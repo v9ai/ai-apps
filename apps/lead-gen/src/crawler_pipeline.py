@@ -62,6 +62,59 @@ from crawler_replay_buffer import (
     ReplayBufferConfig,
 )
 
+# --- Novelty technique imports (01-10) ---
+from crawler_craw4llm import (
+    Craw4LLMConfig,
+    ContentQualityPreFilter,
+    FastTextPreFilter,
+    URLCandidate as Craw4LLMCandidate,
+)
+from crawler_qmin import (
+    QMinConfig,
+    QMinPropagator,
+    combine_qmin_dqn_score,
+)
+from crawler_larl import (
+    LARLConfig,
+    LARLScheduler,
+    DomainContext,
+)
+from crawler_ssrs import (
+    SSRSConfig,
+    SSRSRewardShaper,
+)
+from crawler_arb_replay import (
+    ARBConfig,
+    ARBReplayBuffer,
+)
+from crawler_opagent import (
+    OpAgentConfig,
+    OpAgentRewardShaper,
+    RecoveryAction,
+    classify_page_type,
+)
+from crawler_m2cmab import (
+    M2CMABConfig,
+    M2CMABScheduler,
+    ResourceMonitor,
+    DomainContextBuilder,
+)
+from crawler_discover import (
+    DISCOVERConfig,
+    DISCOVERCurriculum,
+)
+from crawler_webrl import (
+    WebRLConfig,
+    WebRLOrchestrator,
+    Trajectory,
+)
+from crawler_world_model import (
+    WorldModelConfig,
+    ModelBasedAgent,
+    DynaTrainer,
+    WebDreamerPlanner,
+)
+
 logger = logging.getLogger("crawler_pipeline")
 
 
@@ -94,6 +147,50 @@ class CrawlerPipelineConfig:
     # Data directory
     data_dir: str = "scrapus_data"
 
+    # --- Novelty technique configs (01-10) ---
+    # 01: Craw4LLM fastText pre-filter
+    craw4llm: Craw4LLMConfig = None  # type: ignore[assignment]
+    enable_craw4llm: bool = True
+
+    # 02: QMin quality propagation
+    qmin: QMinConfig = None  # type: ignore[assignment]
+    enable_qmin: bool = True
+
+    # 03: LARL temporal drift bandits
+    larl: LARLConfig = None  # type: ignore[assignment]
+    enable_larl: bool = False  # disabled by default — use M2-CMAB instead
+
+    # 04: SSRS semi-supervised reward shaping
+    ssrs: SSRSConfig = None  # type: ignore[assignment]
+    enable_ssrs: bool = True
+
+    # 05: ARB on-policyness replay
+    arb: ARBConfig = None  # type: ignore[assignment]
+    enable_arb: bool = True
+
+    # 06: WebDreamer LLM look-ahead
+    world_model: WorldModelConfig = None  # type: ignore[assignment]
+    enable_world_model: bool = False  # opt-in (requires LLM endpoint)
+
+    # 07: OpAgent process rewards + reflector
+    opagent: OpAgentConfig = None  # type: ignore[assignment]
+    enable_opagent: bool = True
+
+    # 08: M2-CMAB constraint-aware scheduling
+    m2cmab: M2CMABConfig = None  # type: ignore[assignment]
+    enable_m2cmab: bool = True  # replaces UCB1
+
+    # 09: DISCOVER auto-curriculum
+    discover: DISCOVERConfig = None  # type: ignore[assignment]
+    enable_discover: bool = True
+
+    # 10: WebRL ORM + curriculum
+    webrl: WebRLConfig = None  # type: ignore[assignment]
+    enable_webrl: bool = True
+
+    # Scheduler selection: "ucb1" | "m2cmab" | "larl"
+    scheduler_type: str = "m2cmab"
+
     def __post_init__(self) -> None:
         if self.dqn is None:
             self.dqn = DQNConfig()
@@ -103,6 +200,27 @@ class CrawlerPipelineConfig:
             self.crawler = CrawlerConfig()
         if self.replay is None:
             self.replay = ReplayBufferConfig()
+        # Novelty configs
+        if self.craw4llm is None:
+            self.craw4llm = Craw4LLMConfig()
+        if self.qmin is None:
+            self.qmin = QMinConfig()
+        if self.larl is None:
+            self.larl = LARLConfig()
+        if self.ssrs is None:
+            self.ssrs = SSRSConfig()
+        if self.arb is None:
+            self.arb = ARBConfig()
+        if self.world_model is None:
+            self.world_model = WorldModelConfig()
+        if self.opagent is None:
+            self.opagent = OpAgentConfig()
+        if self.m2cmab is None:
+            self.m2cmab = M2CMABConfig()
+        if self.discover is None:
+            self.discover = DISCOVERConfig()
+        if self.webrl is None:
+            self.webrl = WebRLConfig()
 
 
 # ======================= Crawl Result (per-page) ============================
@@ -147,6 +265,21 @@ class CrawlerPipeline:
         self.onnx_engine: Optional[ONNXInferenceEngine] = None
         self.replay: Optional[MmapReplayBuffer] = None
         self.engine: Optional[CrawlerEngine] = None
+
+        # Novelty components (01-10)
+        self.craw4llm_filter: Optional[ContentQualityPreFilter] = None     # 01
+        self.qmin: Optional[QMinPropagator] = None                         # 02
+        self.larl_scheduler: Optional[LARLScheduler] = None                # 03
+        self.ssrs: Optional[SSRSRewardShaper] = None                       # 04
+        self.arb_replay: Optional[ARBReplayBuffer] = None                  # 05
+        self.model_based_agent: Optional[ModelBasedAgent] = None           # 06
+        self.dyna_trainer: Optional[DynaTrainer] = None                    # 06
+        self.webdreamer: Optional[WebDreamerPlanner] = None                # 06
+        self.opagent: Optional[OpAgentRewardShaper] = None                 # 07
+        self.m2cmab_scheduler: Optional[M2CMABScheduler] = None            # 08
+        self.resource_monitor: Optional[ResourceMonitor] = None            # 08
+        self.discover: Optional[DISCOVERCurriculum] = None                 # 09
+        self.webrl: Optional[WebRLOrchestrator] = None                     # 10
 
         # Tracking
         self._global_step: int = 0
@@ -219,8 +352,113 @@ class CrawlerPipeline:
         # 5. Crawler engine
         self.engine = CrawlerEngine(self.config.crawler)
 
+        # --- Novelty components (01-10) ---
+
+        # 01: Craw4LLM fastText pre-filter
+        if self.config.enable_craw4llm:
+            try:
+                self.craw4llm_filter = ContentQualityPreFilter(self.config.craw4llm)
+                logger.info("Craw4LLM pre-filter enabled (top_k=%d)", self.config.craw4llm.top_k)
+            except Exception as exc:
+                logger.warning("Craw4LLM init failed: %s", exc)
+
+        # 02: QMin quality propagation
+        if self.config.enable_qmin:
+            try:
+                self.qmin = QMinPropagator(self.config.qmin)
+                logger.info("QMin propagator enabled (policy=%s)", self.config.qmin.policy)
+            except Exception as exc:
+                logger.warning("QMin init failed: %s", exc)
+
+        # 03: LARL temporal drift scheduler
+        if self.config.enable_larl and self.config.scheduler_type == "larl":
+            try:
+                self.larl_scheduler = LARLScheduler(self.config.larl)
+                logger.info("LARL scheduler enabled")
+            except Exception as exc:
+                logger.warning("LARL init failed: %s", exc)
+
+        # 04: SSRS semi-supervised reward shaping
+        if self.config.enable_ssrs:
+            try:
+                self.ssrs = SSRSRewardShaper(self.config.ssrs)
+                logger.info("SSRS reward shaper enabled")
+            except Exception as exc:
+                logger.warning("SSRS init failed: %s", exc)
+
+        # 05: ARB on-policyness replay (wraps the base replay buffer)
+        if self.config.enable_arb and self.replay:
+            try:
+                self.arb_replay = ARBReplayBuffer(self.replay, self.config.arb)
+                logger.info("ARB replay buffer wrapping enabled")
+            except Exception as exc:
+                logger.warning("ARB replay init failed: %s", exc)
+
+        # 06: WebDreamer / world model
+        if self.config.enable_world_model:
+            try:
+                from crawler_world_model import EnsembleWorldModel
+                world_model = EnsembleWorldModel(self.config.world_model)
+                self.model_based_agent = ModelBasedAgent(
+                    self.config.world_model, world_model,
+                    self.agent.q_network if self.agent else None,
+                )
+                self.dyna_trainer = DynaTrainer(self.config.world_model, world_model)
+                if self.config.world_model.webdreamer_enabled:
+                    self.webdreamer = WebDreamerPlanner(self.config.world_model)
+                logger.info("WebDreamer/world model enabled")
+            except Exception as exc:
+                logger.warning("World model init failed: %s", exc)
+
+        # 07: OpAgent process rewards + reflector
+        if self.config.enable_opagent:
+            try:
+                self.opagent = OpAgentRewardShaper(self.config.opagent)
+                logger.info("OpAgent process rewards enabled")
+            except Exception as exc:
+                logger.warning("OpAgent init failed: %s", exc)
+
+        # 08: M2-CMAB constraint-aware scheduler
+        if self.config.enable_m2cmab and self.config.scheduler_type == "m2cmab":
+            try:
+                self.m2cmab_scheduler = M2CMABScheduler(self.config.m2cmab)
+                self.resource_monitor = ResourceMonitor(self.config.m2cmab)
+                logger.info("M2-CMAB scheduler enabled (%d constraints)", self.config.m2cmab.num_constraints)
+            except Exception as exc:
+                logger.warning("M2-CMAB init failed: %s", exc)
+
+        # 09: DISCOVER auto-curriculum
+        if self.config.enable_discover:
+            try:
+                self.discover = DISCOVERCurriculum(self.config.discover)
+                logger.info("DISCOVER auto-curriculum enabled")
+            except Exception as exc:
+                logger.warning("DISCOVER init failed: %s", exc)
+
+        # 10: WebRL ORM + curriculum
+        if self.config.enable_webrl:
+            try:
+                self.webrl = WebRLOrchestrator(self.config.webrl)
+                logger.info("WebRL ORM + curriculum enabled")
+            except Exception as exc:
+                logger.warning("WebRL init failed: %s", exc)
+
         self._initialised = True
-        logger.info("Crawler pipeline initialised")
+        enabled = [
+            name for name, flag in [
+                ("Craw4LLM", self.craw4llm_filter),
+                ("QMin", self.qmin),
+                ("LARL", self.larl_scheduler),
+                ("SSRS", self.ssrs),
+                ("ARB", self.arb_replay),
+                ("WebDreamer", self.model_based_agent),
+                ("OpAgent", self.opagent),
+                ("M2-CMAB", self.m2cmab_scheduler),
+                ("DISCOVER", self.discover),
+                ("WebRL", self.webrl),
+            ] if flag is not None
+        ]
+        logger.info("Crawler pipeline initialised — novelty modules: %s", ", ".join(enabled) or "none")
 
     async def shutdown(self) -> None:
         """Release all resources in correct order."""
@@ -257,6 +495,33 @@ class CrawlerPipeline:
         if self.onnx_engine:
             del self.onnx_engine
             self.onnx_engine = None
+
+        # --- Novelty component cleanup ---
+        if self.qmin:
+            try:
+                self.qmin.close()
+            except Exception:
+                pass
+        if self.larl_scheduler:
+            try:
+                self.larl_scheduler.close()
+            except Exception:
+                pass
+        if self.m2cmab_scheduler:
+            try:
+                self.m2cmab_scheduler.close()
+            except Exception:
+                pass
+        if self.discover:
+            try:
+                self.discover.close()
+            except Exception:
+                pass
+        if self.webrl:
+            try:
+                self.webrl.close()
+            except Exception:
+                pass
 
         gc.collect()
         self._initialised = False
@@ -309,6 +574,15 @@ class CrawlerPipeline:
             self._resolve_pending_rewards_periodic(stop_event)
         )
 
+        # 09 DISCOVER: select initial crawl goal if curriculum active
+        if self.discover:
+            try:
+                goal = self.discover.select_next_goal()
+                if goal:
+                    logger.info("DISCOVER goal: %s (page_type=%s)", goal.goal_id, goal.page_type)
+            except Exception as exc:
+                logger.debug("DISCOVER goal selection error: %s", exc)
+
         logger.info("Starting crawl loop (max_pages=%d)", max_pages)
 
         try:
@@ -317,6 +591,26 @@ class CrawlerPipeline:
                 if not self.engine.frontier.has_pending():
                     logger.info("Frontier exhausted at step %d", self._global_step)
                     break
+
+                # 08 M2-CMAB: select domain respecting resource constraints
+                if self.m2cmab_scheduler:
+                    try:
+                        available = self.engine.frontier.get_available_domains()
+                        if available:
+                            domain = self.m2cmab_scheduler.select_domain(available)
+                            if domain:
+                                self._current_domain = domain
+                    except Exception as exc:
+                        logger.debug("M2-CMAB domain selection error: %s", exc)
+                elif self.larl_scheduler:
+                    try:
+                        available = self.engine.frontier.get_available_domains()
+                        if available:
+                            domain = self.larl_scheduler.select_domain(available)
+                            if domain:
+                                self._current_domain = domain
+                    except Exception as exc:
+                        logger.debug("LARL domain selection error: %s", exc)
 
                 # Crawl a batch
                 pages = await self.engine.crawl_batch(
@@ -569,18 +863,81 @@ class CrawlerPipeline:
         scalar: ScalarFeatures,
         state: np.ndarray,
     ) -> Optional[CrawlResult]:
-        """Process a page with pre-computed embedding and state vector."""
+        """Process a page with pre-computed embedding and state vector.
+
+        Integration points for novelty techniques:
+        - 01 Craw4LLM: quality feedback for online retraining
+        - 02 QMin: update quality graph with measured quality
+        - 04 SSRS: dense reward shaping for zero-reward transitions
+        - 07 OpAgent: per-step process rewards + recovery check
+        - 08 M2-CMAB: resource cost tracking
+        - 10 WebRL: trajectory accumulation for ORM
+        """
         try:
-            # Select action (link to follow) via DQN
+            # Select action (link to follow) via DQN or WebDreamer
             action, epsilon, q_value = self._select_action(
-                state, len(page.outbound_links)
+                state, len(page.outbound_links), page=page
             )
 
-            # Initial reward: -0.01 cost per page crawled.
+            # --- Reward shaping pipeline ---
+            # Base: -0.01 cost per page crawled (real reward arrives async)
             reward = -0.01
+
+            # 07 OpAgent: rule-based process rewards (cycle/blocker/progress)
+            prev_page = self._trajectory[-1] if self._trajectory else None
+            if self.opagent:
+                try:
+                    opagent_reward, decomp = self.opagent.shape_reward(
+                        page, prev_page, reward,
+                        domain_stats=self._get_domain_stats(page.domain),
+                    )
+                    reward = opagent_reward
+
+                    # Check reflector for recovery actions
+                    recovery = self.opagent.check_and_recover(
+                        page, expected=None,
+                    )
+                    if recovery and recovery != RecoveryAction.CONTINUE:
+                        logger.debug("Reflector suggests %s for %s", recovery.name, page.url)
+                        if recovery == RecoveryAction.SKIP_DOMAIN:
+                            # Mark domain as cooled for future scheduling
+                            self.engine.scheduler.cool_domain(page.domain)
+                except Exception as exc:
+                    logger.debug("OpAgent reward shaping error: %s", exc)
+
+            # 04 SSRS: dense reward for zero-reward transitions
+            if self.ssrs and abs(reward - (-0.01)) < 1e-6:
+                try:
+                    ssrs_reward = self.ssrs.shape_reward(
+                        state, action,
+                        np.zeros_like(state),  # next_state patched later
+                        reward,
+                    )
+                    reward = ssrs_reward
+                except Exception as exc:
+                    logger.debug("SSRS reward shaping error: %s", exc)
+
             self._all_rewards.append(reward)
 
-            # Store in replay buffer
+            # 02 QMin: update quality graph with measured page quality
+            if self.qmin:
+                try:
+                    from crawler_content_quality import ContentQualityScorer
+                    quality = ContentQualityScorer().quick_score(page.body_text)
+                    self.qmin.update_quality(page.url, quality)
+                except Exception:
+                    pass
+
+            # 01 Craw4LLM: feed quality feedback for online retraining
+            if self.craw4llm_filter and reward > 0:
+                try:
+                    self.craw4llm_filter.record_quality_feedback(
+                        page.body_text, is_quality=(reward >= 0.2)
+                    )
+                except Exception:
+                    pass
+
+            # Store in replay buffer (ARB-aware if enabled)
             zero_state = np.zeros_like(state)
             done = check_episode_done(
                 domain_frontier_empty=not self.engine.frontier.has_pending(page.domain),
@@ -588,9 +945,10 @@ class CrawlerPipeline:
                 pages_crawled=self._episode_pages,
             )
 
-            if self.replay:
+            replay_target = self.arb_replay if self.arb_replay else self.replay
+            if replay_target:
                 try:
-                    self.replay.add(
+                    replay_target.add(
                         state=state,
                         action=action,
                         reward=reward,
@@ -601,21 +959,43 @@ class CrawlerPipeline:
                 except Exception as exc:
                     logger.error("Replay buffer add failed for %s: %s", page.url, exc)
 
-            # Update domain scheduler
-            self.engine.scheduler.update_domain(page.domain, reward)
+            # 08 M2-CMAB: track resource costs + update scheduler
+            if self.m2cmab_scheduler and self.resource_monitor:
+                try:
+                    self.resource_monitor.record_request(
+                        page.domain,
+                        latency_ms=page.fetch_time_ms,
+                        bytes_transferred=page.body_length,
+                        cpu_time_ms=0.0,
+                    )
+                    costs = self.resource_monitor.get_costs(page.domain)
+                    self.m2cmab_scheduler.update_domain(page.domain, reward, costs)
+                except Exception as exc:
+                    logger.debug("M2-CMAB update error: %s", exc)
+            else:
+                # Fallback to base scheduler
+                try:
+                    self.engine.scheduler.update_domain(page.domain, reward)
+                except Exception as exc:
+                    logger.error("Domain scheduler update failed: %s", exc)
 
-            # Update frontier Q-values for discovered links
+            # Score discovered links (with Craw4LLM + QMin pre-filtering)
             if self.agent or self.onnx_engine:
-                self._score_discovered_links(page, embedding, scalar)
+                try:
+                    self._score_discovered_links(page, embedding, scalar)
+                except Exception as exc:
+                    logger.error("Link scoring failed for %s: %s", page.url, exc)
 
-            # Track trajectory for hindsight relabeling
-            self._trajectory.append({
+            # Track trajectory for hindsight relabeling + WebRL
+            traj_entry = {
                 "url": page.url,
                 "state": state,
                 "action": action,
                 "reward": reward,
                 "step": self._global_step,
-            })
+                "page_type": classify_page_type(page.url, page.body_text) if self.opagent else "unknown",
+            }
+            self._trajectory.append(traj_entry)
 
             # Episode bookkeeping
             self._episode_pages += 1
@@ -638,14 +1018,32 @@ class CrawlerPipeline:
             return None
 
     def _select_action(
-        self, state: np.ndarray, num_links: int
+        self, state: np.ndarray, num_links: int,
+        page: Optional[PageContent] = None,
     ) -> tuple:
-        """Select action using DQN agent or ONNX engine.
+        """Select action using DQN agent, WebDreamer, or ONNX engine.
+
+        Integration points:
+        - 06 WebDreamer: LLM look-ahead for high-uncertainty decisions
+        - 08 M2-CMAB: domain selection respects resource constraints
 
         Returns (action, epsilon, q_value).
         """
         if num_links == 0:
             return 0, 1.0, 0.0
+
+        # 06: WebDreamer model-based agent (when confident)
+        if self.model_based_agent and self.agent and page:
+            try:
+                link_candidates = page.outbound_links[:10] if page.outbound_links else []
+                action, epsilon = self.model_based_agent.select_action(
+                    state, num_links, self._global_step,
+                    page_context=page.body_text[:500] if page else None,
+                    link_candidates=link_candidates,
+                )
+                return action, epsilon, 0.0
+            except Exception as exc:
+                logger.debug("ModelBasedAgent fallback to DQN: %s", exc)
 
         # ONNX inference (production mode)
         if self.onnx_engine:
@@ -672,14 +1070,47 @@ class CrawlerPipeline:
     ) -> None:
         """Score discovered links and update frontier Q-values.
 
-        Uses the DQN to estimate Q-values for outbound links based on
-        the current page's context.
+        Integration points:
+        - 01 Craw4LLM: pre-filter candidates before DQN scoring
+        - 02 QMin: blend graph-level quality with DQN Q-values
         """
         if not page.outbound_links:
             return
 
-        # For efficiency, batch-score a subset
-        links = page.outbound_links[:self.config.dqn.action_dim]
+        links = page.outbound_links[:self.config.dqn.action_dim * 3]  # wider pool for pre-filter
+
+        # 01 Craw4LLM: pre-filter before DQN (reduces action space by ~70%)
+        if self.craw4llm_filter:
+            try:
+                candidates = [
+                    Craw4LLMCandidate(
+                        url=link,
+                        anchor_text="",  # extracted from page if available
+                        parent_quality=0.5,
+                        depth=self._episode_depth,
+                    )
+                    for link in links
+                ]
+                filtered = self.craw4llm_filter.filter_frontier(candidates)
+                links = [c.url for c in filtered]
+            except Exception as exc:
+                logger.debug("Craw4LLM filter error: %s", exc)
+
+        # Limit to DQN action dim after filtering
+        links = links[:self.config.dqn.action_dim]
+
+        # 02 QMin: register edges and get graph-level quality scores
+        qmin_scores: Dict[str, float] = {}
+        if self.qmin:
+            try:
+                for link in links:
+                    canonical = canonicalize_url(link)
+                    score = self.qmin.score_url(canonical, page.url, 0.5)
+                    qmin_scores[canonical] = score
+            except Exception as exc:
+                logger.debug("QMin scoring error: %s", exc)
+
+        # DQN Q-value estimation
         state = self.state_builder.build_state(
             page.body_text, page_scalar, precomputed_embedding=page_embedding
         )
@@ -697,10 +1128,19 @@ class CrawlerPipeline:
         else:
             return
 
+        # Update frontier with combined scores
         for i, link in enumerate(links):
             if i < len(q_values):
                 canonical = canonicalize_url(link)
-                self.engine.frontier.update_q_value(canonical, float(q_values[i]))
+                dqn_q = float(q_values[i])
+
+                # 02 QMin: blend graph-level quality with DQN Q-value
+                if canonical in qmin_scores:
+                    combined = combine_qmin_dqn_score(qmin_scores[canonical], dqn_q)
+                else:
+                    combined = dqn_q
+
+                self.engine.frontier.update_q_value(canonical, combined)
 
     def _get_domain_stats(self, domain: str) -> Dict[str, Any]:
         """Retrieve domain stats from the scheduler."""
@@ -713,19 +1153,95 @@ class CrawlerPipeline:
     # ---- Training -----------------------------------------------------------
 
     def _train_step(self) -> None:
-        """One DQN training step on a batch from the replay buffer."""
+        """One DQN training step on a batch from the replay buffer.
+
+        Integration points:
+        - 04 SSRS: co-train reward predictor on same batch
+        - 05 ARB: on-policyness-aware sampling and priority updates
+        - 06 WebDreamer/Dyna: periodic synthetic experience generation
+        - 10 WebRL: KL-constrained updates when curriculum active
+        """
         if self.agent is None or self.replay is None:
             return
 
-        batch = self.replay.sample(self.config.dqn.batch_size)
+        # 05 ARB: sample with on-policyness weighting if available
+        q_network = self.agent.q_network if self.agent else None
+        if self.arb_replay:
+            try:
+                batch = self.arb_replay.sample(self.config.dqn.batch_size, q_network)
+                self.arb_replay.maybe_refresh(q_network)
+            except Exception:
+                batch = self.replay.sample(self.config.dqn.batch_size)
+        else:
+            batch = self.replay.sample(self.config.dqn.batch_size)
+
         states, actions, rewards, next_states, dones, weights, indices = batch
 
-        loss, td_errors = self.agent.train_step_on_batch(
-            states, actions, rewards, next_states, dones, weights
-        )
+        # 10 WebRL: KL-constrained loss when curriculum is active
+        if self.webrl and self.webrl._kl_updater:
+            try:
+                loss, td_errors = self.agent.train_step_on_batch(
+                    states, actions, rewards, next_states, dones, weights
+                )
+                # Apply KL penalty post-hoc (adjusts gradient direction)
+                kl_pen = self.webrl._kl_updater.compute_kl_penalty(
+                    q_network, states
+                )
+                if kl_pen > 0.1:
+                    logger.debug("WebRL KL penalty: %.4f", kl_pen)
+            except Exception:
+                loss, td_errors = self.agent.train_step_on_batch(
+                    states, actions, rewards, next_states, dones, weights
+                )
+        else:
+            loss, td_errors = self.agent.train_step_on_batch(
+                states, actions, rewards, next_states, dones, weights
+            )
 
-        # Update PER priorities
-        self.replay.update_priorities(indices, td_errors)
+        # Update PER priorities (ARB-aware if enabled)
+        if self.arb_replay:
+            try:
+                self.arb_replay.update_priorities(indices, td_errors, q_network)
+            except Exception:
+                self.replay.update_priorities(indices, td_errors)
+        else:
+            self.replay.update_priorities(indices, td_errors)
+
+        # 04 SSRS: co-train reward predictor on the same batch
+        if self.ssrs and self.agent.train_step % 4 == 0:
+            try:
+                q_vals = None
+                if q_network:
+                    import torch
+                    with torch.no_grad():
+                        s_t = torch.as_tensor(states, dtype=torch.float32, device=self.agent.device)
+                        q_vals = q_network(s_t).cpu().numpy()
+                ssrs_metrics = self.ssrs.train_step(
+                    (states, actions, rewards, next_states, dones), q_vals
+                )
+                if self.agent.train_step % self.config.log_interval == 0:
+                    logger.debug("SSRS train: %s", json.dumps(ssrs_metrics))
+            except Exception as exc:
+                logger.debug("SSRS training error: %s", exc)
+
+        # 06 Dyna: periodic synthetic experience generation
+        if self.dyna_trainer and self.agent.train_step % 500 == 0:
+            try:
+                # Sample starting states from replay buffer
+                start_batch = self.replay.sample(min(32, self.replay.size))
+                start_states = start_batch[0]  # states array
+                synthetic = self.dyna_trainer.generate_synthetic_experience(
+                    n=32, start_states=start_states
+                )
+                if synthetic and self.replay:
+                    for t in synthetic:
+                        self.replay.add(
+                            state=t.state, action=t.action, reward=t.reward,
+                            next_state=t.next_state, done=t.done, url="synthetic",
+                        )
+                    logger.debug("Dyna: added %d synthetic transitions", len(synthetic))
+            except Exception as exc:
+                logger.debug("Dyna generation error: %s", exc)
 
         # Save policy snapshot for actor threads
         if self.agent.train_step % self.config.policy_save_interval == 0:
@@ -742,17 +1258,29 @@ class CrawlerPipeline:
             except Exception as exc:
                 logger.error("ONNX export failed: %s", exc)
 
-        # Log convergence metrics
+        # Log convergence metrics (including novelty module stats)
         if self.agent.train_step % self.config.log_interval == 0:
             metrics = self.agent.get_convergence_metrics(self._all_rewards)
             metrics["replay_size"] = self.replay.size
             metrics["unresolved_rewards"] = self.replay.count_unresolved()
+            if self.arb_replay:
+                try:
+                    from crawler_arb_replay import ARBDiagnostics
+                    diag = ARBDiagnostics(self.arb_replay)
+                    metrics["arb_effective_size"] = diag.get_effective_buffer_size()
+                except Exception:
+                    pass
             logger.info("Train metrics: %s", json.dumps(metrics))
 
     # ---- Episode Management -------------------------------------------------
 
     def _handle_episode_end(self) -> None:
-        """Handle end of a crawling episode."""
+        """Handle end of a crawling episode.
+
+        Integration points:
+        - 09 DISCOVER: update curriculum with episode outcome
+        - 10 WebRL: process trajectory through ORM + failure curriculum
+        """
         # Apply hindsight reward relabeling if there were positive rewards
         if self._trajectory:
             positive = [t for t in self._trajectory if t["reward"] > 0]
@@ -763,6 +1291,42 @@ class CrawlerPipeline:
                     gamma=self.config.dqn.gamma,
                 )
 
+            # 10 WebRL: process trajectory through ORM
+            if self.webrl and len(self._trajectory) > 1:
+                try:
+                    outcome = any(t["reward"] >= 0.2 for t in self._trajectory)
+                    traj = Trajectory(
+                        states=[t["state"] for t in self._trajectory],
+                        actions=[t["action"] for t in self._trajectory],
+                        rewards=[t["reward"] for t in self._trajectory],
+                        outcome=outcome,
+                        domain=self._current_domain or "unknown",
+                        seed_url=self._trajectory[0]["url"],
+                    )
+                    self.webrl.process_trajectory(traj)
+
+                    # Retrain ORM if enough data accumulated
+                    if self.webrl.should_retrain():
+                        orm_metrics = self.webrl.retrain_orm()
+                        logger.info("WebRL ORM retrained: %s", json.dumps(orm_metrics))
+                except Exception as exc:
+                    logger.debug("WebRL trajectory processing error: %s", exc)
+
+            # 09 DISCOVER: update curriculum with episode outcome
+            if self.discover:
+                try:
+                    success = any(t["reward"] >= 0.2 for t in self._trajectory)
+                    page_types = [
+                        t.get("page_type", "unknown") for t in self._trajectory
+                    ]
+                    self.discover.update_outcome(
+                        goal=None,  # current goal from curriculum
+                        success=success,
+                        trajectory=self._trajectory,
+                    )
+                except Exception as exc:
+                    logger.debug("DISCOVER curriculum update error: %s", exc)
+
         # Reset episode state
         self._trajectory = []
         self._episode_pages = 0
@@ -772,7 +1336,13 @@ class CrawlerPipeline:
     # ---- Periodic Maintenance -----------------------------------------------
 
     def _periodic_maintenance(self) -> None:
-        """Run periodic maintenance tasks."""
+        """Run periodic maintenance tasks.
+
+        Integration points:
+        - 10 WebRL: generate curriculum tasks from failures
+        - 09 DISCOVER: refresh goal selection periodically
+        - 08 M2-CMAB: reset epoch budgets if needed
+        """
         now = time.time()
 
         # Prune failed frontier entries
@@ -781,6 +1351,28 @@ class CrawlerPipeline:
             if self.replay:
                 self.replay.prune_old_pending()
             self._last_prune_time = now
+
+        # 10 WebRL: generate curriculum from failures every 500 steps
+        if self.webrl and self._global_step % 500 == 0 and self._global_step > 0:
+            try:
+                tasks = self.webrl.generate_curriculum()
+                if tasks:
+                    # Add curriculum seed URLs to frontier
+                    for task in tasks[:5]:  # limit to top 5 curriculum tasks
+                        if hasattr(task, "seed_url") and task.seed_url:
+                            self.engine.add_seed_urls([task.seed_url])
+                    logger.info("WebRL curriculum: %d new tasks generated", len(tasks))
+            except Exception as exc:
+                logger.debug("WebRL curriculum generation error: %s", exc)
+
+        # 09 DISCOVER: refresh goal every 200 steps
+        if self.discover and self._global_step % 200 == 0 and self._global_step > 0:
+            try:
+                goal = self.discover.select_next_goal()
+                if goal:
+                    logger.debug("DISCOVER new goal: %s", goal.page_type)
+            except Exception as exc:
+                logger.debug("DISCOVER goal refresh error: %s", exc)
 
     # ---- Background Tasks ---------------------------------------------------
 
@@ -1175,7 +1767,7 @@ class CrawlerPipeline:
     # ---- Statistics ---------------------------------------------------------
 
     def _collect_stats(self) -> Dict[str, Any]:
-        """Collect comprehensive pipeline statistics."""
+        """Collect comprehensive pipeline statistics including novelty modules."""
         stats: Dict[str, Any] = {
             "global_step": self._global_step,
             "crawler": self.engine.get_stats() if self.engine else {},
@@ -1196,6 +1788,50 @@ class CrawlerPipeline:
                     4,
                 ),
             }
+
+        # --- Novelty module stats ---
+        novelty: Dict[str, Any] = {}
+
+        if self.craw4llm_filter:
+            try:
+                novelty["craw4llm"] = self.craw4llm_filter.get_filter_stats()
+            except Exception:
+                pass
+
+        if self.qmin:
+            try:
+                novelty["qmin"] = self.qmin.get_stats()
+            except Exception:
+                pass
+
+        if self.m2cmab_scheduler:
+            try:
+                novelty["m2cmab"] = {
+                    "constraint_status": self.m2cmab_scheduler.get_constraint_status(),
+                }
+            except Exception:
+                pass
+
+        if self.opagent:
+            try:
+                novelty["opagent"] = self.opagent.get_stats()
+            except Exception:
+                pass
+
+        if self.discover:
+            try:
+                novelty["discover"] = self.discover.get_curriculum_stats()
+            except Exception:
+                pass
+
+        if self.webrl:
+            try:
+                novelty["webrl"] = self.webrl.get_stats()
+            except Exception:
+                pass
+
+        if novelty:
+            stats["novelty"] = novelty
 
         return stats
 

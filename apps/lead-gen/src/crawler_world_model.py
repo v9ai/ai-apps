@@ -1,18 +1,37 @@
 """
 Module 1: Learned world model for tree-search planning in RL-based crawling.
 
-Implements:
+Implements WebDreamer-inspired model-based planning (arXiv:2411.06559):
+
 1. EnsembleWorldModel: N independent transition models for uncertainty-aware
    next-state/reward/done prediction from (state, action) pairs.
+   Training: multi-epoch with train/val split, early stopping per model,
+   Gaussian NLL for states, MSE for rewards, BCE for done.
+
 2. TreeSearchPlanner: forward simulation using the world model to build a
    search tree of depth=planning_horizon, width=planning_width, scored by
-   cumulative reward or DQN Q-values at the leaves.
-3. ModelBasedAgent: blends DQN epsilon-greedy with tree-search planning,
-   falling back to DQN when the world model is uncertain.
-4. ModelTrainer: trains the ensemble from replay buffer transitions, tracks
+   cumulative model reward + DQN Q-values at the leaves.
+   Uncertainty-based branch pruning.
+
+3. WebDreamerPlanner: LLM-based look-ahead simulation for high-value
+   decisions. Uses local LLM (DeepSeek/Qwen via MLX) to predict crawl
+   outcomes from URL patterns + anchor text. MPC strategy: simulate top-K
+   candidate URLs, pick highest predicted quality. Falls back to DQN when
+   LLM unavailable. Rate-limited: max 5 simulations per decision.
+
+4. ModelBasedAgent: blends DQN epsilon-greedy with tree-search planning,
+   falling back to DQN when the world model is uncertain. Planning weight
+   ramps from 0.0 to 0.8 over warmup period.
+
+5. DynaTrainer: generates synthetic experience from the world model for
+   DQN training (Sutton 1991 Dyna-Q). Quality-filtered by ensemble
+   uncertainty. Max 0.5 synthetic/real ratio.
+
+6. ModelTrainer: trains the ensemble from replay buffer transitions, tracks
    prediction accuracy (state MSE, reward MAE, done accuracy).
 
 Ensemble of 5 x (794 -> 256 -> 256 -> 786) MLPs ~ 5 MB total.
+WebDreamer LLM overhead: ~2s per decision (batched local 3B model).
 
 State: 784-dim (768 nomic-embed + 16 scalar features).
 Actions: discrete 0..action_dim-1 (one-hot encoded for the transition model).
@@ -22,13 +41,14 @@ Target: Apple M1 16GB, zero cloud dependency.
 
 import gc
 import hashlib
+import json
 import logging
 import os
 import time
 from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Deque, Dict, List, Optional, Tuple
+from typing import Any, Deque, Dict, List, NamedTuple, Optional, Tuple
 
 import numpy as np
 
@@ -50,15 +70,39 @@ except ImportError:
     logger.warning("PyTorch not installed -- world model disabled")
 
 
+# ======================= Data Structures ====================================
+
+class SimulationResult(NamedTuple):
+    """Result of an LLM-based action simulation (WebDreamer look-ahead)."""
+    predicted_page_type: str       # e.g. "careers", "about", "blog", "irrelevant"
+    predicted_quality: float       # 0.0 - 1.0 B2B lead relevance score
+    confidence: float              # 0.0 - 1.0 model confidence
+    reasoning: str                 # brief explanation
+
+
+class Transition(NamedTuple):
+    """A single (s, a, r, s', done) transition, optionally labeled synthetic."""
+    state: np.ndarray
+    action: int
+    reward: float
+    next_state: np.ndarray
+    done: float
+    is_synthetic: bool = False
+
+
 # ======================= Configuration ======================================
 
 @dataclass
 class WorldModelConfig:
-    """Hyperparameters for the ensemble world model and tree-search planner.
+    """Hyperparameters for the ensemble world model, tree-search planner,
+    WebDreamer LLM look-ahead, and Dyna synthetic experience generation.
 
     Ensemble of 5 transition models predicts (next_state, reward, done)
     from (state, action).  Tree-search simulates 3 steps ahead with top-5
     actions per step.  Total ensemble size: ~5 MB.
+
+    WebDreamer adds optional LLM-based simulation for high-value link
+    selection decisions (text-only, no screenshots needed for B2B crawling).
     """
 
     # Dimensions
@@ -81,9 +125,16 @@ class WorldModelConfig:
     # Training schedule
     train_interval: int = 100       # train world model every N agent steps
     min_training_data: int = 500    # minimum transitions before training
+    model_train_interval: int = 1000  # steps between full ensemble retraining
 
     # Training buffer
     buffer_capacity: int = 50_000   # last 50K transitions for world model
+
+    # Training hyperparameters (multi-epoch)
+    num_train_epochs: int = 10       # max epochs per training cycle
+    train_batch_size: int = 256      # batch size for ensemble training
+    val_split: float = 0.1           # fraction held out for validation
+    early_stop_patience: int = 3     # epochs without improvement before stop
 
     # Uncertainty thresholds
     uncertainty_threshold: float = 0.5   # above this, fall back to DQN
@@ -93,6 +144,20 @@ class WorldModelConfig:
 
     # Discount
     gamma: float = 0.99
+
+    # WebDreamer LLM look-ahead
+    llm_model: str = "deepseek"                  # "deepseek" or "qwen"
+    max_simulations_per_step: int = 5             # rate limit per decision
+    simulation_timeout_ms: int = 2000             # per-simulation timeout
+    llm_endpoint: str = "http://localhost:8080/v1"  # local vLLM/MLX endpoint
+    llm_temperature: float = 0.3                  # low temp for deterministic predictions
+    webdreamer_enabled: bool = False              # enable LLM look-ahead (off by default)
+
+    # Dyna-style synthetic experience
+    dyna_ratio: float = 0.3        # max synthetic/real ratio in replay buffer
+    dyna_rollout_length: int = 5   # steps per synthetic rollout
+    dyna_batch_size: int = 32      # synthetic rollouts per Dyna update
+    dyna_uncertainty_threshold: float = 0.3  # stricter than planning threshold
 
     # Persistence
     checkpoint_path: str = "scrapus_data/models/world_model/ensemble.pt"
@@ -191,6 +256,12 @@ class EnsembleWorldModel:
     ensemble members' next-state predictions.  High disagreement means the
     model has not seen enough data in that region of state-action space.
 
+    Training:
+    - Multi-epoch training from replay buffer with train/validation split
+    - Per-model early stopping when validation loss stops improving
+    - Gaussian NLL for state prediction (heteroscedastic)
+    - MSE for reward, BCE for done
+
     Training buffer: ring buffer of last 50K transitions.
     Total size: 5 x ~1 MB = ~5 MB.
     """
@@ -231,6 +302,10 @@ class EnsembleWorldModel:
 
         # Training counter
         self.train_steps: int = 0
+
+        # Per-model best validation losses (for early stopping)
+        self._best_val_losses: List[float] = [float("inf")] * self.config.n_ensemble
+        self._patience_counters: List[int] = [0] * self.config.n_ensemble
 
         logger.info(
             "EnsembleWorldModel initialised: %d members, device=%s",
@@ -295,6 +370,21 @@ class EnsembleWorldModel:
         )
         onehot.scatter_(1, actions_t.unsqueeze(1), 1.0)
         return onehot
+
+    # ---- Buffer to arrays ---------------------------------------------------
+
+    def _buffer_to_arrays(
+        self,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Convert the internal ring buffer to numpy arrays for training."""
+        states = np.array(list(self._buffer_states), dtype=np.float32)
+        actions = np.array(list(self._buffer_actions), dtype=np.int64)
+        next_states = np.array(
+            list(self._buffer_next_states), dtype=np.float32
+        )
+        rewards = np.array(list(self._buffer_rewards), dtype=np.float32)
+        dones = np.array(list(self._buffer_dones), dtype=np.float32)
+        return states, actions, next_states, rewards, dones
 
     # ---- Prediction ---------------------------------------------------------
 
@@ -393,7 +483,7 @@ class EnsembleWorldModel:
 
         return mean_ns, mean_r, mean_d, uncertainties
 
-    # ---- Training -----------------------------------------------------------
+    # ---- Single-batch training step -----------------------------------------
 
     def train_step(
         self,
@@ -468,6 +558,226 @@ class EnsembleWorldModel:
         self.train_steps += 1
         return total_loss / self.config.n_ensemble
 
+    # ---- Multi-epoch training with early stopping ---------------------------
+
+    def train(
+        self,
+        replay_buffer: Optional[Any] = None,
+        num_epochs: Optional[int] = None,
+        batch_size: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Train ensemble on replay data with train/val split and early stopping.
+
+        Each of the N ensemble models is trained independently on the same
+        data splits. Per-model early stopping halts training for a model when
+        its validation loss stops improving for `early_stop_patience` epochs.
+
+        Each model predicts: (state, action_onehot) -> (next_state_delta, reward, done)
+        Ensemble disagreement provides epistemic uncertainty.
+
+        Args:
+            replay_buffer: external buffer with .sample(n) method, or None
+                           to use the internal ring buffer.
+            num_epochs: number of training epochs (default from config).
+            batch_size: batch size (default from config).
+
+        Returns:
+            Dict with per-model final losses, validation losses, epochs
+            completed, and overall training summary.
+        """
+        if not _HAS_TORCH:
+            raise RuntimeError("PyTorch required for training")
+
+        if not self.has_enough_data:
+            logger.debug(
+                "Not enough data for world model training (%d < %d)",
+                self.buffer_size,
+                self.config.min_training_data,
+            )
+            return {"status": "insufficient_data", "buffer_size": self.buffer_size}
+
+        num_epochs = num_epochs or self.config.num_train_epochs
+        batch_size = batch_size or self.config.train_batch_size
+
+        # Gather data from internal buffer or external replay buffer
+        if replay_buffer is not None:
+            try:
+                n_samples = min(self.config.buffer_capacity, replay_buffer.size if hasattr(replay_buffer, 'size') else len(replay_buffer))
+                batch = replay_buffer.sample(n_samples)
+                states, actions, rewards, next_states, dones = batch
+            except (ValueError, AttributeError):
+                states, actions, next_states, rewards, dones = self._buffer_to_arrays()
+        else:
+            states, actions, next_states, rewards, dones = self._buffer_to_arrays()
+
+        n_total = len(states)
+        n_val = max(1, int(n_total * self.config.val_split))
+        n_train = n_total - n_val
+
+        # Shuffle and split
+        perm = np.random.permutation(n_total)
+        train_idx = perm[:n_train]
+        val_idx = perm[n_train:]
+
+        train_states = states[train_idx]
+        train_actions = actions[train_idx]
+        train_next = next_states[train_idx]
+        train_rewards = rewards[train_idx]
+        train_dones = dones[train_idx]
+
+        val_states = states[val_idx]
+        val_actions = actions[val_idx]
+        val_next = next_states[val_idx]
+        val_rewards = rewards[val_idx]
+        val_dones = dones[val_idx]
+
+        # Prepare validation tensors once
+        dev = self.device
+        val_states_t = torch.as_tensor(val_states, dtype=torch.float32, device=dev)
+        val_next_t = torch.as_tensor(val_next, dtype=torch.float32, device=dev)
+        val_rewards_t = torch.as_tensor(val_rewards, dtype=torch.float32, device=dev).unsqueeze(1)
+        val_dones_t = torch.as_tensor(val_dones, dtype=torch.float32, device=dev).unsqueeze(1)
+        val_action_onehot = self._action_to_onehot(val_actions)
+
+        # Reset early stopping state
+        self._best_val_losses = [float("inf")] * self.config.n_ensemble
+        self._patience_counters = [0] * self.config.n_ensemble
+        model_active = [True] * self.config.n_ensemble  # per-model early stop flag
+
+        per_model_train_losses: List[List[float]] = [[] for _ in range(self.config.n_ensemble)]
+        per_model_val_losses: List[List[float]] = [[] for _ in range(self.config.n_ensemble)]
+        per_model_epochs: List[int] = [0] * self.config.n_ensemble
+
+        n_batches_per_epoch = max(1, n_train // batch_size)
+
+        for epoch in range(num_epochs):
+            # Check if all models have stopped early
+            if not any(model_active):
+                logger.info("All ensemble models stopped early at epoch %d", epoch)
+                break
+
+            # Shuffle training data each epoch
+            epoch_perm = np.random.permutation(n_train)
+
+            for model_idx, (model, optimizer) in enumerate(
+                zip(self.models, self.optimizers)
+            ):
+                if not model_active[model_idx]:
+                    continue
+
+                model.train()
+                epoch_loss = 0.0
+
+                for batch_idx in range(n_batches_per_epoch):
+                    start = batch_idx * batch_size
+                    end = min(start + batch_size, n_train)
+                    idx = epoch_perm[start:end]
+
+                    b_states = torch.as_tensor(
+                        train_states[idx], dtype=torch.float32, device=dev
+                    )
+                    b_next = torch.as_tensor(
+                        train_next[idx], dtype=torch.float32, device=dev
+                    )
+                    b_rewards = torch.as_tensor(
+                        train_rewards[idx], dtype=torch.float32, device=dev
+                    ).unsqueeze(1)
+                    b_dones = torch.as_tensor(
+                        train_dones[idx], dtype=torch.float32, device=dev
+                    ).unsqueeze(1)
+                    b_action_onehot = self._action_to_onehot(train_actions[idx])
+
+                    pred_ns, pred_r, pred_d_logit, log_var = model(
+                        b_states, b_action_onehot
+                    )
+
+                    # State loss: Gaussian NLL (heteroscedastic)
+                    var = torch.exp(log_var).clamp(min=1e-6)
+                    state_loss = 0.5 * (
+                        log_var + (b_next - pred_ns) ** 2 / var
+                    ).mean()
+
+                    reward_loss = F.mse_loss(pred_r, b_rewards)
+                    done_loss = F.binary_cross_entropy_with_logits(
+                        pred_d_logit, b_dones
+                    )
+
+                    loss = state_loss + reward_loss + done_loss
+
+                    optimizer.zero_grad()
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+                    optimizer.step()
+
+                    epoch_loss += loss.item()
+
+                avg_train_loss = epoch_loss / n_batches_per_epoch
+                per_model_train_losses[model_idx].append(avg_train_loss)
+                per_model_epochs[model_idx] = epoch + 1
+
+                # Validation loss
+                model.eval()
+                with torch.no_grad():
+                    pred_ns_v, pred_r_v, pred_d_v, log_var_v = model(
+                        val_states_t, val_action_onehot
+                    )
+                    var_v = torch.exp(log_var_v).clamp(min=1e-6)
+                    v_state_loss = 0.5 * (
+                        log_var_v + (val_next_t - pred_ns_v) ** 2 / var_v
+                    ).mean()
+                    v_reward_loss = F.mse_loss(pred_r_v, val_rewards_t)
+                    v_done_loss = F.binary_cross_entropy_with_logits(
+                        pred_d_v, val_dones_t
+                    )
+                    val_loss = (v_state_loss + v_reward_loss + v_done_loss).item()
+
+                per_model_val_losses[model_idx].append(val_loss)
+
+                # Early stopping check for this model
+                if val_loss < self._best_val_losses[model_idx]:
+                    self._best_val_losses[model_idx] = val_loss
+                    self._patience_counters[model_idx] = 0
+                else:
+                    self._patience_counters[model_idx] += 1
+                    if self._patience_counters[model_idx] >= self.config.early_stop_patience:
+                        model_active[model_idx] = False
+                        logger.info(
+                            "Model %d early stopped at epoch %d (val_loss=%.4f, best=%.4f)",
+                            model_idx, epoch + 1, val_loss,
+                            self._best_val_losses[model_idx],
+                        )
+
+            self.train_steps += 1
+
+            # Log epoch summary
+            active_count = sum(model_active)
+            mean_val = np.mean([
+                per_model_val_losses[i][-1]
+                for i in range(self.config.n_ensemble)
+                if per_model_val_losses[i]
+            ])
+            logger.info(
+                "Ensemble epoch %d/%d: mean_val_loss=%.4f, active_models=%d/%d",
+                epoch + 1, num_epochs, mean_val,
+                active_count, self.config.n_ensemble,
+            )
+
+        return {
+            "status": "trained",
+            "epochs_per_model": per_model_epochs,
+            "final_train_losses": [
+                losses[-1] if losses else float("inf")
+                for losses in per_model_train_losses
+            ],
+            "final_val_losses": [
+                losses[-1] if losses else float("inf")
+                for losses in per_model_val_losses
+            ],
+            "best_val_losses": self._best_val_losses,
+            "n_train": n_train,
+            "n_val": n_val,
+        }
+
     # ---- Persistence --------------------------------------------------------
 
     def save_checkpoint(self, path: Optional[str] = None) -> str:
@@ -479,6 +789,7 @@ class EnsembleWorldModel:
             "models": [m.state_dict() for m in self.models],
             "optimizers": [o.state_dict() for o in self.optimizers],
             "train_steps": self.train_steps,
+            "best_val_losses": self._best_val_losses,
             "config": self.config.__dict__,
         }
         torch.save(checkpoint, path)
@@ -500,6 +811,10 @@ class EnsembleWorldModel:
             model.load_state_dict(checkpoint["models"][i])
             optimizer.load_state_dict(checkpoint["optimizers"][i])
         self.train_steps = checkpoint.get("train_steps", 0)
+        self._best_val_losses = checkpoint.get(
+            "best_val_losses",
+            [float("inf")] * self.config.n_ensemble,
+        )
         logger.info(
             "World model loaded from %s (step %d)", path, self.train_steps
         )
@@ -525,8 +840,7 @@ class TreeSearchPlanner:
 
     At each node, expands the top-K actions (planning_width).  Recurses up
     to planning_horizon depth.  Leaf nodes are scored by:
-    - DQN Q-value (if a q_network is provided), or
-    - Cumulative discounted reward along the simulated trajectory.
+      cumulative discounted reward + DQN Q-value bootstrap at leaf.
 
     Pruning: branches with high world-model uncertainty are skipped -- the
     model cannot reliably predict outcomes in unexplored state-action regions.
@@ -583,20 +897,33 @@ class TreeSearchPlanner:
         state: np.ndarray,
         q_network: Optional[Any] = None,
         num_links: Optional[int] = None,
+        depth: Optional[int] = None,
+        width: Optional[int] = None,
     ) -> Tuple[int, float]:
         """Plan the best action via forward tree search.
+
+        Builds a tree: at each node, expand top-`width` actions by predicted
+        immediate reward. Score leaf nodes by:
+            cumulative_model_reward + gamma^depth * max_a Q(leaf_state, a)
+
+        Prunes branches where model uncertainty > threshold.
 
         Args:
             state: (state_dim,) float32 current state.
             q_network: optional DQN network for leaf evaluation.
                        If None, uses cumulative world-model reward.
             num_links: number of available links (clamps action space).
+            depth: override planning horizon (default from config).
+            width: override planning width (default from config).
 
         Returns:
-            (best_action, expected_return)
+            (best_action, expected_return) -- action leading to highest leaf.
         """
         # Clear cache for new planning round
         self._cache.clear()
+
+        horizon = depth if depth is not None else self.config.planning_horizon
+        beam_width = width if width is not None else self.config.planning_width
 
         action_dim = self.config.action_dim
         if num_links is not None:
@@ -606,9 +933,17 @@ class TreeSearchPlanner:
         best_action = 0
         best_return = -float("inf")
 
+        # Pre-screen all root actions: predict outcomes, rank by reward
+        root_predictions: List[Tuple[int, np.ndarray, float, float, float]] = []
         for action in range(action_dim):
             ns, r, done, unc = self._predict_cached(state, action)
+            root_predictions.append((action, ns, r, done, unc))
 
+        # Sort by predicted immediate reward, take top beam_width
+        root_predictions.sort(key=lambda x: x[2], reverse=True)
+        top_root = root_predictions[:beam_width]
+
+        for action, ns, r, done, unc in top_root:
             # Prune high-uncertainty branches at root
             if unc > self.config.uncertainty_threshold:
                 continue
@@ -624,6 +959,8 @@ class TreeSearchPlanner:
                     cumulative_reward=r,
                     discount=self.config.gamma,
                     q_network=q_network,
+                    max_depth=horizon,
+                    beam_width=beam_width,
                 )
                 expected = subtree_return
 
@@ -644,18 +981,20 @@ class TreeSearchPlanner:
         cumulative_reward: float,
         discount: float,
         q_network: Optional[Any],
+        max_depth: int,
+        beam_width: int,
     ) -> float:
         """Recursively expand a tree node.
 
-        At leaf depth (depth == planning_horizon):
-        - If q_network is provided, evaluate with Q-values.
+        At leaf depth (depth == max_depth):
+        - If q_network is provided, bootstrap with max Q-value.
         - Otherwise, return cumulative discounted reward.
 
         At intermediate depth:
-        - Expand top planning_width actions, pick the best subtree.
+        - Expand top beam_width actions, pick the best subtree.
         """
         # Leaf node: score it
-        if depth >= self.config.planning_horizon:
+        if depth >= max_depth:
             return self._evaluate_leaf(
                 state, cumulative_reward, discount, depth, q_network
             )
@@ -665,16 +1004,16 @@ class TreeSearchPlanner:
         best_child_return = -float("inf")
 
         # Pre-screen actions: predict all, sort by immediate reward, take top-K
-        action_scores: List[Tuple[int, float, np.ndarray, float, float, float]] = []
+        action_scores: List[Tuple[int, float, np.ndarray, float, float]] = []
         for action in range(action_dim):
             ns, r, done, unc = self._predict_cached(state, action)
-            action_scores.append((action, r, ns, done, unc, r))
+            action_scores.append((action, r, ns, done, unc))
 
-        # Sort by predicted reward, take top planning_width
+        # Sort by predicted reward, take top beam_width
         action_scores.sort(key=lambda x: x[1], reverse=True)
-        top_actions = action_scores[: self.config.planning_width]
+        top_actions = action_scores[:beam_width]
 
-        for action, r, ns, done, unc, _ in top_actions:
+        for action, r, ns, done, unc in top_actions:
             # Prune high-uncertainty branches
             if unc > self.config.uncertainty_threshold:
                 continue
@@ -690,6 +1029,8 @@ class TreeSearchPlanner:
                     discounted_r,
                     discount,
                     q_network,
+                    max_depth,
+                    beam_width,
                 )
 
             if child_return > best_child_return:
@@ -711,11 +1052,10 @@ class TreeSearchPlanner:
     ) -> float:
         """Score a leaf node.
 
-        If q_network is available, bootstraps with max Q-value:
-            return = cumulative_reward + gamma^depth * max_a Q(state, a)
+        return = cumulative_reward + gamma^depth * max_a Q(state, a)
 
-        Otherwise returns the cumulative discounted reward from the world
-        model trajectory.
+        If q_network not available, returns cumulative discounted reward from
+        the world model trajectory alone.
         """
         if q_network is not None and _HAS_TORCH:
             state_t = torch.as_tensor(
@@ -744,17 +1084,523 @@ class TreeSearchPlanner:
         self._cache_misses = 0
 
 
+# ======================= WebDreamer Planner (LLM Look-Ahead) ================
+
+class WebDreamerPlanner:
+    """LLM-based look-ahead simulation for crawl decisions (WebDreamer).
+
+    Uses a local LLM (DeepSeek or Qwen via MLX) to simulate what content
+    lies behind a candidate URL before actually fetching it. This is the
+    text-only adaptation of WebDreamer (arXiv:2411.06559) for B2B crawling:
+    no screenshots needed -- URL pattern + anchor text + page context suffice.
+
+    MPC strategy: simulate top-K candidate URLs, pick the one with highest
+    predicted quality for B2B lead discovery.
+
+    Rate-limited to max_simulations_per_step (default 5) to stay within the
+    latency budget (~2s per decision on local 3B model).
+
+    Falls back to DQN action selection when LLM is not available or on error.
+    """
+
+    def __init__(self, config: Optional[WorldModelConfig] = None) -> None:
+        self.config = config or WorldModelConfig()
+        self._llm_available: bool = False
+        self._simulation_count: int = 0
+        self._fallback_count: int = 0
+        self._total_latency_ms: float = 0.0
+
+        # Try to connect to local LLM endpoint
+        self._check_llm_availability()
+
+    def _check_llm_availability(self) -> None:
+        """Probe the local LLM endpoint for availability."""
+        if not self.config.webdreamer_enabled:
+            self._llm_available = False
+            return
+
+        try:
+            import urllib.request
+            req = urllib.request.Request(
+                self.config.llm_endpoint + "/models",
+                method="GET",
+            )
+            req.add_header("Content-Type", "application/json")
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                if resp.status == 200:
+                    self._llm_available = True
+                    logger.info(
+                        "WebDreamer LLM endpoint available at %s",
+                        self.config.llm_endpoint,
+                    )
+        except Exception as exc:
+            self._llm_available = False
+            logger.debug(
+                "WebDreamer LLM endpoint not available: %s", exc
+            )
+
+    @property
+    def is_available(self) -> bool:
+        """Whether the LLM endpoint is reachable."""
+        return self._llm_available and self.config.webdreamer_enabled
+
+    # ---- Single action simulation -------------------------------------------
+
+    def simulate_action(
+        self,
+        state: Dict[str, str],
+        action_description: Dict[str, str],
+    ) -> SimulationResult:
+        """Use local LLM to predict crawl outcome for a candidate URL.
+
+        This is the core WebDreamer world model call -- predict what content
+        we would find after following a link, without actually fetching it.
+
+        Args:
+            state: dict with keys: url, title, summary (current page context)
+            action_description: dict with keys: url, anchor_text, url_pattern,
+                                surrounding_context
+
+        Returns:
+            SimulationResult with predicted page type, quality, confidence.
+        """
+        if not self.is_available:
+            return SimulationResult(
+                predicted_page_type="unknown",
+                predicted_quality=0.5,
+                confidence=0.0,
+                reasoning="LLM not available, returning default",
+            )
+
+        prompt = self._build_simulation_prompt(state, action_description)
+
+        try:
+            start_ms = time.monotonic() * 1000
+            response = self._call_llm(prompt)
+            elapsed_ms = time.monotonic() * 1000 - start_ms
+            self._total_latency_ms += elapsed_ms
+            self._simulation_count += 1
+
+            return self._parse_simulation_response(response)
+        except Exception as exc:
+            logger.debug("WebDreamer simulation failed: %s", exc)
+            self._fallback_count += 1
+            return SimulationResult(
+                predicted_page_type="unknown",
+                predicted_quality=0.5,
+                confidence=0.0,
+                reasoning=f"Simulation error: {exc}",
+            )
+
+    def _build_simulation_prompt(
+        self,
+        state: Dict[str, str],
+        action: Dict[str, str],
+    ) -> str:
+        """Build the LLM prompt for URL outcome prediction.
+
+        Follows WebDreamer's insight: use LLM world knowledge to predict
+        what content lies behind a link before following it.
+        """
+        return f"""You are a web navigation prediction model for B2B lead discovery.
+
+Given this company webpage:
+URL: {state.get('url', 'unknown')}
+Title: {state.get('title', 'unknown')}
+Page context: {state.get('summary', 'unknown')[:500]}
+
+If we follow this link:
+Target URL: {action.get('url', 'unknown')}
+Anchor text: {action.get('anchor_text', 'unknown')}
+URL pattern: {action.get('url_pattern', 'unknown')}
+Surrounding text: {action.get('surrounding_context', '')[:200]}
+
+Predict what content we will find. Respond in JSON:
+{{
+  "page_type": "careers|about|team|contact|blog|product|pricing|other|irrelevant",
+  "quality": 0.0-1.0,
+  "confidence": 0.0-1.0,
+  "reasoning": "brief explanation"
+}}
+
+Quality scoring:
+- 1.0: Job listings with remote EU AI/ML positions
+- 0.8: Team/engineering pages with decision-maker info
+- 0.6: Company about/contact pages
+- 0.4: General careers pages
+- 0.2: Blog/product pages
+- 0.0: Irrelevant (login, TOS, external links)
+
+Respond ONLY with the JSON object."""
+
+    def _call_llm(self, prompt: str) -> str:
+        """Call the local LLM endpoint (OpenAI-compatible API).
+
+        Uses urllib to avoid adding a dependency. Timeout from config.
+        """
+        import urllib.request
+
+        payload = json.dumps({
+            "model": self.config.llm_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": self.config.llm_temperature,
+            "max_tokens": 200,
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            self.config.llm_endpoint + "/chat/completions",
+            data=payload,
+            method="POST",
+        )
+        req.add_header("Content-Type", "application/json")
+
+        timeout_s = self.config.simulation_timeout_ms / 1000.0
+        with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            return data["choices"][0]["message"]["content"]
+
+    def _parse_simulation_response(self, response: str) -> SimulationResult:
+        """Parse LLM JSON response into SimulationResult.
+
+        Robust to minor formatting issues (e.g. markdown code blocks).
+        """
+        # Strip markdown code block if present
+        text = response.strip()
+        if text.startswith("```"):
+            lines = text.split("\n")
+            # Remove first and last lines (```json and ```)
+            text = "\n".join(lines[1:-1] if len(lines) > 2 else lines[1:])
+            text = text.strip()
+        if text.startswith("```"):
+            text = text[3:].strip()
+        if text.endswith("```"):
+            text = text[:-3].strip()
+
+        try:
+            data = json.loads(text)
+            return SimulationResult(
+                predicted_page_type=str(data.get("page_type", "unknown")),
+                predicted_quality=float(data.get("quality", 0.5)),
+                confidence=float(data.get("confidence", 0.5)),
+                reasoning=str(data.get("reasoning", "")),
+            )
+        except (json.JSONDecodeError, TypeError, ValueError):
+            # Fallback: try to extract numbers from text
+            logger.debug("Failed to parse LLM response as JSON: %s", text[:100])
+            return SimulationResult(
+                predicted_page_type="unknown",
+                predicted_quality=0.5,
+                confidence=0.3,
+                reasoning=f"Parse error, raw: {text[:100]}",
+            )
+
+    # ---- MPC planning with simulation ---------------------------------------
+
+    def plan_with_simulation(
+        self,
+        state: Dict[str, str],
+        candidates: List[Dict[str, str]],
+        max_simulations: Optional[int] = None,
+    ) -> Tuple[int, float]:
+        """Simulate top-K candidate URLs and pick the best one.
+
+        Implements WebDreamer's MPC strategy:
+        1. Take the top max_simulations candidates (by heuristic pre-ranking)
+        2. Simulate each via LLM world model
+        3. Return the candidate with highest predicted quality
+
+        Args:
+            state: current page context (url, title, summary).
+            candidates: list of link descriptions, each with url, anchor_text,
+                        url_pattern, surrounding_context.
+            max_simulations: override max simulations per step.
+
+        Returns:
+            (best_candidate_index, predicted_quality)
+        """
+        max_sim = max_simulations or self.config.max_simulations_per_step
+        n_candidates = len(candidates)
+
+        if not self.is_available or n_candidates == 0:
+            return 0, 0.5
+
+        # Limit simulations to budget
+        n_to_simulate = min(n_candidates, max_sim)
+
+        # Pre-rank candidates by simple URL heuristics before expensive LLM calls
+        # (mirrors WebDreamer's self-refinement stage)
+        ranked_indices = self._heuristic_prerank(candidates)
+        top_indices = ranked_indices[:n_to_simulate]
+
+        best_idx = top_indices[0] if top_indices else 0
+        best_quality = -1.0
+
+        for idx in top_indices:
+            result = self.simulate_action(state, candidates[idx])
+
+            # Weight by confidence: quality * confidence
+            weighted_quality = result.predicted_quality * result.confidence
+
+            if weighted_quality > best_quality:
+                best_quality = weighted_quality
+                best_idx = idx
+
+        return best_idx, max(best_quality, 0.0)
+
+    def _heuristic_prerank(
+        self, candidates: List[Dict[str, str]]
+    ) -> List[int]:
+        """Pre-rank candidates by URL pattern heuristics.
+
+        High-value URL patterns for B2B crawling:
+        - /careers, /jobs, /openings -> highest
+        - /about, /team, /people -> high
+        - /contact -> medium
+        - /blog, /news -> low
+        - everything else -> lowest
+
+        This mirrors WebDreamer's self-refinement stage (Stage 2) but uses
+        deterministic pattern matching instead of an LLM call.
+        """
+        PATTERN_SCORES = {
+            "career": 1.0, "job": 1.0, "opening": 1.0, "position": 1.0,
+            "vacanc": 0.9, "hiring": 0.9, "recruit": 0.9,
+            "about": 0.7, "team": 0.7, "people": 0.7, "who-we-are": 0.7,
+            "engineer": 0.8, "ai": 0.8, "machine-learning": 0.8, "ml": 0.8,
+            "contact": 0.5,
+            "blog": 0.2, "news": 0.2, "press": 0.2,
+            "login": 0.0, "sign": 0.0, "auth": 0.0, "terms": 0.0,
+            "privacy": 0.0, "cookie": 0.0,
+        }
+
+        scored: List[Tuple[int, float]] = []
+        for i, cand in enumerate(candidates):
+            url = cand.get("url", "").lower()
+            anchor = cand.get("anchor_text", "").lower()
+            combined = url + " " + anchor
+
+            score = 0.1  # default
+            for pattern, s in PATTERN_SCORES.items():
+                if pattern in combined:
+                    score = max(score, s)
+
+            scored.append((i, score))
+
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [idx for idx, _ in scored]
+
+    # ---- Diagnostics --------------------------------------------------------
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return WebDreamer simulation statistics."""
+        total = max(self._simulation_count + self._fallback_count, 1)
+        avg_latency = (
+            self._total_latency_ms / max(self._simulation_count, 1)
+        )
+        return {
+            "llm_available": self._llm_available,
+            "simulations_completed": self._simulation_count,
+            "fallbacks": self._fallback_count,
+            "simulation_ratio": self._simulation_count / total,
+            "avg_latency_ms": avg_latency,
+        }
+
+
+# ======================= Dyna Trainer (Synthetic Experience) =================
+
+class DynaTrainer:
+    """Generates synthetic experience from the world model for DQN training.
+
+    Implements Dyna-Q (Sutton 1991): use the learned world model to generate
+    additional training transitions for the DQN without actual environment
+    interaction.
+
+    Quality filtering: only transitions where ensemble uncertainty is below
+    dyna_uncertainty_threshold are added. This prevents the DQN from training
+    on hallucinated dynamics.
+
+    Ratio control: max dyna_ratio synthetic transitions per real transition
+    in the replay buffer (default 0.3), preventing model exploitation.
+    """
+
+    def __init__(
+        self,
+        world_model: EnsembleWorldModel,
+        config: Optional[WorldModelConfig] = None,
+    ) -> None:
+        if not _HAS_TORCH:
+            raise RuntimeError("PyTorch required for DynaTrainer")
+
+        self.world_model = world_model
+        self.config = config or world_model.config
+
+        # Counters
+        self._generated_count: int = 0
+        self._filtered_count: int = 0
+        self._total_rollouts: int = 0
+
+    def generate_synthetic_experience(
+        self,
+        n: int,
+        start_states: Optional[np.ndarray] = None,
+    ) -> List[Transition]:
+        """Generate synthetic transitions by rolling out the world model.
+
+        For each synthetic trajectory:
+        1. Sample a start state from start_states or the world model buffer.
+        2. Roll out for dyna_rollout_length steps using random actions.
+        3. At each step, check ensemble uncertainty.
+        4. Only include transitions below the uncertainty threshold.
+
+        Args:
+            n: number of synthetic rollouts to attempt.
+            start_states: (N, state_dim) array of states to start from.
+                          If None, samples from the world model's buffer.
+
+        Returns:
+            List of quality-filtered Transition instances (labeled synthetic).
+        """
+        if not self.world_model.has_enough_data:
+            return []
+
+        transitions: List[Transition] = []
+        rollout_length = self.config.dyna_rollout_length
+        unc_threshold = self.config.dyna_uncertainty_threshold
+
+        for rollout_idx in range(n):
+            # Pick a start state
+            if start_states is not None and len(start_states) > 0:
+                idx = np.random.randint(0, len(start_states))
+                state = start_states[idx].copy()
+            else:
+                # Sample from world model's buffer
+                buf_size = self.world_model.buffer_size
+                idx = np.random.randint(0, buf_size)
+                state = np.array(
+                    list(self.world_model._buffer_states)[idx],
+                    dtype=np.float32,
+                )
+
+            self._total_rollouts += 1
+
+            for step in range(rollout_length):
+                # Random action (could use DQN policy for more focused rollouts)
+                action = np.random.randint(0, self.config.action_dim)
+
+                # Predict next state via ensemble
+                next_state, reward, done_prob, uncertainty = (
+                    self.world_model.predict(state, action)
+                )
+
+                # Quality filter: only include low-uncertainty transitions
+                if uncertainty < unc_threshold:
+                    done_val = 1.0 if done_prob > 0.5 else 0.0
+                    transitions.append(Transition(
+                        state=state.copy(),
+                        action=action,
+                        reward=reward,
+                        next_state=next_state.copy(),
+                        done=done_val,
+                        is_synthetic=True,
+                    ))
+                    self._generated_count += 1
+                else:
+                    self._filtered_count += 1
+                    # High uncertainty -- stop this rollout early
+                    break
+
+                # Advance state
+                state = next_state.copy()
+
+                # Check if predicted done
+                if done_prob > 0.5:
+                    break
+
+        return transitions
+
+    def generate_and_add_to_buffer(
+        self,
+        replay_buffer: Any,
+        real_buffer_size: int,
+    ) -> int:
+        """Generate synthetic experience and add to replay buffer.
+
+        Respects dyna_ratio: the total number of synthetic transitions
+        added is capped at dyna_ratio * real_buffer_size.
+
+        Args:
+            replay_buffer: must support .add(state, action, reward, next_state, done)
+                           or .add_transition(...).
+            real_buffer_size: current number of real transitions in the buffer.
+
+        Returns:
+            Number of synthetic transitions actually added.
+        """
+        max_synthetic = int(real_buffer_size * self.config.dyna_ratio)
+        n_rollouts = self.config.dyna_batch_size
+
+        transitions = self.generate_synthetic_experience(n_rollouts)
+
+        # Cap to max allowed synthetic transitions
+        transitions = transitions[:max_synthetic]
+
+        added = 0
+        for t in transitions:
+            try:
+                if hasattr(replay_buffer, 'add'):
+                    replay_buffer.add(
+                        t.state, t.action, t.reward, t.next_state, t.done
+                    )
+                elif hasattr(replay_buffer, 'add_transition'):
+                    replay_buffer.add_transition(
+                        t.state, t.action, t.reward, t.next_state, t.done
+                    )
+                added += 1
+            except Exception as exc:
+                logger.debug("Failed to add synthetic transition: %s", exc)
+                break
+
+        if added > 0:
+            logger.info(
+                "Dyna: added %d synthetic transitions (from %d rollouts, "
+                "%d filtered, ratio=%.2f)",
+                added, n_rollouts, self._filtered_count,
+                added / max(real_buffer_size, 1),
+            )
+
+        return added
+
+    # ---- Diagnostics --------------------------------------------------------
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return Dyna generation statistics."""
+        total_attempts = self._generated_count + self._filtered_count
+        return {
+            "total_rollouts": self._total_rollouts,
+            "generated_transitions": self._generated_count,
+            "filtered_transitions": self._filtered_count,
+            "acceptance_rate": (
+                self._generated_count / max(total_attempts, 1)
+            ),
+        }
+
+
 # ======================= Model-Based Agent ==================================
 
 class ModelBasedAgent:
-    """Combines DQN with world-model tree-search planning.
+    """Combines DQN with world-model tree-search planning and WebDreamer.
 
     Decision logic:
-    - When world model uncertainty is low: use tree-search planning.
-    - When world model uncertainty is high: fall back to DQN.
+    - When world model uncertainty is low AND step > warmup:
+      use tree-search planning.
+    - When WebDreamer LLM is available AND decision is high-value:
+      use LLM look-ahead simulation.
+    - Otherwise: fall back to epsilon-greedy DQN.
     - Gradual blending: as the model improves (lower avg uncertainty),
-      the planning weight increases from planning_blend_start to
-      planning_blend_end over blend_warmup_steps.
+      the planning weight ramps from 0.0 to 0.8 over warmup steps.
+
+    Integrates Dyna-style synthetic experience generation: periodically
+    uses the world model to generate synthetic training data for the DQN.
 
     Requires a DoubleDQNAgent (from crawler_dqn) for the DQN fallback.
     """
@@ -765,6 +1611,8 @@ class ModelBasedAgent:
         world_model: EnsembleWorldModel,
         planner: TreeSearchPlanner,
         config: Optional[WorldModelConfig] = None,
+        webdreamer: Optional[WebDreamerPlanner] = None,
+        dyna_trainer: Optional[DynaTrainer] = None,
     ) -> None:
         if not _HAS_TORCH:
             raise RuntimeError("PyTorch required for ModelBasedAgent")
@@ -773,13 +1621,23 @@ class ModelBasedAgent:
         self.world_model = world_model
         self.planner = planner
         self.config = config or world_model.config
+        self.webdreamer = webdreamer
+        self.dyna_trainer = dyna_trainer
 
         # Track planning usage stats
         self._planning_used: int = 0
         self._dqn_fallback_used: int = 0
+        self._webdreamer_used: int = 0
         self._total_decisions: int = 0
 
-        logger.info("ModelBasedAgent initialised")
+        # Track recent uncertainties for adaptive thresholding
+        self._recent_uncertainties: List[float] = []
+
+        logger.info(
+            "ModelBasedAgent initialised (webdreamer=%s, dyna=%s)",
+            webdreamer is not None,
+            dyna_trainer is not None,
+        )
 
     # ---- Planning weight schedule -------------------------------------------
 
@@ -804,6 +1662,25 @@ class ModelBasedAgent:
             )
         )
 
+    def _is_model_confident(self, state: np.ndarray) -> bool:
+        """Check if the world model is confident enough to plan.
+
+        Probes the model with a few random actions and checks if the
+        average uncertainty is below the threshold.
+        """
+        n_probe = min(3, self.config.action_dim)
+        uncertainties = []
+        for a in range(n_probe):
+            _, _, _, unc = self.world_model.predict(state, a)
+            uncertainties.append(unc)
+
+        avg_unc = float(np.mean(uncertainties))
+        self._recent_uncertainties.append(avg_unc)
+        if len(self._recent_uncertainties) > 100:
+            self._recent_uncertainties = self._recent_uncertainties[-50:]
+
+        return avg_unc < self.config.uncertainty_threshold
+
     # ---- Action selection ---------------------------------------------------
 
     def select_action(
@@ -811,13 +1688,23 @@ class ModelBasedAgent:
         state: np.ndarray,
         num_links: int,
         global_step: int,
+        page_context: Optional[Dict[str, str]] = None,
+        link_candidates: Optional[List[Dict[str, str]]] = None,
     ) -> Tuple[int, float]:
-        """Select action blending DQN and tree-search planning.
+        """Select action blending DQN, tree-search, and WebDreamer.
+
+        Decision hierarchy:
+        1. Epsilon-greedy random exploration (DQN epsilon schedule)
+        2. If world model confident AND step > warmup: tree-search planning
+        3. If WebDreamer available AND candidates provided: LLM look-ahead
+        4. Otherwise: greedy DQN action selection
 
         Args:
             state: (state_dim,) float32 array.
             num_links: number of available link candidates.
             global_step: current global training step.
+            page_context: optional dict for WebDreamer (url, title, summary).
+            link_candidates: optional list of link descriptions for WebDreamer.
 
         Returns:
             (action_index, epsilon)
@@ -833,11 +1720,12 @@ class ModelBasedAgent:
         if np.random.random() < epsilon:
             return int(np.random.randint(0, action_dim)), epsilon
 
-        # Decide: planning or DQN
+        # Decision path 1: Tree-search planning
         use_planning = (
             planning_weight > 0.0
             and np.random.random() < planning_weight
             and self.world_model.has_enough_data
+            and self._is_model_confident(state)
         )
 
         if use_planning:
@@ -850,10 +1738,28 @@ class ModelBasedAgent:
                 self._planning_used += 1
                 return plan_action, epsilon
             except Exception as exc:
-                # If planning fails, fall back to DQN
-                logger.debug("Planning failed, falling back to DQN: %s", exc)
+                logger.debug("Planning failed, trying alternatives: %s", exc)
 
-        # DQN fallback
+        # Decision path 2: WebDreamer LLM look-ahead
+        if (
+            self.webdreamer is not None
+            and self.webdreamer.is_available
+            and page_context is not None
+            and link_candidates is not None
+            and len(link_candidates) > 0
+        ):
+            try:
+                wd_action, wd_quality = self.webdreamer.plan_with_simulation(
+                    page_context, link_candidates
+                )
+                # Only use WebDreamer if quality prediction is confident
+                if wd_quality > 0.3:
+                    self._webdreamer_used += 1
+                    return min(wd_action, action_dim - 1), epsilon
+            except Exception as exc:
+                logger.debug("WebDreamer failed, falling back to DQN: %s", exc)
+
+        # Decision path 3: DQN greedy
         self._dqn_fallback_used += 1
         state_t = torch.as_tensor(
             state, dtype=torch.float32,
@@ -864,18 +1770,67 @@ class ModelBasedAgent:
         valid_q = q_values[:action_dim]
         return int(np.argmax(valid_q)), epsilon
 
+    # ---- Dyna integration ---------------------------------------------------
+
+    def maybe_generate_synthetic_data(
+        self,
+        replay_buffer: Any,
+        real_buffer_size: int,
+        global_step: int,
+    ) -> int:
+        """Periodically generate synthetic experience via Dyna.
+
+        Called every model_train_interval steps. Uses the world model to
+        generate synthetic transitions and add them to the replay buffer.
+
+        Args:
+            replay_buffer: the DQN's replay buffer.
+            real_buffer_size: number of real transitions.
+            global_step: current training step.
+
+        Returns:
+            Number of synthetic transitions added (0 if not due or no trainer).
+        """
+        if self.dyna_trainer is None:
+            return 0
+
+        if global_step % self.config.model_train_interval != 0:
+            return 0
+
+        if not self.world_model.has_enough_data:
+            return 0
+
+        return self.dyna_trainer.generate_and_add_to_buffer(
+            replay_buffer, real_buffer_size
+        )
+
     # ---- Diagnostics --------------------------------------------------------
 
     def get_usage_stats(self) -> Dict[str, Any]:
-        """Return planning vs DQN usage statistics."""
+        """Return planning vs DQN vs WebDreamer usage statistics."""
         total = max(self._total_decisions, 1)
-        return {
+        stats: Dict[str, Any] = {
             "total_decisions": self._total_decisions,
             "planning_used": self._planning_used,
             "dqn_fallback_used": self._dqn_fallback_used,
+            "webdreamer_used": self._webdreamer_used,
             "planning_ratio": self._planning_used / total,
             "dqn_ratio": self._dqn_fallback_used / total,
+            "webdreamer_ratio": self._webdreamer_used / total,
+            "avg_uncertainty": (
+                float(np.mean(self._recent_uncertainties))
+                if self._recent_uncertainties
+                else float("inf")
+            ),
         }
+
+        if self.webdreamer is not None:
+            stats["webdreamer_stats"] = self.webdreamer.get_stats()
+
+        if self.dyna_trainer is not None:
+            stats["dyna_stats"] = self.dyna_trainer.get_stats()
+
+        return stats
 
 
 # ======================= Model Trainer ======================================
@@ -890,6 +1845,9 @@ class ModelTrainer:
 
     These metrics indicate whether the world model is reliable enough
     for tree-search planning to be useful.
+
+    Supports both single-epoch training (train_epoch) and full multi-epoch
+    training with early stopping (train_full).
     """
 
     def __init__(
@@ -913,7 +1871,74 @@ class ModelTrainer:
         self._loss_history: List[float] = []
         self._epoch_count: int = 0
 
-    # ---- Training epoch -----------------------------------------------------
+    # ---- Full training (delegates to EnsembleWorldModel.train) ---------------
+
+    def train_full(
+        self,
+        replay_buffer: Optional[Any] = None,
+        num_epochs: Optional[int] = None,
+        batch_size: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Full multi-epoch training with early stopping.
+
+        Delegates to EnsembleWorldModel.train() which handles:
+        - Train/validation split
+        - Per-model early stopping
+        - Proper batch iteration
+
+        After training, updates accuracy metrics on the validation data.
+
+        Args:
+            replay_buffer: external replay buffer or None for internal buffer.
+            num_epochs: override max epochs.
+            batch_size: override batch size.
+
+        Returns:
+            Training summary dict from EnsembleWorldModel.train().
+        """
+        result = self.world_model.train(
+            replay_buffer=replay_buffer,
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+        )
+
+        if result.get("status") == "trained":
+            # Update accuracy metrics after training
+            self._update_accuracy_from_buffer()
+            self._epoch_count += sum(result.get("epochs_per_model", [0]))
+
+            # Record losses
+            for loss in result.get("final_train_losses", []):
+                if loss < float("inf"):
+                    self._loss_history.append(loss)
+
+        return result
+
+    def _update_accuracy_from_buffer(self) -> None:
+        """Evaluate current model accuracy on a sample from the buffer."""
+        if not self.world_model.has_enough_data:
+            return
+
+        # Sample a small batch for evaluation
+        buf_size = self.world_model.buffer_size
+        n_eval = min(256, buf_size)
+        indices = np.random.randint(0, buf_size, size=n_eval)
+
+        states_list = list(self.world_model._buffer_states)
+        actions_list = list(self.world_model._buffer_actions)
+        next_list = list(self.world_model._buffer_next_states)
+        rewards_list = list(self.world_model._buffer_rewards)
+        dones_list = list(self.world_model._buffer_dones)
+
+        states = np.array([states_list[i] for i in indices], dtype=np.float32)
+        actions = np.array([actions_list[i] for i in indices], dtype=np.int64)
+        next_states = np.array([next_list[i] for i in indices], dtype=np.float32)
+        rewards = np.array([rewards_list[i] for i in indices], dtype=np.float32)
+        dones = np.array([dones_list[i] for i in indices], dtype=np.float32)
+
+        self._update_accuracy_metrics(states, actions, next_states, rewards, dones)
+
+    # ---- Single-epoch training (backward compatible) -------------------------
 
     def train_epoch(
         self,
