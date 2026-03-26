@@ -31,7 +31,7 @@ import {
   Tooltip,
   Callout,
 } from "@radix-ui/themes";
-import { TrashIcon, BookmarkIcon, BookmarkFilledIcon, ExternalLinkIcon, ExclamationTriangleIcon, InfoCircledIcon } from "@radix-ui/react-icons";
+import { TrashIcon, ExternalLinkIcon, ExclamationTriangleIcon, InfoCircledIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-hooks";
@@ -253,33 +253,6 @@ function JobPageContent() {
     }
   };
 
-  const savedApp = appsData?.applications?.find(
-    (a) => a.jobId === job?.url || a.jobId === id,
-  );
-
-  const handleSaveJob = async () => {
-    if (!user || !job) return;
-    setSaving(true);
-    try {
-      await createApplicationMutation({
-        variables: {
-          input: {
-            jobId: job.url ?? id,
-            questions: [],
-            jobTitle: job.title ?? undefined,
-            companyName: job.company_key ?? undefined,
-          },
-        },
-        refetchQueries: ["GetApplications"],
-        awaitRefetchQueries: true,
-      });
-    } catch (err) {
-      console.error("Error saving job:", err);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const isReported = job.status === "reported";
 
   const handleReportJob = async () => {
@@ -337,21 +310,6 @@ function JobPageContent() {
                   Apply <ExternalLinkIcon />
                 </Button>
               </RadixLink>
-            )}
-            {user && (
-              <Tooltip content={savedApp ? "Saved to pipeline" : "Save to application pipeline"}>
-                <Button
-                  size="2"
-                  variant={savedApp ? "solid" : "soft"}
-                  color={savedApp ? "green" : "gray"}
-                  onClick={savedApp ? () => router.push("/applications") : handleSaveJob}
-                  disabled={saving}
-                  loading={saving}
-                >
-                  {savedApp ? <BookmarkFilledIcon /> : <BookmarkIcon />}
-                  {savedApp ? "Saved" : "Save Job"}
-                </Button>
-              </Tooltip>
             )}
             {isAdmin && (
               <Tooltip content={isReported ? "Reported" : "Report this job"}>

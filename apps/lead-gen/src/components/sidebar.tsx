@@ -4,7 +4,6 @@ import { Flex, Box, IconButton, Text } from "@radix-ui/themes";
 import {
   GitHubLogoIcon,
   BackpackIcon,
-  FileTextIcon,
   PersonIcon,
   CubeIcon,
   ResumeIcon,
