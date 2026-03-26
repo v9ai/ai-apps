@@ -1066,7 +1066,6 @@ export type Mutation = {
   importCompanyWithContacts: ImportCompanyResult;
   importContacts: ImportContactsResult;
   importResendEmails: ImportResendResult;
-  ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
   markContactEmailVerified: Contact;
@@ -1080,7 +1079,6 @@ export type Mutation = {
    * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
    */
   processAllJobs: ProcessAllJobsResponse;
-  rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1103,7 +1101,6 @@ export type Mutation = {
   updateEmailTemplate: EmailTemplate;
   updateTask: Task;
   updateUserSettings: UserSettings;
-  uploadResume: Maybe<ResumeUploadResult>;
   upsert_company_ats_boards: Array<AtsBoard>;
   verifyContactEmail: VerifyEmailResult;
 };
@@ -1275,13 +1272,6 @@ export type MutationImportResendEmailsArgs = {
 };
 
 
-export type MutationIngestResumeParseArgs = {
-  email: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-  job_id: Scalars['String']['input'];
-};
-
-
 export type MutationIngest_Company_SnapshotArgs = {
   capture_timestamp?: InputMaybe<Scalars['String']['input']>;
   company_id: Scalars['Int']['input'];
@@ -1336,12 +1326,6 @@ export type MutationPreviewEmailArgs = {
 
 export type MutationProcessAllJobsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationRateResumeAnswerArgs = {
-  helpful: Scalars['Boolean']['input'];
-  traceId: Scalars['ID']['input'];
 };
 
 
@@ -1436,13 +1420,6 @@ export type MutationUpdateUserSettingsArgs = {
 };
 
 
-export type MutationUploadResumeArgs = {
-  email: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-  resumePdf: Scalars['String']['input'];
-};
-
-
 export type MutationUpsert_Company_Ats_BoardsArgs = {
   boards: Array<AtsBoardUpsertInput>;
   company_id: Scalars['Int']['input'];
@@ -1482,7 +1459,6 @@ export type ProcessAllJobsResponse = {
 export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
-  askAboutResume: Maybe<ResumeAnswer>;
   blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
@@ -1506,16 +1482,9 @@ export type Query = {
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
-  resumeStatus: Maybe<ResumeStatus>;
   task: Maybe<Task>;
   tasks: TasksResult;
   userSettings: Maybe<UserSettings>;
-};
-
-
-export type QueryAskAboutResumeArgs = {
-  email: Scalars['String']['input'];
-  question: Scalars['String']['input'];
 };
 
 
@@ -1653,11 +1622,6 @@ export type QueryResendEmailArgs = {
 };
 
 
-export type QueryResumeStatusArgs = {
-  email: Scalars['String']['input'];
-};
-
-
 export type QueryTaskArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1713,40 +1677,6 @@ export type ResendEmailDetail = {
   subject: Maybe<Scalars['String']['output']>;
   text: Maybe<Scalars['String']['output']>;
   to: Array<Scalars['String']['output']>;
-};
-
-export type ResumeAnswer = {
-  __typename?: 'ResumeAnswer';
-  answer: Scalars['String']['output'];
-  context_count: Scalars['Int']['output'];
-  trace_id: Maybe<Scalars['String']['output']>;
-};
-
-export type ResumeIngestResult = {
-  __typename?: 'ResumeIngestResult';
-  chunks_stored: Maybe<Scalars['Int']['output']>;
-  error: Maybe<Scalars['String']['output']>;
-  job_id: Scalars['String']['output'];
-  resume_id: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
-export type ResumeStatus = {
-  __typename?: 'ResumeStatus';
-  chunk_count: Maybe<Scalars['Int']['output']>;
-  exists: Scalars['Boolean']['output'];
-  filename: Maybe<Scalars['String']['output']>;
-  ingested_at: Maybe<Scalars['String']['output']>;
-  resume_id: Maybe<Scalars['String']['output']>;
-};
-
-export type ResumeUploadResult = {
-  __typename?: 'ResumeUploadResult';
-  job_id: Scalars['String']['output'];
-  status: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-  tier: Scalars['String']['output'];
 };
 
 export type ScheduleBatchEmailsInput = {
@@ -2155,7 +2085,6 @@ export type ResolversTypes = {
   GreenhouseOffice: ResolverTypeWrapper<Partial<GreenhouseOffice>>;
   GreenhouseQuestion: ResolverTypeWrapper<Partial<GreenhouseQuestion>>;
   GreenhouseQuestionField: ResolverTypeWrapper<Partial<GreenhouseQuestionField>>;
-  ID: ResolverTypeWrapper<Partial<Scalars['ID']['output']>>;
   ImportCompaniesResult: ResolverTypeWrapper<Partial<ImportCompaniesResult>>;
   ImportCompanyResult: ResolverTypeWrapper<Partial<ImportCompanyResult>>;
   ImportCompanyWithContactsInput: ResolverTypeWrapper<Partial<ImportCompanyWithContactsInput>>;
@@ -2178,10 +2107,6 @@ export type ResolversTypes = {
   ReceivedEmail: ResolverTypeWrapper<Partial<ReceivedEmail>>;
   ReceivedEmailsResult: ResolverTypeWrapper<Partial<ReceivedEmailsResult>>;
   ResendEmailDetail: ResolverTypeWrapper<Partial<ResendEmailDetail>>;
-  ResumeAnswer: ResolverTypeWrapper<Partial<ResumeAnswer>>;
-  ResumeIngestResult: ResolverTypeWrapper<Partial<ResumeIngestResult>>;
-  ResumeStatus: ResolverTypeWrapper<Partial<ResumeStatus>>;
-  ResumeUploadResult: ResolverTypeWrapper<Partial<ResumeUploadResult>>;
   ScheduleBatchEmailsInput: ResolverTypeWrapper<Partial<ScheduleBatchEmailsInput>>;
   ScheduleBatchResult: ResolverTypeWrapper<Partial<ScheduleBatchResult>>;
   SendEmailInput: ResolverTypeWrapper<Partial<SendEmailInput>>;
@@ -2288,7 +2213,6 @@ export type ResolversParentTypes = {
   GreenhouseOffice: Partial<GreenhouseOffice>;
   GreenhouseQuestion: Partial<GreenhouseQuestion>;
   GreenhouseQuestionField: Partial<GreenhouseQuestionField>;
-  ID: Partial<Scalars['ID']['output']>;
   ImportCompaniesResult: Partial<ImportCompaniesResult>;
   ImportCompanyResult: Partial<ImportCompanyResult>;
   ImportCompanyWithContactsInput: Partial<ImportCompanyWithContactsInput>;
@@ -2310,10 +2234,6 @@ export type ResolversParentTypes = {
   ReceivedEmail: Partial<ReceivedEmail>;
   ReceivedEmailsResult: Partial<ReceivedEmailsResult>;
   ResendEmailDetail: Partial<ResendEmailDetail>;
-  ResumeAnswer: Partial<ResumeAnswer>;
-  ResumeIngestResult: Partial<ResumeIngestResult>;
-  ResumeStatus: Partial<ResumeStatus>;
-  ResumeUploadResult: Partial<ResumeUploadResult>;
   ScheduleBatchEmailsInput: Partial<ScheduleBatchEmailsInput>;
   ScheduleBatchResult: Partial<ScheduleBatchResult>;
   SendEmailInput: Partial<SendEmailInput>;
@@ -3040,7 +2960,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   importCompanyWithContacts?: Resolver<ResolversTypes['ImportCompanyResult'], ParentType, ContextType, RequireFields<MutationImportCompanyWithContactsArgs, 'input'>>;
   importContacts?: Resolver<ResolversTypes['ImportContactsResult'], ParentType, ContextType, RequireFields<MutationImportContactsArgs, 'contacts'>>;
   importResendEmails?: Resolver<ResolversTypes['ImportResendResult'], ParentType, ContextType, Partial<MutationImportResendEmailsArgs>>;
-  ingestResumeParse?: Resolver<Maybe<ResolversTypes['ResumeIngestResult']>, ParentType, ContextType, RequireFields<MutationIngestResumeParseArgs, 'email' | 'filename' | 'job_id'>>;
   ingest_company_snapshot?: Resolver<ResolversTypes['CompanySnapshot'], ParentType, ContextType, RequireFields<MutationIngest_Company_SnapshotArgs, 'company_id' | 'evidence' | 'fetched_at' | 'source_url'>>;
   launchEmailCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationLaunchEmailCampaignArgs, 'id'>>;
   markContactEmailVerified?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationMarkContactEmailVerifiedArgs, 'contactId' | 'verified'>>;
@@ -3050,7 +2969,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   mergeDuplicateContacts?: Resolver<ResolversTypes['MergeDuplicateContactsResult'], ParentType, ContextType, RequireFields<MutationMergeDuplicateContactsArgs, 'companyId'>>;
   previewEmail?: Resolver<ResolversTypes['EmailPreview'], ParentType, ContextType, RequireFields<MutationPreviewEmailArgs, 'input'>>;
   processAllJobs?: Resolver<ResolversTypes['ProcessAllJobsResponse'], ParentType, ContextType, Partial<MutationProcessAllJobsArgs>>;
-  rateResumeAnswer?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationRateResumeAnswerArgs, 'helpful' | 'traceId'>>;
   reportJob?: Resolver<Maybe<ResolversTypes['Job']>, ParentType, ContextType, RequireFields<MutationReportJobArgs, 'id'>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
   scheduleFollowUpBatch?: Resolver<ResolversTypes['FollowUpBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleFollowUpBatchArgs, 'input'>>;
@@ -3068,7 +2986,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationUpdateEmailTemplateArgs, 'id' | 'input'>>;
   updateTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationUpdateTaskArgs, 'id' | 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
-  uploadResume?: Resolver<Maybe<ResolversTypes['ResumeUploadResult']>, ParentType, ContextType, RequireFields<MutationUploadResumeArgs, 'email' | 'filename' | 'resumePdf'>>;
   upsert_company_ats_boards?: Resolver<Array<ResolversTypes['ATSBoard']>, ParentType, ContextType, RequireFields<MutationUpsert_Company_Ats_BoardsArgs, 'boards' | 'company_id'>>;
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
 };
@@ -3086,7 +3003,6 @@ export type ProcessAllJobsResponseResolvers<ContextType = GraphQLContext, Parent
 
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   allCompanyTags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  askAboutResume?: Resolver<Maybe<ResolversTypes['ResumeAnswer']>, ParentType, ContextType, RequireFields<QueryAskAboutResumeArgs, 'email' | 'question'>>;
   blockedCompanies?: Resolver<Array<ResolversTypes['BlockedCompany']>, ParentType, ContextType>;
   companies?: Resolver<ResolversTypes['CompaniesResponse'], ParentType, ContextType, Partial<QueryCompaniesArgs>>;
   company?: Resolver<Maybe<ResolversTypes['Company']>, ParentType, ContextType, Partial<QueryCompanyArgs>>;
@@ -3110,7 +3026,6 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
   resendEmail?: Resolver<Maybe<ResolversTypes['ResendEmailDetail']>, ParentType, ContextType, RequireFields<QueryResendEmailArgs, 'resendId'>>;
-  resumeStatus?: Resolver<Maybe<ResolversTypes['ResumeStatus']>, ParentType, ContextType, RequireFields<QueryResumeStatusArgs, 'email'>>;
   task?: Resolver<Maybe<ResolversTypes['Task']>, ParentType, ContextType, RequireFields<QueryTaskArgs, 'id'>>;
   tasks?: Resolver<ResolversTypes['TasksResult'], ParentType, ContextType, Partial<QueryTasksArgs>>;
   userSettings?: Resolver<Maybe<ResolversTypes['UserSettings']>, ParentType, ContextType, RequireFields<QueryUserSettingsArgs, 'userId'>>;
@@ -3151,36 +3066,6 @@ export type ResendEmailDetailResolvers<ContextType = GraphQLContext, ParentType 
   subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   to?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type ResumeAnswerResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResumeAnswer'] = ResolversParentTypes['ResumeAnswer']> = {
-  answer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  context_count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  trace_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type ResumeIngestResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResumeIngestResult'] = ResolversParentTypes['ResumeIngestResult']> = {
-  chunks_stored?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  job_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  resume_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-};
-
-export type ResumeStatusResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResumeStatus'] = ResolversParentTypes['ResumeStatus']> = {
-  chunk_count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  exists?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  filename?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  ingested_at?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  resume_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type ResumeUploadResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResumeUploadResult'] = ResolversParentTypes['ResumeUploadResult']> = {
-  job_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  tier?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type ScheduleBatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScheduleBatchResult'] = ResolversParentTypes['ScheduleBatchResult']> = {
@@ -3376,10 +3261,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ReceivedEmail?: ReceivedEmailResolvers<ContextType>;
   ReceivedEmailsResult?: ReceivedEmailsResultResolvers<ContextType>;
   ResendEmailDetail?: ResendEmailDetailResolvers<ContextType>;
-  ResumeAnswer?: ResumeAnswerResolvers<ContextType>;
-  ResumeIngestResult?: ResumeIngestResultResolvers<ContextType>;
-  ResumeStatus?: ResumeStatusResolvers<ContextType>;
-  ResumeUploadResult?: ResumeUploadResultResolvers<ContextType>;
   ScheduleBatchResult?: ScheduleBatchResultResolvers<ContextType>;
   SendEmailResult?: SendEmailResultResolvers<ContextType>;
   SendNowResult?: SendNowResultResolvers<ContextType>;

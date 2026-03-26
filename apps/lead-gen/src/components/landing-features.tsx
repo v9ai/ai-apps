@@ -12,33 +12,47 @@ import {
   Badge,
 } from "@radix-ui/themes";
 
-const cardStyle: React.CSSProperties = {
-  borderRadius: 0,
-  boxShadow: "none",
-  border: "1px solid var(--gray-6)",
-  background: "var(--gray-2)",
-};
-
 const badgeStyle: React.CSSProperties = {
   borderRadius: 0,
   textTransform: "lowercase" as const,
 };
 
+/** Each card gets a unique left-border accent for visual differentiation */
+const CARD_ACCENTS = [
+  "#3E63DD", // accent.primary (indigo)
+  "#30A46C", // status.positive (green)
+  "#E5484D", // warm red — contrast to complete the triad
+];
+
 interface FeatureCardProps {
   title: string;
   description: string;
   details: string[];
+  index?: number;
 }
 
-function FeatureCard({ title, description, details }: FeatureCardProps) {
+function FeatureCard({ title, description, details, index = 0 }: FeatureCardProps) {
+  const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
   return (
-    <Card style={cardStyle}>
+    <Card
+      style={{
+        borderRadius: 0,
+        boxShadow: "none",
+        border: "1px solid var(--gray-6)",
+        borderLeft: `3px solid ${accent}`,
+        background: "var(--gray-2)",
+      }}
+    >
       <Box p="4">
         <Heading
           as="h3"
-          size="3"
-          weight="medium"
-          style={{ color: "var(--gray-12)", letterSpacing: "-0.005em" }}
+          size="4"
+          weight="bold"
+          style={{
+            color: "var(--gray-12)",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.2,
+          }}
           mb="3"
         >
           {title}
@@ -46,16 +60,27 @@ function FeatureCard({ title, description, details }: FeatureCardProps) {
         <Text as="p" size="2" style={{ color: "var(--gray-11)", lineHeight: 1.6 }} mb="4">
           {description}
         </Text>
-        <Flex direction="column" gap="1">
+        <Flex direction="column" gap="2">
           {details.map((detail) => (
-            <Text
-              key={detail}
-              as="p"
-              size="1"
-              style={{ color: "var(--gray-10)" }}
-            >
-              {detail}
-            </Text>
+            <Flex key={detail} align="baseline" gap="2">
+              <Box
+                style={{
+                  width: 4,
+                  height: 4,
+                  background: accent,
+                  flexShrink: 0,
+                  marginTop: 6,
+                  opacity: 0.6,
+                }}
+              />
+              <Text
+                as="p"
+                size="1"
+                style={{ color: "var(--gray-10)", lineHeight: 1.5 }}
+              >
+                {detail}
+              </Text>
+            </Flex>
           ))}
         </Flex>
       </Box>

@@ -986,7 +986,6 @@ type Mutation {
   importCompanyWithContacts(input: ImportCompanyWithContactsInput!): ImportCompanyResult!
   importContacts(contacts: [ContactInput!]!): ImportContactsResult!
   importResendEmails(maxEmails: Int): ImportResendResult!
-  ingestResumeParse(email: String!, filename: String!, job_id: String!): ResumeIngestResult
   ingest_company_snapshot(capture_timestamp: String, company_id: Int!, content_hash: String, crawl_id: String, evidence: EvidenceInput!, extracted: JSON, fetched_at: String!, http_status: Int, jsonld: JSON, mime: String, source_url: String!, text_sample: String): CompanySnapshot!
   launchEmailCampaign(id: String!): EmailCampaign!
   markContactEmailVerified(contactId: Int!, verified: Boolean!): Contact!
@@ -1000,7 +999,6 @@ type Mutation {
   Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
   """
   processAllJobs(limit: Int): ProcessAllJobsResponse!
-  rateResumeAnswer(helpful: Boolean!, traceId: ID!): Boolean
   """
   Report a job as irrelevant, spam, or incorrectly classified.
   Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1023,7 +1021,6 @@ type Mutation {
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
   updateTask(id: Int!, input: UpdateTaskInput!): Task!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
-  uploadResume(email: String!, filename: String!, resumePdf: String!): ResumeUploadResult
   upsert_company_ats_boards(boards: [ATSBoardUpsertInput!]!, company_id: Int!): [ATSBoard!]!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
 }
@@ -1055,7 +1052,6 @@ type ProcessAllJobsResponse {
 
 type Query {
   allCompanyTags: [String!]!
-  askAboutResume(email: String!, question: String!): ResumeAnswer
   blockedCompanies: [BlockedCompany!]!
   companies(filter: CompanyFilterInput, limit: Int, offset: Int, order_by: CompanyOrderBy): CompaniesResponse!
   company(id: Int, key: String): Company
@@ -1079,7 +1075,6 @@ type Query {
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, limit: Int, offset: Int): ReceivedEmailsResult!
   resendEmail(resendId: String!): ResendEmailDetail
-  resumeStatus(email: String!): ResumeStatus
   task(id: Int!): Task
   tasks(limit: Int, offset: Int, priority: String, status: String): TasksResult!
   userSettings(userId: String!): UserSettings
@@ -1120,36 +1115,6 @@ type ResendEmailDetail {
   subject: String
   text: String
   to: [String!]!
-}
-
-type ResumeAnswer {
-  answer: String!
-  context_count: Int!
-  trace_id: String
-}
-
-type ResumeIngestResult {
-  chunks_stored: Int
-  error: String
-  job_id: String!
-  resume_id: String
-  status: String!
-  success: Boolean!
-}
-
-type ResumeStatus {
-  chunk_count: Int
-  exists: Boolean!
-  filename: String
-  ingested_at: String
-  resume_id: String
-}
-
-type ResumeUploadResult {
-  job_id: String!
-  status: String!
-  success: Boolean!
-  tier: String!
 }
 
 input ScheduleBatchEmailsInput {

@@ -1065,7 +1065,6 @@ export type Mutation = {
   importCompanyWithContacts: ImportCompanyResult;
   importContacts: ImportContactsResult;
   importResendEmails: ImportResendResult;
-  ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
   markContactEmailVerified: Contact;
@@ -1079,7 +1078,6 @@ export type Mutation = {
    * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
    */
   processAllJobs: ProcessAllJobsResponse;
-  rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1102,7 +1100,6 @@ export type Mutation = {
   updateEmailTemplate: EmailTemplate;
   updateTask: Task;
   updateUserSettings: UserSettings;
-  uploadResume: Maybe<ResumeUploadResult>;
   upsert_company_ats_boards: Array<AtsBoard>;
   verifyContactEmail: VerifyEmailResult;
 };
@@ -1274,13 +1271,6 @@ export type MutationImportResendEmailsArgs = {
 };
 
 
-export type MutationIngestResumeParseArgs = {
-  email: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-  job_id: Scalars['String']['input'];
-};
-
-
 export type MutationIngest_Company_SnapshotArgs = {
   capture_timestamp?: InputMaybe<Scalars['String']['input']>;
   company_id: Scalars['Int']['input'];
@@ -1335,12 +1325,6 @@ export type MutationPreviewEmailArgs = {
 
 export type MutationProcessAllJobsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationRateResumeAnswerArgs = {
-  helpful: Scalars['Boolean']['input'];
-  traceId: Scalars['ID']['input'];
 };
 
 
@@ -1435,13 +1419,6 @@ export type MutationUpdateUserSettingsArgs = {
 };
 
 
-export type MutationUploadResumeArgs = {
-  email: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-  resumePdf: Scalars['String']['input'];
-};
-
-
 export type MutationUpsert_Company_Ats_BoardsArgs = {
   boards: Array<AtsBoardUpsertInput>;
   company_id: Scalars['Int']['input'];
@@ -1481,7 +1458,6 @@ export type ProcessAllJobsResponse = {
 export type Query = {
   __typename: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
-  askAboutResume: Maybe<ResumeAnswer>;
   blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
@@ -1505,16 +1481,9 @@ export type Query = {
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
-  resumeStatus: Maybe<ResumeStatus>;
   task: Maybe<Task>;
   tasks: TasksResult;
   userSettings: Maybe<UserSettings>;
-};
-
-
-export type QueryAskAboutResumeArgs = {
-  email: Scalars['String']['input'];
-  question: Scalars['String']['input'];
 };
 
 
@@ -1652,11 +1621,6 @@ export type QueryResendEmailArgs = {
 };
 
 
-export type QueryResumeStatusArgs = {
-  email: Scalars['String']['input'];
-};
-
-
 export type QueryTaskArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1712,40 +1676,6 @@ export type ResendEmailDetail = {
   subject: Maybe<Scalars['String']['output']>;
   text: Maybe<Scalars['String']['output']>;
   to: Array<Scalars['String']['output']>;
-};
-
-export type ResumeAnswer = {
-  __typename: 'ResumeAnswer';
-  answer: Scalars['String']['output'];
-  context_count: Scalars['Int']['output'];
-  trace_id: Maybe<Scalars['String']['output']>;
-};
-
-export type ResumeIngestResult = {
-  __typename: 'ResumeIngestResult';
-  chunks_stored: Maybe<Scalars['Int']['output']>;
-  error: Maybe<Scalars['String']['output']>;
-  job_id: Scalars['String']['output'];
-  resume_id: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
-export type ResumeStatus = {
-  __typename: 'ResumeStatus';
-  chunk_count: Maybe<Scalars['Int']['output']>;
-  exists: Scalars['Boolean']['output'];
-  filename: Maybe<Scalars['String']['output']>;
-  ingested_at: Maybe<Scalars['String']['output']>;
-  resume_id: Maybe<Scalars['String']['output']>;
-};
-
-export type ResumeUploadResult = {
-  __typename: 'ResumeUploadResult';
-  job_id: Scalars['String']['output'];
-  status: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-  tier: Scalars['String']['output'];
 };
 
 export type ScheduleBatchEmailsInput = {
@@ -2692,39 +2622,6 @@ export type UnarchiveJobMutationVariables = Exact<{
 
 export type UnarchiveJobMutation = { __typename: 'Mutation', unarchiveJob: { __typename: 'Job', id: number, archived: boolean } };
 
-export type ResumeStatusQueryVariables = Exact<{
-  email: Scalars['String']['input'];
-}>;
-
-
-export type ResumeStatusQuery = { __typename: 'Query', resumeStatus: { __typename: 'ResumeStatus', exists: boolean, resume_id: string | null, chunk_count: number | null, filename: string | null, ingested_at: string | null } | null };
-
-export type UploadResumeMutationVariables = Exact<{
-  email: Scalars['String']['input'];
-  resumePdf: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-}>;
-
-
-export type UploadResumeMutation = { __typename: 'Mutation', uploadResume: { __typename: 'ResumeUploadResult', success: boolean, job_id: string, tier: string, status: string } | null };
-
-export type IngestResumeParseMutationVariables = Exact<{
-  email: Scalars['String']['input'];
-  job_id: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-}>;
-
-
-export type IngestResumeParseMutation = { __typename: 'Mutation', ingestResumeParse: { __typename: 'ResumeIngestResult', success: boolean, status: string, job_id: string, resume_id: string | null, chunks_stored: number | null, error: string | null } | null };
-
-export type AskAboutResumeQueryVariables = Exact<{
-  email: Scalars['String']['input'];
-  question: Scalars['String']['input'];
-}>;
-
-
-export type AskAboutResumeQuery = { __typename: 'Query', askAboutResume: { __typename: 'ResumeAnswer', answer: string, context_count: number } | null };
-
 export type GetTasksQueryVariables = Exact<{
   status?: InputMaybe<Scalars['String']['input']>;
   priority?: InputMaybe<Scalars['String']['input']>;
@@ -2858,10 +2755,6 @@ export const EnhanceJobFromAtsDocument = {"kind":"Document","definitions":[{"kin
 export const MarkJobAppliedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"MarkJobApplied"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"markJobApplied"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"applied"}},{"kind":"Field","name":{"kind":"Name","value":"appliedAt"}}]}}]}}]} as unknown as DocumentNode<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>;
 export const ArchiveJobDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ArchiveJob"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"archiveJob"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"archived"}}]}}]}}]} as unknown as DocumentNode<ArchiveJobMutation, ArchiveJobMutationVariables>;
 export const UnarchiveJobDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UnarchiveJob"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"unarchiveJob"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"archived"}}]}}]}}]} as unknown as DocumentNode<UnarchiveJobMutation, UnarchiveJobMutationVariables>;
-export const ResumeStatusDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ResumeStatus"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"email"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resumeStatus"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"email"},"value":{"kind":"Variable","name":{"kind":"Name","value":"email"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"exists"}},{"kind":"Field","name":{"kind":"Name","value":"resume_id"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_count"}},{"kind":"Field","name":{"kind":"Name","value":"filename"}},{"kind":"Field","name":{"kind":"Name","value":"ingested_at"}}]}}]}}]} as unknown as DocumentNode<ResumeStatusQuery, ResumeStatusQueryVariables>;
-export const UploadResumeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UploadResume"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"email"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resumePdf"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filename"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uploadResume"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"email"},"value":{"kind":"Variable","name":{"kind":"Name","value":"email"}}},{"kind":"Argument","name":{"kind":"Name","value":"resumePdf"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resumePdf"}}},{"kind":"Argument","name":{"kind":"Name","value":"filename"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filename"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"job_id"}},{"kind":"Field","name":{"kind":"Name","value":"tier"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<UploadResumeMutation, UploadResumeMutationVariables>;
-export const IngestResumeParseDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"IngestResumeParse"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"email"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"job_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filename"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"ingestResumeParse"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"email"},"value":{"kind":"Variable","name":{"kind":"Name","value":"email"}}},{"kind":"Argument","name":{"kind":"Name","value":"job_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"job_id"}}},{"kind":"Argument","name":{"kind":"Name","value":"filename"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filename"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"job_id"}},{"kind":"Field","name":{"kind":"Name","value":"resume_id"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_stored"}},{"kind":"Field","name":{"kind":"Name","value":"error"}}]}}]}}]} as unknown as DocumentNode<IngestResumeParseMutation, IngestResumeParseMutationVariables>;
-export const AskAboutResumeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AskAboutResume"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"email"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"question"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"askAboutResume"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"email"},"value":{"kind":"Variable","name":{"kind":"Name","value":"email"}}},{"kind":"Argument","name":{"kind":"Name","value":"question"},"value":{"kind":"Variable","name":{"kind":"Name","value":"question"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"answer"}},{"kind":"Field","name":{"kind":"Name","value":"context_count"}}]}}]}}]} as unknown as DocumentNode<AskAboutResumeQuery, AskAboutResumeQueryVariables>;
 export const GetTasksDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetTasks"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"status"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"priority"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tasks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"status"},"value":{"kind":"Variable","name":{"kind":"Name","value":"status"}}},{"kind":"Argument","name":{"kind":"Name","value":"priority"},"value":{"kind":"Variable","name":{"kind":"Name","value":"priority"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tasks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"completedAt"}},{"kind":"Field","name":{"kind":"Name","value":"entityType"}},{"kind":"Field","name":{"kind":"Name","value":"entityId"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]} as unknown as DocumentNode<GetTasksQuery, GetTasksQueryVariables>;
 export const GetTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"task"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"completedAt"}},{"kind":"Field","name":{"kind":"Name","value":"entityType"}},{"kind":"Field","name":{"kind":"Name","value":"entityId"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetTaskQuery, GetTaskQueryVariables>;
 export const CreateTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateTaskInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"priority"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<CreateTaskMutation, CreateTaskMutationVariables>;

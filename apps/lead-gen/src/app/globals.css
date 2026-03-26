@@ -620,9 +620,22 @@ nav a.active {
   .rt-TabsContent,
   .collapsible-body,
   .backend-topic-badge,
-  .rt-Card {
+  .rt-Card,
+  .pipeline-card-animated,
+  .stat-value-inner,
+  .headline-word,
+  .badge-scan-animated::after,
+  .pipeline-arrow-flow,
+  .pipeline-card-hover::after {
     animation: none !important;
     transition: none !important;
+  }
+  .pipeline-card-animated,
+  .stat-value-inner,
+  .headline-word {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
   }
 }
 

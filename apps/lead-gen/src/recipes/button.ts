@@ -34,15 +34,37 @@ export const button = cva({
           background: "accent.hover",
         },
       },
+      solidGreen: {
+        background: "status.positive",
+        color: "#FFFFFF",
+        border: "1px solid transparent",
+        fontWeight: "bold",
+        _hover: {
+          background: "#2B9362",
+        },
+      },
       ghost: {
+        background: "transparent",
+        color: "ui.tertiary",
+        border: "1px solid",
+        borderColor: "ui.border",
+        fontWeight: "medium",
+        _hover: {
+          background: "ui.surfaceHover",
+          color: "ui.secondary",
+          borderColor: "ui.borderHover",
+        },
+      },
+      outline: {
         background: "transparent",
         color: "ui.secondary",
         border: "1px solid",
-        borderColor: "ui.border",
+        borderColor: "accent.border",
         fontWeight: "semibold",
         _hover: {
-          background: "ui.surfaceHover",
-          color: "ui.heading",
+          background: "accent.subtle",
+          color: "accent.primary",
+          borderColor: "accent.primary",
         },
       },
       link: {
