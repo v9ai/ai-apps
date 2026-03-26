@@ -610,39 +610,6 @@ export type NewContactEmail = typeof contactEmails.$inferInsert;
 
 
 // Tasks (CRM — personal task management linked to entities)
-export const tasks = pgTable(
-  "tasks",
-  {
-    id: serial("id").primaryKey(),
-    title: text("title").notNull(),
-    description: text("description"),
-    status: text("status", {
-      enum: ["todo", "in_progress", "done"],
-    }).notNull().default("todo"),
-    priority: text("priority", {
-      enum: ["high", "medium", "low"],
-    }).notNull().default("medium"),
-    due_date: text("due_date"),
-    completed_at: text("completed_at"),
-    entity_type: text("entity_type"), // "contact" | "company" | "opportunity" | "job"
-    entity_id: text("entity_id"), // FK to the entity (text to support opportunity IDs)
-    tags: text("tags"), // JSON array
-    created_at: text("created_at")
-      .notNull()
-      .default(sql`now()::text`),
-    updated_at: text("updated_at")
-      .notNull()
-      .default(sql`now()::text`),
-  },
-  (table) => ({
-    statusIdx: index("idx_tasks_status").on(table.status),
-    priorityIdx: index("idx_tasks_priority").on(table.priority),
-    dueDateIdx: index("idx_tasks_due_date").on(table.due_date),
-  }),
-);
-
-export type Task = typeof tasks.$inferSelect;
-export type NewTask = typeof tasks.$inferInsert;
 
 // Email Campaigns (CRM — automated email sequences)
 export const emailCampaigns = pgTable(

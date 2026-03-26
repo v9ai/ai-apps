@@ -490,17 +490,6 @@ export type CreateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
-export type CreateTaskInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  dueDate?: InputMaybe<Scalars['String']['input']>;
-  entityId?: InputMaybe<Scalars['String']['input']>;
-  entityType?: InputMaybe<Scalars['String']['input']>;
-  priority?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title: Scalars['String']['input'];
-};
-
 export type DeleteBlockedCompanyResult = {
   __typename: 'DeleteBlockedCompanyResult';
   message: Maybe<Scalars['String']['output']>;
@@ -540,12 +529,6 @@ export type DeleteEmailTemplateResult = {
 
 export type DeleteJobResponse = {
   __typename: 'DeleteJobResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
-export type DeleteTaskResult = {
-  __typename: 'DeleteTaskResult';
   message: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -1018,12 +1001,10 @@ export type Mutation = {
   blockJobsByCompany: BlockJobsResult;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
-  completeTask: Task;
   createCompany: Company;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createTask: Task;
   deleteAllJobs: DeleteJobResponse;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
@@ -1031,7 +1012,6 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteJob: DeleteJobResponse;
-  deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
   /**
@@ -1096,7 +1076,6 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateTask: Task;
   updateUserSettings: UserSettings;
   upsert_company_ats_boards: Array<AtsBoard>;
   verifyContactEmail: VerifyEmailResult;
@@ -1151,11 +1130,6 @@ export type MutationCancelScheduledEmailArgs = {
 };
 
 
-export type MutationCompleteTaskArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
 export type MutationCreateCompanyArgs = {
   input: CreateCompanyInput;
 };
@@ -1173,11 +1147,6 @@ export type MutationCreateDraftCampaignArgs = {
 
 export type MutationCreateEmailTemplateArgs = {
   input: CreateEmailTemplateInput;
-};
-
-
-export type MutationCreateTaskArgs = {
-  input: CreateTaskInput;
 };
 
 
@@ -1207,11 +1176,6 @@ export type MutationDeleteEmailTemplateArgs = {
 
 
 export type MutationDeleteJobArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type MutationDeleteTaskArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1405,12 +1369,6 @@ export type MutationUpdateEmailTemplateArgs = {
 };
 
 
-export type MutationUpdateTaskArgs = {
-  id: Scalars['Int']['input'];
-  input: UpdateTaskInput;
-};
-
-
 export type MutationUpdateUserSettingsArgs = {
   settings: UserSettingsInput;
   userId: Scalars['String']['input'];
@@ -1479,8 +1437,6 @@ export type Query = {
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
-  task: Maybe<Task>;
-  tasks: TasksResult;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -1616,19 +1572,6 @@ export type QueryReceivedEmailsArgs = {
 
 export type QueryResendEmailArgs = {
   resendId: Scalars['String']['input'];
-};
-
-
-export type QueryTaskArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type QueryTasksArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  priority?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1770,28 +1713,6 @@ export type SyncResendResult = {
   updatedCount: Scalars['Int']['output'];
 };
 
-export type Task = {
-  __typename: 'Task';
-  completedAt: Maybe<Scalars['String']['output']>;
-  createdAt: Scalars['String']['output'];
-  description: Maybe<Scalars['String']['output']>;
-  dueDate: Maybe<Scalars['String']['output']>;
-  entityId: Maybe<Scalars['String']['output']>;
-  entityType: Maybe<Scalars['String']['output']>;
-  id: Scalars['Int']['output'];
-  priority: Scalars['String']['output'];
-  status: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-};
-
-export type TasksResult = {
-  __typename: 'TasksResult';
-  tasks: Array<Task>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type UnverifyContactsResult = {
   __typename: 'UnverifyContactsResult';
   count: Scalars['Int']['output'];
@@ -1863,17 +1784,6 @@ export type UpdateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type UpdateTaskInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  dueDate?: InputMaybe<Scalars['String']['input']>;
-  entityId?: InputMaybe<Scalars['String']['input']>;
-  entityType?: InputMaybe<Scalars['String']['input']>;
-  priority?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UserSettings = {
