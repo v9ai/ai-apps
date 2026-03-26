@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { company, position, url, status, notes, appliedAt } = body;
+  const { company, position, url, status, notes, appliedAt, jobDescription } = body;
 
   if (!company || !position) {
     return NextResponse.json({ error: "company and position are required" }, { status: 400 });
@@ -42,6 +42,7 @@ export async function POST(req: Request) {
       url: url || null,
       status: status || "saved",
       notes: notes || null,
+      jobDescription: jobDescription || null,
       appliedAt: appliedAt ? new Date(appliedAt) : null,
     })
     .returning();

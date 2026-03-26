@@ -26,7 +26,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const [session, { id }] = await Promise.all([getSession(), params]);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
-  const { company, position, url, status, notes, appliedAt } = body;
+  const { company, position, url, status, notes, appliedAt, jobDescription, aiInterviewQuestions, aiTechStack, techDismissedTags } = body;
 
   const [row] = await db
     .update(applications)
@@ -36,6 +36,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       ...(url !== undefined && { url }),
       ...(status !== undefined && { status }),
       ...(notes !== undefined && { notes }),
+      ...(jobDescription !== undefined && { jobDescription }),
+      ...(aiInterviewQuestions !== undefined && { aiInterviewQuestions }),
+      ...(aiTechStack !== undefined && { aiTechStack }),
+      ...(techDismissedTags !== undefined && { techDismissedTags }),
       ...(appliedAt !== undefined && { appliedAt: appliedAt ? new Date(appliedAt) : null }),
       updatedAt: new Date(),
     })
