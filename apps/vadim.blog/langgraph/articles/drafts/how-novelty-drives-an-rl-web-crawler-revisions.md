@@ -1,0 +1,28 @@
+**DECISION: REVISE**
+
+## Critical Issues (must fix)
+- [ ] **Fabricated Citation (Section 4):** The draft cites a non-existent "[NeurIPS 2025 paper](https://arxiv.org/abs/2410.14618) by Diaz-Bone et al." for the DISCOVER algorithm. The provided Source Article, which is the ground truth for this implementation, cites "Diaz-Bone et al., NeurIPS 2025" but does not provide a URL. The arXiv ID `2410.14618` must be verified. A quick check shows this ID is invalid (no such paper exists on arXiv as of the current date). This is a critical factual error. The citation must be removed or corrected to an existing, verifiable source. If no public citation exists, the text should be rephrased to reference the algorithm conceptually or as described in the source code, without a false link.
+- [ ] **Insufficient & Unverifiable Citations (Throughout):** The draft contains only 3 inline citations for ~2300 words. The "Reference Quality" check mandates at least 7 (target 1 per 300 words). More critically, the provided Research Brief states **no relevant academic papers were found**, meaning the citations to Pathak et al. and Sutton, while conceptually correct for the field, cannot be verified against the supplied research materials. The draft must include citations that can be supported or must clearly frame the discussion around the implementation described in the Source Article, using it as the primary reference.
+- [ ] **Contradiction with Research Brief (Throughout):** The draft presents a deep technical narrative with references to specific papers (`Pathak et al., 2017`, `Sutton, 1991`), algorithms (DISCOVER), and results. The Research Brief explicitly states: "**Critical Issue: No Relevant Academic Papers Found**" and "**Critical Issue: No Editorial Sources Provided**." Therefore, every claim referencing external literature is currently unverified and contradicts the editorial team's research findings. The article must be revised to align with the available sources or the research must be redone.
+
+## Suggestions (should fix)
+- [ ] **Enhance E-E-A-T with Source Article References (Throughout):** To build Expertise, Authoritativeness, and Trustworthiness using the *actual* available source, integrate citations to the provided "Source Article" (the ground-truth codebase description) as the foundation. For example, when describing the ICM, cite the Source Article's description of `crawler_curiosity.py`. This creates a verifiable link between the article's claims and its primary source.
+- [ ] **Address SEO Structural Gaps (Sections 6 & 8):** The SEO Blueprint recommends H2s like "What is a Reinforcement Learning (RL) Web Crawler?" and "The Impact on Crawl Efficiency and Data Quality." The current draft's H2s are more narrative (e.g., "The Sparse-Reward Desert of the Web"). Consider adjusting at least one H2 to more directly match target keyword intent, perhaps renaming Section 8 to "Practical Takeaways: Implementing Your Own RL Crawler" to better align with the informational/transactional intent of "how to build an RL crawler."
+- [ ] **Integrate FAQ Schema Content (New Section):** The SEO Strategy specifies an FAQ section with 3-5 questions. This content is provided in the strategy doc. Add a section before the conclusion titled "Frequently Asked Questions on RL Web Crawlers" and insert the provided Q&A pairs verbatim. This is a strong SEO feature.
+
+## Minor Notes (nice to have)
+- [ ] **Clarify Edge Computing Claims (Section 6):** The argument that "the edge is not just viable; it's superior" is compelling but could be strengthened with a quantitative comparison from the Source Article, if available (e.g., latency in milliseconds vs. cloud round-trip seconds). If no hard data exists, consider softening to "can be superior for latency-sensitive tasks."
+- [ ] **Tighten a Long Sentence (Section 2):** The sentence beginning "The architecture, detailed in `crawler_curiosity.py`, is elegantly small—three MLPs totaling ~2 MB." is 31 words. Consider breaking it for readability.
+
+---
+**Revision Instructions:**
+1.  **Fix the NeurIPS 2025 Citation:** Remove the arXiv link or replace it with a correct, verifiable source. If describing the DISCOVER algorithm based solely on the Source Article, phrase it as "the DISCOVER algorithm (implemented in `crawler_discover.py`)" and use the Source Article as the reference.
+2.  **Increase and Authenticate Citations:**
+    *   Add a minimum of 4 more inline hyperlinks.
+    *   Use the **Source Article as the primary reference**. Create descriptive anchor text (e.g., "as detailed in the project's architecture") linking to a placeholder URL like `#source-article-ground-truth`. In a publishing environment, this would link to the actual project documentation or repository.
+    *   For general RL concepts where specific papers cannot be verified from the Research Brief, phrase them as established domain knowledge without a specific citation (e.g., "The Intrinsic Curiosity Module (ICM), a well-known RL exploration technique...").
+3.  **Align with Available Research:** Add a brief editor's note or introduction acknowledging that the article is a deep-dive into a specific implementation, using its source documentation as the foundation, as broader academic literature on this niche intersection was not covered in the provided research batch.
+4.  **Incorporate SEO Elements:**
+    *   Add the provided FAQ section.
+    *   Consider slight H2 adjustments for keyword alignment.
+5.  **Final Proof:** Ensure all technical details (file names, reward formulas, architecture components) match the Source Article exactly. It currently does this well.
