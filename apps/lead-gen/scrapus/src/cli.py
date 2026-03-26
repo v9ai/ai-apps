@@ -614,6 +614,46 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     asyncio.run(_run_evaluate(cfg))
 
 
+def cmd_orchestrate(args: argparse.Namespace) -> None:
+    """Run the full pipeline via the orchestrator with checkpoint/resume, memory guardrails."""
+    cfg = _resolve_config(args)
+    setup_logging(cfg)
+    logger.info(config_summary(cfg))
+
+    if getattr(args, "seed_urls", None):
+        cfg.crawler.seed_urls = args.seed_urls
+    if getattr(args, "max_pages", None) is not None:
+        cfg.crawler.max_pages = args.max_pages
+
+    try:
+        from pipeline_orchestrator import PipelineOrchestrator
+        pipeline_cfg = cfg.to_pipeline_config()
+
+        # Apply CLI overrides
+        resume_id = getattr(args, "resume_run", None)
+        if resume_id:
+            pipeline_cfg.resume_run_id = resume_id
+
+        stages = _parse_stages(getattr(args, "stages", None))
+        pipeline_cfg.stages = stages
+
+        dry_run = getattr(args, "dry_run", False)
+
+        async def _run_orchestrator() -> None:
+            orchestrator = PipelineOrchestrator(pipeline_cfg)
+            if dry_run:
+                results = await orchestrator.dry_run()
+                print(json.dumps(results, indent=2, default=str))
+            else:
+                result = await orchestrator.run()
+                result.print_summary()
+
+        asyncio.run(_run_orchestrator())
+
+    except ImportError as e:
+        _die(f"Orchestrator not available: {e}")
+
+
 def cmd_dashboard(args: argparse.Namespace) -> None:
     """Launch the Streamlit monitoring dashboard."""
     cfg = _resolve_config(args)
@@ -930,6 +970,22 @@ def build_parser() -> argparse.ArgumentParser:
     p_eval = subparsers.add_parser("evaluate", help="Run evaluation only")
     _add_common_args(p_eval)
     p_eval.set_defaults(func=cmd_evaluate)
+
+    # ---- orchestrate --------------------------------------------------------
+    p_orch = subparsers.add_parser(
+        "orchestrate",
+        help="Run full pipeline via orchestrator (checkpoint/resume, memory guardrails)",
+    )
+    _add_common_args(p_orch)
+    p_orch.add_argument("--stages", "-s", metavar="STAGES",
+                        help="Comma-separated stages")
+    p_orch.add_argument("--seed-urls", nargs="+", metavar="URL")
+    p_orch.add_argument("--max-pages", type=int, metavar="N")
+    p_orch.add_argument("--resume-run", metavar="RUN_ID",
+                        help="Resume a previous run by ID")
+    p_orch.add_argument("--dry-run", action="store_true",
+                        help="Validate config and model availability without running")
+    p_orch.set_defaults(func=cmd_orchestrate)
 
     # ---- dashboard ----------------------------------------------------------
     p_dash = subparsers.add_parser("dashboard", help="Launch Streamlit monitoring dashboard")

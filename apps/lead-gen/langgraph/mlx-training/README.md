@@ -1,4 +1,4 @@
-# MLX Local Inference for nomadically.work
+# MLX Local Inference for lead-gen
 
 Local ML inference on Apple Silicon (M1 16GB) replacing DeepSeek/Claude API calls.
 

@@ -347,7 +347,7 @@ class TestToDisplayName:
         assert _to_display_name("my_app") == "My App"
 
     def test_dot_separated(self):
-        assert _to_display_name("nomadically.work") == "Nomadically Work"
+        assert _to_display_name("lead-gen") == "Lead Gen"
 
     def test_single_word(self):
         assert _to_display_name("bricks") == "Bricks"

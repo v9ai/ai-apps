@@ -1,4 +1,4 @@
-# File: /Users/vadimnicolai/Public/ai-apps/apps/nomadically.work/scrapus/module-2-extraction/topic_extraction.py
+# File: /Users/vadimnicolai/Public/ai-apps/apps/lead-gen/scrapus/module-2-extraction/topic_extraction.py
 
 """
 Module 2 Integration: Topic Modeling with Persistence

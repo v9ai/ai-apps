@@ -283,7 +283,7 @@ so the crawler picks up rule changes (documented as production gap in Module 1).
 ### User-Agent Identification
 
 ```
-User-Agent: ScrapusBot/1.0 (+https://nomadically.work/scrapus)
+User-Agent: ScrapusBot/1.0 (+https://lead-gen/scrapus)
 ```
 
 Site operators can set ScrapusBot-specific rules (tighter Crawl-delay, additional

@@ -26,7 +26,7 @@ pub struct FallbackClients {
 /// Configuration for search/detail tool behaviour.
 ///
 /// Different apps use different defaults (e.g. research-thera wants longer
-/// abstracts and more authors than nomadically.work). Construct tools via
+/// abstracts and more authors than lead-gen). Construct tools via
 /// [`SearchPapers::with_config`] / [`GetPaperDetail::with_config`] to override.
 #[derive(Clone, Debug)]
 pub struct SearchToolConfig {

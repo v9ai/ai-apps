@@ -10,7 +10,7 @@ import "dotenv/config";
  * Usage:
  *   pnpm how-it-works              # process all apps
  *   pnpm how-it-works:dry          # dry run (no file writes)
- *   pnpm how-it-works -- --app nomadically.work   # single app
+ *   pnpm how-it-works -- --app lead-gen   # single app
  *   pnpm how-it-works -- --verbose  # show full analysis output
  */
 

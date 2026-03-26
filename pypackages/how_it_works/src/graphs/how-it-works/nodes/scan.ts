@@ -19,7 +19,7 @@ function detectFramework(appPath: string): AppInfo["framework"] {
 }
 
 function detectAppDir(appPath: string): string | null {
-  // Prefer src/app/ if both exist (nomadically.work pattern)
+  // Prefer src/app/ if both exist (lead-gen pattern)
   if (existsSync(join(appPath, "src", "app"))) return join(appPath, "src", "app");
   if (existsSync(join(appPath, "app"))) return join(appPath, "app");
   return null;
