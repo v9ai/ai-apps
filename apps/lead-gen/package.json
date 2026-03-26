@@ -18,7 +18,6 @@
     "codegen": "graphql-codegen",
     "test:evals": "tsx src/evals/remote-eu/__tests__/run-local.ts",
     "test:email-evals": "tsx src/evals/email-generation/__tests__/run-local.ts",
-    "eval:heuristic": "tsx --env-file=.env.local scripts/eval-heuristic-comparison.ts",
     "boards:discover": "tsx scripts/discover-ashby-boards.ts",
     "skills:seed": "tsx scripts/seed-skill-taxonomy.ts",
     "skills:extract": "tsx scripts/extract-job-skills.ts",
