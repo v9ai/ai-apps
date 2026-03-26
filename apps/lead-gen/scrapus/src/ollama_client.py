@@ -234,3 +234,22 @@ class OllamaClient:
         except Exception as exc:
             logger.error("Failed to pull model %s: %s", model, exc)
             return False
+
+    async def ensure_model(self, model: str) -> bool:
+        """Check if model is available locally; pull it if not."""
+        if await self.has_model(model):
+            return True
+        logger.info("Model %s not found locally, pulling...", model)
+        return await self.pull(model)
+
+    async def embeddings(
+        self,
+        text: str,
+        *,
+        model: str = "nomic-embed-text",
+    ) -> List[float]:
+        """Generate embeddings via /api/embeddings."""
+        payload = {"model": model, "prompt": text}
+        resp = await self._client.post("/api/embeddings", json=payload)
+        resp.raise_for_status()
+        return resp.json().get("embedding", [])

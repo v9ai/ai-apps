@@ -254,10 +254,10 @@ def generate_summary_openai(prompt: str) -> str:
 | Inference | CPU or GPU (Metal on macOS) |
 
 ```python
-import requests
+import httpx
 
 def generate_summary_local(prompt: str) -> str:
-    response = requests.post("http://localhost:11434/api/generate", json={
+    response = httpx.post("http://localhost:11434/api/generate", json={
         "model": "llama3.1:8b-instruct-q4_K_M",
         "prompt": prompt,
         "system": SYSTEM_PROMPT,  # includes few-shot exemplars

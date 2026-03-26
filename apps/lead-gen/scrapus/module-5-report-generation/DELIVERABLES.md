@@ -10,7 +10,7 @@
 ## Files Delivered
 
 ### 1. structured_generator.py (1,200+ lines)
-**Location**: `/Users/vadimnicolai/Public/ai-apps/apps/nomadically.work/scrapus/module-5-report-generation/structured_generator.py`
+**Location**: `/Users/vadimnicolai/Public/ai-apps/apps/lead-gen/scrapus/module-5-report-generation/structured_generator.py`
 
 **Contents**:
 - Pydantic models: `LeadReport`, `Source`
@@ -38,7 +38,7 @@
 ---
 
 ### 2. STRUCTURED_OUTPUT_GUIDE.md (5,000+ words)
-**Location**: `/Users/vadimnicolai/Public/ai-apps/apps/nomadically.work/scrapus/module-5-report-generation/STRUCTURED_OUTPUT_GUIDE.md`
+**Location**: `/Users/vadimnicolai/Public/ai-apps/apps/lead-gen/scrapus/module-5-report-generation/STRUCTURED_OUTPUT_GUIDE.md`
 
 **Sections**:
 1. Overview & Pydantic schema definition
@@ -60,7 +60,7 @@
 ---
 
 ### 3. QUICKSTART.md (500+ words)
-**Location**: `/Users/vadimnicolai/Public/ai-apps/apps/nomadically.work/scrapus/module-5-report-generation/QUICKSTART.md`
+**Location**: `/Users/vadimnicolai/Public/ai-apps/apps/lead-gen/scrapus/module-5-report-generation/QUICKSTART.md`
 
 **Contents**:
 - 30-second overview with working code

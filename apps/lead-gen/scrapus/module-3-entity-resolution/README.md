@@ -342,7 +342,7 @@ SELECT c.* FROM companies c WHERE c.id IN (SELECT cid FROM direct);
 ## External Enrichment
 
 ```python
-import requests
+import httpx
 
 def enrich_from_dbpedia(company_name: str) -> dict | None:
     query = f"""
@@ -353,8 +353,8 @@ def enrich_from_dbpedia(company_name: str) -> dict | None:
         OPTIONAL {{ ?company dbo:parentCompany ?parent }}
     }} LIMIT 1
     """
-    resp = requests.get("https://dbpedia.org/sparql",
-                        params={"query": query, "format": "json"})
+    resp = httpx.get("https://dbpedia.org/sparql",
+                     params={"query": query, "format": "json"})
     ...
 ```
 
