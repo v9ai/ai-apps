@@ -493,17 +493,6 @@ export type CreateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
-export type CreateTaskInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  dueDate?: InputMaybe<Scalars['String']['input']>;
-  entityId?: InputMaybe<Scalars['String']['input']>;
-  entityType?: InputMaybe<Scalars['String']['input']>;
-  priority?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title: Scalars['String']['input'];
-};
-
 export type DeleteBlockedCompanyResult = {
   __typename?: 'DeleteBlockedCompanyResult';
   message: Maybe<Scalars['String']['output']>;
@@ -543,12 +532,6 @@ export type DeleteEmailTemplateResult = {
 
 export type DeleteJobResponse = {
   __typename?: 'DeleteJobResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
-export type DeleteTaskResult = {
-  __typename?: 'DeleteTaskResult';
   message: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -1021,12 +1004,10 @@ export type Mutation = {
   blockJobsByCompany: BlockJobsResult;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
-  completeTask: Task;
   createCompany: Company;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createTask: Task;
   deleteAllJobs: DeleteJobResponse;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
@@ -1034,7 +1015,6 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteJob: DeleteJobResponse;
-  deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
   /**
@@ -1099,7 +1079,6 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateTask: Task;
   updateUserSettings: UserSettings;
   upsert_company_ats_boards: Array<AtsBoard>;
   verifyContactEmail: VerifyEmailResult;
@@ -1154,11 +1133,6 @@ export type MutationCancelScheduledEmailArgs = {
 };
 
 
-export type MutationCompleteTaskArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
 export type MutationCreateCompanyArgs = {
   input: CreateCompanyInput;
 };
@@ -1176,11 +1150,6 @@ export type MutationCreateDraftCampaignArgs = {
 
 export type MutationCreateEmailTemplateArgs = {
   input: CreateEmailTemplateInput;
-};
-
-
-export type MutationCreateTaskArgs = {
-  input: CreateTaskInput;
 };
 
 
@@ -1210,11 +1179,6 @@ export type MutationDeleteEmailTemplateArgs = {
 
 
 export type MutationDeleteJobArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type MutationDeleteTaskArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1408,12 +1372,6 @@ export type MutationUpdateEmailTemplateArgs = {
 };
 
 
-export type MutationUpdateTaskArgs = {
-  id: Scalars['Int']['input'];
-  input: UpdateTaskInput;
-};
-
-
 export type MutationUpdateUserSettingsArgs = {
   settings: UserSettingsInput;
   userId: Scalars['String']['input'];
@@ -1482,8 +1440,6 @@ export type Query = {
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
-  task: Maybe<Task>;
-  tasks: TasksResult;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -1619,19 +1575,6 @@ export type QueryReceivedEmailsArgs = {
 
 export type QueryResendEmailArgs = {
   resendId: Scalars['String']['input'];
-};
-
-
-export type QueryTaskArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type QueryTasksArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  priority?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1773,28 +1716,6 @@ export type SyncResendResult = {
   updatedCount: Scalars['Int']['output'];
 };
 
-export type Task = {
-  __typename?: 'Task';
-  completedAt: Maybe<Scalars['String']['output']>;
-  createdAt: Scalars['String']['output'];
-  description: Maybe<Scalars['String']['output']>;
-  dueDate: Maybe<Scalars['String']['output']>;
-  entityId: Maybe<Scalars['String']['output']>;
-  entityType: Maybe<Scalars['String']['output']>;
-  id: Scalars['Int']['output'];
-  priority: Scalars['String']['output'];
-  status: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-};
-
-export type TasksResult = {
-  __typename?: 'TasksResult';
-  tasks: Array<Task>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type UnverifyContactsResult = {
   __typename?: 'UnverifyContactsResult';
   count: Scalars['Int']['output'];
@@ -1866,17 +1787,6 @@ export type UpdateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type UpdateTaskInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  dueDate?: InputMaybe<Scalars['String']['input']>;
-  entityId?: InputMaybe<Scalars['String']['input']>;
-  entityType?: InputMaybe<Scalars['String']['input']>;
-  priority?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UserSettings = {
@@ -2043,7 +1953,6 @@ export type ResolversTypes = {
   CreateCompanyInput: ResolverTypeWrapper<Partial<CreateCompanyInput>>;
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
   CreateEmailTemplateInput: ResolverTypeWrapper<Partial<CreateEmailTemplateInput>>;
-  CreateTaskInput: ResolverTypeWrapper<Partial<CreateTaskInput>>;
   DateTime: ResolverTypeWrapper<Partial<Scalars['DateTime']['output']>>;
   DeleteBlockedCompanyResult: ResolverTypeWrapper<Partial<DeleteBlockedCompanyResult>>;
   DeleteCampaignResult: ResolverTypeWrapper<Partial<DeleteCampaignResult>>;
@@ -2052,7 +1961,6 @@ export type ResolversTypes = {
   DeleteContactResult: ResolverTypeWrapper<Partial<DeleteContactResult>>;
   DeleteEmailTemplateResult: ResolverTypeWrapper<Partial<DeleteEmailTemplateResult>>;
   DeleteJobResponse: ResolverTypeWrapper<Partial<DeleteJobResponse>>;
-  DeleteTaskResult: ResolverTypeWrapper<Partial<DeleteTaskResult>>;
   EmailAddress: ResolverTypeWrapper<Partial<Scalars['EmailAddress']['output']>>;
   EmailCampaign: ResolverTypeWrapper<Partial<EmailCampaign>>;
   EmailCampaignsResult: ResolverTypeWrapper<Partial<EmailCampaignsResult>>;
@@ -2119,15 +2027,12 @@ export type ResolversTypes = {
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
-  Task: ResolverTypeWrapper<Partial<Task>>;
-  TasksResult: ResolverTypeWrapper<Partial<TasksResult>>;
   URL: ResolverTypeWrapper<Partial<Scalars['URL']['output']>>;
   UnverifyContactsResult: ResolverTypeWrapper<Partial<UnverifyContactsResult>>;
   UpdateCampaignInput: ResolverTypeWrapper<Partial<UpdateCampaignInput>>;
   UpdateCompanyInput: ResolverTypeWrapper<Partial<UpdateCompanyInput>>;
   UpdateContactInput: ResolverTypeWrapper<Partial<UpdateContactInput>>;
   UpdateEmailTemplateInput: ResolverTypeWrapper<Partial<UpdateEmailTemplateInput>>;
-  UpdateTaskInput: ResolverTypeWrapper<Partial<UpdateTaskInput>>;
   Upload: ResolverTypeWrapper<Partial<Scalars['Upload']['output']>>;
   UserSettings: ResolverTypeWrapper<Partial<UserSettings>>;
   UserSettingsInput: ResolverTypeWrapper<Partial<UserSettingsInput>>;
@@ -2172,7 +2077,6 @@ export type ResolversParentTypes = {
   CreateCompanyInput: Partial<CreateCompanyInput>;
   CreateContactInput: Partial<CreateContactInput>;
   CreateEmailTemplateInput: Partial<CreateEmailTemplateInput>;
-  CreateTaskInput: Partial<CreateTaskInput>;
   DateTime: Partial<Scalars['DateTime']['output']>;
   DeleteBlockedCompanyResult: Partial<DeleteBlockedCompanyResult>;
   DeleteCampaignResult: Partial<DeleteCampaignResult>;
@@ -2181,7 +2085,6 @@ export type ResolversParentTypes = {
   DeleteContactResult: Partial<DeleteContactResult>;
   DeleteEmailTemplateResult: Partial<DeleteEmailTemplateResult>;
   DeleteJobResponse: Partial<DeleteJobResponse>;
-  DeleteTaskResult: Partial<DeleteTaskResult>;
   EmailAddress: Partial<Scalars['EmailAddress']['output']>;
   EmailCampaign: Partial<EmailCampaign>;
   EmailCampaignsResult: Partial<EmailCampaignsResult>;
@@ -2245,15 +2148,12 @@ export type ResolversParentTypes = {
   SkillMatchDetail: Partial<SkillMatchDetail>;
   String: Partial<Scalars['String']['output']>;
   SyncResendResult: Partial<SyncResendResult>;
-  Task: Partial<Task>;
-  TasksResult: Partial<TasksResult>;
   URL: Partial<Scalars['URL']['output']>;
   UnverifyContactsResult: Partial<UnverifyContactsResult>;
   UpdateCampaignInput: Partial<UpdateCampaignInput>;
   UpdateCompanyInput: Partial<UpdateCompanyInput>;
   UpdateContactInput: Partial<UpdateContactInput>;
   UpdateEmailTemplateInput: Partial<UpdateEmailTemplateInput>;
-  UpdateTaskInput: Partial<UpdateTaskInput>;
   Upload: Partial<Scalars['Upload']['output']>;
   UserSettings: Partial<UserSettings>;
   UserSettingsInput: Partial<UserSettingsInput>;
@@ -2570,11 +2470,6 @@ export type DeleteEmailTemplateResultResolvers<ContextType = GraphQLContext, Par
 };
 
 export type DeleteJobResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteJobResponse'] = ResolversParentTypes['DeleteJobResponse']> = {
-  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-};
-
-export type DeleteTaskResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteTaskResult'] = ResolversParentTypes['DeleteTaskResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
@@ -2935,12 +2830,10 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   blockJobsByCompany?: Resolver<ResolversTypes['BlockJobsResult'], ParentType, ContextType, RequireFields<MutationBlockJobsByCompanyArgs, 'companyName'>>;
   cancelCompanyEmails?: Resolver<ResolversTypes['CancelCompanyEmailsResult'], ParentType, ContextType, RequireFields<MutationCancelCompanyEmailsArgs, 'companyId'>>;
   cancelScheduledEmail?: Resolver<ResolversTypes['CancelEmailResult'], ParentType, ContextType, RequireFields<MutationCancelScheduledEmailArgs, 'resendId'>>;
-  completeTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationCompleteTaskArgs, 'id'>>;
   createCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationCreateCompanyArgs, 'input'>>;
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationCreateContactArgs, 'input'>>;
   createDraftCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationCreateDraftCampaignArgs, 'input'>>;
   createEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationCreateEmailTemplateArgs, 'input'>>;
-  createTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationCreateTaskArgs, 'input'>>;
   deleteAllJobs?: Resolver<ResolversTypes['DeleteJobResponse'], ParentType, ContextType>;
   deleteCampaign?: Resolver<ResolversTypes['DeleteCampaignResult'], ParentType, ContextType, RequireFields<MutationDeleteCampaignArgs, 'id'>>;
   deleteCompanies?: Resolver<ResolversTypes['DeleteCompaniesResult'], ParentType, ContextType, RequireFields<MutationDeleteCompaniesArgs, 'companyIds'>>;
@@ -2948,7 +2841,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteContact?: Resolver<ResolversTypes['DeleteContactResult'], ParentType, ContextType, RequireFields<MutationDeleteContactArgs, 'id'>>;
   deleteEmailTemplate?: Resolver<ResolversTypes['DeleteEmailTemplateResult'], ParentType, ContextType, RequireFields<MutationDeleteEmailTemplateArgs, 'id'>>;
   deleteJob?: Resolver<ResolversTypes['DeleteJobResponse'], ParentType, ContextType, RequireFields<MutationDeleteJobArgs, 'id'>>;
-  deleteTask?: Resolver<ResolversTypes['DeleteTaskResult'], ParentType, ContextType, RequireFields<MutationDeleteTaskArgs, 'id'>>;
   enhanceAllContacts?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType>;
   enhanceCompany?: Resolver<ResolversTypes['EnhanceCompanyResponse'], ParentType, ContextType, Partial<MutationEnhanceCompanyArgs>>;
   enhanceJobFromATS?: Resolver<ResolversTypes['EnhanceJobResponse'], ParentType, ContextType, RequireFields<MutationEnhanceJobFromAtsArgs, 'company' | 'jobId' | 'source'>>;
@@ -2984,7 +2876,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUpdateCompanyArgs, 'id' | 'input'>>;
   updateContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationUpdateContactArgs, 'id' | 'input'>>;
   updateEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationUpdateEmailTemplateArgs, 'id' | 'input'>>;
-  updateTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationUpdateTaskArgs, 'id' | 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   upsert_company_ats_boards?: Resolver<Array<ResolversTypes['ATSBoard']>, ParentType, ContextType, RequireFields<MutationUpsert_Company_Ats_BoardsArgs, 'boards' | 'company_id'>>;
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
@@ -3026,8 +2917,6 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
   resendEmail?: Resolver<Maybe<ResolversTypes['ResendEmailDetail']>, ParentType, ContextType, RequireFields<QueryResendEmailArgs, 'resendId'>>;
-  task?: Resolver<Maybe<ResolversTypes['Task']>, ParentType, ContextType, RequireFields<QueryTaskArgs, 'id'>>;
-  tasks?: Resolver<ResolversTypes['TasksResult'], ParentType, ContextType, Partial<QueryTasksArgs>>;
   userSettings?: Resolver<Maybe<ResolversTypes['UserSettings']>, ParentType, ContextType, RequireFields<QueryUserSettingsArgs, 'userId'>>;
 };
 
@@ -3121,26 +3010,6 @@ export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType e
   updatedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
-export type TaskResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Task'] = ResolversParentTypes['Task']> = {
-  completedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  dueDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  entityId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  entityType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  priority?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type TasksResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TasksResult'] = ResolversParentTypes['TasksResult']> = {
-  tasks?: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType>;
-  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-};
-
 export interface UrlScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['URL'], any> {
   name: 'URL';
 }
@@ -3217,7 +3086,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteContactResult?: DeleteContactResultResolvers<ContextType>;
   DeleteEmailTemplateResult?: DeleteEmailTemplateResultResolvers<ContextType>;
   DeleteJobResponse?: DeleteJobResponseResolvers<ContextType>;
-  DeleteTaskResult?: DeleteTaskResultResolvers<ContextType>;
   EmailAddress?: GraphQLScalarType;
   EmailCampaign?: EmailCampaignResolvers<ContextType>;
   EmailCampaignsResult?: EmailCampaignsResultResolvers<ContextType>;
@@ -3268,8 +3136,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SkillMatch?: SkillMatchResolvers<ContextType>;
   SkillMatchDetail?: SkillMatchDetailResolvers<ContextType>;
   SyncResendResult?: SyncResendResultResolvers<ContextType>;
-  Task?: TaskResolvers<ContextType>;
-  TasksResult?: TasksResultResolvers<ContextType>;
   URL?: GraphQLScalarType;
   UnverifyContactsResult?: UnverifyContactsResultResolvers<ContextType>;
   Upload?: GraphQLScalarType;

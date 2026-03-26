@@ -447,17 +447,6 @@ input CreateEmailTemplateInput {
   variables: [String!]
 }
 
-input CreateTaskInput {
-  description: String
-  dueDate: String
-  entityId: String
-  entityType: String
-  priority: String
-  status: String
-  tags: [String!]
-  title: String!
-}
-
 scalar DateTime
 
 type DeleteBlockedCompanyResult {
@@ -492,11 +481,6 @@ type DeleteEmailTemplateResult {
 }
 
 type DeleteJobResponse {
-  message: String
-  success: Boolean!
-}
-
-type DeleteTaskResult {
   message: String
   success: Boolean!
 }
@@ -941,12 +925,10 @@ type Mutation {
   blockJobsByCompany(companyName: String!): BlockJobsResult!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
-  completeTask(id: Int!): Task!
   createCompany(input: CreateCompanyInput!): Company!
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
-  createTask(input: CreateTaskInput!): Task!
   deleteAllJobs: DeleteJobResponse!
   deleteCampaign(id: String!): DeleteCampaignResult!
   deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
@@ -954,7 +936,6 @@ type Mutation {
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
   deleteJob(id: Int!): DeleteJobResponse!
-  deleteTask(id: Int!): DeleteTaskResult!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
   """
@@ -1019,7 +1000,6 @@ type Mutation {
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
-  updateTask(id: Int!, input: UpdateTaskInput!): Task!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   upsert_company_ats_boards(boards: [ATSBoardUpsertInput!]!, company_id: Int!): [ATSBoard!]!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
@@ -1075,8 +1055,6 @@ type Query {
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, limit: Int, offset: Int): ReceivedEmailsResult!
   resendEmail(resendId: String!): ResendEmailDetail
-  task(id: Int!): Task
-  tasks(limit: Int, offset: Int, priority: String, status: String): TasksResult!
   userSettings(userId: String!): UserSettings
 }
 
@@ -1205,26 +1183,6 @@ type SyncResendResult {
   updatedCount: Int!
 }
 
-type Task {
-  completedAt: String
-  createdAt: String!
-  description: String
-  dueDate: String
-  entityId: String
-  entityType: String
-  id: Int!
-  priority: String!
-  status: String!
-  tags: [String!]!
-  title: String!
-  updatedAt: String!
-}
-
-type TasksResult {
-  tasks: [Task!]!
-  totalCount: Int!
-}
-
 scalar URL
 
 type UnverifyContactsResult {
@@ -1297,17 +1255,6 @@ input UpdateEmailTemplateInput {
   tags: [String!]
   textContent: String
   variables: [String!]
-}
-
-input UpdateTaskInput {
-  description: String
-  dueDate: String
-  entityId: String
-  entityType: String
-  priority: String
-  status: String
-  tags: [String!]
-  title: String
 }
 
 scalar Upload

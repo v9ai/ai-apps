@@ -4,7 +4,7 @@ import {
   ExclamationTriangleIcon,
   EnvelopeClosedIcon,
   PersonIcon,
-  CheckboxIcon,
+
   Cross2Icon,
 } from "@radix-ui/react-icons";
 import { Flex } from "@radix-ui/themes";
@@ -29,12 +29,7 @@ export function AdminNav() {
           contacts
         </Flex>
       </NavLink>
-      <NavLink href="/admin/tasks" title="Tasks">
-        <Flex align="center" gap="2">
-          <CheckboxIcon width={14} height={14} />
-          tasks
-        </Flex>
-      </NavLink>
+
       <NavLink href="/admin/emails" title="Emails">
         <Flex align="center" gap="2">
           <EnvelopeClosedIcon width={14} height={14} />
