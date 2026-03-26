@@ -13,6 +13,7 @@ import {
 } from "@radix-ui/react-icons";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { NavLink } from "@/components/ui";
 import { AuthHeader } from "@/components/auth-header";
 import { AdminNav } from "@/components/admin-nav";
@@ -31,6 +32,10 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const { collapsed, toggle } = useSidebar();
+  const pathname = usePathname();
+  const isHomepage = pathname === "/";
+
+  if (isHomepage) return null;
 
   const width = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH;
 
@@ -134,7 +139,9 @@ export function Sidebar() {
 
 export function MainContent({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar();
-  const marginLeft = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH;
+  const pathname = usePathname();
+  const isHomepage = pathname === "/";
+  const marginLeft = isHomepage ? 0 : collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH;
 
   return (
     <Box

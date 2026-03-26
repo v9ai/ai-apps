@@ -140,13 +140,13 @@ export function InterviewPrepTab({ app, isAdmin }: TabBaseProps) {
             ),
             em: ({ children }) => <em>{children}</em>,
             ul: ({ children }) => (
-              <Box as="ul" mb="3" style={{ paddingLeft: 20, lineHeight: 1.8 }}>{children}</Box>
+              <ul style={{ paddingLeft: 20, lineHeight: 1.8, marginBottom: 12 }}>{children}</ul>
             ),
             ol: ({ children }) => (
-              <Box as="ol" mb="3" style={{ paddingLeft: 20, lineHeight: 1.8 }}>{children}</Box>
+              <ol style={{ paddingLeft: 20, lineHeight: 1.8, marginBottom: 12 }}>{children}</ol>
             ),
             li: ({ children }) => (
-              <Text as="li" size="2" mb="1" style={{ lineHeight: 1.7 }}>{children}</Text>
+              <li style={{ lineHeight: 1.7, marginBottom: 4, fontSize: "var(--font-size-2)" }}>{children}</li>
             ),
             blockquote: ({ children }) => (
               <Box mb="3" pl="3" style={{ borderLeft: "3px solid var(--gray-6)", color: "var(--gray-11)" }}>
