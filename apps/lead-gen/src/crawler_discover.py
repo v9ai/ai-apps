@@ -767,10 +767,12 @@ class AdaptiveAlpha:
             + self._ema_alpha * outcome
         )
 
-        # Adapt alpha: if succeeding too easily, decrease (harder goals);
-        # if failing too often, increase (easier goals)
+        # Adapt alpha: if succeeding too easily, decrease alpha (push toward
+        # harder, more relevant goals); if failing too often, increase alpha
+        # (retreat to easier, more achievable goals).
+        # Sign: alpha += eta * (p* - p_t), so failing (low p_t) increases alpha.
         delta = self.config.alpha_adapt_rate * (
-            self._success_ema - self.config.target_success_rate
+            self.config.target_success_rate - self._success_ema
         )
         self._alpha = max(
             self.config.alpha_min,
