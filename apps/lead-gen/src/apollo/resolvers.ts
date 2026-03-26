@@ -1,7 +1,6 @@
 import { companyResolvers } from "./resolvers/company";
 import { jobResolvers } from "./resolvers/job";
 import { userSettingsResolvers } from "./resolvers/user-settings";
-import { resumeResolvers } from "./resolvers/resume";
 import { contactResolvers } from "./resolvers/contacts";
 import { taskResolvers } from "./resolvers/tasks";
 import { emailCampaignResolvers } from "./resolvers/email-campaigns";
@@ -15,7 +14,6 @@ export const resolvers = merge(
   companyResolvers,
   jobResolvers,
   userSettingsResolvers,
-  resumeResolvers,
   contactResolvers,
   taskResolvers,
   emailCampaignResolvers,

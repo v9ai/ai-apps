@@ -447,6 +447,25 @@ export const applications = pgTable(
   ],
 );
 
+// ── Resumes ──────────────────────────────────────────────────────
+
+export const resumes = pgTable("resumes", {
+  id: text("id").primaryKey(), // UUID
+  userId: text("user_id").notNull(),
+  filename: text("filename"),
+  rawText: text("raw_text"),
+  extractedSkills: text("extracted_skills"), // JSON
+  taxonomyVersion: text("taxonomy_version"),
+  createdAt: text("created_at"),
+  updatedAt: text("updated_at"),
+}, (table) => [
+  uniqueIndex("resumes_user_id_unique").on(table.userId),
+  index("resumes_user_id_idx").on(table.userId),
+]);
+
+export type Resume = typeof resumes.$inferSelect;
+export type NewResume = typeof resumes.$inferInsert;
+
 // ── Relations ──────────────────────────────────────────────────────
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
