@@ -39,6 +39,7 @@
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
     "@neondatabase/serverless": "^0.10.4",
+    "@radix-ui/react-icons": "^1.3.2",
     "@radix-ui/themes": "^3.3.0",
     "drizzle-orm": "^0.45.1",
     "next": "latest",

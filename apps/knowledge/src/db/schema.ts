@@ -429,6 +429,10 @@ export const applications = pgTable(
     url: text("url"),
     status: applicationStatusEnum("status").notNull().default("saved"),
     notes: text("notes"),
+    jobDescription: text("job_description"),
+    aiInterviewQuestions: text("ai_interview_questions"),
+    aiTechStack: text("ai_tech_stack"),
+    techDismissedTags: text("tech_dismissed_tags"),
     appliedAt: timestamp("applied_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

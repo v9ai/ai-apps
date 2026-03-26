@@ -786,12 +786,12 @@ fn trigram_similarity(a: &str, b: &str) -> f64 {
     if a.len() < 3 || b.len() < 3 {
         return if a == b { 1.0 } else { 0.0 };
     }
-    let trigrams = |s: &str| -> HashSet<&str> {
+    fn trigrams(s: &str) -> HashSet<String> {
         (0..s.len().saturating_sub(2))
             .filter(|&i| s.is_char_boundary(i) && s.is_char_boundary(i + 3))
-            .map(|i| &s[i..i + 3])
+            .map(|i| s[i..i + 3].to_string())
             .collect()
-    };
+    }
     let a_tri = trigrams(a);
     let b_tri = trigrams(b);
     let intersection = a_tri.intersection(&b_tri).count();
