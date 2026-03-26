@@ -1,6 +1,6 @@
 # Extraction / NER Research
 
-Research output for information extraction and NER pipeline (module-2). Co-located with `crates/nomad/` (skill_extract.rs, role_tagger.rs).
+Research output for information extraction and NER pipeline (module-2).
 
 ## Files
 
