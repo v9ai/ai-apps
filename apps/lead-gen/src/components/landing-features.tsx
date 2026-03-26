@@ -37,22 +37,22 @@ function FeatureCard({ title, description, details }: FeatureCardProps) {
         <Heading
           as="h3"
           size="3"
-          weight="bold"
-          style={{ color: "var(--accent-9)" }}
-          mb="2"
+          weight="medium"
+          style={{ color: "var(--gray-12)", letterSpacing: "-0.005em" }}
+          mb="3"
         >
           {title}
         </Heading>
-        <Text as="p" size="2" style={{ color: "var(--gray-11)" }} mb="3">
+        <Text as="p" size="2" style={{ color: "var(--gray-11)", lineHeight: 1.6 }} mb="4">
           {description}
         </Text>
-        <Flex direction="column" gap="2">
+        <Flex direction="column" gap="1">
           {details.map((detail) => (
             <Text
               key={detail}
               as="p"
               size="1"
-              style={{ color: "var(--gray-9)" }}
+              style={{ color: "var(--gray-10)" }}
             >
               {detail}
             </Text>
@@ -112,12 +112,12 @@ export function LandingFeatures() {
     <Section size="2">
       <Container size="3">
         {/* ── heading ───────────────────────────────────────────── */}
-        <Box mb="6">
+        <Box mt="2" mb="6">
           <Heading
             as="h2"
-            size="6"
+            size="5"
             weight="bold"
-            style={{ color: "var(--gray-12)" }}
+            style={{ color: "var(--gray-12)", letterSpacing: "-0.02em" }}
           >
             why neural lead gen
           </Heading>

@@ -39,7 +39,7 @@ export function LandingPreview() {
       }}
     >
       {/* heading with pulsing dot */}
-      <Flex align="center" gap="3" mb="4">
+      <Flex align="center" gap="3" mt="2" mb="5">
         <span
           style={{
             display: "inline-block",
@@ -53,7 +53,8 @@ export function LandingPreview() {
         />
         <Heading
           as="h2"
-          size="4"
+          size="5"
+          weight="bold"
           style={{ letterSpacing: "-0.02em", color: "var(--gray-12)" }}
         >
           live pipeline output
