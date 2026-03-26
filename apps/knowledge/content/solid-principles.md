@@ -313,3 +313,92 @@ In [production-patterns](/production-patterns) for AI systems, SOLID shows up co
 **Ignoring LSP in event-driven systems.** When subscribers handle different event shapes through a common handler interface, a new event type that breaks the handler contract violates LSP — even without inheritance.
 
 **Treating SOLID as a checklist.** These principles are heuristics, not laws. Apply them when they reduce the cost of change. If your module is small, stable, and well-tested, adding layers of abstraction for SOLID compliance creates accidental complexity.
+
+## Testing Benefits of SOLID
+
+SOLID and testability are deeply intertwined. Code that follows SOLID is almost always easy to unit-test; code that violates it is almost always painful to test.
+
+| Principle | Testability Gain |
+|-----------|-----------------|
+| SRP | Each class has a focused surface — tests are short and precise |
+| OCP | New behavior added via new classes — existing tests never break |
+| LSP | Any implementation can be swapped for a test double without surprises |
+| ISP | Mocks implement only the needed interface, not a god interface |
+| DIP | Business logic accepts injected fakes — no live DB or HTTP in unit tests |
+
+### Example: DIP enables fast unit tests
+
+```typescript
+// Production: inject the real repository
+const service = new OrderService(new NeonOrderRepository(sql));
+
+// Test: inject an in-memory fake — no database needed
+it("creates an order and returns its id", async () => {
+  const repo = new InMemoryOrderRepository();
+  const service = new OrderService(repo);
+  const id = await service.createOrder("user-1", [{ price: 10, qty: 2 }]);
+  expect(typeof id).toBe("string");
+});
+```
+
+The test runs in microseconds and never touches a database. This is only possible because DIP broke the hard dependency on Neon.
+
+## Dependency Injection in Practice
+
+DIP describes *what* to depend on (abstractions). DI frameworks handle *how* to wire those abstractions to concrete implementations at runtime.
+
+### Manual wiring (composition root)
+
+For small services, compose dependencies in a single entry point:
+
+```typescript
+// app.ts — the composition root
+const sql = neon(process.env.DATABASE_URL!);
+const repo = new NeonOrderRepository(sql);
+const notifier = new SendgridNotifier(process.env.SENDGRID_KEY!);
+const service = new OrderService(repo, notifier);
+
+export { service };
+```
+
+### tsyringe (lightweight TypeScript DI)
+
+```typescript
+import "reflect-metadata";
+import { injectable, inject, container } from "tsyringe";
+
+@injectable()
+class NeonOrderRepository implements OrderRepository {
+  constructor(@inject("DatabaseUrl") private url: string) {}
+  async create(userId: string, total: number) { /* ... */ }
+}
+
+@injectable()
+class OrderService {
+  constructor(@inject("OrderRepository") private repo: OrderRepository) {}
+  async createOrder(userId: string, items: CartItem[]) {
+    return this.repo.create(userId, computeTotal(items));
+  }
+}
+
+// Register once
+container.register("DatabaseUrl", { useValue: process.env.DATABASE_URL });
+container.register<OrderRepository>("OrderRepository", NeonOrderRepository);
+
+// Resolve anywhere
+const service = container.resolve(OrderService);
+```
+
+DI containers shine in large codebases where the dependency graph is deep. For most microservices, manual wiring at the composition root is simpler and sufficient.
+
+## SOLID at a Glance
+
+| Principle | One-Line Rule | Key Mechanism | Violation Warning Sign |
+|-----------|--------------|---------------|----------------------|
+| **S**RP | One reason to change | Separate actors into separate modules | Class imports from three unrelated domains |
+| **O**CP | Extend without modifying | Polymorphism via interfaces | Ever-growing `switch`/`if-else` chain |
+| **L**SP | Subtypes are drop-in replacements | Honour the contract of the base type | `instanceof` checks in consuming code |
+| **I**SP | No forced dependencies | Narrow, role-specific interfaces | Mock must stub methods it never calls |
+| **D**IP | Depend on abstractions | Inject implementations from outside | `new ConcreteImpl()` inside a class body |
+
+These five principles compound: SRP gives you focused modules, OCP keeps them stable, LSP makes them composable, ISP keeps interfaces lean, and DIP lets you assemble them freely. Together they produce codebases that age gracefully — new features slot in, old code stays untouched, and tests run fast.

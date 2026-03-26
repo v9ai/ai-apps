@@ -173,8 +173,23 @@ export function Search({ groups }: Props) {
               <div className="no-results-icon">🔍</div>
               <div className="no-results-title">No results found</div>
               <div className="no-results-hint">
-                Try different keywords or shorter queries
+                {!isDeepSearch
+                  ? "No keyword matches — try Deep search for semantic / conceptual queries"
+                  : "Try different keywords or a shorter query"}
               </div>
+              {!isDeepSearch && (
+                <button
+                  className="yc-search-mode"
+                  style={{ position: "static", transform: "none", marginTop: 12 }}
+                  onClick={() => {
+                    setIsDeepSearch(true);
+                    clearTimeout(timerRef.current);
+                    timerRef.current = setTimeout(() => doSearch(query), 100);
+                  }}
+                >
+                  Try Deep Search
+                </button>
+              )}
               <button className="no-results-clear" onClick={handleClear}>
                 Clear search
               </button>

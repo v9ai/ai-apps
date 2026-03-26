@@ -43,6 +43,7 @@ export async function deepSearch(query: string): Promise<DeepSearchResult[]> {
         fts_rank: number;
         vector_similarity: number;
         combined_score: number;
+        snippet: string;
       }>(
         sql`SELECT * FROM hybrid_search_lessons(
           ${trimmed},
@@ -60,6 +61,7 @@ export async function deepSearch(query: string): Promise<DeepSearchResult[]> {
         lesson_title: string;
         heading: string;
         similarity: number;
+        content_excerpt: string;
       }>(
         sql`SELECT * FROM find_similar_sections(
           ${sql.raw(`'${vecLiteral}'::vector(1024)`)},
@@ -75,7 +77,7 @@ export async function deepSearch(query: string): Promise<DeepSearchResult[]> {
       results.push({
         resultType: "lesson",
         title: r.title,
-        snippet: `Category: ${r.category_name} | Vector similarity: ${(r.vector_similarity * 100).toFixed(0)}%`,
+        snippet: r.snippet || "",
         rank: r.combined_score,
         lessonSlug: r.slug,
         lessonTitle: r.title,
@@ -89,7 +91,7 @@ export async function deepSearch(query: string): Promise<DeepSearchResult[]> {
       results.push({
         resultType: "section",
         title: r.heading,
-        snippet: `Similarity: ${(r.similarity * 100).toFixed(0)}%`,
+        snippet: r.content_excerpt || "",
         rank: r.similarity,
         lessonSlug: r.lesson_slug,
         lessonTitle: r.lesson_title,

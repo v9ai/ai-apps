@@ -347,7 +347,8 @@ RETURNS TABLE (
   lesson_slug text,
   lesson_title text,
   heading text,
-  similarity float
+  similarity float,
+  content_excerpt text
 )
 LANGUAGE sql STABLE
 SET search_path = public, pg_catalog
@@ -358,7 +359,8 @@ AS $$
     l.slug AS lesson_slug,
     l.title AS lesson_title,
     ls.heading,
-    1 - (se.embedding <=> query_embedding) AS similarity
+    1 - (se.embedding <=> query_embedding) AS similarity,
+    left(coalesce(ls.content, ''), 200) AS content_excerpt
   FROM section_embeddings se
   JOIN lesson_sections ls ON ls.id = se.section_id
   JOIN lessons l ON l.id = se.lesson_id
@@ -506,7 +508,8 @@ RETURNS TABLE (
   category_name text,
   fts_rank float,
   vector_similarity float,
-  combined_score float
+  combined_score float,
+  snippet text
 )
 LANGUAGE sql STABLE
 SET search_path = public, pg_catalog
@@ -521,7 +524,13 @@ AS $$
     (
       fts_weight * ts_rank(l.fts, websearch_to_tsquery('english', query_text))
       + vector_weight * (1 - (le.embedding <=> query_embedding))
-    )::float AS combined_score
+    )::float AS combined_score,
+    CASE
+      WHEN l.fts @@ websearch_to_tsquery('english', query_text)
+      THEN ts_headline('english', coalesce(l.content, ''), websearch_to_tsquery('english', query_text),
+           'MaxWords=40, MinWords=15, StartSel=**, StopSel=**')
+      ELSE left(coalesce(l.content, ''), 200)
+    END AS snippet
   FROM lessons l
   JOIN lesson_embeddings le ON le.lesson_id = l.id
   JOIN categories cat ON cat.id = l.category_id
