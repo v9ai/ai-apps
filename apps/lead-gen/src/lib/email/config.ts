@@ -1,5 +1,5 @@
 /**
- * Email configuration for Nomadically
+ * Email configuration
  */
 
 export class EmailConfig {

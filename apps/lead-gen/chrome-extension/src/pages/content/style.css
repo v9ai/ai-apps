@@ -1,6 +1,6 @@
 /* Content script styles — scoped via data attributes to avoid breaking host pages */
 
-[data-nomad-block-btn] {
+[data-lg-block-btn] {
   margin-left: 8px;
   padding: 2px 8px;
   font-size: 11px;
@@ -17,16 +17,16 @@
   position: relative;
 }
 
-[data-nomad-block-btn]:hover {
+[data-lg-block-btn]:hover {
   background-color: #b91c1c;
 }
 
-[data-nomad-block-btn]:disabled {
+[data-lg-block-btn]:disabled {
   background-color: #6b7280;
   cursor: default;
 }
 
-[data-nomad-salary-highlight] {
+[data-lg-salary-highlight] {
   border: 2px solid #0a66c2;
   border-radius: 4px;
   padding: 4px;

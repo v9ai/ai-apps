@@ -19,7 +19,7 @@ load_dotenv()
 
 @click.group()
 def main():
-    """Nomadically LlamaIndex Workflows pipelines."""
+    """Lead Gen LlamaIndex Workflows pipelines."""
     pass
 
 

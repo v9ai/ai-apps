@@ -42,7 +42,7 @@ function isCompanyBlocked(name: string): boolean {
 
 // ── Block Company Button ──────────────────────────────────────────────
 
-const BLOCK_BTN_ATTR = "data-nomad-block-btn";
+const BLOCK_BTN_ATTR = "data-lg-block-btn";
 
 function createBlockButton(companyName: string): HTMLButtonElement {
   const btn = document.createElement("button");
@@ -63,7 +63,7 @@ function createBlockButton(companyName: string): HTMLButtonElement {
       { action: "blockCompany", companyName },
       (response) => {
         if (chrome.runtime.lastError) {
-          console.error("[Nomad] Message error:", chrome.runtime.lastError.message);
+          console.error("[LG] Message error:", chrome.runtime.lastError.message);
           btn.textContent = "Error";
           btn.style.backgroundColor = "#ef4444";
           btn.disabled = false;
@@ -78,7 +78,7 @@ function createBlockButton(companyName: string): HTMLButtonElement {
           markAllButtonsBlocked(companyName);
           dismissJobCard(btn);
         } else {
-          console.error("[Nomad] Block failed:", response?.error);
+          console.error("[LG] Block failed:", response?.error);
           btn.textContent = "Failed";
           btn.style.backgroundColor = "#ef4444";
           btn.disabled = false;
@@ -126,8 +126,8 @@ function findDismissButton(card: Element): HTMLButtonElement | null {
 
 function dismissJobCard(btn: HTMLElement) {
   const card = btn.closest(".job-card-container, .base-card");
-  if (!card || card.getAttribute("data-nomad-dismissed")) return;
-  card.setAttribute("data-nomad-dismissed", "true");
+  if (!card || card.getAttribute("data-lg-dismissed")) return;
+  card.setAttribute("data-lg-dismissed", "true");
   const dismissBtn = findDismissButton(card);
   if (dismissBtn) {
     setTimeout(() => {
@@ -182,7 +182,7 @@ const queuedButtons = new WeakSet<HTMLButtonElement>();
 function queueDismiss(card: Element, btn: HTMLButtonElement) {
   if (queuedButtons.has(btn)) return;
   if (dismissQueue.length >= MAX_DISMISS_QUEUE) return;
-  card.setAttribute("data-nomad-dismissed", "true");
+  card.setAttribute("data-lg-dismissed", "true");
   queuedButtons.add(btn);
   dismissQueue.push(btn);
   if (!dismissTimer) {
@@ -212,7 +212,7 @@ function autoDismissLocationCards() {
 
   // Logged-in view cards
   document.querySelectorAll(".job-card-container").forEach((card) => {
-    if (card.getAttribute("data-nomad-dismissed")) return;
+    if (card.getAttribute("data-lg-dismissed")) return;
     const locText = getCardLocationText(card);
     if (!locText.trim() || !isDismissLocation(locText)) return;
     const dismissBtn = findDismissButton(card);
@@ -223,16 +223,16 @@ function autoDismissLocationCards() {
 
   // Public/logged-out view cards
   document.querySelectorAll(".base-card.job-search-card").forEach((card) => {
-    if (card.getAttribute("data-nomad-dismissed")) return;
+    if (card.getAttribute("data-lg-dismissed")) return;
     const locText = getCardLocationText(card);
     if (!locText.trim() || !isDismissLocation(locText)) return;
-    card.setAttribute("data-nomad-dismissed", "true");
+    card.setAttribute("data-lg-dismissed", "true");
     (card as HTMLElement).style.display = "none";
     queued++;
   });
 
   if (queued > 0) {
-    console.log(`[Nomad] Dismissing ${queued} excluded-location job(s)`);
+    console.log(`[LG] Dismissing ${queued} excluded-location job(s)`);
   }
 }
 
@@ -242,7 +242,7 @@ function autoDismissBlockedCards() {
 
   let queued = 0;
   document.querySelectorAll(".job-card-container").forEach((card) => {
-    if (card.getAttribute("data-nomad-dismissed")) return;
+    if (card.getAttribute("data-lg-dismissed")) return;
     const companyEl = card.querySelector(
       ".artdeco-entity-lockup__subtitle, .job-card-container__primary-description",
     );
@@ -255,7 +255,7 @@ function autoDismissBlockedCards() {
     queued++;
   });
   if (queued > 0) {
-    console.log(`[Nomad] Dismissing ${queued} blocked company job(s)`);
+    console.log(`[LG] Dismissing ${queued} blocked company job(s)`);
   }
 }
 
@@ -318,7 +318,7 @@ observeBlockButtons();
 
 // ── Send Email Button (LinkedIn Post/Activity Pages) ─────────────────
 
-const SEND_EMAIL_BTN_ATTR = "data-nomad-send-email-btn";
+const SEND_EMAIL_BTN_ATTR = "data-lg-send-email-btn";
 
 function extractPostData() {
   // Post text content
@@ -363,7 +363,7 @@ function createSendEmailButton(): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.setAttribute(SEND_EMAIL_BTN_ATTR, "true");
   btn.textContent = "Send Email";
-  btn.title = "Send email via Nomad CRM";
+  btn.title = "Send email via CRM";
   btn.style.cssText = `
     background-color: #0a66c2;
     color: white;
@@ -396,7 +396,7 @@ function createSendEmailButton(): HTMLButtonElement {
       { action: "sendEmailFromPost", postData },
       (response) => {
         if (chrome.runtime.lastError) {
-          console.error("[Nomad] Send email error:", chrome.runtime.lastError.message);
+          console.error("[LG] Send email error:", chrome.runtime.lastError.message);
           btn.textContent = "Error";
           btn.style.backgroundColor = "#ef4444";
           btn.disabled = false;
@@ -415,7 +415,7 @@ function createSendEmailButton(): HTMLButtonElement {
             btn.disabled = false;
           }, 3000);
         } else {
-          console.error("[Nomad] Send email failed:", response?.error);
+          console.error("[LG] Send email failed:", response?.error);
           btn.textContent = response?.error || "Failed";
           btn.style.backgroundColor = "#ef4444";
           btn.disabled = false;
@@ -471,7 +471,7 @@ observeSendEmailButton();
 
 // ── Connect All Button (LinkedIn People Search) ─────────────────────
 
-const CONNECT_ALL_BTN_ATTR = "data-nomad-connect-all-btn";
+const CONNECT_ALL_BTN_ATTR = "data-lg-connect-all-btn";
 
 // Click element in page's main world via background script (bypasses CSP + content script isolation)
 function mainWorldClick(selector: string): Promise<boolean> {
@@ -551,9 +551,9 @@ function createConnectAllButton(): HTMLButtonElement {
       btn.textContent = `${sent + 1}/${total} connecting...`;
 
       // Tag + click via main world
-      connectBtn.setAttribute('data-nomad-connect-target', 'true');
-      await mainWorldClick('[data-nomad-connect-target="true"]');
-      connectBtn.removeAttribute('data-nomad-connect-target');
+      connectBtn.setAttribute('data-lg-connect-target', 'true');
+      await mainWorldClick('[data-lg-connect-target="true"]');
+      connectBtn.removeAttribute('data-lg-connect-target');
 
       // Wait for modal to render
       await new Promise((r) => setTimeout(r, 1500));
@@ -600,9 +600,9 @@ function createConnectAllButton(): HTMLButtonElement {
           console.log(`[ConnectAll] Found send button: "${label}", clicking via main world`);
           btn.textContent = `${sent + 1}/${total} sending...`;
           // Tag the button so mainWorldClick can find it reliably
-          sendBtn.setAttribute('data-nomad-send-target', 'true');
-          const clickResult = await mainWorldClick('[data-nomad-send-target="true"]');
-          sendBtn.removeAttribute('data-nomad-send-target');
+          sendBtn.setAttribute('data-lg-send-target', 'true');
+          const clickResult = await mainWorldClick('[data-lg-send-target="true"]');
+          sendBtn.removeAttribute('data-lg-send-target');
           console.log(`[ConnectAll] mainWorldClick result for "${label}":`, clickResult);
           // Check if modal disappeared
           await new Promise((r) => setTimeout(r, 500));
@@ -626,9 +626,9 @@ function createConnectAllButton(): HTMLButtonElement {
         document.querySelector('[role="dialog"] button[aria-label="Close"]');
       if (dismissEl) {
         console.log("[ConnectAll] Dismissing modal");
-        dismissEl.setAttribute('data-nomad-dismiss-target', 'true');
-        await mainWorldClick('[data-nomad-dismiss-target="true"]');
-        dismissEl.removeAttribute('data-nomad-dismiss-target');
+        dismissEl.setAttribute('data-lg-dismiss-target', 'true');
+        await mainWorldClick('[data-lg-dismiss-target="true"]');
+        dismissEl.removeAttribute('data-lg-dismiss-target');
         await new Promise((r) => setTimeout(r, 300));
       }
 
@@ -678,7 +678,7 @@ observeConnectAllButton();
 
 // ── Browse Profiles Button (LinkedIn People Search) ─────────────────
 
-const BROWSE_PROFILES_BTN_ATTR = "data-nomad-browse-profiles-btn";
+const BROWSE_PROFILES_BTN_ATTR = "data-lg-browse-profiles-btn";
 let browseProfilesBtn: HTMLButtonElement | null = null;
 
 function getProfileLinks(): string[] {
@@ -812,8 +812,8 @@ function clickSalaryMetadata() {
     );
     if (metadataUls.length < 2) return;
     const salaryUl = metadataUls[1] as HTMLElement;
-    if (salaryUl.hasAttribute("data-nomad-salary-highlight")) return;
-    salaryUl.setAttribute("data-nomad-salary-highlight", "true");
+    if (salaryUl.hasAttribute("data-lg-salary-highlight")) return;
+    salaryUl.setAttribute("data-lg-salary-highlight", "true");
   });
 }
 

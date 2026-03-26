@@ -366,7 +366,7 @@ export function BatchEmailModal({
               </Text>
               <TextArea
                 placeholder={
-                  "Hi {{name}},\n\nYour message here...\n\nThanks,\nNomadically Team"
+                  "Hi {{name}},\n\nYour message here...\n\nThanks,\nThe Team"
                 }
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
