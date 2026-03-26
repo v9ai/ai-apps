@@ -785,6 +785,7 @@ dependencies = [
  "bytemuck",
  "crc32fast",
  "crossbeam",
+ "libc",
  "memmap2",
  "parking_lot",
  "regex",

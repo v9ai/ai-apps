@@ -7,6 +7,7 @@ use lancedb::{connect, Connection};
 use tokio::sync::Mutex;
 
 use crate::models::{Contact, ExportResponse, Post, StoredPost};
+use crate::scoring;
 
 /// PostsDb persists data to LanceDB and mirrors it in memory for reads.
 pub struct PostsDb {
@@ -136,11 +137,46 @@ impl PostsDb {
         Ok(count)
     }
 
-    pub async fn add_posts(&self, contact_id: i32, posts: &[Post]) -> Result<(usize, usize)> {
+    pub async fn add_posts(&self, contact_id: i32, posts: &[Post]) -> Result<(usize, usize, usize)> {
         if posts.is_empty() {
-            return Ok((0, 0));
+            return Ok((0, 0, 0));
         }
 
+        // Score each post and partition into keep vs filtered
+        let mut kept: Vec<&Post> = Vec::new();
+        let mut filtered_count: usize = 0;
+
+        for post in posts {
+            let verdict = scoring::score(post);
+            if verdict.keep {
+                tracing::debug!(
+                    "KEEP (score={} reason={}): {}",
+                    verdict.score,
+                    verdict.reason,
+                    post.post_text.as_deref().unwrap_or("").chars().take(80).collect::<String>(),
+                );
+                kept.push(post);
+            } else {
+                tracing::info!(
+                    "DROP (score={} reason={}): {}",
+                    verdict.score,
+                    verdict.reason,
+                    post.post_text.as_deref().unwrap_or("[empty]").chars().take(80).collect::<String>(),
+                );
+                filtered_count += 1;
+            }
+        }
+
+        if kept.is_empty() {
+            tracing::info!(
+                "All {} posts for contact {} filtered out",
+                posts.len(),
+                contact_id
+            );
+            return Ok((0, 0, filtered_count));
+        }
+
+        let posts = &kept;
         let schema = posts_schema();
         let now = chrono::Utc::now().to_rfc3339();
 
@@ -225,14 +261,18 @@ impl PostsDb {
             }
         }
 
-        tracing::info!("Inserted {} posts for contact {}", n, contact_id);
-        Ok((n, 0))
+        tracing::info!(
+            "Contact {}: {} kept, {} filtered out of {} total",
+            contact_id, n, filtered_count, n + filtered_count,
+        );
+        Ok((n, 0, filtered_count))
     }
 
-    pub async fn stats(&self) -> (usize, usize) {
-        let contacts = self.contacts.lock().await.len();
-        let posts = self.posts.lock().await.len();
-        (contacts, posts)
+    pub async fn posts_count(&self) -> usize {
+        match self.conn.open_table("posts").execute().await {
+            Ok(table) => table.count_rows(None).await.unwrap_or(0) as usize,
+            Err(_) => 0,
+        }
     }
 
     pub async fn export(&self) -> ExportResponse {

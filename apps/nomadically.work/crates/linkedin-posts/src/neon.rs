@@ -59,6 +59,40 @@ pub async fn fetch_contacts_with_linkedin() -> Result<Vec<Contact>> {
     Ok(contacts)
 }
 
+/// Count contacts with linkedin_url in Neon.
+pub async fn count_contacts() -> Result<i64> {
+    let db_url = std::env::var("NEON_DATABASE_URL")
+        .context("NEON_DATABASE_URL env var not set")?
+        .replace("channel_binding=require&", "")
+        .replace("&channel_binding=require", "")
+        .replace("?channel_binding=require", "?");
+
+    let tls_config = rustls::ClientConfig::builder()
+        .with_root_certificates(root_certs())
+        .with_no_client_auth();
+    let tls = tokio_postgres_rustls::MakeRustlsConnect::new(tls_config);
+
+    let (client, connection) = tokio_postgres::connect(&db_url, tls)
+        .await
+        .context("Failed to connect to Neon")?;
+
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            tracing::error!("Neon connection error: {}", e);
+        }
+    });
+
+    let row = client
+        .query_one(
+            "SELECT COUNT(*) FROM contacts WHERE linkedin_url IS NOT NULL AND linkedin_url != ''",
+            &[],
+        )
+        .await
+        .context("Failed to count contacts")?;
+
+    Ok(row.get::<_, i64>(0))
+}
+
 fn root_certs() -> Arc<rustls::RootCertStore> {
     let mut roots = rustls::RootCertStore::empty();
     roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());

@@ -50,8 +50,8 @@ pub fn scan_html(
 
                         // Finalize any in-progress email
                         if in_potential_email && email_pos > 3 {
-                            if is_valid_email_fast(&email_buf[..email_pos]) {
-                                if email_count < max_emails {
+                            if is_valid_email_fast(&email_buf[..email_pos])
+                                && email_count < max_emails {
                                     emails[email_count][..email_pos]
                                         .copy_from_slice(&email_buf[..email_pos]);
                                     if email_pos < 128 {
@@ -59,7 +59,6 @@ pub fn scan_html(
                                     }
                                     email_count += 1;
                                 }
-                            }
                             email_pos = 0;
                             in_potential_email = false;
                         }
@@ -101,8 +100,8 @@ pub fn scan_html(
                                 }
                             } else {
                                 // End of potential email
-                                if is_valid_email_fast(&email_buf[..email_pos]) {
-                                    if email_count < max_emails {
+                                if is_valid_email_fast(&email_buf[..email_pos])
+                                    && email_count < max_emails {
                                         emails[email_count][..email_pos]
                                             .copy_from_slice(&email_buf[..email_pos]);
                                         if email_pos < 128 {
@@ -110,7 +109,6 @@ pub fn scan_html(
                                         }
                                         email_count += 1;
                                     }
-                                }
                                 email_pos = 0;
                                 in_potential_email = false;
                             }
@@ -227,15 +225,14 @@ pub fn scan_html(
     }
 
     // Finalize trailing email
-    if in_potential_email && email_pos > 3 {
-        if is_valid_email_fast(&email_buf[..email_pos]) && email_count < max_emails {
+    if in_potential_email && email_pos > 3
+        && is_valid_email_fast(&email_buf[..email_pos]) && email_count < max_emails {
             emails[email_count][..email_pos].copy_from_slice(&email_buf[..email_pos]);
             if email_pos < 128 {
                 emails[email_count][email_pos] = 0;
             }
             email_count += 1;
         }
-    }
 
     (text_pos, email_count)
 }
@@ -302,6 +299,73 @@ fn is_valid_email_fast(email: &[u8]) -> bool {
 pub fn email_to_str(slot: &[u8; 128]) -> &str {
     let end = slot.iter().position(|&b| b == 0).unwrap_or(128);
     std::str::from_utf8(&slot[..end]).unwrap_or("")
+}
+
+/// Structured scan result with heap-allocated output.
+pub struct ScanResult {
+    pub text: String,
+    pub emails: Vec<String>,
+}
+
+/// High-level scan: extracts text + emails (both inline and `mailto:` links).
+/// Allocates output on the heap for convenience.
+pub fn scan_html_full(html: &[u8]) -> ScanResult {
+    let mut text_buf = vec![0u8; html.len().max(4096)];
+    let mut email_slots = [[0u8; 128]; 64];
+
+    let (text_len, email_count) = scan_html(html, &mut text_buf, &mut email_slots, 64);
+
+    let text = std::str::from_utf8(&text_buf[..text_len])
+        .unwrap_or("")
+        .to_string();
+
+    let mut emails: Vec<String> = (0..email_count)
+        .map(|i| email_to_str(&email_slots[i]).to_string())
+        .collect();
+
+    // Also extract mailto: links
+    extract_mailto_emails(html, &mut emails);
+
+    // Deduplicate
+    emails.sort();
+    emails.dedup();
+
+    ScanResult { text, emails }
+}
+
+/// Extract emails from `mailto:` links in HTML.
+/// Scans for `mailto:` (case-insensitive) and extracts until `"`, `'`, `>`, `?`, or whitespace.
+fn extract_mailto_emails(html: &[u8], emails: &mut Vec<String>) {
+    let mailto = b"mailto:";
+    let mut i = 0;
+
+    while i + mailto.len() < html.len() {
+        // Find "mailto:" (case-insensitive)
+        if html[i..i + mailto.len()].eq_ignore_ascii_case(mailto) {
+            i += mailto.len();
+
+            // Extract email until delimiter
+            let start = i;
+            while i < html.len() {
+                let b = html[i];
+                if b == b'"' || b == b'\'' || b == b'>' || b == b'?' || b == b' '
+                    || b == b'\n' || b == b'\r' || b == b'&'
+                {
+                    break;
+                }
+                i += 1;
+            }
+
+            let email_bytes = &html[start..i];
+            if is_valid_email_fast(email_bytes) {
+                if let Ok(s) = std::str::from_utf8(email_bytes) {
+                    emails.push(s.to_lowercase());
+                }
+            }
+        } else {
+            i += 1;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -433,5 +497,31 @@ mod tests {
         let (tlen, ecount) = scan_html(b"", &mut text, &mut emails, 32);
         assert_eq!(tlen, 0);
         assert_eq!(ecount, 0);
+    }
+
+    #[test]
+    fn test_mailto_extraction() {
+        let html = br#"<a href="mailto:cto@acme.com">Email CTO</a>
+                       <a href="MAILTO:hr@acme.com?subject=Hi">Contact HR</a>"#;
+        let result = scan_html_full(html);
+        assert!(result.emails.contains(&"cto@acme.com".to_string()));
+        assert!(result.emails.contains(&"hr@acme.com".to_string()));
+    }
+
+    #[test]
+    fn test_scan_html_full_dedup() {
+        let html = b"<p>info@acme.com</p><a href=\"mailto:info@acme.com\">mail</a>";
+        let result = scan_html_full(html);
+        // Should be deduplicated
+        let info_count = result.emails.iter().filter(|e| *e == "info@acme.com").count();
+        assert_eq!(info_count, 1);
+    }
+
+    #[test]
+    fn test_scan_result_struct() {
+        let html = b"<h1>Company</h1><p>Contact: hello@world.com</p>";
+        let result = scan_html_full(html);
+        assert!(result.text.contains("Company"));
+        assert!(result.emails.contains(&"hello@world.com".to_string()));
     }
 }

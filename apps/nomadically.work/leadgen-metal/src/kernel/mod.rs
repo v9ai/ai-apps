@@ -9,3 +9,15 @@ pub mod scoring;
 
 #[cfg(feature = "kernel-html")]
 pub mod html_scanner;
+
+#[cfg(feature = "kernel-timer")]
+pub mod timer;
+
+#[cfg(feature = "kernel-crc")]
+pub mod crc;
+
+#[cfg(feature = "kernel-ner")]
+pub mod job_ner;
+
+#[cfg(feature = "kernel-ring")]
+pub mod ring;

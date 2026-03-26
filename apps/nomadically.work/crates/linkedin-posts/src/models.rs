@@ -74,6 +74,9 @@ pub struct InsertResult {
     pub inserted: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duplicates: Option<usize>,
+    /// Posts dropped by relevance scoring.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub filtered: Option<usize>,
 }
 
 #[derive(Debug, Serialize)]

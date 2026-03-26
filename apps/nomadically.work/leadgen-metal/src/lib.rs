@@ -4,6 +4,8 @@ pub mod dns;
 pub mod email_metal;
 pub mod index;
 pub mod kernel;
+pub mod net;
+pub mod pipeline;
 pub mod queue;
 pub mod similarity;
 pub mod storage;
@@ -13,7 +15,7 @@ use std::path::Path;
 
 use dedup::blocking;
 use index::posting::InvertedIndex;
-use similarity::embeddings::EmbeddingStore;
+use similarity::embeddings::{EmbeddingStore, QuantizedEmbeddingStore};
 use storage::{btree::{BTreeOps, RecordPtr}, page::PageFile, record, wal::WriteAheadLog};
 
 #[cfg(not(feature = "kernel-btree"))]
@@ -38,6 +40,12 @@ pub struct Pipeline {
     pub postings: InvertedIndex,
     pub frontier: queue::frontier::UrlFrontier,
     pub embeddings: EmbeddingStore,
+    /// INT8 quantized embeddings — 4x memory reduction over FP32.
+    pub embeddings_q: QuantizedEmbeddingStore,
+    /// Bloom filter for fast-path domain duplicate check (avoids B-tree lookup).
+    domain_bloom: parking_lot::Mutex<bloom::BloomFilter>,
+    /// Bloom filter for fast-path email duplicate check.
+    email_bloom: parking_lot::Mutex<bloom::BloomFilter>,
 }
 
 impl Pipeline {
@@ -105,17 +113,30 @@ impl Pipeline {
         let postings = InvertedIndex::new();
         let frontier = queue::frontier::UrlFrontier::new(100_000);
         let embeddings = EmbeddingStore::new(384);
+        let embeddings_q = QuantizedEmbeddingStore::new(384);
 
-        Ok(Self { wal, pages, companies, contacts, postings, frontier, embeddings })
+        // Bloom filters for fast-path duplicate rejection (0.1% false positive rate)
+        let domain_bloom = parking_lot::Mutex::new(bloom::BloomFilter::new(100_000, 0.001));
+        let email_bloom = parking_lot::Mutex::new(bloom::BloomFilter::new(500_000, 0.001));
+
+        Ok(Self {
+            wal, pages, companies, contacts, postings, frontier,
+            embeddings, embeddings_q, domain_bloom, email_bloom,
+        })
     }
 
     /// Ingest a company: WAL → page store → B-tree index → posting index → frontier.
+    /// Bloom filter provides O(1) fast-path rejection for known duplicates.
+    #[allow(clippy::too_many_arguments)]
     pub fn ingest_company(
         &self,
         id: &str, name: &str, domain: &str, industry: &str,
         employee_count: u32, tech_stack: &str, location: &str, description: &str,
     ) -> io::Result<()> {
-        if self.companies.get(domain.as_bytes()).is_some() {
+        // Fast-path: bloom filter rejects definite duplicates without B-tree lookup
+        if self.domain_bloom.lock().contains(domain.as_bytes())
+            && self.companies.get(domain.as_bytes()).is_some()
+        {
             return Ok(());
         }
 
@@ -129,6 +150,7 @@ impl Pipeline {
         if let Some(slot) = self.pages.insert_into_page(page_id, &data) {
             let ptr = RecordPtr { page_id, slot_idx: slot };
             self.companies.insert(domain.as_bytes(), ptr);
+            self.domain_bloom.lock().insert(domain.as_bytes());
 
             let doc_id = crc32fast::hash(id.as_bytes());
             self.postings.index_with_id(doc_id, name);
@@ -142,12 +164,17 @@ impl Pipeline {
     }
 
     /// Ingest a contact: WAL → page store → B-tree index → posting index.
+    /// Bloom filter provides O(1) fast-path rejection for known duplicates.
+    #[allow(clippy::too_many_arguments)]
     pub fn ingest_contact(
         &self,
         id: &str, company_id: &str, first: &str, last: &str,
         title: &str, seniority: &str, email: &str, status: &str,
     ) -> io::Result<()> {
-        if self.contacts.get(email.as_bytes()).is_some() {
+        // Fast-path: bloom filter rejects definite duplicates without B-tree lookup
+        if self.email_bloom.lock().contains(email.as_bytes())
+            && self.contacts.get(email.as_bytes()).is_some()
+        {
             return Ok(());
         }
 
@@ -161,6 +188,7 @@ impl Pipeline {
         if let Some(slot) = self.pages.insert_into_page(page_id, &data) {
             let ptr = RecordPtr { page_id, slot_idx: slot };
             self.contacts.insert(email.as_bytes(), ptr);
+            self.email_bloom.lock().insert(email.as_bytes());
 
             let doc_id = crc32fast::hash(id.as_bytes());
             self.postings.index_with_id(doc_id, title);
@@ -175,9 +203,14 @@ impl Pipeline {
         self.postings.search_ranked(query, limit)
     }
 
-    /// Find similar items by embedding vector (cosine similarity).
+    /// Find similar items by embedding vector (cosine similarity, FP32).
     pub fn find_similar(&self, query: &[f32], top_k: usize) -> Vec<(u32, f32)> {
         self.embeddings.top_k(query, top_k)
+    }
+
+    /// Find similar items using INT8 quantized embeddings (4x less memory).
+    pub fn find_similar_quantized(&self, query: &[f32], top_k: usize) -> Vec<(u32, f32)> {
+        self.embeddings_q.top_k(query, top_k)
     }
 
     /// Score a batch of contacts against an ICP profile.
@@ -267,6 +300,8 @@ impl Pipeline {
     pub fn flush(&self) -> io::Result<()> {
         self.wal.sync()?;
         self.pages.sync()?;
+        self.companies.sync()?;
+        self.contacts.sync()?;
         Ok(())
     }
 }

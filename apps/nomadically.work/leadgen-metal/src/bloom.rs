@@ -11,7 +11,7 @@ impl BloomFilter {
     pub fn new(capacity: usize, false_positive_rate: f64) -> Self {
         let num_bits = optimal_bits(capacity, false_positive_rate);
         let num_hashes = optimal_hashes(num_bits, capacity);
-        let num_words = (num_bits + 63) / 64;
+        let num_words = num_bits.div_ceil(64);
 
         Self {
             bits: vec![0u64; num_words],

@@ -189,6 +189,7 @@ pub mod contact_fields {
     pub const FIELD_COUNT: usize = 8;
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_company_record(
     id: &str, name: &str, domain: &str, industry: &str,
     employee_count: u32, tech_stack: &str, location: &str, description: &str,
@@ -205,6 +206,7 @@ pub fn build_company_record(
     b.build()
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_contact_record(
     id: &str, company_id: &str, first: &str, last: &str,
     title: &str, seniority: &str, email: &str, status: &str,

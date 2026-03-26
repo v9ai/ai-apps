@@ -16,7 +16,7 @@ impl CompiledPattern {
     pub fn compile(pattern: &str) -> Self {
         let mut segments = Vec::new();
 
-        let parts: Vec<&str> = pattern.split(|c| c == '.' || c == '-' || c == '_').collect();
+        let parts: Vec<&str> = pattern.split(['.', '-', '_']).collect();
         let separators: Vec<char> = pattern.chars().filter(|c| *c == '.' || *c == '-' || *c == '_').collect();
 
         for (i, part) in parts.iter().enumerate() {

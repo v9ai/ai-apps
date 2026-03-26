@@ -179,7 +179,7 @@ impl PageFile {
         let page_id = self.num_pages.fetch_add(1, Ordering::SeqCst);
         let needed = (page_id as u64 + 1) * PAGE_SIZE as u64;
         if needed > self.mmap.len() as u64 {
-            return Err(io::Error::new(io::ErrorKind::Other, "need file growth"));
+            return Err(io::Error::other("need file growth"));
         }
         self.init_page(page_id);
         Ok(page_id)

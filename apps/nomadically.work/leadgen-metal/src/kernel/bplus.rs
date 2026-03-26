@@ -98,6 +98,8 @@ pub struct BPlusTree {
     root_page: u32,
     file_capacity: u64,
     _path: String,
+    /// Cached entry count to avoid full leaf walk on len().
+    cached_count: u32,
 }
 
 impl BPlusTree {
@@ -110,6 +112,7 @@ impl BPlusTree {
             .read(true)
             .write(true)
             .create(true)
+            .truncate(false)
             .open(path)?;
 
         let initial_pages = initial_pages.max(16);
@@ -134,6 +137,7 @@ impl BPlusTree {
             root_page: 0,
             file_capacity: file_len,
             _path: path.to_string(),
+            cached_count: 0,
         };
 
         if !exists {
@@ -142,7 +146,7 @@ impl BPlusTree {
             let header = tree.node_header_mut(0);
             header.flags |= NODE_FLAG_ROOT | NODE_FLAG_LEAF;
         } else {
-            // Scan to find num_pages and root
+            // Scan to find num_pages, root, and count
             tree.recover();
         }
 
@@ -154,6 +158,7 @@ impl BPlusTree {
         let capacity = self.file_capacity as u32 / PAGE_SIZE as u32;
         let mut max_used = 0u32;
         let mut root = 0u32;
+        let mut total_keys = 0u32;
 
         for i in 0..capacity {
             let header = self.node_header(i);
@@ -162,11 +167,16 @@ impl BPlusTree {
                 if header.flags & NODE_FLAG_ROOT != 0 {
                     root = i;
                 }
+                // Count keys only in leaf nodes
+                if header.flags & NODE_FLAG_LEAF != 0 {
+                    total_keys += header.num_keys as u32;
+                }
             }
         }
 
         self.num_pages = max_used.max(1);
         self.root_page = root;
+        self.cached_count = total_keys;
     }
 
     fn page_ptr(&self, page_id: u32) -> *const u8 {
@@ -362,12 +372,11 @@ impl BPlusTree {
         let n = self.node_header(leaf).num_keys as usize;
 
         if n < LEAF_MAX_KEYS {
-            // Room in leaf — insert directly
             self.leaf_insert_at(leaf, bkey, value);
         } else {
-            // Leaf is full — split
             self.leaf_split_and_insert(leaf, bkey, value);
         }
+        self.cached_count += 1;
     }
 
     /// Insert into a leaf that has room.
@@ -606,6 +615,7 @@ impl BPlusTree {
             self.set_leaf_value(leaf, i, v);
         }
         self.node_header_mut(leaf).num_keys -= 1;
+        self.cached_count -= 1;
 
         true
     }
@@ -642,8 +652,13 @@ impl BPlusTree {
         results
     }
 
-    /// Count all entries by walking leaves.
+    /// Count all entries (O(1) via cached count).
     pub fn count(&self) -> usize {
+        self.cached_count as usize
+    }
+
+    /// Count by walking all leaves (for verification only).
+    pub fn count_walk(&self) -> usize {
         let mut count = 0;
         let mut page = self.find_leftmost_leaf();
         loop {
@@ -733,6 +748,10 @@ impl BTreeOps for BPlusTreeIndex {
     fn len(&self) -> usize {
         let tree = unsafe { &*self.inner.get() };
         tree.count()
+    }
+
+    fn sync(&self) -> io::Result<()> {
+        unsafe { &*self.inner.get() }.sync()
     }
 }
 

@@ -1,5 +1,5 @@
-RUST_CRATE := ../../../crates/linkedin-posts
-ENV_FILE   := ../../../apps/nomadically.work/.env.local
+RUST_CRATE := ../crates/linkedin-posts
+ENV_FILE   := ../.env.local
 
 .PHONY: dev start server build clean
 

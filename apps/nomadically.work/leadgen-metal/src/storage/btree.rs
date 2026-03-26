@@ -16,12 +16,20 @@ pub trait BTreeOps: Send + Sync {
     fn prefix_scan(&self, prefix: &[u8]) -> Vec<(Vec<u8>, RecordPtr)>;
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool { self.len() == 0 }
+    /// Flush to disk (no-op for in-memory implementations).
+    fn sync(&self) -> std::io::Result<()> { Ok(()) }
 }
 
 /// In-memory B-tree index mapping string keys to record locations.
 /// Rebuilt from WAL on startup.
 pub struct MemoryBTreeIndex {
     inner: RwLock<BTreeMap<Vec<u8>, RecordPtr>>,
+}
+
+impl Default for MemoryBTreeIndex {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MemoryBTreeIndex {

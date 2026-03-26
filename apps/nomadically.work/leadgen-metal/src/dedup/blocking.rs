@@ -83,7 +83,7 @@ pub fn sorted_neighborhood_compare<F>(
 where
     F: Fn(usize, usize) -> bool,
 {
-    block.sort_by(|a, b| sort_key(*a).cmp(&sort_key(*b)));
+    block.sort_by_key(|a| sort_key(*a));
 
     let mut pairs = Vec::new();
 

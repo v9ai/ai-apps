@@ -1,4 +1,74 @@
-/// ICP (Ideal Customer Profile) configuration for scoring.
+/// ICP matching criteria — defines what signals to look for in contact records.
+pub struct IcpMatcher {
+    /// Target industries (lowercase). A contact's industry matches if any substring matches.
+    pub target_industries: Vec<String>,
+    /// Target seniorities (e.g., "VP", "Director", "C-level").
+    pub target_seniorities: Vec<String>,
+    /// Target departments (e.g., "Engineering", "AI", "ML").
+    pub target_departments: Vec<String>,
+    /// Target tech stack keywords.
+    pub target_tech: Vec<String>,
+    /// Employee range (min, max).
+    pub employee_range: (u32, u32),
+}
+
+impl IcpMatcher {
+    /// Check if a value matches any target (case-insensitive substring).
+    fn matches_any(value: &str, targets: &[String]) -> bool {
+        let lower = value.to_lowercase();
+        targets.iter().any(|t| lower.contains(t.as_str()))
+    }
+
+    /// Score a contact's tech overlap (0-10 scale).
+    pub fn tech_overlap(&self, tech_stack: &str) -> u8 {
+        if self.target_tech.is_empty() { return 0; }
+        let lower = tech_stack.to_lowercase();
+        let hits = self.target_tech.iter().filter(|t| lower.contains(t.as_str())).count();
+        ((hits as f32 / self.target_tech.len() as f32) * 10.0).min(10.0) as u8
+    }
+
+    /// Populate a single slot in a ContactBatch from contact/company fields.
+    #[allow(clippy::too_many_arguments)]
+    pub fn populate_slot(
+        &self,
+        batch: &mut ContactBatch,
+        idx: usize,
+        industry: &str,
+        employee_count: u32,
+        seniority: &str,
+        title: &str,
+        tech_stack: &str,
+        email_status: &str,
+        days_since_update: u16,
+    ) {
+        batch.industry_match[idx] = Self::matches_any(industry, &self.target_industries) as u8;
+        batch.employee_in_range[idx] = (employee_count >= self.employee_range.0
+            && employee_count <= self.employee_range.1) as u8;
+        batch.seniority_match[idx] = Self::matches_any(seniority, &self.target_seniorities) as u8;
+        batch.department_match[idx] = Self::matches_any(title, &self.target_departments) as u8;
+        batch.tech_overlap[idx] = self.tech_overlap(tech_stack);
+        batch.email_verified[idx] = match email_status {
+            "verified" => 2,
+            "catch-all" | "catchall" => 1,
+            _ => 0,
+        };
+        batch.recency_days[idx] = days_since_update;
+    }
+}
+
+impl Default for IcpMatcher {
+    fn default() -> Self {
+        Self {
+            target_industries: vec!["ai".into(), "ml".into(), "saas".into(), "infrastructure".into()],
+            target_seniorities: vec!["vp".into(), "director".into(), "head".into(), "chief".into(), "cto".into(), "ceo".into()],
+            target_departments: vec!["engineering".into(), "ai".into(), "ml".into(), "data".into(), "platform".into()],
+            target_tech: vec!["rust".into(), "python".into(), "kubernetes".into(), "pytorch".into(), "tensorflow".into()],
+            employee_range: (20, 500),
+        }
+    }
+}
+
+/// ICP (Ideal Customer Profile) weight configuration for scoring.
 pub struct IcpProfile {
     pub industry_weight: f32,    // default 25
     pub employee_weight: f32,    // default 15

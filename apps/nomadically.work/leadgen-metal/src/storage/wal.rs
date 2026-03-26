@@ -42,11 +42,11 @@ impl From<u8> for EntryType {
 }
 
 pub struct WriteAheadLog {
-    _file: std::fs::File,
+    file: std::fs::File,
     mmap: Option<MmapMut>,
     write_pos: AtomicU64,
     sequence: AtomicU64,
-    capacity: u64,
+    capacity: AtomicU64,
     _path: String,
 }
 
@@ -71,11 +71,11 @@ impl WriteAheadLog {
         let (write_pos, max_seq) = Self::scan_entries(&mmap);
 
         Ok(Self {
-            _file: file,
+            file,
             mmap: Some(mmap),
             write_pos: AtomicU64::new(write_pos),
             sequence: AtomicU64::new(max_seq + 1),
-            capacity: actual_len,
+            capacity: AtomicU64::new(actual_len),
             _path: path.to_string(),
         })
     }
@@ -114,6 +114,7 @@ impl WriteAheadLog {
     }
 
     /// Append an entry. Returns the sequence number.
+    /// Auto-grows the WAL file if capacity is exceeded.
     pub fn append(&self, entry_type: EntryType, data: &[u8]) -> io::Result<u64> {
         let seq = self.sequence.fetch_add(1, Ordering::SeqCst);
         let crc = crc32fast::hash(data);
@@ -131,9 +132,15 @@ impl WriteAheadLog {
         let aligned_size = (entry_size + 7) & !7; // 8-byte alignment
 
         let pos = self.write_pos.fetch_add(aligned_size as u64, Ordering::SeqCst);
+        let capacity = self.capacity.load(Ordering::SeqCst);
 
-        if pos + aligned_size as u64 > self.capacity {
-            return Err(io::Error::new(io::ErrorKind::Other, "WAL full, needs rotation"));
+        if pos + aligned_size as u64 > capacity {
+            // Roll back write_pos and return error — caller should call grow() then retry
+            self.write_pos.fetch_sub(aligned_size as u64, Ordering::SeqCst);
+            self.sequence.fetch_sub(1, Ordering::SeqCst);
+            return Err(io::Error::other(
+                format!("WAL full ({} bytes), call grow() to expand", capacity),
+            ));
         }
 
         let mmap = self.mmap.as_ref().unwrap();
@@ -152,6 +159,37 @@ impl WriteAheadLog {
         }
 
         Ok(seq)
+    }
+
+    /// Grow the WAL file by doubling its capacity and remapping.
+    pub fn grow(&mut self) -> io::Result<()> {
+        let old_cap = self.capacity.load(Ordering::SeqCst);
+        let new_cap = old_cap * 2;
+
+        self.file.set_len(new_cap)?;
+
+        let new_mmap = unsafe {
+            MmapOptions::new().len(new_cap as usize).map_mut(&self.file)?
+        };
+        self.mmap = Some(new_mmap);
+        self.capacity.store(new_cap, Ordering::SeqCst);
+
+        Ok(())
+    }
+
+    /// Current capacity in bytes.
+    pub fn capacity(&self) -> u64 {
+        self.capacity.load(Ordering::SeqCst)
+    }
+
+    /// Current write position in bytes.
+    pub fn write_pos(&self) -> u64 {
+        self.write_pos.load(Ordering::SeqCst)
+    }
+
+    /// Utilization as a fraction (0.0 - 1.0).
+    pub fn utilization(&self) -> f64 {
+        self.write_pos() as f64 / self.capacity() as f64
     }
 
     /// Flush mmap to disk

@@ -1,6 +1,7 @@
 mod db;
 mod models;
 mod neon;
+mod scoring;
 
 use std::sync::Arc;
 
@@ -68,7 +69,7 @@ async fn get_contacts(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    // Also persist to LanceDB
+    // Cache in LanceDB
     if let Err(e) = db.add_contacts(&contacts).await {
         tracing::warn!("Failed to cache contacts in LanceDB: {}", e);
     }
@@ -88,6 +89,7 @@ async fn add_contacts(
     Ok(Json(InsertResult {
         inserted,
         duplicates: None,
+        filtered: None,
     }))
 }
 
@@ -95,7 +97,7 @@ async fn add_posts(
     State(db): State<AppState>,
     Json(req): Json<AddPostsRequest>,
 ) -> Result<Json<InsertResult>, (StatusCode, String)> {
-    let (inserted, duplicates) = db
+    let (inserted, duplicates, filtered) = db
         .add_posts(req.contact_id, &req.posts)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -103,11 +105,13 @@ async fn add_posts(
     Ok(Json(InsertResult {
         inserted,
         duplicates: Some(duplicates),
+        filtered: if filtered > 0 { Some(filtered) } else { None },
     }))
 }
 
 async fn stats(State(db): State<AppState>) -> Json<StatsResponse> {
-    let (contacts, posts) = db.stats().await;
+    let contacts = neon::count_contacts().await.unwrap_or(0) as usize;
+    let posts = db.posts_count().await;
     Json(StatsResponse { contacts, posts })
 }
 

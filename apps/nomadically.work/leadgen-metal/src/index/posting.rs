@@ -7,6 +7,12 @@ pub struct InvertedIndex {
     doc_count: std::sync::atomic::AtomicU32,
 }
 
+impl Default for InvertedIndex {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InvertedIndex {
     pub fn new() -> Self {
         Self {
@@ -23,7 +29,7 @@ impl InvertedIndex {
         for token in tokens {
             postings
                 .entry(token)
-                .or_insert_with(RoaringBitmap::new)
+                .or_default()
                 .insert(doc_id);
         }
 
@@ -36,7 +42,7 @@ impl InvertedIndex {
         for token in tokens {
             postings
                 .entry(token)
-                .or_insert_with(RoaringBitmap::new)
+                .or_default()
                 .insert(doc_id);
         }
     }

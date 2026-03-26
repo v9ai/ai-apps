@@ -122,10 +122,15 @@ export async function getServerStats(): Promise<{
 
 // ── Post to Rust server ──
 
+interface PostResult {
+  inserted: number;
+  filtered: number;
+}
+
 async function postPosts(
   contactId: number,
   posts: ScrapedPost[],
-): Promise<number> {
+): Promise<PostResult> {
   const res = await fetch(`${RUST_SERVER}/posts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -134,7 +139,7 @@ async function postPosts(
 
   if (!res.ok) throw new Error(`Server error: ${res.status}`);
   const data = await res.json();
-  return data.inserted;
+  return { inserted: data.inserted, filtered: data.filtered || 0 };
 }
 
 // ── Scroll and extract posts from an activity page ──
@@ -300,6 +305,7 @@ export async function browseContactPosts(tabId: number): Promise<void> {
   }
 
   let totalPosts = 0;
+  let totalFiltered = 0;
 
   for (let i = 0; i < contacts.length; i++) {
     if (postsCancelled) break;
@@ -315,6 +321,7 @@ export async function browseContactPosts(tabId: number): Promise<void> {
       total: contacts.length,
       contactName: name,
       postsFound: totalPosts,
+      postsFiltered: totalFiltered,
     });
 
     // Navigate to activity page
@@ -348,13 +355,14 @@ export async function browseContactPosts(tabId: number): Promise<void> {
       console.warn(`[PostScraper] Extraction failed for ${name}:`, err);
     }
 
-    // Send posts to Rust server
+    // Send posts to Rust server (scoring filters irrelevant ones)
     if (posts.length > 0) {
       try {
-        const inserted = await postPosts(contact.id, posts);
+        const { inserted, filtered } = await postPosts(contact.id, posts);
         totalPosts += inserted;
+        totalFiltered += filtered;
         console.log(
-          `[PostScraper] ${name}: ${inserted} posts saved`,
+          `[PostScraper] ${name}: ${inserted} kept, ${filtered} filtered (${posts.length} scraped)`,
         );
       } catch (err) {
         console.error(`[PostScraper] Failed to save posts for ${name}:`, err);
@@ -373,10 +381,11 @@ export async function browseContactPosts(tabId: number): Promise<void> {
     done: true,
     totalContacts: contacts.length,
     totalPosts,
+    totalFiltered,
   });
 
   console.log(
-    `[PostScraper] Complete. ${totalPosts} posts from ${contacts.length} contacts.`,
+    `[PostScraper] Complete. ${totalPosts} kept, ${totalFiltered} filtered from ${contacts.length} contacts.`,
   );
 }
 

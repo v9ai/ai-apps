@@ -36,8 +36,11 @@ export default function PostsSection() {
       }
 
       if (message.done) {
+        const filtered = message.totalFiltered
+          ? ` (${message.totalFiltered} noise filtered)`
+          : "";
         setStatus(
-          `Done! ${message.totalPosts} posts from ${message.totalContacts} contacts`,
+          `Done! ${message.totalPosts} relevant posts from ${message.totalContacts} contacts${filtered}`,
         );
         setLoading(false);
         // Refresh stats
@@ -49,8 +52,11 @@ export default function PostsSection() {
       }
 
       if (message.current && message.total) {
+        const filtered = message.postsFiltered
+          ? ` | ${message.postsFiltered} filtered`
+          : "";
         setStatus(
-          `${message.current}/${message.total}: ${message.contactName} (${message.postsFound} posts)`,
+          `${message.current}/${message.total}: ${message.contactName} (${message.postsFound} kept${filtered})`,
         );
       }
 
