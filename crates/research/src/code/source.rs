@@ -1,4 +1,5 @@
-/// Core ast-grep wrapper: parse source, run patterns, return structured matches.
+//! Core ast-grep wrapper: parse source, run patterns, return structured matches.
+
 use ast_grep_core::meta_var::MetaVariable;
 use ast_grep_language::{LanguageExt, SupportLang};
 use serde::{Deserialize, Serialize};

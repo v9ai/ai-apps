@@ -22,6 +22,10 @@ const RETRY_CONFIG: RetryConfig = RetryConfig {
     jitter: true,
 };
 
+/// Client for the arXiv Atom feed API.
+///
+/// Respects arXiv's rate-limit guidelines with polite delays between requests
+/// and automatic retry on HTTP 429.
 #[derive(Clone)]
 pub struct ArxivClient {
     http: reqwest::Client,
@@ -29,10 +33,12 @@ pub struct ArxivClient {
 }
 
 impl ArxivClient {
+    /// Create a client pointing at the default arXiv API endpoint.
     pub fn new() -> Self {
         Self::with_base_url(BASE_URL)
     }
 
+    /// Create a client with a custom base URL (useful for testing).
     pub fn with_base_url(base_url: &str) -> Self {
         let http = reqwest::Client::builder()
             .timeout(Duration::from_secs(30))

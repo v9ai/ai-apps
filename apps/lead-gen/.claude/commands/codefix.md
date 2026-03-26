@@ -112,7 +112,7 @@ Your role: {role-name}
 Read and follow: .claude/skills/codefix-{name}/SKILL.md
 Read project context: CLAUDE.md
 
-Project root: /Users/vadimnicolai/Public/nomadically.work
+Project root: /Users/vadimnicolai/Public/ai-apps/apps/lead-gen
 State directory: ~/.claude/state/
 
 ## Your workflow

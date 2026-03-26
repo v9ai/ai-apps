@@ -87,7 +87,7 @@ Task tool call:
     Read project context: CLAUDE.md
 
     Goal: Help find fully remote EU AI engineering jobs.
-    Project root: /Users/vadimnicolai/Public/nomadically.work
+    Project root: /Users/vadimnicolai/Public/ai-apps/apps/lead-gen
     State directory: ~/.claude/state/
 
     [Specific task from action plan]

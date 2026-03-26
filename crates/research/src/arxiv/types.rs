@@ -3,14 +3,17 @@ use std::fmt;
 
 use super::error::Error;
 
+/// A single paper from the arXiv Atom feed.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArxivPaper {
     pub arxiv_id: String,
     pub title: String,
     pub summary: String,
     pub authors: Vec<String>,
+    /// ISO 8601 publication timestamp (e.g. `"2017-06-12T17:57:34Z"`).
     pub published: String,
     pub updated: Option<String>,
+    /// arXiv category codes (e.g. `["cs.CL", "cs.LG"]`).
     pub categories: Vec<String>,
     pub pdf_url: Option<String>,
     pub doi: Option<String>,
@@ -19,6 +22,7 @@ pub struct ArxivPaper {
     pub link_url: Option<String>,
 }
 
+/// Parsed response from an arXiv Atom feed query.
 #[derive(Debug, Clone)]
 pub struct ArxivSearchResponse {
     pub total_results: u64,

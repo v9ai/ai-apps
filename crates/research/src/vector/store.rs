@@ -40,6 +40,7 @@ pub struct SearchFilter {
     pub min_citations: Option<u64>,
 }
 
+/// LanceDB-backed store for embedding, indexing, and searching papers and chunks.
 pub struct VectorStore {
     conn: Connection,
     engine: EmbeddingEngine,
@@ -241,6 +242,7 @@ fn passes_filter(paper: &ResearchPaper, filter: &SearchFilter) -> bool {
 }
 
 impl VectorStore {
+    /// Open (or create) a LanceDB store at `path` with the given embedding engine.
     pub async fn connect(path: &str, engine: EmbeddingEngine) -> Result<Self> {
         let conn = lancedb::connect(path).execute().await?;
 
@@ -337,6 +339,7 @@ impl VectorStore {
         .context("building papers RecordBatch")
     }
 
+    /// Embed and insert papers into the store. Returns the count inserted.
     pub async fn add_papers(&self, papers: &[ResearchPaper]) -> Result<usize> {
         if papers.is_empty() {
             return Ok(0);
@@ -426,6 +429,7 @@ impl VectorStore {
         Ok(total)
     }
 
+    /// Embed and insert text chunks into the store. Returns the count inserted.
     pub async fn add_chunks(&self, chunks: &[Chunk]) -> Result<usize> {
         if chunks.is_empty() {
             return Ok(0);

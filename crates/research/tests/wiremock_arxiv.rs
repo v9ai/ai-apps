@@ -1,4 +1,4 @@
-use wiremock::matchers::{method, query_param_contains};
+use wiremock::matchers::method;
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use research::arxiv::ArxivClient;
@@ -190,7 +190,8 @@ async fn search_non_429_error() {
             ResponseTemplate::new(500)
                 .set_body_string("Internal Server Error"),
         )
-        .expect(1)
+        // 500 is retryable: 1 initial + 3 retries = 4 total attempts
+        .expect(4)
         .mount(&server)
         .await;
 
@@ -210,7 +211,8 @@ async fn search_429_exhausts_retries() {
 
     Mock::given(method("GET"))
         .respond_with(ResponseTemplate::new(429))
-        .expect(3) // MAX_RETRIES=3, attempts 0..3
+        // retry_get loop: 0..=max_retries (max_retries=3) = 4 total attempts
+        .expect(4)
         .mount(&server)
         .await;
 

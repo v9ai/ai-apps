@@ -18,7 +18,7 @@
 //! * **Team orchestration** — [`team`] module provides [`team::TeamLead`],
 //!   [`team::Teammate`], task scheduling, and broadcast messaging.
 //! * **Semantic ranking** — [`EmbeddingRanker`] (API-based) and the optional
-//!   [`LocalRanker`] (Candle) implement the [`Ranker`] trait.
+//!   `LocalRanker` (Candle, requires `local-vector`) implement the [`Ranker`] trait.
 //! * **Retry logic** — [`retry`] module provides configurable exponential
 //!   backoff with jitter for HTTP requests.
 //! * **Search-quality critique** — [`critique`] module scores result sets on

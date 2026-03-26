@@ -346,11 +346,13 @@ impl Tool for AnalyzeStructure {
 
 // ─── FindAntiPatterns ───────────────────────────────────────────────────────
 
+/// Agent tool: detect curated anti-patterns in source code.
 pub struct FindAntiPatterns {
     config: CodeAnalysisConfig,
 }
 
 impl FindAntiPatterns {
+    /// Create a new `FindAntiPatterns` tool with the given configuration.
     pub fn new(config: CodeAnalysisConfig) -> Self {
         Self { config }
     }

@@ -12,7 +12,7 @@
 //! - **Field diversity**: variety of research fields/categories
 //!
 //! When the `local-vector` feature is enabled, an additional **semantic diversity**
-//! metric is available via [`CritiqueConfig::evaluate_semantic`], which uses
+//! metric is available via `CritiqueConfig::evaluate_semantic`, which uses
 //! the Candle embedding engine to measure pairwise cosine distances.
 
 use serde::{Deserialize, Serialize};
@@ -305,6 +305,7 @@ impl CritiqueConfig {
     ///
     /// `embeddings` must be one 384-d vector per paper (same order as `papers`).
     #[cfg(feature = "local-vector")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "local-vector")))]
     pub fn evaluate_semantic(
         &self,
         papers: &[ResearchPaper],

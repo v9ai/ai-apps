@@ -122,7 +122,7 @@
         "LINEAR_API_KEY": "YOUR_LINEAR_API_KEY"
       }
     },
-    "nomadically-docs": {
+    "lead-gen-docs": {
       "type": "stdio",
       "command": "uvx",
       "args": [
