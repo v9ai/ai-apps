@@ -83,10 +83,10 @@ export function LandingHero() {
               background: "transparent",
               color: "var(--green-9)",
               padding: "4px 12px",
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: "0.04em",
-              textTransform: "lowercase",
+              fontSize: 10,
+              fontWeight: 500,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
@@ -100,14 +100,15 @@ export function LandingHero() {
         {/* --- headline --- */}
         <Heading
           as="h1"
-          size="8"
+          size="9"
           align="center"
           weight="bold"
+          className="landing-hero-headline"
           style={{
             color: "var(--gray-12)",
-            letterSpacing: "-0.03em",
-            lineHeight: 1.1,
-            maxWidth: 680,
+            letterSpacing: "-0.025em",
+            lineHeight: 1.08,
+            maxWidth: 780,
             margin: "0 auto",
           }}
         >
@@ -117,13 +118,15 @@ export function LandingHero() {
         {/* --- subheadline --- */}
         <Text
           as="p"
-          size="3"
+          size="4"
           align="center"
+          className="landing-hero-subheadline"
           style={{
-            color: "var(--gray-11)",
-            maxWidth: 560,
-            margin: "16px auto 0",
-            lineHeight: 1.6,
+            color: "var(--gray-10)",
+            maxWidth: 520,
+            margin: "20px auto 0",
+            lineHeight: 1.65,
+            letterSpacing: "-0.01em",
           }}
         >
           an AI pipeline that finds who's hiring before they post on job boards
@@ -139,8 +142,9 @@ export function LandingHero() {
             variant="solid"
             style={{
               fontWeight: 700,
-              letterSpacing: "0.01em",
-              padding: "8px 24px",
+              fontSize: 15,
+              letterSpacing: "0.04em",
+              padding: "10px 32px",
               cursor: "pointer",
             }}
           >
@@ -154,9 +158,10 @@ export function LandingHero() {
             size="3"
             variant="ghost"
             style={{
-              fontWeight: 600,
-              letterSpacing: "0.01em",
-              padding: "8px 24px",
+              fontWeight: 700,
+              fontSize: 15,
+              letterSpacing: "0.04em",
+              padding: "10px 32px",
               cursor: "pointer",
             }}
           >
@@ -173,11 +178,17 @@ export function LandingHero() {
           style={{ borderTop: "1px solid var(--gray-6)", paddingTop: 24 }}
         >
           {STATS.map((stat) => (
-            <Flex key={stat.label} direction="column" align="center" gap="1">
+            <Flex key={stat.label} direction="column" align="center" gap="2">
               <Text
-                size="6"
+                size="7"
                 weight="bold"
-                style={{ color: "var(--gray-12)", letterSpacing: "-0.02em" }}
+                className="landing-hero-stat-value"
+                style={{
+                  color: "var(--gray-12)",
+                  letterSpacing: "-0.03em",
+                  fontVariantNumeric: "tabular-nums",
+                  lineHeight: 1,
+                }}
               >
                 {stat.value}
               </Text>
@@ -185,8 +196,11 @@ export function LandingHero() {
                 size="1"
                 style={{
                   color: "var(--gray-9)",
-                  textTransform: "lowercase",
-                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  fontWeight: 500,
+                  fontSize: 11,
+                  lineHeight: 1,
                 }}
               >
                 {stat.label}
@@ -205,11 +219,11 @@ export function LandingHero() {
             />
             <Text
               size="2"
-              weight="bold"
+              weight="medium"
               style={{
-                color: "var(--gray-11)",
-                textTransform: "lowercase",
-                letterSpacing: "0.04em",
+                color: "var(--gray-9)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
               }}
             >
               pipeline stages
@@ -233,7 +247,7 @@ export function LandingHero() {
                     padding: 20,
                   }}
                 >
-                  <Flex align="center" gap="2" mb="3">
+                  <Flex align="center" gap="2" mb="2">
                     <Flex
                       align="center"
                       justify="center"
@@ -255,8 +269,7 @@ export function LandingHero() {
                         border: "1px solid var(--gray-6)",
                         background: "transparent",
                         color: "var(--gray-9)",
-                        fontSize: 10,
-                        textTransform: "lowercase",
+                        fontWeight: 500,
                       }}
                     >
                       {stage.badge}
@@ -265,16 +278,17 @@ export function LandingHero() {
                   <Text
                     as="p"
                     size="2"
-                    weight="bold"
+                    weight="medium"
                     style={{
                       color: "var(--gray-12)",
                       textTransform: "lowercase",
-                      marginBottom: 4,
+                      letterSpacing: "0.01em",
+                      marginBottom: 8,
                     }}
                   >
                     {stage.title}
                   </Text>
-                  <Text as="p" size="1" style={{ color: "var(--gray-11)", lineHeight: 1.5 }}>
+                  <Text as="p" size="1" style={{ color: "var(--gray-10)", lineHeight: 1.6 }}>
                     {stage.description}
                   </Text>
                 </Box>
@@ -306,7 +320,7 @@ export function LandingHero() {
                     padding: 20,
                   }}
                 >
-                  <Flex align="center" gap="2" mb="3">
+                  <Flex align="center" gap="2" mb="2">
                     <Flex
                       align="center"
                       justify="center"
@@ -328,8 +342,7 @@ export function LandingHero() {
                         border: "1px solid var(--gray-6)",
                         background: "transparent",
                         color: "var(--gray-9)",
-                        fontSize: 10,
-                        textTransform: "lowercase",
+                        fontWeight: 500,
                       }}
                     >
                       {stage.badge}
@@ -338,16 +351,17 @@ export function LandingHero() {
                   <Text
                     as="p"
                     size="2"
-                    weight="bold"
+                    weight="medium"
                     style={{
                       color: "var(--gray-12)",
                       textTransform: "lowercase",
-                      marginBottom: 4,
+                      letterSpacing: "0.01em",
+                      marginBottom: 8,
                     }}
                   >
                     {stage.title}
                   </Text>
-                  <Text as="p" size="1" style={{ color: "var(--gray-11)", lineHeight: 1.5 }}>
+                  <Text as="p" size="1" style={{ color: "var(--gray-10)", lineHeight: 1.6 }}>
                     {stage.description}
                   </Text>
                 </Box>
