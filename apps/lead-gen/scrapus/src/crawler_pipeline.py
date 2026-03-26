@@ -19,10 +19,12 @@ Target: Apple M1 16GB, zero cloud dependency.
 """
 
 import asyncio
+import collections
 import gc
 import json
 import logging
 import os
+import signal
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -155,6 +157,12 @@ class CrawlerPipeline:
         self._all_rewards: List[float] = []
         self._last_prune_time: float = 0.0
 
+        # Rolling stats for pages/sec calculation
+        self._page_timestamps: collections.deque = collections.deque(maxlen=100)
+
+        # Background tasks
+        self._reward_task: Optional[asyncio.Task] = None
+
         # Initialised flag
         self._initialised = False
 
@@ -285,10 +293,26 @@ class CrawlerPipeline:
         await self.engine.start()
         self._last_prune_time = time.time()
 
+        # Signal handling for graceful shutdown
+        loop = asyncio.get_running_loop()
+        stop_event = asyncio.Event()
+
+        def _signal_handler():
+            logger.info("Shutdown signal received")
+            stop_event.set()
+
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            loop.add_signal_handler(sig, _signal_handler)
+
+        # Start background reward resolution task
+        self._reward_task = asyncio.create_task(
+            self._resolve_pending_rewards_periodic(stop_event)
+        )
+
         logger.info("Starting crawl loop (max_pages=%d)", max_pages)
 
         try:
-            while self._global_step < max_pages:
+            while self._global_step < max_pages and not stop_event.is_set():
                 # Check frontier
                 if not self.engine.frontier.has_pending():
                     logger.info("Frontier exhausted at step %d", self._global_step)
@@ -302,9 +326,9 @@ class CrawlerPipeline:
                     await asyncio.sleep(1.0)
                     continue
 
-                # Process each page: embed -> score -> store
-                for page in pages:
-                    result = await self._process_page(page)
+                # Process batch concurrently: embed -> score -> store
+                results = await self._process_pages_batch(pages)
+                for result in results:
                     if result and on_page_callback:
                         try:
                             await on_page_callback(result)
@@ -312,6 +336,10 @@ class CrawlerPipeline:
                             logger.error("Callback error: %s", exc)
 
                     self._global_step += 1
+                    self._page_timestamps.append(time.monotonic())
+
+                    # Progress logging
+                    self._log_progress()
 
                 # Train DQN
                 if (
@@ -330,6 +358,17 @@ class CrawlerPipeline:
         except Exception as exc:
             logger.error("Pipeline error: %s", exc, exc_info=True)
         finally:
+            # Cancel background reward task
+            stop_event.set()
+            if self._reward_task and not self._reward_task.done():
+                self._reward_task.cancel()
+                try:
+                    await self._reward_task
+                except asyncio.CancelledError:
+                    pass
+            # Remove signal handlers
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                loop.remove_signal_handler(sig)
             stats = self._collect_stats()
             logger.info("Crawl loop finished: %s", json.dumps(stats, indent=2))
 
@@ -339,37 +378,205 @@ class CrawlerPipeline:
 
     async def _process_page(self, page: PageContent) -> Optional[CrawlResult]:
         """Process a single crawled page: embed, score, store in replay."""
+        # Build scalar features
+        domain_stats = self._get_domain_stats(page.domain)
+        scalar = ScalarFeatures(
+            depth=0,  # Will be set from frontier depth
+            domain_pages_crawled=domain_stats.get("pages_crawled", 0),
+            domain_reward_sum=domain_stats.get("reward_sum", 0.0),
+            link_count=page.link_count,
+            body_length=page.body_length,
+            response_time_ms=page.fetch_time_ms,
+        )
+
+        # Embed page text
         try:
-            # Build scalar features
+            embedding = self.embedder.embed_text(
+                page.body_text[:self.config.embedding.max_text_chars]
+            )
+        except Exception as exc:
+            logger.error("Embedding failed for %s: %s", page.url, exc)
+            return None
+
+        # Build full state vector
+        try:
+            state = self.state_builder.build_state(
+                page.body_text,
+                scalar,
+                precomputed_embedding=embedding,
+            )
+        except Exception as exc:
+            logger.error("State vector build failed for %s: %s", page.url, exc)
+            return None
+
+        # Select action (link to follow) via DQN
+        try:
+            action, epsilon, q_value = self._select_action(
+                state, len(page.outbound_links)
+            )
+        except Exception as exc:
+            logger.error("DQN action selection failed for %s: %s", page.url, exc)
+            # Fall back to random action so we don't lose the page
+            action = int(np.random.randint(0, max(len(page.outbound_links), 1)))
+            epsilon = 1.0
+            q_value = 0.0
+
+        # Initial reward: -0.01 cost per page crawled.
+        # Real reward arrives asynchronously from extraction module.
+        reward = -0.01
+        self._all_rewards.append(reward)
+
+        # Store in replay buffer
+        zero_state = np.zeros_like(state)
+        done = check_episode_done(
+            domain_frontier_empty=not self.engine.frontier.has_pending(page.domain),
+            depth=self._episode_depth,
+            pages_crawled=self._episode_pages,
+        )
+
+        if self.replay:
+            try:
+                self.replay.add(
+                    state=state,
+                    action=action,
+                    reward=reward,
+                    next_state=zero_state if done else state,  # will be patched
+                    done=done,
+                    url=page.url,
+                )
+            except Exception as exc:
+                logger.error(
+                    "Replay buffer add failed for %s: %s", page.url, exc
+                )
+                # Continue processing -- losing one replay sample is acceptable
+
+        # Update domain scheduler
+        try:
+            self.engine.scheduler.update_domain(page.domain, reward)
+        except Exception as exc:
+            logger.error("Domain scheduler update failed for %s: %s", page.domain, exc)
+
+        # Update frontier Q-values for discovered links
+        if self.agent or self.onnx_engine:
+            try:
+                self._score_discovered_links(page, embedding, scalar)
+            except Exception as exc:
+                logger.error("Link scoring failed for %s: %s", page.url, exc)
+
+        # Track trajectory for hindsight relabeling
+        self._trajectory.append({
+            "url": page.url,
+            "state": state,
+            "action": action,
+            "reward": reward,
+            "step": self._global_step,
+        })
+
+        # Episode bookkeeping
+        self._episode_pages += 1
+        self._episode_depth += 1
+        if done:
+            self._handle_episode_end()
+
+        return CrawlResult(
+            page=page,
+            state_vector=state,
+            embedding=embedding,
+            scalar_features=scalar,
+            action=action,
+            q_value=q_value,
+            epsilon=epsilon,
+        )
+
+    async def _process_pages_batch(
+        self, pages: List[PageContent]
+    ) -> List[Optional[CrawlResult]]:
+        """Process multiple pages concurrently with batched embeddings.
+
+        Batches the embedding computation and state vector construction
+        for better throughput compared to sequential per-page processing.
+        """
+        if not pages:
+            return []
+
+        # Step 1: Build scalar features for all pages (cheap, no I/O)
+        scalars = []
+        for page in pages:
             domain_stats = self._get_domain_stats(page.domain)
             scalar = ScalarFeatures(
-                depth=0,  # Will be set from frontier depth
+                depth=0,
                 domain_pages_crawled=domain_stats.get("pages_crawled", 0),
                 domain_reward_sum=domain_stats.get("reward_sum", 0.0),
                 link_count=page.link_count,
                 body_length=page.body_length,
                 response_time_ms=page.fetch_time_ms,
             )
+            scalars.append(scalar)
 
-            # Embed page text
-            embedding = self.embedder.embed_text(
-                page.body_text[:self.config.embedding.max_text_chars]
+        # Step 2: Batch embed all page texts at once
+        texts = [
+            p.body_text[:self.config.embedding.max_text_chars] for p in pages
+        ]
+        try:
+            embeddings = self.embedder.embed_batch(texts)
+        except (AttributeError, NotImplementedError):
+            # Fallback: embedder doesn't support batch, embed individually
+            embeddings = [self.embedder.embed_text(t) for t in texts]
+        except Exception as exc:
+            logger.error("Batch embedding failed, falling back to sequential: %s", exc)
+            embeddings = []
+            for t in texts:
+                try:
+                    embeddings.append(self.embedder.embed_text(t))
+                except Exception:
+                    embeddings.append(None)
+
+        # Step 3: Batch build state vectors
+        states = []
+        for i, page in enumerate(pages):
+            emb = embeddings[i] if i < len(embeddings) else None
+            if emb is None:
+                states.append(None)
+                continue
+            try:
+                state = self.state_builder.build_state(
+                    page.body_text,
+                    scalars[i],
+                    precomputed_embedding=emb,
+                )
+                states.append(state)
+            except Exception as exc:
+                logger.error("State build failed for %s: %s", page.url, exc)
+                states.append(None)
+
+        # Step 4: Process each page with pre-computed embedding/state
+        results: List[Optional[CrawlResult]] = []
+        for i, page in enumerate(pages):
+            if states[i] is None or embeddings[i] is None:
+                results.append(None)
+                continue
+            result = await self._process_page_with_precomputed(
+                page, embeddings[i], scalars[i], states[i]
             )
+            results.append(result)
 
-            # Build full state vector
-            state = self.state_builder.build_state(
-                page.body_text,
-                scalar,
-                precomputed_embedding=embedding,
-            )
+        return results
 
+    async def _process_page_with_precomputed(
+        self,
+        page: PageContent,
+        embedding: np.ndarray,
+        scalar: ScalarFeatures,
+        state: np.ndarray,
+    ) -> Optional[CrawlResult]:
+        """Process a page with pre-computed embedding and state vector."""
+        try:
             # Select action (link to follow) via DQN
             action, epsilon, q_value = self._select_action(
                 state, len(page.outbound_links)
             )
 
             # Initial reward: -0.01 cost per page crawled.
-            # Real reward arrives asynchronously from extraction module.
             reward = -0.01
             self._all_rewards.append(reward)
 
@@ -382,14 +589,17 @@ class CrawlerPipeline:
             )
 
             if self.replay:
-                self.replay.add(
-                    state=state,
-                    action=action,
-                    reward=reward,
-                    next_state=zero_state if done else state,  # will be patched
-                    done=done,
-                    url=page.url,
-                )
+                try:
+                    self.replay.add(
+                        state=state,
+                        action=action,
+                        reward=reward,
+                        next_state=zero_state if done else state,
+                        done=done,
+                        url=page.url,
+                    )
+                except Exception as exc:
+                    logger.error("Replay buffer add failed for %s: %s", page.url, exc)
 
             # Update domain scheduler
             self.engine.scheduler.update_domain(page.domain, reward)
@@ -424,7 +634,7 @@ class CrawlerPipeline:
             )
 
         except Exception as exc:
-            logger.error("Error processing page %s: %s", page.url, exc)
+            logger.error("Error in precomputed processing for %s: %s", page.url, exc)
             return None
 
     def _select_action(
@@ -571,6 +781,377 @@ class CrawlerPipeline:
             if self.replay:
                 self.replay.prune_old_pending()
             self._last_prune_time = now
+
+    # ---- Background Tasks ---------------------------------------------------
+
+    async def _resolve_pending_rewards_periodic(
+        self, stop_event: asyncio.Event
+    ) -> None:
+        """Background task that periodically checks for resolved rewards.
+
+        Runs every 60 seconds. Calls self.replay.resolve_pending_rewards()
+        with results from the extraction module.
+        """
+        while not stop_event.is_set():
+            try:
+                await asyncio.wait_for(stop_event.wait(), timeout=60.0)
+                # If we get here, stop_event was set
+                break
+            except asyncio.TimeoutError:
+                # 60 seconds elapsed, run the resolution
+                pass
+
+            if self.replay is None:
+                continue
+
+            try:
+                pending = self.replay.get_pending_reward_urls()
+                if pending:
+                    # Extraction results are stored as pending rewards in
+                    # the replay buffer's SQLite; resolve_pending_rewards
+                    # patches them into the mmap arrays.
+                    resolved = self.replay.resolve_pending_rewards(pending)
+                    if resolved > 0:
+                        logger.info(
+                            "Background reward resolution: %d rewards resolved",
+                            resolved,
+                        )
+            except Exception as exc:
+                logger.error("Background reward resolution error: %s", exc)
+
+    # ---- Progress Logging ---------------------------------------------------
+
+    def _log_progress(self) -> None:
+        """Log progress at regular intervals.
+
+        Every 100 pages: log pages_crawled, pages/sec, harvest_rate, epsilon, replay_size.
+        Every 1000 pages: log detailed stats including top 5 domains.
+        """
+        step = self._global_step
+
+        if step == 0:
+            return
+
+        if step % 100 == 0:
+            pages_per_sec = self._calculate_pages_per_sec()
+            harvest_rate = (
+                sum(1 for r in self._all_rewards if r >= 0.2)
+                / max(len(self._all_rewards), 1)
+            )
+            epsilon = (
+                self.agent.epsilon_scheduler.get_epsilon(step)
+                if self.agent and hasattr(self.agent, "epsilon_scheduler")
+                else 1.0
+            )
+            replay_size = self.replay.size if self.replay else 0
+
+            logger.info(
+                "Progress [%d pages]: %.1f pages/sec | harvest_rate=%.4f | "
+                "epsilon=%.4f | replay_size=%d",
+                step,
+                pages_per_sec,
+                harvest_rate,
+                epsilon,
+                replay_size,
+            )
+
+        if step % 1000 == 0:
+            detailed = self._collect_stats()
+            # Get top 5 domains by pages crawled
+            top_domains = []
+            if self.engine:
+                all_domain_stats = self.engine.scheduler.get_all_stats()
+                sorted_domains = sorted(
+                    all_domain_stats,
+                    key=lambda d: d.get("pages_crawled", 0),
+                    reverse=True,
+                )
+                top_domains = [
+                    {"domain": d["domain"], "pages": d.get("pages_crawled", 0)}
+                    for d in sorted_domains[:5]
+                ]
+
+            logger.info(
+                "Detailed stats [%d pages]: %s | top_domains=%s",
+                step,
+                json.dumps(detailed.get("rewards", {})),
+                json.dumps(top_domains),
+            )
+
+    def _calculate_pages_per_sec(self) -> float:
+        """Calculate rolling pages/sec from the last 100 page timestamps."""
+        if len(self._page_timestamps) < 2:
+            return 0.0
+        elapsed = self._page_timestamps[-1] - self._page_timestamps[0]
+        if elapsed <= 0:
+            return 0.0
+        return (len(self._page_timestamps) - 1) / elapsed
+
+    # ---- Live Stats ---------------------------------------------------------
+
+    def get_live_stats(self) -> Dict[str, Any]:
+        """Real-time stats for the health endpoint.
+
+        Returns:
+            Dict with pages/sec (rolling 100 pages), current epsilon,
+            frontier pending count, replay buffer size, current domain,
+            and memory usage estimate.
+        """
+        pages_per_sec = self._calculate_pages_per_sec()
+
+        epsilon = 1.0
+        if self.agent and hasattr(self.agent, "epsilon_scheduler"):
+            epsilon = self.agent.epsilon_scheduler.get_epsilon(self._global_step)
+
+        frontier_pending = 0
+        if self.engine and self.engine.frontier:
+            try:
+                frontier_pending = self.engine.frontier.pending_count()
+            except Exception:
+                pass
+
+        replay_size = self.replay.size if self.replay else 0
+
+        # Memory usage estimate (MB)
+        memory_mb = 0.0
+        if self.replay:
+            # mmap replay buffer: state_dim * capacity * 4 bytes * 2 (state + next_state)
+            replay_mem = (
+                self.config.replay.state_dim
+                * self.config.replay.capacity
+                * 4
+                * 2
+                / (1024 * 1024)
+            )
+            memory_mb += replay_mem
+        if self.embedder:
+            memory_mb += 300.0  # approximate model size
+        if self.agent:
+            memory_mb += 10.0  # approximate DQN size
+
+        return {
+            "pages_per_sec": round(pages_per_sec, 2),
+            "epsilon": round(epsilon, 4),
+            "frontier_pending": frontier_pending,
+            "replay_size": replay_size,
+            "current_domain": self._current_domain,
+            "global_step": self._global_step,
+            "memory_estimate_mb": round(memory_mb, 1),
+        }
+
+    # ---- Run with Evaluation ------------------------------------------------
+
+    async def run_with_eval(
+        self,
+        seed_urls: Optional[List[str]] = None,
+        max_pages: Optional[int] = None,
+        on_page_callback: Optional[Callable] = None,
+        eval_interval: int = 500,
+        eval_pages: int = 50,
+    ) -> Dict[str, Any]:
+        """Same as run() but periodically evaluates the agent.
+
+        Every eval_interval pages, runs a mini-evaluation by crawling
+        eval_pages in greedy mode (epsilon=0) and logging metrics.
+
+        Args:
+            seed_urls: initial URLs to crawl.
+            max_pages: override config max_pages.
+            on_page_callback: async callable(CrawlResult) for downstream modules.
+            eval_interval: run evaluation every N pages.
+            eval_pages: number of pages to evaluate on.
+
+        Returns:
+            Final statistics dict with evaluation history.
+        """
+        if not self._initialised:
+            await self.initialise()
+
+        max_pages = max_pages or self.config.max_pages
+        eval_history: List[Dict[str, Any]] = []
+        last_eval_step = 0
+
+        # Add seeds
+        if seed_urls:
+            self.engine.add_seed_urls(seed_urls)
+
+        # Start browser
+        await self.engine.start()
+        self._last_prune_time = time.time()
+
+        # Signal handling for graceful shutdown
+        loop = asyncio.get_running_loop()
+        stop_event = asyncio.Event()
+
+        def _signal_handler():
+            logger.info("Shutdown signal received")
+            stop_event.set()
+
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            loop.add_signal_handler(sig, _signal_handler)
+
+        # Start background reward resolution task
+        self._reward_task = asyncio.create_task(
+            self._resolve_pending_rewards_periodic(stop_event)
+        )
+
+        logger.info(
+            "Starting crawl loop with eval (max_pages=%d, eval_interval=%d)",
+            max_pages,
+            eval_interval,
+        )
+
+        try:
+            while self._global_step < max_pages and not stop_event.is_set():
+                # Check frontier
+                if not self.engine.frontier.has_pending():
+                    logger.info("Frontier exhausted at step %d", self._global_step)
+                    break
+
+                # Crawl a batch
+                pages = await self.engine.crawl_batch(
+                    batch_size=self.engine.config.max_concurrent
+                )
+                if not pages:
+                    await asyncio.sleep(1.0)
+                    continue
+
+                # Process batch concurrently
+                results = await self._process_pages_batch(pages)
+                for result in results:
+                    if result and on_page_callback:
+                        try:
+                            await on_page_callback(result)
+                        except Exception as exc:
+                            logger.error("Callback error: %s", exc)
+
+                    self._global_step += 1
+                    self._page_timestamps.append(time.monotonic())
+                    self._log_progress()
+
+                # Train DQN
+                if (
+                    self.agent
+                    and self.replay
+                    and self.replay.size >= self.config.train_after_n_pages
+                    and self._global_step % self.config.train_every_n_steps == 0
+                ):
+                    self._train_step()
+
+                # Periodic tasks
+                self._periodic_maintenance()
+
+                # Mini-evaluation
+                if (
+                    self._global_step - last_eval_step >= eval_interval
+                    and self.agent
+                ):
+                    eval_result = await self._run_mini_eval(eval_pages)
+                    eval_result["step"] = self._global_step
+                    eval_history.append(eval_result)
+                    last_eval_step = self._global_step
+                    logger.info(
+                        "Eval at step %d: %s",
+                        self._global_step,
+                        json.dumps(eval_result),
+                    )
+
+        except KeyboardInterrupt:
+            logger.info("Crawl interrupted by user at step %d", self._global_step)
+        except Exception as exc:
+            logger.error("Pipeline error: %s", exc, exc_info=True)
+        finally:
+            # Cancel background reward task
+            stop_event.set()
+            if self._reward_task and not self._reward_task.done():
+                self._reward_task.cancel()
+                try:
+                    await self._reward_task
+                except asyncio.CancelledError:
+                    pass
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                loop.remove_signal_handler(sig)
+            stats = self._collect_stats()
+            stats["eval_history"] = eval_history
+            logger.info("Crawl loop finished: %s", json.dumps(stats, indent=2))
+
+        return stats
+
+    async def _run_mini_eval(self, eval_pages: int) -> Dict[str, Any]:
+        """Run a mini-evaluation: crawl eval_pages in greedy mode.
+
+        Temporarily sets epsilon to 0 so the agent acts greedily,
+        then restores the original schedule.
+
+        Returns:
+            Evaluation metrics dict.
+        """
+        eval_rewards: List[float] = []
+        eval_q_values: List[float] = []
+        pages_crawled = 0
+
+        for _ in range(eval_pages):
+            if not self.engine.frontier.has_pending():
+                break
+
+            pages = await self.engine.crawl_batch(batch_size=1)
+            if not pages:
+                break
+
+            page = pages[0]
+            try:
+                domain_stats = self._get_domain_stats(page.domain)
+                scalar = ScalarFeatures(
+                    depth=0,
+                    domain_pages_crawled=domain_stats.get("pages_crawled", 0),
+                    domain_reward_sum=domain_stats.get("reward_sum", 0.0),
+                    link_count=page.link_count,
+                    body_length=page.body_length,
+                    response_time_ms=page.fetch_time_ms,
+                )
+                embedding = self.embedder.embed_text(
+                    page.body_text[:self.config.embedding.max_text_chars]
+                )
+                state = self.state_builder.build_state(
+                    page.body_text, scalar, precomputed_embedding=embedding
+                )
+
+                # Greedy action (epsilon=0)
+                if self.onnx_engine:
+                    action = self.onnx_engine.select_action(
+                        state, len(page.outbound_links)
+                    )
+                    q_values = self.onnx_engine.predict_q_values(state)
+                    q_val = float(q_values[action])
+                elif self.agent:
+                    import torch
+
+                    state_t = torch.as_tensor(
+                        state, dtype=torch.float32, device=self.agent.device
+                    ).unsqueeze(0)
+                    with torch.no_grad():
+                        q_out = self.agent.q_network(state_t).cpu().numpy().flatten()
+                    num_links = max(len(page.outbound_links), 1)
+                    action = int(np.argmax(q_out[:num_links]))
+                    q_val = float(q_out[action])
+                else:
+                    continue
+
+                eval_q_values.append(q_val)
+                eval_rewards.append(-0.01)  # Actual reward pending
+                pages_crawled += 1
+
+            except Exception as exc:
+                logger.error("Eval page processing error: %s", exc)
+                continue
+
+        return {
+            "eval_pages": pages_crawled,
+            "mean_q_value": round(float(np.mean(eval_q_values)), 4) if eval_q_values else 0.0,
+            "std_q_value": round(float(np.std(eval_q_values)), 4) if eval_q_values else 0.0,
+            "max_q_value": round(float(np.max(eval_q_values)), 4) if eval_q_values else 0.0,
+            "min_q_value": round(float(np.min(eval_q_values)), 4) if eval_q_values else 0.0,
+        }
 
     # ---- External Integration -----------------------------------------------
 

@@ -93,6 +93,7 @@ async fn search_falls_back_to_openalex_on_429() {
     let fallback = FallbackClients {
         openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let tool = SearchPapers::with_fallback(
@@ -162,6 +163,7 @@ async fn search_falls_back_to_crossref_when_openalex_empty() {
     let fallback = FallbackClients {
         openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let tool = SearchPapers::with_fallback(

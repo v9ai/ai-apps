@@ -4,8 +4,8 @@
 //! # Core capabilities
 //!
 //! * **Academic API clients** — [`ArxivClient`], [`SemanticScholarClient`],
-//!   [`OpenAlexClient`], [`CrossrefClient`], and [`CoreClient`] for searching
-//!   and fetching papers from five major sources.
+//!   [`OpenAlexClient`], [`CrossrefClient`], [`CoreClient`], and [`ZenodoClient`]
+//!   for searching and fetching papers from six major sources.
 //! * **Unified paper model** — [`ResearchPaper`] normalises results from every
 //!   source into a single type with `From` conversions.
 //! * **Dual/multi-model LLM agents** — [`DualModelResearcher`] and
@@ -44,6 +44,7 @@ pub mod retry;
 pub mod scholar;
 pub mod team;
 pub mod tools;
+pub mod zenodo;
 
 #[cfg(feature = "local-vector")]
 #[cfg_attr(docsrs, doc(cfg(feature = "local-vector")))]
@@ -66,6 +67,7 @@ pub use openalex::OpenAlexClient;
 pub use paper::ResearchPaper;
 pub use retry::RetryConfig;
 pub use scholar::SemanticScholarClient;
+pub use zenodo::ZenodoClient;
 
 #[cfg(feature = "local-vector")]
 #[cfg_attr(docsrs, doc(cfg(feature = "local-vector")))]

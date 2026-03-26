@@ -43,6 +43,7 @@ async fn search_prefers_openalex_over_s2() {
     let fallback = FallbackClients {
         openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let tool = SearchPapers::with_fallback(s2, SearchToolConfig::default(), fallback);
@@ -102,6 +103,7 @@ async fn search_full_fallback_chain_to_s2() {
     let fallback = FallbackClients {
         openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let tool = SearchPapers::with_fallback(s2, SearchToolConfig::default(), fallback);
@@ -215,6 +217,7 @@ async fn detail_doi_lookup_via_openalex() {
     let fallback = FallbackClients {
         openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let tool = GetPaperDetail::with_fallback(s2, SearchToolConfig::default(), fallback);
@@ -260,6 +263,7 @@ async fn detail_doi_fallback_to_crossref() {
     let fallback = FallbackClients {
         openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let tool = GetPaperDetail::with_fallback(s2, SearchToolConfig::default(), fallback);
@@ -306,6 +310,7 @@ async fn detail_non_doi_uses_s2() {
     let fallback = FallbackClients {
         openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let tool = GetPaperDetail::with_fallback(s2, SearchToolConfig::default(), fallback);
@@ -341,6 +346,7 @@ async fn detail_bare_doi_detected() {
     let fallback = FallbackClients {
         openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let tool = GetPaperDetail::with_fallback(s2, SearchToolConfig::default(), fallback);
@@ -389,6 +395,7 @@ async fn search_openalex_error_falls_through() {
     let fallback = FallbackClients {
         openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let tool = SearchPapers::with_fallback(s2, SearchToolConfig::default(), fallback);

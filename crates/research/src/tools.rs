@@ -11,6 +11,7 @@ use crate::crossref::CrossrefClient;
 use crate::embeddings::Ranker;
 use crate::openalex::OpenAlexClient;
 use crate::paper::ResearchPaper;
+use crate::zenodo::ZenodoClient;
 use crate::scholar::{SemanticScholarClient, types::{PAPER_FIELDS_FULL, SEARCH_FIELDS}};
 use serde::{Deserialize, Serialize};
 
@@ -21,6 +22,8 @@ pub struct FallbackClients {
     pub openalex: OpenAlexClient,
     /// Crossref client (polite pool via optional mailto).
     pub crossref: CrossrefClient,
+    /// Zenodo client (no API key required for public records).
+    pub zenodo: Option<ZenodoClient>,
 }
 
 /// Configuration for search/detail tool behaviour.
@@ -128,8 +131,22 @@ impl SearchPapers {
                 }
             }
 
+            // Zenodo as third fallback (datasets, software, preprints)
+            if let Some(zenodo) = &fb.zenodo {
+                if let Ok(z_resp) = zenodo.search(&args.query, 1, limit).await {
+                    if let Some(hits) = z_resp.hits {
+                        if !hits.hits.is_empty() {
+                            let papers: Vec<ResearchPaper> =
+                                hits.hits.into_iter().map(Into::into).collect();
+                            let total = papers.len() as u64;
+                            return Ok((papers, total));
+                        }
+                    }
+                }
+            }
+
             tracing::warn!(
-                "OpenAlex + Crossref returned no results, falling back to Semantic Scholar"
+                "OpenAlex + Crossref + Zenodo returned no results, falling back to Semantic Scholar"
             );
         }
 

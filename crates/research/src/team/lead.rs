@@ -112,6 +112,7 @@ impl TeamLead {
         let fallback = Some(FallbackClients {
             openalex: OpenAlexClient::new(mailto),
             crossref: CrossrefClient::new(mailto),
+            zenodo: Some(crate::zenodo::ZenodoClient::new(None)),
         });
 
         for i in 0..self.config.team_size {
