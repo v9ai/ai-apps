@@ -1,9 +1,0 @@
-query ExecuteSql($sql: String!) {
-  executeSql(sql: $sql) {
-    sql
-    explanation
-    columns
-    rows
-    drilldownSearchQuery
-  }
-}

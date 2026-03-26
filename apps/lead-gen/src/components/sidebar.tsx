@@ -8,8 +8,6 @@ import {
   PersonIcon,
   CubeIcon,
   ResumeIcon,
-  ChatBubbleIcon,
-
   LayersIcon,
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon,
@@ -29,7 +27,6 @@ const NAV_ITEMS = [
   { href: "/companies", label: "companies", icon: <CubeIcon width={15} height={15} /> },
   { href: "/contacts", label: "contacts", icon: <PersonIcon width={15} height={15} /> },
   { href: "/resume", label: "resume", icon: <ResumeIcon width={15} height={15} /> },
-  { href: "/chats", label: "query", icon: <ChatBubbleIcon width={15} height={15} /> },
   { href: "/jobs", label: "jobs", icon: <BackpackIcon width={15} height={15} /> },
   { href: "/how-it-works", label: "how it works", icon: <LayersIcon width={15} height={15} /> },
 ];

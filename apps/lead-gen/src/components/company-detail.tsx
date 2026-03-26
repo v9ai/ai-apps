@@ -749,7 +749,7 @@ function LinkedInLeadDialog({
                 Back
               </Button>
               <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Create contact + opportunity"}
+                {saving ? "Saving..." : "Create contact"}
               </Button>
             </Flex>
           </Flex>
@@ -1059,13 +1059,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     (a) => a.companyKey === effectiveKey || a.companyName?.toLowerCase().replace(/\s+/g, "-") === effectiveKey,
   );
 
-  const { data: oppsData, refetch: refetchOpps } = useGetOpportunitiesQuery({
-    variables: { companyId: company?.id },
-    skip: !company?.id || !isAdmin,
-  });
-  const companyOpps = oppsData?.opportunities?.opportunities ?? [];
-
-
   const remoteEuConfirmed = companyJobs.some(
     (j) => j.is_remote_eu === true && j.remote_eu_confidence === "high",
   );
@@ -1347,7 +1340,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               <LinkedInLeadDialog
                 companyId={company.id}
                 companyName={company.name}
-                onCreated={refetchOpps}
+                onCreated={refetch}
               />
             )}
             {isAdmin && (
@@ -1402,11 +1395,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             {companyApps.length > 0 && (
               <Tabs.Trigger value="applications">
                 Applications ({companyApps.length})
-              </Tabs.Trigger>
-            )}
-            {isAdmin && companyOpps.length > 0 && (
-              <Tabs.Trigger value="opportunities">
-                Opportunities ({companyOpps.length})
               </Tabs.Trigger>
             )}
             {isAdmin && (
@@ -1549,81 +1537,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                           </Flex>
                         </Link>
                         {idx < companyApps.length - 1 ? <Separator size="4" /> : null}
-                      </Box>
-                    );
-                  })}
-                </Flex>
-              </Box>
-            </Tabs.Content>
-          )}
-
-          {/* Opportunities tab */}
-          {isAdmin && companyOpps.length > 0 && (
-            <Tabs.Content value="opportunities">
-              <Box pt="4">
-                <Flex direction="column">
-                  {companyOpps.map((opp, idx) => {
-                    const statusColor: Record<string, "gray" | "blue" | "orange" | "green" | "red"> = {
-                      open: "blue",
-                      applied: "orange",
-                      won: "green",
-                      lost: "red",
-                      archived: "gray",
-                    };
-                    return (
-                      <Box key={opp.id}>
-                        <Flex justify="between" align="center" gap="4" py="2">
-                          <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
-                            <Text
-                              size="3"
-                              weight="medium"
-                              style={{
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {opp.title}
-                            </Text>
-                            <Flex gap="2" align="center" wrap="wrap">
-                              <Badge
-                                color={statusColor[opp.status] ?? "gray"}
-                                variant="soft"
-                                size="1"
-                              >
-                                {opp.status}
-                              </Badge>
-                              {opp.source && (
-                                <Badge color="gray" variant="outline" size="1">
-                                  {opp.source}
-                                </Badge>
-                              )}
-                              {opp.url && (
-                                <RadixLink
-                                  href={opp.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  size="1"
-                                >
-                                  <Flex align="center" gap="1">
-                                    <Link2Icon />
-                                    Link
-                                  </Flex>
-                                </RadixLink>
-                              )}
-                            </Flex>
-                          </Flex>
-                          <Text
-                            size="1"
-                            color="gray"
-                            style={{ whiteSpace: "nowrap", flexShrink: 0 }}
-                          >
-                            {new Date(opp.createdAt).toLocaleDateString()}
-                          </Text>
-                        </Flex>
-                        {idx < companyOpps.length - 1 ? (
-                          <Separator size="4" />
-                        ) : null}
                       </Box>
                     );
                   })}
