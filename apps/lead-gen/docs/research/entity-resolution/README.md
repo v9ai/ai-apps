@@ -1,6 +1,6 @@
 # Entity Resolution Research
 
-Research output for entity resolution and deduplication (module-3). Co-located with `crates/nomad/` (enrichment.rs).
+Research output for entity resolution and deduplication (module-3).
 
 ## Files
 

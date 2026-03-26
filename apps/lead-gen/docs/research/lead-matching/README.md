@@ -1,6 +1,6 @@
 # Lead Matching / Scoring Research
 
-Research output for lead scoring and ICP matching (module-4). Co-located with `crates/nomad/` (pipeline.rs, signals.rs).
+Research output for lead scoring and ICP matching (module-4).
 
 ## Files
 
