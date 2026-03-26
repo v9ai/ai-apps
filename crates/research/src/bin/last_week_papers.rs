@@ -10,7 +10,6 @@ use tracing::{info, warn};
 
 use research::arxiv::types::{DateRange, SearchQuery, SortBy, SortOrder};
 use research::arxiv::ArxivClient;
-use research::chunker::{chunk_text, ChunkerConfig, ChunkStrategy};
 use research::crossref::CrossrefClient;
 use research::core_api::CoreClient;
 use research::openalex::OpenAlexClient;
@@ -106,25 +105,58 @@ impl PaperSummary {
     }
 }
 
-
-#[derive(Serialize)]
-struct RunStats {
-    timestamp: String,
-    week_tag: String,
-    total_papers: usize,
-    papers_indexed: usize,
-    by_source: BTreeMap<String, usize>,
-    with_abstract: usize,
-    with_doi: usize,
-    with_pdf: usize,
-    with_citations: usize,
-    avg_citations: f64,
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
     let cli = Cli::parse();
+
+    // ── Query mode: search existing LanceDB ─────────────────────────
+    if let Some(ref query_text) = cli.query {
+        use research::local_embeddings::EmbeddingEngine;
+        use research::vector::{SearchFilter, VectorStore};
+
+        let engine = EmbeddingEngine::new(candle_core::Device::Cpu)?;
+        let store = VectorStore::connect(&cli.db, engine).await?;
+
+        let filter = SearchFilter {
+            year_min: None,
+            year_max: None,
+            source: None,
+            min_citations: cli.min_citations,
+        };
+
+        let results = store
+            .search_papers_filtered(query_text, cli.top_k, &filter)
+            .await?;
+
+        println!("Found {} results for \"{}\":\n", results.len(), query_text);
+        for (i, result) in results.iter().enumerate() {
+            let p = &result.paper;
+            let cites = p
+                .citation_count
+                .map(|c| format!(" [{c} cites]"))
+                .unwrap_or_default();
+            println!(
+                "{}. [score: {:.3}] {}{}",
+                i + 1,
+                result.score,
+                p.title,
+                cites
+            );
+            println!(
+                "   Source: {:?} | ID: {} | Year: {}",
+                p.source,
+                p.source_id,
+                p.year.map(|y| y.to_string()).unwrap_or("?".into())
+            );
+            if let Some(ref abs) = p.abstract_text {
+                let preview: String = abs.chars().take(200).collect();
+                println!("   {preview}...");
+            }
+            println!();
+        }
+        return Ok(());
+    }
 
     let sources: HashSet<&str> = cli.sources.split(',').map(|s| s.trim()).collect();
 
@@ -204,26 +236,6 @@ async fn main() -> Result<()> {
         }
         seen_titles.insert(key)
     });
-
-    // Secondary dedup: catch near-duplicate titles (e.g., same paper, slightly different formatting)
-    let before_fuzzy = all.len();
-    let mut deduped: Vec<PaperSummary> = Vec::with_capacity(all.len());
-    for paper in all.drain(..) {
-        let key = paper.dedup_key();
-        let dominated = deduped.iter().any(|existing| {
-            trigram_similarity(&existing.dedup_key(), &key) > 0.85
-        });
-        if !dominated {
-            deduped.push(paper);
-        }
-    }
-    all = deduped;
-    if before_fuzzy != all.len() {
-        println!(
-            "Fuzzy dedup removed {} near-duplicates",
-            before_fuzzy - all.len()
-        );
-    }
 
     // Sort by source then title
     all.sort_by(|a, b| a.source.cmp(&b.source).then(a.title.cmp(&b.title)));
@@ -341,6 +353,17 @@ async fn main() -> Result<()> {
                     source: paper_source,
                     source_id: s.source_id.clone(),
                     fields_of_study,
+                    published_date: Some(s.published.clone()),
+                    primary_category: if s.primary_category.is_empty() {
+                        None
+                    } else {
+                        Some(s.primary_category.clone())
+                    },
+                    categories: if s.categories.is_empty() {
+                        None
+                    } else {
+                        Some(s.categories.clone())
+                    },
                 }
             })
             .collect();
@@ -350,83 +373,6 @@ async fn main() -> Result<()> {
         let store = VectorStore::connect(&cli.db, engine).await?;
         let count = store.add_papers_batched(&papers, cli.batch_size).await?;
         println!("Indexed {count} papers (tagged: {week_tag})");
-
-        // ── Run statistics ────────────────────────────────────────────
-        let stats = RunStats {
-            timestamp: Utc::now().to_rfc3339(),
-            week_tag: week_tag.clone(),
-            total_papers: papers.len(),
-            papers_indexed: count,
-            by_source: {
-                let mut m = BTreeMap::new();
-                for p in &papers {
-                    *m.entry(format!("{:?}", p.source)).or_insert(0usize) += 1;
-                }
-                m
-            },
-            with_abstract: papers.iter().filter(|p| p.abstract_text.is_some()).count(),
-            with_doi: papers.iter().filter(|p| p.doi.is_some()).count(),
-            with_pdf: papers.iter().filter(|p| p.pdf_url.is_some()).count(),
-            with_citations: papers.iter().filter(|p| p.citation_count.is_some()).count(),
-            avg_citations: {
-                let cited: Vec<u64> = papers.iter().filter_map(|p| p.citation_count).collect();
-                if cited.is_empty() { 0.0 } else { cited.iter().sum::<u64>() as f64 / cited.len() as f64 }
-            },
-        };
-
-        // Save stats JSON to the DB directory
-        let stats_path = format!("{}/run-stats-{}.json", cli.db, now.format("%Y%m%d-%H%M%S"));
-        std::fs::write(&stats_path, serde_json::to_string_pretty(&stats)?)?;
-        println!("\nRun stats saved to {stats_path}");
-
-        // Print summary table
-        println!("\n\u{2554}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2557}");
-        println!("\u{2551}       Ingestion Summary              \u{2551}");
-        println!("\u{2560}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2563}");
-        println!("\u{2551} Total papers:     {:>6}             \u{2551}", stats.total_papers);
-        println!("\u{2551} Indexed:          {:>6}             \u{2551}", stats.papers_indexed);
-        println!("\u{2551} With abstract:    {:>6}             \u{2551}", stats.with_abstract);
-        println!("\u{2551} With DOI:         {:>6}             \u{2551}", stats.with_doi);
-        println!("\u{2551} With PDF:         {:>6}             \u{2551}", stats.with_pdf);
-        println!("\u{2551} With citations:   {:>6}             \u{2551}", stats.with_citations);
-        println!("\u{2551} Avg citations:    {:>6.1}             \u{2551}", stats.avg_citations);
-        println!("\u{2560}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2563}");
-        for (source, count) in &stats.by_source {
-            println!("\u{2551} {:.<20} {:>5}             \u{2551}", source, count);
-        }
-        println!("\u{255a}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{2550}\u{255d}");
-
-        // Chunk abstracts for fine-grained search
-        let chunk_config = ChunkerConfig {
-            chunk_size: 256,
-            overlap: 32,
-            min_size: 30,
-            strategy: ChunkStrategy::Sentence,
-        };
-
-        let mut all_chunks = Vec::new();
-        for paper in &papers {
-            if let Some(ref abstract_text) = paper.abstract_text {
-                if abstract_text.len() > chunk_config.min_size {
-                    let chunks = chunk_text(
-                        abstract_text,
-                        &paper.source_id,
-                        Some(chunk_config.clone()),
-                    );
-                    all_chunks.extend(chunks);
-                }
-            }
-        }
-
-        if !all_chunks.is_empty() {
-            println!(
-                "Chunking {} abstracts into {} chunks...",
-                papers.iter().filter(|p| p.abstract_text.is_some()).count(),
-                all_chunks.len()
-            );
-            let chunk_count = store.add_chunks_batched(&all_chunks, 512).await?;
-            println!("Indexed {chunk_count} abstract chunks");
-        }
     }
 
     Ok(())
@@ -463,34 +409,34 @@ async fn fetch_arxiv(from_str: &str, to_str: &str, limit: u32) -> Vec<PaperSumma
         };
 
         eprint!("  arXiv/{cat}...");
-        match arxiv.search_all(&query, limit).await {
-            Ok(resp) => {
-                eprintln!(" {} papers", resp.papers.len());
-                for p in resp.papers {
-                    papers.push(PaperSummary {
-                        title: p.title.replace('\n', " ").trim().to_string(),
-                        authors: p.authors.clone(),
-                        published: p.published[..10.min(p.published.len())].to_string(),
-                        categories: p.categories.clone(),
-                        primary_category: p
-                            .categories
-                            .first()
-                            .cloned()
-                            .unwrap_or_else(|| cat.to_string()),
-                        source: "arXiv".into(),
-                        source_id: base_arxiv_id(&p.arxiv_id).to_string(),
-                        pdf_url: p.pdf_url,
-                        doi: p.doi,
-                        citation_count: None,
-                        abstract_text: if p.summary.is_empty() {
-                            None
-                        } else {
-                            Some(p.summary)
-                        },
-                    });
-                }
+        let label = format!("arXiv/{cat}");
+        if let Some(resp) = retry(&label, 2, || arxiv.search_all(&query, limit)).await {
+            eprintln!(" {} papers", resp.papers.len());
+            for p in resp.papers {
+                papers.push(PaperSummary {
+                    title: p.title.replace('\n', " ").trim().to_string(),
+                    authors: p.authors.clone(),
+                    published: p.published[..10.min(p.published.len())].to_string(),
+                    categories: p.categories.clone(),
+                    primary_category: p
+                        .categories
+                        .first()
+                        .cloned()
+                        .unwrap_or_else(|| cat.to_string()),
+                    source: "arXiv".into(),
+                    source_id: base_arxiv_id(&p.arxiv_id).to_string(),
+                    pdf_url: p.pdf_url,
+                    doi: p.doi,
+                    citation_count: None,
+                    abstract_text: if p.summary.is_empty() {
+                        None
+                    } else {
+                        Some(p.summary)
+                    },
+                });
             }
-            Err(e) => eprintln!(" error: {e}, skipping"),
+        } else {
+            eprintln!(" skipping after retries exhausted");
         }
     }
 
@@ -592,7 +538,7 @@ async fn fetch_openalex(from_date: &str) -> Vec<PaperSummary> {
                     papers.push(PaperSummary {
                         title: rp.title,
                         authors: rp.authors,
-                        published: rp.year.map(|y| y.to_string()).unwrap_or_default(),
+                        published: rp.year.map(|y: u32| y.to_string()).unwrap_or_default(),
                         categories: rp.fields_of_study.unwrap_or_default(),
                         primary_category: "AI".into(),
                         source: "OpenAlex".into(),
@@ -626,19 +572,19 @@ async fn fetch_crossref(from_date: &str) -> Vec<PaperSummary> {
                 let items = resp
                     .message
                     .as_ref()
-                    .and_then(|m| m.items.as_ref())
+                    .and_then(|m: &research::crossref::CrossrefMessage| m.items.as_ref())
                     .cloned()
                     .unwrap_or_default();
                 eprintln!(" {} papers (since {from_date})", items.len());
                 for w in items {
-                    let rp: ResearchPaper = w.into();
+                    let rp: ResearchPaper = ResearchPaper::from(w);
                     if rp.title.is_empty() {
                         continue;
                     }
                     papers.push(PaperSummary {
                         title: rp.title,
                         authors: rp.authors,
-                        published: rp.year.map(|y| y.to_string()).unwrap_or_default(),
+                        published: rp.year.map(|y: u32| y.to_string()).unwrap_or_default(),
                         categories: vec![],
                         primary_category: "AI".into(),
                         source: "Crossref".into(),
@@ -665,12 +611,12 @@ async fn fetch_core(year: &str) -> Vec<PaperSummary> {
     let mut papers = Vec::new();
 
     for topic in AI_TOPICS.iter() {
-        // CORE doesn't support date filtering in API — use year in query
+        // CORE doesn't support date filtering in API — use year in query + client-side filter
         let query = format!("{topic} {year}");
         eprint!("  CORE/{topic}...");
         match client.search(&query, 50, 0).await {
             Ok(resp) => {
-                // Client-side year filter
+                // Client-side year filter (best we can do — CORE has no date API)
                 let recent: Vec<_> = resp
                     .results
                     .into_iter()
@@ -682,14 +628,14 @@ async fn fetch_core(year: &str) -> Vec<PaperSummary> {
                     .collect();
                 eprintln!(" {} papers", recent.len());
                 for w in recent {
-                    let rp: ResearchPaper = w.into();
+                    let rp: ResearchPaper = ResearchPaper::from(w);
                     if rp.title.is_empty() {
                         continue;
                     }
                     papers.push(PaperSummary {
                         title: rp.title,
                         authors: rp.authors,
-                        published: rp.year.map(|y| y.to_string()).unwrap_or_default(),
+                        published: rp.year.map(|y: u32| y.to_string()).unwrap_or_default(),
                         categories: vec![],
                         primary_category: "AI".into(),
                         source: "CORE".into(),
@@ -723,26 +669,25 @@ fn base_arxiv_id(id: &str) -> &str {
     }
 }
 
-/// Trigram (character 3-gram) similarity between two strings.
-/// Returns the Jaccard index of the trigram sets: |A ∩ B| / |A ∪ B|.
-fn trigram_similarity(a: &str, b: &str) -> f64 {
-    if a.len() < 3 || b.len() < 3 {
-        return if a == b { 1.0 } else { 0.0 };
+async fn retry<F, Fut, T, E>(name: &str, max_retries: u32, f: F) -> Option<T>
+where
+    F: Fn() -> Fut,
+    E: std::fmt::Display,
+    Fut: std::future::Future<Output = Result<T, E>>,
+{
+    for attempt in 0..=max_retries {
+        match f().await {
+            Ok(val) => return Some(val),
+            Err(e) => {
+                if attempt < max_retries {
+                    let delay = std::time::Duration::from_secs(2u64.pow(attempt));
+                    eprintln!("  {name}: attempt {}/{max_retries} failed ({e}), retrying in {delay:?}...", attempt + 1);
+                    tokio::time::sleep(delay).await;
+                } else {
+                    warn!("{name}: all {max_retries} retries exhausted: {e}");
+                }
+            }
+        }
     }
-    let trigrams = |s: &str| -> HashSet<&str> {
-        (0..s.len().saturating_sub(2))
-            .filter(|&i| s.is_char_boundary(i) && s.is_char_boundary(i + 3))
-            .map(|i| &s[i..i + 3])
-            .collect()
-    };
-    let a_tri = trigrams(a);
-    let b_tri = trigrams(b);
-    let intersection = a_tri.intersection(&b_tri).count();
-    let union_count = a_tri.union(&b_tri).count();
-    if union_count == 0 {
-        1.0
-    } else {
-        intersection as f64 / union_count as f64
-    }
+    None
 }
-

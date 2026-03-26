@@ -26,7 +26,7 @@ import {
   Shield,
   Server,
   Cpu,
-  HardDrive,
+
   RefreshCw,
   GitFork,
   Layers,
@@ -368,13 +368,13 @@ const matchingNodes: Node[] = [
     id: "resume-rag",
     type: "agent",
     position: { x: 240, y: 0 },
-    data: { label: "resume-rag", sublabel: "Workers AI embeddings", icon: Cpu, color: "var(--indigo-9)" },
+    data: { label: "resume-rag", sublabel: "Embedding generation", icon: Cpu, color: "var(--indigo-9)" },
   },
   {
     id: "d1-vectors",
     type: "dataStore",
     position: { x: 240, y: 110 },
-    data: { label: "Cloudflare D1", sublabel: "1024-dim vectors", icon: HardDrive, color: "var(--orange-9)" },
+    data: { label: "Neon PostgreSQL", sublabel: "1024-dim vectors", icon: Database, color: "var(--green-9)" },
   },
   {
     id: "job-matcher",
@@ -420,9 +420,8 @@ export function MatchingFlow() {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  *  4. DATABASE ARCHITECTURE FLOW
  *
- *  Hybrid database strategy: PostgreSQL (Neon) for transactional
- *  data via Drizzle ORM, Cloudflare D1 for vector storage.
- *  GraphQL sits in front of both.
+ *  PostgreSQL (Neon) for all application data via Drizzle ORM.
+ *  GraphQL sits in front.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const databaseNodes: Node[] = [
@@ -444,18 +443,6 @@ const databaseNodes: Node[] = [
     position: { x: 60, y: 210 },
     data: { label: "Neon PostgreSQL", sublabel: "jobs, contacts, campaigns", icon: Database, color: "var(--green-9)" },
   },
-  {
-    id: "d1-store",
-    type: "dataStore",
-    position: { x: 360, y: 210 },
-    data: { label: "Cloudflare D1", sublabel: "resume embeddings", icon: HardDrive, color: "var(--orange-9)" },
-  },
-  {
-    id: "workers-ai",
-    type: "agent",
-    position: { x: 360, y: 100 },
-    data: { label: "Workers AI", sublabel: "embedding generation", icon: Cpu, color: "var(--indigo-9)" },
-  },
 ];
 
 const databaseEdges: Edge[] = [
@@ -468,16 +455,6 @@ const databaseEdges: Edge[] = [
     id: "e-drizzle-neon", source: "drizzle", target: "neon-pg",
     ...edgeDefaults, label: "SQL + RLS",
     style: { ...edgeDefaults.style, stroke: "var(--green-8)" },
-  },
-  {
-    id: "e-gql-wai", source: "graphql", target: "workers-ai",
-    ...edgeDefaults, label: "embed requests",
-    style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" },
-  },
-  {
-    id: "e-wai-d1", source: "workers-ai", target: "d1-store",
-    ...edgeDefaults, label: "vectors",
-    style: { ...edgeDefaults.style, stroke: "var(--orange-8)" },
   },
 ];
 

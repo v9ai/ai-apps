@@ -1123,9 +1123,8 @@ type Mutation {
   mergeDuplicateContacts(companyId: Int!): MergeDuplicateContactsResult!
   previewEmail(input: PreviewEmailInput!): EmailPreview!
   """
-  Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
-  Calls the classify-jobs CF worker (POST) which runs DeepSeek-based classification
-  for remote-EU eligibility on every unclassified job.
+  Trigger classification/enhancement of all unprocessed jobs.
+  Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
   """
   processAllJobs(limit: Int): ProcessAllJobsResponse!
   pushLangSmithPrompt(input: PushLangSmithPromptInput, promptIdentifier: String!): String!
@@ -1201,7 +1200,7 @@ input PreviewEmailInput {
   subject: String!
 }
 
-"""Response from triggering the classify-jobs Cloudflare Worker"""
+"""Response from triggering job classification"""
 type ProcessAllJobsResponse {
   """Number of errors during ATS enhancement"""
   enhanceErrors: Int

@@ -68,17 +68,15 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 
 ## 5. Infrastructure, Deployment & DevOps
 
-**Purpose:** Deploy and maintain the application on Vercel + Cloudflare Workers with resilient data pipelines.
+**Purpose:** Deploy and maintain the application on Vercel with resilient data pipelines.
 
 ### Official Anthropic Skills
-- **Cloudflare Workers Deployment** — D1 Gateway, ashby-crawler (Rust/WASM), process-jobs (Python/LangGraph)
-- **Web Performance Auditing** (Cloudflare Team) — Job board page speed, Core Web Vitals monitoring
+- **Web Performance Auditing** — Job board page speed, Core Web Vitals monitoring
 
 ### Claude Code Subagents
-- **devops-engineer** (voltagent-infra) — CI/CD for Next.js + Workers, deployment orchestration
-- **deployment-engineer** (voltagent-infra) — Vercel + Cloudflare multi-environment setup, secrets management
+- **devops-engineer** (voltagent-infra) — CI/CD for Next.js, deployment orchestration
+- **deployment-engineer** (voltagent-infra) — Vercel multi-environment setup, secrets management
 - **platform-engineer** (voltagent-infra) — Observability (LangSmith), error tracking, log aggregation
-- **docker-expert** (voltagent-infra) — Containerize Python Workers if moving to non-CF platforms
 - **sre-engineer** (voltagent-infra) — Incident response, job classification failures, database connectivity issues
 
 ---
@@ -150,7 +148,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 ### Phase 2: AI Pipeline
 - [ ] **prompt-engineer**: Refine job classification prompts for "remote EU" signal detection
 - [ ] **nlm-architect**: Set up multi-LLM routing (Claude for classification, DeepSeek for cost, etc.)
-- [ ] **data-engineer**: Ingest jobs from ATS platforms using Cloudflare Cron + Queues
+- [ ] **data-engineer**: Ingest jobs from ATS platforms
 
 ### Phase 3: ML Evaluation
 - [ ] **nlp-engineer**: Extract remote work signals (keywords, timezone mentions, salary bands)

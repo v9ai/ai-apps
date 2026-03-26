@@ -584,6 +584,9 @@ mod tests {
             source,
             source_id: title.into(),
             fields_of_study: None,
+            published_date: None,
+            primary_category: None,
+            categories: None,
         }
     }
 
@@ -607,6 +610,9 @@ mod tests {
             source,
             source_id: title.into(),
             fields_of_study: fields,
+            published_date: None,
+            primary_category: None,
+            categories: None,
         }
     }
 
