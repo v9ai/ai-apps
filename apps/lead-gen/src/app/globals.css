@@ -88,6 +88,8 @@ nav a {
   color: var(--gray-11);
   text-decoration: none;
   text-transform: lowercase;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   transition: color 0.15s;
   padding: 5px 8px;
   display: block;
@@ -95,6 +97,12 @@ nav a {
 nav a:hover {
   color: var(--gray-12);
   background: var(--gray-3);
+}
+nav a[aria-current="page"],
+nav a.active {
+  color: var(--gray-12);
+  font-weight: 600;
+  letter-spacing: 0.015em;
 }
 
 /* ---------- flat rows (jobs, companies) ---------- */
@@ -116,6 +124,7 @@ nav a:hover {
 .yc-row-title {
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.4;
   color: var(--gray-12);
   margin: 0;
   white-space: nowrap;
@@ -124,6 +133,9 @@ nav a:hover {
 }
 .yc-row-meta {
   font-size: 12px;
+  font-weight: 450;
+  line-height: 1.5;
+  letter-spacing: 0.015em;
   color: var(--gray-11);
   white-space: nowrap;
 }
@@ -179,7 +191,11 @@ nav a:hover {
 /* ---------- badges (skill tags, status) ---------- */
 .yc-badge {
   font-size: 11px;
-  padding: 1px 6px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+  line-height: 1;
+  padding: 3px 6px;
   border: 1px solid var(--gray-6);
   background: transparent;
   color: var(--gray-11);
@@ -238,6 +254,7 @@ nav a:hover {
   border-radius: 0 !important;
   box-shadow: none !important;
   text-transform: lowercase !important;
+  letter-spacing: 0.04em !important;
 }
 
 /* primary variant → accent */
@@ -266,6 +283,10 @@ nav a:hover {
 .rt-Badge {
   border-radius: 0 !important;
   font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: lowercase !important;
+  line-height: 1 !important;
 }
 
 /* flatten text fields */
@@ -623,4 +644,29 @@ nav a:hover {
 .collapsible-body .rt-IconButton svg,
 [data-state="open"] > svg {
   transition: transform 0.25s ease;
+}
+
+/* ---------- responsive landing hero typography ---------- */
+@media (max-width: 640px) {
+  .landing-hero-section {
+    padding-top: 40px !important;
+    padding-bottom: 40px !important;
+  }
+  .landing-hero-headline {
+    font-size: clamp(1.5rem, 4.5vw + 0.5rem, 3.75rem) !important;
+    line-height: 1.15 !important;
+  }
+  .landing-hero-subheadline {
+    font-size: 1.0625rem !important;
+    line-height: 1.7 !important;
+  }
+  .landing-hero-stat-value {
+    font-size: 1.25rem !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 968px) {
+  .landing-hero-headline {
+    line-height: 1.12 !important;
+  }
 }
