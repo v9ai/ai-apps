@@ -30,12 +30,6 @@ export function AdminNav() {
           contacts
         </Flex>
       </NavLink>
-      <NavLink href="/admin/opportunities" title="Opportunities">
-        <Flex align="center" gap="2">
-          <TargetIcon width={14} height={14} />
-          opportunities
-        </Flex>
-      </NavLink>
       <NavLink href="/admin/tasks" title="Tasks">
         <Flex align="center" gap="2">
           <CheckboxIcon width={14} height={14} />

@@ -638,44 +638,6 @@ export const contactEmails = pgTable(
 export type ContactEmail = typeof contactEmails.$inferSelect;
 export type NewContactEmail = typeof contactEmails.$inferInsert;
 
-// Opportunities — personal job pipeline tracker (sourced from CRM)
-export const opportunities = pgTable(
-  "opportunities",
-  {
-    id: text("id").primaryKey(), // opp_<timestamp>_<random>
-    title: text("title").notNull(),
-    url: text("url"),
-    source: text("source"),
-    status: text("status").notNull().default("open"), // open | applied | rejected | offer | closed
-    reward_usd: real("reward_usd"),
-    reward_text: text("reward_text"),
-    start_date: text("start_date"),
-    end_date: text("end_date"),
-    deadline: text("deadline"),
-    first_seen: text("first_seen"),
-    last_seen: text("last_seen"),
-    score: integer("score"),
-    raw_context: text("raw_context"),
-    metadata: text("metadata"), // JSON
-    applied: boolean("applied").notNull().default(false),
-    applied_at: text("applied_at"),
-    application_status: text("application_status"),
-    application_notes: text("application_notes"),
-    tags: text("tags"), // JSON array
-    company_id: integer("company_id").references(() => companies.id),
-    contact_id: integer("contact_id").references(() => contacts.id),
-    created_at: text("created_at").notNull().default(sql`now()::text`),
-    updated_at: text("updated_at").notNull().default(sql`now()::text`),
-  },
-  (t) => ({
-    idxOppStatus: index("idx_opportunities_status").on(t.status),
-    idxOppCompany: index("idx_opportunities_company_id").on(t.company_id),
-    idxOppContact: index("idx_opportunities_contact_id").on(t.contact_id),
-  }),
-);
-
-export type Opportunity = typeof opportunities.$inferSelect;
-export type NewOpportunity = typeof opportunities.$inferInsert;
 
 // Resumes (skill profile uploads)
 export const resumes = pgTable("resumes", {

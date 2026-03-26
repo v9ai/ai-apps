@@ -1,30 +1,24 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { Container, Heading, Button, Flex, Text, Box, Card, Skeleton, Tabs } from "@radix-ui/themes";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import { ApplicationHeader } from "@/components/app-detail/ApplicationHeader";
-import { JobDescriptionTab } from "@/components/app-detail/JobDescriptionTab";
-import { TechStackTab } from "@/components/app-detail/TechStackTab";
 import { InterviewPrepTab } from "@/components/app-detail/InterviewPrepTab";
 import type { AppData } from "@/components/app-detail/types";
 
-const TAB_VALUES = ["description", "tech", "prep"] as const;
-type TabValue = (typeof TAB_VALUES)[number];
-
-function ApplicationDetailInner() {
+function PrepPageInner() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { data: session, isPending } = useSession();
 
   const [app, setApp] = useState<AppData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isAdmin = true; // All authenticated users can edit their own applications
+  const isAdmin = true;
 
   useEffect(() => {
     if (!isPending && !session?.user) {
@@ -45,35 +39,14 @@ function ApplicationDetailInner() {
     }
   }, [session, params.id]);
 
-  // Tab state persisted to URL
-  const rawTab = searchParams.get("tab") ?? "description";
-  const activeTab: TabValue = TAB_VALUES.includes(rawTab as TabValue) ? (rawTab as TabValue) : "description";
-  const setActiveTab = useCallback(
+  const handleTabChange = useCallback(
     (tab: string) => {
-      if (tab === "prep") {
-        router.push(`/applications/${params.id}/prep`);
-        return;
+      if (tab !== "prep") {
+        router.push(`/applications/${params.id}?tab=${tab}`);
       }
-      const url = new URL(window.location.href);
-      url.searchParams.set("tab", tab);
-      router.replace(url.pathname + url.search, { scroll: false });
     },
     [router, params.id],
   );
-
-  // Keyboard shortcuts 1-3 to switch tabs
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      const idx = Number(e.key) - 1;
-      if (idx >= 0 && idx < TAB_VALUES.length) {
-        setActiveTab(TAB_VALUES[idx]);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [setActiveTab]);
 
   if (isPending || !session?.user) return null;
 
@@ -93,7 +66,6 @@ function ApplicationDetailInner() {
           <Flex direction="column" align="center" gap="4" p="6">
             <Heading size="5">Error Loading Application</Heading>
             <Text color="gray">{error}</Text>
-            <Button onClick={() => window.location.reload()}>Retry</Button>
           </Flex>
         </Card>
       </Container>
@@ -120,7 +92,7 @@ function ApplicationDetailInner() {
     <Container size="3" p={{ initial: "4", md: "8" }}>
       <ApplicationHeader app={app} isAdmin={isAdmin} onUpdate={setApp} />
 
-      <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+      <Tabs.Root value="prep" onValueChange={handleTabChange}>
         <Tabs.List style={{ borderBottom: "1px solid var(--gray-6)" }}>
           <Tabs.Trigger value="description">
             <Flex direction="column" align="center" gap="0">
@@ -143,11 +115,8 @@ function ApplicationDetailInner() {
         </Tabs.List>
 
         <Box pt="4">
-          <Tabs.Content value="description">
-            <JobDescriptionTab app={app} isAdmin={isAdmin} onUpdate={setApp} />
-          </Tabs.Content>
-          <Tabs.Content value="tech">
-            <TechStackTab app={app} isAdmin={isAdmin} />
+          <Tabs.Content value="prep">
+            <InterviewPrepTab app={app} isAdmin={isAdmin} />
           </Tabs.Content>
         </Box>
       </Tabs.Root>
@@ -155,7 +124,7 @@ function ApplicationDetailInner() {
   );
 }
 
-export default function ApplicationDetailPage() {
+export default function PrepPage() {
   return (
     <Suspense fallback={
       <Container size="3" p="8">
@@ -163,7 +132,7 @@ export default function ApplicationDetailPage() {
         <Skeleton height="400px" />
       </Container>
     }>
-      <ApplicationDetailInner />
+      <PrepPageInner />
     </Suspense>
   );
 }

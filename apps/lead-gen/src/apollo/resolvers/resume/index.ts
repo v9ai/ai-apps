@@ -17,7 +17,6 @@ export const resumeResolvers = {
       context: any,
     ) {
       if (!context.userId) throw new Error("Unauthorized");
-      // Scoring removed (was backed by Langfuse)
       return false;
     },
 

@@ -6,7 +6,6 @@ import {
   contacts,
   contactEmails,
   blockedCompanies,
-  opportunities,
 } from "@/db/schema";
 import { eq, and, or, like, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
@@ -985,16 +984,11 @@ export const companyResolvers = {
           })
           .where(eq(companies.id, primary.id));
 
-        // Reassign contacts, opportunities, contact_emails from duplicates to primary
+        // Reassign contacts, contact_emails from duplicates to primary
         await context.db
           .update(contacts)
           .set({ company_id: primary.id, updated_at: new Date().toISOString() })
           .where(inArray(contacts.company_id, duplicateIds));
-
-        await context.db
-          .update(opportunities)
-          .set({ company_id: primary.id, updated_at: new Date().toISOString() })
-          .where(inArray(opportunities.company_id, duplicateIds));
 
         await context.db
           .update(contactEmails)
