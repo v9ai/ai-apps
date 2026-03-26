@@ -5,7 +5,7 @@ edition = "2021"
 description = "Shared research infrastructure: Semantic Scholar client, DeepSeek + Qwen dual-model agent framework, and paper search tools"
 
 [features]
-default = []
+default = ["local-vector"]
 local-vector = [
     "dep:candle-core",
     "dep:candle-nn",
@@ -149,4 +149,3 @@ path = "src/bin/scrapus_research.rs"
 [[bin]]
 name = "last-week"
 path = "src/bin/last_week.rs"
-required-features = ["local-vector"]
