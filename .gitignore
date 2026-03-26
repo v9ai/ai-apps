@@ -18,3 +18,10 @@ public/dist
 __pycache__/
 *.egg-info/
 .langgraph_api/
+
+# Binary data / generated databases
+*.wal
+*.dat
+*.bpt
+*.pages
+paper-discovery-db/
