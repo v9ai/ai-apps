@@ -1,3 +1,4 @@
+use chrono::Datelike;
 use serial_test::serial;
 
 use research::core_api::CoreClient;
@@ -133,4 +134,136 @@ async fn search_result_fields_populated() {
     for work in &resp.results {
         assert!(work.title.is_some(), "expected title on search result");
     }
+}
+
+// ── Date enforcement ─────────────────────────────────────────────────
+
+#[tokio::test]
+#[serial]
+async fn search_results_have_year_published() {
+    let client = CoreClient::new(None);
+    let resp = core_search_with_retry(&client, "machine learning 2025", 10, 0)
+        .await
+        .unwrap();
+
+    assert!(!resp.results.is_empty(), "expected results");
+
+    let with_year = resp
+        .results
+        .iter()
+        .filter(|w| w.year_published.is_some())
+        .count();
+    let ratio = with_year as f64 / resp.results.len() as f64;
+    assert!(
+        ratio >= 0.5,
+        "expected at least 50% of results to have year_published, got {:.0}% ({}/{})",
+        ratio * 100.0,
+        with_year,
+        resp.results.len(),
+    );
+
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+}
+
+#[tokio::test]
+#[serial]
+async fn year_published_is_reasonable() {
+    let client = CoreClient::new(None);
+    let resp = core_search_with_retry(&client, "natural language processing", 10, 0)
+        .await
+        .unwrap();
+
+    let current_year = chrono::Utc::now().year() as u32;
+
+    for work in &resp.results {
+        if let Some(year) = work.year_published {
+            assert!(
+                (1900..=current_year + 1).contains(&year),
+                "year_published {} is outside reasonable range 1900..={}",
+                year,
+                current_year + 1,
+            );
+        }
+    }
+
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+}
+
+#[tokio::test]
+#[serial]
+async fn client_side_year_filter_works() {
+    let client = CoreClient::new(None);
+    let resp = core_search_with_retry(&client, "large language models", 10, 0)
+        .await
+        .unwrap();
+
+    let filtered: Vec<_> = resp
+        .results
+        .iter()
+        .filter(|w| w.year_published.map_or(false, |y| y >= 2025))
+        .collect();
+
+    // Every item that passed the filter must satisfy the condition.
+    for work in &filtered {
+        let year = work.year_published.unwrap();
+        assert!(
+            year >= 2025,
+            "client-side filter leaked a paper with year_published = {}",
+            year,
+        );
+    }
+
+    // Informational: how many passed (not a hard failure if zero — CORE may
+    // not have 2025 papers for every query, but the filter itself must be correct).
+    eprintln!(
+        "client_side_year_filter_works: {}/{} results had year_published >= 2025",
+        filtered.len(),
+        resp.results.len(),
+    );
+
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+}
+
+#[tokio::test]
+#[serial]
+async fn search_with_year_in_query_improves_relevance() {
+    let client = CoreClient::new(None);
+
+    let with_year = core_search_with_retry(&client, "deep learning 2026", 10, 0)
+        .await
+        .unwrap();
+
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+
+    let without_year = core_search_with_retry(&client, "deep learning", 10, 0)
+        .await
+        .unwrap();
+
+    fn avg_year(results: &[research::core_api::CoreWork]) -> f64 {
+        let years: Vec<f64> = results
+            .iter()
+            .filter_map(|w| w.year_published.map(|y| y as f64))
+            .collect();
+        if years.is_empty() {
+            return 0.0;
+        }
+        years.iter().sum::<f64>() / years.len() as f64
+    }
+
+    let avg_with = avg_year(&with_year.results);
+    let avg_without = avg_year(&without_year.results);
+
+    eprintln!(
+        "search_with_year_in_query_improves_relevance: avg year with='2026' in query: {:.1}, without: {:.1}",
+        avg_with, avg_without,
+    );
+
+    // The year-in-query search should yield an equal or higher average year.
+    // We allow a small tolerance (the year query should not make things *worse*).
+    assert!(
+        avg_with >= avg_without - 1.0,
+        "year-in-query average ({:.1}) should not be significantly worse than baseline ({:.1})",
+        avg_with,
+        avg_without,
+    );
 }

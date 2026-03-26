@@ -60,7 +60,6 @@ const STRUCTURED_OUTPUT_PATTERNS = [
 
 const GROUNDING_EXEMPT_PATHS = [
   "scripts/bm25-skills.ts",
-  "src/agents/cloudflare-workers-ai.ts",
 ];
 
 const PROVENANCE_FIELDS = ["confidence", "reason", "source", "evidence"];

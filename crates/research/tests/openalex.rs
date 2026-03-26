@@ -146,3 +146,108 @@ async fn work_fields_populated() {
     assert!(work.publication_year.is_some(), "expected publication_year");
     assert!(work.cited_by_count.is_some(), "expected cited_by_count");
 }
+
+// ── Date enforcement ────────────────────────────────────────────────
+
+#[tokio::test]
+#[serial]
+async fn search_results_have_publication_year() {
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+
+    let client = OpenAlexClient::new(None);
+    let resp = client.search("deep learning", 1, 10).await.unwrap();
+
+    assert!(!resp.results.is_empty(), "expected results");
+    let with_year = resp
+        .results
+        .iter()
+        .filter(|w| w.publication_year.is_some())
+        .count();
+    let ratio = with_year as f64 / resp.results.len() as f64;
+    assert!(
+        ratio >= 0.8,
+        "expected >= 80% of results to have publication_year, got {:.0}% ({}/{})",
+        ratio * 100.0,
+        with_year,
+        resp.results.len()
+    );
+}
+
+#[tokio::test]
+#[serial]
+async fn search_results_publication_year_is_reasonable() {
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+
+    let current_year = chrono::Utc::now().year() as u32;
+    let client = OpenAlexClient::new(None);
+    let resp = client.search("deep learning", 1, 10).await.unwrap();
+
+    for work in &resp.results {
+        if let Some(year) = work.publication_year {
+            assert!(
+                (1900..=current_year + 1).contains(&year),
+                "publication_year {} is outside [1900, {}] for work {:?}",
+                year,
+                current_year + 1,
+                work.title
+            );
+        }
+    }
+}
+
+#[tokio::test]
+#[serial]
+async fn client_side_year_filter_works() {
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+
+    let client = OpenAlexClient::new(None);
+    let resp = client.search("large language model", 1, 25).await.unwrap();
+
+    let filtered: Vec<_> = resp
+        .results
+        .iter()
+        .filter(|w| w.publication_year.map_or(false, |y| y >= 2025))
+        .collect();
+
+    // There should be at least some recent papers on this hot topic
+    assert!(
+        !filtered.is_empty(),
+        "expected at least one work with year >= 2025"
+    );
+    for work in &filtered {
+        let year = work.publication_year.unwrap();
+        assert!(
+            year >= 2025,
+            "filtered work has year {} < 2025: {:?}",
+            year,
+            work.title
+        );
+    }
+}
+
+#[tokio::test]
+#[serial]
+async fn publication_date_field_format() {
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+
+    let client = OpenAlexClient::new(None);
+    let resp = client.search("deep learning", 1, 10).await.unwrap();
+
+    let date_re = regex::Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
+    let mut checked = 0;
+    for work in &resp.results {
+        if let Some(ref date) = work.publication_date {
+            assert!(
+                date_re.is_match(date),
+                "publication_date '{}' does not match YYYY-MM-DD for work {:?}",
+                date,
+                work.title
+            );
+            checked += 1;
+        }
+    }
+    assert!(
+        checked > 0,
+        "expected at least one work to have a publication_date"
+    );
+}

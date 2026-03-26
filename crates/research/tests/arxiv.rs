@@ -190,3 +190,155 @@ fn assert_titles_contain(papers: &[ArxivPaper], needle: &str) {
         papers.iter().map(|p| &p.title).collect::<Vec<_>>()
     );
 }
+
+// ── Date enforcement tests ────────────────────────────────────────
+
+use chrono::{Datelike, Duration, NaiveDate, Utc};
+use research::arxiv::types::{ArxivCategory, DateRange, SearchQuery, SortBy, SortOrder};
+
+#[test]
+fn date_range_validation() {
+    // Valid 8-digit dates succeed
+    assert!(DateRange::new("20240101", "20240630").is_ok());
+
+    // Valid 12-digit (YYYYMMDDHHmm) dates succeed
+    assert!(DateRange::new("202401010000", "202406301200").is_ok());
+
+    // Wildcard dates succeed
+    assert!(DateRange::new("*", "20240630").is_ok());
+    assert!(DateRange::new("20240101", "*").is_ok());
+    assert!(DateRange::new("*", "*").is_ok());
+
+    // Invalid format: dashes are rejected
+    assert!(
+        DateRange::new("2024-01-01", "2024-06-30").is_err(),
+        "dates with dashes should be rejected"
+    );
+
+    // Invalid format: wrong length
+    assert!(
+        DateRange::new("2024010", "20240630").is_err(),
+        "7-digit date should be rejected"
+    );
+    assert!(
+        DateRange::new("202401011", "20240630").is_err(),
+        "9-digit date should be rejected"
+    );
+
+    // Invalid format: non-digit characters
+    assert!(
+        DateRange::new("2024ABCD", "20240630").is_err(),
+        "non-digit characters should be rejected"
+    );
+
+    // Invalid format: empty string
+    assert!(
+        DateRange::new("", "20240630").is_err(),
+        "empty string should be rejected"
+    );
+
+    // Note: DateRange::new does not validate end < start semantically —
+    // it only checks format. This is by design (the arXiv API handles ordering).
+}
+
+#[tokio::test]
+#[serial]
+async fn search_with_date_range_returns_recent_papers() {
+    let client = ArxivClient::new();
+
+    let today = Utc::now().date_naive();
+    let from_date = today - Duration::days(30);
+
+    let from_str = from_date.format("%Y%m%d").to_string();
+    let to_str = today.format("%Y%m%d").to_string();
+
+    let date_range = DateRange::new(&from_str, &to_str).expect("valid date range");
+
+    let query = SearchQuery::new()
+        .category(ArxivCategory::CsAI)
+        .date_range(date_range)
+        .sort_by(SortBy::SubmittedDate)
+        .sort_order(SortOrder::Descending)
+        .max_results(5);
+
+    let resp = client.search_advanced(&query).await.unwrap();
+
+    // arXiv might return 0 results on some days for narrow date windows,
+    // but if we get results, verify they are within the expected range.
+    if !resp.papers.is_empty() {
+        // Allow 7-day grace period for arXiv indexing lag
+        let earliest_allowed = from_date - Duration::days(7);
+
+        for paper in &resp.papers {
+            // Published field is ISO 8601: "2024-03-15T12:00:00Z"
+            let pub_date_str = &paper.published;
+            let parsed = NaiveDate::parse_from_str(
+                &pub_date_str[..10],
+                "%Y-%m-%d",
+            );
+            assert!(
+                parsed.is_ok(),
+                "could not parse published date '{}' for paper '{}'",
+                pub_date_str,
+                paper.title
+            );
+            let pub_date = parsed.unwrap();
+            assert!(
+                pub_date >= earliest_allowed,
+                "paper '{}' published on {} is before the allowed earliest date {} \
+                 (from_date={}, 7-day grace)",
+                paper.title,
+                pub_date,
+                earliest_allowed,
+                from_date,
+            );
+        }
+    }
+}
+
+#[tokio::test]
+#[serial]
+async fn search_results_published_field_is_valid_date() {
+    let client = ArxivClient::new();
+
+    let resp = client
+        .search("machine learning", 0, 5, Some("submittedDate"), Some("descending"))
+        .await
+        .unwrap();
+
+    assert!(
+        !resp.papers.is_empty(),
+        "expected at least one paper for 'machine learning'"
+    );
+
+    for paper in &resp.papers {
+        let pub_str = &paper.published;
+
+        // Must be at least 10 characters for YYYY-MM-DD prefix
+        assert!(
+            pub_str.len() >= 10,
+            "published field '{}' is too short to contain a date for paper '{}'",
+            pub_str,
+            paper.title,
+        );
+
+        // The first 10 chars must parse as a valid YYYY-MM-DD date
+        let parsed = NaiveDate::parse_from_str(&pub_str[..10], "%Y-%m-%d");
+        assert!(
+            parsed.is_ok(),
+            "published field '{}' does not start with a valid YYYY-MM-DD date for paper '{}': {:?}",
+            pub_str,
+            paper.title,
+            parsed.err(),
+        );
+
+        // Sanity: year should be between 1990 and 2030
+        let date = parsed.unwrap();
+        assert!(
+            date.year() >= 1990 && date.year() <= 2030,
+            "published date {} has implausible year for paper '{}'",
+            date,
+            paper.title,
+        );
+    }
+}
