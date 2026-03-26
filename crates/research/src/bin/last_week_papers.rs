@@ -453,8 +453,9 @@ async fn fetch_scholar(year: &str, from_date: &str) -> Vec<PaperSummary> {
 
     for topic in AI_TOPICS {
         eprint!("  S2/{topic}...");
-        match client
-            .search_bulk(
+        let label = format!("S2/{topic}");
+        let resp_opt = retry(&label, 2, || {
+            client.search_bulk(
                 topic,
                 SEARCH_FIELDS,
                 Some(&year_filter),
@@ -462,9 +463,11 @@ async fn fetch_scholar(year: &str, from_date: &str) -> Vec<PaperSummary> {
                 Some("publicationDate:desc"),
                 100,
             )
-            .await
-        {
-            Ok(resp) => {
+        })
+        .await;
+
+        match resp_opt {
+            Some(resp) => {
                 let total = resp.data.len();
                 // Client-side date filter: only keep papers with publication_date >= from_date
                 let recent: Vec<_> = resp
@@ -503,8 +506,9 @@ async fn fetch_scholar(year: &str, from_date: &str) -> Vec<PaperSummary> {
                     });
                 }
             }
-            Err(e) => {
-                eprintln!(" error: {e}");
+            None => {
+                eprintln!(" skipping after retries exhausted");
+                // S2 rate-limits aggressively — wait before next topic
                 tokio::time::sleep(std::time::Duration::from_secs(5)).await;
             }
         }
@@ -526,31 +530,31 @@ async fn fetch_openalex(from_date: &str) -> Vec<PaperSummary> {
     for topic in AI_TOPICS.iter() {
         eprint!("  OpenAlex/{topic}...");
         // Server-side date filter via from_publication_date API param
-        match client.search_filtered(topic, Some(from_date), 1, 100).await {
-            Ok(resp) => {
-                eprintln!(" {} papers (since {from_date})", resp.results.len());
-                for w in resp.results {
-                    let title = w.title.clone().unwrap_or_default();
-                    if title.is_empty() {
-                        continue;
-                    }
-                    let rp: ResearchPaper = w.into();
-                    papers.push(PaperSummary {
-                        title: rp.title,
-                        authors: rp.authors,
-                        published: rp.year.map(|y: u32| y.to_string()).unwrap_or_default(),
-                        categories: rp.fields_of_study.unwrap_or_default(),
-                        primary_category: "AI".into(),
-                        source: "OpenAlex".into(),
-                        source_id: rp.source_id,
-                        pdf_url: rp.pdf_url,
-                        doi: rp.doi,
-                        citation_count: rp.citation_count,
-                        abstract_text: rp.abstract_text,
-                    });
+        let label = format!("OpenAlex/{topic}");
+        if let Some(resp) = retry(&label, 2, || client.search_filtered(topic, Some(from_date), 1, 100)).await {
+            eprintln!(" {} papers (since {from_date})", resp.results.len());
+            for w in resp.results {
+                let title = w.title.clone().unwrap_or_default();
+                if title.is_empty() {
+                    continue;
                 }
+                let rp: ResearchPaper = w.into();
+                papers.push(PaperSummary {
+                    title: rp.title,
+                    authors: rp.authors,
+                    published: rp.year.map(|y: u32| y.to_string()).unwrap_or_default(),
+                    categories: rp.fields_of_study.unwrap_or_default(),
+                    primary_category: "AI".into(),
+                    source: "OpenAlex".into(),
+                    source_id: rp.source_id,
+                    pdf_url: rp.pdf_url,
+                    doi: rp.doi,
+                    citation_count: rp.citation_count,
+                    abstract_text: rp.abstract_text,
+                });
             }
-            Err(e) => eprintln!(" error: {e}"),
+        } else {
+            eprintln!(" skipping after retries exhausted");
         }
     }
 
@@ -567,36 +571,36 @@ async fn fetch_crossref(from_date: &str) -> Vec<PaperSummary> {
     for topic in AI_TOPICS.iter() {
         eprint!("  Crossref/{topic}...");
         // Server-side date filter via from-pub-date API param
-        match client.search_filtered(topic, Some(from_date), 100, 0).await {
-            Ok(resp) => {
-                let items = resp
-                    .message
-                    .as_ref()
-                    .and_then(|m: &research::crossref::CrossrefMessage| m.items.as_ref())
-                    .cloned()
-                    .unwrap_or_default();
-                eprintln!(" {} papers (since {from_date})", items.len());
-                for w in items {
-                    let rp: ResearchPaper = ResearchPaper::from(w);
-                    if rp.title.is_empty() {
-                        continue;
-                    }
-                    papers.push(PaperSummary {
-                        title: rp.title,
-                        authors: rp.authors,
-                        published: rp.year.map(|y: u32| y.to_string()).unwrap_or_default(),
-                        categories: vec![],
-                        primary_category: "AI".into(),
-                        source: "Crossref".into(),
-                        source_id: rp.source_id,
-                        pdf_url: rp.pdf_url,
-                        doi: rp.doi,
-                        citation_count: rp.citation_count,
-                        abstract_text: rp.abstract_text,
-                    });
+        let label = format!("Crossref/{topic}");
+        if let Some(resp) = retry(&label, 2, || client.search_filtered(topic, Some(from_date), 100, 0)).await {
+            let items = resp
+                .message
+                .as_ref()
+                .and_then(|m: &research::crossref::CrossrefMessage| m.items.as_ref())
+                .cloned()
+                .unwrap_or_default();
+            eprintln!(" {} papers (since {from_date})", items.len());
+            for w in items {
+                let rp: ResearchPaper = ResearchPaper::from(w);
+                if rp.title.is_empty() {
+                    continue;
                 }
+                papers.push(PaperSummary {
+                    title: rp.title,
+                    authors: rp.authors,
+                    published: rp.year.map(|y: u32| y.to_string()).unwrap_or_default(),
+                    categories: vec![],
+                    primary_category: "AI".into(),
+                    source: "Crossref".into(),
+                    source_id: rp.source_id,
+                    pdf_url: rp.pdf_url,
+                    doi: rp.doi,
+                    citation_count: rp.citation_count,
+                    abstract_text: rp.abstract_text,
+                });
             }
-            Err(e) => eprintln!(" error: {e}"),
+        } else {
+            eprintln!(" skipping after retries exhausted");
         }
     }
 
