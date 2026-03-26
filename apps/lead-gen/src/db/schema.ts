@@ -485,36 +485,6 @@ export const userPreferences = pgTable(
 export type UserPreference = typeof userPreferences.$inferSelect;
 export type NewUserPreference = typeof userPreferences.$inferInsert;
 
-// Applications
-export const applications = pgTable("applications", {
-  id: serial("id").primaryKey(),
-  user_email: text("user_email").notNull(), // User's email address
-  job_id: text("job_id"), // Job URL
-  resume_url: text("resume_url"), // Store uploaded resume URL
-  questions: text("questions"), // JSON array of {questionId, questionText, answerText}
-  status: text("status", {
-    enum: ["pending", "submitted", "reviewed", "rejected", "accepted"],
-  })
-    .notNull()
-    .default("pending"),
-  notes: text("notes"), // Free-text notes on this application
-  job_title: text("job_title"), // Denormalized job title for display
-  company_name: text("company_name"), // Denormalized company name for display
-  job_description: text("job_description"), // User-supplied job description override
-  ai_interview_questions: text("ai_interview_questions"), // AI-generated interview prep (markdown)
-  tech_dismissed_tags: text("tech_dismissed_tags"), // JSON array of dismissed tech tags, e.g. ["webpack","jest"]
-  ai_tech_stack: text("ai_tech_stack"), // JSON array of LLM-extracted techs, e.g. [{"tag":"react","label":"React","category":"Frontend Frameworks","relevance":"primary"}]
-  created_at: text("created_at")
-    .notNull()
-    .default(sql`now()::text`),
-  updated_at: text("updated_at")
-    .notNull()
-    .default(sql`now()::text`),
-});
-
-export type Application = typeof applications.$inferSelect;
-export type NewApplication = typeof applications.$inferInsert;
-
 // Job report audit log (written by job-reporter-llm worker)
 export const jobReportEvents = pgTable(
   "job_report_events",

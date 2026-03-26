@@ -4,7 +4,6 @@ import {
   ExclamationTriangleIcon,
   EnvelopeClosedIcon,
   PersonIcon,
-  TargetIcon,
   CheckboxIcon,
   Cross2Icon,
 } from "@radix-ui/react-icons";

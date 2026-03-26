@@ -224,7 +224,6 @@ type Company {
   snapshots(limit: Int, offset: Int): [CompanySnapshot!]!
   snapshots_count: Int!
   contacts: [Contact!]!
-  opportunities: [Opportunity!]!
 }
 
 type CompaniesResponse {

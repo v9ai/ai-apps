@@ -23,12 +23,6 @@ export async function classifyJobForRemoteEU(input: {
   };
 }
 
-// Export SQL agent for database queries
-export { sqlAgent } from "./sql";
-
-// Export SQL generation agent for database operations
-export { sqlGenerationAgent } from "./sql-generation-agent";
-
 // Export admin assistant for ops control plane
 export { adminAssistantAgent } from "./admin-assistant";
 

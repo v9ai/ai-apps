@@ -3,7 +3,6 @@
    Jobs search bar with debouncing
    - Full-text search with debouncing
    - Clean, focused interface
-   - SQL Query functionality moved to SqlQueryInterface component
    ========================================================= */
 
 "use client";

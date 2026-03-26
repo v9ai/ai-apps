@@ -13,8 +13,6 @@ extend type Query {
   ): JobsResponse!
   job(id: String!): Job
   userSettings(userId: String!): UserSettings
-  textToSql(question: String!): TextToSqlResult!
-  executeSql(sql: String!): TextToSqlResult!
 }
 
 extend type Mutation {
@@ -303,14 +301,6 @@ input UserSettingsInput {
   excluded_companies: [String!]
   dark_mode: Boolean
   jobs_per_page: Int
-}
-
-type TextToSqlResult {
-  sql: String!
-  explanation: String
-  columns: [String!]!
-  rows: [[JSON]]!
-  drilldownSearchQuery: String
 }
 
 type DeleteJobResponse {
