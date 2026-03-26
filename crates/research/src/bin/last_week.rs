@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use anyhow::{Context, Result};
 use chrono::{Duration, Utc};
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use futures::future::join_all;
 use serde::Serialize;
 use tokio::task::JoinHandle;
@@ -46,69 +46,63 @@ const AUTHORS_OUT_DIR: &str = "research-output/last-week-authors";
     about = "Last week's AI research: paper discovery and author tracking"
 )]
 struct Cli {
-    #[command(subcommand)]
-    command: Command,
-}
+    /// Run author tracking mode instead of paper discovery
+    #[arg(long)]
+    authors: bool,
 
-#[derive(Subcommand)]
-enum Command {
-    /// Fetch last week's AI papers from arXiv, Semantic Scholar, OpenAlex, Crossref, and CORE
-    Papers {
-        /// Look-back window in days
-        #[arg(long, default_value_t = 7)]
-        days: u32,
+    // ── Paper args ──────────────────────────────────────────────────
+    /// Look-back window in days
+    #[arg(long, default_value_t = 7)]
+    days: u32,
 
-        /// Max papers per arXiv category
-        #[arg(long, default_value_t = 500)]
-        limit: u32,
+    /// Max papers per arXiv category
+    #[arg(long, default_value_t = 500)]
+    limit: u32,
 
-        /// Output as JSON
-        #[arg(long)]
-        json: bool,
+    /// Output as JSON
+    #[arg(long)]
+    json: bool,
 
-        /// Skip persisting to LanceDB (papers are stored by default)
-        #[arg(long)]
-        no_store: bool,
+    /// Skip persisting to LanceDB (papers are stored by default)
+    #[arg(long)]
+    no_store: bool,
 
-        /// LanceDB storage path
-        #[arg(long, default_value = "paper-discovery-db")]
-        db: String,
+    /// LanceDB storage path
+    #[arg(long, default_value = "paper-discovery-db")]
+    db: String,
 
-        /// Batch size for LanceDB ingestion (bounded memory)
-        #[arg(long, default_value_t = 256)]
-        batch_size: usize,
+    /// Batch size for LanceDB ingestion (bounded memory)
+    #[arg(long, default_value_t = 256)]
+    batch_size: usize,
 
-        /// Sources to fetch from (comma-separated: arxiv,scholar,openalex,crossref,core)
-        #[arg(long, default_value = "arxiv,scholar,openalex,crossref,core")]
-        sources: String,
+    /// Sources to fetch from (comma-separated: arxiv,scholar,openalex,crossref,core)
+    #[arg(long, default_value = "arxiv,scholar,openalex,crossref,core")]
+    sources: String,
 
-        /// Search existing papers instead of fetching new ones
-        #[arg(long)]
-        query: Option<String>,
+    /// Search existing papers instead of fetching new ones
+    #[arg(long)]
+    query: Option<String>,
 
-        /// Number of results for query mode
-        #[arg(long, default_value_t = 20)]
-        top_k: usize,
+    /// Number of results for query mode
+    #[arg(long, default_value_t = 20)]
+    top_k: usize,
 
-        /// Minimum citations filter for query mode
-        #[arg(long)]
-        min_citations: Option<u32>,
-    },
+    /// Minimum citations filter for query mode
+    #[arg(long)]
+    min_citations: Option<u32>,
 
-    /// Track who is publishing AI research via a DeepSeek agent team
-    Authors {
-        /// DeepSeek API key (defaults to DEEPSEEK_API_KEY env var)
-        #[arg(long)]
-        api_key: Option<String>,
+    // ── Author args ────────────────────────────────────────────────
+    /// DeepSeek API key (defaults to DEEPSEEK_API_KEY env var)
+    #[arg(long)]
+    api_key: Option<String>,
 
-        /// DeepSeek base URL
-        #[arg(long)]
-        base_url: Option<String>,
+    /// DeepSeek base URL
+    #[arg(long)]
+    base_url: Option<String>,
 
-        /// Output directory
-        #[arg(long, default_value = AUTHORS_OUT_DIR)]
-        output_dir: String,
-    },
+    /// Output directory for author reports
+    #[arg(long, default_value = AUTHORS_OUT_DIR)]
+    output_dir: String,
 }
 
 // ── Papers types ────────────────────────────────────────────────────────────
@@ -161,34 +155,30 @@ async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
     let cli = Cli::parse();
 
-    match cli.command {
-        Command::Papers {
-            days,
-            limit,
-            json,
-            no_store,
-            db,
-            batch_size,
-            sources,
-            query,
-            top_k,
-            min_citations,
-        } => {
-            run_papers(days, limit, json, no_store, db, batch_size, sources, query, top_k, min_citations).await
-        }
-        Command::Authors {
-            api_key,
-            base_url,
-            output_dir,
-        } => {
-            let api_key = api_key
-                .or_else(|| std::env::var("DEEPSEEK_API_KEY").ok())
-                .context("DEEPSEEK_API_KEY must be set (env or --api-key)")?;
-            let base_url = base_url
-                .or_else(|| std::env::var("DEEPSEEK_BASE_URL").ok())
-                .unwrap_or_else(|| DEFAULT_DEEPSEEK_BASE_URL.to_string());
-            run_authors(api_key, base_url, output_dir).await
-        }
+    if cli.authors {
+        let api_key = cli
+            .api_key
+            .or_else(|| std::env::var("DEEPSEEK_API_KEY").ok())
+            .context("DEEPSEEK_API_KEY must be set (env or --api-key)")?;
+        let base_url = cli
+            .base_url
+            .or_else(|| std::env::var("DEEPSEEK_BASE_URL").ok())
+            .unwrap_or_else(|| DEFAULT_DEEPSEEK_BASE_URL.to_string());
+        run_authors(api_key, base_url, cli.output_dir).await
+    } else {
+        run_papers(
+            cli.days,
+            cli.limit,
+            cli.json,
+            cli.no_store,
+            cli.db,
+            cli.batch_size,
+            cli.sources,
+            cli.query,
+            cli.top_k,
+            cli.min_citations,
+        )
+        .await
     }
 }
 
