@@ -274,11 +274,11 @@ class TestDoubleDQNAgent:
     def test_train_step_on_batch_reduces_loss(self, agent, small_config):
         """Training on the same batch multiple times should reduce loss."""
         batch = self._random_batch(small_config, batch_size=32)
-        initial_loss, _ = agent.train_step_on_batch(*batch)
+        initial_loss, _, _ = agent.train_step_on_batch(*batch)
 
         # Train several more times on the same batch
         for _ in range(50):
-            loss, _ = agent.train_step_on_batch(*batch)
+            loss, _, _ = agent.train_step_on_batch(*batch)
 
         assert loss < initial_loss, (
             f"Loss did not decrease: {initial_loss:.4f} -> {loss:.4f}"

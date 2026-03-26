@@ -549,6 +549,8 @@ class MmapReplayBuffer:
         self, indices: np.ndarray, td_errors: np.ndarray
     ) -> None:
         """Update priorities after a training step."""
+        if self._pending_transitions:
+            self._batch_commit_pending()
         now = time.time()
         update_rows = []
         for idx, tde in zip(indices, td_errors):
@@ -615,6 +617,8 @@ class MmapReplayBuffer:
 
         Returns the number of rewards resolved.
         """
+        if self._pending_transitions:
+            self._batch_commit_pending()
         resolved = 0
         now = time.time()
         for result in extraction_results:
@@ -648,6 +652,8 @@ class MmapReplayBuffer:
 
     def count_unresolved(self) -> int:
         """Count pending reward entries not yet resolved."""
+        if self._pending_transitions:
+            self._batch_commit_pending()
         row = self._conn.execute(
             "SELECT COUNT(*) FROM pending_rewards WHERE reward IS NULL"
         ).fetchone()
@@ -672,6 +678,8 @@ class MmapReplayBuffer:
         Returns:
             (B,) n-step return targets.
         """
+        if self._pending_transitions:
+            self._batch_commit_pending()
         n = self.config.n_step
         gamma = self.config.gamma
         batch_size = len(indices)
@@ -706,7 +714,7 @@ class MmapReplayBuffer:
                         self._next_states_mmap[bootstrap_idx]
                     )[np.newaxis, :]
                     bootstrap_val = bootstrap_q_fn(bootstrap_state)
-                    discounted_sum += (gamma ** n) * float(bootstrap_val)
+                    discounted_sum += (gamma ** n) * float(np.asarray(bootstrap_val).flat[0])
 
             targets[b] = discounted_sum
 
@@ -716,6 +724,8 @@ class MmapReplayBuffer:
 
     def prune_old_pending(self, max_age_seconds: float = 7 * 86400) -> int:
         """Remove pending reward entries older than max_age."""
+        if self._pending_transitions:
+            self._batch_commit_pending()
         cutoff = time.time() - max_age_seconds
         cur = self._conn.execute(
             "DELETE FROM pending_rewards WHERE crawled_at < ? AND reward IS NULL",
