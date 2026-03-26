@@ -1,22 +1,33 @@
 # Research Output
 
-Consolidated research organized by pipeline module. Each module folder contains the original agent research files co-located with the code they describe.
+All pipeline research organized by module. Each folder is self-contained with agent research files, consolidated summaries, implementation guides, and novelty notes.
 
-## Cross-cutting (this directory)
+## Modules
 
-| Module | Location | Topic |
-|--------|----------|-------|
-| System Architecture | [system-architecture/](system-architecture/) | Local-first ML pipeline architecture |
-| Synthesis | [synthesis/](synthesis/) | Cross-module pipeline synthesis |
-| Novelty | [novelty/](novelty/) | Late 2025/2026 infrastructure breakthroughs |
+| # | Module | Folder | Topic | Files |
+|---|--------|--------|-------|-------|
+| 0 | System Architecture | [system-architecture/](system-architecture/) | Local-first ML pipeline, storage trade-offs | 10 |
+| 1 | Crawler | [crawler/](crawler/) | RL-focused web crawling, DQN + MAB | 10 |
+| 2 | Extraction / NER | [extraction/](extraction/) | BERT NER, spaCy, GLiNER2, BERTopic | 10 |
+| 3 | Entity Resolution | [entity-resolution/](entity-resolution/) | Siamese matching, blocking, SupCon | 10 |
+| 4 | Lead Matching | [lead-matching/](lead-matching/) | XGBoost ensemble, FT-Transformer, scoring | 10 |
+| 5 | Report Generation | [report-generation/](report-generation/) | RAG pipeline, GraphRAG, Self-RAG | 15 |
+| 6 | Evaluation | [evaluation/](evaluation/) | End-to-end eval, LLM-as-judge, XAI | 10 |
 
-## Co-located with code
+## Cross-cutting
 
-| Module | Location | Topic |
-|--------|----------|-------|
-| Crawler | [../../crates/agentic-search/research/](../../crates/agentic-search/research/) | RL-focused web crawling |
-| Extraction/NER | [../../crates/nomad/research/extraction/](../../crates/nomad/research/extraction/) | BERT NER, spaCy, BERTopic |
-| Entity Resolution | [../../crates/nomad/research/entity-resolution/](../../crates/nomad/research/entity-resolution/) | Siamese matching, blocking |
-| Lead Matching | [../../crates/nomad/research/lead-matching/](../../crates/nomad/research/lead-matching/) | XGBoost ensemble, scoring |
-| Report Generation | [../../crates/research/research/](../../crates/research/research/) | RAG pipeline, LLM reports |
-| Evaluation | [../../src/evals/research/](../../src/evals/research/) | End-to-end evaluation, XAI |
+| Folder | Topic | Files |
+|--------|-------|-------|
+| [synthesis/](synthesis/) | Unified pipeline analysis, upgrade roadmap | 5 |
+| [novelty/](novelty/) | Late 2025/2026 infrastructure breakthroughs | 3 |
+
+## File conventions
+
+Each module folder contains:
+
+- `RESEARCH.md` — Consolidated literature review
+- `DEEP_RESEARCH.md` — Deep-dive with 2024-2026 papers
+- `IMPLEMENTATION.md` — Implementation guide
+- `novel.md` — Novel approaches and innovations
+- `MODULE_README.md` — Original module overview
+- `agent-NN-*.md` — Raw agent research files (Pass 1, Pass 1 deep, Pass 2, Pass 2 upgrade)
