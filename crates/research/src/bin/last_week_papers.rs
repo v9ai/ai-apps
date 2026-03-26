@@ -618,40 +618,40 @@ async fn fetch_core(year: &str) -> Vec<PaperSummary> {
         // CORE doesn't support date filtering in API — use year in query + client-side filter
         let query = format!("{topic} {year}");
         eprint!("  CORE/{topic}...");
-        match client.search(&query, 50, 0).await {
-            Ok(resp) => {
-                // Client-side year filter (best we can do — CORE has no date API)
-                let recent: Vec<_> = resp
-                    .results
-                    .into_iter()
-                    .filter(|w| {
-                        w.year_published
-                            .map(|y| y >= year.parse::<u32>().unwrap_or(0))
-                            .unwrap_or(false)
-                    })
-                    .collect();
-                eprintln!(" {} papers", recent.len());
-                for w in recent {
-                    let rp: ResearchPaper = ResearchPaper::from(w);
-                    if rp.title.is_empty() {
-                        continue;
-                    }
-                    papers.push(PaperSummary {
-                        title: rp.title,
-                        authors: rp.authors,
-                        published: rp.year.map(|y: u32| y.to_string()).unwrap_or_default(),
-                        categories: vec![],
-                        primary_category: "AI".into(),
-                        source: "CORE".into(),
-                        source_id: rp.source_id,
-                        pdf_url: rp.pdf_url,
-                        doi: rp.doi,
-                        citation_count: rp.citation_count,
-                        abstract_text: rp.abstract_text,
-                    });
+        let label = format!("CORE/{topic}");
+        if let Some(resp) = retry(&label, 2, || client.search(&query, 50, 0)).await {
+            // Client-side year filter (best we can do — CORE has no date API)
+            let recent: Vec<_> = resp
+                .results
+                .into_iter()
+                .filter(|w| {
+                    w.year_published
+                        .map(|y| y >= year.parse::<u32>().unwrap_or(0))
+                        .unwrap_or(false)
+                })
+                .collect();
+            eprintln!(" {} papers", recent.len());
+            for w in recent {
+                let rp: ResearchPaper = ResearchPaper::from(w);
+                if rp.title.is_empty() {
+                    continue;
                 }
+                papers.push(PaperSummary {
+                    title: rp.title,
+                    authors: rp.authors,
+                    published: rp.year.map(|y: u32| y.to_string()).unwrap_or_default(),
+                    categories: vec![],
+                    primary_category: "AI".into(),
+                    source: "CORE".into(),
+                    source_id: rp.source_id,
+                    pdf_url: rp.pdf_url,
+                    doi: rp.doi,
+                    citation_count: rp.citation_count,
+                    abstract_text: rp.abstract_text,
+                });
             }
-            Err(e) => eprintln!(" error: {e}"),
+        } else {
+            eprintln!(" skipping after retries exhausted");
         }
     }
 
