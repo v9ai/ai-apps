@@ -28,12 +28,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "evals"))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from llama_index.core import Settings as LISettings
 from llama_index.core.chat_engine import ContextChatEngine
 from ragas_eval import DOCUMENTS, build_rag_pipeline  # noqa: E402
 from routes.upload import router as upload_router
 from routes.embed import router as embed_router
 from routes.search import router as search_router
+from config import settings
 from graph import run_graph
+from llm_backend import get_llama_index_llm
 
 app = FastAPI(title="Blood Marker Intelligence Chat")
 app.add_middleware(
@@ -49,7 +52,11 @@ app.include_router(embed_router)
 app.include_router(search_router)
 
 # Build RAG pipeline once at startup (used by /chat/simple)
-_rag = build_rag_pipeline("deepseek-chat")
+# The model arg is passed to ragas_eval internals; we immediately override Settings.llm
+_rag = build_rag_pipeline(settings.llm_model)
+
+# Point LlamaIndex at the local mlx_lm.server for all generation
+LISettings.llm = get_llama_index_llm()
 
 SYSTEM_PROMPT = """You are a clinical blood marker intelligence assistant. Answer questions
 about derived ratios (TG/HDL, NLR, De Ritis, BUN/Creatinine, TyG, TC/HDL, HDL/LDL),
@@ -120,4 +127,8 @@ async def chat_simple(req: ChatRequest) -> dict:
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "llm_base_url": settings.llm_base_url,
+        "llm_model": settings.llm_model,
+    }

@@ -15,9 +15,11 @@ class Settings(BaseSettings):
     r2_secret_access_key: str
     r2_bucket_name: str = "healthcare-blood-tests"
 
-    # DeepSeek LLM
-    deepseek_api_key: str = ""
-    deepseek_base_url: str = "https://api.deepseek.com"
+    # LLM — mlx_lm.server (OpenAI-compatible, runs locally on Apple Silicon)
+    # Start: mlx_lm.server --model mlx-community/Qwen2.5-7B-Instruct-4bit --port 8080
+    llm_base_url: str = "http://localhost:8080"
+    llm_model: str = "mlx-community/Qwen2.5-7B-Instruct-4bit"
+    llm_api_key: str = "unused"
 
     # Embedding model (must produce 1024-dim to match existing pgvector schema)
     embed_model: str = "BAAI/bge-large-en-v1.5"

@@ -18,15 +18,13 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 from typing import Any, Literal
 
 from langgraph.graph import END, StateGraph
-from openai import OpenAI
 from pydantic import BaseModel, Field
 
-from config import settings
+from llm_backend import llm_call as _llm_call
 from db import (
     search_appointments,
     search_blood_tests,
@@ -72,36 +70,6 @@ class GraphState(BaseModel):
     guard_passed: bool = False
     guard_issues: list[str] = Field(default_factory=list)
     final_answer: str = ""
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# LLM client
-# ═══════════════════════════════════════════════════════════════════════════
-
-_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", settings.deepseek_base_url)
-# Ensure /v1 suffix for OpenAI client compatibility
-if not _BASE_URL.endswith("/v1"):
-    _BASE_URL = _BASE_URL.rstrip("/") + "/v1"
-
-
-def _get_client() -> OpenAI:
-    return OpenAI(
-        api_key=settings.deepseek_api_key or "local",
-        base_url=_BASE_URL,
-    )
-
-
-def _llm_call(system: str, user: str, temperature: float = 0.0) -> str:
-    client = _get_client()
-    response = client.chat.completions.create(
-        model="deepseek-chat",
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        temperature=temperature,
-    )
-    return response.choices[0].message.content or ""
 
 
 # ═══════════════════════════════════════════════════════════════════════════
