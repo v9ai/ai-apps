@@ -219,17 +219,6 @@ export type CancelEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type ChatMessage = {
-  __typename?: 'ChatMessage';
-  content: Scalars['String']['output'];
-  role: Scalars['String']['output'];
-};
-
-export type ChatMessageInput = {
-  content: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-};
-
 /** Confidence level of a classification result. */
 export type ClassificationConfidence =
   | 'high'
@@ -542,13 +531,6 @@ export type CreateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
-export type CreateLangSmithPromptInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  readme?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
 export type CreateOpportunityInput = {
   applicationNotes?: InputMaybe<Scalars['String']['input']>;
   companyId?: InputMaybe<Scalars['Int']['input']>;
@@ -563,16 +545,6 @@ export type CreateOpportunityInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title: Scalars['String']['input'];
   url?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type CreatePromptInput = {
-  chatMessages?: InputMaybe<Array<ChatMessageInput>>;
-  config?: InputMaybe<PromptConfigInput>;
-  labels?: InputMaybe<Array<Scalars['String']['input']>>;
-  name: Scalars['String']['input'];
-  prompt?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  type: PromptType;
 };
 
 export type CreateTaskInput = {
@@ -1082,37 +1054,6 @@ export type JobsResponse = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type LangSmithPrompt = {
-  __typename?: 'LangSmithPrompt';
-  createdAt: Scalars['String']['output'];
-  description: Maybe<Scalars['String']['output']>;
-  fullName: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  isArchived: Scalars['Boolean']['output'];
-  isPublic: Scalars['Boolean']['output'];
-  lastCommitHash: Maybe<Scalars['String']['output']>;
-  likedByAuthUser: Scalars['Boolean']['output'];
-  numCommits: Scalars['Int']['output'];
-  numDownloads: Scalars['Int']['output'];
-  numLikes: Scalars['Int']['output'];
-  numViews: Scalars['Int']['output'];
-  owner: Maybe<Scalars['String']['output']>;
-  promptHandle: Scalars['String']['output'];
-  readme: Maybe<Scalars['String']['output']>;
-  tags: Array<Scalars['String']['output']>;
-  tenantId: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-};
-
-export type LangSmithPromptCommit = {
-  __typename?: 'LangSmithPromptCommit';
-  commitHash: Scalars['String']['output'];
-  examples: Array<Scalars['JSON']['output']>;
-  manifest: Scalars['JSON']['output'];
-  owner: Scalars['String']['output'];
-  promptName: Scalars['String']['output'];
-};
-
 export type MarkRepliedResult = {
   __typename?: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -1152,9 +1093,7 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createLangSmithPrompt: LangSmithPrompt;
   createOpportunity: Opportunity;
-  createPrompt: Prompt;
   createTask: Task;
   deleteAllJobs: DeleteJobResponse;
   deleteApplication: DeleteApplicationResponse;
@@ -1164,7 +1103,6 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteJob: DeleteJobResponse;
-  deleteLangSmithPrompt: Scalars['Boolean']['output'];
   deleteOpportunity: DeleteOpportunityResult;
   deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
@@ -1212,7 +1150,6 @@ export type Mutation = {
    * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
    */
   processAllJobs: ProcessAllJobsResponse;
-  pushLangSmithPrompt: Scalars['String']['output'];
   rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
@@ -1235,9 +1172,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateLangSmithPrompt: LangSmithPrompt;
   updateOpportunity: Opportunity;
-  updatePromptLabel: Prompt;
   updateTask: Task;
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
@@ -1324,19 +1259,8 @@ export type MutationCreateEmailTemplateArgs = {
 };
 
 
-export type MutationCreateLangSmithPromptArgs = {
-  input?: InputMaybe<CreateLangSmithPromptInput>;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
 export type MutationCreateOpportunityArgs = {
   input: CreateOpportunityInput;
-};
-
-
-export type MutationCreatePromptArgs = {
-  input: CreatePromptInput;
 };
 
 
@@ -1377,11 +1301,6 @@ export type MutationDeleteEmailTemplateArgs = {
 
 export type MutationDeleteJobArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationDeleteLangSmithPromptArgs = {
-  promptIdentifier: Scalars['String']['input'];
 };
 
 
@@ -1512,12 +1431,6 @@ export type MutationProcessAllJobsArgs = {
 };
 
 
-export type MutationPushLangSmithPromptArgs = {
-  input?: InputMaybe<PushLangSmithPromptInput>;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
 export type MutationRateResumeAnswerArgs = {
   helpful: Scalars['Boolean']['input'];
   traceId: Scalars['ID']['input'];
@@ -1609,22 +1522,9 @@ export type MutationUpdateEmailTemplateArgs = {
 };
 
 
-export type MutationUpdateLangSmithPromptArgs = {
-  input: UpdateLangSmithPromptInput;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
 export type MutationUpdateOpportunityArgs = {
   id: Scalars['String']['input'];
   input: UpdateOpportunityInput;
-};
-
-
-export type MutationUpdatePromptLabelArgs = {
-  label: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-  version: Scalars['Int']['input'];
 };
 
 
@@ -1718,60 +1618,6 @@ export type ProcessAllJobsResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-export type Prompt = {
-  __typename?: 'Prompt';
-  chatMessages: Maybe<Array<ChatMessage>>;
-  config: Maybe<PromptConfig>;
-  createdAt: Maybe<Scalars['String']['output']>;
-  createdBy: Maybe<Scalars['String']['output']>;
-  isUserSpecific: Scalars['Boolean']['output'];
-  labels: Maybe<Array<Scalars['String']['output']>>;
-  name: Scalars['String']['output'];
-  prompt: Maybe<Scalars['String']['output']>;
-  tags: Maybe<Array<Scalars['String']['output']>>;
-  type: PromptType;
-  updatedAt: Maybe<Scalars['String']['output']>;
-  version: Maybe<Scalars['Int']['output']>;
-};
-
-export type PromptConfig = {
-  __typename?: 'PromptConfig';
-  max_tokens: Maybe<Scalars['Int']['output']>;
-  model: Maybe<Scalars['String']['output']>;
-  temperature: Maybe<Scalars['Float']['output']>;
-  top_p: Maybe<Scalars['Float']['output']>;
-};
-
-export type PromptConfigInput = {
-  max_tokens?: InputMaybe<Scalars['Int']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-  temperature?: InputMaybe<Scalars['Float']['input']>;
-  top_p?: InputMaybe<Scalars['Float']['input']>;
-};
-
-export type PromptType =
-  | 'CHAT'
-  | 'TEXT';
-
-export type PromptUsage = {
-  __typename?: 'PromptUsage';
-  label: Maybe<Scalars['String']['output']>;
-  promptName: Scalars['String']['output'];
-  traceId: Maybe<Scalars['String']['output']>;
-  usedAt: Scalars['String']['output'];
-  userEmail: Scalars['String']['output'];
-  version: Maybe<Scalars['Int']['output']>;
-};
-
-export type PushLangSmithPromptInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  object?: InputMaybe<Scalars['JSON']['input']>;
-  parentCommitHash?: InputMaybe<Scalars['String']['input']>;
-  readme?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
 export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
@@ -1799,14 +1645,8 @@ export type Query = {
   findCompany: FindCompanyResult;
   job: Maybe<Job>;
   jobs: JobsResponse;
-  langsmithPrompt: Maybe<LangSmithPrompt>;
-  langsmithPromptCommit: Maybe<LangSmithPromptCommit>;
-  langsmithPrompts: Array<LangSmithPrompt>;
-  myPromptUsage: Array<PromptUsage>;
   opportunities: OpportunitiesResult;
   opportunity: Maybe<Opportunity>;
-  prompt: Maybe<Prompt>;
-  prompts: Array<RegisteredPrompt>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
@@ -1951,29 +1791,6 @@ export type QueryJobsArgs = {
 };
 
 
-export type QueryLangsmithPromptArgs = {
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
-export type QueryLangsmithPromptCommitArgs = {
-  includeModel?: InputMaybe<Scalars['Boolean']['input']>;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
-export type QueryLangsmithPromptsArgs = {
-  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  query?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryMyPromptUsageArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryOpportunitiesArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1984,13 +1801,6 @@ export type QueryOpportunitiesArgs = {
 
 export type QueryOpportunityArgs = {
   id: Scalars['String']['input'];
-};
-
-
-export type QueryPromptArgs = {
-  label?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
-  version?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2074,20 +1884,6 @@ export type ReceivedEmailsResult = {
   __typename?: 'ReceivedEmailsResult';
   emails: Array<ReceivedEmail>;
   totalCount: Scalars['Int']['output'];
-};
-
-export type RegisteredPrompt = {
-  __typename?: 'RegisteredPrompt';
-  content: Maybe<Scalars['JSON']['output']>;
-  labels: Array<Scalars['String']['output']>;
-  lastConfig: Maybe<Scalars['JSON']['output']>;
-  lastUpdatedAt: Scalars['String']['output'];
-  lastUsedBy: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
-  usageCount: Maybe<Scalars['Int']['output']>;
-  versions: Array<Scalars['Int']['output']>;
 };
 
 export type ResendEmailDetail = {
@@ -2346,14 +2142,6 @@ export type UpdateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
-export type UpdateLangSmithPromptInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  readme?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
 export type UpdateOpportunityInput = {
   applicationNotes?: InputMaybe<Scalars['String']['input']>;
   applicationStatus?: InputMaybe<Scalars['String']['input']>;
@@ -2533,8 +2321,6 @@ export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Partial<Scalars['Boolean']['output']>>;
   CancelCompanyEmailsResult: ResolverTypeWrapper<Partial<CancelCompanyEmailsResult>>;
   CancelEmailResult: ResolverTypeWrapper<Partial<CancelEmailResult>>;
-  ChatMessage: ResolverTypeWrapper<Partial<ChatMessage>>;
-  ChatMessageInput: ResolverTypeWrapper<Partial<ChatMessageInput>>;
   ClassificationConfidence: ResolverTypeWrapper<Partial<ClassificationConfidence>>;
   CompaniesResponse: ResolverTypeWrapper<Partial<CompaniesResponse>>;
   Company: ResolverTypeWrapper<Partial<Company>>;
@@ -2554,9 +2340,7 @@ export type ResolversTypes = {
   CreateCompanyInput: ResolverTypeWrapper<Partial<CreateCompanyInput>>;
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
   CreateEmailTemplateInput: ResolverTypeWrapper<Partial<CreateEmailTemplateInput>>;
-  CreateLangSmithPromptInput: ResolverTypeWrapper<Partial<CreateLangSmithPromptInput>>;
   CreateOpportunityInput: ResolverTypeWrapper<Partial<CreateOpportunityInput>>;
-  CreatePromptInput: ResolverTypeWrapper<Partial<CreatePromptInput>>;
   CreateTaskInput: ResolverTypeWrapper<Partial<CreateTaskInput>>;
   DateTime: ResolverTypeWrapper<Partial<Scalars['DateTime']['output']>>;
   DeleteApplicationResponse: ResolverTypeWrapper<Partial<DeleteApplicationResponse>>;
@@ -2614,8 +2398,6 @@ export type ResolversTypes = {
   JobSkill: ResolverTypeWrapper<Partial<JobSkill>>;
   JobStatus: ResolverTypeWrapper<Partial<JobStatus>>;
   JobsResponse: ResolverTypeWrapper<Partial<JobsResponse>>;
-  LangSmithPrompt: ResolverTypeWrapper<Partial<LangSmithPrompt>>;
-  LangSmithPromptCommit: ResolverTypeWrapper<Partial<LangSmithPromptCommit>>;
   MarkRepliedResult: ResolverTypeWrapper<Partial<MarkRepliedResult>>;
   MergeCompaniesResult: ResolverTypeWrapper<Partial<MergeCompaniesResult>>;
   MergeDuplicateContactsResult: ResolverTypeWrapper<Partial<MergeDuplicateContactsResult>>;
@@ -2624,18 +2406,11 @@ export type ResolversTypes = {
   Opportunity: ResolverTypeWrapper<Partial<Opportunity>>;
   PreviewEmailInput: ResolverTypeWrapper<Partial<PreviewEmailInput>>;
   ProcessAllJobsResponse: ResolverTypeWrapper<Partial<ProcessAllJobsResponse>>;
-  Prompt: ResolverTypeWrapper<Partial<Prompt>>;
-  PromptConfig: ResolverTypeWrapper<Partial<PromptConfig>>;
-  PromptConfigInput: ResolverTypeWrapper<Partial<PromptConfigInput>>;
-  PromptType: ResolverTypeWrapper<Partial<PromptType>>;
-  PromptUsage: ResolverTypeWrapper<Partial<PromptUsage>>;
-  PushLangSmithPromptInput: ResolverTypeWrapper<Partial<PushLangSmithPromptInput>>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   QuestionAnswer: ResolverTypeWrapper<Partial<QuestionAnswer>>;
   QuestionAnswerInput: ResolverTypeWrapper<Partial<QuestionAnswerInput>>;
   ReceivedEmail: ResolverTypeWrapper<Partial<ReceivedEmail>>;
   ReceivedEmailsResult: ResolverTypeWrapper<Partial<ReceivedEmailsResult>>;
-  RegisteredPrompt: ResolverTypeWrapper<Partial<RegisteredPrompt>>;
   ResendEmailDetail: ResolverTypeWrapper<Partial<ResendEmailDetail>>;
   ResumeAnswer: ResolverTypeWrapper<Partial<ResumeAnswer>>;
   ResumeIngestResult: ResolverTypeWrapper<Partial<ResumeIngestResult>>;
@@ -2663,7 +2438,6 @@ export type ResolversTypes = {
   UpdateCompanyInput: ResolverTypeWrapper<Partial<UpdateCompanyInput>>;
   UpdateContactInput: ResolverTypeWrapper<Partial<UpdateContactInput>>;
   UpdateEmailTemplateInput: ResolverTypeWrapper<Partial<UpdateEmailTemplateInput>>;
-  UpdateLangSmithPromptInput: ResolverTypeWrapper<Partial<UpdateLangSmithPromptInput>>;
   UpdateOpportunityInput: ResolverTypeWrapper<Partial<UpdateOpportunityInput>>;
   UpdateTaskInput: ResolverTypeWrapper<Partial<UpdateTaskInput>>;
   Upload: ResolverTypeWrapper<Partial<Scalars['Upload']['output']>>;
@@ -2696,8 +2470,6 @@ export type ResolversParentTypes = {
   Boolean: Partial<Scalars['Boolean']['output']>;
   CancelCompanyEmailsResult: Partial<CancelCompanyEmailsResult>;
   CancelEmailResult: Partial<CancelEmailResult>;
-  ChatMessage: Partial<ChatMessage>;
-  ChatMessageInput: Partial<ChatMessageInput>;
   CompaniesResponse: Partial<CompaniesResponse>;
   Company: Partial<Company>;
   CompanyContactEmail: Partial<CompanyContactEmail>;
@@ -2714,9 +2486,7 @@ export type ResolversParentTypes = {
   CreateCompanyInput: Partial<CreateCompanyInput>;
   CreateContactInput: Partial<CreateContactInput>;
   CreateEmailTemplateInput: Partial<CreateEmailTemplateInput>;
-  CreateLangSmithPromptInput: Partial<CreateLangSmithPromptInput>;
   CreateOpportunityInput: Partial<CreateOpportunityInput>;
-  CreatePromptInput: Partial<CreatePromptInput>;
   CreateTaskInput: Partial<CreateTaskInput>;
   DateTime: Partial<Scalars['DateTime']['output']>;
   DeleteApplicationResponse: Partial<DeleteApplicationResponse>;
@@ -2772,8 +2542,6 @@ export type ResolversParentTypes = {
   Job: Partial<Job>;
   JobSkill: Partial<JobSkill>;
   JobsResponse: Partial<JobsResponse>;
-  LangSmithPrompt: Partial<LangSmithPrompt>;
-  LangSmithPromptCommit: Partial<LangSmithPromptCommit>;
   MarkRepliedResult: Partial<MarkRepliedResult>;
   MergeCompaniesResult: Partial<MergeCompaniesResult>;
   MergeDuplicateContactsResult: Partial<MergeDuplicateContactsResult>;
@@ -2782,17 +2550,11 @@ export type ResolversParentTypes = {
   Opportunity: Partial<Opportunity>;
   PreviewEmailInput: Partial<PreviewEmailInput>;
   ProcessAllJobsResponse: Partial<ProcessAllJobsResponse>;
-  Prompt: Partial<Prompt>;
-  PromptConfig: Partial<PromptConfig>;
-  PromptConfigInput: Partial<PromptConfigInput>;
-  PromptUsage: Partial<PromptUsage>;
-  PushLangSmithPromptInput: Partial<PushLangSmithPromptInput>;
   Query: Record<PropertyKey, never>;
   QuestionAnswer: Partial<QuestionAnswer>;
   QuestionAnswerInput: Partial<QuestionAnswerInput>;
   ReceivedEmail: Partial<ReceivedEmail>;
   ReceivedEmailsResult: Partial<ReceivedEmailsResult>;
-  RegisteredPrompt: Partial<RegisteredPrompt>;
   ResendEmailDetail: Partial<ResendEmailDetail>;
   ResumeAnswer: Partial<ResumeAnswer>;
   ResumeIngestResult: Partial<ResumeIngestResult>;
@@ -2819,7 +2581,6 @@ export type ResolversParentTypes = {
   UpdateCompanyInput: Partial<UpdateCompanyInput>;
   UpdateContactInput: Partial<UpdateContactInput>;
   UpdateEmailTemplateInput: Partial<UpdateEmailTemplateInput>;
-  UpdateLangSmithPromptInput: Partial<UpdateLangSmithPromptInput>;
   UpdateOpportunityInput: Partial<UpdateOpportunityInput>;
   UpdateTaskInput: Partial<UpdateTaskInput>;
   Upload: Partial<Scalars['Upload']['output']>;
@@ -2952,11 +2713,6 @@ export type CancelCompanyEmailsResultResolvers<ContextType = GraphQLContext, Par
 export type CancelEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CancelEmailResult'] = ResolversParentTypes['CancelEmailResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-};
-
-export type ChatMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ChatMessage'] = ResolversParentTypes['ChatMessage']> = {
-  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type CompaniesResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompaniesResponse'] = ResolversParentTypes['CompaniesResponse']> = {
@@ -3507,35 +3263,6 @@ export type JobsResponseResolvers<ContextType = GraphQLContext, ParentType exten
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
-export type LangSmithPromptResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LangSmithPrompt'] = ResolversParentTypes['LangSmithPrompt']> = {
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  fullName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  isArchived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  isPublic?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  lastCommitHash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  likedByAuthUser?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  numCommits?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  numDownloads?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  numLikes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  numViews?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  owner?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  promptHandle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  readme?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  tenantId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type LangSmithPromptCommitResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LangSmithPromptCommit'] = ResolversParentTypes['LangSmithPromptCommit']> = {
-  commitHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  examples?: Resolver<Array<ResolversTypes['JSON']>, ParentType, ContextType>;
-  manifest?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
-  owner?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  promptName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
 export type MarkRepliedResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MarkRepliedResult'] = ResolversParentTypes['MarkRepliedResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -3571,9 +3298,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationCreateContactArgs, 'input'>>;
   createDraftCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationCreateDraftCampaignArgs, 'input'>>;
   createEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationCreateEmailTemplateArgs, 'input'>>;
-  createLangSmithPrompt?: Resolver<ResolversTypes['LangSmithPrompt'], ParentType, ContextType, RequireFields<MutationCreateLangSmithPromptArgs, 'promptIdentifier'>>;
   createOpportunity?: Resolver<ResolversTypes['Opportunity'], ParentType, ContextType, RequireFields<MutationCreateOpportunityArgs, 'input'>>;
-  createPrompt?: Resolver<ResolversTypes['Prompt'], ParentType, ContextType, RequireFields<MutationCreatePromptArgs, 'input'>>;
   createTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationCreateTaskArgs, 'input'>>;
   deleteAllJobs?: Resolver<ResolversTypes['DeleteJobResponse'], ParentType, ContextType>;
   deleteApplication?: Resolver<ResolversTypes['DeleteApplicationResponse'], ParentType, ContextType, RequireFields<MutationDeleteApplicationArgs, 'id'>>;
@@ -3583,7 +3308,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteContact?: Resolver<ResolversTypes['DeleteContactResult'], ParentType, ContextType, RequireFields<MutationDeleteContactArgs, 'id'>>;
   deleteEmailTemplate?: Resolver<ResolversTypes['DeleteEmailTemplateResult'], ParentType, ContextType, RequireFields<MutationDeleteEmailTemplateArgs, 'id'>>;
   deleteJob?: Resolver<ResolversTypes['DeleteJobResponse'], ParentType, ContextType, RequireFields<MutationDeleteJobArgs, 'id'>>;
-  deleteLangSmithPrompt?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationDeleteLangSmithPromptArgs, 'promptIdentifier'>>;
   deleteOpportunity?: Resolver<ResolversTypes['DeleteOpportunityResult'], ParentType, ContextType, RequireFields<MutationDeleteOpportunityArgs, 'id'>>;
   deleteTask?: Resolver<ResolversTypes['DeleteTaskResult'], ParentType, ContextType, RequireFields<MutationDeleteTaskArgs, 'id'>>;
   enhanceAllContacts?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType>;
@@ -3607,7 +3331,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   mergeDuplicateContacts?: Resolver<ResolversTypes['MergeDuplicateContactsResult'], ParentType, ContextType, RequireFields<MutationMergeDuplicateContactsArgs, 'companyId'>>;
   previewEmail?: Resolver<ResolversTypes['EmailPreview'], ParentType, ContextType, RequireFields<MutationPreviewEmailArgs, 'input'>>;
   processAllJobs?: Resolver<ResolversTypes['ProcessAllJobsResponse'], ParentType, ContextType, Partial<MutationProcessAllJobsArgs>>;
-  pushLangSmithPrompt?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationPushLangSmithPromptArgs, 'promptIdentifier'>>;
   rateResumeAnswer?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationRateResumeAnswerArgs, 'helpful' | 'traceId'>>;
   reportJob?: Resolver<Maybe<ResolversTypes['Job']>, ParentType, ContextType, RequireFields<MutationReportJobArgs, 'id'>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
@@ -3625,9 +3348,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUpdateCompanyArgs, 'id' | 'input'>>;
   updateContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationUpdateContactArgs, 'id' | 'input'>>;
   updateEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationUpdateEmailTemplateArgs, 'id' | 'input'>>;
-  updateLangSmithPrompt?: Resolver<ResolversTypes['LangSmithPrompt'], ParentType, ContextType, RequireFields<MutationUpdateLangSmithPromptArgs, 'input' | 'promptIdentifier'>>;
   updateOpportunity?: Resolver<ResolversTypes['Opportunity'], ParentType, ContextType, RequireFields<MutationUpdateOpportunityArgs, 'id' | 'input'>>;
-  updatePromptLabel?: Resolver<ResolversTypes['Prompt'], ParentType, ContextType, RequireFields<MutationUpdatePromptLabelArgs, 'label' | 'name' | 'version'>>;
   updateTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationUpdateTaskArgs, 'id' | 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   uploadResume?: Resolver<Maybe<ResolversTypes['ResumeUploadResult']>, ParentType, ContextType, RequireFields<MutationUploadResumeArgs, 'email' | 'filename' | 'resumePdf'>>;
@@ -3679,37 +3400,6 @@ export type ProcessAllJobsResponseResolvers<ContextType = GraphQLContext, Parent
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
-export type PromptResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Prompt'] = ResolversParentTypes['Prompt']> = {
-  chatMessages?: Resolver<Maybe<Array<ResolversTypes['ChatMessage']>>, ParentType, ContextType>;
-  config?: Resolver<Maybe<ResolversTypes['PromptConfig']>, ParentType, ContextType>;
-  createdAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  createdBy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  isUserSpecific?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  labels?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  prompt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  tags?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
-  type?: Resolver<ResolversTypes['PromptType'], ParentType, ContextType>;
-  updatedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  version?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-};
-
-export type PromptConfigResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PromptConfig'] = ResolversParentTypes['PromptConfig']> = {
-  max_tokens?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  model?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  temperature?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
-  top_p?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
-};
-
-export type PromptUsageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PromptUsage'] = ResolversParentTypes['PromptUsage']> = {
-  label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  promptName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  traceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  usedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  userEmail?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  version?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-};
-
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   allCompanyTags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   application?: Resolver<Maybe<ResolversTypes['Application']>, ParentType, ContextType, RequireFields<QueryApplicationArgs, 'id'>>;
@@ -3736,14 +3426,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   findCompany?: Resolver<ResolversTypes['FindCompanyResult'], ParentType, ContextType, Partial<QueryFindCompanyArgs>>;
   job?: Resolver<Maybe<ResolversTypes['Job']>, ParentType, ContextType, RequireFields<QueryJobArgs, 'id'>>;
   jobs?: Resolver<ResolversTypes['JobsResponse'], ParentType, ContextType, Partial<QueryJobsArgs>>;
-  langsmithPrompt?: Resolver<Maybe<ResolversTypes['LangSmithPrompt']>, ParentType, ContextType, RequireFields<QueryLangsmithPromptArgs, 'promptIdentifier'>>;
-  langsmithPromptCommit?: Resolver<Maybe<ResolversTypes['LangSmithPromptCommit']>, ParentType, ContextType, RequireFields<QueryLangsmithPromptCommitArgs, 'promptIdentifier'>>;
-  langsmithPrompts?: Resolver<Array<ResolversTypes['LangSmithPrompt']>, ParentType, ContextType, Partial<QueryLangsmithPromptsArgs>>;
-  myPromptUsage?: Resolver<Array<ResolversTypes['PromptUsage']>, ParentType, ContextType, Partial<QueryMyPromptUsageArgs>>;
   opportunities?: Resolver<ResolversTypes['OpportunitiesResult'], ParentType, ContextType, Partial<QueryOpportunitiesArgs>>;
   opportunity?: Resolver<Maybe<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryOpportunityArgs, 'id'>>;
-  prompt?: Resolver<Maybe<ResolversTypes['Prompt']>, ParentType, ContextType, RequireFields<QueryPromptArgs, 'name'>>;
-  prompts?: Resolver<Array<ResolversTypes['RegisteredPrompt']>, ParentType, ContextType>;
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
   resendEmail?: Resolver<Maybe<ResolversTypes['ResendEmailDetail']>, ParentType, ContextType, RequireFields<QueryResendEmailArgs, 'resendId'>>;
@@ -3781,19 +3465,6 @@ export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType exte
 export type ReceivedEmailsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReceivedEmailsResult'] = ResolversParentTypes['ReceivedEmailsResult']> = {
   emails?: Resolver<Array<ResolversTypes['ReceivedEmail']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-};
-
-export type RegisteredPromptResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RegisteredPrompt'] = ResolversParentTypes['RegisteredPrompt']> = {
-  content?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
-  labels?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  lastConfig?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
-  lastUpdatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  lastUsedBy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  usageCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  versions?: Resolver<Array<ResolversTypes['Int']>, ParentType, ContextType>;
 };
 
 export type ResendEmailDetailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResendEmailDetail'] = ResolversParentTypes['ResendEmailDetail']> = {
@@ -3982,7 +3653,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   BlockedCompany?: BlockedCompanyResolvers<ContextType>;
   CancelCompanyEmailsResult?: CancelCompanyEmailsResultResolvers<ContextType>;
   CancelEmailResult?: CancelEmailResultResolvers<ContextType>;
-  ChatMessage?: ChatMessageResolvers<ContextType>;
   CompaniesResponse?: CompaniesResponseResolvers<ContextType>;
   Company?: CompanyResolvers<ContextType>;
   CompanyContactEmail?: CompanyContactEmailResolvers<ContextType>;
@@ -4036,8 +3706,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Job?: JobResolvers<ContextType>;
   JobSkill?: JobSkillResolvers<ContextType>;
   JobsResponse?: JobsResponseResolvers<ContextType>;
-  LangSmithPrompt?: LangSmithPromptResolvers<ContextType>;
-  LangSmithPromptCommit?: LangSmithPromptCommitResolvers<ContextType>;
   MarkRepliedResult?: MarkRepliedResultResolvers<ContextType>;
   MergeCompaniesResult?: MergeCompaniesResultResolvers<ContextType>;
   MergeDuplicateContactsResult?: MergeDuplicateContactsResultResolvers<ContextType>;
@@ -4045,14 +3713,10 @@ export type Resolvers<ContextType = GraphQLContext> = {
   OpportunitiesResult?: OpportunitiesResultResolvers<ContextType>;
   Opportunity?: OpportunityResolvers<ContextType>;
   ProcessAllJobsResponse?: ProcessAllJobsResponseResolvers<ContextType>;
-  Prompt?: PromptResolvers<ContextType>;
-  PromptConfig?: PromptConfigResolvers<ContextType>;
-  PromptUsage?: PromptUsageResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   QuestionAnswer?: QuestionAnswerResolvers<ContextType>;
   ReceivedEmail?: ReceivedEmailResolvers<ContextType>;
   ReceivedEmailsResult?: ReceivedEmailsResultResolvers<ContextType>;
-  RegisteredPrompt?: RegisteredPromptResolvers<ContextType>;
   ResendEmailDetail?: ResendEmailDetailResolvers<ContextType>;
   ResumeAnswer?: ResumeAnswerResolvers<ContextType>;
   ResumeIngestResult?: ResumeIngestResultResolvers<ContextType>;

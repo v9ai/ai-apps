@@ -218,17 +218,6 @@ export type CancelEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type ChatMessage = {
-  __typename: 'ChatMessage';
-  content: Scalars['String']['output'];
-  role: Scalars['String']['output'];
-};
-
-export type ChatMessageInput = {
-  content: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-};
-
 /** Confidence level of a classification result. */
 export type ClassificationConfidence =
   | 'high'
@@ -541,13 +530,6 @@ export type CreateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
-export type CreateLangSmithPromptInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  readme?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
 export type CreateOpportunityInput = {
   applicationNotes?: InputMaybe<Scalars['String']['input']>;
   companyId?: InputMaybe<Scalars['Int']['input']>;
@@ -562,16 +544,6 @@ export type CreateOpportunityInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title: Scalars['String']['input'];
   url?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type CreatePromptInput = {
-  chatMessages?: InputMaybe<Array<ChatMessageInput>>;
-  config?: InputMaybe<PromptConfigInput>;
-  labels?: InputMaybe<Array<Scalars['String']['input']>>;
-  name: Scalars['String']['input'];
-  prompt?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  type: PromptType;
 };
 
 export type CreateTaskInput = {
@@ -1081,37 +1053,6 @@ export type JobsResponse = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type LangSmithPrompt = {
-  __typename: 'LangSmithPrompt';
-  createdAt: Scalars['String']['output'];
-  description: Maybe<Scalars['String']['output']>;
-  fullName: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  isArchived: Scalars['Boolean']['output'];
-  isPublic: Scalars['Boolean']['output'];
-  lastCommitHash: Maybe<Scalars['String']['output']>;
-  likedByAuthUser: Scalars['Boolean']['output'];
-  numCommits: Scalars['Int']['output'];
-  numDownloads: Scalars['Int']['output'];
-  numLikes: Scalars['Int']['output'];
-  numViews: Scalars['Int']['output'];
-  owner: Maybe<Scalars['String']['output']>;
-  promptHandle: Scalars['String']['output'];
-  readme: Maybe<Scalars['String']['output']>;
-  tags: Array<Scalars['String']['output']>;
-  tenantId: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-};
-
-export type LangSmithPromptCommit = {
-  __typename: 'LangSmithPromptCommit';
-  commitHash: Scalars['String']['output'];
-  examples: Array<Scalars['JSON']['output']>;
-  manifest: Scalars['JSON']['output'];
-  owner: Scalars['String']['output'];
-  promptName: Scalars['String']['output'];
-};
-
 export type MarkRepliedResult = {
   __typename: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -1151,9 +1092,7 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createLangSmithPrompt: LangSmithPrompt;
   createOpportunity: Opportunity;
-  createPrompt: Prompt;
   createTask: Task;
   deleteAllJobs: DeleteJobResponse;
   deleteApplication: DeleteApplicationResponse;
@@ -1163,7 +1102,6 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteJob: DeleteJobResponse;
-  deleteLangSmithPrompt: Scalars['Boolean']['output'];
   deleteOpportunity: DeleteOpportunityResult;
   deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
@@ -1211,7 +1149,6 @@ export type Mutation = {
    * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
    */
   processAllJobs: ProcessAllJobsResponse;
-  pushLangSmithPrompt: Scalars['String']['output'];
   rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
@@ -1234,9 +1171,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateLangSmithPrompt: LangSmithPrompt;
   updateOpportunity: Opportunity;
-  updatePromptLabel: Prompt;
   updateTask: Task;
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
@@ -1323,19 +1258,8 @@ export type MutationCreateEmailTemplateArgs = {
 };
 
 
-export type MutationCreateLangSmithPromptArgs = {
-  input?: InputMaybe<CreateLangSmithPromptInput>;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
 export type MutationCreateOpportunityArgs = {
   input: CreateOpportunityInput;
-};
-
-
-export type MutationCreatePromptArgs = {
-  input: CreatePromptInput;
 };
 
 
@@ -1376,11 +1300,6 @@ export type MutationDeleteEmailTemplateArgs = {
 
 export type MutationDeleteJobArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationDeleteLangSmithPromptArgs = {
-  promptIdentifier: Scalars['String']['input'];
 };
 
 
@@ -1511,12 +1430,6 @@ export type MutationProcessAllJobsArgs = {
 };
 
 
-export type MutationPushLangSmithPromptArgs = {
-  input?: InputMaybe<PushLangSmithPromptInput>;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
 export type MutationRateResumeAnswerArgs = {
   helpful: Scalars['Boolean']['input'];
   traceId: Scalars['ID']['input'];
@@ -1608,22 +1521,9 @@ export type MutationUpdateEmailTemplateArgs = {
 };
 
 
-export type MutationUpdateLangSmithPromptArgs = {
-  input: UpdateLangSmithPromptInput;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
 export type MutationUpdateOpportunityArgs = {
   id: Scalars['String']['input'];
   input: UpdateOpportunityInput;
-};
-
-
-export type MutationUpdatePromptLabelArgs = {
-  label: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-  version: Scalars['Int']['input'];
 };
 
 
@@ -1717,60 +1617,6 @@ export type ProcessAllJobsResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-export type Prompt = {
-  __typename: 'Prompt';
-  chatMessages: Maybe<Array<ChatMessage>>;
-  config: Maybe<PromptConfig>;
-  createdAt: Maybe<Scalars['String']['output']>;
-  createdBy: Maybe<Scalars['String']['output']>;
-  isUserSpecific: Scalars['Boolean']['output'];
-  labels: Maybe<Array<Scalars['String']['output']>>;
-  name: Scalars['String']['output'];
-  prompt: Maybe<Scalars['String']['output']>;
-  tags: Maybe<Array<Scalars['String']['output']>>;
-  type: PromptType;
-  updatedAt: Maybe<Scalars['String']['output']>;
-  version: Maybe<Scalars['Int']['output']>;
-};
-
-export type PromptConfig = {
-  __typename: 'PromptConfig';
-  max_tokens: Maybe<Scalars['Int']['output']>;
-  model: Maybe<Scalars['String']['output']>;
-  temperature: Maybe<Scalars['Float']['output']>;
-  top_p: Maybe<Scalars['Float']['output']>;
-};
-
-export type PromptConfigInput = {
-  max_tokens?: InputMaybe<Scalars['Int']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-  temperature?: InputMaybe<Scalars['Float']['input']>;
-  top_p?: InputMaybe<Scalars['Float']['input']>;
-};
-
-export type PromptType =
-  | 'CHAT'
-  | 'TEXT';
-
-export type PromptUsage = {
-  __typename: 'PromptUsage';
-  label: Maybe<Scalars['String']['output']>;
-  promptName: Scalars['String']['output'];
-  traceId: Maybe<Scalars['String']['output']>;
-  usedAt: Scalars['String']['output'];
-  userEmail: Scalars['String']['output'];
-  version: Maybe<Scalars['Int']['output']>;
-};
-
-export type PushLangSmithPromptInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  object?: InputMaybe<Scalars['JSON']['input']>;
-  parentCommitHash?: InputMaybe<Scalars['String']['input']>;
-  readme?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
 export type Query = {
   __typename: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
@@ -1798,14 +1644,8 @@ export type Query = {
   findCompany: FindCompanyResult;
   job: Maybe<Job>;
   jobs: JobsResponse;
-  langsmithPrompt: Maybe<LangSmithPrompt>;
-  langsmithPromptCommit: Maybe<LangSmithPromptCommit>;
-  langsmithPrompts: Array<LangSmithPrompt>;
-  myPromptUsage: Array<PromptUsage>;
   opportunities: OpportunitiesResult;
   opportunity: Maybe<Opportunity>;
-  prompt: Maybe<Prompt>;
-  prompts: Array<RegisteredPrompt>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
@@ -1950,29 +1790,6 @@ export type QueryJobsArgs = {
 };
 
 
-export type QueryLangsmithPromptArgs = {
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
-export type QueryLangsmithPromptCommitArgs = {
-  includeModel?: InputMaybe<Scalars['Boolean']['input']>;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
-export type QueryLangsmithPromptsArgs = {
-  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  query?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryMyPromptUsageArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryOpportunitiesArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1983,13 +1800,6 @@ export type QueryOpportunitiesArgs = {
 
 export type QueryOpportunityArgs = {
   id: Scalars['String']['input'];
-};
-
-
-export type QueryPromptArgs = {
-  label?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
-  version?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2073,20 +1883,6 @@ export type ReceivedEmailsResult = {
   __typename: 'ReceivedEmailsResult';
   emails: Array<ReceivedEmail>;
   totalCount: Scalars['Int']['output'];
-};
-
-export type RegisteredPrompt = {
-  __typename: 'RegisteredPrompt';
-  content: Maybe<Scalars['JSON']['output']>;
-  labels: Array<Scalars['String']['output']>;
-  lastConfig: Maybe<Scalars['JSON']['output']>;
-  lastUpdatedAt: Scalars['String']['output'];
-  lastUsedBy: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
-  usageCount: Maybe<Scalars['Int']['output']>;
-  versions: Array<Scalars['Int']['output']>;
 };
 
 export type ResendEmailDetail = {
@@ -2343,14 +2139,6 @@ export type UpdateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type UpdateLangSmithPromptInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  readme?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type UpdateOpportunityInput = {
@@ -3187,61 +2975,6 @@ export type UnarchiveJobMutationVariables = Exact<{
 
 export type UnarchiveJobMutation = { __typename: 'Mutation', unarchiveJob: { __typename: 'Job', id: number, archived: boolean } };
 
-export type GetLangSmithPromptsQueryVariables = Exact<{
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
-  query?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type GetLangSmithPromptsQuery = { __typename: 'Query', langsmithPrompts: Array<{ __typename: 'LangSmithPrompt', id: string, promptHandle: string, fullName: string, description: string | null, readme: string | null, tenantId: string, createdAt: string, updatedAt: string, isPublic: boolean, isArchived: boolean, tags: Array<string>, owner: string | null, numLikes: number, numDownloads: number, numViews: number, numCommits: number, lastCommitHash: string | null, likedByAuthUser: boolean }> };
-
-export type GetLangSmithPromptQueryVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-}>;
-
-
-export type GetLangSmithPromptQuery = { __typename: 'Query', langsmithPrompt: { __typename: 'LangSmithPrompt', id: string, promptHandle: string, fullName: string, description: string | null, readme: string | null, tenantId: string, createdAt: string, updatedAt: string, isPublic: boolean, isArchived: boolean, tags: Array<string>, owner: string | null, numLikes: number, numDownloads: number, numViews: number, numCommits: number, lastCommitHash: string | null, likedByAuthUser: boolean } | null };
-
-export type GetLangSmithPromptCommitQueryVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-  includeModel?: InputMaybe<Scalars['Boolean']['input']>;
-}>;
-
-
-export type GetLangSmithPromptCommitQuery = { __typename: 'Query', langsmithPromptCommit: { __typename: 'LangSmithPromptCommit', owner: string, promptName: string, commitHash: string, manifest: any, examples: Array<any> } | null };
-
-export type CreateLangSmithPromptMutationVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-  input?: InputMaybe<CreateLangSmithPromptInput>;
-}>;
-
-
-export type CreateLangSmithPromptMutation = { __typename: 'Mutation', createLangSmithPrompt: { __typename: 'LangSmithPrompt', id: string, promptHandle: string, fullName: string, description: string | null, readme: string | null, tenantId: string, createdAt: string, updatedAt: string, isPublic: boolean, isArchived: boolean, tags: Array<string>, owner: string | null, numLikes: number, numDownloads: number, numViews: number, numCommits: number, lastCommitHash: string | null, likedByAuthUser: boolean } };
-
-export type UpdateLangSmithPromptMutationVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-  input: UpdateLangSmithPromptInput;
-}>;
-
-
-export type UpdateLangSmithPromptMutation = { __typename: 'Mutation', updateLangSmithPrompt: { __typename: 'LangSmithPrompt', id: string, promptHandle: string, fullName: string, description: string | null, readme: string | null, tenantId: string, createdAt: string, updatedAt: string, isPublic: boolean, isArchived: boolean, tags: Array<string>, owner: string | null, numLikes: number, numDownloads: number, numViews: number, numCommits: number, lastCommitHash: string | null, likedByAuthUser: boolean } };
-
-export type DeleteLangSmithPromptMutationVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-}>;
-
-
-export type DeleteLangSmithPromptMutation = { __typename: 'Mutation', deleteLangSmithPrompt: boolean };
-
-export type PushLangSmithPromptMutationVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-  input?: InputMaybe<PushLangSmithPromptInput>;
-}>;
-
-
-export type PushLangSmithPromptMutation = { __typename: 'Mutation', pushLangSmithPrompt: string };
-
 export type GetOpportunitiesQueryVariables = Exact<{
   companyId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
@@ -3280,25 +3013,6 @@ export type DeleteOpportunityMutationVariables = Exact<{
 
 
 export type DeleteOpportunityMutation = { __typename: 'Mutation', deleteOpportunity: { __typename: 'DeleteOpportunityResult', success: boolean, message: string | null } };
-
-export type GetPromptsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetPromptsQuery = { __typename: 'Query', prompts: Array<{ __typename: 'RegisteredPrompt', name: string, type: string, content: any | null, tags: Array<string>, labels: Array<string>, versions: Array<number>, lastUpdatedAt: string, lastConfig: any | null, usageCount: number | null, lastUsedBy: string | null }> };
-
-export type GetMyPromptUsageQueryVariables = Exact<{
-  limit?: InputMaybe<Scalars['Int']['input']>;
-}>;
-
-
-export type GetMyPromptUsageQuery = { __typename: 'Query', myPromptUsage: Array<{ __typename: 'PromptUsage', promptName: string, userEmail: string, version: number | null, label: string | null, usedAt: string, traceId: string | null }> };
-
-export type CreatePromptMutationVariables = Exact<{
-  input: CreatePromptInput;
-}>;
-
-
-export type CreatePromptMutation = { __typename: 'Mutation', createPrompt: { __typename: 'Prompt', name: string, version: number | null, type: PromptType, labels: Array<string> | null, tags: Array<string> | null, createdBy: string | null } };
 
 export type ResumeStatusQueryVariables = Exact<{
   email: Scalars['String']['input'];
@@ -3474,21 +3188,11 @@ export const EnhanceJobFromAtsDocument = {"kind":"Document","definitions":[{"kin
 export const MarkJobAppliedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"MarkJobApplied"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"markJobApplied"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"applied"}},{"kind":"Field","name":{"kind":"Name","value":"appliedAt"}}]}}]}}]} as unknown as DocumentNode<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>;
 export const ArchiveJobDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ArchiveJob"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"archiveJob"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"archived"}}]}}]}}]} as unknown as DocumentNode<ArchiveJobMutation, ArchiveJobMutationVariables>;
 export const UnarchiveJobDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UnarchiveJob"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"unarchiveJob"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"archived"}}]}}]}}]} as unknown as DocumentNode<UnarchiveJobMutation, UnarchiveJobMutationVariables>;
-export const GetLangSmithPromptsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLangSmithPrompts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"isPublic"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"isArchived"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"query"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"langsmithPrompts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"isPublic"},"value":{"kind":"Variable","name":{"kind":"Name","value":"isPublic"}}},{"kind":"Argument","name":{"kind":"Name","value":"isArchived"},"value":{"kind":"Variable","name":{"kind":"Name","value":"isArchived"}}},{"kind":"Argument","name":{"kind":"Name","value":"query"},"value":{"kind":"Variable","name":{"kind":"Name","value":"query"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"promptHandle"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"readme"}},{"kind":"Field","name":{"kind":"Name","value":"tenantId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isPublic"}},{"kind":"Field","name":{"kind":"Name","value":"isArchived"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"numLikes"}},{"kind":"Field","name":{"kind":"Name","value":"numDownloads"}},{"kind":"Field","name":{"kind":"Name","value":"numViews"}},{"kind":"Field","name":{"kind":"Name","value":"numCommits"}},{"kind":"Field","name":{"kind":"Name","value":"lastCommitHash"}},{"kind":"Field","name":{"kind":"Name","value":"likedByAuthUser"}}]}}]}}]} as unknown as DocumentNode<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>;
-export const GetLangSmithPromptDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLangSmithPrompt"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"langsmithPrompt"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"promptIdentifier"},"value":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"promptHandle"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"readme"}},{"kind":"Field","name":{"kind":"Name","value":"tenantId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isPublic"}},{"kind":"Field","name":{"kind":"Name","value":"isArchived"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"numLikes"}},{"kind":"Field","name":{"kind":"Name","value":"numDownloads"}},{"kind":"Field","name":{"kind":"Name","value":"numViews"}},{"kind":"Field","name":{"kind":"Name","value":"numCommits"}},{"kind":"Field","name":{"kind":"Name","value":"lastCommitHash"}},{"kind":"Field","name":{"kind":"Name","value":"likedByAuthUser"}}]}}]}}]} as unknown as DocumentNode<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>;
-export const GetLangSmithPromptCommitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLangSmithPromptCommit"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"includeModel"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"langsmithPromptCommit"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"promptIdentifier"},"value":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}}},{"kind":"Argument","name":{"kind":"Name","value":"includeModel"},"value":{"kind":"Variable","name":{"kind":"Name","value":"includeModel"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"promptName"}},{"kind":"Field","name":{"kind":"Name","value":"commitHash"}},{"kind":"Field","name":{"kind":"Name","value":"manifest"}},{"kind":"Field","name":{"kind":"Name","value":"examples"}}]}}]}}]} as unknown as DocumentNode<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>;
-export const CreateLangSmithPromptDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateLangSmithPrompt"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateLangSmithPromptInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createLangSmithPrompt"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"promptIdentifier"},"value":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"promptHandle"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"readme"}},{"kind":"Field","name":{"kind":"Name","value":"tenantId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isPublic"}},{"kind":"Field","name":{"kind":"Name","value":"isArchived"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"numLikes"}},{"kind":"Field","name":{"kind":"Name","value":"numDownloads"}},{"kind":"Field","name":{"kind":"Name","value":"numViews"}},{"kind":"Field","name":{"kind":"Name","value":"numCommits"}},{"kind":"Field","name":{"kind":"Name","value":"lastCommitHash"}},{"kind":"Field","name":{"kind":"Name","value":"likedByAuthUser"}}]}}]}}]} as unknown as DocumentNode<CreateLangSmithPromptMutation, CreateLangSmithPromptMutationVariables>;
-export const UpdateLangSmithPromptDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateLangSmithPrompt"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateLangSmithPromptInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateLangSmithPrompt"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"promptIdentifier"},"value":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"promptHandle"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"readme"}},{"kind":"Field","name":{"kind":"Name","value":"tenantId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isPublic"}},{"kind":"Field","name":{"kind":"Name","value":"isArchived"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"numLikes"}},{"kind":"Field","name":{"kind":"Name","value":"numDownloads"}},{"kind":"Field","name":{"kind":"Name","value":"numViews"}},{"kind":"Field","name":{"kind":"Name","value":"numCommits"}},{"kind":"Field","name":{"kind":"Name","value":"lastCommitHash"}},{"kind":"Field","name":{"kind":"Name","value":"likedByAuthUser"}}]}}]}}]} as unknown as DocumentNode<UpdateLangSmithPromptMutation, UpdateLangSmithPromptMutationVariables>;
-export const DeleteLangSmithPromptDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteLangSmithPrompt"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteLangSmithPrompt"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"promptIdentifier"},"value":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}}}]}]}}]} as unknown as DocumentNode<DeleteLangSmithPromptMutation, DeleteLangSmithPromptMutationVariables>;
-export const PushLangSmithPromptDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"PushLangSmithPrompt"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"PushLangSmithPromptInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pushLangSmithPrompt"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"promptIdentifier"},"value":{"kind":"Variable","name":{"kind":"Name","value":"promptIdentifier"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<PushLangSmithPromptMutation, PushLangSmithPromptMutationVariables>;
 export const GetOpportunitiesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetOpportunities"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"status"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"opportunities"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"companyId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}}},{"kind":"Argument","name":{"kind":"Name","value":"status"},"value":{"kind":"Variable","name":{"kind":"Name","value":"status"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"opportunities"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"rewardUsd"}},{"kind":"Field","name":{"kind":"Name","value":"rewardText"}},{"kind":"Field","name":{"kind":"Name","value":"deadline"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"score"}},{"kind":"Field","name":{"kind":"Name","value":"applied"}},{"kind":"Field","name":{"kind":"Name","value":"appliedAt"}},{"kind":"Field","name":{"kind":"Name","value":"applicationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"companyId"}},{"kind":"Field","name":{"kind":"Name","value":"company"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"website"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]} as unknown as DocumentNode<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>;
 export const GetOpportunityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetOpportunity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"opportunity"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"rewardUsd"}},{"kind":"Field","name":{"kind":"Name","value":"rewardText"}},{"kind":"Field","name":{"kind":"Name","value":"startDate"}},{"kind":"Field","name":{"kind":"Name","value":"endDate"}},{"kind":"Field","name":{"kind":"Name","value":"deadline"}},{"kind":"Field","name":{"kind":"Name","value":"firstSeen"}},{"kind":"Field","name":{"kind":"Name","value":"lastSeen"}},{"kind":"Field","name":{"kind":"Name","value":"score"}},{"kind":"Field","name":{"kind":"Name","value":"rawContext"}},{"kind":"Field","name":{"kind":"Name","value":"metadata"}},{"kind":"Field","name":{"kind":"Name","value":"applied"}},{"kind":"Field","name":{"kind":"Name","value":"appliedAt"}},{"kind":"Field","name":{"kind":"Name","value":"applicationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"applicationNotes"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"companyId"}},{"kind":"Field","name":{"kind":"Name","value":"contactId"}},{"kind":"Field","name":{"kind":"Name","value":"company"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"website"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetOpportunityQuery, GetOpportunityQueryVariables>;
 export const CreateOpportunityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateOpportunity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateOpportunityInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createOpportunity"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"companyId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<CreateOpportunityMutation, CreateOpportunityMutationVariables>;
 export const UpdateOpportunityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateOpportunity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateOpportunityInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateOpportunity"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"applied"}},{"kind":"Field","name":{"kind":"Name","value":"appliedAt"}},{"kind":"Field","name":{"kind":"Name","value":"applicationStatus"}},{"kind":"Field","name":{"kind":"Name","value":"applicationNotes"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<UpdateOpportunityMutation, UpdateOpportunityMutationVariables>;
 export const DeleteOpportunityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteOpportunity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteOpportunity"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<DeleteOpportunityMutation, DeleteOpportunityMutationVariables>;
-export const GetPromptsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetPrompts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"prompts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"labels"}},{"kind":"Field","name":{"kind":"Name","value":"versions"}},{"kind":"Field","name":{"kind":"Name","value":"lastUpdatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"lastConfig"}},{"kind":"Field","name":{"kind":"Name","value":"usageCount"}},{"kind":"Field","name":{"kind":"Name","value":"lastUsedBy"}}]}}]}}]} as unknown as DocumentNode<GetPromptsQuery, GetPromptsQueryVariables>;
-export const GetMyPromptUsageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMyPromptUsage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myPromptUsage"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"promptName"}},{"kind":"Field","name":{"kind":"Name","value":"userEmail"}},{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"usedAt"}},{"kind":"Field","name":{"kind":"Name","value":"traceId"}}]}}]}}]} as unknown as DocumentNode<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>;
-export const CreatePromptDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreatePrompt"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreatePromptInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createPrompt"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"labels"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"}}]}}]}}]} as unknown as DocumentNode<CreatePromptMutation, CreatePromptMutationVariables>;
 export const ResumeStatusDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ResumeStatus"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"email"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resumeStatus"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"email"},"value":{"kind":"Variable","name":{"kind":"Name","value":"email"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"exists"}},{"kind":"Field","name":{"kind":"Name","value":"resume_id"}},{"kind":"Field","name":{"kind":"Name","value":"chunk_count"}},{"kind":"Field","name":{"kind":"Name","value":"filename"}},{"kind":"Field","name":{"kind":"Name","value":"ingested_at"}}]}}]}}]} as unknown as DocumentNode<ResumeStatusQuery, ResumeStatusQueryVariables>;
 export const UploadResumeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UploadResume"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"email"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resumePdf"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filename"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"uploadResume"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"email"},"value":{"kind":"Variable","name":{"kind":"Name","value":"email"}}},{"kind":"Argument","name":{"kind":"Name","value":"resumePdf"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resumePdf"}}},{"kind":"Argument","name":{"kind":"Name","value":"filename"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filename"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"job_id"}},{"kind":"Field","name":{"kind":"Name","value":"tier"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<UploadResumeMutation, UploadResumeMutationVariables>;
 export const IngestResumeParseDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"IngestResumeParse"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"email"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"job_id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filename"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"ingestResumeParse"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"email"},"value":{"kind":"Variable","name":{"kind":"Name","value":"email"}}},{"kind":"Argument","name":{"kind":"Name","value":"job_id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"job_id"}}},{"kind":"Argument","name":{"kind":"Name","value":"filename"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filename"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"job_id"}},{"kind":"Field","name":{"kind":"Name","value":"resume_id"}},{"kind":"Field","name":{"kind":"Name","value":"chunks_stored"}},{"kind":"Field","name":{"kind":"Name","value":"error"}}]}}]}}]} as unknown as DocumentNode<IngestResumeParseMutation, IngestResumeParseMutationVariables>;

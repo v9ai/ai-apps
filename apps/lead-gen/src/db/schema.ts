@@ -892,7 +892,6 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   companySnapshots: many(companySnapshots),
   contacts: many(contacts),
   emailCampaigns: many(emailCampaigns),
-  opportunities: many(opportunities),
 }));
 
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
@@ -949,23 +948,11 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
     references: [companies.id],
   }),
   emails: many(contactEmails),
-  opportunities: many(opportunities),
 }));
 
 export const contactEmailsRelations = relations(contactEmails, ({ one }) => ({
   contact: one(contacts, {
     fields: [contactEmails.contact_id],
-    references: [contacts.id],
-  }),
-}));
-
-export const opportunitiesRelations = relations(opportunities, ({ one }) => ({
-  company: one(companies, {
-    fields: [opportunities.company_id],
-    references: [companies.id],
-  }),
-  contact: one(contacts, {
-    fields: [opportunities.contact_id],
     references: [contacts.id],
   }),
 }));
