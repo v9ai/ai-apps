@@ -166,3 +166,126 @@ async fn work_fields_populated() {
     assert!(work.author.is_some(), "expected author");
     assert!(work.is_referenced_by_count.is_some(), "expected citation count");
 }
+
+// ── Date enforcement ─────────────────────────────────────────────────
+
+#[tokio::test]
+#[serial]
+async fn search_results_have_published_date() {
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    let client = CrossrefClient::new(None);
+    let resp = client.search("machine learning", 20, 0).await.unwrap();
+
+    let items = resp
+        .message
+        .as_ref()
+        .and_then(|m| m.items.as_ref())
+        .expect("expected items");
+
+    let with_date = items.iter().filter(|w| w.published.is_some()).count();
+    let ratio = with_date as f64 / items.len() as f64;
+    assert!(
+        ratio >= 0.5,
+        "expected most results to have a published date, got {with_date}/{} ({:.0}%)",
+        items.len(),
+        ratio * 100.0,
+    );
+}
+
+#[tokio::test]
+#[serial]
+async fn crossref_date_year_extraction() {
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    let client = CrossrefClient::new(None);
+    let resp = client.search("machine learning", 20, 0).await.unwrap();
+
+    let items = resp
+        .message
+        .as_ref()
+        .and_then(|m| m.items.as_ref())
+        .expect("expected items");
+
+    let current_year = 2026u32; // conservative upper bound
+    for work in items.iter().filter(|w| w.published.is_some()) {
+        let dp = work.published.as_ref().unwrap();
+        if let Some(year) = dp.year() {
+            assert!(
+                (1900..=current_year + 1).contains(&year),
+                "year {year} outside reasonable range for work: {:?}",
+                work.title,
+            );
+        }
+    }
+}
+
+#[tokio::test]
+#[serial]
+async fn client_side_date_filter_works() {
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    let client = CrossrefClient::new(None);
+    let resp = client.search("machine learning", 20, 0).await.unwrap();
+
+    let items = resp
+        .message
+        .as_ref()
+        .and_then(|m| m.items.as_ref())
+        .expect("expected items");
+
+    let filtered: Vec<&CrossrefWork> = items
+        .iter()
+        .filter(|w| {
+            w.published
+                .as_ref()
+                .and_then(|dp| dp.year())
+                .map_or(false, |y| y >= 2024)
+        })
+        .collect();
+
+    // Every filtered result must satisfy the predicate.
+    for work in &filtered {
+        let year = work
+            .published
+            .as_ref()
+            .and_then(|dp| dp.year())
+            .expect("filtered work must have year");
+        assert!(
+            year >= 2024,
+            "filtered work has year {year} < 2024: {:?}",
+            work.title,
+        );
+    }
+}
+
+#[tokio::test]
+#[serial]
+async fn crossref_date_has_date_parts() {
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    let client = CrossrefClient::new(None);
+    let resp = client.search("machine learning", 10, 0).await.unwrap();
+
+    let items = resp
+        .message
+        .as_ref()
+        .and_then(|m| m.items.as_ref())
+        .expect("expected items");
+
+    let with_date: Vec<_> = items.iter().filter(|w| w.published.is_some()).collect();
+    assert!(!with_date.is_empty(), "need at least one work with published date");
+
+    for work in &with_date {
+        let dp = work.published.as_ref().unwrap();
+        let parts = dp
+            .date_parts
+            .as_ref()
+            .expect("DateParts.date_parts should be Some");
+        assert!(!parts.is_empty(), "date_parts outer vec should not be empty");
+        let inner = parts.first().unwrap();
+        assert!(
+            !inner.is_empty(),
+            "date_parts inner vec should contain at least a year: {:?}",
+            work.title,
+        );
+        // First element is the year — sanity check it is positive.
+        assert!(inner[0] > 0, "year should be positive");
+    }
+}

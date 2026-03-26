@@ -1,13 +1,11 @@
 /**
  * Job Inserter Service
  *
- * Inserts jobs via Cloudflare Worker endpoint instead of GraphQL.
- * Uses the same approach as documented in the Insert Jobs Worker README.
+ * Inserts jobs via the app's API endpoint.
  */
 
-const WORKER_URL =
-  import.meta.env.VITE_WORKER_URL ||
-  "https://lead-gen-insert-jobs.eeeew.workers.dev";
+const API_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3004";
 
 // API secret can be set at build time or runtime
 const BUILD_TIME_API_SECRET = import.meta.env.VITE_API_SECRET || null;
@@ -76,13 +74,13 @@ async function getApiSecret(): Promise<string | null> {
 }
 
 /**
- * Insert jobs via Cloudflare Worker
+ * Insert jobs via app API
  */
 export async function insertJobs(
   jobs: JobInput[],
 ): Promise<InsertJobsResponse> {
   try {
-    console.log(`[Job Inserter] Inserting ${jobs.length} jobs to worker...`);
+    console.log(`[Job Inserter] Inserting ${jobs.length} jobs...`);
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -94,7 +92,7 @@ export async function insertJobs(
       headers["Authorization"] = `Bearer ${apiSecret}`;
     }
 
-    const response = await fetch(WORKER_URL, {
+    const response = await fetch(`${API_URL}/api/jobs/insert`, {
       method: "POST",
       headers,
       body: JSON.stringify({ jobs }),
@@ -105,7 +103,7 @@ export async function insertJobs(
         error: `HTTP ${response.status}: ${response.statusText}`,
       }));
 
-      console.error("[Job Inserter] Worker returned error:", errorData);
+      console.error("[Job Inserter] API returned error:", errorData);
 
       return {
         success: false,
@@ -117,7 +115,7 @@ export async function insertJobs(
 
     const result: InsertJobsResponse = await response.json();
 
-    console.log("[Job Inserter] Worker response:", {
+    console.log("[Job Inserter] API response:", {
       success: result.success,
       successCount: result.data?.successCount,
       failCount: result.data?.failCount,
@@ -136,7 +134,7 @@ export async function insertJobs(
     if (error instanceof Error) {
       if (error.message.includes("Failed to fetch")) {
         errorMessage =
-          "Cannot connect to worker. Check your internet connection.";
+          "Cannot connect to API. Check your internet connection.";
       } else {
         errorMessage = error.message;
       }
@@ -175,7 +173,7 @@ export async function clearApiSecret(): Promise<void> {
 }
 
 /**
- * Helper to convert legacy job format to worker API format
+ * Helper to convert legacy job format to API format
  */
 export function normalizeJobInput(job: any): any {
   // Extract company key from URL or use company name
@@ -336,12 +334,12 @@ export async function insertJobsBatch(
     };
   }
 
-  // Normalize to worker API format
+  // Normalize to API format
   const jobInputs = validJobs.map((job) => normalizeJobInput(job));
 
   console.log(`[Job Inserter] Prepared ${jobInputs.length} jobs for insertion`);
 
-  // Insert via worker
+  // Insert via API
   const result = await insertJobs(jobInputs);
 
   // Check for authentication errors
@@ -354,7 +352,7 @@ export async function insertJobsBatch(
       return {
         success: false,
         message:
-          "⚠️ Authentication required. The worker needs an API secret. Please set it in extension settings or disable authentication on the worker.",
+          "⚠️ Authentication required. Please set the API secret in extension settings.",
         jobsCollected: 0,
       };
     }

@@ -58,20 +58,6 @@ export const papers: Paper[] = [
     categoryColor: "var(--green-9)",
   },
   {
-    slug: "cloudflare-workers",
-    number: 3,
-    title: "Cloudflare Workers",
-    category: "Infrastructure",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Cloudflare",
-    year: 2024,
-    finding: "Edge compute platform for running serverless functions globally with low latency",
-    relevance: "Hosts 12+ specialized workers like lead-gen-process-jobs for job classification and lead-gen-resume-rag for vector embeddings",
-    url: "https://developers.cloudflare.com/workers",
-    categoryColor: "var(--red-9)",
-  },
-  {
     slug: "drizzle-orm",
     number: 4,
     title: "Drizzle ORM",
@@ -127,44 +113,15 @@ export const papers: Paper[] = [
     url: "https://the-guild.dev/graphql/codegen",
     categoryColor: "var(--orange-9)",
   },
-  {
-    slug: "cloudflare-d1",
-    number: 8,
-    title: "Cloudflare D1",
-    category: "Database",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Cloudflare",
-    year: 2024,
-    finding: "Edge SQL database optimized for fast reads and vector storage",
-    relevance: "Stores resume embeddings from Workers AI for similarity search in the lead-gen-job-matcher worker",
-    url: "https://developers.cloudflare.com/d1",
-    categoryColor: "var(--green-9)",
-  },
 ];
 
 // ── Key Metrics ───────────────────────────────────────────────────
 
 export const researchStats: Stat[] = [
   {
-    number: "12+",
-    label: "Specialized Cloudflare Workers for different tasks",
-    source: "Architecture analysis showing workers like lead-gen-process-jobs and ats-crawler",
-  },
-  {
-    number: "1024-dim",
-    label: "Vector embedding size for resume-job matching",
-    source: "Inferred from Workers AI embeddings stored in Cloudflare D1",
-  },
-  {
     number: "O(log n)",
     label: "Search complexity for job filtering via GraphQL pagination",
     source: "GraphQL queries use limit and offset with indexed PostgreSQL tables",
-  },
-  {
-    number: "< 100ms",
-    label: "Edge response time for D1 vector similarity searches",
-    source: "Cloudflare D1 optimization for low-latency reads",
   },
   {
     number: "4",
@@ -178,18 +135,13 @@ export const researchStats: Stat[] = [
 export const pipelineAgents: PipelineAgent[] = [
   {
     name: "Job Ingestion & Crawling",
-    description: "Rust-based ats-crawler worker scrapes job boards like Ashby and Greenhouse via Common Crawl, then lead-gen-insert-jobs worker adds jobs to a processing queue for classification.",
-    researchBasis: "Cloudflare Workers with Rust for high-performance web scraping",
+    description: "ATS platform fetchers (Greenhouse, Lever, Ashby) ingest jobs via API, then scripts process and classify them for EU remote compatibility.",
+    researchBasis: "ATS API integration for structured job data ingestion",
   },
   {
     name: "AI Classification & EU Validation",
-    description: "lead-gen-process-jobs worker (Python/LangGraph) uses DeepSeek LLM to classify jobs, while lead-gen-eu-classifier worker validates EU remote compatibility, storing results in PostgreSQL via Drizzle ORM.",
-    researchBasis: "LangGraph for agent orchestration and LLM prompt engineering",
-  },
-  {
-    name: "Vectorization & Resume Matching",
-    description: "lead-gen-resume-rag worker creates embeddings from resumes using Workers AI and stores them in Cloudflare D1. lead-gen-job-matcher worker performs cosine similarity search between resume and job vectors for matching.",
-    researchBasis: "Vector embeddings and similarity search for retrieval-augmented generation (RAG)",
+    description: "DeepSeek LLM classifies jobs for EU remote compatibility, with heuristic pre-filtering and structured output validation, storing results in PostgreSQL via Drizzle ORM.",
+    researchBasis: "LLM prompt engineering with structured output grounding",
   },
   {
     name: "Job Display & User Interaction",
@@ -203,7 +155,7 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Monitoring & Evaluation",
-    description: "Evaluation scripts and job-reporter-llm worker analyze job reports with confidence scoring for quality control.",
+    description: "Evaluation scripts analyze job classification accuracy with confidence scoring for quality control.",
     researchBasis: "LLM observability frameworks and A/B testing methodologies",
   },
 ];
@@ -211,33 +163,33 @@ export const pipelineAgents: PipelineAgent[] = [
 // ── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "Job seekers visit the platform where the UnifiedJobsProvider component fetches EU-remote jobs via GraphQL queries to PostgreSQL, filtered by Drizzle ORM. Recruiters post jobs that are ingested by Rust crawlers, classified for EU compatibility using DeepSeek via LangGraph workers, and stored with vector embeddings in Cloudflare D1 for matching. Administrators manage contacts and campaigns through Better Auth-authenticated admin routes, using AI-assisted email drafting with the ComposeFromLinkedIn component and Resend for delivery.";
+  "Job seekers visit the platform where the UnifiedJobsProvider component fetches EU-remote jobs via GraphQL queries to PostgreSQL, filtered by Drizzle ORM. Jobs are ingested from ATS platforms (Greenhouse, Lever, Ashby) and classified for EU remote compatibility using DeepSeek LLM. Administrators manage contacts and campaigns through Better Auth-authenticated admin routes, using AI-assisted email drafting with the ComposeFromLinkedIn component and Resend for delivery.";
 
 // ── Deep-Dive Sections ────────────────────────────────────────────
 
 export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "System Architecture",
-    content: "The platform uses a microservices architecture with Next.js 14 App Router for the frontend, Cloudflare Workers for edge compute, and a hybrid database strategy. PostgreSQL (Neon) handles transactional data like jobs and contacts, while Cloudflare D1 stores vector embeddings for fast similarity search. Rust, Python, and TypeScript workers specialize in crawling, AI classification, and business logic, orchestrated via queues and cron triggers.",
+    content: "The platform uses Next.js App Router for the frontend with Neon PostgreSQL as the primary database. ATS platform fetchers handle job ingestion, DeepSeek LLM handles classification, and GraphQL serves the API layer.",
   },
   {
     heading: "Database Design",
-    content: "PostgreSQL schema includes tables like jobs, contacts, email_campaigns, and reported_jobs, managed by Drizzle ORM with Row-Level Security (RLS) policies. Skills are stored in a many-to-many relationship via job_skills table, seeded by scripts/seed-skill-taxonomy.ts. Cloudflare D1 holds resume embeddings indexed for cosine similarity search, enabling efficient matching in the lead-gen-job-matcher worker.",
+    content: "PostgreSQL schema includes tables like jobs, contacts, email_campaigns, and reported_jobs, managed by Drizzle ORM with Row-Level Security (RLS) policies. Skills are stored in a many-to-many relationship via job_skills table, seeded by scripts/seed-skill-taxonomy.ts.",
   },
   {
     heading: "Security & Auth",
-    content: "Better Auth handles authentication with session-based auth backed by Neon PostgreSQL, while admin access is restricted by email check (isAdminEmail()) in resolvers. Environment variables store secrets like API keys. Input validation occurs on both client and server, with rate limiting likely implemented at the Cloudflare Worker level.",
+    content: "Better Auth handles authentication with session-based auth backed by Neon PostgreSQL, while admin access is restricted by email check (isAdminEmail()) in resolvers. Environment variables store secrets like API keys. Input validation occurs on both client and server.",
   },
   {
     heading: "Deployment & Infrastructure",
-    content: "The app is hosted on Vercel for Next.js frontend, with Cloudflare Workers deployed via Wrangler for edge functions. Neon provides serverless PostgreSQL, and Resend handles email delivery. Monitoring includes custom dashboards for worker status, with evaluation scripts for continuous improvement.",
+    content: "The app is hosted on Vercel for Next.js frontend. Neon provides serverless PostgreSQL, and Resend handles email delivery. Evaluation scripts support continuous improvement.",
   },
   {
     heading: "AI Integration",
-    content: "DeepSeek LLM classifies jobs for EU compatibility in lead-gen-process-jobs worker, while OpenAI powers general tasks. Workers AI generates vector embeddings for resumes, stored in D1. LangGraph orchestrates agentic workflows. AI-assisted email drafting uses the ComposeFromLinkedIn component, and job reports are analyzed by job-reporter-llm worker with confidence scoring.",
+    content: "DeepSeek LLM classifies jobs for EU compatibility with structured output grounding. OpenAI powers general tasks. AI-assisted email drafting uses the ComposeFromLinkedIn component.",
   },
   {
     heading: "Job Processing Pipeline",
-    content: "Jobs are ingested via Rust crawlers, queued for processing, classified by DeepSeek LLM, and stored in PostgreSQL. Vector embeddings are created using Workers AI and stored in D1 for matching. The UnifiedJobsProvider component renders jobs with real-time filtering, while admins manage campaigns via GraphQL mutations and Resend API, with events synced through syncResendEmails mutation.",
+    content: "Jobs are ingested from ATS platforms (Greenhouse, Lever, Ashby), classified by DeepSeek LLM with heuristic pre-filtering, and stored in PostgreSQL. The UnifiedJobsProvider component renders jobs with real-time filtering, while admins manage campaigns via GraphQL mutations and Resend API.",
   },
 ];

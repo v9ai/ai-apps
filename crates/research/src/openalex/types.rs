@@ -8,6 +8,7 @@ pub struct Work {
     pub doi: Option<String>,
     pub title: Option<String>,
     pub publication_year: Option<u32>,
+    pub publication_date: Option<String>,
     pub cited_by_count: Option<u64>,
     pub authorships: Option<Vec<Authorship>>,
     pub abstract_inverted_index: Option<HashMap<String, Vec<usize>>>,
