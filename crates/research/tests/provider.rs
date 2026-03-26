@@ -449,6 +449,8 @@ fn team_config_accepts_deepseek_provider() {
         output_dir: None,
         synthesis_provider: None,
         ranker: None,
+        timeout_check_interval: None,
+        progress_report_interval: None,
     });
 }
 
@@ -472,6 +474,8 @@ fn team_config_accepts_qwen_provider() {
         output_dir: None,
         synthesis_provider: None,
         ranker: None,
+        timeout_check_interval: None,
+        progress_report_interval: None,
     });
 }
 
@@ -498,5 +502,7 @@ fn team_config_separate_synthesis_provider() {
             model: "qwen-max".into(),
         }),
         ranker: None,
+        timeout_check_interval: None,
+        progress_report_interval: None,
     });
 }

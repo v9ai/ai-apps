@@ -1,3 +1,6 @@
+//! Dual- and multi-model research: query DeepSeek and Qwen in parallel
+//! for a single question and pick the richest synthesis.
+
 use anyhow::{bail, Context, Result};
 use tracing::info;
 
@@ -180,9 +183,8 @@ pub fn format_multi_unified_synthesis(resp: &MultiResponse) -> String {
         _ => successful
             .iter()
             .max_by_key(|r| r.content.len())
-            .unwrap()
-            .content
-            .clone(),
+            .map(|r| r.content.clone())
+            .unwrap_or_default(),
     }
 }
 

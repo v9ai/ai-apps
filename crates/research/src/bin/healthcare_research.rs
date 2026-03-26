@@ -35,7 +35,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 2,
@@ -56,7 +56,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 3,
@@ -78,7 +78,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 4,
@@ -100,7 +100,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 5,
@@ -122,7 +122,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![1, 2, 3, 4],
-            result: None,
+            ..Default::default()
         },
     ]
 }
@@ -158,6 +158,8 @@ async fn main() -> Result<()> {
         output_dir: Some(OUT_DIR.into()),
         synthesis_provider: None,
         ranker: None,
+        timeout_check_interval: None,
+        progress_report_interval: None,
     });
 
     let result = lead.run(tasks).await?;

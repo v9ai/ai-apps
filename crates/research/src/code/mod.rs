@@ -1,3 +1,9 @@
+//! Structural code analysis via ast-grep.
+//!
+//! Provides three agent tools — [`tools::SearchPattern`], [`tools::AnalyzeStructure`],
+//! and [`tools::FindAntiPatterns`] — that use tree-sitter ASTs for precise
+//! multi-language pattern matching.
+
 pub mod source;
 pub mod tools;
 

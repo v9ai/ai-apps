@@ -4,6 +4,8 @@ use std::time::Duration;
 use tokio::sync::Semaphore;
 use tokio::time::sleep;
 
+use crate::retry::{backoff_delay, retry_get, RetryAction, RetryConfig};
+
 use super::{
     error::Error,
     types::{
@@ -13,7 +15,13 @@ use super::{
 };
 
 const BASE_URL: &str = "https://api.semanticscholar.org";
-const MAX_RETRIES: u32 = 3;
+
+const RETRY_CONFIG: RetryConfig = RetryConfig {
+    max_retries: 3,
+    base_delay: Duration::from_secs(1),
+    max_delay: Duration::from_secs(30),
+    jitter: true,
+};
 
 /// Async client for the Semantic Scholar Academic Graph, Recommendations, and Datasets APIs.
 ///
@@ -79,50 +87,19 @@ impl SemanticScholarClient {
         }
     }
 
-    /// Low-level GET with exponential-backoff retry on 429.
-    /// When a rate_limiter is set, acquires a permit before each HTTP request.
+    /// Low-level GET with exponential-backoff retry.
+    /// When a rate_limiter is set, acquires a permit before each HTTP request
+    /// and uses a manual retry loop to coordinate with the semaphore.
+    /// Without a rate_limiter, delegates to the shared `retry_get` utility.
     async fn get_json(
         &self,
         url: &str,
         params: Vec<(String, String)>,
     ) -> Result<serde_json::Value, Error> {
-        let mut retries = 0u32;
-        loop {
-            // Acquire semaphore permit if configured.
-            // Record acquisition time so we can hold for a minimum duration (rate limiting).
-            let acquire_time = std::time::Instant::now();
-            let _permit = match &self.rate_limiter {
-                Some(sem) => Some(sem.acquire().await.map_err(|_| Error::Api {
-                    status: 503,
-                    message: "rate limiter closed".into(),
-                })?),
-                None => None,
-            };
-
-            let resp = self.http.get(url).query(&params).send().await?;
+        // Fast path: no semaphore — use the shared retry utility.
+        if self.rate_limiter.is_none() {
+            let resp = retry_get(&self.http, url, &params, &RETRY_CONFIG, "SemanticScholar").await?;
             let status = resp.status();
-
-            if status.as_u16() == 429 {
-                // Hold permit for min duration even on 429 — prevents the next queued
-                // worker from firing immediately and also getting 429'd (cascade).
-                Self::enforce_min_hold(acquire_time, &_permit).await;
-                drop(_permit);
-                if retries >= MAX_RETRIES {
-                    return Err(Error::RateLimited {
-                        retry_after: 2u64.pow(retries),
-                    });
-                }
-                let wait_secs = 2u64.pow(retries);
-                tracing::warn!(
-                    retries,
-                    wait_secs,
-                    "Semantic Scholar rate limited (429), backing off"
-                );
-                sleep(Duration::from_secs(wait_secs)).await;
-                retries += 1;
-                continue;
-            }
-
             if !status.is_success() {
                 let message = resp.text().await.unwrap_or_default();
                 return Err(Error::Api {
@@ -130,15 +107,73 @@ impl SemanticScholarClient {
                     message,
                 });
             }
-
-            let body = resp.json().await?;
-
-            // Hold the permit for at least 1 second from acquisition to throttle throughput.
-            // With Semaphore(1) this enforces ≤1 req/s; with Semaphore(N) it's ≤N req/s.
-            Self::enforce_min_hold(acquire_time, &_permit).await;
-
-            return Ok(body);
+            return Ok(resp.json().await?);
         }
+
+        // Slow path: semaphore-gated retry loop.
+        // Safety: early return on line above guarantees rate_limiter is Some.
+        let sem = self.rate_limiter.as_ref().expect("rate_limiter checked above");
+        for attempt in 0..=RETRY_CONFIG.max_retries {
+            if attempt > 0 {
+                let delay = backoff_delay(&RETRY_CONFIG, attempt - 1);
+                tracing::warn!(
+                    api = "SemanticScholar",
+                    attempt,
+                    delay_ms = delay.as_millis() as u64,
+                    "retrying after backoff"
+                );
+                sleep(delay).await;
+            }
+
+            let acquire_time = std::time::Instant::now();
+            let _permit = Some(sem.acquire().await.map_err(|_| Error::Api {
+                status: 503,
+                message: "rate limiter closed".into(),
+            })?);
+
+            let result = self.http.get(url).query(&params).send().await;
+
+            match result {
+                Ok(resp) => {
+                    let status = resp.status().as_u16();
+                    let action = RetryAction::from_status(status);
+
+                    if action.should_retry() {
+                        // Hold permit for min duration even on retryable status.
+                        Self::enforce_min_hold(acquire_time, &_permit).await;
+                        if attempt == RETRY_CONFIG.max_retries {
+                            if status == 429 {
+                                return Err(Error::RateLimited { retry_after: 0 });
+                            }
+                            let message = resp.text().await.unwrap_or_default();
+                            return Err(Error::Api { status, message });
+                        }
+                        continue;
+                    }
+
+                    if !resp.status().is_success() {
+                        let message = resp.text().await.unwrap_or_default();
+                        return Err(Error::Api { status, message });
+                    }
+
+                    let body = resp.json().await?;
+                    Self::enforce_min_hold(acquire_time, &_permit).await;
+                    return Ok(body);
+                }
+                Err(err) => {
+                    Self::enforce_min_hold(acquire_time, &_permit).await;
+                    if (err.is_timeout() || err.is_connect()) && attempt < RETRY_CONFIG.max_retries {
+                        continue;
+                    }
+                    return Err(Error::Http(err));
+                }
+            }
+        }
+
+        Err(Error::Api {
+            status: 503,
+            message: "retries exhausted".into(),
+        })
     }
 
     /// **Bulk keyword search** — efficient large-scale discovery, up to 10M results.

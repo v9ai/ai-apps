@@ -1,4 +1,4 @@
-# Exclude all apps except agentic-healthcare, nomadically.work, todo, and knowledge
+# Exclude all apps except agentic-healthcare, lead-gen, todo, and knowledge
 apps/podcasts
 apps/real-estate
 apps/research-thera
@@ -29,8 +29,8 @@ target
 .venv-workers
 
 # App-specific large dirs
-apps/nomadically.work/consultancies
-apps/nomadically.work/leadgen-metal
+apps/lead-gen/consultancies
+apps/lead-gen/leadgen-metal
 
 # Common exclusions (use specific paths, not 'dist' to preserve packages/ui/dist)
 node_modules

@@ -1,14 +1,14 @@
-/// Agent tools for code analysis via ast-grep.
-///
-/// Three tools: SearchPattern, AnalyzeStructure, FindAntiPatterns.
-/// All implement the `Tool` trait and respect `CodeAnalysisConfig` limits.
+//! Agent tools for code analysis via ast-grep.
+//!
+//! Three tools — [`SearchPattern`], [`AnalyzeStructure`], [`FindAntiPatterns`] —
+//! all implement the [`Tool`] trait and respect [`CodeAnalysisConfig`] limits.
+
 use async_trait::async_trait;
 use ast_grep_language::SupportLang;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::fs;
 use std::path::PathBuf;
-#[allow(unused_imports)]
 use walkdir::WalkDir;
 
 use crate::agent::{Tool, ToolDefinition};
@@ -53,7 +53,11 @@ fn parse_lang(s: &str) -> anyhow::Result<SupportLang> {
             "py" | "python" => Ok(SupportLang::Python),
             "go" | "golang" => Ok(SupportLang::Go),
             "rb" | "ruby" => Ok(SupportLang::Ruby),
-            "cpp" | "c++" => Ok(SupportLang::Cpp),
+            "cpp" | "c++" | "cxx" => Ok(SupportLang::Cpp),
+            "java" => Ok(SupportLang::Java),
+            "cs" | "csharp" | "c#" => Ok(SupportLang::CSharp),
+            "swift" => Ok(SupportLang::Swift),
+            "kt" | "kotlin" => Ok(SupportLang::Kotlin),
             _ => Err(anyhow::anyhow!("Unsupported language: {s}")),
         })
 }
@@ -102,11 +106,13 @@ fn collect_files(
 
 // ─── SearchPattern ──────────────────────────────────────────────────────────
 
+/// Agent tool: structural code search using ast-grep patterns.
 pub struct SearchPattern {
     config: CodeAnalysisConfig,
 }
 
 impl SearchPattern {
+    /// Create a new `SearchPattern` tool with the given configuration.
     pub fn new(config: CodeAnalysisConfig) -> Self {
         Self { config }
     }
@@ -231,11 +237,13 @@ impl Tool for SearchPattern {
 
 // ─── AnalyzeStructure ───────────────────────────────────────────────────────
 
+/// Agent tool: analyse the structural layout of source code (functions, structs, traits, etc.).
 pub struct AnalyzeStructure {
     config: CodeAnalysisConfig,
 }
 
 impl AnalyzeStructure {
+    /// Create a new `AnalyzeStructure` tool with the given configuration.
     pub fn new(config: CodeAnalysisConfig) -> Self {
         Self { config }
     }
@@ -258,15 +266,18 @@ impl Tool for AnalyzeStructure {
         ToolDefinition {
             name: self.name().into(),
             description: "Analyze the structural layout of source code: list functions, \
-                structs/classes, traits/interfaces, impl blocks, type aliases. Works on \
-                a directory of files or inline code. Returns item kind, name, and line numbers."
+                structs/classes, traits/interfaces, impl blocks, enums, type aliases, \
+                modules, and constants. Works on a directory of files or inline code. \
+                Returns item kind, name, line numbers, classification, and line count. \
+                Supports Rust, TypeScript, TSX, JavaScript, Python, Go, Java, Ruby, \
+                Kotlin, C#, and Swift."
                 .into(),
             parameters: json!({
                 "type": "object",
                 "properties": {
                     "language": {
                         "type": "string",
-                        "description": "Programming language: rust, typescript, tsx, javascript, python, go"
+                        "description": "Programming language: rust, typescript, tsx, javascript, python, go, java, ruby, kotlin, csharp, swift"
                     },
                     "path": {
                         "type": "string",
@@ -365,8 +376,11 @@ impl Tool for FindAntiPatterns {
             description: "Detect curated anti-patterns in source code. You don't need to \
                 know ast-grep syntax — just specify language and category.\n\n\
                 Available categories by language:\n\
-                - Rust: \"unwrap_usage\", \"error_handling\", \"unsafe\"\n\
-                - TypeScript/TSX: \"error_handling\", \"console\"\n\n\
+                - Rust: \"unwrap_usage\", \"error_handling\", \"unsafe\", \"complexity\", \"unused\", \"clone\"\n\
+                - TypeScript/TSX: \"error_handling\", \"console\", \"complexity\", \"deprecated\"\n\
+                - JavaScript: \"error_handling\", \"console\", \"deprecated\"\n\
+                - Python: \"complexity\"\n\
+                - Go: \"error_handling\"\n\n\
                 Returns violations with file, line, matched text, rule name, and description."
                 .into(),
             parameters: json!({
@@ -374,11 +388,11 @@ impl Tool for FindAntiPatterns {
                 "properties": {
                     "language": {
                         "type": "string",
-                        "description": "Programming language: rust, typescript, tsx"
+                        "description": "Programming language: rust, typescript, tsx, javascript, python, go"
                     },
                     "category": {
                         "type": "string",
-                        "description": "Anti-pattern category. Rust: unwrap_usage, error_handling, unsafe. TS/TSX: error_handling, console."
+                        "description": "Anti-pattern category. Rust: unwrap_usage, error_handling, unsafe, complexity, unused, clone. TS/TSX: error_handling, console, complexity, deprecated. JS: error_handling, console, deprecated. Python: complexity. Go: error_handling."
                     },
                     "path": {
                         "type": "string",
@@ -829,6 +843,108 @@ mod tests {
 
         let parsed: Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["violation_count"], 0);
+    }
+
+    // ─── New anti-pattern categories via tool ──────────────────────────────
+
+    #[tokio::test]
+    async fn test_find_anti_patterns_tool_complexity_category() {
+        let tool = FindAntiPatterns::new(CodeAnalysisConfig::default());
+        let result = tool
+            .call_json(json!({
+                "language": "rust",
+                "category": "complexity",
+                "code": "fn deep() {\n    if true {\n        if true {\n            if true {\n                if true {\n                    println!(\"deep\");\n                }\n            }\n        }\n    }\n}"
+            }))
+            .await
+            .unwrap();
+
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        assert!(parsed["violation_count"].as_u64().unwrap() >= 1);
+    }
+
+    #[tokio::test]
+    async fn test_find_anti_patterns_tool_unused_category() {
+        let tool = FindAntiPatterns::new(CodeAnalysisConfig::default());
+        let result = tool
+            .call_json(json!({
+                "language": "rust",
+                "category": "unused",
+                "code": "#[allow(dead_code)]\nfn dead() {}"
+            }))
+            .await
+            .unwrap();
+
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        assert!(parsed["violation_count"].as_u64().unwrap() >= 1);
+    }
+
+    #[tokio::test]
+    async fn test_find_anti_patterns_tool_go_error_handling() {
+        let tool = FindAntiPatterns::new(CodeAnalysisConfig::default());
+        let result = tool
+            .call_json(json!({
+                "language": "go",
+                "category": "error_handling",
+                "code": "package main\n\nfunc risky() {\n    panic(\"oh no\")\n}"
+            }))
+            .await
+            .unwrap();
+
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        assert!(parsed["violation_count"].as_u64().unwrap() >= 1);
+    }
+
+    #[tokio::test]
+    async fn test_find_anti_patterns_tool_js_deprecated() {
+        let tool = FindAntiPatterns::new(CodeAnalysisConfig::default());
+        let result = tool
+            .call_json(json!({
+                "language": "javascript",
+                "category": "deprecated",
+                "code": "var x = 10;\nlet y = 20;"
+            }))
+            .await
+            .unwrap();
+
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        assert_eq!(parsed["violation_count"], 1);
+    }
+
+    // ─── AnalyzeStructure with classification ────────────────────────────
+
+    #[tokio::test]
+    async fn test_analyze_structure_tool_includes_classification() {
+        let tool = AnalyzeStructure::new(CodeAnalysisConfig::default());
+        let result = tool
+            .call_json(json!({
+                "language": "rust",
+                "code": "struct Point { x: f64 }\nfn distance() {}\nenum Color { Red }"
+            }))
+            .await
+            .unwrap();
+
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let items = parsed["items"].as_array().unwrap();
+        // Every item should have a classification and line_count field.
+        for item in items {
+            assert!(item.get("classification").is_some());
+            assert!(item.get("line_count").is_some());
+        }
+    }
+
+    // ─── parse_lang extended aliases ─────────────────────────────────────
+
+    #[test]
+    fn test_parse_lang_extended_aliases() {
+        assert_eq!(parse_lang("java").unwrap(), SupportLang::Java);
+        assert_eq!(parse_lang("csharp").unwrap(), SupportLang::CSharp);
+        assert_eq!(parse_lang("cs").unwrap(), SupportLang::CSharp);
+        assert_eq!(parse_lang("c#").unwrap(), SupportLang::CSharp);
+        assert_eq!(parse_lang("swift").unwrap(), SupportLang::Swift);
+        assert_eq!(parse_lang("kotlin").unwrap(), SupportLang::Kotlin);
+        assert_eq!(parse_lang("kt").unwrap(), SupportLang::Kotlin);
+        assert_eq!(parse_lang("cxx").unwrap(), SupportLang::Cpp);
     }
 
     // ─── Tool trait contract ───────────────────────────────────────────────

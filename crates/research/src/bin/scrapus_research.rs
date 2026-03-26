@@ -92,7 +92,7 @@ fn research_tasks(modules: &[Module]) -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         });
 
         // ── Upgrade blueprint (ID n+i+1) ────────────────────────────────
@@ -106,7 +106,7 @@ fn research_tasks(modules: &[Module]) -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         });
     }
 
@@ -136,7 +136,7 @@ fn research_tasks(modules: &[Module]) -> Vec<ResearchTask> {
         status: TaskStatus::Pending,
         owner: None,
         dependencies: all_ids,
-        result: None,
+        ..Default::default()
     });
 
     tasks
@@ -488,6 +488,8 @@ async fn main() -> Result<()> {
         output_dir: Some(out_dir.clone()),
         synthesis_provider: None,
         ranker: None,
+        timeout_check_interval: None,
+        progress_report_interval: None,
     });
 
     let result = lead.run(tasks).await?;

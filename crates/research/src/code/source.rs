@@ -65,6 +65,29 @@ pub fn search_pattern(
         .collect()
 }
 
+/// Classification of a structural item for finer-grained analysis.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ItemClassification {
+    /// A free-standing function (not inside an impl block).
+    Function,
+    /// A method inside an impl block or class.
+    Method,
+    /// A trait implementation block (e.g. `impl Trait for Type`).
+    TraitImpl,
+    /// A plain impl block (inherent impl).
+    InherentImpl,
+    /// A struct or class definition.
+    Struct,
+    /// An enum definition.
+    Enum,
+    /// A trait or interface definition.
+    Trait,
+    /// A type alias.
+    TypeAlias,
+    /// Anything else (module, const, static, etc.).
+    Other,
+}
+
 /// A structural item found in source code (function, struct, trait, impl, etc.).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StructuralItem {
@@ -72,6 +95,10 @@ pub struct StructuralItem {
     pub name: String,
     pub start_line: usize,
     pub end_line: usize,
+    /// Finer-grained classification for programmatic use.
+    pub classification: ItemClassification,
+    /// Number of source lines the item spans.
+    pub line_count: usize,
 }
 
 /// Per-language patterns for extracting top-level structural items.
@@ -83,12 +110,17 @@ fn structure_patterns(lang: SupportLang) -> Vec<(&'static str, &'static str)> {
             ("enum", "enum $NAME $$$BODY"),
             ("trait", "trait $NAME $$$BODY"),
             ("impl", "impl $NAME $$$BODY"),
+            ("type_alias", "type $NAME = $TYPE;"),
+            ("const", "const $NAME: $TYPE = $VAL;"),
+            ("static", "static $NAME: $TYPE = $VAL;"),
+            ("mod", "mod $NAME $$$BODY"),
         ],
         SupportLang::TypeScript | SupportLang::Tsx => vec![
             ("function", "function $NAME($$$ARGS) { $$$BODY }"),
             ("class", "class $NAME { $$$BODY }"),
             ("interface", "interface $NAME { $$$BODY }"),
             ("type_alias", "type $NAME = $TYPE"),
+            ("enum", "enum $NAME { $$$BODY }"),
         ],
         SupportLang::JavaScript => vec![
             ("function", "function $NAME($$$ARGS) { $$$BODY }"),
@@ -103,7 +135,57 @@ fn structure_patterns(lang: SupportLang) -> Vec<(&'static str, &'static str)> {
             ("struct", "type $NAME struct $$$BODY"),
             ("interface", "type $NAME interface $$$BODY"),
         ],
+        SupportLang::Java => vec![
+            ("class", "class $NAME { $$$BODY }"),
+            ("interface", "interface $NAME { $$$BODY }"),
+            ("enum", "enum $NAME { $$$BODY }"),
+        ],
+        SupportLang::Ruby => vec![
+            ("function", "def $NAME($$$ARGS) $$$BODY end"),
+            ("class", "class $NAME $$$BODY end"),
+            ("mod", "module $NAME $$$BODY end"),
+        ],
+        SupportLang::Kotlin => vec![
+            ("function", "fun $NAME($$$ARGS) { $$$BODY }"),
+            ("class", "class $NAME $$$BODY"),
+            ("interface", "interface $NAME $$$BODY"),
+            ("enum", "enum class $NAME $$$BODY"),
+        ],
+        SupportLang::CSharp => vec![
+            ("class", "class $NAME { $$$BODY }"),
+            ("interface", "interface $NAME { $$$BODY }"),
+            ("enum", "enum $NAME { $$$BODY }"),
+            ("struct", "struct $NAME { $$$BODY }"),
+        ],
+        SupportLang::Swift => vec![
+            ("function", "func $NAME($$$ARGS) $$$BODY"),
+            ("class", "class $NAME { $$$BODY }"),
+            ("struct", "struct $NAME { $$$BODY }"),
+            ("enum", "enum $NAME { $$$BODY }"),
+            ("protocol", "protocol $NAME { $$$BODY }"),
+        ],
         _ => vec![],
+    }
+}
+
+/// Map a structural `kind` string to its `ItemClassification`.
+fn classify_item(kind: &str, name: &str) -> ItemClassification {
+    match kind {
+        "function" => ItemClassification::Function,
+        "method" => ItemClassification::Method,
+        "struct" | "class" => ItemClassification::Struct,
+        "enum" => ItemClassification::Enum,
+        "trait" | "interface" | "protocol" => ItemClassification::Trait,
+        "type_alias" => ItemClassification::TypeAlias,
+        "impl" => {
+            // Heuristic: if the name contains " for " it is likely a trait impl
+            if name.contains(" for ") || name.contains("for ") {
+                ItemClassification::TraitImpl
+            } else {
+                ItemClassification::InherentImpl
+            }
+        }
+        _ => ItemClassification::Other,
     }
 }
 
@@ -122,11 +204,15 @@ pub fn analyze_structure(lang: SupportLang, source: &str) -> Vec<StructuralItem>
                 .unwrap_or_else(|| "<anonymous>".into());
             let start = m.start_pos();
             let end = m.end_pos();
+            let classification = classify_item(kind, &name);
+            let line_count = end.line().saturating_sub(start.line()) + 1;
             items.push(StructuralItem {
                 kind: kind.into(),
                 name,
                 start_line: start.line(),
                 end_line: end.line(),
+                classification,
+                line_count,
             });
         }
     }
@@ -144,6 +230,7 @@ pub struct AntiPatternRule {
 /// Get curated anti-pattern rules for a language + category.
 pub fn anti_pattern_rules(lang: SupportLang, category: &str) -> Vec<AntiPatternRule> {
     match (lang, category) {
+        // ── Rust ──────────────────────────────────────────────────────
         (SupportLang::Rust, "unwrap_usage") => vec![
             AntiPatternRule {
                 name: "unwrap_on_result",
@@ -172,6 +259,16 @@ pub fn anti_pattern_rules(lang: SupportLang, category: &str) -> Vec<AntiPatternR
                 pattern: "todo!($$$ARGS)",
                 description: "todo!() left in code — unfinished implementation",
             },
+            AntiPatternRule {
+                name: "unimplemented_macro",
+                pattern: "unimplemented!($$$ARGS)",
+                description: "unimplemented!() left in code — placeholder implementation",
+            },
+            AntiPatternRule {
+                name: "unreachable_macro",
+                pattern: "unreachable!($$$ARGS)",
+                description: "unreachable!() — verify this branch is truly unreachable",
+            },
         ],
         (SupportLang::Rust, "unsafe") => vec![
             AntiPatternRule {
@@ -179,7 +276,60 @@ pub fn anti_pattern_rules(lang: SupportLang, category: &str) -> Vec<AntiPatternR
                 pattern: "unsafe { $$$BODY }",
                 description: "Unsafe block — verify safety invariants are documented",
             },
+            AntiPatternRule {
+                name: "unsafe_fn",
+                pattern: "unsafe fn $NAME($$$ARGS) $$$BODY",
+                description: "Unsafe function — callers must uphold safety invariants",
+            },
         ],
+        (SupportLang::Rust, "complexity") => vec![
+            AntiPatternRule {
+                name: "deep_nesting_4",
+                pattern: "if $A { if $B { if $C { if $D { $$$BODY } } } }",
+                description: "4+ levels of nested conditionals — consider early returns or extracting helpers",
+            },
+            AntiPatternRule {
+                name: "nested_match_in_match",
+                pattern: "match $A { $$$OUTER => match $B { $$$INNER } }",
+                description: "Nested match inside match — consider extracting inner match to a function",
+            },
+        ],
+        (SupportLang::Rust, "unused") => vec![
+            AntiPatternRule {
+                name: "unused_variable",
+                pattern: "let _$NAME = $EXPR;",
+                description: "Variable prefixed with _ — may indicate unused binding or forgotten cleanup",
+            },
+            AntiPatternRule {
+                name: "allow_unused",
+                pattern: "#[allow(dead_code)]",
+                description: "#[allow(dead_code)] — potential unused code being suppressed",
+            },
+            AntiPatternRule {
+                name: "allow_unused_variables",
+                pattern: "#[allow(unused_variables)]",
+                description: "#[allow(unused_variables)] — suppressed unused variable warnings",
+            },
+            AntiPatternRule {
+                name: "allow_unused_imports",
+                pattern: "#[allow(unused_imports)]",
+                description: "#[allow(unused_imports)] — suppressed unused import warnings",
+            },
+        ],
+        (SupportLang::Rust, "clone") => vec![
+            AntiPatternRule {
+                name: "clone_call",
+                pattern: "$EXPR.clone()",
+                description: ".clone() call — verify this is necessary and not hiding ownership issues",
+            },
+            AntiPatternRule {
+                name: "to_owned_call",
+                pattern: "$EXPR.to_owned()",
+                description: ".to_owned() call — consider if borrowing is sufficient",
+            },
+        ],
+
+        // ── TypeScript / TSX ─────────────────────────────────────────
         (SupportLang::TypeScript | SupportLang::Tsx, "error_handling") => vec![
             AntiPatternRule {
                 name: "empty_catch",
@@ -190,6 +340,11 @@ pub fn anti_pattern_rules(lang: SupportLang, category: &str) -> Vec<AntiPatternR
                 name: "any_type",
                 pattern: ": any",
                 description: "Explicit `any` type — reduces type safety",
+            },
+            AntiPatternRule {
+                name: "non_null_assertion",
+                pattern: "$EXPR!",
+                description: "Non-null assertion operator — prefer explicit null checks",
             },
         ],
         (SupportLang::TypeScript | SupportLang::Tsx, "console") => vec![
@@ -203,9 +358,124 @@ pub fn anti_pattern_rules(lang: SupportLang, category: &str) -> Vec<AntiPatternR
                 pattern: "console.error($$$ARGS)",
                 description: "console.error — consider structured error handling",
             },
+            AntiPatternRule {
+                name: "console_warn",
+                pattern: "console.warn($$$ARGS)",
+                description: "console.warn — consider structured logging",
+            },
+        ],
+        (SupportLang::TypeScript | SupportLang::Tsx, "complexity") => vec![
+            AntiPatternRule {
+                name: "deep_nesting_4",
+                pattern: "if ($A) { if ($B) { if ($C) { if ($D) { $$$BODY } } } }",
+                description: "4+ levels of nested conditionals — consider early returns or extracting helpers",
+            },
+        ],
+        (SupportLang::TypeScript | SupportLang::Tsx, "deprecated") => vec![
+            AntiPatternRule {
+                name: "var_declaration",
+                pattern: "var $NAME = $VAL",
+                description: "`var` declaration — use `let` or `const` instead",
+            },
+        ],
+
+        // ── JavaScript ───────────────────────────────────────────────
+        (SupportLang::JavaScript, "error_handling") => vec![
+            AntiPatternRule {
+                name: "empty_catch",
+                pattern: "catch ($ERR) {}",
+                description: "Empty catch block — errors are silently swallowed",
+            },
+        ],
+        (SupportLang::JavaScript, "console") => vec![
+            AntiPatternRule {
+                name: "console_log",
+                pattern: "console.log($$$ARGS)",
+                description: "console.log left in code — use a proper logger",
+            },
+            AntiPatternRule {
+                name: "console_error",
+                pattern: "console.error($$$ARGS)",
+                description: "console.error — consider structured error handling",
+            },
+        ],
+        (SupportLang::JavaScript, "deprecated") => vec![
+            AntiPatternRule {
+                name: "var_declaration",
+                pattern: "var $NAME = $VAL",
+                description: "`var` declaration — use `let` or `const` instead",
+            },
+        ],
+
+        // ── Python ───────────────────────────────────────────────────
+        (SupportLang::Python, "complexity") => vec![
+            AntiPatternRule {
+                name: "deep_nesting_4",
+                pattern: "if $A: if $B: if $C: if $D: $$$BODY",
+                description: "4+ levels of nested conditionals — consider early returns or extracting helpers",
+            },
+        ],
+
+        // ── Go ───────────────────────────────────────────────────────
+        (SupportLang::Go, "error_handling") => vec![
+            AntiPatternRule {
+                name: "panic_call",
+                pattern: "panic($$$ARGS)",
+                description: "panic() call — use error returns instead in library code",
+            },
+        ],
+
+        _ => vec![],
+    }
+}
+
+/// List all available anti-pattern categories for a given language.
+pub fn available_categories(lang: SupportLang) -> Vec<&'static str> {
+    match lang {
+        SupportLang::Rust => vec![
+            "unwrap_usage", "error_handling", "unsafe", "complexity", "unused", "clone",
+        ],
+        SupportLang::TypeScript | SupportLang::Tsx => vec![
+            "error_handling", "console", "complexity", "deprecated",
+        ],
+        SupportLang::JavaScript => vec![
+            "error_handling", "console", "deprecated",
+        ],
+        SupportLang::Python => vec![
+            "complexity",
+        ],
+        SupportLang::Go => vec![
+            "error_handling",
         ],
         _ => vec![],
     }
+}
+
+/// Detect functions that exceed a given line threshold.
+///
+/// This is a heuristic check based on `analyze_structure` — it finds
+/// structural items classified as functions and flags those that exceed
+/// `max_lines`.
+pub fn find_long_functions(
+    lang: SupportLang,
+    source: &str,
+    max_lines: usize,
+) -> Vec<Violation> {
+    let items = analyze_structure(lang, source);
+    items
+        .into_iter()
+        .filter(|item| item.classification == ItemClassification::Function && item.line_count > max_lines)
+        .map(|item| Violation {
+            rule_name: "long_function".into(),
+            description: format!(
+                "Function `{}` is {} lines long (threshold: {max_lines}) — consider breaking it up",
+                item.name, item.line_count
+            ),
+            text: item.name,
+            start_line: item.start_line,
+            end_line: item.end_line,
+        })
+        .collect()
 }
 
 /// A single anti-pattern violation found in source.
@@ -499,5 +769,306 @@ fn c() { let _ = z.unwrap(); }
         for pair in violations.windows(2) {
             assert!(pair[0].start_line <= pair[1].start_line);
         }
+    }
+
+    // ─── ItemClassification ───────────────────────────────────────────
+
+    #[test]
+    fn test_classification_function() {
+        let source = "fn standalone() {}\n";
+        let items = analyze_structure(SupportLang::Rust, source);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].classification, ItemClassification::Function);
+    }
+
+    #[test]
+    fn test_classification_struct_enum_trait() {
+        let source = r#"
+struct Foo {}
+enum Bar { A }
+trait Baz {}
+"#;
+        let items = analyze_structure(SupportLang::Rust, source);
+        let classifications: Vec<_> = items.iter().map(|i| &i.classification).collect();
+        assert!(classifications.contains(&&ItemClassification::Struct));
+        assert!(classifications.contains(&&ItemClassification::Enum));
+        assert!(classifications.contains(&&ItemClassification::Trait));
+    }
+
+    #[test]
+    fn test_classification_inherent_impl() {
+        let source = r#"
+impl Foo {
+    fn bar(&self) {}
+}
+"#;
+        let items = analyze_structure(SupportLang::Rust, source);
+        let impl_items: Vec<_> = items.iter().filter(|i| i.kind == "impl").collect();
+        assert_eq!(impl_items.len(), 1);
+        assert_eq!(impl_items[0].classification, ItemClassification::InherentImpl);
+    }
+
+    #[test]
+    fn test_line_count_populated() {
+        let source = r#"
+fn short() {}
+
+fn longer() {
+    let a = 1;
+    let b = 2;
+    let c = 3;
+}
+"#;
+        let items = analyze_structure(SupportLang::Rust, source);
+        let short_fn = items.iter().find(|i| i.name == "short").unwrap();
+        assert_eq!(short_fn.line_count, 1);
+        let longer_fn = items.iter().find(|i| i.name == "longer").unwrap();
+        assert!(longer_fn.line_count >= 4);
+    }
+
+    // ─── New anti-pattern categories ─────────────────────────────────
+
+    #[test]
+    fn test_anti_patterns_rust_complexity_deep_nesting() {
+        let source = r#"
+fn deep() {
+    if true {
+        if true {
+            if true {
+                if true {
+                    println!("too deep");
+                }
+            }
+        }
+    }
+}
+"#;
+        let violations = find_anti_patterns(SupportLang::Rust, source, "complexity");
+        assert!(violations.iter().any(|v| v.rule_name == "deep_nesting_4"));
+    }
+
+    #[test]
+    fn test_anti_patterns_rust_unused() {
+        let source = r#"
+#[allow(dead_code)]
+fn unused() {}
+
+#[allow(unused_imports)]
+use std::io;
+"#;
+        let violations = find_anti_patterns(SupportLang::Rust, source, "unused");
+        let rules: Vec<&str> = violations.iter().map(|v| v.rule_name.as_str()).collect();
+        assert!(rules.contains(&"allow_unused"));
+        assert!(rules.contains(&"allow_unused_imports"));
+    }
+
+    #[test]
+    fn test_anti_patterns_rust_clone() {
+        let source = r#"
+fn copy_stuff() {
+    let a = vec![1, 2, 3];
+    let b = a.clone();
+    let c = "hello".to_owned();
+}
+"#;
+        let violations = find_anti_patterns(SupportLang::Rust, source, "clone");
+        let rules: Vec<&str> = violations.iter().map(|v| v.rule_name.as_str()).collect();
+        assert!(rules.contains(&"clone_call"));
+        assert!(rules.contains(&"to_owned_call"));
+    }
+
+    #[test]
+    fn test_anti_patterns_rust_error_handling_extended() {
+        let source = r#"
+fn incomplete() {
+    unimplemented!("not done yet");
+    unreachable!("should not get here");
+}
+"#;
+        let violations = find_anti_patterns(SupportLang::Rust, source, "error_handling");
+        let rules: Vec<&str> = violations.iter().map(|v| v.rule_name.as_str()).collect();
+        assert!(rules.contains(&"unimplemented_macro"));
+        assert!(rules.contains(&"unreachable_macro"));
+    }
+
+    #[test]
+    fn test_anti_patterns_rust_unsafe_fn() {
+        let source = r#"
+unsafe fn dangerous(ptr: *const i32) -> i32 {
+    *ptr
+}
+"#;
+        let violations = find_anti_patterns(SupportLang::Rust, source, "unsafe");
+        assert!(violations.iter().any(|v| v.rule_name == "unsafe_fn"));
+    }
+
+    #[test]
+    fn test_anti_patterns_js_deprecated_var() {
+        let source = r#"
+var x = 10;
+let y = 20;
+"#;
+        let violations = find_anti_patterns(SupportLang::JavaScript, source, "deprecated");
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].rule_name, "var_declaration");
+    }
+
+    #[test]
+    fn test_anti_patterns_go_panic() {
+        let source = r#"
+package main
+
+func risky() {
+    panic("oh no")
+}
+"#;
+        let violations = find_anti_patterns(SupportLang::Go, source, "error_handling");
+        assert!(violations.iter().any(|v| v.rule_name == "panic_call"));
+    }
+
+    // ─── available_categories ────────────────────────────────────────
+
+    #[test]
+    fn test_available_categories_rust() {
+        let cats = available_categories(SupportLang::Rust);
+        assert!(cats.contains(&"unwrap_usage"));
+        assert!(cats.contains(&"error_handling"));
+        assert!(cats.contains(&"unsafe"));
+        assert!(cats.contains(&"complexity"));
+        assert!(cats.contains(&"unused"));
+        assert!(cats.contains(&"clone"));
+    }
+
+    #[test]
+    fn test_available_categories_typescript() {
+        let cats = available_categories(SupportLang::TypeScript);
+        assert!(cats.contains(&"error_handling"));
+        assert!(cats.contains(&"console"));
+        assert!(cats.contains(&"complexity"));
+        assert!(cats.contains(&"deprecated"));
+    }
+
+    #[test]
+    fn test_available_categories_python() {
+        let cats = available_categories(SupportLang::Python);
+        assert!(cats.contains(&"complexity"));
+    }
+
+    #[test]
+    fn test_available_categories_unsupported_lang_empty() {
+        let cats = available_categories(SupportLang::Html);
+        assert!(cats.is_empty());
+    }
+
+    // ─── find_long_functions ─────────────────────────────────────────
+
+    #[test]
+    fn test_find_long_functions_detects_long() {
+        // Build a function that is 15 lines long.
+        let mut lines = vec!["fn long_one() {".to_string()];
+        for i in 0..13 {
+            lines.push(format!("    let x{i} = {i};"));
+        }
+        lines.push("}".to_string());
+        let source = lines.join("\n");
+
+        let violations = find_long_functions(SupportLang::Rust, &source, 10);
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].rule_name, "long_function");
+        assert_eq!(violations[0].text, "long_one");
+    }
+
+    #[test]
+    fn test_find_long_functions_short_fn_ok() {
+        let source = "fn short() { let x = 1; }\n";
+        let violations = find_long_functions(SupportLang::Rust, source, 10);
+        assert!(violations.is_empty());
+    }
+
+    // ─── Expanded structure patterns ─────────────────────────────────
+
+    #[test]
+    fn test_analyze_structure_rust_type_alias() {
+        let source = "type Alias = Vec<String>;\n";
+        let items = analyze_structure(SupportLang::Rust, source);
+        assert!(items.iter().any(|i| i.kind == "type_alias" && i.name == "Alias"));
+    }
+
+    #[test]
+    fn test_analyze_structure_typescript_enum() {
+        let source = r#"
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+"#;
+        let items = analyze_structure(SupportLang::TypeScript, source);
+        assert!(items.iter().any(|i| i.kind == "enum" && i.name == "Direction"));
+    }
+
+    #[test]
+    fn test_analyze_structure_kotlin_fun() {
+        let source = r#"
+fun greet(name: String) {
+    println(name)
+}
+"#;
+        let items = analyze_structure(SupportLang::Kotlin, source);
+        assert!(items.iter().any(|i| i.kind == "function" && i.name == "greet"));
+    }
+
+    // ─── Pattern matching accuracy ───────────────────────────────────
+
+    #[test]
+    fn test_search_pattern_rust_result_return() {
+        let source = r#"
+fn fallible() -> Result<i32, String> {
+    Ok(42)
+}
+
+fn infallible() -> i32 {
+    42
+}
+"#;
+        let matches = search_pattern(
+            SupportLang::Rust,
+            source,
+            "fn $FNAME($$$ARGS) -> Result<$RET, $ERR> $$$BODY",
+        );
+        assert_eq!(matches.len(), 1);
+        let name = matches[0].bindings.iter().find(|(k, _)| k == "FNAME").unwrap();
+        assert_eq!(name.1, "fallible");
+    }
+
+    #[test]
+    fn test_search_pattern_python_def() {
+        let source = r#"
+def add(a, b):
+    return a + b
+
+def sub(a, b):
+    return a - b
+"#;
+        let matches = search_pattern(
+            SupportLang::Python,
+            source,
+            "def $NAME($$$ARGS): $$$BODY",
+        );
+        assert_eq!(matches.len(), 2);
+    }
+
+    #[test]
+    fn test_search_pattern_go_func() {
+        let source = r#"
+package main
+
+func Add(a int, b int) int {
+    return a + b
+}
+"#;
+        let matches = search_pattern(SupportLang::Go, source, "func $NAME($$$ARGS) $$$BODY");
+        assert_eq!(matches.len(), 1);
     }
 }

@@ -40,7 +40,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 2,
@@ -64,7 +64,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 3,
@@ -89,7 +89,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 4,
@@ -113,7 +113,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
 
         // ── Tier 2: Specialized Deep-Dives (12 tasks) ──
@@ -138,7 +138,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![1, 2],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 6,
@@ -161,7 +161,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![1],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 7,
@@ -184,7 +184,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![1],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 8,
@@ -207,7 +207,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![4],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 9,
@@ -229,7 +229,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![2],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 10,
@@ -252,7 +252,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![4],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 11,
@@ -275,7 +275,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![2],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 12,
@@ -299,7 +299,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![2],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 13,
@@ -323,7 +323,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![3],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 14,
@@ -346,7 +346,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![2, 3],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 15,
@@ -368,7 +368,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![3, 4],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 16,
@@ -390,7 +390,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![1, 3],
-            result: None,
+            ..Default::default()
         },
 
         // ── Tier 3: Synthesis (4 tasks) ──
@@ -417,7 +417,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![1, 2, 3, 5, 6, 7, 14],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 18,
@@ -439,7 +439,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![4, 7, 8, 10, 13, 15],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 19,
@@ -461,7 +461,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![9, 11, 12, 14],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 20,
@@ -487,7 +487,7 @@ fn research_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![17, 18, 19],
-            result: None,
+            ..Default::default()
         },
     ]
 }
@@ -526,6 +526,8 @@ async fn main() -> Result<()> {
         output_dir: Some(OUT_DIR.into()),
         synthesis_provider: None,
         ranker: None,
+        timeout_check_interval: None,
+        progress_report_interval: None,
     });
 
     let result = lead.run(tasks).await?;

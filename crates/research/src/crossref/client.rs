@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use tokio::time::sleep;
+use crate::retry::{retry_get, RetryConfig};
 
 use super::{
     error::Error,
@@ -8,7 +8,13 @@ use super::{
 };
 
 const BASE_URL: &str = "https://api.crossref.org";
-const MAX_RETRIES: u32 = 3;
+
+const RETRY_CONFIG: RetryConfig = RetryConfig {
+    max_retries: 3,
+    base_delay: Duration::from_secs(1),
+    max_delay: Duration::from_secs(30),
+    jitter: true,
+};
 
 #[derive(Clone)]
 pub struct CrossrefClient {
@@ -39,44 +45,21 @@ impl CrossrefClient {
         }
     }
 
-    /// Low-level GET with exponential-backoff retry on 429.
     async fn get_json(
         &self,
         url: &str,
         params: Vec<(String, String)>,
     ) -> Result<serde_json::Value, Error> {
-        let mut retries = 0u32;
-        loop {
-            let resp = self.http.get(url).query(&params).send().await?;
-            let status = resp.status();
-
-            if status.as_u16() == 429 {
-                if retries >= MAX_RETRIES {
-                    return Err(Error::RateLimited {
-                        retry_after: 2u64.pow(retries),
-                    });
-                }
-                let wait_secs = 2u64.pow(retries);
-                tracing::warn!(
-                    retries,
-                    wait_secs,
-                    "Crossref rate limited (429), backing off"
-                );
-                sleep(Duration::from_secs(wait_secs)).await;
-                retries += 1;
-                continue;
-            }
-
-            if !status.is_success() {
-                let message = resp.text().await.unwrap_or_default();
-                return Err(Error::Api {
-                    status: status.as_u16(),
-                    message,
-                });
-            }
-
-            return Ok(resp.json().await?);
+        let resp = retry_get(&self.http, url, &params, &RETRY_CONFIG, "Crossref").await?;
+        let status = resp.status();
+        if !status.is_success() {
+            let message = resp.text().await.unwrap_or_default();
+            return Err(Error::Api {
+                status: status.as_u16(),
+                message,
+            });
         }
+        Ok(resp.json().await?)
     }
 
     /// Search Crossref works by query string.

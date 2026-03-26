@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use crate::retry::RetryError;
+
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("HTTP error: {0}")]
@@ -13,4 +15,20 @@ pub enum Error {
 
     #[error("Deserialization error: {0}")]
     Json(#[from] serde_json::Error),
+}
+
+impl From<RetryError> for Error {
+    fn from(e: RetryError) -> Self {
+        match e {
+            RetryError::Connection(inner) => Self::Http(inner),
+            RetryError::Http { status, .. } if status == 429 => {
+                Self::RateLimited { retry_after: 0 }
+            }
+            RetryError::Http { status, message } => Self::Api { status, message },
+            RetryError::Exhausted => Self::Api {
+                status: 503,
+                message: "retries exhausted".into(),
+            },
+        }
+    }
 }

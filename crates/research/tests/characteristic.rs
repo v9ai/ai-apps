@@ -22,7 +22,7 @@ fn concern_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         })
         .collect();
 
@@ -34,7 +34,7 @@ fn concern_tasks() -> Vec<ResearchTask> {
         status: TaskStatus::Pending,
         owner: None,
         dependencies: vec![1, 2, 3, 4],
-        result: None,
+        ..Default::default()
     });
     tasks
 }
@@ -56,7 +56,7 @@ fn strength_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         })
         .collect();
 
@@ -68,7 +68,7 @@ fn strength_tasks() -> Vec<ResearchTask> {
         status: TaskStatus::Pending,
         owner: None,
         dependencies: vec![1, 2, 3, 4],
-        result: None,
+        ..Default::default()
     });
     tasks
 }
@@ -1060,7 +1060,7 @@ fn claiming_same_task_twice_not_possible() {
         status: TaskStatus::Pending,
         owner: None,
         dependencies: vec![],
-        result: None,
+        ..Default::default()
     }];
     let list = SharedTaskList::new(tasks);
 
