@@ -162,6 +162,11 @@ function ResumeDocument({ data }: { data: typeof resumeData }) {
                 {basics.profiles[1].url.replace("https://", "")}
               </Link>
             </View>
+            <View style={s.contactCol}>
+              <Link src={basics.profiles[2].url} style={s.contactLink}>
+                {basics.profiles[2].url.replace("https://", "")}
+              </Link>
+            </View>
           </View>
         </View>
 

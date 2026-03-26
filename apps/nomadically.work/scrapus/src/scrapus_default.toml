@@ -1,0 +1,144 @@
+# =============================================================================
+# Scrapus Configuration — M1 16GB Local Deployment
+# =============================================================================
+# Copy this file to `scrapus.toml` in the project root and edit as needed.
+# Environment variables override any value: SCRAPUS_<SECTION>_<KEY>
+# Example: SCRAPUS_GENERAL_LOG_LEVEL=DEBUG overrides [general] log_level
+# =============================================================================
+
+[general]
+# Base directory for all pipeline data (SQLite, LanceDB, models, logs)
+data_dir = "./scrapus_data"
+log_level = "INFO"                # DEBUG | INFO | WARNING | ERROR
+max_workers = 4                   # CPU workers for parallel stages (M1 has 4 P-cores)
+
+# ---------------------------------------------------------------------------
+# Module 1 — RL Crawler
+# ---------------------------------------------------------------------------
+[crawler]
+seed_urls = []                    # Override via CLI: --seed-urls URL1 URL2
+max_pages = 10000                 # Total pages across all domains
+max_depth = 5                     # Maximum link depth from any seed URL
+rate_limit_per_domain = 2.0       # Seconds between requests to the same domain
+concurrency = 8                   # Concurrent fetch tasks (network I/O bound)
+playwright_headless = true        # Run Playwright in headless mode
+
+# DQN hyperparameters
+dqn_lr = 3e-4
+dqn_gamma = 0.99
+dqn_batch_size = 64
+replay_buffer_size = 100000
+epsilon_start = 1.0
+epsilon_end = 0.01
+target_update_freq = 1000
+
+# ---------------------------------------------------------------------------
+# Module 2 — NER Extraction
+# ---------------------------------------------------------------------------
+[ner]
+# "gliner2" = zero-shot GLiNER2 ONNX, "hybrid" = GLiNER2 + DistilBERT + spaCy
+model_backend = "hybrid"
+batch_size = 32                   # Pages per NER batch (M1 tuned: 100+ pages/sec @ 600 MB)
+confidence_threshold = 0.55       # Minimum confidence to keep an entity
+entity_types = [
+    "ORG",
+    "PERSON",
+    "LOCATION",
+    "PRODUCT",
+    "TECHNOLOGY",
+    "FUNDING_AMOUNT",
+    "INDUSTRY",
+    "COMPETITOR",
+    "EMAIL",
+    "PHONE",
+    "URL",
+]
+
+# Hybrid ensemble weights (only used when model_backend = "hybrid")
+hybrid_weight_rule = 1.0
+hybrid_weight_distilbert = 0.85
+hybrid_weight_gliner = 0.70
+
+# ---------------------------------------------------------------------------
+# Module 3 — Entity Resolution
+# ---------------------------------------------------------------------------
+[entity_resolution]
+blocking_method = "sbert_dbscan"  # "sbert_dbscan" | "rule_based"
+similarity_threshold = 0.05       # Cosine threshold for entity matching
+dbscan_eps = 0.15                 # DBSCAN epsilon (auto-calibrated if 0.0)
+min_cluster_size = 2              # Minimum entities per cluster
+embedding_model = "all-MiniLM-L6-v2"
+embedding_dim = 384
+use_gnn_consistency = true        # Enable 3-round GNN transitivity enforcement
+
+# ---------------------------------------------------------------------------
+# Module 4 — Lead Scoring
+# ---------------------------------------------------------------------------
+[scoring]
+model_type = "lightgbm"           # "lightgbm" | "xgboost" (legacy)
+conformal_coverage = 0.95         # MAPIE conformal prediction target coverage
+calibration_method = "isotonic"   # "isotonic" | "sigmoid" (Platt)
+retrain_trigger = "drift"         # "drift" | "monthly" | "manual"
+qualification_threshold = 0.85    # Leads above this are qualified for reports
+onnx_ensemble = true              # Pack LightGBM + LogReg + RF into single ONNX
+
+# ---------------------------------------------------------------------------
+# Module 5 — Report Generation
+# ---------------------------------------------------------------------------
+[report]
+llm_model = "llama-3.1-8b-instruct"    # Model name for Ollama / MLX
+llm_backend = "ollama"                   # "ollama" | "mlx"
+max_tokens = 2048                        # Maximum tokens per generated report
+temperature = 0.1                        # Low temperature for factual reports
+reranker_enabled = true                  # bge-reranker-v2-m3 cross-encoder
+reranker_model = "BAAI/bge-reranker-v2-m3"
+self_rag_enabled = true                  # Self-RAG claim verification proxy
+outlines_enabled = true                  # Outlines + Pydantic structured output
+mmr_lambda = 0.7                         # MMR relevance vs diversity tradeoff
+retrieval_top_k = 50                     # Candidates before reranking
+retrieval_final_k = 10                   # Documents after reranking
+
+# Fallback LLM for memory-constrained runs (1.7 GB vs 4.7 GB)
+fallback_llm_model = "qwen2.5-3b"
+fallback_llm_backend = "mlx"
+
+# ---------------------------------------------------------------------------
+# Module 6 — Evaluation & Monitoring
+# ---------------------------------------------------------------------------
+[monitoring]
+drift_window_sizes = [100, 500, 2000]    # Fast, medium, trend detection windows
+judge_models = ["llama-3.1-8b-instruct", "mistral-7b"]
+dashboard_port = 8501                    # Streamlit dashboard port
+audit_enabled = true                     # Immutable append-only audit trail
+drift_ks_threshold = 0.1                 # KS-test p-value threshold
+drift_js_threshold = 0.05               # Jensen-Shannon divergence threshold
+drift_cosine_threshold = 0.15            # Cosine drift threshold
+
+# ---------------------------------------------------------------------------
+# Memory Management — M1 16GB Unified Memory
+# ---------------------------------------------------------------------------
+[memory]
+budget_gb = 12.5                         # Total app budget (16 GB - 3.5 GB OS)
+swap_threshold_mb = 500                  # Warn when swap exceeds this
+emergency_cleanup_threshold_mb = 1500    # Emergency cleanup above this
+batch_size_multiplier = 1.0              # Scale all batch sizes (0.5 = half, 2.0 = double)
+
+# Per-stage memory budgets in MB (must sum to < budget_gb * 1024)
+[memory.per_stage_budgets]
+module_1_crawl = 750
+module_2_ner = 1700
+module_3_er = 730
+module_4_score = 850
+module_5_report = 6700
+module_6_eval = 800
+
+# ---------------------------------------------------------------------------
+# M1 Hardware Acceleration
+# ---------------------------------------------------------------------------
+[m1]
+use_mps = true                    # PyTorch MPS backend for DQN training
+use_coreml = true                 # CoreML EP for ONNX Runtime (Neural Engine)
+use_mlx = true                    # MLX for embeddings (4,618/sec) and LLM
+metal_cache_clear = true          # Clear Metal cache between stages
+mmap_size = 268435456             # SQLite mmap size in bytes (256 MB)
+coreml_compute_units = "ALL"      # "ALL" | "CPU_AND_NE" | "CPU_ONLY"

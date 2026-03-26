@@ -56,6 +56,7 @@ impl ArxivClient {
     }
 
     /// Fetch multiple papers by ID in batches via `id_list`.
+    /// On rate-limit or error: waits, retries once, then skips that batch.
     pub async fn fetch_batch(
         &self,
         ids: &[String],
@@ -63,6 +64,7 @@ impl ArxivClient {
     ) -> Result<Vec<ArxivPaper>, Error> {
         let mut all = Vec::new();
         let bs = batch_size.max(1);
+        let total_batches = (ids.len() + bs - 1) / bs;
         for (i, chunk) in ids.chunks(bs).enumerate() {
             let id_list = chunk.join(",");
             let url = format!(
@@ -71,15 +73,37 @@ impl ArxivClient {
                 id_list,
                 chunk.len()
             );
-            let body = self.get_xml(&url).await?;
-            let resp = parse_atom_feed(&body)?;
-            info!(
-                batch = i + 1,
-                requested = chunk.len(),
-                fetched = resp.papers.len(),
-                "arXiv batch fetch"
-            );
-            all.extend(resp.papers);
+            match self.get_xml(&url).await {
+                Ok(body) => {
+                    let resp = parse_atom_feed(&body)?;
+                    info!(
+                        batch = i + 1,
+                        total = total_batches,
+                        requested = chunk.len(),
+                        fetched = resp.papers.len(),
+                        "arXiv batch fetch"
+                    );
+                    all.extend(resp.papers);
+                }
+                Err(e) => {
+                    info!(
+                        batch = i + 1,
+                        total = total_batches,
+                        "Batch failed ({e}), cooling down 10s..."
+                    );
+                    sleep(Duration::from_secs(10)).await;
+                    match self.get_xml(&url).await {
+                        Ok(body) => {
+                            let resp = parse_atom_feed(&body)?;
+                            info!(batch = i + 1, fetched = resp.papers.len(), "Retry ok");
+                            all.extend(resp.papers);
+                        }
+                        Err(e2) => {
+                            info!(batch = i + 1, "Retry failed ({e2}), skipping batch");
+                        }
+                    }
+                }
+            }
         }
         Ok(all)
     }

@@ -38,7 +38,7 @@ export default async function ResumePdfPage({ params }: Props) {
           <span>{basics.phone}</span>
           {basics.profiles.map((p) => (
             <a key={p.network} href={p.url} target="_blank" rel="noopener noreferrer">
-              {p.network === "github" ? "GitHub" : "LinkedIn"}: {p.username}
+              {p.network === "blog" ? "Blog" : p.network === "github" ? "GitHub" : "LinkedIn"}: {p.username}
             </a>
           ))}
           {basics.url && (
