@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createAuth(db: any, schema?: Record<string, unknown>, options?: { trustedOrigins?: string[] }) {
+export function createAuth(db: any, schema?: Record<string, unknown>, options?: { trustedOrigins?: string[]; baseURL?: string }) {
   const origins: string[] = [...(options?.trustedOrigins ?? [])];
 
   // Auto-trust well-known env vars
@@ -27,7 +27,12 @@ export function createAuth(db: any, schema?: Record<string, unknown>, options?: 
     if (!origins.includes(full)) origins.push(full);
   }
 
+  const baseURL = options?.baseURL
+    || process.env.BETTER_AUTH_URL
+    || process.env.NEXT_PUBLIC_BETTER_AUTH_URL;
+
   return betterAuth({
+    baseURL,
     database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: { enabled: true },
     plugins: [nextCookies()],

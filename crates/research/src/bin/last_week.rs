@@ -64,21 +64,6 @@ struct Cli {
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-#[derive(Serialize)]
-struct RunStats {
-    timestamp: String,
-    week_tag: String,
-    total_papers: usize,
-    papers_indexed: usize,
-    by_source: BTreeMap<String, usize>,
-    with_abstract: usize,
-    with_doi: usize,
-    with_pdf: usize,
-    with_citations: usize,
-    avg_citations: f64,
-    chunks_indexed: usize,
-}
-
 #[derive(Serialize, Clone)]
 struct PaperSummary {
     title: String,
