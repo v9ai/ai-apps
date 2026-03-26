@@ -8,17 +8,18 @@ A multi-iteration execution system for Claude Code with semantic memory, hybrid 
 /iterate 5 fix the auth middleware
 ```
 
-1. **`start.sh`** initializes session state in `/tmp/claude-iterate-<id>/`, pre-warms the embedding model, records the task in history, and shows similar past tasks.
-2. Claude works on the task, then stops.
+1. **`start.sh`** initializes session state in `/tmp/claude-iterate-<id>/`, pre-warms the embedding model, creates a plan template, records the task in history, and shows similar past tasks.
+2. Claude works on the task (first iteration: fills in the plan with concrete subtasks), then stops.
 3. **`kick-session.sh`** fires on every Stop hook:
    - Extracts assistant output from the session transcript
    - Stores it in ChromaDB with embeddings (store_context.py)
    - Detects semantic repetition and git diff stalls (advisory warnings)
-   - Auto-commits and pushes changes
-   - Evaluates the iteration with heuristic scoring (evaluate.py)
+   - Auto-commits and pushes changes (unless `--no-commit`)
+   - Evaluates the iteration with heuristic scoring + directive generation (evaluate.py)
    - Retrieves relevant context for the next iteration (retrieve_context.py)
-   - Sends feedback + context to Claude via stderr, triggering the next iteration
-4. Loop runs for exactly N iterations, or until `--done-when` string appears in output.
+   - Reads plan status (completed/total subtasks)
+   - Sends compact feedback + directive + remaining subtasks via stderr
+4. Loop runs for exactly N iterations.
 
 ```
 start.sh ──► Claude works ──► kick-session.sh (Stop hook)
@@ -37,12 +38,12 @@ start.sh ──► Claude works ──► kick-session.sh (Stop hook)
 ## Usage
 
 ```bash
-/iterate 10 implement the new search feature     # run 10 iterations
-/iterate 5 --done-when "ALL TESTS PASS" fix tests # stop early on match
-/iterate status                                    # show active sessions
-/iterate reset                                     # clear session for this CWD
-/iterate clean                                     # GC stale sessions (>4h idle)
-/iterate history                                   # show past tasks from ChromaDB
+/iterate 10 implement the new search feature      # run 10 iterations
+/iterate 5 --no-commit build the auth system        # skip auto-commit between iterations
+/iterate status                                     # show active sessions
+/iterate reset                                      # clear session for this CWD
+/iterate clean                                      # GC stale sessions (>4h idle)
+/iterate history                                    # show past tasks from ChromaDB
 ```
 
 ### Flags
@@ -50,7 +51,7 @@ start.sh ──► Claude works ──► kick-session.sh (Stop hook)
 | Flag | Description |
 |------|-------------|
 | `--iterations N` | Max iterations (default 10, max 1000) |
-| `--done-when "string"` | Stop early when output contains this string |
+| `--no-commit` | Skip auto-commit and push between iterations |
 | `--reset` | Clear iterate state for the current working directory |
 | `--status` | Show all active iterate sessions with scores |
 | `--clean` | Remove stale sessions (>4h idle, or counter=1 and >30m) |
@@ -68,7 +69,8 @@ start.sh ──► Claude works ──► kick-session.sh (Stop hook)
 | `scores.json` | Array of eval scores per iteration |
 | `cwd.txt` | Git root directory |
 | `session.txt` | Claude Code session ID |
-| `done-when.txt` | Optional completion promise string |
+| `no-commit.txt` | Present when `--no-commit` is active |
+| `plan.md` | Subtask plan — Claude fills in iteration 1, marks [x] as done |
 | `transcript-offset.txt` | Line offset into session transcript |
 | `output-iter-N.txt` | Raw assistant output for iteration N |
 | `eval-iter-N.json` | Eval result JSON for iteration N |
@@ -90,13 +92,19 @@ All three degrade gracefully if dependencies are missing.
 
 Heuristic scoring (no LLM calls) using:
 - Cosine similarity between output and task description
-- Error pattern extraction from output
-- Git diff stats (files changed)
+- Error pattern extraction and classification (compile, type, runtime, test, build)
+- Git diff stats (files changed, insertions/deletions, net lines)
 - Semantic similarity between consecutive iterations (repetition detection)
 
 Metrics: Task Completion, Incremental Progress, Coherence, Code Quality, Focus, Answer Relevancy, Faithfulness, Contextual Relevancy.
 
+Produces a **composite score** (weighted: tc=0.30, pr=0.25, qu=0.20, co=0.15, fo=0.10) and a **directive** — a focused, actionable instruction for what to do next based on eval signals (e.g., "FIX COMPILE ERRORS", "Fix failing tests", "You are REPEATING prior work").
+
 Scores are **advisory only** — they never stop the loop early.
+
+### Plan tracking
+
+`start.sh` creates a `plan.md` template in the session dir. Claude is instructed to fill it with concrete subtasks in iteration 1 and mark items `[x]` as completed. The stop hook reads plan progress and includes remaining subtasks in the feedback message. The statusline shows `plan=N/M`.
 
 ### Task history
 
@@ -110,7 +118,7 @@ Persistent cross-session history in `~/.claude/iterate-history/chroma`. Survives
 Configured in `.claude/settings.json`:
 
 - **Stop hook**: `kick-session.sh` runs on every Claude stop event (timeout 300s)
-- **Statusline**: `statusline.sh` shows `iter N/M [score]` in the Claude Code status bar
+- **Statusline**: `statusline.sh` shows `iter N/M s=0.XX plan=N/M` in the Claude Code status bar
 - **SessionStart hook**: separate — logs git state (not part of iterate)
 
 ## Files

@@ -55,7 +55,7 @@ TOTAL=$(cat "${ITER_DIR}/iterations.txt" 2>/dev/null || echo "")
 
 STATUS="iter ${COUNT}/${TOTAL}"
 
-# Append latest Task Completion score if available
+# Append composite score and plan status
 SCORES_FILE="${ITER_DIR}/scores.json"
 if [ -f "$SCORES_FILE" ]; then
     LAST_SCORE=$(python3.12 -c "
@@ -63,13 +63,23 @@ import json, sys
 try:
     data = json.load(open(sys.argv[1]))
     if data:
-        s = data[-1].get('Task Completion', {}).get('score')
-        if s is not None:
-            print(f'{float(s):.2f}')
+        c = data[-1].get('_composite')
+        tc = data[-1].get('Task Completion', {}).get('score')
+        if c is not None:
+            print(f'{float(c):.2f}')
+        elif tc is not None:
+            print(f'{float(tc):.2f}')
 except Exception:
     pass
 " "$SCORES_FILE" 2>/dev/null || echo "")
-    [ -n "$LAST_SCORE" ] && STATUS="${STATUS} tc=${LAST_SCORE}"
+    [ -n "$LAST_SCORE" ] && STATUS="${STATUS} s=${LAST_SCORE}"
+fi
+
+# Plan progress
+if [ -f "${ITER_DIR}/plan.md" ]; then
+    _total=$(grep -c '^\- \[' "${ITER_DIR}/plan.md" 2>/dev/null || echo "0")
+    _done=$(grep -c '^\- \[x\]' "${ITER_DIR}/plan.md" 2>/dev/null || echo "0")
+    [ "$_total" -gt 0 ] && STATUS="${STATUS} plan=${_done}/${_total}"
 fi
 
 # Append semantic similarity stall count

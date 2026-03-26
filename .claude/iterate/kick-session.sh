@@ -5,10 +5,10 @@ set -uo pipefail
 # Claude Code Stop Hook — Iterate with Chroma + Eval
 #
 # Iterations are EXACT: runs exactly N iterations.
-# Only stops early on: iteration limit reached, or --done-when match.
+# Only stops early on: iteration limit reached.
 # Eval scores and stall/repetition are advisory warnings only.
 #
-# Exit 0  = done (iteration limit or completion promise)
+# Exit 0  = done (iteration limit reached)
 # Exit 2  = send feedback to Claude via stderr, keep going
 # ==============================================================
 
@@ -19,14 +19,12 @@ INPUT=$(cat)
 
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 HOOK_CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
-# Resolve to git root so we match start.sh which stores git root in cwd.txt
-HOOK_GIT_ROOT=$(cd "$HOOK_CWD" 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null || echo "$HOOK_CWD")
 
 # Locate the iterate dir for this session.
 # 1. Try the canonical per-session path (session_id prefix).
 # 2. Fall back to scanning:
 #    a. session.txt matches session_id
-#    b. cwd.txt matches hook CWD (handles start.sh run without CLAUDE_CODE_SESSION_ID)
+#    b. cwd.txt matches hook CWD exactly (handles start.sh run without CLAUDE_CODE_SESSION_ID)
 #    c. both sides have empty session ID
 ITER_DIR=""
 if [ -n "$SESSION_ID" ]; then
@@ -48,10 +46,10 @@ if [ -z "$ITER_DIR" ]; then
             break
         fi
         # start.sh ran without CLAUDE_CODE_SESSION_ID (Bash tool env) → session.txt is empty.
-        # Match by stored CWD (git root) — prefer the most recently modified directory.
-        if [ -z "$_owner" ] && [ -n "$HOOK_GIT_ROOT" ]; then
+        # Match by stored CWD (exact pwd) — isolates apps within a monorepo.
+        if [ -z "$_owner" ] && [ -n "$HOOK_CWD" ]; then
             _stored_cwd=$(cat "${_d}cwd.txt" 2>/dev/null || echo "")
-            if [ "$_stored_cwd" = "$HOOK_GIT_ROOT" ] || [ "$_stored_cwd" = "$HOOK_CWD" ]; then
+            if [ "$_stored_cwd" = "$HOOK_CWD" ]; then
                 _mtime=$(stat -f %m "${_d}task.txt" 2>/dev/null || stat -c %Y "${_d}task.txt" 2>/dev/null || echo "0")
                 if [ "$_mtime" -gt "$_best_mtime" ] 2>/dev/null; then
                     _best_mtime="$_mtime"
@@ -89,8 +87,6 @@ fi
 COUNTER_FILE="$ITER_DIR/counter"
 TASK_FILE="$ITER_DIR/task.txt"
 SCORES_FILE="$ITER_DIR/scores.json"
-DONE_WHEN=$(cat "$ITER_DIR/done-when.txt" 2>/dev/null || echo "")
-
 _record_end() {
     local reason="$1" score="${2:-0.0}"
     local _fc=0
@@ -185,17 +181,6 @@ if [ -n "$SESSION_ID" ]; then
     fi
 fi
 
-# --- Completion promise check (Ralph Loop pattern) ---
-# If --done-when was set and the output contains the promise string, stop.
-if [ -n "$DONE_WHEN" ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
-    if grep -qF "$DONE_WHEN" "$ITER_OUTPUT" 2>/dev/null; then
-        _record_end "completion promise matched: $DONE_WHEN" "1.0"
-        echo "Iterate: complete — output contained '$DONE_WHEN'" >&2
-        rm -rf "$ITER_DIR"
-        exit 0
-    fi
-fi
-
 # --- Increment counter EARLY so timeout can't lose progress ---
 # Save old COUNT for Python scripts, write NEXT to disk now.
 # If the hook gets killed during slow Python ops below, counter is already advanced.
@@ -257,7 +242,9 @@ if [ "$COUNT" -ge 1 ] && [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
 fi
 
 # --- Auto-commit & push between iterations ---
-if [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
+if [ -f "$ITER_DIR/no-commit.txt" ]; then
+    echo "[kick-session] auto-commit skipped (--no-commit)" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+elif [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
     (
         cd "$ITER_CWD" 2>/dev/null || exit 0
         git rev-parse --is-inside-work-tree > /dev/null 2>&1 || exit 0
@@ -298,6 +285,7 @@ fi
 
 # --- Step 2: Evaluate (advisory — never stops the loop) ---
 EVAL_FEEDBACK=""
+EVAL_DIRECTIVE=""
 TREND_FEEDBACK=""
 EVAL_WARNINGS=""
 
@@ -337,33 +325,35 @@ with open(sys.argv[4]) as f:
 store_eval(int(sys.argv[2]), data.get("scores", {}), sys.argv[3], data.get("eval_method", "unknown"))
 PYEOF
 
-    # Skip eval/trend feedback if fallback
+    # Extract compact eval summary + directive
     IS_FALLBACK=$(echo "$EVAL_RESULT" | jq -r '
         .eval_method == "fallback"
     ' 2>/dev/null) || IS_FALLBACK="false"
 
     if [ "$IS_FALLBACK" != "true" ]; then
+        # Compact one-line score summary
         EVAL_FEEDBACK=$(echo "$EVAL_RESULT" | jq -r '
-            "\n## Eval (iter \(.iteration), \(.eval_method // "unknown"))\n" +
-            (.scores | to_entries | map(
-                "- **\(.key)**: \(.value.score // "n/a") — \(.value.reason // "")"
-            ) | join("\n"))
+            "**Scores:** composite=\(.composite // "?") tc=\(.scores["Task Completion"].score // "?") pr=\(.scores["Incremental Progress"].score // "?") qu=\(.scores["Code Quality"].score // "?") co=\(.scores["Coherence"].score // "?")"
         ' 2>/dev/null) || EVAL_FEEDBACK=""
 
+        # Directive from heuristic analysis
+        EVAL_DIRECTIVE=$(echo "$EVAL_RESULT" | jq -r '.directive // ""' 2>/dev/null) || EVAL_DIRECTIVE=""
+
+        # Only show trends if something is declining
         TREND_FEEDBACK=$(echo "$EVAL_RESULT" | jq -r '
             if .trends then
                 (.trends | to_entries
-                    | map(select(.value.direction != "insufficient_data"))
+                    | map(select(.value.direction == "declining"))
                     | if length > 0 then
-                        "\n## Trends\n" +
-                        (map("- **\(.key)**: \(.value.direction) (Δ\(.value.avg_delta))") | join("\n"))
+                        "**Declining:** " +
+                        (map("\(.key) \(.value.avg_delta)") | join(", "))
                       else "" end)
             else "" end
         ' 2>/dev/null) || TREND_FEEDBACK=""
 
         EVAL_WARNINGS=$(echo "$EVAL_RESULT" | jq -r '
             if .warnings and (.warnings | length) > 0 then
-                "\n## Eval Warnings\n" + (.warnings | map("- " + .) | join("\n"))
+                (.warnings | join(" | "))
             else "" end
         ' 2>/dev/null) || EVAL_WARNINGS=""
     fi
@@ -378,41 +368,74 @@ RETRIEVED_CONTEXT=$(python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
     --n-results 5 \
     2>> "$ITER_DIR/debug.log") || RETRIEVED_CONTEXT="No previous context available."
 
-# --- Collect advisory warnings ---
-ALL_WARNINGS=""
-[ -n "$SEM_WARNING" ] && ALL_WARNINGS="${ALL_WARNINGS}${SEM_WARNING}\n"
-[ -n "$STALL_WARNING" ] && ALL_WARNINGS="${ALL_WARNINGS}${STALL_WARNING}\n"
-[ -n "$EVAL_WARNINGS" ] && ALL_WARNINGS="${ALL_WARNINGS}${EVAL_WARNINGS}\n"
-
 # --- Read plan status ---
 PLAN_STATUS=""
+PLAN_CONTENT=""
 if [ -f "$ITER_DIR/plan.md" ]; then
     _total=$(grep -c '^\- \[' "$ITER_DIR/plan.md" 2>/dev/null || echo "0")
     _done=$(grep -c '^\- \[x\]' "$ITER_DIR/plan.md" 2>/dev/null || echo "0")
     if [ "$_total" -gt 0 ]; then
         PLAN_STATUS="**Plan:** ${_done}/${_total} subtasks done"
     fi
+    # Include remaining (unchecked) subtasks
+    PLAN_CONTENT=$(grep '^\- \[ \]' "$ITER_DIR/plan.md" 2>/dev/null | head -5)
 fi
 
 # --- Git diff summary for last iteration (so Claude sees what changed) ---
 DIFF_SUMMARY=""
 if [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
-    # Show uncommitted changes or last commit diff
     _ds=$(cd "$ITER_CWD" 2>/dev/null && { _u=$(git diff HEAD --stat --no-color 2>/dev/null | tail -1); [ -n "$_u" ] && echo "$_u" || git diff HEAD~1 HEAD --stat --no-color 2>/dev/null | tail -1; } || echo "")
-    [ -n "$_ds" ] && DIFF_SUMMARY="**Last iteration diff:** $_ds"
+    [ -n "$_ds" ] && DIFF_SUMMARY="**Diff:** $_ds"
 fi
 
-# --- Step 4: Return inline via stderr → Claude sees it and keeps working ---
-cat >&2 <<EOF
-ITERATION ${COUNT}/${ITERATIONS} — ${TASK}
-Working directory: ${ITER_CWD}
-$([ -n "$DIFF_SUMMARY" ] && echo "$DIFF_SUMMARY")
-$([ -n "$ALL_WARNINGS" ] && echo -e "\n${ALL_WARNINGS}")
-${RETRIEVED_CONTEXT}
-${EVAL_FEEDBACK}
-${TREND_FEEDBACK}
+# --- Collect all warnings into one line ---
+ALL_WARNINGS=""
+[ -n "$SEM_WARNING" ] && ALL_WARNINGS="${ALL_WARNINGS}${SEM_WARNING} | "
+[ -n "$STALL_WARNING" ] && ALL_WARNINGS="${ALL_WARNINGS}${STALL_WARNING} | "
+[ -n "$EVAL_WARNINGS" ] && ALL_WARNINGS="${ALL_WARNINGS}${EVAL_WARNINGS}"
+# Trim trailing " | "
+ALL_WARNINGS=$(echo "$ALL_WARNINGS" | sed 's/ | $//')
 
-Do NOT repeat prior work. Focus on what's missing or broken.
-EOF
+# --- Step 4: Return inline via stderr → Claude sees it and keeps working ---
+{
+echo "ITERATION ${COUNT}/${ITERATIONS} — ${TASK}"
+echo "CWD: ${ITER_CWD}"
+[ -n "$DIFF_SUMMARY" ] && echo "$DIFF_SUMMARY"
+[ -n "$PLAN_STATUS" ] && echo "$PLAN_STATUS"
+[ -n "$EVAL_FEEDBACK" ] && echo "$EVAL_FEEDBACK"
+[ -n "$TREND_FEEDBACK" ] && echo "$TREND_FEEDBACK"
+[ -n "$ALL_WARNINGS" ] && echo "**Warnings:** $ALL_WARNINGS"
+echo ""
+
+# Directive: the most important part — tells Claude what to do next
+if [ -n "${EVAL_DIRECTIVE:-}" ]; then
+    echo "## NEXT: ${EVAL_DIRECTIVE}"
+else
+    echo "## NEXT: Continue making progress. Do NOT repeat prior work."
+fi
+echo ""
+
+# Show remaining plan items
+if [ -n "$PLAN_CONTENT" ]; then
+    echo "## Remaining subtasks"
+    echo "$PLAN_CONTENT"
+    echo ""
+fi
+
+# Plan file reminder for first iteration
+if [ "$COUNT" -le 1 ] && [ -f "$ITER_DIR/plan.md" ]; then
+    _has_real_tasks=$(grep -c '(fill in' "$ITER_DIR/plan.md" 2>/dev/null || echo "0")
+    if [ "$_has_real_tasks" -gt 0 ]; then
+        echo "IMPORTANT: Update ${ITER_DIR}/plan.md with concrete subtasks. Mark items [x] as you complete them."
+        echo ""
+    fi
+fi
+
+# Retrieved context (compressed — only show if meaningful)
+if [ -n "$RETRIEVED_CONTEXT" ] && [ "$RETRIEVED_CONTEXT" != "No previous context available." ]; then
+    echo "## Prior context"
+    echo "$RETRIEVED_CONTEXT" | head -60
+fi
+} >&2
 
 exit 2
