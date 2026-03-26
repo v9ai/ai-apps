@@ -191,16 +191,6 @@ type CancelEmailResult {
   success: Boolean!
 }
 
-type ChatMessage {
-  content: String!
-  role: String!
-}
-
-input ChatMessageInput {
-  content: String!
-  role: String!
-}
-
 """Confidence level of a classification result."""
 enum ClassificationConfidence {
   high
@@ -495,13 +485,6 @@ input CreateEmailTemplateInput {
   variables: [String!]
 }
 
-input CreateLangSmithPromptInput {
-  description: String
-  isPublic: Boolean
-  readme: String
-  tags: [String!]
-}
-
 input CreateOpportunityInput {
   applicationNotes: String
   companyId: Int
@@ -516,16 +499,6 @@ input CreateOpportunityInput {
   tags: [String!]
   title: String!
   url: String
-}
-
-input CreatePromptInput {
-  chatMessages: [ChatMessageInput!]
-  config: PromptConfigInput
-  labels: [String!]
-  name: String!
-  prompt: String
-  tags: [String!]
-  type: PromptType!
 }
 
 input CreateTaskInput {
@@ -1003,35 +976,6 @@ type JobsResponse {
   totalCount: Int!
 }
 
-type LangSmithPrompt {
-  createdAt: String!
-  description: String
-  fullName: String!
-  id: String!
-  isArchived: Boolean!
-  isPublic: Boolean!
-  lastCommitHash: String
-  likedByAuthUser: Boolean!
-  numCommits: Int!
-  numDownloads: Int!
-  numLikes: Int!
-  numViews: Int!
-  owner: String
-  promptHandle: String!
-  readme: String
-  tags: [String!]!
-  tenantId: String!
-  updatedAt: String!
-}
-
-type LangSmithPromptCommit {
-  commitHash: String!
-  examples: [JSON!]!
-  manifest: JSON!
-  owner: String!
-  promptName: String!
-}
-
 type MarkRepliedResult {
   message: String
   success: Boolean!
@@ -1067,9 +1011,7 @@ type Mutation {
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
-  createLangSmithPrompt(input: CreateLangSmithPromptInput, promptIdentifier: String!): LangSmithPrompt!
   createOpportunity(input: CreateOpportunityInput!): Opportunity!
-  createPrompt(input: CreatePromptInput!): Prompt!
   createTask(input: CreateTaskInput!): Task!
   deleteAllJobs: DeleteJobResponse!
   deleteApplication(id: Int!): DeleteApplicationResponse!
@@ -1079,7 +1021,6 @@ type Mutation {
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
   deleteJob(id: Int!): DeleteJobResponse!
-  deleteLangSmithPrompt(promptIdentifier: String!): Boolean!
   deleteOpportunity(id: String!): DeleteOpportunityResult!
   deleteTask(id: Int!): DeleteTaskResult!
   enhanceAllContacts: EnhanceAllContactsResult!
@@ -1127,7 +1068,6 @@ type Mutation {
   Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
   """
   processAllJobs(limit: Int): ProcessAllJobsResponse!
-  pushLangSmithPrompt(input: PushLangSmithPromptInput, promptIdentifier: String!): String!
   rateResumeAnswer(helpful: Boolean!, traceId: ID!): Boolean
   """
   Report a job as irrelevant, spam, or incorrectly classified.
@@ -1150,9 +1090,7 @@ type Mutation {
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
-  updateLangSmithPrompt(input: UpdateLangSmithPromptInput!, promptIdentifier: String!): LangSmithPrompt!
   updateOpportunity(id: String!, input: UpdateOpportunityInput!): Opportunity!
-  updatePromptLabel(label: String!, name: String!, version: Int!): Prompt!
   updateTask(id: Int!, input: UpdateTaskInput!): Task!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   uploadResume(email: String!, filename: String!, resumePdf: String!): ResumeUploadResult
@@ -1218,58 +1156,6 @@ type ProcessAllJobsResponse {
   success: Boolean!
 }
 
-type Prompt {
-  chatMessages: [ChatMessage!]
-  config: PromptConfig
-  createdAt: String
-  createdBy: String
-  isUserSpecific: Boolean!
-  labels: [String!]
-  name: String!
-  prompt: String
-  tags: [String!]
-  type: PromptType!
-  updatedAt: String
-  version: Int
-}
-
-type PromptConfig {
-  max_tokens: Int
-  model: String
-  temperature: Float
-  top_p: Float
-}
-
-input PromptConfigInput {
-  max_tokens: Int
-  model: String
-  temperature: Float
-  top_p: Float
-}
-
-enum PromptType {
-  CHAT
-  TEXT
-}
-
-type PromptUsage {
-  label: String
-  promptName: String!
-  traceId: String
-  usedAt: String!
-  userEmail: String!
-  version: Int
-}
-
-input PushLangSmithPromptInput {
-  description: String
-  isPublic: Boolean
-  object: JSON
-  parentCommitHash: String
-  readme: String
-  tags: [String!]
-}
-
 type Query {
   allCompanyTags: [String!]!
   application(id: Int!): Application
@@ -1296,14 +1182,8 @@ type Query {
   findCompany(name: String, website: String): FindCompanyResult!
   job(id: String!): Job
   jobs(companyKey: String, excludedCompanies: [String!], limit: Int, offset: Int, remoteEuConfidence: String, search: String, showAll: Boolean, skills: [String!], sourceType: String, sourceTypes: [String!]): JobsResponse!
-  langsmithPrompt(promptIdentifier: String!): LangSmithPrompt
-  langsmithPromptCommit(includeModel: Boolean, promptIdentifier: String!): LangSmithPromptCommit
-  langsmithPrompts(isArchived: Boolean, isPublic: Boolean, query: String): [LangSmithPrompt!]!
-  myPromptUsage(limit: Int): [PromptUsage!]!
   opportunities(companyId: Int, limit: Int, offset: Int, status: String): OpportunitiesResult!
   opportunity(id: String!): Opportunity
-  prompt(label: String, name: String!, version: Int): Prompt
-  prompts: [RegisteredPrompt!]!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, limit: Int, offset: Int): ReceivedEmailsResult!
   resendEmail(resendId: String!): ResendEmailDetail
@@ -1347,19 +1227,6 @@ type ReceivedEmail {
 type ReceivedEmailsResult {
   emails: [ReceivedEmail!]!
   totalCount: Int!
-}
-
-type RegisteredPrompt {
-  content: JSON
-  labels: [String!]!
-  lastConfig: JSON
-  lastUpdatedAt: String!
-  lastUsedBy: String
-  name: String!
-  tags: [String!]!
-  type: String!
-  usageCount: Int
-  versions: [Int!]!
 }
 
 type ResendEmailDetail {
@@ -1603,14 +1470,6 @@ input UpdateEmailTemplateInput {
   tags: [String!]
   textContent: String
   variables: [String!]
-}
-
-input UpdateLangSmithPromptInput {
-  description: String
-  isArchived: Boolean
-  isPublic: Boolean
-  readme: String
-  tags: [String!]
 }
 
 input UpdateOpportunityInput {

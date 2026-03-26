@@ -219,17 +219,6 @@ export type CancelEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type ChatMessage = {
-  __typename?: 'ChatMessage';
-  content: Scalars['String']['output'];
-  role: Scalars['String']['output'];
-};
-
-export type ChatMessageInput = {
-  content: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-};
-
 /** Confidence level of a classification result. */
 export type ClassificationConfidence =
   | 'high'
@@ -542,13 +531,6 @@ export type CreateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
-export type CreateLangSmithPromptInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  readme?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
 export type CreateOpportunityInput = {
   applicationNotes?: InputMaybe<Scalars['String']['input']>;
   companyId?: InputMaybe<Scalars['Int']['input']>;
@@ -563,16 +545,6 @@ export type CreateOpportunityInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title: Scalars['String']['input'];
   url?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type CreatePromptInput = {
-  chatMessages?: InputMaybe<Array<ChatMessageInput>>;
-  config?: InputMaybe<PromptConfigInput>;
-  labels?: InputMaybe<Array<Scalars['String']['input']>>;
-  name: Scalars['String']['input'];
-  prompt?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  type: PromptType;
 };
 
 export type CreateTaskInput = {
@@ -1082,37 +1054,6 @@ export type JobsResponse = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type LangSmithPrompt = {
-  __typename?: 'LangSmithPrompt';
-  createdAt: Scalars['String']['output'];
-  description: Maybe<Scalars['String']['output']>;
-  fullName: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  isArchived: Scalars['Boolean']['output'];
-  isPublic: Scalars['Boolean']['output'];
-  lastCommitHash: Maybe<Scalars['String']['output']>;
-  likedByAuthUser: Scalars['Boolean']['output'];
-  numCommits: Scalars['Int']['output'];
-  numDownloads: Scalars['Int']['output'];
-  numLikes: Scalars['Int']['output'];
-  numViews: Scalars['Int']['output'];
-  owner: Maybe<Scalars['String']['output']>;
-  promptHandle: Scalars['String']['output'];
-  readme: Maybe<Scalars['String']['output']>;
-  tags: Array<Scalars['String']['output']>;
-  tenantId: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-};
-
-export type LangSmithPromptCommit = {
-  __typename?: 'LangSmithPromptCommit';
-  commitHash: Scalars['String']['output'];
-  examples: Array<Scalars['JSON']['output']>;
-  manifest: Scalars['JSON']['output'];
-  owner: Scalars['String']['output'];
-  promptName: Scalars['String']['output'];
-};
-
 export type MarkRepliedResult = {
   __typename?: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -1152,9 +1093,7 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createLangSmithPrompt: LangSmithPrompt;
   createOpportunity: Opportunity;
-  createPrompt: Prompt;
   createTask: Task;
   deleteAllJobs: DeleteJobResponse;
   deleteApplication: DeleteApplicationResponse;
@@ -1164,7 +1103,6 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteJob: DeleteJobResponse;
-  deleteLangSmithPrompt: Scalars['Boolean']['output'];
   deleteOpportunity: DeleteOpportunityResult;
   deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
@@ -1212,7 +1150,6 @@ export type Mutation = {
    * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
    */
   processAllJobs: ProcessAllJobsResponse;
-  pushLangSmithPrompt: Scalars['String']['output'];
   rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
@@ -1235,9 +1172,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateLangSmithPrompt: LangSmithPrompt;
   updateOpportunity: Opportunity;
-  updatePromptLabel: Prompt;
   updateTask: Task;
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
@@ -1324,19 +1259,8 @@ export type MutationCreateEmailTemplateArgs = {
 };
 
 
-export type MutationCreateLangSmithPromptArgs = {
-  input?: InputMaybe<CreateLangSmithPromptInput>;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
 export type MutationCreateOpportunityArgs = {
   input: CreateOpportunityInput;
-};
-
-
-export type MutationCreatePromptArgs = {
-  input: CreatePromptInput;
 };
 
 
@@ -1377,11 +1301,6 @@ export type MutationDeleteEmailTemplateArgs = {
 
 export type MutationDeleteJobArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationDeleteLangSmithPromptArgs = {
-  promptIdentifier: Scalars['String']['input'];
 };
 
 
@@ -1512,12 +1431,6 @@ export type MutationProcessAllJobsArgs = {
 };
 
 
-export type MutationPushLangSmithPromptArgs = {
-  input?: InputMaybe<PushLangSmithPromptInput>;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
 export type MutationRateResumeAnswerArgs = {
   helpful: Scalars['Boolean']['input'];
   traceId: Scalars['ID']['input'];
@@ -1609,22 +1522,9 @@ export type MutationUpdateEmailTemplateArgs = {
 };
 
 
-export type MutationUpdateLangSmithPromptArgs = {
-  input: UpdateLangSmithPromptInput;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
 export type MutationUpdateOpportunityArgs = {
   id: Scalars['String']['input'];
   input: UpdateOpportunityInput;
-};
-
-
-export type MutationUpdatePromptLabelArgs = {
-  label: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-  version: Scalars['Int']['input'];
 };
 
 
@@ -1718,60 +1618,6 @@ export type ProcessAllJobsResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-export type Prompt = {
-  __typename?: 'Prompt';
-  chatMessages: Maybe<Array<ChatMessage>>;
-  config: Maybe<PromptConfig>;
-  createdAt: Maybe<Scalars['String']['output']>;
-  createdBy: Maybe<Scalars['String']['output']>;
-  isUserSpecific: Scalars['Boolean']['output'];
-  labels: Maybe<Array<Scalars['String']['output']>>;
-  name: Scalars['String']['output'];
-  prompt: Maybe<Scalars['String']['output']>;
-  tags: Maybe<Array<Scalars['String']['output']>>;
-  type: PromptType;
-  updatedAt: Maybe<Scalars['String']['output']>;
-  version: Maybe<Scalars['Int']['output']>;
-};
-
-export type PromptConfig = {
-  __typename?: 'PromptConfig';
-  max_tokens: Maybe<Scalars['Int']['output']>;
-  model: Maybe<Scalars['String']['output']>;
-  temperature: Maybe<Scalars['Float']['output']>;
-  top_p: Maybe<Scalars['Float']['output']>;
-};
-
-export type PromptConfigInput = {
-  max_tokens?: InputMaybe<Scalars['Int']['input']>;
-  model?: InputMaybe<Scalars['String']['input']>;
-  temperature?: InputMaybe<Scalars['Float']['input']>;
-  top_p?: InputMaybe<Scalars['Float']['input']>;
-};
-
-export type PromptType =
-  | 'CHAT'
-  | 'TEXT';
-
-export type PromptUsage = {
-  __typename?: 'PromptUsage';
-  label: Maybe<Scalars['String']['output']>;
-  promptName: Scalars['String']['output'];
-  traceId: Maybe<Scalars['String']['output']>;
-  usedAt: Scalars['String']['output'];
-  userEmail: Scalars['String']['output'];
-  version: Maybe<Scalars['Int']['output']>;
-};
-
-export type PushLangSmithPromptInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  object?: InputMaybe<Scalars['JSON']['input']>;
-  parentCommitHash?: InputMaybe<Scalars['String']['input']>;
-  readme?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
 export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
@@ -1799,14 +1645,8 @@ export type Query = {
   findCompany: FindCompanyResult;
   job: Maybe<Job>;
   jobs: JobsResponse;
-  langsmithPrompt: Maybe<LangSmithPrompt>;
-  langsmithPromptCommit: Maybe<LangSmithPromptCommit>;
-  langsmithPrompts: Array<LangSmithPrompt>;
-  myPromptUsage: Array<PromptUsage>;
   opportunities: OpportunitiesResult;
   opportunity: Maybe<Opportunity>;
-  prompt: Maybe<Prompt>;
-  prompts: Array<RegisteredPrompt>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
@@ -1951,29 +1791,6 @@ export type QueryJobsArgs = {
 };
 
 
-export type QueryLangsmithPromptArgs = {
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
-export type QueryLangsmithPromptCommitArgs = {
-  includeModel?: InputMaybe<Scalars['Boolean']['input']>;
-  promptIdentifier: Scalars['String']['input'];
-};
-
-
-export type QueryLangsmithPromptsArgs = {
-  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  query?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryMyPromptUsageArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryOpportunitiesArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1984,13 +1801,6 @@ export type QueryOpportunitiesArgs = {
 
 export type QueryOpportunityArgs = {
   id: Scalars['String']['input'];
-};
-
-
-export type QueryPromptArgs = {
-  label?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
-  version?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2074,20 +1884,6 @@ export type ReceivedEmailsResult = {
   __typename?: 'ReceivedEmailsResult';
   emails: Array<ReceivedEmail>;
   totalCount: Scalars['Int']['output'];
-};
-
-export type RegisteredPrompt = {
-  __typename?: 'RegisteredPrompt';
-  content: Maybe<Scalars['JSON']['output']>;
-  labels: Array<Scalars['String']['output']>;
-  lastConfig: Maybe<Scalars['JSON']['output']>;
-  lastUpdatedAt: Scalars['String']['output'];
-  lastUsedBy: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
-  usageCount: Maybe<Scalars['Int']['output']>;
-  versions: Array<Scalars['Int']['output']>;
 };
 
 export type ResendEmailDetail = {
@@ -2344,14 +2140,6 @@ export type UpdateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type UpdateLangSmithPromptInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  readme?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type UpdateOpportunityInput = {
@@ -3116,61 +2904,6 @@ export type UnarchiveJobMutationVariables = Exact<{
 
 export type UnarchiveJobMutation = { __typename?: 'Mutation', unarchiveJob: { __typename?: 'Job', id: number, archived: boolean } };
 
-export type GetLangSmithPromptsQueryVariables = Exact<{
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
-  query?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type GetLangSmithPromptsQuery = { __typename?: 'Query', langsmithPrompts: Array<{ __typename?: 'LangSmithPrompt', id: string, promptHandle: string, fullName: string, description: string | null, readme: string | null, tenantId: string, createdAt: string, updatedAt: string, isPublic: boolean, isArchived: boolean, tags: Array<string>, owner: string | null, numLikes: number, numDownloads: number, numViews: number, numCommits: number, lastCommitHash: string | null, likedByAuthUser: boolean }> };
-
-export type GetLangSmithPromptQueryVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-}>;
-
-
-export type GetLangSmithPromptQuery = { __typename?: 'Query', langsmithPrompt: { __typename?: 'LangSmithPrompt', id: string, promptHandle: string, fullName: string, description: string | null, readme: string | null, tenantId: string, createdAt: string, updatedAt: string, isPublic: boolean, isArchived: boolean, tags: Array<string>, owner: string | null, numLikes: number, numDownloads: number, numViews: number, numCommits: number, lastCommitHash: string | null, likedByAuthUser: boolean } | null };
-
-export type GetLangSmithPromptCommitQueryVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-  includeModel?: InputMaybe<Scalars['Boolean']['input']>;
-}>;
-
-
-export type GetLangSmithPromptCommitQuery = { __typename?: 'Query', langsmithPromptCommit: { __typename?: 'LangSmithPromptCommit', owner: string, promptName: string, commitHash: string, manifest: any, examples: Array<any> } | null };
-
-export type CreateLangSmithPromptMutationVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-  input?: InputMaybe<CreateLangSmithPromptInput>;
-}>;
-
-
-export type CreateLangSmithPromptMutation = { __typename?: 'Mutation', createLangSmithPrompt: { __typename?: 'LangSmithPrompt', id: string, promptHandle: string, fullName: string, description: string | null, readme: string | null, tenantId: string, createdAt: string, updatedAt: string, isPublic: boolean, isArchived: boolean, tags: Array<string>, owner: string | null, numLikes: number, numDownloads: number, numViews: number, numCommits: number, lastCommitHash: string | null, likedByAuthUser: boolean } };
-
-export type UpdateLangSmithPromptMutationVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-  input: UpdateLangSmithPromptInput;
-}>;
-
-
-export type UpdateLangSmithPromptMutation = { __typename?: 'Mutation', updateLangSmithPrompt: { __typename?: 'LangSmithPrompt', id: string, promptHandle: string, fullName: string, description: string | null, readme: string | null, tenantId: string, createdAt: string, updatedAt: string, isPublic: boolean, isArchived: boolean, tags: Array<string>, owner: string | null, numLikes: number, numDownloads: number, numViews: number, numCommits: number, lastCommitHash: string | null, likedByAuthUser: boolean } };
-
-export type DeleteLangSmithPromptMutationVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-}>;
-
-
-export type DeleteLangSmithPromptMutation = { __typename?: 'Mutation', deleteLangSmithPrompt: boolean };
-
-export type PushLangSmithPromptMutationVariables = Exact<{
-  promptIdentifier: Scalars['String']['input'];
-  input?: InputMaybe<PushLangSmithPromptInput>;
-}>;
-
-
-export type PushLangSmithPromptMutation = { __typename?: 'Mutation', pushLangSmithPrompt: string };
-
 export type GetOpportunitiesQueryVariables = Exact<{
   companyId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
@@ -3209,25 +2942,6 @@ export type DeleteOpportunityMutationVariables = Exact<{
 
 
 export type DeleteOpportunityMutation = { __typename?: 'Mutation', deleteOpportunity: { __typename?: 'DeleteOpportunityResult', success: boolean, message: string | null } };
-
-export type GetPromptsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetPromptsQuery = { __typename?: 'Query', prompts: Array<{ __typename?: 'RegisteredPrompt', name: string, type: string, content: any | null, tags: Array<string>, labels: Array<string>, versions: Array<number>, lastUpdatedAt: string, lastConfig: any | null, usageCount: number | null, lastUsedBy: string | null }> };
-
-export type GetMyPromptUsageQueryVariables = Exact<{
-  limit?: InputMaybe<Scalars['Int']['input']>;
-}>;
-
-
-export type GetMyPromptUsageQuery = { __typename?: 'Query', myPromptUsage: Array<{ __typename?: 'PromptUsage', promptName: string, userEmail: string, version: number | null, label: string | null, usedAt: string, traceId: string | null }> };
-
-export type CreatePromptMutationVariables = Exact<{
-  input: CreatePromptInput;
-}>;
-
-
-export type CreatePromptMutation = { __typename?: 'Mutation', createPrompt: { __typename?: 'Prompt', name: string, version: number | null, type: PromptType, labels: Array<string> | null, tags: Array<string> | null, createdBy: string | null } };
 
 export type ResumeStatusQueryVariables = Exact<{
   email: Scalars['String']['input'];
@@ -7514,344 +7228,6 @@ export function useUnarchiveJobMutation(baseOptions?: Apollo.MutationHookOptions
 export type UnarchiveJobMutationHookResult = ReturnType<typeof useUnarchiveJobMutation>;
 export type UnarchiveJobMutationResult = Apollo.MutationResult<UnarchiveJobMutation>;
 export type UnarchiveJobMutationOptions = Apollo.BaseMutationOptions<UnarchiveJobMutation, UnarchiveJobMutationVariables>;
-export const GetLangSmithPromptsDocument = gql`
-    query GetLangSmithPrompts($isPublic: Boolean, $isArchived: Boolean, $query: String) {
-  langsmithPrompts(isPublic: $isPublic, isArchived: $isArchived, query: $query) {
-    id
-    promptHandle
-    fullName
-    description
-    readme
-    tenantId
-    createdAt
-    updatedAt
-    isPublic
-    isArchived
-    tags
-    owner
-    numLikes
-    numDownloads
-    numViews
-    numCommits
-    lastCommitHash
-    likedByAuthUser
-  }
-}
-    `;
-
-/**
- * __useGetLangSmithPromptsQuery__
- *
- * To run a query within a React component, call `useGetLangSmithPromptsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetLangSmithPromptsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetLangSmithPromptsQuery({
- *   variables: {
- *      isPublic: // value for 'isPublic'
- *      isArchived: // value for 'isArchived'
- *      query: // value for 'query'
- *   },
- * });
- */
-export function useGetLangSmithPromptsQuery(baseOptions?: Apollo.QueryHookOptions<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>(GetLangSmithPromptsDocument, options);
-      }
-export function useGetLangSmithPromptsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>(GetLangSmithPromptsDocument, options);
-        }
-// @ts-ignore
-export function useGetLangSmithPromptsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>): Apollo.UseSuspenseQueryResult<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>;
-export function useGetLangSmithPromptsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>): Apollo.UseSuspenseQueryResult<GetLangSmithPromptsQuery | undefined, GetLangSmithPromptsQueryVariables>;
-export function useGetLangSmithPromptsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>(GetLangSmithPromptsDocument, options);
-        }
-export type GetLangSmithPromptsQueryHookResult = ReturnType<typeof useGetLangSmithPromptsQuery>;
-export type GetLangSmithPromptsLazyQueryHookResult = ReturnType<typeof useGetLangSmithPromptsLazyQuery>;
-export type GetLangSmithPromptsSuspenseQueryHookResult = ReturnType<typeof useGetLangSmithPromptsSuspenseQuery>;
-export type GetLangSmithPromptsQueryResult = Apollo.QueryResult<GetLangSmithPromptsQuery, GetLangSmithPromptsQueryVariables>;
-export const GetLangSmithPromptDocument = gql`
-    query GetLangSmithPrompt($promptIdentifier: String!) {
-  langsmithPrompt(promptIdentifier: $promptIdentifier) {
-    id
-    promptHandle
-    fullName
-    description
-    readme
-    tenantId
-    createdAt
-    updatedAt
-    isPublic
-    isArchived
-    tags
-    owner
-    numLikes
-    numDownloads
-    numViews
-    numCommits
-    lastCommitHash
-    likedByAuthUser
-  }
-}
-    `;
-
-/**
- * __useGetLangSmithPromptQuery__
- *
- * To run a query within a React component, call `useGetLangSmithPromptQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetLangSmithPromptQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetLangSmithPromptQuery({
- *   variables: {
- *      promptIdentifier: // value for 'promptIdentifier'
- *   },
- * });
- */
-export function useGetLangSmithPromptQuery(baseOptions: Apollo.QueryHookOptions<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables> & ({ variables: GetLangSmithPromptQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>(GetLangSmithPromptDocument, options);
-      }
-export function useGetLangSmithPromptLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>(GetLangSmithPromptDocument, options);
-        }
-// @ts-ignore
-export function useGetLangSmithPromptSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>): Apollo.UseSuspenseQueryResult<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>;
-export function useGetLangSmithPromptSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>): Apollo.UseSuspenseQueryResult<GetLangSmithPromptQuery | undefined, GetLangSmithPromptQueryVariables>;
-export function useGetLangSmithPromptSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>(GetLangSmithPromptDocument, options);
-        }
-export type GetLangSmithPromptQueryHookResult = ReturnType<typeof useGetLangSmithPromptQuery>;
-export type GetLangSmithPromptLazyQueryHookResult = ReturnType<typeof useGetLangSmithPromptLazyQuery>;
-export type GetLangSmithPromptSuspenseQueryHookResult = ReturnType<typeof useGetLangSmithPromptSuspenseQuery>;
-export type GetLangSmithPromptQueryResult = Apollo.QueryResult<GetLangSmithPromptQuery, GetLangSmithPromptQueryVariables>;
-export const GetLangSmithPromptCommitDocument = gql`
-    query GetLangSmithPromptCommit($promptIdentifier: String!, $includeModel: Boolean) {
-  langsmithPromptCommit(
-    promptIdentifier: $promptIdentifier
-    includeModel: $includeModel
-  ) {
-    owner
-    promptName
-    commitHash
-    manifest
-    examples
-  }
-}
-    `;
-
-/**
- * __useGetLangSmithPromptCommitQuery__
- *
- * To run a query within a React component, call `useGetLangSmithPromptCommitQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetLangSmithPromptCommitQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetLangSmithPromptCommitQuery({
- *   variables: {
- *      promptIdentifier: // value for 'promptIdentifier'
- *      includeModel: // value for 'includeModel'
- *   },
- * });
- */
-export function useGetLangSmithPromptCommitQuery(baseOptions: Apollo.QueryHookOptions<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables> & ({ variables: GetLangSmithPromptCommitQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>(GetLangSmithPromptCommitDocument, options);
-      }
-export function useGetLangSmithPromptCommitLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>(GetLangSmithPromptCommitDocument, options);
-        }
-// @ts-ignore
-export function useGetLangSmithPromptCommitSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>): Apollo.UseSuspenseQueryResult<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>;
-export function useGetLangSmithPromptCommitSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>): Apollo.UseSuspenseQueryResult<GetLangSmithPromptCommitQuery | undefined, GetLangSmithPromptCommitQueryVariables>;
-export function useGetLangSmithPromptCommitSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>(GetLangSmithPromptCommitDocument, options);
-        }
-export type GetLangSmithPromptCommitQueryHookResult = ReturnType<typeof useGetLangSmithPromptCommitQuery>;
-export type GetLangSmithPromptCommitLazyQueryHookResult = ReturnType<typeof useGetLangSmithPromptCommitLazyQuery>;
-export type GetLangSmithPromptCommitSuspenseQueryHookResult = ReturnType<typeof useGetLangSmithPromptCommitSuspenseQuery>;
-export type GetLangSmithPromptCommitQueryResult = Apollo.QueryResult<GetLangSmithPromptCommitQuery, GetLangSmithPromptCommitQueryVariables>;
-export const CreateLangSmithPromptDocument = gql`
-    mutation CreateLangSmithPrompt($promptIdentifier: String!, $input: CreateLangSmithPromptInput) {
-  createLangSmithPrompt(promptIdentifier: $promptIdentifier, input: $input) {
-    id
-    promptHandle
-    fullName
-    description
-    readme
-    tenantId
-    createdAt
-    updatedAt
-    isPublic
-    isArchived
-    tags
-    owner
-    numLikes
-    numDownloads
-    numViews
-    numCommits
-    lastCommitHash
-    likedByAuthUser
-  }
-}
-    `;
-export type CreateLangSmithPromptMutationFn = Apollo.MutationFunction<CreateLangSmithPromptMutation, CreateLangSmithPromptMutationVariables>;
-
-/**
- * __useCreateLangSmithPromptMutation__
- *
- * To run a mutation, you first call `useCreateLangSmithPromptMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateLangSmithPromptMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createLangSmithPromptMutation, { data, loading, error }] = useCreateLangSmithPromptMutation({
- *   variables: {
- *      promptIdentifier: // value for 'promptIdentifier'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateLangSmithPromptMutation(baseOptions?: Apollo.MutationHookOptions<CreateLangSmithPromptMutation, CreateLangSmithPromptMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateLangSmithPromptMutation, CreateLangSmithPromptMutationVariables>(CreateLangSmithPromptDocument, options);
-      }
-export type CreateLangSmithPromptMutationHookResult = ReturnType<typeof useCreateLangSmithPromptMutation>;
-export type CreateLangSmithPromptMutationResult = Apollo.MutationResult<CreateLangSmithPromptMutation>;
-export type CreateLangSmithPromptMutationOptions = Apollo.BaseMutationOptions<CreateLangSmithPromptMutation, CreateLangSmithPromptMutationVariables>;
-export const UpdateLangSmithPromptDocument = gql`
-    mutation UpdateLangSmithPrompt($promptIdentifier: String!, $input: UpdateLangSmithPromptInput!) {
-  updateLangSmithPrompt(promptIdentifier: $promptIdentifier, input: $input) {
-    id
-    promptHandle
-    fullName
-    description
-    readme
-    tenantId
-    createdAt
-    updatedAt
-    isPublic
-    isArchived
-    tags
-    owner
-    numLikes
-    numDownloads
-    numViews
-    numCommits
-    lastCommitHash
-    likedByAuthUser
-  }
-}
-    `;
-export type UpdateLangSmithPromptMutationFn = Apollo.MutationFunction<UpdateLangSmithPromptMutation, UpdateLangSmithPromptMutationVariables>;
-
-/**
- * __useUpdateLangSmithPromptMutation__
- *
- * To run a mutation, you first call `useUpdateLangSmithPromptMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateLangSmithPromptMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateLangSmithPromptMutation, { data, loading, error }] = useUpdateLangSmithPromptMutation({
- *   variables: {
- *      promptIdentifier: // value for 'promptIdentifier'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUpdateLangSmithPromptMutation(baseOptions?: Apollo.MutationHookOptions<UpdateLangSmithPromptMutation, UpdateLangSmithPromptMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateLangSmithPromptMutation, UpdateLangSmithPromptMutationVariables>(UpdateLangSmithPromptDocument, options);
-      }
-export type UpdateLangSmithPromptMutationHookResult = ReturnType<typeof useUpdateLangSmithPromptMutation>;
-export type UpdateLangSmithPromptMutationResult = Apollo.MutationResult<UpdateLangSmithPromptMutation>;
-export type UpdateLangSmithPromptMutationOptions = Apollo.BaseMutationOptions<UpdateLangSmithPromptMutation, UpdateLangSmithPromptMutationVariables>;
-export const DeleteLangSmithPromptDocument = gql`
-    mutation DeleteLangSmithPrompt($promptIdentifier: String!) {
-  deleteLangSmithPrompt(promptIdentifier: $promptIdentifier)
-}
-    `;
-export type DeleteLangSmithPromptMutationFn = Apollo.MutationFunction<DeleteLangSmithPromptMutation, DeleteLangSmithPromptMutationVariables>;
-
-/**
- * __useDeleteLangSmithPromptMutation__
- *
- * To run a mutation, you first call `useDeleteLangSmithPromptMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteLangSmithPromptMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteLangSmithPromptMutation, { data, loading, error }] = useDeleteLangSmithPromptMutation({
- *   variables: {
- *      promptIdentifier: // value for 'promptIdentifier'
- *   },
- * });
- */
-export function useDeleteLangSmithPromptMutation(baseOptions?: Apollo.MutationHookOptions<DeleteLangSmithPromptMutation, DeleteLangSmithPromptMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteLangSmithPromptMutation, DeleteLangSmithPromptMutationVariables>(DeleteLangSmithPromptDocument, options);
-      }
-export type DeleteLangSmithPromptMutationHookResult = ReturnType<typeof useDeleteLangSmithPromptMutation>;
-export type DeleteLangSmithPromptMutationResult = Apollo.MutationResult<DeleteLangSmithPromptMutation>;
-export type DeleteLangSmithPromptMutationOptions = Apollo.BaseMutationOptions<DeleteLangSmithPromptMutation, DeleteLangSmithPromptMutationVariables>;
-export const PushLangSmithPromptDocument = gql`
-    mutation PushLangSmithPrompt($promptIdentifier: String!, $input: PushLangSmithPromptInput) {
-  pushLangSmithPrompt(promptIdentifier: $promptIdentifier, input: $input)
-}
-    `;
-export type PushLangSmithPromptMutationFn = Apollo.MutationFunction<PushLangSmithPromptMutation, PushLangSmithPromptMutationVariables>;
-
-/**
- * __usePushLangSmithPromptMutation__
- *
- * To run a mutation, you first call `usePushLangSmithPromptMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `usePushLangSmithPromptMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [pushLangSmithPromptMutation, { data, loading, error }] = usePushLangSmithPromptMutation({
- *   variables: {
- *      promptIdentifier: // value for 'promptIdentifier'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function usePushLangSmithPromptMutation(baseOptions?: Apollo.MutationHookOptions<PushLangSmithPromptMutation, PushLangSmithPromptMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<PushLangSmithPromptMutation, PushLangSmithPromptMutationVariables>(PushLangSmithPromptDocument, options);
-      }
-export type PushLangSmithPromptMutationHookResult = ReturnType<typeof usePushLangSmithPromptMutation>;
-export type PushLangSmithPromptMutationResult = Apollo.MutationResult<PushLangSmithPromptMutation>;
-export type PushLangSmithPromptMutationOptions = Apollo.BaseMutationOptions<PushLangSmithPromptMutation, PushLangSmithPromptMutationVariables>;
 export const GetOpportunitiesDocument = gql`
     query GetOpportunities($companyId: Int, $status: String, $limit: Int, $offset: Int) {
   opportunities(
@@ -8111,143 +7487,6 @@ export function useDeleteOpportunityMutation(baseOptions?: Apollo.MutationHookOp
 export type DeleteOpportunityMutationHookResult = ReturnType<typeof useDeleteOpportunityMutation>;
 export type DeleteOpportunityMutationResult = Apollo.MutationResult<DeleteOpportunityMutation>;
 export type DeleteOpportunityMutationOptions = Apollo.BaseMutationOptions<DeleteOpportunityMutation, DeleteOpportunityMutationVariables>;
-export const GetPromptsDocument = gql`
-    query GetPrompts {
-  prompts {
-    name
-    type
-    content
-    tags
-    labels
-    versions
-    lastUpdatedAt
-    lastConfig
-    usageCount
-    lastUsedBy
-  }
-}
-    `;
-
-/**
- * __useGetPromptsQuery__
- *
- * To run a query within a React component, call `useGetPromptsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetPromptsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetPromptsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetPromptsQuery(baseOptions?: Apollo.QueryHookOptions<GetPromptsQuery, GetPromptsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetPromptsQuery, GetPromptsQueryVariables>(GetPromptsDocument, options);
-      }
-export function useGetPromptsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPromptsQuery, GetPromptsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetPromptsQuery, GetPromptsQueryVariables>(GetPromptsDocument, options);
-        }
-// @ts-ignore
-export function useGetPromptsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPromptsQuery, GetPromptsQueryVariables>): Apollo.UseSuspenseQueryResult<GetPromptsQuery, GetPromptsQueryVariables>;
-export function useGetPromptsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPromptsQuery, GetPromptsQueryVariables>): Apollo.UseSuspenseQueryResult<GetPromptsQuery | undefined, GetPromptsQueryVariables>;
-export function useGetPromptsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPromptsQuery, GetPromptsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetPromptsQuery, GetPromptsQueryVariables>(GetPromptsDocument, options);
-        }
-export type GetPromptsQueryHookResult = ReturnType<typeof useGetPromptsQuery>;
-export type GetPromptsLazyQueryHookResult = ReturnType<typeof useGetPromptsLazyQuery>;
-export type GetPromptsSuspenseQueryHookResult = ReturnType<typeof useGetPromptsSuspenseQuery>;
-export type GetPromptsQueryResult = Apollo.QueryResult<GetPromptsQuery, GetPromptsQueryVariables>;
-export const GetMyPromptUsageDocument = gql`
-    query GetMyPromptUsage($limit: Int) {
-  myPromptUsage(limit: $limit) {
-    promptName
-    userEmail
-    version
-    label
-    usedAt
-    traceId
-  }
-}
-    `;
-
-/**
- * __useGetMyPromptUsageQuery__
- *
- * To run a query within a React component, call `useGetMyPromptUsageQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetMyPromptUsageQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetMyPromptUsageQuery({
- *   variables: {
- *      limit: // value for 'limit'
- *   },
- * });
- */
-export function useGetMyPromptUsageQuery(baseOptions?: Apollo.QueryHookOptions<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>(GetMyPromptUsageDocument, options);
-      }
-export function useGetMyPromptUsageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>(GetMyPromptUsageDocument, options);
-        }
-// @ts-ignore
-export function useGetMyPromptUsageSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>): Apollo.UseSuspenseQueryResult<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>;
-export function useGetMyPromptUsageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>): Apollo.UseSuspenseQueryResult<GetMyPromptUsageQuery | undefined, GetMyPromptUsageQueryVariables>;
-export function useGetMyPromptUsageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>(GetMyPromptUsageDocument, options);
-        }
-export type GetMyPromptUsageQueryHookResult = ReturnType<typeof useGetMyPromptUsageQuery>;
-export type GetMyPromptUsageLazyQueryHookResult = ReturnType<typeof useGetMyPromptUsageLazyQuery>;
-export type GetMyPromptUsageSuspenseQueryHookResult = ReturnType<typeof useGetMyPromptUsageSuspenseQuery>;
-export type GetMyPromptUsageQueryResult = Apollo.QueryResult<GetMyPromptUsageQuery, GetMyPromptUsageQueryVariables>;
-export const CreatePromptDocument = gql`
-    mutation CreatePrompt($input: CreatePromptInput!) {
-  createPrompt(input: $input) {
-    name
-    version
-    type
-    labels
-    tags
-    createdBy
-  }
-}
-    `;
-export type CreatePromptMutationFn = Apollo.MutationFunction<CreatePromptMutation, CreatePromptMutationVariables>;
-
-/**
- * __useCreatePromptMutation__
- *
- * To run a mutation, you first call `useCreatePromptMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreatePromptMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createPromptMutation, { data, loading, error }] = useCreatePromptMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreatePromptMutation(baseOptions?: Apollo.MutationHookOptions<CreatePromptMutation, CreatePromptMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreatePromptMutation, CreatePromptMutationVariables>(CreatePromptDocument, options);
-      }
-export type CreatePromptMutationHookResult = ReturnType<typeof useCreatePromptMutation>;
-export type CreatePromptMutationResult = Apollo.MutationResult<CreatePromptMutation>;
-export type CreatePromptMutationOptions = Apollo.BaseMutationOptions<CreatePromptMutation, CreatePromptMutationVariables>;
 export const ResumeStatusDocument = gql`
     query ResumeStatus($email: String!) {
   resumeStatus(email: $email) {
