@@ -2,20 +2,21 @@ use std::collections::{BTreeMap, HashSet};
 
 use anyhow::Result;
 use chrono::{Duration, Utc};
-use clap::Parser;
 use futures::future::join_all;
-use serde::Serialize;
 use tokio::task::JoinHandle;
 use tracing::{info, warn};
 
 use research::arxiv::types::{DateRange, SearchQuery, SortBy, SortOrder};
 use research::arxiv::ArxivClient;
+use research::chunker::{chunk_text, ChunkerConfig, ChunkStrategy};
 use research::core_api::CoreClient;
 use research::crossref::CrossrefClient;
+use research::local_embeddings::EmbeddingEngine;
 use research::openalex::OpenAlexClient;
 use research::paper::{PaperSource, ResearchPaper};
 use research::scholar::types::SEARCH_FIELDS;
 use research::scholar::SemanticScholarClient;
+use research::vector::VectorStore;
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -40,31 +41,9 @@ const BATCH_SIZE: usize = 256;
 const DB_PATH: &str = "paper-discovery-db";
 const OUTPUT_DIR: &str = "research-output";
 
-// ── CLI ────────────────────────────────────────────────────────────────────
-
-#[derive(Parser)]
-#[command(name = "last-week", about = "Fetch last week's AI papers, categorize, and save a report")]
-struct Cli {
-    /// Search existing LanceDB instead of fetching new papers
-    #[arg(long)]
-    query: Option<String>,
-
-    /// Number of results for query mode
-    #[arg(long, default_value_t = 20)]
-    top_k: usize,
-
-    /// Minimum citations filter for query mode
-    #[arg(long)]
-    min_citations: Option<u32>,
-
-    /// Skip persisting to LanceDB
-    #[arg(long)]
-    no_store: bool,
-}
-
 // ── Types ──────────────────────────────────────────────────────────────────
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 struct PaperSummary {
     title: String,
     authors: Vec<String>,
@@ -107,57 +86,7 @@ impl PaperSummary {
 async fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
     dotenvy::dotenv().ok();
-    let cli = Cli::parse();
 
-    // ── Query mode ─────────────────────────────────────────────────
-    if let Some(ref query_text) = cli.query {
-        use research::local_embeddings::EmbeddingEngine;
-        use research::vector::{SearchFilter, VectorStore};
-
-        let engine = EmbeddingEngine::new(candle_core::Device::Cpu)?;
-        let store = VectorStore::connect(DB_PATH, engine).await?;
-
-        let filter = SearchFilter {
-            year_min: None,
-            year_max: None,
-            source: None,
-            min_citations: cli.min_citations,
-        };
-
-        let results = store
-            .search_papers_filtered(query_text, cli.top_k, &filter)
-            .await?;
-
-        println!("Found {} results for \"{}\":\n", results.len(), query_text);
-        for (i, result) in results.iter().enumerate() {
-            let p = &result.paper;
-            let cites = p
-                .citation_count
-                .map(|c| format!(" [{c} cites]"))
-                .unwrap_or_default();
-            println!(
-                "{}. [score: {:.3}] {}{}",
-                i + 1,
-                result.score,
-                p.title,
-                cites
-            );
-            println!(
-                "   Source: {:?} | ID: {} | Year: {}",
-                p.source,
-                p.source_id,
-                p.year.map(|y| y.to_string()).unwrap_or("?".into())
-            );
-            if let Some(ref abs) = p.abstract_text {
-                let preview: String = abs.chars().take(200).collect();
-                println!("   {preview}...");
-            }
-            println!();
-        }
-        return Ok(());
-    }
-
-    // ── Fetch mode ─────────────────────────────────────────────────
     let now = Utc::now();
     let from = now - Duration::days(DAYS as i64);
     let year_str = from.format("%Y").to_string();
@@ -194,7 +123,6 @@ async fn main() -> Result<()> {
         }
     }
 
-    // Exact dedup
     let mut seen_titles: HashSet<String> = HashSet::new();
     all.retain(|p| {
         let key = p.dedup_key();
@@ -204,7 +132,6 @@ async fn main() -> Result<()> {
         seen_titles.insert(key)
     });
 
-    // Fuzzy dedup
     let before_fuzzy = all.len();
     let mut deduped: Vec<PaperSummary> = Vec::with_capacity(all.len());
     for paper in all.drain(..) {
@@ -220,7 +147,6 @@ async fn main() -> Result<()> {
         println!("Fuzzy dedup removed {} near-duplicates", before_fuzzy - all.len());
     }
 
-    // Sort by citation count (highest first), then title
     all.sort_by(|a, b| {
         b.citation_count
             .unwrap_or(0)
@@ -228,65 +154,51 @@ async fn main() -> Result<()> {
             .then(a.title.cmp(&b.title))
     });
 
-    // ── Build markdown report ──────────────────────────────────────
-    let period = format!(
-        "{} to {}",
-        from.format("%Y-%m-%d"),
-        now.format("%Y-%m-%d"),
-    );
+    // ── Markdown report ────────────────────────────────────────────
+    let period = format!("{} to {}", from.format("%Y-%m-%d"), now.format("%Y-%m-%d"));
     let md = build_report(&all, &period);
 
     std::fs::create_dir_all(OUTPUT_DIR)?;
-    let report_path = format!(
-        "{OUTPUT_DIR}/last-week-{}.md",
-        now.format("%Y-%m-%d"),
-    );
+    let report_path = format!("{OUTPUT_DIR}/last-week-{}.md", now.format("%Y-%m-%d"));
     std::fs::write(&report_path, &md)?;
     println!("\nReport saved to {report_path} ({} papers)", all.len());
 
     // ── Persist to LanceDB ─────────────────────────────────────────
-    if !cli.no_store {
-        use research::chunker::{chunk_text, ChunkerConfig, ChunkStrategy};
-        use research::local_embeddings::EmbeddingEngine;
-        use research::vector::VectorStore;
+    let week_tag = format!("weekly:{}", now.format("%G-W%V"));
+    let papers: Vec<ResearchPaper> = all.iter().map(|s| to_research_paper(s, &week_tag)).collect();
 
-        let week_tag = format!("weekly:{}", now.format("%G-W%V"));
+    println!("Storing {} papers to LanceDB ({DB_PATH})...", papers.len());
+    let engine = EmbeddingEngine::new(candle_core::Device::Cpu)?;
+    let store = VectorStore::connect(DB_PATH, engine).await?;
+    let count = store.add_papers_batched(&papers, BATCH_SIZE).await?;
+    println!("Indexed {count} papers (tagged: {week_tag})");
 
-        let papers: Vec<ResearchPaper> = all.iter().map(|s| to_research_paper(s, &week_tag)).collect();
+    let chunk_config = ChunkerConfig {
+        chunk_size: 256,
+        overlap: 32,
+        min_size: 30,
+        strategy: ChunkStrategy::Sentence,
+    };
 
-        println!("Storing {} papers to LanceDB ({DB_PATH})...", papers.len());
-        let engine = EmbeddingEngine::new(candle_core::Device::Cpu)?;
-        let store = VectorStore::connect(DB_PATH, engine).await?;
-        let count = store.add_papers_batched(&papers, BATCH_SIZE).await?;
-        println!("Indexed {count} papers (tagged: {week_tag})");
-
-        let chunk_config = ChunkerConfig {
-            chunk_size: 256,
-            overlap: 32,
-            min_size: 30,
-            strategy: ChunkStrategy::Sentence,
-        };
-
-        let mut all_chunks = Vec::new();
-        for paper in &papers {
-            if let Some(ref abstract_text) = paper.abstract_text {
-                if abstract_text.len() > chunk_config.min_size {
-                    let chunks =
-                        chunk_text(abstract_text, &paper.source_id, Some(chunk_config.clone()));
-                    all_chunks.extend(chunks);
-                }
+    let mut all_chunks = Vec::new();
+    for paper in &papers {
+        if let Some(ref abstract_text) = paper.abstract_text {
+            if abstract_text.len() > chunk_config.min_size {
+                let chunks =
+                    chunk_text(abstract_text, &paper.source_id, Some(chunk_config.clone()));
+                all_chunks.extend(chunks);
             }
         }
+    }
 
-        if !all_chunks.is_empty() {
-            println!(
-                "Chunking {} abstracts into {} chunks...",
-                papers.iter().filter(|p| p.abstract_text.is_some()).count(),
-                all_chunks.len()
-            );
-            let c = store.add_chunks_batched(&all_chunks, 512).await?;
-            println!("Indexed {c} abstract chunks");
-        }
+    if !all_chunks.is_empty() {
+        println!(
+            "Chunking {} abstracts into {} chunks...",
+            papers.iter().filter(|p| p.abstract_text.is_some()).count(),
+            all_chunks.len()
+        );
+        let c = store.add_chunks_batched(&all_chunks, 512).await?;
+        println!("Indexed {c} abstract chunks");
     }
 
     Ok(())
@@ -296,12 +208,10 @@ async fn main() -> Result<()> {
 // Markdown report
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Map primary_category / source into a human-readable domain bucket.
 fn categorize(paper: &PaperSummary) -> &'static str {
     let cat = paper.primary_category.as_str();
     let title_lower = paper.title.to_lowercase();
 
-    // arXiv category mapping
     match cat {
         "cs.CL" => return "NLP & Language Models",
         "cs.CV" => return "Computer Vision",
@@ -315,18 +225,30 @@ fn categorize(paper: &PaperSummary) -> &'static str {
         _ => {}
     }
 
-    // Keyword fallback for non-arXiv sources
-    if title_lower.contains("language model") || title_lower.contains("llm") || title_lower.contains("transformer") {
+    if title_lower.contains("language model")
+        || title_lower.contains("llm")
+        || title_lower.contains("transformer")
+    {
         "NLP & Language Models"
-    } else if title_lower.contains("diffusion") || title_lower.contains("image") || title_lower.contains("vision") || title_lower.contains("video") {
+    } else if title_lower.contains("diffusion")
+        || title_lower.contains("image")
+        || title_lower.contains("vision")
+        || title_lower.contains("video")
+    {
         "Computer Vision"
     } else if title_lower.contains("reinforcement") || title_lower.contains("robot") {
         "Robotics & RL"
     } else if title_lower.contains("agent") || title_lower.contains("tool use") {
         "AI Agents"
-    } else if title_lower.contains("safety") || title_lower.contains("alignment") || title_lower.contains("rlhf") {
+    } else if title_lower.contains("safety")
+        || title_lower.contains("alignment")
+        || title_lower.contains("rlhf")
+    {
         "Safety & Alignment"
-    } else if title_lower.contains("graph") || title_lower.contains("protein") || title_lower.contains("molecule") {
+    } else if title_lower.contains("graph")
+        || title_lower.contains("protein")
+        || title_lower.contains("molecule")
+    {
         "Graph & Science"
     } else {
         "Other"
@@ -345,11 +267,10 @@ fn build_report(papers: &[PaperSummary], period: &str) -> String {
     }
 
     let mut md = String::new();
-    md.push_str(&format!("# Last Week in AI Research\n\n"));
+    md.push_str("# Last Week in AI Research\n\n");
     md.push_str(&format!("**Period:** {period}  \n"));
     md.push_str(&format!("**Total papers:** {}  \n\n", papers.len()));
 
-    // Source breakdown
     md.push_str("## Sources\n\n");
     md.push_str("| Source | Papers |\n|--------|-------:|\n");
     for (source, count) in &by_source {
@@ -357,7 +278,6 @@ fn build_report(papers: &[PaperSummary], period: &str) -> String {
     }
     md.push('\n');
 
-    // Category breakdown
     md.push_str("## By Category\n\n");
     md.push_str("| Category | Papers |\n|----------|-------:|\n");
     for (cat, papers) in &by_category {
@@ -365,7 +285,6 @@ fn build_report(papers: &[PaperSummary], period: &str) -> String {
     }
     md.push('\n');
 
-    // Top cited
     let cited: Vec<&PaperSummary> = papers
         .iter()
         .filter(|p| p.citation_count.unwrap_or(0) > 0)
@@ -392,7 +311,6 @@ fn build_report(papers: &[PaperSummary], period: &str) -> String {
         }
     }
 
-    // Papers by category
     for (cat, cat_papers) in &by_category {
         md.push_str(&format!("## {cat}\n\n"));
         for p in cat_papers.iter().take(30) {
