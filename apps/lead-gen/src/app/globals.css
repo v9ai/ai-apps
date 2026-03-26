@@ -900,3 +900,71 @@ nav a.active {
     line-height: 1.12 !important;
   }
 }
+
+/* ---------- tech stack horizontal scroll (mobile only) ---------- */
+.tech-stack-scroll::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 640px) {
+  .tech-stack-scroll {
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+    overflow-x: visible !important;
+  }
+}
+
+/* ---------- preview cards responsive padding ---------- */
+@media (min-width: 640px) {
+  [role="list"][aria-label*="pipeline leads"] > [role="listitem"] {
+    padding: 16px 20px !important;
+  }
+}
+
+/* ---------- skip-to-content link (a11y) ---------- */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--accent-9);
+  color: var(--accent-contrast);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0;
+  outline: none;
+}
+.skip-to-content:focus {
+  top: 8px;
+}
+
+/* ---------- prefers-contrast: more (WCAG AAA support) ---------- */
+@media (prefers-contrast: more) {
+  /* Promote all tertiary/dim text to full contrast */
+  body {
+    --gray-9: var(--gray-11);
+    --gray-10: var(--gray-12);
+  }
+
+  /* Stronger borders for better element delineation */
+  .rt-Card,
+  .yc-panel,
+  .yc-row {
+    border-color: var(--gray-8) !important;
+  }
+
+  /* Ensure badges are legible */
+  .rt-Badge {
+    border-color: var(--gray-8) !important;
+    color: var(--gray-12) !important;
+  }
+
+  /* CTA buttons get stronger outlines */
+  .yc-cta-ghost,
+  .rt-Button:where(.rt-variant-ghost),
+  .rt-Button:where(.rt-variant-soft) {
+    border-color: var(--gray-8) !important;
+    color: var(--gray-12) !important;
+  }
+}

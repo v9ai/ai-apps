@@ -1,6 +1,6 @@
 "use client";
 
-import { css } from "styled-system/css";
+import { css, cx } from "styled-system/css";
 import { flex, grid, container } from "styled-system/patterns";
 import { badge } from "@/recipes/badge";
 import { pipelineCard, iconHolder } from "@/recipes/cards";
@@ -14,19 +14,26 @@ import {
 } from "@radix-ui/react-icons";
 
 /**
- * Improvement 2: Pipeline visualization as its own narrative section.
- *
- * Extracted from the hero to create a clear "how it works" beat in the
- * page flow. Sits between hero (the promise) and preview (the proof).
- * Has its own section heading and a short introductory sentence so
- * users understand what they are looking at without context from above.
+ * Pipeline visualization with micro-interactions:
+ *  #1 — Staggered card entrance + scanline glitch on hover (pipeline-card-animated, pipeline-card-hover)
+ *  #4 — Arrow sequential pulse showing data flow (pipeline-arrow-flow)
  */
 
+/**
+ * IMPROVEMENT 4: Pipeline descriptions rewritten from specs to outcomes.
+ *
+ * Before: "aggregate jobs from Greenhouse, Lever, and Ashby boards"
+ *   (what it does technically -- reads like a spec sheet)
+ *
+ * After: "catches new roles across 460+ companies before they hit LinkedIn"
+ *   (what it means for you -- reads like a benefit)
+ */
 const PIPELINE_STAGES = [
   {
     icon: <MagnifyingGlassIcon width={20} height={20} />,
     title: "signal detection",
-    description: "aggregate jobs from Greenhouse, Lever, and Ashby boards",
+    description:
+      "catches new roles across 460+ companies before they hit LinkedIn or Indeed",
     badge: "ingest",
     step: "01",
     accentOpacity: 0.3,
@@ -34,7 +41,8 @@ const PIPELINE_STAGES = [
   {
     icon: <CubeIcon width={20} height={20} />,
     title: "company enrichment",
-    description: "AI-powered company profiling, funding, and stack analysis",
+    description:
+      "maps stack, funding stage, and remote policy so you skip the guesswork",
     badge: "enrich",
     step: "02",
     accentOpacity: 0.5,
@@ -42,7 +50,8 @@ const PIPELINE_STAGES = [
   {
     icon: <PersonIcon width={20} height={20} />,
     title: "contact discovery",
-    description: "find engineering managers and hiring decision makers",
+    description:
+      "finds the actual hiring manager, not the generic careers@ inbox",
     badge: "discover",
     step: "03",
     accentOpacity: 0.75,
@@ -50,7 +59,8 @@ const PIPELINE_STAGES = [
   {
     icon: <EnvelopeClosedIcon width={20} height={20} />,
     title: "smart outreach",
-    description: "personalized email generation grounded in company context",
+    description:
+      "writes emails that reference real company context, not templates",
     badge: "outreach",
     step: "04",
     accentOpacity: 1,
@@ -97,10 +107,10 @@ export function LandingPipeline() {
             maxW: "480px",
           })}
         >
-          four stages transform raw job postings into personalized outreach.
+          from a new job posting to a personalized email in your outbox. four stages, zero manual work.
         </p>
 
-        {/* --- desktop: horizontal flow with arrow connectors --- */}
+        {/* --- desktop: horizontal flow (#1: stagger + glitch, #4: arrow pulse) --- */}
         <div
           className={flex({
             align: "stretch",
@@ -111,12 +121,15 @@ export function LandingPipeline() {
           {PIPELINE_STAGES.map((stage, i) => (
             <div
               key={stage.title}
-              className={flex({
-                align: "stretch",
-                gap: "3",
-                flex: "1",
-                minWidth: "0",
-              })}
+              className={cx(
+                flex({
+                  align: "stretch",
+                  gap: "3",
+                  flex: "1",
+                  minWidth: "0",
+                }),
+                "pipeline-card-animated",
+              )}
             >
               {i > 0 && (
                 <div
@@ -129,19 +142,23 @@ export function LandingPipeline() {
                   <ArrowRightIcon
                     width={18}
                     height={18}
-                    className={css({ color: "ui.dim" })}
+                    className={cx(
+                      css({ color: "ui.dim" }),
+                      "pipeline-arrow-flow",
+                    )}
+                    data-pipeline-arrow={i - 1}
                   />
                 </div>
               )}
               <div className={css({ flex: "1", minWidth: "0" })}>
                 <div
-                  className={pipelineCard()}
+                  className={cx(pipelineCard(), "pipeline-card-hover")}
                   style={{
                     borderTop: `2px solid rgba(62, 99, 221, ${stage.accentOpacity})`,
                     position: "relative",
                   }}
                 >
-                  {/* step number */}
+                  {/* step number watermark */}
                   <span
                     className={css({
                       fontSize: "3xl",
@@ -204,27 +221,31 @@ export function LandingPipeline() {
           })}
         >
           {PIPELINE_STAGES.map((stage, i) => (
-            <div key={stage.title}>
+            <div key={stage.title} className="pipeline-card-animated">
               {i > 0 && (
                 <div className={flex({ justify: "center", mb: "3" })}>
                   <ArrowRightIcon
                     width={16}
                     height={16}
-                    className={css({
-                      color: "ui.dim",
-                      transform: "rotate(90deg)",
-                    })}
+                    className={cx(
+                      css({
+                        color: "ui.dim",
+                        transform: "rotate(90deg)",
+                      }),
+                      "pipeline-arrow-flow",
+                    )}
+                    data-pipeline-arrow={i - 1}
                   />
                 </div>
               )}
               <div
-                className={pipelineCard()}
+                className={cx(pipelineCard(), "pipeline-card-hover")}
                 style={{
                   borderTop: `2px solid rgba(62, 99, 221, ${stage.accentOpacity})`,
                   position: "relative",
                 }}
               >
-                {/* step number */}
+                {/* step number watermark */}
                 <span
                   className={css({
                     fontSize: "3xl",

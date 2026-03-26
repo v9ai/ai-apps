@@ -18,6 +18,7 @@ import Image from "next/image";
 const SECTION_ANCHORS = [
   { id: "hero", label: "home" },
   { id: "pipeline", label: "pipeline" },
+  { id: "preview", label: "leads" },
   { id: "features", label: "features" },
   { id: "stack", label: "stack" },
 ] as const;
@@ -116,7 +117,6 @@ export function LandingNav() {
           zIndex: 50,
           bg: "rgba(10, 10, 15, 0.85)",
           backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
           borderBottom: "1px solid",
           borderBottomColor: "ui.border",
           transition: "transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease",
@@ -124,6 +124,7 @@ export function LandingNav() {
           opacity: visible ? 1 : 0,
           pointerEvents: visible ? "auto" : "none",
         })}
+        style={{ WebkitBackdropFilter: "blur(12px)" }}
       >
         <div
           className={container({ maxW: "breakpoint-lg" })}
@@ -265,12 +266,12 @@ export function LandingNav() {
             zIndex: 49,
             bg: "rgba(10, 10, 15, 0.95)",
             backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
             display: { base: "flex", md: "none" },
             flexDirection: "column",
             pt: "60px",
             px: "6",
           })}
+          style={{ WebkitBackdropFilter: "blur(16px)" }}
         >
           {/* section anchors */}
           <p

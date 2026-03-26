@@ -143,6 +143,7 @@ export function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <Box
+      asChild
       flexGrow="1"
       minWidth="0"
       style={{
@@ -150,7 +151,9 @@ export function MainContent({ children }: { children: React.ReactNode }) {
         transition: "margin-left 0.2s ease",
       }}
     >
-      {children}
+      <main id="main-content">
+        {children}
+      </main>
     </Box>
   );
 }

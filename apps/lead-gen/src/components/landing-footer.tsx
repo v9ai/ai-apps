@@ -134,12 +134,38 @@ export function LandingFooter() {
           ))}
         </div>
 
+        {/* IMPROVEMENT 5: brutalist manifesto strip */}
+        <div
+          className={css({
+            mt: "8",
+            py: "5",
+            borderTop: "2px solid",
+            borderTopColor: "accent.primary",
+          })}
+        >
+          <p
+            className={css({
+              fontSize: { base: "xs", md: "sm" },
+              fontWeight: "medium",
+              color: "ui.tertiary",
+              lineHeight: "relaxed",
+              letterSpacing: "snug",
+              maxW: "560px",
+            })}
+          >
+            built by one person who got tired of copy-pasting job URLs into
+            spreadsheets. this is not a startup. there is no pricing page.
+            it is a tool that does one thing well: find remote EU tech jobs
+            faster than you can manually.
+          </p>
+        </div>
+
         {/* bottom bar */}
         <div
           className={flex({
             align: "center",
             justify: "space-between",
-            mt: "8",
+            mt: "4",
             pt: "4",
           })}
           style={{ borderTop: "1px solid var(--gray-4)" }}
