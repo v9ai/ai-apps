@@ -77,43 +77,6 @@ export type AnalyzeCompanyResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-export type Application = {
-  __typename?: 'Application';
-  aiInterviewQuestions: Maybe<Scalars['String']['output']>;
-  aiTechStack: Maybe<Scalars['String']['output']>;
-  companyKey: Maybe<Scalars['String']['output']>;
-  companyName: Maybe<Scalars['String']['output']>;
-  createdAt: Scalars['String']['output'];
-  email: Scalars['EmailAddress']['output'];
-  id: Scalars['Int']['output'];
-  jobDescription: Maybe<Scalars['String']['output']>;
-  jobId: Maybe<Scalars['String']['output']>;
-  jobTitle: Maybe<Scalars['String']['output']>;
-  notes: Maybe<Scalars['String']['output']>;
-  questions: Array<QuestionAnswer>;
-  resume: Maybe<Scalars['Upload']['output']>;
-  status: ApplicationStatus;
-};
-
-export type ApplicationInput = {
-  companyName?: InputMaybe<Scalars['String']['input']>;
-  jobId?: InputMaybe<Scalars['String']['input']>;
-  jobTitle?: InputMaybe<Scalars['String']['input']>;
-  questions: Array<QuestionAnswerInput>;
-  resume?: InputMaybe<Scalars['Upload']['input']>;
-};
-
-/**
- * Pipeline status for a tracked job application.
- * Maps to a kanban column in the UI.
- */
-export type ApplicationStatus =
-  | 'accepted'
-  | 'pending'
-  | 'rejected'
-  | 'reviewed'
-  | 'submitted';
-
 export type ApplyEmailPatternResult = {
   __typename?: 'ApplyEmailPatternResult';
   contacts: Array<Contact>;
@@ -260,7 +223,6 @@ export type Company = {
   location: Maybe<Scalars['String']['output']>;
   logo_url: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
-  opportunities: Array<Opportunity>;
   score: Scalars['Float']['output'];
   score_reasons: Array<Scalars['String']['output']>;
   service_taxonomy: Array<Scalars['String']['output']>;
@@ -531,22 +493,6 @@ export type CreateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
-export type CreateOpportunityInput = {
-  applicationNotes?: InputMaybe<Scalars['String']['input']>;
-  companyId?: InputMaybe<Scalars['Int']['input']>;
-  contactId?: InputMaybe<Scalars['Int']['input']>;
-  deadline?: InputMaybe<Scalars['String']['input']>;
-  endDate?: InputMaybe<Scalars['String']['input']>;
-  rewardText?: InputMaybe<Scalars['String']['input']>;
-  rewardUsd?: InputMaybe<Scalars['Float']['input']>;
-  source?: InputMaybe<Scalars['String']['input']>;
-  startDate?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title: Scalars['String']['input'];
-  url?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type CreateTaskInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['String']['input']>;
@@ -556,12 +502,6 @@ export type CreateTaskInput = {
   status?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title: Scalars['String']['input'];
-};
-
-export type DeleteApplicationResponse = {
-  __typename?: 'DeleteApplicationResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
 };
 
 export type DeleteBlockedCompanyResult = {
@@ -603,12 +543,6 @@ export type DeleteEmailTemplateResult = {
 
 export type DeleteJobResponse = {
   __typename?: 'DeleteJobResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
-export type DeleteOpportunityResult = {
-  __typename?: 'DeleteOpportunityResult';
   message: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -1088,22 +1022,18 @@ export type Mutation = {
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
   completeTask: Task;
-  createApplication: Application;
   createCompany: Company;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createOpportunity: Opportunity;
   createTask: Task;
   deleteAllJobs: DeleteJobResponse;
-  deleteApplication: DeleteApplicationResponse;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteJob: DeleteJobResponse;
-  deleteOpportunity: DeleteOpportunityResult;
   deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
@@ -1167,12 +1097,10 @@ export type Mutation = {
   unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
-  updateApplication: Application;
   updateCampaign: EmailCampaign;
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateOpportunity: Opportunity;
   updateTask: Task;
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
@@ -1234,11 +1162,6 @@ export type MutationCompleteTaskArgs = {
 };
 
 
-export type MutationCreateApplicationArgs = {
-  input: ApplicationInput;
-};
-
-
 export type MutationCreateCompanyArgs = {
   input: CreateCompanyInput;
 };
@@ -1259,18 +1182,8 @@ export type MutationCreateEmailTemplateArgs = {
 };
 
 
-export type MutationCreateOpportunityArgs = {
-  input: CreateOpportunityInput;
-};
-
-
 export type MutationCreateTaskArgs = {
   input: CreateTaskInput;
-};
-
-
-export type MutationDeleteApplicationArgs = {
-  id: Scalars['Int']['input'];
 };
 
 
@@ -1301,11 +1214,6 @@ export type MutationDeleteEmailTemplateArgs = {
 
 export type MutationDeleteJobArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationDeleteOpportunityArgs = {
-  id: Scalars['String']['input'];
 };
 
 
@@ -1492,12 +1400,6 @@ export type MutationUnverifyCompanyContactsArgs = {
 };
 
 
-export type MutationUpdateApplicationArgs = {
-  id: Scalars['Int']['input'];
-  input: UpdateApplicationInput;
-};
-
-
 export type MutationUpdateCampaignArgs = {
   id: Scalars['String']['input'];
   input: UpdateCampaignInput;
@@ -1519,12 +1421,6 @@ export type MutationUpdateContactArgs = {
 export type MutationUpdateEmailTemplateArgs = {
   id: Scalars['Int']['input'];
   input: UpdateEmailTemplateInput;
-};
-
-
-export type MutationUpdateOpportunityArgs = {
-  id: Scalars['String']['input'];
-  input: UpdateOpportunityInput;
 };
 
 
@@ -1557,41 +1453,6 @@ export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
 
-export type OpportunitiesResult = {
-  __typename?: 'OpportunitiesResult';
-  opportunities: Array<Opportunity>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type Opportunity = {
-  __typename?: 'Opportunity';
-  applicationNotes: Maybe<Scalars['String']['output']>;
-  applicationStatus: Maybe<Scalars['String']['output']>;
-  applied: Scalars['Boolean']['output'];
-  appliedAt: Maybe<Scalars['String']['output']>;
-  company: Maybe<Company>;
-  companyId: Maybe<Scalars['Int']['output']>;
-  contactId: Maybe<Scalars['Int']['output']>;
-  createdAt: Scalars['String']['output'];
-  deadline: Maybe<Scalars['String']['output']>;
-  endDate: Maybe<Scalars['String']['output']>;
-  firstSeen: Maybe<Scalars['String']['output']>;
-  id: Scalars['String']['output'];
-  lastSeen: Maybe<Scalars['String']['output']>;
-  metadata: Maybe<Scalars['JSON']['output']>;
-  rawContext: Maybe<Scalars['String']['output']>;
-  rewardText: Maybe<Scalars['String']['output']>;
-  rewardUsd: Maybe<Scalars['Float']['output']>;
-  score: Maybe<Scalars['Int']['output']>;
-  source: Maybe<Scalars['String']['output']>;
-  startDate: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-  url: Maybe<Scalars['String']['output']>;
-};
-
 export type PreviewEmailInput = {
   content: Scalars['String']['input'];
   drySend?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1621,8 +1482,6 @@ export type ProcessAllJobsResponse = {
 export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
-  application: Maybe<Application>;
-  applications: Array<Application>;
   askAboutResume: Maybe<ResumeAnswer>;
   blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
@@ -1641,25 +1500,16 @@ export type Query = {
   emailTemplate: Maybe<EmailTemplate>;
   emailTemplates: EmailTemplatesResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
-  executeSql: TextToSqlResult;
   findCompany: FindCompanyResult;
   job: Maybe<Job>;
   jobs: JobsResponse;
-  opportunities: OpportunitiesResult;
-  opportunity: Maybe<Opportunity>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
   resumeStatus: Maybe<ResumeStatus>;
   task: Maybe<Task>;
   tasks: TasksResult;
-  textToSql: TextToSqlResult;
   userSettings: Maybe<UserSettings>;
-};
-
-
-export type QueryApplicationArgs = {
-  id: Scalars['Int']['input'];
 };
 
 
@@ -1761,11 +1611,6 @@ export type QueryEmailsNeedingFollowUpArgs = {
 };
 
 
-export type QueryExecuteSqlArgs = {
-  sql: Scalars['String']['input'];
-};
-
-
 export type QueryFindCompanyArgs = {
   name?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
@@ -1788,19 +1633,6 @@ export type QueryJobsArgs = {
   skills?: InputMaybe<Array<Scalars['String']['input']>>;
   sourceType?: InputMaybe<Scalars['String']['input']>;
   sourceTypes?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-
-export type QueryOpportunitiesArgs = {
-  companyId?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryOpportunityArgs = {
-  id: Scalars['String']['input'];
 };
 
 
@@ -1839,26 +1671,8 @@ export type QueryTasksArgs = {
 };
 
 
-export type QueryTextToSqlArgs = {
-  question: Scalars['String']['input'];
-};
-
-
 export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
-};
-
-export type QuestionAnswer = {
-  __typename?: 'QuestionAnswer';
-  answerText: Scalars['String']['output'];
-  questionId: Scalars['String']['output'];
-  questionText: Scalars['String']['output'];
-};
-
-export type QuestionAnswerInput = {
-  answerText: Scalars['String']['input'];
-  questionId: Scalars['String']['input'];
-  questionText: Scalars['String']['input'];
 };
 
 export type ReceivedEmail = {
@@ -2051,28 +1865,10 @@ export type TasksResult = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type TextToSqlResult = {
-  __typename?: 'TextToSqlResult';
-  columns: Array<Scalars['String']['output']>;
-  drilldownSearchQuery: Maybe<Scalars['String']['output']>;
-  explanation: Maybe<Scalars['String']['output']>;
-  rows: Array<Maybe<Array<Maybe<Scalars['JSON']['output']>>>>;
-  sql: Scalars['String']['output'];
-};
-
 export type UnverifyContactsResult = {
   __typename?: 'UnverifyContactsResult';
   count: Scalars['Int']['output'];
   success: Scalars['Boolean']['output'];
-};
-
-export type UpdateApplicationInput = {
-  companyName?: InputMaybe<Scalars['String']['input']>;
-  jobDescription?: InputMaybe<Scalars['String']['input']>;
-  jobId?: InputMaybe<Scalars['String']['input']>;
-  jobTitle?: InputMaybe<Scalars['String']['input']>;
-  notes?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<ApplicationStatus>;
 };
 
 export type UpdateCampaignInput = {
@@ -2140,26 +1936,6 @@ export type UpdateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type UpdateOpportunityInput = {
-  applicationNotes?: InputMaybe<Scalars['String']['input']>;
-  applicationStatus?: InputMaybe<Scalars['String']['input']>;
-  applied?: InputMaybe<Scalars['Boolean']['input']>;
-  appliedAt?: InputMaybe<Scalars['String']['input']>;
-  companyId?: InputMaybe<Scalars['Int']['input']>;
-  contactId?: InputMaybe<Scalars['Int']['input']>;
-  deadline?: InputMaybe<Scalars['String']['input']>;
-  endDate?: InputMaybe<Scalars['String']['input']>;
-  rewardText?: InputMaybe<Scalars['String']['input']>;
-  rewardUsd?: InputMaybe<Scalars['Float']['input']>;
-  score?: InputMaybe<Scalars['Int']['input']>;
-  source?: InputMaybe<Scalars['String']['input']>;
-  startDate?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title?: InputMaybe<Scalars['String']['input']>;
-  url?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateTaskInput = {
@@ -2237,13 +2013,6 @@ export type DeleteJobMutationVariables = Exact<{
 
 export type DeleteJobMutation = { __typename?: 'Mutation', deleteJob: { __typename?: 'DeleteJobResponse', success: boolean, message: string | null } };
 
-export type ExecuteSqlQueryVariables = Exact<{
-  sql: Scalars['String']['input'];
-}>;
-
-
-export type ExecuteSqlQuery = { __typename?: 'Query', executeSql: { __typename?: 'TextToSqlResult', sql: string, explanation: string | null, columns: Array<string>, rows: Array<Array<any | null> | null>, drilldownSearchQuery: string | null } };
-
 export type GetJobQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
@@ -2287,13 +2056,6 @@ export type ReportJobMutationVariables = Exact<{
 
 export type ReportJobMutation = { __typename?: 'Mutation', reportJob: { __typename?: 'Job', id: number, status: JobStatus | null } | null };
 
-export type TextToSqlQueryVariables = Exact<{
-  question: Scalars['String']['input'];
-}>;
-
-
-export type TextToSqlQuery = { __typename?: 'Query', textToSql: { __typename?: 'TextToSqlResult', sql: string, explanation: string | null, columns: Array<string>, rows: Array<Array<any | null> | null>, drilldownSearchQuery: string | null } };
-
 export type UpdateUserSettingsMutationVariables = Exact<{
   userId: Scalars['String']['input'];
   settings: UserSettingsInput;
@@ -2301,42 +2063,6 @@ export type UpdateUserSettingsMutationVariables = Exact<{
 
 
 export type UpdateUserSettingsMutation = { __typename?: 'Mutation', updateUserSettings: { __typename?: 'UserSettings', id: number, user_id: string, email_notifications: boolean, daily_digest: boolean, new_job_alerts: boolean, preferred_locations: Array<string> | null, preferred_skills: Array<string> | null, excluded_companies: Array<string> | null, dark_mode: boolean, jobs_per_page: number, created_at: string, updated_at: string } };
-
-export type ApplicationFieldsFragment = { __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, aiTechStack: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> };
-
-export type GetApplicationsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetApplicationsQuery = { __typename?: 'Query', applications: Array<{ __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, aiTechStack: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> }> };
-
-export type GetApplicationQueryVariables = Exact<{
-  id: Scalars['Int']['input'];
-}>;
-
-
-export type GetApplicationQuery = { __typename?: 'Query', application: { __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, aiTechStack: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> } | null };
-
-export type CreateApplicationMutationVariables = Exact<{
-  input: ApplicationInput;
-}>;
-
-
-export type CreateApplicationMutation = { __typename?: 'Mutation', createApplication: { __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, aiTechStack: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> } };
-
-export type UpdateApplicationMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-  input: UpdateApplicationInput;
-}>;
-
-
-export type UpdateApplicationMutation = { __typename?: 'Mutation', updateApplication: { __typename?: 'Application', id: number, jobId: string | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null } };
-
-export type DeleteApplicationMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-}>;
-
-
-export type DeleteApplicationMutation = { __typename?: 'Mutation', deleteApplication: { __typename?: 'DeleteApplicationResponse', success: boolean, message: string | null } };
 
 export type GetBlockedCompaniesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2904,45 +2630,6 @@ export type UnarchiveJobMutationVariables = Exact<{
 
 export type UnarchiveJobMutation = { __typename?: 'Mutation', unarchiveJob: { __typename?: 'Job', id: number, archived: boolean } };
 
-export type GetOpportunitiesQueryVariables = Exact<{
-  companyId?: InputMaybe<Scalars['Int']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-}>;
-
-
-export type GetOpportunitiesQuery = { __typename?: 'Query', opportunities: { __typename?: 'OpportunitiesResult', totalCount: number, opportunities: Array<{ __typename?: 'Opportunity', id: string, title: string, url: string | null, source: string | null, status: string, rewardUsd: number | null, rewardText: string | null, deadline: string | null, tags: Array<string>, score: number | null, applied: boolean, appliedAt: string | null, applicationStatus: string | null, companyId: number | null, createdAt: string, updatedAt: string, company: { __typename?: 'Company', id: number, name: string, website: string | null } | null }> } };
-
-export type GetOpportunityQueryVariables = Exact<{
-  id: Scalars['String']['input'];
-}>;
-
-
-export type GetOpportunityQuery = { __typename?: 'Query', opportunity: { __typename?: 'Opportunity', id: string, title: string, url: string | null, source: string | null, status: string, rewardUsd: number | null, rewardText: string | null, startDate: string | null, endDate: string | null, deadline: string | null, firstSeen: string | null, lastSeen: string | null, score: number | null, rawContext: string | null, metadata: any | null, applied: boolean, appliedAt: string | null, applicationStatus: string | null, applicationNotes: string | null, tags: Array<string>, companyId: number | null, contactId: number | null, createdAt: string, updatedAt: string, company: { __typename?: 'Company', id: number, name: string, website: string | null } | null } | null };
-
-export type CreateOpportunityMutationVariables = Exact<{
-  input: CreateOpportunityInput;
-}>;
-
-
-export type CreateOpportunityMutation = { __typename?: 'Mutation', createOpportunity: { __typename?: 'Opportunity', id: string, title: string, url: string | null, source: string | null, status: string, companyId: number | null, createdAt: string } };
-
-export type UpdateOpportunityMutationVariables = Exact<{
-  id: Scalars['String']['input'];
-  input: UpdateOpportunityInput;
-}>;
-
-
-export type UpdateOpportunityMutation = { __typename?: 'Mutation', updateOpportunity: { __typename?: 'Opportunity', id: string, title: string, status: string, applied: boolean, appliedAt: string | null, applicationStatus: string | null, applicationNotes: string | null, updatedAt: string } };
-
-export type DeleteOpportunityMutationVariables = Exact<{
-  id: Scalars['String']['input'];
-}>;
-
-
-export type DeleteOpportunityMutation = { __typename?: 'Mutation', deleteOpportunity: { __typename?: 'DeleteOpportunityResult', success: boolean, message: string | null } };
-
 export type ResumeStatusQueryVariables = Exact<{
   email: Scalars['String']['input'];
 }>;
@@ -3022,28 +2709,6 @@ export type DeleteTaskMutationVariables = Exact<{
 
 export type DeleteTaskMutation = { __typename?: 'Mutation', deleteTask: { __typename?: 'DeleteTaskResult', success: boolean, message: string | null } };
 
-export const ApplicationFieldsFragmentDoc = gql`
-    fragment ApplicationFields on Application {
-  id
-  email
-  jobId
-  resume
-  questions {
-    questionId
-    questionText
-    answerText
-  }
-  status
-  notes
-  jobTitle
-  companyName
-  companyKey
-  jobDescription
-  aiInterviewQuestions
-  aiTechStack
-  createdAt
-}
-    `;
 export const EvidenceFieldsFragmentDoc = gql`
     fragment EvidenceFields on Evidence {
   source_type
@@ -3222,53 +2887,6 @@ export function useDeleteJobMutation(baseOptions?: Apollo.MutationHookOptions<De
 export type DeleteJobMutationHookResult = ReturnType<typeof useDeleteJobMutation>;
 export type DeleteJobMutationResult = Apollo.MutationResult<DeleteJobMutation>;
 export type DeleteJobMutationOptions = Apollo.BaseMutationOptions<DeleteJobMutation, DeleteJobMutationVariables>;
-export const ExecuteSqlDocument = gql`
-    query ExecuteSql($sql: String!) {
-  executeSql(sql: $sql) {
-    sql
-    explanation
-    columns
-    rows
-    drilldownSearchQuery
-  }
-}
-    `;
-
-/**
- * __useExecuteSqlQuery__
- *
- * To run a query within a React component, call `useExecuteSqlQuery` and pass it any options that fit your needs.
- * When your component renders, `useExecuteSqlQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useExecuteSqlQuery({
- *   variables: {
- *      sql: // value for 'sql'
- *   },
- * });
- */
-export function useExecuteSqlQuery(baseOptions: Apollo.QueryHookOptions<ExecuteSqlQuery, ExecuteSqlQueryVariables> & ({ variables: ExecuteSqlQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ExecuteSqlQuery, ExecuteSqlQueryVariables>(ExecuteSqlDocument, options);
-      }
-export function useExecuteSqlLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ExecuteSqlQuery, ExecuteSqlQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ExecuteSqlQuery, ExecuteSqlQueryVariables>(ExecuteSqlDocument, options);
-        }
-// @ts-ignore
-export function useExecuteSqlSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ExecuteSqlQuery, ExecuteSqlQueryVariables>): Apollo.UseSuspenseQueryResult<ExecuteSqlQuery, ExecuteSqlQueryVariables>;
-export function useExecuteSqlSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ExecuteSqlQuery, ExecuteSqlQueryVariables>): Apollo.UseSuspenseQueryResult<ExecuteSqlQuery | undefined, ExecuteSqlQueryVariables>;
-export function useExecuteSqlSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ExecuteSqlQuery, ExecuteSqlQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<ExecuteSqlQuery, ExecuteSqlQueryVariables>(ExecuteSqlDocument, options);
-        }
-export type ExecuteSqlQueryHookResult = ReturnType<typeof useExecuteSqlQuery>;
-export type ExecuteSqlLazyQueryHookResult = ReturnType<typeof useExecuteSqlLazyQuery>;
-export type ExecuteSqlSuspenseQueryHookResult = ReturnType<typeof useExecuteSqlSuspenseQuery>;
-export type ExecuteSqlQueryResult = Apollo.QueryResult<ExecuteSqlQuery, ExecuteSqlQueryVariables>;
 export const GetJobDocument = gql`
     query GetJob($id: String!) {
   job(id: $id) {
@@ -3682,53 +3300,6 @@ export function useReportJobMutation(baseOptions?: Apollo.MutationHookOptions<Re
 export type ReportJobMutationHookResult = ReturnType<typeof useReportJobMutation>;
 export type ReportJobMutationResult = Apollo.MutationResult<ReportJobMutation>;
 export type ReportJobMutationOptions = Apollo.BaseMutationOptions<ReportJobMutation, ReportJobMutationVariables>;
-export const TextToSqlDocument = gql`
-    query TextToSql($question: String!) {
-  textToSql(question: $question) {
-    sql
-    explanation
-    columns
-    rows
-    drilldownSearchQuery
-  }
-}
-    `;
-
-/**
- * __useTextToSqlQuery__
- *
- * To run a query within a React component, call `useTextToSqlQuery` and pass it any options that fit your needs.
- * When your component renders, `useTextToSqlQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useTextToSqlQuery({
- *   variables: {
- *      question: // value for 'question'
- *   },
- * });
- */
-export function useTextToSqlQuery(baseOptions: Apollo.QueryHookOptions<TextToSqlQuery, TextToSqlQueryVariables> & ({ variables: TextToSqlQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<TextToSqlQuery, TextToSqlQueryVariables>(TextToSqlDocument, options);
-      }
-export function useTextToSqlLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<TextToSqlQuery, TextToSqlQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<TextToSqlQuery, TextToSqlQueryVariables>(TextToSqlDocument, options);
-        }
-// @ts-ignore
-export function useTextToSqlSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<TextToSqlQuery, TextToSqlQueryVariables>): Apollo.UseSuspenseQueryResult<TextToSqlQuery, TextToSqlQueryVariables>;
-export function useTextToSqlSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TextToSqlQuery, TextToSqlQueryVariables>): Apollo.UseSuspenseQueryResult<TextToSqlQuery | undefined, TextToSqlQueryVariables>;
-export function useTextToSqlSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<TextToSqlQuery, TextToSqlQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<TextToSqlQuery, TextToSqlQueryVariables>(TextToSqlDocument, options);
-        }
-export type TextToSqlQueryHookResult = ReturnType<typeof useTextToSqlQuery>;
-export type TextToSqlLazyQueryHookResult = ReturnType<typeof useTextToSqlLazyQuery>;
-export type TextToSqlSuspenseQueryHookResult = ReturnType<typeof useTextToSqlSuspenseQuery>;
-export type TextToSqlQueryResult = Apollo.QueryResult<TextToSqlQuery, TextToSqlQueryVariables>;
 export const UpdateUserSettingsDocument = gql`
     mutation UpdateUserSettings($userId: String!, $settings: UserSettingsInput!) {
   updateUserSettings(userId: $userId, settings: $settings) {
@@ -3774,199 +3345,6 @@ export function useUpdateUserSettingsMutation(baseOptions?: Apollo.MutationHookO
 export type UpdateUserSettingsMutationHookResult = ReturnType<typeof useUpdateUserSettingsMutation>;
 export type UpdateUserSettingsMutationResult = Apollo.MutationResult<UpdateUserSettingsMutation>;
 export type UpdateUserSettingsMutationOptions = Apollo.BaseMutationOptions<UpdateUserSettingsMutation, UpdateUserSettingsMutationVariables>;
-export const GetApplicationsDocument = gql`
-    query GetApplications {
-  applications {
-    ...ApplicationFields
-  }
-}
-    ${ApplicationFieldsFragmentDoc}`;
-
-/**
- * __useGetApplicationsQuery__
- *
- * To run a query within a React component, call `useGetApplicationsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetApplicationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetApplicationsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetApplicationsQuery(baseOptions?: Apollo.QueryHookOptions<GetApplicationsQuery, GetApplicationsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetApplicationsQuery, GetApplicationsQueryVariables>(GetApplicationsDocument, options);
-      }
-export function useGetApplicationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetApplicationsQuery, GetApplicationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetApplicationsQuery, GetApplicationsQueryVariables>(GetApplicationsDocument, options);
-        }
-// @ts-ignore
-export function useGetApplicationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetApplicationsQuery, GetApplicationsQueryVariables>): Apollo.UseSuspenseQueryResult<GetApplicationsQuery, GetApplicationsQueryVariables>;
-export function useGetApplicationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetApplicationsQuery, GetApplicationsQueryVariables>): Apollo.UseSuspenseQueryResult<GetApplicationsQuery | undefined, GetApplicationsQueryVariables>;
-export function useGetApplicationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetApplicationsQuery, GetApplicationsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetApplicationsQuery, GetApplicationsQueryVariables>(GetApplicationsDocument, options);
-        }
-export type GetApplicationsQueryHookResult = ReturnType<typeof useGetApplicationsQuery>;
-export type GetApplicationsLazyQueryHookResult = ReturnType<typeof useGetApplicationsLazyQuery>;
-export type GetApplicationsSuspenseQueryHookResult = ReturnType<typeof useGetApplicationsSuspenseQuery>;
-export type GetApplicationsQueryResult = Apollo.QueryResult<GetApplicationsQuery, GetApplicationsQueryVariables>;
-export const GetApplicationDocument = gql`
-    query GetApplication($id: Int!) {
-  application(id: $id) {
-    ...ApplicationFields
-  }
-}
-    ${ApplicationFieldsFragmentDoc}`;
-
-/**
- * __useGetApplicationQuery__
- *
- * To run a query within a React component, call `useGetApplicationQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetApplicationQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetApplicationQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetApplicationQuery(baseOptions: Apollo.QueryHookOptions<GetApplicationQuery, GetApplicationQueryVariables> & ({ variables: GetApplicationQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetApplicationQuery, GetApplicationQueryVariables>(GetApplicationDocument, options);
-      }
-export function useGetApplicationLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetApplicationQuery, GetApplicationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetApplicationQuery, GetApplicationQueryVariables>(GetApplicationDocument, options);
-        }
-// @ts-ignore
-export function useGetApplicationSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetApplicationQuery, GetApplicationQueryVariables>): Apollo.UseSuspenseQueryResult<GetApplicationQuery, GetApplicationQueryVariables>;
-export function useGetApplicationSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetApplicationQuery, GetApplicationQueryVariables>): Apollo.UseSuspenseQueryResult<GetApplicationQuery | undefined, GetApplicationQueryVariables>;
-export function useGetApplicationSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetApplicationQuery, GetApplicationQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetApplicationQuery, GetApplicationQueryVariables>(GetApplicationDocument, options);
-        }
-export type GetApplicationQueryHookResult = ReturnType<typeof useGetApplicationQuery>;
-export type GetApplicationLazyQueryHookResult = ReturnType<typeof useGetApplicationLazyQuery>;
-export type GetApplicationSuspenseQueryHookResult = ReturnType<typeof useGetApplicationSuspenseQuery>;
-export type GetApplicationQueryResult = Apollo.QueryResult<GetApplicationQuery, GetApplicationQueryVariables>;
-export const CreateApplicationDocument = gql`
-    mutation CreateApplication($input: ApplicationInput!) {
-  createApplication(input: $input) {
-    ...ApplicationFields
-  }
-}
-    ${ApplicationFieldsFragmentDoc}`;
-export type CreateApplicationMutationFn = Apollo.MutationFunction<CreateApplicationMutation, CreateApplicationMutationVariables>;
-
-/**
- * __useCreateApplicationMutation__
- *
- * To run a mutation, you first call `useCreateApplicationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateApplicationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createApplicationMutation, { data, loading, error }] = useCreateApplicationMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateApplicationMutation(baseOptions?: Apollo.MutationHookOptions<CreateApplicationMutation, CreateApplicationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateApplicationMutation, CreateApplicationMutationVariables>(CreateApplicationDocument, options);
-      }
-export type CreateApplicationMutationHookResult = ReturnType<typeof useCreateApplicationMutation>;
-export type CreateApplicationMutationResult = Apollo.MutationResult<CreateApplicationMutation>;
-export type CreateApplicationMutationOptions = Apollo.BaseMutationOptions<CreateApplicationMutation, CreateApplicationMutationVariables>;
-export const UpdateApplicationDocument = gql`
-    mutation UpdateApplication($id: Int!, $input: UpdateApplicationInput!) {
-  updateApplication(id: $id, input: $input) {
-    id
-    jobId
-    status
-    notes
-    jobTitle
-    companyName
-    companyKey
-    jobDescription
-  }
-}
-    `;
-export type UpdateApplicationMutationFn = Apollo.MutationFunction<UpdateApplicationMutation, UpdateApplicationMutationVariables>;
-
-/**
- * __useUpdateApplicationMutation__
- *
- * To run a mutation, you first call `useUpdateApplicationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateApplicationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateApplicationMutation, { data, loading, error }] = useUpdateApplicationMutation({
- *   variables: {
- *      id: // value for 'id'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUpdateApplicationMutation(baseOptions?: Apollo.MutationHookOptions<UpdateApplicationMutation, UpdateApplicationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateApplicationMutation, UpdateApplicationMutationVariables>(UpdateApplicationDocument, options);
-      }
-export type UpdateApplicationMutationHookResult = ReturnType<typeof useUpdateApplicationMutation>;
-export type UpdateApplicationMutationResult = Apollo.MutationResult<UpdateApplicationMutation>;
-export type UpdateApplicationMutationOptions = Apollo.BaseMutationOptions<UpdateApplicationMutation, UpdateApplicationMutationVariables>;
-export const DeleteApplicationDocument = gql`
-    mutation DeleteApplication($id: Int!) {
-  deleteApplication(id: $id) {
-    success
-    message
-  }
-}
-    `;
-export type DeleteApplicationMutationFn = Apollo.MutationFunction<DeleteApplicationMutation, DeleteApplicationMutationVariables>;
-
-/**
- * __useDeleteApplicationMutation__
- *
- * To run a mutation, you first call `useDeleteApplicationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteApplicationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteApplicationMutation, { data, loading, error }] = useDeleteApplicationMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteApplicationMutation(baseOptions?: Apollo.MutationHookOptions<DeleteApplicationMutation, DeleteApplicationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteApplicationMutation, DeleteApplicationMutationVariables>(DeleteApplicationDocument, options);
-      }
-export type DeleteApplicationMutationHookResult = ReturnType<typeof useDeleteApplicationMutation>;
-export type DeleteApplicationMutationResult = Apollo.MutationResult<DeleteApplicationMutation>;
-export type DeleteApplicationMutationOptions = Apollo.BaseMutationOptions<DeleteApplicationMutation, DeleteApplicationMutationVariables>;
 export const GetBlockedCompaniesDocument = gql`
     query GetBlockedCompanies {
   blockedCompanies {
@@ -7228,265 +6606,6 @@ export function useUnarchiveJobMutation(baseOptions?: Apollo.MutationHookOptions
 export type UnarchiveJobMutationHookResult = ReturnType<typeof useUnarchiveJobMutation>;
 export type UnarchiveJobMutationResult = Apollo.MutationResult<UnarchiveJobMutation>;
 export type UnarchiveJobMutationOptions = Apollo.BaseMutationOptions<UnarchiveJobMutation, UnarchiveJobMutationVariables>;
-export const GetOpportunitiesDocument = gql`
-    query GetOpportunities($companyId: Int, $status: String, $limit: Int, $offset: Int) {
-  opportunities(
-    companyId: $companyId
-    status: $status
-    limit: $limit
-    offset: $offset
-  ) {
-    opportunities {
-      id
-      title
-      url
-      source
-      status
-      rewardUsd
-      rewardText
-      deadline
-      tags
-      score
-      applied
-      appliedAt
-      applicationStatus
-      companyId
-      company {
-        id
-        name
-        website
-      }
-      createdAt
-      updatedAt
-    }
-    totalCount
-  }
-}
-    `;
-
-/**
- * __useGetOpportunitiesQuery__
- *
- * To run a query within a React component, call `useGetOpportunitiesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetOpportunitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetOpportunitiesQuery({
- *   variables: {
- *      companyId: // value for 'companyId'
- *      status: // value for 'status'
- *      limit: // value for 'limit'
- *      offset: // value for 'offset'
- *   },
- * });
- */
-export function useGetOpportunitiesQuery(baseOptions?: Apollo.QueryHookOptions<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>(GetOpportunitiesDocument, options);
-      }
-export function useGetOpportunitiesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>(GetOpportunitiesDocument, options);
-        }
-// @ts-ignore
-export function useGetOpportunitiesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>): Apollo.UseSuspenseQueryResult<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>;
-export function useGetOpportunitiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>): Apollo.UseSuspenseQueryResult<GetOpportunitiesQuery | undefined, GetOpportunitiesQueryVariables>;
-export function useGetOpportunitiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>(GetOpportunitiesDocument, options);
-        }
-export type GetOpportunitiesQueryHookResult = ReturnType<typeof useGetOpportunitiesQuery>;
-export type GetOpportunitiesLazyQueryHookResult = ReturnType<typeof useGetOpportunitiesLazyQuery>;
-export type GetOpportunitiesSuspenseQueryHookResult = ReturnType<typeof useGetOpportunitiesSuspenseQuery>;
-export type GetOpportunitiesQueryResult = Apollo.QueryResult<GetOpportunitiesQuery, GetOpportunitiesQueryVariables>;
-export const GetOpportunityDocument = gql`
-    query GetOpportunity($id: String!) {
-  opportunity(id: $id) {
-    id
-    title
-    url
-    source
-    status
-    rewardUsd
-    rewardText
-    startDate
-    endDate
-    deadline
-    firstSeen
-    lastSeen
-    score
-    rawContext
-    metadata
-    applied
-    appliedAt
-    applicationStatus
-    applicationNotes
-    tags
-    companyId
-    contactId
-    company {
-      id
-      name
-      website
-    }
-    createdAt
-    updatedAt
-  }
-}
-    `;
-
-/**
- * __useGetOpportunityQuery__
- *
- * To run a query within a React component, call `useGetOpportunityQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetOpportunityQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetOpportunityQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetOpportunityQuery(baseOptions: Apollo.QueryHookOptions<GetOpportunityQuery, GetOpportunityQueryVariables> & ({ variables: GetOpportunityQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetOpportunityQuery, GetOpportunityQueryVariables>(GetOpportunityDocument, options);
-      }
-export function useGetOpportunityLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOpportunityQuery, GetOpportunityQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetOpportunityQuery, GetOpportunityQueryVariables>(GetOpportunityDocument, options);
-        }
-// @ts-ignore
-export function useGetOpportunitySuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetOpportunityQuery, GetOpportunityQueryVariables>): Apollo.UseSuspenseQueryResult<GetOpportunityQuery, GetOpportunityQueryVariables>;
-export function useGetOpportunitySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOpportunityQuery, GetOpportunityQueryVariables>): Apollo.UseSuspenseQueryResult<GetOpportunityQuery | undefined, GetOpportunityQueryVariables>;
-export function useGetOpportunitySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOpportunityQuery, GetOpportunityQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetOpportunityQuery, GetOpportunityQueryVariables>(GetOpportunityDocument, options);
-        }
-export type GetOpportunityQueryHookResult = ReturnType<typeof useGetOpportunityQuery>;
-export type GetOpportunityLazyQueryHookResult = ReturnType<typeof useGetOpportunityLazyQuery>;
-export type GetOpportunitySuspenseQueryHookResult = ReturnType<typeof useGetOpportunitySuspenseQuery>;
-export type GetOpportunityQueryResult = Apollo.QueryResult<GetOpportunityQuery, GetOpportunityQueryVariables>;
-export const CreateOpportunityDocument = gql`
-    mutation CreateOpportunity($input: CreateOpportunityInput!) {
-  createOpportunity(input: $input) {
-    id
-    title
-    url
-    source
-    status
-    companyId
-    createdAt
-  }
-}
-    `;
-export type CreateOpportunityMutationFn = Apollo.MutationFunction<CreateOpportunityMutation, CreateOpportunityMutationVariables>;
-
-/**
- * __useCreateOpportunityMutation__
- *
- * To run a mutation, you first call `useCreateOpportunityMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateOpportunityMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createOpportunityMutation, { data, loading, error }] = useCreateOpportunityMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateOpportunityMutation(baseOptions?: Apollo.MutationHookOptions<CreateOpportunityMutation, CreateOpportunityMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateOpportunityMutation, CreateOpportunityMutationVariables>(CreateOpportunityDocument, options);
-      }
-export type CreateOpportunityMutationHookResult = ReturnType<typeof useCreateOpportunityMutation>;
-export type CreateOpportunityMutationResult = Apollo.MutationResult<CreateOpportunityMutation>;
-export type CreateOpportunityMutationOptions = Apollo.BaseMutationOptions<CreateOpportunityMutation, CreateOpportunityMutationVariables>;
-export const UpdateOpportunityDocument = gql`
-    mutation UpdateOpportunity($id: String!, $input: UpdateOpportunityInput!) {
-  updateOpportunity(id: $id, input: $input) {
-    id
-    title
-    status
-    applied
-    appliedAt
-    applicationStatus
-    applicationNotes
-    updatedAt
-  }
-}
-    `;
-export type UpdateOpportunityMutationFn = Apollo.MutationFunction<UpdateOpportunityMutation, UpdateOpportunityMutationVariables>;
-
-/**
- * __useUpdateOpportunityMutation__
- *
- * To run a mutation, you first call `useUpdateOpportunityMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateOpportunityMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateOpportunityMutation, { data, loading, error }] = useUpdateOpportunityMutation({
- *   variables: {
- *      id: // value for 'id'
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUpdateOpportunityMutation(baseOptions?: Apollo.MutationHookOptions<UpdateOpportunityMutation, UpdateOpportunityMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateOpportunityMutation, UpdateOpportunityMutationVariables>(UpdateOpportunityDocument, options);
-      }
-export type UpdateOpportunityMutationHookResult = ReturnType<typeof useUpdateOpportunityMutation>;
-export type UpdateOpportunityMutationResult = Apollo.MutationResult<UpdateOpportunityMutation>;
-export type UpdateOpportunityMutationOptions = Apollo.BaseMutationOptions<UpdateOpportunityMutation, UpdateOpportunityMutationVariables>;
-export const DeleteOpportunityDocument = gql`
-    mutation DeleteOpportunity($id: String!) {
-  deleteOpportunity(id: $id) {
-    success
-    message
-  }
-}
-    `;
-export type DeleteOpportunityMutationFn = Apollo.MutationFunction<DeleteOpportunityMutation, DeleteOpportunityMutationVariables>;
-
-/**
- * __useDeleteOpportunityMutation__
- *
- * To run a mutation, you first call `useDeleteOpportunityMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteOpportunityMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteOpportunityMutation, { data, loading, error }] = useDeleteOpportunityMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteOpportunityMutation(baseOptions?: Apollo.MutationHookOptions<DeleteOpportunityMutation, DeleteOpportunityMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteOpportunityMutation, DeleteOpportunityMutationVariables>(DeleteOpportunityDocument, options);
-      }
-export type DeleteOpportunityMutationHookResult = ReturnType<typeof useDeleteOpportunityMutation>;
-export type DeleteOpportunityMutationResult = Apollo.MutationResult<DeleteOpportunityMutation>;
-export type DeleteOpportunityMutationOptions = Apollo.BaseMutationOptions<DeleteOpportunityMutation, DeleteOpportunityMutationVariables>;
 export const ResumeStatusDocument = gql`
     query ResumeStatus($email: String!) {
   resumeStatus(email: $email) {

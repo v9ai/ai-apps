@@ -102,7 +102,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 
 ## Key structural patterns
 
-- **GraphQL schema** lives in `schema/` (by domain: `base/`, `jobs/`, `companies/`, `applications/`). Query/mutation/fragment documents are in `src/graphql/`.
+- **GraphQL schema** lives in `schema/` (by domain: `base/`, `jobs/`, `companies/`). Query/mutation/fragment documents are in `src/graphql/`.
 - **Resolvers** are in `src/apollo/resolvers/` — job resolvers in `src/apollo/resolvers/job/`.
 - **ATS ingestion** fetchers: `src/ingestion/{greenhouse,lever,ashby}.ts` — primary job discovery channel.
 - **Skills subsystem**: `src/lib/skills/` — taxonomy, extraction, filtering.
