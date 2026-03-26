@@ -143,7 +143,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 ### Phase 1: Foundation
 - [ ] **frontend-developer** + **nextjs-developer**: Build job listing UI with filters
 - [ ] **graphql-architect** + **backend-developer**: Design GraphQL schema, resolvers
-- [ ] **database-administrator**: Optimize D1 schema for job queries
+- [ ] **database-administrator**: Optimize PostgreSQL schema for job queries
 
 ### Phase 2: AI Pipeline
 - [ ] **prompt-engineer**: Refine job classification prompts for "remote EU" signal detection
@@ -156,7 +156,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 - [ ] **performance-engineer**: Profile skill extraction, resume RAG latency
 
 ### Phase 4: Deployment & Scale
-- [ ] **devops-engineer**: CI/CD pipeline for Next.js + Workers
+- [ ] **devops-engineer**: CI/CD pipeline for Next.js + Vercel
 - [ ] **platform-engineer**: Observability, error tracking, alerts for job ingestion failures
 - [ ] **sre-engineer**: Incident response playbooks
 
