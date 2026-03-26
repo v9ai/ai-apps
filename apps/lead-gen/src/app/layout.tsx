@@ -15,9 +15,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Nomadically.Work",
+  title: "Neural Lead Gen — AI-Powered Lead Generation Pipeline",
   description:
-    "Fully remote jobs within the EU - Find remote positions you can work from anywhere in Europe",
+    "Identify high-intent hiring signals, enrich company data, and generate personalized outreach at scale with a multi-model AI pipeline.",
 };
 
 export default function RootLayout({
