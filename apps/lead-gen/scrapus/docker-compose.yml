@@ -1,7 +1,8 @@
 # Scrapus local deployment — M1 16GB, zero cloud dependency
 # Usage:
-#   docker compose up -d          # start ollama
-#   docker compose up scrapus     # run pipeline (after ollama healthy)
+#   docker compose up -d                    # start ollama
+#   docker compose run --rm model-pull      # pull required model (once)
+#   docker compose --profile pipeline up    # run pipeline
 
 services:
   ollama:
@@ -26,6 +27,21 @@ services:
         limits:
           memory: 8g
 
+  model-pull:
+    image: curlimages/curl:latest
+    container_name: scrapus-model-pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: >
+      sh -c '
+        echo "Pulling llama3.1:8b-instruct-q4_K_M..." &&
+        curl -sf http://ollama:11434/api/pull -d "{\"name\":\"llama3.1:8b-instruct-q4_K_M\"}" &&
+        echo "Model ready."
+      '
+    profiles:
+      - setup
+
   scrapus:
     build:
       context: .
@@ -35,11 +51,14 @@ services:
       ollama:
         condition: service_healthy
     environment:
-      - SCRAPUS_REPORT_LLM_BACKEND=ollama
       - OLLAMA_HOST=http://ollama:11434
     volumes:
       - ./scrapus_data:/app/scrapus_data
       - ./output:/app/output
+    deploy:
+      resources:
+        limits:
+          memory: 12g
     profiles:
       - pipeline
 

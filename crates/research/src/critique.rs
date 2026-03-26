@@ -27,6 +27,7 @@ pub struct DimensionWeights {
     pub year_range: f32,
     pub source_diversity: f32,
     pub abstract_coverage: f32,
+    pub citation_distribution: f32,
     pub recency_bias: f32,
     pub citation_network: f32,
     pub authority: f32,
@@ -36,14 +37,15 @@ pub struct DimensionWeights {
 impl Default for DimensionWeights {
     fn default() -> Self {
         Self {
-            result_count: 0.15,
-            year_range: 0.12,
-            source_diversity: 0.12,
-            abstract_coverage: 0.12,
-            recency_bias: 0.12,
-            citation_network: 0.10,
-            authority: 0.12,
-            field_diversity: 0.15,
+            result_count: 0.14,
+            year_range: 0.11,
+            source_diversity: 0.11,
+            abstract_coverage: 0.11,
+            citation_distribution: 0.09,
+            recency_bias: 0.11,
+            citation_network: 0.09,
+            authority: 0.11,
+            field_diversity: 0.13,
         }
     }
 }
@@ -55,6 +57,7 @@ impl DimensionWeights {
             + self.year_range
             + self.source_diversity
             + self.abstract_coverage
+            + self.citation_distribution
             + self.recency_bias
             + self.citation_network
             + self.authority
@@ -67,6 +70,7 @@ impl DimensionWeights {
         self.year_range /= total;
         self.source_diversity /= total;
         self.abstract_coverage /= total;
+        self.citation_distribution /= total;
         self.recency_bias /= total;
         self.citation_network /= total;
         self.authority /= total;
@@ -74,12 +78,13 @@ impl DimensionWeights {
     }
 
     /// Return weights normalised so they sum to 1.0 (non-mutating).
-    fn normalised(&self) -> [f32; 8] {
+    fn normalised(&self) -> [f64; 9] {
         let raw = [
             self.result_count,
             self.year_range,
             self.source_diversity,
             self.abstract_coverage,
+            self.citation_distribution,
             self.recency_bias,
             self.citation_network,
             self.authority,
@@ -87,11 +92,11 @@ impl DimensionWeights {
         ];
         let total: f32 = raw.iter().sum();
         if total <= 0.0 {
-            return [1.0 / 8.0; 8];
+            return [1.0 / 9.0; 9];
         }
-        let mut out = [0.0; 8];
+        let mut out = [0.0f64; 9];
         for (i, &v) in raw.iter().enumerate() {
-            out[i] = v / total;
+            out[i] = (v / total) as f64;
         }
         out
     }
@@ -171,9 +176,9 @@ impl CritiqueConfig {
             suggestions.push("Broaden search terms or relax filters".into());
             return Critique {
                 quality_score: 0.0,
-                dimension_scores: DimensionScores {
+                dimension_scores: Some(DimensionScores {
                     result_count: 0.0,
-                    year_span: 0.0,
+                    year_range: 0.0,
                     source_diversity: 0.0,
                     abstract_coverage: 0.0,
                     citation_distribution: 0.0,
@@ -182,7 +187,7 @@ impl CritiqueConfig {
                     authority: 0.0,
                     field_diversity: 0.0,
                     semantic_diversity: None,
-                },
+                }),
                 issues,
                 suggestions,
             };
@@ -314,7 +319,7 @@ impl CritiqueConfig {
 
         Critique {
             quality_score: quality_score.clamp(0.0, 1.0),
-            dimension_scores: scores,
+            dimension_scores: Some(scores),
             issues,
             suggestions,
         }
@@ -352,8 +357,9 @@ impl CritiqueConfig {
             suggestions.push("Use more varied query angles or broaden search terms".into());
         }
 
-        let mut dimension_scores = base.dimension_scores;
+        let mut dimension_scores = base.dimension_scores.unwrap();
         dimension_scores.semantic_diversity = Some(diversity);
+        let dimension_scores = Some(dimension_scores);
 
         Critique {
             quality_score: rebalanced.clamp(0.0, 1.0),
@@ -678,7 +684,7 @@ mod tests {
             "issues: {:?}",
             critique.issues
         );
-        assert!(critique.dimension_scores.recency_bias < 0.6);
+        assert!(critique.dimension_scores.as_ref().unwrap().recency_bias < 0.6);
     }
 
     #[test]
@@ -697,7 +703,7 @@ mod tests {
             "issues: {:?}",
             critique.issues
         );
-        assert!(critique.dimension_scores.recency_bias > 0.8);
+        assert!(critique.dimension_scores.as_ref().unwrap().recency_bias > 0.8);
     }
 
     // ── Citation network (Gini) ─────────────────────────────────────────────
@@ -786,7 +792,7 @@ mod tests {
             "issues: {:?}",
             critique.issues
         );
-        assert!(critique.dimension_scores.authority < 0.01);
+        assert!(critique.dimension_scores.as_ref().unwrap().authority < 0.01);
     }
 
     #[test]
@@ -819,7 +825,7 @@ mod tests {
             "issues: {:?}",
             critique.issues
         );
-        assert!(critique.dimension_scores.authority > 0.9);
+        assert!(critique.dimension_scores.as_ref().unwrap().authority > 0.9);
     }
 
     // ── Field diversity ─────────────────────────────────────────────────────
@@ -845,7 +851,7 @@ mod tests {
             "issues: {:?}",
             critique.issues
         );
-        assert!(critique.dimension_scores.field_diversity < 0.3);
+        assert!(critique.dimension_scores.as_ref().unwrap().field_diversity < 0.3);
     }
 
     #[test]
@@ -874,9 +880,9 @@ mod tests {
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
         assert!(
-            critique.dimension_scores.field_diversity > 0.8,
+            critique.dimension_scores.as_ref().unwrap().field_diversity > 0.8,
             "field_diversity was {}",
-            critique.dimension_scores.field_diversity
+            critique.dimension_scores.as_ref().unwrap().field_diversity
         );
     }
 
@@ -886,9 +892,9 @@ mod tests {
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
         assert!(
-            (critique.dimension_scores.field_diversity - 0.5).abs() < 0.01,
+            (critique.dimension_scores.as_ref().unwrap().field_diversity - 0.5).abs() < 0.01,
             "field_diversity was {}",
-            critique.dimension_scores.field_diversity
+            critique.dimension_scores.as_ref().unwrap().field_diversity
         );
     }
 
@@ -911,7 +917,7 @@ mod tests {
         let mut weighted_cfg = CritiqueConfig::default();
         weighted_cfg.weights = DimensionWeights {
             result_count: 1.0,
-            year_span: 0.0,
+            year_range: 0.0,
             source_diversity: 0.0,
             abstract_coverage: 0.0,
             citation_distribution: 0.0,
@@ -946,7 +952,7 @@ mod tests {
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
         // All dimension scores should be between 0 and 1
-        let ds = &critique.dimension_scores;
+        let ds = critique.dimension_scores.as_ref().unwrap();
         for &score in &[
             ds.result_count,
             ds.year_span,
@@ -964,7 +970,7 @@ mod tests {
                 score
             );
         }
-        assert!(critique.dimension_scores.semantic_diversity.is_none());
+        assert!(critique.dimension_scores.as_ref().unwrap().semantic_diversity.is_none());
     }
 
     // ── Semantic diversity (local-vector only) ──────────────────────────────
@@ -989,7 +995,7 @@ mod tests {
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate_semantic(&papers, &embs);
         assert!(critique.issues.iter().any(|i| i.contains("semantic diversity")));
-        assert!(critique.dimension_scores.semantic_diversity.is_some());
+        assert!(critique.dimension_scores.as_ref().unwrap().semantic_diversity.is_some());
     }
 
     #[cfg(feature = "local-vector")]
@@ -1012,6 +1018,6 @@ mod tests {
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate_semantic(&papers, &embs);
         assert!(!critique.issues.iter().any(|i| i.contains("semantic diversity")));
-        assert!(critique.dimension_scores.semantic_diversity.unwrap() > 0.5);
+        assert!(critique.dimension_scores.as_ref().unwrap().semantic_diversity.unwrap() > 0.5);
     }
 }
