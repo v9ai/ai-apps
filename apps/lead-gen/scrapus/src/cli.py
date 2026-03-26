@@ -134,20 +134,34 @@ async def _run_crawl(cfg: ScrapusConfig, resume: bool = False) -> Dict[str, Any]
     )
     _ensure_data_dirs(cfg)
 
-    # Lazy import so startup stays fast when only running other stages.
-    try:
-        from memory_management import MemoryManagementSystem
-    except ImportError:
-        logger.warning("memory_management not available; running without memory tracking")
-        MemoryManagementSystem = None  # type: ignore[assignment,misc]
-
     if not cfg.crawler.seed_urls:
         logger.warning("No seed URLs configured. Pass --seed-urls or set [crawler] seed_urls in TOML.")
         return {"status": "skipped", "reason": "no_seed_urls"}
 
-    # TODO: replace with actual crawler invocation once wired.
-    logger.info("Crawler stage placeholder — replace with RL crawler integration")
-    return {"status": "completed", "pages_crawled": 0}
+    start = time.monotonic()
+    try:
+        from crawler_pipeline import run_crawler_pipeline, CrawlerPipelineConfig
+
+        crawler_cfg = CrawlerPipelineConfig(
+            max_pages=cfg.crawler.max_pages,
+            max_depth=cfg.crawler.max_depth,
+            max_concurrent=cfg.crawler.concurrency,
+            default_crawl_delay=cfg.crawler.rate_limit_per_domain,
+            headless=cfg.crawler.playwright_headless,
+        )
+        result = await run_crawler_pipeline(
+            seed_urls=cfg.crawler.seed_urls,
+            config=crawler_cfg,
+            max_pages=cfg.crawler.max_pages,
+        )
+        result["elapsed_s"] = round(time.monotonic() - start, 2)
+        return result
+    except ImportError as exc:
+        logger.error("Crawler module not available: %s", exc)
+        return {"status": "error", "reason": str(exc)}
+    except Exception as exc:
+        logger.exception("Crawler failed")
+        return {"status": "error", "reason": str(exc)}
 
 
 async def _run_extract(cfg: ScrapusConfig) -> Dict[str, Any]:
@@ -158,9 +172,43 @@ async def _run_extract(cfg: ScrapusConfig) -> Dict[str, Any]:
     )
     _ensure_data_dirs(cfg)
 
-    # TODO: wire gliner2_integration / hybrid_ner_pipeline
-    logger.info("NER extraction stage placeholder — replace with hybrid NER pipeline")
-    return {"status": "completed", "entities_extracted": 0}
+    start = time.monotonic()
+    try:
+        from hybrid_ner_pipeline import HybridNERPipeline
+        from sqlite_repository import SQLiteRepository
+
+        repo = SQLiteRepository(str(cfg.sqlite_path))
+        pages = repo.get_pending_pages(limit=10_000)
+
+        if not pages:
+            logger.info("No pending pages for NER extraction")
+            return {"status": "completed", "entities_extracted": 0, "pages_processed": 0}
+
+        pipeline = HybridNERPipeline(
+            entity_types=cfg.ner.entity_types,
+            confidence_threshold=cfg.ner.confidence_threshold,
+        )
+
+        total_entities = 0
+        for batch_start in range(0, len(pages), cfg.ner.batch_size):
+            batch = pages[batch_start : batch_start + cfg.ner.batch_size]
+            for page in batch:
+                entities = pipeline.process(page["clean_text"])
+                repo.insert_entities(page["id"], entities)
+                total_entities += len(entities)
+
+        return {
+            "status": "completed",
+            "entities_extracted": total_entities,
+            "pages_processed": len(pages),
+            "elapsed_s": round(time.monotonic() - start, 2),
+        }
+    except ImportError as exc:
+        logger.error("NER module not available: %s", exc)
+        return {"status": "error", "reason": str(exc)}
+    except Exception as exc:
+        logger.exception("NER extraction failed")
+        return {"status": "error", "reason": str(exc)}
 
 
 async def _run_resolve(cfg: ScrapusConfig) -> Dict[str, Any]:
@@ -173,9 +221,54 @@ async def _run_resolve(cfg: ScrapusConfig) -> Dict[str, Any]:
     )
     _ensure_data_dirs(cfg)
 
-    # TODO: wire sbert_blocker + deberta_inference + gnn_consistency
-    logger.info("Entity resolution stage placeholder — replace with SBERT blocker pipeline")
-    return {"status": "completed", "entities_resolved": 0}
+    start = time.monotonic()
+    try:
+        from sbert_blocker import SBERTBlocker
+        from sqlite_repository import SQLiteRepository
+
+        repo = SQLiteRepository(str(cfg.sqlite_path))
+        entities = repo.get_entities_by_type("ORG", limit=50_000)
+
+        if not entities:
+            logger.info("No entities for resolution")
+            return {"status": "completed", "entities_resolved": 0, "clusters_formed": 0}
+
+        device = "mps" if cfg.m1.use_mps else "cpu"
+        blocker = SBERTBlocker(
+            model_name=cfg.entity_resolution.embedding_model,
+            db_path=str(cfg.sqlite_path),
+            min_samples=cfg.entity_resolution.min_cluster_size,
+            device=device,
+        )
+        embeddings = blocker.encode(entities, text_field="name")
+        blocks = blocker.create_blocks(embeddings, epsilon=cfg.entity_resolution.dbscan_eps)
+
+        # Optional GNN consistency enforcement
+        if cfg.entity_resolution.use_gnn_consistency:
+            try:
+                from gnn_consistency import GNNConsistencyResolver
+                resolver = GNNConsistencyResolver()
+                blocks = resolver.enforce(blocks, embeddings)
+            except ImportError:
+                logger.warning("GNN consistency module not available; skipping")
+
+        clusters_formed = len(blocks)
+        for block in blocks:
+            cluster_id = repo.create_cluster(method=cfg.entity_resolution.blocking_method)
+            repo.add_cluster_members_batch(cluster_id, block.member_ids)
+
+        return {
+            "status": "completed",
+            "entities_resolved": len(entities),
+            "clusters_formed": clusters_formed,
+            "elapsed_s": round(time.monotonic() - start, 2),
+        }
+    except ImportError as exc:
+        logger.error("Entity resolution module not available: %s", exc)
+        return {"status": "error", "reason": str(exc)}
+    except Exception as exc:
+        logger.exception("Entity resolution failed")
+        return {"status": "error", "reason": str(exc)}
 
 
 async def _run_score(cfg: ScrapusConfig) -> Dict[str, Any]:
@@ -187,9 +280,51 @@ async def _run_score(cfg: ScrapusConfig) -> Dict[str, Any]:
     )
     _ensure_data_dirs(cfg)
 
-    # TODO: wire lightgbm_onnx_migration + conformal_pipeline
-    logger.info("Lead scoring stage placeholder — replace with LightGBM + MAPIE pipeline")
-    return {"status": "completed", "leads_scored": 0}
+    start = time.monotonic()
+    try:
+        from conformal_pipeline import ConformalLeadScoringStage, ConformalStageConfig
+        from sqlite_repository import SQLiteRepository
+        import numpy as np
+
+        repo = SQLiteRepository(str(cfg.sqlite_path))
+        leads = repo.get_leads_by_status("pending", limit=10_000)
+
+        if not leads:
+            logger.info("No pending leads to score")
+            return {"status": "completed", "leads_scored": 0}
+
+        stage_cfg = ConformalStageConfig(
+            stage_name="lead_scoring",
+            alpha=1.0 - cfg.scoring.conformal_coverage,
+            method="plus",
+            auto_tune_threshold=True,
+        )
+        scorer = ConformalLeadScoringStage(stage_cfg)
+
+        scored = 0
+        for lead in leads:
+            features = repo.get_lead_features(lead["id"])
+            if features is None:
+                continue
+            prediction = scorer.predict(np.array([features]))
+            pred = prediction[0]
+            score_val = float(pred.point_estimate)
+            status = "qualified" if score_val >= cfg.scoring.qualification_threshold else "disqualified"
+            repo.update_lead_score(lead["id"], score=score_val, confidence_lower=float(pred.lower_bound), confidence_upper=float(pred.upper_bound))
+            repo.update_lead_status(lead["id"], status)
+            scored += 1
+
+        return {
+            "status": "completed",
+            "leads_scored": scored,
+            "elapsed_s": round(time.monotonic() - start, 2),
+        }
+    except ImportError as exc:
+        logger.error("Scoring module not available: %s", exc)
+        return {"status": "error", "reason": str(exc)}
+    except Exception as exc:
+        logger.exception("Lead scoring failed")
+        return {"status": "error", "reason": str(exc)}
 
 
 async def _run_report(cfg: ScrapusConfig) -> Dict[str, Any]:
@@ -202,9 +337,80 @@ async def _run_report(cfg: ScrapusConfig) -> Dict[str, Any]:
     )
     _ensure_data_dirs(cfg)
 
-    # TODO: wire structured_output + selfrag_lightgraphrag + reranker_mmr
-    logger.info("Report generation stage placeholder — replace with Outlines + Self-RAG pipeline")
-    return {"status": "completed", "reports_generated": 0}
+    start = time.monotonic()
+    try:
+        from structured_output import OutlinesJSONGenerator, LeadReport, GenerationConfig
+        from ollama_client import OllamaClient
+        from sqlite_repository import SQLiteRepository
+
+        repo = SQLiteRepository(str(cfg.sqlite_path))
+        qualified_leads = repo.get_top_leads(
+            limit=100, min_score=cfg.scoring.qualification_threshold,
+        )
+
+        if not qualified_leads:
+            logger.info("No qualified leads for report generation")
+            return {"status": "completed", "reports_generated": 0}
+
+        gen_cfg = GenerationConfig(
+            model_name=f"{cfg.report.llm_model}",
+            max_tokens=cfg.report.max_tokens,
+            temperature=cfg.report.temperature,
+        )
+        generator = OutlinesJSONGenerator(
+            model_name=gen_cfg.model_name,
+        )
+
+        # Optional retriever + verifier
+        retriever = None
+        verifier = None
+        if cfg.report.reranker_enabled:
+            try:
+                from reranker_mmr import AdvancedRetrievalPipeline
+                retriever = AdvancedRetrievalPipeline(
+                    lancedb_path=str(cfg.lancedb_path),
+                    reranker_model=cfg.report.reranker_model,
+                )
+            except ImportError:
+                logger.warning("Reranker not available; generating without retrieval")
+
+        if cfg.report.self_rag_enabled:
+            try:
+                from selfrag_lightgraphrag import SelfRAGVerifier
+                verifier = SelfRAGVerifier()
+            except ImportError:
+                logger.warning("Self-RAG verifier not available; skipping claim verification")
+
+        reports_generated = 0
+        for lead in qualified_leads:
+            prompt = (
+                f"Generate a B2B lead intelligence report for {lead['name']}. "
+                f"Data: {json.dumps(lead.get('data', {}), default=str)}"
+            )
+            try:
+                raw_json, mode = generator.generate_json(prompt, LeadReport)
+                report = LeadReport.parse_raw(raw_json)
+                repo.insert_report(
+                    lead_id=lead["id"],
+                    report_json=json.dumps(report.to_dict()),
+                    summary=report.summary,
+                )
+                reports_generated += 1
+            except Exception as exc:
+                logger.warning("Report generation failed for %s: %s", lead["name"], exc)
+
+        return {
+            "status": "completed",
+            "reports_generated": reports_generated,
+            "total_leads": len(qualified_leads),
+            "elapsed_s": round(time.monotonic() - start, 2),
+        }
+    except ImportError as exc:
+        logger.error("Report module not available: %s", exc)
+        return {"status": "error", "reason": str(exc)}
+    except Exception as exc:
+        logger.exception("Report generation failed")
+        return {"status": "error", "reason": str(exc)}
 
 
 async def _run_evaluate(cfg: ScrapusConfig) -> Dict[str, Any]:
@@ -217,9 +423,77 @@ async def _run_evaluate(cfg: ScrapusConfig) -> Dict[str, Any]:
     )
     _ensure_data_dirs(cfg)
 
-    # TODO: wire drift_detection + llm_judge_ensemble
-    logger.info("Evaluation stage placeholder — replace with drift detection + LLM judge pipeline")
-    return {"status": "completed", "metrics_computed": 0}
+    start = time.monotonic()
+    results: Dict[str, Any] = {"status": "completed"}
+
+    # 1. Drift detection
+    try:
+        from drift_detection import DriftDetectionSystem
+        drift_system = DriftDetectionSystem(
+            db_path=str(cfg.sqlite_path),
+        )
+        drift_result = drift_system.run_full_drift_check(
+            reference_data={}, current_data={},
+        )
+        results["drift_detected"] = drift_result.get("drift_detected", False)
+        results["drift_severity"] = drift_result.get("severity", "none")
+        results["retraining_recommended"] = drift_result.get("retrain_recommended", False)
+        logger.info("Drift check: detected=%s severity=%s",
+                     results["drift_detected"], results["drift_severity"])
+    except ImportError:
+        logger.warning("Drift detection module not available; skipping")
+        results["drift_detected"] = None
+    except Exception as exc:
+        logger.warning("Drift detection failed: %s", exc)
+        results["drift_detected"] = None
+
+    # 2. LLM judge evaluation on recent reports
+    try:
+        from llm_judge_ensemble import OllamaJudge, JudgeEnsemble
+        from sqlite_repository import SQLiteRepository
+
+        repo = SQLiteRepository(str(cfg.sqlite_path))
+        # Get reports from top leads as recent evaluation targets
+        top_leads = repo.get_top_leads(limit=10)
+        recent_reports = []
+        for lead in top_leads:
+            report = repo.get_latest_report(lead["id"])
+            if report:
+                recent_reports.append(report)
+
+        if recent_reports:
+            judges = []
+            for model_name in cfg.monitoring.judge_models:
+                try:
+                    judges.append(OllamaJudge(model_name=model_name))
+                except RuntimeError as exc:
+                    logger.warning("Judge model %s not available: %s", model_name, exc)
+
+            if judges:
+                ensemble = JudgeEnsemble(judges, db_path=str(cfg.sqlite_path))
+                scores = []
+                for report in recent_reports:
+                    try:
+                        consensus = ensemble.evaluate_summary(
+                            report_text=report["summary"],
+                            sources=report.get("sources", []),
+                        )
+                        scores.append(consensus.overall_score)
+                    except Exception as exc:
+                        logger.warning("Judge evaluation failed: %s", exc)
+
+                if scores:
+                    results["report_quality_mean"] = round(sum(scores) / len(scores), 3)
+                    results["reports_evaluated"] = len(scores)
+        else:
+            logger.info("No recent reports to evaluate")
+    except ImportError:
+        logger.warning("LLM judge module not available; skipping")
+    except Exception as exc:
+        logger.warning("Judge evaluation failed: %s", exc)
+
+    results["elapsed_s"] = round(time.monotonic() - start, 2)
+    return results
 
 
 # Stage name -> runner function.

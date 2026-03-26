@@ -9,8 +9,13 @@ use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::Tokenizer;
 use tracing::info;
 
+/// Embedding dimensionality (all-MiniLM-L6-v2 outputs 384-d vectors).
 pub const DIM: usize = 384;
 
+/// On-device sentence embedding engine using Candle + all-MiniLM-L6-v2.
+///
+/// Downloads model weights from HuggingFace Hub on first use, then runs
+/// fully offline. All outputs are L2-normalised.
 pub struct EmbeddingEngine {
     model: BertModel,
     tokenizer: Tokenizer,
@@ -18,6 +23,7 @@ pub struct EmbeddingEngine {
 }
 
 impl EmbeddingEngine {
+    /// Load the model onto `device` (CPU or Metal). Downloads weights on first call.
     pub fn new(device: Device) -> Result<Self> {
         let repo_id = "sentence-transformers/all-MiniLM-L6-v2";
         info!("Loading {repo_id}");

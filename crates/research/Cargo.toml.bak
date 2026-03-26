@@ -64,5 +64,83 @@ tempfile = "3"
 serial_test = "3"
 wiremock = "0.6"
 
-# Bins temporarily disabled for test compilation — see Cargo.toml.bak
-# [[bin]] entries will be restored after tests pass
+[[bin]]
+name = "healthcare-research"
+path = "src/bin/healthcare_research.rs"
+
+[[bin]]
+name = "code-research"
+path = "src/bin/code_research.rs"
+
+[[bin]]
+name = "law-research"
+path = "src/bin/law_research.rs"
+
+[[bin]]
+name = "interview-prep"
+path = "src/bin/interview_prep.rs"
+
+[[bin]]
+name = "condition-research"
+path = "src/bin/condition_research.rs"
+
+[[bin]]
+name = "tts-research"
+path = "src/bin/tts_research.rs"
+
+[[bin]]
+name = "therapeutic-research"
+path = "src/bin/therapeutic_research.rs"
+
+[[bin]]
+name = "eval-therapeutic"
+path = "src/bin/eval_therapeutic.rs"
+
+[[bin]]
+name = "real-estate-research"
+path = "src/bin/real_estate_research.rs"
+
+[[bin]]
+name = "knowledge-research"
+path = "src/bin/knowledge_research.rs"
+
+[[bin]]
+name = "scalping-research"
+path = "src/bin/scalping_research.rs"
+
+[[bin]]
+name = "calm-parent-research"
+path = "src/bin/calm_parent_research.rs"
+
+[[bin]]
+name = "todo-research"
+path = "src/bin/todo_research.rs"
+
+[[bin]]
+name = "todo-sdd"
+path = "src/bin/todo_sdd.rs"
+
+[[bin]]
+name = "eval-characteristic"
+path = "src/bin/eval_characteristic.rs"
+
+[[bin]]
+name = "characteristic-research"
+path = "src/bin/characteristic_research.rs"
+
+[[bin]]
+name = "bear-market-trading"
+path = "src/bin/bear_market_trading.rs"
+
+[[bin]]
+name = "qwen-investigate"
+path = "src/bin/qwen_investigate.rs"
+
+[[bin]]
+name = "paper-discovery"
+path = "src/bin/paper_discovery.rs"
+required-features = ["local-vector"]
+
+[[bin]]
+name = "scrapus-research"
+path = "src/bin/scrapus_research.rs"

@@ -150,7 +150,7 @@ Your role: {role-name}
 Read and follow: .claude/skills/sdd-{name}/SKILL.md
 Read project context: CLAUDE.md
 
-Project root: /Users/vadimnicolai/Public/nomadically.work
+Project root: /Users/vadimnicolai/Public/ai-apps/apps/lead-gen
 Change: {change-name}
 Change dir: openspec/changes/{change-name}/
 

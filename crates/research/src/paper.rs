@@ -224,6 +224,7 @@ impl From<ArxivPaper> for ResearchPaper {
 /// `embeddings` must be one vector per paper (same order). Vectors are assumed
 /// L2-normalized.
 #[cfg(feature = "local-vector")]
+#[cfg_attr(docsrs, doc(cfg(feature = "local-vector")))]
 pub fn dedup_by_embedding(
     papers: Vec<ResearchPaper>,
     embeddings: &[Vec<f32>],
