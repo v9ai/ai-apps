@@ -3,7 +3,7 @@ import { css } from "styled-system/css";
 import { LandingNav } from "@/components/landing-nav";
 import { LandingHero } from "@/components/landing-hero";
 import { LandingPipeline } from "@/components/landing-pipeline";
-import { LandingPreview } from "@/components/landing-preview";
+
 import { LandingFeatures } from "@/components/landing-features";
 import { LandingBuilder } from "@/components/landing-builder";
 import { LandingClosing } from "@/components/landing-closing";
@@ -16,7 +16,6 @@ import { LandingMetrics } from "@/components/landing-metrics";
  * 1. Hero:     Local-first B2B lead gen value prop + pipeline stats + CTA pair
  * 2. Pipeline: 7-module visualization (crawl → extract → resolve → score → report → evaluate)
  * 3. Metrics:  8-metric benchmark grid with scroll-triggered count-up animations
- * 4. Preview:  Proof — live pipeline output with scored B2B leads
  * 4. Builder:  Human element — "built by" with mission context
  * 5. Features: Differentiators — RL crawling, ensemble scoring, local-first privacy
  * 6. Closing:  Decision point — deploy locally CTA + research updates signup
@@ -42,7 +41,6 @@ export default function HomePage() {
       <div className={sectionDivider} />
       <LandingPipeline />
       <LandingMetrics />
-      <LandingPreview />
       <LandingBuilder />
       <div className={sectionDivider} />
       <LandingFeatures />
