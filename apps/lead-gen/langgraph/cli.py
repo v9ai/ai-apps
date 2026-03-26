@@ -35,7 +35,7 @@ load_dotenv()
 
 @click.group()
 def main():
-    """Nomadically LangGraph pipelines."""
+    """Lead Gen LangGraph pipelines."""
     pass
 
 

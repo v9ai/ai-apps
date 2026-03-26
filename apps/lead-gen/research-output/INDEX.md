@@ -8,9 +8,9 @@ Research files have been consolidated from this flat directory into module-local
 |--------|----------|-------|
 | System Architecture (module-0) | `docs/research/system-architecture/` | agent-01-*, agent-08-* |
 | Crawler (module-1) | `crates/agentic-search/research/` | agent-02-*, agent-09-* |
-| Extraction/NER (module-2) | `crates/nomad/research/extraction/` | agent-03-*, agent-10-* |
-| Entity Resolution (module-3) | `crates/nomad/research/entity-resolution/` | agent-04-*, agent-11-* |
-| Lead Matching (module-4) | `crates/nomad/research/lead-matching/` | agent-05-*, agent-12-* |
+| Extraction/NER (module-2) | `docs/research/extraction/` | agent-03-*, agent-10-* |
+| Entity Resolution (module-3) | `docs/research/entity-resolution/` | agent-04-*, agent-11-* |
+| Lead Matching (module-4) | `docs/research/lead-matching/` | agent-05-*, agent-12-* |
 | Report Generation (module-5) | `crates/research/research/` | agent-06-*, agent-13-* |
 | Evaluation (module-6) | `src/evals/research/` | agent-07-*, agent-14-* |
 | Synthesis (cross-cutting) | `docs/research/synthesis/` | agent-15-* |

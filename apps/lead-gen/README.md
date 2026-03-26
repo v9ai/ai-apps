@@ -1,4 +1,4 @@
-# Nomadically.work
+# Lead Gen
 
 Remote EU job board aggregator with AI classification, CRM, and email campaigns.
 

@@ -37,7 +37,7 @@ email_compose_graph = build_email_compose_graph()
 eu_classifier_graph = build_eu_classifier_graph()
 resume_rag_graph = build_resume_rag_graph()
 
-app = FastAPI(title="Nomadically LangGraph API", version="0.1.0")
+app = FastAPI(title="Lead Gen LangGraph API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,

@@ -80,8 +80,8 @@ export function AuthDialog({
         </Dialog.Title>
         <Dialog.Description size="2" mb="4" color="gray">
           {mode === "signin"
-            ? "Sign in to your Nomadically account."
-            : "Create a new Nomadically account."}
+            ? "Sign in to your account."
+            : "Create a new account."}
         </Dialog.Description>
 
         <form onSubmit={handleSubmit}>

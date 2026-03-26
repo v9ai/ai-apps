@@ -91,7 +91,7 @@ export default function Popup() {
           for (let i = 0; i < jobCards.length; i++) {
             const jobCard = jobCards[i];
             // Skip if job is dismissed
-            if (!jobCard.getAttribute("data-nomad-dismissed")) {
+            if (!jobCard.getAttribute("data-lg-dismissed")) {
               firstNonDismissedJob = jobCard;
               break;
             }
