@@ -406,8 +406,8 @@ async fn fetch_openalex(from_date: &str) -> Vec<PaperSummary> {
         eprint!("  OpenAlex/{topic}...");
         match client.search(topic, 1, 50).await {
             Ok(resp) => {
-                eprintln!(" {} papers", resp.results.len());
                 // Client-side year filter
+                let total = resp.results.len();
                 let recent: Vec<_> = resp
                     .results
                     .into_iter()
@@ -417,7 +417,7 @@ async fn fetch_openalex(from_date: &str) -> Vec<PaperSummary> {
                             .unwrap_or(false)
                     })
                     .collect();
-                eprintln!(" {} papers", recent.len());
+                eprintln!(" {} recent / {} total", recent.len(), total);
                 for w in recent {
                     let title = w.title.clone().unwrap_or_default();
                     if title.is_empty() {

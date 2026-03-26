@@ -36,7 +36,6 @@ node_modules/
 .DS_Store
 *.tsbuildinfo
 _memory/
-openspec/
 *.png
 *.log
 workspace/

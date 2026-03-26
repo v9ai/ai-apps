@@ -723,7 +723,7 @@ class ReportGenerationStage(PipelineStage):
                         "name": name, "score": lead["score"],
                         "confidence_interval": lead.get("confidence_interval", []),
                     }
-                    report_obj, gen_meta = generator.generate_report(
+                    report_obj, gen_meta = await generator.generate_report(
                         company_id=lead_id, company_data=company_data,
                         source_facts=source_facts,
                     )
@@ -841,7 +841,7 @@ class EvaluationStage(PipelineStage):
                 # Use current pipeline stats as current_data for drift check
                 reference_data = generate_synthetic_data(num_samples=100)
                 current_data = generate_synthetic_data(num_samples=100)
-                drift_result = drift_system.run_full_drift_check(reference_data, current_data)
+                drift_result = await drift_system.run_full_drift_check(reference_data, current_data)
                 drift_detected = drift_result.get("drift_detected", False)
                 drift_details = drift_result
             except ImportError:
@@ -861,7 +861,7 @@ class EvaluationStage(PipelineStage):
                 for report in input_data.reports[:10]:  # cap at 10 for eval speed
                     try:
                         report_text = str(report.get("report_json", {}).get("summary", ""))
-                        result = ensemble.evaluate_summary(
+                        result = await ensemble.evaluate_summary(
                             summary=report_text,
                             source_data="",
                             icp_profile="B2B lead",

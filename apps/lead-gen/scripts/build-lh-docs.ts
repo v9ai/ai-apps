@@ -150,24 +150,6 @@ addWholeFile(sections, "INTERVIEW-PREP-TTS.md", "interview-prep-tts.md", "Interv
 addWholeFile(sections, "EVAL-HARNESS-TTS.md", "eval-harness-tts.md", "Eval Harness (TTS)", "Interview Preparation");
 addWholeFile(sections, "TECHNICAL-REFERENCE-TTS.md", "tech-ref-tts.md", "Technical Reference (TTS)", "Interview Preparation");
 
-// Group 4: OpenSpec
-console.log("\nOpenSpec:");
-const openspecFiles = [
-  { src: "openspec/changes/promptfoo-langchain-sqlite/proposal.md", title: "Proposal" },
-  { src: "openspec/changes/promptfoo-langchain-sqlite/explore.md", title: "Explore" },
-  { src: "openspec/changes/promptfoo-langchain-sqlite/design.md", title: "Design" },
-  { src: "openspec/changes/promptfoo-langchain-sqlite/spec.md", title: "Spec" },
-  { src: "openspec/changes/promptfoo-langchain-sqlite/tasks.md", title: "Tasks" },
-  { src: "openspec/changes/promptfoo-langchain-sqlite/verify.md", title: "Verify" },
-  { src: "openspec/changes/generic-pipeline-v2/spec.md", title: "Generic Pipeline v2 Spec" },
-];
-for (const { src, title } of openspecFiles) {
-  const outName = `openspec/${src.split("/").pop()!.replace(/\.md$/, "")}-${slugify(title)}.md`;
-  // Use a cleaner output name
-  const cleanOut = `openspec/${slugify(title)}.md`;
-  addWholeFile(sections, src, cleanOut, title, "OpenSpec");
-}
-
 // Write TOC manifest
 const tocPath = join(OUT_DIR, "toc.json");
 const toc = { sections };

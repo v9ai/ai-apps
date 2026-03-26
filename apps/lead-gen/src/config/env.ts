@@ -77,11 +77,6 @@ export const env = envConfig;
 export const OPENAI_API_KEY = env.llm.openaiApiKey?.trim();
 export const DEEPSEEK_API_KEY = env.llm.deepseekApiKey?.trim();
 
-// Cloudflare configuration
-export const CLOUDFLARE_WORKERS_AI_KEY = getOptionalEnv(
-  "CLOUDFLARE_WORKERS_AI_KEY",
-);
-
 /**
  * Ensure environment is loaded (call this at the start of scripts)
  */
