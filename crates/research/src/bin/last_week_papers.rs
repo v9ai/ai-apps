@@ -81,6 +81,21 @@ struct Cli {
 }
 
 #[derive(Serialize)]
+struct RunStats {
+    timestamp: String,
+    week_tag: String,
+    total_papers: usize,
+    papers_indexed: usize,
+    by_source: BTreeMap<String, usize>,
+    with_abstract: usize,
+    with_doi: usize,
+    with_pdf: usize,
+    with_citations: usize,
+    avg_citations: f64,
+    chunks_indexed: usize,
+}
+
+#[derive(Serialize)]
 struct PaperSummary {
     title: String,
     authors: Vec<String>,
@@ -237,6 +252,22 @@ async fn main() -> Result<()> {
         seen_titles.insert(key)
     });
 
+    // Fuzzy dedup: catch near-duplicate titles across sources
+    let before_fuzzy = all.len();
+    let mut deduped: Vec<PaperSummary> = Vec::with_capacity(all.len());
+    for paper in all.drain(..) {
+        let dominated = deduped
+            .iter()
+            .any(|existing| trigram_similarity(&existing.dedup_key(), &paper.dedup_key()) > 0.85);
+        if !dominated {
+            deduped.push(paper);
+        }
+    }
+    all = deduped;
+    if before_fuzzy != all.len() {
+        println!("Fuzzy dedup removed {} near-duplicates", before_fuzzy - all.len());
+    }
+
     // Sort by source then title
     all.sort_by(|a, b| a.source.cmp(&b.source).then(a.title.cmp(&b.title)));
 
@@ -373,6 +404,84 @@ async fn main() -> Result<()> {
         let store = VectorStore::connect(&cli.db, engine).await?;
         let count = store.add_papers_batched(&papers, cli.batch_size).await?;
         println!("Indexed {count} papers (tagged: {week_tag})");
+
+        // ── Chunk abstracts for fine-grained search ──────────────────
+        use research::chunker::{chunk_text, ChunkerConfig, ChunkStrategy};
+
+        let chunk_config = ChunkerConfig {
+            chunk_size: 256,
+            overlap: 32,
+            min_size: 30,
+            strategy: ChunkStrategy::Sentence,
+        };
+
+        let mut all_chunks = Vec::new();
+        for paper in &papers {
+            if let Some(ref abstract_text) = paper.abstract_text {
+                if abstract_text.len() > chunk_config.min_size {
+                    let chunks = chunk_text(abstract_text, &paper.source_id, Some(chunk_config.clone()));
+                    all_chunks.extend(chunks);
+                }
+            }
+        }
+
+        let chunks_indexed = if !all_chunks.is_empty() {
+            println!(
+                "Chunking {} abstracts into {} chunks...",
+                papers.iter().filter(|p| p.abstract_text.is_some()).count(),
+                all_chunks.len()
+            );
+            let c = store.add_chunks_batched(&all_chunks, 512).await?;
+            println!("Indexed {c} abstract chunks");
+            c
+        } else {
+            0
+        };
+
+        // ── Run statistics ───────────────────────────────────────────
+        let stats = RunStats {
+            timestamp: Utc::now().to_rfc3339(),
+            week_tag: week_tag.clone(),
+            total_papers: papers.len(),
+            papers_indexed: count,
+            by_source: {
+                let mut m = BTreeMap::new();
+                for p in &papers {
+                    *m.entry(format!("{:?}", p.source)).or_insert(0usize) += 1;
+                }
+                m
+            },
+            with_abstract: papers.iter().filter(|p| p.abstract_text.is_some()).count(),
+            with_doi: papers.iter().filter(|p| p.doi.is_some()).count(),
+            with_pdf: papers.iter().filter(|p| p.pdf_url.is_some()).count(),
+            with_citations: papers.iter().filter(|p| p.citation_count.is_some()).count(),
+            avg_citations: {
+                let cited: Vec<u64> = papers.iter().filter_map(|p| p.citation_count).collect();
+                if cited.is_empty() { 0.0 } else { cited.iter().sum::<u64>() as f64 / cited.len() as f64 }
+            },
+            chunks_indexed,
+        };
+
+        let stats_path = format!("{}/run-stats-{}.json", cli.db, now.format("%Y%m%d-%H%M%S"));
+        std::fs::write(&stats_path, serde_json::to_string_pretty(&stats)?)?;
+
+        println!("\n╔══════════════════════════════════════╗");
+        println!("║       Ingestion Summary              ║");
+        println!("╠══════════════════════════════════════╣");
+        println!("║ Total papers:     {:>6}             ║", stats.total_papers);
+        println!("║ Indexed:          {:>6}             ║", stats.papers_indexed);
+        println!("║ Chunks:           {:>6}             ║", stats.chunks_indexed);
+        println!("║ With abstract:    {:>6}             ║", stats.with_abstract);
+        println!("║ With DOI:         {:>6}             ║", stats.with_doi);
+        println!("║ With PDF:         {:>6}             ║", stats.with_pdf);
+        println!("║ With citations:   {:>6}             ║", stats.with_citations);
+        println!("║ Avg citations:    {:>6.1}             ║", stats.avg_citations);
+        println!("╠══════════════════════════════════════╣");
+        for (source, count) in &stats.by_source {
+            println!("║ {:.<20} {:>5}             ║", source, count);
+        }
+        println!("╚══════════════════════════════════════╝");
+        println!("Stats saved to {stats_path}");
     }
 
     Ok(())
@@ -671,6 +780,23 @@ fn base_arxiv_id(id: &str) -> &str {
         }
         _ => id,
     }
+}
+
+fn trigram_similarity(a: &str, b: &str) -> f64 {
+    if a.len() < 3 || b.len() < 3 {
+        return if a == b { 1.0 } else { 0.0 };
+    }
+    let trigrams = |s: &str| -> HashSet<&str> {
+        (0..s.len().saturating_sub(2))
+            .filter(|&i| s.is_char_boundary(i) && s.is_char_boundary(i + 3))
+            .map(|i| &s[i..i + 3])
+            .collect()
+    };
+    let a_tri = trigrams(a);
+    let b_tri = trigrams(b);
+    let intersection = a_tri.intersection(&b_tri).count();
+    let union = a_tri.union(&b_tri).count();
+    if union == 0 { 1.0 } else { intersection as f64 / union as f64 }
 }
 
 async fn retry<F, Fut, T, E>(name: &str, max_retries: u32, f: F) -> Option<T>
