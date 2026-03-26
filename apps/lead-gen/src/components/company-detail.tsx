@@ -8,9 +8,6 @@ import {
   useAnalyzeCompanyMutation,
   useUpdateCompanyMutation,
   useGetJobsQuery,
-  useGetApplicationsQuery,
-  useCreateApplicationMutation,
-  useUpdateApplicationMutation,
   useCreateContactMutation,
   useDeleteCompanyMutation,
 } from "@/__generated__/hooks";
@@ -1054,11 +1051,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   });
   const companyJobs = jobsData?.jobs?.jobs ?? [];
 
-  const { data: appsData, refetch: refetchApps } = useGetApplicationsQuery();
-  const companyApps = (appsData?.applications ?? []).filter(
-    (a) => a.companyKey === effectiveKey || a.companyName?.toLowerCase().replace(/\s+/g, "-") === effectiveKey,
-  );
-
   const remoteEuConfirmed = companyJobs.some(
     (j) => j.is_remote_eu === true && j.remote_eu_confidence === "high",
   );
@@ -1392,11 +1384,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               Jobs{companyJobs.length > 0 ? ` (${companyJobs.length})` : ""}
             </Tabs.Trigger>
             <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-            {companyApps.length > 0 && (
-              <Tabs.Trigger value="applications">
-                Applications ({companyApps.length})
-              </Tabs.Trigger>
-            )}
             {isAdmin && (
               <Link href={`/companies/${effectiveKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", paddingLeft: "var(--tabs-trigger-padding-x)", paddingRight: "var(--tabs-trigger-padding-x)" }}>
                 Contacts
@@ -1461,89 +1448,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               )}
             </Box>
           </Tabs.Content>
-
-          {/* Applications tab */}
-          {companyApps.length > 0 && (
-            <Tabs.Content value="applications">
-              <Box pt="4">
-                <Flex direction="column">
-                  {companyApps.map((app, idx) => {
-                    const statusColor: Record<string, "gray" | "blue" | "orange" | "green" | "red"> = {
-                      pending: "gray",
-                      submitted: "blue",
-                      reviewed: "orange",
-                      accepted: "green",
-                      rejected: "red",
-                    };
-                    const statusLabel: Record<string, string> = {
-                      pending: "Saved",
-                      submitted: "Applied",
-                      reviewed: "Interviewing",
-                      accepted: "Offer",
-                      rejected: "Rejected",
-                    };
-                    return (
-                      <Box key={app.id}>
-                        <Link
-                          href={`/applications/${app.id}`}
-                          style={{ textDecoration: "none", color: "inherit" }}
-                        >
-                          <Flex
-                            justify="between"
-                            align="center"
-                            gap="4"
-                            py="2"
-                            style={{ cursor: "pointer" }}
-                          >
-                            <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
-                              <Text
-                                size="3"
-                                weight="medium"
-                                style={{
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {app.jobTitle ?? app.jobId}
-                              </Text>
-                              <Flex gap="2" align="center">
-                                <Badge
-                                  color={statusColor[app.status] ?? "gray"}
-                                  variant="soft"
-                                  size="1"
-                                >
-                                  {statusLabel[app.status] ?? app.status}
-                                </Badge>
-                                {app.notes && (
-                                  <Text size="1" color="gray" style={{
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                    maxWidth: 300,
-                                  }}>
-                                    {app.notes}
-                                  </Text>
-                                )}
-                              </Flex>
-                            </Flex>
-                            <Text
-                              size="1"
-                              color="gray"
-                              style={{ whiteSpace: "nowrap", flexShrink: 0 }}
-                            >
-                              {new Date(app.createdAt).toLocaleDateString()}
-                            </Text>
-                          </Flex>
-                        </Link>
-                        {idx < companyApps.length - 1 ? <Separator size="4" /> : null}
-                      </Box>
-                    );
-                  })}
-                </Flex>
-              </Box>
-            </Tabs.Content>
-          )}
 
           {/* Overview tab */}
           <Tabs.Content value="overview">
