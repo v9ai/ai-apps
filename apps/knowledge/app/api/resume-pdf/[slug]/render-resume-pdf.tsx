@@ -8,7 +8,7 @@ import {
   StyleSheet,
   renderToBuffer,
 } from "@react-pdf/renderer";
-import resumeData from "@/apollo/resolvers/resume/resume-data.json";
+import resumeData from "@/data/resume-data.json";
 
 const SLUGS: Record<string, typeof resumeData> = {
   vadim: resumeData,
