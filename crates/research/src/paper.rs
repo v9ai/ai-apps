@@ -1,3 +1,5 @@
+//! Unified paper model with `From` conversions from all API-specific types.
+
 use serde::{Deserialize, Serialize};
 
 use crate::arxiv::ArxivPaper;
@@ -6,6 +8,7 @@ use crate::crossref::CrossrefWork;
 use crate::openalex::Work as OpenAlexWork;
 use crate::scholar::Paper;
 
+/// Which academic API a paper was fetched from.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PaperSource {
     SemanticScholar,
@@ -15,6 +18,10 @@ pub enum PaperSource {
     Arxiv,
 }
 
+/// A normalised research paper that can originate from any supported source.
+///
+/// Use `From<T>` conversions to create instances from API-specific types
+/// (`Paper`, `Work`, `CrossrefWork`, `CoreWork`, `ArxivPaper`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResearchPaper {
     pub title: String,
@@ -26,6 +33,7 @@ pub struct ResearchPaper {
     pub url: Option<String>,
     pub pdf_url: Option<String>,
     pub source: PaperSource,
+    /// Identifier from the originating source (e.g. S2 paper ID, DOI, arXiv ID).
     pub source_id: String,
     pub fields_of_study: Option<Vec<String>>,
 }

@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 use tracing::info;
@@ -14,7 +14,7 @@ use crate::embeddings::Ranker;
 use crate::openalex::OpenAlexClient;
 use crate::tools::FallbackClients;
 
-use super::mailbox::{Mailbox, MessageKind, TeamMessage};
+use super::mailbox::{Mailbox, MessageKind, StatusPhase, TeamMessage};
 use super::task::{ResearchTask, SharedTaskList};
 use crate::tools::SearchToolConfig;
 
@@ -47,6 +47,10 @@ pub struct TeamConfig {
     /// Semantic ranker shared across all teammates for search result re-ranking.
     /// Accepts any `Ranker` impl (local Candle `LocalRanker` or API-based `EmbeddingRanker`).
     pub ranker: Option<Arc<dyn Ranker>>,
+    /// Interval for checking task timeouts. Defaults to 30 seconds.
+    pub timeout_check_interval: Option<Duration>,
+    /// Interval for printing progress reports. Defaults to 60 seconds.
+    pub progress_report_interval: Option<Duration>,
 }
 
 /// Result of a full team research run.
@@ -145,7 +149,7 @@ impl TeamLead {
                     Ok(TeamMessage { from, kind, .. }) => match &kind {
                         MessageKind::Finding { task_id, summary } => {
                             let duration_ms = {
-                                let times = monitor_times.lock().unwrap();
+                                let times = monitor_times.lock().unwrap_or_else(|e| e.into_inner());
                                 times.get(task_id).map(|start| start.elapsed().as_millis() as u64)
                             };
                             if let Some(dur) = duration_ms {
@@ -178,7 +182,11 @@ impl TeamLead {
                                     }
                                 }
                             }
-                            eprintln!("[lead] {from} completed task {task_id}: {summary}");
+                            let progress = monitor_task_list.progress();
+                            eprintln!(
+                                "[lead] {from} completed task {task_id}: {summary} [{}/{} done, {:.0}%]",
+                                progress.completed, progress.total, progress.percent_succeeded()
+                            );
                         }
                         MessageKind::StatusUpdate(msg) => {
                             // Record task start time when a StatusUpdate indicates task start
@@ -188,7 +196,7 @@ impl TeamLead {
                                     .and_then(|s| s.split(':').next())
                                 {
                                     if let Ok(task_id) = task_id_str.trim().parse::<usize>() {
-                                        let mut times = monitor_times.lock().unwrap();
+                                        let mut times = monitor_times.lock().unwrap_or_else(|e| e.into_inner());
                                         times.insert(task_id, Instant::now());
                                         info!(
                                             task_id = task_id,
@@ -205,11 +213,97 @@ impl TeamLead {
                             info!(worker = %from, error = %msg, "task error");
                             eprintln!("[lead] ERROR from {from}: {msg}");
                         }
+                        MessageKind::Status(report) => {
+                            match &report.phase {
+                                StatusPhase::Retrying { attempt, backoff_secs } => {
+                                    info!(
+                                        worker = %from,
+                                        task_id = report.task_id,
+                                        attempt,
+                                        backoff_secs,
+                                        "task retrying"
+                                    );
+                                    eprintln!(
+                                        "[lead] {from} retrying task {} (attempt {}, backoff {}s): {}",
+                                        report.task_id, attempt, backoff_secs, report.message
+                                    );
+                                }
+                                StatusPhase::TimedOut => {
+                                    info!(
+                                        worker = %from,
+                                        task_id = report.task_id,
+                                        "task timed out"
+                                    );
+                                    eprintln!("[lead] {from} task {} timed out", report.task_id);
+                                }
+                                StatusPhase::Progress { percent } => {
+                                    eprintln!(
+                                        "[lead] {from} task {} progress: {percent}% — {}",
+                                        report.task_id, report.message
+                                    );
+                                }
+                                StatusPhase::Failed => {
+                                    eprintln!(
+                                        "[lead] {from} task {} permanently failed: {}",
+                                        report.task_id, report.message
+                                    );
+                                }
+                                _ => {
+                                    info!(worker = %from, status = ?report, "status report");
+                                }
+                            }
+                        }
                     },
                     Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
                     Err(tokio::sync::broadcast::error::RecvError::Lagged(n)) => {
                         eprintln!("[lead] mailbox lagged, missed {n} messages");
                     }
+                }
+            }
+        });
+
+        // Periodic timeout checker.
+        let timeout_task_list = task_list.clone();
+        let timeout_mailbox = mailbox.clone();
+        let timeout_interval = self.config.timeout_check_interval.unwrap_or(Duration::from_secs(30));
+        let timeout_handle = tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(timeout_interval).await;
+                let timed_out = timeout_task_list.check_timeouts();
+                for (task_id, retry_backoff) in &timed_out {
+                    let phase = if retry_backoff.is_some() {
+                        StatusPhase::TimedOut
+                    } else {
+                        StatusPhase::Failed
+                    };
+                    timeout_mailbox.send_status("timeout-checker", super::mailbox::StatusReport {
+                        task_id: *task_id,
+                        phase,
+                        message: "Task exceeded timeout".into(),
+                    });
+                }
+                if timeout_task_list.all_done() {
+                    break;
+                }
+            }
+        });
+
+        // Periodic progress reporter.
+        let progress_task_list = task_list.clone();
+        let progress_interval = self.config.progress_report_interval.unwrap_or(Duration::from_secs(60));
+        let progress_handle = tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(progress_interval).await;
+                let p = progress_task_list.progress();
+                eprintln!(
+                    "[lead] Progress: {}/{} completed, {}/{} failed, {}/{} in-progress, {:.0}% done",
+                    p.completed, p.total,
+                    p.failed, p.total,
+                    p.in_progress, p.total,
+                    p.percent_done()
+                );
+                if progress_task_list.all_done() {
+                    break;
                 }
             }
         });
@@ -223,8 +317,10 @@ impl TeamLead {
             }
         }
 
-        // Stop monitor.
+        // Stop background tasks.
         monitor_handle.abort();
+        timeout_handle.abort();
+        progress_handle.abort();
 
         // Collect findings.
         let mut findings = task_list.completed_tasks();
@@ -233,15 +329,18 @@ impl TeamLead {
         let successful = findings.len();
         let team_elapsed_ms = team_start.elapsed().as_millis() as u64;
 
+        let progress = task_list.progress();
         info!(
             tasks_completed = successful,
+            tasks_failed = progress.failed,
             tasks_total = task_count,
             total_duration_ms = team_elapsed_ms,
             "team completed"
         );
 
         eprintln!(
-            "\n[lead] All teammates done ({successful}/{task_count} succeeded). Running synthesis…\n"
+            "\n[lead] All teammates done ({successful}/{task_count} succeeded, {} failed). Running synthesis…\n",
+            progress.failed
         );
 
         if findings.is_empty() {

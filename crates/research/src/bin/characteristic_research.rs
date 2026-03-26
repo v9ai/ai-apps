@@ -145,7 +145,7 @@ fn research_tasks(input: &CharacteristicInput) -> Vec<ResearchTask> {
                 status: TaskStatus::Pending,
                 owner: None,
                 dependencies: vec![],
-                result: None,
+                ..Default::default()
             },
             ResearchTask {
                 id: 2,
@@ -166,7 +166,7 @@ fn research_tasks(input: &CharacteristicInput) -> Vec<ResearchTask> {
                 status: TaskStatus::Pending,
                 owner: None,
                 dependencies: vec![],
-                result: None,
+                ..Default::default()
             },
             ResearchTask {
                 id: 3,
@@ -186,7 +186,7 @@ fn research_tasks(input: &CharacteristicInput) -> Vec<ResearchTask> {
                 status: TaskStatus::Pending,
                 owner: None,
                 dependencies: vec![],
-                result: None,
+                ..Default::default()
             },
             ResearchTask {
                 id: 4,
@@ -206,7 +206,7 @@ fn research_tasks(input: &CharacteristicInput) -> Vec<ResearchTask> {
                 status: TaskStatus::Pending,
                 owner: None,
                 dependencies: vec![],
-                result: None,
+                ..Default::default()
             },
         ],
         "STRENGTH" => vec![
@@ -228,7 +228,7 @@ fn research_tasks(input: &CharacteristicInput) -> Vec<ResearchTask> {
                 status: TaskStatus::Pending,
                 owner: None,
                 dependencies: vec![],
-                result: None,
+                ..Default::default()
             },
             ResearchTask {
                 id: 2,
@@ -247,7 +247,7 @@ fn research_tasks(input: &CharacteristicInput) -> Vec<ResearchTask> {
                 status: TaskStatus::Pending,
                 owner: None,
                 dependencies: vec![],
-                result: None,
+                ..Default::default()
             },
             ResearchTask {
                 id: 3,
@@ -266,7 +266,7 @@ fn research_tasks(input: &CharacteristicInput) -> Vec<ResearchTask> {
                 status: TaskStatus::Pending,
                 owner: None,
                 dependencies: vec![],
-                result: None,
+                ..Default::default()
             },
             ResearchTask {
                 id: 4,
@@ -285,7 +285,7 @@ fn research_tasks(input: &CharacteristicInput) -> Vec<ResearchTask> {
                 status: TaskStatus::Pending,
                 owner: None,
                 dependencies: vec![],
-                result: None,
+                ..Default::default()
             },
         ],
         _ => vec![],
@@ -327,7 +327,7 @@ fn research_tasks(input: &CharacteristicInput) -> Vec<ResearchTask> {
         status: TaskStatus::Pending,
         owner: None,
         dependencies: dep_ids,
-        result: None,
+        ..Default::default()
     });
 
     tasks
@@ -418,6 +418,8 @@ Produce a synthesis with:
         output_dir: Some(out_dir.clone()),
         synthesis_provider: None,
         ranker: None,
+        timeout_check_interval: None,
+        progress_report_interval: None,
     });
 
     let result = lead.run(tasks).await?;

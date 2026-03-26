@@ -1,3 +1,9 @@
+//! Agent tools for academic paper search, detail retrieval, and recommendations.
+//!
+//! Implements the DeepSeek [`Tool`] trait so these can be plugged directly into
+//! an agent's tool-use loop. Supports Semantic Scholar, OpenAlex, and Crossref
+//! with optional semantic re-ranking via the [`Ranker`] trait.
+
 use std::sync::Arc;
 
 use crate::agent::{Tool, ToolDefinition};
@@ -8,13 +14,12 @@ use crate::paper::ResearchPaper;
 use crate::scholar::{SemanticScholarClient, types::{PAPER_FIELDS_FULL, SEARCH_FIELDS}};
 use serde::{Deserialize, Serialize};
 
-// Re-export for convenience
-pub use SearchToolConfig as ToolConfig;
-
 /// Fallback API clients for when Semantic Scholar is rate-limited.
 #[derive(Clone)]
 pub struct FallbackClients {
+    /// OpenAlex client (no API key required).
     pub openalex: OpenAlexClient,
+    /// Crossref client (polite pool via optional mailto).
     pub crossref: CrossrefClient,
 }
 
@@ -50,6 +55,7 @@ impl Default for SearchToolConfig {
 
 // ─── SearchPapers ────────────────────────────────────────────────────────────
 
+/// Deserialized arguments for the `search_papers` tool call.
 #[derive(Deserialize, Serialize)]
 pub struct SearchArgs {
     pub query: String,
@@ -58,6 +64,10 @@ pub struct SearchArgs {
     pub limit: Option<u32>,
 }
 
+/// Agent tool: search academic papers across multiple sources.
+///
+/// Tries OpenAlex and Crossref first (no rate limits), then falls back to
+/// Semantic Scholar. Optionally re-ranks results via a [`Ranker`].
 pub struct SearchPapers {
     client: SemanticScholarClient,
     config: SearchToolConfig,
@@ -66,14 +76,17 @@ pub struct SearchPapers {
 }
 
 impl SearchPapers {
+    /// Create with default configuration and no fallback.
     pub fn new(client: SemanticScholarClient) -> Self {
         Self { client, config: SearchToolConfig::default(), fallback: None, ranker: None }
     }
 
+    /// Create with custom configuration and no fallback.
     pub fn with_config(client: SemanticScholarClient, config: SearchToolConfig) -> Self {
         Self { client, config, fallback: None, ranker: None }
     }
 
+    /// Create with custom configuration and OpenAlex/Crossref fallback.
     pub fn with_fallback(client: SemanticScholarClient, config: SearchToolConfig, fallback: FallbackClients) -> Self {
         Self { client, config, fallback: Some(fallback), ranker: None }
     }
@@ -281,11 +294,13 @@ pub fn format_paper_detail(paper: &ResearchPaper) -> String {
 
 // ─── GetPaperDetail ──────────────────────────────────────────────────────────
 
+/// Deserialized arguments for the `get_paper_detail` tool call.
 #[derive(Deserialize, Serialize)]
 pub struct PaperDetailArgs {
     pub paper_id: String,
 }
 
+/// Agent tool: fetch full details for a single paper by ID or DOI.
 pub struct GetPaperDetail {
     client: SemanticScholarClient,
     config: SearchToolConfig,
@@ -293,14 +308,17 @@ pub struct GetPaperDetail {
 }
 
 impl GetPaperDetail {
+    /// Create with default configuration and no fallback.
     pub fn new(client: SemanticScholarClient) -> Self {
         Self { client, config: SearchToolConfig::default(), fallback: None }
     }
 
+    /// Create with custom configuration and no fallback.
     pub fn with_config(client: SemanticScholarClient, config: SearchToolConfig) -> Self {
         Self { client, config, fallback: None }
     }
 
+    /// Create with custom configuration and OpenAlex/Crossref fallback.
     pub fn with_fallback(client: SemanticScholarClient, config: SearchToolConfig, fallback: FallbackClients) -> Self {
         Self { client, config, fallback: Some(fallback) }
     }
@@ -340,8 +358,8 @@ impl Tool for GetPaperDetail {
         let args: PaperDetailArgs = serde_json::from_value(args).map_err(|e| e.to_string())?;
 
         // Try DOI-based lookup via OpenAlex/Crossref first (no rate limits).
-        let doi = if args.paper_id.starts_with("DOI:") {
-            Some(args.paper_id.strip_prefix("DOI:").unwrap().to_string())
+        let doi = if let Some(stripped) = args.paper_id.strip_prefix("DOI:") {
+            Some(stripped.to_string())
         } else if args.paper_id.starts_with("10.") {
             Some(args.paper_id.clone())
         } else {
@@ -388,22 +406,26 @@ impl Tool for GetPaperDetail {
 
 // ─── GetRecommendations ─────────────────────────────────────────────────────
 
+/// Deserialized arguments for the `get_recommendations` tool call.
 #[derive(Deserialize, Serialize)]
 pub struct RecommendationsArgs {
     pub paper_id: String,
     pub limit: Option<u32>,
 }
 
+/// Agent tool: get SPECTER2-based paper recommendations from Semantic Scholar.
 pub struct GetRecommendations {
     client: SemanticScholarClient,
     config: SearchToolConfig,
 }
 
 impl GetRecommendations {
+    /// Create with default configuration.
     pub fn new(client: SemanticScholarClient) -> Self {
         Self { client, config: SearchToolConfig::default() }
     }
 
+    /// Create with custom configuration.
     pub fn with_config(client: SemanticScholarClient, config: SearchToolConfig) -> Self {
         Self { client, config }
     }

@@ -6,7 +6,7 @@
     "dev": "turbo run dev",
     "dev:h": "turbo run dev --filter=agentic-healthcare & cd apps/agentic-healthcare/langgraph && uv run uvicorn chat_server:app --port 8001 --reload",
     "dev:l": "turbo run dev --filter=law-adversarial",
-    "dev:n": "turbo run dev --filter=nomadically.work",
+    "dev:n": "turbo run dev --filter=lead-gen",
     "dev:r": "turbo run dev --filter=research-thera",
     "dev:b": "turbo run dev --filter=vadim.blog",
     "dev:re": "turbo run dev --filter=real-estate & cd apps/real-estate/analyzer && uv run uvicorn server:app --port 8005 --reload",

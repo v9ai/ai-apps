@@ -1,3 +1,3 @@
 pub mod store;
 
-pub use store::VectorStore;
+pub use store::{SearchFilter, SearchResult, VectorStore};

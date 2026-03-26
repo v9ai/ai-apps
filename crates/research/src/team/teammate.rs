@@ -11,7 +11,7 @@ use crate::embeddings::Ranker;
 use crate::tools::{FallbackClients, GetPaperDetail, GetRecommendations, SearchPapers, SearchToolConfig};
 use crate::SemanticScholarClient;
 
-use super::mailbox::{Mailbox, MessageKind, TeamMessage};
+use super::mailbox::{Mailbox, MessageKind, StatusPhase, StatusReport, TeamMessage};
 use super::task::SharedTaskList;
 
 /// Maximum total characters for injected context (~100K tokens, safe under DeepSeek's 131K limit).
@@ -57,7 +57,7 @@ impl Teammate {
         }
     }
 
-    /// Run the work loop: claim → inject context → run agent → report → loop.
+    /// Run the work loop: claim -> inject context -> run agent -> report -> loop.
     pub async fn run(self) -> Result<()> {
         loop {
             // Try to claim a task.
@@ -78,9 +78,18 @@ impl Teammate {
                 worker = %self.worker_id,
                 task_id = task.id,
                 subject = %task.subject,
+                priority = ?task.priority,
+                attempt = task.attempt,
                 "claimed task"
             );
 
+            self.mailbox.send_status(&self.worker_id, StatusReport {
+                task_id: task.id,
+                phase: StatusPhase::Started,
+                message: format!("Starting task {}: {}", task.id, task.subject),
+            });
+
+            // Also send the legacy StatusUpdate for backward compatibility with lead monitor.
             self.mailbox.send(TeamMessage {
                 from: self.worker_id.clone(),
                 kind: MessageKind::StatusUpdate(format!(
@@ -89,6 +98,9 @@ impl Teammate {
                 )),
                 timestamp: std::time::Instant::now(),
             });
+
+            // Report progress: building context
+            self.tasks.update_progress(task.id, 10, Some("building context".into()));
 
             // Build context from dependency findings only (not all completed tasks).
             let prior = truncate_context(
@@ -107,6 +119,14 @@ impl Teammate {
                 }
                 ctx
             };
+
+            // Report progress: running agent
+            self.tasks.update_progress(task.id, 20, Some("running agent".into()));
+            self.mailbox.send_status(&self.worker_id, StatusReport {
+                task_id: task.id,
+                phase: StatusPhase::Progress { percent: 20 },
+                message: "Running LLM agent".into(),
+            });
 
             // Build and run the agent.
             let scholar = match &self.config.scholar_rate_limiter {
@@ -168,24 +188,61 @@ impl Teammate {
                         from: self.worker_id.clone(),
                         kind: MessageKind::Finding {
                             task_id: task.id,
-                            summary,
+                            summary: summary.clone(),
                         },
                         timestamp: std::time::Instant::now(),
+                    });
+                    self.mailbox.send_status(&self.worker_id, StatusReport {
+                        task_id: task.id,
+                        phase: StatusPhase::Completed,
+                        message: summary,
                     });
                     info!(worker = %self.worker_id, task_id = task.id, "completed task");
                 }
                 Err(e) => {
                     let err_msg = format!("{e:#}");
-                    self.tasks.fail(task.id, err_msg.clone());
-                    self.mailbox.send(TeamMessage {
-                        from: self.worker_id.clone(),
-                        kind: MessageKind::Error(format!(
-                            "Task {} failed: {err_msg}",
-                            task.id
-                        )),
-                        timestamp: std::time::Instant::now(),
-                    });
-                    info!(worker = %self.worker_id, task_id = task.id, "task failed: {e:#}");
+                    let retry_backoff = self.tasks.fail(task.id, err_msg.clone());
+                    if let Some(backoff) = retry_backoff {
+                        let backoff_secs = backoff.as_secs();
+                        self.mailbox.send_status(&self.worker_id, StatusReport {
+                            task_id: task.id,
+                            phase: StatusPhase::Retrying {
+                                attempt: task.attempt + 1,
+                                backoff_secs,
+                            },
+                            message: format!("Retrying after {backoff_secs}s: {err_msg}"),
+                        });
+                        self.mailbox.send(TeamMessage {
+                            from: self.worker_id.clone(),
+                            kind: MessageKind::Error(format!(
+                                "Task {} failed (will retry in {backoff_secs}s): {err_msg}",
+                                task.id
+                            )),
+                            timestamp: std::time::Instant::now(),
+                        });
+                        info!(
+                            worker = %self.worker_id,
+                            task_id = task.id,
+                            backoff_secs,
+                            "task failed, retrying after backoff"
+                        );
+                        tokio::time::sleep(backoff).await;
+                    } else {
+                        self.mailbox.send_status(&self.worker_id, StatusReport {
+                            task_id: task.id,
+                            phase: StatusPhase::Failed,
+                            message: err_msg.clone(),
+                        });
+                        self.mailbox.send(TeamMessage {
+                            from: self.worker_id.clone(),
+                            kind: MessageKind::Error(format!(
+                                "Task {} permanently failed: {err_msg}",
+                                task.id
+                            )),
+                            timestamp: std::time::Instant::now(),
+                        });
+                        info!(worker = %self.worker_id, task_id = task.id, "task permanently failed: {e:#}");
+                    }
                 }
             }
         }

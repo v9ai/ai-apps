@@ -117,7 +117,7 @@ fn investigation_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         // ── t2: Regime Investigation (no deps) ─────────────────────────────
         ResearchTask {
@@ -147,7 +147,7 @@ fn investigation_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         // ── t3: Execution/Config Investigation (no deps) ───────────────────
         ResearchTask {
@@ -176,7 +176,7 @@ fn investigation_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         // ── t4: Strategy/Research Investigation (no deps) ──────────────────
         ResearchTask {
@@ -212,7 +212,7 @@ fn investigation_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         // ── t5: Synthesis (depends on t1-t4) ───────────────────────────────
         ResearchTask {
@@ -239,7 +239,7 @@ fn investigation_tasks() -> Vec<ResearchTask> {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![1, 2, 3, 4],
-            result: None,
+            ..Default::default()
         },
     ]
 }
@@ -328,6 +328,8 @@ async fn main() -> Result<()> {
         output_dir: Some(output_dir.clone()),
         synthesis_provider: None,
         ranker: None,
+        timeout_check_interval: None,
+        progress_report_interval: None,
     });
 
     let result = lead.run(tasks).await?;

@@ -7,7 +7,7 @@ A pnpm + Turborepo monorepo containing AI-powered web apps, shared Rust crates, 
 ```mermaid
 graph TD
     subgraph apps["Apps"]
-        NOM["nomadically.work\nRemote EU job board"]
+        NOM["lead-gen\nRemote EU job board"]
         HC["agentic-healthcare\nBlood test intelligence"]
         LAW["law-adversarial\nLegal brief stress-tester"]
         RT["research-thera\nTherapeutic research"]
@@ -100,7 +100,7 @@ flowchart LR
 | [`agentic-healthcare`](apps/agentic-healthcare) | Longitudinal blood test intelligence — clinical ratio tracking, health trajectories, AI Q&A | Next.js, Neon/Drizzle, S3/Unstructured, LangGraph, Qwen, promptfoo + deepeval evals |
 | [`knowledge`](apps/knowledge) | Knowledge management with AI agent evaluation | Next.js, Neon/Drizzle, Radix UI, deepeval evals |
 | [`law-adversarial`](apps/law-adversarial) | Legal brief stress-tester with adversarial multi-agent debate (Attacker -> Defender -> Judge) | Next.js, Supabase, DeepSeek R1 + Qwen Plus, D3, promptfoo evals |
-| [`nomadically.work`](apps/nomadically.work) | Remote EU job board aggregator with AI classification, CRM, and a multi-worker pipeline | Next.js 16, Neon, Apollo/GraphQL, CF Workers (TS + Rust/WASM + Python), Trigger.dev, Langfuse, LlamaIndex, Vanilla Extract, ReactFlow |
+| [`lead-gen`](apps/lead-gen) | Remote EU job board aggregator with AI classification, CRM, and a multi-worker pipeline | Next.js 16, Neon, Apollo/GraphQL, CF Workers (TS + Rust/WASM + Python), Trigger.dev, Langfuse, LlamaIndex, Vanilla Extract, ReactFlow |
 | [`podcasts`](apps/podcasts) | Humans of AI — editorial profiles of 90+ AI researchers and founders | Next.js, PandaCSS, CrewAI backend, RSS/JSON feeds, OG images, search, compare view |
 | [`real-estate`](apps/real-estate) | Property intelligence platform — analyzer, cashflow, due diligence, portfolio, pipeline, AI advisor chat | Next.js, Neon/Drizzle/pgvector, Leaflet, Recharts, TanStack Table, FastAPI analyzer backend, deepeval evals |
 | [`research-thera`](apps/research-thera) | Multi-source therapeutic research platform (Crossref, PubMed, Semantic Scholar, OpenAlex, arXiv, Europe PMC) | Next.js, Mastra AI agents, Apollo/GraphQL, Neon/pgvector, Trigger.dev, Cloudflare R2/D1, better-auth, OpenAI TTS |
@@ -146,7 +146,7 @@ flowchart LR
 pnpm install
 
 # Dev servers
-pnpm dev:n          # Nomadically     — http://localhost:3000
+pnpm dev:n          # Lead-Gen        — http://localhost:3000
 pnpm dev:p          # Podcasts
 pnpm dev:re         # Real Estate     — frontend + FastAPI analyzer on :8005
 

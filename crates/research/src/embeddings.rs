@@ -1,9 +1,13 @@
+//! Semantic embedding and re-ranking of research papers.
+//!
+//! Defines the [`Ranker`] trait and provides [`EmbeddingRanker`], an API-based
+//! implementation using Qwen's `text-embedding-v4` via DashScope. For a local
+//! alternative, see [`crate::local_embeddings::LocalRanker`] (requires `local-vector`).
+
 use anyhow::{Context, Result};
 use tracing::info;
 
 use crate::paper::ResearchPaper;
-
-// ─── Ranker trait ────────────────────────────────────────────────────────────
 
 /// Unified interface for semantic re-ranking of research papers.
 ///

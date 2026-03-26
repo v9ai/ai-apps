@@ -238,7 +238,7 @@ fn task_list_resumes_from_saved_files() {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 2,
@@ -248,7 +248,7 @@ fn task_list_resumes_from_saved_files() {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 3,
@@ -258,7 +258,7 @@ fn task_list_resumes_from_saved_files() {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![1],
-            result: None,
+            ..Default::default()
         },
     ];
 
@@ -297,7 +297,7 @@ fn task_list_resume_skips_empty_files() {
         status: TaskStatus::Pending,
         owner: None,
         dependencies: vec![],
-        result: None,
+        ..Default::default()
     }];
 
     let task_list = SharedTaskList::new(tasks);
@@ -319,7 +319,7 @@ fn reset_failed_tasks() {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
         ResearchTask {
             id: 2,
@@ -329,7 +329,7 @@ fn reset_failed_tasks() {
             status: TaskStatus::Pending,
             owner: None,
             dependencies: vec![],
-            result: None,
+            ..Default::default()
         },
     ];
 
