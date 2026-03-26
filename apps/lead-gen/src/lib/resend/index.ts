@@ -18,5 +18,4 @@ export type {
 } from "./resend-adapter";
 
 export { ResendEmailAdapter, resend, createResendAdapter } from "./resend-adapter";
-export * from "./resume-config";
 export * from "./sync-service";

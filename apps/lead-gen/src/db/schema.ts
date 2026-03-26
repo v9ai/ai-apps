@@ -609,23 +609,6 @@ export type ContactEmail = typeof contactEmails.$inferSelect;
 export type NewContactEmail = typeof contactEmails.$inferInsert;
 
 
-// Resumes (skill profile uploads)
-export const resumes = pgTable("resumes", {
-  id: text("id").primaryKey(), // UUID
-  user_id: text("user_id").notNull(),
-  filename: text("filename"),
-  raw_text: text("raw_text"),
-  created_at: text("created_at")
-    .notNull()
-    .default(sql`now()::text`),
-  updated_at: text("updated_at")
-    .notNull()
-    .default(sql`now()::text`),
-});
-
-export type Resume = typeof resumes.$inferSelect;
-export type NewResume = typeof resumes.$inferInsert;
-
 // Tasks (CRM — personal task management linked to entities)
 export const tasks = pgTable(
   "tasks",
