@@ -9,7 +9,7 @@ use research::tools::SearchToolConfig;
 
 const DEFAULT_BASE_URL: &str = "https://api.deepseek.com";
 const SCRAPUS_DIR: &str =
-    "/Users/vadimnicolai/Public/ai-apps/apps/nomadically.work/scrapus";
+    "/Users/vadimnicolai/Public/ai-apps/apps/lead-gen/scrapus";
 
 /// Module data: (name, path, readme, prior_research).
 struct Module {

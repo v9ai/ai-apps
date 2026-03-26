@@ -23,7 +23,6 @@ from typing import Dict, List, Optional, Tuple
 import hashlib
 
 import numpy as np
-import httpx
 from abc import ABC, abstractmethod
 
 
@@ -249,102 +248,89 @@ Respond ONLY with valid JSON:
 
 class Judge(ABC):
     """Abstract base class for LLM judges."""
-    
+
     @abstractmethod
-    def evaluate(
+    async def evaluate(
         self,
         summary: str,
         source_data: str,
         icp_profile: str,
-        report_id: str
+        report_id: str,
     ) -> JudgmentScore:
         """Evaluate a report and return structured scores."""
-        pass
-    
+        ...
+
     @abstractmethod
     def get_name(self) -> str:
         """Get the judge's model name."""
-        pass
+        ...
 
 
 class OllamaJudge(Judge):
-    """LLM judge via Ollama API."""
-    
+    """Async LLM judge via the centralised OllamaClient."""
+
     def __init__(
         self,
         model_name: str,
+        ollama_client: "OllamaClient" = None,
         ollama_base_url: str = "http://localhost:11434",
         temperature: float = 0.1,
-        top_p: float = 0.9,
         timeout: int = 60,
     ):
         self.model_name = model_name
-        self.ollama_base_url = ollama_base_url
         self.temperature = temperature
-        self.top_p = top_p
         self.timeout = timeout
-        self.endpoint = f"{ollama_base_url}/api/generate"
-        self._verify_connectivity()
-    
-    def _verify_connectivity(self):
-        """Check if Ollama is running and model is available."""
-        try:
-            with httpx.Client(timeout=5.0) as client:
-                response = client.get(f"{self.ollama_base_url}/api/tags")
-            models = [m['name'] for m in response.json().get('models', [])]
-            if self.model_name not in models:
-                raise RuntimeError(
-                    f"Model {self.model_name} not found in Ollama. "
-                    f"Available: {models}"
-                )
-        except RuntimeError:
-            raise
-        except Exception as e:
-            raise RuntimeError(
-                f"Cannot connect to Ollama at {self.ollama_base_url}: {e}"
+
+        if ollama_client is not None:
+            self._client = ollama_client
+        else:
+            from ollama_client import OllamaClient
+            self._client = OllamaClient(
+                base_url=ollama_base_url, timeout=float(timeout),
             )
-    
-    def evaluate(
+
+    async def verify_connectivity(self) -> None:
+        """Check if Ollama is running and model is available."""
+        healthy = await self._client.health_check()
+        if not healthy:
+            raise RuntimeError(
+                f"Cannot connect to Ollama at {self._client.base_url}"
+            )
+        has = await self._client.has_model(self.model_name)
+        if not has:
+            models = await self._client.list_models()
+            raise RuntimeError(
+                f"Model {self.model_name} not found in Ollama. Available: {models}"
+            )
+
+    async def evaluate(
         self,
         summary: str,
         source_data: str,
         icp_profile: str,
-        report_id: str
+        report_id: str,
     ) -> JudgmentScore:
-        """Call Ollama API and parse structured JSON response."""
+        """Call Ollama via async OllamaClient and parse structured JSON."""
         prompt = JUDGE_PROMPT_TEMPLATE.format(
             source_data=source_data,
             icp_profile=icp_profile,
-            summary=summary
+            summary=summary,
         )
-        
+
         start_time = time.perf_counter()
-        
+
         try:
-            with httpx.Client(timeout=float(self.timeout)) as client:
-                response = client.post(
-                    self.endpoint,
-                    json={
-                        'model': self.model_name,
-                        'prompt': prompt,
-                        'stream': False,
-                        'options': {
-                            'temperature': self.temperature,
-                            'top_p': self.top_p,
-                            'num_predict': 500,
-                        }
-                    },
-                )
-            response.raise_for_status()
-            
-            result = response.json()
-            raw_response = result['response']
-            
-            # Parse JSON from response (may contain markdown code blocks)
+            result = await self._client.generate(
+                prompt,
+                model=self.model_name,
+                max_tokens=500,
+                temperature=self.temperature,
+            )
+            raw_response = result.text
             parsed = self._extract_json(raw_response)
-            
+
             latency_ms = (time.perf_counter() - start_time) * 1000
-            
+
             return JudgmentScore(
                 judge_name=self.model_name,
                 report_id=report_id,
@@ -357,7 +343,7 @@ class OllamaJudge(Judge):
                 explanation=parsed.get('explanation', ''),
                 confidence=float(parsed.get('confidence', 0.5)),
                 latency_ms=latency_ms,
-                raw_response=raw_response
+                raw_response=raw_response,
             )
         except Exception as e:
             raise RuntimeError(f"Ollama judge error: {e}")
@@ -611,23 +597,22 @@ class JudgeEnsemble:
             for dim in EVALUATION_RUBRIC.keys()
         }
     
-    def evaluate_summary(
+    async def evaluate_summary(
         self,
         summary: str,
         source_data: str,
         icp_profile: str,
-        report_id: str
+        report_id: str,
     ) -> ConsensusResult:
-        """
-        Evaluate summary with ensemble and return consensus.
-        
+        """Evaluate summary with ensemble and return consensus.
+
         Sequential judging: if first 2 judges agree within threshold, skip 3rd.
         """
         judgments = []
         start_time = time.perf_counter()
-        
+
         for i, judge in enumerate(self.judges):
-            judgment = judge.evaluate(summary, source_data, icp_profile, report_id)
+            judgment = await judge.evaluate(summary, source_data, icp_profile, report_id)
             judgments.append(judgment)
             
             # Early stopping: check agreement after 2 judges

@@ -47,7 +47,7 @@ async fn main() -> Result<()> {
         "## Monorepo Reference\n\n\
          This is a pnpm monorepo deployed on Vercel. All apps are Next.js web apps:\n\
          - apps/knowledge/ — port 3003\n\
-         - apps/nomadically.work/ — port 3004\n\
+         - apps/lead-gen/ — port 3004\n\
          - apps/research-thera/ — port 3005\n\
          - apps/scalping/ — port 3006\n\
          - apps/todo/ — port 3007 (THIS APP)\n\n\

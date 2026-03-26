@@ -3,7 +3,6 @@
 import {
   ExclamationTriangleIcon,
   EnvelopeClosedIcon,
-  GearIcon,
   PersonIcon,
   TargetIcon,
   CheckboxIcon,
@@ -59,12 +58,6 @@ export function AdminNav() {
         <Flex align="center" gap="2">
           <ExclamationTriangleIcon width={14} height={14} style={{ color: "var(--orange-9)" }} />
           reported
-        </Flex>
-      </NavLink>
-      <NavLink href="/admin/workers" title="Workers">
-        <Flex align="center" gap="2">
-          <GearIcon width={14} height={14} />
-          workers
         </Flex>
       </NavLink>
     </>

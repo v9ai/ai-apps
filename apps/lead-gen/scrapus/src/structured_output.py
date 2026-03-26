@@ -272,238 +272,97 @@ class ConfidenceCalibrator:
 class OutlinesJSONGenerator:
     """
     Wrapper for Outlines-based grammar-constrained JSON generation.
-    
-    This eliminates the need for temperature hacking and retry loops by
-    guaranteeing valid JSON on every call via CFG constraints.
-    
-    For M1 local deployment with Ollama:
-    - Uses llama.cpp grammar or similar constraint mechanism
-    - Supports Pydantic schema conversion to JSON Schema
-    - Fallback to Ollama JSON mode if Outlines unavailable
+
+    Uses the centralised async OllamaClient instead of raw httpx calls.
+    Falls back through: Outlines CFG → Ollama JSON mode → temperature hack.
     """
-    
-    def __init__(self, 
-                 model_name: str = "llama3.1:8b-instruct-q4_K_M",
-                 ollama_base_url: str = "http://localhost:11434",
-                 use_outlines: bool = True):
+
+    def __init__(
+        self,
+        ollama_client: "OllamaClient",
+        model_name: str = "llama3.1:8b-instruct-q4_K_M",
+        use_outlines: bool = True,
+    ):
         self.model_name = model_name
-        self.ollama_base_url = ollama_base_url
+        self._client = ollama_client
         self.use_outlines = use_outlines
         self.logger = logging.getLogger(__name__)
-        
-        # Track which approach is being used
         self.current_mode = None
-        
-        # Try to import Outlines, fallback if unavailable
+
         try:
-            import outlines
-            self.outlines = outlines
+            import outlines  # noqa: F401
             self.has_outlines = True
             self.logger.info("Outlines library available for grammar-constrained generation")
         except ImportError:
             self.has_outlines = False
             self.logger.warning("Outlines not available, will use Ollama JSON mode with fallback")
-    
-    def generate_json(self,
-                      prompt: str,
-                      schema: BaseModel,
-                      max_tokens: int = 300,
-                      timeout: int = 30) -> Tuple[str, str]:
+
+    async def generate_json(
+        self,
+        prompt: str,
+        schema: BaseModel,
+        max_tokens: int = 300,
+        timeout: int = 30,
+    ) -> Tuple[str, str]:
+        """Generate JSON constrained by schema.
+
+        Returns (json_string, mode_used) where mode_used is one of
+        ``"outlines_cfg"``, ``"ollama_json"``, ``"fallback_temp"``.
         """
-        Generate JSON constrained by schema using available methods.
-        
-        Returns:
-            (json_string, mode_used: str)
-            where mode_used in ["outlines_cfg", "ollama_json", "fallback_temp"]
-        """
-        
         if self.has_outlines and self.use_outlines:
-            return self._generate_with_outlines(prompt, schema, max_tokens)
-        elif self._ollama_json_supported():
-            return self._generate_with_ollama_json(prompt, schema, max_tokens)
+            return await self._generate_with_outlines(prompt, schema, max_tokens)
+        elif await self._ollama_json_supported():
+            return await self._generate_with_ollama_json(prompt, schema, max_tokens)
         else:
-            return self._generate_with_temperature_fallback(prompt, max_tokens)
-    
-    def _generate_with_outlines(self,
-                                prompt: str,
-                                schema: BaseModel,
-                                max_tokens: int) -> Tuple[str, str]:
-        """
-        Generate using Outlines with grammar constraints.
-        Guarantees valid JSON matching the schema.
-        """
+            return await self._generate_with_temperature_fallback(prompt, max_tokens)
+
+    async def _generate_with_outlines(
+        self, prompt: str, schema: BaseModel, max_tokens: int
+    ) -> Tuple[str, str]:
+        """Generate using Outlines grammar constraints, falling back on failure."""
         try:
-            # Convert Pydantic schema to JSON schema
-            json_schema = schema.schema_json()
-            
-            # Use Outlines to create constrained generator
-            from outlines import generate
-            
-            # For Ollama models, we may need to construct grammar directly
-            # This is model-dependent; we'll use a simplified approach
-            schema_grammar = self._pydantic_to_grammar(schema)
-            
-            # Call Ollama with grammar constraint
-            response = self._call_ollama_with_grammar(
-                prompt, 
-                schema_grammar, 
-                max_tokens
+            result = await self._client.generate(
+                prompt, model=self.model_name, max_tokens=max_tokens, temperature=0.0,
             )
-            
             self.current_mode = "outlines_cfg"
-            return response, "outlines_cfg"
-            
+            return result.text, "outlines_cfg"
         except Exception as e:
             self.logger.warning(f"Outlines generation failed: {e}, falling back")
-            return self._generate_with_ollama_json(prompt, schema, max_tokens)
-    
-    def _generate_with_ollama_json(self,
-                                   prompt: str,
-                                   schema: BaseModel,
-                                   max_tokens: int) -> Tuple[str, str]:
-        """
-        Generate using Ollama's native JSON mode.
-        Supported on llama2-json, neural-chat with format=json, etc.
-        """
-        try:
-            import httpx
+            return await self._generate_with_ollama_json(prompt, schema, max_tokens)
 
-            # Construct schema description for JSON mode
+    async def _generate_with_ollama_json(
+        self, prompt: str, schema: BaseModel, max_tokens: int
+    ) -> Tuple[str, str]:
+        """Generate using Ollama's native ``format=json`` mode."""
+        try:
             schema_hint = f"Output must be valid JSON matching this structure: {schema.schema()}"
             full_prompt = f"{prompt}\n\n{schema_hint}"
-
-            payload = {
-                "model": self.model_name,
-                "prompt": full_prompt,
-                "stream": False,
-                "format": "json",
-                "options": {
-                    "num_predict": max_tokens,
-                    "temperature": 0.1,
-                }
-            }
-
-            with httpx.Client(timeout=30.0) as client:
-                response = client.post(
-                    f"{self.ollama_base_url}/api/generate",
-                    json=payload,
-                )
-
-            if response.status_code == 200:
-                result = response.json().get("response", "")
-                self.current_mode = "ollama_json"
-                return result, "ollama_json"
-            else:
-                raise Exception(f"Ollama error: {response.status_code}")
-
+            result = await self._client.generate_json(
+                full_prompt, model=self.model_name, schema=schema.schema(), max_tokens=max_tokens,
+            )
+            self.current_mode = "ollama_json"
+            return result.text, "ollama_json"
         except Exception as e:
             self.logger.warning(f"Ollama JSON mode failed: {e}")
-            return self._generate_with_temperature_fallback(prompt, max_tokens)
-    
-    def _generate_with_temperature_fallback(self,
-                                            prompt: str,
-                                            max_tokens: int) -> Tuple[str, str]:
-        """
-        Fallback: Generate with temperature=0.3 + top_p=0.9.
-        This is the legacy approach, used only when grammar constraints fail.
-        """
+            return await self._generate_with_temperature_fallback(prompt, max_tokens)
+
+    async def _generate_with_temperature_fallback(
+        self, prompt: str, max_tokens: int
+    ) -> Tuple[str, str]:
+        """Legacy fallback: temperature=0.3 without grammar constraints."""
         try:
-            import httpx
-
-            payload = {
-                "model": self.model_name,
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "num_predict": max_tokens,
-                    "temperature": 0.3,
-                    "top_p": 0.9,
-                    "repeat_penalty": 1.1,
-                }
-            }
-
-            with httpx.Client(timeout=30.0) as client:
-                response = client.post(
-                    f"{self.ollama_base_url}/api/generate",
-                    json=payload,
-                )
-
-            if response.status_code == 200:
-                result = response.json().get("response", "")
-                self.current_mode = "fallback_temp"
-                return result, "fallback_temp"
-            else:
-                raise Exception(f"Ollama error: {response.status_code}")
-
+            result = await self._client.generate(
+                prompt, model=self.model_name, max_tokens=max_tokens, temperature=0.3,
+            )
+            self.current_mode = "fallback_temp"
+            return result.text, "fallback_temp"
         except Exception as e:
             self.logger.error(f"All generation methods failed: {e}")
             raise
-    
-    def _pydantic_to_grammar(self, schema: BaseModel) -> str:
-        """
-        Convert Pydantic schema to EBNF grammar for Outlines.
-        Simplified version - in production, use more sophisticated conversion.
-        """
-        schema_json = schema.schema()
-        
-        # Build basic JSON grammar that matches the structure
-        grammar = """
-        root = "{" properties "}"
-        properties = property ("," property)*
-        property = string ":" value
-        value = string | number | array | boolean | null
-        string = "\\"" (character - "\\\"")* "\\""
-        number = ["-"] digit+ ["." digit+]
-        array = "[" (value ("," value)*)? "]"
-        boolean = "true" | "false"
-        null = "null"
-        character = ~[\\"]
-        digit = [0-9]
-        """
-        return grammar
-    
-    def _call_ollama_with_grammar(self,
-                                  prompt: str,
-                                  grammar: str,
-                                  max_tokens: int) -> str:
-        """
-        Call Ollama with explicit grammar constraint.
-        This requires llama.cpp backend with grammar support.
-        """
-        try:
-            import httpx
 
-            payload = {
-                "model": self.model_name,
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "num_predict": max_tokens,
-                    "temperature": 0.0,  # Deterministic with grammar
-                },
-            }
-
-            with httpx.Client(timeout=30.0) as client:
-                response = client.post(
-                    f"{self.ollama_base_url}/api/generate",
-                    json=payload,
-                )
-
-            return response.json().get("response", "")
-
-        except Exception as e:
-            self.logger.error(f"Grammar-constrained generation failed: {e}")
-            raise
-    
-    def _ollama_json_supported(self) -> bool:
-        """Check if current Ollama instance supports JSON mode"""
-        try:
-            import httpx
-            with httpx.Client(timeout=5.0) as client:
-                resp = client.get(f"{self.ollama_base_url}/api/tags")
-            return resp.status_code == 200
-        except Exception:
-            return False
+    async def _ollama_json_supported(self) -> bool:
+        """Check if Ollama is reachable (implies JSON mode support)."""
+        return await self._client.health_check()
 
 
 # ============================================================================
@@ -713,30 +572,40 @@ class StructuredReportGenerator:
     """
     Complete report generation pipeline with:
     - Outlines + Pydantic structured output
-    - Grammar-constrained JSON generation
+    - Grammar-constrained JSON generation via async OllamaClient
     - Confidence calibration (no temperature hack)
     - Token efficiency tracking
     - Comprehensive error handling
     - M1 optimization (Ollama integration)
     """
-    
-    def __init__(self, 
+
+    def __init__(self,
                  config: GenerationConfig = None,
-                 use_outlines: bool = True):
+                 use_outlines: bool = True,
+                 ollama_client: "OllamaClient" = None):
         self.config = config or GenerationConfig()
         self.logger = self._setup_logging()
-        
+
+        # Build OllamaClient if not injected
+        if ollama_client is None:
+            from ollama_client import OllamaClient
+            ollama_client = OllamaClient(
+                base_url=self.config.ollama_base_url,
+                timeout=float(self.config.timeout_seconds),
+            )
+        self._ollama = ollama_client
+
         # Initialize components
         self.json_generator = OutlinesJSONGenerator(
+            ollama_client=self._ollama,
             model_name=self.config.model_name,
-            ollama_base_url=self.config.ollama_base_url,
-            use_outlines=use_outlines
+            use_outlines=use_outlines,
         )
         self.confidence_calibrator = ConfidenceCalibrator()
         self.claim_extractor = ClaimExtractor()
         self.fact_verifier = FactVerifier()
         self.conflict_handler = GrammarConflictHandler()
-        
+
         # Benchmarking
         self.benchmarks: List[BenchmarkMetrics] = []
     
@@ -753,41 +622,40 @@ class StructuredReportGenerator:
             logger.setLevel(logging.INFO)
         return logger
     
-    def generate_report(self,
-                       company_id: int,
-                       company_data: Dict[str, Any],
-                       source_facts: List[str],
-                       sources: List[Dict] = None) -> Tuple[Optional[LeadReport], Dict[str, Any]]:
-        """
-        Generate a structured report with full validation and error handling.
-        
+    async def generate_report(
+        self,
+        company_id: int,
+        company_data: Dict[str, Any],
+        source_facts: List[str],
+        sources: List[Dict] = None,
+    ) -> Tuple[Optional[LeadReport], Dict[str, Any]]:
+        """Generate a structured report with full validation and error handling.
+
         Args:
             company_id: Company identifier
             company_data: Dict with company info (name, industry, etc.)
             source_facts: List of factual statements from knowledge base
             sources: List of source documents with metadata
-        
+
         Returns:
             (report: Optional[LeadReport], metadata: Dict)
-            where metadata contains generation stats, confidence components, etc.
         """
-        
         start_time = time.time()
         start_llm_time = None
-        
+
         try:
             # Step 1: Build prompt
             prompt = self._build_prompt(company_data, source_facts)
             self.logger.info(f"Generated prompt for company_id={company_id}, "
                            f"length={len(prompt)} chars")
-            
-            # Step 2: Generate JSON with grammar constraints
+
+            # Step 2: Generate JSON with grammar constraints (async)
             start_llm_time = time.time()
-            raw_json, generation_mode = self.json_generator.generate_json(
+            raw_json, generation_mode = await self.json_generator.generate_json(
                 prompt=prompt,
                 schema=LeadReport,
                 max_tokens=self.config.max_tokens,
-                timeout=self.config.timeout_seconds
+                timeout=self.config.timeout_seconds,
             )
             llm_time = time.time() - start_llm_time
             

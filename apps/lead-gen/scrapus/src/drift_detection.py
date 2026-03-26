@@ -1097,11 +1097,10 @@ class AlertRouter:
         conn.commit()
         conn.close()
 
-    def send_alert(self, severity: DriftSeverity, message: str,
-                   detector_name: Optional[str] = None,
-                   drift_detected: bool = False) -> bool:
-        """
-        Log alert to SQLite and optionally send to webhook.
+    async def send_alert(self, severity: DriftSeverity, message: str,
+                         detector_name: Optional[str] = None,
+                         drift_detected: bool = False) -> bool:
+        """Log alert to SQLite and optionally send to webhook.
 
         Args:
             severity: Alert severity level
@@ -1127,7 +1126,7 @@ class AlertRouter:
         webhook_sent = False
         if self.webhook_url and severity.value >= DriftSeverity.MEDIUM.value:
             try:
-                webhook_sent = self._send_webhook(severity, message, detector_name)
+                webhook_sent = await self._send_webhook(severity, message, detector_name)
             except Exception as e:
                 logger.error(f"Failed to send webhook alert: {e}")
 
@@ -1138,9 +1137,9 @@ class AlertRouter:
 
         return True
 
-    def _send_webhook(self, severity: DriftSeverity, message: str,
-                      detector_name: Optional[str]) -> bool:
-        """Send alert to webhook endpoint."""
+    async def _send_webhook(self, severity: DriftSeverity, message: str,
+                            detector_name: Optional[str]) -> bool:
+        """Send alert to webhook endpoint (async)."""
         payload = {
             'severity': severity.name,
             'message': message,
@@ -1149,8 +1148,8 @@ class AlertRouter:
         }
 
         try:
-            with httpx.Client(timeout=5.0) as client:
-                response = client.post(self.webhook_url, json=payload)
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.post(self.webhook_url, json=payload)
             return response.status_code == 200
         except Exception as e:
             logger.error(f"Webhook send failed: {e}")
@@ -1260,10 +1259,9 @@ class DriftDetectionSystem:
         self.alert_router = AlertRouter(db_path, webhook_url)
         self.fp_analyzer = FalsePositiveAnalyzer(db_path)
 
-    def run_full_drift_check(self, reference_data: Dict[str, np.ndarray],
-                            current_data: Dict[str, np.ndarray]) -> Dict[str, Any]:
-        """
-        Execute complete drift detection pipeline.
+    async def run_full_drift_check(self, reference_data: Dict[str, np.ndarray],
+                                  current_data: Dict[str, np.ndarray]) -> Dict[str, Any]:
+        """Execute complete drift detection pipeline.
 
         Args:
             reference_data: Reference dataset statistics
@@ -1299,11 +1297,11 @@ class DriftDetectionSystem:
                 f"{ensemble_result.num_detectors_signaling} detectors signaling. "
                 f"Detectors: {', '.join(triggered_detectors)}"
             )
-            self.alert_router.send_alert(
+            await self.alert_router.send_alert(
                 ensemble_result.severity,
                 message,
                 detector_name=triggered_detectors[0] if triggered_detectors else None,
-                drift_detected=True
+                drift_detected=True,
             )
 
         elapsed = (time.perf_counter() - t0) * 1000
