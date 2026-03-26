@@ -71,7 +71,7 @@ function StageConnector() {
 
 export function LandingHero() {
   return (
-    <Section size="3" style={{ paddingTop: 64, paddingBottom: 64 }}>
+    <Section size="3" className="landing-hero-section" style={{ paddingTop: 64, paddingBottom: 64 }}>
       <Container size="3">
         {/* --- top badge --- */}
         <Flex justify="center" mb="5">
