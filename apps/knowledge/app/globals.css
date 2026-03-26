@@ -2300,54 +2300,27 @@ body {
 /* ================================================================
    APPLICATIONS PAGE
    ================================================================ */
-.apps-page {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 32px 24px 64px;
+.app-row:hover {
+  background-color: var(--gray-2) !important;
 }
-.apps-topbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
+.tab-shortcut-hint {
+  font-size: 10px;
+  color: var(--gray-8);
+  font-family: var(--font-mono, monospace);
 }
-.apps-topbar > :last-child {
-  margin-left: auto;
+.collapsible-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease;
 }
-.apps-back {
-  font-size: 13px;
-  color: var(--gray-9);
-  text-decoration: none;
+.collapsible-open {
+  max-height: 9999px;
 }
-.apps-back:hover {
-  color: var(--accent-11);
+.deep-dive-content pre {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
-.apps-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.apps-card {
-  transition: border-color 0.15s;
-}
-.apps-card:hover {
-  border-color: var(--accent-7);
-}
-.apps-link {
-  font-size: 12px;
-  color: var(--accent-11);
-  text-decoration: none;
-}
-.apps-link:hover {
-  text-decoration: underline;
-}
-.apps-keyword-link {
-  color: var(--accent-11);
-  text-decoration: none;
-  border-bottom: 1px dashed var(--accent-8);
-  transition: border-color 0.15s;
-}
-.apps-keyword-link:hover {
-  border-bottom-style: solid;
-  border-color: var(--accent-11);
+.interview-prep-md {
+  font-size: var(--font-size-2);
+  line-height: 1.7;
 }

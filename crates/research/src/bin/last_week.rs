@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, HashSet};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use chrono::{Duration, Utc};
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use futures::future::join_all;
 use serde::Serialize;
 use tokio::task::JoinHandle;
@@ -16,6 +16,9 @@ use research::openalex::OpenAlexClient;
 use research::paper::{PaperSource, ResearchPaper};
 use research::scholar::types::SEARCH_FIELDS;
 use research::scholar::SemanticScholarClient;
+use research::team::{LlmProvider, ResearchTask, TaskPriority, TeamConfig, TeamLead};
+
+// ── Shared constants ────────────────────────────────────────────────────────
 
 const AI_CATEGORIES: &[&str] = &[
     "cs.AI", "cs.CL", "cs.CV", "cs.LG", "cs.MA", "cs.RO", "cs.IR", "cs.SE", "cs.CR", "stat.ML",
@@ -32,53 +35,83 @@ const AI_TOPICS: &[&str] = &[
     "AI agent",
 ];
 
+const DEFAULT_DEEPSEEK_BASE_URL: &str = "https://api.deepseek.com";
+const AUTHORS_OUT_DIR: &str = "research-output/last-week-authors";
+
+// ── CLI ─────────────────────────────────────────────────────────────────────
+
 #[derive(Parser)]
 #[command(
-    name = "last-week-papers",
-    about = "Fetch last week's AI research papers from arXiv, Semantic Scholar, OpenAlex, Crossref, and CORE"
+    name = "last-week",
+    about = "Last week's AI research: paper discovery and author tracking"
 )]
 struct Cli {
-    /// Look-back window in days
-    #[arg(long, default_value_t = 7)]
-    days: u32,
-
-    /// Max papers per arXiv category
-    #[arg(long, default_value_t = 500)]
-    limit: u32,
-
-    /// Output as JSON
-    #[arg(long)]
-    json: bool,
-
-    /// Skip persisting to LanceDB (papers are stored by default)
-    #[arg(long)]
-    no_store: bool,
-
-    /// LanceDB storage path
-    #[arg(long, default_value = "paper-discovery-db")]
-    db: String,
-
-    /// Batch size for LanceDB ingestion (bounded memory)
-    #[arg(long, default_value_t = 256)]
-    batch_size: usize,
-
-    /// Sources to fetch from (comma-separated: arxiv,scholar,openalex,crossref,core)
-    /// Default: all sources
-    #[arg(long, default_value = "arxiv,scholar,openalex,crossref,core")]
-    sources: String,
-
-    /// Search existing papers instead of fetching new ones
-    #[arg(long)]
-    query: Option<String>,
-
-    /// Number of results for query mode
-    #[arg(long, default_value_t = 20)]
-    top_k: usize,
-
-    /// Minimum citations filter for query mode
-    #[arg(long)]
-    min_citations: Option<u32>,
+    #[command(subcommand)]
+    command: Command,
 }
+
+#[derive(Subcommand)]
+enum Command {
+    /// Fetch last week's AI papers from arXiv, Semantic Scholar, OpenAlex, Crossref, and CORE
+    Papers {
+        /// Look-back window in days
+        #[arg(long, default_value_t = 7)]
+        days: u32,
+
+        /// Max papers per arXiv category
+        #[arg(long, default_value_t = 500)]
+        limit: u32,
+
+        /// Output as JSON
+        #[arg(long)]
+        json: bool,
+
+        /// Skip persisting to LanceDB (papers are stored by default)
+        #[arg(long)]
+        no_store: bool,
+
+        /// LanceDB storage path
+        #[arg(long, default_value = "paper-discovery-db")]
+        db: String,
+
+        /// Batch size for LanceDB ingestion (bounded memory)
+        #[arg(long, default_value_t = 256)]
+        batch_size: usize,
+
+        /// Sources to fetch from (comma-separated: arxiv,scholar,openalex,crossref,core)
+        #[arg(long, default_value = "arxiv,scholar,openalex,crossref,core")]
+        sources: String,
+
+        /// Search existing papers instead of fetching new ones
+        #[arg(long)]
+        query: Option<String>,
+
+        /// Number of results for query mode
+        #[arg(long, default_value_t = 20)]
+        top_k: usize,
+
+        /// Minimum citations filter for query mode
+        #[arg(long)]
+        min_citations: Option<u32>,
+    },
+
+    /// Track who is publishing AI research via a DeepSeek agent team
+    Authors {
+        /// DeepSeek API key (defaults to DEEPSEEK_API_KEY env var)
+        #[arg(long)]
+        api_key: Option<String>,
+
+        /// DeepSeek base URL
+        #[arg(long)]
+        base_url: Option<String>,
+
+        /// Output directory
+        #[arg(long, default_value = AUTHORS_OUT_DIR)]
+        output_dir: String,
+    },
+}
+
+// ── Papers types ────────────────────────────────────────────────────────────
 
 #[derive(Serialize)]
 struct RunStats {
@@ -120,28 +153,78 @@ impl PaperSummary {
     }
 }
 
+// ── Main ────────────────────────────────────────────────────────────────────
+
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
+    dotenvy::dotenv().ok();
     let cli = Cli::parse();
 
+    match cli.command {
+        Command::Papers {
+            days,
+            limit,
+            json,
+            no_store,
+            db,
+            batch_size,
+            sources,
+            query,
+            top_k,
+            min_citations,
+        } => {
+            run_papers(days, limit, json, no_store, db, batch_size, sources, query, top_k, min_citations).await
+        }
+        Command::Authors {
+            api_key,
+            base_url,
+            output_dir,
+        } => {
+            let api_key = api_key
+                .or_else(|| std::env::var("DEEPSEEK_API_KEY").ok())
+                .context("DEEPSEEK_API_KEY must be set (env or --api-key)")?;
+            let base_url = base_url
+                .or_else(|| std::env::var("DEEPSEEK_BASE_URL").ok())
+                .unwrap_or_else(|| DEFAULT_DEEPSEEK_BASE_URL.to_string());
+            run_authors(api_key, base_url, output_dir).await
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Papers subcommand
+// ═══════════════════════════════════════════════════════════════════════════
+
+async fn run_papers(
+    days: u32,
+    limit: u32,
+    json: bool,
+    no_store: bool,
+    db: String,
+    batch_size: usize,
+    sources: String,
+    query: Option<String>,
+    top_k: usize,
+    min_citations: Option<u32>,
+) -> Result<()> {
     // ── Query mode: search existing LanceDB ─────────────────────────
-    if let Some(ref query_text) = cli.query {
+    if let Some(ref query_text) = query {
         use research::local_embeddings::EmbeddingEngine;
         use research::vector::{SearchFilter, VectorStore};
 
         let engine = EmbeddingEngine::new(candle_core::Device::Cpu)?;
-        let store = VectorStore::connect(&cli.db, engine).await?;
+        let store = VectorStore::connect(&db, engine).await?;
 
         let filter = SearchFilter {
             year_min: None,
             year_max: None,
             source: None,
-            min_citations: cli.min_citations,
+            min_citations,
         };
 
         let results = store
-            .search_papers_filtered(query_text, cli.top_k, &filter)
+            .search_papers_filtered(query_text, top_k, &filter)
             .await?;
 
         println!("Found {} results for \"{}\":\n", results.len(), query_text);
@@ -173,25 +256,24 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
-    let sources: HashSet<&str> = cli.sources.split(',').map(|s| s.trim()).collect();
+    let source_set: HashSet<&str> = sources.split(',').map(|s| s.trim()).collect();
 
     let now = Utc::now();
-    let from = now - Duration::days(cli.days as i64);
+    let from = now - Duration::days(days as i64);
     let year_str = from.format("%Y").to_string();
 
     println!(
         "Fetching AI papers from {} to {} ({} days)\nSources: {}\n",
         from.format("%Y-%m-%d"),
         now.format("%Y-%m-%d"),
-        cli.days,
-        cli.sources,
+        days,
+        sources,
     );
 
     let mut handles: Vec<JoinHandle<Vec<PaperSummary>>> = Vec::new();
 
     // ── arXiv ───────────────────────────────────────────────────────
-    if sources.contains("arxiv") {
-        let limit = cli.limit;
+    if source_set.contains("arxiv") {
         let from_str = from.format("%Y%m%d").to_string();
         let to_str = now.format("%Y%m%d").to_string();
         handles.push(tokio::spawn(async move {
@@ -200,7 +282,7 @@ async fn main() -> Result<()> {
     }
 
     // ── Semantic Scholar ────────────────────────────────────────────
-    if sources.contains("scholar") {
+    if source_set.contains("scholar") {
         let year = year_str.clone();
         let from_iso = from.format("%Y-%m-%d").to_string();
         handles.push(tokio::spawn(async move {
@@ -209,7 +291,7 @@ async fn main() -> Result<()> {
     }
 
     // ── OpenAlex ────────────────────────────────────────────────────
-    if sources.contains("openalex") {
+    if source_set.contains("openalex") {
         let from_iso = from.format("%Y-%m-%d").to_string();
         handles.push(tokio::spawn(async move {
             fetch_openalex(&from_iso).await
@@ -217,7 +299,7 @@ async fn main() -> Result<()> {
     }
 
     // ── Crossref ────────────────────────────────────────────────────
-    if sources.contains("crossref") {
+    if source_set.contains("crossref") {
         let from_iso = from.format("%Y-%m-%d").to_string();
         handles.push(tokio::spawn(async move {
             fetch_crossref(&from_iso).await
@@ -225,7 +307,7 @@ async fn main() -> Result<()> {
     }
 
     // ── CORE ────────────────────────────────────────────────────────
-    if sources.contains("core") {
+    if source_set.contains("core") {
         let year = year_str.clone();
         handles.push(tokio::spawn(async move {
             fetch_core(&year).await
@@ -273,7 +355,7 @@ async fn main() -> Result<()> {
 
     println!();
 
-    if cli.json {
+    if json {
         println!("{}", serde_json::to_string_pretty(&all)?);
     } else {
         // Group by source
@@ -316,15 +398,11 @@ async fn main() -> Result<()> {
         );
     }
 
-    if !cli.no_store {
+    if !no_store {
         use research::local_embeddings::EmbeddingEngine;
         use research::vector::VectorStore;
 
         let week_tag = format!("weekly:{}", now.format("%G-W%V"));
-
-        // TODO: add `published_date: Option<String>` to ResearchPaper to preserve full date (s.published)
-        // TODO: add `primary_category: Option<String>` to ResearchPaper to preserve s.primary_category
-        // TODO: add `categories: Option<Vec<String>>` to ResearchPaper to preserve s.categories
 
         let papers: Vec<ResearchPaper> = all
             .iter()
@@ -338,7 +416,6 @@ async fn main() -> Result<()> {
                     _ => PaperSource::Arxiv,
                 };
 
-                // Construct a proper URL based on source, falling back to pdf_url
                 let url = match paper_source {
                     PaperSource::Arxiv => {
                         Some(format!("https://arxiv.org/abs/{}", s.source_id))
@@ -350,7 +427,6 @@ async fn main() -> Result<()> {
                         ))
                     }
                     PaperSource::OpenAlex | PaperSource::Crossref | PaperSource::Core => {
-                        // Use DOI URL if available, otherwise fall back to pdf_url
                         s.doi
                             .as_ref()
                             .map(|doi| format!("https://doi.org/{doi}"))
@@ -358,11 +434,8 @@ async fn main() -> Result<()> {
                     }
                 };
 
-                // Preserve raw categories alongside enrichment tags
                 let fields_of_study = Some({
-                    // Raw categories first (preserves original data)
                     let mut f: Vec<String> = s.categories.clone();
-                    // Enrichment tags for filtering
                     f.extend(s.categories.iter().map(|c| format!("field:{c}")));
                     if !s.primary_category.is_empty() {
                         f.push(format!("primary:{}", s.primary_category));
@@ -399,10 +472,10 @@ async fn main() -> Result<()> {
             })
             .collect();
 
-        println!("\nStoring {} papers to LanceDB ({})...", papers.len(), cli.db);
+        println!("\nStoring {} papers to LanceDB ({})...", papers.len(), db);
         let engine = EmbeddingEngine::new(candle_core::Device::Cpu)?;
-        let store = VectorStore::connect(&cli.db, engine).await?;
-        let count = store.add_papers_batched(&papers, cli.batch_size).await?;
+        let store = VectorStore::connect(&db, engine).await?;
+        let count = store.add_papers_batched(&papers, batch_size).await?;
         println!("Indexed {count} papers (tagged: {week_tag})");
 
         // ── Chunk abstracts for fine-grained search ──────────────────
@@ -462,7 +535,7 @@ async fn main() -> Result<()> {
             chunks_indexed,
         };
 
-        let stats_path = format!("{}/run-stats-{}.json", cli.db, now.format("%Y%m%d-%H%M%S"));
+        let stats_path = format!("{}/run-stats-{}.json", db, now.format("%Y%m%d-%H%M%S"));
         std::fs::write(&stats_path, serde_json::to_string_pretty(&stats)?)?;
 
         println!("\n╔══════════════════════════════════════╗");
@@ -487,7 +560,262 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-// ── arXiv fetcher ───────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Authors subcommand
+// ═══════════════════════════════════════════════════════════════════════════
+
+fn author_preamble() -> String {
+    "You are a bibliometrics researcher specialising in tracking who is publishing \
+     cutting-edge AI research. For every paper you find, extract and highlight: \
+     (1) full author names, (2) institutional affiliations when available, \
+     (3) whether they are first/last/corresponding author, \
+     (4) notable collaboration patterns (cross-institution, industry-academia). \
+     Format your findings in Markdown with author names in **bold**. \
+     Focus on papers from the last 7 days."
+        .into()
+}
+
+fn author_tasks() -> Vec<ResearchTask> {
+    let week = "last 7 days";
+
+    vec![
+        ResearchTask {
+            id: 1,
+            subject: "llm-authors".into(),
+            description: format!(
+                "Search for papers published in the {week} on large language models (LLMs), \
+                 including GPT, Claude, Gemini, Llama, DeepSeek, Qwen variants. \
+                 For each paper found, list ALL author names and their affiliations. \
+                 Identify the most prolific authors (appearing on 2+ papers) and \
+                 which labs/companies they belong to. Note any new first-time LLM authors."
+            ),
+            preamble: author_preamble(),
+            priority: TaskPriority::Critical,
+            ..Default::default()
+        },
+        ResearchTask {
+            id: 2,
+            subject: "vision-diffusion-authors".into(),
+            description: format!(
+                "Search for papers published in the {week} on computer vision, \
+                 image generation, diffusion models, and video generation. \
+                 Extract ALL author names and affiliations. \
+                 Identify key research groups (Stability AI, Midjourney, Google DeepMind vision team, \
+                 Meta FAIR vision). Flag any cross-lab collaborations."
+            ),
+            preamble: author_preamble(),
+            priority: TaskPriority::Normal,
+            ..Default::default()
+        },
+        ResearchTask {
+            id: 3,
+            subject: "rl-robotics-authors".into(),
+            description: format!(
+                "Search for papers published in the {week} on reinforcement learning, \
+                 robot learning, embodied AI, and sim-to-real transfer. \
+                 Extract ALL author names and affiliations. \
+                 Identify which robotics labs are most active this week \
+                 (Berkeley, CMU, Stanford, MIT, Google DeepMind, Toyota Research, etc.)."
+            ),
+            preamble: author_preamble(),
+            priority: TaskPriority::Normal,
+            ..Default::default()
+        },
+        ResearchTask {
+            id: 4,
+            subject: "multimodal-authors".into(),
+            description: format!(
+                "Search for papers published in the {week} on multimodal AI, \
+                 vision-language models, audio-language models, and multi-modal reasoning. \
+                 Extract ALL author names and affiliations. \
+                 Track which teams are leading multimodal research this week."
+            ),
+            preamble: author_preamble(),
+            priority: TaskPriority::Normal,
+            ..Default::default()
+        },
+        ResearchTask {
+            id: 5,
+            subject: "ai-agents-authors".into(),
+            description: format!(
+                "Search for papers published in the {week} on AI agents, \
+                 tool-use, function calling, agentic workflows, and autonomous systems. \
+                 Extract ALL author names and affiliations. \
+                 Identify emerging researchers in the agentic AI space."
+            ),
+            preamble: author_preamble(),
+            priority: TaskPriority::Critical,
+            ..Default::default()
+        },
+        ResearchTask {
+            id: 6,
+            subject: "safety-alignment-authors".into(),
+            description: format!(
+                "Search for papers published in the {week} on AI safety, alignment, \
+                 RLHF, constitutional AI, red-teaming, and interpretability. \
+                 Extract ALL author names and affiliations. \
+                 Identify which safety labs are publishing (Anthropic, OpenAI safety, \
+                 DeepMind alignment, MIRI, ARC, Redwood Research)."
+            ),
+            preamble: author_preamble(),
+            priority: TaskPriority::Normal,
+            ..Default::default()
+        },
+        ResearchTask {
+            id: 7,
+            subject: "efficiency-scaling-authors".into(),
+            description: format!(
+                "Search for papers published in the {week} on model efficiency, \
+                 quantization, distillation, pruning, mixture-of-experts, \
+                 and scaling laws. Extract ALL author names and affiliations. \
+                 Track which hardware/efficiency labs are most active."
+            ),
+            preamble: author_preamble(),
+            priority: TaskPriority::Normal,
+            ..Default::default()
+        },
+        ResearchTask {
+            id: 8,
+            subject: "nlp-ir-authors".into(),
+            description: format!(
+                "Search for papers published in the {week} on NLP, information retrieval, \
+                 RAG, search, embeddings, and text understanding. \
+                 Extract ALL author names and affiliations. \
+                 Identify the most active NLP research groups this week."
+            ),
+            preamble: author_preamble(),
+            priority: TaskPriority::Normal,
+            ..Default::default()
+        },
+        ResearchTask {
+            id: 9,
+            subject: "graph-geometric-authors".into(),
+            description: format!(
+                "Search for papers published in the {week} on graph neural networks, \
+                 geometric deep learning, molecular AI, and protein folding. \
+                 Extract ALL author names and affiliations. \
+                 Note any cross-disciplinary collaborations (CS + biology/chemistry)."
+            ),
+            preamble: author_preamble(),
+            priority: TaskPriority::Normal,
+            ..Default::default()
+        },
+        ResearchTask {
+            id: 10,
+            subject: "author-landscape-synthesis".into(),
+            description: format!(
+                "Based on findings from all previous tasks, produce a comprehensive \
+                 author landscape report for the {week}: \
+                 (1) Top 20 most prolific authors across all AI domains, \
+                 (2) Most active institutions/labs ranked by paper count, \
+                 (3) Notable industry-academia collaborations, \
+                 (4) Emerging researchers (first-time or recently-active authors with high-impact work), \
+                 (5) Cross-domain authors appearing in multiple research areas, \
+                 (6) Geographic distribution of AI research output. \
+                 Present as a structured Markdown report with tables where appropriate."
+            ),
+            preamble: "You are a science-of-science researcher producing a weekly intelligence \
+                 briefing on who is driving AI research. Synthesise the teammate findings into \
+                 a clear, data-driven author landscape report."
+                .into(),
+            priority: TaskPriority::Critical,
+            dependencies: vec![1, 2, 3, 4, 5, 6, 7, 8, 9],
+            ..Default::default()
+        },
+    ]
+}
+
+async fn run_authors(api_key: String, base_url: String, output_dir: String) -> Result<()> {
+    let scholar_key = std::env::var("SEMANTIC_SCHOLAR_API_KEY").ok();
+
+    std::fs::create_dir_all(&output_dir)
+        .with_context(|| format!("creating output dir {output_dir}"))?;
+
+    let tasks = author_tasks();
+    let team_size = 10;
+    eprintln!(
+        "Launching last-week-authors team: {team_size} workers, {} tasks\n",
+        tasks.len()
+    );
+
+    let lead = TeamLead::new(TeamConfig {
+        team_size,
+        provider: LlmProvider::DeepSeek { api_key, base_url },
+        scholar_key,
+        code_root: None,
+        synthesis_preamble: Some(
+            "You are a bibliometrics analyst producing a weekly AI author intelligence report. \
+             Synthesise all agent findings into a unified view of who is publishing what, \
+             collaboration patterns, and emerging talent."
+                .into(),
+        ),
+        synthesis_prompt_template: Some(
+            r#"# Author Landscape Synthesis — Last Week in AI Research
+
+You have received findings from {count} research agents, each tracking author names
+and affiliations in a different AI domain over the past week.
+
+Produce a **master author landscape report** with:
+
+1. **Top Authors** — ranked by paper count across all domains
+2. **Lab Leaderboard** — institutions ranked by output volume
+3. **Collaboration Heatmap** — which labs co-author most frequently
+4. **Rising Stars** — newly prolific or first-time authors with notable work
+5. **Cross-Domain Bridges** — authors publishing in 2+ domains simultaneously
+6. **Industry vs Academia Split** — ratio and key players on each side
+7. **Geographic Hotspots** — where AI research is concentrated this week
+
+## Agent Findings
+
+{combined}
+"#
+            .into(),
+        ),
+        tool_config: None,
+        scholar_concurrency: Some(3),
+        mailto: std::env::var("RESEARCH_MAILTO").ok(),
+        output_dir: Some(output_dir.clone()),
+        synthesis_provider: None,
+        ranker: None,
+        timeout_check_interval: None,
+        progress_report_interval: None,
+    });
+
+    let result = lead.run(tasks).await?;
+
+    for (id, subject, content) in &result.findings {
+        let path = format!("{output_dir}/agent-{id:02}-{subject}.md");
+        std::fs::write(&path, content).with_context(|| format!("writing {path}"))?;
+        eprintln!("  wrote {path} ({} bytes)", content.len());
+    }
+
+    let synthesis_path = format!("{output_dir}/synthesis.md");
+    std::fs::write(&synthesis_path, &result.synthesis)
+        .with_context(|| format!("writing {synthesis_path}"))?;
+    eprintln!(
+        "  wrote {synthesis_path} ({} bytes)",
+        result.synthesis.len()
+    );
+
+    let mut combined = String::from("# Last Week in AI — Author Landscape Report\n\n");
+    for (id, subject, content) in &result.findings {
+        combined.push_str(&format!("## Agent {id}: {subject}\n\n{content}\n\n---\n\n"));
+    }
+    combined.push_str("## Synthesis\n\n");
+    combined.push_str(&result.synthesis);
+
+    let combined_path = format!("{output_dir}/last-week-authors-complete.md");
+    std::fs::write(&combined_path, &combined)
+        .with_context(|| format!("writing {combined_path}"))?;
+    eprintln!("  wrote {combined_path} ({} bytes)", combined.len());
+
+    eprintln!("\nDone.");
+    Ok(())
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Paper source fetchers
+// ═══════════════════════════════════════════════════════════════════════════
 
 async fn fetch_arxiv(from_str: &str, to_str: &str, limit: u32) -> Vec<PaperSummary> {
     let dr = match DateRange::new(from_str, to_str) {
@@ -553,8 +881,6 @@ async fn fetch_arxiv(from_str: &str, to_str: &str, limit: u32) -> Vec<PaperSumma
     papers
 }
 
-// ── Semantic Scholar fetcher ────────────────────────────────────────────────
-
 async fn fetch_scholar(year: &str, from_date: &str) -> Vec<PaperSummary> {
     let client = SemanticScholarClient::new(None);
     let mut papers = Vec::new();
@@ -578,7 +904,6 @@ async fn fetch_scholar(year: &str, from_date: &str) -> Vec<PaperSummary> {
         match resp_opt {
             Some(resp) => {
                 let total = resp.data.len();
-                // Client-side date filter: only keep papers with publication_date >= from_date
                 let recent: Vec<_> = resp
                     .data
                     .into_iter()
@@ -617,12 +942,10 @@ async fn fetch_scholar(year: &str, from_date: &str) -> Vec<PaperSummary> {
             }
             None => {
                 eprintln!(" skipping after retries exhausted");
-                // S2 rate-limits aggressively — wait before next topic
                 tokio::time::sleep(std::time::Duration::from_secs(5)).await;
             }
         }
 
-        // Be polite to S2
         tokio::time::sleep(std::time::Duration::from_secs(3)).await;
     }
 
@@ -630,15 +953,12 @@ async fn fetch_scholar(year: &str, from_date: &str) -> Vec<PaperSummary> {
     papers
 }
 
-// ── OpenAlex fetcher ────────────────────────────────────────────────────────
-
 async fn fetch_openalex(from_date: &str) -> Vec<PaperSummary> {
     let client = OpenAlexClient::new(None);
     let mut papers = Vec::new();
 
     for topic in AI_TOPICS.iter() {
         eprint!("  OpenAlex/{topic}...");
-        // Server-side date filter via from_publication_date API param
         let label = format!("OpenAlex/{topic}");
         if let Some(resp) = retry(&label, 2, || client.search_filtered(topic, Some(from_date), 1, 100)).await {
             eprintln!(" {} papers (since {from_date})", resp.results.len());
@@ -671,15 +991,12 @@ async fn fetch_openalex(from_date: &str) -> Vec<PaperSummary> {
     papers
 }
 
-// ── Crossref fetcher ────────────────────────────────────────────────────────
-
 async fn fetch_crossref(from_date: &str) -> Vec<PaperSummary> {
     let client = CrossrefClient::new(None);
     let mut papers = Vec::new();
 
     for topic in AI_TOPICS.iter() {
         eprint!("  Crossref/{topic}...");
-        // Server-side date filter via from-pub-date API param
         let label = format!("Crossref/{topic}");
         if let Some(resp) = retry(&label, 2, || client.search_filtered(topic, Some(from_date), 100, 0)).await {
             let items = resp
@@ -717,19 +1034,15 @@ async fn fetch_crossref(from_date: &str) -> Vec<PaperSummary> {
     papers
 }
 
-// ── CORE fetcher ────────────────────────────────────────────────────────────
-
 async fn fetch_core(year: &str) -> Vec<PaperSummary> {
     let client = CoreClient::new(None);
     let mut papers = Vec::new();
 
     for topic in AI_TOPICS.iter() {
-        // CORE doesn't support date filtering in API — use year in query + client-side filter
         let query = format!("{topic} {year}");
         eprint!("  CORE/{topic}...");
         let label = format!("CORE/{topic}");
         if let Some(resp) = retry(&label, 2, || client.search(&query, 50, 0)).await {
-            // Client-side year filter (best we can do — CORE has no date API)
             let recent: Vec<_> = resp
                 .results
                 .into_iter()
@@ -768,7 +1081,9 @@ async fn fetch_core(year: &str) -> Vec<PaperSummary> {
     papers
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════════════════════
 
 fn base_arxiv_id(id: &str) -> &str {
     match id.find('v') {
