@@ -7,6 +7,7 @@ use crate::core_api::CoreWork;
 use crate::crossref::CrossrefWork;
 use crate::openalex::Work as OpenAlexWork;
 use crate::scholar::Paper;
+use crate::zenodo::ZenodoRecord;
 
 /// Which academic API a paper was fetched from.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,6 +17,7 @@ pub enum PaperSource {
     Crossref,
     Core,
     Arxiv,
+    Zenodo,
 }
 
 /// A normalised research paper that can originate from any supported source.
@@ -253,6 +255,69 @@ impl From<ArxivPaper> for ResearchPaper {
             } else {
                 Some(p.categories)
             },
+            published_date,
+            primary_category,
+            categories,
+        }
+    }
+}
+
+impl From<ZenodoRecord> for ResearchPaper {
+    fn from(r: ZenodoRecord) -> Self {
+        // Extract fields that borrow `r` before any moves.
+        let pdf_url = r.pdf_url();
+        let url = r.links.as_ref().and_then(|l| l.self_html.clone());
+        let source_id = r.id.map(|id| id.to_string()).unwrap_or_default();
+
+        let meta = r.metadata.unwrap_or_default();
+        let title = meta.title.or(r.title).unwrap_or_default();
+        let abstract_text = meta
+            .description
+            .as_deref()
+            .map(crate::zenodo::types::strip_html);
+        let authors = meta
+            .creators
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|c| c.name)
+            .collect();
+        let year = meta
+            .publication_date
+            .as_deref()
+            .and_then(|d| d.get(..4).and_then(|s| s.parse::<u32>().ok()));
+        let doi = meta.doi.or(r.doi);
+        let published_date = meta.publication_date;
+        let keywords = meta.keywords;
+        let primary_category = meta
+            .resource_type
+            .as_ref()
+            .and_then(|rt| rt.title.clone().or(rt.subtype.clone()));
+        let categories = meta
+            .resource_type
+            .map(|rt| {
+                let mut cats = Vec::new();
+                if let Some(t) = rt.resource_type {
+                    cats.push(t);
+                }
+                if let Some(s) = rt.subtype {
+                    cats.push(s);
+                }
+                cats
+            })
+            .filter(|c| !c.is_empty());
+
+        Self {
+            title,
+            abstract_text,
+            authors,
+            year,
+            doi,
+            citation_count: None,
+            url,
+            pdf_url,
+            source: PaperSource::Zenodo,
+            source_id,
+            fields_of_study: keywords,
             published_date,
             primary_category,
             categories,

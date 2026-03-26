@@ -12,13 +12,14 @@ Disk: ~700 MB for 100K transitions with 784-dim states.
 Target: Apple M1 16GB, zero cloud dependency.
 """
 
+import collections
 import gc
 import logging
 import os
 import sqlite3
 import struct
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -55,6 +56,10 @@ class ReplayBufferConfig:
 
     # Maintenance
     prune_interval_steps: int = 10_000
+
+    # Batching / flush tuning
+    mmap_flush_interval: int = 100  # Flush mmap every N transitions
+    batch_commit_size: int = 100  # Deferred SQLite commit threshold
 
 
 # ======================= Segment Tree for PER ===============================
@@ -196,6 +201,19 @@ class MmapReplayBuffer:
         self._write_idx = 0
         self._size = 0
 
+        # Deferred batch commit state
+        self._pending_transitions: List[Tuple] = []  # (idx, action, reward, done, priority, now, now)
+        self._pending_urls: List[Tuple] = []  # (url, idx, now)
+        self._adds_since_mmap_flush = 0
+
+        # Performance tracking
+        self._perf_add_times: collections.deque = collections.deque(maxlen=1000)
+        self._perf_sample_times: collections.deque = collections.deque(maxlen=1000)
+        self._perf_flush_count = 0
+        self._perf_total_committed = 0
+        self._perf_commit_count = 0
+        self._perf_mmap_flush_count = 0
+
         # Restore state from SQLite if resuming
         self._restore_state()
 
@@ -300,6 +318,7 @@ class MmapReplayBuffer:
         Returns:
             The buffer index where the transition was stored.
         """
+        t_start = time.monotonic()
         idx = self._write_idx
 
         # Write state vectors to mmap (zero-copy on read)
@@ -317,38 +336,125 @@ class MmapReplayBuffer:
         self.sum_tree.update(idx, priority)
 
         now = time.time()
-        self._conn.execute(
-            """
-            INSERT OR REPLACE INTO transitions
-                (idx, action, reward, done, priority, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (idx, action, reward, int(done), priority, now, now),
+        self._pending_transitions.append(
+            (idx, action, reward, int(done), priority, now, now)
         )
 
         if url is not None:
-            self._conn.execute(
-                """
-                INSERT OR IGNORE INTO pending_rewards
-                    (url, replay_idx, crawled_at)
-                VALUES (?, ?, ?)
-                """,
-                (url, idx, now),
-            )
+            self._pending_urls.append((url, idx, now))
 
         # Advance write pointer
         self._write_idx = (self._write_idx + 1) % self.config.capacity
         self._size = min(self._size + 1, self.config.capacity)
 
-        # Flush to mmap
-        self._states_mmap.flush()
-        self._next_states_mmap.flush()
+        # Flush mmap every mmap_flush_interval transitions
+        self._adds_since_mmap_flush += 1
+        if self._adds_since_mmap_flush >= self.config.mmap_flush_interval:
+            self._states_mmap.flush()
+            self._next_states_mmap.flush()
+            self._adds_since_mmap_flush = 0
+            self._perf_mmap_flush_count += 1
+
+        # Deferred batch commit
+        if len(self._pending_transitions) >= self.config.batch_commit_size:
+            self._batch_commit_pending()
 
         # Periodically persist state
         if self._size % 500 == 0:
             self._save_state()
 
+        self._perf_add_times.append(time.monotonic() - t_start)
         return idx
+
+    def add_batch(
+        self,
+        states: np.ndarray,
+        actions: np.ndarray,
+        rewards: np.ndarray,
+        next_states: np.ndarray,
+        dones: np.ndarray,
+        td_errors: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """Add a batch of transitions efficiently.
+
+        Args:
+            states: (B, state_dim) float32.
+            actions: (B,) integer action indices.
+            rewards: (B,) scalar rewards.
+            next_states: (B, state_dim) float32.
+            dones: (B,) boolean/int episode termination flags.
+            td_errors: (B,) optional initial TD errors for priority.
+
+        Returns:
+            (B,) array of buffer indices where transitions were stored.
+        """
+        t_start = time.monotonic()
+        batch_size = states.shape[0]
+        indices = np.empty(batch_size, dtype=np.int64)
+        now = time.time()
+
+        # Compute contiguous write indices (handle wraparound)
+        start_idx = self._write_idx
+        raw_indices = np.arange(start_idx, start_idx + batch_size) % self.config.capacity
+        indices[:] = raw_indices
+
+        # Single mmap write for the entire batch
+        states_f32 = states.astype(np.float32)
+        next_states_f32 = next_states.astype(np.float32)
+        for i, idx in enumerate(raw_indices):
+            self._states_mmap[idx] = states_f32[i]
+            self._next_states_mmap[idx] = next_states_f32[i]
+
+        # Compute priorities
+        max_prio = self.sum_tree.max_priority()
+        if max_prio == 0.0:
+            max_prio = 1.0
+
+        rows_to_insert = []
+        for i in range(batch_size):
+            idx = int(raw_indices[i])
+            if td_errors is not None:
+                priority = (abs(float(td_errors[i])) + self.config.priority_epsilon) ** self.config.alpha
+            else:
+                priority = max_prio
+
+            self.sum_tree.update(idx, priority)
+            rows_to_insert.append(
+                (idx, int(actions[i]), float(rewards[i]), int(dones[i]), priority, now, now)
+            )
+
+        # Single SQLite executemany for all transitions
+        self._conn.executemany(
+            """
+            INSERT OR REPLACE INTO transitions
+                (idx, action, reward, done, priority, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows_to_insert,
+        )
+        self._conn.commit()
+        self._perf_total_committed += batch_size
+        self._perf_commit_count += 1
+
+        # Update write pointer
+        self._write_idx = (start_idx + batch_size) % self.config.capacity
+        self._size = min(self._size + batch_size, self.config.capacity)
+
+        # Single flush at the end
+        self._states_mmap.flush()
+        self._next_states_mmap.flush()
+        self._perf_mmap_flush_count += 1
+
+        # Persist state
+        self._save_state()
+
+        elapsed = time.monotonic() - t_start
+        # Record per-transition time for stats consistency
+        per_item = elapsed / batch_size if batch_size > 0 else elapsed
+        for _ in range(batch_size):
+            self._perf_add_times.append(per_item)
+
+        return indices
 
     def sample(self, batch_size: int = 64) -> Tuple[
         np.ndarray,  # states  (B, state_dim)
@@ -363,6 +469,12 @@ class MmapReplayBuffer:
 
         Returns numpy arrays ready for torch conversion.
         """
+        t_start = time.monotonic()
+
+        # Flush any pending transitions so they are visible to the query
+        if self._pending_transitions:
+            self._batch_commit_pending()
+
         if self._size < batch_size:
             raise ValueError(
                 f"Buffer has {self._size} entries, need {batch_size}"
@@ -397,15 +509,20 @@ class MmapReplayBuffer:
         )
 
         # Fetch states from mmap (zero-copy: OS handles paging)
-        states = np.array(self._states_mmap[indices])
-        next_states = np.array(self._next_states_mmap[indices])
+        # Pre-allocate output arrays
+        states = np.empty((batch_size, self.config.state_dim), dtype=np.float32)
+        next_states = np.empty((batch_size, self.config.state_dim), dtype=np.float32)
+        states[:] = self._states_mmap[indices]
+        next_states[:] = self._next_states_mmap[indices]
 
-        # Fetch scalar metadata from SQLite
-        placeholders = ",".join("?" * batch_size)
+        # Fetch scalar metadata from SQLite (single IN-clause query)
+        # Deduplicate indices for the query, then map back
+        unique_indices = np.unique(indices)
+        placeholders = ",".join("?" * len(unique_indices))
         rows = self._conn.execute(
             f"SELECT idx, action, reward, done FROM transitions "
-            f"WHERE idx IN ({placeholders}) ORDER BY idx",
-            tuple(int(i) for i in indices),
+            f"WHERE idx IN ({placeholders})",
+            tuple(int(i) for i in unique_indices),
         ).fetchall()
 
         # Build a lookup; handle potential ordering mismatch
@@ -425,6 +542,7 @@ class MmapReplayBuffer:
                 rewards[i] = 0.0
                 dones[i] = 1.0
 
+        self._perf_sample_times.append(time.monotonic() - t_start)
         return states, actions, rewards, next_states, dones, weights.astype(np.float32), indices
 
     def update_priorities(
@@ -432,14 +550,57 @@ class MmapReplayBuffer:
     ) -> None:
         """Update priorities after a training step."""
         now = time.time()
+        update_rows = []
         for idx, tde in zip(indices, td_errors):
             priority = (abs(tde) + self.config.priority_epsilon) ** self.config.alpha
             self.sum_tree.update(int(idx), float(priority))
-            self._conn.execute(
-                "UPDATE transitions SET priority = ?, updated_at = ? WHERE idx = ?",
-                (float(priority), now, int(idx)),
-            )
+            update_rows.append((float(priority), now, int(idx)))
+        self._conn.executemany(
+            "UPDATE transitions SET priority = ?, updated_at = ? WHERE idx = ?",
+            update_rows,
+        )
         self._conn.commit()
+
+    # ---- Batch commit infrastructure ----------------------------------------
+
+    def _batch_commit_pending(self) -> None:
+        """Flush accumulated pending transitions to SQLite in a single batch.
+
+        Reduces SQLite write amplification by grouping INSERTs into a single
+        executemany + commit instead of one commit per add() call.
+        """
+        if not self._pending_transitions:
+            return
+
+        self._conn.executemany(
+            """
+            INSERT OR REPLACE INTO transitions
+                (idx, action, reward, done, priority, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            self._pending_transitions,
+        )
+
+        if self._pending_urls:
+            self._conn.executemany(
+                """
+                INSERT OR IGNORE INTO pending_rewards
+                    (url, replay_idx, crawled_at)
+                VALUES (?, ?, ?)
+                """,
+                self._pending_urls,
+            )
+
+        self._conn.commit()
+
+        # Track performance stats
+        committed = len(self._pending_transitions)
+        self._perf_total_committed += committed
+        self._perf_commit_count += 1
+        self._perf_flush_count += 1
+
+        self._pending_transitions.clear()
+        self._pending_urls.clear()
 
     # ---- Async reward patching (credit assignment) -------------------------
 
@@ -580,6 +741,42 @@ class MmapReplayBuffer:
             "disk_mb": round(self._disk_usage_mb(), 2),
         }
 
+    def get_performance_stats(self) -> Dict[str, float]:
+        """Return rolling performance statistics.
+
+        Returns:
+            Dict with keys: adds_per_sec, samples_per_sec, flush_count,
+            avg_commit_size, mmap_flush_count.
+        """
+        add_times = list(self._perf_add_times)
+        sample_times = list(self._perf_sample_times)
+
+        if add_times:
+            avg_add = sum(add_times) / len(add_times)
+            adds_per_sec = 1.0 / avg_add if avg_add > 0 else 0.0
+        else:
+            adds_per_sec = 0.0
+
+        if sample_times:
+            avg_sample = sum(sample_times) / len(sample_times)
+            samples_per_sec = 1.0 / avg_sample if avg_sample > 0 else 0.0
+        else:
+            samples_per_sec = 0.0
+
+        avg_commit_size = (
+            self._perf_total_committed / self._perf_commit_count
+            if self._perf_commit_count > 0
+            else 0.0
+        )
+
+        return {
+            "adds_per_sec": round(adds_per_sec, 2),
+            "samples_per_sec": round(samples_per_sec, 2),
+            "flush_count": self._perf_flush_count,
+            "avg_commit_size": round(avg_commit_size, 2),
+            "mmap_flush_count": self._perf_mmap_flush_count,
+        }
+
     def _disk_usage_mb(self) -> float:
         """Estimate total disk usage of the replay buffer."""
         total = 0.0
@@ -591,8 +788,12 @@ class MmapReplayBuffer:
 
     def flush(self) -> None:
         """Flush all data to disk."""
+        # Commit any pending transitions first
+        self._batch_commit_pending()
         self._states_mmap.flush()
         self._next_states_mmap.flush()
+        self._adds_since_mmap_flush = 0
+        self._perf_mmap_flush_count += 1
         self._save_state()
         self._conn.commit()
 

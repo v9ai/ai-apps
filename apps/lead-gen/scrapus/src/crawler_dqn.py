@@ -95,6 +95,10 @@ class DQNConfig:
     epsilon_end: float = 0.01
     epsilon_decay_steps: int = 100_000
 
+    # Target update mode
+    soft_update: bool = False  # False = hard copy every target_update_freq; True = Polyak averaging every step
+    tau: float = 0.005  # Polyak averaging coefficient (only used when soft_update=True)
+
     # N-step returns
     n_step: int = 5
 
@@ -363,11 +367,13 @@ class DoubleDQNAgent:
         next_states: np.ndarray,
         dones: np.ndarray,
         is_weights: Optional[np.ndarray] = None,
-    ) -> Tuple[float, np.ndarray]:
+    ) -> Tuple[float, np.ndarray, Dict[str, Any]]:
         """One gradient step on a batch.
 
         Returns:
-            (loss_value, per_sample_td_errors)
+            (loss_value, per_sample_td_errors, extra_metrics)
+            extra_metrics contains grad_norm (L2 before clipping) and
+            was_clipped (bool, True if grad_norm exceeded grad_clip_max_norm).
         """
         dev = self.device
         states_t = torch.as_tensor(states, dtype=torch.float32, device=dev)
@@ -387,9 +393,14 @@ class DoubleDQNAgent:
 
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(
+
+        # Compute L2 gradient norm before clipping
+        grad_norm = torch.nn.utils.clip_grad_norm_(
             self.q_network.parameters(), self.config.grad_clip_max_norm
         )
+        grad_norm_val = float(grad_norm)
+        was_clipped = grad_norm_val > self.config.grad_clip_max_norm
+
         self.optimizer.step()
 
         self.train_step += 1
@@ -407,18 +418,72 @@ class DoubleDQNAgent:
         if len(self._recent_q_values) > 1000:
             self._recent_q_values = self._recent_q_values[-500:]
 
-        # Periodic target network hard-update
+        # Periodic target network update (hard or soft)
         self._maybe_update_target()
 
-        return loss_val, td_errors
+        extra_metrics: Dict[str, Any] = {
+            "grad_norm": grad_norm_val,
+            "was_clipped": was_clipped,
+        }
+
+        return loss_val, td_errors, extra_metrics
+
+    def _soft_update_target(self) -> None:
+        """Polyak averaging: target = tau * online + (1-tau) * target.
+
+        Smoother than hard copy. Reduces Q-value oscillation.
+        Lillicrap et al. 2016 (DDPG), tau=0.005.
+        """
+        for target_param, online_param in zip(
+            self.target_network.parameters(),
+            self.q_network.parameters(),
+        ):
+            target_param.data.copy_(
+                self.config.tau * online_param.data
+                + (1.0 - self.config.tau) * target_param.data
+            )
 
     def _maybe_update_target(self) -> None:
         self.update_counter += 1
-        if self.update_counter % self.config.target_update_freq == 0:
+        if self.config.soft_update:
+            self._soft_update_target()
+        elif self.update_counter % self.config.target_update_freq == 0:
             self.target_network.load_state_dict(self.q_network.state_dict())
             logger.info(
                 "Target network updated at step %d", self.update_counter
             )
+
+    # ---- Q-value diagnostics ------------------------------------------------
+
+    def get_q_value_stats(self, states: np.ndarray) -> Dict[str, float]:
+        """Compute Q-value statistics for a batch of states.
+
+        Args:
+            states: (batch, state_dim) float32 array.
+
+        Returns:
+            Dict with mean_q, max_q, min_q, q_variance, and
+            online_target_divergence.
+        """
+        states_t = torch.as_tensor(
+            states, dtype=torch.float32, device=self.device
+        )
+        with torch.no_grad():
+            online_q = self.q_network(states_t)
+            target_q = self.target_network(states_t)
+
+        online_np = online_q.cpu().numpy()
+        target_np = target_q.cpu().numpy()
+
+        return {
+            "mean_q": float(np.mean(online_np)),
+            "max_q": float(np.max(online_np)),
+            "min_q": float(np.min(online_np)),
+            "q_variance": float(np.var(online_np)),
+            "online_target_divergence": float(
+                np.mean(np.abs(online_np - target_np))
+            ),
+        }
 
     # ---- Convergence diagnostics -------------------------------------------
 

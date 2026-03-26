@@ -283,6 +283,7 @@ async fn search_papers_with_embedding_reranker() {
     let fallback = research::tools::FallbackClients {
         openalex: research::openalex::OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: research::crossref::CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let emb_client = qwen::Client::new("test-key").with_base_url(emb_server.uri());
@@ -344,6 +345,7 @@ async fn search_papers_without_ranker_preserves_original_order() {
     let fallback = research::tools::FallbackClients {
         openalex: research::openalex::OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: research::crossref::CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     // No embedding ranker.
@@ -402,6 +404,7 @@ async fn search_papers_embedding_error_falls_back_to_original_order() {
     let fallback = research::tools::FallbackClients {
         openalex: research::openalex::OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: research::crossref::CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let emb_client = qwen::Client::new("test-key").with_base_url(emb_server.uri());

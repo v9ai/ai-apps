@@ -6,6 +6,9 @@ Provides:
 2. Batch processing with configurable batch size
 3. State vector construction: 768 embed + 16 scalar features = 784 dims
 4. Memory-efficient load/unload for M1 16GB pipeline integration
+5. EmbeddingCache: LRU cache for recently computed embeddings
+6. BatchEmbeddingQueue: async queue for batching across concurrent workers
+7. StateVectorCache: URL-keyed cache for full state vectors
 
 Model: nomic-ai/nomic-embed-text-v1.5 (MLX format)
 Throughput: ~4,600 embeddings/sec on M1 (batched)
@@ -14,10 +17,14 @@ RAM: ~300 MB loaded, 0 MB when unloaded
 Target: Apple M1 16GB, zero cloud dependency.
 """
 
+import asyncio
 import gc
+import hashlib
 import logging
 import os
+import threading
 import time
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -74,6 +81,183 @@ class EmbeddingConfig:
     search_prefix: str = "search_document: "
     query_prefix: str = "search_query: "
 
+    # Embedding cache
+    cache_size: int = 10_000
+    enable_cache: bool = True
+
+
+# ======================= Embedding Cache ====================================
+
+class EmbeddingCache:
+    """LRU cache for recently computed embeddings.
+
+    Keys are derived from the first 256 characters of text (SHA-256 hash).
+    Max size defaults to 10,000 entries (~30 MB for 768-dim float32).
+    Thread-safe via a lock.
+    """
+
+    def __init__(self, max_size: int = 10_000) -> None:
+        self._max_size = max_size
+        self._cache: OrderedDict[str, np.ndarray] = OrderedDict()
+        self._lock = threading.Lock()
+        self._hits = 0
+        self._misses = 0
+        self._evictions = 0
+
+    @staticmethod
+    def _text_key(text: str) -> str:
+        """Hash first 256 chars of text for cache key."""
+        prefix = text[:256]
+        return hashlib.sha256(prefix.encode("utf-8", errors="replace")).hexdigest()
+
+    def get(self, text: str) -> Optional[np.ndarray]:
+        """Look up a cached embedding. Returns None on miss."""
+        key = self._text_key(text)
+        with self._lock:
+            if key in self._cache:
+                self._hits += 1
+                # Move to end (most recently used)
+                self._cache.move_to_end(key)
+                return self._cache[key].copy()
+            self._misses += 1
+            return None
+
+    def put(self, text: str, embedding: np.ndarray) -> None:
+        """Store an embedding in the cache, evicting LRU if at capacity."""
+        key = self._text_key(text)
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+                self._cache[key] = embedding.copy()
+                return
+            if len(self._cache) >= self._max_size:
+                self._cache.popitem(last=False)
+                self._evictions += 1
+            self._cache[key] = embedding.copy()
+
+    def cache_stats(self) -> Dict[str, int]:
+        """Return cache statistics."""
+        with self._lock:
+            return {
+                "hits": self._hits,
+                "misses": self._misses,
+                "size": len(self._cache),
+                "evictions": self._evictions,
+            }
+
+    def clear(self) -> None:
+        """Clear all cached entries and reset stats."""
+        with self._lock:
+            self._cache.clear()
+            self._hits = 0
+            self._misses = 0
+            self._evictions = 0
+
+
+# ======================= Batch Embedding Queue ==============================
+
+class BatchEmbeddingQueue:
+    """Async queue that collects embed requests and processes in batches.
+
+    Reduces per-page embedding overhead by batching across concurrent
+    crawler workers. The background task processes the queue every
+    batch_interval_ms or when batch_size is reached.
+    """
+
+    def __init__(
+        self,
+        embedder: "NomicEmbedder",
+        batch_size: int = 128,
+        batch_interval_ms: float = 10.0,
+    ) -> None:
+        self._embedder = embedder
+        self._batch_size = batch_size
+        self._batch_interval_s = batch_interval_ms / 1000.0
+        self._queue: asyncio.Queue[Tuple[str, asyncio.Future[np.ndarray]]] = (
+            asyncio.Queue()
+        )
+        self._task: Optional[asyncio.Task[None]] = None
+        self._running = False
+
+    def start(self) -> None:
+        """Start the background batch processing task."""
+        if self._running:
+            return
+        self._running = True
+        loop = asyncio.get_event_loop()
+        self._task = loop.create_task(self._process_loop())
+        logger.info(
+            "BatchEmbeddingQueue started (batch_size=%d, interval=%.1fms)",
+            self._batch_size,
+            self._batch_interval_s * 1000,
+        )
+
+    def stop(self) -> None:
+        """Stop the background processing task."""
+        self._running = False
+        if self._task is not None:
+            self._task.cancel()
+            self._task = None
+        logger.info("BatchEmbeddingQueue stopped")
+
+    async def submit(self, text: str) -> np.ndarray:
+        """Submit a single text for embedding. Returns when the batch completes.
+
+        Args:
+            text: the text to embed.
+
+        Returns:
+            (embedding_dim,) float32 array.
+        """
+        loop = asyncio.get_event_loop()
+        future: asyncio.Future[np.ndarray] = loop.create_future()
+        await self._queue.put((text, future))
+        return await future
+
+    async def _process_loop(self) -> None:
+        """Background loop: drain queue into batches and embed."""
+        while self._running:
+            batch_texts: List[str] = []
+            batch_futures: List[asyncio.Future[np.ndarray]] = []
+
+            # Wait for at least one item
+            try:
+                text, future = await asyncio.wait_for(
+                    self._queue.get(), timeout=self._batch_interval_s
+                )
+                batch_texts.append(text)
+                batch_futures.append(future)
+            except asyncio.TimeoutError:
+                continue
+
+            # Drain up to batch_size
+            deadline = time.monotonic() + self._batch_interval_s
+            while len(batch_texts) < self._batch_size:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                try:
+                    text, future = await asyncio.wait_for(
+                        self._queue.get(), timeout=remaining
+                    )
+                    batch_texts.append(text)
+                    batch_futures.append(future)
+                except asyncio.TimeoutError:
+                    break
+
+            # Process the batch
+            try:
+                embeddings = await asyncio.get_event_loop().run_in_executor(
+                    None, self._embedder.embed_texts, batch_texts
+                )
+                for idx, fut in enumerate(batch_futures):
+                    if not fut.cancelled():
+                        fut.set_result(embeddings[idx])
+            except Exception as exc:
+                for fut in batch_futures:
+                    if not fut.cancelled() and not fut.done():
+                        fut.set_exception(exc)
+
 
 # ======================= MLX Nomic Embedder =================================
 
@@ -84,6 +268,7 @@ class NomicEmbedder:
     - Batch processing at ~4,600 embeddings/sec
     - Explicit unload for pipeline memory management
     - Falls back to sentence-transformers on non-Apple or missing MLX
+    - Optional LRU embedding cache (EmbeddingCache)
     """
 
     def __init__(self, config: Optional[EmbeddingConfig] = None) -> None:
@@ -92,6 +277,11 @@ class NomicEmbedder:
         self._tokenizer: Any = None
         self._backend: str = "none"
         self._fallback_model: Any = None
+
+        # Embedding cache
+        self._cache: Optional[EmbeddingCache] = None
+        if self.config.enable_cache:
+            self._cache = EmbeddingCache(max_size=self.config.cache_size)
 
     @property
     def is_loaded(self) -> bool:
@@ -255,22 +445,149 @@ class NomicEmbedder:
         else:
             raise RuntimeError(f"Unknown backend: {self._backend}")
 
+    def embed_texts_cached(
+        self,
+        texts: List[str],
+        prefix: Optional[str] = None,
+        normalize: bool = True,
+    ) -> np.ndarray:
+        """Embed texts with LRU cache. Checks cache first, embeds only misses.
+
+        Args:
+            texts: list of text strings.
+            prefix: task prefix (e.g., "search_document: ").
+            normalize: L2-normalize output vectors.
+
+        Returns:
+            (N, embedding_dim) float32 array.
+        """
+        if self._cache is None:
+            return self.embed_texts(texts, prefix=prefix, normalize=normalize)
+
+        results: List[Optional[np.ndarray]] = []
+        texts_to_embed: List[str] = []
+        miss_indices: List[int] = []
+
+        for i, text in enumerate(texts):
+            cached = self._cache.get(text)
+            if cached is not None:
+                results.append(cached)
+            else:
+                results.append(None)
+                texts_to_embed.append(text)
+                miss_indices.append(i)
+
+        # Embed cache misses
+        if texts_to_embed:
+            new_embeddings = self.embed_texts(
+                texts_to_embed, prefix=prefix, normalize=normalize
+            )
+            for j, miss_idx in enumerate(miss_indices):
+                embedding = new_embeddings[j]
+                results[miss_idx] = embedding
+                self._cache.put(texts[miss_idx], embedding)
+
+        return np.array(results, dtype=np.float32)
+
+    def clear_cache(self) -> None:
+        """Clear the embedding cache."""
+        if self._cache is not None:
+            self._cache.clear()
+
+    def get_cache_stats(self) -> Dict[str, int]:
+        """Return embedding cache statistics."""
+        if self._cache is not None:
+            return self._cache.cache_stats()
+        return {"hits": 0, "misses": 0, "size": 0, "evictions": 0}
+
+    def estimated_memory_mb(self) -> float:
+        """Estimate total memory usage in MB (model + cache).
+
+        Model estimate: ~300 MB for MLX, ~100 MB for SBERT.
+        Cache estimate: entries * embedding_dim * 4 bytes (float32) + key overhead.
+        """
+        model_mb = 0.0
+        if self._backend == "mlx":
+            model_mb = 300.0
+        elif self._backend == "sbert":
+            model_mb = 100.0
+
+        cache_mb = 0.0
+        if self._cache is not None:
+            stats = self._cache.cache_stats()
+            # Each entry: embedding_dim * 4 bytes + ~100 bytes key/overhead
+            bytes_per_entry = self.embedding_dim * 4 + 100
+            cache_mb = (stats["size"] * bytes_per_entry) / (1024 * 1024)
+
+        return model_mb + cache_mb
+
     def _embed_mlx(
         self, texts: List[str], normalize: bool
     ) -> np.ndarray:
-        """Batch embedding via MLX."""
-        all_embeddings: List[np.ndarray] = []
-        batch_size = self.config.batch_size
+        """Batch embedding via MLX.
 
-        for i in range(0, len(texts), batch_size):
-            batch = texts[i : i + batch_size]
-            tokens = self._tokenizer(
-                batch,
+        Improvements over naive batching:
+        - Sorts texts by length before batching (reduces padding waste)
+        - Prefetches next batch tokens while current batch is processing
+        - Progress tracking for large batches (>1000 texts)
+        """
+        total = len(texts)
+        batch_size = self.config.batch_size
+        num_batches = (total + batch_size - 1) // batch_size
+        log_progress = total > 1000
+
+        # Sort by text length to reduce padding waste within batches.
+        # Track original indices so we can restore original order.
+        indexed_texts = list(enumerate(texts))
+        indexed_texts.sort(key=lambda t: len(t[1]))
+        sorted_indices = [idx for idx, _ in indexed_texts]
+        sorted_texts = [text for _, text in indexed_texts]
+
+        all_embeddings: List[np.ndarray] = []
+
+        # Prefetch: tokenize the first batch ahead of the loop
+        prefetched_tokens: Optional[Dict[str, Any]] = None
+        if total > 0:
+            first_batch = sorted_texts[:batch_size]
+            prefetched_tokens = self._tokenizer(
+                first_batch,
                 padding=True,
                 truncation=True,
                 max_length=self.config.max_seq_length,
                 return_tensors="np",
             )
+
+        for batch_idx in range(num_batches):
+            start = batch_idx * batch_size
+            end = min(start + batch_size, total)
+
+            # Use prefetched tokens for current batch
+            if prefetched_tokens is not None:
+                tokens = prefetched_tokens
+                prefetched_tokens = None
+            else:
+                batch = sorted_texts[start:end]
+                tokens = self._tokenizer(
+                    batch,
+                    padding=True,
+                    truncation=True,
+                    max_length=self.config.max_seq_length,
+                    return_tensors="np",
+                )
+
+            # Prefetch next batch tokens while current batch processes on GPU
+            next_start = end
+            next_end = min(next_start + batch_size, total)
+            next_tokens: Optional[Dict[str, Any]] = None
+            if next_start < total:
+                next_batch = sorted_texts[next_start:next_end]
+                next_tokens = self._tokenizer(
+                    next_batch,
+                    padding=True,
+                    truncation=True,
+                    max_length=self.config.max_seq_length,
+                    return_tensors="np",
+                )
 
             input_ids = mx.array(tokens["input_ids"])
             attention_mask = mx.array(tokens["attention_mask"])
@@ -300,12 +617,27 @@ class NomicEmbedder:
             emb_np = np.array(embeddings, dtype=np.float32)
             all_embeddings.append(emb_np)
 
-        result = np.concatenate(all_embeddings, axis=0)
+            # Store prefetched tokens for next iteration
+            prefetched_tokens = next_tokens
+
+            if log_progress and (batch_idx + 1) % 10 == 0:
+                processed = min(end, total)
+                logger.info(
+                    "Embedding progress: %d/%d texts (batch %d/%d)",
+                    processed, total, batch_idx + 1, num_batches,
+                )
+
+        sorted_result = np.concatenate(all_embeddings, axis=0)
 
         if normalize:
-            norms = np.linalg.norm(result, axis=1, keepdims=True)
+            norms = np.linalg.norm(sorted_result, axis=1, keepdims=True)
             norms = np.maximum(norms, 1e-12)
-            result = result / norms
+            sorted_result = sorted_result / norms
+
+        # Restore original order
+        result = np.empty_like(sorted_result)
+        for new_pos, orig_pos in enumerate(sorted_indices):
+            result[orig_pos] = sorted_result[new_pos]
 
         return result
 
@@ -423,6 +755,53 @@ class ScalarFeatures:
         return vec
 
 
+# ======================= State Vector Cache =================================
+
+class StateVectorCache:
+    """URL-keyed LRU cache for full state vectors (embedding + scalar features).
+
+    Useful when the same page is re-scored during frontier re-evaluation.
+    Max 5000 entries by default.
+    """
+
+    def __init__(self, max_size: int = 5000) -> None:
+        self._max_size = max_size
+        self._cache: OrderedDict[str, np.ndarray] = OrderedDict()
+        self._lock = threading.Lock()
+
+    def get(self, url: str) -> Optional[np.ndarray]:
+        """Look up a cached state vector by URL. Returns None on miss."""
+        with self._lock:
+            if url in self._cache:
+                self._cache.move_to_end(url)
+                return self._cache[url].copy()
+            return None
+
+    def put(self, url: str, state_vector: np.ndarray) -> None:
+        """Store a state vector keyed by URL, evicting LRU if at capacity."""
+        with self._lock:
+            if url in self._cache:
+                self._cache.move_to_end(url)
+                self._cache[url] = state_vector.copy()
+                return
+            if len(self._cache) >= self._max_size:
+                self._cache.popitem(last=False)
+            self._cache[url] = state_vector.copy()
+
+    @property
+    def size(self) -> int:
+        """Current number of cached entries."""
+        with self._lock:
+            return len(self._cache)
+
+    def clear(self) -> None:
+        """Clear all cached state vectors."""
+        with self._lock:
+            self._cache.clear()
+
+
+# ======================= State Vector Builder ===============================
+
 class StateVectorBuilder:
     """Constructs the full state vector for the DQN agent.
 
@@ -430,6 +809,9 @@ class StateVectorBuilder:
 
     If the embedder produces 384-dim (fallback mode), pads to 768 with zeros
     so the DQN input dimension stays consistent.
+
+    Includes optional StateVectorCache for URL-keyed caching of full state
+    vectors (useful during frontier re-evaluation).
     """
 
     def __init__(
@@ -437,11 +819,13 @@ class StateVectorBuilder:
         embedder: NomicEmbedder,
         target_embed_dim: int = 768,
         scalar_dim: int = 16,
+        state_cache_size: int = 5000,
     ) -> None:
         self.embedder = embedder
         self.target_embed_dim = target_embed_dim
         self.scalar_dim = scalar_dim
         self.state_dim = target_embed_dim + scalar_dim
+        self._state_cache = StateVectorCache(max_size=state_cache_size)
 
     def build_state(
         self,
@@ -475,6 +859,41 @@ class StateVectorBuilder:
         scalar_vec = scalar_features.to_array()
         return np.concatenate([embed, scalar_vec]).astype(np.float32)
 
+    def build_state_cached(
+        self,
+        text: str,
+        scalar_features: ScalarFeatures,
+        url: Optional[str] = None,
+        precomputed_embedding: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """Build a state vector with URL-keyed caching.
+
+        If url is provided and a cached state vector exists, returns the
+        cached version. Otherwise computes, caches (if url given), and returns.
+
+        Args:
+            text: page body text for embedding.
+            scalar_features: ScalarFeatures instance.
+            url: URL key for caching. None disables caching.
+            precomputed_embedding: skip re-embedding if already computed.
+
+        Returns:
+            (state_dim,) float32 array.
+        """
+        if url is not None:
+            cached = self._state_cache.get(url)
+            if cached is not None:
+                return cached
+
+        state = self.build_state(
+            text, scalar_features, precomputed_embedding=precomputed_embedding
+        )
+
+        if url is not None:
+            self._state_cache.put(url, state)
+
+        return state
+
     def build_states_batch(
         self,
         texts: List[str],
@@ -503,3 +922,12 @@ class StateVectorBuilder:
         )
 
         return np.concatenate([padded, scalars], axis=1)
+
+    def clear_state_cache(self) -> None:
+        """Clear the state vector cache."""
+        self._state_cache.clear()
+
+    @property
+    def state_cache_size(self) -> int:
+        """Current number of cached state vectors."""
+        return self._state_cache.size

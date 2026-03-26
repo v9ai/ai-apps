@@ -1,7 +1,8 @@
 """
 Shared pytest fixtures for the Scrapus pipeline test suite.
 
-Provides sample data, mock models, temp databases, and M1-detection helpers
+Provides sample data, mock models, temp databases, M1-detection helpers,
+and Module 1 crawler fixtures (configs, replay buffer, frontier, scheduler)
 so individual test modules can focus on testing logic rather than setup.
 """
 
@@ -15,11 +16,17 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+
+from crawler_dqn import DQNConfig
+from crawler_embeddings import EmbeddingConfig, NomicEmbedder
+from crawler_engine import CrawlerConfig, DomainScheduler, PageContent, URLFrontier
+from crawler_pipeline import CrawlerPipelineConfig
+from crawler_replay_buffer import MmapReplayBuffer, ReplayBufferConfig
 
 
 # ---------------------------------------------------------------------------
@@ -30,6 +37,9 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "slow: marks tests as slow (deselect with -m 'not slow')")
     config.addinivalue_line("markers", "gpu: marks tests that require M1 GPU / MPS")
     config.addinivalue_line("markers", "integration: marks integration tests")
+    config.addinivalue_line("markers", "requires_torch: marks tests that need PyTorch")
+    config.addinivalue_line("markers", "requires_onnx: marks tests that need ONNX Runtime")
+    config.addinivalue_line("markers", "requires_mlx: marks tests that need MLX")
 
 
 # ---------------------------------------------------------------------------
@@ -307,3 +317,233 @@ def make_training_data():
         return X, y
 
     return _factory
+
+
+# ===========================================================================
+# Module 1: Crawler pipeline shared fixtures
+# ===========================================================================
+
+
+# ---------------------------------------------------------------------------
+# Temporary data directory with standard sub-structure
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def tmp_data_dir(tmp_path: Path) -> Path:
+    """Create a temporary scrapus_data directory with standard subdirectories."""
+    data_dir = tmp_path / "scrapus_data"
+    data_dir.mkdir()
+    (data_dir / "models" / "dqn").mkdir(parents=True)
+    (data_dir / "replay_buffer").mkdir()
+    (data_dir / "logs").mkdir()
+    return data_dir
+
+
+# ---------------------------------------------------------------------------
+# Sub-module configs pointing at tmp_data_dir
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def dqn_config(tmp_data_dir: Path) -> DQNConfig:
+    """DQNConfig with paths pointing to the temporary data directory."""
+    return DQNConfig(
+        policy_path=str(tmp_data_dir / "models" / "dqn" / "policy.pt"),
+        onnx_path=str(tmp_data_dir / "models" / "dqn" / "policy.onnx"),
+        coreml_path=str(tmp_data_dir / "models" / "dqn" / "policy.mlpackage"),
+    )
+
+
+@pytest.fixture
+def crawler_config(tmp_data_dir: Path) -> CrawlerConfig:
+    """CrawlerConfig with SQLite paths rooted in the temporary directory."""
+    return CrawlerConfig(
+        frontier_db=str(tmp_data_dir / "frontier.db"),
+        domain_stats_db=str(tmp_data_dir / "domain_stats.db"),
+        bloom_capacity=10_000,
+    )
+
+
+@pytest.fixture
+def replay_config(tmp_data_dir: Path) -> ReplayBufferConfig:
+    """ReplayBufferConfig with storage rooted in the temporary directory."""
+    return ReplayBufferConfig(
+        capacity=200,
+        state_dim=784,
+        data_dir=str(tmp_data_dir / "replay_buffer"),
+    )
+
+
+@pytest.fixture
+def embedding_config() -> EmbeddingConfig:
+    """Default EmbeddingConfig."""
+    return EmbeddingConfig()
+
+
+@pytest.fixture
+def pipeline_config(tmp_data_dir: Path) -> CrawlerPipelineConfig:
+    """CrawlerPipelineConfig with all sub-configs using temporary paths."""
+    return CrawlerPipelineConfig(
+        dqn=DQNConfig(
+            policy_path=str(tmp_data_dir / "models" / "dqn" / "policy.pt"),
+            onnx_path=str(tmp_data_dir / "models" / "dqn" / "policy.onnx"),
+            coreml_path=str(tmp_data_dir / "models" / "dqn" / "policy.mlpackage"),
+        ),
+        embedding=EmbeddingConfig(),
+        crawler=CrawlerConfig(
+            frontier_db=str(tmp_data_dir / "frontier.db"),
+            domain_stats_db=str(tmp_data_dir / "domain_stats.db"),
+            bloom_capacity=10_000,
+        ),
+        replay=ReplayBufferConfig(
+            capacity=200,
+            state_dim=784,
+            data_dir=str(tmp_data_dir / "replay_buffer"),
+        ),
+        data_dir=str(tmp_data_dir),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Random state vectors
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def random_state() -> np.ndarray:
+    """Single random state vector of shape (784,), float32."""
+    return np.random.randn(784).astype(np.float32)
+
+
+@pytest.fixture
+def random_states():
+    """Factory fixture: return (n, 784) float32 random state array.
+
+    Usage::
+
+        def test_batch(random_states):
+            states = random_states(n=128)
+            assert states.shape == (128, 784)
+    """
+
+    def _factory(n: int = 64) -> np.ndarray:
+        return np.random.randn(n, 784).astype(np.float32)
+
+    return _factory
+
+
+# ---------------------------------------------------------------------------
+# Fake PageContent factory
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def fake_page_content():
+    """Factory fixture: create PageContent instances with configurable fields.
+
+    Usage::
+
+        def test_page(fake_page_content):
+            page = fake_page_content(url="https://example.com", title="Test")
+    """
+
+    def _factory(
+        url: str = "https://example.com/page",
+        domain: str = "example.com",
+        title: str = "Test Page",
+        body_text: str = "This is a test page with some content for embedding.",
+        outbound_links: Optional[List[str]] = None,
+        meta_description: str = "",
+        meta_keywords: str = "",
+        language: str = "en",
+        status_code: int = 200,
+        content_type: str = "text/html",
+        fetch_time_ms: float = 150.0,
+        body_length: int = 0,
+        link_count: int = 0,
+    ) -> PageContent:
+        links = outbound_links if outbound_links is not None else [
+            "https://example.com/link1",
+            "https://example.com/link2",
+        ]
+        return PageContent(
+            url=url,
+            domain=domain,
+            title=title,
+            body_text=body_text,
+            outbound_links=links,
+            meta_description=meta_description,
+            meta_keywords=meta_keywords,
+            language=language,
+            status_code=status_code,
+            content_type=content_type,
+            fetch_time_ms=fetch_time_ms,
+            body_length=body_length or len(body_text),
+            link_count=link_count or len(links),
+        )
+
+    return _factory
+
+
+# ---------------------------------------------------------------------------
+# Mock NomicEmbedder (no real model loading)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def mock_nomic_embedder() -> NomicEmbedder:
+    """NomicEmbedder with a mocked backend that returns random embeddings.
+
+    Does not load any model files; suitable for tests that need embedding
+    dimensions to be correct but don't care about the actual vectors.
+    """
+    embedder = NomicEmbedder(EmbeddingConfig())
+    embedder._model = MagicMock()
+    embedder._backend = "mlx"
+
+    def _fake_embed_texts(texts, prefix=None, normalize=True):
+        n = len(texts)
+        rng = np.random.RandomState(42)
+        vecs = rng.randn(n, 768).astype(np.float32)
+        if normalize:
+            norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+            vecs = vecs / np.maximum(norms, 1e-12)
+        return vecs
+
+    embedder.embed_texts = _fake_embed_texts
+    embedder.embed_text = lambda text, prefix=None, normalize=True: _fake_embed_texts(
+        [text], prefix=prefix, normalize=normalize
+    )[0]
+    return embedder
+
+
+# ---------------------------------------------------------------------------
+# Initialised MmapReplayBuffer (auto-closed)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def replay_buffer(replay_config: ReplayBufferConfig) -> MmapReplayBuffer:
+    """Initialised MmapReplayBuffer backed by temporary files; closed after test."""
+    buf = MmapReplayBuffer(replay_config)
+    yield buf
+    buf.close()
+
+
+# ---------------------------------------------------------------------------
+# Initialised URLFrontier (auto-closed)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def frontier(crawler_config: CrawlerConfig) -> URLFrontier:
+    """Initialised URLFrontier backed by a temporary SQLite DB; closed after test."""
+    f = URLFrontier(crawler_config)
+    yield f
+    f.close()
+
+
+# ---------------------------------------------------------------------------
+# Initialised DomainScheduler (auto-closed)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def scheduler(crawler_config: CrawlerConfig) -> DomainScheduler:
+    """Initialised DomainScheduler backed by a temporary SQLite DB; closed after test."""
+    s = DomainScheduler(crawler_config)
+    yield s
+    s.close()

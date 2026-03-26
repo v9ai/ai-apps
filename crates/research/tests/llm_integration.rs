@@ -508,6 +508,7 @@ async fn agent_uses_search_papers_tool_end_to_end() {
     let fallback = research::tools::FallbackClients {
         openalex: research::openalex::OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: research::crossref::CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
     let search_tool = research::tools::SearchPapers::with_fallback(
         s2_client,
@@ -658,6 +659,7 @@ async fn agent_handles_search_then_detail_tool_calls() {
     let fallback = research::tools::FallbackClients {
         openalex: research::openalex::OpenAlexClient::with_base_url(&oa_server.uri(), None),
         crossref: research::crossref::CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: None,
     };
 
     let search_tool = research::tools::SearchPapers::with_fallback(

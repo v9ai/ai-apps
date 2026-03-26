@@ -157,9 +157,18 @@ class PolitenessManager:
         """Fetch and parse robots.txt for a domain.
 
         Returns a dict with 'crawl_delay', 'disallow_patterns', 'allowed'.
+        Uses TTL-based caching; expired entries are re-fetched automatically.
         """
         if domain in self._robots_cache:
-            return self._robots_cache[domain]
+            cached_result, fetched_at = self._robots_cache[domain]
+            if time.time() - fetched_at < self.config.robots_cache_ttl:
+                self._robots_cache_hits += 1
+                return cached_result
+            else:
+                self._robots_cache_expired += 1
+                # Fall through to re-fetch
+        else:
+            self._robots_cache_misses += 1
 
         result: Dict[str, Any] = {
             "crawl_delay": self.config.default_crawl_delay,
@@ -182,8 +191,27 @@ class PolitenessManager:
         except Exception as exc:
             logger.debug("robots.txt fetch failed for %s: %s", domain, exc)
 
-        self._robots_cache[domain] = result
+        self._robots_cache[domain] = (result, time.time())
         return result
+
+    def clear_robots_cache(self) -> None:
+        """Clear all cached robots.txt entries and reset stats."""
+        self._robots_cache.clear()
+        self._robots_cache_hits = 0
+        self._robots_cache_misses = 0
+        self._robots_cache_expired = 0
+
+    def robots_cache_stats(self) -> dict:
+        """Return robots.txt cache statistics.
+
+        Returns dict with hits, misses, expired, and size.
+        """
+        return {
+            "hits": self._robots_cache_hits,
+            "misses": self._robots_cache_misses,
+            "expired": self._robots_cache_expired,
+            "size": len(self._robots_cache),
+        }
 
     def _parse_robots(self, text: str) -> Dict[str, Any]:
         """Parse robots.txt; prefer User-Agent: ScrapusBot, fall back to *."""
@@ -262,6 +290,21 @@ class PolitenessManager:
             )
             base_delay = max(base_delay, backoff)
 
+        # Respect rate limit headers from previous responses
+        if domain in self._rate_limit_delays:
+            base_delay = max(base_delay, self._rate_limit_delays[domain])
+
+        # Respect Retry-After from previous 429 responses
+        if domain in self._retry_after:
+            retry_at = self._retry_after[domain]
+            now = time.time()
+            if now < retry_at:
+                wait_for_retry = retry_at - now
+                base_delay = max(base_delay, wait_for_retry)
+            else:
+                # Retry-After has passed, clean up
+                del self._retry_after[domain]
+
         # Enforce minimum inter-request gap
         last = self._last_request_time.get(domain, 0.0)
         elapsed = time.time() - last
@@ -272,12 +315,115 @@ class PolitenessManager:
         return base_delay
 
     def record_outcome(self, domain: str, success: bool) -> None:
-        """Record fetch outcome for adaptive backoff."""
+        """Record fetch outcome for adaptive backoff and domain cooling."""
         self._failure_windows[domain].append(0 if success else 1)
         if success:
             self._backoff_state[domain] = 0
         else:
             self._backoff_state[domain] += 1
+            # Trigger domain cooling after N consecutive failures
+            if self._backoff_state[domain] >= self.config.domain_cooling_threshold:
+                cooldown_until = time.time() + self.config.domain_cooling_duration
+                self._cooled_domains[domain] = cooldown_until
+                logger.warning(
+                    "Domain %s put on cooldown until %.0f after %d consecutive failures",
+                    domain,
+                    cooldown_until,
+                    self._backoff_state[domain],
+                )
+
+    def process_response_headers(
+        self, domain: str, status_code: int, headers: Dict[str, str]
+    ) -> None:
+        """Parse rate limit and Retry-After headers from a response.
+
+        Adapts crawl delays based on X-RateLimit-* headers and tracks
+        Retry-After on 429 responses.
+
+        Args:
+            domain: the domain the response came from.
+            status_code: HTTP status code.
+            headers: response headers (case-insensitive keys expected).
+        """
+        # Normalize header keys to lowercase for case-insensitive lookup
+        lower_headers = {k.lower(): v for k, v in headers.items()}
+
+        # Parse X-RateLimit-* headers to adapt crawl delay
+        remaining = lower_headers.get("x-ratelimit-remaining")
+        limit = lower_headers.get("x-ratelimit-limit")
+        reset = lower_headers.get("x-ratelimit-reset")
+
+        if remaining is not None and limit is not None:
+            try:
+                remaining_val = int(remaining)
+                limit_val = int(limit)
+                if limit_val > 0 and remaining_val <= limit_val * 0.1:
+                    # Running low on quota -- slow down significantly
+                    if reset is not None:
+                        try:
+                            reset_val = float(reset)
+                            # reset could be epoch timestamp or seconds-until-reset
+                            if reset_val > 1_000_000_000:
+                                # Epoch timestamp
+                                delay = max(0.0, reset_val - time.time())
+                            else:
+                                # Seconds until reset
+                                delay = reset_val
+                            if remaining_val > 0:
+                                self._rate_limit_delays[domain] = delay / remaining_val
+                            else:
+                                self._rate_limit_delays[domain] = delay
+                        except ValueError:
+                            pass
+                    else:
+                        # No reset header; double the default delay
+                        self._rate_limit_delays[domain] = (
+                            self.config.default_crawl_delay * 2.0
+                        )
+                elif remaining_val > limit_val * 0.5:
+                    # Plenty of quota left; remove any rate limit delay override
+                    self._rate_limit_delays.pop(domain, None)
+            except ValueError:
+                pass
+
+        # Track Retry-After on 429 responses
+        if status_code == 429:
+            retry_after = lower_headers.get("retry-after")
+            if retry_after is not None:
+                try:
+                    # Could be seconds (integer) or HTTP-date
+                    seconds = float(retry_after)
+                    self._retry_after[domain] = time.time() + seconds
+                except ValueError:
+                    # Try parsing as HTTP-date (RFC 7231)
+                    try:
+                        from email.utils import parsedate_to_datetime
+
+                        dt = parsedate_to_datetime(retry_after)
+                        self._retry_after[domain] = dt.timestamp()
+                    except Exception:
+                        # Fallback: 60 second retry
+                        self._retry_after[domain] = time.time() + 60.0
+            else:
+                # No Retry-After header on 429; default to 60 seconds
+                self._retry_after[domain] = time.time() + 60.0
+
+    def is_domain_cooled(self, domain: str) -> bool:
+        """Check if a domain is currently on cooldown.
+
+        Returns True if the domain is cooled (should not be crawled).
+        Automatically removes domains from cooldown after their timeout expires.
+        """
+        if domain not in self._cooled_domains:
+            return False
+        cooldown_until = self._cooled_domains[domain]
+        if time.time() >= cooldown_until:
+            del self._cooled_domains[domain]
+            # Reset consecutive failure counter when cooldown expires
+            self._backoff_state[domain] = 0
+            logger.info("Domain %s cooldown expired, removing from cooldown", domain)
+            return False
+        return True
 
 
 # ======================= Domain Scheduler (UCB1) ============================

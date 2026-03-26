@@ -367,6 +367,11 @@ fn to_research_paper(s: &PaperSummary, week_tag: &str) -> ResearchPaper {
             .as_ref()
             .map(|doi| format!("https://doi.org/{doi}"))
             .or_else(|| s.pdf_url.clone()),
+        PaperSource::Zenodo => s
+            .doi
+            .as_ref()
+            .map(|doi| format!("https://doi.org/{doi}"))
+            .or_else(|| Some(format!("https://zenodo.org/records/{}", s.source_id))),
     };
 
     let fields_of_study = Some({
