@@ -15,7 +15,7 @@
 //! the Candle embedding engine to measure pairwise cosine distances.
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use crate::paper::ResearchPaper;
 
@@ -27,7 +27,6 @@ pub struct DimensionWeights {
     pub year_range: f32,
     pub source_diversity: f32,
     pub abstract_coverage: f32,
-    pub citation_distribution: f32,
     pub recency_bias: f32,
     pub citation_network: f32,
     pub authority: f32,
@@ -37,15 +36,14 @@ pub struct DimensionWeights {
 impl Default for DimensionWeights {
     fn default() -> Self {
         Self {
-            result_count: 0.14,
-            year_range: 0.11,
-            source_diversity: 0.11,
-            abstract_coverage: 0.11,
-            citation_distribution: 0.09,
-            recency_bias: 0.11,
-            citation_network: 0.09,
-            authority: 0.11,
-            field_diversity: 0.13,
+            result_count: 0.15,
+            year_range: 0.12,
+            source_diversity: 0.12,
+            abstract_coverage: 0.12,
+            recency_bias: 0.12,
+            citation_network: 0.10,
+            authority: 0.12,
+            field_diversity: 0.15,
         }
     }
 }
@@ -57,7 +55,6 @@ impl DimensionWeights {
             + self.year_range
             + self.source_diversity
             + self.abstract_coverage
-            + self.citation_distribution
             + self.recency_bias
             + self.citation_network
             + self.authority
@@ -70,7 +67,6 @@ impl DimensionWeights {
         self.year_range /= total;
         self.source_diversity /= total;
         self.abstract_coverage /= total;
-        self.citation_distribution /= total;
         self.recency_bias /= total;
         self.citation_network /= total;
         self.authority /= total;
@@ -78,13 +74,12 @@ impl DimensionWeights {
     }
 
     /// Return weights normalised so they sum to 1.0 (non-mutating).
-    fn normalised(&self) -> [f64; 9] {
+    fn normalised(&self) -> [f32; 8] {
         let raw = [
             self.result_count,
             self.year_range,
             self.source_diversity,
             self.abstract_coverage,
-            self.citation_distribution,
             self.recency_bias,
             self.citation_network,
             self.authority,
@@ -92,14 +87,29 @@ impl DimensionWeights {
         ];
         let total: f32 = raw.iter().sum();
         if total <= 0.0 {
-            return [1.0 / 9.0; 9];
+            return [1.0 / 8.0; 8];
         }
-        let mut out = [0.0f64; 9];
+        let mut out = [0.0; 8];
         for (i, &v) in raw.iter().enumerate() {
-            out[i] = (v / total) as f64;
+            out[i] = v / total;
         }
         out
     }
+}
+
+/// Per-dimension raw scores (0.0..=1.0) for transparency.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DimensionScores {
+    pub result_count: f32,
+    pub year_range: f32,
+    pub source_diversity: f32,
+    pub abstract_coverage: f32,
+    pub recency_bias: f32,
+    pub citation_network: f32,
+    pub authority: f32,
+    pub field_diversity: f32,
+    /// Only populated when `evaluate_semantic` is used.
+    pub semantic_diversity: Option<f32>,
 }
 
 #[derive(Debug, Clone)]
@@ -134,22 +144,6 @@ impl Default for CritiqueConfig {
     }
 }
 
-/// Per-dimension raw scores (0.0..=1.0) for transparency.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DimensionScores {
-    pub result_count: f64,
-    pub year_span: f64,
-    pub source_diversity: f64,
-    pub abstract_coverage: f64,
-    pub citation_distribution: f64,
-    pub recency_bias: f64,
-    pub citation_network: f64,
-    pub authority: f64,
-    pub field_diversity: f64,
-    /// Only populated when `evaluate_semantic` is used.
-    pub semantic_diversity: Option<f64>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Critique {
     pub quality_score: f64,
@@ -159,13 +153,18 @@ pub struct Critique {
 }
 
 impl CritiqueConfig {
+    /// Resolve the effective current year.
+    fn effective_year(&self) -> u32 {
+        self.current_year.unwrap_or(2026)
+    }
+
     pub fn evaluate(&self, papers: &[ResearchPaper]) -> Critique {
         let mut issues = Vec::new();
         let mut suggestions = Vec::new();
         let w = self.weights.normalised();
 
         // 1. Result count
-        let count_score = (papers.len() as f64 / self.min_results as f64).min(1.0);
+        let count_score = (papers.len() as f32 / self.min_results as f32).min(1.0);
 
         // Short-circuit: no papers means everything scores zero
         if papers.is_empty() {
@@ -181,7 +180,6 @@ impl CritiqueConfig {
                     year_range: 0.0,
                     source_diversity: 0.0,
                     abstract_coverage: 0.0,
-                    citation_distribution: 0.0,
                     recency_bias: 0.0,
                     citation_network: 0.0,
                     authority: 0.0,
@@ -201,13 +199,13 @@ impl CritiqueConfig {
             suggestions.push("Broaden search terms or relax filters".into());
         }
 
-        // 2. Year span
+        // 2. Year range
         let years: Vec<u32> = papers.iter().filter_map(|p| p.year).collect();
-        let year_span_score = if let (Some(&mn), Some(&mx)) =
+        let year_range_score = if let (Some(&mn), Some(&mx)) =
             (years.iter().min(), years.iter().max())
         {
             let span = mx - mn;
-            let ratio = (span as f64 / self.min_year_range as f64).min(1.0);
+            let ratio = (span as f32 / self.min_year_range as f32).min(1.0);
             if span < self.min_year_range {
                 issues.push(format!("Narrow time range ({mn}-{mx})"));
                 suggestions.push("Include older foundational papers".into());
@@ -225,7 +223,7 @@ impl CritiqueConfig {
         for p in papers {
             sources.insert(format!("{:?}", p.source));
         }
-        let source_score = (sources.len() as f64 / self.min_sources as f64).min(1.0);
+        let source_score = (sources.len() as f32 / self.min_sources as f32).min(1.0);
         if sources.len() < self.min_sources {
             issues.push(format!(
                 "Limited source diversity ({} source{})",
@@ -246,7 +244,7 @@ impl CritiqueConfig {
                         .unwrap_or(false)
                 })
                 .count();
-            let ratio = with_abstract as f64 / papers.len() as f64;
+            let ratio = with_abstract as f32 / papers.len() as f32;
             if ratio < 0.5 {
                 issues.push(format!("Low abstract coverage ({:.0}%)", ratio * 100.0));
                 suggestions
@@ -257,46 +255,106 @@ impl CritiqueConfig {
             0.0
         };
 
-        // 5. Citation distribution
-        let citation_dist_score = if !papers.is_empty() {
-            let with_citations = papers
-                .iter()
-                .filter(|p| p.citation_count.map(|c| c > 0).unwrap_or(false))
-                .count();
-            let ratio = with_citations as f64 / papers.len() as f64;
-            if ratio < 0.3 {
-                issues.push("Most papers have no citation data".into());
-                suggestions.push("Use Semantic Scholar for citation-rich results".into());
+        // 5. Recency bias detection
+        let current_year = self.effective_year();
+        let recency_score = score_recency_bias(papers, current_year);
+        {
+            let year_vals: Vec<u32> = papers.iter().filter_map(|p| p.year).collect();
+            if year_vals.len() >= 2 {
+                let recent_cutoff = current_year.saturating_sub(1);
+                let recent_count = year_vals.iter().filter(|&&y| y >= recent_cutoff).count();
+                let recent_frac = recent_count as f32 / year_vals.len() as f32;
+                if recent_frac > 0.7 {
+                    issues.push(format!(
+                        "Recency bias: {:.0}% of papers from {recent_cutoff}+",
+                        recent_frac * 100.0,
+                    ));
+                    suggestions.push("Add seminal/foundational papers from earlier years".into());
+                }
             }
-            ratio
-        } else {
-            0.0
-        };
+        }
 
-        // 6. Recency bias detection
-        let recency_score = score_recency_bias(papers, self.current_year.unwrap_or(2025), &mut issues, &mut suggestions);
+        // 6. Citation network (Gini coefficient)
+        let citation_network_score = score_citation_network(papers);
+        {
+            let mut counts: Vec<f64> = papers
+                .iter()
+                .filter_map(|p| p.citation_count.map(|c| c as f64))
+                .collect();
+            if counts.len() >= 2 {
+                counts.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+                let n = counts.len() as f64;
+                let mean = counts.iter().sum::<f64>() / n;
+                if mean > 0.001 {
+                    let mut sum_diff = 0.0;
+                    for (i, &ci) in counts.iter().enumerate() {
+                        for &cj in counts.iter().skip(i + 1) {
+                            sum_diff += (cj - ci).abs();
+                        }
+                    }
+                    let gini = sum_diff / (n * n * mean);
+                    if gini > 0.8 {
+                        issues.push(format!(
+                            "Citation concentration too high (Gini {:.2}) \
+                             — corpus dominated by a few papers",
+                            gini
+                        ));
+                        suggestions.push(
+                            "Balance highly-cited papers with newer or niche works".into(),
+                        );
+                    } else if gini < 0.1 {
+                        issues.push(format!(
+                            "Citation counts suspiciously uniform (Gini {:.2})",
+                            gini
+                        ));
+                        suggestions
+                            .push("Include a mix of landmark and emerging papers".into());
+                    }
+                }
+            }
+        }
 
-        // 7. Citation network (Gini coefficient — lower Gini = more equal = healthier)
-        let citation_network_score = score_citation_network(papers, &mut issues, &mut suggestions);
-
-        // 8. Authority scoring
+        // 7. Authority scoring
         let authority_score = score_authority(
             papers,
-            self.authority_citation_threshold as u64,
-            self.authority_min_fraction as f64,
-            &mut issues,
-            &mut suggestions,
+            self.authority_citation_threshold,
+            self.authority_min_fraction,
         );
+        if authority_score < 0.01 && !papers.is_empty() {
+            let threshold = self.authority_citation_threshold;
+            issues.push(format!(
+                "No landmark papers (>{threshold} citations) in corpus"
+            ));
+            suggestions
+                .push("Include well-established, highly-cited foundational works".into());
+        }
 
-        // 9. Field diversity
-        let field_diversity_score = score_field_diversity(papers, &mut issues, &mut suggestions);
+        // 8. Field diversity
+        let field_diversity_score = score_field_diversity(papers);
+        {
+            let mut all_fields = HashSet::new();
+            let mut papers_with_fields = 0usize;
+            for p in papers {
+                if let Some(ref fields) = p.fields_of_study {
+                    if !fields.is_empty() {
+                        papers_with_fields += 1;
+                        for f in fields {
+                            all_fields.insert(f.to_lowercase());
+                        }
+                    }
+                }
+            }
+            if all_fields.len() <= 1 && papers_with_fields >= 3 {
+                issues.push("All papers in a single research field".into());
+                suggestions.push("Include cross-disciplinary perspectives".into());
+            }
+        }
 
         let scores = DimensionScores {
             result_count: count_score,
-            year_span: year_span_score,
+            year_range: year_range_score,
             source_diversity: source_score,
             abstract_coverage: abstract_score,
-            citation_distribution: citation_dist_score,
             recency_bias: recency_score,
             citation_network: citation_network_score,
             authority: authority_score,
@@ -306,16 +364,19 @@ impl CritiqueConfig {
 
         let raw = [
             count_score,
-            year_span_score,
+            year_range_score,
             source_score,
             abstract_score,
-            citation_dist_score,
             recency_score,
             citation_network_score,
             authority_score,
             field_diversity_score,
         ];
-        let quality_score: f64 = raw.iter().zip(w.iter()).map(|(s, wt)| s * wt).sum();
+        let quality_score: f64 = raw
+            .iter()
+            .zip(w.iter())
+            .map(|(s, wt)| *s as f64 * *wt as f64)
+            .sum();
 
         Critique {
             quality_score: quality_score.clamp(0.0, 1.0),
@@ -327,7 +388,7 @@ impl CritiqueConfig {
 
     /// Evaluate with an additional semantic diversity dimension using local
     /// Candle embeddings. Rebalances weights to include a pairwise-distance
-    /// metric (weight 0.15, taken proportionally from the other nine axes).
+    /// metric (weight 0.15, taken proportionally from the other eight axes).
     ///
     /// `embeddings` must be one 384-d vector per paper (same order as `papers`).
     #[cfg(feature = "local-vector")]
@@ -345,7 +406,7 @@ impl CritiqueConfig {
         let diversity = mean_pairwise_distance(embeddings);
 
         // Rebalance: scale base axes to 0.85, add diversity at 0.15.
-        let rebalanced = base.quality_score * 0.85 + diversity * 0.15;
+        let rebalanced = base.quality_score * 0.85 + diversity as f64 * 0.15;
 
         let mut issues = base.issues;
         let mut suggestions = base.suggestions;
@@ -357,9 +418,10 @@ impl CritiqueConfig {
             suggestions.push("Use more varied query angles or broaden search terms".into());
         }
 
-        let mut dimension_scores = base.dimension_scores.unwrap();
-        dimension_scores.semantic_diversity = Some(diversity);
-        let dimension_scores = Some(dimension_scores);
+        let mut dimension_scores = base.dimension_scores;
+        if let Some(ref mut ds) = dimension_scores {
+            ds.semantic_diversity = Some(diversity);
+        }
 
         Critique {
             quality_score: rebalanced.clamp(0.0, 1.0),
@@ -374,47 +436,26 @@ impl CritiqueConfig {
 
 /// Detects recency bias: if >70% of papers with year data fall within the
 /// last 2 years, the corpus may lack historical context.
-/// Returns a score where 1.0 = well-balanced, 0.0 = heavily biased to recent.
-fn score_recency_bias(
-    papers: &[ResearchPaper],
-    current_year: u32,
-    issues: &mut Vec<String>,
-    suggestions: &mut Vec<String>,
-) -> f64 {
+/// Returns 1.0 when balanced, drops linearly when over-concentrated.
+fn score_recency_bias(papers: &[ResearchPaper], current_year: u32) -> f32 {
     let years: Vec<u32> = papers.iter().filter_map(|p| p.year).collect();
     if years.len() < 2 {
         return 0.5; // not enough data to judge
     }
     let recent_cutoff = current_year.saturating_sub(1);
     let recent_count = years.iter().filter(|&&y| y >= recent_cutoff).count();
-    let recent_frac = recent_count as f64 / years.len() as f64;
+    let recent_frac = recent_count as f32 / years.len() as f32;
 
-    // Score: 1.0 when <=40% recent, linearly drops to 0.0 at 100% recent
-    let score = if recent_frac <= 0.4 {
+    if recent_frac <= 0.4 {
         1.0
     } else {
         ((1.0 - recent_frac) / 0.6).clamp(0.0, 1.0)
-    };
-
-    if recent_frac > 0.7 {
-        issues.push(format!(
-            "Recency bias: {:.0}% of papers from {recent_cutoff}+",
-            recent_frac * 100.0,
-        ));
-        suggestions.push("Add seminal/foundational papers from earlier years".into());
     }
-
-    score
 }
 
 /// Citation network score based on the Gini coefficient of citation counts.
-/// A perfectly equal distribution scores 1.0; extreme concentration scores low.
-/// A moderate Gini (0.3-0.6) is actually healthy (mix of landmark + new papers).
-fn score_citation_network(
-    papers: &[ResearchPaper],
-    issues: &mut Vec<String>,
-    suggestions: &mut Vec<String>,
-) -> f64 {
+/// Moderate Gini (0.3-0.6) scores best (healthy mix of landmark + new papers).
+fn score_citation_network(papers: &[ResearchPaper]) -> f32 {
     let mut counts: Vec<f64> = papers
         .iter()
         .filter_map(|p| p.citation_count.map(|c| c as f64))
@@ -429,11 +470,9 @@ fn score_citation_network(
     let mean = counts.iter().sum::<f64>() / n;
 
     if mean < 0.001 {
-        // All zeros — no citation data at all
         return 0.3;
     }
 
-    // Gini coefficient
     let mut sum_diff = 0.0;
     for (i, &ci) in counts.iter().enumerate() {
         for &cj in counts.iter().skip(i + 1) {
@@ -442,72 +481,37 @@ fn score_citation_network(
     }
     let gini = sum_diff / (n * n * mean);
 
-    // Ideal Gini for research is moderate (0.3-0.6 = healthy mix).
-    // Extreme equality (0.0) or extreme concentration (>0.8) both penalised.
     let score = if gini <= 0.6 {
-        // 0.0-0.6 maps to 0.6-1.0
         0.6 + (gini / 0.6) * 0.4
     } else {
-        // 0.6-1.0 maps to 1.0 down to 0.2
         1.0 - ((gini - 0.6) / 0.4) * 0.8
     };
 
-    if gini > 0.8 {
-        issues.push(format!(
-            "Citation concentration too high (Gini {:.2}) — corpus dominated by a few papers",
-            gini
-        ));
-        suggestions.push("Balance highly-cited papers with newer or niche works".into());
-    } else if gini < 0.1 {
-        issues.push(format!(
-            "Citation counts suspiciously uniform (Gini {:.2})",
-            gini
-        ));
-        suggestions.push("Include a mix of landmark and emerging papers".into());
-    }
-
-    score.clamp(0.0, 1.0)
+    (score as f32).clamp(0.0, 1.0)
 }
 
-/// Authority scoring: fraction of papers that are "landmarks" (above citation threshold).
-/// Having some high-authority papers is good; having none flags a gap.
-fn score_authority(
-    papers: &[ResearchPaper],
-    threshold: u64,
-    min_fraction: f64,
-    issues: &mut Vec<String>,
-    suggestions: &mut Vec<String>,
-) -> f64 {
+/// Authority scoring: fraction of papers above citation threshold.
+fn score_authority(papers: &[ResearchPaper], threshold: u32, min_fraction: f32) -> f32 {
     if papers.is_empty() {
         return 0.0;
     }
 
     let landmark_count = papers
         .iter()
-        .filter(|p| p.citation_count.map(|c| c >= threshold).unwrap_or(false))
+        .filter(|p| {
+            p.citation_count
+                .map(|c| c >= threshold as u64)
+                .unwrap_or(false)
+        })
         .count();
-    let fraction = landmark_count as f64 / papers.len() as f64;
+    let fraction = landmark_count as f32 / papers.len() as f32;
 
-    // Score: 0 landmarks = 0.0; reaching min_fraction = 1.0; cap at 1.0
-    let score = (fraction / min_fraction.max(0.01)).min(1.0);
-
-    if landmark_count == 0 {
-        issues.push(format!(
-            "No landmark papers (>{threshold} citations) in corpus"
-        ));
-        suggestions.push("Include well-established, highly-cited foundational works".into());
-    }
-
-    score
+    (fraction / min_fraction.max(0.01)).min(1.0)
 }
 
-/// Field diversity: how many distinct fields of study are represented.
-/// Uses `fields_of_study` from papers. More fields = more diverse perspective.
-fn score_field_diversity(
-    papers: &[ResearchPaper],
-    issues: &mut Vec<String>,
-    suggestions: &mut Vec<String>,
-) -> f64 {
+/// Field diversity: count distinct `fields_of_study` across papers.
+/// Rewards cross-disciplinary breadth.
+fn score_field_diversity(papers: &[ResearchPaper]) -> f32 {
     if papers.is_empty() {
         return 0.0;
     }
@@ -526,44 +530,22 @@ fn score_field_diversity(
     }
 
     if papers_with_fields == 0 {
-        // No field data — neutral score
         return 0.5;
     }
 
-    let field_count = all_fields.len();
-
-    // Measure how evenly fields are distributed
-    let mut field_counts: HashMap<String, usize> = HashMap::new();
-    for p in papers {
-        if let Some(ref fields) = p.fields_of_study {
-            for f in fields {
-                *field_counts.entry(f.to_lowercase()).or_insert(0) += 1;
-            }
-        }
-    }
-
-    // Score: log-scaled field count (1 field = 0.2, 3 fields = 0.6, 5+ = 1.0)
-    let diversity_score = match field_count {
+    match all_fields.len() {
         0 => 0.0,
         1 => 0.2,
         2 => 0.4,
         3 => 0.6,
         4 => 0.8,
         _ => 1.0,
-    };
-
-    if field_count <= 1 && papers_with_fields >= 3 {
-        issues.push("All papers in a single research field".into());
-        suggestions.push("Include cross-disciplinary perspectives".into());
     }
-
-    diversity_score
 }
 
 /// Mean pairwise cosine distance across all (i, j) pairs.
-/// Vectors are assumed L2-normalized so cosine = dot product.
 #[cfg(feature = "local-vector")]
-fn mean_pairwise_distance(vecs: &[Vec<f32>]) -> f64 {
+fn mean_pairwise_distance(vecs: &[Vec<f32>]) -> f32 {
     let n = vecs.len();
     if n < 2 {
         return 0.0;
@@ -577,7 +559,11 @@ fn mean_pairwise_distance(vecs: &[Vec<f32>]) -> f64 {
             count += 1;
         }
     }
-    if count == 0 { 0.0 } else { total / count as f64 }
+    if count == 0 {
+        0.0
+    } else {
+        (total / count as f64) as f32
+    }
 }
 
 #[cfg(test)]
@@ -645,11 +631,7 @@ mod tests {
         ];
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            critique.quality_score > 0.5,
-            "score was {}",
-            critique.quality_score
-        );
+        assert!(critique.quality_score > 0.5, "score was {}", critique.quality_score);
     }
 
     #[test]
@@ -679,12 +661,9 @@ mod tests {
         ];
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            critique.issues.iter().any(|i| i.contains("Recency bias")),
-            "issues: {:?}",
-            critique.issues
-        );
-        assert!(critique.dimension_scores.as_ref().unwrap().recency_bias < 0.6);
+        assert!(critique.issues.iter().any(|i| i.contains("Recency bias")), "issues: {:?}", critique.issues);
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.recency_bias < 0.6);
     }
 
     #[test]
@@ -698,134 +677,121 @@ mod tests {
         ];
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            !critique.issues.iter().any(|i| i.contains("Recency bias")),
-            "issues: {:?}",
-            critique.issues
-        );
-        assert!(critique.dimension_scores.as_ref().unwrap().recency_bias > 0.8);
+        assert!(!critique.issues.iter().any(|i| i.contains("Recency bias")), "issues: {:?}", critique.issues);
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.recency_bias > 0.8);
+    }
+
+    #[test]
+    fn recency_bias_score_fn_returns_half_for_single_paper() {
+        let papers = vec![make_paper("A", Some(2025), PaperSource::Arxiv)];
+        let score = score_recency_bias(&papers, 2026);
+        assert!((score - 0.5).abs() < 0.01, "got {}", score);
+    }
+
+    #[test]
+    fn recency_bias_with_custom_current_year() {
+        let papers = vec![
+            make_paper("A", Some(2020), PaperSource::Arxiv),
+            make_paper("B", Some(2020), PaperSource::SemanticScholar),
+            make_paper("C", Some(2020), PaperSource::OpenAlex),
+            make_paper("D", Some(2019), PaperSource::Crossref),
+            make_paper("E", Some(2019), PaperSource::Core),
+        ];
+        let mut cfg = CritiqueConfig::default();
+        cfg.current_year = Some(2020);
+        let critique = cfg.evaluate(&papers);
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.recency_bias < 0.6, "got {}", ds.recency_bias);
     }
 
     // ── Citation network (Gini) ─────────────────────────────────────────────
 
     #[test]
     fn citation_network_uniform_scores_moderate() {
-        // All papers have identical citations — Gini near 0 → flag suspiciously uniform
         let papers: Vec<_> = (0..5)
-            .map(|i| {
-                make_paper_full(
-                    &format!("P{i}"),
-                    Some(2020 + i as u32),
-                    PaperSource::Arxiv,
-                    Some(50),
-                    None,
-                    Some("Abstract".into()),
-                )
-            })
+            .map(|i| make_paper_full(&format!("P{i}"), Some(2020 + i as u32), PaperSource::Arxiv, Some(50), None, Some("Abstract".into())))
             .collect();
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            critique
-                .issues
-                .iter()
-                .any(|i| i.contains("uniform")),
-            "issues: {:?}",
-            critique.issues
-        );
+        assert!(critique.issues.iter().any(|i| i.contains("uniform")), "issues: {:?}", critique.issues);
     }
 
     #[test]
     fn citation_network_extreme_concentration_flagged() {
-        // One paper has 10000 cites, rest have 1
-        let mut papers = vec![make_paper_full(
-            "Landmark",
-            Some(2015),
-            PaperSource::Arxiv,
-            Some(10000),
-            None,
-            Some("Abstract".into()),
-        )];
+        let mut papers = vec![make_paper_full("Landmark", Some(2015), PaperSource::Arxiv, Some(10000), None, Some("Abstract".into()))];
         for i in 0..9 {
-            papers.push(make_paper_full(
-                &format!("P{i}"),
-                Some(2020 + i as u32),
-                PaperSource::SemanticScholar,
-                Some(1),
-                None,
-                Some("Abstract".into()),
-            ));
+            papers.push(make_paper_full(&format!("P{i}"), Some(2020 + i as u32), PaperSource::SemanticScholar, Some(1), None, Some("Abstract".into())));
         }
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            critique
-                .issues
-                .iter()
-                .any(|i| i.contains("Citation concentration")),
-            "issues: {:?}",
-            critique.issues
-        );
+        assert!(critique.issues.iter().any(|i| i.contains("Citation concentration")), "issues: {:?}", critique.issues);
+    }
+
+    #[test]
+    fn citation_network_moderate_gini_scores_well() {
+        let papers = vec![
+            make_paper_full("A", Some(2020), PaperSource::Arxiv, Some(200), None, Some("Abstract".into())),
+            make_paper_full("B", Some(2020), PaperSource::Arxiv, Some(50), None, Some("Abstract".into())),
+            make_paper_full("C", Some(2020), PaperSource::Arxiv, Some(20), None, Some("Abstract".into())),
+            make_paper_full("D", Some(2020), PaperSource::Arxiv, Some(5), None, Some("Abstract".into())),
+            make_paper_full("E", Some(2020), PaperSource::Arxiv, Some(1), None, Some("Abstract".into())),
+        ];
+        let score = score_citation_network(&papers);
+        assert!(score > 0.7, "got {}", score);
+    }
+
+    #[test]
+    fn citation_network_no_data_returns_half() {
+        let papers = vec![make_paper_full("A", Some(2020), PaperSource::Arxiv, None, None, Some("Abstract".into()))];
+        let score = score_citation_network(&papers);
+        assert!((score - 0.5).abs() < 0.01, "got {}", score);
     }
 
     // ── Authority scoring ───────────────────────────────────────────────────
 
     #[test]
     fn authority_flags_no_landmarks() {
-        // All papers have low citations
         let papers: Vec<_> = (0..5)
-            .map(|i| {
-                make_paper_full(
-                    &format!("P{i}"),
-                    Some(2020),
-                    PaperSource::Arxiv,
-                    Some(5),
-                    None,
-                    Some("Abstract".into()),
-                )
-            })
+            .map(|i| make_paper_full(&format!("P{i}"), Some(2020), PaperSource::Arxiv, Some(5), None, Some("Abstract".into())))
             .collect();
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            critique.issues.iter().any(|i| i.contains("landmark")),
-            "issues: {:?}",
-            critique.issues
-        );
-        assert!(critique.dimension_scores.as_ref().unwrap().authority < 0.01);
+        assert!(critique.issues.iter().any(|i| i.contains("landmark")), "issues: {:?}", critique.issues);
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.authority < 0.01);
     }
 
     #[test]
     fn authority_rewards_landmark_papers() {
         let mut papers: Vec<_> = (0..4)
-            .map(|i| {
-                make_paper_full(
-                    &format!("P{i}"),
-                    Some(2020),
-                    PaperSource::Arxiv,
-                    Some(5),
-                    None,
-                    Some("Abstract".into()),
-                )
-            })
+            .map(|i| make_paper_full(&format!("P{i}"), Some(2020), PaperSource::Arxiv, Some(5), None, Some("Abstract".into())))
             .collect();
-        // Add a landmark
-        papers.push(make_paper_full(
-            "Landmark",
-            Some(2015),
-            PaperSource::SemanticScholar,
-            Some(500),
-            None,
-            Some("Abstract".into()),
-        ));
+        papers.push(make_paper_full("Landmark", Some(2015), PaperSource::SemanticScholar, Some(500), None, Some("Abstract".into())));
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            !critique.issues.iter().any(|i| i.contains("landmark")),
-            "issues: {:?}",
-            critique.issues
-        );
-        assert!(critique.dimension_scores.as_ref().unwrap().authority > 0.9);
+        assert!(!critique.issues.iter().any(|i| i.contains("landmark")), "issues: {:?}", critique.issues);
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.authority > 0.9);
+    }
+
+    #[test]
+    fn authority_custom_threshold() {
+        let papers: Vec<_> = (0..5)
+            .map(|i| make_paper_full(&format!("P{i}"), Some(2020), PaperSource::Arxiv, Some(50), None, Some("Abstract".into())))
+            .collect();
+        let mut cfg = CritiqueConfig::default();
+        cfg.authority_citation_threshold = 30;
+        cfg.authority_min_fraction = 0.2;
+        let critique = cfg.evaluate(&papers);
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.authority > 0.99, "got {}", ds.authority);
+    }
+
+    #[test]
+    fn authority_empty_papers_returns_zero() {
+        let score = score_authority(&[], 100, 0.1);
+        assert!(score < 0.01);
     }
 
     // ── Field diversity ─────────────────────────────────────────────────────
@@ -833,25 +799,13 @@ mod tests {
     #[test]
     fn field_diversity_single_field_flagged() {
         let papers: Vec<_> = (0..5)
-            .map(|i| {
-                make_paper_full(
-                    &format!("P{i}"),
-                    Some(2020),
-                    PaperSource::Arxiv,
-                    Some(10),
-                    Some(vec!["cs.AI".into()]),
-                    Some("Abstract".into()),
-                )
-            })
+            .map(|i| make_paper_full(&format!("P{i}"), Some(2020), PaperSource::Arxiv, Some(10), Some(vec!["cs.AI".into()]), Some("Abstract".into())))
             .collect();
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            critique.issues.iter().any(|i| i.contains("single research field")),
-            "issues: {:?}",
-            critique.issues
-        );
-        assert!(critique.dimension_scores.as_ref().unwrap().field_diversity < 0.3);
+        assert!(critique.issues.iter().any(|i| i.contains("single research field")), "issues: {:?}", critique.issues);
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.field_diversity < 0.3);
     }
 
     #[test]
@@ -863,27 +817,13 @@ mod tests {
             vec!["cs.CV".into(), "cs.AI".into()],
             vec!["q-bio.NC".into()],
         ];
-        let papers: Vec<_> = fields
-            .into_iter()
-            .enumerate()
-            .map(|(i, f)| {
-                make_paper_full(
-                    &format!("P{i}"),
-                    Some(2020 + i as u32),
-                    PaperSource::Arxiv,
-                    Some(10),
-                    Some(f),
-                    Some("Abstract".into()),
-                )
-            })
+        let papers: Vec<_> = fields.into_iter().enumerate()
+            .map(|(i, f)| make_paper_full(&format!("P{i}"), Some(2020 + i as u32), PaperSource::Arxiv, Some(10), Some(f), Some("Abstract".into())))
             .collect();
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            critique.dimension_scores.as_ref().unwrap().field_diversity > 0.8,
-            "field_diversity was {}",
-            critique.dimension_scores.as_ref().unwrap().field_diversity
-        );
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.field_diversity > 0.8, "got {}", ds.field_diversity);
     }
 
     #[test]
@@ -891,11 +831,18 @@ mod tests {
         let papers = vec![make_paper("A", Some(2020), PaperSource::Arxiv)];
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        assert!(
-            (critique.dimension_scores.as_ref().unwrap().field_diversity - 0.5).abs() < 0.01,
-            "field_diversity was {}",
-            critique.dimension_scores.as_ref().unwrap().field_diversity
-        );
+        let ds = critique.dimension_scores.unwrap();
+        assert!((ds.field_diversity - 0.5).abs() < 0.01, "got {}", ds.field_diversity);
+    }
+
+    #[test]
+    fn field_diversity_case_insensitive() {
+        let papers = vec![
+            make_paper_full("A", Some(2020), PaperSource::Arxiv, Some(10), Some(vec!["CS.AI".into()]), Some("Abstract".into())),
+            make_paper_full("B", Some(2021), PaperSource::Arxiv, Some(10), Some(vec!["cs.ai".into()]), Some("Abstract".into())),
+        ];
+        let score = score_field_diversity(&papers);
+        assert!((score - 0.2).abs() < 0.01, "got {}", score);
     }
 
     // ── Custom weights ──────────────────────────────────────────────────────
@@ -909,39 +856,47 @@ mod tests {
             make_paper("D", Some(2024), PaperSource::Arxiv),
             make_paper("E", Some(2024), PaperSource::Arxiv),
         ];
-
         let default_cfg = CritiqueConfig::default();
         let default_critique = default_cfg.evaluate(&papers);
 
-        // Weight only result_count (which is perfect at 5 papers)
         let mut weighted_cfg = CritiqueConfig::default();
         weighted_cfg.weights = DimensionWeights {
-            result_count: 1.0,
-            year_range: 0.0,
-            source_diversity: 0.0,
-            abstract_coverage: 0.0,
-            citation_distribution: 0.0,
-            recency_bias: 0.0,
-            citation_network: 0.0,
-            authority: 0.0,
-            field_diversity: 0.0,
+            result_count: 1.0, year_range: 0.0, source_diversity: 0.0,
+            abstract_coverage: 0.0, recency_bias: 0.0, citation_network: 0.0,
+            authority: 0.0, field_diversity: 0.0,
         };
         let weighted_critique = weighted_cfg.evaluate(&papers);
-
-        // With only result_count weighted and 5 papers, score should be 1.0
-        assert!(
-            (weighted_critique.quality_score - 1.0).abs() < 0.01,
-            "score was {}",
-            weighted_critique.quality_score
-        );
-        // Default should differ
-        assert!(
-            (default_critique.quality_score - weighted_critique.quality_score).abs() > 0.1,
-            "default={} weighted={}",
-            default_critique.quality_score,
-            weighted_critique.quality_score
-        );
+        assert!((weighted_critique.quality_score - 1.0).abs() < 0.01, "score was {}", weighted_critique.quality_score);
+        assert!((default_critique.quality_score - weighted_critique.quality_score).abs() > 0.1);
     }
+
+    #[test]
+    fn normalize_weights_sums_to_one() {
+        let mut w = DimensionWeights {
+            result_count: 2.0, year_range: 3.0, source_diversity: 1.0,
+            abstract_coverage: 1.0, recency_bias: 1.0, citation_network: 1.0,
+            authority: 1.0, field_diversity: 0.0,
+        };
+        w.normalize();
+        let sum = w.result_count + w.year_range + w.source_diversity + w.abstract_coverage
+            + w.recency_bias + w.citation_network + w.authority + w.field_diversity;
+        assert!((sum - 1.0).abs() < 0.001, "got {}", sum);
+        assert!((w.year_range / w.result_count - 1.5).abs() < 0.01);
+    }
+
+    #[test]
+    fn normalize_all_zero_resets_to_default() {
+        let mut w = DimensionWeights {
+            result_count: 0.0, year_range: 0.0, source_diversity: 0.0,
+            abstract_coverage: 0.0, recency_bias: 0.0, citation_network: 0.0,
+            authority: 0.0, field_diversity: 0.0,
+        };
+        w.normalize();
+        let def = DimensionWeights::default();
+        assert!((w.result_count - def.result_count).abs() < 0.001);
+    }
+
+    // ── Dimension scores populated ──────────────────────────────────────────
 
     #[test]
     fn dimension_scores_populated() {
@@ -951,26 +906,27 @@ mod tests {
         ];
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate(&papers);
-        // All dimension scores should be between 0 and 1
-        let ds = critique.dimension_scores.as_ref().unwrap();
-        for &score in &[
-            ds.result_count,
-            ds.year_span,
-            ds.source_diversity,
-            ds.abstract_coverage,
-            ds.citation_distribution,
-            ds.recency_bias,
-            ds.citation_network,
-            ds.authority,
-            ds.field_diversity,
-        ] {
-            assert!(
-                (0.0..=1.0).contains(&score),
-                "score {} out of range",
-                score
-            );
+        let ds = critique.dimension_scores.unwrap();
+        for &score in &[ds.result_count, ds.year_range, ds.source_diversity, ds.abstract_coverage,
+                        ds.recency_bias, ds.citation_network, ds.authority, ds.field_diversity] {
+            assert!((0.0..=1.0).contains(&score), "score {} out of range", score);
         }
-        assert!(critique.dimension_scores.as_ref().unwrap().semantic_diversity.is_none());
+        assert!(ds.semantic_diversity.is_none());
+    }
+
+    #[test]
+    fn dimension_scores_is_some_on_empty() {
+        let cfg = CritiqueConfig::default();
+        let critique = cfg.evaluate(&[]);
+        assert!(critique.dimension_scores.is_some());
+    }
+
+    #[test]
+    fn default_weights_sum_to_one() {
+        let w = DimensionWeights::default();
+        let sum = w.result_count + w.year_range + w.source_diversity + w.abstract_coverage
+            + w.recency_bias + w.citation_network + w.authority + w.field_diversity;
+        assert!((sum - 1.0).abs() < 0.01, "got {}", sum);
     }
 
     // ── Semantic diversity (local-vector only) ──────────────────────────────
@@ -986,16 +942,13 @@ mod tests {
             make_paper("Paper E", Some(2024), PaperSource::Core),
         ];
         let embs: Vec<Vec<f32>> = (0..5)
-            .map(|_| {
-                let mut v = vec![0.0f32; 384];
-                v[0] = 1.0;
-                v
-            })
+            .map(|_| { let mut v = vec![0.0f32; 384]; v[0] = 1.0; v })
             .collect();
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate_semantic(&papers, &embs);
         assert!(critique.issues.iter().any(|i| i.contains("semantic diversity")));
-        assert!(critique.dimension_scores.as_ref().unwrap().semantic_diversity.is_some());
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.semantic_diversity.is_some());
     }
 
     #[cfg(feature = "local-vector")]
@@ -1009,15 +962,12 @@ mod tests {
             make_paper("Paper E", Some(2024), PaperSource::Core),
         ];
         let embs: Vec<Vec<f32>> = (0..5)
-            .map(|i| {
-                let mut v = vec![0.0f32; 384];
-                v[i] = 1.0;
-                v
-            })
+            .map(|i| { let mut v = vec![0.0f32; 384]; v[i] = 1.0; v })
             .collect();
         let cfg = CritiqueConfig::default();
         let critique = cfg.evaluate_semantic(&papers, &embs);
         assert!(!critique.issues.iter().any(|i| i.contains("semantic diversity")));
-        assert!(critique.dimension_scores.as_ref().unwrap().semantic_diversity.unwrap() > 0.5);
+        let ds = critique.dimension_scores.unwrap();
+        assert!(ds.semantic_diversity.unwrap() > 0.5);
     }
 }

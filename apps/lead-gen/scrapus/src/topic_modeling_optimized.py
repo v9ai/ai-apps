@@ -1,4 +1,4 @@
-# File: /Users/vadimnicolai/Public/ai-apps/apps/nomadically.work/scrapus/topic_modeling_optimized.py
+# File: /Users/vadimnicolai/Public/ai-apps/apps/lead-gen/scrapus/topic_modeling_optimized.py
 
 """
 BERTopic v0.16+ optimization for M1 16GB with zero cloud dependency.

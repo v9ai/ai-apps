@@ -1,4 +1,4 @@
-# /Users/vadimnicolai/Public/ai-apps/apps/nomadically.work/scrapus/advanced_retrieval.py
+# /Users/vadimnicolai/Public/ai-apps/apps/lead-gen/scrapus/advanced_retrieval.py
 
 """
 Advanced Retrieval Pipeline for Scrapus M1 Local Deployment

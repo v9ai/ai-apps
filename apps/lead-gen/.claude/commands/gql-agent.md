@@ -62,7 +62,7 @@ Example wiring:
 import { mcpHTTP, buildMcpServers } from '@/anthropic/mcp';
 
 const mcpServers = buildMcpServers({
-  nomadically: mcpHTTP(process.env.NEXT_PUBLIC_APP_URL + '/api/graphql', {
+  leadGen: mcpHTTP(process.env.NEXT_PUBLIC_APP_URL + '/api/graphql', {
     'Content-Type': 'application/json',
   }),
 });

@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scrapus"
+version = "0.1.0"
+description = "Local-first B2B lead generation pipeline — M1 optimized, zero cloud dependency"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "numpy>=1.26",
+    "pydantic>=2.0",
+    # Storage
+    "lancedb>=0.6",
+    "duckdb>=0.10",
+    # NER (Module 2)
+    "sentence-transformers>=3.0",
+    "gliner>=0.2",
+    "transformers>=4.40",
+    "torch>=2.2",
+    # Entity Resolution (Module 3)
+    "scikit-learn>=1.4",
+    # Lead Scoring (Module 4)
+    "lightgbm>=4.3",
+    "onnxruntime>=1.17",
+    "mapie>=0.8",
+    # Report Generation (Module 5)
+    "outlines>=0.0.40",
+    # Evaluation (Module 6)
+    "scipy>=1.13",
+    # System
+    "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+dashboard = ["streamlit>=1.30"]
+mlx = [
+    "mlx>=0.10",
+    "mlx-lm>=0.10",
+    "coremltools>=7.0",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+scrapus = "cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

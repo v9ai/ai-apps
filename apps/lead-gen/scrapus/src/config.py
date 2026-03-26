@@ -226,6 +226,31 @@ class ScrapusConfig:
         """Serialize the entire config tree to a plain dict."""
         return asdict(self)
 
+    def to_pipeline_config(self) -> "PipelineConfig":
+        """
+        Convert to a PipelineConfig suitable for the orchestrator.
+
+        Bridges the typed TOML config system with the orchestrator's
+        PipelineConfig dataclass so all settings flow through correctly.
+        """
+        from pipeline_orchestrator import PipelineConfig
+        return PipelineConfig(
+            data_dir=self.data_dir,
+            model_dir=self.models_dir,
+            output_dir=self.data_dir / "output",
+            checkpoint_db=str(self.data_dir / "pipeline_checkpoints.db"),
+            pipeline_db=str(self.sqlite_path),
+            memory_log_dir=self.logs_dir / "memory",
+            seed_urls=self.crawler.seed_urls,
+            max_pages=self.crawler.max_pages,
+            score_threshold=self.scoring.qualification_threshold,
+            rss_abort_threshold_gb=self.memory.budget_gb,
+            llm_backend=self.report.llm_backend,
+            ollama_model=self.report.llm_model,
+            ner_batch_size=self.ner.batch_size,
+            entity_types=self.ner.entity_types,
+        )
+
 
 # ============================================================================
 # TOML parsing helpers
