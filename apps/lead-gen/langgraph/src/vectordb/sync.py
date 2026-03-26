@@ -288,7 +288,7 @@ def sync_posts() -> SyncResult:
     """Sync LinkedIn posts from the Rust LanceDB store into the vectordb with embeddings.
 
     Reads posts from ~/.lance/linkedin (written by the Rust server),
-    embeds post_text via MLX, writes to ~/.lance/nomadically/posts.
+    embeds post_text via MLX, writes to ~/.lance/lead-gen/posts.
     """
     db = lancedb.connect(LANCE_DB_PATH)
 

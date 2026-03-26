@@ -1,5 +1,5 @@
 [project]
-name = "nomadically-llamaindex"
+name = "lead-gen-llamaindex"
 version = "0.1.0"
 description = "LlamaIndex Workflows pipelines for interview prep and tech knowledge extraction"
 requires-python = ">=3.12"

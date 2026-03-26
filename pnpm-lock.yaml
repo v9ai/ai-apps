@@ -321,7 +321,7 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.37)(happy-dom@20.8.4)(jiti@2.6.1)(jsdom@28.1.0(@noble/hashes@2.0.1))(lightningcss@1.32.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
-  apps/nomadically.work:
+  apps/lead-gen:
     dependencies:
       '@ai-apps/auth':
         specifier: workspace:*
@@ -520,7 +520,7 @@ importers:
         specifier: ^8.20.0
         version: 8.20.0
 
-  apps/nomadically.work/chrome-extension:
+  apps/lead-gen/chrome-extension:
     dependencies:
       '@mantine/core':
         specifier: ^8.3.10

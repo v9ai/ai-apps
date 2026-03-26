@@ -5,4 +5,4 @@
 
 pub mod store;
 
-pub use store::{SearchFilter, SearchResult, VectorStore};
+pub use store::{ChunkResult, SearchFilter, SearchResult, VectorStore};

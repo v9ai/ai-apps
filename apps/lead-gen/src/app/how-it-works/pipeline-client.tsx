@@ -748,7 +748,7 @@ export function PipelineClient() {
         <Text color="gray" size="2">
           20 LangGraph StateGraphs power the pipeline — from board discovery to interview prep.
         </Text>
-        <a href="https://github.com/nicolad/nomadically.work" target="_blank" rel="noopener noreferrer"
+        <a href="https://github.com/nicolad/lead-gen" target="_blank" rel="noopener noreferrer"
           style={{ color: "var(--gray-9)", display: "flex", alignItems: "center" }}>
           <GitHubLogoIcon width={16} height={16} />
         </a>

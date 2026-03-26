@@ -17,18 +17,18 @@ import { ExclamationTriangleIcon, ReloadIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 
 const WORKERS = [
-  { name: "nomadically-janitor", config: "wrangler.toml", runtime: "TypeScript", notes: "Daily midnight UTC, triggers ATS ingestion" },
-  { name: "nomadically-work-insert-jobs", config: "wrangler.insert-jobs.toml", runtime: "TypeScript", notes: "Queue-based job ingestion" },
-  { name: "nomadically-work-process-companies-cron", config: "wrangler.process-companies-cron.toml", runtime: "TypeScript", notes: "Company processing cron" },
+  { name: "lead-gen-janitor", config: "wrangler.toml", runtime: "TypeScript", notes: "Daily midnight UTC, triggers ATS ingestion" },
+  { name: "lead-gen-insert-jobs", config: "wrangler.insert-jobs.toml", runtime: "TypeScript", notes: "Queue-based job ingestion" },
+  { name: "lead-gen-process-companies-cron", config: "wrangler.process-companies-cron.toml", runtime: "TypeScript", notes: "Company processing cron" },
   { name: "dlq-consumer", config: "wrangler.dlq-consumer.toml", runtime: "TypeScript", notes: "Dead-letter queue consumer" },
   { name: "observability-tail", config: "wrangler.observability-tail.toml", runtime: "TypeScript", notes: "Observability logging tail" },
   { name: "ats-crawler", config: "workers/ashby-crawler/wrangler.toml", runtime: "Rust/WASM", notes: "Common Crawl → Ashby boards, cron 02:00 UTC" },
-  { name: "nomadically-work-process-jobs", config: "workers/process-jobs/wrangler.jsonc", runtime: "Python/LangGraph", notes: "Every 6h + queue, DeepSeek classification" },
-  { name: "nomadically-work-eu-classifier", config: "workers/eu-classifier/wrangler.jsonc", runtime: "Python", notes: "EU job classification" },
-  { name: "nomadically-work-resume-rag", config: "workers/resume-rag/wrangler.jsonc", runtime: "Python", notes: "Vectorize + Workers AI" },
-  { name: "nomadically-work-job-matcher", config: "workers/job-matcher/wrangler.jsonc", runtime: "Python", notes: "Resume-to-job matching" },
+  { name: "lead-gen-process-jobs", config: "workers/process-jobs/wrangler.jsonc", runtime: "Python/LangGraph", notes: "Every 6h + queue, DeepSeek classification" },
+  { name: "lead-gen-eu-classifier", config: "workers/eu-classifier/wrangler.jsonc", runtime: "Python", notes: "EU job classification" },
+  { name: "lead-gen-resume-rag", config: "workers/resume-rag/wrangler.jsonc", runtime: "Python", notes: "Vectorize + Workers AI" },
+  { name: "lead-gen-job-matcher", config: "workers/job-matcher/wrangler.jsonc", runtime: "Python", notes: "Resume-to-job matching" },
   { name: "job-reporter-llm", config: "workers/job-reporter-llm/wrangler.toml", runtime: "TypeScript", notes: "LLM-based job report analysis" },
-  { name: "nomadically-work-cleanup-jobs", config: "workers/cleanup-jobs/wrangler.jsonc", runtime: "Python", notes: "Job cleanup" },
+  { name: "lead-gen-cleanup-jobs", config: "workers/cleanup-jobs/wrangler.jsonc", runtime: "Python", notes: "Job cleanup" },
 ] as const;
 
 export default function WorkersPage() {

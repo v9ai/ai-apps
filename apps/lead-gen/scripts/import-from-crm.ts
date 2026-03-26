@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 /**
- * Import companies and contacts from CRM JSON backup into nomadically.work D1.
+ * Import companies and contacts from CRM JSON backup into lead-gen D1.
  *
  * Usage:
  *   pnpm tsx scripts/import-from-crm.ts                        # import both

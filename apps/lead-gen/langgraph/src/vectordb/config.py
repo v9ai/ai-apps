@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-LANCE_DB_PATH = str(Path.home() / ".lance" / "nomadically")
+LANCE_DB_PATH = str(Path.home() / ".lance" / "lead-gen")
 LANCE_LINKEDIN_PATH = str(Path.home() / ".lance" / "linkedin")  # Rust store (read-only)
 
 MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"

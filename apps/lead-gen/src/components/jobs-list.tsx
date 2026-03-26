@@ -87,7 +87,7 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        localStorage.setItem("nomadically:admin:scroll", String(window.scrollY));
+        localStorage.setItem("lead-gen:admin:scroll", String(window.scrollY));
         ticking = false;
       });
     };
@@ -222,7 +222,7 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
   useEffect(() => {
     if (!isAdmin || scrollRestoredRef.current || !data) return;
     scrollRestoredRef.current = true;
-    const saved = localStorage.getItem("nomadically:admin:scroll");
+    const saved = localStorage.getItem("lead-gen:admin:scroll");
     if (saved) {
       window.scrollTo({ top: parseInt(saved, 10), behavior: "instant" });
     }

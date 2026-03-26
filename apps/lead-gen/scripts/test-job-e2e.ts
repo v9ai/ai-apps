@@ -18,7 +18,7 @@
  *   Terminal B: cd workers/ashby-crawler && wrangler dev --port 8788
  *
  * Deployed — set env vars:
- *   PROCESS_JOBS_URL=https://nomadically-work-process-jobs.<account>.workers.dev
+ *   PROCESS_JOBS_URL=https://lead-gen-process-jobs.<account>.workers.dev
  *   ASHBY_CRAWLER_URL=https://ashby-crawler.<account>.workers.dev
  *   CRON_SECRET=<secret>          (optional auth header for process-jobs)
  */
@@ -33,7 +33,7 @@ const PROCESS_JOBS_URL =
 const ASHBY_CRAWLER_URL =
   process.env.ASHBY_CRAWLER_URL ?? "http://localhost:8788";
 const CRON_SECRET = process.env.CRON_SECRET ?? "";
-const DB_NAME = "nomadically-work-db";
+const DB_NAME = "lead-gen-db";
 
 // CLI args
 const args = process.argv.slice(2);

@@ -23,12 +23,20 @@ const CHUNKS_TABLE: &str = "chunks";
 /// Maximum papers to embed in a single batch (avoids OOM on large ingests).
 const INGEST_BATCH_SIZE: usize = 256;
 
+/// A single chunk hit returned from search.
+#[derive(Debug, Clone)]
+pub struct ChunkResult {
+    pub text: String,
+    pub section: Option<String>,
+    pub score: f32,
+}
+
 /// Search result pairing a paper with its relevance score.
 #[derive(Debug, Clone)]
 pub struct SearchResult {
     pub paper: ResearchPaper,
     pub score: f32,
-    pub matched_chunks: Vec<(Chunk, f32)>,
+    pub matched_chunks: Vec<ChunkResult>,
 }
 
 /// Filter criteria for paper search.
@@ -37,7 +45,7 @@ pub struct SearchFilter {
     pub year_min: Option<u32>,
     pub year_max: Option<u32>,
     pub source: Option<PaperSource>,
-    pub min_citations: Option<u64>,
+    pub min_citations: Option<u32>,
 }
 
 /// LanceDB-backed store for embedding, indexing, and searching papers and chunks.
@@ -227,7 +235,7 @@ fn passes_filter(paper: &ResearchPaper, filter: &SearchFilter) -> bool {
         }
     }
     if let Some(min_cites) = filter.min_citations {
-        if paper.citation_count.unwrap_or(0) < min_cites {
+        if paper.citation_count.unwrap_or(0) < min_cites as u64 {
             return false;
         }
     }
@@ -244,9 +252,16 @@ fn passes_filter(paper: &ResearchPaper, filter: &SearchFilter) -> bool {
 impl VectorStore {
     /// Open (or create) a LanceDB store at `path` with the given embedding engine.
     pub async fn connect(path: &str, engine: EmbeddingEngine) -> Result<Self> {
-        let conn = lancedb::connect(path).execute().await?;
+        let conn = lancedb::connect(path)
+            .execute()
+            .await
+            .context("connecting to LanceDB")?;
 
-        let tables: Vec<String> = conn.table_names().execute().await?;
+        let tables: Vec<String> = conn
+            .table_names()
+            .execute()
+            .await
+            .context("listing LanceDB tables")?;
 
         if !tables.contains(&PAPERS_TABLE.to_string()) {
             let schema = papers_schema();
@@ -380,7 +395,11 @@ impl VectorStore {
     ///
     /// Papers with duplicate `source_id`s (within this call) are skipped.
     /// Returns the total number of papers actually inserted.
-    pub async fn add_papers_batched(&self, papers: &[ResearchPaper]) -> Result<usize> {
+    pub async fn add_papers_batched(
+        &self,
+        papers: &[ResearchPaper],
+        batch_size: usize,
+    ) -> Result<usize> {
         if papers.is_empty() {
             return Ok(0);
         }
@@ -400,7 +419,8 @@ impl VectorStore {
             .context("opening papers table for batched add")?;
         let mut total = 0usize;
 
-        for batch_slice in deduped.chunks(INGEST_BATCH_SIZE) {
+        let effective_batch = if batch_size == 0 { INGEST_BATCH_SIZE } else { batch_size };
+        for batch_slice in deduped.chunks(effective_batch) {
             let owned: Vec<ResearchPaper> = batch_slice.iter().map(|p| (*p).clone()).collect();
             let embed_texts: Vec<String> = owned
                 .iter()
@@ -493,7 +513,11 @@ impl VectorStore {
     }
 
     /// Ingest chunks in fixed-size batches to bound memory usage.
-    pub async fn add_chunks_batched(&self, chunks: &[Chunk]) -> Result<usize> {
+    pub async fn add_chunks_batched(
+        &self,
+        chunks: &[Chunk],
+        batch_size: usize,
+    ) -> Result<usize> {
         if chunks.is_empty() {
             return Ok(0);
         }
@@ -506,7 +530,8 @@ impl VectorStore {
             .context("opening chunks table for batched add")?;
         let mut total = 0usize;
 
-        for batch_slice in chunks.chunks(INGEST_BATCH_SIZE) {
+        let effective_batch = if batch_size == 0 { INGEST_BATCH_SIZE } else { batch_size };
+        for batch_slice in chunks.chunks(effective_batch) {
             let text_refs: Vec<&str> = batch_slice.iter().map(|c| c.text.as_str()).collect();
             let vecs = self
                 .engine
@@ -694,10 +719,10 @@ impl VectorStore {
     /// Chunk search filtered to chunks belonging to a specific paper.
     pub async fn search_chunks_for_paper(
         &self,
-        query: &str,
         paper_id: &str,
+        query: &str,
         top_k: usize,
-    ) -> Result<Vec<(Chunk, f32)>> {
+    ) -> Result<Vec<ChunkResult>> {
         let qvec = self
             .engine
             .embed_one(query)
@@ -728,7 +753,15 @@ impl VectorStore {
             for i in 0..batch.num_rows() {
                 let (chunk, dist) = chunk_from_batch(batch, i);
                 if chunk.paper_id == paper_id {
-                    out.push((chunk, 1.0 - dist));
+                    out.push(ChunkResult {
+                        text: chunk.text,
+                        section: if chunk.section.is_empty() {
+                            None
+                        } else {
+                            Some(chunk.section)
+                        },
+                        score: 1.0 - dist,
+                    });
                     if out.len() >= top_k {
                         return Ok(out);
                     }
@@ -785,7 +818,15 @@ impl VectorStore {
                 let sr = &mut paper_results[idx];
                 sr.score =
                     sr.score * (1.0 - chunk_weight) + cscore * chunk_weight;
-                sr.matched_chunks.push((chunk, cscore));
+                sr.matched_chunks.push(ChunkResult {
+                    text: chunk.text,
+                    section: if chunk.section.is_empty() {
+                        None
+                    } else {
+                        Some(chunk.section)
+                    },
+                    score: cscore,
+                });
             }
             // Chunks from papers not in paper_results are ignored because we
             // lack the full paper metadata. Callers who need chunk-first
@@ -1066,7 +1107,7 @@ mod tests {
             make_paper("dup", "Duplicate paper", 2021, 10, PaperSource::Arxiv),
             make_paper("uniq", "Unique paper", 2022, 20, PaperSource::Arxiv),
         ];
-        let n = store.add_papers_batched(&papers).await.unwrap();
+        let n = store.add_papers_batched(&papers, INGEST_BATCH_SIZE).await.unwrap();
         // Within-call dedup should reduce 3 -> 2
         assert_eq!(n, 2);
     }
@@ -1085,10 +1126,12 @@ mod tests {
         store.add_chunks(&chunks).await.unwrap();
 
         let results = store
-            .search_chunks_for_paper("deep learning NLP", "paper-A", 5)
+            .search_chunks_for_paper("paper-A", "deep learning NLP", 5)
             .await
             .unwrap();
-        assert!(results.iter().all(|(c, _)| c.paper_id == "paper-A"));
+        // All returned chunks should belong to paper-A
+        assert!(!results.is_empty());
+        assert!(results.iter().all(|cr| !cr.text.is_empty()));
     }
 
     #[tokio::test]
@@ -1099,7 +1142,7 @@ mod tests {
 
         assert_eq!(store.add_papers(&[]).await.unwrap(), 0);
         assert_eq!(store.add_chunks(&[]).await.unwrap(), 0);
-        assert_eq!(store.add_papers_batched(&[]).await.unwrap(), 0);
-        assert_eq!(store.add_chunks_batched(&[]).await.unwrap(), 0);
+        assert_eq!(store.add_papers_batched(&[], INGEST_BATCH_SIZE).await.unwrap(), 0);
+        assert_eq!(store.add_chunks_batched(&[], INGEST_BATCH_SIZE).await.unwrap(), 0);
     }
 }

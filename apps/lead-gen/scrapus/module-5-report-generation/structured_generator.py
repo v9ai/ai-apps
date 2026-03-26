@@ -366,33 +366,27 @@ class OutlinesJSONGenerator:
         Supported on llama2-json, neural-chat with format=json, etc.
         """
         try:
-            import requests
-            
-            # Construct schema description for JSON mode
+            import httpx
+
             schema_hint = f"Output must be valid JSON matching this structure: {schema.schema()}"
             full_prompt = f"{prompt}\n\n{schema_hint}"
-            
+
             payload = {
                 "model": self.model_name,
                 "prompt": full_prompt,
                 "stream": False,
+                "format": "json",
                 "options": {
                     "num_predict": max_tokens,
-                    "temperature": 0.1,  # Lower temp for consistency with JSON
+                    "temperature": 0.1,
                 }
             }
-            
-            # Try with format hint if supported
-            try:
-                payload["format"] = "json"
-            except:
-                pass
-            
-            response = requests.post(
-                f"{self.ollama_base_url}/api/generate",
-                json=payload,
-                timeout=30
-            )
+
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(
+                    f"{self.ollama_base_url}/api/generate",
+                    json=payload,
+                )
             
             if response.status_code == 200:
                 result = response.json().get("response", "")
@@ -413,8 +407,8 @@ class OutlinesJSONGenerator:
         This is the legacy approach, used only when grammar constraints fail.
         """
         try:
-            import requests
-            
+            import httpx
+
             payload = {
                 "model": self.model_name,
                 "prompt": prompt,
@@ -426,12 +420,12 @@ class OutlinesJSONGenerator:
                     "repeat_penalty": 1.1,
                 }
             }
-            
-            response = requests.post(
-                f"{self.ollama_base_url}/api/generate",
-                json=payload,
-                timeout=30
-            )
+
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(
+                    f"{self.ollama_base_url}/api/generate",
+                    json=payload,
+                )
             
             if response.status_code == 200:
                 result = response.json().get("response", "")
@@ -476,26 +470,23 @@ class OutlinesJSONGenerator:
         This requires llama.cpp backend with grammar support.
         """
         try:
-            import requests
-            
-            # Some Ollama versions support grammar parameter
+            import httpx
+
             payload = {
                 "model": self.model_name,
                 "prompt": prompt,
                 "stream": False,
                 "options": {
                     "num_predict": max_tokens,
-                    "temperature": 0.0,  # Deterministic with grammar
+                    "temperature": 0.0,
                 },
-                # Grammar support is model/backend dependent
-                # "grammar": grammar
             }
-            
-            response = requests.post(
-                f"{self.ollama_base_url}/api/generate",
-                json=payload,
-                timeout=30
-            )
+
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(
+                    f"{self.ollama_base_url}/api/generate",
+                    json=payload,
+                )
             
             return response.json().get("response", "")
             
@@ -506,14 +497,11 @@ class OutlinesJSONGenerator:
     def _ollama_json_supported(self) -> bool:
         """Check if current Ollama instance supports JSON mode"""
         try:
-            import requests
-            resp = requests.get(
-                f"{self.ollama_base_url}/api/tags",
-                timeout=5
-            )
-            # Simple check: if API responds, assume feature support
+            import httpx
+            with httpx.Client(timeout=5.0) as client:
+                resp = client.get(f"{self.ollama_base_url}/api/tags")
             return resp.status_code == 200
-        except:
+        except Exception:
             return False
 
 

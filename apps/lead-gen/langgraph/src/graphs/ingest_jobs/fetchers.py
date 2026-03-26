@@ -200,7 +200,7 @@ def fetch_remotive_jobs() -> list[dict]:
 def fetch_remoteok_jobs() -> list[dict]:
     """Fetch jobs from RemoteOK API."""
     client = _get_client()
-    resp = client.get("https://remoteok.com/api", headers={"User-Agent": "nomadically-langgraph/1.0"})
+    resp = client.get("https://remoteok.com/api", headers={"User-Agent": "lead-gen-langgraph/1.0"})
     resp.raise_for_status()
     data = resp.json()
     if not isinstance(data, list):

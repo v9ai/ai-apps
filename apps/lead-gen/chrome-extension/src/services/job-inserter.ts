@@ -7,7 +7,7 @@
 
 const WORKER_URL =
   import.meta.env.VITE_WORKER_URL ||
-  "https://nomadically-work-insert-jobs.eeeew.workers.dev";
+  "https://lead-gen-insert-jobs.eeeew.workers.dev";
 
 // API secret can be set at build time or runtime
 const BUILD_TIME_API_SECRET = import.meta.env.VITE_API_SECRET || null;
@@ -184,7 +184,7 @@ export function normalizeJobInput(job: any): any {
   // Check if this is a CRM internal URL (localhost or known CRM domains)
   // Format: /jobs/<id-or-slug>?company=<company>&source=<source>
   const crmUrlMatch = job.url?.match(
-    /(?:localhost:\d+|nomadically\.work|127\.0\.0\.1:\d+)\/jobs\/([^?]+)/,
+    /(?:localhost:\d+|lead-gen|127\.0\.0\.1:\d+)\/jobs\/([^?]+)/,
   );
 
   if (crmUrlMatch) {

@@ -1,5 +1,5 @@
 [project]
-name = "nomadically-langgraph"
+name = "lead-gen-langgraph"
 version = "0.3.0"
 description = "LangGraph pipelines for job processing, classification, ingestion, discovery, resume RAG, and more"
 requires-python = ">=3.12"
