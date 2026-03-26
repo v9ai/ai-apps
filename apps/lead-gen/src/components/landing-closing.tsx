@@ -3,150 +3,183 @@
 import { css } from "styled-system/css";
 import { flex, container } from "styled-system/patterns";
 import { button } from "@/recipes/button";
-import { badge } from "@/recipes/badge";
-import { ArrowRightIcon } from "@radix-ui/react-icons";
+import { ArrowRightIcon, EnvelopeClosedIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
-import { Box, Flex, Text, Badge } from "@radix-ui/themes";
 
 /**
- * Improvement 5: Closing section — consolidated CTAs + credibility signals.
+ * CTA Improvement 2: Final conversion section (page closer).
  *
- * Dual CTAs (explore pipeline + browse leads) appear here at the bottom
- * instead of competing in the hero. This follows the "closing argument"
- * pattern: after seeing promise, mechanism, proof, and differentiators,
- * the user is ready to act.
- *
- * Tech stack badges and open-source callout moved here from LandingFeatures
- * where they were buried mid-page. As credibility signals, they belong
- * at the decision point — right before the user clicks.
+ * Visitors who scroll to the bottom are high-intent but undecided.
+ * This section provides:
+ * - A value-restating headline (not "get started" -- too generic)
+ * - Primary CTA repeated (consistency with hero)
+ * - Email capture for visitors not ready to commit (newsletter/alerts)
+ * - Creates urgency with "updated daily" language
  */
-
-const techStack = [
-  "Next.js 16",
-  "Neon PostgreSQL",
-  "Cloudflare Workers",
-  "DeepSeek",
-  "LangGraph",
-  "LanceDB",
-  "GraphQL",
-  "Drizzle ORM",
-];
-
-const badgeStyle: React.CSSProperties = {
-  borderRadius: 0,
-  textTransform: "lowercase" as const,
-};
 
 export function LandingClosing() {
   return (
     <section
+      id="stack"
       className={css({
-        pt: { base: "sectionMobile", lg: "section" },
-        pb: { base: "sectionMobile", lg: "section" },
+        py: { base: "sectionMobile", lg: "section" },
         borderTop: "1px solid",
-        borderColor: "ui.border",
+        borderTopColor: "ui.border",
+        scrollMarginTop: "56px",
       })}
     >
       <div className={container({ maxW: "breakpoint-lg" })}>
-        {/* --- headline --- */}
-        <h2
-          className={css({
-            fontSize: { base: "2xl", md: "3xl" },
-            fontWeight: "bold",
-            color: "ui.heading",
-            letterSpacing: "tighter",
-            lineHeight: "snug",
-            textAlign: "center",
-            maxW: "520px",
-            mx: "auto",
-          })}
-        >
-          start finding leads before they hit the job boards
-        </h2>
-
-        {/* --- dual CTAs --- */}
-        <div className={flex({ justify: "center", gap: "3", mt: "6" })}>
-          <Link
-            href="/how-it-works"
-            className={button({ variant: "solid", size: "lg" })}
-          >
-            explore pipeline
-            <ArrowRightIcon width={14} height={14} />
-          </Link>
-          <Link
-            href="/companies"
-            className={button({ variant: "ghost", size: "lg" })}
-          >
-            browse leads
-          </Link>
-        </div>
-
-        {/* --- tech stack badges --- */}
         <div
-          className={css({
-            mt: "8",
+          className={flex({
+            direction: "column",
+            align: "center",
             textAlign: "center",
           })}
         >
-          <Text
-            as="p"
-            size="1"
-            weight="medium"
-            mb="3"
-            style={{ color: "var(--gray-8)", textTransform: "lowercase" }}
+          {/* restated value prop */}
+          <h2
+            className={css({
+              fontSize: { base: "3xl", md: "4xl" },
+              fontWeight: "bold",
+              color: "ui.heading",
+              letterSpacing: "tighter",
+              lineHeight: "snug",
+              maxW: "560px",
+            })}
           >
-            tech stack
-          </Text>
-          <Flex gap="2" wrap="wrap" justify="center">
-            {techStack.map((tech) => (
-              <Badge
-                key={tech}
-                variant="outline"
-                color="gray"
-                size="1"
-                style={badgeStyle}
-              >
-                {tech.toLowerCase()}
-              </Badge>
-            ))}
-          </Flex>
-        </div>
+            stop scrolling job boards manually
+          </h2>
+          <p
+            className={css({
+              fontSize: { base: "base", md: "lg" },
+              color: "ui.secondary",
+              mt: "3",
+              maxW: "440px",
+              lineHeight: "relaxed",
+              letterSpacing: "snug",
+            })}
+          >
+            27 verified EU-remote AI/ML positions — updated daily from 460+
+            company pipelines.
+          </p>
 
-        {/* --- open source callout --- */}
-        <Box
-          mt="6"
-          py="4"
-          px="5"
-          style={{
-            border: "1px solid var(--green-9)",
-            borderRadius: 0,
-            background: "transparent",
-          }}
-        >
-          <Flex align="center" justify="between" wrap="wrap" gap="3">
-            <Text size="2" style={{ color: "var(--gray-11)" }}>
-              fully open source — explore the architecture
-            </Text>
+          {/* primary CTA repeated */}
+          <div className={flex({ justify: "center", gap: "3", mt: "6" })}>
             <Link
-              href="/how-it-works"
-              className={css({
-                color: "status.positive",
-                fontSize: "sm",
-                textDecoration: "none",
-                textTransform: "lowercase",
-                fontWeight: "medium",
-                borderBottom: "1px solid",
-                borderColor: "status.positive",
-                pb: "1px",
-                _hover: {
-                  opacity: 0.8,
-                },
+              href="/jobs"
+              className={button({ variant: "solid", size: "lg" })}
+            >
+              find remote EU jobs
+              <ArrowRightIcon width={14} height={14} />
+            </Link>
+          </div>
+
+          {/* email capture for low-commitment visitors */}
+          <div
+            className={css({
+              mt: "8",
+              pt: "6",
+              borderTop: "1px solid",
+              borderTopColor: "ui.border",
+              width: "100%",
+              maxW: "440px",
+            })}
+          >
+            <div
+              className={flex({
+                align: "center",
+                gap: "2",
+                justify: "center",
+                mb: "3",
               })}
             >
-              how it works
-            </Link>
-          </Flex>
-        </Box>
+              <EnvelopeClosedIcon
+                width={12}
+                height={12}
+                className={css({ color: "ui.dim" })}
+              />
+              <span
+                className={css({
+                  fontSize: "xs",
+                  color: "ui.tertiary",
+                  textTransform: "lowercase",
+                  letterSpacing: "wide",
+                })}
+              >
+                not ready yet? get weekly alerts
+              </span>
+            </div>
+            <form
+              className={flex({
+                gap: "0",
+                width: "100%",
+              })}
+              onSubmit={(e) => {
+                e.preventDefault();
+                // TODO: wire to newsletter API / Neon table
+              }}
+            >
+              <input
+                type="email"
+                placeholder="your@email.com"
+                required
+                aria-label="email address for weekly alerts"
+                className={css({
+                  flex: 1,
+                  height: "40px",
+                  px: "3",
+                  bg: "ui.surface",
+                  border: "1px solid",
+                  borderColor: "ui.border",
+                  borderRight: "none",
+                  color: "ui.heading",
+                  fontSize: "sm",
+                  letterSpacing: "normal",
+                  outline: "none",
+                  _placeholder: {
+                    color: "ui.dim",
+                  },
+                  _focusVisible: {
+                    borderColor: "accent.primary",
+                  },
+                })}
+              />
+              <button
+                type="submit"
+                className={css({
+                  height: "40px",
+                  px: "5",
+                  bg: "accent.primary",
+                  color: "accent.contrast",
+                  border: "1px solid transparent",
+                  fontWeight: "bold",
+                  fontSize: "sm",
+                  cursor: "pointer",
+                  textTransform: "lowercase",
+                  letterSpacing: "normal",
+                  whiteSpace: "nowrap",
+                  transition: "background 150ms ease",
+                  _hover: {
+                    bg: "accent.hover",
+                  },
+                })}
+              >
+                subscribe
+              </button>
+            </form>
+            <p
+              className={css({
+                fontSize: "2xs",
+                color: "ui.dim",
+                mt: "2",
+                textAlign: "center",
+                letterSpacing: "normal",
+              })}
+            >
+              one email per week. unsubscribe anytime. no spam.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );

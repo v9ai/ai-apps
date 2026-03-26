@@ -155,7 +155,11 @@ fn chunk_sentence(text: &str, paper_id: &str, cfg: &ChunkerConfig) -> Vec<Chunk>
     let bytes = text.len();
 
     while pos < bytes {
-        let end = (pos + cfg.chunk_size).min(bytes);
+        let mut end = (pos + cfg.chunk_size).min(bytes);
+        // Snap to a char boundary so we never slice inside a multi-byte codepoint
+        while end < bytes && !text.is_char_boundary(end) {
+            end += 1;
+        }
         let mut slice = &text[pos..end];
 
         // Try to break at sentence boundary
@@ -177,11 +181,15 @@ fn chunk_sentence(text: &str, paper_id: &str, cfg: &ChunkerConfig) -> Vec<Chunk>
         }
 
         let actual_end = pos + slice.len();
-        let next = if actual_end > cfg.overlap {
+        let mut next = if actual_end > cfg.overlap {
             actual_end - cfg.overlap
         } else {
             actual_end
         };
+        // Snap to char boundary
+        while next > 0 && !text.is_char_boundary(next) {
+            next -= 1;
+        }
         if next <= pos {
             break;
         }
