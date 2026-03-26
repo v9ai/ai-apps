@@ -3,111 +3,12 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'exec \"$(git rev-parse --show-toplevel)/apps/lead-gen/hooks/scripts/hooks-dispatch\"'",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'exec \"$(git rev-parse --show-toplevel)/apps/lead-gen/hooks/scripts/hooks-dispatch\"'",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'exec \"$(git rev-parse --show-toplevel)/apps/lead-gen/hooks/scripts/hooks-dispatch\"'",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'exec \"$(git rev-parse --show-toplevel)/apps/lead-gen/hooks/scripts/hooks-dispatch\"'",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "matcher": "Bash|Write|Edit|Read|Glob|Grep",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'exec \"$(git rev-parse --show-toplevel)/apps/lead-gen/hooks/scripts/hooks-dispatch\"'",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'exec \"$(git rev-parse --show-toplevel)/apps/lead-gen/hooks/scripts/hooks-dispatch\"'",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'exec \"$(git rev-parse --show-toplevel)/apps/lead-gen/hooks/scripts/hooks-dispatch\"'",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'exec \"$(git rev-parse --show-toplevel)/apps/lead-gen/hooks/scripts/hooks-dispatch\"'",
-            "timeout": 20
-          }
-        ]
-      }
-    ],
     "Notification": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "osascript -e 'display notification \"Waiting for your input\" with title \"Claude Code\" sound name \"Glass\"'"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -c 'exec \"$(git rev-parse --show-toplevel)/apps/lead-gen/hooks/scripts/hooks-dispatch\"'",
-            "timeout": 10
           }
         ]
       }
