@@ -1,25 +1,27 @@
 import { Box } from "@radix-ui/themes";
-import { css } from "styled-system/css";
 import { LandingHero } from "@/components/landing-hero";
+import { LandingPipeline } from "@/components/landing-pipeline";
 import { LandingPreview } from "@/components/landing-preview";
 import { LandingFeatures } from "@/components/landing-features";
+import { LandingClosing } from "@/components/landing-closing";
 
-const sectionDivider = css({
-  width: "100%",
-  height: "1px",
-  background:
-    "linear-gradient(90deg, transparent 0%, {colors.ui.border} 30%, {colors.accent.primary}/30 50%, {colors.ui.border} 70%, transparent 100%)",
-  my: { base: "10", lg: "14" },
-});
-
+/**
+ * Landing page — narrative arc: what → how → proof → why → action.
+ *
+ * 1. Hero:     Value proposition + social proof stats + single CTA
+ * 2. Pipeline: How it works — 4-stage visualization
+ * 3. Preview:  Proof — live pipeline output with real leads
+ * 4. Features: Differentiators — multi-model, real-time, vector matching
+ * 5. Closing:  Decision point — dual CTAs + tech stack + open source
+ */
 export default function HomePage() {
   return (
     <Box>
       <LandingHero />
-      <div className={sectionDivider} />
+      <LandingPipeline />
       <LandingPreview />
-      <div className={sectionDivider} />
       <LandingFeatures />
+      <LandingClosing />
     </Box>
   );
 }
