@@ -1207,9 +1207,8 @@ export type Mutation = {
   mergeDuplicateContacts: MergeDuplicateContactsResult;
   previewEmail: EmailPreview;
   /**
-   * Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
-   * Calls the classify-jobs CF worker (POST) which runs DeepSeek-based classification
-   * for remote-EU eligibility on every unclassified job.
+   * Trigger classification/enhancement of all unprocessed jobs.
+   * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
    */
   processAllJobs: ProcessAllJobsResponse;
   pushLangSmithPrompt: Scalars['String']['output'];
@@ -1699,7 +1698,7 @@ export type PreviewEmailInput = {
   subject: Scalars['String']['input'];
 };
 
-/** Response from triggering the classify-jobs Cloudflare Worker */
+/** Response from triggering job classification */
 export type ProcessAllJobsResponse = {
   __typename: 'ProcessAllJobsResponse';
   /** Number of errors during ATS enhancement */

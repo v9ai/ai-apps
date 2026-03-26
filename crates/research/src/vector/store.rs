@@ -163,10 +163,13 @@ fn paper_from_batch(batch: &RecordBatch, i: usize) -> (ResearchPaper, f32) {
         .and_then(|c| c.as_any().downcast_ref::<StringArray>())
         .and_then(|c| serde_json::from_str(c.value(i)).ok());
 
-    // New metadata columns — read but not yet mapped to ResearchPaper fields.
-    let _published_date = get_str("published_date");
-    let _primary_category = get_str("primary_category");
-    let _categories_json = get_str("categories_json");
+    let published_date = get_str("published_date");
+    let primary_category = get_str("primary_category");
+
+    let categories: Option<Vec<String>> = batch
+        .column_by_name("categories_json")
+        .and_then(|c| c.as_any().downcast_ref::<StringArray>())
+        .and_then(|c| serde_json::from_str(c.value(i)).ok());
 
     let dist = batch
         .column_by_name("_distance")
@@ -186,6 +189,9 @@ fn paper_from_batch(batch: &RecordBatch, i: usize) -> (ResearchPaper, f32) {
         source,
         source_id,
         fields_of_study,
+        published_date,
+        primary_category,
+        categories,
     };
 
     (paper, dist)
@@ -325,20 +331,21 @@ impl VectorStore {
             abstracts.push(p.abstract_text.clone().unwrap_or_default());
             authors_json.push(serde_json::to_string(&p.authors).unwrap_or_default());
             years.push(p.year.unwrap_or(0));
-            // published_date: not yet on ResearchPaper, store None
-            published_dates.push(None);
+            published_dates.push(p.published_date.clone());
             dois.push(p.doi.clone().unwrap_or_default());
             citation_counts.push(p.citation_count.unwrap_or(0));
             urls.push(p.url.clone().unwrap_or_default());
             pdf_urls.push(p.pdf_url.clone().unwrap_or_default());
             sources.push(format!("{:?}", p.source));
-            let fos_json =
-                serde_json::to_string(&p.fields_of_study).unwrap_or_default();
-            fields_json.push(fos_json.clone());
-            // primary_category: not yet on ResearchPaper, store None
-            primary_categories.push(None);
-            // categories_json: fallback to fields_of_study_json for now
-            categories_jsons.push(Some(fos_json));
+            fields_json.push(
+                serde_json::to_string(&p.fields_of_study).unwrap_or_default(),
+            );
+            primary_categories.push(p.primary_category.clone());
+            // categories_json: use categories if present, fallback to fields_of_study
+            let cats = p.categories.as_ref().or(p.fields_of_study.as_ref());
+            categories_jsons.push(
+                cats.map(|c| serde_json::to_string(c).unwrap_or_default()),
+            );
             timestamps.push(now_secs());
             all_vecs.extend_from_slice(v);
         }
@@ -947,6 +954,9 @@ mod tests {
             source,
             source_id: id.into(),
             fields_of_study: None,
+            published_date: None,
+            primary_category: None,
+            categories: None,
         }
     }
 

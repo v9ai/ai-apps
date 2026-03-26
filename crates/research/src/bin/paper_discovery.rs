@@ -448,6 +448,9 @@ async fn main() -> Result<()> {
                             "awesome:{}",
                             entry.category
                         )]),
+                        published_date: None,
+                        primary_category: None,
+                        categories: None,
                     });
                 }
             }
@@ -1036,6 +1039,9 @@ async fn ingest_paper_entries(
                         "{}:{}",
                         repo_tag, entry.category
                     )]),
+                    published_date: None,
+                    primary_category: None,
+                    categories: None,
                 });
             }
         }
