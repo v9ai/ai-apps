@@ -8,8 +8,6 @@ import {
   useUpdateUserSettingsMutation,
   useDeleteJobMutation,
   useEnhanceJobFromAtsMutation,
-  useCreateApplicationMutation,
-  useGetApplicationsQuery,
   useReportJobMutation,
   useMarkJobAppliedMutation,
   useArchiveJobMutation,
@@ -67,8 +65,6 @@ function JobPageContent() {
   const [hideCompanyLoading, setHideCompanyLoading] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [enhanceError, setEnhanceError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
   const { data, loading, error, refetch } = useGetJobQuery({
     variables: { id },
   });
@@ -82,12 +78,10 @@ function JobPageContent() {
   const [updateSettings] = useUpdateUserSettingsMutation();
   const [deleteJobMutation] = useDeleteJobMutation();
   const [enhanceJobMutation] = useEnhanceJobFromAtsMutation();
-  const [createApplicationMutation] = useCreateApplicationMutation();
   const [reportJobMutation] = useReportJobMutation();
   const [markJobApplied] = useMarkJobAppliedMutation();
   const [archiveJob] = useArchiveJobMutation();
   const [unarchiveJob] = useUnarchiveJobMutation();
-  const { data: appsData } = useGetApplicationsQuery({ skip: !user });
 
   const { data: relatedJobsData } = useGetJobsQuery({
     variables: { search: data?.job?.company_key ?? "", limit: 100 },
