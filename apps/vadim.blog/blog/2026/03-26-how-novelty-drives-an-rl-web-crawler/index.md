@@ -28,8 +28,8 @@ The first layer generates immediate, granular novelty signals. It implements a v
 
 The implementation in `crawler_curiosity.py` is remarkably lightweight. It consists of three small Multi-Layer Perceptrons (MLPs) totaling about 2 MB:
 *   **`FeatureEncoder`**: Compresses a 784-dimensional page state (768-d embeddings from Nomic plus 16 handcrafted scalar features) down to a 256-d latent representation, *phi(s)*.
-*   **`ForwardModel`**: The core of curiosity. Given *phi(s_t)* and the action taken, it predicts *phi(s_{t+1})*. The mean squared error (MSE) of this prediction becomes the intrinsic reward.
-*   **`InverseModel`**: A regularizer. It takes *phi(s_t)* and *phi(s_{t+1})* and must predict the action taken. This forces the `FeatureEncoder` to learn a latent space that discards irrelevant noise (like ad banners, timestamps) and focuses on page structure relevant to navigation.
+*   **`ForwardModel`**: The core of curiosity. Given *phi(s_t)* and the action taken, it predicts *phi(s_\{t+1\})*. The mean squared error (MSE) of this prediction becomes the intrinsic reward.
+*   **`InverseModel`**: A regularizer. It takes *phi(s_t)* and *phi(s_\{t+1\})* and must predict the action taken. This forces the `FeatureEncoder` to learn a latent space that discards irrelevant noise (like ad banners, timestamps) and focuses on page structure relevant to navigation.
 
 The augmented reward for the DQN is:
 `r_total = r_extrinsic + 0.1 * min(curiosity_MSE, 5.0)`
