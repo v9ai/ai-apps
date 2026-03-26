@@ -60,8 +60,10 @@ const PIPELINE_STAGES = [
 export function LandingPipeline() {
   return (
     <section
+      id="pipeline"
       className={css({
         pb: { base: "sectionMobile", lg: "section" },
+        scrollMarginTop: "56px",
       })}
     >
       <div className={container({ maxW: "breakpoint-lg" })}>

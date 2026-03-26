@@ -27,9 +27,11 @@ const STATS = [
 export function LandingHero() {
   return (
     <section
+      id="hero"
       className={css({
         pt: { base: "sectionMobile", lg: "section" },
         pb: { base: "sectionMobile", lg: "section" },
+        scrollMarginTop: "56px",
       })}
     >
       <div className={container({ maxW: "breakpoint-lg" })}>
@@ -87,8 +89,9 @@ export function LandingHero() {
           contacts, and generating personalized outreach at scale.
         </p>
 
-        {/* --- social proof stats (directly after value prop) --- */}
-        <div
+        {/* --- social proof stats (semantic dl, WCAG AA contrast) --- */}
+        <dl
+          aria-label="Pipeline statistics"
           className={flex({
             justify: "center",
             gap: { base: "5", md: "8" },
@@ -99,13 +102,14 @@ export function LandingHero() {
           {STATS.map((stat) => (
             <div
               key={stat.label}
+              role="group"
               className={flex({
                 direction: "column",
                 align: "center",
                 gap: "1",
               })}
             >
-              <span
+              <dd
                 className={css({
                   fontSize: { base: "xl", md: "2xl" },
                   fontWeight: "bold",
@@ -116,21 +120,21 @@ export function LandingHero() {
                 })}
               >
                 {stat.value}
-              </span>
-              <span
+              </dd>
+              <dt
                 className={css({
                   fontSize: "xs",
-                  color: "ui.tertiary",
+                  color: "ui.secondary",
                   textTransform: "lowercase",
                   letterSpacing: "wide",
                   lineHeight: "none",
                 })}
               >
                 {stat.label}
-              </span>
+              </dt>
             </div>
           ))}
-        </div>
+        </dl>
 
         {/* --- single primary CTA --- */}
         <div className={flex({ justify: "center", mt: "7" })}>

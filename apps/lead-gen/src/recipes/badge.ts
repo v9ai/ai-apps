@@ -24,7 +24,7 @@ export const badge = cva({
         padding: "4px 12px",
       },
       pipeline: {
-        color: "ui.tertiary",
+        color: "ui.secondary",
         fontSize: "2xs",
         letterSpacing: "wide",
         textTransform: "lowercase",
