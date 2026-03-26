@@ -32,7 +32,10 @@
     "strategy:check:all": "tsx scripts/enforce-strategy.ts --all",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "panda": "panda",
+    "panda:codegen": "panda codegen",
+    "prepare": "panda codegen"
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
@@ -53,7 +56,6 @@
     "@vanilla-extract/css": "^1.18.0",
     "@xyflow/react": "^12.10.1",
     "ai": "^6.0.77",
-
     "clsx": "^2.1.1",
     "dataloader": "^2.2.3",
     "date-fns": "^4.1.0",
@@ -61,7 +63,6 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "graphql": "^16.12.0",
-
     "llama-parse": "^0.1.0",
     "llamaindex": "^0.12.1",
     "lodash": "^4.17.23",
@@ -86,6 +87,7 @@
     "@graphql-codegen/typescript": "^5.0.7",
     "@graphql-codegen/typescript-operations": "^5.0.7",
     "@graphql-codegen/typescript-react-apollo": "^4.4.0",
+    "@pandacss/dev": "^1.9.0",
     "@types/lodash": "^4.17.23",
     "@types/node": "22.19.7",
     "@types/react": "^19.1.12",

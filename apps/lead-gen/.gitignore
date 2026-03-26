@@ -82,3 +82,6 @@ public/docs/
 
 # LlamaIndex local storage
 llamaindex/.storage/
+
+# PandaCSS generated output
+/styled-system/
