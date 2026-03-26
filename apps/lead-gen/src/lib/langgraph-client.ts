@@ -56,10 +56,6 @@ export interface ClassifyJobResult {
   source: string;
 }
 
-export interface ResumeChatResult {
-  answer: string;
-}
-
 export interface EmailOutreachResult {
   subject: string;
   text: string;
@@ -134,16 +130,6 @@ export function classifyJob(input: {
     title: input.title,
     location: input.location ?? "",
     description: input.description ?? "",
-  });
-}
-
-export function resumeChat(
-  userId: string,
-  question: string,
-): Promise<ResumeChatResult> {
-  return callLangGraph<ResumeChatResult>("/resume-chat", {
-    user_id: userId,
-    question,
   });
 }
 

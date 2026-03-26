@@ -648,6 +648,221 @@ nav a.active {
   transition: transform 0.25s ease;
 }
 
+/* ==========================================================
+   LANDING PAGE MICRO-INTERACTIONS
+   ========================================================== */
+
+/* --- 1. Pipeline card staggered entrance + glitch hover --- */
+@keyframes pipeline-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pipeline-card-animated {
+  opacity: 0;
+  animation: pipeline-card-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.pipeline-card-animated:nth-child(1) { animation-delay: 0.1s; }
+.pipeline-card-animated:nth-child(2) { animation-delay: 0.22s; }
+.pipeline-card-animated:nth-child(3) { animation-delay: 0.34s; }
+.pipeline-card-animated:nth-child(4) { animation-delay: 0.46s; }
+
+/* brutalist scanline glitch on hover */
+.pipeline-card-hover {
+  position: relative;
+  overflow: hidden;
+}
+.pipeline-card-hover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: var(--accent-9);
+  opacity: 0;
+  transition: none;
+}
+.pipeline-card-hover:hover::after {
+  animation: scanline-sweep 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes scanline-sweep {
+  0% {
+    left: -100%;
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 1;
+  }
+}
+
+/* --- 2. CTA button arrow nudge + border sweep --- */
+.cta-solid-animated {
+  position: relative;
+  overflow: hidden;
+}
+.cta-solid-animated::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent-contrast);
+  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cta-solid-animated:hover::before {
+  width: 100%;
+}
+.cta-solid-animated svg {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cta-solid-animated:hover svg {
+  transform: translateX(4px);
+}
+
+.cta-ghost-animated {
+  position: relative;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+}
+.cta-ghost-animated::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+  background: var(--gray-4);
+  transition: height 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: -1;
+}
+.cta-ghost-animated:hover::before {
+  height: 100%;
+}
+
+/* --- 3. Stats counter scroll-triggered entrance --- */
+@keyframes stat-slot-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.stat-value-animated {
+  opacity: 0;
+  animation: stat-slot-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.stat-value-animated:nth-child(1) .stat-value-inner { animation-delay: 0s; }
+.stat-value-animated:nth-child(2) .stat-value-inner { animation-delay: 0.08s; }
+.stat-value-animated:nth-child(3) .stat-value-inner { animation-delay: 0.16s; }
+.stat-value-animated:nth-child(4) .stat-value-inner { animation-delay: 0.24s; }
+.stat-value-inner {
+  opacity: 0;
+  animation: stat-slot-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* parent stagger offsets for direct children */
+.stats-row-animated > :nth-child(1) .stat-value-inner { animation-delay: 0s; }
+.stats-row-animated > :nth-child(2) .stat-value-inner { animation-delay: 0.1s; }
+.stats-row-animated > :nth-child(3) .stat-value-inner { animation-delay: 0.2s; }
+.stats-row-animated > :nth-child(4) .stat-value-inner { animation-delay: 0.3s; }
+
+/* --- 4. Pipeline arrow sequential pulse --- */
+@keyframes arrow-flow-pulse {
+  0% {
+    opacity: 0.3;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(3px);
+  }
+  100% {
+    opacity: 0.3;
+    transform: translateX(0);
+  }
+}
+.pipeline-arrow-flow {
+  animation: arrow-flow-pulse 2s ease-in-out infinite;
+}
+.pipeline-arrow-flow:nth-child(1) { animation-delay: 0s; }
+.pipeline-arrow-flow:nth-child(2) { animation-delay: 0.5s; }
+.pipeline-arrow-flow:nth-child(3) { animation-delay: 1.0s; }
+
+/* sequential by pipeline position: use data attributes */
+[data-pipeline-arrow="0"] { animation-delay: 0s; }
+[data-pipeline-arrow="1"] { animation-delay: 0.6s; }
+[data-pipeline-arrow="2"] { animation-delay: 1.2s; }
+
+/* --- 5. Hero badge scan line + headline stagger --- */
+@keyframes badge-scan {
+  0% {
+    left: -30%;
+  }
+  100% {
+    left: 130%;
+  }
+}
+.badge-scan-animated {
+  position: relative;
+  overflow: hidden;
+}
+.badge-scan-animated::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -30%;
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06),
+    transparent
+  );
+  animation: badge-scan 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes headline-word-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.headline-word {
+  display: inline-block;
+  opacity: 0;
+  animation: headline-word-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.headline-word:nth-child(1) { animation-delay: 0.05s; }
+.headline-word:nth-child(2) { animation-delay: 0.12s; }
+.headline-word:nth-child(3) { animation-delay: 0.19s; }
+.headline-word:nth-child(4) { animation-delay: 0.26s; }
+.headline-word:nth-child(5) { animation-delay: 0.33s; }
+.headline-word:nth-child(6) { animation-delay: 0.40s; }
+
+/* ==========================================================
+   END LANDING PAGE MICRO-INTERACTIONS
+   ========================================================== */
+
 /* ---------- responsive landing hero typography ---------- */
 @media (max-width: 640px) {
   .landing-hero-section {

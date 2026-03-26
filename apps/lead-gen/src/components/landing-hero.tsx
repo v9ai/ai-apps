@@ -71,8 +71,8 @@ export function LandingHero() {
         <h1
           className={css({
             fontSize: { base: "4xl", md: "5xl", lg: "6xl" },
-            fontWeight: "bold",
-            color: "ui.heading",
+            fontWeight: "light",
+            color: "ui.secondary",
             letterSpacing: "tighter",
             lineHeight: { base: "snug", lg: "tight" },
             textAlign: "center",
@@ -80,7 +80,19 @@ export function LandingHero() {
             mx: "auto",
           })}
         >
-          turn hiring signals into qualified leads
+          turn hiring signals into{" "}
+          <span
+            className={css({
+              fontWeight: "bold",
+              color: "transparent",
+              backgroundClip: "text",
+              background:
+                "linear-gradient(135deg, {colors.ui.heading} 0%, {colors.accent.primary} 50%, {colors.status.positive} 100%)",
+              WebkitBackgroundClip: "text",
+            })}
+          >
+            qualified leads
+          </span>
         </h1>
 
         {/* --- subheadline --- */}
@@ -120,32 +132,55 @@ export function LandingHero() {
 
         {/* --- stats row --- */}
         <div
-          className={flex({
-            justify: "center",
-            gap: "6",
-            mt: "8",
-            pt: "6",
-            flexWrap: "wrap",
-            borderTop: "1px solid",
-            borderColor: "ui.border",
+          className={grid({
+            columns: { base: 2, md: 4 },
+            gap: "0",
+            mt: "10",
           })}
         >
-          {STATS.map((stat) => (
+          {STATS.map((stat, i) => (
             <div
               key={stat.label}
-              className={flex({
-                direction: "column",
-                align: "center",
+              className={css({
+                display: "flex",
+                flexDirection: "column",
                 gap: "1",
+                py: "5",
+                px: "5",
+                borderLeft: i === 0 || (i === 2) ? { base: "none", md: i === 0 ? "none" : "1px solid" } : "1px solid",
+                borderLeftColor: "ui.border",
+                /* first item on each mobile row has no left border */
+                _first: { borderLeft: "none" },
+                /* top border on mobile second row */
+                borderTop: { base: i >= 2 ? "1px solid" : "none", md: "none" },
+                borderTopColor: "ui.border",
+                position: "relative",
+                _before: {
+                  content: '""',
+                  position: "absolute",
+                  top: "0",
+                  left: "0",
+                  width: "24px",
+                  height: "2px",
+                  background: i === 0
+                    ? "accent.primary"
+                    : i === 1
+                      ? "status.positive"
+                      : i === 2
+                        ? "accent.primary"
+                        : "status.positive",
+                  display: { base: "none", md: "block" },
+                },
               })}
             >
               <span
                 className={css({
-                  fontSize: { base: "xl", md: "2xl" },
+                  fontSize: { base: "2xl", md: "3xl" },
                   fontWeight: "bold",
                   color: "ui.heading",
-                  letterSpacing: "tight",
+                  letterSpacing: "tighter",
                   lineHeight: "none",
+                  fontVariantNumeric: "tabular-nums",
                 })}
               >
                 {stat.value}
@@ -157,6 +192,7 @@ export function LandingHero() {
                   textTransform: "lowercase",
                   letterSpacing: "wide",
                   lineHeight: "none",
+                  mt: "1",
                 })}
               >
                 {stat.label}
