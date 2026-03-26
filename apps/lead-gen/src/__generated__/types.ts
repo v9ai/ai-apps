@@ -74,43 +74,6 @@ export type AnalyzeCompanyResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-export type Application = {
-  __typename: 'Application';
-  aiInterviewQuestions: Maybe<Scalars['String']['output']>;
-  aiTechStack: Maybe<Scalars['String']['output']>;
-  companyKey: Maybe<Scalars['String']['output']>;
-  companyName: Maybe<Scalars['String']['output']>;
-  createdAt: Scalars['String']['output'];
-  email: Scalars['EmailAddress']['output'];
-  id: Scalars['Int']['output'];
-  jobDescription: Maybe<Scalars['String']['output']>;
-  jobId: Maybe<Scalars['String']['output']>;
-  jobTitle: Maybe<Scalars['String']['output']>;
-  notes: Maybe<Scalars['String']['output']>;
-  questions: Array<QuestionAnswer>;
-  resume: Maybe<Scalars['Upload']['output']>;
-  status: ApplicationStatus;
-};
-
-export type ApplicationInput = {
-  companyName?: InputMaybe<Scalars['String']['input']>;
-  jobId?: InputMaybe<Scalars['String']['input']>;
-  jobTitle?: InputMaybe<Scalars['String']['input']>;
-  questions: Array<QuestionAnswerInput>;
-  resume?: InputMaybe<Scalars['Upload']['input']>;
-};
-
-/**
- * Pipeline status for a tracked job application.
- * Maps to a kanban column in the UI.
- */
-export type ApplicationStatus =
-  | 'accepted'
-  | 'pending'
-  | 'rejected'
-  | 'reviewed'
-  | 'submitted';
-
 export type ApplyEmailPatternResult = {
   __typename: 'ApplyEmailPatternResult';
   contacts: Array<Contact>;
@@ -257,7 +220,6 @@ export type Company = {
   location: Maybe<Scalars['String']['output']>;
   logo_url: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
-  opportunities: Array<Opportunity>;
   score: Scalars['Float']['output'];
   score_reasons: Array<Scalars['String']['output']>;
   service_taxonomy: Array<Scalars['String']['output']>;
@@ -528,22 +490,6 @@ export type CreateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
-export type CreateOpportunityInput = {
-  applicationNotes?: InputMaybe<Scalars['String']['input']>;
-  companyId?: InputMaybe<Scalars['Int']['input']>;
-  contactId?: InputMaybe<Scalars['Int']['input']>;
-  deadline?: InputMaybe<Scalars['String']['input']>;
-  endDate?: InputMaybe<Scalars['String']['input']>;
-  rewardText?: InputMaybe<Scalars['String']['input']>;
-  rewardUsd?: InputMaybe<Scalars['Float']['input']>;
-  source?: InputMaybe<Scalars['String']['input']>;
-  startDate?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title: Scalars['String']['input'];
-  url?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type CreateTaskInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['String']['input']>;
@@ -553,12 +499,6 @@ export type CreateTaskInput = {
   status?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title: Scalars['String']['input'];
-};
-
-export type DeleteApplicationResponse = {
-  __typename: 'DeleteApplicationResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
 };
 
 export type DeleteBlockedCompanyResult = {
@@ -600,12 +540,6 @@ export type DeleteEmailTemplateResult = {
 
 export type DeleteJobResponse = {
   __typename: 'DeleteJobResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
-export type DeleteOpportunityResult = {
-  __typename: 'DeleteOpportunityResult';
   message: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -1085,22 +1019,18 @@ export type Mutation = {
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
   completeTask: Task;
-  createApplication: Application;
   createCompany: Company;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  createOpportunity: Opportunity;
   createTask: Task;
   deleteAllJobs: DeleteJobResponse;
-  deleteApplication: DeleteApplicationResponse;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteJob: DeleteJobResponse;
-  deleteOpportunity: DeleteOpportunityResult;
   deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
@@ -1164,12 +1094,10 @@ export type Mutation = {
   unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
-  updateApplication: Application;
   updateCampaign: EmailCampaign;
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
-  updateOpportunity: Opportunity;
   updateTask: Task;
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
@@ -1231,11 +1159,6 @@ export type MutationCompleteTaskArgs = {
 };
 
 
-export type MutationCreateApplicationArgs = {
-  input: ApplicationInput;
-};
-
-
 export type MutationCreateCompanyArgs = {
   input: CreateCompanyInput;
 };
@@ -1256,18 +1179,8 @@ export type MutationCreateEmailTemplateArgs = {
 };
 
 
-export type MutationCreateOpportunityArgs = {
-  input: CreateOpportunityInput;
-};
-
-
 export type MutationCreateTaskArgs = {
   input: CreateTaskInput;
-};
-
-
-export type MutationDeleteApplicationArgs = {
-  id: Scalars['Int']['input'];
 };
 
 
@@ -1298,11 +1211,6 @@ export type MutationDeleteEmailTemplateArgs = {
 
 export type MutationDeleteJobArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationDeleteOpportunityArgs = {
-  id: Scalars['String']['input'];
 };
 
 
@@ -1489,12 +1397,6 @@ export type MutationUnverifyCompanyContactsArgs = {
 };
 
 
-export type MutationUpdateApplicationArgs = {
-  id: Scalars['Int']['input'];
-  input: UpdateApplicationInput;
-};
-
-
 export type MutationUpdateCampaignArgs = {
   id: Scalars['String']['input'];
   input: UpdateCampaignInput;
@@ -1516,12 +1418,6 @@ export type MutationUpdateContactArgs = {
 export type MutationUpdateEmailTemplateArgs = {
   id: Scalars['Int']['input'];
   input: UpdateEmailTemplateInput;
-};
-
-
-export type MutationUpdateOpportunityArgs = {
-  id: Scalars['String']['input'];
-  input: UpdateOpportunityInput;
 };
 
 
@@ -1554,41 +1450,6 @@ export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
 
-export type OpportunitiesResult = {
-  __typename: 'OpportunitiesResult';
-  opportunities: Array<Opportunity>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type Opportunity = {
-  __typename: 'Opportunity';
-  applicationNotes: Maybe<Scalars['String']['output']>;
-  applicationStatus: Maybe<Scalars['String']['output']>;
-  applied: Scalars['Boolean']['output'];
-  appliedAt: Maybe<Scalars['String']['output']>;
-  company: Maybe<Company>;
-  companyId: Maybe<Scalars['Int']['output']>;
-  contactId: Maybe<Scalars['Int']['output']>;
-  createdAt: Scalars['String']['output'];
-  deadline: Maybe<Scalars['String']['output']>;
-  endDate: Maybe<Scalars['String']['output']>;
-  firstSeen: Maybe<Scalars['String']['output']>;
-  id: Scalars['String']['output'];
-  lastSeen: Maybe<Scalars['String']['output']>;
-  metadata: Maybe<Scalars['JSON']['output']>;
-  rawContext: Maybe<Scalars['String']['output']>;
-  rewardText: Maybe<Scalars['String']['output']>;
-  rewardUsd: Maybe<Scalars['Float']['output']>;
-  score: Maybe<Scalars['Int']['output']>;
-  source: Maybe<Scalars['String']['output']>;
-  startDate: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-  url: Maybe<Scalars['String']['output']>;
-};
-
 export type PreviewEmailInput = {
   content: Scalars['String']['input'];
   drySend?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1618,8 +1479,6 @@ export type ProcessAllJobsResponse = {
 export type Query = {
   __typename: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
-  application: Maybe<Application>;
-  applications: Array<Application>;
   askAboutResume: Maybe<ResumeAnswer>;
   blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
@@ -1638,25 +1497,16 @@ export type Query = {
   emailTemplate: Maybe<EmailTemplate>;
   emailTemplates: EmailTemplatesResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
-  executeSql: TextToSqlResult;
   findCompany: FindCompanyResult;
   job: Maybe<Job>;
   jobs: JobsResponse;
-  opportunities: OpportunitiesResult;
-  opportunity: Maybe<Opportunity>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
   resumeStatus: Maybe<ResumeStatus>;
   task: Maybe<Task>;
   tasks: TasksResult;
-  textToSql: TextToSqlResult;
   userSettings: Maybe<UserSettings>;
-};
-
-
-export type QueryApplicationArgs = {
-  id: Scalars['Int']['input'];
 };
 
 
@@ -1758,11 +1608,6 @@ export type QueryEmailsNeedingFollowUpArgs = {
 };
 
 
-export type QueryExecuteSqlArgs = {
-  sql: Scalars['String']['input'];
-};
-
-
 export type QueryFindCompanyArgs = {
   name?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
@@ -1785,19 +1630,6 @@ export type QueryJobsArgs = {
   skills?: InputMaybe<Array<Scalars['String']['input']>>;
   sourceType?: InputMaybe<Scalars['String']['input']>;
   sourceTypes?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-
-export type QueryOpportunitiesArgs = {
-  companyId?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryOpportunityArgs = {
-  id: Scalars['String']['input'];
 };
 
 
@@ -1836,26 +1668,8 @@ export type QueryTasksArgs = {
 };
 
 
-export type QueryTextToSqlArgs = {
-  question: Scalars['String']['input'];
-};
-
-
 export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
-};
-
-export type QuestionAnswer = {
-  __typename: 'QuestionAnswer';
-  answerText: Scalars['String']['output'];
-  questionId: Scalars['String']['output'];
-  questionText: Scalars['String']['output'];
-};
-
-export type QuestionAnswerInput = {
-  answerText: Scalars['String']['input'];
-  questionId: Scalars['String']['input'];
-  questionText: Scalars['String']['input'];
 };
 
 export type ReceivedEmail = {
@@ -2048,28 +1862,10 @@ export type TasksResult = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type TextToSqlResult = {
-  __typename: 'TextToSqlResult';
-  columns: Array<Scalars['String']['output']>;
-  drilldownSearchQuery: Maybe<Scalars['String']['output']>;
-  explanation: Maybe<Scalars['String']['output']>;
-  rows: Array<Maybe<Array<Maybe<Scalars['JSON']['output']>>>>;
-  sql: Scalars['String']['output'];
-};
-
 export type UnverifyContactsResult = {
   __typename: 'UnverifyContactsResult';
   count: Scalars['Int']['output'];
   success: Scalars['Boolean']['output'];
-};
-
-export type UpdateApplicationInput = {
-  companyName?: InputMaybe<Scalars['String']['input']>;
-  jobDescription?: InputMaybe<Scalars['String']['input']>;
-  jobId?: InputMaybe<Scalars['String']['input']>;
-  jobTitle?: InputMaybe<Scalars['String']['input']>;
-  notes?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<ApplicationStatus>;
 };
 
 export type UpdateCampaignInput = {
@@ -2137,26 +1933,6 @@ export type UpdateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type UpdateOpportunityInput = {
-  applicationNotes?: InputMaybe<Scalars['String']['input']>;
-  applicationStatus?: InputMaybe<Scalars['String']['input']>;
-  applied?: InputMaybe<Scalars['Boolean']['input']>;
-  appliedAt?: InputMaybe<Scalars['String']['input']>;
-  companyId?: InputMaybe<Scalars['Int']['input']>;
-  contactId?: InputMaybe<Scalars['Int']['input']>;
-  deadline?: InputMaybe<Scalars['String']['input']>;
-  endDate?: InputMaybe<Scalars['String']['input']>;
-  rewardText?: InputMaybe<Scalars['String']['input']>;
-  rewardUsd?: InputMaybe<Scalars['Float']['input']>;
-  score?: InputMaybe<Scalars['Int']['input']>;
-  source?: InputMaybe<Scalars['String']['input']>;
-  startDate?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title?: InputMaybe<Scalars['String']['input']>;
-  url?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateTaskInput = {

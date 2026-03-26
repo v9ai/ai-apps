@@ -62,43 +62,6 @@ type AnalyzeCompanyResponse {
   success: Boolean!
 }
 
-type Application {
-  aiInterviewQuestions: String
-  aiTechStack: String
-  companyKey: String
-  companyName: String
-  createdAt: String!
-  email: EmailAddress!
-  id: Int!
-  jobDescription: String
-  jobId: String
-  jobTitle: String
-  notes: String
-  questions: [QuestionAnswer!]!
-  resume: Upload
-  status: ApplicationStatus!
-}
-
-input ApplicationInput {
-  companyName: String
-  jobId: String
-  jobTitle: String
-  questions: [QuestionAnswerInput!]!
-  resume: Upload
-}
-
-"""
-Pipeline status for a tracked job application.
-Maps to a kanban column in the UI.
-"""
-enum ApplicationStatus {
-  accepted
-  pending
-  rejected
-  reviewed
-  submitted
-}
-
 type ApplyEmailPatternResult {
   contacts: [Contact!]!
   contactsUpdated: Int!
@@ -231,7 +194,6 @@ type Company {
   location: String
   logo_url: String
   name: String!
-  opportunities: [Opportunity!]!
   score: Float!
   score_reasons: [String!]!
   service_taxonomy: [String!]!
@@ -485,22 +447,6 @@ input CreateEmailTemplateInput {
   variables: [String!]
 }
 
-input CreateOpportunityInput {
-  applicationNotes: String
-  companyId: Int
-  contactId: Int
-  deadline: String
-  endDate: String
-  rewardText: String
-  rewardUsd: Float
-  source: String
-  startDate: String
-  status: String
-  tags: [String!]
-  title: String!
-  url: String
-}
-
 input CreateTaskInput {
   description: String
   dueDate: String
@@ -513,11 +459,6 @@ input CreateTaskInput {
 }
 
 scalar DateTime
-
-type DeleteApplicationResponse {
-  message: String
-  success: Boolean!
-}
 
 type DeleteBlockedCompanyResult {
   message: String
@@ -551,11 +492,6 @@ type DeleteEmailTemplateResult {
 }
 
 type DeleteJobResponse {
-  message: String
-  success: Boolean!
-}
-
-type DeleteOpportunityResult {
   message: String
   success: Boolean!
 }
@@ -1006,22 +942,18 @@ type Mutation {
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
   completeTask(id: Int!): Task!
-  createApplication(input: ApplicationInput!): Application!
   createCompany(input: CreateCompanyInput!): Company!
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
-  createOpportunity(input: CreateOpportunityInput!): Opportunity!
   createTask(input: CreateTaskInput!): Task!
   deleteAllJobs: DeleteJobResponse!
-  deleteApplication(id: Int!): DeleteApplicationResponse!
   deleteCampaign(id: String!): DeleteCampaignResult!
   deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
   deleteCompany(id: Int!): DeleteCompanyResponse!
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
   deleteJob(id: Int!): DeleteJobResponse!
-  deleteOpportunity(id: String!): DeleteOpportunityResult!
   deleteTask(id: Int!): DeleteTaskResult!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
@@ -1085,50 +1017,15 @@ type Mutation {
   unarchiveJob(id: Int!): Job!
   unblockCompany(id: Int!): DeleteBlockedCompanyResult!
   unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
-  updateApplication(id: Int!, input: UpdateApplicationInput!): Application!
   updateCampaign(id: String!, input: UpdateCampaignInput!): EmailCampaign!
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
-  updateOpportunity(id: String!, input: UpdateOpportunityInput!): Opportunity!
   updateTask(id: Int!, input: UpdateTaskInput!): Task!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   uploadResume(email: String!, filename: String!, resumePdf: String!): ResumeUploadResult
   upsert_company_ats_boards(boards: [ATSBoardUpsertInput!]!, company_id: Int!): [ATSBoard!]!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
-}
-
-type OpportunitiesResult {
-  opportunities: [Opportunity!]!
-  totalCount: Int!
-}
-
-type Opportunity {
-  applicationNotes: String
-  applicationStatus: String
-  applied: Boolean!
-  appliedAt: String
-  company: Company
-  companyId: Int
-  contactId: Int
-  createdAt: String!
-  deadline: String
-  endDate: String
-  firstSeen: String
-  id: String!
-  lastSeen: String
-  metadata: JSON
-  rawContext: String
-  rewardText: String
-  rewardUsd: Float
-  score: Int
-  source: String
-  startDate: String
-  status: String!
-  tags: [String!]!
-  title: String!
-  updatedAt: String!
-  url: String
 }
 
 input PreviewEmailInput {
@@ -1158,8 +1055,6 @@ type ProcessAllJobsResponse {
 
 type Query {
   allCompanyTags: [String!]!
-  application(id: Int!): Application
-  applications: [Application!]!
   askAboutResume(email: String!, question: String!): ResumeAnswer
   blockedCompanies: [BlockedCompany!]!
   companies(filter: CompanyFilterInput, limit: Int, offset: Int, order_by: CompanyOrderBy): CompaniesResponse!
@@ -1178,32 +1073,16 @@ type Query {
   emailTemplate(id: Int!): EmailTemplate
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
-  executeSql(sql: String!): TextToSqlResult!
   findCompany(name: String, website: String): FindCompanyResult!
   job(id: String!): Job
   jobs(companyKey: String, excludedCompanies: [String!], limit: Int, offset: Int, remoteEuConfidence: String, search: String, showAll: Boolean, skills: [String!], sourceType: String, sourceTypes: [String!]): JobsResponse!
-  opportunities(companyId: Int, limit: Int, offset: Int, status: String): OpportunitiesResult!
-  opportunity(id: String!): Opportunity
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, limit: Int, offset: Int): ReceivedEmailsResult!
   resendEmail(resendId: String!): ResendEmailDetail
   resumeStatus(email: String!): ResumeStatus
   task(id: Int!): Task
   tasks(limit: Int, offset: Int, priority: String, status: String): TasksResult!
-  textToSql(question: String!): TextToSqlResult!
   userSettings(userId: String!): UserSettings
-}
-
-type QuestionAnswer {
-  answerText: String!
-  questionId: String!
-  questionText: String!
-}
-
-input QuestionAnswerInput {
-  answerText: String!
-  questionId: String!
-  questionText: String!
 }
 
 type ReceivedEmail {
@@ -1381,28 +1260,11 @@ type TasksResult {
   totalCount: Int!
 }
 
-type TextToSqlResult {
-  columns: [String!]!
-  drilldownSearchQuery: String
-  explanation: String
-  rows: [[JSON]]!
-  sql: String!
-}
-
 scalar URL
 
 type UnverifyContactsResult {
   count: Int!
   success: Boolean!
-}
-
-input UpdateApplicationInput {
-  companyName: String
-  jobDescription: String
-  jobId: String
-  jobTitle: String
-  notes: String
-  status: ApplicationStatus
 }
 
 input UpdateCampaignInput {
@@ -1470,26 +1332,6 @@ input UpdateEmailTemplateInput {
   tags: [String!]
   textContent: String
   variables: [String!]
-}
-
-input UpdateOpportunityInput {
-  applicationNotes: String
-  applicationStatus: String
-  applied: Boolean
-  appliedAt: String
-  companyId: Int
-  contactId: Int
-  deadline: String
-  endDate: String
-  rewardText: String
-  rewardUsd: Float
-  score: Int
-  source: String
-  startDate: String
-  status: String
-  tags: [String!]
-  title: String
-  url: String
 }
 
 input UpdateTaskInput {

@@ -23,7 +23,6 @@ const SIDEBAR_WIDTH = 200;
 const SIDEBAR_COLLAPSED_WIDTH = 56;
 
 const NAV_ITEMS = [
-  { href: "/applications", label: "applications", icon: <FileTextIcon width={15} height={15} /> },
   { href: "/companies", label: "companies", icon: <CubeIcon width={15} height={15} /> },
   { href: "/contacts", label: "contacts", icon: <PersonIcon width={15} height={15} /> },
   { href: "/resume", label: "resume", icon: <ResumeIcon width={15} height={15} /> },
