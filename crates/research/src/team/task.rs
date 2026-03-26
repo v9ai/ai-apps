@@ -12,7 +12,9 @@ pub enum TaskStatus {
 }
 
 /// Priority level for task scheduling. Higher priority tasks are claimed first.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 pub enum TaskPriority {
     Low = 0,
     Normal = 1,
@@ -30,17 +32,17 @@ impl Default for TaskPriority {
 pub struct TaskProgress {
     /// Percentage complete (0..=100).
     pub percent: u8,
-    /// Optional description of current phase.
-    pub phase: Option<String>,
+    /// Description of current phase.
+    pub phase: String,
     /// When progress was last updated.
     pub updated_at: Instant,
 }
 
 impl TaskProgress {
-    pub fn new(percent: u8, phase: Option<String>) -> Self {
+    pub fn new(percent: u8, phase: impl Into<String>) -> Self {
         Self {
             percent: percent.min(100),
-            phase,
+            phase: phase.into(),
             updated_at: Instant::now(),
         }
     }
@@ -92,9 +94,15 @@ impl Default for ResearchTask {
 }
 
 impl ResearchTask {
-    /// Compute retry backoff delay: 2^attempt seconds, capped at 60s.
+    /// Compute retry backoff delay: 2^(attempt-1) seconds, capped at 60s.
     pub fn retry_backoff(&self) -> Duration {
-        let secs = 2u64.pow(self.attempt.saturating_sub(1)).min(60);
+        let exp = self.attempt.saturating_sub(1);
+        // Cap exponent to avoid overflow; 2^6 = 64 > 60 so anything >= 6 maps to 60s.
+        let secs = if exp >= 6 {
+            60
+        } else {
+            2u64.pow(exp).min(60)
+        };
         Duration::from_secs(secs)
     }
 
@@ -125,19 +133,19 @@ pub struct TeamProgress {
 
 impl TeamProgress {
     /// Percentage of tasks in a terminal state (completed or failed).
-    pub fn percent_done(&self) -> f64 {
+    pub fn percent_done(&self) -> f32 {
         if self.total == 0 {
             return 100.0;
         }
-        ((self.completed + self.failed) as f64 / self.total as f64) * 100.0
+        ((self.completed + self.failed) as f32 / self.total as f32) * 100.0
     }
 
     /// Percentage of tasks successfully completed.
-    pub fn percent_succeeded(&self) -> f64 {
+    pub fn percent_succeeded(&self) -> f32 {
         if self.total == 0 {
             return 100.0;
         }
-        (self.completed as f64 / self.total as f64) * 100.0
+        (self.completed as f32 / self.total as f32) * 100.0
     }
 }
 
@@ -149,7 +157,8 @@ impl SharedTaskList {
     }
 
     /// Atomically claim the next unblocked, unassigned task.
-    /// Higher-priority tasks are claimed first. Returns `None` if no task is available.
+    /// Higher-priority tasks are claimed first; ties broken by lowest id.
+    /// Returns `None` if no task is available.
     pub fn claim(&self, worker_id: &str) -> Option<ResearchTask> {
         let mut tasks = self.inner.lock().unwrap_or_else(|e| e.into_inner());
 
@@ -163,6 +172,7 @@ impl SharedTaskList {
             .collect();
 
         // Find the highest-priority pending task whose dependencies are all resolved.
+        // Break ties by choosing the lowest task id (stable scheduling order).
         let idx = tasks
             .iter()
             .enumerate()
@@ -170,7 +180,9 @@ impl SharedTaskList {
                 t.status == TaskStatus::Pending
                     && t.dependencies.iter().all(|dep| resolved.contains(dep))
             })
-            .max_by_key(|(_, t)| t.priority)
+            .max_by(|(_, a), (_, b)| {
+                a.priority.cmp(&b.priority).then_with(|| b.id.cmp(&a.id))
+            })
             .map(|(i, _)| i)?;
 
         tasks[idx].status = TaskStatus::InProgress;
@@ -185,7 +197,7 @@ impl SharedTaskList {
         if let Some(task) = tasks.iter_mut().find(|t| t.id == task_id) {
             task.status = TaskStatus::Completed;
             task.result = Some(result);
-            task.progress = Some(TaskProgress::new(100, Some("done".into())));
+            task.progress = Some(TaskProgress::new(100, "done"));
         }
     }
 
@@ -215,7 +227,7 @@ impl SharedTaskList {
     }
 
     /// Update the progress of an in-progress task.
-    pub fn update_progress(&self, task_id: usize, percent: u8, phase: Option<String>) {
+    pub fn update_progress(&self, task_id: usize, percent: u8, phase: impl Into<String>) {
         let mut tasks = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.iter_mut().find(|t| t.id == task_id) {
             task.progress = Some(TaskProgress::new(percent, phase));
@@ -249,15 +261,38 @@ impl SharedTaskList {
         timed_out
     }
 
-    /// Get a snapshot of overall team progress.
+    /// Get a snapshot of overall team progress. Alias: [`Self::team_progress`].
     pub fn progress(&self) -> TeamProgress {
         let tasks = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         let total = tasks.len();
-        let completed = tasks.iter().filter(|t| t.status == TaskStatus::Completed).count();
-        let failed = tasks.iter().filter(|t| t.status == TaskStatus::Failed).count();
-        let in_progress = tasks.iter().filter(|t| t.status == TaskStatus::InProgress).count();
-        let pending = tasks.iter().filter(|t| t.status == TaskStatus::Pending).count();
-        TeamProgress { total, completed, failed, in_progress, pending }
+        let completed = tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::Completed)
+            .count();
+        let failed = tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::Failed)
+            .count();
+        let in_progress = tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::InProgress)
+            .count();
+        let pending = tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::Pending)
+            .count();
+        TeamProgress {
+            total,
+            completed,
+            failed,
+            in_progress,
+            pending,
+        }
+    }
+
+    /// Alias for [`Self::progress`].
+    pub fn team_progress(&self) -> TeamProgress {
+        self.progress()
     }
 
     /// Return all completed findings as (subject, result) pairs.
@@ -437,10 +472,7 @@ mod tests {
 
     #[test]
     fn failed_deps_unblock_downstream() {
-        let tasks = vec![
-            make_task(1, vec![]),
-            make_task(2, vec![1]),
-        ];
+        let tasks = vec![make_task(1, vec![]), make_task(2, vec![1])];
         let list = SharedTaskList::new(tasks);
 
         list.claim("w1").unwrap();
@@ -580,22 +612,19 @@ mod tests {
         let list = SharedTaskList::new(tasks);
         list.claim("w1");
 
-        list.update_progress(1, 50, Some("searching".into()));
+        list.update_progress(1, 50, "searching");
         let p = {
             let tasks = list.inner.lock().unwrap();
             tasks[0].progress.clone()
         };
         let p = p.unwrap();
         assert_eq!(p.percent, 50);
-        assert_eq!(p.phase.as_deref(), Some("searching"));
+        assert_eq!(p.phase.as_str(), "searching");
     }
 
     #[test]
     fn all_done_with_mixed_terminal_states() {
-        let tasks = vec![
-            make_task(1, vec![]),
-            make_task(2, vec![]),
-        ];
+        let tasks = vec![make_task(1, vec![]), make_task(2, vec![])];
         let list = SharedTaskList::new(tasks);
 
         assert!(!list.all_done());
@@ -658,5 +687,214 @@ mod tests {
 
         assert!(t1.is_some());
         assert!(t2.is_none(), "same task should not be claimed twice");
+    }
+
+    #[test]
+    fn same_priority_claims_lowest_id_first() {
+        let tasks = vec![
+            make_task(5, vec![]),
+            make_task(3, vec![]),
+            make_task(7, vec![]),
+            make_task(1, vec![]),
+        ];
+        let list = SharedTaskList::new(tasks);
+
+        let first = list.claim("w1").unwrap();
+        assert_eq!(first.id, 1, "lowest id should be claimed first at same priority");
+
+        let second = list.claim("w2").unwrap();
+        assert_eq!(second.id, 3);
+
+        let third = list.claim("w3").unwrap();
+        assert_eq!(third.id, 5);
+
+        let fourth = list.claim("w4").unwrap();
+        assert_eq!(fourth.id, 7);
+    }
+
+    #[test]
+    fn priority_with_id_tiebreaker() {
+        let tasks = vec![
+            make_task_with_priority(10, TaskPriority::Critical),
+            make_task_with_priority(5, TaskPriority::Critical),
+            make_task_with_priority(3, TaskPriority::Normal),
+            make_task_with_priority(1, TaskPriority::Normal),
+        ];
+        let list = SharedTaskList::new(tasks);
+
+        // Critical tasks first, lowest id wins tie
+        let t = list.claim("w1").unwrap();
+        assert_eq!(t.id, 5, "lower-id Critical task first");
+
+        let t = list.claim("w2").unwrap();
+        assert_eq!(t.id, 10, "higher-id Critical task second");
+
+        // Then Normal tasks, lowest id first
+        let t = list.claim("w3").unwrap();
+        assert_eq!(t.id, 1, "lower-id Normal task");
+
+        let t = list.claim("w4").unwrap();
+        assert_eq!(t.id, 3);
+    }
+
+    #[test]
+    fn default_research_task() {
+        let task = ResearchTask::default();
+        assert_eq!(task.id, 0);
+        assert_eq!(task.priority, TaskPriority::Normal);
+        assert_eq!(task.attempt, 0);
+        assert_eq!(task.max_retries, 0);
+        assert!(task.started_at.is_none());
+        assert!(task.timeout.is_none());
+        assert!(task.progress.is_none());
+        assert_eq!(task.status, TaskStatus::Pending);
+    }
+
+    #[test]
+    fn backoff_cap_at_60s() {
+        let mut task = make_task(1, vec![]);
+        // Very large attempt number should cap at 60s
+        task.attempt = 100;
+        assert_eq!(task.retry_backoff(), Duration::from_secs(60));
+    }
+
+    #[test]
+    fn no_timeout_without_config() {
+        let mut task = make_task(1, vec![]);
+        task.started_at = Some(Instant::now());
+        // No timeout configured -> should not time out
+        assert!(!task.is_timed_out());
+    }
+
+    #[test]
+    fn no_timeout_before_start() {
+        let mut task = make_task(1, vec![]);
+        task.timeout = Some(Duration::from_millis(1));
+        // Not started -> should not time out
+        assert!(!task.is_timed_out());
+    }
+
+    #[test]
+    fn check_timeouts_skips_non_in_progress() {
+        let tasks = vec![
+            ResearchTask {
+                timeout: Some(Duration::from_millis(1)),
+                ..make_task(1, vec![])
+            },
+            ResearchTask {
+                timeout: Some(Duration::from_millis(1)),
+                ..make_task(2, vec![])
+            },
+        ];
+        let list = SharedTaskList::new(tasks);
+
+        // Only claim task 1 (task 2 stays Pending)
+        list.claim("w1").unwrap();
+        std::thread::sleep(Duration::from_millis(5));
+
+        let timed_out = list.check_timeouts();
+        assert_eq!(timed_out.len(), 1, "only in-progress task should time out");
+        assert_eq!(timed_out[0].0, 1);
+    }
+
+    #[test]
+    fn team_progress_alias() {
+        let tasks = vec![make_task(1, vec![]), make_task(2, vec![])];
+        let list = SharedTaskList::new(tasks);
+
+        list.claim("w1");
+        list.complete(1, "ok".into());
+
+        let p1 = list.progress();
+        let p2 = list.team_progress();
+        assert_eq!(p1.total, p2.total);
+        assert_eq!(p1.completed, p2.completed);
+        assert_eq!(p1.percent_done(), p2.percent_done());
+    }
+
+    #[test]
+    fn progress_percent_capped_at_100() {
+        let tp = TaskProgress::new(200, "over");
+        assert_eq!(tp.percent, 100);
+    }
+
+    #[test]
+    fn completed_findings_for_filters_correctly() {
+        let tasks = vec![
+            make_task(1, vec![]),
+            make_task(2, vec![]),
+            make_task(3, vec![]),
+        ];
+        let list = SharedTaskList::new(tasks);
+
+        list.claim("w1");
+        list.complete(1, "result-1".into());
+        list.claim("w2");
+        list.complete(2, "result-2".into());
+        list.claim("w3");
+        list.complete(3, "result-3".into());
+
+        let findings = list.completed_findings_for(&[1, 3]);
+        assert_eq!(findings.len(), 2);
+        assert!(findings.iter().any(|(s, _)| s == "task-1"));
+        assert!(findings.iter().any(|(s, _)| s == "task-3"));
+        assert!(!findings.iter().any(|(s, _)| s == "task-2"));
+    }
+
+    #[test]
+    fn priority_serde_roundtrip() {
+        let priorities = vec![TaskPriority::Low, TaskPriority::Normal, TaskPriority::Critical];
+        let json = serde_json::to_string(&priorities).unwrap();
+        let deserialized: Vec<TaskPriority> = serde_json::from_str(&json).unwrap();
+        assert_eq!(priorities, deserialized);
+    }
+
+    #[test]
+    fn dependency_with_priority_interaction() {
+        // High-priority task blocked by dependency should not be claimed before
+        // lower-priority unblocked tasks.
+        let tasks = vec![
+            make_task_with_priority(1, TaskPriority::Low),
+            ResearchTask {
+                priority: TaskPriority::Critical,
+                dependencies: vec![1],
+                ..make_task(2, vec![])
+            },
+        ];
+        let list = SharedTaskList::new(tasks);
+
+        let t = list.claim("w1").unwrap();
+        assert_eq!(t.id, 1, "low-priority unblocked task claimed first");
+
+        // Critical task 2 still blocked
+        assert!(list.claim("w2").is_none());
+
+        list.complete(1, "done".into());
+        let t = list.claim("w2").unwrap();
+        assert_eq!(t.id, 2, "critical task claimable after dep resolved");
+    }
+
+    #[test]
+    fn concurrent_claim_from_threads() {
+        let tasks: Vec<_> = (1..=10).map(|i| make_task(i, vec![])).collect();
+        let list = SharedTaskList::new(tasks);
+
+        let handles: Vec<_> = (0..10)
+            .map(|i| {
+                let list = list.clone();
+                std::thread::spawn(move || list.claim(&format!("w{i}")))
+            })
+            .collect();
+
+        let mut claimed_ids: Vec<usize> = handles
+            .into_iter()
+            .filter_map(|h| h.join().unwrap())
+            .map(|t| t.id)
+            .collect();
+        claimed_ids.sort();
+
+        // All 10 tasks should be claimed exactly once across 10 threads
+        assert_eq!(claimed_ids, (1..=10).collect::<Vec<_>>());
+        assert!(list.claim("extra").is_none());
     }
 }

@@ -49,18 +49,27 @@ impl Default for ChunkerConfig {
 
 impl ChunkerConfig {
     /// Validate the configuration, returning an error message if invalid.
+    ///
+    /// Logs a warning via `tracing::warn!` when a validation rule is violated
+    /// so callers do not need to log separately.
     pub fn validate(&self) -> Result<(), String> {
-        if self.overlap >= self.chunk_size {
-            return Err(format!(
-                "overlap ({}) must be less than chunk_size ({})",
-                self.overlap, self.chunk_size
-            ));
+        if self.chunk_size == 0 {
+            let msg = "chunk_size must be greater than 0".to_string();
+            tracing::warn!("invalid chunker config: {msg}");
+            return Err(msg);
         }
         if self.min_size == 0 {
-            return Err("min_size must be greater than 0".to_string());
+            let msg = "min_size must be greater than 0".to_string();
+            tracing::warn!("invalid chunker config: {msg}");
+            return Err(msg);
         }
-        if self.chunk_size == 0 {
-            return Err("chunk_size must be greater than 0".to_string());
+        if self.overlap >= self.chunk_size {
+            let msg = format!(
+                "overlap ({}) must be less than chunk_size ({})",
+                self.overlap, self.chunk_size
+            );
+            tracing::warn!("invalid chunker config: {msg}");
+            return Err(msg);
         }
         Ok(())
     }
@@ -82,8 +91,8 @@ impl Chunk {
 
 pub fn chunk_text(text: &str, paper_id: &str, config: Option<ChunkerConfig>) -> Vec<Chunk> {
     let cfg = config.unwrap_or_default();
-    if let Err(e) = cfg.validate() {
-        tracing::warn!("invalid chunker config: {e}; using defaults");
+    if let Err(_e) = cfg.validate() {
+        tracing::warn!("falling back to default config");
         return chunk_text(text, paper_id, Some(ChunkerConfig::default()));
     }
 
@@ -325,10 +334,7 @@ fn detect_sections(text: &str) -> Vec<(String, usize, usize)> {
     let mut sections = Vec::new();
     for i in 0..headings.len() {
         let start = headings[i].1;
-        let end = headings
-            .get(i + 1)
-            .map(|h| h.1)
-            .unwrap_or(text.len());
+        let end = headings.get(i + 1).map(|h| h.1).unwrap_or(text.len());
         sections.push((headings[i].0.clone(), start, end));
     }
     sections
@@ -371,7 +377,9 @@ fn find_last_sentence_break(slice: &str, min_pos: usize) -> Option<usize> {
 mod tests {
     use super::*;
 
-    // ---- existing tests (preserved) ----
+    // -----------------------------------------------------------------------
+    // Basics & edge cases
+    // -----------------------------------------------------------------------
 
     #[test]
     fn empty_text_returns_no_chunks() {
@@ -392,14 +400,6 @@ mod tests {
         assert!(!chunks.is_empty());
         assert_eq!(chunks[0].paper_id, "paper-1");
         assert_eq!(chunks[0].chunk_index, 0);
-    }
-
-    #[test]
-    fn section_detection_finds_markdown_headings() {
-        let text = "## Introduction\nSome intro text here that is long enough.\n## Methods\nSome methods text here that is also long enough.";
-        let sections = detect_sections(text);
-        assert!(sections.len() >= 2);
-        assert!(sections[0].0.contains("Introduction"));
     }
 
     #[test]
@@ -426,7 +426,99 @@ mod tests {
         assert!(chunks.is_empty());
     }
 
-    // ---- validation tests ----
+    #[test]
+    fn very_short_paper_below_min_size() {
+        let cfg = ChunkerConfig {
+            chunk_size: 100,
+            overlap: 10,
+            min_size: 50,
+            strategy: ChunkStrategy::Section,
+        };
+        let text = "Very short abstract.";
+        let chunks = chunk_text(text, "p1", Some(cfg));
+        assert!(chunks.is_empty());
+    }
+
+    #[test]
+    fn very_short_paper_below_min_size_all_strategies() {
+        let text = "Hi.";
+        for strategy in [
+            ChunkStrategy::Fixed,
+            ChunkStrategy::Sentence,
+            ChunkStrategy::Paragraph,
+            ChunkStrategy::Section,
+        ] {
+            let cfg = ChunkerConfig {
+                chunk_size: 100,
+                overlap: 10,
+                min_size: 50,
+                strategy,
+            };
+            let chunks = chunk_text(text, "p1", Some(cfg));
+            assert!(
+                chunks.is_empty(),
+                "{:?}: text below min_size should yield empty vec",
+                strategy
+            );
+        }
+    }
+
+    #[test]
+    fn paper_with_no_clear_sections() {
+        let text =
+            "This is a plain text document with no headings or section markers at all. ".repeat(20);
+        let cfg = ChunkerConfig {
+            chunk_size: 200,
+            overlap: 30,
+            min_size: 20,
+            strategy: ChunkStrategy::Section,
+        };
+        let chunks = chunk_text(&text, "p1", Some(cfg));
+        assert!(
+            !chunks.is_empty(),
+            "should still chunk text without sections"
+        );
+        for c in &chunks {
+            assert!(
+                c.section.is_empty(),
+                "section should be empty for plain text"
+            );
+        }
+    }
+
+    #[test]
+    fn chunks_have_sequential_indices() {
+        let text = "Word ".repeat(500);
+        let cfg = ChunkerConfig {
+            chunk_size: 100,
+            overlap: 10,
+            min_size: 10,
+            strategy: ChunkStrategy::Fixed,
+        };
+        let chunks = chunk_text(&text, "p1", Some(cfg));
+        for (i, c) in chunks.iter().enumerate() {
+            assert_eq!(
+                c.chunk_index, i as i32,
+                "chunk indices should be sequential"
+            );
+        }
+    }
+
+    #[test]
+    fn default_strategy_is_section() {
+        let cfg = ChunkerConfig::default();
+        assert_eq!(cfg.strategy, ChunkStrategy::Section);
+    }
+
+    #[test]
+    fn default_chunk_strategy_derives_default() {
+        let strat: ChunkStrategy = Default::default();
+        assert_eq!(strat, ChunkStrategy::Section);
+    }
+
+    // -----------------------------------------------------------------------
+    // Validation
+    // -----------------------------------------------------------------------
 
     #[test]
     fn overlap_must_be_less_than_chunk_size() {
@@ -455,8 +547,26 @@ mod tests {
             min_size: 10,
             strategy: ChunkStrategy::Fixed,
         };
-        // overlap == chunk_size triggers the overlap check first
-        assert!(cfg.validate().is_err());
+        let err = cfg.validate().unwrap_err();
+        assert!(
+            err.contains("chunk_size"),
+            "error should mention chunk_size: {err}"
+        );
+    }
+
+    #[test]
+    fn zero_min_size_is_invalid() {
+        let cfg = ChunkerConfig {
+            chunk_size: 100,
+            overlap: 10,
+            min_size: 0,
+            strategy: ChunkStrategy::Fixed,
+        };
+        let err = cfg.validate().unwrap_err();
+        assert!(
+            err.contains("min_size"),
+            "error should mention min_size: {err}"
+        );
     }
 
     #[test]
@@ -484,7 +594,9 @@ mod tests {
         assert!(!chunks.is_empty());
     }
 
-    // ---- strategy: fixed ----
+    // -----------------------------------------------------------------------
+    // Strategy: Fixed
+    // -----------------------------------------------------------------------
 
     #[test]
     fn fixed_strategy_produces_chunks() {
@@ -498,15 +610,38 @@ mod tests {
         let chunks = chunk_text(&text, "p1", Some(cfg));
         assert!(chunks.len() > 1, "expected multiple fixed chunks");
         for c in &chunks {
-            assert!(c.section.is_empty(), "fixed strategy should have empty section");
+            assert!(
+                c.section.is_empty(),
+                "fixed strategy should have empty section"
+            );
         }
     }
 
-    // ---- strategy: sentence ----
+    #[test]
+    fn fixed_strategy_no_boundary_awareness() {
+        // The fixed strategy should NOT try to break at sentence boundaries,
+        // so a chunk may end mid-word.
+        let text = "abcdefghij".repeat(30); // 300 chars, no spaces
+        let cfg = ChunkerConfig {
+            chunk_size: 100,
+            overlap: 0,
+            min_size: 10,
+            strategy: ChunkStrategy::Fixed,
+        };
+        let chunks = chunk_text(&text, "p1", Some(cfg));
+        assert_eq!(chunks.len(), 3, "300 chars / 100 chunk_size = 3 chunks");
+        assert_eq!(chunks[0].text.len(), 100);
+    }
+
+    // -----------------------------------------------------------------------
+    // Strategy: Sentence
+    // -----------------------------------------------------------------------
 
     #[test]
     fn sentence_strategy_breaks_at_sentence_boundaries() {
-        let text = "First sentence here. Second sentence follows. Third comes along. Fourth is great. Fifth is fine. Sixth is here. Seventh too. Eighth now. Ninth ok. Tenth done.";
+        let text = "First sentence here. Second sentence follows. Third comes along. \
+                     Fourth is great. Fifth is fine. Sixth is here. Seventh too. \
+                     Eighth now. Ninth ok. Tenth done.";
         let cfg = ChunkerConfig {
             chunk_size: 80,
             overlap: 10,
@@ -515,7 +650,6 @@ mod tests {
         };
         let chunks = chunk_text(text, "p1", Some(cfg));
         assert!(!chunks.is_empty());
-        // Each chunk (except possibly the last) should end with a period
         for c in &chunks[..chunks.len().saturating_sub(1)] {
             assert!(
                 c.text.ends_with('.'),
@@ -525,7 +659,32 @@ mod tests {
         }
     }
 
-    // ---- strategy: paragraph ----
+    #[test]
+    fn sentence_strategy_handles_question_and_exclamation_marks() {
+        let text = "Is this a question? Yes it is! And this continues. \
+                     Another question here? Of course! More text follows. Done now.";
+        let cfg = ChunkerConfig {
+            chunk_size: 60,
+            overlap: 5,
+            min_size: 10,
+            strategy: ChunkStrategy::Sentence,
+        };
+        let chunks = chunk_text(text, "p1", Some(cfg));
+        assert!(!chunks.is_empty());
+        // Verify we actually get sentence-boundary breaks (not mid-word)
+        for c in &chunks[..chunks.len().saturating_sub(1)] {
+            let last_char = c.text.chars().last().unwrap();
+            assert!(
+                last_char == '.' || last_char == '?' || last_char == '!',
+                "sentence chunk should end at punctuation: {:?}",
+                c.text
+            );
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Strategy: Paragraph
+    // -----------------------------------------------------------------------
 
     #[test]
     fn paragraph_strategy_respects_double_newlines() {
@@ -540,117 +699,45 @@ mod tests {
             strategy: ChunkStrategy::Paragraph,
         };
         let chunks = chunk_text(&text, "p1", Some(cfg));
-        assert!(chunks.len() >= 2, "expected at least 2 paragraph chunks, got {}", chunks.len());
-    }
-
-    // ---- strategy: section (enhanced detection) ----
-
-    #[test]
-    fn detects_latex_sections() {
-        let text = r"\section{Introduction}
-This is the introduction with enough text to be a real section in a paper.
-\subsection{Background}
-Background material and prior work details go here for context.
-\section{Methods}
-We describe our methodology with sufficient detail for reproduction.";
-        let sections = detect_sections(text);
         assert!(
-            sections.len() >= 3,
-            "expected >=3 LaTeX sections, got {}: {:?}",
-            sections.len(),
-            sections.iter().map(|s| &s.0).collect::<Vec<_>>()
-        );
-        assert!(sections[0].0.contains("Introduction"));
-    }
-
-    #[test]
-    fn detects_numbered_subsections() {
-        let text = "1. Introduction\nSome intro text here.\n2.1 Related Work\nSome related work.\n2.2 Prior Art\nMore prior art here.\n3. Methods\nOur methods.";
-        let sections = detect_sections(text);
-        assert!(
-            sections.len() >= 3,
-            "expected >=3 numbered sections, got {}: {:?}",
-            sections.len(),
-            sections.iter().map(|s| &s.0).collect::<Vec<_>>()
+            chunks.len() >= 2,
+            "expected at least 2 paragraph chunks, got {}",
+            chunks.len()
         );
     }
 
     #[test]
-    fn detects_academic_heading_patterns() {
-        let headings = [
-            "Abstract", "Introduction", "Background", "Related Work",
-            "Methods", "Results", "Discussion", "Conclusion", "References",
-            "Limitations", "Future Work", "Acknowledgments",
-        ];
-        for heading in &headings {
-            let text = format!(
-                "{}\nThis is some body text that is long enough to pass the minimum size filter easily.",
-                heading
-            );
-            let sections = detect_sections(&text);
-            assert!(
-                !sections.is_empty(),
-                "should detect academic heading: {}",
-                heading
-            );
-            assert!(
-                sections[0].0.contains(heading),
-                "first section should contain '{}', got '{}'",
-                heading,
-                sections[0].0
-            );
-        }
-    }
-
-    #[test]
-    fn detects_table_and_figure_markers() {
-        let text = "Some text before.\nTable 1: Results of experiments\nData row one.\nFigure 2: Architecture diagram\nMore text.";
-        let sections = detect_sections(text);
-        let names: Vec<&str> = sections.iter().map(|s| s.0.as_str()).collect();
-        assert!(
-            names.iter().any(|n| n.starts_with("Table")),
-            "should detect table markers: {:?}", names
-        );
-        assert!(
-            names.iter().any(|n| n.starts_with("Figure")),
-            "should detect figure markers: {:?}", names
-        );
-    }
-
-    // ---- edge cases ----
-
-    #[test]
-    fn very_short_paper_below_min_size() {
+    fn paragraph_strategy_merges_small_paragraphs() {
+        // Three short paragraphs that together fit into one chunk
+        let text = "Para one.\n\nPara two.\n\nPara three.";
         let cfg = ChunkerConfig {
-            chunk_size: 100,
+            chunk_size: 500,
             overlap: 10,
-            min_size: 50,
-            strategy: ChunkStrategy::Section,
+            min_size: 10,
+            strategy: ChunkStrategy::Paragraph,
         };
-        let text = "Very short abstract.";
         let chunks = chunk_text(text, "p1", Some(cfg));
-        assert!(chunks.is_empty());
+        assert_eq!(
+            chunks.len(),
+            1,
+            "small paragraphs should merge into one chunk"
+        );
+        assert!(chunks[0].text.contains("Para one"));
+        assert!(chunks[0].text.contains("Para three"));
     }
 
-    #[test]
-    fn paper_with_no_clear_sections() {
-        let text = "This is a plain text document with no headings or section markers at all. ".repeat(20);
-        let cfg = ChunkerConfig {
-            chunk_size: 200,
-            overlap: 30,
-            min_size: 20,
-            strategy: ChunkStrategy::Section,
-        };
-        let chunks = chunk_text(&text, "p1", Some(cfg));
-        assert!(!chunks.is_empty(), "should still chunk text without sections");
-        for c in &chunks {
-            assert!(c.section.is_empty(), "section should be empty for plain text");
-        }
-    }
+    // -----------------------------------------------------------------------
+    // Strategy: Section (enhanced detection)
+    // -----------------------------------------------------------------------
 
     #[test]
     fn section_strategy_assigns_section_names() {
-        let text = "## Abstract\nThis is a substantial abstract with enough words to pass the minimum size threshold easily for testing purposes.\n\n## Introduction\nThe introduction provides context and background for the research being presented in this paper.";
+        let text = "## Abstract\n\
+                     This is a substantial abstract with enough words to pass the minimum \
+                     size threshold easily for testing purposes.\n\n\
+                     ## Introduction\n\
+                     The introduction provides context and background for the research \
+                     being presented in this paper.";
         let cfg = ChunkerConfig {
             chunk_size: 500,
             overlap: 20,
@@ -662,7 +749,8 @@ We describe our methodology with sufficient detail for reproduction.";
         let sections: Vec<&str> = chunks.iter().map(|c| c.section.as_str()).collect();
         assert!(
             sections.iter().any(|s| s.contains("Abstract")),
-            "should have Abstract section: {:?}", sections
+            "should have Abstract section: {:?}",
+            sections
         );
     }
 
@@ -690,33 +778,251 @@ We describe our methodology with sufficient detail for reproduction.";
         }
     }
 
+    // -----------------------------------------------------------------------
+    // Section detection — Markdown
+    // -----------------------------------------------------------------------
+
     #[test]
-    fn default_strategy_is_section() {
-        let cfg = ChunkerConfig::default();
-        assert_eq!(cfg.strategy, ChunkStrategy::Section);
+    fn section_detection_finds_markdown_headings() {
+        let text = "## Introduction\n\
+                     Some intro text here that is long enough.\n\
+                     ## Methods\n\
+                     Some methods text here that is also long enough.";
+        let sections = detect_sections(text);
+        assert!(sections.len() >= 2);
+        assert!(sections[0].0.contains("Introduction"));
     }
 
     #[test]
-    fn chunks_have_sequential_indices() {
-        let text = "Word ".repeat(500);
-        let cfg = ChunkerConfig {
-            chunk_size: 100,
-            overlap: 10,
-            min_size: 10,
-            strategy: ChunkStrategy::Fixed,
-        };
-        let chunks = chunk_text(&text, "p1", Some(cfg));
-        for (i, c) in chunks.iter().enumerate() {
-            assert_eq!(c.chunk_index, i as i32, "chunk indices should be sequential");
+    fn detects_markdown_h4_headings() {
+        let text = "#### Detailed Sub-subsection\n\
+                     Body text for the sub-subsection that is long enough.";
+        let sections = detect_sections(text);
+        assert!(
+            !sections.is_empty(),
+            "should detect #### headings: {:?}",
+            sections
+        );
+        assert!(sections[0].0.contains("Detailed Sub-subsection"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Section detection — LaTeX
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn detects_latex_sections() {
+        let text = r"\section{Introduction}
+This is the introduction with enough text to be a real section in a paper.
+\subsection{Background}
+Background material and prior work details go here for context.
+\section{Methods}
+We describe our methodology with sufficient detail for reproduction.";
+        let sections = detect_sections(text);
+        assert!(
+            sections.len() >= 3,
+            "expected >=3 LaTeX sections, got {}: {:?}",
+            sections.len(),
+            sections.iter().map(|s| &s.0).collect::<Vec<_>>()
+        );
+        assert!(sections[0].0.contains("Introduction"));
+    }
+
+    #[test]
+    fn detects_latex_subsubsection() {
+        let text = r"\subsubsection{Training Details}
+We trained the model using Adam optimizer with learning rate 1e-4.
+\subsubsection{Hyperparameter Search}
+Grid search was used over the following ranges.";
+        let sections = detect_sections(text);
+        assert!(
+            sections.len() >= 2,
+            "expected >=2 subsubsection headings, got {}: {:?}",
+            sections.len(),
+            sections.iter().map(|s| &s.0).collect::<Vec<_>>()
+        );
+        assert!(sections[0].0.contains("Training Details"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Section detection — Numbered subsections
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn detects_numbered_subsections() {
+        let text = "1. Introduction\n\
+                     Some intro text here.\n\
+                     2.1 Related Work\n\
+                     Some related work.\n\
+                     2.2 Prior Art\n\
+                     More prior art here.\n\
+                     3. Methods\n\
+                     Our methods.";
+        let sections = detect_sections(text);
+        assert!(
+            sections.len() >= 3,
+            "expected >=3 numbered sections, got {}: {:?}",
+            sections.len(),
+            sections.iter().map(|s| &s.0).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn detects_deeply_nested_numbered_subsections() {
+        let text = "3.1.2 Attention Mechanism\n\
+                     We use multi-head self-attention with 8 heads.\n\
+                     3.1.3 Feed-forward Network\n\
+                     The FFN layer uses GELU activation.";
+        let sections = detect_sections(text);
+        assert!(
+            sections.len() >= 2,
+            "expected >=2 deeply numbered sections (3.1.2, 3.1.3), got {}: {:?}",
+            sections.len(),
+            sections.iter().map(|s| &s.0).collect::<Vec<_>>()
+        );
+        assert!(sections[0].0.contains("Attention Mechanism"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Section detection — Academic headings
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn detects_academic_heading_patterns() {
+        let headings = [
+            "Abstract",
+            "Introduction",
+            "Background",
+            "Related Work",
+            "Methods",
+            "Results",
+            "Discussion",
+            "Conclusion",
+            "References",
+            "Limitations",
+            "Future Work",
+            "Acknowledgments",
+        ];
+        for heading in &headings {
+            let text = format!(
+                "{}\nThis is some body text that is long enough to pass the minimum size \
+                 filter easily.",
+                heading
+            );
+            let sections = detect_sections(&text);
+            assert!(
+                !sections.is_empty(),
+                "should detect academic heading: {}",
+                heading
+            );
+            assert!(
+                sections[0].0.contains(heading),
+                "first section should contain '{}', got '{}'",
+                heading,
+                sections[0].0
+            );
         }
     }
+
+    #[test]
+    fn detects_extended_academic_headings() {
+        let headings = [
+            "Literature Review",
+            "Methodology",
+            "Experimental Setup",
+            "Experiments",
+            "Analysis",
+            "Summary",
+            "Acknowledgements",
+            "Appendix",
+            "Supplementary Materials",
+        ];
+        for heading in &headings {
+            let text = format!(
+                "{}\nThis is body text that follows the heading and provides detail.",
+                heading
+            );
+            let sections = detect_sections(&text);
+            assert!(
+                !sections.is_empty(),
+                "should detect extended academic heading: {}",
+                heading
+            );
+            assert!(
+                sections[0].0.contains(heading),
+                "first section should contain '{}', got '{}'",
+                heading,
+                sections[0].0
+            );
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Section detection — Table / Figure markers
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn detects_table_and_figure_markers() {
+        let text = "Some text before.\n\
+                     Table 1: Results of experiments\n\
+                     Data row one.\n\
+                     Figure 2: Architecture diagram\n\
+                     More text.";
+        let sections = detect_sections(text);
+        let names: Vec<&str> = sections.iter().map(|s| s.0.as_str()).collect();
+        assert!(
+            names.iter().any(|n| n.starts_with("Table")),
+            "should detect table markers: {:?}",
+            names
+        );
+        assert!(
+            names.iter().any(|n| n.starts_with("Figure")),
+            "should detect figure markers: {:?}",
+            names
+        );
+    }
+
+    #[test]
+    fn detects_table_with_dot_separator() {
+        let text = "Table 3. Ablation study results\nRow data here.\n\
+                     Figure 5. Model architecture overview\nCaption text.";
+        let sections = detect_sections(text);
+        let names: Vec<&str> = sections.iter().map(|s| s.0.as_str()).collect();
+        assert!(
+            names.iter().any(|n| n.starts_with("Table")),
+            "should detect 'Table N.' with dot separator: {:?}",
+            names
+        );
+        assert!(
+            names.iter().any(|n| n.starts_with("Figure")),
+            "should detect 'Figure N.' with dot separator: {:?}",
+            names
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Heading dedup
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn heading_dedup_removes_near_duplicates() {
+        // Markdown heading and academic pattern at same position should dedup
+        let text =
+            "## Abstract\nBody text that is long enough for testing the deduplication logic.";
+        let sections = detect_sections(text);
+        let abstract_count = sections.iter().filter(|s| s.0.contains("Abstract")).count();
+        assert_eq!(abstract_count, 1, "should dedup overlapping headings");
+    }
+
+    // -----------------------------------------------------------------------
+    // Helper: find_last_sentence_break
+    // -----------------------------------------------------------------------
 
     #[test]
     fn find_last_sentence_break_works() {
         let text = "First one. Second two. Third three.";
         let pos = find_last_sentence_break(text, 5);
         assert!(pos.is_some());
-        // Should find the last ". " break
         let p = pos.unwrap();
         assert!(p > 10, "should find a break well into the text, got {}", p);
     }
@@ -729,12 +1035,118 @@ We describe our methodology with sufficient detail for reproduction.";
     }
 
     #[test]
-    fn heading_dedup_removes_near_duplicates() {
-        // Markdown heading and academic pattern at same position should dedup
-        let text = "## Abstract\nBody text that is long enough for testing the deduplication logic.";
-        let sections = detect_sections(text);
-        // Should not have duplicate entries for "Abstract"
-        let abstract_count = sections.iter().filter(|s| s.0.contains("Abstract")).count();
-        assert_eq!(abstract_count, 1, "should dedup overlapping headings");
+    fn find_last_sentence_break_handles_question_marks() {
+        let text = "Is this right? Yes it is. Done.";
+        let pos = find_last_sentence_break(text, 0);
+        assert!(pos.is_some(), "should find ? as sentence break");
+    }
+
+    #[test]
+    fn find_last_sentence_break_handles_exclamation_marks() {
+        let text = "Amazing result! We are thrilled. End.";
+        let pos = find_last_sentence_break(text, 0);
+        assert!(pos.is_some(), "should find ! as sentence break");
+    }
+
+    // -----------------------------------------------------------------------
+    // Overlap behaviour
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn fixed_chunks_overlap_correctly() {
+        let text = "abcdefghijklmnopqrstuvwxyz".repeat(10); // 260 chars
+        let cfg = ChunkerConfig {
+            chunk_size: 100,
+            overlap: 20,
+            min_size: 10,
+            strategy: ChunkStrategy::Fixed,
+        };
+        let chunks = chunk_text(&text, "p1", Some(cfg));
+        assert!(chunks.len() >= 2);
+        // The last 20 chars of chunk 0 should equal the first 20 chars of chunk 1
+        let tail_0 = &chunks[0].text[chunks[0].text.len() - 20..];
+        let head_1 = &chunks[1].text[..20];
+        assert_eq!(
+            tail_0, head_1,
+            "overlap region should be identical across adjacent chunks"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Unicode / multibyte safety
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn handles_unicode_text_without_panic() {
+        let text = "Transformers verwenden Selbst-Aufmerksamkeit. \
+                     Die Ergebnisse zeigen eine Verbesserung von 15% gegenueber dem Baseline. \
+                     Weitere Experimente mit groesseren Datensaetzen sind geplant. "
+            .repeat(5);
+        let cfg = ChunkerConfig {
+            chunk_size: 100,
+            overlap: 10,
+            min_size: 10,
+            strategy: ChunkStrategy::Sentence,
+        };
+        // Should not panic on non-ASCII text
+        let chunks = chunk_text(&text, "p1", Some(cfg));
+        assert!(!chunks.is_empty());
+    }
+
+    // -----------------------------------------------------------------------
+    // Full academic paper simulation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn full_paper_section_chunking() {
+        let text = "\
+## Abstract
+We present a novel approach to neural machine translation that achieves \
+state-of-the-art results on WMT benchmarks. Our method combines attention \
+mechanisms with structured prediction to improve translation quality.
+
+## Introduction
+Machine translation has been a fundamental problem in natural language \
+processing for decades. Recent advances in deep learning have led to \
+significant improvements in translation quality across many language pairs.
+
+## Methods
+We propose a hybrid architecture that combines self-attention with \
+convolutional layers. The model uses a multi-scale approach to capture \
+both local and global dependencies in the source text.
+
+## Results
+Our model achieves a BLEU score of 34.5 on the WMT14 English-German \
+benchmark, surpassing the previous best result by 1.2 points. We also \
+observe improvements on lower-resource language pairs.
+
+## Conclusion
+We have demonstrated that combining attention with structured prediction \
+leads to improved machine translation quality across multiple benchmarks.";
+        let cfg = ChunkerConfig {
+            chunk_size: 300,
+            overlap: 30,
+            min_size: 20,
+            strategy: ChunkStrategy::Section,
+        };
+        let chunks = chunk_text(text, "paper-mt", Some(cfg));
+        assert!(
+            chunks.len() >= 4,
+            "expected at least 4 chunks for 5-section paper, got {}",
+            chunks.len()
+        );
+
+        let unique_sections: std::collections::HashSet<&str> =
+            chunks.iter().map(|c| c.section.as_str()).collect();
+        assert!(
+            unique_sections.len() >= 3,
+            "expected chunks from at least 3 different sections, got {:?}",
+            unique_sections
+        );
+
+        // Verify paper_id propagates
+        for c in &chunks {
+            assert_eq!(c.paper_id, "paper-mt");
+        }
     }
 }

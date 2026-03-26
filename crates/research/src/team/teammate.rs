@@ -100,7 +100,7 @@ impl Teammate {
             });
 
             // Report progress: building context
-            self.tasks.update_progress(task.id, 10, Some("building context".into()));
+            self.tasks.update_progress(task.id, 10, "building context");
 
             // Build context from dependency findings only (not all completed tasks).
             let prior = truncate_context(
@@ -121,7 +121,7 @@ impl Teammate {
             };
 
             // Report progress: running agent
-            self.tasks.update_progress(task.id, 20, Some("running agent".into()));
+            self.tasks.update_progress(task.id, 20, "running agent");
             self.mailbox.send_status(&self.worker_id, StatusReport {
                 task_id: task.id,
                 phase: StatusPhase::Progress { percent: 20 },

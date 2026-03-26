@@ -67,7 +67,7 @@ export const papers: Paper[] = [
     authors: "Cloudflare",
     year: 2024,
     finding: "Edge compute platform for running serverless functions globally with low latency",
-    relevance: "Hosts 12+ specialized workers like nomadically-work-process-jobs for job classification and nomadically-work-resume-rag for vector embeddings",
+    relevance: "Hosts 12+ specialized workers like lead-gen-process-jobs for job classification and lead-gen-resume-rag for vector embeddings",
     url: "https://developers.cloudflare.com/workers",
     categoryColor: "var(--red-9)",
   },
@@ -109,7 +109,7 @@ export const papers: Paper[] = [
     authors: "DeepSeek",
     year: 2024,
     finding: "Cost-effective large language model for text classification and generation tasks",
-    relevance: "Used by nomadically-work-process-jobs worker to classify jobs for EU remote compatibility and extract skills via scripts/extract-job-skills.ts",
+    relevance: "Used by lead-gen-process-jobs worker to classify jobs for EU remote compatibility and extract skills via scripts/extract-job-skills.ts",
     url: "https://platform.deepseek.com",
     categoryColor: "var(--amber-9)",
   },
@@ -137,7 +137,7 @@ export const papers: Paper[] = [
     authors: "Cloudflare",
     year: 2024,
     finding: "Edge SQL database optimized for fast reads and vector storage",
-    relevance: "Stores resume embeddings from Workers AI for similarity search in the nomadically-work-job-matcher worker",
+    relevance: "Stores resume embeddings from Workers AI for similarity search in the lead-gen-job-matcher worker",
     url: "https://developers.cloudflare.com/d1",
     categoryColor: "var(--green-9)",
   },
@@ -149,7 +149,7 @@ export const researchStats: Stat[] = [
   {
     number: "12+",
     label: "Specialized Cloudflare Workers for different tasks",
-    source: "Architecture analysis showing workers like nomadically-work-process-jobs and ats-crawler",
+    source: "Architecture analysis showing workers like lead-gen-process-jobs and ats-crawler",
   },
   {
     number: "1024-dim",
@@ -178,17 +178,17 @@ export const researchStats: Stat[] = [
 export const pipelineAgents: PipelineAgent[] = [
   {
     name: "Job Ingestion & Crawling",
-    description: "Rust-based ats-crawler worker scrapes job boards like Ashby and Greenhouse via Common Crawl, then nomadically-work-insert-jobs worker adds jobs to a processing queue for classification.",
+    description: "Rust-based ats-crawler worker scrapes job boards like Ashby and Greenhouse via Common Crawl, then lead-gen-insert-jobs worker adds jobs to a processing queue for classification.",
     researchBasis: "Cloudflare Workers with Rust for high-performance web scraping",
   },
   {
     name: "AI Classification & EU Validation",
-    description: "nomadically-work-process-jobs worker (Python/LangGraph) uses DeepSeek LLM to classify jobs, while nomadically-work-eu-classifier worker validates EU remote compatibility, storing results in PostgreSQL via Drizzle ORM.",
+    description: "lead-gen-process-jobs worker (Python/LangGraph) uses DeepSeek LLM to classify jobs, while lead-gen-eu-classifier worker validates EU remote compatibility, storing results in PostgreSQL via Drizzle ORM.",
     researchBasis: "LangGraph for agent orchestration and LLM prompt engineering",
   },
   {
     name: "Vectorization & Resume Matching",
-    description: "nomadically-work-resume-rag worker creates embeddings from resumes using Workers AI and stores them in Cloudflare D1. nomadically-work-job-matcher worker performs cosine similarity search between resume and job vectors for matching.",
+    description: "lead-gen-resume-rag worker creates embeddings from resumes using Workers AI and stores them in Cloudflare D1. lead-gen-job-matcher worker performs cosine similarity search between resume and job vectors for matching.",
     researchBasis: "Vector embeddings and similarity search for retrieval-augmented generation (RAG)",
   },
   {
@@ -222,7 +222,7 @@ export const extraSections: { heading: string; content: string }[] = [
   },
   {
     heading: "Database Design",
-    content: "PostgreSQL schema includes tables like jobs, contacts, email_campaigns, and reported_jobs, managed by Drizzle ORM with Row-Level Security (RLS) policies. Skills are stored in a many-to-many relationship via job_skills table, seeded by scripts/seed-skill-taxonomy.ts. Cloudflare D1 holds resume embeddings indexed for cosine similarity search, enabling efficient matching in the nomadically-work-job-matcher worker.",
+    content: "PostgreSQL schema includes tables like jobs, contacts, email_campaigns, and reported_jobs, managed by Drizzle ORM with Row-Level Security (RLS) policies. Skills are stored in a many-to-many relationship via job_skills table, seeded by scripts/seed-skill-taxonomy.ts. Cloudflare D1 holds resume embeddings indexed for cosine similarity search, enabling efficient matching in the lead-gen-job-matcher worker.",
   },
   {
     heading: "Security & Auth",
@@ -234,7 +234,7 @@ export const extraSections: { heading: string; content: string }[] = [
   },
   {
     heading: "AI Integration",
-    content: "DeepSeek LLM classifies jobs for EU compatibility in nomadically-work-process-jobs worker, while OpenAI powers general tasks. Workers AI generates vector embeddings for resumes, stored in D1. LangGraph orchestrates agentic workflows. AI-assisted email drafting uses the ComposeFromLinkedIn component, and job reports are analyzed by job-reporter-llm worker with confidence scoring.",
+    content: "DeepSeek LLM classifies jobs for EU compatibility in lead-gen-process-jobs worker, while OpenAI powers general tasks. Workers AI generates vector embeddings for resumes, stored in D1. LangGraph orchestrates agentic workflows. AI-assisted email drafting uses the ComposeFromLinkedIn component, and job reports are analyzed by job-reporter-llm worker with confidence scoring.",
   },
   {
     heading: "Job Processing Pipeline",

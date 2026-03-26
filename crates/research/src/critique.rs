@@ -2,10 +2,9 @@
 //!
 //! Dimensions scored (all available without feature flags):
 //! - **Result count**: enough papers to draw conclusions
-//! - **Year span**: temporal breadth of the corpus
+//! - **Year range**: temporal breadth of the corpus
 //! - **Source diversity**: variety of data sources (arXiv, Semantic Scholar, etc.)
 //! - **Abstract coverage**: fraction of papers with abstracts
-//! - **Citation distribution**: papers with citation data
 //! - **Recency bias**: detects over-concentration on recent publications
 //! - **Citation network**: Gini-based analysis of citation concentration
 //! - **Authority**: presence of highly-cited landmark papers
@@ -24,52 +23,73 @@ use crate::paper::ResearchPaper;
 /// before scoring, so relative magnitudes are what matter.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DimensionWeights {
-    pub result_count: f64,
-    pub year_span: f64,
-    pub source_diversity: f64,
-    pub abstract_coverage: f64,
-    pub citation_distribution: f64,
-    pub recency_bias: f64,
-    pub citation_network: f64,
-    pub authority: f64,
-    pub field_diversity: f64,
+    pub result_count: f32,
+    pub year_range: f32,
+    pub source_diversity: f32,
+    pub abstract_coverage: f32,
+    pub recency_bias: f32,
+    pub citation_network: f32,
+    pub authority: f32,
+    pub field_diversity: f32,
 }
 
 impl Default for DimensionWeights {
     fn default() -> Self {
         Self {
             result_count: 0.15,
-            year_span: 0.10,
-            source_diversity: 0.10,
-            abstract_coverage: 0.10,
-            citation_distribution: 0.10,
-            recency_bias: 0.10,
+            year_range: 0.12,
+            source_diversity: 0.12,
+            abstract_coverage: 0.12,
+            recency_bias: 0.12,
             citation_network: 0.10,
-            authority: 0.10,
+            authority: 0.12,
             field_diversity: 0.15,
         }
     }
 }
 
 impl DimensionWeights {
-    /// Return weights normalised so they sum to 1.0.
-    fn normalised(&self) -> [f64; 9] {
+    /// Scale all weights in place so they sum to 1.0.
+    pub fn normalize(&mut self) {
+        let total = self.result_count
+            + self.year_range
+            + self.source_diversity
+            + self.abstract_coverage
+            + self.recency_bias
+            + self.citation_network
+            + self.authority
+            + self.field_diversity;
+        if total <= 0.0 {
+            *self = Self::default();
+            return;
+        }
+        self.result_count /= total;
+        self.year_range /= total;
+        self.source_diversity /= total;
+        self.abstract_coverage /= total;
+        self.recency_bias /= total;
+        self.citation_network /= total;
+        self.authority /= total;
+        self.field_diversity /= total;
+    }
+
+    /// Return weights normalised so they sum to 1.0 (non-mutating).
+    fn normalised(&self) -> [f32; 8] {
         let raw = [
             self.result_count,
-            self.year_span,
+            self.year_range,
             self.source_diversity,
             self.abstract_coverage,
-            self.citation_distribution,
             self.recency_bias,
             self.citation_network,
             self.authority,
             self.field_diversity,
         ];
-        let total: f64 = raw.iter().sum();
+        let total: f32 = raw.iter().sum();
         if total <= 0.0 {
-            return [1.0 / 9.0; 9];
+            return [1.0 / 8.0; 8];
         }
-        let mut out = [0.0; 9];
+        let mut out = [0.0; 8];
         for (i, &v) in raw.iter().enumerate() {
             out[i] = v / total;
         }
@@ -84,11 +104,12 @@ pub struct CritiqueConfig {
     pub min_sources: usize,
     pub quality_threshold: f64,
     /// Citation count above which a paper is considered a "landmark".
-    pub authority_citation_threshold: u64,
+    pub authority_citation_threshold: u32,
     /// Minimum fraction of landmark papers expected for a healthy corpus.
-    pub authority_min_fraction: f64,
-    /// Year considered "current" for recency bias detection (defaults to current year).
-    pub current_year: u32,
+    pub authority_min_fraction: f32,
+    /// Year considered "current" for recency bias detection.
+    /// Defaults to `None` (uses 2026 as fallback).
+    pub current_year: Option<u32>,
     /// Per-dimension weight overrides.
     pub weights: DimensionWeights,
 }
@@ -102,7 +123,7 @@ impl Default for CritiqueConfig {
             quality_threshold: 0.6,
             authority_citation_threshold: 100,
             authority_min_fraction: 0.1,
-            current_year: 2026,
+            current_year: None,
             weights: DimensionWeights::default(),
         }
     }
@@ -127,7 +148,7 @@ pub struct DimensionScores {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Critique {
     pub quality_score: f64,
-    pub dimension_scores: DimensionScores,
+    pub dimension_scores: Option<DimensionScores>,
     pub issues: Vec<String>,
     pub suggestions: Vec<String>,
 }
@@ -248,7 +269,7 @@ impl CritiqueConfig {
         };
 
         // 6. Recency bias detection
-        let recency_score = score_recency_bias(papers, self.current_year, &mut issues, &mut suggestions);
+        let recency_score = score_recency_bias(papers, self.current_year.unwrap_or(2025), &mut issues, &mut suggestions);
 
         // 7. Citation network (Gini coefficient — lower Gini = more equal = healthier)
         let citation_network_score = score_citation_network(papers, &mut issues, &mut suggestions);
@@ -256,8 +277,8 @@ impl CritiqueConfig {
         // 8. Authority scoring
         let authority_score = score_authority(
             papers,
-            self.authority_citation_threshold,
-            self.authority_min_fraction,
+            self.authority_citation_threshold as u64,
+            self.authority_min_fraction as f64,
             &mut issues,
             &mut suggestions,
         );

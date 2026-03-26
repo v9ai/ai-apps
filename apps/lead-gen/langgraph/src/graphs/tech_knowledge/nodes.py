@@ -384,7 +384,7 @@ def persist_to_knowledge_node(state: TechKnowledgeState) -> dict:
                 name=cat_name,
                 description=TECH_CATEGORIES.get(cat_name, {}).get("description"),
                 concept_type="topic",
-                metadata={"source": "nomadically", "level": "category"},
+                metadata={"source": "lead-gen", "level": "category"},
             )
             category_concept_ids[cat_name] = concept_id
             stats["concepts_created"] += 1
@@ -415,7 +415,7 @@ def persist_to_knowledge_node(state: TechKnowledgeState) -> dict:
                 description=f"{g['label']} — {g['category']}",
                 concept_type="tool",
                 metadata={
-                    "source": "nomadically",
+                    "source": "lead-gen",
                     "application_id": application_id,
                     "tag": g["tag"],
                     "slug": g["slug"],
@@ -444,7 +444,7 @@ def persist_to_knowledge_node(state: TechKnowledgeState) -> dict:
                     name=sub_name,
                     description=f"{subtopic} in the context of {g['label']}",
                     concept_type="topic",
-                    metadata={"source": "nomadically", "parent_tag": g["tag"]},
+                    metadata={"source": "lead-gen", "parent_tag": g["tag"]},
                 )
                 stats["concepts_created"] += 1
 

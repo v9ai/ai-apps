@@ -208,7 +208,7 @@ function generateJsonSchema(): object {
   return {
     ...HEADER_JSON,
     $schema: "http://json-schema.org/draft-07/schema#",
-    title: "nomadically.work shared contracts",
+    title: "lead-gen shared contracts",
     definitions: {
       ...Object.fromEntries(
         Object.entries(enums).map(([name, values]) => [

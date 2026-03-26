@@ -12,7 +12,7 @@ use super::types::{
     validate_arxiv_id, ArxivPaper, ArxivSearchResponse, SearchQuery, SortBy, SortOrder,
 };
 
-const BASE_URL: &str = "http://export.arxiv.org/api/query";
+const BASE_URL: &str = "https://export.arxiv.org/api/query";
 const POLITE_DELAY: Duration = Duration::from_secs(3);
 
 const RETRY_CONFIG: RetryConfig = RetryConfig {
