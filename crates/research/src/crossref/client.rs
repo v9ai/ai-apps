@@ -69,6 +69,20 @@ impl CrossrefClient {
         rows: u32,
         offset: u32,
     ) -> Result<CrossrefResponse, Error> {
+        self.search_filtered(query, None, rows, offset).await
+    }
+
+    /// Search Crossref works with optional date filter.
+    ///
+    /// `from_pub_date` accepts `"YYYY-MM-DD"` and restricts results to works
+    /// published on or after that date.
+    pub async fn search_filtered(
+        &self,
+        query: &str,
+        from_pub_date: Option<&str>,
+        rows: u32,
+        offset: u32,
+    ) -> Result<CrossrefResponse, Error> {
         let url = format!("{}/works", self.base_url);
         let mut params = vec![
             ("query".into(), query.to_string()),
@@ -77,6 +91,9 @@ impl CrossrefClient {
         ];
         if let Some(ref email) = self.mailto {
             params.push(("mailto".into(), email.clone()));
+        }
+        if let Some(date) = from_pub_date {
+            params.push(("filter".into(), format!("from-pub-date:{date}")));
         }
         let val = self.get_json(&url, params).await?;
         Ok(serde_json::from_value(val)?)

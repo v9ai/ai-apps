@@ -64,12 +64,29 @@ impl OpenAlexClient {
         page: u32,
         per_page: u32,
     ) -> Result<SearchResponse, Error> {
+        self.search_filtered(query, None, page, per_page).await
+    }
+
+    /// Search for works by keyword with optional date filter.
+    ///
+    /// `from_publication_date` accepts `"YYYY-MM-DD"` format and restricts
+    /// results to works published on or after that date.
+    pub async fn search_filtered(
+        &self,
+        query: &str,
+        from_publication_date: Option<&str>,
+        page: u32,
+        per_page: u32,
+    ) -> Result<SearchResponse, Error> {
         let url = format!("{}/works", self.base_url);
-        let params = vec![
+        let mut params = vec![
             ("search".into(), query.to_string()),
             ("page".into(), page.to_string()),
             ("per_page".into(), per_page.to_string()),
         ];
+        if let Some(date) = from_publication_date {
+            params.push(("filter".into(), format!("from_publication_date:{date}")));
+        }
         let val = self.get_json(&url, params).await?;
         Ok(serde_json::from_value(val)?)
     }

@@ -33,7 +33,7 @@ export function HowItWorksClient() {
     <div style={prose}>
       <h2 style={{ fontSize: "1.75rem", fontWeight: 700, margin: "2rem 0 0" }}>How It Works</h2>
       <p style={{ color: "var(--gray-a8, rgba(0,0,0,0.5))", margin: "0.5rem 0 0" }}>
-        A Next.js and Cloudflare Workers-powered job platform with AI-driven classification and PostgreSQL/D1 hybrid database
+        A Next.js job platform with AI-driven classification backed by Neon PostgreSQL
       </p>
       <p style={{ margin: "1.5rem 0 0" }}>{story}</p>
 

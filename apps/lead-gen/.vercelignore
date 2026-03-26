@@ -1,9 +1,6 @@
 # Rust crates (not used in Next.js build)
 crates/
 
-# Cloudflare Workers (deployed separately via wrangler)
-workers/
-
 # Rust hooks (local dev only)
 hooks/
 
@@ -22,7 +19,6 @@ chrome-extension/
 
 # Build artifacts
 **/target/
-.wrangler/
 .trigger
 .next/
 

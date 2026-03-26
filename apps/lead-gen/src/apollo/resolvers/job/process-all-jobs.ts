@@ -13,8 +13,7 @@ const EMPTY_STATS = {
 /**
  * GraphQL mutation resolver: one-click enhancement + classification.
  *
- * Calls the EU classifier Cloudflare Worker (waits for response).
- * Classification runs the centralized EU remote pipeline (workers/eu-classifier/).
+ * Runs the EU remote classification pipeline.
  */
 export async function processAllJobs(
   _parent: any,

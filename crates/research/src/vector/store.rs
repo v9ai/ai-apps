@@ -61,12 +61,15 @@ fn papers_schema() -> Arc<Schema> {
         Field::new("abstract_text", DataType::Utf8, true),
         Field::new("authors_json", DataType::Utf8, true),
         Field::new("year", DataType::UInt32, true),
+        Field::new("published_date", DataType::Utf8, true),
         Field::new("doi", DataType::Utf8, true),
         Field::new("citation_count", DataType::UInt64, true),
         Field::new("url", DataType::Utf8, true),
         Field::new("pdf_url", DataType::Utf8, true),
         Field::new("source", DataType::Utf8, true),
         Field::new("fields_of_study_json", DataType::Utf8, true),
+        Field::new("primary_category", DataType::Utf8, true),
+        Field::new("categories_json", DataType::Utf8, true),
         Field::new("indexed_at", DataType::Float64, true),
         Field::new(
             "vector",
@@ -159,6 +162,11 @@ fn paper_from_batch(batch: &RecordBatch, i: usize) -> (ResearchPaper, f32) {
         .column_by_name("fields_of_study_json")
         .and_then(|c| c.as_any().downcast_ref::<StringArray>())
         .and_then(|c| serde_json::from_str(c.value(i)).ok());
+
+    // New metadata columns — read but not yet mapped to ResearchPaper fields.
+    let _published_date = get_str("published_date");
+    let _primary_category = get_str("primary_category");
+    let _categories_json = get_str("categories_json");
 
     let dist = batch
         .column_by_name("_distance")
@@ -305,6 +313,9 @@ impl VectorStore {
         let mut pdf_urls = Vec::with_capacity(n);
         let mut sources = Vec::with_capacity(n);
         let mut fields_json = Vec::with_capacity(n);
+        let mut published_dates: Vec<Option<String>> = Vec::with_capacity(n);
+        let mut primary_categories: Vec<Option<String>> = Vec::with_capacity(n);
+        let mut categories_jsons: Vec<Option<String>> = Vec::with_capacity(n);
         let mut timestamps = Vec::with_capacity(n);
         let mut all_vecs: Vec<f32> = Vec::with_capacity(n * DIM);
 
@@ -314,14 +325,20 @@ impl VectorStore {
             abstracts.push(p.abstract_text.clone().unwrap_or_default());
             authors_json.push(serde_json::to_string(&p.authors).unwrap_or_default());
             years.push(p.year.unwrap_or(0));
+            // published_date: not yet on ResearchPaper, store None
+            published_dates.push(None);
             dois.push(p.doi.clone().unwrap_or_default());
             citation_counts.push(p.citation_count.unwrap_or(0));
             urls.push(p.url.clone().unwrap_or_default());
             pdf_urls.push(p.pdf_url.clone().unwrap_or_default());
             sources.push(format!("{:?}", p.source));
-            fields_json.push(
-                serde_json::to_string(&p.fields_of_study).unwrap_or_default(),
-            );
+            let fos_json =
+                serde_json::to_string(&p.fields_of_study).unwrap_or_default();
+            fields_json.push(fos_json.clone());
+            // primary_category: not yet on ResearchPaper, store None
+            primary_categories.push(None);
+            // categories_json: fallback to fields_of_study_json for now
+            categories_jsons.push(Some(fos_json));
             timestamps.push(now_secs());
             all_vecs.extend_from_slice(v);
         }
@@ -341,12 +358,15 @@ impl VectorStore {
                 Arc::new(StringArray::from(abstracts)),
                 Arc::new(StringArray::from(authors_json)),
                 Arc::new(UInt32Array::from(years)),
+                Arc::new(StringArray::from(published_dates)),
                 Arc::new(StringArray::from(dois)),
                 Arc::new(UInt64Array::from(citation_counts)),
                 Arc::new(StringArray::from(urls)),
                 Arc::new(StringArray::from(pdf_urls)),
                 Arc::new(StringArray::from(sources)),
                 Arc::new(StringArray::from(fields_json)),
+                Arc::new(StringArray::from(primary_categories)),
+                Arc::new(StringArray::from(categories_jsons)),
                 Arc::new(Float64Array::from(timestamps)),
                 Arc::new(vec_array),
             ],
