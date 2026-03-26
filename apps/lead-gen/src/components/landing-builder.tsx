@@ -7,12 +7,8 @@ import { GitHubLogoIcon } from "@radix-ui/react-icons";
 /**
  * TRUST IMPROVEMENT 4: "Built by" human element.
  *
- * No testimonials exist yet, but a builder attribution strip grounds the project
- * in a real person with a real mission. This is the single most effective trust
- * signal for solo/indie projects -- it answers "who made this and why should I
- * care?" without requiring social proof from third parties.
- *
- * Pattern: first-person voice + specific technical detail + mission statement.
+ * Builder attribution strip for Scrapus B2B lead generation pipeline.
+ * First-person voice + specific technical detail + mission statement.
  * Positioned between preview (proof) and features (differentiators) to bridge
  * "this works" into "here's why it's built well".
  */
@@ -74,10 +70,11 @@ export function LandingBuilder() {
               >
                 built by{" "}
                 <span className={css({ fontWeight: "bold" })}>vadim nicolai</span>
-                {" "}-- an AI engineer looking for a fully remote EU role. this
-                pipeline automates my job search: ingesting from 3 ATS platforms,
-                classifying with 7-layer country signals, and matching against my
-                actual resume.
+                {" "}&mdash; an AI engineer who got tired of paying $10K+/year for
+                cloud CRMs that don&apos;t understand his ICP. this pipeline runs
+                entirely local: RL crawling, BERT extraction, ensemble scoring,
+                and LLM-generated reports &mdash; all on a single machine with a
+                15 GB footprint.
               </p>
               <div
                 className={flex({
@@ -95,7 +92,7 @@ export function LandingBuilder() {
                     textTransform: "lowercase",
                   })}
                 >
-                  eating my own cooking since march 2025
+                  backed by 35 cited papers since 2023
                 </span>
                 <a
                   href="https://github.com/nicolad/lead-gen"

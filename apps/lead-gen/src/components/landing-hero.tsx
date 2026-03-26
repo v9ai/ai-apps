@@ -14,23 +14,23 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 /**
- * EMOTIONAL DESIGN + MICRO-INTERACTIONS:
+ * SCRAPUS LANDING HERO
  *
- * Copy: "i built a robot to find me a remote EU job" -- personal, memorable,
- *       first-person builder voice instead of generic B2B SaaS.
+ * Copy: "i built a local AI pipeline to generate B2B leads without the cloud"
+ *       -- personal builder voice, commodity-hardware manifesto.
  *
- * Badge: live rotating system status replaces static "multi-model AI pipeline".
+ * Badge: live rotating pipeline status replaces static copy.
  *        Creates liveness -- the page feels like a dashboard, not a brochure.
  *
  * Animations: word-by-word headline entrance, stat count-up, CTA micro-interactions,
  *             badge scan-line overlay -- all wired from globals.css.
  *
- * Subheadline: ends with "because refreshing job boards is not a strategy" --
- *              a personality line that makes the page memorable.
+ * Subheadline: ends with "because paying $13K/year for a cloud CRM is not a strategy"
+ *              -- a personality line that makes the page memorable.
  */
 
 /* ------------------------------------------------------------------ */
-/*  #3 — Animated stat counter: counts up from 0 on scroll into view  */
+/*  Animated stat counter: counts up from 0 on scroll into view       */
 /* ------------------------------------------------------------------ */
 function AnimatedStat({ value, label, context }: { value: string; label: string; context?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -112,7 +112,6 @@ function AnimatedStat({ value, label, context }: { value: string; label: string;
       >
         {label}
       </dt>
-      {/* trust improvement 3: context sub-label explains what the number means */}
       {context && (
         <span
           className={css({
@@ -132,7 +131,7 @@ function AnimatedStat({ value, label, context }: { value: string; label: string;
 }
 
 /* ------------------------------------------------------------------ */
-/*  IMPROVEMENT 2: Rotating system status indicator                    */
+/*  Rotating system status indicator                                   */
 /* ------------------------------------------------------------------ */
 function StatusIndicator() {
   const [idx, setIdx] = useState(0);
@@ -174,21 +173,21 @@ function StatusIndicator() {
   );
 }
 
-const HEADLINE_WORDS = ["i", "built", "a", "robot", "to"];
+const HEADLINE_WORDS = ["i", "built", "a", "local", "AI", "pipeline", "to"];
 
 const STATUS_LINES = [
-  "scanning 3 ATS platforms",
-  "27 EU-remote matches today",
-  "last ingestion: 4h ago",
+  "crawling 820 domains",
+  "300 qualified leads today",
+  "last crawl: 2h ago",
   "pipeline: nominal",
-  "next scan in 2h 14m",
+  "next crawl in 45m",
 ] as const;
 
 const STATS = [
-  { value: "9,200+", label: "contacts indexed", context: "across 3 ATS platforms" },
-  { value: "460+", label: "companies profiled", context: "AI-enriched with funding & stack" },
-  { value: "1,800+", label: "jobs tracked", context: "ingested in last 30 days" },
-  { value: "27", label: "EU-remote matches", context: "passed 7-layer classification" },
+  { value: "50,000+", label: "pages crawled", context: "RL-powered exploration (DQN + UCB1)" },
+  { value: "300+", label: "leads generated", context: "99.4% funnel reduction" },
+  { value: "92%", label: "NER accuracy", context: "BERT extraction F1 score" },
+  { value: "89%", label: "cost savings", context: "$1,500/yr vs $5,400-13,200 cloud" },
 ] as const;
 
 export function LandingHero() {
@@ -202,7 +201,7 @@ export function LandingHero() {
       })}
     >
       <div className={container({ maxW: "breakpoint-lg" })}>
-        {/* --- trust improvement 1: triple trust badge row --- */}
+        {/* --- trust badge row --- */}
         <div
           className={flex({
             justify: "center",
@@ -211,9 +210,9 @@ export function LandingHero() {
             flexWrap: "wrap",
           })}
         >
-          {/* open source -- promoted from buried footer to top-level trust signal */}
+          {/* open source badge */}
           <a
-            href="https://github.com/nicolad/lead-gen"
+            href="https://github.com/nicolad/scrapus"
             target="_blank"
             rel="noopener noreferrer"
             className={css({
@@ -245,7 +244,7 @@ export function LandingHero() {
             open source
           </a>
 
-          {/* IMPROVEMENT 2: live rotating system status badge */}
+          {/* live rotating system status badge */}
           <span
             className={cx(
               badge({ variant: "status", size: "md" }),
@@ -260,7 +259,7 @@ export function LandingHero() {
             <StatusIndicator />
           </span>
 
-          {/* test coverage -- engineering credibility signal */}
+          {/* cited papers -- research credibility signal */}
           <span
             className={css({
               display: "inline-flex",
@@ -282,11 +281,11 @@ export function LandingHero() {
             })}
           >
             <CheckCircledIcon width={12} height={12} />
-            180+ regression tests
+            35 cited papers
           </span>
         </div>
 
-        {/* --- headline (#5: staggered word entrance) --- */}
+        {/* --- headline (staggered word entrance) --- */}
         <h1
           className={css({
             fontSize: { base: "4xl", md: "5xl", lg: "6xl" },
@@ -317,9 +316,9 @@ export function LandingHero() {
               }),
               "headline-word",
             )}
-            style={{ animationDelay: "0.33s" }}
+            style={{ animationDelay: "0.46s" }}
           >
-            find me a remote EU job
+            generate B2B leads without the cloud
           </span>
         </h1>
 
@@ -329,7 +328,7 @@ export function LandingHero() {
             fontSize: { base: "base", md: "lg" },
             color: "ui.secondary",
             textAlign: "center",
-            maxW: { base: "100%", md: "520px" },
+            maxW: { base: "100%", md: "580px" },
             px: { base: "4", md: "0" },
             mx: "auto",
             mt: "5",
@@ -337,13 +336,13 @@ export function LandingHero() {
             letterSpacing: "snug",
           })}
         >
-          this pipeline crawls 460+ companies across Greenhouse, Lever, and
-          Ashby every few hours. it classifies remote-EU roles, enriches
-          company data, finds the hiring manager, and drafts outreach.
-          because refreshing job boards is not a strategy.
+          this pipeline crawls 820+ domains with RL-powered exploration,
+          extracts entities with 92.3% F1, resolves duplicates in &lt;1ms,
+          and scores leads with an XGBoost ensemble. because paying $13K/year
+          for a cloud CRM is not a strategy.
         </p>
 
-        {/* --- trust improvement 3: live activity indicator --- */}
+        {/* --- live activity indicator --- */}
         <div className={flex({ justify: "center", mt: "7", mb: "2" })}>
           <span
             className={css({
@@ -369,11 +368,11 @@ export function LandingHero() {
                 animation: "landing-preview-pulse 2s ease-in-out infinite",
               }}
             />
-            pipeline active -- last ingestion: today
+            pipeline active -- last crawl: today
           </span>
         </div>
 
-        {/* --- social proof stats (#3: count-up + stagger entrance) --- */}
+        {/* --- social proof stats (count-up + stagger entrance) --- */}
         <dl
           aria-label="Pipeline statistics"
           className={cx(
@@ -398,7 +397,7 @@ export function LandingHero() {
           ))}
         </dl>
 
-        {/* --- trust improvement 3: funnel conversion line --- */}
+        {/* --- funnel conversion line --- */}
         <div className={flex({ justify: "center", mt: "3" })}>
           <span
             className={css({
@@ -408,12 +407,12 @@ export function LandingHero() {
               textTransform: "lowercase",
             })}
           >
-            9,200 contacts &rarr; 460 companies &rarr; 1,800 jobs &rarr; 27
-            qualified matches
+            50,000 pages &rarr; 4,200 entities &rarr; 1,100 resolved &rarr; 300
+            qualified leads
           </span>
         </div>
 
-        {/* --- CTA pair (#2: arrow nudge + border sweep) --- */}
+        {/* --- CTA pair (arrow nudge + border sweep) --- */}
         <div
           className={flex({
             justify: "center",
@@ -424,25 +423,25 @@ export function LandingHero() {
           })}
         >
           <Link
-            href="/jobs"
+            href="/how-it-works"
             className={cx(
               button({ variant: "solid", size: "lg" }),
               css({ justifyContent: "center", width: { base: "100%", sm: "auto" } }),
               "cta-solid-animated",
             )}
           >
-            find remote EU jobs
+            explore the pipeline
             <ArrowRightIcon width={14} height={14} />
           </Link>
           <Link
-            href="/companies"
+            href="/docs"
             className={cx(
               button({ variant: "ghost", size: "lg" }),
               css({ justifyContent: "center", width: { base: "100%", sm: "auto" } }),
               "cta-ghost-animated",
             )}
           >
-            see hiring companies
+            view documentation
           </Link>
         </div>
       </div>

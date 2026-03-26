@@ -360,8 +360,15 @@ fn find_last_sentence_break(slice: &str, min_pos: usize) -> Option<usize> {
     let mut best: Option<usize> = None;
     for term in &terminators {
         let mut search_from = min_pos;
-        while let Some(pos) = slice[search_from..].find(term) {
-            let abs = search_from + pos + 1; // position after the punctuation
+        // Snap to a valid char boundary
+        while search_from < slice.len() && !slice.is_char_boundary(search_from) {
+            search_from += 1;
+        }
+        while search_from < slice.len() {
+            let Some(pos) = slice[search_from..].find(term) else {
+                break;
+            };
+            let abs = search_from + pos + 1;
             if abs > min_pos {
                 best = Some(match best {
                     Some(prev) if prev > abs => prev,
@@ -369,9 +376,6 @@ fn find_last_sentence_break(slice: &str, min_pos: usize) -> Option<usize> {
                 });
             }
             search_from = search_from + pos + term.len();
-            if search_from >= slice.len() {
-                break;
-            }
         }
     }
     best
