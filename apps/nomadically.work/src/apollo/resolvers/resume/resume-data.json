@@ -18,6 +18,11 @@
     "objective": "",
     "profiles": [
       {
+        "network": "blog",
+        "username": "vadim.blog",
+        "url": "https://vadim.blog/"
+      },
+      {
         "network": "github",
         "username": "nicolad",
         "url": "https://github.com/nicolad"

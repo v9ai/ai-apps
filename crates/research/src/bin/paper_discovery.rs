@@ -88,6 +88,20 @@ enum Commands {
         #[arg(long, default_value_t = 50)]
         batch_size: usize,
     },
+    /// Sweep an entire arXiv category (paginated)
+    SweepArxiv {
+        /// arXiv category, e.g. "cs.AI", "cs.CL", "stat.ML"
+        category: String,
+        /// Max papers to fetch (default 5000)
+        #[arg(short = 'n', long, default_value_t = 5000)]
+        max_papers: u32,
+        /// Results per page (default 100)
+        #[arg(long, default_value_t = 100)]
+        page_size: u32,
+        /// Also chunk abstracts
+        #[arg(long)]
+        chunk: bool,
+    },
     /// Show database statistics
     Stats,
 }
@@ -588,6 +602,109 @@ async fn main() -> Result<()> {
                 &cli.db,
             )
             .await?;
+        }
+        Commands::SweepArxiv {
+            category,
+            max_papers,
+            page_size,
+            chunk,
+        } => {
+            let engine = EmbeddingEngine::new(candle_core::Device::Cpu)?;
+            let store = VectorStore::connect(&cli.db, engine).await?;
+            let arxiv = ArxivClient::new();
+            let cfg = ChunkerConfig::default();
+
+            let query = format!("cat:{}", category);
+            let total_pages = (max_papers + page_size - 1) / page_size;
+            let mut ingested = 0u32;
+            let mut chunked = 0usize;
+
+            println!("Sweeping arXiv category '{category}' — up to {max_papers} papers, {page_size}/page");
+
+            for page in 0..total_pages {
+                let start = page * page_size;
+                let remaining = max_papers.saturating_sub(start);
+                let fetch_count = remaining.min(page_size);
+                if fetch_count == 0 {
+                    break;
+                }
+
+                println!(
+                    "  Page {}/{} (start={}, n={})...",
+                    page + 1,
+                    total_pages,
+                    start,
+                    fetch_count
+                );
+
+                let resp = arxiv
+                    .search(&query, start, fetch_count, Some("submittedDate"), Some("descending"))
+                    .await;
+
+                let resp = match resp {
+                    Ok(r) => r,
+                    Err(e) => {
+                        println!("    Page {} failed: {e}, waiting 10s and retrying...", page + 1);
+                        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                        match arxiv.search(&query, start, fetch_count, Some("submittedDate"), Some("descending")).await {
+                            Ok(r) => r,
+                            Err(e2) => {
+                                println!("    Retry failed: {e2}, skipping page");
+                                continue;
+                            }
+                        }
+                    }
+                };
+
+                if resp.papers.is_empty() {
+                    println!("    No more papers, done.");
+                    break;
+                }
+
+                let papers: Vec<ResearchPaper> = resp
+                    .papers
+                    .into_iter()
+                    .map(|ap| {
+                        let mut rp: ResearchPaper = ap.into();
+                        let mut fields = rp.fields_of_study.unwrap_or_default();
+                        fields.push(format!("arxiv:{}", category));
+                        rp.fields_of_study = Some(fields);
+                        rp
+                    })
+                    .collect();
+
+                let count = store.add_papers(&papers).await?;
+                ingested += count as u32;
+
+                if chunk {
+                    for p in &papers {
+                        if let Some(ref abs) = p.abstract_text {
+                            if !abs.is_empty() {
+                                let chunks = chunk_text(abs, &p.source_id, Some(cfg.clone()));
+                                let n = store.add_chunks(&chunks).await?;
+                                chunked += n;
+                            }
+                        }
+                    }
+                }
+
+                println!(
+                    "    Fetched {} papers (total ingested: {})",
+                    papers.len(),
+                    ingested
+                );
+
+                // Early exit if arXiv returned fewer than requested
+                if (papers.len() as u32) < fetch_count {
+                    println!("    arXiv returned fewer papers than requested, category exhausted.");
+                    break;
+                }
+            }
+
+            println!(
+                "\nSweep complete: {} — {} papers indexed, {} chunks",
+                category, ingested, chunked
+            );
         }
         Commands::Stats => {
             let engine =
