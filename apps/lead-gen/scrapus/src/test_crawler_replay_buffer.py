@@ -215,6 +215,7 @@ class TestMmapReplayBuffer:
         assert buf.size == cap
         assert buf._write_idx == 5  # wrapped around
 
+        buf.flush()  # commit pending transitions to SQLite
         # The last written entry (index 4) should have reward 14.0
         row = buf._conn.execute(
             "SELECT reward FROM transitions WHERE idx = 4"
@@ -277,6 +278,7 @@ class TestMmapReplayBuffer:
     def test_pending_rewards_add(self, buf):
         s, a, r, ns, d = _random_transition(reward=0.0)
         buf.add(s, a, r, ns, d, url="https://example.com/page1")
+        buf.flush()  # commit pending transitions to SQLite
 
         row = buf._conn.execute(
             "SELECT url, replay_idx, reward FROM pending_rewards WHERE url = ?",
@@ -328,6 +330,7 @@ class TestMmapReplayBuffer:
     def test_prune_old_pending(self, buf):
         s, a, r, ns, d = _random_transition(reward=0.0)
         buf.add(s, a, r, ns, d, url="https://old.com/1")
+        buf.flush()  # commit pending transitions to SQLite
 
         # Backdate the crawled_at to simulate an old entry
         very_old = time.time() - 30 * 86400  # 30 days ago
