@@ -249,9 +249,22 @@ def build_config(args: argparse.Namespace) -> PipelineConfig:
 
     # Start from file config if provided
     if args.config:
-        config = PipelineConfig.from_json(args.config)
+        config_path = Path(args.config)
+        if config_path.suffix == ".toml":
+            # Use typed TOML config system
+            from config import load_config
+            scrapus_cfg = load_config(config_path)
+            config = scrapus_cfg.to_pipeline_config()
+        else:
+            config = PipelineConfig.from_json(args.config)
     else:
-        config = PipelineConfig()
+        # Try auto-discovering scrapus.toml for typed config
+        try:
+            from config import load_config
+            scrapus_cfg = load_config()  # auto-discovers scrapus.toml
+            config = scrapus_cfg.to_pipeline_config()
+        except Exception:
+            config = PipelineConfig()
 
     # Override with CLI arguments
     config.data_dir = Path(args.data_dir)

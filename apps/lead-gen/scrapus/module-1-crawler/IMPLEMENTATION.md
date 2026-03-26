@@ -264,7 +264,7 @@ DQN-UCB weight ratio 0.7/0.3 was selected via grid search over
 ## 7. Politeness and robots.txt
 
 ```python
-import requests
+import httpx
 from collections import deque
 
 class PolitenessManager:
@@ -284,7 +284,7 @@ class PolitenessManager:
         if domain in self.robots_cache:
             return self.robots_cache[domain]
         try:
-            resp = requests.get(f"https://{domain}/robots.txt", timeout=5)
+            resp = httpx.get(f"https://{domain}/robots.txt", timeout=5)
             if resp.status_code == 200:
                 self.robots_cache[domain] = self._parse_robots(resp.text)
             else:

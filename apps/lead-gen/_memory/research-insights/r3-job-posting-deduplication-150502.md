@@ -10,7 +10,7 @@ The academic literature specifically focused on job posting deduplication is spa
 - **Relevance:** high
 - **Domain:** Job‑board aggregation, duplicate detection
 - **Key Finding:** The authors design a framework that implements 24 methods combining four tokenisers, three vectorisers, and six similarity measures. Overlap with skip‑gram (OS) and overlap with n‑gram (OG) are the top‑performing methods, outperforming a TF‑IDF‑cosine baseline.
-- **Actionable Insight:** For nomadically.work, start with a simple overlap‑based similarity pipeline (e.g., using skip‑gram or n‑gram tokenisation) as a first‑line deduplication filter. This approach is lightweight, explainable, and already validated on real job‑posting data.
+- **Actionable Insight:** For lead-gen, start with a simple overlap‑based similarity pipeline (e.g., using skip‑gram or n‑gram tokenisation) as a first‑line deduplication filter. This approach is lightweight, explainable, and already validated on real job‑posting data.
 - **Confidence:** high
 - **Source:** https://www.semanticscholar.org/paper/f9786d373ba85757e246f7897985f909ec91bb70
 
@@ -70,7 +70,7 @@ The academic literature specifically focused on job posting deduplication is spa
 ### P1 (Next Sprint)
 - **Integrate skill extraction:** Use an off‑the‑shelf ESCO‑based NER model to extract skills from each posting. Incorporate skill‑set similarity (Jaccard index) into the overall duplicate score.
 - **Implement weighted multi‑feature similarity:** Combine title, company, location, and skill similarities with learnable weights (initially set by domain knowledge).
-- **Collect labelled data:** Manually label a small set of duplicate/non‑duplicate pairs from nomadically.work’s own aggregated postings to evaluate and tune the system.
+- **Collect labelled data:** Manually label a small set of duplicate/non‑duplicate pairs from lead-gen’s own aggregated postings to evaluate and tune the system.
 
 ### P2 (Backlog)
 - **Explore deep‑learning embeddings:** Fine‑tune a Sentence‑BERT model on the labelled duplicate pairs to capture semantic paraphrasing.
@@ -87,4 +87,4 @@ The academic literature specifically focused on job posting deduplication is spa
 - **Total papers reviewed:** 5
 - **With code/benchmarks:** 1 ([1] provides a full framework and evaluation)
 - **EU‑specific:** 0 (none of the papers focus on EU remote‑work aggregation or ESCO in deduplication)
-- **Overall confidence:** **40%** – While one paper offers a strong foundation, the literature is extremely limited for the specific context of remote EU job‑board aggregation. Most insights are extrapolated from broader job‑market analysis or duplicate‑detection in other domains. Practical implementation will require extensive experimentation with nomadically.work’s own data.
+- **Overall confidence:** **40%** – While one paper offers a strong foundation, the literature is extremely limited for the specific context of remote EU job‑board aggregation. Most insights are extrapolated from broader job‑market analysis or duplicate‑detection in other domains. Practical implementation will require extensive experimentation with lead-gen’s own data.

@@ -10,7 +10,7 @@ Recent literature demonstrates a strong shift toward **deep learning-based embed
 - **Relevance:** high
 - **Domain:** EU job matching, ESCO taxonomy, embedding models
 - **Key Finding:** CareerBERT combines ESCO taxonomy and EURES job ads into a shared embedding space, outperforming traditional and state‑of‑the‑art embedding approaches in human‑expert evaluations.
-- **Actionable Insight:** For nomadically.work, integrate the ESCO taxonomy and EURES job ad corpus to create a shared embedding space that aligns resumes with standardized EU occupation titles, enabling more accurate cross‑border job recommendations.
+- **Actionable Insight:** For lead-gen, integrate the ESCO taxonomy and EURES job ad corpus to create a shared embedding space that aligns resumes with standardized EU occupation titles, enabling more accurate cross‑border job recommendations.
 - **Confidence:** high
 - **Source:** https://www.semanticscholar.org/paper/4ad292445b0e74b735cade6e9cb79ead5fa6afd9
 
