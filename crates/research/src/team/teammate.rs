@@ -7,6 +7,7 @@ use tracing::info;
 use crate::agent::{provider_agent_builder, LlmProvider};
 use crate::code::CodeAnalysisConfig;
 use crate::code::tools::{AnalyzeStructure, FindAntiPatterns, SearchPattern};
+use crate::embeddings::Ranker;
 use crate::tools::{FallbackClients, GetPaperDetail, GetRecommendations, SearchPapers, SearchToolConfig};
 use crate::SemanticScholarClient;
 
@@ -28,6 +29,8 @@ pub struct TeammateConfig {
     pub scholar_rate_limiter: Option<Arc<Semaphore>>,
     /// Fallback clients for when Semantic Scholar is rate-limited.
     pub fallback: Option<FallbackClients>,
+    /// Semantic ranker for re-ranking search results (local Candle or API-based).
+    pub ranker: Option<Arc<dyn Ranker>>,
 }
 
 /// A teammate agent that claims tasks, injects prior findings, and runs the
@@ -123,10 +126,13 @@ impl Teammate {
                 detail_description: None,
             });
 
-            let search_tool = match &self.config.fallback {
+            let mut search_tool = match &self.config.fallback {
                 Some(fb) => SearchPapers::with_fallback(scholar.clone(), tool_config.clone(), fb.clone()),
                 None => SearchPapers::with_config(scholar.clone(), tool_config.clone()),
             };
+            if let Some(ranker) = &self.config.ranker {
+                search_tool = search_tool.with_ranker(Arc::clone(ranker));
+            }
             let detail_tool = match &self.config.fallback {
                 Some(fb) => GetPaperDetail::with_fallback(scholar.clone(), tool_config.clone(), fb.clone()),
                 None => GetPaperDetail::with_config(scholar.clone(), tool_config.clone()),

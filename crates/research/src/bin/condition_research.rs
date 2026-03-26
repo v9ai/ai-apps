@@ -283,6 +283,7 @@ Your task: produce a **master clinical research synthesis** with:
             condition_name = condition.name,
         )),
         synthesis_provider: None,
+        ranker: None,
     });
 
     let result = lead.run(tasks).await?;

@@ -10,6 +10,7 @@ use tracing::info;
 use crate::agent::{provider_agent_builder, LlmProvider};
 use crate::code::CodeAnalysisConfig;
 use crate::crossref::CrossrefClient;
+use crate::embeddings::Ranker;
 use crate::openalex::OpenAlexClient;
 use crate::tools::FallbackClients;
 
@@ -43,6 +44,9 @@ pub struct TeamConfig {
     pub output_dir: Option<String>,
     /// Optional separate provider for synthesis. Falls back to `provider` if `None`.
     pub synthesis_provider: Option<LlmProvider>,
+    /// Semantic ranker shared across all teammates for search result re-ranking.
+    /// Accepts any `Ranker` impl (local Candle `LocalRanker` or API-based `EmbeddingRanker`).
+    pub ranker: Option<Arc<dyn Ranker>>,
 }
 
 /// Result of a full team research run.
@@ -117,6 +121,7 @@ impl TeamLead {
                     tool_config: self.config.tool_config.clone(),
                     scholar_rate_limiter: scholar_rate_limiter.clone(),
                     fallback: fallback.clone(),
+                    ranker: self.config.ranker.clone(),
                 },
                 task_list.clone(),
                 mailbox.clone(),

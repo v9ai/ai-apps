@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::agent::{Tool, ToolDefinition};
 use crate::crossref::CrossrefClient;
-use crate::embeddings::EmbeddingRanker;
+use crate::embeddings::Ranker;
 use crate::openalex::OpenAlexClient;
 use crate::paper::ResearchPaper;
 use crate::scholar::{SemanticScholarClient, types::{PAPER_FIELDS_FULL, SEARCH_FIELDS}};
@@ -62,25 +62,25 @@ pub struct SearchPapers {
     client: SemanticScholarClient,
     config: SearchToolConfig,
     fallback: Option<FallbackClients>,
-    embedding_ranker: Option<Arc<EmbeddingRanker>>,
+    ranker: Option<Arc<dyn Ranker>>,
 }
 
 impl SearchPapers {
     pub fn new(client: SemanticScholarClient) -> Self {
-        Self { client, config: SearchToolConfig::default(), fallback: None, embedding_ranker: None }
+        Self { client, config: SearchToolConfig::default(), fallback: None, ranker: None }
     }
 
     pub fn with_config(client: SemanticScholarClient, config: SearchToolConfig) -> Self {
-        Self { client, config, fallback: None, embedding_ranker: None }
+        Self { client, config, fallback: None, ranker: None }
     }
 
     pub fn with_fallback(client: SemanticScholarClient, config: SearchToolConfig, fallback: FallbackClients) -> Self {
-        Self { client, config, fallback: Some(fallback), embedding_ranker: None }
+        Self { client, config, fallback: Some(fallback), ranker: None }
     }
 
-    /// Attach an embedding ranker for semantic re-ranking of search results.
-    pub fn with_embedding_ranker(mut self, ranker: Arc<EmbeddingRanker>) -> Self {
-        self.embedding_ranker = Some(ranker);
+    /// Attach a semantic ranker (local Candle or API-based Qwen) for re-ranking.
+    pub fn with_ranker(mut self, ranker: Arc<dyn Ranker>) -> Self {
+        self.ranker = Some(ranker);
         self
     }
 }
@@ -188,8 +188,8 @@ impl Tool for SearchPapers {
 
         let (mut papers, total) = self.fetch_papers(&args, limit).await?;
 
-        // Optional semantic re-ranking via Qwen embeddings.
-        if let Some(ranker) = &self.embedding_ranker {
+        // Optional semantic re-ranking via Ranker (local Candle or API-based Qwen).
+        if let Some(ranker) = &self.ranker {
             if !papers.is_empty() {
                 match ranker.rank_papers(&args.query, papers).await {
                     Ok(ranked) => {

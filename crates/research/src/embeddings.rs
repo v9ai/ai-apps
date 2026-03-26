@@ -3,6 +3,26 @@ use tracing::info;
 
 use crate::paper::ResearchPaper;
 
+// ─── Ranker trait ────────────────────────────────────────────────────────────
+
+/// Unified interface for semantic re-ranking of research papers.
+///
+/// Implementors embed a query and a set of papers, compute cosine similarity,
+/// and return the papers sorted by descending relevance score.
+#[async_trait::async_trait]
+pub trait Ranker: Send + Sync {
+    /// Re-rank `papers` by semantic similarity to `query`.
+    ///
+    /// Returns `(paper, score)` pairs sorted by descending score.
+    async fn rank_papers(
+        &self,
+        query: &str,
+        papers: Vec<ResearchPaper>,
+    ) -> Result<Vec<(ResearchPaper, f32)>>;
+}
+
+// ─── API-based ranker (Qwen DashScope) ──────────────────────────────────────
+
 /// Re-ranks papers by cosine similarity to a query embedding using Qwen's
 /// `text-embedding-v4` model via DashScope.
 pub struct EmbeddingRanker {
@@ -20,11 +40,11 @@ impl EmbeddingRanker {
     pub fn with_client(client: qwen::Client) -> Self {
         Self { client }
     }
+}
 
-    /// Re-rank papers by cosine similarity to `query`.
-    ///
-    /// Returns papers paired with their similarity score, sorted descending.
-    pub async fn rank_papers(
+#[async_trait::async_trait]
+impl Ranker for EmbeddingRanker {
+    async fn rank_papers(
         &self,
         query: &str,
         papers: Vec<ResearchPaper>,
@@ -82,7 +102,7 @@ impl EmbeddingRanker {
         info!(
             count = scored.len(),
             top_score = scored.first().map(|(_, s)| *s).unwrap_or(0.0),
-            "embedding re-rank complete"
+            "embedding re-rank complete (qwen)"
         );
 
         Ok(scored)

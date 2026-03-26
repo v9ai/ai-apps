@@ -5,6 +5,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use research::agent::{provider_agent_builder, qwen_agent_builder, LlmProvider, Tool};
 use research::embeddings::EmbeddingRanker;
+use research::Ranker;
 use research::paper::{PaperSource, ResearchPaper};
 use research::tools::{SearchPapers, SearchToolConfig};
 
@@ -288,7 +289,7 @@ async fn search_papers_with_embedding_reranker() {
     let ranker = Arc::new(EmbeddingRanker::with_client(emb_client));
 
     let tool = SearchPapers::with_fallback(s2_client, SearchToolConfig::default(), fallback)
-        .with_embedding_ranker(ranker);
+        .with_ranker(ranker);
 
     let result = tool
         .call_json(serde_json::json!({ "query": "deep learning NLP" }))
@@ -407,7 +408,7 @@ async fn search_papers_embedding_error_falls_back_to_original_order() {
     let ranker = Arc::new(EmbeddingRanker::with_client(emb_client));
 
     let tool = SearchPapers::with_fallback(s2_client, SearchToolConfig::default(), fallback)
-        .with_embedding_ranker(ranker);
+        .with_ranker(ranker);
 
     let result = tool
         .call_json(serde_json::json!({ "query": "test" }))
@@ -447,6 +448,7 @@ fn team_config_accepts_deepseek_provider() {
         mailto: None,
         output_dir: None,
         synthesis_provider: None,
+        ranker: None,
     });
 }
 
@@ -469,6 +471,7 @@ fn team_config_accepts_qwen_provider() {
         mailto: None,
         output_dir: None,
         synthesis_provider: None,
+        ranker: None,
     });
 }
 
@@ -494,5 +497,6 @@ fn team_config_separate_synthesis_provider() {
             api_key: "qw-key".into(),
             model: "qwen-max".into(),
         }),
+        ranker: None,
     });
 }

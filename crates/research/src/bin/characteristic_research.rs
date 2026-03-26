@@ -417,6 +417,7 @@ Produce a synthesis with:
         mailto: std::env::var("RESEARCH_MAILTO").ok(),
         output_dir: Some(out_dir.clone()),
         synthesis_provider: None,
+        ranker: None,
     });
 
     let result = lead.run(tasks).await?;

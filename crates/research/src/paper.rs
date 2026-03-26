@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::arxiv::ArxivPaper;
 use crate::core_api::CoreWork;
 use crate::crossref::CrossrefWork;
 use crate::openalex::Work as OpenAlexWork;
@@ -11,6 +12,7 @@ pub enum PaperSource {
     OpenAlex,
     Crossref,
     Core,
+    Arxiv,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -175,5 +177,143 @@ impl From<CoreWork> for ResearchPaper {
             source_id,
             fields_of_study: None,
         }
+    }
+}
+
+impl From<ArxivPaper> for ResearchPaper {
+    fn from(p: ArxivPaper) -> Self {
+        let year = p.published.get(..4).and_then(|s| s.parse::<u32>().ok());
+        let url = p
+            .link_url
+            .unwrap_or_else(|| format!("https://arxiv.org/abs/{}", p.arxiv_id));
+        Self {
+            title: p.title.trim().to_string(),
+            abstract_text: Some(p.summary.trim().to_string()),
+            authors: p.authors,
+            year,
+            doi: p.doi,
+            citation_count: None,
+            url: Some(url),
+            pdf_url: p.pdf_url,
+            source: PaperSource::Arxiv,
+            source_id: p.arxiv_id,
+            fields_of_study: if p.categories.is_empty() {
+                None
+            } else {
+                Some(p.categories)
+            },
+        }
+    }
+}
+
+// ─── Embedding-based dedup ───────────────────────────────────────────────────
+
+/// Remove near-duplicate papers using cosine similarity of their embeddings.
+///
+/// For each pair of papers with cosine similarity >= `threshold`, the paper
+/// with fewer citations is dropped (or the later one if citations are equal).
+///
+/// `embeddings` must be one vector per paper (same order). Vectors are assumed
+/// L2-normalized.
+#[cfg(feature = "local-vector")]
+pub fn dedup_by_embedding(
+    papers: Vec<ResearchPaper>,
+    embeddings: &[Vec<f32>],
+    threshold: f32,
+) -> Vec<ResearchPaper> {
+    if papers.len() != embeddings.len() || papers.len() < 2 {
+        return papers;
+    }
+
+    let n = papers.len();
+    let mut keep = vec![true; n];
+
+    for i in 0..n {
+        if !keep[i] {
+            continue;
+        }
+        for j in (i + 1)..n {
+            if !keep[j] {
+                continue;
+            }
+            let sim = crate::local_embeddings::EmbeddingEngine::cosine(
+                &embeddings[i],
+                &embeddings[j],
+            );
+            if sim >= threshold {
+                // Drop the paper with fewer citations.
+                let ci = papers[i].citation_count.unwrap_or(0);
+                let cj = papers[j].citation_count.unwrap_or(0);
+                if ci >= cj {
+                    keep[j] = false;
+                } else {
+                    keep[i] = false;
+                    break; // i is dropped, no need to compare further
+                }
+            }
+        }
+    }
+
+    papers
+        .into_iter()
+        .zip(keep.iter())
+        .filter_map(|(p, &k)| if k { Some(p) } else { None })
+        .collect()
+}
+
+#[cfg(all(test, feature = "local-vector"))]
+mod dedup_tests {
+    use super::*;
+
+    fn paper(title: &str, cites: u64) -> ResearchPaper {
+        ResearchPaper {
+            title: title.into(),
+            abstract_text: None,
+            authors: vec![],
+            year: None,
+            doi: None,
+            citation_count: Some(cites),
+            url: None,
+            pdf_url: None,
+            source: PaperSource::Arxiv,
+            source_id: title.into(),
+            fields_of_study: None,
+        }
+    }
+
+    #[test]
+    fn identical_embeddings_dedup() {
+        let papers = vec![paper("A", 100), paper("B", 10)];
+        let embs = vec![vec![1.0f32; 384], vec![1.0f32; 384]];
+        let result = dedup_by_embedding(papers, &embs, 0.95);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].title, "A"); // keeps higher citations
+    }
+
+    #[test]
+    fn orthogonal_embeddings_keep_both() {
+        let papers = vec![paper("A", 10), paper("B", 10)];
+        let mut e1 = vec![0.0f32; 384];
+        let mut e2 = vec![0.0f32; 384];
+        e1[0] = 1.0;
+        e2[1] = 1.0;
+        let result = dedup_by_embedding(papers, &[e1, e2], 0.95);
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn single_paper_unchanged() {
+        let papers = vec![paper("A", 10)];
+        let embs = vec![vec![1.0f32; 384]];
+        let result = dedup_by_embedding(papers, &embs, 0.95);
+        assert_eq!(result.len(), 1);
+    }
+
+    #[test]
+    fn mismatched_lengths_returns_original() {
+        let papers = vec![paper("A", 10), paper("B", 10)];
+        let embs = vec![vec![1.0f32; 384]]; // wrong length
+        let result = dedup_by_embedding(papers, &embs, 0.95);
+        assert_eq!(result.len(), 2);
     }
 }
