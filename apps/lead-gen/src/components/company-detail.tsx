@@ -12,8 +12,6 @@ import {
   useCreateApplicationMutation,
   useUpdateApplicationMutation,
   useCreateContactMutation,
-  useCreateOpportunityMutation,
-  useGetOpportunitiesQuery,
   useDeleteCompanyMutation,
 } from "@/__generated__/hooks";
 import { useRouter } from "next/navigation";
@@ -523,10 +521,8 @@ function LinkedInLeadDialog({
 
   const [createContact, { loading: contactLoading }] =
     useCreateContactMutation();
-  const [createOpportunity, { loading: oppLoading }] =
-    useCreateOpportunityMutation();
 
-  const saving = contactLoading || oppLoading;
+  const saving = contactLoading;
 
   const handleExtract = () => {
     setError(null);
@@ -588,21 +584,8 @@ function LinkedInLeadDialog({
 
       const contactId = contactResult.data?.createContact?.id;
 
-      await createOpportunity({
-        variables: {
-          input: {
-            title: `LinkedIn lead – ${companyName}`,
-            companyId,
-            contactId: contactId ?? undefined,
-            url: postUrl.trim() || undefined,
-            source: "linkedin",
-            applicationNotes: rawText.trim() || undefined,
-          },
-        },
-      });
-
       setSuccess(
-        `Contact created (ID ${contactId}) and opportunity saved.`
+        `Contact created (ID ${contactId}).`
       );
       onCreated?.();
     } catch (err) {
