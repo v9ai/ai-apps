@@ -150,3 +150,7 @@ path = "src/bin/scrapus_research.rs"
 name = "last-week-papers"
 path = "src/bin/last_week_papers.rs"
 required-features = ["local-vector"]
+
+[[bin]]
+name = "last-week-authors"
+path = "src/bin/last_week_authors.rs"

@@ -1,3 +1,4 @@
+use chrono::Datelike;
 use serial_test::serial;
 
 use research::openalex::OpenAlexClient;
@@ -233,16 +234,30 @@ async fn publication_date_field_format() {
     let client = OpenAlexClient::new(None);
     let resp = client.search("deep learning", 1, 10).await.unwrap();
 
-    let date_re = regex::Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
     let mut checked = 0;
     for work in &resp.results {
         if let Some(ref date) = work.publication_date {
-            assert!(
-                date_re.is_match(date),
-                "publication_date '{}' does not match YYYY-MM-DD for work {:?}",
+            // Verify YYYY-MM-DD format: exactly 10 chars, dashes at positions 4 and 7,
+            // all other positions are ASCII digits.
+            assert_eq!(
+                date.len(),
+                10,
+                "publication_date '{}' is not 10 chars for work {:?}",
                 date,
                 work.title
             );
+            let bytes = date.as_bytes();
+            assert_eq!(bytes[4], b'-', "expected '-' at pos 4 in '{}'", date);
+            assert_eq!(bytes[7], b'-', "expected '-' at pos 7 in '{}'", date);
+            for &i in &[0, 1, 2, 3, 5, 6, 8, 9] {
+                assert!(
+                    bytes[i].is_ascii_digit(),
+                    "expected digit at pos {} in '{}' for work {:?}",
+                    i,
+                    date,
+                    work.title
+                );
+            }
             checked += 1;
         }
     }

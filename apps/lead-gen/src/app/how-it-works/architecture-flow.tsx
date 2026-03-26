@@ -250,7 +250,7 @@ const ingestionNodes: Node[] = [
     id: "insert",
     type: "agent",
     position: { x: 260, y: 40 },
-    data: { label: "insert-jobs", sublabel: "CF Worker — queues jobs", icon: Layers, color: "var(--orange-9)" },
+    data: { label: "insert-jobs", sublabel: "Job ingestion pipeline", icon: Layers, color: "var(--orange-9)" },
   },
   {
     id: "pg-jobs",
@@ -353,9 +353,8 @@ export function ClassificationFlow() {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  *  3. VECTORIZATION & MATCHING FLOW
  *
- *  resume-rag worker creates embeddings via Workers AI, stores
- *  them in D1. job-matcher performs cosine similarity search
- *  between resume and job vectors.
+ *  Resume embeddings enable cosine similarity search
+ *  between resume and job vectors for matching.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const matchingNodes: Node[] = [
@@ -558,7 +557,7 @@ export function AdminFlow() {
  *  6. SYSTEM OVERVIEW FLOW
  *
  *  High-level architecture: Next.js frontend talks to GraphQL,
- *  Cloudflare Workers handle edge compute, hybrid DB strategy.
+ *  backed by Neon PostgreSQL and DeepSeek LLM.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const overviewNodes: Node[] = [
@@ -575,27 +574,15 @@ const overviewNodes: Node[] = [
     data: { label: "GraphQL API", sublabel: "codegen + typed hooks", icon: Workflow, color: "var(--orange-9)" },
   },
   {
-    id: "cf-workers",
-    type: "agent",
-    position: { x: 230, y: 120 },
-    data: { label: "CF Workers (12+)", sublabel: "Rust + Python + TS", icon: Globe, color: "var(--red-9)" },
-  },
-  {
     id: "neon-db",
     type: "dataStore",
     position: { x: 480, y: 0 },
-    data: { label: "Neon PostgreSQL", sublabel: "transactional data", icon: Database, color: "var(--green-9)" },
-  },
-  {
-    id: "d1-db",
-    type: "dataStore",
-    position: { x: 480, y: 80 },
-    data: { label: "Cloudflare D1", sublabel: "vector embeddings", icon: HardDrive, color: "var(--orange-9)" },
+    data: { label: "Neon PostgreSQL", sublabel: "all application data", icon: Database, color: "var(--green-9)" },
   },
   {
     id: "deepseek",
     type: "dataStore",
-    position: { x: 480, y: 155 },
+    position: { x: 480, y: 120 },
     data: { label: "DeepSeek LLM", sublabel: "classification + generation", icon: Brain, color: "var(--amber-9)" },
   },
 ];
@@ -607,22 +594,12 @@ const overviewEdges: Edge[] = [
     style: { ...edgeDefaults.style, stroke: "var(--blue-8)" },
   },
   {
-    id: "e-next-cf", source: "nextjs", target: "cf-workers",
-    ...edgeDefaults,
-    style: { ...edgeDefaults.style, stroke: "var(--red-8)" },
-  },
-  {
     id: "e-gql-neon", source: "gql-api", target: "neon-db",
     ...edgeDefaults, label: "Drizzle ORM",
     style: { ...edgeDefaults.style, stroke: "var(--green-8)" },
   },
   {
-    id: "e-cf-d1", source: "cf-workers", target: "d1-db",
-    ...edgeDefaults, label: "vectors",
-    style: { ...edgeDefaults.style, stroke: "var(--orange-8)" },
-  },
-  {
-    id: "e-cf-ds", source: "cf-workers", target: "deepseek",
+    id: "e-gql-ds", source: "gql-api", target: "deepseek",
     ...edgeDefaults, animated: true, label: "LLM calls",
     style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
   },

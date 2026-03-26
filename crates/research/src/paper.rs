@@ -36,6 +36,12 @@ pub struct ResearchPaper {
     /// Identifier from the originating source (e.g. S2 paper ID, DOI, arXiv ID).
     pub source_id: String,
     pub fields_of_study: Option<Vec<String>>,
+    /// Full publication date string (ISO 8601, e.g. "2026-03-20").
+    pub published_date: Option<String>,
+    /// Primary arXiv category or main field of study.
+    pub primary_category: Option<String>,
+    /// All categories / subjects associated with this paper.
+    pub categories: Option<Vec<String>>,
 }
 
 impl From<Paper> for ResearchPaper {
@@ -47,6 +53,11 @@ impl From<Paper> for ResearchPaper {
             .filter_map(|a| a.name)
             .collect();
         let pdf_url = p.open_access_pdf.and_then(|oa| oa.url);
+        let primary_category = p
+            .fields_of_study
+            .as_ref()
+            .and_then(|f| f.first().cloned());
+        let categories = p.fields_of_study.clone();
         Self {
             title: p.title.unwrap_or_default(),
             abstract_text: p.abstract_text,
@@ -59,6 +70,9 @@ impl From<Paper> for ResearchPaper {
             source: PaperSource::SemanticScholar,
             source_id: p.paper_id.unwrap_or_default(),
             fields_of_study: p.fields_of_study,
+            published_date: p.publication_date,
+            primary_category,
+            categories,
         }
     }
 }
@@ -82,6 +96,7 @@ impl From<OpenAlexWork> for ResearchPaper {
             .as_ref()
             .and_then(|loc| loc.landing_page_url.clone());
         let source_id = w.id.clone().unwrap_or_default();
+        let published_date = w.publication_year.map(|y| y.to_string());
         Self {
             title: w.title.unwrap_or_default(),
             abstract_text,
@@ -94,6 +109,9 @@ impl From<OpenAlexWork> for ResearchPaper {
             source: PaperSource::OpenAlex,
             source_id,
             fields_of_study: None,
+            published_date,
+            primary_category: None,
+            categories: None,
         }
     }
 }
@@ -132,6 +150,17 @@ impl From<CrossrefWork> for ResearchPaper {
             }
             clean.trim().to_string()
         });
+        let published_date = w.published.as_ref().and_then(|d| {
+            d.date_parts.as_ref().and_then(|outer| {
+                outer.first().map(|parts| {
+                    parts
+                        .iter()
+                        .map(|p| format!("{:02}", p))
+                        .collect::<Vec<_>>()
+                        .join("-")
+                })
+            })
+        });
         let year = w.published.and_then(|d| d.year());
         let pdf_url = w
             .link
@@ -148,6 +177,9 @@ impl From<CrossrefWork> for ResearchPaper {
             source: PaperSource::Crossref,
             source_id: w.doi.unwrap_or_default(),
             fields_of_study: None,
+            published_date,
+            primary_category: None,
+            categories: None,
         }
     }
 }
@@ -172,6 +204,7 @@ impl From<CoreWork> for ResearchPaper {
             .id
             .map(|id| id.to_string())
             .unwrap_or_default();
+        let published_date = w.year_published.map(|y| y.to_string());
         Self {
             title: w.title.unwrap_or_default(),
             abstract_text: w.abstract_text,
@@ -184,6 +217,9 @@ impl From<CoreWork> for ResearchPaper {
             source: PaperSource::Core,
             source_id,
             fields_of_study: None,
+            published_date,
+            primary_category: None,
+            categories: None,
         }
     }
 }
@@ -194,6 +230,13 @@ impl From<ArxivPaper> for ResearchPaper {
         let url = p
             .link_url
             .unwrap_or_else(|| format!("https://arxiv.org/abs/{}", p.arxiv_id));
+        let published_date = p.published.get(..10).map(|s| s.to_string());
+        let primary_category = p.categories.first().cloned();
+        let categories = if p.categories.is_empty() {
+            None
+        } else {
+            Some(p.categories.clone())
+        };
         Self {
             title: p.title.trim().to_string(),
             abstract_text: Some(p.summary.trim().to_string()),
@@ -210,6 +253,9 @@ impl From<ArxivPaper> for ResearchPaper {
             } else {
                 Some(p.categories)
             },
+            published_date,
+            primary_category,
+            categories,
         }
     }
 }
@@ -287,6 +333,9 @@ mod dedup_tests {
             source: PaperSource::Arxiv,
             source_id: title.into(),
             fields_of_study: None,
+            published_date: None,
+            primary_category: None,
+            categories: None,
         }
     }
 

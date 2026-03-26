@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Remote EU job board aggregator. Next.js 16 frontend + GraphQL API backed by Neon PostgreSQL, with an AI/ML pipeline for job classification, skill extraction, and resume matching. CF Workers (janitor, insert-jobs, process-companies-cron) all use Neon PostgreSQL via `@neondatabase/serverless`.
+Remote EU job board aggregator. Next.js 16 frontend + GraphQL API backed by Neon PostgreSQL, with an AI/ML pipeline for job classification, skill extraction, and resume matching.
 
 ---
 
@@ -50,14 +50,12 @@ Import `db` from `@/db` for all queries. Schema in `src/db/schema.ts`, migration
 ### Data flow
 
 ```
-1. Board Crawl:    Common Crawl CDX --[ashby-crawler (Rust)]--> Ashby boards → Neon
-2. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[scripts]--> Neon
-3. Enhancement:    Job IDs --[GraphQL Mutation]--> ATS API --> Neon
-4. Classification: Unprocessed jobs --[process-jobs (Python) / DeepSeek]--> is_remote_eu --> Neon
-5. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → Neon
-6. Resume Match:   Resumes --[resume-rag (Python) / Vectorize]--> Vector search
-7. Serving:        Browser --[Apollo Client]--> /api/graphql --[Drizzle ORM]--> Neon
-8. Evaluation:     Local evals --[LLM calls]--> Accuracy scores
+1. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[scripts]--> Neon
+2. Enhancement:    Job IDs --[GraphQL Mutation]--> ATS API --> Neon
+3. Classification: Unprocessed jobs --[DeepSeek LLM]--> is_remote_eu --> Neon
+4. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → Neon
+5. Serving:        Browser --[Apollo Client]--> /api/graphql --[Drizzle ORM]--> Neon
+6. Evaluation:     Local evals --[LLM calls]--> Accuracy scores
 ```
 
 ### GraphQL codegen
@@ -90,12 +88,11 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 |---|---|
 | Frontend | Next.js 16, React 19, App Router |
 | Language | TypeScript 5.9 |
-| Database | Neon PostgreSQL (all layers — Next.js app + CF Workers) |
+| Database | Neon PostgreSQL |
 | ORM | Drizzle ORM |
 | API | Apollo Server 5 (GraphQL) |
 | Auth | Better Auth (`@ai-apps/auth`) |
 | AI/ML | Vercel AI SDK, DeepSeek, OpenRouter |
-| Background jobs | Cloudflare Cron + Queues |
 | Observability | LangSmith |
 | Deployment | Vercel |
 | Package manager | pnpm 10.10 |
@@ -108,7 +105,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 - **GraphQL schema** lives in `schema/` (by domain: `base/`, `jobs/`, `companies/`, `applications/`, `prompts/`). Query/mutation/fragment documents are in `src/graphql/`.
 - **Resolvers** are in `src/apollo/resolvers/` — job resolvers in `src/apollo/resolvers/job/`.
 - **ATS ingestion** fetchers: `src/ingestion/{greenhouse,lever,ashby}.ts` — primary job discovery channel.
-- **Skills subsystem**: `src/lib/skills/` — taxonomy, extraction, vector ops, filtering.
+- **Skills subsystem**: `src/lib/skills/` — taxonomy, extraction, filtering.
 - **AI agents**: `src/agents/` (Vercel AI SDK — SQL, admin, strategy enforcer), `src/anthropic/` (Claude client, MCP, sub-agents, architect).
 - **Database tools for agents**: `src/tools/database/` (introspection + SQL execution).
 
@@ -122,7 +119,7 @@ See **[OPTIMIZATION-STRATEGY.md](./OPTIMIZATION-STRATEGY.md)** for the full stra
 |---|---|---|
 | **Eval-First** | PRIMARY | Every prompt/model change tested against >= 80% accuracy bar |
 | **Grounding-First** | PRIMARY | LLM outputs schema-constrained; skills validated against taxonomy |
-| **Multi-Model Routing** | SECONDARY | Cheap model first (Workers AI), escalate on low confidence only |
+| **Multi-Model Routing** | SECONDARY | Cheap model first, escalate on low confidence only |
 | **Spec-Driven** | CROSS-CUTTING | GraphQL + Drizzle + Zod schemas as formal contracts |
 | **Observability** | EMERGING | Production tracing partial |
 
@@ -167,6 +164,7 @@ Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Aut
 ### Dead code
 - `scripts/ingest-jobs.ts` still documents Turso env vars in its help text (stale).
 - `@libsql/client` and `drizzle-orm/d1` are likely unused and can be removed from `package.json`.
+- `crates/nomad/` Rust crate still uses `D1Client` (Cloudflare D1) — needs migration to Neon.
 
 ### Dependencies
 - `@libsql/client` and `drizzle-orm/d1` are likely unused — remove from `package.json`.
@@ -254,7 +252,7 @@ Safety: Max 3 code changes + 2 skill evolutions per cycle. Phase detection (IMPR
 
 ## Domain-specific patterns
 
-> An MCPDoc MCP server is configured in `.claude/settings.json` with docs for Drizzle, Next.js, Vercel AI SDK, Cloudflare Workers. Call `list_doc_sources` to see available sources, then `fetch_docs` on specific URLs when you need deeper detail on any API.
+> An MCPDoc MCP server is configured in `.claude/settings.json` with docs for Drizzle, Next.js, Vercel AI SDK. Call `list_doc_sources` to see available sources, then `fetch_docs` on specific URLs when you need deeper detail on any API.
 
 ---
 
@@ -306,7 +304,6 @@ pnpm db:migrate    # applies locally
 - Never write raw SQL strings in resolvers — use Drizzle ORM methods.
 - Never use `db.execute(sql\`...\`)` for application queries — use typed builder.
 - Never import from `drizzle-orm/sqlite-core` or `drizzle-orm/d1` — use `drizzle-orm/pg-core`.
-- Never use `createD1HttpClient()` — it is deleted; import `db` from `@/db` directly.
 
 > Docs: fetch_docs on `https://orm.drizzle.team/docs/overview`
 

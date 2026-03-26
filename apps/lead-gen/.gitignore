@@ -35,7 +35,6 @@ yarn-error.log*
 .env.local.*
 .env.local.backup
 .env.development
-.dev.vars
 
 # vercel
 .vercel
@@ -48,16 +47,7 @@ next-env.d.ts
 .mastra/
 .env.vercel.local
 
-# wrangler
-.wrangler/
 .env*.local
-
-# python workers
-python_modules/
-workers/*/node_modules/
-workers/job-matcher/.venv/
-workers/job-matcher/.venv-workers/
-workers/job-matcher/.wheels_temp/
 *.pyc
 __pycache__/
 .venv/

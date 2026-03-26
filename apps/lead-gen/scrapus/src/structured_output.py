@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 import hashlib
 import sqlite3
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 import numpy as np
 
 
@@ -33,13 +33,12 @@ import numpy as np
 
 class Source(BaseModel):
     """Citation source metadata"""
+    model_config = ConfigDict(extra="allow")
+
     url: str = Field(..., description="Source URL")
     title: Optional[str] = Field(None, description="Page title")
     crawl_date: Optional[str] = Field(None, description="Crawl date (ISO 8601)")
     relevance_score: float = Field(ge=0.0, le=1.0, description="Relevance 0-1")
-    
-    class Config:
-        extra = "allow"
 
 
 class LeadReport(BaseModel):
@@ -55,19 +54,19 @@ class LeadReport(BaseModel):
     
     key_strengths: List[str] = Field(
         default_factory=list,
-        max_items=3,
+        max_length=3,
         description="Top 3 competitive strengths or positive signals"
     )
-    
+
     growth_indicators: List[str] = Field(
         default_factory=list,
-        max_items=3,
+        max_length=3,
         description="Key growth signals: funding rounds, hiring, product launches, expansions"
     )
-    
+
     risk_factors: List[str] = Field(
         default_factory=list,
-        max_items=2,
+        max_length=2,
         description="Primary business or technical risks that may impact the company"
     )
     
@@ -96,11 +95,13 @@ class LeadReport(BaseModel):
     _fact_count: Optional[int] = None
     _fact_overlap_score: Optional[float] = None
     
-    @validator("summary", "recommended_approach")
+    @field_validator("summary", "recommended_approach")
+    @classmethod
     def trim_whitespace(cls, v: str) -> str:
         return " ".join(v.split())
-    
-    @validator("key_strengths", "growth_indicators", "risk_factors", pre=True)
+
+    @field_validator("key_strengths", "growth_indicators", "risk_factors", mode="before")
+    @classmethod
     def deduplicate_lists(cls, v: List[str]) -> List[str]:
         """Remove duplicates while preserving order"""
         if not isinstance(v, list):
@@ -131,7 +132,7 @@ class LeadReport(BaseModel):
             "risk_factors": self.risk_factors,
             "recommended_approach": self.recommended_approach,
             "confidence": self.confidence,
-            "sources": [s.dict() for s in self.sources]
+            "sources": [s.model_dump() for s in self.sources]
         }
         if include_metadata:
             data["_metadata"] = {
@@ -335,10 +336,10 @@ class OutlinesJSONGenerator:
     ) -> Tuple[str, str]:
         """Generate using Ollama's native ``format=json`` mode."""
         try:
-            schema_hint = f"Output must be valid JSON matching this structure: {schema.schema()}"
+            schema_hint = f"Output must be valid JSON matching this structure: {schema.model_json_schema()}"
             full_prompt = f"{prompt}\n\n{schema_hint}"
             result = await self._client.generate_json(
-                full_prompt, model=self.model_name, schema=schema.schema(), max_tokens=max_tokens,
+                full_prompt, model=self.model_name, schema=schema.model_json_schema(), max_tokens=max_tokens,
             )
             self.current_mode = "ollama_json"
             return result.text, "ollama_json"
@@ -546,7 +547,7 @@ class GrammarConflictHandler:
         result = {}
         
         # Extract schema field names and descriptions
-        schema_fields = schema.schema().get("properties", {})
+        schema_fields = schema.model_json_schema().get("properties", {})
         
         for field_name, field_info in schema_fields.items():
             # Try to extract matching content from text

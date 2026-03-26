@@ -85,6 +85,7 @@ class TestOllamaJudge:
     @pytest.mark.asyncio
     async def test_verify_connectivity_unhealthy(self, mock_client):
         mock_client.health_check = AsyncMock(return_value=False)
+        mock_client.base_url = "http://test:11434"
         judge = OllamaJudge(model_name="llama3.1:8b-instruct-q4_K_M", ollama_client=mock_client)
         with pytest.raises(RuntimeError, match="Cannot connect"):
             await judge.verify_connectivity()

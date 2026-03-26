@@ -25,9 +25,8 @@ extend type Mutation {
   deleteJob(id: Int!): DeleteJobResponse!
   deleteAllJobs: DeleteJobResponse!
   """
-  Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
-  Calls the classify-jobs CF worker (POST) which runs DeepSeek-based classification
-  for remote-EU eligibility on every unclassified job.
+  Trigger classification/enhancement of all unprocessed jobs.
+  Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
   """
   processAllJobs(limit: Int): ProcessAllJobsResponse!
   """
@@ -320,7 +319,7 @@ type DeleteJobResponse {
 }
 
 """
-Response from triggering the classify-jobs Cloudflare Worker
+Response from triggering job classification
 """
 type ProcessAllJobsResponse {
   success: Boolean!
