@@ -10,22 +10,18 @@ import { LandingClosing } from "@/components/landing-closing";
 import { LandingFooter } from "@/components/landing-footer";
 
 /**
- * Landing page -- narrative arc: what -> how -> proof -> why -> action.
+ * Scrapus landing page — narrative arc: what → how → proof → why → action.
  *
- * 1. Hero:     Value proposition + trust badges + contextual stats + CTA pair
- * 2. Pipeline: How it works -- 4-stage visualization
- * 3. Preview:  Proof -- live pipeline output with real leads
- * 4. Builder:  Human element -- "built by" attribution with mission context
- * 5. Features: Differentiators -- multi-model, real-time, vector matching
- * 6. Closing:  Decision point -- dual CTAs + tech stack + open source
+ * 1. Hero:     Local-first B2B lead gen value prop + pipeline stats + CTA pair
+ * 2. Pipeline: 7-module visualization (crawl → extract → resolve → score → report → evaluate)
+ * 3. Preview:  Proof — live pipeline output with scored B2B leads
+ * 4. Builder:  Human element — "built by" with mission context
+ * 5. Features: Differentiators — RL crawling, ensemble scoring, local-first privacy
+ * 6. Closing:  Decision point — deploy locally CTA + research updates signup
  *
- * Navigation improvements:
- * - LandingNav: sticky header with scroll progress + section anchors + site links
- * - LandingFooter: sitemap with quick links + back-to-top
- * - Each section has an `id` attribute for scroll-to navigation
- *
- * Gradient dividers at major narrative transitions create visual
- * breathing room and signal a shift in content type to the reader.
+ * Navigation:
+ * - LandingNav: sticky header with scroll progress + section anchors
+ * - LandingFooter: sitemap + manifesto + back-to-top
  */
 
 const sectionDivider = css({

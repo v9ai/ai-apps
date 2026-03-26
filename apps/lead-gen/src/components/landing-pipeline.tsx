@@ -5,64 +5,86 @@ import { flex, grid, container } from "styled-system/patterns";
 import { badge } from "@/recipes/badge";
 import { pipelineCard, iconHolder } from "@/recipes/cards";
 import {
+  GearIcon,
   MagnifyingGlassIcon,
-  CubeIcon,
-  PersonIcon,
-  EnvelopeClosedIcon,
-  ArrowRightIcon,
+  ReaderIcon,
+  LinkBreak2Icon,
   BarChartIcon,
+  FileTextIcon,
+  CheckCircledIcon,
+  ArrowRightIcon,
 } from "@radix-ui/react-icons";
 
 /**
+ * Scrapus 7-module B2B lead generation pipeline.
+ *
  * Pipeline visualization with micro-interactions:
  *  #1 — Staggered card entrance + scanline glitch on hover (pipeline-card-animated, pipeline-card-hover)
  *  #4 — Arrow sequential pulse showing data flow (pipeline-arrow-flow)
  */
 
-/**
- * IMPROVEMENT 4: Pipeline descriptions rewritten from specs to outcomes.
- *
- * Before: "aggregate jobs from Greenhouse, Lever, and Ashby boards"
- *   (what it does technically -- reads like a spec sheet)
- *
- * After: "catches new roles across 460+ companies before they hit LinkedIn"
- *   (what it means for you -- reads like a benefit)
- */
 const PIPELINE_STAGES = [
   {
-    icon: <MagnifyingGlassIcon width={20} height={20} />,
-    title: "signal detection",
+    icon: <GearIcon width={20} height={20} />,
+    title: "system overview",
     description:
-      "catches new roles across 460+ companies before they hit LinkedIn or Indeed",
-    badge: "ingest",
+      "SQLite WAL + LanceDB HNSW + ChromaDB hybrid storage in ~15 GB footprint",
+    badge: "orchestrate",
+    step: "00",
+    accentOpacity: 0.15,
+  },
+  {
+    icon: <MagnifyingGlassIcon width={20} height={20} />,
+    title: "rl crawler",
+    description:
+      "DQN agent with 448-dim state + UCB1 multi-armed bandit explores 820 domains, achieving 3\u00D7 harvest rate",
+    badge: "crawl",
     step: "01",
     accentOpacity: 0.3,
   },
   {
-    icon: <CubeIcon width={20} height={20} />,
-    title: "company enrichment",
+    icon: <ReaderIcon width={20} height={20} />,
+    title: "ner extraction",
     description:
-      "maps stack, funding stage, and remote policy so you skip the guesswork",
-    badge: "enrich",
+      "BERT-base-cased + spaCy + BERTopic extract entities at 92.3% F1, processing ~100 pages/sec",
+    badge: "extract",
     step: "02",
-    accentOpacity: 0.5,
+    accentOpacity: 0.45,
   },
   {
-    icon: <PersonIcon width={20} height={20} />,
-    title: "contact discovery",
+    icon: <LinkBreak2Icon width={20} height={20} />,
+    title: "entity resolution",
     description:
-      "finds the actual hiring manager, not the generic careers@ inbox",
-    badge: "discover",
+      "Siamese 128-dim embeddings with SQLite CTEs deduplicate in <1ms ANN queries",
+    badge: "resolve",
     step: "03",
+    accentOpacity: 0.6,
+  },
+  {
+    icon: <BarChartIcon width={20} height={20} />,
+    title: "lead scoring",
+    description:
+      "XGBoost 50% + LogReg 25% + RF 25% ensemble scores leads with 89.7% precision",
+    badge: "score",
+    step: "04",
     accentOpacity: 0.75,
   },
   {
-    icon: <EnvelopeClosedIcon width={20} height={20} />,
-    title: "smart outreach",
+    icon: <FileTextIcon width={20} height={20} />,
+    title: "report generation",
     description:
-      "writes emails that reference real company context, not templates",
-    badge: "outreach",
-    step: "04",
+      "Ollama + SQLite/ChromaDB RAG generates reports with 97% factual accuracy in 10-30s",
+    badge: "report",
+    step: "05",
+    accentOpacity: 0.9,
+  },
+  {
+    icon: <CheckCircledIcon width={20} height={20} />,
+    title: "evaluation",
+    description:
+      "SHAP explanations + cascade error tracking monitor pipeline health (CER ~0.15)",
+    badge: "evaluate",
+    step: "06",
     accentOpacity: 1,
   },
 ] as const;
@@ -93,7 +115,7 @@ export function LandingPipeline() {
               letterSpacing: "wide",
             })}
           >
-            pipeline stages
+            pipeline modules
           </span>
         </div>
 
@@ -104,10 +126,10 @@ export function LandingPipeline() {
             mb: "5",
             lineHeight: "relaxed",
             letterSpacing: "snug",
-            maxW: "480px",
+            maxW: "560px",
           })}
         >
-          from a new job posting to a personalized email in your outbox. four stages, zero manual work.
+          from raw web pages to scored B2B leads with generated reports. seven modules, zero cloud dependencies.
         </p>
 
         {/* --- desktop: horizontal flow (#1: stagger + glitch, #4: arrow pulse) --- */}

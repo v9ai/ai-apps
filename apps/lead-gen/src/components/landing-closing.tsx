@@ -13,8 +13,8 @@ import Link from "next/link";
  * This section provides:
  * - A value-restating headline (not "get started" -- too generic)
  * - Primary CTA repeated (consistency with hero)
- * - Email capture for visitors not ready to commit (newsletter/alerts)
- * - Creates urgency with "updated daily" language
+ * - Email capture for visitors not ready to commit (pipeline research updates)
+ * - Creates urgency with cost-comparison language
  */
 
 export function LandingClosing() {
@@ -47,7 +47,7 @@ export function LandingClosing() {
               maxW: "560px",
             })}
           >
-            stop scrolling job boards manually
+            stop paying cloud CRMs to own your leads
           </h2>
           <p
             className={css({
@@ -59,17 +59,17 @@ export function LandingClosing() {
               letterSpacing: "snug",
             })}
           >
-            27 verified EU-remote AI/ML positions — updated daily from 460+
-            company pipelines.
+            300 qualified B2B leads per cycle — extracted, deduplicated, scored,
+            and reported. fully local. $1,500/year total cost.
           </p>
 
           {/* primary CTA repeated */}
           <div className={flex({ justify: "center", gap: "3", mt: "6" })}>
             <Link
-              href="/jobs"
+              href="/how-it-works"
               className={button({ variant: "solid", size: "lg" })}
             >
-              find remote EU jobs
+              deploy scrapus locally
               <ArrowRightIcon width={14} height={14} />
             </Link>
           </div>
@@ -106,7 +106,7 @@ export function LandingClosing() {
                   letterSpacing: "wide",
                 })}
               >
-                not ready yet? get weekly alerts
+                not ready yet? get pipeline research updates
               </span>
             </div>
             <form
@@ -123,7 +123,7 @@ export function LandingClosing() {
                 type="email"
                 placeholder="your@email.com"
                 required
-                aria-label="email address for weekly alerts"
+                aria-label="email address for pipeline research updates"
                 className={css({
                   flex: 1,
                   height: "40px",
@@ -136,6 +136,7 @@ export function LandingClosing() {
                   fontSize: "sm",
                   letterSpacing: "normal",
                   outline: "none",
+                  borderRadius: "0",
                   _placeholder: {
                     color: "ui.dim",
                   },
@@ -158,6 +159,7 @@ export function LandingClosing() {
                   textTransform: "lowercase",
                   letterSpacing: "normal",
                   whiteSpace: "nowrap",
+                  borderRadius: "0",
                   transition: "background 150ms ease",
                   _hover: {
                     bg: "accent.hover",
@@ -176,7 +178,7 @@ export function LandingClosing() {
                 letterSpacing: "normal",
               })}
             >
-              one email per week. unsubscribe anytime. no spam.
+              one email per month. new papers, benchmarks, and module upgrades.
             </p>
           </div>
         </div>

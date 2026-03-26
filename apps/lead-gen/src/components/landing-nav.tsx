@@ -8,7 +8,7 @@ import {
   Cross1Icon,
   CubeIcon,
   PersonIcon,
-  BackpackIcon,
+  BarChartIcon,
   LayersIcon,
   GitHubLogoIcon,
 } from "@radix-ui/react-icons";
@@ -18,16 +18,16 @@ import Image from "next/image";
 const SECTION_ANCHORS = [
   { id: "hero", label: "home" },
   { id: "pipeline", label: "pipeline" },
-  { id: "preview", label: "leads" },
+  { id: "metrics", label: "metrics" },
   { id: "features", label: "features" },
-  { id: "stack", label: "stack" },
+  { id: "research", label: "research" },
 ] as const;
 
 const SITE_LINKS = [
   { href: "/companies", label: "companies", icon: <CubeIcon width={14} height={14} /> },
   { href: "/contacts", label: "contacts", icon: <PersonIcon width={14} height={14} /> },
-  { href: "/jobs", label: "jobs", icon: <BackpackIcon width={14} height={14} /> },
-  { href: "/how-it-works", label: "how it works", icon: <LayersIcon width={14} height={14} /> },
+  { href: "/architecture", label: "architecture", icon: <LayersIcon width={14} height={14} /> },
+  { href: "/benchmarks", label: "benchmarks", icon: <BarChartIcon width={14} height={14} /> },
 ] as const;
 
 export function LandingNav() {
@@ -146,7 +146,7 @@ export function LandingNav() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <Image src="/logo.svg" alt="neural lead gen" width={100} height={22} priority />
+              <Image src="/logo.svg" alt="scrapus" width={100} height={22} priority />
             </Link>
 
             {/* desktop: section anchors */}

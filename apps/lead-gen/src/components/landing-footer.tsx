@@ -12,20 +12,20 @@ const FOOTER_SECTIONS = [
     links: [
       { href: "/companies", label: "companies" },
       { href: "/contacts", label: "contacts" },
-      { href: "/jobs", label: "jobs" },
-      { href: "/how-it-works", label: "how it works" },
+      { href: "/how-it-works", label: "architecture" },
     ],
   },
   {
     title: "pipeline",
     links: [
-      { href: "/#pipeline", label: "pipeline stages" },
+      { href: "/#pipeline", label: "7 modules" },
       { href: "/#features", label: "features" },
-      { href: "/#stack", label: "tech stack" },
+      { href: "/#metrics", label: "benchmarks" },
+      { href: "/#research", label: "research" },
     ],
   },
   {
-    title: "account",
+    title: "resources",
     links: [
       { href: "/sign-in", label: "sign in" },
       { href: "/sign-up", label: "sign up" },
@@ -59,7 +59,7 @@ export function LandingFooter() {
               className={flex({ align: "center", gap: "2", mb: "3" })}
               style={{ textDecoration: "none" }}
             >
-              <Image src="/logo.svg" alt="neural lead gen" width={100} height={22} />
+              <Image src="/logo.svg" alt="scrapus" width={100} height={22} />
             </Link>
             <p
               className={css({
@@ -69,8 +69,8 @@ export function LandingFooter() {
                 maxW: "200px",
               })}
             >
-              ai-powered lead generation pipeline. aggregate hiring signals,
-              enrich companies, generate outreach.
+              local-first B2B lead generation pipeline. RL crawling, ML scoring,
+              LLM reports — zero cloud dependencies.
             </p>
             <a
               href="https://github.com/nicolad/lead-gen"
@@ -120,6 +120,7 @@ export function LandingFooter() {
                       textDecoration: "none",
                       textTransform: "lowercase",
                       letterSpacing: "normal",
+                      borderRadius: "0",
                       transition: "color 150ms ease",
                       _hover: {
                         color: "ui.heading",
@@ -134,7 +135,7 @@ export function LandingFooter() {
           ))}
         </div>
 
-        {/* IMPROVEMENT 5: brutalist manifesto strip */}
+        {/* brutalist manifesto strip */}
         <div
           className={css({
             mt: "8",
@@ -153,10 +154,10 @@ export function LandingFooter() {
               maxW: "560px",
             })}
           >
-            built by one person who got tired of copy-pasting job URLs into
-            spreadsheets. this is not a startup. there is no pricing page.
-            it is a tool that does one thing well: find remote EU tech jobs
-            faster than you can manually.
+            built by one person who got tired of paying cloud CRMs $10K/year to
+            own their own leads. this is not a startup. there is no pricing page.
+            it is a pipeline that does one thing well: generate qualified B2B
+            leads on commodity hardware.
           </p>
         </div>
 
@@ -177,7 +178,7 @@ export function LandingFooter() {
               letterSpacing: "normal",
             })}
           >
-            neural lead gen
+            scrapus
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -190,6 +191,7 @@ export function LandingFooter() {
               fontWeight: "medium",
               letterSpacing: "wide",
               textTransform: "lowercase",
+              borderRadius: "0",
               px: "3",
               py: "1.5",
               cursor: "pointer",

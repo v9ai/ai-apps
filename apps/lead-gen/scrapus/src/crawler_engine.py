@@ -70,6 +70,13 @@ class CrawlerConfig:
     max_body_chars: int = 50_000
     user_agent: str = "ScrapusBot/1.0 (+https://scrapus.dev/bot)"
 
+    # Robots.txt cache
+    robots_cache_ttl: float = 86400.0  # 24 hours
+
+    # Domain cooling
+    domain_cooling_threshold: int = 10  # consecutive failures before cooldown
+    domain_cooling_duration: float = 300.0  # 5 minutes cooldown
+
     # Playwright
     headless: bool = True
     browser_type: str = "chromium"  # chromium | firefox | webkit
@@ -129,12 +136,22 @@ class PolitenessManager:
 
     def __init__(self, config: CrawlerConfig) -> None:
         self.config = config
-        self._robots_cache: Dict[str, Dict[str, Any]] = {}
+        # robots.txt cache: domain -> (result_dict, fetched_at_timestamp)
+        self._robots_cache: Dict[str, Tuple[Dict[str, Any], float]] = {}
+        self._robots_cache_hits: int = 0
+        self._robots_cache_misses: int = 0
+        self._robots_cache_expired: int = 0
         self._failure_windows: Dict[str, Deque] = defaultdict(
             lambda: deque(maxlen=100)
         )
         self._last_request_time: Dict[str, float] = {}
         self._backoff_state: Dict[str, int] = defaultdict(int)  # consecutive failures
+        # Rate limit headers tracking: domain -> adapted delay from server headers
+        self._rate_limit_delays: Dict[str, float] = {}
+        # Retry-After tracking: domain -> timestamp when retry is allowed
+        self._retry_after: Dict[str, float] = {}
+        # Domain cooling: domain -> cooldown_until timestamp
+        self._cooled_domains: Dict[str, float] = {}
 
     async def fetch_robots_txt(self, domain: str) -> Dict[str, Any]:
         """Fetch and parse robots.txt for a domain.

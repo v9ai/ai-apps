@@ -8,42 +8,59 @@ import { Box, Flex, Heading, Text, Badge } from "@radix-ui/themes";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 /**
- * CTA Improvement 4: Urgency-driven preview CTA.
+ * Scrapus B2B lead generation preview.
  *
- * - "see all leads" (vague) -> "view 27 EU-remote matches" (specific, FOMO)
- * - Uses solidGreen variant for visual differentiation from hero CTA
- * - Added secondary "how it works" outline link to catch research-mode visitors
- * - Live count number creates specificity = credibility
+ * Shows sample scored leads from the pipeline with company info,
+ * lead scores, extracted contacts, and industry tags.
+ * Primary CTA: "view 300 scored leads" (solidGreen)
+ * Secondary CTA: "how it works" (outline)
  */
 
-const EU_REMOTE_COUNT = 27;
+const SCORED_LEADS_COUNT = 300;
 
 const PREVIEW_LEADS = [
   {
     id: 1,
-    title: "Senior AI Engineer — Remote EU",
-    company: "Pento",
-    source: "ashby",
-    classification: "eu-remote",
-    skills: ["Python", "LLM", "MLOps"],
+    company: "TechFlow GmbH",
+    score: 0.94,
+    domain: "techflow.de",
+    classification: "high-fit" as const,
+    contact: { name: "Maria Schmidt", title: "VP Engineering", email: "m.schmidt@techflow.de" },
+    tags: ["SaaS", "DevTools", "Series B"],
   },
   {
     id: 2,
-    title: "Staff ML Platform Engineer",
-    company: "Canonical",
-    source: "greenhouse",
-    classification: "eu-remote",
-    skills: ["Kubernetes", "PyTorch", "Go"],
+    company: "DataStream Ltd",
+    score: 0.87,
+    domain: "datastream.io",
+    classification: "high-fit" as const,
+    contact: { name: "James Chen", title: "CTO", email: "j.chen@datastream.io" },
+    tags: ["Data Infrastructure", "FinTech", "Series A"],
   },
   {
     id: 3,
-    title: "Lead Data Scientist",
-    company: "Factorial",
-    source: "lever",
-    classification: "eu-remote",
-    skills: ["NLP", "Spark", "Terraform"],
+    company: "CloudNine Analytics",
+    score: 0.82,
+    domain: "cloudnine.com",
+    classification: "medium-fit" as const,
+    contact: { name: "Sarah Park", title: "Head of Engineering", email: "s.park@cloudnine.com" },
+    tags: ["Analytics", "MLOps", "Seed"],
   },
 ] as const;
+
+function ScoreBadge({ score }: { score: number }) {
+  const color = score >= 0.9 ? "green" : score >= 0.85 ? "cyan" : "orange";
+  return (
+    <Badge
+      size="1"
+      variant="soft"
+      color={color}
+      style={{ borderRadius: 0, fontVariantNumeric: "tabular-nums" }}
+    >
+      {score.toFixed(2)}
+    </Badge>
+  );
+}
 
 export function LandingPreview() {
   return (
@@ -76,7 +93,7 @@ export function LandingPreview() {
         {/* leads list with semantic structure */}
         <Box
           role="list"
-          aria-label={`${PREVIEW_LEADS.length} sample pipeline leads`}
+          aria-label={`${PREVIEW_LEADS.length} sample scored leads`}
           style={{
             position: "relative",
             background: "var(--gray-2)",
@@ -89,7 +106,7 @@ export function LandingPreview() {
             <Box
               key={lead.id}
               role="listitem"
-              aria-label={`${lead.title} at ${lead.company}`}
+              aria-label={`${lead.company} — score ${lead.score}`}
               style={{
                 display: "flex",
                 alignItems: "flex-start",
@@ -105,7 +122,7 @@ export function LandingPreview() {
             >
               {/* content */}
               <Box style={{ flex: 1, minWidth: 0 }}>
-                {/* line 1: title + classification badge */}
+                {/* line 1: company name + score badge + classification badge */}
                 <Flex align="center" gap="2" wrap="wrap">
                   <Text
                     size="3"
@@ -116,26 +133,33 @@ export function LandingPreview() {
                       lineHeight: 1.4,
                     }}
                   >
-                    {lead.title}
+                    {lead.company}
                   </Text>
+                  <ScoreBadge score={lead.score} />
                   <Badge
                     size="1"
                     variant="soft"
-                    color="green"
+                    color={lead.classification === "high-fit" ? "green" : "orange"}
                     style={{ borderRadius: 0 }}
                   >
                     {lead.classification}
                   </Badge>
                 </Flex>
 
-                {/* line 2: company + source */}
-                <Flex align="center" gap="2" mt="1">
+                {/* line 2: contact + source domain */}
+                <Flex align="center" gap="2" mt="1" wrap="wrap">
                   <Text
                     size="2"
                     weight="medium"
                     style={{ color: "var(--gray-11)" }}
                   >
-                    {lead.company}
+                    {lead.contact.name}, {lead.contact.title}
+                  </Text>
+                  <Text
+                    size="2"
+                    style={{ color: "var(--gray-9)" }}
+                  >
+                    — {lead.contact.email}
                   </Text>
                   <Badge
                     size="1"
@@ -143,27 +167,27 @@ export function LandingPreview() {
                     color="gray"
                     style={{ borderRadius: 0 }}
                   >
-                    {lead.source}
+                    {lead.domain}
                   </Badge>
                 </Flex>
 
-                {/* line 3: skill tags */}
+                {/* line 3: industry tags */}
                 <Flex
                   gap="2"
                   mt="2"
                   wrap="wrap"
                   role="list"
-                  aria-label="Required skills"
+                  aria-label="Industry tags"
                 >
-                  {lead.skills.map((skill) => (
+                  {lead.tags.map((tag) => (
                     <Badge
-                      key={skill}
+                      key={tag}
                       size="1"
                       variant="surface"
                       color="gray"
                       style={{ borderRadius: 0 }}
                     >
-                      {skill}
+                      {tag}
                     </Badge>
                   ))}
                 </Flex>
@@ -186,13 +210,13 @@ export function LandingPreview() {
           />
         </Box>
 
-        {/* CTA pair: specific count for urgency + research fallback */}
+        {/* CTA pair: scored leads count + research fallback */}
         <div className={flex({ justify: "center", gap: "3", mt: "5" })}>
           <Link
-            href="/jobs?filter=eu-remote"
+            href="/companies"
             className={button({ variant: "solidGreen", size: "md" })}
           >
-            view {EU_REMOTE_COUNT} EU-remote matches
+            view {SCORED_LEADS_COUNT} scored leads
             <ArrowRightIcon width={14} height={14} />
           </Link>
           <Link
