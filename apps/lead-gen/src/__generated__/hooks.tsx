@@ -1066,7 +1066,6 @@ export type Mutation = {
   importCompanyWithContacts: ImportCompanyResult;
   importContacts: ImportContactsResult;
   importResendEmails: ImportResendResult;
-  ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
   markContactEmailVerified: Contact;
@@ -1080,7 +1079,6 @@ export type Mutation = {
    * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
    */
   processAllJobs: ProcessAllJobsResponse;
-  rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1103,7 +1101,6 @@ export type Mutation = {
   updateEmailTemplate: EmailTemplate;
   updateTask: Task;
   updateUserSettings: UserSettings;
-  uploadResume: Maybe<ResumeUploadResult>;
   upsert_company_ats_boards: Array<AtsBoard>;
   verifyContactEmail: VerifyEmailResult;
 };
@@ -1275,13 +1272,6 @@ export type MutationImportResendEmailsArgs = {
 };
 
 
-export type MutationIngestResumeParseArgs = {
-  email: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-  job_id: Scalars['String']['input'];
-};
-
-
 export type MutationIngest_Company_SnapshotArgs = {
   capture_timestamp?: InputMaybe<Scalars['String']['input']>;
   company_id: Scalars['Int']['input'];
@@ -1336,12 +1326,6 @@ export type MutationPreviewEmailArgs = {
 
 export type MutationProcessAllJobsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationRateResumeAnswerArgs = {
-  helpful: Scalars['Boolean']['input'];
-  traceId: Scalars['ID']['input'];
 };
 
 
@@ -1436,13 +1420,6 @@ export type MutationUpdateUserSettingsArgs = {
 };
 
 
-export type MutationUploadResumeArgs = {
-  email: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-  resumePdf: Scalars['String']['input'];
-};
-
-
 export type MutationUpsert_Company_Ats_BoardsArgs = {
   boards: Array<AtsBoardUpsertInput>;
   company_id: Scalars['Int']['input'];
@@ -1482,7 +1459,6 @@ export type ProcessAllJobsResponse = {
 export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
-  askAboutResume: Maybe<ResumeAnswer>;
   blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
@@ -1506,16 +1482,9 @@ export type Query = {
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
-  resumeStatus: Maybe<ResumeStatus>;
   task: Maybe<Task>;
   tasks: TasksResult;
   userSettings: Maybe<UserSettings>;
-};
-
-
-export type QueryAskAboutResumeArgs = {
-  email: Scalars['String']['input'];
-  question: Scalars['String']['input'];
 };
 
 
@@ -1653,11 +1622,6 @@ export type QueryResendEmailArgs = {
 };
 
 
-export type QueryResumeStatusArgs = {
-  email: Scalars['String']['input'];
-};
-
-
 export type QueryTaskArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1713,40 +1677,6 @@ export type ResendEmailDetail = {
   subject: Maybe<Scalars['String']['output']>;
   text: Maybe<Scalars['String']['output']>;
   to: Array<Scalars['String']['output']>;
-};
-
-export type ResumeAnswer = {
-  __typename?: 'ResumeAnswer';
-  answer: Scalars['String']['output'];
-  context_count: Scalars['Int']['output'];
-  trace_id: Maybe<Scalars['String']['output']>;
-};
-
-export type ResumeIngestResult = {
-  __typename?: 'ResumeIngestResult';
-  chunks_stored: Maybe<Scalars['Int']['output']>;
-  error: Maybe<Scalars['String']['output']>;
-  job_id: Scalars['String']['output'];
-  resume_id: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
-export type ResumeStatus = {
-  __typename?: 'ResumeStatus';
-  chunk_count: Maybe<Scalars['Int']['output']>;
-  exists: Scalars['Boolean']['output'];
-  filename: Maybe<Scalars['String']['output']>;
-  ingested_at: Maybe<Scalars['String']['output']>;
-  resume_id: Maybe<Scalars['String']['output']>;
-};
-
-export type ResumeUploadResult = {
-  __typename?: 'ResumeUploadResult';
-  job_id: Scalars['String']['output'];
-  status: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-  tier: Scalars['String']['output'];
 };
 
 export type ScheduleBatchEmailsInput = {
@@ -2629,39 +2559,6 @@ export type UnarchiveJobMutationVariables = Exact<{
 
 
 export type UnarchiveJobMutation = { __typename?: 'Mutation', unarchiveJob: { __typename?: 'Job', id: number, archived: boolean } };
-
-export type ResumeStatusQueryVariables = Exact<{
-  email: Scalars['String']['input'];
-}>;
-
-
-export type ResumeStatusQuery = { __typename?: 'Query', resumeStatus: { __typename?: 'ResumeStatus', exists: boolean, resume_id: string | null, chunk_count: number | null, filename: string | null, ingested_at: string | null } | null };
-
-export type UploadResumeMutationVariables = Exact<{
-  email: Scalars['String']['input'];
-  resumePdf: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-}>;
-
-
-export type UploadResumeMutation = { __typename?: 'Mutation', uploadResume: { __typename?: 'ResumeUploadResult', success: boolean, job_id: string, tier: string, status: string } | null };
-
-export type IngestResumeParseMutationVariables = Exact<{
-  email: Scalars['String']['input'];
-  job_id: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-}>;
-
-
-export type IngestResumeParseMutation = { __typename?: 'Mutation', ingestResumeParse: { __typename?: 'ResumeIngestResult', success: boolean, status: string, job_id: string, resume_id: string | null, chunks_stored: number | null, error: string | null } | null };
-
-export type AskAboutResumeQueryVariables = Exact<{
-  email: Scalars['String']['input'];
-  question: Scalars['String']['input'];
-}>;
-
-
-export type AskAboutResumeQuery = { __typename?: 'Query', askAboutResume: { __typename?: 'ResumeAnswer', answer: string, context_count: number } | null };
 
 export type GetTasksQueryVariables = Exact<{
   status?: InputMaybe<Scalars['String']['input']>;
@@ -6606,176 +6503,6 @@ export function useUnarchiveJobMutation(baseOptions?: Apollo.MutationHookOptions
 export type UnarchiveJobMutationHookResult = ReturnType<typeof useUnarchiveJobMutation>;
 export type UnarchiveJobMutationResult = Apollo.MutationResult<UnarchiveJobMutation>;
 export type UnarchiveJobMutationOptions = Apollo.BaseMutationOptions<UnarchiveJobMutation, UnarchiveJobMutationVariables>;
-export const ResumeStatusDocument = gql`
-    query ResumeStatus($email: String!) {
-  resumeStatus(email: $email) {
-    exists
-    resume_id
-    chunk_count
-    filename
-    ingested_at
-  }
-}
-    `;
-
-/**
- * __useResumeStatusQuery__
- *
- * To run a query within a React component, call `useResumeStatusQuery` and pass it any options that fit your needs.
- * When your component renders, `useResumeStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useResumeStatusQuery({
- *   variables: {
- *      email: // value for 'email'
- *   },
- * });
- */
-export function useResumeStatusQuery(baseOptions: Apollo.QueryHookOptions<ResumeStatusQuery, ResumeStatusQueryVariables> & ({ variables: ResumeStatusQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ResumeStatusQuery, ResumeStatusQueryVariables>(ResumeStatusDocument, options);
-      }
-export function useResumeStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ResumeStatusQuery, ResumeStatusQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ResumeStatusQuery, ResumeStatusQueryVariables>(ResumeStatusDocument, options);
-        }
-// @ts-ignore
-export function useResumeStatusSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ResumeStatusQuery, ResumeStatusQueryVariables>): Apollo.UseSuspenseQueryResult<ResumeStatusQuery, ResumeStatusQueryVariables>;
-export function useResumeStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ResumeStatusQuery, ResumeStatusQueryVariables>): Apollo.UseSuspenseQueryResult<ResumeStatusQuery | undefined, ResumeStatusQueryVariables>;
-export function useResumeStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ResumeStatusQuery, ResumeStatusQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<ResumeStatusQuery, ResumeStatusQueryVariables>(ResumeStatusDocument, options);
-        }
-export type ResumeStatusQueryHookResult = ReturnType<typeof useResumeStatusQuery>;
-export type ResumeStatusLazyQueryHookResult = ReturnType<typeof useResumeStatusLazyQuery>;
-export type ResumeStatusSuspenseQueryHookResult = ReturnType<typeof useResumeStatusSuspenseQuery>;
-export type ResumeStatusQueryResult = Apollo.QueryResult<ResumeStatusQuery, ResumeStatusQueryVariables>;
-export const UploadResumeDocument = gql`
-    mutation UploadResume($email: String!, $resumePdf: String!, $filename: String!) {
-  uploadResume(email: $email, resumePdf: $resumePdf, filename: $filename) {
-    success
-    job_id
-    tier
-    status
-  }
-}
-    `;
-export type UploadResumeMutationFn = Apollo.MutationFunction<UploadResumeMutation, UploadResumeMutationVariables>;
-
-/**
- * __useUploadResumeMutation__
- *
- * To run a mutation, you first call `useUploadResumeMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUploadResumeMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [uploadResumeMutation, { data, loading, error }] = useUploadResumeMutation({
- *   variables: {
- *      email: // value for 'email'
- *      resumePdf: // value for 'resumePdf'
- *      filename: // value for 'filename'
- *   },
- * });
- */
-export function useUploadResumeMutation(baseOptions?: Apollo.MutationHookOptions<UploadResumeMutation, UploadResumeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UploadResumeMutation, UploadResumeMutationVariables>(UploadResumeDocument, options);
-      }
-export type UploadResumeMutationHookResult = ReturnType<typeof useUploadResumeMutation>;
-export type UploadResumeMutationResult = Apollo.MutationResult<UploadResumeMutation>;
-export type UploadResumeMutationOptions = Apollo.BaseMutationOptions<UploadResumeMutation, UploadResumeMutationVariables>;
-export const IngestResumeParseDocument = gql`
-    mutation IngestResumeParse($email: String!, $job_id: String!, $filename: String!) {
-  ingestResumeParse(email: $email, job_id: $job_id, filename: $filename) {
-    success
-    status
-    job_id
-    resume_id
-    chunks_stored
-    error
-  }
-}
-    `;
-export type IngestResumeParseMutationFn = Apollo.MutationFunction<IngestResumeParseMutation, IngestResumeParseMutationVariables>;
-
-/**
- * __useIngestResumeParseMutation__
- *
- * To run a mutation, you first call `useIngestResumeParseMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useIngestResumeParseMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [ingestResumeParseMutation, { data, loading, error }] = useIngestResumeParseMutation({
- *   variables: {
- *      email: // value for 'email'
- *      job_id: // value for 'job_id'
- *      filename: // value for 'filename'
- *   },
- * });
- */
-export function useIngestResumeParseMutation(baseOptions?: Apollo.MutationHookOptions<IngestResumeParseMutation, IngestResumeParseMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<IngestResumeParseMutation, IngestResumeParseMutationVariables>(IngestResumeParseDocument, options);
-      }
-export type IngestResumeParseMutationHookResult = ReturnType<typeof useIngestResumeParseMutation>;
-export type IngestResumeParseMutationResult = Apollo.MutationResult<IngestResumeParseMutation>;
-export type IngestResumeParseMutationOptions = Apollo.BaseMutationOptions<IngestResumeParseMutation, IngestResumeParseMutationVariables>;
-export const AskAboutResumeDocument = gql`
-    query AskAboutResume($email: String!, $question: String!) {
-  askAboutResume(email: $email, question: $question) {
-    answer
-    context_count
-  }
-}
-    `;
-
-/**
- * __useAskAboutResumeQuery__
- *
- * To run a query within a React component, call `useAskAboutResumeQuery` and pass it any options that fit your needs.
- * When your component renders, `useAskAboutResumeQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAskAboutResumeQuery({
- *   variables: {
- *      email: // value for 'email'
- *      question: // value for 'question'
- *   },
- * });
- */
-export function useAskAboutResumeQuery(baseOptions: Apollo.QueryHookOptions<AskAboutResumeQuery, AskAboutResumeQueryVariables> & ({ variables: AskAboutResumeQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<AskAboutResumeQuery, AskAboutResumeQueryVariables>(AskAboutResumeDocument, options);
-      }
-export function useAskAboutResumeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AskAboutResumeQuery, AskAboutResumeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<AskAboutResumeQuery, AskAboutResumeQueryVariables>(AskAboutResumeDocument, options);
-        }
-// @ts-ignore
-export function useAskAboutResumeSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<AskAboutResumeQuery, AskAboutResumeQueryVariables>): Apollo.UseSuspenseQueryResult<AskAboutResumeQuery, AskAboutResumeQueryVariables>;
-export function useAskAboutResumeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AskAboutResumeQuery, AskAboutResumeQueryVariables>): Apollo.UseSuspenseQueryResult<AskAboutResumeQuery | undefined, AskAboutResumeQueryVariables>;
-export function useAskAboutResumeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AskAboutResumeQuery, AskAboutResumeQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<AskAboutResumeQuery, AskAboutResumeQueryVariables>(AskAboutResumeDocument, options);
-        }
-export type AskAboutResumeQueryHookResult = ReturnType<typeof useAskAboutResumeQuery>;
-export type AskAboutResumeLazyQueryHookResult = ReturnType<typeof useAskAboutResumeLazyQuery>;
-export type AskAboutResumeSuspenseQueryHookResult = ReturnType<typeof useAskAboutResumeSuspenseQuery>;
-export type AskAboutResumeQueryResult = Apollo.QueryResult<AskAboutResumeQuery, AskAboutResumeQueryVariables>;
 export const GetTasksDocument = gql`
     query GetTasks($status: String, $priority: String, $limit: Int, $offset: Int) {
   tasks(status: $status, priority: $priority, limit: $limit, offset: $offset) {

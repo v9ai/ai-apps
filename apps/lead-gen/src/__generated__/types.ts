@@ -1063,7 +1063,6 @@ export type Mutation = {
   importCompanyWithContacts: ImportCompanyResult;
   importContacts: ImportContactsResult;
   importResendEmails: ImportResendResult;
-  ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
   markContactEmailVerified: Contact;
@@ -1077,7 +1076,6 @@ export type Mutation = {
    * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
    */
   processAllJobs: ProcessAllJobsResponse;
-  rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1100,7 +1098,6 @@ export type Mutation = {
   updateEmailTemplate: EmailTemplate;
   updateTask: Task;
   updateUserSettings: UserSettings;
-  uploadResume: Maybe<ResumeUploadResult>;
   upsert_company_ats_boards: Array<AtsBoard>;
   verifyContactEmail: VerifyEmailResult;
 };
@@ -1272,13 +1269,6 @@ export type MutationImportResendEmailsArgs = {
 };
 
 
-export type MutationIngestResumeParseArgs = {
-  email: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-  job_id: Scalars['String']['input'];
-};
-
-
 export type MutationIngest_Company_SnapshotArgs = {
   capture_timestamp?: InputMaybe<Scalars['String']['input']>;
   company_id: Scalars['Int']['input'];
@@ -1333,12 +1323,6 @@ export type MutationPreviewEmailArgs = {
 
 export type MutationProcessAllJobsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationRateResumeAnswerArgs = {
-  helpful: Scalars['Boolean']['input'];
-  traceId: Scalars['ID']['input'];
 };
 
 
@@ -1433,13 +1417,6 @@ export type MutationUpdateUserSettingsArgs = {
 };
 
 
-export type MutationUploadResumeArgs = {
-  email: Scalars['String']['input'];
-  filename: Scalars['String']['input'];
-  resumePdf: Scalars['String']['input'];
-};
-
-
 export type MutationUpsert_Company_Ats_BoardsArgs = {
   boards: Array<AtsBoardUpsertInput>;
   company_id: Scalars['Int']['input'];
@@ -1479,7 +1456,6 @@ export type ProcessAllJobsResponse = {
 export type Query = {
   __typename: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
-  askAboutResume: Maybe<ResumeAnswer>;
   blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
@@ -1503,16 +1479,9 @@ export type Query = {
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
-  resumeStatus: Maybe<ResumeStatus>;
   task: Maybe<Task>;
   tasks: TasksResult;
   userSettings: Maybe<UserSettings>;
-};
-
-
-export type QueryAskAboutResumeArgs = {
-  email: Scalars['String']['input'];
-  question: Scalars['String']['input'];
 };
 
 
@@ -1650,11 +1619,6 @@ export type QueryResendEmailArgs = {
 };
 
 
-export type QueryResumeStatusArgs = {
-  email: Scalars['String']['input'];
-};
-
-
 export type QueryTaskArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1710,40 +1674,6 @@ export type ResendEmailDetail = {
   subject: Maybe<Scalars['String']['output']>;
   text: Maybe<Scalars['String']['output']>;
   to: Array<Scalars['String']['output']>;
-};
-
-export type ResumeAnswer = {
-  __typename: 'ResumeAnswer';
-  answer: Scalars['String']['output'];
-  context_count: Scalars['Int']['output'];
-  trace_id: Maybe<Scalars['String']['output']>;
-};
-
-export type ResumeIngestResult = {
-  __typename: 'ResumeIngestResult';
-  chunks_stored: Maybe<Scalars['Int']['output']>;
-  error: Maybe<Scalars['String']['output']>;
-  job_id: Scalars['String']['output'];
-  resume_id: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
-export type ResumeStatus = {
-  __typename: 'ResumeStatus';
-  chunk_count: Maybe<Scalars['Int']['output']>;
-  exists: Scalars['Boolean']['output'];
-  filename: Maybe<Scalars['String']['output']>;
-  ingested_at: Maybe<Scalars['String']['output']>;
-  resume_id: Maybe<Scalars['String']['output']>;
-};
-
-export type ResumeUploadResult = {
-  __typename: 'ResumeUploadResult';
-  job_id: Scalars['String']['output'];
-  status: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-  tier: Scalars['String']['output'];
 };
 
 export type ScheduleBatchEmailsInput = {
