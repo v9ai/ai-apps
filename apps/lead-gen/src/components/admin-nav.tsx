@@ -1,10 +1,8 @@
 "use client";
 
 import {
-  ExclamationTriangleIcon,
   EnvelopeClosedIcon,
   PersonIcon,
-
   Cross2Icon,
 } from "@radix-ui/react-icons";
 import { Flex } from "@radix-ui/themes";
@@ -40,12 +38,6 @@ export function AdminNav() {
         <Flex align="center" gap="2">
           <Cross2Icon width={14} height={14} />
           blocked
-        </Flex>
-      </NavLink>
-      <NavLink href="/admin/reported-jobs" title="Reported jobs review">
-        <Flex align="center" gap="2">
-          <ExclamationTriangleIcon width={14} height={14} style={{ color: "var(--orange-9)" }} />
-          reported
         </Flex>
       </NavLink>
     </>

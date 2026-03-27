@@ -8,7 +8,7 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use tracing::{info, warn};
 
-use crate::constants::{DISCOVERY_YEAR, NEW_HOTEL_MIN_YEAR};
+use crate::constants::{DISCOVERY_YEAR, DISCOVERY_YEAR_STR, NEW_HOTEL_MIN_YEAR};
 use crate::embeddings::EmbeddingEngine;
 use crate::hotel::Hotel;
 
@@ -339,7 +339,7 @@ pub fn extract_hotels(ranked: &[RankedPassage]) -> Vec<Hotel> {
             if y >= NEW_HOTEL_MIN_YEAR { Some(y) } else { None }
         });
         // If no year in the new-hotel window, skip
-        if opened_year.is_none() && !text.to_lowercase().contains("2026") {
+        if opened_year.is_none() && !text.to_lowercase().contains(DISCOVERY_YEAR_STR) {
             continue;
         }
         // Use the parsed year; fall back to DISCOVERY_YEAR when the text mentions it without a parseable year
@@ -592,6 +592,7 @@ pub fn validate_hotel(hotel: &Hotel) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::DISCOVERY_YEAR;
     use crate::hotel::test_hotel;
 
     // ── slug_from_name ─────────────────────────────────────────────
@@ -808,7 +809,7 @@ mod tests {
         let h = &hotels[0];
         assert!(h.name.contains("Domes Zeen Chania Resort"));
         assert_eq!(h.star_rating, 5);
-        assert_eq!(h.opened_year, Some(2026));
+        assert_eq!(h.opened_year, Some(DISCOVERY_YEAR));
         assert!(h.price_eur > 300.0);
         assert_eq!(h.location, "Chania, Crete, Greece");
         assert!(h.amenities.contains(&"Swimming pool".to_string()));
