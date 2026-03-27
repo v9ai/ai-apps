@@ -122,7 +122,7 @@ start-build: ## Build the Rust pipeline binary (release)
 	cd $(METAL_DIR) && cargo build --release
 
 start: start-build ## Full pipeline cycle (discover -> enrich -> contacts+qa -> outreach)
-	$(METAL_BIN) pipeline $(if $(DOMAINS),--domains $(DOMAINS),)
+	$(METAL_BIN) pipeline --yes $(if $(DOMAINS),--domains $(DOMAINS),)
 
 start-status: start-build ## Show pipeline status and phase detection
 	$(METAL_BIN) status

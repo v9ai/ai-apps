@@ -52,7 +52,7 @@ extend type Mutation {
   deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
   importCompanyWithContacts(input: ImportCompanyWithContactsInput!): ImportCompanyResult!
   importCompanies(companies: [CompanyImportInput!]!): ImportCompaniesResult!
-  blockJobsByCompany(companyName: String!): BlockJobsResult!
+
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
 }

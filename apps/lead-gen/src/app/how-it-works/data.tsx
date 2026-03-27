@@ -67,7 +67,7 @@ export const papers: Paper[] = [
     authors: "Drizzle Team",
     year: 2024,
     finding: "Type-safe SQL query builder with migrations and schema management",
-    relevance: "Defines database schema in src/db/schema.ts and handles all queries for the GraphQL API, including tables like companies, contacts, ats_boards, and blocked_companies",
+    relevance: "Defines database schema in src/db/schema.ts and handles all queries for the GraphQL API, including tables like companies, contacts, and ats_boards",
     url: "https://orm.drizzle.team",
     categoryColor: "var(--green-9)",
   },
@@ -174,7 +174,7 @@ export const extraSections: { heading: string; content: string }[] = [
   },
   {
     heading: "Database Design",
-    content: "PostgreSQL schema includes tables for companies, contacts, contact_emails, email_campaigns, email_templates, ats_boards, company_facts, company_snapshots, and blocked_companies — all managed by Drizzle ORM with proper indexes for filtering performance.",
+    content: "PostgreSQL schema includes tables for companies, contacts, contact_emails, email_campaigns, email_templates, ats_boards, company_facts, and company_snapshots — all managed by Drizzle ORM with proper indexes for filtering performance.",
   },
   {
     heading: "Security & Auth",

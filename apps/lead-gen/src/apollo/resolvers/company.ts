@@ -5,7 +5,7 @@ import {
   atsBoards,
   contacts,
   contactEmails,
-  blockedCompanies,
+
 } from "@/db/schema";
 import { eq, and, or, like, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
@@ -1223,42 +1223,6 @@ export const companyResolvers = {
         failed: errors.length,
         errors,
       };
-    },
-
-    async blockJobsByCompany(
-      _parent: any,
-      args: { companyName: string },
-      context: GraphQLContext,
-    ) {
-      if (!context.userId || !isAdminEmail(context.userEmail)) {
-        throw new Error("Forbidden");
-      }
-
-      try {
-        // Check if already blocked
-        const existing = await context.db
-          .select()
-          .from(blockedCompanies)
-          .where(sql`lower(${blockedCompanies.name}) = ${args.companyName.toLowerCase()}`)
-          .limit(1);
-
-        if (existing[0]) {
-          return { success: true, message: `"${args.companyName}" is already blocked` };
-        }
-
-        await context.db.insert(blockedCompanies).values({
-          name: args.companyName,
-          reason: "Blocked via blockJobsByCompany mutation",
-        });
-
-        return { success: true, message: `Blocked jobs from "${args.companyName}"` };
-      } catch (error) {
-        console.error("Error blocking company:", error);
-        return {
-          success: false,
-          message: error instanceof Error ? error.message : "Failed to block company",
-        };
-      }
     },
 
     async enhanceCompany(_parent: any, args: { id?: number; key?: string }) {

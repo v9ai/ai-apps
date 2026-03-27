@@ -26,6 +26,10 @@ enum Command {
         /// Domains file (one domain per line)
         #[arg(short, long)]
         domains: Option<PathBuf>,
+
+        /// Skip confirmation prompt
+        #[arg(short, long)]
+        yes: bool,
     },
 
     /// Show pipeline status and phase detection
@@ -58,10 +62,10 @@ async fn main() -> Result<()> {
     std::fs::create_dir_all(data_dir)?;
 
     match cli.command {
-        Command::Pipeline { domains } => {
+        Command::Pipeline { domains, yes } => {
             let pipeline = Pipeline::open(&data_dir.join("pipeline"))?;
             let ctx = Arc::new(teams::TeamContext::new(pipeline, data_dir.clone()));
-            teams::run_pipeline(ctx, domains.as_deref()).await?;
+            teams::run_pipeline(ctx, domains.as_deref(), yes).await?;
         }
 
         Command::Status => {
