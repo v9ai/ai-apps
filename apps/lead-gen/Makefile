@@ -56,40 +56,6 @@ db-migrate:
 db-studio:
 	pnpm db:studio
 
-# ── Module 2: Scrapus (RL Crawler) ────────────────────────────
-
-.PHONY: scrapus scrapus-test scrapus-crawl scrapus-status scrapus-bench scrapus-lint scrapus-clean scrapus-install scrapus-metrics scrapus-reset
-
-scrapus: ## Delegate to scrapus Makefile
-	$(MAKE) -C scrapus
-
-scrapus-install: ## Install scrapus dependencies
-	$(MAKE) -C scrapus install-dev
-
-scrapus-test: ## Run scrapus tests
-	$(MAKE) -C scrapus test
-
-scrapus-crawl: ## Run RL crawler (pass SEEDS="url1 url2")
-	$(MAKE) -C scrapus crawl SEEDS="$(SEEDS)"
-
-scrapus-status: ## Show scrapus pipeline status
-	$(MAKE) -C scrapus status
-
-scrapus-bench: ## Run scrapus benchmarks
-	$(MAKE) -C scrapus bench
-
-scrapus-lint: ## Lint scrapus code
-	$(MAKE) -C scrapus lint
-
-scrapus-metrics: ## Show scrapus training metrics
-	$(MAKE) -C scrapus metrics
-
-scrapus-clean: ## Clean scrapus caches
-	$(MAKE) -C scrapus clean
-
-scrapus-reset: ## Full reset scrapus data
-	$(MAKE) -C scrapus reset
-
 # ── Module 3: Leadgen (Rust pipeline) ──────────────────────────
 
 RUST_CRATE   := ../../crates/leadgen
@@ -168,5 +134,5 @@ start-top: start-build ## Show top leads (pass N=50 for count)
 
 .PHONY: install-all
 
-install-all: hooks-install scrapus-install
+install-all: hooks-install
 	pnpm install

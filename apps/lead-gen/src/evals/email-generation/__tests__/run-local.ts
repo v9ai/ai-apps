@@ -20,7 +20,7 @@ import {
   scoreEmail,
   scoreComposite,
 } from "../scorers";
-import { buildComposePrompt } from "../../../prompts/compose-email";
+import { buildComposePrompt } from "../../../lib/compose-email-prompt";
 
 // ---------------------------------------------------------------------------
 // Minimal test runner
