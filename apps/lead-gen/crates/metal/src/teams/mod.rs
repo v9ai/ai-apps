@@ -59,6 +59,7 @@ pub struct TeamContext {
     pub llm_api_key: Option<String>,
     pub llm_base_url: String,
     pub batch: BatchSizes,
+    pub auto_confirm: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -94,6 +95,7 @@ impl TeamContext {
             llm_api_key,
             llm_base_url,
             batch: BatchSizes::default(),
+            auto_confirm: false,
         }
     }
 
@@ -107,7 +109,6 @@ impl TeamContext {
 pub async fn run_pipeline(
     ctx: Arc<TeamContext>,
     domains_file: Option<&Path>,
-    auto_confirm: bool,
 ) -> Result<Vec<StageReport>> {
     std::fs::create_dir_all(ctx.reports_dir())?;
     let mut reports = Vec::new();
@@ -116,7 +117,7 @@ pub async fn run_pipeline(
     let plan = state::assess(&ctx)?;
     eprintln!("{plan}");
 
-    if !auto_confirm {
+    if !ctx.auto_confirm {
         eprintln!("\n  Press Enter to execute, or Ctrl+C to abort...");
         let mut buf = String::new();
         std::io::stdin().read_line(&mut buf)?;

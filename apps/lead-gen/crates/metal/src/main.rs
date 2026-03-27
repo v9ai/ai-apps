@@ -64,8 +64,10 @@ async fn main() -> Result<()> {
     match cli.command {
         Command::Pipeline { domains, yes } => {
             let pipeline = Pipeline::open(&data_dir.join("pipeline"))?;
-            let ctx = Arc::new(teams::TeamContext::new(pipeline, data_dir.clone()));
-            teams::run_pipeline(ctx, domains.as_deref(), yes).await?;
+            let mut ctx = teams::TeamContext::new(pipeline, data_dir.clone());
+            ctx.auto_confirm = yes;
+            let ctx = Arc::new(ctx);
+            teams::run_pipeline(ctx, domains.as_deref()).await?;
         }
 
         Command::Status => {
