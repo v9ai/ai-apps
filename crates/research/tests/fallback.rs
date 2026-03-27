@@ -9,6 +9,7 @@ use research::crossref::CrossrefClient;
 use research::openalex::OpenAlexClient;
 use research::scholar::SemanticScholarClient;
 use research::tools::{FallbackClients, SearchPapers, SearchToolConfig};
+use research::zenodo::ZenodoClient;
 
 // ── Semaphore rate limiting ─────────────────────────────────────────
 
@@ -181,6 +182,91 @@ async fn search_falls_back_to_crossref_when_openalex_empty() {
     assert!(
         output.contains("Crossref Fallback Paper"),
         "expected Crossref paper: {output}"
+    );
+}
+
+// ── Search fallback to Zenodo when OpenAlex + Crossref empty ────────
+
+#[tokio::test]
+async fn search_falls_back_to_zenodo_when_crossref_empty() {
+    let s2_server = MockServer::start().await;
+    let oa_server = MockServer::start().await;
+    let cr_server = MockServer::start().await;
+    let zenodo_server = MockServer::start().await;
+
+    // S2 always returns 429
+    Mock::given(method("GET"))
+        .and(path_regex("/graph/v1/paper/search"))
+        .respond_with(ResponseTemplate::new(429))
+        .mount(&s2_server)
+        .await;
+
+    // OpenAlex returns error
+    Mock::given(method("GET"))
+        .and(path_regex("/works"))
+        .respond_with(ResponseTemplate::new(500))
+        .mount(&oa_server)
+        .await;
+
+    // Crossref returns error
+    Mock::given(method("GET"))
+        .and(path_regex("/works"))
+        .respond_with(ResponseTemplate::new(500))
+        .mount(&cr_server)
+        .await;
+
+    // Zenodo returns results
+    Mock::given(method("GET"))
+        .and(path_regex("/records"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "hits": {
+                "total": 1,
+                "hits": [{
+                    "id": 99999,
+                    "doi": "10.5281/zenodo.99999",
+                    "metadata": {
+                        "title": "Zenodo Fallback Paper",
+                        "publication_date": "2024-03-15",
+                        "creators": [{"name": "Author, A"}],
+                        "resource_type": {"type": "publication", "subtype": "article"}
+                    },
+                    "links": {
+                        "self": "https://zenodo.org/api/records/99999",
+                        "self_html": "https://zenodo.org/records/99999"
+                    }
+                }]
+            }
+        })))
+        .expect(1)
+        .mount(&zenodo_server)
+        .await;
+
+    let s2_client = SemanticScholarClient::with_base_url(&s2_server.uri(), None);
+    let fallback = FallbackClients {
+        openalex: OpenAlexClient::with_base_url(&oa_server.uri(), None),
+        crossref: CrossrefClient::with_base_url(&cr_server.uri(), None),
+        zenodo: Some(ZenodoClient::with_base_url(&zenodo_server.uri(), None)),
+    };
+
+    let tool = SearchPapers::with_fallback(
+        s2_client,
+        SearchToolConfig::default(),
+        fallback,
+    );
+
+    let result = tool
+        .call_json(serde_json::json!({ "query": "test" }))
+        .await;
+
+    assert!(result.is_ok(), "expected Zenodo fallback success: {:?}", result);
+    let output = result.unwrap();
+    assert!(
+        output.contains("Zenodo Fallback Paper"),
+        "expected Zenodo paper in output: {output}"
+    );
+    assert!(
+        output.contains("Zenodo"),
+        "expected Zenodo source annotation: {output}"
     );
 }
 
