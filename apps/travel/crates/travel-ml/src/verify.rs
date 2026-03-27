@@ -200,6 +200,12 @@ pub fn verify_hotel(
 /// Logs each verdict and a summary line. Designed to slot into the pipeline
 /// between review scraping (IO phase) and Candle ML analysis (CPU phase),
 /// so rejected hotels never waste embedding compute.
+///
+/// **Scraper-blocked heuristic:** if *every* hotel in the batch has
+/// `review_signal == Fail` (zero data from all sources), the HTTP scraper is
+/// likely being globally blocked (CAPTCHAs, cookie walls). In that case the
+/// review signal is downgraded to `Weak` for all hotels so we don't discard
+/// the entire dataset. Only the URL and pre-scraped signals remain decisive.
 pub fn verify_batch(
     hotels: &[Hotel],
     scraped_data: &[ScrapedReviewData],
@@ -207,12 +213,41 @@ pub fn verify_batch(
 ) -> Vec<usize> {
     assert_eq!(hotels.len(), scraped_data.len());
 
+    // Detect global scraper blockage: every hotel yielded zero review data.
+    let all_review_fail = !scraped_data.is_empty()
+        && scraped_data.iter().all(|s| {
+            s.review_count == 0 && s.review_rating == 0.0 && s.review_texts.is_empty() && s.sources.is_empty()
+        });
+    if all_review_fail {
+        warn!(
+            "All {} hotels returned zero review data — HTTP scraper appears globally blocked; \
+             downgrading review signal to Weak",
+            hotels.len(),
+        );
+    }
+
     let mut keep = Vec::new();
     let mut dropped = Vec::new();
 
     for (i, (hotel, scraped)) in hotels.iter().zip(scraped_data.iter()).enumerate() {
-        let verdict = verify_hotel(hotel, scraped, prescraped_path);
-        if verdict.passed {
+        let url_signal = check_source_url(hotel);
+        let review_signal = if all_review_fail {
+            VerifySignal::Weak
+        } else {
+            check_scraped_reviews(scraped)
+        };
+        let prescraped_signal = check_prescraped(&hotel.hotel_id, prescraped_path);
+        let passed = combine(url_signal, review_signal, prescraped_signal);
+
+        let verdict = Verdict {
+            hotel_name: hotel.name.clone(),
+            url_signal,
+            review_signal,
+            prescraped_signal,
+            passed,
+        };
+
+        if passed {
             keep.push(i);
         } else {
             warn!("Dropping unverifiable hotel: {verdict}");
