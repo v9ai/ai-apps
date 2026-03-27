@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { appointments, familyMembers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { Box, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
+import { Badge, Box, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 import { deleteAppointment } from "../actions";
@@ -19,6 +19,14 @@ async function AppointmentDetail({ id }: { id: string }) {
     .where(eq(appointments.id, id));
 
   if (!appointment || appointment.userId !== userId) notFound();
+
+  const familyMember = appointment.familyMemberId
+    ? await db
+        .select({ id: familyMembers.id, name: familyMembers.name, relationship: familyMembers.relationship })
+        .from(familyMembers)
+        .where(eq(familyMembers.id, appointment.familyMemberId))
+        .then((rows) => rows[0] ?? null)
+    : null;
 
   return (
     <>
@@ -44,6 +52,20 @@ async function AppointmentDetail({ id }: { id: string }) {
       </Flex>
 
       <Separator size="4" />
+
+      {familyMember && (
+        <Flex direction="column" gap="1">
+          <Text size="2" weight="medium" color="gray">For</Text>
+          <Flex align="center" gap="2">
+            <Text size="3" asChild>
+              <Link href={`/family/${familyMember.id}`}>{familyMember.name}</Link>
+            </Text>
+            {familyMember.relationship && (
+              <Badge color="blue" radius="full" size="1">{familyMember.relationship}</Badge>
+            )}
+          </Flex>
+        </Flex>
+      )}
 
       {appointment.notes ? (
         <Flex direction="column" gap="1">

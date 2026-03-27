@@ -1,7 +1,7 @@
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { doctors } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { doctors, familyMemberDoctors, familyMembers } from "@/lib/db/schema";
+import { eq, asc, inArray } from "drizzle-orm";
 import { Box, Card, Flex, Heading, Separator, Skeleton, Text, Badge } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { AddDoctorForm } from "./add-form";
@@ -18,6 +18,21 @@ async function DoctorsList() {
     .from(doctors)
     .where(eq(doctors.userId, userId))
     .orderBy(asc(doctors.name));
+
+  // Fetch linked family members for all doctors in one round-trip
+  const doctorIds = rows.map((d) => d.id);
+  const linkedMap = new Map<string, string[]>();
+  if (doctorIds.length) {
+    const fmdRows = await db
+      .select({ doctorId: familyMemberDoctors.doctorId, name: familyMembers.name })
+      .from(familyMemberDoctors)
+      .innerJoin(familyMembers, eq(familyMemberDoctors.familyMemberId, familyMembers.id))
+      .where(inArray(familyMemberDoctors.doctorId, doctorIds));
+    for (const { doctorId, name } of fmdRows) {
+      if (!linkedMap.has(doctorId)) linkedMap.set(doctorId, []);
+      linkedMap.get(doctorId)!.push(name);
+    }
+  }
 
   if (!rows.length) {
     return (
@@ -45,6 +60,13 @@ async function DoctorsList() {
                   </Flex>
                   {d.phone && <Text size="1" color="gray">{d.phone}</Text>}
                   {d.address && <Text size="1" color="gray">{d.address}</Text>}
+                  {(linkedMap.get(d.id) ?? []).length > 0 && (
+                    <Flex gap="1" wrap="wrap" mt="1">
+                      {(linkedMap.get(d.id) ?? []).map((name) => (
+                        <Badge key={name} color="purple" variant="soft" size="1">{name}</Badge>
+                      ))}
+                    </Flex>
+                  )}
                 </Flex>
                 <DeleteConfirmButton
                   action={deleteDoctor.bind(null, d.id)}

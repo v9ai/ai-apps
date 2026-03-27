@@ -1,7 +1,7 @@
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { familyMembers } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { familyMembers, familyMemberDoctors } from "@/lib/db/schema";
+import { eq, asc, count } from "drizzle-orm";
 import { Box, Badge, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { AddFamilyMemberForm } from "./add-form";
@@ -24,11 +24,19 @@ const RELATIONSHIP_COLORS: Record<string, "blue" | "green" | "orange" | "purple"
 async function FamilyList() {
   const { userId } = await withAuth();
 
-  const rows = await db
-    .select()
-    .from(familyMembers)
-    .where(eq(familyMembers.userId, userId))
-    .orderBy(asc(familyMembers.name));
+  const [rows, doctorCounts] = await Promise.all([
+    db
+      .select()
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, userId))
+      .orderBy(asc(familyMembers.name)),
+    db
+      .select({ familyMemberId: familyMemberDoctors.familyMemberId, doctorCount: count() })
+      .from(familyMemberDoctors)
+      .groupBy(familyMemberDoctors.familyMemberId),
+  ]);
+
+  const doctorCountMap = new Map(doctorCounts.map((r) => [r.familyMemberId, r.doctorCount]));
 
   if (!rows.length) {
     return (
@@ -59,6 +67,11 @@ async function FamilyList() {
                         size="1"
                       >
                         {m.relationship}
+                      </Badge>
+                    )}
+                    {(doctorCountMap.get(m.id) ?? 0) > 0 && (
+                      <Badge color="blue" variant="soft" size="1">
+                        {doctorCountMap.get(m.id)} {doctorCountMap.get(m.id) === 1 ? "doctor" : "doctors"}
                       </Badge>
                     )}
                   </Flex>

@@ -1,13 +1,16 @@
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { familyMembers } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { familyMembers, familyMemberDoctors, doctors } from "@/lib/db/schema";
+import { and, eq, asc, notInArray } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
-import { Box, Badge, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
+import { Box, Badge, Card, Flex, Heading, Select, Separator, Skeleton, Text, Button } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
+import { Stethoscope } from "lucide-react";
 import { deleteFamilyMember } from "../actions";
+import { linkDoctorToFamilyMember, unlinkDoctorFromFamilyMember } from "../doctor-link-actions";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
+import { LinkDoctorForm } from "./link-doctor-form";
 
 async function FamilyMemberDetail({ id }: { id: string }) {
   const { userId } = await withAuth();
@@ -24,6 +27,32 @@ async function FamilyMemberDetail({ id }: { id: string }) {
         (Date.now() - new Date(member.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
       )
     : null;
+
+  // Fetch linked doctors
+  const linkedDoctors = await db
+    .select({
+      id: doctors.id,
+      name: doctors.name,
+      specialty: doctors.specialty,
+      phone: doctors.phone,
+      address: doctors.address,
+    })
+    .from(familyMemberDoctors)
+    .innerJoin(doctors, eq(familyMemberDoctors.doctorId, doctors.id))
+    .where(eq(familyMemberDoctors.familyMemberId, id))
+    .orderBy(asc(doctors.name));
+
+  // Fetch user's doctors not yet linked — for the link form
+  const linkedDoctorIds = linkedDoctors.map((d) => d.id);
+  const availableDoctors = await db
+    .select({ id: doctors.id, name: doctors.name, specialty: doctors.specialty })
+    .from(doctors)
+    .where(
+      linkedDoctorIds.length > 0
+        ? and(eq(doctors.userId, userId), notInArray(doctors.id, linkedDoctorIds))
+        : eq(doctors.userId, userId),
+    )
+    .orderBy(asc(doctors.name));
 
   return (
     <>
@@ -66,6 +95,59 @@ async function FamilyMemberDetail({ id }: { id: string }) {
           </Flex>
         ) : (
           !member.dateOfBirth && <Text size="2" color="gray">No additional details.</Text>
+        )}
+      </Flex>
+
+      <Separator size="4" />
+
+      <Flex direction="column" gap="3">
+        <Heading size="4">Doctors</Heading>
+
+        {linkedDoctors.length > 0 ? (
+          <Flex direction="column" gap="2">
+            {linkedDoctors.map((d) => (
+              <Card key={d.id} asChild className="card-hover">
+                <Link href={`/doctors/${d.id}`} style={{ textDecoration: "none" }}>
+                  <Flex justify="between" align="start">
+                    <Flex direction="column" gap="1">
+                      <Flex align="center" gap="2">
+                        <Text size="2" weight="medium">{d.name}</Text>
+                        {d.specialty && (
+                          <Badge color="blue" variant="soft" size="1">{d.specialty}</Badge>
+                        )}
+                      </Flex>
+                      {d.phone && <Text size="1" color="gray">{d.phone}</Text>}
+                      {d.address && <Text size="1" color="gray">{d.address}</Text>}
+                    </Flex>
+                    <DeleteConfirmButton
+                      action={async () => {
+                        "use server";
+                        const fd = new FormData();
+                        fd.set("familyMemberId", id);
+                        fd.set("doctorId", d.id);
+                        await unlinkDoctorFromFamilyMember(fd);
+                      }}
+                      description="This doctor will be unlinked from this family member."
+                      stopPropagation
+                    />
+                  </Flex>
+                </Link>
+              </Card>
+            ))}
+          </Flex>
+        ) : (
+          <Flex align="center" gap="2" py="2">
+            <Stethoscope size={16} color="var(--gray-8)" />
+            <Text size="2" color="gray">No doctors linked yet.</Text>
+          </Flex>
+        )}
+
+        {availableDoctors.length > 0 && (
+          <LinkDoctorForm
+            familyMemberId={id}
+            availableDoctors={availableDoctors}
+            linkAction={linkDoctorToFamilyMember}
+          />
         )}
       </Flex>
     </>

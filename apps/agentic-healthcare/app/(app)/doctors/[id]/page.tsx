@@ -1,6 +1,6 @@
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { doctors, appointments } from "@/lib/db/schema";
+import { doctors, appointments, familyMemberDoctors, familyMembers } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { Box, Badge, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
@@ -8,7 +8,16 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { deleteDoctor } from "../actions";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
-import { Calendar } from "lucide-react";
+import { Calendar, Users } from "lucide-react";
+
+function calcAge(dateOfBirth: string): number {
+  const today = new Date();
+  const dob = new Date(dateOfBirth);
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
 
 async function DoctorDetail({ id }: { id: string }) {
   const { userId } = await withAuth();
@@ -20,11 +29,23 @@ async function DoctorDetail({ id }: { id: string }) {
 
   if (!doctor || doctor.userId !== userId) notFound();
 
-  const relatedAppointments = await db
-    .select()
-    .from(appointments)
-    .where(and(eq(appointments.userId, userId), eq(appointments.doctorId, id)))
-    .orderBy(desc(appointments.appointmentDate));
+  const [relatedAppointments, linkedFamilyMembers] = await Promise.all([
+    db
+      .select()
+      .from(appointments)
+      .where(and(eq(appointments.userId, userId), eq(appointments.doctorId, id)))
+      .orderBy(desc(appointments.appointmentDate)),
+    db
+      .select({
+        id: familyMembers.id,
+        name: familyMembers.name,
+        relationship: familyMembers.relationship,
+        dateOfBirth: familyMembers.dateOfBirth,
+      })
+      .from(familyMemberDoctors)
+      .innerJoin(familyMembers, eq(familyMemberDoctors.familyMemberId, familyMembers.id))
+      .where(eq(familyMemberDoctors.doctorId, id)),
+  ]);
 
   return (
     <>
@@ -75,6 +96,33 @@ async function DoctorDetail({ id }: { id: string }) {
           <Text size="2" color="gray">No additional details.</Text>
         )}
       </Flex>
+
+      {linkedFamilyMembers.length > 0 && (
+        <>
+          <Separator size="4" />
+          <Flex direction="column" gap="2">
+            <Heading size="4">Family members</Heading>
+            {linkedFamilyMembers.map((fm) => (
+              <Card key={fm.id} asChild className="card-hover">
+                <Link href={`/family/${fm.id}`} style={{ textDecoration: "none" }}>
+                  <Flex align="center" gap="2">
+                    <Users size={14} color="var(--gray-8)" />
+                    <Text size="2" weight="medium">{fm.name}</Text>
+                    {fm.relationship && (
+                      <Badge color="green" variant="soft" size="1">{fm.relationship}</Badge>
+                    )}
+                    {fm.dateOfBirth && (
+                      <Text size="1" color="gray">
+                        Age {calcAge(fm.dateOfBirth)}
+                      </Text>
+                    )}
+                  </Flex>
+                </Link>
+              </Card>
+            ))}
+          </Flex>
+        </>
+      )}
 
       {relatedAppointments.length > 0 && (
         <>
