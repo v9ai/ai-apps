@@ -302,7 +302,7 @@ def enrich_results(state: State) -> dict:
         f"""For each movie in this JSON array, add exactly three new fields:
 - "url": Netflix URL "https://www.netflix.com/title/<id>" or Disney+ URL
   "https://www.disneyplus.com/movies/<slug>" (use real IDs/slugs if known,
-  else search fallback: netflix.com/search?q=... or disneyplus.com/search?q=...)
+  else search fallback: netflix.com/search?q=... or disneyplus.com/en-gb/browse/search?q=...)
 - "imdb_url": "https://www.imdb.com/title/<tt_id>/" with the real IMDB tt-id
 - "romanian_audio": boolean, true if the film has Romanian dubbing in Romania
 
@@ -319,7 +319,7 @@ Keep ALL existing fields. Return ONLY the JSON array, no markdown.
                 m["url"] = (
                     f"https://www.netflix.com/search?q={t}"
                     if m.get("platform") == "Netflix"
-                    else f"https://www.disneyplus.com/search?q={t}"
+                    else f"https://www.disneyplus.com/en-gb/browse/search?q={t}"
                 )
         return {"similar_movies": enriched}
     except (json.JSONDecodeError, ValueError):
@@ -454,7 +454,7 @@ async def _validate_async(movies: list[dict]) -> list[dict]:
                 m[key] = (
                     f"https://www.netflix.com/search?q={t}"
                     if m.get("platform") == "Netflix"
-                    else f"https://www.disneyplus.com/search?q={t}"
+                    else f"https://www.disneyplus.com/en-gb/browse/search?q={t}"
                 )
             else:
                 m[key] = f"https://www.imdb.com/find/?q={t}"
