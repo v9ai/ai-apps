@@ -1214,7 +1214,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             {isAdmin && company && (
               <AddApplicationDialog
                 companyName={company.name}
-                onCreated={refetchApps}
+                onCreated={refetch}
               />
             )}
             {isAdmin && company && (
