@@ -1,3 +1,4 @@
+pub mod constants;
 pub mod dedup;
 pub mod discover;
 pub mod embeddings;

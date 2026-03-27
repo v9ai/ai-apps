@@ -8,6 +8,7 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use tracing::{info, warn};
 
+use crate::constants::{DISCOVERY_YEAR, NEW_HOTEL_MIN_YEAR};
 use crate::embeddings::EmbeddingEngine;
 use crate::hotel::Hotel;
 
@@ -332,17 +333,17 @@ pub fn extract_hotels(ranked: &[RankedPassage]) -> Vec<Hotel> {
             .and_then(|c| c[1].parse::<f32>().ok())
             .unwrap_or(0.0);
 
-        // Detect year — keep any recent year (2018+)
+        // Detect year — keep only 2025–2026 window
         let opened_year = year_re.captures(text).and_then(|c| {
             let y: u16 = c[1].parse().ok()?;
-            if y >= 2018 { Some(y) } else { None }
+            if y >= NEW_HOTEL_MIN_YEAR { Some(y) } else { None }
         });
-        // If no recent year mention, skip — we only want new hotels
+        // If no year in the new-hotel window, skip
         if opened_year.is_none() && !text.to_lowercase().contains("2026") {
             continue;
         }
-        // Use the parsed year; fall back to 2026 only when the text mentions it without a parseable year
-        let opened_year = opened_year.or(Some(2026u16));
+        // Use the parsed year; fall back to DISCOVERY_YEAR when the text mentions it without a parseable year
+        let opened_year = opened_year.or(Some(DISCOVERY_YEAR));
 
         // Detect location
         let text_lower = text.to_lowercase();
@@ -550,7 +551,7 @@ pub async fn structure_with_deepseek(text: &str) -> Result<Hotel> {
         amenities: ex.amenities,
         image_url: None,
         gallery: vec![],
-        opened_year: Some(2026),
+        opened_year: Some(DISCOVERY_YEAR),
     })
 }
 

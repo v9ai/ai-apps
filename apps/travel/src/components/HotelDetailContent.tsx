@@ -3,6 +3,7 @@
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
 import { getHotelById, hotels2026 } from "@/lib/data";
+import { NEW_HOTEL_MIN_YEAR } from "@/lib/constants";
 import Link from "next/link";
 import { useState, useCallback, useEffect } from "react";
 
@@ -620,7 +621,7 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
             >
               {"★".repeat(hotel.star_rating)}
             </span>
-            {hotel.opened_year && hotel.opened_year >= new Date().getFullYear() - 1 && (
+            {hotel.opened_year && hotel.opened_year >= NEW_HOTEL_MIN_YEAR && (
               <span
                 className={css({
                   display: "inline-flex",
