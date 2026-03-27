@@ -4,14 +4,14 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
-  useGetCompaniesQuery,
+  useSearchCompaniesQuery,
   useDeleteCompanyMutation,
   useCreateCompanyMutation,
   useDeleteCompaniesMutation,
   useMergeDuplicateCompaniesMutation,
   useImportCompanyWithContactsMutation,
 } from "@/__generated__/hooks";
-import type { GetCompaniesQuery, CompanyOrderBy } from "@/__generated__/graphql";
+import type { SearchCompaniesQuery, CompanyOrderBy, CompanyFilterInput, CompanyCategory } from "@/__generated__/graphql";
 import { useAuth } from "@/lib/auth-hooks";
 import {
   Box,
@@ -25,27 +25,31 @@ import {
   Button,
   TextArea,
   TextField,
+  Select,
 } from "@radix-ui/themes";
 import { TrashIcon, PlusIcon, MixIcon, UploadIcon } from "@radix-ui/react-icons";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
-type Company = GetCompaniesQuery["companies"]["companies"][number];
+type Company = SearchCompaniesQuery["companies"]["companies"][number];
 
 export function CompaniesList() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
+  const [category, setCategory] = useState(searchParams.get("cat") ?? "ALL");
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") ?? "name");
+  const [minTier, setMinTier] = useState(searchParams.get("tier") ?? "all");
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (searchTerm) {
-      params.set("q", searchTerm);
-    } else {
-      params.delete("q");
-    }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchTerm, router, pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+    const params = new URLSearchParams();
+    if (searchTerm) params.set("q", searchTerm);
+    if (category !== "ALL") params.set("cat", category);
+    if (sortBy !== "name") params.set("sort", sortBy);
+    if (minTier !== "all") params.set("tier", minTier);
+    const qs = params.toString();
+    router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  }, [searchTerm, category, sortBy, minTier, router, pathname]); // eslint-disable-line react-hooks/exhaustive-deps
   const observerRef = useRef<IntersectionObserver | null>(null);
   const { user } = useAuth();
   const [deleteCompanyMutation] = useDeleteCompanyMutation();
@@ -91,7 +95,7 @@ export function CompaniesList() {
             linkedin_url: addLinkedin.trim() || undefined,
           },
         },
-        refetchQueries: ["GetCompanies"],
+        refetchQueries: ["SearchCompanies"],
         awaitRefetchQueries: true,
       });
       setAddOpen(false);
@@ -115,7 +119,7 @@ export function CompaniesList() {
     try {
       await deleteCompanyMutation({
         variables: { id: companyId },
-        refetchQueries: ["GetCompanies"],
+        refetchQueries: ["SearchCompanies"],
         awaitRefetchQueries: true,
       });
     } catch (error) {
@@ -139,7 +143,7 @@ export function CompaniesList() {
     try {
       await deleteCompaniesMutation({
         variables: { companyIds: Array.from(selectedCompanies) },
-        refetchQueries: ["GetCompanies"],
+        refetchQueries: ["SearchCompanies"],
         awaitRefetchQueries: true,
       });
       setSelectedCompanies(new Set());
@@ -154,7 +158,7 @@ export function CompaniesList() {
     try {
       await mergeDuplicateCompaniesMutation({
         variables: { companyIds: Array.from(selectedCompanies) },
-        refetchQueries: ["GetCompanies"],
+        refetchQueries: ["SearchCompanies"],
         awaitRefetchQueries: true,
       });
       setSelectedCompanies(new Set());
@@ -203,14 +207,21 @@ export function CompaniesList() {
     }
   };
 
-  const { loading, error, data, refetch, fetchMore } = useGetCompaniesQuery({
+  const filter: CompanyFilterInput = {
+    ...(searchTerm ? { text: searchTerm } : {}),
+    ...(category !== "ALL" ? { category_in: [category as CompanyCategory] } : {}),
+    ...(minTier !== "all" ? { min_ai_tier: parseInt(minTier, 10) } : {}),
+  };
+  const orderBy = (sortBy === "score" ? "SCORE_DESC" : "NAME_ASC") as CompanyOrderBy;
+
+  const { loading, error, data, refetch, fetchMore } = useSearchCompaniesQuery({
     variables: {
-      text: searchTerm || undefined,
-      order_by: "NAME_ASC" as CompanyOrderBy,
+      filter,
+      order_by: orderBy,
       limit: 20,
       offset: 0,
     },
-    pollInterval: 60000, // Refresh every minute
+    pollInterval: 60000,
     notifyOnNetworkStatusChange: true,
   });
 
@@ -393,13 +404,60 @@ export function CompaniesList() {
       </Flex>
 
       {/* search */}
-      <div className="yc-search" style={{ marginBottom: 12 }}>
+      <div className="yc-search" style={{ marginBottom: 8 }}>
         <input
           placeholder="search companies…"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+
+      {/* filter bar */}
+      <Flex gap="3" align="center" mb="2" wrap="wrap">
+        <Select.Root value={category} onValueChange={setCategory}>
+          <Select.Trigger variant="ghost" size="1" style={{ fontSize: 12 }} />
+          <Select.Content>
+            <Select.Item value="ALL">All categories</Select.Item>
+            <Select.Item value="CONSULTANCY">Consultancy</Select.Item>
+            <Select.Item value="PRODUCT">Product</Select.Item>
+            <Select.Item value="AGENCY">Agency</Select.Item>
+            <Select.Item value="STAFFING">Staffing</Select.Item>
+            <Select.Item value="OTHER">Other</Select.Item>
+            <Select.Item value="UNKNOWN">Unknown</Select.Item>
+          </Select.Content>
+        </Select.Root>
+
+        <Select.Root value={sortBy} onValueChange={setSortBy}>
+          <Select.Trigger variant="ghost" size="1" style={{ fontSize: 12 }} />
+          <Select.Content>
+            <Select.Item value="name">Sort: Name</Select.Item>
+            <Select.Item value="score">Sort: Score</Select.Item>
+          </Select.Content>
+        </Select.Root>
+
+        <Select.Root value={minTier} onValueChange={setMinTier}>
+          <Select.Trigger variant="ghost" size="1" style={{ fontSize: 12 }} />
+          <Select.Content>
+            <Select.Item value="all">Any AI tier</Select.Item>
+            <Select.Item value="1">AI tier 1+</Select.Item>
+            <Select.Item value="2">AI tier 2</Select.Item>
+          </Select.Content>
+        </Select.Root>
+
+        {(category !== "ALL" || minTier !== "all" || sortBy !== "name") && (
+          <button
+            className="yc-cta"
+            style={{ fontSize: 11, padding: "2px 8px" }}
+            onClick={() => {
+              setCategory("ALL");
+              setSortBy("name");
+              setMinTier("all");
+            }}
+          >
+            clear filters
+          </button>
+        )}
+      </Flex>
 
       {/* bulk action bar */}
       {isAdmin && selectedCompanies.size > 0 && (
@@ -519,6 +577,12 @@ export function CompaniesList() {
                     {company.tags.slice(0, 3).join(", ")}
                     {company.tags.length > 3 && ` +${company.tags.length - 3}`}
                   </span>
+                )}
+                {company.score > 0 && (
+                  <span> · {company.score.toFixed(1)}</span>
+                )}
+                {company.category && company.category !== "UNKNOWN" && (
+                  <span> · {company.category.toLowerCase()}</span>
                 )}
               </span>
             </div>
