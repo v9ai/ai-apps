@@ -339,10 +339,10 @@
     "name": "Computas",
     "website": "https://computas.com/",
     "source": "seed",
-    "description": "Computas provides AI and cloud solutions to public and private sectors in the Nordic region.",
+    "description": "Computas provides AI and ML consulting services, focusing on AI-assisted coding, machine learning, and scalable solutions for public and private sectors.",
     "location": "Norway",
-    "employee_range": "51-200",
-    "specialties": "AI, Machine Learning, Cloud Solutions, Custom Copilots, NLP, Computer Vision",
+    "employee_range": "500+",
+    "specialties": "AI-assisted coding, Machine Learning, Natural Language Processing, Computer Vision, AI Consulting, MLOps",
     "remote_policy": "unknown",
     "is_ai_consultancy": true,
     "confidence": 0.95

@@ -78,9 +78,12 @@ fn extract_links(doc: &Html, base_url: &str) -> Vec<String> {
         .collect()
 }
 
-pub fn truncate_for_llm(text: &str, max_chars: usize) -> String {
-    if text.len() <= max_chars { return text.to_string(); }
-    let truncated = &text[..max_chars];
+pub fn truncate_for_llm(text: &str, max_bytes: usize) -> String {
+    if text.len() <= max_bytes { return text.to_string(); }
+    // Find a valid char boundary at or before max_bytes
+    let mut end = max_bytes;
+    while end > 0 && !text.is_char_boundary(end) { end -= 1; }
+    let truncated = &text[..end];
     if let Some(pos) = truncated.rfind(". ") { truncated[..=pos].to_string() }
-    else { format!("{}...", &text[..max_chars]) }
+    else { format!("{}...", truncated) }
 }

@@ -36,3 +36,14 @@ export const DISCOVERY_YEAR = 2026;
  * Rust mirror: `NEW_HOTEL_MIN_YEAR` in `crates/travel-ml/src/constants.rs`
  */
 export const NEW_HOTEL_MIN_YEAR = 2025;
+
+/**
+ * Maximum review count plausible for a genuinely new hotel.
+ *
+ * If a hotel has `opened_year >= DISCOVERY_YEAR` but more reviews than this,
+ * it was misidentified as new. The Rust pipeline clears `opened_year` to
+ * null before export, so this constant is informational on the TS side.
+ *
+ * Rust mirror: `MAX_REVIEWS_NEW_HOTEL` in `crates/travel-ml/src/constants.rs`
+ */
+export const MAX_REVIEWS_NEW_HOTEL = 50;

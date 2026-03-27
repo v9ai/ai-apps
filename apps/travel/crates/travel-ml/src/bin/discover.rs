@@ -9,7 +9,7 @@ use tracing::info;
 use travel_ml::constants::{DISCOVERY_YEAR, DISCOVERY_YEAR_STR};
 use travel_ml::dedup::deduplicate;
 use travel_ml::discover::{
-    extract_hotels, rank_passages, scrape_all_sources, validate_hotel,
+    extract_hotels, is_seaside_hotel, rank_passages, scrape_all_sources, validate_hotel,
 };
 use travel_ml::embeddings::EmbeddingEngine;
 use travel_ml::hotel::{seed_hotels, Hotel, HotelSearchResult};
@@ -98,7 +98,15 @@ async fn main() -> Result<()> {
             before - scraped_candidates.len()
         );
     }
-    info!("Valid scraped candidates: {}", scraped_candidates.len());
+    let before_seaside = scraped_candidates.len();
+    scraped_candidates.retain(|h| is_seaside_hotel(h));
+    if scraped_candidates.len() < before_seaside {
+        info!(
+            "Seaside filter: dropped {} inland candidates",
+            before_seaside - scraped_candidates.len()
+        );
+    }
+    info!("Valid seaside candidates: {}", scraped_candidates.len());
 
     // ── Stage 5: Merge scraped + curated 2026 hotels ──
     let curated = curated_2026_hotels();
@@ -151,7 +159,7 @@ async fn export_results(hotels: &[Hotel], engine: &EmbeddingEngine, args: &Args)
     // Compute relevance scores via Candle embedding similarity.
     // DISCOVERY_YEAR_STR is embedded in the query so the vector space is anchored
     // to the target year — do not replace with a literal year.
-    let query = format!("new affordable hotel Greece {DISCOVERY_YEAR_STR} beach resort value cheapest budget");
+    let query = format!("new affordable seaside beach hotel Greece {DISCOVERY_YEAR_STR} beachfront coastal resort value budget");
     let query_vec = engine.embed_one(&query).context("embedding reference query")?;
 
     let texts: Vec<String> = hotels.iter().map(|h| h.embed_text()).collect();
@@ -219,6 +227,9 @@ async fn export_results(hotels: &[Hotel], engine: &EmbeddingEngine, args: &Args)
     let analyses = reviews::analyze_all_hotels_with_reviews(engine, &hotels_with_images)
         .await
         .context("review analysis pipeline")?;
+
+    // De-classify "new" hotels whose review counts prove they are established
+    reviews::clear_misidentified_new_hotels(&mut hotels_with_images, &analyses);
 
     // Build enriched results
     let mut results: Vec<EnrichedSearchResult> = hotels_with_images
@@ -292,22 +303,6 @@ fn curated_2026_hotels() -> Vec<Hotel> {
     vec![
         // ── Budget / Value (under €150) ────────────────────────────
         Hotel {
-            hotel_id: "petra-view-meteora".into(),
-            name: "Petra View Hotel Meteora".into(),
-            description: format!("New 3-star guesthouse at the foot of the Meteora rock pillars in Kalambaka. \
-                24 stone-clad rooms with balcony views of the monasteries, hearty Greek breakfast, \
-                and a garden terrace. The most affordable new-build near Meteora in {DISCOVERY_YEAR_STR}."),
-            star_rating: 3,
-            board_type: "Bed & Breakfast".into(),
-            price_eur: 65.0,
-            location: "Meteora, Thessaly, Greece".into(),
-            region: "Thessaly".into(),
-            lat: 39.7217, lng: 21.6306,
-            source_url: "https://www.booking.com/searchresults.html?ss=Meteora+Kalambaka+Greece".into(),
-            amenities: vec!["Restaurant".into(), "Parking".into(), "Wi-Fi".into(), "Garden terrace".into()],
-            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
-        },
-        Hotel {
             hotel_id: "selini-suites-naxos".into(),
             name: "Selini Suites Naxos".into(),
             description: "New-build 3-star aparthotel 200m from Agios Georgios beach in Naxos Town. \
@@ -353,22 +348,6 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 36.8933, lng: 26.9881,
             source_url: "https://www.booking.com/searchresults.html?ss=Lambi+Kos+Greece+hotel".into(),
             amenities: vec!["Swimming pool".into(), "Bar".into(), "Beach access".into(), "Wi-Fi".into(), "Parking".into(), "Bike rental".into()],
-            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
-        },
-        Hotel {
-            hotel_id: "urban-athena-hotel".into(),
-            name: "Urban Athena Hotel".into(),
-            description: "Contemporary 3-star city hotel in central Athens, a 5-minute walk from \
-                Syntagma Square. 60 compact rooms with industrial-chic interiors, co-working lounge, \
-                and a rooftop bar with Acropolis views. Excellent value for an Athens city break.".into(),
-            star_rating: 3,
-            board_type: "Bed & Breakfast".into(),
-            price_eur: 89.0,
-            location: "Athens, Attica, Greece".into(),
-            region: "Attica".into(),
-            lat: 37.9750, lng: 23.7350,
-            source_url: "https://www.booking.com/searchresults.html?ss=Syntagma+Square+Athens+Greece+hotel".into(),
-            amenities: vec!["Rooftop terrace".into(), "Bar".into(), "Wi-Fi".into(), "Restaurant".into(), "Co-working".into()],
             image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         // ── Mid-range (€100–€250) ──────────────────────────────────
@@ -606,6 +585,19 @@ mod tests {
                     h.hotel_id
                 );
             }
+        }
+    }
+
+    #[test]
+    fn curated_hotels_are_all_seaside() {
+        use travel_ml::discover::is_seaside_hotel;
+        for h in curated_2026_hotels() {
+            assert!(
+                is_seaside_hotel(&h),
+                "curated hotel '{}' (region={}, location={}) is not seaside — \
+                 all curated hotels must be beachfront or on a Greek island",
+                h.hotel_id, h.region, h.location,
+            );
         }
     }
 
