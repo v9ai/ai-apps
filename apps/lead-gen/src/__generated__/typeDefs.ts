@@ -75,52 +75,12 @@ type ArchiveEmailResult {
   success: Boolean!
 }
 
-type AshbyAddress {
-  postalAddress: AshbyPostalAddress
-}
-
-type AshbyCompensation {
-  compensationTierSummary: String
-  compensationTiers: [AshbyCompensationTier!]!
-  scrapeableCompensationSalarySummary: String
-  summaryComponents: [AshbyCompensationComponent!]!
-}
-
-type AshbyCompensationComponent {
-  compensationType: String
-  currencyCode: String
-  id: String
-  interval: String
-  maxValue: Float
-  minValue: Float
-  summary: String
-}
-
-type AshbyCompensationTier {
-  additionalInformation: String
-  components: [AshbyCompensationComponent!]!
-  id: String
-  tierSummary: String
-  title: String
-}
-
 type AshbyEnrichment {
   company_name: String
   enriched_at: String
   industry_tags: [String!]!
   size_signal: String
   tech_signals: [String!]!
-}
-
-type AshbyPostalAddress {
-  addressCountry: String
-  addressLocality: String
-  addressRegion: String
-}
-
-type AshbySecondaryLocation {
-  address: AshbyPostalAddress
-  location: String!
 }
 
 input BatchRecipientInput {
@@ -473,11 +433,6 @@ type DeleteEmailTemplateResult {
   success: Boolean!
 }
 
-type DeleteJobResponse {
-  message: String
-  success: Boolean!
-}
-
 scalar EmailAddress
 
 type EmailCampaign {
@@ -568,16 +523,6 @@ type EnhanceCompanyResponse {
   companyId: Int
   companyKey: String
   message: String
-  success: Boolean!
-}
-
-"""Response from enhancing a job with ATS data"""
-type EnhanceJobResponse {
-  """The updated job record with enhanced data from the ATS"""
-  job: Job
-  """Human-readable message about the operation result"""
-  message: String
-  """Whether the enhancement was successful"""
   success: Boolean!
 }
 
@@ -698,61 +643,6 @@ type GenerateReplyResult {
   subject: String!
 }
 
-type GreenhouseCompliance {
-  description: String
-  questions: [GreenhouseQuestion!]
-  type: String!
-}
-
-type GreenhouseDataCompliance {
-  demographic_data_consent_applies: Boolean!
-  requires_consent: Boolean!
-  requires_processing_consent: Boolean!
-  requires_retention_consent: Boolean!
-  retention_period: Int
-  type: String!
-}
-
-type GreenhouseDemographicQuestions {
-  description: String
-  header: String
-  questions: [GreenhouseQuestion!]
-}
-
-type GreenhouseDepartment {
-  child_ids: [String!]
-  id: String!
-  name: String!
-  parent_id: String
-}
-
-type GreenhouseMetadata {
-  id: String!
-  name: String!
-  value: String
-  value_type: String
-}
-
-type GreenhouseOffice {
-  child_ids: [String!]
-  id: String!
-  location: String
-  name: String!
-  parent_id: String
-}
-
-type GreenhouseQuestion {
-  description: String
-  fields: [GreenhouseQuestionField!]
-  label: String!
-  required: Boolean!
-}
-
-type GreenhouseQuestionField {
-  name: String
-  type: String!
-}
-
 type ImportCompaniesResult {
   errors: [String!]!
   failed: Int!
@@ -802,87 +692,6 @@ type ImportResendResult {
 
 scalar JSON
 
-type Job {
-  absolute_url: String
-  applied: Boolean!
-  appliedAt: String
-  archived: Boolean!
-  ashby_address: AshbyAddress
-  ashby_apply_url: String
-  ashby_compensation: AshbyCompensation
-  ashby_department: String
-  ashby_employment_type: String
-  ashby_is_listed: Boolean
-  ashby_is_remote: Boolean
-  ashby_job_url: String
-  ashby_secondary_locations: [AshbySecondaryLocation!]
-  ashby_team: String
-  company: Company
-  company_id: Int
-  company_key: String!
-  company_name: String
-  compliance: [GreenhouseCompliance!]
-  created_at: String!
-  data_compliance: [GreenhouseDataCompliance!]
-  demographic_questions: GreenhouseDemographicQuestions
-  departments: [GreenhouseDepartment!]
-  description: String
-  external_id: String!
-  id: Int!
-  internal_job_id: String
-  language: String
-  location: String
-  location_questions: [GreenhouseQuestion!]
-  metadata: [GreenhouseMetadata!]
-  offices: [GreenhouseOffice!]
-  """
-  Canonical publication date. All ATS sources (Greenhouse, Ashby)
-  write to the unified first_published DB column at ingestion time.
-  Falls back to posted_at (ingestion timestamp) when no ATS date exists.
-  """
-  publishedAt: String!
-  questions: [GreenhouseQuestion!]
-  recruiter: Contact
-  requisition_id: String
-  score: Float
-  score_reason: String
-  skillMatch: SkillMatch
-  skills: [JobSkill!]
-  source_id: String
-  source_kind: String!
-  status: JobStatus
-  title: String!
-  updated_at: String!
-  url: String!
-}
-
-type JobSkill {
-  confidence: Float
-  evidence: String
-  level: String!
-  tag: String!
-}
-
-"""
-Pipeline status for a job posting.
-Mirrors workers/process-jobs/src/entry.py JobStatus enum — values must stay in sync.
-"""
-enum JobStatus {
-  enhanced
-  error
-  eu_remote
-  new
-  non_eu
-  reported
-  role_match
-  role_nomatch
-}
-
-type JobsResponse {
-  jobs: [Job!]!
-  totalCount: Int!
-}
-
 type MarkRepliedResult {
   message: String
   success: Boolean!
@@ -907,7 +716,6 @@ type Mutation {
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   archiveEmail(id: Int!): ArchiveEmailResult!
-  archiveJob(id: Int!): Job!
   blockCompany(name: String!, reason: String): BlockedCompany!
   blockJobsByCompany(companyName: String!): BlockJobsResult!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
@@ -916,36 +724,13 @@ type Mutation {
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
-  deleteAllJobs: DeleteJobResponse!
   deleteCampaign(id: String!): DeleteCampaignResult!
   deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
   deleteCompany(id: Int!): DeleteCompanyResponse!
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
-  deleteJob(id: Int!): DeleteJobResponse!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
-  """
-  Enhance a job posting by fetching detailed data from the ATS (Applicant Tracking System).
-  
-  Supported ATS sources:
-  - greenhouse: Greenhouse ATS (https://greenhouse.io)
-  - ashby: Ashby ATS (https://ashbyhq.com)
-  
-  For Greenhouse:
-  - jobId: The job posting ID from the URL (e.g., "5802159004" from https://job-boards.greenhouse.io/grafanalabs/jobs/5802159004)
-  - company: The board token (e.g., "grafanalabs")
-  
-  For Ashby:
-  - jobId: The posting ID
-  - company: The board name
-  
-  The mutation will:
-  1. Fetch comprehensive job data from the ATS API
-  2. Save enhanced fields (description, departments, offices, questions, etc.)
-  3. Return the updated job with full ATS data
-  """
-  enhanceJobFromATS(company: String!, jobId: String!, source: String!): EnhanceJobResponse!
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!
   generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
@@ -958,16 +743,9 @@ type Mutation {
   launchEmailCampaign(id: String!): EmailCampaign!
   markContactEmailVerified(contactId: Int!, verified: Boolean!): Contact!
   markEmailReplied(resendId: String!): MarkRepliedResult!
-  markJobApplied(id: Int!): Job!
   mergeDuplicateCompanies(companyIds: [Int!]!): MergeCompaniesResult!
   mergeDuplicateContacts(companyId: Int!): MergeDuplicateContactsResult!
   previewEmail(input: PreviewEmailInput!): EmailPreview!
-  """
-  Report a job as irrelevant, spam, or incorrectly classified.
-  Sets the job status to "reported" so it can be reviewed or excluded.
-  Requires authentication.
-  """
-  reportJob(id: Int!): Job
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
   sendEmail(input: SendEmailInput!): SendEmailResult!
@@ -975,7 +753,6 @@ type Mutation {
   sendScheduledEmailNow(resendId: String!): SendNowResult!
   syncResendEmails(companyId: Int): SyncResendResult!
   unarchiveEmail(id: Int!): ArchiveEmailResult!
-  unarchiveJob(id: Int!): Job!
   unblockCompany(id: Int!): DeleteBlockedCompanyResult!
   unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
   updateCampaign(id: String!, input: UpdateCampaignInput!): EmailCampaign!
@@ -1014,8 +791,6 @@ type Query {
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
   findCompany(name: String, website: String): FindCompanyResult!
-  job(id: String!): Job
-  jobs(companyKey: String, excludedCompanies: [String!], limit: Int, offset: Int, search: String, showAll: Boolean, skills: [String!], sourceType: String, sourceTypes: [String!]): JobsResponse!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, limit: Int, offset: Int): ReceivedEmailsResult!
   resendEmail(resendId: String!): ResendEmailDetail
@@ -1116,22 +891,6 @@ type SendOutreachEmailResult {
   success: Boolean!
 }
 
-type SkillMatch {
-  details: [SkillMatchDetail!]!
-  jobCoverage: Float!
-  matchedCount: Int!
-  requiredCoverage: Float!
-  score: Float!
-  totalPreferred: Int!
-  userCoverage: Float!
-}
-
-type SkillMatchDetail {
-  level: String!
-  matched: Boolean!
-  tag: String!
-}
-
 enum SourceType {
   COMMONCRAWL
   LIVE_FETCH
@@ -1230,10 +989,6 @@ type UserSettings {
   email_notifications: Boolean!
   excluded_companies: [String!]
   id: Int!
-  jobs_per_page: Int!
-  new_job_alerts: Boolean!
-  preferred_locations: [String!]
-  preferred_skills: [String!]
   updated_at: String!
   user_id: String!
 }
@@ -1243,10 +998,6 @@ input UserSettingsInput {
   dark_mode: Boolean
   email_notifications: Boolean
   excluded_companies: [String!]
-  jobs_per_page: Int
-  new_job_alerts: Boolean
-  preferred_locations: [String!]
-  preferred_skills: [String!]
 }
 
 type VerifyEmailResult {

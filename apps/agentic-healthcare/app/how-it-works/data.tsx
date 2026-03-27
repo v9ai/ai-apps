@@ -13,7 +13,7 @@ export const papers: Paper[] = [
     authors: "Vercel",
     year: 2024,
     finding: "React framework with App Router, Server Components, and middleware for SSR/SSG with edge-compatible auth",
-    relevance: "Server Components in app/protected/ fetch data without client state; proxy.ts middleware redirects unauthenticated users via getSessionCookie()",
+    relevance: "Server Components in app/ fetch data without client state; proxy.ts middleware redirects unauthenticated users via getSessionCookie()",
     url: "https://nextjs.org/docs",
     categoryColor: "var(--blue-9)",
   },
@@ -329,7 +329,7 @@ export const extraSections: ExtraSection[] = [
   },
   {
     heading: "Security & Auth",
-    content: "Better Auth with Drizzle adapter handles email/password + verification. proxy.ts checks getSessionCookie() for all /protected/* routes. Python API authenticates via x-api-key header. Row-level security is enforced in every SQL function — user_id is required, not optional. Embeddings contain only de-identified health data.",
+    content: "Better Auth with Drizzle adapter handles email/password + verification. proxy.ts checks getSessionCookie() for all /* routes. Python API authenticates via x-api-key header. Row-level security is enforced in every SQL function — user_id is required, not optional. Embeddings contain only de-identified health data.",
   },
   {
     heading: "RAG Pipeline Deep Dive",

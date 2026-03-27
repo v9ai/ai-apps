@@ -9,6 +9,7 @@ tags:
   - reinforcement-learning
   - lead-generation
   - crawler
+draft: true
 ---
 
 export const ns = (bg, border) => ({ background: bg, color: '#e0e0e0', border: `2px solid ${border}`, borderRadius: 8, padding: 12, fontSize: 13 });
@@ -83,7 +84,7 @@ Before the crawler can be intelligent, it needs a performant substrate. Module 1
 
 **Rust-native ML inference.** Benchmarks show Rust frameworks (Candle, Burn, tract) deliver 1.5-3x faster inference with 30-50% lower memory than Python equivalents, with mature Apple Silicon/Metal support. Our pipeline uses `ndarray` for the NeuralUCB network — zero Python in the hot path.
 
-**Embedded vector search.** Research recommends SQLite vector extensions for <100K vectors under 2GB RAM. We use LanceDB for company/contact embeddings, enabling semantic similarity search without a separate vector database process.
+**Embedded vector search.** Research recommends SQLite vector extensions for &lt;100K vectors under 2GB RAM. We use LanceDB for company/contact embeddings, enabling semantic similarity search without a separate vector database process.
 
 These three pillars directly enable Module 2's intelligence. Without Rust-native inference, the NeuralUCB contextual bandit would require a Python subprocess. Without zero-copy, the tight feedback loop (crawl → extract → score → re-rank frontier) would bottleneck at stage boundaries.
 

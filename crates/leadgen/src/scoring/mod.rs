@@ -1,3 +1,7 @@
+pub mod online_learner;
+
+pub use online_learner::OnlineLearner;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

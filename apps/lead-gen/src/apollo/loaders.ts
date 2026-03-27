@@ -2,7 +2,6 @@ import DataLoader from "dataloader";
 import { eq, inArray } from "drizzle-orm";
 import type { DbInstance } from "@/db";
 import {
-  jobSkillTags,
   companies,
   atsBoards,
   companyFacts,
@@ -11,7 +10,6 @@ import {
   contacts,
 } from "@/db/schema";
 import type {
-  JobSkillTag,
   Company,
   ATSBoard,
   CompanyFact,
@@ -24,31 +22,6 @@ const BATCH_SIZE = 100;
 
 export function createLoaders(db: DbInstance) {
   return {
-    // Select only the 5 columns exposed by the JobSkill GraphQL type —
-    // skips extracted_at and version which are never sent to clients.
-    jobSkills: new DataLoader<number, JobSkillTag[]>(
-      async (jobIds) => {
-        const rows = await db
-          .select({
-            job_id: jobSkillTags.job_id,
-            tag: jobSkillTags.tag,
-            level: jobSkillTags.level,
-            confidence: jobSkillTags.confidence,
-            evidence: jobSkillTags.evidence,
-          })
-          .from(jobSkillTags)
-          .where(inArray(jobSkillTags.job_id, [...jobIds]));
-        const byJob = new Map<number, JobSkillTag[]>();
-        for (const row of rows) {
-          const arr = byJob.get(row.job_id);
-          if (arr) arr.push(row as JobSkillTag);
-          else byJob.set(row.job_id, [row as JobSkillTag]);
-        }
-        return jobIds.map((id) => byJob.get(id) ?? []);
-      },
-      { maxBatchSize: BATCH_SIZE },
-    ),
-
     company: new DataLoader<number, Company | null>(
       async (companyIds) => {
         const rows = await db

@@ -7,7 +7,6 @@ import {
   useEnhanceCompanyMutation,
   useAnalyzeCompanyMutation,
   useUpdateCompanyMutation,
-  useGetJobsQuery,
   useCreateContactMutation,
   useDeleteCompanyMutation,
 } from "@/__generated__/hooks";
@@ -18,7 +17,6 @@ import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { extractJobSlug } from "@/lib/job-utils";
 import {
   Badge,
   Box,
@@ -1045,12 +1043,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     router.push("/companies");
   }, [company, deleteCompany, router]);
 
-  const { data: jobsData, loading: jobsLoading } = useGetJobsQuery({
-    variables: { companyKey: effectiveKey, limit: 100, showAll: true },
-    skip: !effectiveKey,
-  });
-  const companyJobs = jobsData?.jobs?.jobs ?? [];
-
   const websiteHref = useMemo(
     () => coerceExternalUrl(company?.website),
     [company?.website]
@@ -1112,92 +1104,14 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   }
 
   if (!company) {
-    if (jobsLoading) {
-      return (
-        <Container size="3" p={{ initial: "4", md: "6" }}>
-          <Text color="gray">Loading company details…</Text>
-        </Container>
-      );
-    }
-
-    if (companyJobs.length === 0) {
-      return (
-        <Container size="3" p={{ initial: "4", md: "6" }}>
-          <Callout.Root>
-            <Callout.Icon>
-              <InfoCircledIcon />
-            </Callout.Icon>
-            <Callout.Text>Company not found.</Callout.Text>
-          </Callout.Root>
-        </Container>
-      );
-    }
-
-    // No company record but jobs exist — show a minimal page
     return (
       <Container size="3" p={{ initial: "4", md: "6" }}>
-        <Flex direction="column" gap="5">
-          <Heading size="8" style={{ textTransform: "capitalize" }}>
-            {effectiveKey}
-          </Heading>
-          <SectionCard title={`Jobs (${companyJobs.length})`}>
-            <Flex direction="column">
-              {companyJobs.map((job, idx) => {
-                const jobId = extractJobSlug(job.external_id, job.id);
-                const jobHref = `/jobs/${jobId}?company=${job.company_key}&source=${job.source_kind}`;
-                return (
-                  <Box key={job.id}>
-                    <Link
-                      href={jobHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
-                      <Flex
-                        justify="between"
-                        align="center"
-                        gap="4"
-                        py="2"
-                        style={{ cursor: "pointer" }}
-                      >
-                        <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
-                          <Text
-                            size="3"
-                            weight="medium"
-                            style={{
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {job.title}
-                          </Text>
-                          {job.location && (
-                            <Text size="2" color="gray">
-                              {job.location}
-                            </Text>
-                          )}
-                        </Flex>
-                        {job.publishedAt && (
-                          <Text
-                            size="1"
-                            color="gray"
-                            style={{ whiteSpace: "nowrap", flexShrink: 0 }}
-                          >
-                            {new Date(job.publishedAt).toLocaleDateString()}
-                          </Text>
-                        )}
-                      </Flex>
-                    </Link>
-                    {idx < companyJobs.length - 1 ? (
-                      <Separator size="4" />
-                    ) : null}
-                  </Box>
-                );
-              })}
-            </Flex>
-          </SectionCard>
-        </Flex>
+        <Callout.Root>
+          <Callout.Icon>
+            <InfoCircledIcon />
+          </Callout.Icon>
+          <Callout.Text>Company not found.</Callout.Text>
+        </Callout.Root>
       </Container>
     );
   }
@@ -1286,13 +1200,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   </Flex>
                 )}
 
-                {companyJobs.length > 0 && (
-                  <Badge color="indigo" variant="soft">
-                    {companyJobs.length} open role{companyJobs.length !== 1 ? "s" : ""}
-                  </Badge>
-                )}
-
-
               </Flex>
 
               <Flex gap="2" wrap="wrap" mt="3">
@@ -1358,13 +1265,10 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
 
         {/* Tabs */}
         <Tabs.Root
-          defaultValue={companyJobs.length > 0 ? "jobs" : "overview"}
+          defaultValue="overview"
           aria-label="Company sections"
         >
           <Tabs.List>
-            <Tabs.Trigger value="jobs">
-              Jobs{companyJobs.length > 0 ? ` (${companyJobs.length})` : ""}
-            </Tabs.Trigger>
             <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
             {isAdmin && (
               <Link href={`/companies/${effectiveKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", paddingLeft: "var(--tabs-trigger-padding-x)", paddingRight: "var(--tabs-trigger-padding-x)" }}>
@@ -1377,53 +1281,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               </Link>
             )}
           </Tabs.List>
-
-          {/* Jobs tab */}
-          <Tabs.Content value="jobs">
-            <Box pt="4">
-              {companyJobs.length === 0 ? (
-                <Callout.Root color="gray" variant="soft">
-                  <Callout.Icon>
-                    <InfoCircledIcon />
-                  </Callout.Icon>
-                  <Callout.Text>No open roles at this company right now.</Callout.Text>
-                </Callout.Root>
-              ) : (
-                <Flex direction="column">
-                  {companyJobs.map((job, idx) => {
-                    const jobId = extractJobSlug(job.external_id, job.id);
-                    const jobHref = `/jobs/${jobId}?company=${job.company_key}&source=${job.source_kind}`;
-                    return (
-                      <Box key={job.id}>
-                        <Link href={jobHref} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", color: "inherit" }}>
-                          <Flex justify="between" align="center" gap="4" py="2" style={{ cursor: "pointer" }}>
-                            <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
-                              <Text size="3" weight="medium" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {job.title}
-                              </Text>
-                              <Flex gap="2" align="center" wrap="wrap">
-                                {job.location && (
-                                  <Text size="2" color="gray">
-                                    {job.location}
-                                  </Text>
-                                )}
-                              </Flex>
-                            </Flex>
-                            {job.publishedAt && (
-                              <Text size="1" color="gray" style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
-                                {new Date(job.publishedAt).toLocaleDateString()}
-                              </Text>
-                            )}
-                          </Flex>
-                        </Link>
-                        {idx < companyJobs.length - 1 ? <Separator size="4" /> : null}
-                      </Box>
-                    );
-                  })}
-                </Flex>
-              )}
-            </Box>
-          </Tabs.Content>
 
           {/* Overview tab */}
           <Tabs.Content value="overview">

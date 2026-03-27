@@ -11,17 +11,6 @@ Running AI agents in a real codebase means solving three intertwined problems at
 
 <!--truncate-->
 
-## Table of Contents
-
-- [The Three Pillars](#the-three-pillars)
-- [Pillar 1 — BMAD v6: Workflows and Quality Gates](#pillar-1-bmad-v6)
-- [Pillar 2 — Langfuse: Edge-Compatible Observability](#pillar-2-langfuse)
-- [Pillar 3 — Claude Code Agent Teams](#pillar-3-agent-teams)
-- [How They Compose](#how-they-compose)
-- [Lessons Learned](#lessons-learned)
-
----
-
 ## The Three Pillars
 
 Before diving into each system, it helps to name the gap each one fills:

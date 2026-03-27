@@ -36,6 +36,7 @@ struct Choice { message: MessageContent }
 #[derive(Deserialize)]
 struct MessageContent { content: String }
 
+#[derive(Clone)]
 pub struct LlmClient {
     client: Client,
     base_url: String,
@@ -81,6 +82,11 @@ Page text:
             "Write a 3-sentence lead brief.\nCompany: {}\nIndustry: {}\nEmployees: {}\nContact: {} — {}\nTech: {}\n\n1. What they do\n2. Why relevant\n3. Outreach angle",
             company, industry, emp, contact, title, tech);
         self.chat(&prompt, 0.7).await
+    }
+
+    /// General-purpose text completion.
+    pub async fn complete(&self, prompt: &str, temperature: f32) -> Result<String> {
+        self.chat(prompt, temperature).await
     }
 
     async fn chat(&self, prompt: &str, temperature: f32) -> Result<String> {

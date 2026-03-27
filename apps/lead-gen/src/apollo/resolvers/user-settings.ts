@@ -30,12 +30,6 @@ export const userSettingsResolvers = {
         // Parse JSON fields
         return {
           ...settings,
-          preferred_locations: settings.preferred_locations
-            ? JSON.parse(settings.preferred_locations)
-            : [],
-          preferred_skills: settings.preferred_skills
-            ? JSON.parse(settings.preferred_skills)
-            : [],
           excluded_companies: settings.excluded_companies
             ? JSON.parse(settings.excluded_companies)
             : [],
@@ -55,12 +49,8 @@ export const userSettingsResolvers = {
         settings: {
           email_notifications?: boolean;
           daily_digest?: boolean;
-          new_job_alerts?: boolean;
-          preferred_locations?: string[];
-          preferred_skills?: string[];
           excluded_companies?: string[];
           dark_mode?: boolean;
-          jobs_per_page?: number;
         };
       },
       context: GraphQLContext,
@@ -91,17 +81,6 @@ export const userSettingsResolvers = {
           ...(settingsInput.daily_digest !== undefined && {
             daily_digest: settingsInput.daily_digest,
           }),
-          ...(settingsInput.new_job_alerts !== undefined && {
-            new_job_alerts: settingsInput.new_job_alerts,
-          }),
-          ...(settingsInput.preferred_locations !== undefined && {
-            preferred_locations: JSON.stringify(
-              settingsInput.preferred_locations,
-            ),
-          }),
-          ...(settingsInput.preferred_skills !== undefined && {
-            preferred_skills: JSON.stringify(settingsInput.preferred_skills),
-          }),
           ...(settingsInput.excluded_companies !== undefined && {
             excluded_companies: JSON.stringify(
               settingsInput.excluded_companies,
@@ -109,9 +88,6 @@ export const userSettingsResolvers = {
           }),
           ...(settingsInput.dark_mode !== undefined && {
             dark_mode: settingsInput.dark_mode,
-          }),
-          ...(settingsInput.jobs_per_page !== undefined && {
-            jobs_per_page: settingsInput.jobs_per_page,
           }),
           updated_at: new Date().toISOString(),
         };
@@ -135,12 +111,6 @@ export const userSettingsResolvers = {
         // Parse JSON fields for response
         return {
           ...result,
-          preferred_locations: result.preferred_locations
-            ? JSON.parse(result.preferred_locations)
-            : [],
-          preferred_skills: result.preferred_skills
-            ? JSON.parse(result.preferred_skills)
-            : [],
           excluded_companies: result.excluded_companies
             ? JSON.parse(result.excluded_companies)
             : [],

@@ -1,0 +1,167 @@
+{
+  "petra-view-meteora": {
+    "review_rating": 9.8,
+    "review_count": 3638,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "selini-suites-naxos": {
+    "review_rating": 10.0,
+    "review_count": 539,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "corfu-olive-garden": {
+    "review_rating": 9.2,
+    "review_count": 668,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "kos-mare-boutique": {
+    "review_rating": 9.8,
+    "review_count": 604,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "urban-athena-hotel": {
+    "review_rating": 10.0,
+    "review_count": 11462,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "halkidiki-blue-lagoon": {
+    "review_rating": 9.6,
+    "review_count": 1705,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "rhodes-seaside-all-inclusive": {
+    "review_rating": 9.6,
+    "review_count": 4376,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "paros-azure-beach": {
+    "review_rating": 10.0,
+    "review_count": 539,
+    "review_texts": [
+      "Am avut o ședere minunată acolo acum aproximativ 2 luni. Casa este unică, foarte modernă, dar păstrând pe deplin stilul insulei. Terasa oferă o priveliște neprețuită asupra mării, cu culori minunate ale apusurilor/răsăriturilor. … Mai multe",
+      "Cazare superba intr-o zona linistita cu acces usor la un minimarket si cateva restaurante! Aproape de plaja confortabilă din Drios, dar și de populara Golden Beach! … Mai multe"
+    ],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "skiathos-breeze-hotel": {
+    "review_rating": 9.0,
+    "review_count": 1273,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "casa-cook-rethymno": {
+    "review_rating": 10.0,
+    "review_count": 1243,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "domes-zeen-chania": {
+    "review_rating": 9.6,
+    "review_count": 1425,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "numo-ierapetra": {
+    "review_rating": 9.6,
+    "review_count": 1767,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "w-hotel-crete": {
+    "review_rating": 10.0,
+    "review_count": 1080,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "santorini-canaves-oia-epitome": {
+    "review_rating": 9.8,
+    "review_count": 1333,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "costa-navarino-mandarin": {
+    "review_rating": 10.0,
+    "review_count": 871,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "six-senses-crete": {
+    "review_rating": 9.6,
+    "review_count": 1535,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "one-and-only-kea": {
+    "review_rating": 8.9,
+    "review_count": 20377,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "aman-elounda": {
+    "review_rating": 9.6,
+    "review_count": 1535,
+    "review_texts": [],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  }
+}

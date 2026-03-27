@@ -81,3 +81,119 @@ pub fn is_disposable_domain(domain: &str) -> bool {
      "yopmail.com","sharklasers.com","maildrop.cc"]
         .contains(&domain.to_lowercase().as_str())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // --- is_valid_syntax ---
+
+    #[test]
+    fn valid_simple_email() {
+        assert!(is_valid_syntax("john@example.com"));
+    }
+
+    #[test]
+    fn valid_email_with_dots_and_plus() {
+        assert!(is_valid_syntax("john.doe+filter@sub.example.co.uk"));
+    }
+
+    #[test]
+    fn valid_email_with_hyphens() {
+        assert!(is_valid_syntax("first-last@my-company.io"));
+    }
+
+    #[test]
+    fn invalid_missing_at() {
+        assert!(!is_valid_syntax("johndoeexample.com"));
+    }
+
+    #[test]
+    fn invalid_missing_domain() {
+        assert!(!is_valid_syntax("john@"));
+    }
+
+    #[test]
+    fn invalid_missing_tld() {
+        assert!(!is_valid_syntax("john@example"));
+    }
+
+    #[test]
+    fn invalid_double_at() {
+        assert!(!is_valid_syntax("john@@example.com"));
+    }
+
+    #[test]
+    fn invalid_empty_string() {
+        assert!(!is_valid_syntax(""));
+    }
+
+    #[test]
+    fn invalid_spaces() {
+        assert!(!is_valid_syntax("john doe@example.com"));
+    }
+
+    // --- is_role_based ---
+
+    #[test]
+    fn role_based_info() {
+        assert!(is_role_based("info@example.com"));
+    }
+
+    #[test]
+    fn role_based_support() {
+        assert!(is_role_based("support@example.com"));
+    }
+
+    #[test]
+    fn role_based_noreply() {
+        assert!(is_role_based("noreply@example.com"));
+    }
+
+    #[test]
+    fn role_based_no_reply() {
+        assert!(is_role_based("no-reply@example.com"));
+    }
+
+    #[test]
+    fn role_based_hr() {
+        assert!(is_role_based("hr@example.com"));
+    }
+
+    #[test]
+    fn not_role_based_personal() {
+        assert!(!is_role_based("john.doe@example.com"));
+    }
+
+    #[test]
+    fn not_role_based_firstname() {
+        assert!(!is_role_based("alice@example.com"));
+    }
+
+    // --- is_disposable_domain ---
+
+    #[test]
+    fn disposable_mailinator() {
+        assert!(is_disposable_domain("mailinator.com"));
+    }
+
+    #[test]
+    fn disposable_case_insensitive() {
+        assert!(is_disposable_domain("Mailinator.COM"));
+    }
+
+    #[test]
+    fn disposable_yopmail() {
+        assert!(is_disposable_domain("yopmail.com"));
+    }
+
+    #[test]
+    fn not_disposable_gmail() {
+        assert!(!is_disposable_domain("gmail.com"));
+    }
+
+    #[test]
+    fn not_disposable_company_domain() {
+        assert!(!is_disposable_domain("acme.io"));
+    }
+}

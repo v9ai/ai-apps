@@ -89,39 +89,6 @@ export type ArchiveEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type AshbyAddress = {
-  __typename: 'AshbyAddress';
-  postalAddress: Maybe<AshbyPostalAddress>;
-};
-
-export type AshbyCompensation = {
-  __typename: 'AshbyCompensation';
-  compensationTierSummary: Maybe<Scalars['String']['output']>;
-  compensationTiers: Array<AshbyCompensationTier>;
-  scrapeableCompensationSalarySummary: Maybe<Scalars['String']['output']>;
-  summaryComponents: Array<AshbyCompensationComponent>;
-};
-
-export type AshbyCompensationComponent = {
-  __typename: 'AshbyCompensationComponent';
-  compensationType: Maybe<Scalars['String']['output']>;
-  currencyCode: Maybe<Scalars['String']['output']>;
-  id: Maybe<Scalars['String']['output']>;
-  interval: Maybe<Scalars['String']['output']>;
-  maxValue: Maybe<Scalars['Float']['output']>;
-  minValue: Maybe<Scalars['Float']['output']>;
-  summary: Maybe<Scalars['String']['output']>;
-};
-
-export type AshbyCompensationTier = {
-  __typename: 'AshbyCompensationTier';
-  additionalInformation: Maybe<Scalars['String']['output']>;
-  components: Array<AshbyCompensationComponent>;
-  id: Maybe<Scalars['String']['output']>;
-  tierSummary: Maybe<Scalars['String']['output']>;
-  title: Maybe<Scalars['String']['output']>;
-};
-
 export type AshbyEnrichment = {
   __typename: 'AshbyEnrichment';
   company_name: Maybe<Scalars['String']['output']>;
@@ -129,19 +96,6 @@ export type AshbyEnrichment = {
   industry_tags: Array<Scalars['String']['output']>;
   size_signal: Maybe<Scalars['String']['output']>;
   tech_signals: Array<Scalars['String']['output']>;
-};
-
-export type AshbyPostalAddress = {
-  __typename: 'AshbyPostalAddress';
-  addressCountry: Maybe<Scalars['String']['output']>;
-  addressLocality: Maybe<Scalars['String']['output']>;
-  addressRegion: Maybe<Scalars['String']['output']>;
-};
-
-export type AshbySecondaryLocation = {
-  __typename: 'AshbySecondaryLocation';
-  address: Maybe<AshbyPostalAddress>;
-  location: Scalars['String']['output'];
 };
 
 export type BatchRecipientInput = {
@@ -521,12 +475,6 @@ export type DeleteEmailTemplateResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type DeleteJobResponse = {
-  __typename: 'DeleteJobResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
 export type EmailCampaign = {
   __typename: 'EmailCampaign';
   addAntiThreadHeader: Scalars['Boolean']['output'];
@@ -623,17 +571,6 @@ export type EnhanceCompanyResponse = {
   companyId: Maybe<Scalars['Int']['output']>;
   companyKey: Maybe<Scalars['String']['output']>;
   message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
-/** Response from enhancing a job with ATS data */
-export type EnhanceJobResponse = {
-  __typename: 'EnhanceJobResponse';
-  /** The updated job record with enhanced data from the ATS */
-  job: Maybe<Job>;
-  /** Human-readable message about the operation result */
-  message: Maybe<Scalars['String']['output']>;
-  /** Whether the enhancement was successful */
   success: Scalars['Boolean']['output'];
 };
 
@@ -761,69 +698,6 @@ export type GenerateReplyResult = {
   subject: Scalars['String']['output'];
 };
 
-export type GreenhouseCompliance = {
-  __typename: 'GreenhouseCompliance';
-  description: Maybe<Scalars['String']['output']>;
-  questions: Maybe<Array<GreenhouseQuestion>>;
-  type: Scalars['String']['output'];
-};
-
-export type GreenhouseDataCompliance = {
-  __typename: 'GreenhouseDataCompliance';
-  demographic_data_consent_applies: Scalars['Boolean']['output'];
-  requires_consent: Scalars['Boolean']['output'];
-  requires_processing_consent: Scalars['Boolean']['output'];
-  requires_retention_consent: Scalars['Boolean']['output'];
-  retention_period: Maybe<Scalars['Int']['output']>;
-  type: Scalars['String']['output'];
-};
-
-export type GreenhouseDemographicQuestions = {
-  __typename: 'GreenhouseDemographicQuestions';
-  description: Maybe<Scalars['String']['output']>;
-  header: Maybe<Scalars['String']['output']>;
-  questions: Maybe<Array<GreenhouseQuestion>>;
-};
-
-export type GreenhouseDepartment = {
-  __typename: 'GreenhouseDepartment';
-  child_ids: Maybe<Array<Scalars['String']['output']>>;
-  id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  parent_id: Maybe<Scalars['String']['output']>;
-};
-
-export type GreenhouseMetadata = {
-  __typename: 'GreenhouseMetadata';
-  id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  value: Maybe<Scalars['String']['output']>;
-  value_type: Maybe<Scalars['String']['output']>;
-};
-
-export type GreenhouseOffice = {
-  __typename: 'GreenhouseOffice';
-  child_ids: Maybe<Array<Scalars['String']['output']>>;
-  id: Scalars['String']['output'];
-  location: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  parent_id: Maybe<Scalars['String']['output']>;
-};
-
-export type GreenhouseQuestion = {
-  __typename: 'GreenhouseQuestion';
-  description: Maybe<Scalars['String']['output']>;
-  fields: Maybe<Array<GreenhouseQuestionField>>;
-  label: Scalars['String']['output'];
-  required: Scalars['Boolean']['output'];
-};
-
-export type GreenhouseQuestionField = {
-  __typename: 'GreenhouseQuestionField';
-  name: Maybe<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
-};
-
 export type ImportCompaniesResult = {
   __typename: 'ImportCompaniesResult';
   errors: Array<Scalars['String']['output']>;
@@ -875,89 +749,6 @@ export type ImportResendResult = {
   updatedCount: Scalars['Int']['output'];
 };
 
-export type Job = {
-  __typename: 'Job';
-  absolute_url: Maybe<Scalars['String']['output']>;
-  applied: Scalars['Boolean']['output'];
-  appliedAt: Maybe<Scalars['String']['output']>;
-  archived: Scalars['Boolean']['output'];
-  ashby_address: Maybe<AshbyAddress>;
-  ashby_apply_url: Maybe<Scalars['String']['output']>;
-  ashby_compensation: Maybe<AshbyCompensation>;
-  ashby_department: Maybe<Scalars['String']['output']>;
-  ashby_employment_type: Maybe<Scalars['String']['output']>;
-  ashby_is_listed: Maybe<Scalars['Boolean']['output']>;
-  ashby_is_remote: Maybe<Scalars['Boolean']['output']>;
-  ashby_job_url: Maybe<Scalars['String']['output']>;
-  ashby_secondary_locations: Maybe<Array<AshbySecondaryLocation>>;
-  ashby_team: Maybe<Scalars['String']['output']>;
-  company: Maybe<Company>;
-  company_id: Maybe<Scalars['Int']['output']>;
-  company_key: Scalars['String']['output'];
-  company_name: Maybe<Scalars['String']['output']>;
-  compliance: Maybe<Array<GreenhouseCompliance>>;
-  created_at: Scalars['String']['output'];
-  data_compliance: Maybe<Array<GreenhouseDataCompliance>>;
-  demographic_questions: Maybe<GreenhouseDemographicQuestions>;
-  departments: Maybe<Array<GreenhouseDepartment>>;
-  description: Maybe<Scalars['String']['output']>;
-  external_id: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  internal_job_id: Maybe<Scalars['String']['output']>;
-  language: Maybe<Scalars['String']['output']>;
-  location: Maybe<Scalars['String']['output']>;
-  location_questions: Maybe<Array<GreenhouseQuestion>>;
-  metadata: Maybe<Array<GreenhouseMetadata>>;
-  offices: Maybe<Array<GreenhouseOffice>>;
-  /**
-   * Canonical publication date. All ATS sources (Greenhouse, Ashby)
-   * write to the unified first_published DB column at ingestion time.
-   * Falls back to posted_at (ingestion timestamp) when no ATS date exists.
-   */
-  publishedAt: Scalars['String']['output'];
-  questions: Maybe<Array<GreenhouseQuestion>>;
-  recruiter: Maybe<Contact>;
-  requisition_id: Maybe<Scalars['String']['output']>;
-  score: Maybe<Scalars['Float']['output']>;
-  score_reason: Maybe<Scalars['String']['output']>;
-  skillMatch: Maybe<SkillMatch>;
-  skills: Maybe<Array<JobSkill>>;
-  source_id: Maybe<Scalars['String']['output']>;
-  source_kind: Scalars['String']['output'];
-  status: Maybe<JobStatus>;
-  title: Scalars['String']['output'];
-  updated_at: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-};
-
-export type JobSkill = {
-  __typename: 'JobSkill';
-  confidence: Maybe<Scalars['Float']['output']>;
-  evidence: Maybe<Scalars['String']['output']>;
-  level: Scalars['String']['output'];
-  tag: Scalars['String']['output'];
-};
-
-/**
- * Pipeline status for a job posting.
- * Mirrors workers/process-jobs/src/entry.py JobStatus enum — values must stay in sync.
- */
-export type JobStatus =
-  | 'enhanced'
-  | 'error'
-  | 'eu_remote'
-  | 'new'
-  | 'non_eu'
-  | 'reported'
-  | 'role_match'
-  | 'role_nomatch';
-
-export type JobsResponse = {
-  __typename: 'JobsResponse';
-  jobs: Array<Job>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type MarkRepliedResult = {
   __typename: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -986,7 +777,6 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   applyEmailPattern: ApplyEmailPatternResult;
   archiveEmail: ArchiveEmailResult;
-  archiveJob: Job;
   blockCompany: BlockedCompany;
   blockJobsByCompany: BlockJobsResult;
   cancelCompanyEmails: CancelCompanyEmailsResult;
@@ -995,36 +785,13 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  deleteAllJobs: DeleteJobResponse;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
-  deleteJob: DeleteJobResponse;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
-  /**
-   * Enhance a job posting by fetching detailed data from the ATS (Applicant Tracking System).
-   *
-   * Supported ATS sources:
-   * - greenhouse: Greenhouse ATS (https://greenhouse.io)
-   * - ashby: Ashby ATS (https://ashbyhq.com)
-   *
-   * For Greenhouse:
-   * - jobId: The job posting ID from the URL (e.g., "5802159004" from https://job-boards.greenhouse.io/grafanalabs/jobs/5802159004)
-   * - company: The board token (e.g., "grafanalabs")
-   *
-   * For Ashby:
-   * - jobId: The posting ID
-   * - company: The board name
-   *
-   * The mutation will:
-   * 1. Fetch comprehensive job data from the ATS API
-   * 2. Save enhanced fields (description, departments, offices, questions, etc.)
-   * 3. Return the updated job with full ATS data
-   */
-  enhanceJobFromATS: EnhanceJobResponse;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   generateEmail: GenerateEmailResult;
@@ -1037,16 +804,9 @@ export type Mutation = {
   launchEmailCampaign: EmailCampaign;
   markContactEmailVerified: Contact;
   markEmailReplied: MarkRepliedResult;
-  markJobApplied: Job;
   mergeDuplicateCompanies: MergeCompaniesResult;
   mergeDuplicateContacts: MergeDuplicateContactsResult;
   previewEmail: EmailPreview;
-  /**
-   * Report a job as irrelevant, spam, or incorrectly classified.
-   * Sets the job status to "reported" so it can be reviewed or excluded.
-   * Requires authentication.
-   */
-  reportJob: Maybe<Job>;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   sendEmail: SendEmailResult;
@@ -1054,7 +814,6 @@ export type Mutation = {
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
-  unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateCampaign: EmailCampaign;
@@ -1085,11 +844,6 @@ export type MutationApplyEmailPatternArgs = {
 
 
 export type MutationArchiveEmailArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type MutationArchiveJobArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1160,21 +914,9 @@ export type MutationDeleteEmailTemplateArgs = {
 };
 
 
-export type MutationDeleteJobArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
 export type MutationEnhanceCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type MutationEnhanceJobFromAtsArgs = {
-  company: Scalars['String']['input'];
-  jobId: Scalars['String']['input'];
-  source: Scalars['String']['input'];
 };
 
 
@@ -1250,11 +992,6 @@ export type MutationMarkEmailRepliedArgs = {
 };
 
 
-export type MutationMarkJobAppliedArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
 export type MutationMergeDuplicateCompaniesArgs = {
   companyIds: Array<Scalars['Int']['input']>;
 };
@@ -1267,11 +1004,6 @@ export type MutationMergeDuplicateContactsArgs = {
 
 export type MutationPreviewEmailArgs = {
   input: PreviewEmailInput;
-};
-
-
-export type MutationReportJobArgs = {
-  id: Scalars['Int']['input'];
 };
 
 
@@ -1306,11 +1038,6 @@ export type MutationSyncResendEmailsArgs = {
 
 
 export type MutationUnarchiveEmailArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type MutationUnarchiveJobArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1393,8 +1120,6 @@ export type Query = {
   emailTemplates: EmailTemplatesResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
   findCompany: FindCompanyResult;
-  job: Maybe<Job>;
-  jobs: JobsResponse;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
@@ -1497,24 +1222,6 @@ export type QueryEmailsNeedingFollowUpArgs = {
 export type QueryFindCompanyArgs = {
   name?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryJobArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-export type QueryJobsArgs = {
-  companyKey?: InputMaybe<Scalars['String']['input']>;
-  excludedCompanies?: InputMaybe<Array<Scalars['String']['input']>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
-  showAll?: InputMaybe<Scalars['Boolean']['input']>;
-  skills?: InputMaybe<Array<Scalars['String']['input']>>;
-  sourceType?: InputMaybe<Scalars['String']['input']>;
-  sourceTypes?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -1640,24 +1347,6 @@ export type SendOutreachEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type SkillMatch = {
-  __typename: 'SkillMatch';
-  details: Array<SkillMatchDetail>;
-  jobCoverage: Scalars['Float']['output'];
-  matchedCount: Scalars['Int']['output'];
-  requiredCoverage: Scalars['Float']['output'];
-  score: Scalars['Float']['output'];
-  totalPreferred: Scalars['Int']['output'];
-  userCoverage: Scalars['Float']['output'];
-};
-
-export type SkillMatchDetail = {
-  __typename: 'SkillMatchDetail';
-  level: Scalars['String']['output'];
-  matched: Scalars['Boolean']['output'];
-  tag: Scalars['String']['output'];
-};
-
 export type SourceType =
   | 'COMMONCRAWL'
   | 'LIVE_FETCH'
@@ -1754,10 +1443,6 @@ export type UserSettings = {
   email_notifications: Scalars['Boolean']['output'];
   excluded_companies: Maybe<Array<Scalars['String']['output']>>;
   id: Scalars['Int']['output'];
-  jobs_per_page: Scalars['Int']['output'];
-  new_job_alerts: Scalars['Boolean']['output'];
-  preferred_locations: Maybe<Array<Scalars['String']['output']>>;
-  preferred_skills: Maybe<Array<Scalars['String']['output']>>;
   updated_at: Scalars['String']['output'];
   user_id: Scalars['String']['output'];
 };
@@ -1767,10 +1452,6 @@ export type UserSettingsInput = {
   dark_mode?: InputMaybe<Scalars['Boolean']['input']>;
   email_notifications?: InputMaybe<Scalars['Boolean']['input']>;
   excluded_companies?: InputMaybe<Array<Scalars['String']['input']>>;
-  jobs_per_page?: InputMaybe<Scalars['Int']['input']>;
-  new_job_alerts?: InputMaybe<Scalars['Boolean']['input']>;
-  preferred_locations?: InputMaybe<Array<Scalars['String']['input']>>;
-  preferred_skills?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type VerifyEmailResult = {

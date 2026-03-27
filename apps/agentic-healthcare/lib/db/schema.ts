@@ -160,6 +160,40 @@ export const symptoms = pgTable(
   (table) => [index("symptoms_user_idx").on(table.userId)],
 );
 
+export const doctors = pgTable(
+  "doctors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    specialty: text("specialty"),
+    phone: text("phone"),
+    email: text("email"),
+    address: text("address"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("doctors_user_idx").on(table.userId)],
+);
+
+export const familyMembers = pgTable(
+  "family_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    relationship: text("relationship"),
+    dateOfBirth: date("date_of_birth"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("family_members_user_idx").on(table.userId)],
+);
+
 export const appointments = pgTable(
   "appointments",
   {
@@ -167,6 +201,7 @@ export const appointments = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    doctorId: uuid("doctor_id").references(() => doctors.id, { onDelete: "set null" }),
     title: text("title").notNull(),
     provider: text("provider"),
     notes: text("notes"),

@@ -92,39 +92,6 @@ export type ArchiveEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type AshbyAddress = {
-  __typename?: 'AshbyAddress';
-  postalAddress: Maybe<AshbyPostalAddress>;
-};
-
-export type AshbyCompensation = {
-  __typename?: 'AshbyCompensation';
-  compensationTierSummary: Maybe<Scalars['String']['output']>;
-  compensationTiers: Array<AshbyCompensationTier>;
-  scrapeableCompensationSalarySummary: Maybe<Scalars['String']['output']>;
-  summaryComponents: Array<AshbyCompensationComponent>;
-};
-
-export type AshbyCompensationComponent = {
-  __typename?: 'AshbyCompensationComponent';
-  compensationType: Maybe<Scalars['String']['output']>;
-  currencyCode: Maybe<Scalars['String']['output']>;
-  id: Maybe<Scalars['String']['output']>;
-  interval: Maybe<Scalars['String']['output']>;
-  maxValue: Maybe<Scalars['Float']['output']>;
-  minValue: Maybe<Scalars['Float']['output']>;
-  summary: Maybe<Scalars['String']['output']>;
-};
-
-export type AshbyCompensationTier = {
-  __typename?: 'AshbyCompensationTier';
-  additionalInformation: Maybe<Scalars['String']['output']>;
-  components: Array<AshbyCompensationComponent>;
-  id: Maybe<Scalars['String']['output']>;
-  tierSummary: Maybe<Scalars['String']['output']>;
-  title: Maybe<Scalars['String']['output']>;
-};
-
 export type AshbyEnrichment = {
   __typename?: 'AshbyEnrichment';
   company_name: Maybe<Scalars['String']['output']>;
@@ -132,19 +99,6 @@ export type AshbyEnrichment = {
   industry_tags: Array<Scalars['String']['output']>;
   size_signal: Maybe<Scalars['String']['output']>;
   tech_signals: Array<Scalars['String']['output']>;
-};
-
-export type AshbyPostalAddress = {
-  __typename?: 'AshbyPostalAddress';
-  addressCountry: Maybe<Scalars['String']['output']>;
-  addressLocality: Maybe<Scalars['String']['output']>;
-  addressRegion: Maybe<Scalars['String']['output']>;
-};
-
-export type AshbySecondaryLocation = {
-  __typename?: 'AshbySecondaryLocation';
-  address: Maybe<AshbyPostalAddress>;
-  location: Scalars['String']['output'];
 };
 
 export type BatchRecipientInput = {
@@ -524,12 +478,6 @@ export type DeleteEmailTemplateResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type DeleteJobResponse = {
-  __typename?: 'DeleteJobResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
 export type EmailCampaign = {
   __typename?: 'EmailCampaign';
   addAntiThreadHeader: Scalars['Boolean']['output'];
@@ -626,17 +574,6 @@ export type EnhanceCompanyResponse = {
   companyId: Maybe<Scalars['Int']['output']>;
   companyKey: Maybe<Scalars['String']['output']>;
   message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
-/** Response from enhancing a job with ATS data */
-export type EnhanceJobResponse = {
-  __typename?: 'EnhanceJobResponse';
-  /** The updated job record with enhanced data from the ATS */
-  job: Maybe<Job>;
-  /** Human-readable message about the operation result */
-  message: Maybe<Scalars['String']['output']>;
-  /** Whether the enhancement was successful */
   success: Scalars['Boolean']['output'];
 };
 
@@ -764,69 +701,6 @@ export type GenerateReplyResult = {
   subject: Scalars['String']['output'];
 };
 
-export type GreenhouseCompliance = {
-  __typename?: 'GreenhouseCompliance';
-  description: Maybe<Scalars['String']['output']>;
-  questions: Maybe<Array<GreenhouseQuestion>>;
-  type: Scalars['String']['output'];
-};
-
-export type GreenhouseDataCompliance = {
-  __typename?: 'GreenhouseDataCompliance';
-  demographic_data_consent_applies: Scalars['Boolean']['output'];
-  requires_consent: Scalars['Boolean']['output'];
-  requires_processing_consent: Scalars['Boolean']['output'];
-  requires_retention_consent: Scalars['Boolean']['output'];
-  retention_period: Maybe<Scalars['Int']['output']>;
-  type: Scalars['String']['output'];
-};
-
-export type GreenhouseDemographicQuestions = {
-  __typename?: 'GreenhouseDemographicQuestions';
-  description: Maybe<Scalars['String']['output']>;
-  header: Maybe<Scalars['String']['output']>;
-  questions: Maybe<Array<GreenhouseQuestion>>;
-};
-
-export type GreenhouseDepartment = {
-  __typename?: 'GreenhouseDepartment';
-  child_ids: Maybe<Array<Scalars['String']['output']>>;
-  id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  parent_id: Maybe<Scalars['String']['output']>;
-};
-
-export type GreenhouseMetadata = {
-  __typename?: 'GreenhouseMetadata';
-  id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  value: Maybe<Scalars['String']['output']>;
-  value_type: Maybe<Scalars['String']['output']>;
-};
-
-export type GreenhouseOffice = {
-  __typename?: 'GreenhouseOffice';
-  child_ids: Maybe<Array<Scalars['String']['output']>>;
-  id: Scalars['String']['output'];
-  location: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  parent_id: Maybe<Scalars['String']['output']>;
-};
-
-export type GreenhouseQuestion = {
-  __typename?: 'GreenhouseQuestion';
-  description: Maybe<Scalars['String']['output']>;
-  fields: Maybe<Array<GreenhouseQuestionField>>;
-  label: Scalars['String']['output'];
-  required: Scalars['Boolean']['output'];
-};
-
-export type GreenhouseQuestionField = {
-  __typename?: 'GreenhouseQuestionField';
-  name: Maybe<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
-};
-
 export type ImportCompaniesResult = {
   __typename?: 'ImportCompaniesResult';
   errors: Array<Scalars['String']['output']>;
@@ -878,89 +752,6 @@ export type ImportResendResult = {
   updatedCount: Scalars['Int']['output'];
 };
 
-export type Job = {
-  __typename?: 'Job';
-  absolute_url: Maybe<Scalars['String']['output']>;
-  applied: Scalars['Boolean']['output'];
-  appliedAt: Maybe<Scalars['String']['output']>;
-  archived: Scalars['Boolean']['output'];
-  ashby_address: Maybe<AshbyAddress>;
-  ashby_apply_url: Maybe<Scalars['String']['output']>;
-  ashby_compensation: Maybe<AshbyCompensation>;
-  ashby_department: Maybe<Scalars['String']['output']>;
-  ashby_employment_type: Maybe<Scalars['String']['output']>;
-  ashby_is_listed: Maybe<Scalars['Boolean']['output']>;
-  ashby_is_remote: Maybe<Scalars['Boolean']['output']>;
-  ashby_job_url: Maybe<Scalars['String']['output']>;
-  ashby_secondary_locations: Maybe<Array<AshbySecondaryLocation>>;
-  ashby_team: Maybe<Scalars['String']['output']>;
-  company: Maybe<Company>;
-  company_id: Maybe<Scalars['Int']['output']>;
-  company_key: Scalars['String']['output'];
-  company_name: Maybe<Scalars['String']['output']>;
-  compliance: Maybe<Array<GreenhouseCompliance>>;
-  created_at: Scalars['String']['output'];
-  data_compliance: Maybe<Array<GreenhouseDataCompliance>>;
-  demographic_questions: Maybe<GreenhouseDemographicQuestions>;
-  departments: Maybe<Array<GreenhouseDepartment>>;
-  description: Maybe<Scalars['String']['output']>;
-  external_id: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  internal_job_id: Maybe<Scalars['String']['output']>;
-  language: Maybe<Scalars['String']['output']>;
-  location: Maybe<Scalars['String']['output']>;
-  location_questions: Maybe<Array<GreenhouseQuestion>>;
-  metadata: Maybe<Array<GreenhouseMetadata>>;
-  offices: Maybe<Array<GreenhouseOffice>>;
-  /**
-   * Canonical publication date. All ATS sources (Greenhouse, Ashby)
-   * write to the unified first_published DB column at ingestion time.
-   * Falls back to posted_at (ingestion timestamp) when no ATS date exists.
-   */
-  publishedAt: Scalars['String']['output'];
-  questions: Maybe<Array<GreenhouseQuestion>>;
-  recruiter: Maybe<Contact>;
-  requisition_id: Maybe<Scalars['String']['output']>;
-  score: Maybe<Scalars['Float']['output']>;
-  score_reason: Maybe<Scalars['String']['output']>;
-  skillMatch: Maybe<SkillMatch>;
-  skills: Maybe<Array<JobSkill>>;
-  source_id: Maybe<Scalars['String']['output']>;
-  source_kind: Scalars['String']['output'];
-  status: Maybe<JobStatus>;
-  title: Scalars['String']['output'];
-  updated_at: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-};
-
-export type JobSkill = {
-  __typename?: 'JobSkill';
-  confidence: Maybe<Scalars['Float']['output']>;
-  evidence: Maybe<Scalars['String']['output']>;
-  level: Scalars['String']['output'];
-  tag: Scalars['String']['output'];
-};
-
-/**
- * Pipeline status for a job posting.
- * Mirrors workers/process-jobs/src/entry.py JobStatus enum — values must stay in sync.
- */
-export type JobStatus =
-  | 'enhanced'
-  | 'error'
-  | 'eu_remote'
-  | 'new'
-  | 'non_eu'
-  | 'reported'
-  | 'role_match'
-  | 'role_nomatch';
-
-export type JobsResponse = {
-  __typename?: 'JobsResponse';
-  jobs: Array<Job>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type MarkRepliedResult = {
   __typename?: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -989,7 +780,6 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   applyEmailPattern: ApplyEmailPatternResult;
   archiveEmail: ArchiveEmailResult;
-  archiveJob: Job;
   blockCompany: BlockedCompany;
   blockJobsByCompany: BlockJobsResult;
   cancelCompanyEmails: CancelCompanyEmailsResult;
@@ -998,36 +788,13 @@ export type Mutation = {
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
-  deleteAllJobs: DeleteJobResponse;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
-  deleteJob: DeleteJobResponse;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
-  /**
-   * Enhance a job posting by fetching detailed data from the ATS (Applicant Tracking System).
-   *
-   * Supported ATS sources:
-   * - greenhouse: Greenhouse ATS (https://greenhouse.io)
-   * - ashby: Ashby ATS (https://ashbyhq.com)
-   *
-   * For Greenhouse:
-   * - jobId: The job posting ID from the URL (e.g., "5802159004" from https://job-boards.greenhouse.io/grafanalabs/jobs/5802159004)
-   * - company: The board token (e.g., "grafanalabs")
-   *
-   * For Ashby:
-   * - jobId: The posting ID
-   * - company: The board name
-   *
-   * The mutation will:
-   * 1. Fetch comprehensive job data from the ATS API
-   * 2. Save enhanced fields (description, departments, offices, questions, etc.)
-   * 3. Return the updated job with full ATS data
-   */
-  enhanceJobFromATS: EnhanceJobResponse;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   generateEmail: GenerateEmailResult;
@@ -1040,16 +807,9 @@ export type Mutation = {
   launchEmailCampaign: EmailCampaign;
   markContactEmailVerified: Contact;
   markEmailReplied: MarkRepliedResult;
-  markJobApplied: Job;
   mergeDuplicateCompanies: MergeCompaniesResult;
   mergeDuplicateContacts: MergeDuplicateContactsResult;
   previewEmail: EmailPreview;
-  /**
-   * Report a job as irrelevant, spam, or incorrectly classified.
-   * Sets the job status to "reported" so it can be reviewed or excluded.
-   * Requires authentication.
-   */
-  reportJob: Maybe<Job>;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   sendEmail: SendEmailResult;
@@ -1057,7 +817,6 @@ export type Mutation = {
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
-  unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateCampaign: EmailCampaign;
@@ -1088,11 +847,6 @@ export type MutationApplyEmailPatternArgs = {
 
 
 export type MutationArchiveEmailArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type MutationArchiveJobArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1163,21 +917,9 @@ export type MutationDeleteEmailTemplateArgs = {
 };
 
 
-export type MutationDeleteJobArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
 export type MutationEnhanceCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type MutationEnhanceJobFromAtsArgs = {
-  company: Scalars['String']['input'];
-  jobId: Scalars['String']['input'];
-  source: Scalars['String']['input'];
 };
 
 
@@ -1253,11 +995,6 @@ export type MutationMarkEmailRepliedArgs = {
 };
 
 
-export type MutationMarkJobAppliedArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
 export type MutationMergeDuplicateCompaniesArgs = {
   companyIds: Array<Scalars['Int']['input']>;
 };
@@ -1270,11 +1007,6 @@ export type MutationMergeDuplicateContactsArgs = {
 
 export type MutationPreviewEmailArgs = {
   input: PreviewEmailInput;
-};
-
-
-export type MutationReportJobArgs = {
-  id: Scalars['Int']['input'];
 };
 
 
@@ -1309,11 +1041,6 @@ export type MutationSyncResendEmailsArgs = {
 
 
 export type MutationUnarchiveEmailArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type MutationUnarchiveJobArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1396,8 +1123,6 @@ export type Query = {
   emailTemplates: EmailTemplatesResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
   findCompany: FindCompanyResult;
-  job: Maybe<Job>;
-  jobs: JobsResponse;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
@@ -1500,24 +1225,6 @@ export type QueryEmailsNeedingFollowUpArgs = {
 export type QueryFindCompanyArgs = {
   name?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryJobArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-export type QueryJobsArgs = {
-  companyKey?: InputMaybe<Scalars['String']['input']>;
-  excludedCompanies?: InputMaybe<Array<Scalars['String']['input']>>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
-  showAll?: InputMaybe<Scalars['Boolean']['input']>;
-  skills?: InputMaybe<Array<Scalars['String']['input']>>;
-  sourceType?: InputMaybe<Scalars['String']['input']>;
-  sourceTypes?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -1643,24 +1350,6 @@ export type SendOutreachEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type SkillMatch = {
-  __typename?: 'SkillMatch';
-  details: Array<SkillMatchDetail>;
-  jobCoverage: Scalars['Float']['output'];
-  matchedCount: Scalars['Int']['output'];
-  requiredCoverage: Scalars['Float']['output'];
-  score: Scalars['Float']['output'];
-  totalPreferred: Scalars['Int']['output'];
-  userCoverage: Scalars['Float']['output'];
-};
-
-export type SkillMatchDetail = {
-  __typename?: 'SkillMatchDetail';
-  level: Scalars['String']['output'];
-  matched: Scalars['Boolean']['output'];
-  tag: Scalars['String']['output'];
-};
-
 export type SourceType =
   | 'COMMONCRAWL'
   | 'LIVE_FETCH'
@@ -1757,10 +1446,6 @@ export type UserSettings = {
   email_notifications: Scalars['Boolean']['output'];
   excluded_companies: Maybe<Array<Scalars['String']['output']>>;
   id: Scalars['Int']['output'];
-  jobs_per_page: Scalars['Int']['output'];
-  new_job_alerts: Scalars['Boolean']['output'];
-  preferred_locations: Maybe<Array<Scalars['String']['output']>>;
-  preferred_skills: Maybe<Array<Scalars['String']['output']>>;
   updated_at: Scalars['String']['output'];
   user_id: Scalars['String']['output'];
 };
@@ -1770,10 +1455,6 @@ export type UserSettingsInput = {
   dark_mode?: InputMaybe<Scalars['Boolean']['input']>;
   email_notifications?: InputMaybe<Scalars['Boolean']['input']>;
   excluded_companies?: InputMaybe<Array<Scalars['String']['input']>>;
-  jobs_per_page?: InputMaybe<Scalars['Int']['input']>;
-  new_job_alerts?: InputMaybe<Scalars['Boolean']['input']>;
-  preferred_locations?: InputMaybe<Array<Scalars['String']['input']>>;
-  preferred_skills?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type VerifyEmailResult = {
@@ -1801,53 +1482,12 @@ export type WarcPointerInput = {
   offset: Scalars['Int']['input'];
 };
 
-export type DeleteAllJobsMutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type DeleteAllJobsMutation = { __typename?: 'Mutation', deleteAllJobs: { __typename?: 'DeleteJobResponse', success: boolean, message: string | null } };
-
-export type DeleteJobMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-}>;
-
-
-export type DeleteJobMutation = { __typename?: 'Mutation', deleteJob: { __typename?: 'DeleteJobResponse', success: boolean, message: string | null } };
-
-export type GetJobQueryVariables = Exact<{
-  id: Scalars['String']['input'];
-}>;
-
-
-export type GetJobQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, status: JobStatus | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, ashby_department: string | null, ashby_team: string | null, ashby_employment_type: string | null, ashby_is_remote: boolean | null, ashby_is_listed: boolean | null, ashby_job_url: string | null, ashby_apply_url: string | null, applied: boolean, appliedAt: string | null, archived: boolean, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, skillMatch: { __typename?: 'SkillMatch', score: number, userCoverage: number, jobCoverage: number, requiredCoverage: number, matchedCount: number, totalPreferred: number, details: Array<{ __typename?: 'SkillMatchDetail', tag: string, level: string, matched: boolean }> } | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null, ashby_secondary_locations: Array<{ __typename?: 'AshbySecondaryLocation', location: string, address: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null }> | null, ashby_compensation: { __typename?: 'AshbyCompensation', compensationTierSummary: string | null, scrapeableCompensationSalarySummary: string | null, compensationTiers: Array<{ __typename?: 'AshbyCompensationTier', id: string | null, tierSummary: string | null, title: string | null, additionalInformation: string | null, components: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> }>, summaryComponents: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> } | null, ashby_address: { __typename?: 'AshbyAddress', postalAddress: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null } | null } | null };
-
-export type GetJobsQueryVariables = Exact<{
-  sourceType?: InputMaybe<Scalars['String']['input']>;
-  sourceTypes?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
-  search?: InputMaybe<Scalars['String']['input']>;
-  companyKey?: InputMaybe<Scalars['String']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  excludedCompanies?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
-  skills?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
-  showAll?: InputMaybe<Scalars['Boolean']['input']>;
-}>;
-
-
-export type GetJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_kind: string, company_key: string, title: string, location: string | null, url: string, publishedAt: string, status: JobStatus | null, applied: boolean, archived: boolean, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string }> | null }> } };
-
 export type GetUserSettingsQueryVariables = Exact<{
   userId: Scalars['String']['input'];
 }>;
 
 
-export type GetUserSettingsQuery = { __typename?: 'Query', userSettings: { __typename?: 'UserSettings', id: number, preferred_locations: Array<string> | null, preferred_skills: Array<string> | null, excluded_companies: Array<string> | null } | null };
-
-export type ReportJobMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-}>;
-
-
-export type ReportJobMutation = { __typename?: 'Mutation', reportJob: { __typename?: 'Job', id: number, status: JobStatus | null } | null };
+export type GetUserSettingsQuery = { __typename?: 'Query', userSettings: { __typename?: 'UserSettings', id: number, excluded_companies: Array<string> | null } | null };
 
 export type UpdateUserSettingsMutationVariables = Exact<{
   userId: Scalars['String']['input'];
@@ -1855,7 +1495,7 @@ export type UpdateUserSettingsMutationVariables = Exact<{
 }>;
 
 
-export type UpdateUserSettingsMutation = { __typename?: 'Mutation', updateUserSettings: { __typename?: 'UserSettings', id: number, user_id: string, email_notifications: boolean, daily_digest: boolean, new_job_alerts: boolean, preferred_locations: Array<string> | null, preferred_skills: Array<string> | null, excluded_companies: Array<string> | null, dark_mode: boolean, jobs_per_page: number, created_at: string, updated_at: string } };
+export type UpdateUserSettingsMutation = { __typename?: 'Mutation', updateUserSettings: { __typename?: 'UserSettings', id: number, user_id: string, email_notifications: boolean, daily_digest: boolean, excluded_companies: Array<string> | null, dark_mode: boolean, created_at: string, updated_at: string } };
 
 export type GetBlockedCompaniesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2377,52 +2017,6 @@ export type DeleteEmailTemplateMutationVariables = Exact<{
 
 export type DeleteEmailTemplateMutation = { __typename?: 'Mutation', deleteEmailTemplate: { __typename?: 'DeleteEmailTemplateResult', success: boolean, message: string | null } };
 
-export type GetGreenhouseJobsQueryVariables = Exact<{
-  search?: InputMaybe<Scalars['String']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-}>;
-
-
-export type GetGreenhouseJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null }> } };
-
-export type GetGreenhouseJobByIdQueryVariables = Exact<{
-  id: Scalars['String']['input'];
-}>;
-
-
-export type GetGreenhouseJobByIdQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null } | null };
-
-export type EnhanceJobFromAtsMutationVariables = Exact<{
-  jobId: Scalars['String']['input'];
-  company: Scalars['String']['input'];
-  source: Scalars['String']['input'];
-}>;
-
-
-export type EnhanceJobFromAtsMutation = { __typename?: 'Mutation', enhanceJobFromATS: { __typename?: 'EnhanceJobResponse', success: boolean, message: string | null, job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null } | null } };
-
-export type MarkJobAppliedMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-}>;
-
-
-export type MarkJobAppliedMutation = { __typename?: 'Mutation', markJobApplied: { __typename?: 'Job', id: number, applied: boolean, appliedAt: string | null } };
-
-export type ArchiveJobMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-}>;
-
-
-export type ArchiveJobMutation = { __typename?: 'Mutation', archiveJob: { __typename?: 'Job', id: number, archived: boolean } };
-
-export type UnarchiveJobMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-}>;
-
-
-export type UnarchiveJobMutation = { __typename?: 'Mutation', unarchiveJob: { __typename?: 'Job', id: number, archived: boolean } };
-
 export const EvidenceFieldsFragmentDoc = gql`
     fragment EvidenceFields on Evidence {
   source_type
@@ -2534,367 +2128,10 @@ export const CompanyFieldsFragmentDoc = gql`
   }
 }
     ${AtsBoardFieldsFragmentDoc}`;
-export const DeleteAllJobsDocument = gql`
-    mutation DeleteAllJobs {
-  deleteAllJobs {
-    success
-    message
-  }
-}
-    `;
-export type DeleteAllJobsMutationFn = Apollo.MutationFunction<DeleteAllJobsMutation, DeleteAllJobsMutationVariables>;
-
-/**
- * __useDeleteAllJobsMutation__
- *
- * To run a mutation, you first call `useDeleteAllJobsMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteAllJobsMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteAllJobsMutation, { data, loading, error }] = useDeleteAllJobsMutation({
- *   variables: {
- *   },
- * });
- */
-export function useDeleteAllJobsMutation(baseOptions?: Apollo.MutationHookOptions<DeleteAllJobsMutation, DeleteAllJobsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteAllJobsMutation, DeleteAllJobsMutationVariables>(DeleteAllJobsDocument, options);
-      }
-export type DeleteAllJobsMutationHookResult = ReturnType<typeof useDeleteAllJobsMutation>;
-export type DeleteAllJobsMutationResult = Apollo.MutationResult<DeleteAllJobsMutation>;
-export type DeleteAllJobsMutationOptions = Apollo.BaseMutationOptions<DeleteAllJobsMutation, DeleteAllJobsMutationVariables>;
-export const DeleteJobDocument = gql`
-    mutation DeleteJob($id: Int!) {
-  deleteJob(id: $id) {
-    success
-    message
-  }
-}
-    `;
-export type DeleteJobMutationFn = Apollo.MutationFunction<DeleteJobMutation, DeleteJobMutationVariables>;
-
-/**
- * __useDeleteJobMutation__
- *
- * To run a mutation, you first call `useDeleteJobMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteJobMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteJobMutation, { data, loading, error }] = useDeleteJobMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteJobMutation(baseOptions?: Apollo.MutationHookOptions<DeleteJobMutation, DeleteJobMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteJobMutation, DeleteJobMutationVariables>(DeleteJobDocument, options);
-      }
-export type DeleteJobMutationHookResult = ReturnType<typeof useDeleteJobMutation>;
-export type DeleteJobMutationResult = Apollo.MutationResult<DeleteJobMutation>;
-export type DeleteJobMutationOptions = Apollo.BaseMutationOptions<DeleteJobMutation, DeleteJobMutationVariables>;
-export const GetJobDocument = gql`
-    query GetJob($id: String!) {
-  job(id: $id) {
-    id
-    external_id
-    source_id
-    source_kind
-    company_id
-    company_key
-    company {
-      ...CompanyFields
-    }
-    title
-    location
-    url
-    description
-    publishedAt
-    score
-    score_reason
-    status
-    skills {
-      tag
-      level
-      confidence
-      evidence
-    }
-    skillMatch {
-      score
-      userCoverage
-      jobCoverage
-      requiredCoverage
-      matchedCount
-      totalPreferred
-      details {
-        tag
-        level
-        matched
-      }
-    }
-    absolute_url
-    internal_job_id
-    requisition_id
-    company_name
-    publishedAt
-    language
-    metadata {
-      id
-      name
-      value
-      value_type
-    }
-    departments {
-      id
-      name
-      child_ids
-      parent_id
-    }
-    offices {
-      id
-      name
-      location
-      child_ids
-      parent_id
-    }
-    questions {
-      description
-      label
-      required
-      fields {
-        type
-        name
-      }
-    }
-    location_questions {
-      description
-      label
-      required
-      fields {
-        type
-        name
-      }
-    }
-    compliance {
-      type
-      description
-      questions {
-        description
-        label
-        required
-        fields {
-          type
-          name
-        }
-      }
-    }
-    demographic_questions {
-      header
-      description
-      questions {
-        description
-        label
-        required
-        fields {
-          type
-          name
-        }
-      }
-    }
-    data_compliance {
-      type
-      requires_consent
-      requires_processing_consent
-      requires_retention_consent
-      retention_period
-      demographic_data_consent_applies
-    }
-    ashby_department
-    ashby_team
-    ashby_employment_type
-    ashby_is_remote
-    ashby_is_listed
-    ashby_job_url
-    ashby_apply_url
-    ashby_secondary_locations {
-      location
-      address {
-        addressLocality
-        addressRegion
-        addressCountry
-      }
-    }
-    ashby_compensation {
-      compensationTierSummary
-      scrapeableCompensationSalarySummary
-      compensationTiers {
-        id
-        tierSummary
-        title
-        additionalInformation
-        components {
-          id
-          summary
-          compensationType
-          interval
-          currencyCode
-          minValue
-          maxValue
-        }
-      }
-      summaryComponents {
-        id
-        summary
-        compensationType
-        interval
-        currencyCode
-        minValue
-        maxValue
-      }
-    }
-    ashby_address {
-      postalAddress {
-        addressLocality
-        addressRegion
-        addressCountry
-      }
-    }
-    applied
-    appliedAt
-    archived
-    created_at
-    updated_at
-  }
-}
-    ${CompanyFieldsFragmentDoc}`;
-
-/**
- * __useGetJobQuery__
- *
- * To run a query within a React component, call `useGetJobQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetJobQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetJobQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetJobQuery(baseOptions: Apollo.QueryHookOptions<GetJobQuery, GetJobQueryVariables> & ({ variables: GetJobQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetJobQuery, GetJobQueryVariables>(GetJobDocument, options);
-      }
-export function useGetJobLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetJobQuery, GetJobQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetJobQuery, GetJobQueryVariables>(GetJobDocument, options);
-        }
-// @ts-ignore
-export function useGetJobSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetJobQuery, GetJobQueryVariables>): Apollo.UseSuspenseQueryResult<GetJobQuery, GetJobQueryVariables>;
-export function useGetJobSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetJobQuery, GetJobQueryVariables>): Apollo.UseSuspenseQueryResult<GetJobQuery | undefined, GetJobQueryVariables>;
-export function useGetJobSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetJobQuery, GetJobQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetJobQuery, GetJobQueryVariables>(GetJobDocument, options);
-        }
-export type GetJobQueryHookResult = ReturnType<typeof useGetJobQuery>;
-export type GetJobLazyQueryHookResult = ReturnType<typeof useGetJobLazyQuery>;
-export type GetJobSuspenseQueryHookResult = ReturnType<typeof useGetJobSuspenseQuery>;
-export type GetJobQueryResult = Apollo.QueryResult<GetJobQuery, GetJobQueryVariables>;
-export const GetJobsDocument = gql`
-    query GetJobs($sourceType: String, $sourceTypes: [String!], $search: String, $companyKey: String, $limit: Int, $offset: Int, $excludedCompanies: [String!], $skills: [String!], $showAll: Boolean) {
-  jobs(
-    sourceType: $sourceType
-    sourceTypes: $sourceTypes
-    search: $search
-    companyKey: $companyKey
-    limit: $limit
-    offset: $offset
-    excludedCompanies: $excludedCompanies
-    skills: $skills
-    showAll: $showAll
-  ) {
-    jobs {
-      id
-      external_id
-      source_kind
-      company_key
-      title
-      location
-      url
-      publishedAt
-      status
-      applied
-      archived
-      skills {
-        tag
-        level
-      }
-    }
-    totalCount
-  }
-}
-    `;
-
-/**
- * __useGetJobsQuery__
- *
- * To run a query within a React component, call `useGetJobsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetJobsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetJobsQuery({
- *   variables: {
- *      sourceType: // value for 'sourceType'
- *      sourceTypes: // value for 'sourceTypes'
- *      search: // value for 'search'
- *      companyKey: // value for 'companyKey'
- *      limit: // value for 'limit'
- *      offset: // value for 'offset'
- *      excludedCompanies: // value for 'excludedCompanies'
- *      skills: // value for 'skills'
- *      showAll: // value for 'showAll'
- *   },
- * });
- */
-export function useGetJobsQuery(baseOptions?: Apollo.QueryHookOptions<GetJobsQuery, GetJobsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetJobsQuery, GetJobsQueryVariables>(GetJobsDocument, options);
-      }
-export function useGetJobsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetJobsQuery, GetJobsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetJobsQuery, GetJobsQueryVariables>(GetJobsDocument, options);
-        }
-// @ts-ignore
-export function useGetJobsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetJobsQuery, GetJobsQueryVariables>): Apollo.UseSuspenseQueryResult<GetJobsQuery, GetJobsQueryVariables>;
-export function useGetJobsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetJobsQuery, GetJobsQueryVariables>): Apollo.UseSuspenseQueryResult<GetJobsQuery | undefined, GetJobsQueryVariables>;
-export function useGetJobsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetJobsQuery, GetJobsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetJobsQuery, GetJobsQueryVariables>(GetJobsDocument, options);
-        }
-export type GetJobsQueryHookResult = ReturnType<typeof useGetJobsQuery>;
-export type GetJobsLazyQueryHookResult = ReturnType<typeof useGetJobsLazyQuery>;
-export type GetJobsSuspenseQueryHookResult = ReturnType<typeof useGetJobsSuspenseQuery>;
-export type GetJobsQueryResult = Apollo.QueryResult<GetJobsQuery, GetJobsQueryVariables>;
 export const GetUserSettingsDocument = gql`
     query GetUserSettings($userId: String!) {
   userSettings(userId: $userId) {
     id
-    preferred_locations
-    preferred_skills
     excluded_companies
   }
 }
@@ -2935,40 +2172,6 @@ export type GetUserSettingsQueryHookResult = ReturnType<typeof useGetUserSetting
 export type GetUserSettingsLazyQueryHookResult = ReturnType<typeof useGetUserSettingsLazyQuery>;
 export type GetUserSettingsSuspenseQueryHookResult = ReturnType<typeof useGetUserSettingsSuspenseQuery>;
 export type GetUserSettingsQueryResult = Apollo.QueryResult<GetUserSettingsQuery, GetUserSettingsQueryVariables>;
-export const ReportJobDocument = gql`
-    mutation ReportJob($id: Int!) {
-  reportJob(id: $id) {
-    id
-    status
-  }
-}
-    `;
-export type ReportJobMutationFn = Apollo.MutationFunction<ReportJobMutation, ReportJobMutationVariables>;
-
-/**
- * __useReportJobMutation__
- *
- * To run a mutation, you first call `useReportJobMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useReportJobMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [reportJobMutation, { data, loading, error }] = useReportJobMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useReportJobMutation(baseOptions?: Apollo.MutationHookOptions<ReportJobMutation, ReportJobMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<ReportJobMutation, ReportJobMutationVariables>(ReportJobDocument, options);
-      }
-export type ReportJobMutationHookResult = ReturnType<typeof useReportJobMutation>;
-export type ReportJobMutationResult = Apollo.MutationResult<ReportJobMutation>;
-export type ReportJobMutationOptions = Apollo.BaseMutationOptions<ReportJobMutation, ReportJobMutationVariables>;
 export const UpdateUserSettingsDocument = gql`
     mutation UpdateUserSettings($userId: String!, $settings: UserSettingsInput!) {
   updateUserSettings(userId: $userId, settings: $settings) {
@@ -2976,12 +2179,8 @@ export const UpdateUserSettingsDocument = gql`
     user_id
     email_notifications
     daily_digest
-    new_job_alerts
-    preferred_locations
-    preferred_skills
     excluded_companies
     dark_mode
-    jobs_per_page
     created_at
     updated_at
   }
@@ -5887,382 +5086,3 @@ export function useDeleteEmailTemplateMutation(baseOptions?: Apollo.MutationHook
 export type DeleteEmailTemplateMutationHookResult = ReturnType<typeof useDeleteEmailTemplateMutation>;
 export type DeleteEmailTemplateMutationResult = Apollo.MutationResult<DeleteEmailTemplateMutation>;
 export type DeleteEmailTemplateMutationOptions = Apollo.BaseMutationOptions<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>;
-export const GetGreenhouseJobsDocument = gql`
-    query GetGreenhouseJobs($search: String, $limit: Int, $offset: Int) {
-  jobs(sourceType: "greenhouse", search: $search, limit: $limit, offset: $offset) {
-    jobs {
-      id
-      external_id
-      source_id
-      source_kind
-      company_id
-      company_key
-      company {
-        ...CompanyFields
-      }
-      title
-      location
-      url
-      description
-      publishedAt
-      score
-      score_reason
-      skills {
-        tag
-        level
-        confidence
-        evidence
-      }
-      created_at
-      updated_at
-    }
-    totalCount
-  }
-}
-    ${CompanyFieldsFragmentDoc}`;
-
-/**
- * __useGetGreenhouseJobsQuery__
- *
- * To run a query within a React component, call `useGetGreenhouseJobsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetGreenhouseJobsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetGreenhouseJobsQuery({
- *   variables: {
- *      search: // value for 'search'
- *      limit: // value for 'limit'
- *      offset: // value for 'offset'
- *   },
- * });
- */
-export function useGetGreenhouseJobsQuery(baseOptions?: Apollo.QueryHookOptions<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>(GetGreenhouseJobsDocument, options);
-      }
-export function useGetGreenhouseJobsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>(GetGreenhouseJobsDocument, options);
-        }
-// @ts-ignore
-export function useGetGreenhouseJobsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>): Apollo.UseSuspenseQueryResult<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>;
-export function useGetGreenhouseJobsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>): Apollo.UseSuspenseQueryResult<GetGreenhouseJobsQuery | undefined, GetGreenhouseJobsQueryVariables>;
-export function useGetGreenhouseJobsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>(GetGreenhouseJobsDocument, options);
-        }
-export type GetGreenhouseJobsQueryHookResult = ReturnType<typeof useGetGreenhouseJobsQuery>;
-export type GetGreenhouseJobsLazyQueryHookResult = ReturnType<typeof useGetGreenhouseJobsLazyQuery>;
-export type GetGreenhouseJobsSuspenseQueryHookResult = ReturnType<typeof useGetGreenhouseJobsSuspenseQuery>;
-export type GetGreenhouseJobsQueryResult = Apollo.QueryResult<GetGreenhouseJobsQuery, GetGreenhouseJobsQueryVariables>;
-export const GetGreenhouseJobByIdDocument = gql`
-    query GetGreenhouseJobById($id: String!) {
-  job(id: $id) {
-    id
-    external_id
-    source_id
-    source_kind
-    company_id
-    company_key
-    company {
-      ...CompanyFields
-    }
-    title
-    location
-    url
-    description
-    publishedAt
-    score
-    score_reason
-    skills {
-      tag
-      level
-      confidence
-      evidence
-    }
-    created_at
-    updated_at
-  }
-}
-    ${CompanyFieldsFragmentDoc}`;
-
-/**
- * __useGetGreenhouseJobByIdQuery__
- *
- * To run a query within a React component, call `useGetGreenhouseJobByIdQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetGreenhouseJobByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetGreenhouseJobByIdQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetGreenhouseJobByIdQuery(baseOptions: Apollo.QueryHookOptions<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables> & ({ variables: GetGreenhouseJobByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables>(GetGreenhouseJobByIdDocument, options);
-      }
-export function useGetGreenhouseJobByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables>(GetGreenhouseJobByIdDocument, options);
-        }
-// @ts-ignore
-export function useGetGreenhouseJobByIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables>;
-export function useGetGreenhouseJobByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables>): Apollo.UseSuspenseQueryResult<GetGreenhouseJobByIdQuery | undefined, GetGreenhouseJobByIdQueryVariables>;
-export function useGetGreenhouseJobByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables>(GetGreenhouseJobByIdDocument, options);
-        }
-export type GetGreenhouseJobByIdQueryHookResult = ReturnType<typeof useGetGreenhouseJobByIdQuery>;
-export type GetGreenhouseJobByIdLazyQueryHookResult = ReturnType<typeof useGetGreenhouseJobByIdLazyQuery>;
-export type GetGreenhouseJobByIdSuspenseQueryHookResult = ReturnType<typeof useGetGreenhouseJobByIdSuspenseQuery>;
-export type GetGreenhouseJobByIdQueryResult = Apollo.QueryResult<GetGreenhouseJobByIdQuery, GetGreenhouseJobByIdQueryVariables>;
-export const EnhanceJobFromAtsDocument = gql`
-    mutation EnhanceJobFromATS($jobId: String!, $company: String!, $source: String!) {
-  enhanceJobFromATS(jobId: $jobId, company: $company, source: $source) {
-    success
-    message
-    job {
-      id
-      external_id
-      source_id
-      source_kind
-      company_id
-      company_key
-      company {
-        ...CompanyFields
-      }
-      title
-      location
-      url
-      description
-      publishedAt
-      score
-      score_reason
-      skills {
-        tag
-        level
-        confidence
-        evidence
-      }
-      absolute_url
-      internal_job_id
-      requisition_id
-      company_name
-      publishedAt
-      language
-      metadata {
-        id
-        name
-        value
-        value_type
-      }
-      departments {
-        id
-        name
-        child_ids
-        parent_id
-      }
-      offices {
-        id
-        name
-        location
-        child_ids
-        parent_id
-      }
-      questions {
-        description
-        label
-        required
-        fields {
-          type
-          name
-        }
-      }
-      location_questions {
-        description
-        label
-        required
-        fields {
-          type
-          name
-        }
-      }
-      compliance {
-        type
-        description
-        questions {
-          description
-          label
-          required
-          fields {
-            type
-            name
-          }
-        }
-      }
-      demographic_questions {
-        header
-        description
-        questions {
-          description
-          label
-          required
-          fields {
-            type
-            name
-          }
-        }
-      }
-      data_compliance {
-        type
-        requires_consent
-        requires_processing_consent
-        requires_retention_consent
-        retention_period
-        demographic_data_consent_applies
-      }
-      created_at
-      updated_at
-    }
-  }
-}
-    ${CompanyFieldsFragmentDoc}`;
-export type EnhanceJobFromAtsMutationFn = Apollo.MutationFunction<EnhanceJobFromAtsMutation, EnhanceJobFromAtsMutationVariables>;
-
-/**
- * __useEnhanceJobFromAtsMutation__
- *
- * To run a mutation, you first call `useEnhanceJobFromAtsMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useEnhanceJobFromAtsMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [enhanceJobFromAtsMutation, { data, loading, error }] = useEnhanceJobFromAtsMutation({
- *   variables: {
- *      jobId: // value for 'jobId'
- *      company: // value for 'company'
- *      source: // value for 'source'
- *   },
- * });
- */
-export function useEnhanceJobFromAtsMutation(baseOptions?: Apollo.MutationHookOptions<EnhanceJobFromAtsMutation, EnhanceJobFromAtsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<EnhanceJobFromAtsMutation, EnhanceJobFromAtsMutationVariables>(EnhanceJobFromAtsDocument, options);
-      }
-export type EnhanceJobFromAtsMutationHookResult = ReturnType<typeof useEnhanceJobFromAtsMutation>;
-export type EnhanceJobFromAtsMutationResult = Apollo.MutationResult<EnhanceJobFromAtsMutation>;
-export type EnhanceJobFromAtsMutationOptions = Apollo.BaseMutationOptions<EnhanceJobFromAtsMutation, EnhanceJobFromAtsMutationVariables>;
-export const MarkJobAppliedDocument = gql`
-    mutation MarkJobApplied($id: Int!) {
-  markJobApplied(id: $id) {
-    id
-    applied
-    appliedAt
-  }
-}
-    `;
-export type MarkJobAppliedMutationFn = Apollo.MutationFunction<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>;
-
-/**
- * __useMarkJobAppliedMutation__
- *
- * To run a mutation, you first call `useMarkJobAppliedMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useMarkJobAppliedMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [markJobAppliedMutation, { data, loading, error }] = useMarkJobAppliedMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useMarkJobAppliedMutation(baseOptions?: Apollo.MutationHookOptions<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>(MarkJobAppliedDocument, options);
-      }
-export type MarkJobAppliedMutationHookResult = ReturnType<typeof useMarkJobAppliedMutation>;
-export type MarkJobAppliedMutationResult = Apollo.MutationResult<MarkJobAppliedMutation>;
-export type MarkJobAppliedMutationOptions = Apollo.BaseMutationOptions<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>;
-export const ArchiveJobDocument = gql`
-    mutation ArchiveJob($id: Int!) {
-  archiveJob(id: $id) {
-    id
-    archived
-  }
-}
-    `;
-export type ArchiveJobMutationFn = Apollo.MutationFunction<ArchiveJobMutation, ArchiveJobMutationVariables>;
-
-/**
- * __useArchiveJobMutation__
- *
- * To run a mutation, you first call `useArchiveJobMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useArchiveJobMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [archiveJobMutation, { data, loading, error }] = useArchiveJobMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useArchiveJobMutation(baseOptions?: Apollo.MutationHookOptions<ArchiveJobMutation, ArchiveJobMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<ArchiveJobMutation, ArchiveJobMutationVariables>(ArchiveJobDocument, options);
-      }
-export type ArchiveJobMutationHookResult = ReturnType<typeof useArchiveJobMutation>;
-export type ArchiveJobMutationResult = Apollo.MutationResult<ArchiveJobMutation>;
-export type ArchiveJobMutationOptions = Apollo.BaseMutationOptions<ArchiveJobMutation, ArchiveJobMutationVariables>;
-export const UnarchiveJobDocument = gql`
-    mutation UnarchiveJob($id: Int!) {
-  unarchiveJob(id: $id) {
-    id
-    archived
-  }
-}
-    `;
-export type UnarchiveJobMutationFn = Apollo.MutationFunction<UnarchiveJobMutation, UnarchiveJobMutationVariables>;
-
-/**
- * __useUnarchiveJobMutation__
- *
- * To run a mutation, you first call `useUnarchiveJobMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUnarchiveJobMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [unarchiveJobMutation, { data, loading, error }] = useUnarchiveJobMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useUnarchiveJobMutation(baseOptions?: Apollo.MutationHookOptions<UnarchiveJobMutation, UnarchiveJobMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UnarchiveJobMutation, UnarchiveJobMutationVariables>(UnarchiveJobDocument, options);
-      }
-export type UnarchiveJobMutationHookResult = ReturnType<typeof useUnarchiveJobMutation>;
-export type UnarchiveJobMutationResult = Apollo.MutationResult<UnarchiveJobMutation>;
-export type UnarchiveJobMutationOptions = Apollo.BaseMutationOptions<UnarchiveJobMutation, UnarchiveJobMutationVariables>;
