@@ -72,7 +72,7 @@ const config: Config = {
         docs: false,
         blog: {
           routeBasePath: "/", // Serve the blog at the site's root
-          blogSidebarCount: "ALL",
+          blogSidebarCount: 0,
           blogDescription:
             "Articles on AI engineering, LLM agents, eval-driven development, edge computing, and TypeScript/Rust by Vadim Nicolai.",
           showReadingTime: true,
