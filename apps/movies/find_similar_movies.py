@@ -15,7 +15,7 @@ from urllib.parse import quote
 import chromadb
 import httpx
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from rich import box
 from rich.console import Console
@@ -26,11 +26,33 @@ load_dotenv()
 QUERY_MOVIE = "The Pursuit of Happyness"
 MIN_IMDB_RATING = 7.0
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "similar_movies_results.json")
+EMBED_SERVER = "http://localhost:9999"
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3, max_tokens=16384)
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 chroma_client = chromadb.Client()
 console = Console()
+
+
+class CandleEmbeddings:
+    """Thin client for the local Candle embed-server (Metal-accelerated)."""
+
+    def __init__(self, url: str = EMBED_SERVER):
+        self._url = f"{url}/embed"
+
+    def _call(self, input_: str | list[str]) -> list[list[float]]:
+        resp = httpx.post(self._url, json={"input": input_}, timeout=30)
+        resp.raise_for_status()
+        items = sorted(resp.json()["data"], key=lambda x: x["index"])
+        return [item["embedding"] for item in items]
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._call(text)[0]
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return self._call(texts)
+
+
+embeddings = CandleEmbeddings()
 
 # Article words stripped when comparing titles for deduplication.
 _ARTICLES = re.compile(r"^(the|a|an)\s+", re.IGNORECASE)
@@ -511,7 +533,7 @@ def _print_table(movies: list[dict], query_movie: str):
     table.add_column("Year", width=6, justify="center")
     table.add_column("Platform", width=9, justify="center")
     table.add_column("IMDB", width=5, justify="center")
-    table.add_column("Rating", width=6, justify="center")
+    table.add_column("Age", width=6, justify="center")
     table.add_column("Score", width=6, justify="center")
     table.add_column("Genre", style="dim", min_width=14)
     table.add_column("RO", width=3, justify="center")
@@ -535,6 +557,22 @@ def _print_table(movies: list[dict], query_movie: str):
 
     console.print()
     console.print(table)
+    console.print()
+
+    # Print watch + IMDB URLs as a plain list for easy copy-paste
+    console.print("[bold]Watch URLs[/bold]")
+    for m in movies:
+        title = m.get("title", "?")
+        watch = m.get("url", "")
+        imdb = m.get("imdb_url", "")
+        plat = m.get("platform", "")
+        color = "red" if plat == "Netflix" else "blue"
+        console.print(
+            f"  [dim]{m.get('rank', '?'):>2}.[/dim] "
+            f"[bold]{title}[/bold]  "
+            f"[{color}]{watch}[/{color}]  "
+            f"[dim]{imdb}[/dim]"
+        )
 
 
 # ---------------------------------------------------------------------------
