@@ -8,7 +8,7 @@ const LLM_BASE_URL =
   process.env.LLM_BASE_URL || "http://localhost:11434/v1";
 const LLM_MODEL =
   process.env.LLM_MODEL || "qwen2.5:7b-instruct-q4_K_M";
-const LLM_API_KEY = process.env.LLM_API_KEY || process.env.DEEPSEEK_API_KEY || "";
+const LLM_API_KEY = process.env.LLM_API_KEY || "";
 
 export async function POST(req: NextRequest) {
 
