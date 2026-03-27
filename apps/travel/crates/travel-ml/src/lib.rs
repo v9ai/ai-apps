@@ -6,3 +6,4 @@ pub mod hotel;
 pub mod reviews;
 pub mod scraper;
 pub mod store;
+pub mod verify;

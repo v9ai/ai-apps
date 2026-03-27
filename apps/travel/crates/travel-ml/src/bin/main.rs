@@ -9,7 +9,7 @@
 use anyhow::{Context, Result};
 use candle_core::Device;
 use clap::{Parser, Subcommand};
-use tracing::{info, warn};
+use tracing::info;
 
 use travel_ml::constants::{DISCOVERY_YEAR, DISCOVERY_YEAR_STR};
 use travel_ml::dedup::deduplicate;
@@ -303,46 +303,36 @@ async fn export_results(
         }
     }
 
-    // Stage 7c: Candle ML review analysis + web scraping
-    let analyses = reviews::analyze_all_hotels_with_reviews(engine, &hotels_with_images)
-        .await
+    // Stage 7c: Scrape reviews (IO-bound, parallel)
+    let prescraped_path = reviews::resolve_prescraped_path(None);
+    let scraped_data = reviews::scrape_reviews_batch(&hotels_with_images, prescraped_path.as_deref())
+        .await;
+
+    // Stage 7d: Existence verification — drop hotels with no evidence of
+    // being a real property. Runs *before* Candle ML so rejected hotels
+    // never burn embedding compute.
+    let kept_indices = travel_ml::verify::verify_batch(
+        &hotels_with_images,
+        &scraped_data,
+        prescraped_path.as_deref(),
+    );
+    let mut verified_hotels: Vec<Hotel> = kept_indices.iter().map(|&i| hotels_with_images[i].clone()).collect();
+    let verified_scraped: Vec<reviews::ScrapedReviewData> = kept_indices.iter().map(|&i| scraped_data[i].clone()).collect();
+    let verified_scores: Vec<f32> = kept_indices.iter().map(|&i| scores[i]).collect();
+
+    // Stage 7e: Candle ML review analysis (CPU-bound)
+    let analyses = reviews::analyze_from_scraped(engine, &verified_hotels, &verified_scraped)
         .context("review analysis pipeline")?;
 
     // De-classify "new" hotels whose review counts prove they are established
-    reviews::clear_misidentified_new_hotels(&mut hotels_with_images, &analyses);
-
-    // Drop unverifiable hotels: zero reviews + zero rating = no evidence of existence
-    // on any platform (Google Maps, Google Search, Booking.com). This catches fictional
-    // names in the curated seed list that were never validated against real listings.
-    let before_verify = hotels_with_images.len();
-    let verified: Vec<(Hotel, f32, reviews::ReviewAnalysis)> = hotels_with_images
-        .into_iter()
-        .zip(scores.iter().copied())
-        .zip(analyses.into_iter())
-        .filter_map(|((hotel, score), analysis)| {
-            if analysis.review_count == 0 && analysis.review_rating == 0.0 && analysis.reviews.is_empty() {
-                warn!(
-                    "Dropping unverifiable hotel '{}' — no reviews found on any platform",
-                    hotel.name,
-                );
-                None
-            } else {
-                Some((hotel, score, analysis))
-            }
-        })
-        .collect();
-    if verified.len() < before_verify {
-        info!(
-            "Existence check: dropped {} unverifiable hotels ({} remain)",
-            before_verify - verified.len(),
-            verified.len(),
-        );
-    }
+    reviews::clear_misidentified_new_hotels(&mut verified_hotels, &analyses);
 
     // Build enriched results
-    let mut results: Vec<EnrichedSearchResult> = verified
+    let mut results: Vec<EnrichedSearchResult> = verified_hotels
         .into_iter()
-        .map(|(hotel, score, analysis)| EnrichedSearchResult {
+        .zip(verified_scores.iter().copied())
+        .zip(analyses.into_iter())
+        .map(|((hotel, score), analysis)| EnrichedSearchResult {
             hotel: reviews::EnrichedHotel {
                 hotel,
                 analysis,

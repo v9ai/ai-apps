@@ -1154,7 +1154,8 @@ pub async fn analyze_all_hotels_with_reviews(
     engine: &EmbeddingEngine,
     hotels: &[Hotel],
 ) -> Result<Vec<ReviewAnalysis>> {
-    analyze_all_hotels_with_reviews_from(engine, hotels, None).await
+    let scraped = scrape_reviews_batch(hotels, None).await;
+    analyze_from_scraped(engine, hotels, &scraped)
 }
 
 /// Like `analyze_all_hotels_with_reviews` but with explicit pre-scraped data path.
@@ -1163,15 +1164,33 @@ pub async fn analyze_all_hotels_with_reviews_from(
     hotels: &[Hotel],
     prescraped_path: Option<&str>,
 ) -> Result<Vec<ReviewAnalysis>> {
-    // Check for pre-scraped review data (Playwright output)
+    let scraped = scrape_reviews_batch(hotels, prescraped_path).await;
+    analyze_from_scraped(engine, hotels, &scraped)
+}
+
+/// Resolve the pre-scraped JSON path (explicit or auto-detected).
+pub fn resolve_prescraped_path(explicit: Option<&str>) -> Option<String> {
     let default_paths = [
         "../../apps/travel/data/scraped_reviews.json",
         "data/scraped_reviews.json",
         "scraped_reviews.json",
     ];
-    let prescraped_file = prescraped_path
+    explicit
         .map(String::from)
-        .or_else(|| default_paths.iter().find(|p| std::path::Path::new(p).exists()).map(|p| p.to_string()));
+        .or_else(|| default_paths.iter().find(|p| std::path::Path::new(p).exists()).map(|p| p.to_string()))
+}
+
+/// Scrape/load review data for a batch of hotels (IO-bound, parallel).
+///
+/// This is the first half of the review pipeline. Call [`analyze_from_scraped`]
+/// with the output to run the CPU-bound ML phase. Splitting the two allows
+/// existence verification between them so rejected hotels never burn embedding
+/// compute.
+pub async fn scrape_reviews_batch(
+    hotels: &[Hotel],
+    prescraped_path: Option<&str>,
+) -> Vec<ScrapedReviewData> {
+    let prescraped_file = resolve_prescraped_path(prescraped_path);
 
     if let Some(ref path) = prescraped_file {
         info!("Found pre-scraped review data at {}", path);
@@ -1179,10 +1198,9 @@ pub async fn analyze_all_hotels_with_reviews_from(
         info!("No pre-scraped review data found — will try HTTP scraping (may be blocked)");
     }
 
-    // Phase 1: Scrape reviews in parallel (IO-bound)
     info!("Scraping reviews for {} hotels concurrently...", hotels.len());
     let prescraped_clone = prescraped_file.clone();
-    let scraped_data: Vec<ScrapedReviewData> = stream::iter(hotels.iter().enumerate())
+    stream::iter(hotels.iter().enumerate())
         .map(|(i, hotel)| {
             let prescraped = prescraped_clone.clone();
             let hotel = hotel.clone();
@@ -1202,10 +1220,20 @@ pub async fn analyze_all_hotels_with_reviews_from(
         })
         .buffered(6)
         .collect()
-        .await;
+        .await
+}
 
-    // Phase 2: ML analysis (CPU-bound, sequential — shares EmbeddingEngine)
-    // Build anchor embeddings once — reused for all 16 hotels.
+/// Run Candle ML review analysis on pre-fetched scraped data (CPU-bound).
+///
+/// `hotels` and `scraped_data` must be the same length and aligned by index.
+pub fn analyze_from_scraped(
+    engine: &EmbeddingEngine,
+    hotels: &[Hotel],
+    scraped_data: &[ScrapedReviewData],
+) -> Result<Vec<ReviewAnalysis>> {
+    assert_eq!(hotels.len(), scraped_data.len());
+
+    // Build anchor embeddings once — reused for all hotels.
     info!("Building anchor embeddings (sentiment + {} aspects)...", aspect_anchors().len());
     let anchors = AnchorVecs::new(engine).context("building anchor vecs")?;
 
