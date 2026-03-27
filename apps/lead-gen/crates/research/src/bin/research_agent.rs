@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use chrono::Utc;
-use research::agent::{agent_builder, ReqwestClient};
+use research::agent::agent_builder;
 use research::scholar::SemanticScholarClient;
 use research::tools::{GetPaperDetail, SearchPapers};
 use research_agent::{
@@ -173,8 +173,6 @@ async fn main() -> Result<()> {
                 std::env::var("SEMANTIC_SCHOLAR_API_KEY").ok().as_deref(),
             );
 
-            let client = Client::new(&api_key);
-
             let preamble = r#"You are a research analyst for a remote EU job board aggregator.
 You have access to the Semantic Scholar API via search_papers and get_paper_detail.
 
@@ -185,8 +183,7 @@ Research standards:
 - Extract actionable insights for job board aggregation (classification, skill matching, etc.)
 - Report confidence honestly — say 'insufficient evidence' if the literature is sparse"#;
 
-            let agent = client
-                .agent("deepseek-reasoner")
+            let agent = agent_builder(&api_key, "deepseek-reasoner")
                 .preamble(preamble)
                 .tool(SearchPapers::new(scholar.clone()))
                 .tool(GetPaperDetail::new(scholar))
@@ -227,38 +224,6 @@ Research standards:
                     info!("latest-insights.md updated");
                 }
             }
-        }
-
-        Command::Study { api_key } => {
-            let api_key = api_key
-                .or_else(|| std::env::var("DEEPSEEK_API_KEY").ok())
-                .context("DEEPSEEK_API_KEY not set")?;
-
-            let scholar = SemanticScholarClient::new(
-                std::env::var("SEMANTIC_SCHOLAR_API_KEY").ok().as_deref(),
-            );
-
-            let d1 = D1Client::from_env()?;
-
-            info!("Starting agentic-coding study generation (20 parallel agents)");
-            study::run(&api_key, &scholar, &d1).await?;
-            info!("All topics saved to D1 — visit /study/agentic-coding");
-        }
-
-        Command::Prep { api_key } => {
-            let api_key = api_key
-                .or_else(|| std::env::var("DEEPSEEK_API_KEY").ok())
-                .context("DEEPSEEK_API_KEY not set")?;
-
-            let scholar = SemanticScholarClient::new(
-                std::env::var("SEMANTIC_SCHOLAR_API_KEY").ok().as_deref(),
-            );
-
-            let d1 = D1Client::from_env()?;
-
-            info!("Starting application-prep study generation (10 parallel agents)");
-            study::run_prep(&api_key, &scholar, &d1).await?;
-            info!("All topics saved to D1 — visit /study/application-prep");
         }
 
         Command::Enhance { source, api_key } => {
@@ -334,19 +299,6 @@ Research standards:
             }
 
             info!("slug-fix complete");
-        }
-
-        Command::StudyGen { category, count, api_key } => {
-            let api_key = api_key
-                .or_else(|| std::env::var("DEEPSEEK_API_KEY").ok())
-                .context("DEEPSEEK_API_KEY not set")?;
-
-            let d1 = D1Client::from_env()?;
-            let count = count.min(20);
-
-            info!(category = %category, count, "Generating study topics with DeepSeek Reasoner");
-            study::run_gen(&category, count, &api_key, &d1).await?;
-            info!(category = %category, "Topics saved to D1 — visit /study/{category}");
         }
 
         Command::RemoteJobSearch { api_key, skip_synthesis } => {

@@ -5,7 +5,7 @@
 ///
 /// An optional `SEMANTIC_SCHOLAR_API_KEY` raises the rate-limit cap for tool tests.
 use research::{
-    agent::Client,
+    agent::agent_builder,
     scholar::SemanticScholarClient,
     tools::{GetPaperDetail, SearchPapers},
 };
@@ -27,8 +27,7 @@ fn scholar() -> SemanticScholarClient {
 #[tokio::test]
 #[ignore = "requires DEEPSEEK_API_KEY"]
 async fn live_ds_chat_basic_response() {
-    let agent = Client::new(&api_key())
-        .agent("deepseek-chat")
+    let agent = agent_builder(&api_key(), "deepseek-chat")
         .preamble("You are a concise assistant. Reply in one sentence.")
         .build();
 
@@ -45,8 +44,7 @@ async fn live_ds_chat_basic_response() {
 #[tokio::test]
 #[ignore = "requires DEEPSEEK_API_KEY"]
 async fn live_ds_reasoner_basic_response() {
-    let agent = Client::new(&api_key())
-        .agent("deepseek-reasoner")
+    let agent = agent_builder(&api_key(), "deepseek-reasoner")
         .preamble("You are a concise quantitative analyst. Reply in one sentence.")
         .build();
 
@@ -65,8 +63,7 @@ async fn live_ds_reasoner_basic_response() {
 #[tokio::test]
 #[ignore = "requires DEEPSEEK_API_KEY"]
 async fn live_ds_tool_call_triggers_search_papers() {
-    let agent = Client::new(&api_key())
-        .agent("deepseek-chat")
+    let agent = agent_builder(&api_key(), "deepseek-chat")
         .preamble("You must call search_papers at least once, then answer.")
         .tool(SearchPapers::new(scholar()))
         .build();
@@ -88,8 +85,7 @@ async fn live_ds_tool_call_triggers_search_papers() {
 #[tokio::test]
 #[ignore = "requires DEEPSEEK_API_KEY"]
 async fn live_ds_tool_call_get_paper_detail() {
-    let agent = Client::new(&api_key())
-        .agent("deepseek-chat")
+    let agent = agent_builder(&api_key(), "deepseek-chat")
         .preamble("You must call get_paper_detail, then answer.")
         .tool(GetPaperDetail::new(scholar()))
         .build();
@@ -116,8 +112,7 @@ async fn live_ds_tool_call_get_paper_detail() {
 #[tokio::test]
 #[ignore = "requires DEEPSEEK_API_KEY"]
 async fn live_ds_full_research_loop_returns_structured_output() {
-    let agent = Client::new(&api_key())
-        .agent("deepseek-chat")
+    let agent = agent_builder(&api_key(), "deepseek-chat")
         .preamble(
             "You are a quant research assistant. Use search_papers to find relevant papers, \
              then get_paper_detail on the most promising one. Return a brief markdown summary \
@@ -153,8 +148,7 @@ async fn live_ds_full_research_loop_returns_structured_output() {
 #[tokio::test]
 #[ignore = "requires DEEPSEEK_API_KEY (uses a bad key on purpose)"]
 async fn live_ds_invalid_api_key_returns_error() {
-    let agent = Client::new("sk-invalid-key-for-testing")
-        .agent("deepseek-chat")
+    let agent = agent_builder("sk-invalid-key-for-testing", "deepseek-chat")
         .build();
 
     let err = agent
@@ -175,8 +169,7 @@ async fn live_ds_invalid_api_key_returns_error() {
 #[tokio::test]
 #[ignore = "requires DEEPSEEK_API_KEY"]
 async fn live_ds_response_is_valid_utf8_string() {
-    let agent = Client::new(&api_key())
-        .agent("deepseek-chat")
+    let agent = agent_builder(&api_key(), "deepseek-chat")
         .build();
 
     let result = agent
@@ -192,8 +185,7 @@ async fn live_ds_response_is_valid_utf8_string() {
 #[tokio::test]
 #[ignore = "requires DEEPSEEK_API_KEY"]
 async fn live_ds_multiple_independent_prompts() {
-    let agent = Client::new(&api_key())
-        .agent("deepseek-chat")
+    let agent = agent_builder(&api_key(), "deepseek-chat")
         .build();
 
     for i in 1u32..=3 {
