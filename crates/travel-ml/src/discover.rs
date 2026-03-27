@@ -332,20 +332,17 @@ pub fn extract_hotels(ranked: &[RankedPassage]) -> Vec<Hotel> {
             .and_then(|c| c[1].parse::<f32>().ok())
             .unwrap_or(0.0);
 
-        // Detect year — only keep if 2026 is mentioned
+        // Detect year — keep any recent year (2018+)
         let opened_year = year_re.captures(text).and_then(|c| {
             let y: u16 = c[1].parse().ok()?;
-            if y == 2026 {
-                Some(y)
-            } else {
-                None
-            }
+            if y >= 2018 { Some(y) } else { None }
         });
-        // If no 2026 mention, skip — we only want new 2026 hotels
+        // If no recent year mention, skip — we only want new hotels
         if opened_year.is_none() && !text.to_lowercase().contains("2026") {
             continue;
         }
-        let opened_year = Some(2026u16);
+        // Use the parsed year; fall back to 2026 only when the text mentions it without a parseable year
+        let opened_year = opened_year.or(Some(2026u16));
 
         // Detect location
         let text_lower = text.to_lowercase();
