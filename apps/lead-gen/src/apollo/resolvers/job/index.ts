@@ -5,7 +5,6 @@ import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
 import { jobsQuery } from "./jobs-query";
 import { enhanceJobFromATS } from "./enhance-job";
-import { processAllJobs } from "./process-all-jobs";
 import { JOB_STATUS } from "@/constants/job-status";
 import type {
   JobResolvers,
@@ -73,16 +72,6 @@ const Job: JobResolvers<GraphQLContext, Job> = {
   // Map DB status (hyphenated) to GraphQL JobStatus enum (underscored)
   status(parent) {
     return (STATUS_TO_ENUM[parent.status ?? ""] ?? parent.status ?? null) as any;
-  },
-  // Read directly from DB column — the actual source of truth
-  is_remote_eu(parent) {
-    return (parent.is_remote_eu as unknown) === 1 || parent.is_remote_eu === true;
-  },
-  remote_eu_confidence(parent) {
-    return parent.remote_eu_confidence ?? null;
-  },
-  remote_eu_reason(parent) {
-    return parent.remote_eu_reason ?? null;
   },
   async skills(parent, _args, context) {
     try {
@@ -369,8 +358,6 @@ const Mutation: MutationResolvers = {
   },
 
   enhanceJobFromATS: enhanceJobFromATS as MutationResolvers["enhanceJobFromATS"],
-
-  processAllJobs: processAllJobs as MutationResolvers["processAllJobs"],
 
   async deleteAllJobs(_parent, _args, context) {
     if (!context.userId) {

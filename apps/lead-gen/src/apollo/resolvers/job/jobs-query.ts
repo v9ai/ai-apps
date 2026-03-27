@@ -16,7 +16,6 @@ import {
 import type { GraphQLContext } from "../../context";
 import type { QueryJobsArgs } from "@/__generated__/resolvers-types";
 import { EXCLUDED_LOCATIONS } from "./constants";
-import { REMOTE_EU_ONLY } from "@/lib/constants";
 
 export async function jobsQuery(
   _parent: unknown,
@@ -35,7 +34,7 @@ export async function jobsQuery(
       AS REAL) > LENGTH(${jobs.company_key}) * 0.6
     )`;
     const conditions = [ne(jobs.status, "reported"), spamKeyFilter];
-    const hasFilters = !!(args.search || args.companyKey || args.sourceType || (args.sourceTypes && args.sourceTypes.length > 0) || args.remoteEuConfidence || (args.skills && args.skills.length > 0) || (args.excludedCompanies && args.excludedCompanies.length > 0));
+    const hasFilters = !!(args.search || args.companyKey || args.sourceType || (args.sourceTypes && args.sourceTypes.length > 0) || (args.skills && args.skills.length > 0) || (args.excludedCompanies && args.excludedCompanies.length > 0));
 
     if (args.companyKey) {
       conditions.push(eq(jobs.company_key, args.companyKey));
@@ -49,12 +48,6 @@ export async function jobsQuery(
           like(jobs.description, searchPattern),
         )!,
       );
-    }
-
-    // Always filter to remote EU jobs (REMOTE_EU_ONLY = true in src/lib/constants.ts)
-    // showAll bypasses this filter (admin-only UI toggle)
-    if (REMOTE_EU_ONLY && !args.showAll) {
-      conditions.push(eq(jobs.is_remote_eu, true));
     }
 
     // Exclude archived (dismissed) jobs from the main list
@@ -75,11 +68,6 @@ export async function jobsQuery(
     // Filter by sourceTypes (multi-source OR logic)
     if (args.sourceTypes && args.sourceTypes.length > 0) {
       conditions.push(inArray(jobs.source_kind, args.sourceTypes));
-    }
-
-    // Filter by remoteEuConfidence level
-    if (args.remoteEuConfidence) {
-      conditions.push(eq(jobs.remote_eu_confidence, args.remoteEuConfidence as typeof jobs.remote_eu_confidence.enumValues[number]));
     }
 
     // Filter by skills — match ANY requested skill (OR logic), case-insensitive
@@ -139,9 +127,7 @@ export async function jobsQuery(
         posted_at: jobs.posted_at,
         first_published: jobs.first_published,
         status: jobs.status,
-        is_remote_eu: jobs.is_remote_eu,
         score: jobs.score,
-        remote_eu_confidence: jobs.remote_eu_confidence,
       })
       .from(jobs)
       .where(whereClause)

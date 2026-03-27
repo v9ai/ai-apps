@@ -149,3 +149,39 @@ path = "src/bin/scrapus_research.rs"
 [[bin]]
 name = "last-week"
 path = "src/bin/last_week.rs"
+
+[[bin]]
+name = "lead-gen-research-1"
+path = "src/bin/lead_gen_research_1.rs"
+
+[[bin]]
+name = "lead-gen-research-2"
+path = "src/bin/lead_gen_research_2.rs"
+
+[[bin]]
+name = "lead-gen-research-3"
+path = "src/bin/lead_gen_research_3.rs"
+
+[[bin]]
+name = "lead-gen-research-4"
+path = "src/bin/lead_gen_research_4.rs"
+
+[[bin]]
+name = "lead-gen-research-5"
+path = "src/bin/lead_gen_research_5.rs"
+
+[[bin]]
+name = "lead-gen-research-6"
+path = "src/bin/lead_gen_research_6.rs"
+
+[[bin]]
+name = "lead-gen-research-7"
+path = "src/bin/lead_gen_research_7.rs"
+
+[[bin]]
+name = "lead-gen-research-8"
+path = "src/bin/lead_gen_research_8.rs"
+
+[[bin]]
+name = "lead-gen-research-9"
+path = "src/bin/lead_gen_research_9.rs"
