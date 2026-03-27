@@ -8,7 +8,9 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use tracing::{info, warn};
 
-use crate::constants::{DISCOVERY_YEAR, DISCOVERY_YEAR_STR, NEW_HOTEL_MIN_YEAR};
+use crate::constants::{
+    DISCOVERY_YEAR, DISCOVERY_YEAR_STR, ISLAND_REGIONS, NEW_HOTEL_MIN_YEAR, SEASIDE_KEYWORDS,
+};
 use crate::embeddings::EmbeddingEngine;
 use crate::hotel::Hotel;
 
@@ -215,11 +217,11 @@ fn find_nearest_heading(doc: &Html, _el: &scraper::ElementRef) -> Option<String>
 /// enforced by `tests::discovery_queries_all_contain_discovery_year_str`.
 fn discovery_queries() -> Vec<String> {
     vec![
-        format!("new hotel resort Greece opened {DISCOVERY_YEAR_STR} affordable budget"),
-        format!("brand new beachfront hotel Greek islands opening {DISCOVERY_YEAR_STR}"),
-        format!("newly built boutique hotel Santorini Mykonos Crete Rhodes {DISCOVERY_YEAR_STR}"),
-        format!("Greece hotel grand opening {DISCOVERY_YEAR_STR} cheap value all inclusive"),
-        format!("new budget hotel Athens Thessaloniki Corfu {DISCOVERY_YEAR_STR}"),
+        format!("new seaside beach hotel resort Greece opened {DISCOVERY_YEAR_STR} affordable budget"),
+        format!("brand new beachfront hotel Greek islands opening {DISCOVERY_YEAR_STR} coastal"),
+        format!("newly built boutique seaside hotel Santorini Mykonos Crete Rhodes {DISCOVERY_YEAR_STR}"),
+        format!("Greece beach hotel grand opening {DISCOVERY_YEAR_STR} cheap value all inclusive seafront"),
+        format!("new coastal resort Halkidiki Corfu Kos Paros beach {DISCOVERY_YEAR_STR}"),
     ]
 }
 
@@ -567,6 +569,35 @@ pub async fn structure_with_deepseek(text: &str) -> Result<Hotel> {
     })
 }
 
+// ── Seaside enforcement ────────────────────────────────────────────────
+
+/// Returns `true` if the hotel is on a Greek island (always seaside) or its
+/// description / amenities / location contain a [`SEASIDE_KEYWORDS`] match.
+///
+/// Pipeline-level policy: only seaside hotels are kept. Inland properties
+/// (e.g. Meteora, central Athens) are filtered out.
+pub fn is_seaside_hotel(hotel: &Hotel) -> bool {
+    // All Greek island regions are inherently seaside.
+    if ISLAND_REGIONS
+        .iter()
+        .any(|r| hotel.region.eq_ignore_ascii_case(r))
+    {
+        return true;
+    }
+
+    // Check description + location + amenities for seaside keywords.
+    let desc_lower = hotel.description.to_lowercase();
+    let loc_lower = hotel.location.to_lowercase();
+    SEASIDE_KEYWORDS.iter().any(|kw| {
+        desc_lower.contains(kw)
+            || loc_lower.contains(kw)
+            || hotel
+                .amenities
+                .iter()
+                .any(|a| a.to_lowercase().contains(kw))
+    })
+}
+
 // ── Validation ─────────────────────────────────────────────────────────
 
 /// Cosine similarity between two L2-normalized vectors (public for tests).
@@ -574,7 +605,7 @@ pub fn cosine_sim(a: &[f32], b: &[f32]) -> f32 {
     dot_product(a, b)
 }
 
-/// Validate a hotel candidate is plausible for Crete.
+/// Validate a hotel candidate is plausible for Greece.
 pub fn validate_hotel(hotel: &Hotel) -> bool {
     if hotel.name.is_empty() || hotel.name.len() < 4 {
         return false;
@@ -921,6 +952,58 @@ mod tests {
             "passage mentioning DISCOVERY_YEAR_STR must not be filtered out"
         );
         assert_eq!(hotels[0].opened_year, Some(DISCOVERY_YEAR));
+    }
+
+    // ── is_seaside_hotel ─────────────────────────────────────────
+
+    #[test]
+    fn seaside_island_region_always_passes() {
+        let mut h = test_hotel("Naxos Suites", 4, "Naxos, Cyclades, Greece");
+        h.region = "Cyclades".into();
+        h.amenities = vec![]; // no beach amenity
+        assert!(is_seaside_hotel(&h), "island-region hotel must pass");
+    }
+
+    #[test]
+    fn seaside_crete_always_passes() {
+        let mut h = test_hotel("Rethymno Retreat", 4, "Rethymno, Crete, Greece");
+        h.region = "Crete".into();
+        assert!(is_seaside_hotel(&h), "Crete hotel must pass as island");
+    }
+
+    #[test]
+    fn seaside_mainland_with_beach_passes() {
+        let mut h = test_hotel("Halkidiki Beach", 4, "Halkidiki, Central Macedonia, Greece");
+        h.region = "Central Macedonia".into();
+        h.description = "Resort on a sandy beach with crystal waters.".into();
+        assert!(is_seaside_hotel(&h), "mainland hotel with beach keyword must pass");
+    }
+
+    #[test]
+    fn seaside_mainland_without_keywords_fails() {
+        let mut h = test_hotel("Meteora View", 3, "Meteora, Thessaly, Greece");
+        h.region = "Thessaly".into();
+        h.description = "Guesthouse at the foot of Meteora rock pillars.".into();
+        h.amenities = vec!["Parking".into(), "Wi-Fi".into()];
+        assert!(!is_seaside_hotel(&h), "inland hotel without seaside keywords must fail");
+    }
+
+    #[test]
+    fn seaside_mainland_city_without_keywords_fails() {
+        let mut h = test_hotel("Urban Athena", 3, "Athens, Attica, Greece");
+        h.region = "Attica".into();
+        h.description = "City hotel near Syntagma Square with rooftop Acropolis views.".into();
+        h.amenities = vec!["Rooftop terrace".into(), "Bar".into()];
+        assert!(!is_seaside_hotel(&h), "city hotel without seaside keywords must fail");
+    }
+
+    #[test]
+    fn seaside_amenity_match_passes() {
+        let mut h = test_hotel("Riviera Hotel", 4, "Athens Riviera, Attica, Greece");
+        h.region = "Attica".into();
+        h.description = "Modern hotel on the coast.".into();
+        h.amenities = vec!["Beach access".into(), "Wi-Fi".into()];
+        assert!(is_seaside_hotel(&h), "hotel with beach amenity must pass");
     }
 
     // ── cosine_sim ─────────────────────────────────────────────────

@@ -1176,6 +1176,28 @@ fn infer_missing_aspects(hotel: &Hotel, aspect_scores: &HashMap<String, f32>) ->
 /// First checks for pre-scraped review data at `prescraped_path` (produced by
 /// Playwright headless browser, which can handle JS-rendered sites like Google Maps
 /// and Booking.com). Falls back to HTTP scraping via reqwest if no pre-scraped data.
+/// Clear `opened_year` on hotels whose review counts prove they are not new.
+///
+/// A hotel claiming `opened_year >= DISCOVERY_YEAR` with more than
+/// [`MAX_REVIEWS_NEW_HOTEL`] reviews is an established property misidentified
+/// by the year-mention heuristic in `extract_hotels`. Clearing to `None`
+/// preserves review data while removing the false "NEW" badge.
+pub fn clear_misidentified_new_hotels(hotels: &mut [Hotel], analyses: &[ReviewAnalysis]) {
+    use crate::constants::{DISCOVERY_YEAR, MAX_REVIEWS_NEW_HOTEL};
+
+    for (hotel, analysis) in hotels.iter_mut().zip(analyses.iter()) {
+        if let Some(year) = hotel.opened_year {
+            if year >= DISCOVERY_YEAR && analysis.review_count > MAX_REVIEWS_NEW_HOTEL {
+                info!(
+                    "De-classifying '{}': opened_year={} but review_count={} > {} (MAX_REVIEWS_NEW_HOTEL)",
+                    hotel.name, year, analysis.review_count, MAX_REVIEWS_NEW_HOTEL
+                );
+                hotel.opened_year = None;
+            }
+        }
+    }
+}
+
 pub async fn analyze_all_hotels_with_reviews(
     engine: &EmbeddingEngine,
     hotels: &[Hotel],
@@ -1929,5 +1951,76 @@ mod tests {
     #[test]
     fn extract_review_count_thousands() {
         assert_eq!(extract_review_count("12,345 reviews from guests"), Some(12345));
+    }
+
+    // ── clear_misidentified_new_hotels ──────────────────────────────
+
+    fn stub_analysis(review_count: u32) -> ReviewAnalysis {
+        ReviewAnalysis {
+            reviews: vec![],
+            sentiment_score: 0.7,
+            aspect_scores: HashMap::new(),
+            review_summary: String::new(),
+            pros: vec![],
+            cons: vec![],
+            review_count,
+            review_rating: 8.5,
+            value_score: 50.0,
+            discovery_score: 50.0,
+        }
+    }
+
+    #[test]
+    fn clear_misidentified_clears_high_review_count() {
+        use crate::constants::{DISCOVERY_YEAR, MAX_REVIEWS_NEW_HOTEL};
+
+        let mut hotel = crate::hotel::test_hotel("Fake New Hotel", 4, "Athens");
+        hotel.opened_year = Some(DISCOVERY_YEAR);
+
+        let mut hotels = vec![hotel];
+        let analyses = vec![stub_analysis(MAX_REVIEWS_NEW_HOTEL + 1)];
+        clear_misidentified_new_hotels(&mut hotels, &analyses);
+
+        assert_eq!(hotels[0].opened_year, None);
+    }
+
+    #[test]
+    fn clear_misidentified_keeps_low_review_count() {
+        use crate::constants::{DISCOVERY_YEAR, MAX_REVIEWS_NEW_HOTEL};
+
+        let mut hotel = crate::hotel::test_hotel("Real New Hotel", 4, "Crete");
+        hotel.opened_year = Some(DISCOVERY_YEAR);
+
+        let mut hotels = vec![hotel];
+        let analyses = vec![stub_analysis(MAX_REVIEWS_NEW_HOTEL - 1)];
+        clear_misidentified_new_hotels(&mut hotels, &analyses);
+
+        assert_eq!(hotels[0].opened_year, Some(DISCOVERY_YEAR));
+    }
+
+    #[test]
+    fn clear_misidentified_ignores_pre_discovery_year() {
+        let mut hotel = crate::hotel::test_hotel("Old Hotel", 5, "Santorini");
+        hotel.opened_year = Some(2019);
+
+        let mut hotels = vec![hotel];
+        let analyses = vec![stub_analysis(5000)];
+        clear_misidentified_new_hotels(&mut hotels, &analyses);
+
+        assert_eq!(hotels[0].opened_year, Some(2019));
+    }
+
+    #[test]
+    fn clear_misidentified_boundary_at_threshold() {
+        use crate::constants::{DISCOVERY_YEAR, MAX_REVIEWS_NEW_HOTEL};
+
+        let mut hotel = crate::hotel::test_hotel("Boundary Hotel", 3, "Rhodes");
+        hotel.opened_year = Some(DISCOVERY_YEAR);
+
+        let mut hotels = vec![hotel];
+        let analyses = vec![stub_analysis(MAX_REVIEWS_NEW_HOTEL)]; // exactly at threshold
+        clear_misidentified_new_hotels(&mut hotels, &analyses);
+
+        assert_eq!(hotels[0].opened_year, Some(DISCOVERY_YEAR));
     }
 }

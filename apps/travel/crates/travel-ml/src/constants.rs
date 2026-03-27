@@ -47,6 +47,61 @@ pub const DISCOVERY_YEAR_STR: &str = "2026";
 /// Mirror: `NEW_HOTEL_MIN_YEAR` in `apps/travel/src/lib/constants.ts`.
 pub const NEW_HOTEL_MIN_YEAR: u16 = 2025;
 
+/// Keywords that indicate a hotel is seaside / coastal.
+///
+/// Used by `discover::is_seaside_hotel` to gate non-island hotels.
+/// A hotel passes if ANY keyword appears (case-insensitive) in its
+/// `description`, `location`, or any `amenities` entry.
+///
+/// Mirror: `SEASIDE_KEYWORDS` in `apps/travel/src/lib/constants.ts`.
+pub const SEASIDE_KEYWORDS: &[&str] = &[
+    "beach",
+    "beachfront",
+    "seaside",
+    "seafront",
+    "oceanfront",
+    "coastal",
+    "waterfront",
+    "bay",
+    "cove",
+    "shore",
+    "marina",
+    "harbour",
+    "harbor",
+    "sea view",
+    "sea-view",
+    "water sports",
+    "aegean",
+    "mediterranean",
+];
+
+/// Greek island regions — every hotel on a Greek island is inherently seaside.
+///
+/// Used by `discover::is_seaside_hotel` to short-circuit the keyword check.
+///
+/// Mirror: `ISLAND_REGIONS` in `apps/travel/src/lib/constants.ts`.
+pub const ISLAND_REGIONS: &[&str] = &[
+    "Crete",
+    "Cyclades",
+    "Dodecanese",
+    "Ionian Islands",
+    "Sporades",
+    "NE Aegean",
+    "Saronic Islands",
+];
+
+/// Maximum review count plausible for a genuinely new hotel.
+///
+/// A hotel with `opened_year >= DISCOVERY_YEAR` and `review_count` above this
+/// threshold is almost certainly an established hotel misidentified as new
+/// (scraped articles say "best hotels to visit in 2026", not "opened in 2026").
+/// When this fires, the pipeline clears `opened_year` to `None`, which:
+/// - Preserves the accurate scraped review data.
+/// - Removes the false "NEW" badge in the UI.
+///
+/// Mirror: `MAX_REVIEWS_NEW_HOTEL` in `apps/travel/src/lib/constants.ts`.
+pub const MAX_REVIEWS_NEW_HOTEL: u32 = 50;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -69,6 +124,19 @@ mod tests {
         assert!(
             NEW_HOTEL_MIN_YEAR >= DISCOVERY_YEAR - 1,
             "NEW_HOTEL_MIN_YEAR ({NEW_HOTEL_MIN_YEAR}) must be within 1 year of DISCOVERY_YEAR ({DISCOVERY_YEAR})"
+        );
+    }
+
+    #[test]
+    fn max_reviews_new_hotel_is_reasonable() {
+        assert!(
+            MAX_REVIEWS_NEW_HOTEL > 0,
+            "MAX_REVIEWS_NEW_HOTEL must be positive"
+        );
+        assert!(
+            MAX_REVIEWS_NEW_HOTEL <= 200,
+            "MAX_REVIEWS_NEW_HOTEL ({MAX_REVIEWS_NEW_HOTEL}) seems too high — \
+             a genuinely new hotel cannot have hundreds of reviews"
         );
     }
 }

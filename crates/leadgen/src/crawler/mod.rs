@@ -66,7 +66,14 @@ async fn extract_with_ner_fallback(
 
     // NER didn't find enough — fall back to LLM
     let truncated = extractor::truncate_for_llm(text, 3000);
-    (llm.extract_entities(&truncated).await, "llm")
+    match llm.extract_entities(&truncated).await {
+        Ok(data) => (Ok(data), "llm"),
+        Err(_) => {
+            // LLM unavailable — return NER result even if low-confidence
+            let data = ner_to_company_extraction(&ner_out);
+            (Ok(data), "ner")
+        }
+    }
 }
 
 pub async fn process_domain(
