@@ -8,7 +8,6 @@ hooks/
 langgraph/
 llamaindex/
 consultancies/
-leadgen-metal/
 
 # Chrome extension (deployed separately)
 chrome-extension/

@@ -2,12 +2,12 @@
   "cycle_count": 0,
   "phase": null,
   "counts": {
-    "discovered": 82,
-    "enriched": 30,
-    "contacts_found": 11,
+    "discovered": 123,
+    "enriched": 90,
+    "contacts_found": 17,
     "outreach_drafted": 0,
     "outreach_sent": 0
   },
-  "quality_score": 0.9,
+  "quality_score": 0.6499999999999999,
   "bounce_rate": 0.0
 }

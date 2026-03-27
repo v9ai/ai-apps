@@ -20,7 +20,8 @@
       ],
       "emails_found": [],
       "has_careers_page": false,
-      "enrichment_score": 0.84,
+      "remote_policy": 2,
+      "enrichment_score": 0.7979999999999999,
       "confidence": 0.4
     },
     {
@@ -44,7 +45,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.84,
+      "remote_policy": 1,
+      "enrichment_score": 0.888,
       "confidence": 0.4
     },
     {
@@ -68,7 +70,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.94,
+      "remote_policy": 3,
+      "enrichment_score": 0.758,
       "confidence": 0.4
     },
     {
@@ -87,7 +90,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.79,
+      "remote_policy": 2,
+      "enrichment_score": 0.7705,
       "confidence": 0.4
     },
     {
@@ -112,8 +116,9 @@
       "emails_found": [
         "0000745671hello@netguru.comcertificates:next"
       ],
-      "has_careers_page": false,
-      "enrichment_score": 0.74,
+      "has_careers_page": true,
+      "remote_policy": 1,
+      "enrichment_score": 0.888,
       "confidence": 0.4
     },
     {
@@ -131,7 +136,8 @@
       ],
       "emails_found": [],
       "has_careers_page": false,
-      "enrichment_score": 0.615,
+      "remote_policy": 0,
+      "enrichment_score": 0.5017499999999999,
       "confidence": 0.4
     },
     {
@@ -152,7 +158,8 @@
         "hello@zenzero.co.uk"
       ],
       "has_careers_page": true,
-      "enrichment_score": 0.765,
+      "remote_policy": 2,
+      "enrichment_score": 0.7517499999999999,
       "confidence": 0.4
     },
     {
@@ -172,7 +179,8 @@
         "info@axyon.ai"
       ],
       "has_careers_page": true,
-      "enrichment_score": 0.615,
+      "remote_policy": 2,
+      "enrichment_score": 0.62175,
       "confidence": 0.4
     },
     {
@@ -193,7 +201,8 @@
         "info@appliedai.de"
       ],
       "has_careers_page": false,
-      "enrichment_score": 0.54,
+      "remote_policy": 0,
+      "enrichment_score": 0.44049999999999995,
       "confidence": 0.4
     },
     {
@@ -210,7 +219,8 @@
       ],
       "emails_found": [],
       "has_careers_page": false,
-      "enrichment_score": 0.59,
+      "remote_policy": 0,
+      "enrichment_score": 0.483,
       "confidence": 0.4
     },
     {
@@ -226,13 +236,14 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.815,
+      "remote_policy": 2,
+      "enrichment_score": 0.78425,
       "confidence": 0.4
     },
     {
       "domain": "adesso.de",
       "name": "Adesso",
-      "category": "PRODUCT",
+      "category": "CONSULTANCY",
       "ai_tier": "ai_native",
       "industry": "technology",
       "tech_stack": [
@@ -242,10 +253,12 @@
         "rag"
       ],
       "emails_found": [
-        "info@adesso.de"
+        "info@adesso.de",
+        "recruiting@adesso-group.com"
       ],
-      "has_careers_page": false,
-      "enrichment_score": 0.59,
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.613,
       "confidence": 0.4
     },
     {
@@ -264,7 +277,8 @@
         "press@heuritech.com"
       ],
       "has_careers_page": true,
-      "enrichment_score": 0.79,
+      "remote_policy": 0,
+      "enrichment_score": 0.633,
       "confidence": 0.4
     },
     {
@@ -283,7 +297,8 @@
       ],
       "emails_found": [],
       "has_careers_page": false,
-      "enrichment_score": 0.64,
+      "remote_policy": 2,
+      "enrichment_score": 0.6405,
       "confidence": 0.4
     },
     {
@@ -302,7 +317,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.54,
+      "remote_policy": 2,
+      "enrichment_score": 0.5705,
       "confidence": 0.4
     },
     {
@@ -321,7 +337,8 @@
         "@frog.co"
       ],
       "has_careers_page": true,
-      "enrichment_score": 0.54,
+      "remote_policy": 0,
+      "enrichment_score": 0.44549999999999995,
       "confidence": 0.4
     },
     {
@@ -338,7 +355,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.84,
+      "remote_policy": 0,
+      "enrichment_score": 0.6829999999999999,
       "confidence": 0.4
     },
     {
@@ -356,7 +374,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.715,
+      "remote_policy": 3,
+      "enrichment_score": 0.58175,
       "confidence": 0.4
     },
     {
@@ -373,7 +392,8 @@
       ],
       "emails_found": [],
       "has_careers_page": false,
-      "enrichment_score": 0.59,
+      "remote_policy": 0,
+      "enrichment_score": 0.483,
       "confidence": 0.4
     },
     {
@@ -389,7 +409,8 @@
       ],
       "emails_found": [],
       "has_careers_page": false,
-      "enrichment_score": 0.565,
+      "remote_policy": 0,
+      "enrichment_score": 0.46425,
       "confidence": 0.4
     },
     {
@@ -406,7 +427,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.84,
+      "remote_policy": 2,
+      "enrichment_score": 0.8029999999999999,
       "confidence": 0.4
     },
     {
@@ -422,7 +444,8 @@
         "ceadar@ucd.ie"
       ],
       "has_careers_page": true,
-      "enrichment_score": 0.615,
+      "remote_policy": 0,
+      "enrichment_score": 0.5067499999999999,
       "confidence": 0.4
     },
     {
@@ -436,7 +459,8 @@
       ],
       "emails_found": [],
       "has_careers_page": false,
-      "enrichment_score": 0.315,
+      "remote_policy": 0,
+      "enrichment_score": 0.27675,
       "confidence": 0.4
     },
     {
@@ -451,7 +475,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.44,
+      "remote_policy": 2,
+      "enrichment_score": 0.4955,
       "confidence": 0.4
     },
     {
@@ -468,7 +493,8 @@
       ],
       "emails_found": [],
       "has_careers_page": false,
-      "enrichment_score": 0.59,
+      "remote_policy": 0,
+      "enrichment_score": 0.483,
       "confidence": 0.4
     },
     {
@@ -483,7 +509,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.44,
+      "remote_policy": 0,
+      "enrichment_score": 0.37549999999999994,
       "confidence": 0.4
     },
     {
@@ -500,7 +527,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.59,
+      "remote_policy": 0,
+      "enrichment_score": 0.483,
       "confidence": 0.4
     },
     {
@@ -515,7 +543,8 @@
       ],
       "emails_found": [],
       "has_careers_page": true,
-      "enrichment_score": 0.69,
+      "remote_policy": 2,
+      "enrichment_score": 0.6955,
       "confidence": 0.4
     },
     {
@@ -531,7 +560,8 @@
       ],
       "emails_found": [],
       "has_careers_page": false,
-      "enrichment_score": 0.615,
+      "remote_policy": 0,
+      "enrichment_score": 0.51425,
       "confidence": 0.4
     },
     {
@@ -549,7 +579,8 @@
         "jobs@datatonic.com"
       ],
       "has_careers_page": true,
-      "enrichment_score": 0.565,
+      "remote_policy": 2,
+      "enrichment_score": 0.5842499999999999,
       "confidence": 0.4
     }
   ],
