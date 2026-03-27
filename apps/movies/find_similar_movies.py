@@ -1,19 +1,13 @@
 """
-LangGraph + ChromaDB pipeline to find movies similar to any given film,
-available on selected streaming platforms.
-
-Usage:
-    uv run find_similar_movies.py --movie "The Pursuit of Happyness"
-    uv run find_similar_movies.py --movie "Interstellar" --platforms netflix prime
-    uv run find_similar_movies.py --movie "Coco" --min-rating 7.5 --format md
+LangGraph + ChromaDB pipeline to find movies similar to a given film,
+available on Netflix and Disney+.
 """
 
-import argparse
 import asyncio
 import json
 import os
 import re
-import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import TypedDict
 from urllib.parse import quote
@@ -23,66 +17,117 @@ import httpx
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langgraph.graph import END, StateGraph
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 load_dotenv()
+
+QUERY_MOVIE = "The Pursuit of Happyness"
+MIN_IMDB_RATING = 7.0
+OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "similar_movies_results.json")
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3, max_tokens=16384)
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 chroma_client = chromadb.Client()
 console = Console()
 
-PLATFORM_CONFIG = {
-    "netflix": {
-        "label": "Netflix",
-        "search_url": "https://www.netflix.com/search?q={title}",
-    },
-    "disney": {
-        "label": "Disney+",
-        "search_url": "https://www.disneyplus.com/search?q={title}",
-    },
-    "prime": {
-        "label": "Prime Video",
-        "search_url": "https://www.amazon.com/s?k={title}&i=instant-video",
-    },
-    "appletv": {
-        "label": "Apple TV+",
-        "search_url": "https://tv.apple.com/search?term={title}",
-    },
-}
-
-PLATFORM_ALIASES = {
-    "netflix": "netflix",
-    "disney": "disney",
-    "disney+": "disney",
-    "prime": "prime",
-    "prime_video": "prime",
-    "primevideo": "prime",
-    "amazon": "prime",
-    "appletv": "appletv",
-    "apple": "appletv",
-    "apple_tv": "appletv",
-    "appletvplus": "appletv",
-}
+# Article words stripped when comparing titles for deduplication.
+_ARTICLES = re.compile(r"^(the|a|an)\s+", re.IGNORECASE)
 
 
 class State(TypedDict):
     query_movie: str
-    platforms: list[str]          # e.g. ["netflix", "disney"]
-    min_rating: float
     movie_profile: str
-    platform_candidates: dict      # {platform_key: candidates_text}
+    netflix_candidates: str
+    disney_candidates: str
     similar_movies: list[dict]
-    output_file: str
 
+
+# ---------------------------------------------------------------------------
+# Parsing helpers
+# ---------------------------------------------------------------------------
+
+# Matches the start of a numbered list item, with optional leading/trailing bold markers.
+# Handles: "1. Title", "1) Title", "**1. Title", "**1.** Title"
+_LIST_ITEM = re.compile(r"^\**\s*\d{1,3}[.)]\**\s+\**")
+
+
+def _split_numbered_list(text: str) -> list[str]:
+    """Split a numbered-list LLM response into one string per item.
+
+    Handles:  blank-line separators, bold markers (**N.** or **N. ), and
+    multi-line items. Each numbered entry is joined into a single string.
+    """
+    items: list[str] = []
+    current: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            # Blank line = end of current item
+            if current:
+                items.append(" ".join(current))
+                current = []
+            continue
+        if _LIST_ITEM.match(stripped):
+            if current:
+                items.append(" ".join(current))
+            current = [_LIST_ITEM.sub("", stripped).strip("* ")]
+        elif current:
+            current.append(stripped)
+    if current:
+        items.append(" ".join(current))
+    return items
+
+
+def _normalize_for_embed(raw: str) -> str:
+    """Reformat a raw candidate string into a compact embedding-friendly form.
+
+    Example output:
+        "The Blind Side (2009): family support, overcoming adversity, drama. ..."
+    """
+    # Extract a leading title + year pattern if present.
+    m = re.match(r"^(.+?)\s*[\(\[–-]?\s*((?:19|20)\d{2})\s*[\)\]]?[:\s–-]*(.*)", raw, re.DOTALL)
+    if m:
+        title, year, rest = m.group(1).strip(), m.group(2), m.group(3).strip()
+        rest = " ".join(rest.split())  # collapse whitespace
+        return f"{title} ({year}): {rest}"
+    return " ".join(raw.split())  # fallback: collapse whitespace only
+
+
+def _dedup_key(title: str) -> str:
+    """Lower-cased, article-stripped title for deduplication."""
+    return _ARTICLES.sub("", title.lower().strip())
+
+
+def _extract_json(text: str) -> list:
+    """Extract a JSON array from an LLM response, handling markdown fences and prose."""
+    text = text.strip()
+    # Strip markdown code fences
+    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"\s*```$", "", text)
+    text = text.strip()
+    # Try direct parse first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    # Find the first [...] block in the response
+    m = re.search(r"\[.*\]", text, re.DOTALL)
+    if m:
+        return json.loads(m.group(0))
+    raise ValueError("No JSON array found in LLM response")
+
+
+# ---------------------------------------------------------------------------
+# Graph nodes
+# ---------------------------------------------------------------------------
 
 def analyze_movie(state: State) -> dict:
     resp = llm.invoke(
         f"""Analyze the movie "{state['query_movie']}" and produce a detailed profile including:
 - Genre(s)
-- Key themes (e.g., perseverance, family bonds, ambition, redemption)
+- Key themes (e.g., perseverance, father-son bond, poverty, ambition)
 - Emotional tone
 - Target audience
 - Similar narrative patterns
@@ -92,14 +137,14 @@ Return a structured text profile that can be used for similarity matching."""
     return {"movie_profile": resp.content}
 
 
-def _search_one_platform(platform_key: str, movie: str, profile: str) -> str:
-    label = PLATFORM_CONFIG[platform_key]["label"]
+def _search(platform: str, movie: str, profile: str) -> str:
     resp = llm.invoke(
         f"""Based on this movie profile for "{movie}":
 {profile}
 
-List 25-30 movies currently or recently available on {label} that are similar.
-Focus on movies that share the same themes, emotional tone, and narrative patterns.
+List 25-30 movies currently or recently available on {platform} that are similar.
+Focus on movies that share themes of: struggle, perseverance, family bonds,
+overcoming adversity, biographical/true stories, drama.
 Do NOT include "{movie}" itself.
 
 For each movie provide:
@@ -113,73 +158,43 @@ Format as a numbered list. Be exhaustive."""
     return resp.content
 
 
-def search_platforms(state: State) -> dict:
-    """Search all selected platforms, parallelised via threads."""
-    from concurrent.futures import ThreadPoolExecutor, as_completed
+def search_netflix(state: State) -> dict:
+    return {"netflix_candidates": _search("Netflix", state["query_movie"], state["movie_profile"])}
 
-    results: dict[str, str] = {}
-    with ThreadPoolExecutor(max_workers=len(state["platforms"])) as pool:
-        futures = {
-            pool.submit(
-                _search_one_platform,
-                pk,
-                state["query_movie"],
-                state["movie_profile"],
-            ): pk
-            for pk in state["platforms"]
-        }
-        for fut in as_completed(futures):
-            pk = futures[fut]
-            results[pk] = fut.result()
-            console.print(f"  [green]✓[/green] {PLATFORM_CONFIG[pk]['label']} search done")
-    return {"platform_candidates": results}
+
+def search_disney(state: State) -> dict:
+    return {"disney_candidates": _search("Disney+", state["query_movie"], state["movie_profile"])}
 
 
 def rank_with_chromadb(state: State) -> dict:
-    collection = chroma_client.get_or_create_collection(
-        name="movie_similarity",
+    # Use a fresh collection per invocation to avoid stale data from prior runs.
+    coll_name = f"movies_{abs(hash(state['query_movie'])) % 10**8}"
+    try:
+        chroma_client.delete_collection(coll_name)
+    except Exception:
+        pass
+    collection = chroma_client.create_collection(
+        name=coll_name,
         metadata={"hnsw:space": "cosine"},
     )
 
-    existing = collection.get()
-    if existing["ids"]:
-        collection.delete(ids=existing["ids"])
-
-    all_candidates = []
-    for pk, text in state["platform_candidates"].items():
-        label = PLATFORM_CONFIG[pk]["label"]
-        lines = text.strip().split("\n")
-        current_movie: list[str] = []
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                if current_movie:
-                    all_candidates.append({"platform": label, "text": "\n".join(current_movie)})
-                    current_movie = []
-                continue
-            if stripped and len(stripped) > 2 and stripped[0].isdigit() and (
-                "." in stripped[:4] or ")" in stripped[:4]
-            ):
-                if current_movie:
-                    all_candidates.append({"platform": label, "text": "\n".join(current_movie)})
-                current_movie = [stripped]
-            else:
-                current_movie.append(stripped)
-        if current_movie:
-            all_candidates.append({"platform": label, "text": "\n".join(current_movie)})
+    all_candidates: list[dict] = []
+    for platform, text in [("Netflix", state["netflix_candidates"]), ("Disney+", state["disney_candidates"])]:
+        for raw in _split_numbered_list(text):
+            if len(raw) > 10:
+                all_candidates.append({"platform": platform, "raw": raw, "text": _normalize_for_embed(raw)})
 
     if not all_candidates:
         return {"similar_movies": []}
 
     query_embedding = embeddings.embed_query(state["movie_profile"])
-    candidate_texts = [c["text"] for c in all_candidates]
-    candidate_embeddings = embeddings.embed_documents(candidate_texts)
+    candidate_embeddings = embeddings.embed_documents([c["text"] for c in all_candidates])
 
     collection.add(
-        ids=[f"movie_{i}" for i in range(len(all_candidates))],
+        ids=[f"m{i}" for i in range(len(all_candidates))],
         embeddings=candidate_embeddings,
-        documents=candidate_texts,
-        metadatas=[{"platform": c["platform"]} for c in all_candidates],
+        documents=[c["text"] for c in all_candidates],
+        metadatas=[{"platform": c["platform"], "raw": c["raw"]} for c in all_candidates],
     )
 
     results = collection.query(
@@ -192,499 +207,347 @@ def rank_with_chromadb(state: State) -> dict:
         ranked.append({
             "rank": i + 1,
             "platform": results["metadatas"][0][i]["platform"],
-            "description": doc,
+            "description": results["metadatas"][0][i]["raw"],
             "similarity_score": round(1 - results["distances"][0][i], 4),
         })
 
-    console.print(f"  ChromaDB returned [bold]{len(ranked)}[/bold] candidates")
+    console.print(f"  ChromaDB: [bold]{len(ranked)}[/bold] candidates ranked")
     return {"similar_movies": ranked}
 
 
-def _parse_json(content: str) -> list:
-    content = content.strip()
-    if content.startswith("```"):
-        content = content.split("\n", 1)[1]
-        if content.endswith("```"):
-            content = content.rsplit("```", 1)[0]
-        content = content.strip()
-    return json.loads(content)
-
-
 def _refine_batch(batch: list[dict], query_movie: str) -> list[dict]:
-    batch_json = json.dumps(batch, indent=2)
     resp = llm.invoke(
-        f"""Extract movie info from these candidates. Return a JSON array.
+        f"""Extract structured movie info from these candidates. Return a JSON array.
 
-{batch_json}
+{json.dumps(batch, indent=2)}
 
-For EACH entry above, return:
-- "title": movie title only
+For EACH entry, return:
+- "title": movie title only (string)
 - "year": release year (integer)
 - "platform": keep from data
 - "similarity_score": keep from data
 - "imdb_rating": real IMDB rating as float (e.g. 7.8)
-- "age_rating": US content rating string (e.g. "G", "PG", "PG-13", "R"). Use real ratings.
+- "age_rating": US content rating (e.g. "G", "PG", "PG-13", "R")
 - "why_similar": one English sentence about thematic connection to {query_movie}
 - "genre": list of genre strings (e.g. ["Drama", "Biography"])
-- "director": director name(s) as a string
+- "director": director name as a string
 
-Process ALL entries. Do NOT skip any. Do NOT include {query_movie} itself.
-Return ONLY the JSON array."""
+Process ALL entries. Do NOT include {query_movie} itself. Return ONLY the JSON array."""
     )
     try:
-        return _parse_json(resp.content)
+        return _extract_json(resp.content)
     except (json.JSONDecodeError, ValueError):
         return []
 
 
 def refine_results(state: State) -> dict:
     candidates = state["similar_movies"]
-    all_refined = []
+    all_refined: list[dict] = []
 
-    for i in range(0, len(candidates), 15):
-        batch = candidates[i:i + 15]
-        result = _refine_batch(batch, state["query_movie"])
-        all_refined.extend(result)
-        console.print(
-            f"  Refine batch {i // 15 + 1}: {len(batch)} in → [cyan]{len(result)}[/cyan] out"
-        )
+    # Process in batches of 10 for better LLM accuracy
+    for i in range(0, len(candidates), 10):
+        batch = candidates[i : i + 10]
+        out = _refine_batch(batch, state["query_movie"])
+        all_refined.extend(out)
+        console.print(f"  Batch {i // 10 + 1}: {len(batch)} → [cyan]{len(out)}[/cyan]")
 
-    query_lower = state["query_movie"].lower().strip()
+    query_key = _dedup_key(state["query_movie"])
     seen: set[str] = set()
-    deduped = []
+    deduped: list[dict] = []
     for m in all_refined:
-        key = m.get("title", "").lower().strip()
-        if key in seen or key == query_lower:
+        key = _dedup_key(m.get("title", ""))
+        if key in seen or key == query_key:
             continue
         seen.add(key)
         deduped.append(m)
 
-    # Filter by age rating (7+ only)
-    allowed_ratings = {"g", "pg", "pg-13", "tv-y7", "tv-g", "tv-pg", "tv-14"}
-    filtered = [m for m in deduped if m.get("age_rating", "").lower() in allowed_ratings]
+    allowed = {"g", "pg", "pg-13", "tv-y7", "tv-g", "tv-pg", "tv-14"}
+    filtered = [m for m in deduped if m.get("age_rating", "").lower() in allowed]
 
     filtered.sort(key=lambda m: m.get("similarity_score", 0), reverse=True)
     for i, m in enumerate(filtered):
         m["rank"] = i + 1
 
     console.print(
-        f"  Refine total: {len(all_refined)} → deduped: {len(deduped)} → "
-        f"age 7+: [bold green]{len(filtered)}[/bold green]"
+        f"  Refine: {len(all_refined)} raw → {len(deduped)} unique → "
+        f"[bold green]{len(filtered)}[/bold green] age-safe"
     )
     return {"similar_movies": filtered}
 
 
-def _platform_search_url(platform_label: str, title: str) -> str:
-    title_encoded = quote(title)
-    for pk, cfg in PLATFORM_CONFIG.items():
-        if cfg["label"] == platform_label:
-            return cfg["search_url"].format(title=title_encoded)
-    return f"https://www.google.com/search?q={title_encoded}+streaming"
-
-
 def enrich_results(state: State) -> dict:
-    movies_json = json.dumps(state["similar_movies"], ensure_ascii=False, indent=2)
-    platform_labels = [PLATFORM_CONFIG[pk]["label"] for pk in state["platforms"]]
     resp = llm.invoke(
-        f"""For each movie in this JSON array, add exactly three new fields.
+        f"""For each movie in this JSON array, add exactly three new fields:
+- "url": Netflix URL "https://www.netflix.com/title/<id>" or Disney+ URL
+  "https://www.disneyplus.com/movies/<slug>" (use real IDs/slugs if known,
+  else search fallback: netflix.com/search?q=... or disneyplus.com/search?q=...)
+- "imdb_url": "https://www.imdb.com/title/<tt_id>/" with the real IMDB tt-id
+- "romanian_audio": boolean, true if the film has Romanian dubbing in Romania
 
-Platforms searched: {platform_labels}
+Keep ALL existing fields. Return ONLY the JSON array, no markdown.
 
-Fields to add:
-- "url": direct URL to watch on its platform (use real content ID if known, else
-  search fallback URL appropriate for the platform)
-- "imdb_url": "https://www.imdb.com/title/<imdb_id>/" (use real IMDB ID like tt1234567)
-- "romanian_audio": boolean -- true if the movie has Romanian audio dubbing
-  (common for animated/Disney/Pixar films and major blockbusters in Romania). false otherwise.
-
-Keep ALL existing fields unchanged. Return the complete JSON array.
-Return ONLY the JSON array, no markdown fences.
-
-{movies_json}"""
+{json.dumps(state["similar_movies"], ensure_ascii=False, indent=2)}"""
     )
     try:
-        enriched = _parse_json(resp.content)
-        # Fill in search fallback URLs for any movie missing a real URL
+        enriched = _extract_json(resp.content)
+        # Guarantee search-fallback URLs for anything blank
         for m in enriched:
             if not m.get("url"):
-                m["url"] = _platform_search_url(m.get("platform", ""), m.get("title", ""))
+                t = quote(m.get("title", ""))
+                m["url"] = (
+                    f"https://www.netflix.com/search?q={t}"
+                    if m.get("platform") == "Netflix"
+                    else f"https://www.disneyplus.com/search?q={t}"
+                )
         return {"similar_movies": enriched}
     except (json.JSONDecodeError, ValueError):
         return {"similar_movies": state["similar_movies"]}
 
 
+# ---------------------------------------------------------------------------
+# IMDB verification — batched single GraphQL request
+# ---------------------------------------------------------------------------
+
 IMDB_GRAPHQL = "https://graphql.imdb.com/"
-IMDB_QUERY = '{ title(id: "%s") { ratingsSummary { aggregateRating } } }'
+
+
+def _build_batch_query(id_map: dict[str, str]) -> str:
+    """Build a single GraphQL query that fetches ratings for all IDs at once.
+
+    Uses field aliases so each title result is keyed by its tt-id.
+        { tt1234567: title(id: "tt1234567") { ratingsSummary { aggregateRating } } ... }
+    """
+    fields = " ".join(
+        f'{alias}: title(id: "{tt_id}") {{ ratingsSummary {{ aggregateRating }} }}'
+        for alias, tt_id in id_map.items()
+    )
+    return "{ " + fields + " }"
 
 
 def check_imdb(state: State) -> dict:
-    """Query IMDB GraphQL for each movie's real rating, filter below min_rating."""
+    """Fetch all IMDB ratings in one batched GraphQL request, then filter."""
     movies = state["similar_movies"]
-    min_rating = state.get("min_rating", 7.0)
-    verified = []
 
-    with httpx.Client(timeout=15) as client:
-        for movie in movies:
-            imdb_url = movie.get("imdb_url", "")
-            m = re.search(r"(tt\d+)", imdb_url) if imdb_url else None
+    # Build alias → (tt_id, movie_index) map
+    id_map: dict[str, str] = {}   # alias → tt_id
+    idx_map: dict[str, int] = {}  # alias → index in movies
+    for i, movie in enumerate(movies):
+        m = re.search(r"(tt\d+)", movie.get("imdb_url", ""))
+        if m:
+            alias = f"t{m.group(1)[2:]}"  # "tt1234567" → "t1234567" (valid GraphQL field name)
+            id_map[alias] = m.group(1)
+            idx_map[alias] = i
 
-            if not m:
-                if movie.get("imdb_rating", 0) >= min_rating:
-                    verified.append(movie)
-                continue
-
-            imdb_id = m.group(1)
-            try:
+    ratings: dict[str, float] = {}
+    if id_map:
+        try:
+            with httpx.Client(timeout=20) as client:
                 resp = client.post(
                     IMDB_GRAPHQL,
-                    json={"query": IMDB_QUERY % imdb_id},
+                    json={"query": _build_batch_query(id_map)},
                     headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json"},
                 )
-                if resp.status_code != 200:
-                    if movie.get("imdb_rating", 0) >= min_rating:
-                        verified.append(movie)
-                    continue
+            if resp.status_code == 200:
+                data = resp.json().get("data", {})
+                for alias in id_map:
+                    r = (data.get(alias) or {}).get("ratingsSummary", {}).get("aggregateRating")
+                    if r is not None:
+                        ratings[alias] = round(float(r), 1)
+        except (httpx.HTTPError, json.JSONDecodeError, KeyError):
+            pass
 
-                real_rating = (
-                    resp.json()
-                    .get("data", {})
-                    .get("title", {})
-                    .get("ratingsSummary", {})
-                    .get("aggregateRating")
-                )
+    # Apply verified ratings back to movies
+    for alias, movie_idx in idx_map.items():
+        if alias in ratings:
+            movies[movie_idx]["imdb_rating"] = ratings[alias]
+            movies[movie_idx]["imdb_rating_verified"] = ratings[alias]
 
-                if real_rating is not None:
-                    real_rating = round(float(real_rating), 1)
-                    movie["imdb_rating_verified"] = real_rating
-                    movie["imdb_rating"] = real_rating
-                    if real_rating >= min_rating:
-                        verified.append(movie)
-                    else:
-                        console.print(
-                            f"  [dim]Filtered '{movie.get('title')}': "
-                            f"IMDB {real_rating} < {min_rating}[/dim]"
-                        )
-                else:
-                    if movie.get("imdb_rating", 0) >= min_rating:
-                        verified.append(movie)
+    # Filter by minimum rating
+    verified = [m for m in movies if m.get("imdb_rating", 0) >= MIN_IMDB_RATING]
+    for m in movies:
+        if m not in verified:
+            console.print(
+                f"  [dim]Dropped '{m.get('title')}' — IMDB {m.get('imdb_rating')} "
+                f"< {MIN_IMDB_RATING}[/dim]"
+            )
 
-            except (httpx.HTTPError, json.JSONDecodeError, ValueError, KeyError):
-                if movie.get("imdb_rating", 0) >= min_rating:
-                    verified.append(movie)
-
-    # Deduplicate IMDB URLs — keep first (higher similarity), fix duplicates
-    seen_urls: dict[str, bool] = {}
+    # Deduplicate IMDB URLs
+    seen_imdb: set[str] = set()
     for movie in verified:
         url = movie.get("imdb_url", "")
-        if url in seen_urls:
-            title_encoded = quote(movie.get("title", ""))
-            movie["imdb_url"] = f"https://www.imdb.com/find/?q={title_encoded}"
+        if url in seen_imdb:
+            movie["imdb_url"] = f"https://www.imdb.com/find/?q={quote(movie.get('title', ''))}"
         else:
-            seen_urls[url] = True
+            seen_imdb.add(url)
 
-    verified.sort(key=lambda m: m.get("similarity_score", 0), reverse=True)
-    for i, mv in enumerate(verified):
-        mv["rank"] = i + 1
+    # Composite re-rank: blend cosine similarity (70%) with normalised IMDB rating (30%)
+    rating_range = 10.0 - MIN_IMDB_RATING
+    for m in verified:
+        cosine = m.get("similarity_score", 0)
+        imdb_norm = max(0.0, (m.get("imdb_rating", MIN_IMDB_RATING) - MIN_IMDB_RATING) / rating_range)
+        m["final_score"] = round(0.7 * cosine + 0.3 * imdb_norm, 4)
+
+    verified.sort(key=lambda m: m["final_score"], reverse=True)
+    for i, m in enumerate(verified):
+        m["rank"] = i + 1
 
     console.print(
-        f"  IMDB check: {len(movies)} → [bold green]{len(verified)}[/bold green] "
-        f"movies ({min_rating}+ verified)"
+        f"  IMDB batch: {len(id_map)} IDs fetched — "
+        f"[bold green]{len(verified)}[/bold green] kept (≥{MIN_IMDB_RATING})"
     )
     return {"similar_movies": verified}
 
 
-async def _check_url_async(client: httpx.AsyncClient, url: str) -> tuple[str, int, bool]:
+# ---------------------------------------------------------------------------
+# Async URL validation
+# ---------------------------------------------------------------------------
+
+async def _head(client: httpx.AsyncClient, url: str) -> tuple[int, bool]:
     try:
-        resp = await client.head(url, headers={"User-Agent": "Mozilla/5.0"})
-        return url, resp.status_code, resp.status_code < 400
+        r = await client.head(url, headers={"User-Agent": "Mozilla/5.0"})
+        return r.status_code, r.status_code < 400
     except httpx.HTTPError:
-        return url, 0, False
+        return 0, False
 
 
-async def _validate_urls_async(movies: list[dict]) -> list[dict]:
+async def _validate_async(movies: list[dict]) -> list[dict]:
     async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
-        tasks = []
-        task_meta = []
-        for idx, movie in enumerate(movies):
+        tasks, meta = [], []
+        for i, m in enumerate(movies):
             for key in ("url", "imdb_url"):
-                url = movie.get(key, "")
-                if url:
-                    tasks.append(_check_url_async(client, url))
-                    task_meta.append((idx, key))
+                if m.get(key):
+                    tasks.append(_head(client, m[key]))
+                    meta.append((i, key))
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        results_raw = await asyncio.gather(*tasks, return_exceptions=True)
-
-    for (idx, key), result in zip(task_meta, results_raw):
-        movie = movies[idx]
-        if isinstance(result, Exception):
-            movie[f"{key}_status"] = 0
-            movie[f"{key}_ok"] = False
+    for (i, key), res in zip(meta, results):
+        m = movies[i]
+        if isinstance(res, Exception):
+            m[f"{key}_status"], m[f"{key}_ok"] = 0, False
         else:
-            _, status, ok = result
-            movie[f"{key}_status"] = status
-            movie[f"{key}_ok"] = ok
-
-        if not movie.get(f"{key}_ok", True):
-            title_encoded = quote(movie.get("title", ""))
+            m[f"{key}_status"], m[f"{key}_ok"] = res
+        if not m.get(f"{key}_ok", True):
+            t = quote(m.get("title", ""))
             if key == "url":
-                movie[key] = _platform_search_url(movie.get("platform", ""), movie.get("title", ""))
-            elif key == "imdb_url":
-                movie[key] = f"https://www.imdb.com/find/?q={title_encoded}"
-
+                m[key] = (
+                    f"https://www.netflix.com/search?q={t}"
+                    if m.get("platform") == "Netflix"
+                    else f"https://www.disneyplus.com/search?q={t}"
+                )
+            else:
+                m[key] = f"https://www.imdb.com/find/?q={t}"
     return movies
 
 
 def validate_urls(state: State) -> dict:
-    """Check URLs via async HTTP HEAD in parallel. Replace broken ones with search fallbacks."""
-    movies = state["similar_movies"]
-    movies = asyncio.run(_validate_urls_async(movies))
-    ok_count = sum(1 for m in movies if m.get("url_ok") and m.get("imdb_url_ok"))
-    console.print(f"  URL check: [bold]{ok_count}/{len(movies)}[/bold] fully valid")
+    movies = asyncio.run(_validate_async(state["similar_movies"]))
+    ok = sum(1 for m in movies if m.get("url_ok") and m.get("imdb_url_ok"))
+    console.print(f"  URLs: [bold]{ok}/{len(movies)}[/bold] fully valid")
     return {"similar_movies": movies}
 
 
+# ---------------------------------------------------------------------------
+# Save
+# ---------------------------------------------------------------------------
+
 def save_results(state: State) -> dict:
-    output_path = state.get("output_file") or os.path.join(
-        os.path.dirname(__file__), "similar_movies_results.json"
-    )
-    output = {
+    out = {
         "query_movie": state["query_movie"],
         "generated_at": datetime.now().isoformat(),
-        "platforms": [PLATFORM_CONFIG[pk]["label"] for pk in state["platforms"]],
-        "min_rating": state.get("min_rating", 7.0),
+        "platforms": ["Netflix", "Disney+"],
+        "min_rating": MIN_IMDB_RATING,
         "total_results": len(state["similar_movies"]),
         "results": state["similar_movies"],
     }
-    with open(output_path, "w") as f:
-        json.dump(output, f, indent=2, ensure_ascii=False)
-    return {"output_file": output_path}
+    with open(OUTPUT_FILE, "w") as f:
+        json.dump(out, f, indent=2, ensure_ascii=False)
+    return {}
 
+
+# ---------------------------------------------------------------------------
+# Graph
+# ---------------------------------------------------------------------------
 
 def build_graph():
-    graph = StateGraph(State)
-    graph.add_node("analyze_movie", analyze_movie)
-    graph.add_node("search_platforms", search_platforms)
-    graph.add_node("rank_with_chromadb", rank_with_chromadb)
-    graph.add_node("refine_results", refine_results)
-    graph.add_node("enrich_results", enrich_results)
-    graph.add_node("check_imdb", check_imdb)
-    graph.add_node("validate_urls", validate_urls)
-    graph.add_node("save_results", save_results)
+    g = StateGraph(State)
+    g.add_node("analyze_movie", analyze_movie)
+    g.add_node("search_netflix", search_netflix)
+    g.add_node("search_disney", search_disney)
+    g.add_node("rank_with_chromadb", rank_with_chromadb)
+    g.add_node("refine_results", refine_results)
+    g.add_node("enrich_results", enrich_results)
+    g.add_node("check_imdb", check_imdb)
+    g.add_node("validate_urls", validate_urls)
+    g.add_node("save_results", save_results)
 
-    graph.set_entry_point("analyze_movie")
-    graph.add_edge("analyze_movie", "search_platforms")
-    graph.add_edge("search_platforms", "rank_with_chromadb")
-    graph.add_edge("rank_with_chromadb", "refine_results")
-    graph.add_edge("refine_results", "enrich_results")
-    graph.add_edge("enrich_results", "check_imdb")
-    graph.add_edge("check_imdb", "validate_urls")
-    graph.add_edge("validate_urls", "save_results")
-    graph.add_edge("save_results", END)
-    return graph.compile()
+    g.set_entry_point("analyze_movie")
+    # Fan-out: both searches run in parallel after analysis
+    g.add_edge("analyze_movie", "search_netflix")
+    g.add_edge("analyze_movie", "search_disney")
+    # Fan-in: rank only after both searches complete
+    g.add_edge("search_netflix", "rank_with_chromadb")
+    g.add_edge("search_disney", "rank_with_chromadb")
+    g.add_edge("rank_with_chromadb", "refine_results")
+    g.add_edge("refine_results", "enrich_results")
+    g.add_edge("enrich_results", "check_imdb")
+    g.add_edge("check_imdb", "validate_urls")
+    g.add_edge("validate_urls", "save_results")
+    g.add_edge("save_results", END)
+    return g.compile()
 
 
-def print_rich_table(movies: list[dict], query_movie: str):
+# ---------------------------------------------------------------------------
+# Display
+# ---------------------------------------------------------------------------
+
+def _print_table(movies: list[dict], query_movie: str):
     table = Table(
         title=f"Movies Similar to [bold cyan]{query_movie}[/bold cyan]",
         box=box.ROUNDED,
         show_lines=True,
     )
     table.add_column("#", style="dim", width=3, justify="right")
-    table.add_column("Title", style="bold white", min_width=20)
+    table.add_column("Title", style="bold white", min_width=22)
     table.add_column("Year", width=6, justify="center")
-    table.add_column("Platform", width=11, justify="center")
+    table.add_column("Platform", width=9, justify="center")
     table.add_column("IMDB", width=5, justify="center")
     table.add_column("Rating", width=6, justify="center")
     table.add_column("Score", width=6, justify="center")
-    table.add_column("Genre", style="dim", min_width=12)
+    table.add_column("Genre", style="dim", min_width=14)
     table.add_column("RO", width=3, justify="center")
 
-    platform_styles = {
-        "Netflix": "bold red",
-        "Disney+": "bold blue",
-        "Prime Video": "bold cyan",
-        "Apple TV+": "bold white",
-    }
-
     for m in movies:
-        platform = m.get("platform", "?")
-        plat_style = platform_styles.get(platform, "white")
+        plat = m.get("platform", "?")
+        plat_str = f"[bold red]{plat}[/bold red]" if plat == "Netflix" else f"[bold blue]{plat}[/bold blue]"
         genres = m.get("genre", [])
         genre_str = ", ".join(genres[:2]) if isinstance(genres, list) else str(genres)
-        ro = "✓" if m.get("romanian_audio") else ""
-        imdb = str(m.get("imdb_rating", "?"))
-        score = f"{m.get('similarity_score', 0):.3f}"
-
         table.add_row(
             str(m.get("rank", "?")),
             m.get("title", "?"),
             str(m.get("year", "?")),
-            f"[{plat_style}]{platform}[/{plat_style}]",
-            imdb,
+            plat_str,
+            str(m.get("imdb_rating", "?")),
             m.get("age_rating", "?"),
-            score,
+            f"{m.get('final_score', m.get('similarity_score', 0)):.3f}",
             genre_str,
-            ro,
+            "✓" if m.get("romanian_audio") else "",
         )
 
     console.print()
     console.print(table)
 
 
-def export_markdown(movies: list[dict], query_movie: str, output_path: str):
-    lines = [
-        f"# Movies Similar to *{query_movie}*",
-        f"\n_Generated {datetime.now().strftime('%Y-%m-%d %H:%M')}_\n",
-        "| # | Title | Year | Platform | IMDB | Rating | Score | Genre |",
-        "|---|-------|------|----------|------|--------|-------|-------|",
-    ]
-    for m in movies:
-        genres = m.get("genre", [])
-        genre_str = ", ".join(genres[:2]) if isinstance(genres, list) else str(genres)
-        lines.append(
-            f"| {m.get('rank', '?')} "
-            f"| [{m.get('title', '?')}]({m.get('url', '')}) "
-            f"| {m.get('year', '?')} "
-            f"| {m.get('platform', '?')} "
-            f"| [{m.get('imdb_rating', '?')}]({m.get('imdb_url', '')}) "
-            f"| {m.get('age_rating', '?')} "
-            f"| {m.get('similarity_score', 0):.3f} "
-            f"| {genre_str} |"
-        )
-    with open(output_path, "w") as f:
-        f.write("\n".join(lines) + "\n")
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
-
-CACHE_DIR = os.path.join(os.path.dirname(__file__), ".cache")
-
-
-def _cache_key(movie: str, platforms: list[str], min_rating: float) -> str:
-    import hashlib
-    key = f"{movie.lower().strip()}|{','.join(sorted(platforms))}|{min_rating}"
-    return hashlib.sha1(key.encode()).hexdigest()[:16]
-
-
-def load_cache(movie: str, platforms: list[str], min_rating: float) -> dict | None:
-    path = os.path.join(CACHE_DIR, f"{_cache_key(movie, platforms, min_rating)}.json")
-    if not os.path.exists(path):
-        return None
-    with open(path) as f:
-        return json.load(f)
-
-
-def save_cache(data: dict, movie: str, platforms: list[str], min_rating: float):
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    path = os.path.join(CACHE_DIR, f"{_cache_key(movie, platforms, min_rating)}.json")
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-
-def parse_args(argv=None):
-    parser = argparse.ArgumentParser(
-        description="Find movies similar to a given film on streaming platforms."
-    )
-    parser.add_argument(
-        "--movie", "-m",
-        default="The Pursuit of Happyness",
-        help='Movie title to find similar films for (default: "The Pursuit of Happyness")',
-    )
-    parser.add_argument(
-        "--platforms", "-p",
-        nargs="+",
-        default=["netflix", "disney"],
-        choices=list(PLATFORM_ALIASES.keys()),
-        metavar="PLATFORM",
-        help=(
-            "Streaming platforms to search. "
-            f"Choices: {', '.join(PLATFORM_CONFIG.keys())} "
-            "(default: netflix disney)"
-        ),
-    )
-    parser.add_argument(
-        "--min-rating", "-r",
-        type=float,
-        default=7.0,
-        help="Minimum IMDB rating to include (default: 7.0)",
-    )
-    parser.add_argument(
-        "--output", "-o",
-        default=None,
-        help="Output JSON file path (default: similar_movies_results.json)",
-    )
-    parser.add_argument(
-        "--format", "-f",
-        choices=["json", "md", "both"],
-        default="json",
-        help="Output format: json, md (markdown), or both (default: json)",
-    )
-    parser.add_argument(
-        "--no-cache",
-        action="store_true",
-        help="Bypass cache and re-run the full pipeline even if cached results exist",
-    )
-    return parser.parse_args(argv)
-
-
-def main(argv=None):
-    args = parse_args(argv)
-
-    # Resolve platform aliases and deduplicate
-    resolved_platforms = list(dict.fromkeys(
-        PLATFORM_ALIASES.get(p.lower(), p.lower()) for p in args.platforms
-    ))
-    # Ensure all resolved keys exist in PLATFORM_CONFIG
-    for pk in resolved_platforms:
-        if pk not in PLATFORM_CONFIG:
-            console.print(f"[red]Unknown platform key: {pk}[/red]")
-            sys.exit(1)
-
-    output_file = args.output or os.path.join(
-        os.path.dirname(__file__), "similar_movies_results.json"
-    )
-
-    platform_labels = [PLATFORM_CONFIG[pk]["label"] for pk in resolved_platforms]
-    console.print(f"\n[bold]Movie Finder[/bold] — searching for films similar to [cyan]{args.movie!r}[/cyan]")
-    console.print(f"Platforms: [yellow]{', '.join(platform_labels)}[/yellow]  |  Min IMDB: [yellow]{args.min_rating}[/yellow]\n")
-
-    # Check cache first
-    cached = None if args.no_cache else load_cache(args.movie, resolved_platforms, args.min_rating)
-    if cached:
-        movies = cached["results"]
-        console.print(
-            f"[dim]Loaded {len(movies)} results from cache "
-            f"(generated {cached.get('generated_at', '?')[:10]}). "
-            f"Use --no-cache to refresh.[/dim]\n"
-        )
-        # Still write to output file so downstream tools always have it
-        with open(output_file, "w") as f:
-            json.dump(cached, f, indent=2, ensure_ascii=False)
-    else:
-        console.print("[bold]Building LangGraph pipeline...[/bold]")
-        app = build_graph()
-
-        console.print("[bold]Running pipeline...[/bold]\n")
-        result = app.invoke({
-            "query_movie": args.movie,
-            "platforms": resolved_platforms,
-            "min_rating": args.min_rating,
-            "output_file": output_file,
-        })
-        movies = result["similar_movies"]
-
-        # Load the saved JSON (has all metadata) and cache it
-        with open(output_file) as f:
-            full_data = json.load(f)
-        save_cache(full_data, args.movie, resolved_platforms, args.min_rating)
-
-        console.print(f"\n[bold green]Found {len(movies)} similar movies![/bold green]")
-        console.print(f"Results saved to: [underline]{output_file}[/underline]\n")
-
-    print_rich_table(movies, args.movie)
-
-    if args.format in ("md", "both"):
-        md_path = output_file.replace(".json", ".md")
-        export_markdown(movies, args.movie, md_path)
-        console.print(f"\nMarkdown saved to: [underline]{md_path}[/underline]")
+def main():
+    console.print(f"\n[bold]Movie Finder[/bold] — [cyan]{QUERY_MOVIE!r}[/cyan]\n")
+    app = build_graph()
+    result = app.invoke({"query_movie": QUERY_MOVIE})
+    movies = result["similar_movies"]
+    console.print(f"\n[bold green]✓ {len(movies)} movies[/bold green] → {OUTPUT_FILE}\n")
+    _print_table(movies, QUERY_MOVIE)
 
 
 if __name__ == "__main__":
