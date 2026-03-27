@@ -42,5 +42,15 @@ make leads-clean                      # remove generated data
 | `consultancies/discover.py` | Europe-only regions, 65 EU seed companies, EU Clutch/GoodFirms URLs |
 | `consultancies/extract_domains.py` | New: LanceDB → domains.txt extraction |
 | `scripts/import-rust-leads.ts` | New: Rust CSV → Neon PostgreSQL import |
-| `crates/leadgen/src/main.rs` | `--icp-ai-consultancy` flag, `MLX_LM_SERVER` env var |
-| `crates/leadgen/src/crawler/mod.rs` | NER confidence threshold 40→30 |
+| `Makefile` | New `leads*` targets for full pipeline orchestration |
+| `crates/leadgen/src/main.rs` | `--icp-ai-consultancy` flag, `MLX_LM_SERVER` env var, `drop(index_writer)` before pipeline |
+| `crates/leadgen/src/crawler/mod.rs` | NER confidence threshold 40→30, graceful LLM fallback |
+| `crates/leadgen/src/crawler/extractor.rs` | Fix UTF-8 char boundary panic in `truncate_for_llm` |
+
+## Bugs Fixed
+
+1. **Tantivy lock conflict** — `main()` created an `IndexWriter` that held a lock, then `CrawlStage` tried to create another. Fix: `drop(index_writer)` before entering the pipeline branch.
+2. **UTF-8 panic** — `truncate_for_llm()` used `&text[..max_bytes]` which panics on multi-byte chars (e.g. Chinese). Fix: walk back to valid char boundary with `is_char_boundary()`.
+3. **LLM connection panic** — When Ollama is unavailable, every LLM fallback call failed and propagated errors. Fix: catch LLM errors and return NER result even if low-confidence.
+4. **Bad seed URLs** — Three seed companies used `https://www.2000.com/` placeholder URLs. Fix: replaced with real domains.
+5. **Missing Python deps** — `beautifulsoup4` not installed. Fix: `pip3 install aiohttp beautifulsoup4`.
