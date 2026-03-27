@@ -24,6 +24,9 @@ fn make_paper(title: &str, abstract_text: Option<&str>) -> ResearchPaper {
         source: PaperSource::OpenAlex,
         source_id: format!("id-{title}"),
         fields_of_study: None,
+        published_date: None,
+        primary_category: None,
+        categories: None,
     }
 }
 

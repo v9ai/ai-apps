@@ -14,7 +14,7 @@ tags:
   - curriculum-learning
 ---
 
-import Flow from '@site/src/components/Flow';
+import { ICMDiagram, WorldModelDiagram, DiscoverDiagram, OrchestrationDiagram } from './diagrams';
 
 The most dangerous assumption in applied Reinforcement Learning (RL) is that useful exploration requires massive scale—cloud GPU clusters, terabytes of experience, and billion-parameter models. I built a system that proves the opposite. The core innovation of a production-grade, B2B lead generation web crawler isn't its performance, but its location: it runs entirely on an Apple M1 MacBook, with zero cloud dependencies. Its ability to navigate the sparse-reward desert of the web emerges not from brute force, but from a meticulously orchestrated **multi-timescale novelty engine**. This architecture, where intrinsic curiosity, predictive uncertainty, and a self-adjusting curriculum interlock, provides a general blueprint for building autonomous agents that must find needles in the world's largest haystacks.
 
@@ -41,35 +41,7 @@ The augmented reward for the DQN is:
 
 The cap prevents a single, wildly novel page from skewing the reward scale. In practice, this means the agent earns a consistent micro-reward for visiting structurally new page templates—a unique "About Us" layout, a novel product catalog design—long before it finds any contact information. A `CuriosityTracker` maintains rolling averages per domain, allowing a scheduler to prioritize revisiting domains with persistently high novelty.
 
-<Flow
-  height={510}
-  nodes={[
-    { id: 'st',   position: { x: 20,  y: 20  }, data: { label: 'State s_t (784-d)' } },
-    { id: 'at',   position: { x: 230, y: 120 }, data: { label: 'Action a_t' } },
-    { id: 'st1',  position: { x: 450, y: 20  }, data: { label: 'State s_{t+1} (784-d)' } },
-    { id: 'enc1', position: { x: 20,  y: 120 }, data: { label: 'FeatureEncoder' } },
-    { id: 'enc2', position: { x: 450, y: 120 }, data: { label: 'FeatureEncoder' } },
-    { id: 'phi1', position: { x: 20,  y: 230 }, data: { label: 'phi(s_t) — 256-d latent' } },
-    { id: 'phi2', position: { x: 450, y: 230 }, data: { label: 'phi(s_{t+1}) — 256-d latent' } },
-    { id: 'fwd',  position: { x: 80,  y: 340 }, data: { label: 'ForwardModel' } },
-    { id: 'inv',  position: { x: 360, y: 340 }, data: { label: 'InverseModel (regularizer)' } },
-    { id: 'mse',  position: { x: 80,  y: 440 }, data: { label: 'MSE = r_intrinsic (cap 5.0)' } },
-    { id: 'pred', position: { x: 360, y: 440 }, data: { label: 'Predicted Action (noise filter)' } },
-  ]}
-  edges={[
-    { id: 'e1',  source: 'st',   target: 'enc1' },
-    { id: 'e2',  source: 'st1',  target: 'enc2' },
-    { id: 'e3',  source: 'enc1', target: 'phi1' },
-    { id: 'e4',  source: 'enc2', target: 'phi2' },
-    { id: 'e5',  source: 'phi1', target: 'fwd' },
-    { id: 'e6',  source: 'at',   target: 'fwd' },
-    { id: 'e7',  source: 'fwd',  target: 'mse' },
-    { id: 'e8',  source: 'phi2', target: 'mse',  label: 'compare' },
-    { id: 'e9',  source: 'phi1', target: 'inv' },
-    { id: 'e10', source: 'phi2', target: 'inv' },
-    { id: 'e11', source: 'inv',  target: 'pred' },
-  ]}
-/>
+<ICMDiagram />
 
 ## 3. Per-Episode Novelty: Planning with Ensemble Uncertainty
 
@@ -80,6 +52,8 @@ The `EnsembleWorldModel` in `crawler_world_model.py` is an ensemble of 5 indepen
 This drives a `TreeSearchPlanner` that performs forward simulation from the current state. Branches predicted to lead to high uncertainty are prioritized. The system also includes a hybrid `WebDreamerPlanner`, inspired by [WebDreamer](https://arxiv.org/abs/2411.06559) (Gu et al., TMLR 2025), which uses a local, quantized LLM (e.g., DeepSeek 3B via Apple's MLX) for semantic look-ahead. Given a candidate URL and anchor text, the LLM predicts page type and estimated lead quality *before the HTTP request is made*, injecting commonsense to avoid dead ends like "Login" pages.
 
 Crucially, the world model enables **synthetic experience generation** via a `DynaTrainer` — a technique rooted in [Dyna-Q](https://dl.acm.org/doi/10.1145/122344.122377) (Sutton, 1991). Every real transition added to the replay buffer can spawn *N* synthetic transitions, dramatically improving sample efficiency. The implementation caps the synthetic-to-real ratio at 0.5 to prevent the agent from diverging into a fantasy world of its own making—a critical guardrail against model hallucination drift, a common pitfall in model-based RL.
+
+<WorldModelDiagram />
 
 ## 4. Cross-Episode Novelty: The DISCOVER Auto-Curriculum
 
@@ -95,34 +69,7 @@ Instead of targeting the final lead page immediately, DISCOVER dynamically selec
 
 The adaptive parameter `alpha` is the master regulator. It self-tunes to maintain a ~50% success rate. If the agent struggles, `alpha` increases, biasing selection toward easier, more achievable goals. As it masters parts of the domain, `alpha` decreases, pushing it to attempt harder, more relevant goals. The `AchievedGoalSet`, backed by SQLite, provides the novelty signal via a KNN lookup on goal embeddings. This creates an emergent exploration drive, systematically pulling the agent toward page types it hasn't yet learned to reach.
 
-<Flow
-  height={420}
-  nodes={[
-    { id: 'g0',      position: { x: 0,   y: 20  }, data: { label: 'Homepage (0)' } },
-    { id: 'g1',      position: { x: 115, y: 20  }, data: { label: 'Listing (1)' } },
-    { id: 'g2',      position: { x: 230, y: 20  }, data: { label: 'Company (2)' } },
-    { id: 'g3',      position: { x: 345, y: 20  }, data: { label: 'Team (3)' } },
-    { id: 'g4',      position: { x: 460, y: 20  }, data: { label: 'About (4)' } },
-    { id: 'g5',      position: { x: 575, y: 20  }, data: { label: 'Contact (5)' } },
-    { id: 'g6',      position: { x: 690, y: 20  }, data: { label: 'Lead (6) ★' } },
-    { id: 'achieved', position: { x: 250, y: 150 }, data: { label: 'AchievedGoalSet (SQLite + KNN)' } },
-    { id: 'alpha',   position: { x: 550, y: 240 }, data: { label: 'Adaptive alpha (targets 50%)' } },
-    { id: 'algo',    position: { x: 190, y: 270 }, data: { label: 'alpha*(V+beta*sigma) + (1-alpha)*(V*+beta*sigma*)' } },
-    { id: 'next',    position: { x: 290, y: 370 }, data: { label: 'Selected Goal g — DQN target' } },
-  ]}
-  edges={[
-    { id: 'h1', source: 'g0',      target: 'g1',      animated: true },
-    { id: 'h2', source: 'g1',      target: 'g2',      animated: true },
-    { id: 'h3', source: 'g2',      target: 'g3',      animated: true },
-    { id: 'h4', source: 'g3',      target: 'g4',      animated: true },
-    { id: 'h5', source: 'g4',      target: 'g5',      animated: true },
-    { id: 'h6', source: 'g5',      target: 'g6',      animated: true },
-    { id: 'e1', source: 'g3',      target: 'achieved', label: 'success' },
-    { id: 'e2', source: 'achieved', target: 'algo' },
-    { id: 'e3', source: 'alpha',   target: 'algo' },
-    { id: 'e4', source: 'algo',    target: 'next' },
-  ]}
-/>
+<DiscoverDiagram />
 
 ## 5. Orchestration: The Multi-Timescale Novelty Engine
 
@@ -142,30 +89,7 @@ In a single operational cycle, they interact seamlessly:
 
 This creates a virtuous cycle where exploration in one layer fuels learning and refines exploration in the others.
 
-<Flow
-  height={430}
-  nodes={[
-    { id: 'trans',  position: { x: 180, y: 20  }, data: { label: 'Page Transition (s_t, a_t, s_{t+1}, r_ext)' } },
-    { id: 'icm',   position: { x: 10,  y: 140 }, data: { label: 'ICM — Per-Step' } },
-    { id: 'wm',    position: { x: 220, y: 140 }, data: { label: 'World Model — Per-Episode' } },
-    { id: 'disc',  position: { x: 450, y: 140 }, data: { label: 'DISCOVER — Cross-Episode' } },
-    { id: 'rcur',  position: { x: 10,  y: 265 }, data: { label: 'r_curiosity (dense)' } },
-    { id: 'synth', position: { x: 205, y: 265 }, data: { label: 'Synthetic Transitions (ratio <= 0.5)' } },
-    { id: 'goal',  position: { x: 450, y: 265 }, data: { label: 'Intermediate Goal g' } },
-    { id: 'dqn',   position: { x: 200, y: 370 }, data: { label: 'DQN Policy — r_total = r_ext + 0.1*r_cur' } },
-  ]}
-  edges={[
-    { id: 'e1', source: 'trans', target: 'icm',   animated: true },
-    { id: 'e2', source: 'trans', target: 'wm',    animated: true },
-    { id: 'e3', source: 'trans', target: 'disc',  animated: true },
-    { id: 'e4', source: 'icm',   target: 'rcur' },
-    { id: 'e5', source: 'wm',    target: 'synth' },
-    { id: 'e6', source: 'disc',  target: 'goal' },
-    { id: 'e7', source: 'rcur',  target: 'dqn' },
-    { id: 'e8', source: 'synth', target: 'dqn' },
-    { id: 'e9', source: 'goal',  target: 'dqn' },
-  ]}
-/>
+<OrchestrationDiagram />
 
 ## 6. The Edge Computing Imperative
 
