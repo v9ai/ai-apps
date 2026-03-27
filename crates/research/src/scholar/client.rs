@@ -21,6 +21,7 @@ const RETRY_CONFIG: RetryConfig = RetryConfig {
     base_delay: Duration::from_secs(1),
     max_delay: Duration::from_secs(30),
     jitter: true,
+    retry_on_server_error: false,
 };
 
 /// Async client for the Semantic Scholar Academic Graph, Recommendations, and Datasets APIs.

@@ -14,6 +14,9 @@ pub struct RetryConfig {
     pub max_delay: Duration,
     /// Whether to add random jitter (up to 50% of computed delay).
     pub jitter: bool,
+    /// Whether to retry on HTTP 5xx server errors. When `false`, only 429
+    /// rate-limit responses trigger retries.
+    pub retry_on_server_error: bool,
 }
 
 impl Default for RetryConfig {
@@ -23,6 +26,7 @@ impl Default for RetryConfig {
             base_delay: Duration::from_secs(1),
             max_delay: Duration::from_secs(30),
             jitter: true,
+            retry_on_server_error: true,
         }
     }
 }
@@ -125,7 +129,12 @@ pub async fn retry_get(
                 let status = resp.status().as_u16();
                 let action = RetryAction::from_status(status);
 
-                if !action.should_retry() {
+                let retryable = match action {
+                    RetryAction::RateLimited => true,
+                    RetryAction::ServerError => config.retry_on_server_error,
+                    _ => false,
+                };
+                if !retryable {
                     return Ok(resp);
                 }
 

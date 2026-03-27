@@ -14,6 +14,7 @@ use research::ResearchPaper;
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live OpenAlex API"]
 async fn openalex_search_returns_results() {
     let client = OpenAlexClient::new(None);
     let resp = client.search("machine learning", 1, 5).await.unwrap();
@@ -22,6 +23,7 @@ async fn openalex_search_returns_results() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live OpenAlex API"]
 async fn openalex_get_work_by_id() {
     let client = OpenAlexClient::new(None);
     // "Attention Is All You Need" — well-known, stable OpenAlex ID
@@ -35,6 +37,7 @@ async fn openalex_get_work_by_id() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live OpenAlex API"]
 async fn openalex_abstract_reconstruction() {
     let client = OpenAlexClient::new(None);
     let work = client.get_work("https://openalex.org/W2626778328").await.unwrap();
@@ -49,6 +52,7 @@ async fn openalex_abstract_reconstruction() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live OpenAlex API"]
 async fn openalex_to_research_paper() {
     let client = OpenAlexClient::new(None);
     let work = client.get_work("https://openalex.org/W2626778328").await.unwrap();
@@ -61,6 +65,7 @@ async fn openalex_to_research_paper() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live Crossref API"]
 async fn crossref_search_returns_results() {
     let client = CrossrefClient::new(None);
     let resp = client.search("CRISPR genome editing", 5, 0).await.unwrap();
@@ -74,6 +79,7 @@ async fn crossref_search_returns_results() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live Crossref API"]
 async fn crossref_get_work_by_doi() {
     let client = CrossrefClient::new(None);
     // "CRISPR-Cas9" landmark paper in Nature
@@ -89,6 +95,7 @@ async fn crossref_get_work_by_doi() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live Crossref API"]
 async fn crossref_to_research_paper() {
     let client = CrossrefClient::new(None);
     let work = client.get_work("10.1038/nature12373").await.unwrap();
@@ -101,6 +108,7 @@ async fn crossref_to_research_paper() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn core_search_returns_results() {
     let client = CoreClient::new(None);
     let resp = client.search("deep learning", 5, 0).await.unwrap();
@@ -109,6 +117,7 @@ async fn core_search_returns_results() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn core_get_work_and_convert() {
     let client = CoreClient::new(None);
     // Search first to get a valid ID
@@ -126,6 +135,7 @@ async fn core_get_work_and_convert() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn scholar_search_returns_results() {
     let client = SemanticScholarClient::new(None);
     let resp = client
@@ -142,6 +152,7 @@ async fn scholar_search_returns_results() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn scholar_get_paper_by_id() {
     let client = SemanticScholarClient::new(None);
     // "Attention Is All You Need" S2 ID
@@ -161,6 +172,7 @@ async fn scholar_get_paper_by_id() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn scholar_to_research_paper() {
     let client = SemanticScholarClient::new(None);
     let paper = client

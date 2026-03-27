@@ -25,6 +25,7 @@ async fn core_search_with_retry(
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn search_returns_results() {
     let client = CoreClient::new(None);
     let resp = core_search_with_retry(&client, "deep learning", 5, 0)
@@ -36,6 +37,7 @@ async fn search_returns_results() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn search_respects_limit() {
     let client = CoreClient::new(None);
     let resp = core_search_with_retry(&client, "machine learning", 3, 0)
@@ -51,6 +53,7 @@ async fn search_respects_limit() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn search_pagination_works() {
     let client = CoreClient::new(None);
 
@@ -71,6 +74,7 @@ async fn search_pagination_works() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn search_total_hits_populated() {
     let client = CoreClient::new(None);
     let resp = core_search_with_retry(&client, "transformer", 5, 0)
@@ -85,6 +89,7 @@ async fn search_total_hits_populated() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn get_work_from_search_result() {
     let client = CoreClient::new(None);
 
@@ -109,6 +114,7 @@ async fn get_work_from_search_result() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn work_converts_to_research_paper() {
     let client = CoreClient::new(None);
 
@@ -125,6 +131,7 @@ async fn work_converts_to_research_paper() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn search_result_fields_populated() {
     let client = CoreClient::new(None);
     let resp = core_search_with_retry(&client, "convolutional neural network", 3, 0)
@@ -140,6 +147,7 @@ async fn search_result_fields_populated() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn search_results_have_year_published() {
     let client = CoreClient::new(None);
     let resp = core_search_with_retry(&client, "machine learning 2025", 10, 0)
@@ -167,6 +175,7 @@ async fn search_results_have_year_published() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn year_published_is_reasonable() {
     let client = CoreClient::new(None);
     let resp = core_search_with_retry(&client, "natural language processing", 10, 0)
@@ -191,6 +200,7 @@ async fn year_published_is_reasonable() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn client_side_year_filter_works() {
     let client = CoreClient::new(None);
     let resp = core_search_with_retry(&client, "large language models", 10, 0)
@@ -226,6 +236,7 @@ async fn client_side_year_filter_works() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live CORE API"]
 async fn search_with_year_in_query_improves_relevance() {
     let client = CoreClient::new(None);
 
