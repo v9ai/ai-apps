@@ -45,6 +45,10 @@ struct Args {
     /// Skip review analysis (faster, no sentiment/aspect scores)
     #[arg(long)]
     skip_reviews: bool,
+
+    /// Sanitize existing JSON: remove non-seaside hotels and exit
+    #[arg(long)]
+    sanitize: bool,
 }
 
 #[tokio::main]
@@ -52,6 +56,10 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
 
     let args = Args::parse();
+
+    if args.sanitize {
+        return sanitize_json(&args.out);
+    }
 
     // ── Stage 1: Init Candle embedding engine ──
     info!("Loading Candle embedding model (all-MiniLM-L6-v2)...");
@@ -122,6 +130,93 @@ async fn main() -> Result<()> {
 
     // ── Stage 7: Review analysis + export ──
     export_results(&unique, &engine, &args).await
+}
+
+/// Read an existing JSON output, drop non-seaside hotels, write back.
+///
+/// Handles both `EnrichedSearchResult` (nested `hotel.hotel_id`) and flat
+/// `HotelSearchResult` (top-level `hotel_id`) layouts.
+fn sanitize_json(path: &str) -> Result<()> {
+    let raw = std::fs::read_to_string(path)
+        .with_context(|| format!("reading {path}"))?;
+    let entries: Vec<serde_json::Value> =
+        serde_json::from_str(&raw).context("parsing JSON array")?;
+    let before = entries.len();
+
+    let kept: Vec<serde_json::Value> = entries
+        .into_iter()
+        .filter(|entry| {
+            // Resolve the hotel object — may be nested under "hotel"
+            let hotel_obj = entry
+                .get("hotel")
+                .and_then(|h| {
+                    // EnrichedSearchResult: hotel.hotel_id lives directly in "hotel"
+                    if h.get("hotel_id").is_some() {
+                        Some(h)
+                    } else {
+                        // Shouldn't happen, but guard against double nesting
+                        h.get("hotel")
+                    }
+                })
+                .unwrap_or(entry);
+
+            let region = hotel_obj
+                .get("region")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            let description = hotel_obj
+                .get("description")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            let location = hotel_obj
+                .get("location")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            let amenities: Vec<String> = hotel_obj
+                .get("amenities")
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|a| a.as_str().map(String::from))
+                        .collect()
+                })
+                .unwrap_or_default();
+
+            let probe = Hotel {
+                hotel_id: String::new(),
+                name: String::new(),
+                description: description.to_string(),
+                star_rating: 0,
+                board_type: String::new(),
+                price_eur: 0.0,
+                location: location.to_string(),
+                region: region.to_string(),
+                lat: 0.0,
+                lng: 0.0,
+                source_url: String::new(),
+                amenities,
+                image_url: None,
+                gallery: vec![],
+                opened_year: None,
+            };
+
+            let pass = is_seaside_hotel(&probe);
+            if !pass {
+                let name = hotel_obj
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("?");
+                info!("Dropping inland hotel: {name} (region={region})");
+            }
+            pass
+        })
+        .collect();
+
+    let removed = before - kept.len();
+    let json = serde_json::to_string_pretty(&kept).context("serializing")?;
+    std::fs::write(path, json.as_bytes()).with_context(|| format!("writing {path}"))?;
+    info!("Sanitized {path}: removed {removed} inland, {len} seaside remain", len = kept.len());
+    Ok(())
 }
 
 /// Fallback: generate discovery results from curated 2026 hotel data.
