@@ -1,0 +1,15 @@
+{
+  "duplicates": {
+    "company_dupes": [],
+    "contact_dupes": []
+  },
+  "completeness": {
+    "companies_audited": 0,
+    "contacts_audited": 0,
+    "companies_complete": 0,
+    "contacts_complete": 0,
+    "missing_fields": []
+  },
+  "quality_score": 1.0,
+  "recommendations": []
+}

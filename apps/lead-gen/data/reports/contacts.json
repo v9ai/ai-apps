@@ -1,0 +1,11 @@
+{
+  "contacts": [],
+  "verification_stats": {
+    "mx_checked": 0,
+    "smtp_checked": 0,
+    "verified_count": 0,
+    "failed_count": 0,
+    "no_mx_count": 0
+  },
+  "errors": []
+}
