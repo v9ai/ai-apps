@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Remote EU job board aggregator. Next.js 16 frontend + GraphQL API backed by Neon PostgreSQL, with an AI/ML pipeline for job classification, skill extraction, and resume matching.
+B2B lead generation platform. Next.js 16 frontend + GraphQL API backed by Neon PostgreSQL, with AI/ML pipelines for company enrichment, contact discovery, and outreach automation.
 
 ---
 
@@ -27,11 +27,6 @@ pnpm strategy:check               # Validate staged changes against optimization
 pnpm strategy:check:all           # Validate all tracked files
 
 # Scripts
-pnpm jobs:ingest                  # Ingest jobs from ATS platforms
-pnpm jobs:enhance                 # Enhance all jobs with ATS data
-pnpm jobs:status                  # Check ingestion status
-pnpm jobs:extract-skills          # Extract skills during ingestion
-pnpm skills:extract               # Extract skills from jobs
 pnpm skills:seed                  # Seed skill taxonomy
 pnpm boards:discover              # Discover Ashby boards
 # Deployment
@@ -50,10 +45,10 @@ Import `db` from `@/db` for all queries. Schema in `src/db/schema.ts`, migration
 ### Data flow
 
 ```
-1. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[scripts]--> Neon
-2. Enhancement:    Job IDs --[GraphQL Mutation]--> ATS API --> Neon
-3. Classification: Unprocessed jobs --[DeepSeek LLM]--> is_remote_eu --> Neon
-4. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → Neon
+1. Discovery:      Common Crawl / live fetch --[scripts]--> companies → Neon
+2. Enrichment:     Company IDs --[GraphQL Mutation]--> LLM/web --> Neon
+3. Contacts:       LinkedIn / manual --[GraphQL Mutation]--> contacts → Neon
+4. Outreach:       Contacts --[email campaigns]--> Resend → Neon
 5. Serving:        Browser --[Apollo Client]--> /api/graphql --[Drizzle ORM]--> Neon
 6. Evaluation:     Local evals --[LLM calls]--> Accuracy scores
 ```
@@ -74,7 +69,6 @@ Custom scalars: `DateTime`/`URL`/`EmailAddress` → `string`, `Upload` → `File
 |---|---|
 | `/api/graphql` | Apollo Server GraphQL endpoint (main API) |
 | `/api/text-to-sql` | Natural language → SQL query |
-| `/api/enhance-greenhouse-jobs` | Trigger Greenhouse job enhancement |
 | `/api/companies/bulk-import` | Bulk import companies |
 | `/api/companies/enhance` | Enhance company data |
 
@@ -103,8 +97,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 ## Key structural patterns
 
 - **GraphQL schema** lives in `schema/` (by domain: `base/`, `jobs/`, `companies/`). Query/mutation/fragment documents are in `src/graphql/`.
-- **Resolvers** are in `src/apollo/resolvers/` — job resolvers in `src/apollo/resolvers/job/`.
-- **ATS ingestion** fetchers: `src/ingestion/{greenhouse,lever,ashby}.ts` — primary job discovery channel.
+- **Resolvers** are in `src/apollo/resolvers/` (company, contacts, email-campaigns, email-templates, blocked-companies, received-emails, user-settings).
 - **Skills subsystem**: `src/lib/skills/` — taxonomy, extraction, filtering.
 - **AI agents**: `src/agents/` (Vercel AI SDK — SQL, admin, strategy enforcer), `src/anthropic/` (Claude client, MCP, sub-agents, architect).
 - **Database tools for agents**: `src/tools/database/` (introspection + SQL execution).
@@ -148,10 +141,6 @@ Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Aut
 ---
 
 ## Known issues
-
-### Performance
-- **Full table scan** in `src/apollo/resolvers/job/enhance-job.ts` — fetches all jobs to find one by `external_id`.
-- **N+1 queries** for skills, company, and ATS board sub-fields — no DataLoader.
 
 ### Security
 - No CORS policy on the GraphQL API route.

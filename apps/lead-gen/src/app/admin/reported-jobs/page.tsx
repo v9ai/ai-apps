@@ -311,12 +311,7 @@ export default function ReportedJobsPage() {
                         </>
                       )}
                       {" · "}
-                      <Link
-                        href={`/jobs/${job.id}`}
-                        style={{ color: "var(--accent-11)" }}
-                      >
-                        Job #{job.id}
-                      </Link>
+                      <Text as="span" color="gray">Job #{job.id}</Text>
                     </Text>
                   </Box>
 
