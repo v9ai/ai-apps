@@ -1,7 +1,7 @@
 //! QA audit stage — dedup, validate, score.
 //!
 //! Uses existing leadgen-metal infrastructure:
-//!   - dedup::blocking        — blocking-key entity resolution
+//!   - dedup                  — blocking-key entity resolution
 //!   - similarity::simd       — Jaro-Winkler string similarity
 //!   - Pipeline::find_duplicates
 

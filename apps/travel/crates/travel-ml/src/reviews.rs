@@ -739,152 +739,111 @@ pub async fn scrape_hotel_images(hotel: &Hotel) -> Vec<String> {
 
 // ── Core ML functions ────────────────────────────────────────────────
 
-/// Compute sentiment for text passages using Candle embedding cosine similarity.
-pub fn analyze_sentiment(
-    engine: &EmbeddingEngine,
-    texts: &[&str],
-) -> Result<Vec<f32>> {
-    if texts.is_empty() {
-        return Ok(vec![]);
+/// Pre-computed anchor embeddings — constant across all hotels.
+/// Build once with `AnchorVecs::new()`, reuse for every hotel.
+pub struct AnchorVecs {
+    pub positive: Vec<f32>,
+    pub negative: Vec<f32>,
+    pub aspect_names: Vec<&'static str>,
+    pub aspect_vecs: Vec<Vec<f32>>,
+}
+
+impl AnchorVecs {
+    pub fn new(engine: &EmbeddingEngine) -> Result<Self> {
+        let positive = engine.embed_one(POSITIVE_ANCHOR).context("embedding positive anchor")?;
+        let negative = engine.embed_one(NEGATIVE_ANCHOR).context("embedding negative anchor")?;
+        let anchors = aspect_anchors();
+        let anchor_texts: Vec<&str> = anchors.iter().map(|(_, text)| *text).collect();
+        let aspect_vecs = engine.embed_batch(&anchor_texts).context("embedding aspect anchors")?;
+        let aspect_names: Vec<&'static str> = anchors.iter().map(|(name, _)| *name).collect();
+        Ok(Self { positive, negative, aspect_names, aspect_vecs })
     }
+}
 
-    let pos_vec = engine.embed_one(POSITIVE_ANCHOR).context("embedding positive anchor")?;
-    let neg_vec = engine.embed_one(NEGATIVE_ANCHOR).context("embedding negative anchor")?;
-    let text_vecs = embed_in_batches(engine, texts)?;
+// ── Vec-only helpers (no embedding calls) ────────────────────────────
 
-    let scores: Vec<f32> = text_vecs
-        .iter()
-        .map(|tvec| {
-            let pos_sim = dot_product(tvec, &pos_vec);
-            let neg_sim = dot_product(tvec, &neg_vec);
-            let denom = pos_sim.abs() + neg_sim.abs();
-            if denom < 1e-8 {
-                0.0
-            } else {
-                ((pos_sim - neg_sim) / denom).clamp(-1.0, 1.0)
+fn sentiment_from_vecs(text_vecs: &[Vec<f32>], pos: &[f32], neg: &[f32]) -> Vec<f32> {
+    text_vecs.iter().map(|tvec| {
+        let pos_sim = dot_product(tvec, pos);
+        let neg_sim = dot_product(tvec, neg);
+        let denom = pos_sim.abs() + neg_sim.abs();
+        if denom < 1e-8 { 0.0 } else { ((pos_sim - neg_sim) / denom).clamp(-1.0, 1.0) }
+    }).collect()
+}
+
+fn aspects_from_vecs(text_vecs: &[Vec<f32>], sentiments: &[f32], a: &AnchorVecs) -> HashMap<String, f32> {
+    let mut sums: HashMap<String, (f32, u32)> = HashMap::new();
+    for (ti, tvec) in text_vecs.iter().enumerate() {
+        for (ai, name) in a.aspect_names.iter().enumerate() {
+            let sim = dot_product(tvec, &a.aspect_vecs[ai]);
+            if sim >= 0.25 {
+                let e = sums.entry(name.to_string()).or_insert((0.0, 0));
+                e.0 += (sentiments.get(ti).copied().unwrap_or(0.0) + 1.0) / 2.0 * sim;
+                e.1 += 1;
             }
-        })
-        .collect();
+        }
+    }
+    sums.into_iter().map(|(n, (s, c))| {
+        (n, if c > 0 { (s / c as f32).clamp(0.0, 1.0) } else { 0.5 })
+    }).collect()
+}
 
-    Ok(scores)
+fn representative_from_vecs(vecs: &[Vec<f32>], k: usize) -> Vec<usize> {
+    if vecs.is_empty() || k == 0 { return vec![]; }
+    let dim = vecs[0].len();
+    let mut centroid = vec![0.0f32; dim];
+    for v in vecs { for (i, val) in v.iter().enumerate() { centroid[i] += val; } }
+    let n = vecs.len() as f32;
+    for val in &mut centroid { *val /= n; }
+    let norm: f32 = centroid.iter().map(|x| x * x).sum::<f32>().sqrt();
+    if norm > 1e-8 { for val in &mut centroid { *val /= norm; } }
+    let mut scored: Vec<(usize, f32)> = vecs.iter().enumerate()
+        .map(|(i, v)| (i, dot_product(v, &centroid))).collect();
+    scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+    scored.into_iter().take(k).map(|(i, _)| i).collect()
+}
+
+fn pros_cons_from_sentiments(sentences: &[&str], sentiments: &[f32]) -> (Vec<String>, Vec<String>) {
+    let mut scored: Vec<(usize, f32)> = sentiments.iter().enumerate().map(|(i, &s)| (i, s)).collect();
+    scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+    let pros = scored.iter().filter(|(_, s)| *s > 0.05).take(5)
+        .map(|(i, _)| sentences[*i].to_string()).collect();
+    let cons = scored.iter().rev().filter(|(_, s)| *s < 0.0).take(3)
+        .map(|(i, _)| sentences[*i].to_string()).collect();
+    (pros, cons)
+}
+
+// ── Public API (used by tests that call functions individually) ───────
+
+/// Compute sentiment for text passages using Candle embedding cosine similarity.
+pub fn analyze_sentiment(engine: &EmbeddingEngine, texts: &[&str]) -> Result<Vec<f32>> {
+    if texts.is_empty() { return Ok(vec![]); }
+    let pos = engine.embed_one(POSITIVE_ANCHOR).context("embedding positive anchor")?;
+    let neg = engine.embed_one(NEGATIVE_ANCHOR).context("embedding negative anchor")?;
+    let vecs = embed_in_batches(engine, texts)?;
+    Ok(sentiment_from_vecs(&vecs, &pos, &neg))
 }
 
 /// Extract aspect scores from text passages.
-pub fn extract_aspects(
-    engine: &EmbeddingEngine,
-    texts: &[&str],
-    sentiments: &[f32],
-) -> Result<HashMap<String, f32>> {
-    if texts.is_empty() {
-        return Ok(HashMap::new());
-    }
-
-    let anchors = aspect_anchors();
-    let anchor_texts: Vec<&str> = anchors.iter().map(|(_, text)| *text).collect();
-    let anchor_vecs = engine.embed_batch(&anchor_texts).context("embedding aspect anchors")?;
-    let text_vecs = embed_in_batches(engine, texts)?;
-
-    let mut aspect_sums: HashMap<String, (f32, u32)> = HashMap::new();
-
-    for (ti, tvec) in text_vecs.iter().enumerate() {
-        for (ai, (name, _)) in anchors.iter().enumerate() {
-            let sim = dot_product(tvec, &anchor_vecs[ai]);
-            if sim >= 0.25 {
-                let entry = aspect_sums
-                    .entry(name.to_string())
-                    .or_insert((0.0, 0));
-                let sentiment = sentiments.get(ti).copied().unwrap_or(0.0);
-                entry.0 += (sentiment + 1.0) / 2.0 * sim;
-                entry.1 += 1;
-            }
-        }
-    }
-
-    let scores: HashMap<String, f32> = aspect_sums
-        .into_iter()
-        .map(|(name, (sum, count))| {
-            let avg = if count > 0 { sum / count as f32 } else { 0.5 };
-            (name, avg.clamp(0.0, 1.0))
-        })
-        .collect();
-
-    Ok(scores)
+pub fn extract_aspects(engine: &EmbeddingEngine, texts: &[&str], sentiments: &[f32]) -> Result<HashMap<String, f32>> {
+    if texts.is_empty() { return Ok(HashMap::new()); }
+    let a = AnchorVecs::new(engine)?;
+    let vecs = embed_in_batches(engine, texts)?;
+    Ok(aspects_from_vecs(&vecs, sentiments, &a))
 }
 
 /// Select the k most representative texts (closest to embedding centroid).
-pub fn select_representative(
-    engine: &EmbeddingEngine,
-    texts: &[&str],
-    k: usize,
-) -> Result<Vec<usize>> {
-    if texts.is_empty() || k == 0 {
-        return Ok(vec![]);
-    }
-
+pub fn select_representative(engine: &EmbeddingEngine, texts: &[&str], k: usize) -> Result<Vec<usize>> {
+    if texts.is_empty() || k == 0 { return Ok(vec![]); }
     let vecs = embed_in_batches(engine, texts)?;
-    let dim = vecs[0].len();
-
-    let mut centroid = vec![0.0f32; dim];
-    for v in &vecs {
-        for (i, val) in v.iter().enumerate() {
-            centroid[i] += val;
-        }
-    }
-    let n = vecs.len() as f32;
-    for val in &mut centroid {
-        *val /= n;
-    }
-    let norm: f32 = centroid.iter().map(|x| x * x).sum::<f32>().sqrt();
-    if norm > 1e-8 {
-        for val in &mut centroid {
-            *val /= norm;
-        }
-    }
-
-    let mut scored: Vec<(usize, f32)> = vecs
-        .iter()
-        .enumerate()
-        .map(|(i, v)| (i, dot_product(v, &centroid)))
-        .collect();
-    scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-
-    Ok(scored.into_iter().take(k).map(|(i, _)| i).collect())
+    Ok(representative_from_vecs(&vecs, k))
 }
 
 /// Extract pros and cons from sentences using sentiment analysis.
-pub fn extract_pros_cons(
-    engine: &EmbeddingEngine,
-    sentences: &[&str],
-) -> Result<(Vec<String>, Vec<String>)> {
-    if sentences.is_empty() {
-        return Ok((vec![], vec![]));
-    }
-
+pub fn extract_pros_cons(engine: &EmbeddingEngine, sentences: &[&str]) -> Result<(Vec<String>, Vec<String>)> {
+    if sentences.is_empty() { return Ok((vec![], vec![])); }
     let sentiments = analyze_sentiment(engine, sentences)?;
-
-    let mut scored: Vec<(usize, f32)> = sentiments
-        .iter()
-        .enumerate()
-        .map(|(i, &s)| (i, s))
-        .collect();
-    scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-
-    let pros: Vec<String> = scored
-        .iter()
-        .filter(|(_, s)| *s > 0.05)
-        .take(5)
-        .map(|(i, _)| sentences[*i].to_string())
-        .collect();
-
-    let cons: Vec<String> = scored
-        .iter()
-        .rev()
-        .filter(|(_, s)| *s < 0.0)
-        .take(3)
-        .map(|(i, _)| sentences[*i].to_string())
-        .collect();
-
-    Ok((pros, cons))
+    Ok(pros_cons_from_sentiments(sentences, &sentiments))
 }
 
 /// Compute value-for-money score (0–100, higher = better value).
@@ -960,59 +919,51 @@ pub fn analyze_hotel(
     hotel: &Hotel,
     scraped: Option<&ScrapedReviewData>,
 ) -> Result<ReviewAnalysis> {
-    // Build review corpus
+    let anchors = AnchorVecs::new(engine)?;
+    analyze_hotel_with_anchors(engine, hotel, scraped, &anchors)
+}
+
+/// Like [`analyze_hotel`] but reuses pre-built anchor embeddings.
+/// The batch pipeline builds anchors once and calls this per hotel,
+/// eliminating redundant anchor embedding (positive, negative, 8 aspects)
+/// on every iteration.
+pub fn analyze_hotel_with_anchors(
+    engine: &EmbeddingEngine,
+    hotel: &Hotel,
+    scraped: Option<&ScrapedReviewData>,
+    anchors: &AnchorVecs,
+) -> Result<ReviewAnalysis> {
     let sentences = split_sentences(&hotel.description);
     let mut review_texts: Vec<String> = sentences.clone();
     let mut sources: Vec<String> = vec!["description".to_string()];
 
-    // Add scraped review texts (the real content)
     let (scraped_count, scraped_rating) = if let Some(data) = scraped {
-        for text in &data.review_texts {
-            review_texts.push(text.clone());
-        }
+        for text in &data.review_texts { review_texts.push(text.clone()); }
         sources.extend(data.sources.clone());
         (data.review_count, data.review_rating)
     } else {
         (0, 0.0)
     };
 
-    // Add amenity sentences
-    for a in &hotel.amenities {
-        review_texts.push(format!("This hotel offers {a}."));
-    }
-
-    // Add context sentences
-    review_texts.push(format!(
-        "{}-star {} in {}.",
-        hotel.star_rating, hotel.board_type, hotel.location
-    ));
-    if let Some(year) = hotel.opened_year {
-        review_texts.push(format!("Brand new hotel opened in {year}."));
-    }
+    for a in &hotel.amenities { review_texts.push(format!("This hotel offers {a}.")); }
+    review_texts.push(format!("{}-star {} in {}.", hotel.star_rating, hotel.board_type, hotel.location));
+    if let Some(year) = hotel.opened_year { review_texts.push(format!("Brand new hotel opened in {year}.")); }
 
     let text_refs: Vec<&str> = review_texts.iter().map(|s| s.as_str()).collect();
 
-    // ── Sentiment analysis ──
-    let sentiments = analyze_sentiment(engine, &text_refs)
-        .context("sentiment analysis")?;
+    // ── Single embed call per hotel — reuse vecs for all steps ──
+    let text_vecs = embed_in_batches(engine, &text_refs).context("embedding review texts")?;
+
+    let sentiments = sentiment_from_vecs(&text_vecs, &anchors.positive, &anchors.negative);
     let overall_sentiment = if sentiments.is_empty() {
         0.0
     } else {
         sentiments.iter().sum::<f32>() / sentiments.len() as f32
     };
 
-    // ── Aspect extraction ──
-    let aspect_scores = extract_aspects(engine, &text_refs, &sentiments)
-        .context("aspect extraction")?;
-
-    // ── Representative selection ──
-    let rep_indices = select_representative(engine, &text_refs, 3)
-        .context("representative selection")?;
-
-    // ── Pros / Cons ──
-    let all_sentence_refs: Vec<&str> = review_texts.iter().map(|s| s.as_str()).collect();
-    let (pros, cons) = extract_pros_cons(engine, &all_sentence_refs)
-        .context("pros/cons extraction")?;
+    let aspect_scores = aspects_from_vecs(&text_vecs, &sentiments, &anchors);
+    let rep_indices = representative_from_vecs(&text_vecs, 3);
+    let (pros, cons) = pros_cons_from_sentiments(&text_refs, &sentiments);
 
     let cons = if cons.is_empty() {
         infer_missing_aspects(hotel, &aspect_scores)
@@ -1254,6 +1205,10 @@ pub async fn analyze_all_hotels_with_reviews_from(
         .await;
 
     // Phase 2: ML analysis (CPU-bound, sequential — shares EmbeddingEngine)
+    // Build anchor embeddings once — reused for all 16 hotels.
+    info!("Building anchor embeddings (sentiment + {} aspects)...", aspect_anchors().len());
+    let anchors = AnchorVecs::new(engine).context("building anchor vecs")?;
+
     info!("Running Candle ML analysis on {} hotels...", hotels.len());
     let mut analyses = Vec::with_capacity(hotels.len());
 
@@ -1270,7 +1225,7 @@ pub async fn analyze_all_hotels_with_reviews_from(
             )
         };
 
-        let analysis = analyze_hotel(engine, hotel, Some(scraped))
+        let analysis = analyze_hotel_with_anchors(engine, hotel, Some(scraped), &anchors)
             .with_context(|| format!("analyzing hotel '{}'", hotel.name))?;
         info!(
             "  [{}/{}] {} — sentiment: {:.2}, value: {:.0}, rating: {:.1}, reviews: {}, aspects: {} ({})",

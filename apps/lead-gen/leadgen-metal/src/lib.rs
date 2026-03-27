@@ -14,8 +14,7 @@ pub mod teams;
 use std::io;
 use std::path::Path;
 
-use dedup::blocking;
-use index::posting::InvertedIndex;
+use index::InvertedIndex;
 use similarity::embeddings::{EmbeddingStore, QuantizedEmbeddingStore};
 use storage::{btree::{BTreeOps, RecordPtr}, page::PageFile, record, wal::WriteAheadLog};
 
@@ -39,7 +38,7 @@ pub struct Pipeline {
     pub companies: Box<dyn BTreeOps>,
     pub contacts: Box<dyn BTreeOps>,
     pub postings: InvertedIndex,
-    pub frontier: queue::frontier::UrlFrontier,
+    pub frontier: queue::UrlFrontier,
     pub embeddings: EmbeddingStore,
     /// INT8 quantized embeddings — 4x memory reduction over FP32.
     pub embeddings_q: QuantizedEmbeddingStore,
@@ -112,7 +111,7 @@ impl Pipeline {
         }
 
         let postings = InvertedIndex::new();
-        let frontier = queue::frontier::UrlFrontier::new(100_000);
+        let frontier = queue::UrlFrontier::new(100_000);
         let embeddings = EmbeddingStore::new(384);
         let embeddings_q = QuantizedEmbeddingStore::new(384);
 
@@ -242,7 +241,7 @@ impl Pipeline {
     pub async fn discover_emails(
         &self, domain: &str, first: &str, last: &str,
     ) -> Result<Vec<(String, email_metal::smtp_fsm::VerifyResult)>, String> {
-        let mx_records = dns::raw::resolve_mx_async(domain).await?;
+        let mx_records = dns::resolve_mx_async(domain).await?;
         if mx_records.is_empty() {
             return Err(format!("no MX records for {}", domain));
         }
@@ -274,7 +273,7 @@ impl Pipeline {
         contacts: &[(String, String, String)],
         similarity_threshold: f64,
     ) -> Vec<(usize, usize, f64)> {
-        let blocks = blocking::build_blocks(contacts);
+        let blocks = dedup::build_blocks(contacts);
         let mut duplicates = Vec::new();
 
         for (_key, indices) in &blocks {
