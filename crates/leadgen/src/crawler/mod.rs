@@ -1,6 +1,9 @@
 pub mod contact_ner;
+pub mod experience_replay;
 pub mod extractor;
 pub mod fetcher;
+pub mod grounding;
+pub mod memory_tree;
 pub mod neural_ucb;
 pub mod scheduler;
 pub mod url_scorer;
@@ -11,11 +14,11 @@ use std::collections::HashSet;
 use tracing::{info, warn};
 
 pub use fetcher::{CrawlJob, Fetcher};
-pub use scheduler::{CrawlReward, DomainScheduler, SchedulerConfig};
+pub use scheduler::{CrawlReward, DomainScheduler, ExplorationStrategy, SchedulerConfig};
 pub use url_scorer::{discover_urls, score_url, AdaptiveUrlScorer};
 
 /// Minimum NER confidence to accept extraction without LLM fallback.
-const NER_CONFIDENCE_THRESHOLD: u8 = 40;
+const NER_CONFIDENCE_THRESHOLD: u8 = 30;
 
 /// Convert NER extraction result to the LLM CompanyExtraction type.
 fn ner_to_company_extraction(ner: &contact_ner::ContactExtraction) -> llm::CompanyExtraction {
@@ -75,6 +78,7 @@ pub async fn process_domain(
     let mut contacts_found = 0u32;
     let mut all_text = String::new();
     let mut all_emails: Vec<String> = Vec::new();
+    let mut cached_pages = 0u32;
 
     info!(domain = domain, "starting crawl");
 
@@ -84,6 +88,7 @@ pub async fn process_domain(
                 save_extracted_data(database, domain, &data).await?;
                 contacts_found += data.key_people.len() as u32;
             }
+            cached_pages += 1;
             continue;
         }
 
@@ -122,7 +127,17 @@ pub async fn process_domain(
         }
     }
 
-    Ok(ProcessResult { domain: domain.to_string(), pages_fetched, contacts_found, emails_discovered: all_emails })
+    let avg_content_length =
+        all_text.len() as f64 / pages_fetched.max(1) as f64;
+
+    Ok(ProcessResult {
+        domain: domain.to_string(),
+        pages_fetched,
+        contacts_found,
+        emails_discovered: all_emails,
+        avg_content_length,
+        cached_pages,
+    })
 }
 
 async fn save_extracted_data(database: &db::Db, domain: &str, data: &llm::CompanyExtraction) -> Result<()> {
@@ -179,6 +194,8 @@ pub struct ProcessResult {
     pub pages_fetched: u32,
     pub contacts_found: u32,
     pub emails_discovered: Vec<String>,
+    pub avg_content_length: f64,
+    pub cached_pages: u32,
 }
 
 /// Enhanced crawl that discovers URLs dynamically using scoring heuristics
@@ -334,11 +351,16 @@ pub async fn process_domain_smart(
         "smart crawl complete"
     );
 
+    let avg_content_length =
+        if pages_fetched > 0 { total_content_length as f64 / pages_fetched as f64 } else { 0.0 };
+
     Ok(ProcessResult {
         domain: domain.to_string(),
         pages_fetched,
         contacts_found,
         emails_discovered: all_emails,
+        avg_content_length,
+        cached_pages,
     })
 }
 

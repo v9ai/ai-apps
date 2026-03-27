@@ -1,0 +1,2128 @@
+[
+  {
+    "hotel": {
+      "hotel_id": "urban-athena-hotel",
+      "name": "Urban Athena Hotel",
+      "description": "Contemporary 3-star city hotel in central Athens, a 5-minute walk from Syntagma Square. 60 compact rooms with industrial-chic interiors, co-working lounge, and a rooftop bar with Acropolis views. Excellent value for an Athens city break.",
+      "star_rating": 3,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 89.0,
+      "location": "Athens, Attica, Greece",
+      "region": "Attica",
+      "lat": 37.975,
+      "lng": 23.735,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Syntagma+Square+Athens+Greece+hotel",
+      "amenities": [
+        "Rooftop terrace",
+        "Bar",
+        "Wi-Fi",
+        "Restaurant",
+        "Co-working"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Rooftop terrace.",
+          "source": "ml-analysis",
+          "sentiment": 0.6566985,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Restaurant.",
+          "source": "ml-analysis",
+          "sentiment": 0.5692547,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Co-working.",
+          "source": "ml-analysis",
+          "sentiment": 0.5684886,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Bar.",
+          "source": "ml-analysis",
+          "sentiment": 0.5314997,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "Contemporary 3-star city hotel in central Athens, a 5-minute walk from Syntagma Square",
+          "source": "description",
+          "sentiment": 0.42341176,
+          "aspects": [
+            "Location"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "60 compact rooms with industrial-chic interiors, co-working lounge, and a rooftop bar with Acropolis views",
+          "source": "description",
+          "sentiment": 0.35406747,
+          "aspects": [
+            "Location"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.722341,
+      "aspect_scores": {
+        "Value": 0.18431929,
+        "Service": 0.2674963,
+        "Food": 0.26888466,
+        "Spa": 0.21457782,
+        "Cleanliness": 0.1927175,
+        "Location": 0.22263904
+      },
+      "review_summary": "This hotel offers Restaurant. This hotel offers Bar. This hotel offers Co-working.",
+      "pros": [
+        "This hotel offers Rooftop terrace.",
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Restaurant.",
+        "This hotel offers Co-working.",
+        "This hotel offers Bar."
+      ],
+      "cons": [
+        "Excellent value for an Athens city break"
+      ],
+      "review_count": 11462,
+      "review_rating": 10.0,
+      "value_score": 49.000557,
+      "discovery_score": 90.874466
+    },
+    "score": 0.551558
+  },
+  {
+    "hotel": {
+      "hotel_id": "petra-view-meteora",
+      "name": "Petra View Hotel Meteora",
+      "description": "New 3-star guesthouse at the foot of the Meteora rock pillars in Kalambaka. 24 stone-clad rooms with balcony views of the monasteries, hearty Greek breakfast, and a garden terrace. The most affordable new-build near Meteora in 2026.",
+      "star_rating": 3,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 65.0,
+      "location": "Meteora, Thessaly, Greece",
+      "region": "Thessaly",
+      "lat": 39.7217,
+      "lng": 21.6306,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Meteora+Kalambaka+Greece",
+      "amenities": [
+        "Restaurant",
+        "Parking",
+        "Wi-Fi",
+        "Garden terrace"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Restaurant.",
+          "source": "ml-analysis",
+          "sentiment": 0.5692547,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Garden terrace.",
+          "source": "ml-analysis",
+          "sentiment": 0.5444747,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "24 stone-clad rooms with balcony views of the monasteries, hearty Greek breakfast, and a garden terrace",
+          "source": "description",
+          "sentiment": 0.49792138,
+          "aspects": [
+            "Food",
+            "Location"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "New 3-star guesthouse at the foot of the Meteora rock pillars in Kalambaka",
+          "source": "description",
+          "sentiment": 0.45578352,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Parking.",
+          "source": "ml-analysis",
+          "sentiment": 0.41198903,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "3-star Bed & Breakfast in Meteora, Thessaly, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.33733243,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.72052485,
+      "aspect_scores": {
+        "Value": 0.14785488,
+        "Spa": 0.21705133,
+        "Location": 0.20649314,
+        "Service": 0.24540246,
+        "Food": 0.27315924
+      },
+      "review_summary": "This hotel offers Restaurant. This hotel offers Garden terrace. This hotel offers Parking.",
+      "pros": [
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Restaurant.",
+        "This hotel offers Garden terrace.",
+        "24 stone-clad rooms with balcony views of the monasteries, hearty Greek breakfast, and a garden terrace",
+        "Brand new hotel opened in 2026."
+      ],
+      "cons": [
+        "No spa or wellness facilities mentioned",
+        "No swimming pool mentioned",
+        "No fitness center mentioned"
+      ],
+      "review_count": 3638,
+      "review_rating": 9.8,
+      "value_score": 58.66181,
+      "discovery_score": 87.871
+    },
+    "score": 0.4365804
+  },
+  {
+    "hotel": {
+      "hotel_id": "rhodes-seaside-all-inclusive",
+      "name": "Rhodes Seaside All-Inclusive",
+      "description": "New 4-star all-inclusive resort on Faliraki's south beach, Rhodes. 200 rooms, three pools, aqua park, five dining outlets, evening entertainment, and a mini golf course. Strong value proposition for families.",
+      "star_rating": 4,
+      "board_type": "All-Inclusive",
+      "price_eur": 135.0,
+      "location": "Rhodes, Dodecanese, Greece",
+      "region": "Dodecanese",
+      "lat": 36.34,
+      "lng": 28.2,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Faliraki+Rhodes+Greece+all+inclusive",
+      "amenities": [
+        "Beach access",
+        "Swimming pool",
+        "Kids club",
+        "Multiple restaurants",
+        "Water sports",
+        "Fitness center",
+        "Aqua park"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Multiple restaurants.",
+          "source": "ml-analysis",
+          "sentiment": 0.6475567,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Swimming pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.5780089,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "4-star All-Inclusive in Rhodes, Dodecanese, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.4719989,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Fitness center.",
+          "source": "ml-analysis",
+          "sentiment": 0.46894142,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Aqua park.",
+          "source": "ml-analysis",
+          "sentiment": 0.45368195,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "New 4-star all-inclusive resort on Faliraki's south beach, Rhodes",
+          "source": "description",
+          "sentiment": 0.45152447,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7161536,
+      "aspect_scores": {
+        "Family": 0.25298423,
+        "Spa": 0.26795924,
+        "Cleanliness": 0.17575006,
+        "Food": 0.24375156,
+        "Beach": 0.2613103,
+        "Location": 0.28642598,
+        "Value": 0.14815126,
+        "Service": 0.22915053
+      },
+      "review_summary": "This hotel offers Swimming pool. This hotel offers Beach access. This hotel offers Aqua park.",
+      "pros": [
+        "This hotel offers Multiple restaurants.",
+        "This hotel offers Swimming pool.",
+        "This hotel offers Beach access.",
+        "Brand new hotel opened in 2026.",
+        "4-star All-Inclusive in Rhodes, Dodecanese, Greece."
+      ],
+      "cons": [
+        "Strong value proposition for families"
+      ],
+      "review_count": 4376,
+      "review_rating": 9.6,
+      "value_score": 48.505966,
+      "discovery_score": 85.36482
+    },
+    "score": 0.5664641
+  },
+  {
+    "hotel": {
+      "hotel_id": "halkidiki-blue-lagoon",
+      "name": "Halkidiki Blue Lagoon Resort",
+      "description": "New-build 4-star family resort on the Kassandra peninsula, Halkidiki. 120 bungalow-style rooms among pine trees, 300m of private beach, two pools, kids' animation program, and half-board dining with local seafood.",
+      "star_rating": 4,
+      "board_type": "Half Board",
+      "price_eur": 125.0,
+      "location": "Halkidiki, Central Macedonia, Greece",
+      "region": "Central Macedonia",
+      "lat": 40.05,
+      "lng": 23.42,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Kassandra+Halkidiki+Greece+resort",
+      "amenities": [
+        "Private beach",
+        "Swimming pool",
+        "Kids club",
+        "Restaurant",
+        "Parking",
+        "Wi-Fi"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Swimming pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.5780089,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Restaurant.",
+          "source": "ml-analysis",
+          "sentiment": 0.5692547,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "New-build 4-star family resort on the Kassandra peninsula, Halkidiki",
+          "source": "description",
+          "sentiment": 0.55062723,
+          "aspects": [
+            "Family"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "4-star Half Board in Halkidiki, Central Macedonia, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.45530093,
+          "aspects": [
+            "Location"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Kids club.",
+          "source": "ml-analysis",
+          "sentiment": 0.42459762,
+          "aspects": [
+            "Family"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Private beach.",
+          "source": "ml-analysis",
+          "sentiment": 0.4189297,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        }
+      ],
+      "sentiment_score": 0.7384279,
+      "aspect_scores": {
+        "Location": 0.285967,
+        "Beach": 0.2807605,
+        "Food": 0.26923004,
+        "Cleanliness": 0.18186791,
+        "Service": 0.23965554,
+        "Family": 0.2502298
+      },
+      "review_summary": "This hotel offers Restaurant. This hotel offers Private beach. This hotel offers Kids club.",
+      "pros": [
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Swimming pool.",
+        "This hotel offers Restaurant.",
+        "New-build 4-star family resort on the Kassandra peninsula, Halkidiki",
+        "Brand new hotel opened in 2026."
+      ],
+      "cons": [
+        "No spa or wellness facilities mentioned",
+        "No fitness center mentioned"
+      ],
+      "review_count": 1705,
+      "review_rating": 9.6,
+      "value_score": 50.00892,
+      "discovery_score": 83.218445
+    },
+    "score": 0.54851407
+  },
+  {
+    "hotel": {
+      "hotel_id": "selini-suites-naxos",
+      "name": "Selini Suites Naxos",
+      "description": "New-build 3-star aparthotel 200m from Agios Georgios beach in Naxos Town. 32 airy studios and one-bedroom suites with kitchenettes, shared courtyard pool, and rooftop bar overlooking the Portara. Ideal budget base for Cyclades island-hopping.",
+      "star_rating": 3,
+      "board_type": "Room Only",
+      "price_eur": 72.0,
+      "location": "Naxos, Cyclades, Greece",
+      "region": "Cyclades",
+      "lat": 37.1036,
+      "lng": 25.3763,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Naxos+Town+Greece+hotel",
+      "amenities": [
+        "Swimming pool",
+        "Bar",
+        "Wi-Fi",
+        "Kitchenette",
+        "Beach access"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Swimming pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.5780089,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Bar.",
+          "source": "ml-analysis",
+          "sentiment": 0.5314997,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Kitchenette.",
+          "source": "ml-analysis",
+          "sentiment": 0.46959844,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "32 airy studios and one-bedroom suites with kitchenettes, shared courtyard pool, and rooftop bar overlooking the Portara",
+          "source": "description",
+          "sentiment": 0.40258563,
+          "aspects": [
+            "Location",
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "3-star Room Only in Naxos, Cyclades, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.2674214,
+          "aspects": [],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7123931,
+      "aspect_scores": {
+        "Value": 0.1785685,
+        "Beach": 0.33948147,
+        "Family": 0.2167001,
+        "Location": 0.26020685,
+        "Service": 0.22977777,
+        "Cleanliness": 0.2352386,
+        "Food": 0.25462633
+      },
+      "review_summary": "This hotel offers Beach access. This hotel offers Bar. This hotel offers Swimming pool.",
+      "pros": [
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Swimming pool.",
+        "This hotel offers Bar.",
+        "This hotel offers Beach access.",
+        "Brand new hotel opened in 2026."
+      ],
+      "cons": [
+        "No spa or wellness facilities mentioned",
+        "No fitness center mentioned"
+      ],
+      "review_count": 539,
+      "review_rating": 10.0,
+      "value_score": 59.735977,
+      "discovery_score": 82.19559
+    },
+    "score": 0.46024504
+  },
+  {
+    "hotel": {
+      "hotel_id": "kos-mare-boutique",
+      "name": "Kos Mare Boutique",
+      "description": "Freshly built 3-star boutique hotel on Kos's Lambi beach strip. 45 modern rooms, ground-floor pool bar, rooftop sun terrace, and free bike rentals. Steps from the beach and a 10-minute walk to Kos Town harbour.",
+      "star_rating": 3,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 85.0,
+      "location": "Kos, Dodecanese, Greece",
+      "region": "Dodecanese",
+      "lat": 36.8933,
+      "lng": 26.9881,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Lambi+Kos+Greece+hotel",
+      "amenities": [
+        "Swimming pool",
+        "Bar",
+        "Beach access",
+        "Wi-Fi",
+        "Parking",
+        "Bike rental"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Swimming pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.5780089,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Bar.",
+          "source": "ml-analysis",
+          "sentiment": 0.5314997,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Bike rental.",
+          "source": "ml-analysis",
+          "sentiment": 0.50349814,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Parking.",
+          "source": "ml-analysis",
+          "sentiment": 0.41198903,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "45 modern rooms, ground-floor pool bar, rooftop sun terrace, and free bike rentals",
+          "source": "description",
+          "sentiment": 0.36772397,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.72084606,
+      "aspect_scores": {
+        "Family": 0.22414146,
+        "Beach": 0.30442402,
+        "Food": 0.23081881,
+        "Cleanliness": 0.20886464,
+        "Location": 0.28987488,
+        "Service": 0.21843421
+      },
+      "review_summary": "This hotel offers Beach access. This hotel offers Bike rental. This hotel offers Parking.",
+      "pros": [
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Swimming pool.",
+        "This hotel offers Bar.",
+        "This hotel offers Beach access.",
+        "This hotel offers Bike rental."
+      ],
+      "cons": [
+        "No spa or wellness facilities mentioned",
+        "No fitness center mentioned"
+      ],
+      "review_count": 604,
+      "review_rating": 9.8,
+      "value_score": 54.965355,
+      "discovery_score": 81.75595
+    },
+    "score": 0.56217074
+  },
+  {
+    "hotel": {
+      "hotel_id": "corfu-olive-garden",
+      "name": "Corfu Olive Garden Hotel",
+      "description": "Family-run 3-star hotel in a converted olive press near Sidari, Corfu. 28 rooms set among century-old olive groves, freshwater pool, taverna serving home-grown produce, and free shuttle to the beach. Authentic and affordable.",
+      "star_rating": 3,
+      "board_type": "Half Board",
+      "price_eur": 78.0,
+      "location": "Corfu, Ionian Islands, Greece",
+      "region": "Ionian Islands",
+      "lat": 39.79,
+      "lng": 19.71,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Sidari+Corfu+Greece+hotel",
+      "amenities": [
+        "Swimming pool",
+        "Restaurant",
+        "Parking",
+        "Wi-Fi",
+        "Beach shuttle"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "3-star Half Board in Corfu, Ionian Islands, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.66810983,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Beach shuttle.",
+          "source": "ml-analysis",
+          "sentiment": 0.5978314,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Swimming pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.5780089,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Restaurant.",
+          "source": "ml-analysis",
+          "sentiment": 0.5692547,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Family-run 3-star hotel in a converted olive press near Sidari, Corfu",
+          "source": "description",
+          "sentiment": 0.5186522,
+          "aspects": [
+            "Family"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Parking.",
+          "source": "ml-analysis",
+          "sentiment": 0.41198903,
+          "aspects": [],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7472352,
+      "aspect_scores": {
+        "Cleanliness": 0.18633804,
+        "Food": 0.26176566,
+        "Family": 0.21462782,
+        "Location": 0.28874618,
+        "Value": 0.28684905,
+        "Beach": 0.2975864,
+        "Service": 0.22847857
+      },
+      "review_summary": "This hotel offers Restaurant. This hotel offers Beach shuttle. This hotel offers Swimming pool.",
+      "pros": [
+        "3-star Half Board in Corfu, Ionian Islands, Greece.",
+        "This hotel offers Beach shuttle.",
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Swimming pool.",
+        "This hotel offers Restaurant."
+      ],
+      "cons": [
+        "No spa or wellness facilities mentioned",
+        "No fitness center mentioned"
+      ],
+      "review_count": 668,
+      "review_rating": 9.2,
+      "value_score": 53.210735,
+      "discovery_score": 81.42496
+    },
+    "score": 0.55688363
+  },
+  {
+    "hotel": {
+      "hotel_id": "casa-cook-rethymno",
+      "name": "Casa Cook Rethymno",
+      "description": "Design-led lifestyle hotel in Rethymno's old harbour district, Crete. 95 rooms with bohemian-minimalist interiors, communal yoga deck, farm-to-fork restaurant, natural wine bar, and a lap pool in a restored Venetian-era courtyard. Adults-only.",
+      "star_rating": 4,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 195.0,
+      "location": "Rethymno, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.372,
+      "lng": 24.47,
+      "source_url": "https://www.casacook.com",
+      "amenities": [
+        "Swimming pool",
+        "Yoga",
+        "Restaurant",
+        "Bar",
+        "Spa",
+        "Wi-Fi"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Swimming pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.5780089,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Restaurant.",
+          "source": "ml-analysis",
+          "sentiment": 0.5692547,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Bar.",
+          "source": "ml-analysis",
+          "sentiment": 0.5314997,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "95 rooms with bohemian-minimalist interiors, communal yoga deck, farm-to-fork restaurant, natural wine bar, and a lap pool in a restored Venetian-era courtyard",
+          "source": "description",
+          "sentiment": 0.42515698,
+          "aspects": [
+            "Food",
+            "Beach",
+            "Spa"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Yoga.",
+          "source": "ml-analysis",
+          "sentiment": 0.36966032,
+          "aspects": [
+            "Spa"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Spa.",
+          "source": "ml-analysis",
+          "sentiment": 0.3517839,
+          "aspects": [
+            "Spa"
+          ],
+          "is_representative": true
+        }
+      ],
+      "sentiment_score": 0.70651245,
+      "aspect_scores": {
+        "Beach": 0.3704123,
+        "Service": 0.2447055,
+        "Food": 0.26048657,
+        "Family": 0.22414146,
+        "Location": 0.22728705,
+        "Spa": 0.31799063,
+        "Cleanliness": 0.28728452
+      },
+      "review_summary": "This hotel offers Restaurant. This hotel offers Spa. This hotel offers Bar.",
+      "pros": [
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Swimming pool.",
+        "This hotel offers Restaurant.",
+        "This hotel offers Bar.",
+        "Brand new hotel opened in 2026."
+      ],
+      "cons": [
+        "Adults-only"
+      ],
+      "review_count": 1243,
+      "review_rating": 10.0,
+      "value_score": 31.949448,
+      "discovery_score": 80.08522
+    },
+    "score": 0.5422585
+  },
+  {
+    "hotel": {
+      "hotel_id": "paros-azure-beach",
+      "name": "Paros Azure Beach Hotel",
+      "description": "New 4-star beachfront hotel on Paros's Golden Beach, the island's windsurfing capital. 80 rooms with sea-view balconies, two pools (adults + family), beach bar, and water-sports centre. Half-board includes Cycladic tasting menus.",
+      "star_rating": 4,
+      "board_type": "Half Board",
+      "price_eur": 145.0,
+      "location": "Paros, Cyclades, Greece",
+      "region": "Cyclades",
+      "lat": 37.048,
+      "lng": 25.22,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Golden+Beach+Paros+Greece+hotel",
+      "amenities": [
+        "Beach access",
+        "Swimming pool",
+        "Water sports",
+        "Bar",
+        "Restaurant",
+        "Wi-Fi"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "New 4-star beachfront hotel on Paros's Golden Beach, the island's windsurfing capital",
+          "source": "description",
+          "sentiment": 0.68751,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Swimming pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.5780089,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Restaurant.",
+          "source": "ml-analysis",
+          "sentiment": 0.5692547,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Bar.",
+          "source": "ml-analysis",
+          "sentiment": 0.5314997,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "4-star Half Board in Paros, Cyclades, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.52101016,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7275311,
+      "aspect_scores": {
+        "Food": 0.2616507,
+        "Service": 0.24764812,
+        "Family": 0.2399715,
+        "Beach": 0.29533342,
+        "Location": 0.2815976,
+        "Cleanliness": 0.18955806
+      },
+      "review_summary": "This hotel offers Beach access. This hotel offers Restaurant. This hotel offers Bar.",
+      "pros": [
+        "New 4-star beachfront hotel on Paros's Golden Beach, the island's windsurfing capital",
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Swimming pool.",
+        "This hotel offers Restaurant.",
+        "This hotel offers Bar."
+      ],
+      "cons": [
+        "No spa or wellness facilities mentioned",
+        "No fitness center mentioned"
+      ],
+      "review_count": 539,
+      "review_rating": 10.0,
+      "value_score": 44.244747,
+      "discovery_score": 79.71804
+    },
+    "score": 0.5542423
+  },
+  {
+    "hotel": {
+      "hotel_id": "skiathos-breeze-hotel",
+      "name": "Skiathos Breeze Hotel",
+      "description": "Brand-new 4-star hillside hotel overlooking Koukounaries bay, Skiathos. 55 rooms with pine-forest views, infinity pool, sunset cocktail bar, and complimentary beach shuttle. One of the Sporades' first new-builds in a decade.",
+      "star_rating": 4,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 165.0,
+      "location": "Skiathos, Sporades, Greece",
+      "region": "Sporades",
+      "lat": 39.15,
+      "lng": 23.46,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Koukounaries+Skiathos+Greece+hotel",
+      "amenities": [
+        "Infinity pool",
+        "Bar",
+        "Beach access",
+        "Wi-Fi",
+        "Fitness center"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Bar.",
+          "source": "ml-analysis",
+          "sentiment": 0.5314997,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "55 rooms with pine-forest views, infinity pool, sunset cocktail bar, and complimentary beach shuttle",
+          "source": "description",
+          "sentiment": 0.48001957,
+          "aspects": [
+            "Location",
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Fitness center.",
+          "source": "ml-analysis",
+          "sentiment": 0.46894142,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Infinity pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.4616256,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand-new 4-star hillside hotel overlooking Koukounaries bay, Skiathos",
+          "source": "description",
+          "sentiment": 0.3688709,
+          "aspects": [
+            "Location"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7026473,
+      "aspect_scores": {
+        "Food": 0.21423292,
+        "Spa": 0.26795924,
+        "Beach": 0.26157084,
+        "Service": 0.22686052,
+        "Location": 0.2928132
+      },
+      "review_summary": "This hotel offers Beach access. This hotel offers Bar. This hotel offers Infinity pool.",
+      "pros": [
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Bar.",
+        "This hotel offers Beach access.",
+        "Brand new hotel opened in 2026.",
+        "55 rooms with pine-forest views, infinity pool, sunset cocktail bar, and complimentary beach shuttle"
+      ],
+      "cons": [
+        "One of the Sporades' first new-builds in a decade"
+      ],
+      "review_count": 1273,
+      "review_rating": 9.0,
+      "value_score": 30.852013,
+      "discovery_score": 79.10787
+    },
+    "score": 0.5207699
+  },
+  {
+    "hotel": {
+      "hotel_id": "domes-zeen-chania",
+      "name": "Domes Zeen Chania",
+      "description": "Domes Resorts' new-build property west of Chania town. 150 rooms wrapped around a lagoon-style pool, Haute Living suites with private chef service, open-air cinema, and a Cretan-Japanese fusion restaurant. Family-friendly with kids' village.",
+      "star_rating": 5,
+      "board_type": "Half Board",
+      "price_eur": 340.0,
+      "location": "Chania, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.48,
+      "lng": 23.92,
+      "source_url": "https://www.domesresorts.com",
+      "amenities": [
+        "Lagoon pool",
+        "Spa",
+        "Kids club",
+        "Multiple restaurants",
+        "Beach access",
+        "Fitness center",
+        "Cinema"
+      ],
+      "image_url": null,
+      "opened_year": 2019,
+      "reviews": [
+        {
+          "text": "Domes Resorts' new-build property west of Chania town",
+          "source": "description",
+          "sentiment": 0.7165351,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Multiple restaurants.",
+          "source": "ml-analysis",
+          "sentiment": 0.6475567,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Lagoon pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.5463348,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Fitness center.",
+          "source": "ml-analysis",
+          "sentiment": 0.46894142,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Cinema.",
+          "source": "ml-analysis",
+          "sentiment": 0.45338735,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "150 rooms wrapped around a lagoon-style pool, Haute Living suites with private chef service, open-air cinema, and a Cretan-Japanese fusion restaurant",
+          "source": "description",
+          "sentiment": 0.43352944,
+          "aspects": [
+            "Food",
+            "Service",
+            "Beach"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7323943,
+      "aspect_scores": {
+        "Beach": 0.32237056,
+        "Family": 0.24876603,
+        "Cleanliness": 0.25649574,
+        "Location": 0.275797,
+        "Spa": 0.25017706,
+        "Service": 0.21365766,
+        "Food": 0.25299606
+      },
+      "review_summary": "This hotel offers Beach access. This hotel offers Multiple restaurants. This hotel offers Spa.",
+      "pros": [
+        "Domes Resorts' new-build property west of Chania town",
+        "This hotel offers Multiple restaurants.",
+        "This hotel offers Lagoon pool.",
+        "This hotel offers Beach access.",
+        "Brand new hotel opened in 2026."
+      ],
+      "cons": [
+        "Premium pricing"
+      ],
+      "review_count": 1425,
+      "review_rating": 9.6,
+      "value_score": 24.62061,
+      "discovery_score": 74.67509
+    },
+    "score": 0.501998
+  },
+  {
+    "hotel": {
+      "hotel_id": "numo-ierapetra",
+      "name": "Numo Ierapetra Beach Resort",
+      "description": "Ultra-luxury beachfront resort on Crete's southeastern coast. 280 suites with private pools, a 2,000 sqm spa, five restaurants, and direct access to a 400-metre sandy beach. Minimalist Cretan-contemporary design by MKV Design.",
+      "star_rating": 5,
+      "board_type": "All-Inclusive",
+      "price_eur": 380.0,
+      "location": "Ierapetra, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.0075,
+      "lng": 25.7374,
+      "source_url": "https://numohotels.com",
+      "amenities": [
+        "Private pools",
+        "Spa",
+        "Beach access",
+        "Multiple restaurants",
+        "Fitness center",
+        "Kids club",
+        "Water sports"
+      ],
+      "image_url": null,
+      "opened_year": 2021,
+      "reviews": [
+        {
+          "text": "This hotel offers Multiple restaurants.",
+          "source": "ml-analysis",
+          "sentiment": 0.6475567,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "5-star All-Inclusive in Ierapetra, Crete, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.531134,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Private pools.",
+          "source": "ml-analysis",
+          "sentiment": 0.51945245,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Fitness center.",
+          "source": "ml-analysis",
+          "sentiment": 0.46894142,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Kids club.",
+          "source": "ml-analysis",
+          "sentiment": 0.42459762,
+          "aspects": [
+            "Family"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Water sports.",
+          "source": "ml-analysis",
+          "sentiment": 0.3829563,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7171254,
+      "aspect_scores": {
+        "Food": 0.23652035,
+        "Service": 0.22191617,
+        "Location": 0.2896544,
+        "Family": 0.2678499,
+        "Beach": 0.2774577,
+        "Spa": 0.27870482
+      },
+      "review_summary": "This hotel offers Beach access. This hotel offers Private pools. This hotel offers Spa.",
+      "pros": [
+        "This hotel offers Multiple restaurants.",
+        "5-star All-Inclusive in Ierapetra, Crete, Greece.",
+        "This hotel offers Beach access.",
+        "This hotel offers Private pools.",
+        "Brand new hotel opened in 2026."
+      ],
+      "cons": [
+        "Premium pricing"
+      ],
+      "review_count": 1767,
+      "review_rating": 9.6,
+      "value_score": 21.569708,
+      "discovery_score": 73.632576
+    },
+    "score": 0.5492639
+  },
+  {
+    "hotel": {
+      "hotel_id": "w-hotel-crete",
+      "name": "W Crete",
+      "description": "W Hotels' first property in Crete, bringing Marriott's lifestyle brand to the island's north coast. 200 rooms with signature W design, WET Deck infinity pool, Away Spa, and multiple dining concepts overlooking the Sea of Crete.",
+      "star_rating": 5,
+      "board_type": "Standard",
+      "price_eur": 420.0,
+      "location": "Chania, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.5138,
+      "lng": 24.018,
+      "source_url": "https://www.marriott.com/w-hotels",
+      "amenities": [
+        "Infinity pool",
+        "Spa",
+        "Beach access",
+        "Multiple restaurants",
+        "Bar",
+        "Fitness center",
+        "Rooftop terrace"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Rooftop terrace.",
+          "source": "ml-analysis",
+          "sentiment": 0.6566985,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Multiple restaurants.",
+          "source": "ml-analysis",
+          "sentiment": 0.6475567,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Bar.",
+          "source": "ml-analysis",
+          "sentiment": 0.5314997,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Fitness center.",
+          "source": "ml-analysis",
+          "sentiment": 0.46894142,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Infinity pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.4616256,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "W Hotels' first property in Crete, bringing Marriott's lifestyle brand to the island's north coast",
+          "source": "description",
+          "sentiment": 0.45941907,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7448571,
+      "aspect_scores": {
+        "Food": 0.24469355,
+        "Beach": 0.25024918,
+        "Location": 0.25369182,
+        "Service": 0.22604577,
+        "Spa": 0.27063057,
+        "Family": 0.18665195
+      },
+      "review_summary": "This hotel offers Beach access. This hotel offers Spa. This hotel offers Multiple restaurants.",
+      "pros": [
+        "This hotel offers Rooftop terrace.",
+        "This hotel offers Multiple restaurants.",
+        "This hotel offers Bar.",
+        "This hotel offers Beach access.",
+        "Brand new hotel opened in 2026."
+      ],
+      "cons": [
+        "Premium pricing"
+      ],
+      "review_count": 1080,
+      "review_rating": 10.0,
+      "value_score": 21.114714,
+      "discovery_score": 71.91124
+    },
+    "score": 0.5350966
+  },
+  {
+    "hotel": {
+      "hotel_id": "santorini-canaves-oia-epitome",
+      "name": "Canaves Oia Epitome",
+      "description": "New adults-only extension of the iconic Canaves Oia brand in Santorini. 24 cave-style suites carved into the caldera cliff with private infinity plunge pools, a subterranean spa, and a sunset champagne terrace. Peak Cycladic luxury.",
+      "star_rating": 5,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 480.0,
+      "location": "Santorini, Cyclades, Greece",
+      "region": "Cyclades",
+      "lat": 36.461,
+      "lng": 25.372,
+      "source_url": "https://www.canaves.com",
+      "amenities": [
+        "Private pools",
+        "Spa",
+        "Restaurant",
+        "Bar",
+        "Concierge",
+        "Butler service"
+      ],
+      "image_url": null,
+      "opened_year": 2018,
+      "reviews": [
+        {
+          "text": "This hotel offers Butler service.",
+          "source": "ml-analysis",
+          "sentiment": 0.66000724,
+          "aspects": [
+            "Service"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "24 cave-style suites carved into the caldera cliff with private infinity plunge pools, a subterranean spa, and a sunset champagne terrace",
+          "source": "description",
+          "sentiment": 0.64448345,
+          "aspects": [
+            "Beach",
+            "Spa"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Restaurant.",
+          "source": "ml-analysis",
+          "sentiment": 0.5692547,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Bar.",
+          "source": "ml-analysis",
+          "sentiment": 0.5314997,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Private pools.",
+          "source": "ml-analysis",
+          "sentiment": 0.51945245,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "5-star Bed & Breakfast in Santorini, Cyclades, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.4148279,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Concierge.",
+          "source": "ml-analysis",
+          "sentiment": 0.41402847,
+          "aspects": [
+            "Service"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.72394156,
+      "aspect_scores": {
+        "Spa": 0.2708033,
+        "Food": 0.26833138,
+        "Service": 0.27039415,
+        "Value": 0.19859374,
+        "Beach": 0.28021735,
+        "Location": 0.21279193
+      },
+      "review_summary": "This hotel offers Restaurant. This hotel offers Spa. This hotel offers Bar.",
+      "pros": [
+        "This hotel offers Butler service.",
+        "24 cave-style suites carved into the caldera cliff with private infinity plunge pools, a subterranean spa, and a sunset champagne terrace",
+        "This hotel offers Restaurant.",
+        "This hotel offers Bar.",
+        "This hotel offers Private pools."
+      ],
+      "cons": [
+        "No fitness center mentioned",
+        "Premium pricing"
+      ],
+      "review_count": 1333,
+      "review_rating": 9.8,
+      "value_score": 16.29208,
+      "discovery_score": 69.61878
+    },
+    "score": 0.44617876
+  },
+  {
+    "hotel": {
+      "hotel_id": "costa-navarino-mandarin",
+      "name": "Mandarin Oriental Costa Navarino",
+      "description": "Mandarin Oriental's Greek debut on the Peloponnese coast. 99 villas with private gardens, two signature golf courses, MO Spa, kids' academy, and four restaurants. Set within the Costa Navarino eco-resort complex with access to Voidokilia beach, one of the Mediterranean's most beautiful.",
+      "star_rating": 5,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 490.0,
+      "location": "Costa Navarino, Peloponnese, Greece",
+      "region": "Peloponnese",
+      "lat": 36.96,
+      "lng": 21.65,
+      "source_url": "https://www.mandarinoriental.com",
+      "amenities": [
+        "Private beach",
+        "Golf course",
+        "Spa",
+        "Kids club",
+        "Multiple restaurants",
+        "Fitness center",
+        "Tennis court"
+      ],
+      "image_url": null,
+      "opened_year": 2023,
+      "reviews": [
+        {
+          "text": "This hotel offers Tennis court.",
+          "source": "ml-analysis",
+          "sentiment": 0.6974447,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Golf course.",
+          "source": "ml-analysis",
+          "sentiment": 0.6813366,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Multiple restaurants.",
+          "source": "ml-analysis",
+          "sentiment": 0.6475567,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Fitness center.",
+          "source": "ml-analysis",
+          "sentiment": 0.46894142,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Kids club.",
+          "source": "ml-analysis",
+          "sentiment": 0.42459762,
+          "aspects": [
+            "Family"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Private beach.",
+          "source": "ml-analysis",
+          "sentiment": 0.4189297,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "99 villas with private gardens, two signature golf courses, MO Spa, kids' academy, and four restaurants",
+          "source": "description",
+          "sentiment": 0.39381787,
+          "aspects": [
+            "Food",
+            "Spa",
+            "Family"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7290871,
+      "aspect_scores": {
+        "Location": 0.27067035,
+        "Beach": 0.24085775,
+        "Spa": 0.24632442,
+        "Food": 0.25224915,
+        "Service": 0.22620791,
+        "Family": 0.23510452
+      },
+      "review_summary": "This hotel offers Spa. This hotel offers Multiple restaurants. This hotel offers Private beach.",
+      "pros": [
+        "This hotel offers Tennis court.",
+        "This hotel offers Golf course.",
+        "This hotel offers Multiple restaurants.",
+        "Brand new hotel opened in 2026.",
+        "This hotel offers Fitness center."
+      ],
+      "cons": [
+        "No swimming pool mentioned",
+        "Premium pricing"
+      ],
+      "review_count": 871,
+      "review_rating": 10.0,
+      "value_score": 17.71515,
+      "discovery_score": 68.466965
+    },
+    "score": 0.49567047
+  },
+  {
+    "hotel": {
+      "hotel_id": "six-senses-crete",
+      "name": "Six Senses Crete",
+      "description": "IHG's Six Senses brand on the Akrotiri peninsula, Crete. 60 earth-toned villas with plunge pools, organic garden, Six Senses Spa with hammam and cryotherapy, and a working Cretan farm. Net-zero carbon targets.",
+      "star_rating": 5,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 650.0,
+      "location": "Chania, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.56,
+      "lng": 24.11,
+      "source_url": "https://www.sixsenses.com",
+      "amenities": [
+        "Plunge pools",
+        "Spa",
+        "Organic garden",
+        "Restaurant",
+        "Yoga",
+        "Hammam",
+        "Beach access"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Restaurant.",
+          "source": "ml-analysis",
+          "sentiment": 0.5692547,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Plunge pools.",
+          "source": "ml-analysis",
+          "sentiment": 0.5261419,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Organic garden.",
+          "source": "ml-analysis",
+          "sentiment": 0.47253528,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Hammam.",
+          "source": "ml-analysis",
+          "sentiment": 0.4263584,
+          "aspects": [
+            "Spa"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Yoga.",
+          "source": "ml-analysis",
+          "sentiment": 0.36966032,
+          "aspects": [
+            "Spa"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Spa.",
+          "source": "ml-analysis",
+          "sentiment": 0.3517839,
+          "aspects": [
+            "Spa"
+          ],
+          "is_representative": true
+        }
+      ],
+      "sentiment_score": 0.6774405,
+      "aspect_scores": {
+        "Family": 0.23433022,
+        "Food": 0.2625731,
+        "Beach": 0.28283972,
+        "Service": 0.23282577,
+        "Cleanliness": 0.17454799,
+        "Spa": 0.31019342,
+        "Location": 0.22567347
+      },
+      "review_summary": "This hotel offers Spa. This hotel offers Restaurant. This hotel offers Beach access.",
+      "pros": [
+        "This hotel offers Restaurant.",
+        "This hotel offers Beach access.",
+        "This hotel offers Plunge pools.",
+        "Brand new hotel opened in 2026.",
+        "This hotel offers Organic garden."
+      ],
+      "cons": [
+        "IHG's Six Senses brand on the Akrotiri peninsula, Crete"
+      ],
+      "review_count": 1535,
+      "review_rating": 9.6,
+      "value_score": 11.912162,
+      "discovery_score": 62.707615
+    },
+    "score": 0.43189174
+  },
+  {
+    "hotel": {
+      "hotel_id": "one-and-only-kea",
+      "name": "One&Only Kea Island",
+      "description": "One&Only's Greek debut on the unspoilt island of Kea in the western Cyclades. 75 clifftop villas with private pools and Aegean panoramas, holistic wellness centre, three restaurants, and a private marina for yacht arrivals.",
+      "star_rating": 5,
+      "board_type": "Standard",
+      "price_eur": 890.0,
+      "location": "Kea, Cyclades, Greece",
+      "region": "Cyclades",
+      "lat": 37.63,
+      "lng": 24.32,
+      "source_url": "https://www.oneandonlyresorts.com",
+      "amenities": [
+        "Private pools",
+        "Spa",
+        "Private beach",
+        "Multiple restaurants",
+        "Marina",
+        "Butler service",
+        "Yoga"
+      ],
+      "image_url": null,
+      "opened_year": 2023,
+      "reviews": [
+        {
+          "text": "This hotel offers Butler service.",
+          "source": "ml-analysis",
+          "sentiment": 0.66000724,
+          "aspects": [
+            "Service"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Multiple restaurants.",
+          "source": "ml-analysis",
+          "sentiment": 0.6475567,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "5-star Standard in Kea, Cyclades, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.5554621,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Private pools.",
+          "source": "ml-analysis",
+          "sentiment": 0.51945245,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "75 clifftop villas with private pools and Aegean panoramas, holistic wellness centre, three restaurants, and a private marina for yacht arrivals",
+          "source": "description",
+          "sentiment": 0.50432354,
+          "aspects": [
+            "Food",
+            "Beach",
+            "Spa"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "One&Only's Greek debut on the unspoilt island of Kea in the western Cyclades",
+          "source": "description",
+          "sentiment": 0.4970636,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Marina.",
+          "source": "ml-analysis",
+          "sentiment": 0.4762803,
+          "aspects": [],
+          "is_representative": true
+        }
+      ],
+      "sentiment_score": 0.74986863,
+      "aspect_scores": {
+        "Service": 0.23992895,
+        "Beach": 0.24140038,
+        "Spa": 0.3098575,
+        "Family": 0.19202486,
+        "Food": 0.287615,
+        "Location": 0.27428523
+      },
+      "review_summary": "This hotel offers Multiple restaurants. This hotel offers Private beach. This hotel offers Marina.",
+      "pros": [
+        "This hotel offers Butler service.",
+        "This hotel offers Multiple restaurants.",
+        "5-star Standard in Kea, Cyclades, Greece.",
+        "This hotel offers Private pools.",
+        "75 clifftop villas with private pools and Aegean panoramas, holistic wellness centre, three restaurants, and a private marina for yacht arrivals"
+      ],
+      "cons": [
+        "No fitness center mentioned",
+        "Premium pricing"
+      ],
+      "review_count": 20377,
+      "review_rating": 8.9,
+      "value_score": 8.927846,
+      "discovery_score": 61.16532
+    },
+    "score": 0.4472886
+  },
+  {
+    "hotel": {
+      "hotel_id": "aman-elounda",
+      "name": "Aman Elounda",
+      "description": "Aman Resorts' first Cretan property overlooking the Gulf of Mirabello. 75 pavilions cascading to a private cove. Stone-and-wood construction, cliff-edge Aman Spa, organic farm-to-table dining, and private boat excursions.",
+      "star_rating": 5,
+      "board_type": "Standard",
+      "price_eur": 950.0,
+      "location": "Elounda, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.2543,
+      "lng": 25.7284,
+      "source_url": "https://www.aman.com",
+      "amenities": [
+        "Private beach",
+        "Spa",
+        "Infinity pool",
+        "Restaurant",
+        "Boat excursions",
+        "Yoga",
+        "Butler service"
+      ],
+      "image_url": null,
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Butler service.",
+          "source": "ml-analysis",
+          "sentiment": 0.66000724,
+          "aspects": [
+            "Service"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Boat excursions.",
+          "source": "ml-analysis",
+          "sentiment": 0.65508,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "Aman Resorts' first Cretan property overlooking the Gulf of Mirabello",
+          "source": "description",
+          "sentiment": 0.5843722,
+          "aspects": [
+            "Location"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Restaurant.",
+          "source": "ml-analysis",
+          "sentiment": 0.5692547,
+          "aspects": [
+            "Food"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "75 pavilions cascading to a private cove",
+          "source": "description",
+          "sentiment": 0.526567,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Infinity pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.4616256,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "5-star Standard in Elounda, Crete, Greece.",
+          "source": "ml-analysis",
+          "sentiment": 0.43736738,
+          "aspects": [],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7426636,
+      "aspect_scores": {
+        "Beach": 0.22518292,
+        "Food": 0.2716406,
+        "Service": 0.263076,
+        "Location": 0.24818645,
+        "Spa": 0.34589782,
+        "Family": 0.2258248
+      },
+      "review_summary": "This hotel offers Restaurant. This hotel offers Boat excursions. This hotel offers Spa.",
+      "pros": [
+        "This hotel offers Butler service.",
+        "This hotel offers Boat excursions.",
+        "Aman Resorts' first Cretan property overlooking the Gulf of Mirabello",
+        "This hotel offers Restaurant.",
+        "75 pavilions cascading to a private cove"
+      ],
+      "cons": [
+        "No fitness center mentioned",
+        "Premium pricing"
+      ],
+      "review_count": 1535,
+      "review_rating": 9.6,
+      "value_score": 8.935139,
+      "discovery_score": 52.5681
+    },
+    "score": 0.5418818
+  }
+]

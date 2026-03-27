@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
 
+#[derive(Clone)]
 pub struct Fetcher {
     client: Client,
     delay_ms: u64,

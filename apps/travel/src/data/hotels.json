@@ -1,0 +1,136 @@
+[
+  {
+    "hotel": {
+      "hotel_id": "kiani-beach-resort",
+      "name": "Kiani Beach Resort",
+      "description": "5-star beachfront All-Inclusive resort on Crete's northwest coast. Set along Kiani Beach near Kalyves, it offers extensive pools, spa facilities, water sports, and multiple dining venues with sea views. Family-friendly with kids clubs and playground.",
+      "star_rating": 5,
+      "board_type": "All-Inclusive",
+      "price_eur": 224.0,
+      "location": "Chania, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.466257,
+      "lng": 24.155082,
+      "source_url": "https://www.jeka.ro/kiani-beach-resort_35734.aspx",
+      "amenities": ["Beach access", "Swimming pools", "Spa", "Water sports", "Kids club", "Multiple restaurants", "Bars", "Fitness center"],
+      "image_url": null,
+      "opened_year": 2007,
+      "gallery": [
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Kiani-Beach-Resort-884803.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Hotel-Kiani-Beach-Resort-884804.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Hotel-Kiani-Beach-Resort-CRETA-884805.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Hotel-Kiani-Beach-Resort-CRETA-GRECIA-884806.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Poze-Kiani-Beach-Resort-Creta-968294.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Poze-Hotel-Kiani-Beach-Resort-968295.jpg"
+      ]
+    },
+    "score": 1.0
+  },
+  {
+    "hotel": {
+      "hotel_id": "zeus-neptuno-beach",
+      "name": "Zeus Hotels Neptuno Beach",
+      "description": "4-star beachfront All-Inclusive hotel on Ammoudara beach near Heraklion. Direct beach frontage on the Cretan Sea with comfortable double rooms, pool area, and dining options. Convenient access to Heraklion city and Knossos archaeological site.",
+      "star_rating": 4,
+      "board_type": "All-Inclusive",
+      "price_eur": 198.0,
+      "location": "Heraklion, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.336906,
+      "lng": 25.087903,
+      "source_url": "https://www.jeka.ro/zeus-hotels-neptuno-beach_21020.aspx",
+      "amenities": ["Beach access", "Swimming pool", "Restaurant", "Bar", "Near Knossos"],
+      "image_url": null,
+      "opened_year": 2002,
+      "gallery": [
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Zeus-Hotels-Neptuno-Beach-1008825.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Hotel-Zeus-Hotels-Neptuno-Beach-1008826.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Hotel-Zeus-Hotels-Neptuno-Beach-Creta-1008827.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Hotel-Zeus-Hotels-Neptuno-Beach-Creta-Grecia-1008828.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Poze-Neptuno-Beach-Creta-970852.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Poze-Hotel-Neptuno-Beach-970853.jpg"
+      ]
+    },
+    "score": 0.95
+  },
+  {
+    "hotel": {
+      "hotel_id": "glaros-beach",
+      "name": "Glaros Beach",
+      "description": "4-star beachfront hotel in Hersonissos, Crete, rated 9.6/10. Just 10-15 meters from the beach with elegant rooms, exemplary daily cleaning, and diverse dining. Part of the Stampoulis hotel group. Half Board and All-Inclusive options available.",
+      "star_rating": 4,
+      "board_type": "All-Inclusive",
+      "price_eur": 107.0,
+      "location": "Hersonissos, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.512772,
+      "lng": 23.97649,
+      "source_url": "https://www.jeka.ro/glaros-beach_28354.aspx",
+      "amenities": ["Beach access", "Restaurant", "Parking", "Daily cleaning", "Wi-Fi"],
+      "image_url": null,
+      "opened_year": 1976,
+      "gallery": [
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Glaros-Beach-1003563.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Hotel-Glaros-Beach-1003564.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Hotel-Glaros-Beach-Creta-1003565.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Hotel-Glaros-Beach-Creta-Grecia-1003566.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Poze-GLAROS-BEACH-CRETA-943452.jpg",
+        "https://s3-eu-west-1.amazonaws.com/jeka-public/images/main/Poze-Hotel-GLAROS-BEACH-943453.jpg"
+      ]
+    },
+    "score": 0.90
+  },
+  {
+    "hotel": {
+      "hotel_id": "alexander-house",
+      "name": "Alexander House Hotel",
+      "description": "Family-run 4-star hotel in the enchanting bay of Agia Pelagia, a traditional fishing village 22 km from Heraklion. 300 metres from the beach with crystal-clear waters. 36 rooms across 6 types including sea view suites. Run by the second-generation Alexandrakis family. Free buffet breakfast, pool, gym, and massage services.",
+      "star_rating": 4,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 122.0,
+      "location": "Agia Pelagia, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.4095,
+      "lng": 24.9895,
+      "source_url": "https://admiral.travel/ro/countries/grecia/heraklion-agia-pelagia/alexander-house-",
+      "amenities": ["Beach nearby", "Swimming pool", "Restaurant & Bar", "Gym", "Massage & Wellness", "Free breakfast", "Sea view rooms", "Family rooms"],
+      "image_url": null,
+      "opened_year": 1993,
+      "gallery": [
+        "https://www.alexanderhouse.gr/images/sliders/intro11.jpg",
+        "https://www.alexanderhouse.gr/images/sliders/pool_main__favorite_.jpg",
+        "https://www.alexanderhouse.gr/images/sliders/intro10.jpg",
+        "https://www.alexanderhouse.gr/images/sliders/intro08.jpg",
+        "https://www.alexanderhouse.gr/images/sliders/intro03.jpg",
+        "https://www.alexanderhouse.gr/images/sliders/intro02.jpg"
+      ]
+    },
+    "score": 0.85
+  },
+  {
+    "hotel": {
+      "hotel_id": "selini-suites",
+      "name": "Selini Suites",
+      "description": "4-star seaside hotel complex in Rapaniana, Kolymbari, 150m from the beach in western Crete. 137 rooms including studios, apartments and two-level maisonettes with sea, pool or garden views. Features 2 swimming pools, waterpark, spa with jacuzzi, gym, and a restaurant serving Cretan and Mediterranean cuisine amid tropical gardens. 20 km from Chania.",
+      "star_rating": 4,
+      "board_type": "All-Inclusive",
+      "price_eur": 126.0,
+      "location": "Kolymbari, Chania, Crete, Greece",
+      "region": "Crete",
+      "lat": 35.533359,
+      "lng": 23.799477,
+      "source_url": "https://admiral.travel/ro/countries/grecia/chania-kolymbari/selini-suites",
+      "amenities": ["Beach nearby", "2 Swimming pools", "Waterpark", "Restaurant", "Spa & Jacuzzi", "Gym", "Free parking", "Free Wi-Fi", "24-hour reception"],
+      "image_url": null,
+      "gallery": [
+        "https://selinisuites.com/wp-content/uploads/2025/02/pool-general-scaled.jpg",
+        "https://selinisuites.com/wp-content/uploads/2021/04/waterpark10-2-1682x1080.jpg",
+        "https://selinisuites.com/wp-content/uploads/2021/04/selini-with-quiet-pool-1-1833x1080.jpg",
+        "https://selinisuites.com/wp-content/uploads/2025/02/maizonette-top-935x623.jpg",
+        "https://selinisuites.com/wp-content/uploads/2025/02/restaurant12-1578x1080.jpg",
+        "https://selinisuites.com/wp-content/uploads/2025/02/restaurant11-1620x1080.jpg"
+      ]
+    },
+    "score": 0.80
+  }
+]

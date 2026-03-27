@@ -1,6 +1,0 @@
-mutation DeleteAllJobs {
-  deleteAllJobs {
-    success
-    message
-  }
-}

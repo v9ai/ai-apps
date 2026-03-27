@@ -1,6 +1,8 @@
 pub mod embedding;
+pub mod relv;
 
 pub use embedding::{cosine_similarity, CandleEmbedder, Embedder};
+pub use relv::{cosine_similarity_f64, RelationalEntry, RelationalVectorDb};
 
 use anyhow::Result;
 use async_trait::async_trait;

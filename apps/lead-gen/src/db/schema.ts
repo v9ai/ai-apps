@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, index, uniqueIndex, primaryKey, serial, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, index, uniqueIndex, serial, boolean } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
 
 // Re-export Better Auth tables (user, session, account, verification)
@@ -76,130 +76,6 @@ export const companies = pgTable("companies", {
 export type Company = typeof companies.$inferSelect;
 export type NewCompany = typeof companies.$inferInsert;
 
-export const jobs = pgTable("jobs", {
-  id: serial("id").primaryKey(),
-  external_id: text("external_id").notNull(),
-  source_id: text("source_id"),
-  source_kind: text("source_kind").notNull(),
-  company_id: integer("company_id").references(() => companies.id, {
-    onDelete: "cascade",
-  }),
-  company_key: text("company_key").notNull(), // Kept for backward compatibility during migration
-  title: text("title").notNull(),
-  location: text("location"),
-  url: text("url").notNull(),
-  description: text("description"),
-  posted_at: text("posted_at").notNull(),
-  score: real("score"),
-  score_reason: text("score_reason"),
-  status: text("status"),
-  // Role classification
-  role_ai_engineer: boolean("role_ai_engineer"),
-  role_confidence: text("role_confidence", { enum: ["high", "medium", "low"] }),
-  role_reason: text("role_reason"),
-  role_source: text("role_source"),
-
-  // Enhanced ATS data (JSON fields)
-  ats_data: text("ats_data"), // Full JSON response from ATS API
-
-  // Greenhouse ATS-specific fields
-  absolute_url: text("absolute_url"),
-  internal_job_id: integer("internal_job_id"),
-  requisition_id: text("requisition_id"),
-  company_name: text("company_name"),
-  first_published: text("first_published"),
-  language: text("language"),
-  metadata: text("metadata"), // JSON array
-  departments: text("departments"), // JSON array
-  offices: text("offices"), // JSON array
-  questions: text("questions"), // JSON array
-  location_questions: text("location_questions"), // JSON array
-  compliance: text("compliance"), // JSON array
-  demographic_questions: text("demographic_questions"), // JSON object
-  data_compliance: text("data_compliance"), // JSON array
-
-  // Ashby ATS-specific fields
-  ashby_department: text("ashby_department"),
-  ashby_team: text("ashby_team"),
-  ashby_employment_type: text("ashby_employment_type"),
-  ashby_is_remote: boolean("ashby_is_remote"),
-  ashby_is_listed: boolean("ashby_is_listed"),
-  ashby_published_at: text("ashby_published_at"),
-  ashby_job_url: text("ashby_job_url"),
-  ashby_apply_url: text("ashby_apply_url"),
-  ashby_secondary_locations: text("ashby_secondary_locations"), // JSON array
-  ashby_compensation: text("ashby_compensation"), // JSON object
-  ashby_address: text("ashby_address"), // JSON object
-
-  // Classification-critical ATS columns (restored — dropped by 0004_nifty_northstar.sql)
-  country: text("country"),
-  workplace_type: text("workplace_type"),
-  categories: text("categories"),       // JSON object (Lever categories / Ashby aggregated)
-  ats_created_at: text("ats_created_at"),
-
-  // Job application tracking
-  applied: boolean("applied").notNull().default(false),
-  applied_at: text("applied_at"),
-  recruiter_id: integer("recruiter_id").references(() => contacts.id, { onDelete: "set null" }),
-  archived: boolean("archived").notNull().default(false),
-
-  // Knowledge Squad enrichment columns
-  salary_min: integer("salary_min"),
-  salary_max: integer("salary_max"),
-  salary_currency: text("salary_currency"),
-  visa_sponsorship: boolean("visa_sponsorship"),
-  enrichment_status: text("enrichment_status", {
-    enum: ["pending", "enriched", "skipped", "failed"],
-  }),
-
-  // Report pipeline columns (written by job-reporter-llm worker)
-  report_reason: text("report_reason"),
-  report_confidence: real("report_confidence"),
-  report_reasoning: text("report_reasoning"),
-  report_tags: text("report_tags"), // JSON array
-  report_action: text("report_action"), // pending|auto_restored|escalated|confirmed
-  report_trace_id: text("report_trace_id"), // Trace ID for score updates
-  report_reviewed_at: text("report_reviewed_at"),
-
-  created_at: text("created_at")
-    .notNull()
-    .default(sql`now()::text`),
-  updated_at: text("updated_at")
-    .notNull()
-    .default(sql`now()::text`),
-}, (table) => ({
-  sourceCompanyExternalIdx: uniqueIndex("idx_jobs_source_company_external").on(table.source_kind, table.company_key, table.external_id),
-  externalIdIdx: index("idx_jobs_external_id").on(table.external_id),
-  postedAtIdx: index("idx_jobs_posted_at_created_at").on(table.posted_at, table.created_at),
-  companyKeyIdx: index("idx_jobs_company_key").on(table.company_key),
-  sourceKindIdx: index("idx_jobs_source_kind").on(table.source_kind),
-}));
-
-export type Job = typeof jobs.$inferSelect;
-export type NewJob = typeof jobs.$inferInsert;
-
-export const ashbyBoards = pgTable("ashby_boards", {
-  id: serial("id").primaryKey(),
-  board_name: text("board_name").notNull().unique(),
-  discovered_at: text("discovered_at")
-    .notNull()
-    .default(sql`now()::text`),
-  last_synced_at: text("last_synced_at"),
-  job_count: integer("job_count").default(0),
-  is_active: boolean("is_active")
-    .notNull()
-    .default(true),
-  created_at: text("created_at")
-    .notNull()
-    .default(sql`now()::text`),
-  updated_at: text("updated_at")
-    .notNull()
-    .default(sql`now()::text`),
-});
-
-export type AshbyBoard = typeof ashbyBoards.$inferSelect;
-export type NewAshbyBoard = typeof ashbyBoards.$inferInsert;
-
 export const userSettings = pgTable("user_settings", {
   id: serial("id").primaryKey(),
   user_id: text("user_id").notNull().unique(), // Better Auth user ID
@@ -209,16 +85,10 @@ export const userSettings = pgTable("user_settings", {
   daily_digest: boolean("daily_digest")
     .notNull()
     .default(false),
-  new_job_alerts: boolean("new_job_alerts")
-    .notNull()
-    .default(true),
-  preferred_locations: text("preferred_locations"), // JSON array
-  preferred_skills: text("preferred_skills"), // JSON array
   excluded_companies: text("excluded_companies"), // JSON array
   dark_mode: boolean("dark_mode")
     .notNull()
     .default(true),
-  jobs_per_page: integer("jobs_per_page").notNull().default(20),
   created_at: text("created_at")
     .notNull()
     .default(sql`now()::text`),
@@ -229,39 +99,6 @@ export const userSettings = pgTable("user_settings", {
 
 export type UserSettings = typeof userSettings.$inferSelect;
 export type NewUserSettings = typeof userSettings.$inferInsert;
-
-export const jobSkillTags = pgTable(
-  "job_skill_tags",
-  {
-    job_id: integer("job_id")
-      .notNull()
-      .references(() => jobs.id, { onDelete: "cascade" }),
-    tag: text("tag").notNull(),
-    level: text("level", {
-      enum: ["required", "preferred", "nice"],
-    }).notNull(),
-    confidence: real("confidence"),
-    evidence: text("evidence"),
-    extracted_at: text("extracted_at").notNull(),
-    version: text("version").notNull(),
-  },
-  (table) => [
-    primaryKey({ name: "job_skill_tags_pk", columns: [table.job_id, table.tag] }),
-    index("idx_job_skill_tags_tag_job").on(table.tag, table.job_id),
-    index("idx_job_skill_tags_job_id").on(table.job_id),
-  ],
-);
-
-export type JobSkillTag = typeof jobSkillTags.$inferSelect;
-export type NewJobSkillTag = typeof jobSkillTags.$inferInsert;
-
-export const skillAliases = pgTable("skill_aliases", {
-  alias: text("alias").primaryKey(),
-  tag: text("tag").notNull(),
-});
-
-export type SkillAlias = typeof skillAliases.$inferSelect;
-export type NewSkillAlias = typeof skillAliases.$inferInsert;
 
 // Company Facts (MDM/Evidence-based)
 export const companyFacts = pgTable(
@@ -434,72 +271,6 @@ export const atsBoards = pgTable(
 export type ATSBoard = typeof atsBoards.$inferSelect;
 export type NewATSBoard = typeof atsBoards.$inferInsert;
 
-// User Preferences (Evidence-based personalization)
-export const userPreferences = pgTable(
-  "user_preferences",
-  {
-    id: serial("id").primaryKey(),
-    user_id: text("user_id")
-      .notNull()
-      .references(() => userSettings.user_id, { onDelete: "cascade" }),
-
-    // Preference field (e.g., "preferred_countries", "excluded_company_types", "min_salary")
-    field: text("field").notNull(),
-
-    // Value storage
-    value_json: text("value_json"), // JSON for arrays/objects
-    value_text: text("value_text"), // Plain text value
-    value_number: real("value_number"), // Numeric value
-
-    // Evidence/confidence tracking
-    confidence: real("confidence").notNull().default(1.0), // 0..1
-    source: text("source", {
-      enum: ["EXPLICIT_SETTING", "INFERRED_ACTION", "FEEDBACK", "IMPLICIT"],
-    }).notNull(),
-
-    // Context for inference
-    context: text("context"), // JSON with additional context
-    observed_at: text("observed_at").notNull(),
-
-    // Tracking
-    created_at: text("created_at")
-      .notNull()
-      .default(sql`now()::text`),
-    updated_at: text("updated_at")
-      .notNull()
-      .default(sql`now()::text`),
-  },
-  (table) => [
-    index("idx_user_preferences_user_field").on(table.user_id, table.field),
-  ],
-);
-
-export type UserPreference = typeof userPreferences.$inferSelect;
-export type NewUserPreference = typeof userPreferences.$inferInsert;
-
-// Job report audit log (written by job-reporter-llm worker)
-export const jobReportEvents = pgTable(
-  "job_report_events",
-  {
-    id: serial("id").primaryKey(),
-    job_id: integer("job_id")
-      .notNull()
-      .references(() => jobs.id),
-    event_type: text("event_type").notNull(), // reported|llm_analyzed|auto_restored|escalated|confirmed|restored
-    actor: text("actor"), // "system:llm" | "admin:<userId>"
-    payload: text("payload"), // JSON
-    created_at: text("created_at")
-      .notNull()
-      .default(sql`now()::text`),
-  },
-  (table) => ({
-    jobIdx: index("idx_report_events_job").on(table.job_id),
-  }),
-);
-
-export type JobReportEvent = typeof jobReportEvents.$inferSelect;
-export type NewJobReportEvent = typeof jobReportEvents.$inferInsert;
-
 // Contacts (from CRM — recruiters and company contacts)
 export const contacts = pgTable(
   "contacts",
@@ -600,8 +371,6 @@ export const contactEmails = pgTable(
 export type ContactEmail = typeof contactEmails.$inferSelect;
 export type NewContactEmail = typeof contactEmails.$inferInsert;
 
-
-// Tasks (CRM — personal task management linked to entities)
 
 // Email Campaigns (CRM — automated email sequences)
 export const emailCampaigns = pgTable(
@@ -730,107 +499,16 @@ export const receivedEmails = pgTable(
 export type ReceivedEmail = typeof receivedEmails.$inferSelect;
 export type NewReceivedEmail = typeof receivedEmails.$inferInsert;
 
-// ATS Pipeline — Job Sources (unified board registry used by janitor + insert-jobs)
-export const jobSources = pgTable(
-  "job_sources",
-  {
-    id: serial("id").primaryKey(),
-    kind: text("kind").notNull(), // greenhouse | lever | ashby | workable | onhires | unknown
-    company_key: text("company_key").notNull(),
-    canonical_url: text("canonical_url"),
-    first_seen_at: text("first_seen_at")
-      .notNull()
-      .default(sql`now()::text`),
-    last_synced_at: text("last_synced_at"),
-    last_fetched_at: text("last_fetched_at"),
-    consecutive_errors: integer("consecutive_errors").notNull().default(0),
-  },
-  (table) => ({
-    uniqueKindKey: uniqueIndex("idx_job_sources_kind_key").on(table.kind, table.company_key),
-  }),
-);
-
-export type JobSource = typeof jobSources.$inferSelect;
-export type NewJobSource = typeof jobSources.$inferInsert;
-
-// Greenhouse board discovery (written by crawlers, read by janitor)
-export const greenhouseBoards = pgTable("greenhouse_boards", {
-  id: serial("id").primaryKey(),
-  token: text("token").notNull().unique(),
-  url: text("url"),
-  first_seen: text("first_seen")
-    .notNull()
-    .default(sql`now()::text`),
-  is_active: boolean("is_active").notNull().default(true),
-  created_at: text("created_at")
-    .notNull()
-    .default(sql`now()::text`),
-  updated_at: text("updated_at")
-    .notNull()
-    .default(sql`now()::text`),
-});
-
-export type GreenhouseBoard = typeof greenhouseBoards.$inferSelect;
-export type NewGreenhouseBoard = typeof greenhouseBoards.$inferInsert;
-
-// Lever board discovery (written by crawlers, read by janitor)
-export const leverBoards = pgTable("lever_boards", {
-  id: serial("id").primaryKey(),
-  site: text("site").notNull().unique(),
-  url: text("url"),
-  first_seen: text("first_seen")
-    .notNull()
-    .default(sql`now()::text`),
-  is_active: boolean("is_active").notNull().default(true),
-  created_at: text("created_at")
-    .notNull()
-    .default(sql`now()::text`),
-  updated_at: text("updated_at")
-    .notNull()
-    .default(sql`now()::text`),
-});
-
-export type LeverBoard = typeof leverBoards.$inferSelect;
-export type NewLeverBoard = typeof leverBoards.$inferInsert;
-
 // ---------------------------------------------------------------------------
 // Drizzle relations() declarations
 // ---------------------------------------------------------------------------
 
 export const companiesRelations = relations(companies, ({ many }) => ({
-  jobs: many(jobs),
   atsBoards: many(atsBoards),
   companyFacts: many(companyFacts),
   companySnapshots: many(companySnapshots),
   contacts: many(contacts),
   emailCampaigns: many(emailCampaigns),
-}));
-
-export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  company: one(companies, {
-    fields: [jobs.company_id],
-    references: [companies.id],
-  }),
-  recruiter: one(contacts, {
-    fields: [jobs.recruiter_id],
-    references: [contacts.id],
-  }),
-  skillTags: many(jobSkillTags),
-  reportEvents: many(jobReportEvents),
-}));
-
-export const jobSkillTagsRelations = relations(jobSkillTags, ({ one }) => ({
-  job: one(jobs, {
-    fields: [jobSkillTags.job_id],
-    references: [jobs.id],
-  }),
-}));
-
-export const jobReportEventsRelations = relations(jobReportEvents, ({ one }) => ({
-  job: one(jobs, {
-    fields: [jobReportEvents.job_id],
-    references: [jobs.id],
-  }),
 }));
 
 export const atsBoardsRelations = relations(atsBoards, ({ one }) => ({
@@ -866,17 +544,6 @@ export const contactEmailsRelations = relations(contactEmails, ({ one }) => ({
   contact: one(contacts, {
     fields: [contactEmails.contact_id],
     references: [contacts.id],
-  }),
-}));
-
-export const userSettingsRelations = relations(userSettings, ({ many }) => ({
-  preferences: many(userPreferences),
-}));
-
-export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
-  userSettings: one(userSettings, {
-    fields: [userPreferences.user_id],
-    references: [userSettings.user_id],
   }),
 }));
 

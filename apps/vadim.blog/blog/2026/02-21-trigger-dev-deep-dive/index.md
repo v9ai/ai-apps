@@ -12,26 +12,6 @@ This article covers the platform end-to-end: architecture, task authoring, the q
 
 <!--truncate-->
 
-## Table of Contents
-
-- [Architecture Overview](#architecture-overview)
-- [Getting Started](#getting-started)
-- [Writing Tasks](#writing-tasks)
-- [Triggering Tasks](#triggering-tasks)
-- [Queues and Concurrency](#queues-and-concurrency)
-- [The Fan-Out Pattern with batchTriggerAndWait](#the-fan-out-pattern-with-batchtriggerandwait)
-- [Error Handling and Retries](#error-handling-and-retries)
-- [Waits and Checkpointing](#waits-and-checkpointing)
-- [Configuration — trigger.config.ts](#configuration--triggerconfigts)
-- [MCP Server — AI Assistant Integration](#mcp-server--ai-assistant-integration)
-- [Agent Skills and Rules](#agent-skills-and-rules)
-- [Claude Agent SDK Integration](#claude-agent-sdk-integration)
-- [Case Study: TTS Audio Pipeline](#case-study-tts-audio-pipeline)
-- [Deployment](#deployment)
-- [Common Mistakes](#common-mistakes)
-
----
-
 ## Architecture Overview
 
 Trigger.dev implements a serverless architecture without timeouts:

@@ -30,7 +30,7 @@ export function SignUpForm() {
         password,
       });
       if (error) throw new Error(error.message);
-      router.push("/protected");
+      router.push("/dashboard");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
