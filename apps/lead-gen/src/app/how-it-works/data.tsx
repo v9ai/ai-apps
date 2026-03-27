@@ -32,14 +32,14 @@ export const papers: Paper[] = [
   {
     slug: "nextjs-app-router",
     number: 1,
-    title: "Next.js 14 App Router",
+    title: "Next.js 16 App Router",
     category: "Frontend",
     wordCount: 0,
     readingTimeMin: 2,
     authors: "Vercel",
-    year: 2024,
-    finding: "Server-side rendering by default with React Server Components for improved performance and SEO",
-    relevance: "Powers the entire frontend with server components for company listings and client components for admin pages like /admin/contacts and /admin/emails",
+    year: 2025,
+    finding: "Server-side rendering by default with React 19 Server Components for improved performance and SEO",
+    relevance: "Powers the entire frontend with server components for company listings, contact management, and admin pages for contacts and email campaigns",
     url: "https://nextjs.org/docs/app",
     categoryColor: "var(--blue-9)",
   },
@@ -53,7 +53,7 @@ export const papers: Paper[] = [
     authors: "Neon",
     year: 2024,
     finding: "Serverless PostgreSQL with branching and auto-scaling for transactional data",
-    relevance: "Stores primary data — companies, contacts, email campaigns, and ATS boards — via Drizzle ORM with indexed queries for filtering and pagination",
+    relevance: "Stores primary data — companies, contacts, email campaigns, ATS boards, and company facts — via Drizzle ORM with indexed queries for filtering and pagination",
     url: "https://neon.tech",
     categoryColor: "var(--green-9)",
   },
@@ -94,8 +94,8 @@ export const papers: Paper[] = [
     readingTimeMin: 2,
     authors: "DeepSeek",
     year: 2024,
-    finding: "Cost-effective large language model for text classification and generation tasks",
-    relevance: "Used for company enrichment, deep analysis generation, and AI-assisted email drafting via the ComposeFromLinkedIn component",
+    finding: "Cost-effective large language model for text classification, generation, and structured extraction",
+    relevance: "Powers company enrichment, deep analysis, AI tier classification, and AI-assisted email drafting via the ComposeFromLinkedIn component",
     url: "https://platform.deepseek.com",
     categoryColor: "var(--amber-9)",
   },
@@ -109,7 +109,7 @@ export const papers: Paper[] = [
     authors: "The Guild",
     year: 2024,
     finding: "Automatically generates TypeScript types and React hooks from GraphQL schemas",
-    relevance: "Creates hooks like useGetContactsQuery and useCreateContactMutation in src/__generated__/hooks for type-safe API interactions",
+    relevance: "Creates typed hooks like useGetContactsQuery and useCreateContactMutation in src/__generated__/hooks, plus resolver types for Apollo Server",
     url: "https://the-guild.dev/graphql/codegen",
     categoryColor: "var(--orange-9)",
   },
@@ -119,14 +119,14 @@ export const papers: Paper[] = [
 
 export const researchStats: Stat[] = [
   {
-    number: "O(log n)",
-    label: "Search complexity for company/contact filtering via GraphQL pagination",
-    source: "GraphQL queries use limit and offset with indexed PostgreSQL tables",
+    number: "6",
+    label: "Pipeline stages: discover, enrich, detect ATS, find contacts, verify emails, outreach",
+    source: "End-to-end B2B lead generation pipeline",
   },
   {
-    number: "3",
-    label: "Primary LLM integration points: company enrichment, deep analysis, email drafting",
-    source: "Technical analysis of AI/LLM usage across the platform",
+    number: "4",
+    label: "LLM integration points: enrichment, deep analysis, AI tier classification, email drafting",
+    source: "DeepSeek + OpenRouter for cost-effective AI across the pipeline",
   },
 ];
 
@@ -134,62 +134,67 @@ export const researchStats: Stat[] = [
 
 export const pipelineAgents: PipelineAgent[] = [
   {
-    name: "Company Discovery & Enrichment",
-    description: "Companies are imported via bulk CSV or discovered through Common Crawl. Enrichment fetches live website data, extracts services and industry signals, and runs deep analysis via DeepSeek LLM.",
-    researchBasis: "Web crawling and LLM-assisted information extraction",
+    name: "Company Discovery",
+    description: "Companies are imported via bulk CSV, discovered through Common Crawl, or found via web search and Ashby board crawling. Each company gets a unique key (slug/domain) for deduplication.",
+    researchBasis: "Web crawling and multi-source entity resolution",
+  },
+  {
+    name: "Enrichment & AI Classification",
+    description: "Enrichment fetches live website data, extracts services, industry signals, and tech stack. DeepSeek LLM generates deep analysis and classifies companies into AI tiers (not AI, AI-first, AI-native) with confidence scores.",
+    researchBasis: "LLM-assisted information extraction and classification",
   },
   {
     name: "ATS Board Detection",
-    description: "The platform detects ATS boards (Greenhouse, Lever, Ashby, Workable, etc.) associated with each company, storing vendor, URL, and confidence scores in the ats_boards table.",
+    description: "Detects ATS boards (Greenhouse, Lever, Ashby, Workable, SmartRecruiters, etc.) associated with each company, storing vendor, URL, board type, and confidence scores with full provenance tracking.",
     researchBasis: "Structured signal extraction from web pages",
   },
   {
-    name: "Contact Management",
-    description: "Contacts are linked to companies with LinkedIn URLs, emails, and positions. NeverBounce verifies email deliverability. Duplicate contacts are merged via GraphQL mutations.",
+    name: "Contact Discovery & Verification",
+    description: "Contacts are linked to companies with LinkedIn URLs, emails, and positions. NeverBounce verifies email deliverability. Bounced emails are tracked and contacts can be flagged as do-not-contact.",
     researchBasis: "Entity resolution and email hygiene pipelines",
   },
   {
-    name: "Admin Campaign Management",
-    description: "Admins use BatchEmailModal and ComposeFromLinkedIn components to draft AI-assisted emails from LinkedIn profiles, then send campaigns via Resend API, with events synced via syncResendEmails mutation.",
-    researchBasis: "LLM integration for personalized content generation",
+    name: "Email Outreach",
+    description: "AI-assisted email drafting from LinkedIn profiles via ComposeFromLinkedIn, batch campaigns via Resend API with configurable sequences, follow-up scheduling, and reply tracking.",
+    researchBasis: "LLM-powered personalized content generation",
   },
   {
-    name: "Monitoring & Evaluation",
-    description: "Evaluation scripts analyze enrichment and email generation quality with confidence scoring for continuous improvement.",
-    researchBasis: "LLM observability frameworks and quality metrics",
+    name: "Inbound & Follow-ups",
+    description: "Inbound emails are captured via Resend webhooks and stored for context. Follow-up sequences are automatically scheduled based on campaign configuration and reply status.",
+    researchBasis: "Event-driven email lifecycle management",
   },
 ];
 
 // ── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "The platform discovers and enriches B2B companies via web crawling and LLM analysis, detects their ATS hiring boards, finds and verifies contact emails, then enables admins to run personalized outreach campaigns through AI-assisted email drafting and Resend delivery.";
+  "The platform discovers B2B companies via Common Crawl, web search, and Ashby boards, then enriches them with AI classification and deep analysis. It detects ATS hiring boards, discovers and verifies contact emails, and enables personalized outreach campaigns with AI-drafted emails, automated follow-up sequences, and inbound reply tracking.";
 
 // ── Deep-Dive Sections ────────────────────────────────────────────
 
 export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "System Architecture",
-    content: "The platform uses Next.js App Router for the frontend with Neon PostgreSQL as the primary database. Company and contact data flows through a GraphQL API backed by Apollo Server, with Drizzle ORM handling all queries.",
+    content: "Next.js 16 App Router with React 19 Server Components for the frontend, Neon PostgreSQL as the primary database. Company and contact data flows through a GraphQL API backed by Apollo Server 5, with Drizzle ORM handling all queries and DataLoaders preventing N+1 issues.",
   },
   {
     heading: "Database Design",
-    content: "PostgreSQL schema includes tables for companies, contacts, contact_emails, email_campaigns, email_templates, ats_boards, company_facts, and company_snapshots — all managed by Drizzle ORM with proper indexes for filtering performance.",
+    content: "PostgreSQL schema includes tables for companies, contacts, contact_emails, email_campaigns, email_templates, ats_boards, company_facts, company_snapshots, and received_emails — all managed by Drizzle ORM with proper indexes for filtering performance.",
   },
   {
     heading: "Security & Auth",
-    content: "Better Auth handles authentication with session-based auth backed by Neon PostgreSQL, while admin access is restricted by email check (isAdminEmail()) in resolvers. Environment variables store secrets like API keys. Input validation occurs on both client and server.",
+    content: "Better Auth handles authentication with session-based auth backed by Neon PostgreSQL, while admin access is restricted by email check (isAdminEmail()) in GraphQL resolvers. Environment variables store secrets like API keys. Input validation occurs on both client and server.",
   },
   {
     heading: "Deployment & Infrastructure",
-    content: "The app is hosted on Vercel for Next.js frontend. Neon provides serverless PostgreSQL, and Resend handles email delivery. Evaluation scripts support continuous improvement.",
+    content: "Hosted on Vercel with 60s max API route duration. Neon provides serverless PostgreSQL with branching support, and Resend handles email delivery with webhook-based event tracking.",
   },
   {
     heading: "AI Integration",
-    content: "DeepSeek LLM powers company deep analysis and enrichment. AI-assisted email drafting uses the ComposeFromLinkedIn component to generate personalized outreach from LinkedIn profiles.",
+    content: "DeepSeek LLM powers company deep analysis, enrichment, and AI tier classification. OpenRouter provides model routing. AI-assisted email drafting uses the ComposeFromLinkedIn component to generate personalized outreach from LinkedIn profiles. LangSmith provides observability.",
   },
   {
     heading: "Outreach Pipeline",
-    content: "Contacts are discovered and verified, then grouped into email campaigns with configurable sequences and delays. The Resend API delivers emails, with reply tracking and follow-up scheduling handled via the contact_emails table.",
+    content: "Contacts are discovered and verified via NeverBounce, then grouped into email campaigns with configurable sequences and delays. Resend API delivers emails with reply tracking. Inbound emails are captured via webhooks and follow-up sequences are automatically managed.",
   },
 ];
