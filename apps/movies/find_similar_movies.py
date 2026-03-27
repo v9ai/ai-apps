@@ -7,6 +7,7 @@ import asyncio
 import json
 import os
 import re
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import TypedDict
@@ -23,7 +24,6 @@ from rich.table import Table
 
 load_dotenv()
 
-QUERY_MOVIE = "The Pursuit of Happyness"
 MIN_IMDB_RATING = 7.0
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "similar_movies_results.json")
 EMBED_SERVER = "http://localhost:9999"
@@ -580,12 +580,16 @@ def _print_table(movies: list[dict], query_movie: str):
 # ---------------------------------------------------------------------------
 
 def main():
-    console.print(f"\n[bold]Movie Finder[/bold] — [cyan]{QUERY_MOVIE!r}[/cyan]\n")
+    if len(sys.argv) < 2:
+        console.print("[red]Usage: uv run find_similar_movies.py \"<movie title>\"[/red]")
+        sys.exit(1)
+    query = " ".join(sys.argv[1:])
+    console.print(f"\n[bold]Movie Finder[/bold] — [cyan]{query!r}[/cyan]\n")
     app = build_graph()
-    result = app.invoke({"query_movie": QUERY_MOVIE})
+    result = app.invoke({"query_movie": query})
     movies = result["similar_movies"]
     console.print(f"\n[bold green]✓ {len(movies)} movies[/bold green] → {OUTPUT_FILE}\n")
-    _print_table(movies, QUERY_MOVIE)
+    _print_table(movies, query)
 
 
 if __name__ == "__main__":
