@@ -16,7 +16,8 @@
         "Food": 0.26048657,
         "Location": 0.22728705,
         "Service": 0.2447055,
-        "Spa": 0.31799063
+        "Spa": 0.31799063,
+        "Value": 0.0
       },
       "board_type": "Bed & Breakfast",
       "cons": [
@@ -138,7 +139,8 @@
         "Food": 0.25299606,
         "Location": 0.275797,
         "Service": 0.21322614,
-        "Spa": 0.25017706
+        "Spa": 0.25017706,
+        "Value": 0.0
       },
       "board_type": "Half Board",
       "cons": [
@@ -253,11 +255,13 @@
       ],
       "aspect_scores": {
         "Beach": 0.2774577,
+        "Cleanliness": 0.0,
         "Family": 0.2678499,
         "Food": 0.23652035,
         "Location": 0.2896544,
         "Service": 0.21679834,
-        "Spa": 0.27870482
+        "Spa": 0.27870482,
+        "Value": 0.0
       },
       "board_type": "All-Inclusive",
       "cons": [
@@ -372,11 +376,13 @@
       ],
       "aspect_scores": {
         "Beach": 0.25024918,
+        "Cleanliness": 0.0,
         "Family": 0.18665195,
         "Food": 0.24469355,
         "Location": 0.25369182,
         "Service": 0.22604577,
-        "Spa": 0.27063057
+        "Spa": 0.27063057,
+        "Value": 0.0
       },
       "board_type": "Standard",
       "cons": [
@@ -488,6 +494,8 @@
       ],
       "aspect_scores": {
         "Beach": 0.28021735,
+        "Cleanliness": 0.0,
+        "Family": 0.0,
         "Food": 0.26833138,
         "Location": 0.21279193,
         "Service": 0.25806776,
@@ -611,11 +619,13 @@
       ],
       "aspect_scores": {
         "Beach": 0.24085775,
+        "Cleanliness": 0.0,
         "Family": 0.23510452,
         "Food": 0.25224915,
         "Location": 0.27067035,
         "Service": 0.22620791,
-        "Spa": 0.24632442
+        "Spa": 0.24632442,
+        "Value": 0.0
       },
       "board_type": "Bed & Breakfast",
       "cons": [
@@ -736,7 +746,8 @@
         "Food": 0.2625731,
         "Location": 0.22567347,
         "Service": 0.23282577,
-        "Spa": 0.31019342
+        "Spa": 0.31019342,
+        "Value": 0.0
       },
       "board_type": "Bed & Breakfast",
       "cons": [
@@ -853,11 +864,13 @@
       ],
       "aspect_scores": {
         "Beach": 0.24140038,
+        "Cleanliness": 0.0,
         "Family": 0.19202486,
         "Food": 0.287615,
         "Location": 0.27428523,
         "Service": 0.23992895,
-        "Spa": 0.3098575
+        "Spa": 0.3098575,
+        "Value": 0.0
       },
       "board_type": "Standard",
       "cons": [
@@ -973,11 +986,13 @@
       ],
       "aspect_scores": {
         "Beach": 0.22518292,
+        "Cleanliness": 0.0,
         "Family": 0.2258248,
         "Food": 0.2716406,
         "Location": 0.24818645,
         "Service": 0.263076,
-        "Spa": 0.34589782
+        "Spa": 0.34589782,
+        "Value": 0.0
       },
       "board_type": "Standard",
       "cons": [
