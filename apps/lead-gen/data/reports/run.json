@@ -1,0 +1,44 @@
+[
+  {
+    "stage": "discover",
+    "status": "Partial",
+    "processed": 50,
+    "created": 41,
+    "errors": [
+      "2000soft.de: error sending request for url (https://2000soft.de/)",
+      "bcg.com: HTTP 403 Forbidden",
+      "datarevenue.com: error sending request for url (https://datarevenue.com/)",
+      "devoteam.com: HTTP 403 Forbidden",
+      "kinandcarta.com: error sending request for url (https://kinandcarta.com/)",
+      "mckinsey.com: error sending request for url (https://mckinsey.com/)",
+      "peltarion.com: error sending request for url (https://peltarion.com/)",
+      "polymatica.com: error sending request for url (https://polymatica.com/)",
+      "quantumblack.com: error sending request for url (https://quantumblack.com/)"
+    ],
+    "duration_ms": 128444
+  },
+  {
+    "stage": "enrich",
+    "status": "Success",
+    "processed": 30,
+    "created": 30,
+    "errors": [],
+    "duration_ms": 78611
+  },
+  {
+    "stage": "contacts",
+    "status": "Success",
+    "processed": 122,
+    "created": 6,
+    "errors": [],
+    "duration_ms": 31383
+  },
+  {
+    "stage": "qa",
+    "status": "Success",
+    "processed": 30,
+    "created": 0,
+    "errors": [],
+    "duration_ms": 0
+  }
+]

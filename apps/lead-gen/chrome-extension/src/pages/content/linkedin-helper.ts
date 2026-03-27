@@ -33,17 +33,7 @@ function findDismissButton(card: Element): HTMLButtonElement | null {
   return null;
 }
 
-function dismissJobCard(btn: HTMLElement) {
-  const card = btn.closest(".job-card-container, .base-card");
-  if (!card || card.getAttribute("data-lg-dismissed")) return;
-  card.setAttribute("data-lg-dismissed", "true");
-  const dismissBtn = findDismissButton(card);
-  if (dismissBtn) {
-    setTimeout(() => {
-      if (dismissBtn.isConnected) clickDismiss(dismissBtn);
-    }, 500);
-  }
-}
+
 
 // ── Auto-Dismiss Non-EU Location Jobs ───────────────────────────────
 
@@ -145,85 +135,25 @@ function autoDismissLocationCards() {
   }
 }
 
-function autoDismissBlockedCards() {
-  // Skip if blocked companies haven't loaded yet — will retry via MutationObserver
-  if (!blockedCompaniesLoaded) return;
-
-  let queued = 0;
-  document.querySelectorAll(".job-card-container").forEach((card) => {
-    if (card.getAttribute("data-lg-dismissed")) return;
-    const companyEl = card.querySelector(
-      ".artdeco-entity-lockup__subtitle, .job-card-container__primary-description",
-    );
-    if (!companyEl) return;
-    const companyName = companyEl.textContent?.trim() || "";
-    if (!isCompanyBlocked(companyName)) return;
-    const dismissBtn = findDismissButton(card);
-    if (!dismissBtn) return;
-    queueDismiss(card, dismissBtn);
-    queued++;
-  });
-  if (queued > 0) {
-    console.log(`[LG] Dismissing ${queued} blocked company job(s)`);
-  }
-}
-
-function injectBlockButtons() {
-  // Auto-dismiss blocked company cards and South Asia location jobs
-  autoDismissBlockedCards();
+function injectLinkedInHelpers() {
   autoDismissLocationCards();
   clickSalaryMetadata();
-
-  // ── Logged-in view: job cards ──
-  document.querySelectorAll(".job-card-container").forEach((card) => {
-    if (card.querySelector(`[${BLOCK_BTN_ATTR}]`)) return;
-    const companyEl = card.querySelector(
-      ".artdeco-entity-lockup__subtitle, .job-card-container__primary-description",
-    );
-    if (!companyEl) return;
-    const companyName = companyEl.textContent?.trim() || "Unknown";
-    companyEl.appendChild(createBlockButton(companyName));
-  });
-
-  // ── Logged-in view: detail panel top card ──
-  const detailCompany = document.querySelector(
-    ".job-details-jobs-unified-top-card__company-name",
-  );
-  if (detailCompany && !detailCompany.querySelector(`[${BLOCK_BTN_ATTR}]`)) {
-    const name = detailCompany.textContent?.trim() || "Unknown";
-    detailCompany.appendChild(createBlockButton(name));
-  }
-
-  // ── Public view: job cards ──
-  document.querySelectorAll(".base-card.job-search-card").forEach((card) => {
-    if (card.querySelector(`[${BLOCK_BTN_ATTR}]`)) return;
-    const companyEl = card.querySelector(
-      "h4.base-search-card__subtitle",
-    );
-    if (!companyEl) return;
-    const companyName = companyEl.textContent?.trim() || "Unknown";
-    companyEl.appendChild(createBlockButton(companyName));
-  });
 }
 
-function observeBlockButtons() {
+function observeLinkedInHelpers() {
   if (!window.location.hostname.includes("linkedin.com")) return;
 
-  // Fetch blocked companies, then inject buttons once loaded
-  loadBlockedCompanies(() => injectBlockButtons());
-  // Fallback: inject after 3s even if fetch hasn't returned
-  setTimeout(() => { if (!blockedCompaniesLoaded) injectBlockButtons(); }, 3000);
+  injectLinkedInHelpers();
 
-  // Re-inject on DOM changes (debounced to prevent excessive calls)
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const obs = new MutationObserver(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(injectBlockButtons, 500);
+    debounceTimer = setTimeout(injectLinkedInHelpers, 500);
   });
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
-observeBlockButtons();
+observeLinkedInHelpers();
 
 // ── Send Email Button (LinkedIn Post/Activity Pages) ─────────────────
 

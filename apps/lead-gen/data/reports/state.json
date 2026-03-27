@@ -3,11 +3,11 @@
   "phase": null,
   "counts": {
     "discovered": 82,
-    "enriched": 0,
-    "contacts_found": 0,
+    "enriched": 30,
+    "contacts_found": 6,
     "outreach_drafted": 0,
     "outreach_sent": 0
   },
-  "quality_score": 0.0,
+  "quality_score": 0.9,
   "bounce_rate": 0.0
 }
