@@ -33,7 +33,6 @@ text_to_sql_graph = build_text_to_sql_graph()
 email_reply_graph = build_email_reply_graph()
 admin_chat_graph = build_admin_chat_graph()
 email_compose_graph = build_email_compose_graph()
-eu_classifier_graph = build_eu_classifier_graph()
 resume_rag_graph = build_resume_rag_graph()
 
 app = FastAPI(title="Lead Gen LangGraph API", version="0.1.0")
@@ -137,19 +136,6 @@ class EmailComposeRequest(BaseModel):
 class EmailComposeResponse(BaseModel):
     subject: str
     body: str
-
-
-class ClassifyJobRequest(BaseModel):
-    title: str
-    location: str = ""
-    description: str = ""
-
-
-class ClassifyJobResponse(BaseModel):
-    is_remote_eu: bool = False
-    confidence: str = "low"
-    reason: str = ""
-    source: str = ""
 
 
 class ResumeChatRequest(BaseModel):
@@ -368,37 +354,6 @@ async def email_compose(req: EmailComposeRequest):
     return EmailComposeResponse(
         subject=result.get("subject", ""),
         body=result.get("body", ""),
-    )
-
-
-@app.post("/classify-job", response_model=ClassifyJobResponse)
-async def classify_job(req: ClassifyJobRequest):
-    log.info("── classify-job request ──")
-    log.info("  title: %s | location: %s", req.title, req.location)
-
-    result = eu_classifier_graph.invoke(
-        {
-            "job": {
-                "title": req.title,
-                "location": req.location,
-                "description": req.description,
-            },
-            "signals": None,
-            "classification": None,
-            "source": "",
-        }
-    )
-
-    classification = result.get("classification") or {}
-    source = result.get("source", "")
-
-    log.info("  result: eu=%s source=%s", classification.get("isRemoteEU"), source)
-
-    return ClassifyJobResponse(
-        is_remote_eu=classification.get("isRemoteEU", False),
-        confidence=classification.get("confidence", "low"),
-        reason=classification.get("reason", ""),
-        source=source,
     )
 
 
