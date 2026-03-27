@@ -15,7 +15,6 @@
     "try:skills": "tsx scripts/try-skills-production.ts",
     "deploy": "tsx scripts/deploy.ts",
     "codegen": "graphql-codegen",
-    "test:evals": "tsx src/evals/remote-eu/__tests__/run-local.ts",
     "test:email-evals": "tsx src/evals/email-generation/__tests__/run-local.ts",
     "boards:discover": "tsx scripts/discover-ashby-boards.ts",
     "skills:seed": "tsx scripts/seed-skill-taxonomy.ts",

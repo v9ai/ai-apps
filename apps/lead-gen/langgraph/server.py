@@ -20,7 +20,6 @@ from src.graphs.text_to_sql.graph import build_text_to_sql_graph
 from src.graphs.email_reply.graph import build_email_reply_graph
 from src.graphs.admin_chat.graph import build_admin_chat_graph
 from src.graphs.email_compose.graph import build_email_compose_graph
-from src.graphs.eu_classifier.graph import build_eu_classifier_graph
 from src.graphs.resume_rag.graph import build_resume_rag_graph
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
