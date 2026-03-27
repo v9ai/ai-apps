@@ -5,7 +5,7 @@
 //!
 //! Uses existing leadgen-metal infrastructure:
 //!   - email_metal::pattern_fsm  — email pattern generation
-//!   - dns::raw                  — MX record resolution
+//!   - dns                        — MX record resolution
 //!   - email_metal::smtp_fsm    — SMTP verification
 
 use anyhow::Result;
@@ -68,7 +68,7 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         let domain = &company.domain;
 
         // Step 1: Resolve MX records
-        let mx_records = match crate::dns::raw::resolve_mx_async(domain).await {
+        let mx_records = match crate::dns::resolve_mx_async(domain).await {
             Ok(records) if !records.is_empty() => {
                 report.verification_stats.mx_checked += 1;
                 records
