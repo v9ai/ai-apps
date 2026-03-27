@@ -245,17 +245,18 @@ Full-lifecycle agent team for the actual lead generation pipeline. Uses Claude C
 | `.claude/skills/pipeline-contacts/SKILL.md` | Contact Hunter | Email discovery, verification, LinkedIn, scoring |
 | `.claude/skills/pipeline-outreach/SKILL.md` | Outreach Composer | Email drafting, campaigns (plan-approval required) |
 | `.claude/skills/pipeline-qa/SKILL.md` | QA Auditor | Dedup, completeness, deliverability, score validation |
-| `.claude/commands/pipeline.md` | Orchestrator | Team creation, dependency graph, phase gates |
+| `.claude/commands/agents.md` | Orchestrator | Unified dispatcher for all agent teams |
 
 ### Commands
 
 | Command | Action |
 |---|---|
-| `/pipeline` | Full batch cycle (discover → enrich → contact → outreach) |
-| `/pipeline discover [vertical]` | Discovery-only for a specific vertical |
-| `/pipeline enrich` | Enrich un-enriched companies in DB |
-| `/pipeline outreach` | Draft + send campaigns for ready contacts |
-| `/pipeline status` | Show funnel metrics across all stages |
+| `/agents pipeline` | Full batch cycle (discover → enrich → contact → outreach) |
+| `/agents pipeline discover [vertical]` | Discovery-only for a specific vertical |
+| `/agents pipeline enrich` | Enrich un-enriched companies in DB |
+| `/agents pipeline outreach` | Draft + send campaigns for ready contacts |
+| `/agents pipeline status` | Show funnel metrics across all stages |
+| `make start` | Launch full pipeline from terminal |
 
 ### Pipeline: `discover → enrich → contacts + qa-audit → outreach`
 
@@ -274,15 +275,15 @@ Ad-hoc research team for deep company investigation. Created per target, destroy
 | `.claude/skills/research-analyst/SKILL.md` | Company Analyst | Tech stack, funding, growth, AI adoption, news |
 | `.claude/skills/research-hiring/SKILL.md` | Hiring Intel | Open roles, ATS boards, team growth, org structure |
 | `.claude/skills/research-icp/SKILL.md` | ICP Matcher | Score against ICP: remote? EU? AI? Stage? DM access? |
-| `.claude/commands/research.md` | Orchestrator | Team creation, debate coordination, synthesis |
+| `.claude/commands/agents.md` | Orchestrator | Unified dispatcher (research section) |
 
 ### Commands
 
 | Command | Action |
 |---|---|
-| `/research {company}` | Full research squad with debate protocol |
-| `/research batch {c1} {c2} ...` | Parallel research squads, comparative summary |
-| `/research score {company}` | Quick ICP scoring only (single agent, no debate) |
+| `/agents research {company}` | Full research squad with debate protocol |
+| `/agents research batch {c1} {c2} ...` | Parallel research squads, comparative summary |
+| `/agents research score {company}` | Quick ICP scoring only (single agent, no debate) |
 
 ### Pipeline: `parallel research → debate → synthesize`
 

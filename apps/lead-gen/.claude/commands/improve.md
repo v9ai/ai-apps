@@ -156,8 +156,8 @@ Step 6: After T1+T2 complete → T3+T4 unblock
   Tuner self-claims T3.
 
 Step 7: After T4 complete → T5 unblocks
-  Spawn: Agent { name: "verifier", skill: improve-evolve }
-  (Classifier Tuner doubles as verifier — validates accuracy of changes)
+  Spawn: Agent { name: "verifier", skill: improve-mine }
+  (Pipeline Monitor doubles as verifier — validates pipeline health after changes)
 
 Step 8: Verifier complete → TeamDelete → show report → pause for user review.
   If REJECT: ask user which issues to fix, loop back to Step 3.
