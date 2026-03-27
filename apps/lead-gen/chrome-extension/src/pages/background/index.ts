@@ -70,25 +70,6 @@ async function gqlRequest(
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "paginationProgress") return false;
 
-  // ── Get Blocked Companies ──
-  if (message.action === "getBlockedCompanies") {
-    gqlRequest(
-      `query { blockedCompanies { id name } }`,
-      {},
-    )
-      .then((data) => {
-        if (data.errors) {
-          sendResponse({ success: false, error: data.errors[0].message });
-        } else {
-          sendResponse({ success: true, companies: data.data.blockedCompanies });
-        }
-      })
-      .catch((err) => {
-        sendResponse({ success: false, error: String(err) });
-      });
-    return true;
-  }
-
   // ── Send Email from LinkedIn Post (via LangGraph pipeline) ──
   if (message.action === "sendEmailFromPost") {
     const { postData } = message;
@@ -169,31 +150,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error: String(err) });
       });
     return true;
-  }
-
-  // ── Block Company ──
-  if (message.action === "blockCompany") {
-    const { companyName } = message;
-    gqlRequest(
-      `mutation BlockCompany($name: String!, $reason: String) {
-        blockCompany(name: $name, reason: $reason) { id name }
-      }`,
-      { name: companyName, reason: "Blocked from LinkedIn via extension" },
-    )
-      .then((data) => {
-        if (data.errors) {
-          console.error("[blockCompany] GQL error:", data.errors[0].message);
-          sendResponse({ success: false, error: data.errors[0].message });
-        } else {
-          console.log("[blockCompany] Blocked:", data.data.blockCompany.name);
-          sendResponse({ success: true, data: data.data.blockCompany });
-        }
-      })
-      .catch((err) => {
-        console.error("[blockCompany] Fetch error:", err);
-        sendResponse({ success: false, error: String(err) });
-      });
-    return true; // keep channel open for async response
   }
 
   // ── Start Profile Browsing ──
