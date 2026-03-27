@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { hotels2026 } from "@/lib/data";
 import { HotelDetailContent } from "@/components/HotelDetailContent";
+import { DISCOVERY_YEAR } from "@/lib/constants";
 
 export function generateStaticParams() {
   return hotels2026.map((r) => ({ hotelId: r.hotel.hotel_id }));
@@ -16,7 +17,7 @@ export async function generateMetadata({
   if (!result) return {};
   const h = result.hotel;
   return {
-    title: `${h.name} — ${h.location} | Greece Hotels 2026`,
+    title: `${h.name} — ${h.location} | Greece Hotels ${DISCOVERY_YEAR}`,
     description: `${h.star_rating}-star ${h.board_type} in ${h.location}. ${h.description.slice(0, 140)}`,
   };
 }

@@ -39,7 +39,7 @@ export const papers: Paper[] = [
     authors: "Vercel",
     year: 2024,
     finding: "Server-side rendering by default with React Server Components for improved performance and SEO",
-    relevance: "Powers the entire frontend with server components like src/app/page.tsx for job listings and client components for admin pages like /admin/contacts",
+    relevance: "Powers the entire frontend with server components for company listings and client components for admin pages like /admin/contacts and /admin/emails",
     url: "https://nextjs.org/docs/app",
     categoryColor: "var(--blue-9)",
   },
@@ -53,7 +53,7 @@ export const papers: Paper[] = [
     authors: "Neon",
     year: 2024,
     finding: "Serverless PostgreSQL with branching and auto-scaling for transactional data",
-    relevance: "Stores primary data like jobs, contacts, and campaigns via Drizzle ORM tables (jobs, contacts, email_campaigns) with RLS policies for security",
+    relevance: "Stores primary data — companies, contacts, email campaigns, and ATS boards — via Drizzle ORM with indexed queries for filtering and pagination",
     url: "https://neon.tech",
     categoryColor: "var(--green-9)",
   },
@@ -67,7 +67,7 @@ export const papers: Paper[] = [
     authors: "Drizzle Team",
     year: 2024,
     finding: "Type-safe SQL query builder with migrations and schema management",
-    relevance: "Defines database schema in src/db/schema.ts and handles queries for GraphQL API, including tables like blocked_companies and reported_jobs",
+    relevance: "Defines database schema in src/db/schema.ts and handles all queries for the GraphQL API, including tables like companies, contacts, ats_boards, and blocked_companies",
     url: "https://orm.drizzle.team",
     categoryColor: "var(--green-9)",
   },
@@ -95,7 +95,7 @@ export const papers: Paper[] = [
     authors: "DeepSeek",
     year: 2024,
     finding: "Cost-effective large language model for text classification and generation tasks",
-    relevance: "Used by lead-gen-process-jobs worker to classify jobs for EU remote compatibility and extract skills via scripts/extract-job-skills.ts",
+    relevance: "Used for company enrichment, deep analysis generation, and AI-assisted email drafting via the ComposeFromLinkedIn component",
     url: "https://platform.deepseek.com",
     categoryColor: "var(--amber-9)",
   },
@@ -120,12 +120,12 @@ export const papers: Paper[] = [
 export const researchStats: Stat[] = [
   {
     number: "O(log n)",
-    label: "Search complexity for job filtering via GraphQL pagination",
+    label: "Search complexity for company/contact filtering via GraphQL pagination",
     source: "GraphQL queries use limit and offset with indexed PostgreSQL tables",
   },
   {
-    number: "4",
-    label: "Primary LLM integration points: classification, email drafting, report analysis, skill extraction",
+    number: "3",
+    label: "Primary LLM integration points: company enrichment, deep analysis, email drafting",
     source: "Technical analysis of AI/LLM usage across the platform",
   },
 ];
@@ -134,19 +134,19 @@ export const researchStats: Stat[] = [
 
 export const pipelineAgents: PipelineAgent[] = [
   {
-    name: "Job Ingestion & Crawling",
-    description: "ATS platform fetchers (Greenhouse, Lever, Ashby) ingest jobs via API, then scripts process and classify them for EU remote compatibility.",
-    researchBasis: "ATS API integration for structured job data ingestion",
+    name: "Company Discovery & Enrichment",
+    description: "Companies are imported via bulk CSV or discovered through Common Crawl. Enrichment fetches live website data, extracts services and industry signals, and runs deep analysis via DeepSeek LLM.",
+    researchBasis: "Web crawling and LLM-assisted information extraction",
   },
   {
-    name: "AI Classification & EU Validation",
-    description: "DeepSeek LLM classifies jobs for EU remote compatibility, with heuristic pre-filtering and structured output validation, storing results in PostgreSQL via Drizzle ORM.",
-    researchBasis: "LLM prompt engineering with structured output grounding",
+    name: "ATS Board Detection",
+    description: "The platform detects ATS boards (Greenhouse, Lever, Ashby, Workable, etc.) associated with each company, storing vendor, URL, and confidence scores in the ats_boards table.",
+    researchBasis: "Structured signal extraction from web pages",
   },
   {
-    name: "Job Display & User Interaction",
-    description: "UnifiedJobsProvider component fetches jobs via GraphQL queries, filtered through Drizzle ORM, and renders them with search and pagination. Users authenticate via Better Auth, and admins access protected routes like /admin/contacts.",
-    researchBasis: "Next.js Server Components and GraphQL for real-time data fetching",
+    name: "Contact Management",
+    description: "Contacts are linked to companies with LinkedIn URLs, emails, and positions. NeverBounce verifies email deliverability. Duplicate contacts are merged via GraphQL mutations.",
+    researchBasis: "Entity resolution and email hygiene pipelines",
   },
   {
     name: "Admin Campaign Management",
@@ -155,26 +155,26 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Monitoring & Evaluation",
-    description: "Evaluation scripts analyze job classification accuracy with confidence scoring for quality control.",
-    researchBasis: "LLM observability frameworks and A/B testing methodologies",
+    description: "Evaluation scripts analyze enrichment and email generation quality with confidence scoring for continuous improvement.",
+    researchBasis: "LLM observability frameworks and quality metrics",
   },
 ];
 
 // ── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "Job seekers visit the platform where the UnifiedJobsProvider component fetches EU-remote jobs via GraphQL queries to PostgreSQL, filtered by Drizzle ORM. Jobs are ingested from ATS platforms (Greenhouse, Lever, Ashby) and classified for EU remote compatibility using DeepSeek LLM. Administrators manage contacts and campaigns through Better Auth-authenticated admin routes, using AI-assisted email drafting with the ComposeFromLinkedIn component and Resend for delivery.";
+  "The platform discovers and enriches B2B companies via web crawling and LLM analysis, detects their ATS hiring boards, finds and verifies contact emails, then enables admins to run personalized outreach campaigns through AI-assisted email drafting and Resend delivery.";
 
 // ── Deep-Dive Sections ────────────────────────────────────────────
 
 export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "System Architecture",
-    content: "The platform uses Next.js App Router for the frontend with Neon PostgreSQL as the primary database. ATS platform fetchers handle job ingestion, DeepSeek LLM handles classification, and GraphQL serves the API layer.",
+    content: "The platform uses Next.js App Router for the frontend with Neon PostgreSQL as the primary database. Company and contact data flows through a GraphQL API backed by Apollo Server, with Drizzle ORM handling all queries.",
   },
   {
     heading: "Database Design",
-    content: "PostgreSQL schema includes tables like jobs, contacts, email_campaigns, and reported_jobs, managed by Drizzle ORM with Row-Level Security (RLS) policies. Skills are stored in a many-to-many relationship via job_skills table, seeded by scripts/seed-skill-taxonomy.ts.",
+    content: "PostgreSQL schema includes tables for companies, contacts, contact_emails, email_campaigns, email_templates, ats_boards, company_facts, company_snapshots, and blocked_companies — all managed by Drizzle ORM with proper indexes for filtering performance.",
   },
   {
     heading: "Security & Auth",
@@ -186,10 +186,10 @@ export const extraSections: { heading: string; content: string }[] = [
   },
   {
     heading: "AI Integration",
-    content: "DeepSeek LLM classifies jobs for EU compatibility with structured output grounding. OpenAI powers general tasks. AI-assisted email drafting uses the ComposeFromLinkedIn component.",
+    content: "DeepSeek LLM powers company deep analysis and enrichment. AI-assisted email drafting uses the ComposeFromLinkedIn component to generate personalized outreach from LinkedIn profiles.",
   },
   {
-    heading: "Job Processing Pipeline",
-    content: "Jobs are ingested from ATS platforms (Greenhouse, Lever, Ashby), classified by DeepSeek LLM with heuristic pre-filtering, and stored in PostgreSQL. The UnifiedJobsProvider component renders jobs with real-time filtering, while admins manage campaigns via GraphQL mutations and Resend API.",
+    heading: "Outreach Pipeline",
+    content: "Contacts are discovered and verified, then grouped into email campaigns with configurable sequences and delays. The Resend API delivers emails, with reply tracking and follow-up scheduling handled via the contact_emails table.",
   },
 ];
