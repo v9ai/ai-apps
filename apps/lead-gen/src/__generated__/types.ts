@@ -105,20 +105,6 @@ export type BatchRecipientInput = {
   name: Scalars['String']['input'];
 };
 
-export type BlockJobsResult = {
-  __typename: 'BlockJobsResult';
-  message: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
-export type BlockedCompany = {
-  __typename: 'BlockedCompany';
-  createdAt: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  name: Scalars['String']['output'];
-  reason: Maybe<Scalars['String']['output']>;
-};
-
 export type CancelCompanyEmailsResult = {
   __typename: 'CancelCompanyEmailsResult';
   cancelledCount: Scalars['Int']['output'];
@@ -436,12 +422,6 @@ export type CreateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type DeleteBlockedCompanyResult = {
-  __typename: 'DeleteBlockedCompanyResult';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
 };
 
 export type DeleteCampaignResult = {
@@ -777,8 +757,6 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   applyEmailPattern: ApplyEmailPatternResult;
   archiveEmail: ArchiveEmailResult;
-  blockCompany: BlockedCompany;
-  blockJobsByCompany: BlockJobsResult;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
   createCompany: Company;
@@ -814,7 +792,6 @@ export type Mutation = {
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
-  unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateCampaign: EmailCampaign;
   updateCompany: Company;
@@ -845,17 +822,6 @@ export type MutationApplyEmailPatternArgs = {
 
 export type MutationArchiveEmailArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationBlockCompanyArgs = {
-  name: Scalars['String']['input'];
-  reason?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type MutationBlockJobsByCompanyArgs = {
-  companyName: Scalars['String']['input'];
 };
 
 
@@ -1042,11 +1008,6 @@ export type MutationUnarchiveEmailArgs = {
 };
 
 
-export type MutationUnblockCompanyArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
 export type MutationUnverifyCompanyContactsArgs = {
   companyId: Scalars['Int']['input'];
 };
@@ -1102,7 +1063,6 @@ export type PreviewEmailInput = {
 export type Query = {
   __typename: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
-  blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;

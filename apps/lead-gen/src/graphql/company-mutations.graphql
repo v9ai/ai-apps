@@ -123,13 +123,6 @@ mutation AnalyzeCompany($id: Int, $key: String) {
   }
 }
 
-mutation BlockJobsByCompany($companyName: String!) {
-  blockJobsByCompany(companyName: $companyName) {
-    success
-    message
-  }
-}
-
 mutation ImportCompanies($companies: [CompanyImportInput!]!) {
   importCompanies(companies: $companies) {
     success

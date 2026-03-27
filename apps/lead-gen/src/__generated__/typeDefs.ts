@@ -90,18 +90,6 @@ input BatchRecipientInput {
   name: String!
 }
 
-type BlockJobsResult {
-  message: String!
-  success: Boolean!
-}
-
-type BlockedCompany {
-  createdAt: String!
-  id: Int!
-  name: String!
-  reason: String
-}
-
 type CancelCompanyEmailsResult {
   cancelledCount: Int!
   failedCount: Int!
@@ -401,11 +389,6 @@ input CreateEmailTemplateInput {
 }
 
 scalar DateTime
-
-type DeleteBlockedCompanyResult {
-  message: String
-  success: Boolean!
-}
 
 type DeleteCampaignResult {
   message: String
@@ -716,8 +699,6 @@ type Mutation {
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   archiveEmail(id: Int!): ArchiveEmailResult!
-  blockCompany(name: String!, reason: String): BlockedCompany!
-  blockJobsByCompany(companyName: String!): BlockJobsResult!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
   createCompany(input: CreateCompanyInput!): Company!
@@ -753,7 +734,6 @@ type Mutation {
   sendScheduledEmailNow(resendId: String!): SendNowResult!
   syncResendEmails(companyId: Int): SyncResendResult!
   unarchiveEmail(id: Int!): ArchiveEmailResult!
-  unblockCompany(id: Int!): DeleteBlockedCompanyResult!
   unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
   updateCampaign(id: String!, input: UpdateCampaignInput!): EmailCampaign!
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
@@ -773,7 +753,6 @@ input PreviewEmailInput {
 
 type Query {
   allCompanyTags: [String!]!
-  blockedCompanies: [BlockedCompany!]!
   companies(filter: CompanyFilterInput, limit: Int, offset: Int, order_by: CompanyOrderBy): CompaniesResponse!
   company(id: Int, key: String): Company
   companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
