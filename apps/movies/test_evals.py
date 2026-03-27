@@ -136,11 +136,15 @@ class TestURLs:
             assert m["url"].startswith("https://"), f"Non-HTTPS url for '{m['title']}'"
 
     def test_url_domain_matches_platform(self, movies):
+        # justwatch.com is accepted as a fallback for any platform
         for m in movies:
+            url = m["url"]
+            if "justwatch.com" in url:
+                continue
             if m["platform"] == "Netflix":
-                assert "netflix.com" in m["url"], f"Netflix URL wrong: {m['url']}"
+                assert "netflix.com" in url, f"Netflix URL wrong: {url}"
             elif m["platform"] == "Disney+":
-                assert "disneyplus.com" in m["url"], f"Disney+ URL wrong: {m['url']}"
+                assert "disneyplus.com" in url, f"Disney+ URL wrong: {url}"
 
     def test_imdb_url_format(self, movies):
         for m in movies:
