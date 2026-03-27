@@ -77,7 +77,8 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
     });
     let candidates = candidates[..limit].to_vec();
 
-    let patterns = crate::email_metal::pattern_fsm::all_patterns();
+    let patterns: Arc<Vec<(&'static str, crate::email_metal::pattern_fsm::CompiledPattern)>> =
+        Arc::new(crate::email_metal::pattern_fsm::all_patterns());
     let pipeline = Arc::clone(&ctx.pipeline);
     let sem = Arc::new(Semaphore::new(COMPANY_CONCURRENCY));
 
@@ -87,7 +88,7 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
     for company in candidates {
         let sem = Arc::clone(&sem);
         let pipeline = Arc::clone(&pipeline);
-        let patterns = patterns.clone();
+        let patterns = Arc::clone(&patterns);
 
         handles.push(tokio::spawn(async move {
             let _permit = sem.acquire().await.unwrap();
@@ -143,7 +144,7 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
 /// Process a single company: MX lookup → pattern generation → parallel SMTP verification.
 async fn process_company(
     company: &super::enrich::EnrichedCompany,
-    patterns: &[(&str, crate::email_metal::pattern_fsm::CompiledPattern)],
+    patterns: &[(&'static str, crate::email_metal::pattern_fsm::CompiledPattern)],
     pipeline: &crate::Pipeline,
 ) -> CompanyResult {
     let domain = &company.domain;
