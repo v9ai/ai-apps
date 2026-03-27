@@ -340,13 +340,13 @@ export function GreeceHotels({ results, lang }: GreeceHotelsProps) {
   const t = T[lang];
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
 
-  // Sort by discovery score descending (cheap × most reviewed × best reviewed)
+  // Sort by price ascending (cheapest first), discovery score as tiebreaker
   const sorted = useMemo(
     () =>
       [...results].sort(
         (a, b) =>
-          (b.hotel.discovery_score ?? 0) - (a.hotel.discovery_score ?? 0) ||
-          a.hotel.price_eur - b.hotel.price_eur,
+          a.hotel.price_eur - b.hotel.price_eur ||
+          (b.hotel.discovery_score ?? 0) - (a.hotel.discovery_score ?? 0),
       ),
     [results],
   );
