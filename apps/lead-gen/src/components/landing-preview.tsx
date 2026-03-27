@@ -8,7 +8,7 @@ import { Box, Flex, Heading, Text, Badge } from "@radix-ui/themes";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 /**
- * Scrapus B2B lead generation preview.
+ * B2B lead generation preview.
  *
  * Shows sample scored leads from the pipeline with company info,
  * lead scores, extracted contacts, and industry tags.
