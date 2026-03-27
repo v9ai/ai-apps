@@ -4,16 +4,18 @@ import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
 import { GreeceHotels } from "@/components/GreeceHotels";
 import { hotels2026 } from "@/lib/data";
+import { DISCOVERY_YEAR } from "@/lib/constants";
+
 const T = {
   ro: {
-    title: "Grecia — Noi in 2026",
+    title: `Grecia — Noi in ${DISCOVERY_YEAR}`,
     subtitle:
       "Cele mai ieftine hoteluri noi — sentiment, aspecte si valoare prin Candle ML",
     tech: "Pipeline: Scrape → Candle embed → sentiment analysis → aspect extraction → value scoring → dedup",
     back: "Inapoi la Katowice",
   },
   en: {
-    title: "Greece — New in 2026",
+    title: `Greece — New in ${DISCOVERY_YEAR}`,
     subtitle:
       "Cheapest new hotels — sentiment, aspects and value analyzed via Candle ML",
     tech: "Pipeline: Scrape → Candle embed → sentiment analysis → aspect extraction → value scoring → dedup",

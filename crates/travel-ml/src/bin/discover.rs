@@ -291,7 +291,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 39.7217, lng: 21.6306,
             source_url: "https://www.booking.com/searchresults.html?ss=Meteora+Kalambaka+Greece".into(),
             amenities: vec!["Restaurant".into(), "Parking".into(), "Wi-Fi".into(), "Garden terrace".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "selini-suites-naxos".into(),
@@ -307,7 +307,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 37.1036, lng: 25.3763,
             source_url: "https://www.booking.com/searchresults.html?ss=Naxos+Town+Greece+hotel".into(),
             amenities: vec!["Swimming pool".into(), "Bar".into(), "Wi-Fi".into(), "Kitchenette".into(), "Beach access".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "corfu-olive-garden".into(),
@@ -323,7 +323,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 39.7900, lng: 19.7100,
             source_url: "https://www.booking.com/searchresults.html?ss=Sidari+Corfu+Greece+hotel".into(),
             amenities: vec!["Swimming pool".into(), "Restaurant".into(), "Parking".into(), "Wi-Fi".into(), "Beach shuttle".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "kos-mare-boutique".into(),
@@ -339,7 +339,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 36.8933, lng: 26.9881,
             source_url: "https://www.booking.com/searchresults.html?ss=Lambi+Kos+Greece+hotel".into(),
             amenities: vec!["Swimming pool".into(), "Bar".into(), "Beach access".into(), "Wi-Fi".into(), "Parking".into(), "Bike rental".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "urban-athena-hotel".into(),
@@ -355,7 +355,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 37.9750, lng: 23.7350,
             source_url: "https://www.booking.com/searchresults.html?ss=Syntagma+Square+Athens+Greece+hotel".into(),
             amenities: vec!["Rooftop terrace".into(), "Bar".into(), "Wi-Fi".into(), "Restaurant".into(), "Co-working".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         // ── Mid-range (€100–€250) ──────────────────────────────────
         Hotel {
@@ -372,7 +372,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 40.0500, lng: 23.4200,
             source_url: "https://www.booking.com/searchresults.html?ss=Kassandra+Halkidiki+Greece+resort".into(),
             amenities: vec!["Private beach".into(), "Swimming pool".into(), "Kids club".into(), "Restaurant".into(), "Parking".into(), "Wi-Fi".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "rhodes-seaside-all-inclusive".into(),
@@ -388,7 +388,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 36.3400, lng: 28.2000,
             source_url: "https://www.booking.com/searchresults.html?ss=Faliraki+Rhodes+Greece+all+inclusive".into(),
             amenities: vec!["Beach access".into(), "Swimming pool".into(), "Kids club".into(), "Multiple restaurants".into(), "Water sports".into(), "Fitness center".into(), "Aqua park".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "paros-azure-beach".into(),
@@ -404,7 +404,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 37.0480, lng: 25.2200,
             source_url: "https://www.booking.com/searchresults.html?ss=Golden+Beach+Paros+Greece+hotel".into(),
             amenities: vec!["Beach access".into(), "Swimming pool".into(), "Water sports".into(), "Bar".into(), "Restaurant".into(), "Wi-Fi".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "skiathos-breeze-hotel".into(),
@@ -420,7 +420,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 39.1500, lng: 23.4600,
             source_url: "https://www.booking.com/searchresults.html?ss=Koukounaries+Skiathos+Greece+hotel".into(),
             amenities: vec!["Infinity pool".into(), "Bar".into(), "Beach access".into(), "Wi-Fi".into(), "Fitness center".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "casa-cook-rethymno".into(),
@@ -437,7 +437,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 35.3720, lng: 24.4700,
             source_url: "https://www.casacook.com".into(),
             amenities: vec!["Swimming pool".into(), "Yoga".into(), "Restaurant".into(), "Bar".into(), "Spa".into(), "Wi-Fi".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         // ── Premium (€250–€500) ────────────────────────────────────
         Hotel {
@@ -486,7 +486,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 35.5138, lng: 24.0180,
             source_url: "https://www.marriott.com/w-hotels".into(),
             amenities: vec!["Infinity pool".into(), "Spa".into(), "Beach access".into(), "Multiple restaurants".into(), "Bar".into(), "Fitness center".into(), "Rooftop terrace".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "santorini-canaves-oia-epitome".into(),
@@ -536,7 +536,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 35.5600, lng: 24.1100,
             source_url: "https://www.sixsenses.com".into(),
             amenities: vec!["Plunge pools".into(), "Spa".into(), "Organic garden".into(), "Restaurant".into(), "Yoga".into(), "Hammam".into(), "Beach access".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
         Hotel {
             hotel_id: "one-and-only-kea".into(),
@@ -568,7 +568,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 35.2543, lng: 25.7284,
             source_url: "https://www.aman.com".into(),
             amenities: vec!["Private beach".into(), "Spa".into(), "Infinity pool".into(), "Restaurant".into(), "Boat excursions".into(), "Yoga".into(), "Butler service".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
     ]
 }

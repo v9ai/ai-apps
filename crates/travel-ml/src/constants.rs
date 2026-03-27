@@ -2,6 +2,9 @@
 /// from a scraped passage.
 pub const DISCOVERY_YEAR: u16 = 2026;
 
+/// String form of DISCOVERY_YEAR for text-based matching in scraped content.
+pub const DISCOVERY_YEAR_STR: &str = "2026";
+
 /// Minimum opening year for a hotel to qualify as "new" (2025–2026 window).
 /// Used for badge display and scraping filters.
 pub const NEW_HOTEL_MIN_YEAR: u16 = 2025;

@@ -198,6 +198,7 @@ pub fn seed_hotels() -> Vec<Hotel> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::DISCOVERY_YEAR;
 
     #[test]
     fn embed_text_basic() {
@@ -219,9 +220,9 @@ mod tests {
     #[test]
     fn embed_text_includes_opened_year() {
         let mut h = test_hotel("Acme Resort", 5, "Chania");
-        h.opened_year = Some(2026);
+        h.opened_year = Some(DISCOVERY_YEAR);
         let text = h.embed_text();
-        assert!(text.contains("Opened in 2026"));
+        assert!(text.contains(&format!("Opened in {DISCOVERY_YEAR}")));
     }
 
     #[test]
@@ -262,8 +263,8 @@ mod tests {
     #[test]
     fn hotel_json_includes_some_opened_year() {
         let mut h = test_hotel("Test Hotel", 4, "Heraklion");
-        h.opened_year = Some(2026);
+        h.opened_year = Some(DISCOVERY_YEAR);
         let json = serde_json::to_string(&h).unwrap();
-        assert!(json.contains("\"opened_year\":2026"));
+        assert!(json.contains(&format!("\"opened_year\":{DISCOVERY_YEAR}")));
     }
 }

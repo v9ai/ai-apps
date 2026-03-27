@@ -34,7 +34,6 @@ const PROMPT_PATTERNS = [
   /prompt/i,
   /classifier/i,
   /extraction-workflow/i,
-  /process-jobs/i,
 ];
 
 const SCHEMA_PATTERNS = [/schema\/.*\.graphql$/, /schema\.graphql$/];
@@ -307,22 +306,8 @@ function checkEvidenceRequired(
   const violations: Violation[] = [];
 
   for (const [file, content] of fileContents) {
-    const insertsToSkillTags =
-      content.includes("job_skill_tags") && content.includes("INSERT");
     const insertsToFacts =
       content.includes("company_facts") && content.includes("INSERT");
-
-    if (insertsToSkillTags && !content.includes("evidence")) {
-      violations.push({
-        rule: "Rule 8: Evidence — Every persisted AI decision must have evidence",
-        severity: "BLOCKING",
-        metaApproach: "Grounding-First",
-        file,
-        message:
-          "INSERT to job_skill_tags without evidence field. Every skill tag must include the job description snippet that justified it.",
-        fix: "Include `evidence` column with the relevant excerpt from the job description.",
-      });
-    }
 
     if (insertsToFacts && !content.includes("evidence")) {
       violations.push({

@@ -1278,6 +1278,7 @@ pub async fn analyze_all_hotels_with_reviews_from(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::DISCOVERY_YEAR;
 
     #[test]
     fn split_sentences_basic() {
@@ -1763,7 +1764,7 @@ mod tests {
             Offers excellent breakfast buffet and friendly staff. \
             Spa and wellness center available. Family-friendly with kids pool.".to_string();
         hotel.amenities = vec!["pool".into(), "spa".into(), "restaurant".into()];
-        hotel.opened_year = Some(2026);
+        hotel.opened_year = Some(DISCOVERY_YEAR);
 
         let analysis = analyze_hotel(&engine, &hotel, None).unwrap();
 
