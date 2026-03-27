@@ -35,8 +35,6 @@ import { TrashIcon, ExternalLinkIcon, ExclamationTriangleIcon, InfoCircledIcon }
 import Link from "next/link";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-hooks";
-import { classifyJob } from "@/lib/classify-job";
-import type { JobClassificationResponse } from "@/lib/classify-job";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { getSkillLabel, formatConfidence } from "@/lib/skills/taxonomy";
 
@@ -56,12 +54,6 @@ function JobPageContent() {
   const source = searchParams.get("source");
   const { user } = useAuth();
 
-  const [classifying, setClassifying] = useState(false);
-  const [classification, setClassification] =
-    useState<JobClassificationResponse | null>(null);
-  const [classificationError, setClassificationError] = useState<string | null>(
-    null,
-  );
   const [hideCompanyLoading, setHideCompanyLoading] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [enhanceError, setEnhanceError] = useState<string | null>(null);
@@ -136,47 +128,6 @@ function JobPageContent() {
   const relatedJobs = (relatedJobsData?.jobs?.jobs ?? []).filter(
     (j) => j.id !== job.id,
   );
-
-  const handleClassify = async () => {
-    if (!job.title || !job.location || !job.description) {
-      setClassificationError("Missing required job information");
-      return;
-    }
-
-    setClassifying(true);
-    setClassificationError(null);
-
-    // Build comprehensive location string including secondary locations
-    let locationString = job.location;
-    if (
-      job.ashby_secondary_locations &&
-      job.ashby_secondary_locations.length > 0
-    ) {
-      const secondaryLocs = job.ashby_secondary_locations
-        .map((loc) => loc.location)
-        .join(", ");
-      locationString = `${job.location}, ${secondaryLocs}`;
-    }
-
-    const result = await classifyJob(
-      {
-        title: job.title,
-        location: locationString,
-        description: job.description,
-      },
-      job.id,
-    );
-
-    setClassifying(false);
-
-    if (result.ok && result.data) {
-      setClassification(result.data);
-      // Refetch all GraphQL data to update UI with new classification
-      await refetch();
-    } else {
-      setClassificationError(result.error || "Classification failed");
-    }
-  };
 
   const handleEnhance = async () => {
     if (!source || !company || !id) {
@@ -409,26 +360,18 @@ function JobPageContent() {
           {job.status && (
             <Badge
               color={
-                job.status === "eu_remote"
-                  ? "green"
-                  : job.status === "non_eu"
-                    ? "red"
-                    : job.status === "enhanced"
-                      ? "blue"
-                      : job.status === "reported"
-                        ? "orange"
-                        : "gray"
+                job.status === "enhanced"
+                  ? "blue"
+                  : job.status === "reported"
+                    ? "orange"
+                    : "gray"
               }
             >
-              {job.status === "eu_remote"
-                ? "✅ Fully Remote (EU)"
-                : job.status === "non_eu"
-                  ? "❌ Not Remote EU"
-                  : job.status === "enhanced"
-                    ? "🔄 Enhanced"
-                    : job.status === "reported"
-                      ? "Reported"
-                      : job.status}
+              {job.status === "enhanced"
+                ? "🔄 Enhanced"
+                : job.status === "reported"
+                  ? "Reported"
+                  : job.status}
             </Badge>
           )}
           {job.source_kind && <Badge>{job.source_kind}</Badge>}
@@ -1374,119 +1317,8 @@ function JobPageContent() {
             )}
         </Box>
 
-        {/* Right Column - Classification & Metadata */}
+        {/* Right Column - Metadata */}
         <Box style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          {/* AI Classification */}
-          <Card>
-            <Flex justify="between" align="center" mb="2">
-              <Heading size="5">Remote EU Classification</Heading>
-              <Button size="2" onClick={handleClassify} disabled={classifying}>
-                {classifying ? "Classifying..." : "Re-classify"}
-              </Button>
-            </Flex>
-            <Text size="1" color="gray" mb="3">
-              Fully remote positions that allow working from anywhere in the EU
-            </Text>
-
-            {/* Show existing classification from database */}
-            {job.is_remote_eu !== null && job.is_remote_eu !== undefined && (
-              <Flex direction="column" gap="3">
-                <Flex gap="2" align="center">
-                  <Badge color={job.is_remote_eu ? "green" : "red"} size="2">
-                    {job.is_remote_eu ? "✅ Remote EU" : "❌ Not Remote EU"}
-                  </Badge>
-                  {job.remote_eu_confidence && (
-                    <Badge
-                      color={
-                        job.remote_eu_confidence === "high"
-                          ? "green"
-                          : job.remote_eu_confidence === "medium"
-                            ? "orange"
-                            : "gray"
-                      }
-                      size="2"
-                    >
-                      {job.remote_eu_confidence} confidence
-                    </Badge>
-                  )}
-                </Flex>
-                {job.remote_eu_reason && (
-                  <>
-                    <Text size="2" color="gray">
-                      <Text weight="medium" as="span">
-                        Reason:
-                      </Text>{" "}
-                      {job.remote_eu_reason}
-                    </Text>
-                    {job.remote_eu_reason.startsWith("Backfilled from") && (
-                      <Text size="1" color="orange" mt="1">
-                        Placeholder from migration — click Re-classify for AI
-                        analysis.
-                      </Text>
-                    )}
-                  </>
-                )}
-              </Flex>
-            )}
-
-            {/* Show live classification result if just classified */}
-            {classification && (
-              <Flex
-                direction="column"
-                gap="3"
-                mt={job.is_remote_eu !== null ? "3" : "0"}
-              >
-                {job.is_remote_eu !== null && (
-                  <Text size="1" weight="bold" color="blue">
-                    New Classification:
-                  </Text>
-                )}
-                <Flex gap="2" align="center">
-                  <Badge
-                    color={classification.isRemoteEU ? "green" : "red"}
-                    size="2"
-                  >
-                    {classification.isRemoteEU
-                      ? "✅ Remote EU"
-                      : "❌ Not Remote EU"}
-                  </Badge>
-                  <Badge
-                    color={
-                      classification.confidence === "high"
-                        ? "green"
-                        : classification.confidence === "medium"
-                          ? "orange"
-                          : "gray"
-                    }
-                    size="2"
-                  >
-                    {classification.confidence} confidence
-                  </Badge>
-                </Flex>
-                <Text size="2" color="gray">
-                  <Text weight="medium" as="span">
-                    Reason:
-                  </Text>{" "}
-                  {classification.reason}
-                </Text>
-              </Flex>
-            )}
-
-            {classificationError && (
-              <Text size="2" color="red">
-                {classificationError}
-              </Text>
-            )}
-
-            {!classification &&
-              !classificationError &&
-              job.is_remote_eu === null && (
-                <Text size="2" color="gray">
-                  Click the button to analyze this job posting with AI
-                </Text>
-              )}
-          </Card>
-
           {/* Skill Match Against User Preferences */}
           {user && job.skillMatch && (() => {
             const { score, matchedCount, totalPreferred, details } = job.skillMatch;

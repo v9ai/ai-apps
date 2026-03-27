@@ -2,7 +2,6 @@
 
 import { Flex, Text, Button } from "@radix-ui/themes";
 import { DeleteAllJobsButton } from "./delete-all-jobs-button";
-import { ProcessAllJobsButton } from "./process-all-jobs-button";
 import { Card, Badge } from "@/components/ui";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -31,7 +30,6 @@ export function AdminBar({ userEmail }: AdminBarProps) {
         <Badge variant="orange">admin</Badge>
         <Flex gap="2" flexGrow="1" wrap="wrap">
           <DeleteAllJobsButton />
-          <ProcessAllJobsButton />
           <Button size="1" variant={showAll ? "solid" : "outline"} color="orange" onClick={toggleShowAll}>
             {showAll ? "showing all" : "show all"}
           </Button>
