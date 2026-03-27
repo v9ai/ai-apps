@@ -17,14 +17,7 @@ from playwright.sync_api import sync_playwright
 
 HOTELS = [
     {"id": "petra-view-meteora", "name": "Petra View Hotel Meteora", "region": "Kalambaka Meteora Greece"},
-    {"id": "selini-suites-naxos", "name": "Selini Suites Naxos", "region": "Naxos Town Greece"},
-    {"id": "corfu-olive-garden", "name": "Corfu Olive Garden Hotel", "region": "Sidari Corfu Greece"},
-    {"id": "kos-mare-boutique", "name": "Kos Mare Boutique", "region": "Kos Greece"},
     {"id": "urban-athena-hotel", "name": "Urban Athena Hotel", "region": "Athens Greece"},
-    {"id": "halkidiki-blue-lagoon", "name": "Halkidiki Blue Lagoon Resort", "region": "Halkidiki Greece"},
-    {"id": "rhodes-seaside-all-inclusive", "name": "Rhodes Seaside All-Inclusive", "region": "Faliraki Rhodes Greece"},
-    {"id": "paros-azure-beach", "name": "Paros Azure Beach Hotel", "region": "Paros Greece"},
-    {"id": "skiathos-breeze-hotel", "name": "Skiathos Breeze Hotel", "region": "Skiathos Greece"},
     {"id": "casa-cook-rethymno", "name": "Casa Cook Rethymno", "region": "Rethymno Crete Greece"},
     {"id": "domes-zeen-chania", "name": "Domes Zeen Chania", "region": "Chania Crete Greece"},
     {"id": "numo-ierapetra", "name": "Numo Ierapetra Beach Resort", "region": "Ierapetra Crete Greece"},
