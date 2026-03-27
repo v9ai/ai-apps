@@ -1051,12 +1051,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   });
   const companyJobs = jobsData?.jobs?.jobs ?? [];
 
-  const remoteEuConfirmed = companyJobs.some(
-    (j) => j.is_remote_eu === true && j.remote_eu_confidence === "high",
-  );
-  const remoteEuLikely =
-    !remoteEuConfirmed && companyJobs.some((j) => j.is_remote_eu === true);
-
   const websiteHref = useMemo(
     () => coerceExternalUrl(company?.website),
     [company?.website]
@@ -1298,19 +1292,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   </Badge>
                 )}
 
-                {remoteEuConfirmed && (
-                  <Badge color="green" variant="soft">
-                    <CheckCircledIcon />
-                    Remote EU confirmed
-                  </Badge>
-                )}
 
-                {remoteEuLikely && (
-                  <Badge color="amber" variant="soft">
-                    <CheckCircledIcon />
-                    Remote EU likely
-                  </Badge>
-                )}
               </Flex>
 
               <Flex gap="2" wrap="wrap" mt="3">
@@ -1424,12 +1406,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                                   <Text size="2" color="gray">
                                     {job.location}
                                   </Text>
-                                )}
-                                {job.is_remote_eu && (
-                                  <Badge color="green" variant="soft" size="1">
-                                    <CheckCircledIcon />
-                                    Remote EU
-                                  </Badge>
                                 )}
                               </Flex>
                             </Flex>

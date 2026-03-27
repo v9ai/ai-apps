@@ -88,36 +88,7 @@ def persist_role_tags(
 
 
 # ---------------------------------------------------------------------------
-# Process Jobs — Phase 3 (EU classification)
-# ---------------------------------------------------------------------------
-
-def persist_eu_classification(
-    conn: psycopg.Connection,
-    job_id: int,
-    is_remote_eu: bool,
-    confidence: str,
-    reason: str,
-    source: str,
-) -> None:
-    """Write EU classification result and advance status."""
-    next_status = "eu-remote" if is_remote_eu else "non-eu"
-    with conn.cursor() as cur:
-        cur.execute(
-            """UPDATE jobs
-               SET is_remote_eu          = %s,
-                   remote_eu_confidence  = %s,
-                   remote_eu_reason      = %s,
-                   score_reason          = %s,
-                   status                = %s,
-                   updated_at            = now()
-               WHERE id = %s""",
-            [is_remote_eu, confidence, reason, source, next_status, job_id],
-        )
-    conn.commit()
-
-
-# ---------------------------------------------------------------------------
-# Process Jobs — Phase 4 (skill extraction)
+# Process Jobs — Phase 3 (skill extraction)
 # ---------------------------------------------------------------------------
 
 def upsert_job_skills(
@@ -160,7 +131,6 @@ def upsert_job_skills(
 # Columns NULLed on stale — everything except identity/conflict keys.
 _STALE_COLUMNS = [
     "location", "description", "score", "score_reason",
-    "is_remote_eu", "remote_eu_confidence", "remote_eu_reason",
     "company_id", "ats_data", "absolute_url", "internal_job_id",
     "requisition_id", "company_name", "first_published", "language",
     "metadata", "departments", "offices", "questions",
