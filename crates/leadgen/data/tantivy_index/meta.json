@@ -3,7 +3,28 @@
     "docstore_compression": "lz4",
     "docstore_blocksize": 16384
   },
-  "segments": [],
+  "segments": [
+    {
+      "segment_id": "fba39fea-c745-432d-96a1-d5c40366a721",
+      "max_doc": 35,
+      "deletes": null
+    },
+    {
+      "segment_id": "2d2b9232-41f5-4b9b-b975-7119e07cd4b6",
+      "max_doc": 3,
+      "deletes": null
+    },
+    {
+      "segment_id": "509fe289-206d-48a3-a9c2-ea2cd9eafe23",
+      "max_doc": 2,
+      "deletes": null
+    },
+    {
+      "segment_id": "01e4f832-a485-4202-a0ff-6a46718e2c9e",
+      "max_doc": 1,
+      "deletes": null
+    }
+  ],
   "schema": [
     {
       "name": "company_id",
@@ -110,5 +131,5 @@
       }
     }
   ],
-  "opstamp": 0
+  "opstamp": 94
 }
