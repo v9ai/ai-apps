@@ -10,7 +10,7 @@ use travel_ml::discover::is_seaside_hotel;
 use travel_ml::hotel::Hotel;
 
 /// Canonical JSON path relative to crates/travel-ml/
-const JSON_PATH: &str = "../../apps/travel/src/data/hotels_2026.json";
+const JSON_PATH: &str = "../../src/data/hotels_2026.json";
 
 fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
