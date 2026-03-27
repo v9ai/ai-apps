@@ -169,7 +169,7 @@ export function LandingFeatures() {
             style={{ color: "var(--gray-9)", maxWidth: 560 }}
           >
             cloud CRMs are optimized for their margins, not your pipeline.
-            scrapus reverses that — it works on your hardware.
+            Lead-gen reverses that — it works on your hardware.
           </Text>
         </Box>
 
