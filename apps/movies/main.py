@@ -1,6 +1,4 @@
-def main():
-    print("Hello from movies!")
-
+from find_similar_movies import main
 
 if __name__ == "__main__":
     main()

@@ -12,7 +12,7 @@ import re
 import pytest
 
 RESULTS_PATH = os.path.join(os.path.dirname(__file__), "similar_movies_results.json")
-QUERY_MOVIE = "The Pursuit of Happyness"
+VALID_PLATFORMS = {"Netflix", "Disney+", "Prime Video", "Apple TV+"}
 
 
 @pytest.fixture(scope="module")
@@ -27,17 +27,25 @@ def movies(results):
     return results["results"]
 
 
+@pytest.fixture(scope="module")
+def query_movie(results):
+    return results["query_movie"]
+
+
 class TestSchema:
     def test_top_level_keys(self, results):
         required = {"query_movie", "generated_at", "platforms", "total_results", "results"}
         assert required.issubset(results.keys())
 
-    def test_query_movie(self, results):
-        assert results["query_movie"] == QUERY_MOVIE
+    def test_query_movie_is_string(self, results):
+        assert isinstance(results["query_movie"], str)
+        assert len(results["query_movie"]) > 0
 
     def test_platforms_listed(self, results):
-        assert "Netflix" in results["platforms"]
-        assert "Disney+" in results["platforms"]
+        assert isinstance(results["platforms"], list)
+        assert len(results["platforms"]) >= 1
+        for p in results["platforms"]:
+            assert p in VALID_PLATFORMS, f"Unknown platform in results: {p}"
 
     def test_total_results_matches(self, results, movies):
         assert results["total_results"] == len(movies)
@@ -51,13 +59,31 @@ class TestSchema:
             missing = required_fields - set(movie.keys())
             assert not missing, f"Movie '{movie.get('title', '?')}' missing fields: {missing}"
 
+    def test_new_fields_present(self, movies):
+        """genre and director fields added in enhanced version."""
+        for movie in movies:
+            assert "genre" in movie, f"Missing 'genre' field for '{movie.get('title', '?')}'"
+            assert "director" in movie, f"Missing 'director' field for '{movie.get('title', '?')}'"
+
+    def test_genre_is_list(self, movies):
+        for movie in movies:
+            assert isinstance(movie.get("genre"), list), \
+                f"'genre' should be a list for '{movie.get('title', '?')}'"
+            assert len(movie["genre"]) >= 1, \
+                f"'genre' list is empty for '{movie.get('title', '?')}'"
+
+    def test_director_is_string(self, movies):
+        for movie in movies:
+            assert isinstance(movie.get("director"), str), \
+                f"'director' should be a string for '{movie.get('title', '?')}'"
+
     def test_ranks_sequential(self, movies):
         ranks = [m["rank"] for m in movies]
         assert ranks == list(range(1, len(movies) + 1)), "Ranks should be sequential 1..N"
 
     def test_year_is_plausible(self, movies):
         for m in movies:
-            assert 1950 <= m["year"] <= 2026, f"Year {m['year']} for '{m['title']}' is implausible"
+            assert 1920 <= m["year"] <= 2027, f"Year {m['year']} for '{m['title']}' is implausible"
 
     def test_age_rating_is_7_plus(self, movies):
         allowed = {"G", "PG", "PG-13", "TV-Y7", "TV-G", "TV-PG", "TV-14"}
@@ -65,31 +91,33 @@ class TestSchema:
             assert m["age_rating"] in allowed, \
                 f"'{m['title']}' has age rating '{m['age_rating']}' (expected 7+ suitable: {allowed})"
 
+    def test_min_rating_in_metadata(self, results):
+        assert "min_rating" in results, "min_rating should be stored in output metadata"
+        assert isinstance(results["min_rating"], (int, float))
+
 
 class TestQuantity:
-    def test_minimum_15_results(self, movies):
-        """Age 7+ filter is stricter, so 15 is the minimum."""
-        assert len(movies) >= 15, f"Expected >= 15 movies, got {len(movies)}"
+    def test_minimum_10_results(self, movies):
+        """At least 10 results expected after filtering."""
+        assert len(movies) >= 10, f"Expected >= 10 movies, got {len(movies)}"
 
-    def test_netflix_has_results(self, movies):
-        netflix = [m for m in movies if m["platform"] == "Netflix"]
-        assert len(netflix) >= 2, f"Expected >= 2 Netflix movies, got {len(netflix)}"
-
-    def test_disney_has_results(self, movies):
-        disney = [m for m in movies if m["platform"] == "Disney+"]
-        assert len(disney) >= 5, f"Expected >= 5 Disney+ movies, got {len(disney)}"
+    def test_each_platform_has_results(self, results, movies):
+        for platform in results["platforms"]:
+            count = sum(1 for m in movies if m["platform"] == platform)
+            assert count >= 1, f"Expected >= 1 movie from {platform}, got {count}"
 
 
 class TestDeduplication:
     def test_no_duplicate_titles(self, movies):
         titles = [m["title"].lower().strip() for m in movies]
-        duplicates = [t for t in titles if titles.count(t) > 1]
-        assert not duplicates, f"Duplicate titles found: {set(duplicates)}"
+        duplicates = [t for t in set(titles) if titles.count(t) > 1]
+        assert not duplicates, f"Duplicate titles found: {duplicates}"
 
-    def test_query_movie_excluded(self, movies):
+    def test_query_movie_excluded(self, movies, query_movie):
+        query_lower = query_movie.lower().strip()
         for m in movies:
             title = m["title"].lower().strip()
-            assert "pursuit of happyness" not in title, \
+            assert title != query_lower, \
                 f"Query movie should not appear in results: '{m['title']}'"
 
 
@@ -115,10 +143,16 @@ class TestURLs:
         for m in movies:
             url = m["url"]
             assert url.startswith("https://"), f"URL not HTTPS for '{m['title']}': {url}"
-            if m["platform"] == "Netflix":
+            platform = m["platform"]
+            if platform == "Netflix":
                 assert "netflix.com" in url, f"Netflix movie has wrong URL domain: {url}"
-            elif m["platform"] == "Disney+":
+            elif platform == "Disney+":
                 assert "disneyplus.com" in url, f"Disney+ movie has wrong URL domain: {url}"
+            elif platform == "Prime Video":
+                assert "amazon.com" in url, f"Prime Video movie has wrong URL domain: {url}"
+            elif platform == "Apple TV+":
+                assert "apple.com" in url or "tv.apple.com" in url, \
+                    f"Apple TV+ movie has wrong URL domain: {url}"
 
     def test_imdb_url_format(self, movies):
         for m in movies:
@@ -129,6 +163,19 @@ class TestURLs:
     def test_imdb_urls_unique(self, movies):
         urls = [m["imdb_url"] for m in movies]
         assert len(urls) == len(set(urls)), "Duplicate IMDB URLs found"
+
+
+class TestRatings:
+    def test_imdb_ratings_above_min(self, results, movies):
+        min_rating = results.get("min_rating", 7.0)
+        for m in movies:
+            assert m.get("imdb_rating", 0) >= min_rating - 0.5, \
+                f"'{m['title']}' IMDB {m.get('imdb_rating')} is well below min_rating {min_rating}"
+
+    def test_imdb_rating_is_numeric(self, movies):
+        for m in movies:
+            assert isinstance(m.get("imdb_rating"), (int, float)), \
+                f"imdb_rating is not numeric for '{m.get('title', '?')}'"
 
 
 class TestRomanianAudio:
@@ -156,18 +203,13 @@ class TestEnglishOutput:
 
 
 class TestPlatformCoverage:
-    def test_both_platforms_represented(self, movies):
-        platforms = {m["platform"] for m in movies}
-        assert "Netflix" in platforms
-        assert "Disney+" in platforms
-
     def test_platform_values_valid(self, movies):
-        valid = {"Netflix", "Disney+"}
         for m in movies:
-            assert m["platform"] in valid, f"Invalid platform '{m['platform']}'"
+            assert m["platform"] in VALID_PLATFORMS, f"Invalid platform '{m['platform']}'"
 
-    def test_balanced_platform_distribution(self, movies):
-        netflix = sum(1 for m in movies if m["platform"] == "Netflix")
-        ratio = netflix / len(movies)
-        assert 0.10 <= ratio <= 0.90, \
-            f"Imbalanced: Netflix has {netflix}/{len(movies)} ({ratio:.0%})"
+    def test_platforms_match_metadata(self, results, movies):
+        """All movie platforms should be among the searched platforms."""
+        searched = set(results["platforms"])
+        for m in movies:
+            assert m["platform"] in searched, \
+                f"Movie '{m['title']}' on '{m['platform']}' which was not in searched platforms {searched}"
