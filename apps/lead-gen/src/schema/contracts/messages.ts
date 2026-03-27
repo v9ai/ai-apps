@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { JobStatus, ClassificationConfidence, SkillLevel } from "./enums";
+import { JobStatus, SkillLevel } from "./enums";
 
 // ---------------------------------------------------------------------------
 // Queue: insert-jobs → process-jobs
@@ -25,17 +25,6 @@ export const ProcessJobsMessage = z.object({
   traceId: z.string().optional(),
 });
 export type ProcessJobsMessage = z.infer<typeof ProcessJobsMessage>;
-
-// ---------------------------------------------------------------------------
-// Job classification result (process-jobs output)
-// ---------------------------------------------------------------------------
-
-export const JobClassificationResult = z.object({
-  isRemoteEU: z.boolean(),
-  confidence: ClassificationConfidence,
-  reason: z.string(),
-});
-export type JobClassificationResult = z.infer<typeof JobClassificationResult>;
 
 // ---------------------------------------------------------------------------
 // Role tagging result (process-jobs Phase 2 output)

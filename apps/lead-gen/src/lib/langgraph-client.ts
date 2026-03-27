@@ -114,18 +114,6 @@ export function composeEmail(input: {
   });
 }
 
-export function classifyJob(input: {
-  title: string;
-  location?: string;
-  description?: string;
-}): Promise<ClassifyJobResult> {
-  return callLangGraph<ClassifyJobResult>("/classify-job", {
-    title: input.title,
-    location: input.location ?? "",
-    description: input.description ?? "",
-  });
-}
-
 export function emailOutreach(input: {
   recipientName: string;
   recipientRole?: string;

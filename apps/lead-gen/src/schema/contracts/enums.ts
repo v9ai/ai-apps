@@ -41,13 +41,6 @@ export const JOB_STATUS_PYTHON_MAP: Record<JobStatus, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Classification confidence
-// ---------------------------------------------------------------------------
-
-export const ClassificationConfidence = z.enum(["high", "medium", "low"]);
-export type ClassificationConfidence = z.infer<typeof ClassificationConfidence>;
-
-// ---------------------------------------------------------------------------
 // ATS vendor / provider
 // ---------------------------------------------------------------------------
 
