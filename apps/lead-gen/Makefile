@@ -149,7 +149,7 @@ leads-clean: ## Remove generated lead data
 
 .PHONY: start
 
-start: ## Full autonomous cycle: pipeline + improve + codefix
+start: ## Full autonomous cycle — launches Claude Code with /agents pipeline
 	claude "/agents pipeline"
 
 # ── All ────────────────────────────────────────────────────────

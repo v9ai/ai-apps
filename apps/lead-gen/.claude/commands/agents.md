@@ -307,7 +307,7 @@ Step 7: T4 done → spawn verifier (T5)
 Step 8: TeamDelete → show report
 ```
 
-Sub-modes: `improve status`, `improve discover`, `improve classify`, `improve skills` — each creates a small team for the targeted task. See `.claude/commands/improve.md` for full details.
+Sub-modes: `improve status`, `improve discover`, `improve classify`, `improve skills` — each creates a targeted team. See `.claude/commands/improve.md` for full step-by-step.
 
 ## Improve Rules
 
