@@ -204,6 +204,8 @@ async fn main() -> Result<()> {
         }
 
         "pipeline" => {
+            // Drop the outer index_writer so CrawlStage can acquire its own lock
+            drop(index_writer);
             let file = args.get(2).expect("usage: leadgen pipeline <domains.txt>");
             let content = std::fs::read_to_string(file)?;
             let domains: Vec<String> = content.lines().filter(|l| !l.is_empty()).map(|l| l.trim().to_string()).collect();

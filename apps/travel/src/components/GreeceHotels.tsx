@@ -655,6 +655,7 @@ export function GreeceHotels({ results, lang }: GreeceHotelsProps) {
               >
                 <Link
                   href={`/greece/${hotel.hotel_id}`}
+                  target="_blank"
                   className={css({
                     fontSize: { base: "body", md: "lg" },
                     fontWeight: "700",
@@ -816,6 +817,7 @@ export function GreeceHotels({ results, lang }: GreeceHotelsProps) {
                 {/* CTA */}
                 <Link
                   href={`/greece/${hotel.hotel_id}`}
+                  target="_blank"
                   className={css({
                     display: "inline-flex",
                     alignItems: "center",
