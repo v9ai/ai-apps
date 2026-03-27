@@ -300,9 +300,12 @@ def refine_results(state: State) -> dict:
 def enrich_results(state: State) -> dict:
     resp = llm.invoke(
         f"""For each movie in this JSON array, add exactly three new fields:
-- "url": Netflix URL "https://www.netflix.com/title/<id>" or Disney+ URL
-  "https://www.disneyplus.com/movies/<slug>" (use real IDs/slugs if known,
-  else search fallback: netflix.com/search?q=... or disneyplus.com/en-gb/browse/search?q=...)
+- "url": direct watch URL — MUST be a real deep-link, not a search page:
+  Netflix: "https://www.netflix.com/title/<numeric_id>"  (e.g. /title/70136120)
+  Disney+: "https://www.disneyplus.com/movies/<title-slug>/<content_id>"
+           (e.g. /movies/soul/1kkx9VdVLKlZ)
+  If you don't know the exact ID, use JustWatch as fallback:
+  "https://www.justwatch.com/us/search?q=<url-encoded-title>"
 - "imdb_url": "https://www.imdb.com/title/<tt_id>/" with the real IMDB tt-id
 - "romanian_audio": boolean, true if the film has Romanian dubbing in Romania
 
@@ -312,15 +315,11 @@ Keep ALL existing fields. Return ONLY the JSON array, no markdown.
     )
     try:
         enriched = _extract_json(resp.content)
-        # Guarantee search-fallback URLs for anything blank
+        # Guarantee fallback URLs for anything blank
         for m in enriched:
             if not m.get("url"):
                 t = quote(m.get("title", ""))
-                m["url"] = (
-                    f"https://www.netflix.com/search?q={t}"
-                    if m.get("platform") == "Netflix"
-                    else f"https://www.disneyplus.com/en-gb/browse/search?q={t}"
-                )
+                m["url"] = f"https://www.justwatch.com/us/search?q={t}"
         return {"similar_movies": enriched}
     except (json.JSONDecodeError, ValueError):
         return {"similar_movies": state["similar_movies"]}
@@ -451,11 +450,7 @@ async def _validate_async(movies: list[dict]) -> list[dict]:
         if not m.get(f"{key}_ok", True):
             t = quote(m.get("title", ""))
             if key == "url":
-                m[key] = (
-                    f"https://www.netflix.com/search?q={t}"
-                    if m.get("platform") == "Netflix"
-                    else f"https://www.disneyplus.com/en-gb/browse/search?q={t}"
-                )
+                m[key] = f"https://www.justwatch.com/us/search?q={t}"
             else:
                 m[key] = f"https://www.imdb.com/find/?q={t}"
     return movies
