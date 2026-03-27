@@ -89,20 +89,6 @@ enum Command {
         prefix: Option<String>,
     },
 
-    /// Spawn 20 parallel agents to research agentic coding topics and save to D1
-    Study {
-        /// DeepSeek API key (or set DEEPSEEK_API_KEY env var)
-        #[arg(long)]
-        api_key: Option<String>,
-    },
-
-    /// Spawn 10 parallel agents to research application-prep topics for Plan A Technologies
-    Prep {
-        /// DeepSeek API key (or set DEEPSEEK_API_KEY env var)
-        #[arg(long)]
-        api_key: Option<String>,
-    },
-
     /// Spawn 10 parallel agents to enhance application's agentic coding section
     Enhance {
         #[command(flatten)]
@@ -125,21 +111,6 @@ enum Command {
 
     /// Normalize study_topics category slugs in D1 (e.g. "Node.js" → "nodejs")
     SlugFix,
-
-    /// Generate study topic stubs for a dynamic category using DeepSeek Reasoner (no Semantic Scholar)
-    StudyGen {
-        /// Category slug (e.g. "nodejs", "rust", "system-design")
-        #[arg(short, long)]
-        category: String,
-
-        /// Number of topics to generate (default: 10, max: 20)
-        #[arg(long, default_value = "10")]
-        count: usize,
-
-        /// DeepSeek API key (or set DEEPSEEK_API_KEY env var)
-        #[arg(long)]
-        api_key: Option<String>,
-    },
 
     /// Spawn 15 parallel agents to research remote AI/ML engineering job search strategies
     RemoteJobSearch {

@@ -46,6 +46,10 @@
   display: none;
 }
 
+.navbar__logo img {
+  width: auto;
+}
+
 /* Article titles: sans-serif font */
 .blog-wrapper article h1,
 .blog-wrapper article h2:first-child,
