@@ -113,7 +113,7 @@ leads-clean: ## Remove generated lead data
 
 # ── Module 4: Rust Pipeline Teams ────────────────────────────
 
-METAL_DIR := leadgen-metal
+METAL_DIR := crates/metal
 METAL_BIN := $(METAL_DIR)/target/release/leadgen-metal
 
 .PHONY: start start-build start-status start-top

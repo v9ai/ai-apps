@@ -127,7 +127,7 @@ schema/                    GraphQL schema (by domain: jobs, companies, contacts,
 migrations/                Drizzle migration SQL files
 scripts/                   TypeScript automation (17 scripts)
 langgraph/                 Python LangGraph service (20 agentic graphs), MLX training
-leadgen-metal/             Zero-alloc Rust kernels (NER, embeddings, scoring, SIMD similarity)
+crates/metal/              Zero-alloc Rust kernels (NER, embeddings, scoring, SIMD similarity)
 ../../crates/leadgen/      Rust ML pipeline (bandits, NeuralUCB, NER, Candle embeddings, eval)
 ../../crates/candle/       Shared Candle ML inference (BERT, Metal/CUDA)
 docs/                      Architecture and research documentation
