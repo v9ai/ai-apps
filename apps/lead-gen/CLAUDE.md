@@ -293,7 +293,7 @@ Debate protocol: agents cross-read findings, challenge weak claims, resolve conf
 
 ## Additional resources
 
-- **[SKILLS-REMOTE-WORK-EU.md](./SKILLS-REMOTE-WORK-EU.md)** — Curated agent skills and subagents for remote EU job market focus.
+- **[SKILLS-REMOTE-WORK-EU.md](./docs/SKILLS-REMOTE-WORK-EU.md)** — Curated agent skills and subagents for remote EU job market focus.
 - **[OPTIMIZATION-STRATEGY.md](./OPTIMIZATION-STRATEGY.md)** — Full Two-Layer Model strategy document.
 
 ---
