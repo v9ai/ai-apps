@@ -4,6 +4,7 @@ import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
 import { getHotelById, hotels2026 } from "@/lib/data";
 import Link from "next/link";
+import { useState, useCallback, useEffect } from "react";
 
 const T = {
   ro: {
@@ -357,6 +358,31 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
     ? (hotel.reviews ?? []).filter((r) => r.source !== "ml-analysis")
     : (hotel.reviews ?? []).filter((r) => r.source === "description");
 
+  const gallery = hotel.gallery ?? [];
+  const hasGallery = gallery.length > 0;
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
+  const closeLightbox = useCallback(() => setLightboxIdx(null), []);
+  const prevImage = useCallback(
+    () => setLightboxIdx((i) => (i !== null ? (i - 1 + gallery.length) % gallery.length : null)),
+    [gallery.length],
+  );
+  const nextImage = useCallback(
+    () => setLightboxIdx((i) => (i !== null ? (i + 1) % gallery.length : null)),
+    [gallery.length],
+  );
+
+  useEffect(() => {
+    if (lightboxIdx === null) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") prevImage();
+      if (e.key === "ArrowRight") nextImage();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [lightboxIdx, closeLightbox, prevImage, nextImage]);
+
   return (
     <div
       className={css({
@@ -365,6 +391,113 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
         color: "text.primary",
       })}
     >
+      {/* ── Lightbox ── */}
+      {lightboxIdx !== null && (
+        <div
+          className={css({
+            position: "fixed",
+            inset: "0",
+            zIndex: 100,
+            bg: "rgba(0,0,0,0.92)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          })}
+          onClick={closeLightbox}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
+            className={css({
+              position: "absolute",
+              top: "4",
+              right: "4",
+              w: "10",
+              h: "10",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              rounded: "full",
+              bg: "rgba(255,255,255,0.1)",
+              color: "white",
+              fontSize: "h3",
+              cursor: "pointer",
+              border: "none",
+              _hover: { bg: "rgba(255,255,255,0.2)" },
+            })}
+          >
+            &times;
+          </button>
+          {gallery.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                className={css({
+                  position: "absolute",
+                  left: "4",
+                  w: "10",
+                  h: "10",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  rounded: "full",
+                  bg: "rgba(255,255,255,0.1)",
+                  color: "white",
+                  fontSize: "h3",
+                  cursor: "pointer",
+                  border: "none",
+                  _hover: { bg: "rgba(255,255,255,0.2)" },
+                })}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                className={css({
+                  position: "absolute",
+                  right: "4",
+                  w: "10",
+                  h: "10",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  rounded: "full",
+                  bg: "rgba(255,255,255,0.1)",
+                  color: "white",
+                  fontSize: "h3",
+                  cursor: "pointer",
+                  border: "none",
+                  _hover: { bg: "rgba(255,255,255,0.2)" },
+                })}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+              </button>
+            </>
+          )}
+          <img
+            src={gallery[lightboxIdx]}
+            alt={`${hotel.name} photo ${lightboxIdx + 1}`}
+            onClick={(e) => e.stopPropagation()}
+            className={css({
+              maxW: "90vw",
+              maxH: "85vh",
+              rounded: "lg",
+              objectFit: "contain",
+            })}
+          />
+          <span
+            className={css({
+              position: "absolute",
+              bottom: "4",
+              fontSize: "meta",
+              color: "rgba(255,255,255,0.5)",
+              fontVariantNumeric: "tabular-nums",
+            })}
+          >
+            {lightboxIdx + 1} / {gallery.length}
+          </span>
+        </div>
+      )}
+
       {/* ── Hero ── */}
       <div
         className={css({
@@ -373,17 +506,31 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
           overflow: "hidden",
         })}
       >
-        <iframe
-          src={`https://www.google.com/maps?q=${hotel.lat},${hotel.lng}&z=16&t=k&output=embed&hl=en`}
-          title={`${hotel.name} satellite view`}
-          className={css({
-            w: "100%",
-            h: "100%",
-            border: "none",
-            pointerEvents: "none",
-          })}
-          loading="lazy"
-        />
+        {hasGallery ? (
+          <img
+            src={gallery[0]}
+            alt={hotel.name}
+            onClick={() => setLightboxIdx(0)}
+            className={css({
+              w: "100%",
+              h: "100%",
+              objectFit: "cover",
+              cursor: "pointer",
+            })}
+          />
+        ) : (
+          <iframe
+            src={`https://www.google.com/maps?q=${hotel.lat},${hotel.lng}&z=16&t=k&output=embed&hl=en`}
+            title={`${hotel.name} satellite view`}
+            className={css({
+              w: "100%",
+              h: "100%",
+              border: "none",
+              pointerEvents: "none",
+            })}
+            loading="lazy"
+          />
+        )}
         <div
           className={css({
             position: "absolute",
@@ -571,6 +718,53 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
           </div>
         </div>
       </div>
+
+      {/* ── Gallery Thumbnails ── */}
+      {hasGallery && gallery.length > 1 && (
+        <div
+          className={css({
+            maxW: "900px",
+            mx: "auto",
+            px: { base: "5", md: "8" },
+            pt: "4",
+            display: "flex",
+            gap: "2",
+            overflowX: "auto",
+          })}
+        >
+          {gallery.slice(0, 6).map((url, i) => (
+            <button
+              key={i}
+              onClick={() => setLightboxIdx(i)}
+              className={css({
+                flex: "0 0 auto",
+                w: { base: "80px", md: "110px" },
+                h: { base: "56px", md: "74px" },
+                rounded: "md",
+                overflow: "hidden",
+                border: "2px solid",
+                borderColor: "steel.border",
+                cursor: "pointer",
+                opacity: "0.75",
+                transition: "all 0.2s",
+                _hover: { opacity: "1", borderColor: "amber.warm" },
+                bg: "transparent",
+                p: "0",
+              })}
+            >
+              <img
+                src={url}
+                alt={`${hotel.name} photo ${i + 1}`}
+                className={css({
+                  w: "100%",
+                  h: "100%",
+                  objectFit: "cover",
+                })}
+              />
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Main content ── */}
       <main

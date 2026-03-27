@@ -2,39 +2,38 @@
 
 Target: Find leads (key contacts + emails) at all AI consultancies across Europe.
 
-## Phase 1: Domain List Compilation
+## Quick Start
+
+```bash
+make leads          # runs everything: discover → domains → build → pipeline → import
+```
+
+## Individual Stages
+
+```bash
+make leads-discover   # Phase 1: scrape Clutch/GoodFirms/Wellfound + MLX classify
+make leads-domains    # Phase 2: extract domains → domains.txt
+make leads-build      # Phase 3: cargo build --release
+make leads-pipeline   # Phase 4: full 5-stage Rust pipeline + score + export
+make leads-import     # Phase 5: CSV → Neon PostgreSQL
+
+make leads-top                        # review top 50 leads
+make leads-report DOMAIN=faculty.ai   # generate report for a prospect
+make leads-clean                      # remove generated data
+```
+
+## Prerequisites
 
 - [ ] Install Python deps: `pip install aiohttp beautifulsoup4 lancedb sentence-transformers mlx-lm`
-- [ ] Run discovery (scrape only): `cd consultancies && python discover.py --search-only`
-- [ ] Run MLX classification: `python discover.py --enrich-only`
-- [ ] Extract domains for Rust: `python extract_domains.py -o data/eu-ai-consultancies.txt`
-- [ ] Review domain list, add missing consultancies manually
-- [ ] Target: 200-500 unique European AI consultancy domains
+- [ ] (Optional) Start mlx_lm server for LLM fallback: `MLX_LM_SERVER=1 mlx_lm.server --model mlx-community/Qwen3-8B-4bit --port 8080`
 
-## Phase 2: Rust Pipeline
+## Quality Assurance
 
-- [ ] Copy domains: `cp consultancies/data/eu-ai-consultancies.txt ../../crates/leadgen/data/`
-- [ ] (Optional) Start mlx_lm server: `MLX_LM_SERVER=1 mlx_lm.server --model mlx-community/Qwen3-8B-4bit --port 8080`
-- [ ] Build: `cd ../../crates/leadgen && cargo build --release`
-- [ ] Run full pipeline: `./target/release/leadgen pipeline data/eu-ai-consultancies.txt --icp-ai-consultancy`
-- [ ] Score leads: `./target/release/leadgen score`
-- [ ] Review top 50: `./target/release/leadgen top 50`
-- [ ] Export CSV: `./target/release/leadgen export data/eu-ai-leads.csv`
-- [ ] Train scorer: `./target/release/leadgen train`
-
-## Phase 3: Import to Neon
-
-- [ ] Dry run: `pnpm tsx scripts/import-rust-leads.ts --dry-run ../../crates/leadgen/data/eu-ai-leads.csv`
-- [ ] Import: `pnpm tsx scripts/import-rust-leads.ts ../../crates/leadgen/data/eu-ai-leads.csv`
-- [ ] Verify in Drizzle Studio: `pnpm db:studio`
-
-## Phase 4: Quality Assurance
-
+- [ ] `make leads-top` — review top 50 for relevance
 - [ ] Check email verification rate (target >30%)
-- [ ] Review top 20 leads for relevance
 - [ ] Verify European country coverage (UK, DE, FR, NL, Nordics, CH, ES, IT, PL, IE)
-- [ ] Generate reports for top prospects: `leadgen report <domain>`
-- [ ] Find similar companies: `leadgen match <top-domain>`
+- [ ] `make leads-report DOMAIN=<top-domain>` for top prospects
+- [ ] `make db-studio` — browse imported data
 
 ## Changes Made
 

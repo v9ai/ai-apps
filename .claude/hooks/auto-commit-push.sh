@@ -5,9 +5,14 @@ set -uo pipefail
 cat > /dev/null  # drain stdin
 
 # Skip during iterate — kick-session.sh handles the Stop hook
-# Check all iterate dirs (they have hash/session suffixes)
+# Only skip if the iterate session is actually running (has a live PID)
 for _d in /tmp/claude-iterate-*/; do
-    [ -f "${_d}task.txt" ] && exit 0
+    [ -f "${_d}task.txt" ] || continue
+    _pid=""
+    [ -f "${_d}session.txt" ] && _pid=$(cat "${_d}session.txt" 2>/dev/null)
+    if [ -n "$_pid" ] && kill -0 "$_pid" 2>/dev/null; then
+        exit 0  # iterate session is alive — let kick-session.sh handle it
+    fi
 done
 
 git rev-parse --is-inside-work-tree > /dev/null 2>&1 || exit 0
