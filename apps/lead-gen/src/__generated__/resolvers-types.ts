@@ -108,20 +108,6 @@ export type BatchRecipientInput = {
   name: Scalars['String']['input'];
 };
 
-export type BlockJobsResult = {
-  __typename?: 'BlockJobsResult';
-  message: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
-export type BlockedCompany = {
-  __typename?: 'BlockedCompany';
-  createdAt: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  name: Scalars['String']['output'];
-  reason: Maybe<Scalars['String']['output']>;
-};
-
 export type CancelCompanyEmailsResult = {
   __typename?: 'CancelCompanyEmailsResult';
   cancelledCount: Scalars['Int']['output'];
@@ -439,12 +425,6 @@ export type CreateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type DeleteBlockedCompanyResult = {
-  __typename?: 'DeleteBlockedCompanyResult';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
 };
 
 export type DeleteCampaignResult = {
@@ -780,8 +760,6 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   applyEmailPattern: ApplyEmailPatternResult;
   archiveEmail: ArchiveEmailResult;
-  blockCompany: BlockedCompany;
-  blockJobsByCompany: BlockJobsResult;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
   createCompany: Company;
@@ -817,7 +795,6 @@ export type Mutation = {
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
-  unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateCampaign: EmailCampaign;
   updateCompany: Company;
@@ -848,17 +825,6 @@ export type MutationApplyEmailPatternArgs = {
 
 export type MutationArchiveEmailArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationBlockCompanyArgs = {
-  name: Scalars['String']['input'];
-  reason?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type MutationBlockJobsByCompanyArgs = {
-  companyName: Scalars['String']['input'];
 };
 
 
@@ -1045,11 +1011,6 @@ export type MutationUnarchiveEmailArgs = {
 };
 
 
-export type MutationUnblockCompanyArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
 export type MutationUnverifyCompanyContactsArgs = {
   companyId: Scalars['Int']['input'];
 };
@@ -1105,7 +1066,6 @@ export type PreviewEmailInput = {
 export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
-  blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
@@ -1564,8 +1524,6 @@ export type ResolversTypes = {
   ArchiveEmailResult: ResolverTypeWrapper<Partial<ArchiveEmailResult>>;
   AshbyEnrichment: ResolverTypeWrapper<Partial<AshbyEnrichment>>;
   BatchRecipientInput: ResolverTypeWrapper<Partial<BatchRecipientInput>>;
-  BlockJobsResult: ResolverTypeWrapper<Partial<BlockJobsResult>>;
-  BlockedCompany: ResolverTypeWrapper<Partial<BlockedCompany>>;
   Boolean: ResolverTypeWrapper<Partial<Scalars['Boolean']['output']>>;
   CancelCompanyEmailsResult: ResolverTypeWrapper<Partial<CancelCompanyEmailsResult>>;
   CancelEmailResult: ResolverTypeWrapper<Partial<CancelEmailResult>>;
@@ -1588,7 +1546,6 @@ export type ResolversTypes = {
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
   CreateEmailTemplateInput: ResolverTypeWrapper<Partial<CreateEmailTemplateInput>>;
   DateTime: ResolverTypeWrapper<Partial<Scalars['DateTime']['output']>>;
-  DeleteBlockedCompanyResult: ResolverTypeWrapper<Partial<DeleteBlockedCompanyResult>>;
   DeleteCampaignResult: ResolverTypeWrapper<Partial<DeleteCampaignResult>>;
   DeleteCompaniesResult: ResolverTypeWrapper<Partial<DeleteCompaniesResult>>;
   DeleteCompanyResponse: ResolverTypeWrapper<Partial<DeleteCompanyResponse>>;
@@ -1667,8 +1624,6 @@ export type ResolversParentTypes = {
   ArchiveEmailResult: Partial<ArchiveEmailResult>;
   AshbyEnrichment: Partial<AshbyEnrichment>;
   BatchRecipientInput: Partial<BatchRecipientInput>;
-  BlockJobsResult: Partial<BlockJobsResult>;
-  BlockedCompany: Partial<BlockedCompany>;
   Boolean: Partial<Scalars['Boolean']['output']>;
   CancelCompanyEmailsResult: Partial<CancelCompanyEmailsResult>;
   CancelEmailResult: Partial<CancelEmailResult>;
@@ -1689,7 +1644,6 @@ export type ResolversParentTypes = {
   CreateContactInput: Partial<CreateContactInput>;
   CreateEmailTemplateInput: Partial<CreateEmailTemplateInput>;
   DateTime: Partial<Scalars['DateTime']['output']>;
-  DeleteBlockedCompanyResult: Partial<DeleteBlockedCompanyResult>;
   DeleteCampaignResult: Partial<DeleteCampaignResult>;
   DeleteCompaniesResult: Partial<DeleteCompaniesResult>;
   DeleteCompanyResponse: Partial<DeleteCompanyResponse>;
@@ -1798,18 +1752,6 @@ export type AshbyEnrichmentResolvers<ContextType = GraphQLContext, ParentType ex
   industry_tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   size_signal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   tech_signals?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type BlockJobsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BlockJobsResult'] = ResolversParentTypes['BlockJobsResult']> = {
-  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-};
-
-export type BlockedCompanyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BlockedCompany'] = ResolversParentTypes['BlockedCompany']> = {
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type CancelCompanyEmailsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CancelCompanyEmailsResult'] = ResolversParentTypes['CancelCompanyEmailsResult']> = {
@@ -1992,11 +1934,6 @@ export type ContactsResultResolvers<ContextType = GraphQLContext, ParentType ext
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
   name: 'DateTime';
 }
-
-export type DeleteBlockedCompanyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteBlockedCompanyResult'] = ResolversParentTypes['DeleteBlockedCompanyResult']> = {
-  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-};
 
 export type DeleteCampaignResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteCampaignResult'] = ResolversParentTypes['DeleteCampaignResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2250,8 +2187,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   analyzeCompany?: Resolver<ResolversTypes['AnalyzeCompanyResponse'], ParentType, ContextType, Partial<MutationAnalyzeCompanyArgs>>;
   applyEmailPattern?: Resolver<ResolversTypes['ApplyEmailPatternResult'], ParentType, ContextType, RequireFields<MutationApplyEmailPatternArgs, 'companyId'>>;
   archiveEmail?: Resolver<ResolversTypes['ArchiveEmailResult'], ParentType, ContextType, RequireFields<MutationArchiveEmailArgs, 'id'>>;
-  blockCompany?: Resolver<ResolversTypes['BlockedCompany'], ParentType, ContextType, RequireFields<MutationBlockCompanyArgs, 'name'>>;
-  blockJobsByCompany?: Resolver<ResolversTypes['BlockJobsResult'], ParentType, ContextType, RequireFields<MutationBlockJobsByCompanyArgs, 'companyName'>>;
   cancelCompanyEmails?: Resolver<ResolversTypes['CancelCompanyEmailsResult'], ParentType, ContextType, RequireFields<MutationCancelCompanyEmailsArgs, 'companyId'>>;
   cancelScheduledEmail?: Resolver<ResolversTypes['CancelEmailResult'], ParentType, ContextType, RequireFields<MutationCancelScheduledEmailArgs, 'resendId'>>;
   createCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationCreateCompanyArgs, 'input'>>;
@@ -2287,7 +2222,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   sendScheduledEmailNow?: Resolver<ResolversTypes['SendNowResult'], ParentType, ContextType, RequireFields<MutationSendScheduledEmailNowArgs, 'resendId'>>;
   syncResendEmails?: Resolver<ResolversTypes['SyncResendResult'], ParentType, ContextType, Partial<MutationSyncResendEmailsArgs>>;
   unarchiveEmail?: Resolver<ResolversTypes['ArchiveEmailResult'], ParentType, ContextType, RequireFields<MutationUnarchiveEmailArgs, 'id'>>;
-  unblockCompany?: Resolver<ResolversTypes['DeleteBlockedCompanyResult'], ParentType, ContextType, RequireFields<MutationUnblockCompanyArgs, 'id'>>;
   unverifyCompanyContacts?: Resolver<ResolversTypes['UnverifyContactsResult'], ParentType, ContextType, RequireFields<MutationUnverifyCompanyContactsArgs, 'companyId'>>;
   updateCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationUpdateCampaignArgs, 'id' | 'input'>>;
   updateCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUpdateCompanyArgs, 'id' | 'input'>>;
@@ -2300,7 +2234,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
 
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   allCompanyTags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  blockedCompanies?: Resolver<Array<ResolversTypes['BlockedCompany']>, ParentType, ContextType>;
   companies?: Resolver<ResolversTypes['CompaniesResponse'], ParentType, ContextType, Partial<QueryCompaniesArgs>>;
   company?: Resolver<Maybe<ResolversTypes['Company']>, ParentType, ContextType, Partial<QueryCompanyArgs>>;
   companyContactEmails?: Resolver<Array<ResolversTypes['CompanyContactEmail']>, ParentType, ContextType, RequireFields<QueryCompanyContactEmailsArgs, 'companyId'>>;
@@ -2444,8 +2377,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ApplyEmailPatternResult?: ApplyEmailPatternResultResolvers<ContextType>;
   ArchiveEmailResult?: ArchiveEmailResultResolvers<ContextType>;
   AshbyEnrichment?: AshbyEnrichmentResolvers<ContextType>;
-  BlockJobsResult?: BlockJobsResultResolvers<ContextType>;
-  BlockedCompany?: BlockedCompanyResolvers<ContextType>;
   CancelCompanyEmailsResult?: CancelCompanyEmailsResultResolvers<ContextType>;
   CancelEmailResult?: CancelEmailResultResolvers<ContextType>;
   CompaniesResponse?: CompaniesResponseResolvers<ContextType>;
@@ -2457,7 +2388,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactEmail?: ContactEmailResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
-  DeleteBlockedCompanyResult?: DeleteBlockedCompanyResultResolvers<ContextType>;
   DeleteCampaignResult?: DeleteCampaignResultResolvers<ContextType>;
   DeleteCompaniesResult?: DeleteCompaniesResultResolvers<ContextType>;
   DeleteCompanyResponse?: DeleteCompanyResponseResolvers<ContextType>;

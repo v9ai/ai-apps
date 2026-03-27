@@ -108,20 +108,6 @@ export type BatchRecipientInput = {
   name: Scalars['String']['input'];
 };
 
-export type BlockJobsResult = {
-  __typename?: 'BlockJobsResult';
-  message: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
-export type BlockedCompany = {
-  __typename?: 'BlockedCompany';
-  createdAt: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  name: Scalars['String']['output'];
-  reason: Maybe<Scalars['String']['output']>;
-};
-
 export type CancelCompanyEmailsResult = {
   __typename?: 'CancelCompanyEmailsResult';
   cancelledCount: Scalars['Int']['output'];
@@ -439,12 +425,6 @@ export type CreateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type DeleteBlockedCompanyResult = {
-  __typename?: 'DeleteBlockedCompanyResult';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
 };
 
 export type DeleteCampaignResult = {
@@ -780,8 +760,6 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   applyEmailPattern: ApplyEmailPatternResult;
   archiveEmail: ArchiveEmailResult;
-  blockCompany: BlockedCompany;
-  blockJobsByCompany: BlockJobsResult;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
   createCompany: Company;
@@ -817,7 +795,6 @@ export type Mutation = {
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
-  unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateCampaign: EmailCampaign;
   updateCompany: Company;
@@ -848,17 +825,6 @@ export type MutationApplyEmailPatternArgs = {
 
 export type MutationArchiveEmailArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationBlockCompanyArgs = {
-  name: Scalars['String']['input'];
-  reason?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type MutationBlockJobsByCompanyArgs = {
-  companyName: Scalars['String']['input'];
 };
 
 
@@ -1045,11 +1011,6 @@ export type MutationUnarchiveEmailArgs = {
 };
 
 
-export type MutationUnblockCompanyArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
 export type MutationUnverifyCompanyContactsArgs = {
   companyId: Scalars['Int']['input'];
 };
@@ -1105,7 +1066,6 @@ export type PreviewEmailInput = {
 export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
-  blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
@@ -1497,26 +1457,6 @@ export type UpdateUserSettingsMutationVariables = Exact<{
 
 export type UpdateUserSettingsMutation = { __typename?: 'Mutation', updateUserSettings: { __typename?: 'UserSettings', id: number, user_id: string, email_notifications: boolean, daily_digest: boolean, excluded_companies: Array<string> | null, dark_mode: boolean, created_at: string, updated_at: string } };
 
-export type GetBlockedCompaniesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetBlockedCompaniesQuery = { __typename?: 'Query', blockedCompanies: Array<{ __typename?: 'BlockedCompany', id: number, name: string, reason: string | null, createdAt: string }> };
-
-export type BlockCompanyMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  reason?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type BlockCompanyMutation = { __typename?: 'Mutation', blockCompany: { __typename?: 'BlockedCompany', id: number, name: string, reason: string | null, createdAt: string } };
-
-export type UnblockCompanyMutationVariables = Exact<{
-  id: Scalars['Int']['input'];
-}>;
-
-
-export type UnblockCompanyMutation = { __typename?: 'Mutation', unblockCompany: { __typename?: 'DeleteBlockedCompanyResult', success: boolean, message: string | null } };
-
 export type AllCompanyTagsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1632,13 +1572,6 @@ export type AnalyzeCompanyMutationVariables = Exact<{
 
 
 export type AnalyzeCompanyMutation = { __typename?: 'Mutation', analyzeCompany: { __typename?: 'AnalyzeCompanyResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null } };
-
-export type BlockJobsByCompanyMutationVariables = Exact<{
-  companyName: Scalars['String']['input'];
-}>;
-
-
-export type BlockJobsByCompanyMutation = { __typename?: 'Mutation', blockJobsByCompany: { __typename?: 'BlockJobsResult', success: boolean, message: string } };
 
 export type ImportCompaniesMutationVariables = Exact<{
   companies: Array<CompanyImportInput> | CompanyImportInput;
@@ -2213,122 +2146,6 @@ export function useUpdateUserSettingsMutation(baseOptions?: Apollo.MutationHookO
 export type UpdateUserSettingsMutationHookResult = ReturnType<typeof useUpdateUserSettingsMutation>;
 export type UpdateUserSettingsMutationResult = Apollo.MutationResult<UpdateUserSettingsMutation>;
 export type UpdateUserSettingsMutationOptions = Apollo.BaseMutationOptions<UpdateUserSettingsMutation, UpdateUserSettingsMutationVariables>;
-export const GetBlockedCompaniesDocument = gql`
-    query GetBlockedCompanies {
-  blockedCompanies {
-    id
-    name
-    reason
-    createdAt
-  }
-}
-    `;
-
-/**
- * __useGetBlockedCompaniesQuery__
- *
- * To run a query within a React component, call `useGetBlockedCompaniesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetBlockedCompaniesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetBlockedCompaniesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetBlockedCompaniesQuery(baseOptions?: Apollo.QueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>(GetBlockedCompaniesDocument, options);
-      }
-export function useGetBlockedCompaniesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>(GetBlockedCompaniesDocument, options);
-        }
-// @ts-ignore
-export function useGetBlockedCompaniesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>): Apollo.UseSuspenseQueryResult<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>;
-export function useGetBlockedCompaniesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>): Apollo.UseSuspenseQueryResult<GetBlockedCompaniesQuery | undefined, GetBlockedCompaniesQueryVariables>;
-export function useGetBlockedCompaniesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>(GetBlockedCompaniesDocument, options);
-        }
-export type GetBlockedCompaniesQueryHookResult = ReturnType<typeof useGetBlockedCompaniesQuery>;
-export type GetBlockedCompaniesLazyQueryHookResult = ReturnType<typeof useGetBlockedCompaniesLazyQuery>;
-export type GetBlockedCompaniesSuspenseQueryHookResult = ReturnType<typeof useGetBlockedCompaniesSuspenseQuery>;
-export type GetBlockedCompaniesQueryResult = Apollo.QueryResult<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>;
-export const BlockCompanyDocument = gql`
-    mutation BlockCompany($name: String!, $reason: String) {
-  blockCompany(name: $name, reason: $reason) {
-    id
-    name
-    reason
-    createdAt
-  }
-}
-    `;
-export type BlockCompanyMutationFn = Apollo.MutationFunction<BlockCompanyMutation, BlockCompanyMutationVariables>;
-
-/**
- * __useBlockCompanyMutation__
- *
- * To run a mutation, you first call `useBlockCompanyMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useBlockCompanyMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [blockCompanyMutation, { data, loading, error }] = useBlockCompanyMutation({
- *   variables: {
- *      name: // value for 'name'
- *      reason: // value for 'reason'
- *   },
- * });
- */
-export function useBlockCompanyMutation(baseOptions?: Apollo.MutationHookOptions<BlockCompanyMutation, BlockCompanyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<BlockCompanyMutation, BlockCompanyMutationVariables>(BlockCompanyDocument, options);
-      }
-export type BlockCompanyMutationHookResult = ReturnType<typeof useBlockCompanyMutation>;
-export type BlockCompanyMutationResult = Apollo.MutationResult<BlockCompanyMutation>;
-export type BlockCompanyMutationOptions = Apollo.BaseMutationOptions<BlockCompanyMutation, BlockCompanyMutationVariables>;
-export const UnblockCompanyDocument = gql`
-    mutation UnblockCompany($id: Int!) {
-  unblockCompany(id: $id) {
-    success
-    message
-  }
-}
-    `;
-export type UnblockCompanyMutationFn = Apollo.MutationFunction<UnblockCompanyMutation, UnblockCompanyMutationVariables>;
-
-/**
- * __useUnblockCompanyMutation__
- *
- * To run a mutation, you first call `useUnblockCompanyMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUnblockCompanyMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [unblockCompanyMutation, { data, loading, error }] = useUnblockCompanyMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useUnblockCompanyMutation(baseOptions?: Apollo.MutationHookOptions<UnblockCompanyMutation, UnblockCompanyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UnblockCompanyMutation, UnblockCompanyMutationVariables>(UnblockCompanyDocument, options);
-      }
-export type UnblockCompanyMutationHookResult = ReturnType<typeof useUnblockCompanyMutation>;
-export type UnblockCompanyMutationResult = Apollo.MutationResult<UnblockCompanyMutation>;
-export type UnblockCompanyMutationOptions = Apollo.BaseMutationOptions<UnblockCompanyMutation, UnblockCompanyMutationVariables>;
 export const AllCompanyTagsDocument = gql`
     query AllCompanyTags {
   allCompanyTags
@@ -2833,40 +2650,6 @@ export function useAnalyzeCompanyMutation(baseOptions?: Apollo.MutationHookOptio
 export type AnalyzeCompanyMutationHookResult = ReturnType<typeof useAnalyzeCompanyMutation>;
 export type AnalyzeCompanyMutationResult = Apollo.MutationResult<AnalyzeCompanyMutation>;
 export type AnalyzeCompanyMutationOptions = Apollo.BaseMutationOptions<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>;
-export const BlockJobsByCompanyDocument = gql`
-    mutation BlockJobsByCompany($companyName: String!) {
-  blockJobsByCompany(companyName: $companyName) {
-    success
-    message
-  }
-}
-    `;
-export type BlockJobsByCompanyMutationFn = Apollo.MutationFunction<BlockJobsByCompanyMutation, BlockJobsByCompanyMutationVariables>;
-
-/**
- * __useBlockJobsByCompanyMutation__
- *
- * To run a mutation, you first call `useBlockJobsByCompanyMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useBlockJobsByCompanyMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [blockJobsByCompanyMutation, { data, loading, error }] = useBlockJobsByCompanyMutation({
- *   variables: {
- *      companyName: // value for 'companyName'
- *   },
- * });
- */
-export function useBlockJobsByCompanyMutation(baseOptions?: Apollo.MutationHookOptions<BlockJobsByCompanyMutation, BlockJobsByCompanyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<BlockJobsByCompanyMutation, BlockJobsByCompanyMutationVariables>(BlockJobsByCompanyDocument, options);
-      }
-export type BlockJobsByCompanyMutationHookResult = ReturnType<typeof useBlockJobsByCompanyMutation>;
-export type BlockJobsByCompanyMutationResult = Apollo.MutationResult<BlockJobsByCompanyMutation>;
-export type BlockJobsByCompanyMutationOptions = Apollo.BaseMutationOptions<BlockJobsByCompanyMutation, BlockJobsByCompanyMutationVariables>;
 export const ImportCompaniesDocument = gql`
     mutation ImportCompanies($companies: [CompanyImportInput!]!) {
   importCompanies(companies: $companies) {
