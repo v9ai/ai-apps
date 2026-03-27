@@ -233,8 +233,8 @@ async fn search_500_returns_api_error() {
             ResponseTemplate::new(500)
                 .set_body_string("Internal Server Error"),
         )
-        // 500 is retryable: 1 initial + 3 retries = 4 total attempts
-        .expect(4)
+        // S2 client does not retry on server errors, only on 429
+        .expect(1)
         .mount(&server)
         .await;
 

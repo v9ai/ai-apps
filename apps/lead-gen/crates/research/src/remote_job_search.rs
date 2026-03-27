@@ -5,8 +5,17 @@
 /// Uses [`TeamLead`] + [`TaskQueue`] for dynamic claiming, retry (max 2 attempts),
 /// and cooperative shutdown — matching the agent-teams coordination model.
 use crate::d1::{D1Client, StudyTopicRow};
-use crate::study::TopicDef;
 use crate::team::{shutdown_pair, Mailbox, TaskQueue, TeamLead};
+
+#[derive(Clone, Copy)]
+pub struct TopicDef {
+    pub slug: &'static str,
+    pub title: &'static str,
+    pub difficulty: &'static str,
+    pub tags: &'static [&'static str],
+    pub search_queries: &'static [&'static str],
+    pub prompt_focus: &'static str,
+}
 use anyhow::{Context, Result};
 use research::agent::agent_builder;
 use research::scholar::SemanticScholarClient;
@@ -512,6 +521,6 @@ Write at a senior engineer level. Be precise, actionable, and grounded in the re
         summary,
         body_md,
         difficulty: topic.difficulty.into(),
-        tags: topic.tags.iter().map(|s| s.to_string()).collect(),
+        tags: topic.tags.iter().map(|s: &&str| s.to_string()).collect(),
     })
 }
