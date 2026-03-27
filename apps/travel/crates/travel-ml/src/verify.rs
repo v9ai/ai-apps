@@ -457,4 +457,49 @@ mod tests {
         let kept = verify_batch(&hotels, &scraped, None);
         assert_eq!(kept, vec![1], "only the real hotel should survive");
     }
+
+    #[test]
+    fn batch_scraper_blocked_downgrades_review_signal() {
+        // When ALL hotels return zero review data, the scraper is globally
+        // blocked — review signal should be downgraded to Weak.
+        let hotels = vec![
+            {
+                // Generic URL → Fail, but review downgraded to Weak → Fail+Weak = rejected
+                let mut h = test_hotel("Fake Beach Hotel", 3, "Kos");
+                h.source_url = "https://www.booking.com/searchresults.html?ss=Kos".into();
+                h
+            },
+            {
+                // Brand URL → Weak, review downgraded to Weak → all Weak = accepted
+                let mut h = test_hotel("Canaves Oia Epitome", 5, "Santorini");
+                h.source_url = "https://www.canaves.com".into();
+                h
+            },
+        ];
+        // Both have completely empty scraped data (simulates global block)
+        let scraped = vec![empty_scraped(), empty_scraped()];
+        let kept = verify_batch(&hotels, &scraped, None);
+        // Canaves survives (all Weak), Fake is still rejected (url:Fail + rest Weak)
+        assert_eq!(kept, vec![1], "brand-URL hotel survives when scraper blocked");
+    }
+
+    #[test]
+    fn batch_scraper_blocked_keeps_all_when_urls_are_weak() {
+        // Both hotels have non-generic URLs and zero reviews due to global block.
+        let hotels = vec![
+            {
+                let mut h = test_hotel("Domes Zeen Chania", 5, "Chania, Crete");
+                h.source_url = "https://www.domesresorts.com".into();
+                h
+            },
+            {
+                let mut h = test_hotel("Numo Ierapetra", 5, "Ierapetra, Crete");
+                h.source_url = "https://numohotels.com".into();
+                h
+            },
+        ];
+        let scraped = vec![empty_scraped(), empty_scraped()];
+        let kept = verify_batch(&hotels, &scraped, None);
+        assert_eq!(kept, vec![0, 1], "all hotels with non-generic URLs survive scraper block");
+    }
 }

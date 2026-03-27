@@ -1,15 +1,28 @@
 {
   "duplicates": {
-    "company_dupes": [],
+    "company_dupes": [
+      {
+        "a": "deepsense.ai",
+        "b": "deepcode.ai",
+        "similarity": 0.8533333333333333,
+        "action": "review"
+      },
+      {
+        "a": "dataiku.com",
+        "b": "datatonic.com",
+        "similarity": 0.87,
+        "action": "review"
+      }
+    ],
     "contact_dupes": []
   },
   "completeness": {
-    "companies_audited": 0,
+    "companies_audited": 30,
     "contacts_audited": 0,
-    "companies_complete": 0,
+    "companies_complete": 30,
     "contacts_complete": 0,
     "missing_fields": []
   },
-  "quality_score": 1.0,
+  "quality_score": 0.9,
   "recommendations": []
 }
