@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use chrono::Utc;
-use research::agent::Client;
+use research::agent::{agent_builder, ReqwestClient};
 use research::scholar::SemanticScholarClient;
 use research::tools::{GetPaperDetail, SearchPapers};
 use research_agent::{
@@ -12,7 +12,6 @@ use research_agent::{
     enhance,
     remote_job_search,
     research_context::ResearchContext,
-    study,
 };
 use std::path::PathBuf;
 use tracing::info;
