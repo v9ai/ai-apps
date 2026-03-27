@@ -23,7 +23,6 @@ const SIDEBAR_COLLAPSED_WIDTH = 56;
 const NAV_ITEMS = [
   { href: "/companies", label: "companies", icon: <CubeIcon width={15} height={15} /> },
   { href: "/contacts", label: "contacts", icon: <PersonIcon width={15} height={15} /> },
-  { href: "/how-it-works", label: "how it works", icon: <LayersIcon width={15} height={15} /> },
 ];
 
 export function Sidebar() {

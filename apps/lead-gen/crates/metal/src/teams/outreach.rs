@@ -159,17 +159,21 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         eprintln!();
     }
     eprintln!("  ──────────────────────────────────────────────────");
-    eprintln!("  APPROVAL REQUIRED: Type 'approve' to mark ready, or 'reject':");
-    eprintln!();
 
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input)?;
-    let input = input.trim().to_lowercase();
-
-    report.status = if input == "approve" || input == "y" || input == "yes" {
+    report.status = if ctx.auto_confirm {
+        eprintln!("  Auto-approved (--yes)");
         OutreachStatus::Approved
     } else {
-        OutreachStatus::Rejected
+        eprintln!("  APPROVAL REQUIRED: Type 'approve' to mark ready, or 'reject':");
+        eprintln!();
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input)?;
+        let input = input.trim().to_lowercase();
+        if input == "approve" || input == "y" || input == "yes" {
+            OutreachStatus::Approved
+        } else {
+            OutreachStatus::Rejected
+        }
     };
 
     eprintln!("  Outreach status: {}", report.status);
