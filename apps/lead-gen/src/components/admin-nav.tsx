@@ -3,7 +3,6 @@
 import {
   EnvelopeClosedIcon,
   PersonIcon,
-  Cross2Icon,
 } from "@radix-ui/react-icons";
 import { Flex } from "@radix-ui/themes";
 import { authClient } from "@/lib/auth/client";
@@ -32,12 +31,6 @@ export function AdminNav() {
         <Flex align="center" gap="2">
           <EnvelopeClosedIcon width={14} height={14} />
           emails
-        </Flex>
-      </NavLink>
-      <NavLink href="/admin/blocked-companies" title="Blocked Companies">
-        <Flex align="center" gap="2">
-          <Cross2Icon width={14} height={14} />
-          blocked
         </Flex>
       </NavLink>
     </>

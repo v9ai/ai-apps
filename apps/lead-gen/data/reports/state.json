@@ -1,0 +1,13 @@
+{
+  "cycle_count": 0,
+  "phase": null,
+  "counts": {
+    "discovered": 82,
+    "enriched": 0,
+    "contacts_found": 0,
+    "outreach_drafted": 0,
+    "outreach_sent": 0
+  },
+  "quality_score": 0.0,
+  "bounce_rate": 0.0
+}

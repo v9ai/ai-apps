@@ -445,25 +445,6 @@ export const emailTemplates = pgTable(
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type NewEmailTemplate = typeof emailTemplates.$inferInsert;
 
-// Blocked Companies (CRM — companies to exclude from outreach)
-export const blockedCompanies = pgTable(
-  "blocked_companies",
-  {
-    id: serial("id").primaryKey(),
-    name: text("name").notNull().unique(),
-    reason: text("reason"),
-    created_at: text("created_at")
-      .notNull()
-      .default(sql`now()::text`),
-  },
-  (table) => ({
-    nameIdx: index("idx_blocked_companies_name").on(table.name),
-  }),
-);
-
-export type BlockedCompany = typeof blockedCompanies.$inferSelect;
-export type NewBlockedCompany = typeof blockedCompanies.$inferInsert;
-
 // Received Emails (inbound emails persisted from Resend webhooks)
 export const receivedEmails = pgTable(
   "received_emails",
