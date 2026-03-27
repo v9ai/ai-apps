@@ -1,4 +1,557 @@
 {
-  "companies": [],
+  "companies": [
+    {
+      "domain": "explosion.ai",
+      "name": "Explosion",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "devtools",
+      "tech_stack": [
+        "python",
+        "machine learning",
+        "deep learning",
+        "llm",
+        "transformer",
+        "go",
+        "rag",
+        "embeddings",
+        "computer vision",
+        "nlp"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "enrichment_score": 0.84,
+      "confidence": 0.4
+    },
+    {
+      "domain": "deepsense.ai",
+      "name": "Deepsense",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "kubernetes",
+        "mlops",
+        "deep learning",
+        "llm",
+        "gcp",
+        "go",
+        "scala",
+        "langchain",
+        "rag",
+        "computer vision"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.84,
+      "confidence": 0.4
+    },
+    {
+      "domain": "aisuperior.com",
+      "name": "Aisuperior",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "technology",
+      "tech_stack": [
+        "rust",
+        "machine learning",
+        "deep learning",
+        "llm",
+        "gpt",
+        "react",
+        "go",
+        "scala",
+        "rag",
+        "computer vision",
+        "nlp"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.94,
+      "confidence": 0.4
+    },
+    {
+      "domain": "artefact.com",
+      "name": "Artefact",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "mlops",
+        "go",
+        "scala",
+        "databricks",
+        "rag",
+        "nlp"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.79,
+      "confidence": 0.4
+    },
+    {
+      "domain": "netguru.com",
+      "name": "Netguru",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "python",
+        "machine learning",
+        "llm",
+        "gpt",
+        "aws",
+        "azure",
+        "react",
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [
+        "0000745671hello@netguru.comcertificates:next"
+      ],
+      "has_careers_page": false,
+      "enrichment_score": 0.74,
+      "confidence": 0.4
+    },
+    {
+      "domain": "alexanderthamm.com",
+      "name": "Alexanderthamm",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "mlops",
+        "machine learning",
+        "go",
+        "computer vision",
+        "nlp"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "enrichment_score": 0.615,
+      "confidence": 0.4
+    },
+    {
+      "domain": "quostar.com",
+      "name": "Quostar",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "azure",
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [
+        "900hello@zenzero.co.uk",
+        "hello@zenzero.co.uk"
+      ],
+      "has_careers_page": true,
+      "enrichment_score": 0.765,
+      "confidence": 0.4
+    },
+    {
+      "domain": "axyon.ai",
+      "name": "Axyon",
+      "category": "AGENCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "machine learning",
+        "deep learning",
+        "go",
+        "rag"
+      ],
+      "emails_found": [
+        "info@axyon.ai"
+      ],
+      "has_careers_page": true,
+      "enrichment_score": 0.615,
+      "confidence": 0.4
+    },
+    {
+      "domain": "appliedai.de",
+      "name": "Appliedai",
+      "category": "STAFFING",
+      "ai_tier": "ai_first",
+      "industry": "technology",
+      "tech_stack": [
+        "rust",
+        "mlops",
+        "machine learning",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [
+        "info@appliedai.de"
+      ],
+      "has_careers_page": false,
+      "enrichment_score": 0.54,
+      "confidence": 0.4
+    },
+    {
+      "domain": "inform-software.com",
+      "name": "Inform Software",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "enrichment_score": 0.59,
+      "confidence": 0.4
+    },
+    {
+      "domain": "lighton.ai",
+      "name": "Lighton",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.815,
+      "confidence": 0.4
+    },
+    {
+      "domain": "adesso.de",
+      "name": "Adesso",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "aws",
+        "go",
+        "databricks",
+        "rag"
+      ],
+      "emails_found": [
+        "info@adesso.de"
+      ],
+      "has_careers_page": false,
+      "enrichment_score": 0.59,
+      "confidence": 0.4
+    },
+    {
+      "domain": "heuritech.com",
+      "name": "Heuritech",
+      "category": "PRODUCT",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "machine learning",
+        "go",
+        "rag",
+        "computer vision"
+      ],
+      "emails_found": [
+        "press@heuritech.com"
+      ],
+      "has_careers_page": true,
+      "enrichment_score": 0.79,
+      "confidence": 0.4
+    },
+    {
+      "domain": "deepcode.ai",
+      "name": "Deepcode",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "devtools",
+      "tech_stack": [
+        "rust",
+        "machine learning",
+        "llm",
+        "gpt",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "enrichment_score": 0.64,
+      "confidence": 0.4
+    },
+    {
+      "domain": "rasa.com",
+      "name": "Rasa",
+      "category": "STAFFING",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "machine learning",
+        "llm",
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.54,
+      "confidence": 0.4
+    },
+    {
+      "domain": "capgemini.com",
+      "name": "Capgemini",
+      "category": "STAFFING",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "go",
+        "scala"
+      ],
+      "emails_found": [
+        "@capgemini.com",
+        "@sogeti.com",
+        "@frog.co"
+      ],
+      "has_careers_page": true,
+      "enrichment_score": 0.54,
+      "confidence": 0.4
+    },
+    {
+      "domain": "accenture.com",
+      "name": "Accenture",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "go",
+        "spark",
+        "databricks"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.84,
+      "confidence": 0.4
+    },
+    {
+      "domain": "dataiku.com",
+      "name": "Dataiku",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "machine learning",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.715,
+      "confidence": 0.4
+    },
+    {
+      "domain": "kernix.com",
+      "name": "Kernix",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "machine learning",
+        "deep learning",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "enrichment_score": 0.59,
+      "confidence": 0.4
+    },
+    {
+      "domain": "mhp.com",
+      "name": "Mhp",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "enrichment_score": 0.565,
+      "confidence": 0.4
+    },
+    {
+      "domain": "cambridgeconsultants.com",
+      "name": "Cambridgeconsultants",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.84,
+      "confidence": 0.4
+    },
+    {
+      "domain": "ceadar.ie",
+      "name": "Ceadar",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "rag"
+      ],
+      "emails_found": [
+        "ceadar@ucd.ie"
+      ],
+      "has_careers_page": true,
+      "enrichment_score": 0.615,
+      "confidence": 0.4
+    },
+    {
+      "domain": "merantix.com",
+      "name": "Merantix",
+      "category": "STAFFING",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "go"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "enrichment_score": 0.315,
+      "confidence": 0.4
+    },
+    {
+      "domain": "modulos.ai",
+      "name": "Modulos",
+      "category": "STAFFING",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "rust",
+        "go"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.44,
+      "confidence": 0.4
+    },
+    {
+      "domain": "craft.ai",
+      "name": "Craft",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "machine learning",
+        "llm",
+        "gpt",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "enrichment_score": 0.59,
+      "confidence": 0.4
+    },
+    {
+      "domain": "faculty.ai",
+      "name": "Faculty",
+      "category": "STAFFING",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "machine learning"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.44,
+      "confidence": 0.4
+    },
+    {
+      "domain": "peak.ai",
+      "name": "Peak",
+      "category": "STAFFING",
+      "ai_tier": "ai_first",
+      "industry": "technology",
+      "tech_stack": [
+        "rust",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.59,
+      "confidence": 0.4
+    },
+    {
+      "domain": "ekimetrics.com",
+      "name": "Ekimetrics",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "machine learning",
+        "go"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "enrichment_score": 0.69,
+      "confidence": 0.4
+    },
+    {
+      "domain": "d-fine.com",
+      "name": "D Fine",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "machine learning",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "enrichment_score": 0.615,
+      "confidence": 0.4
+    },
+    {
+      "domain": "datatonic.com",
+      "name": "Datatonic",
+      "category": "AGENCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "go",
+        "scala",
+        "langchain"
+      ],
+      "emails_found": [
+        "jobs@datatonic.com"
+      ],
+      "has_careers_page": true,
+      "enrichment_score": 0.565,
+      "confidence": 0.4
+    }
+  ],
   "errors": []
 }
