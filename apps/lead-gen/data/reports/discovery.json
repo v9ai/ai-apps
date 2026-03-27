@@ -1,0 +1,562 @@
+{
+  "companies": [
+    {
+      "domain": "accenture.com",
+      "name": "Accenture",
+      "description": "Romania | Let There Be Change | Accenture Skip to main content Skip to footer Menu Accenture Accenture Close Menu What we do Back What we do Capabilities Capabilities Cloud Customer Service Cybersecurity Data and Artificial Intelligence Digital Engineering and Manufacturing Ecosystem Partners Emerging Technology Finance and Risk Management Infrastructure and Capital Projects Learning Managed Services Marketing and Experience Metaverse Sales and Commerce Strategy Supply Chain Sustainability Talen",
+      "tech_signals": [
+        "rust",
+        "go",
+        "spark",
+        "databricks"
+      ],
+      "emails_found": [],
+      "icp_score": 0.3892857142857143
+    },
+    {
+      "domain": "acousticai.com",
+      "name": "Acousticai",
+      "description": "Databuoy Databuoy &#8211; Get the fastest, most precise, fully-automated gunshot detection and localization platform Solutions SHOTPOINT® GEOFOB® KWIC® Application Company About Team Partners Careers News Contact SUPERIOR GUNSHOT DETECTION TECHNOLOGY Save lives and enhance situational awareness Databuoy is the exclusive integrated security and surveillance platform, able to instantly detect and locate shooters indoors, outdoors, and vertically, without human intervention. Our robust panic button",
+      "tech_signals": [
+        "rust",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.19375
+    },
+    {
+      "domain": "adesso.de",
+      "name": "Adesso",
+      "description": "adesso SE - Führender IT-Dienstleister im deutschsprachigen Raum de en adesso entdecken Jobs & Karriere Suche x Branchen Automobil Banken/Finanzdienstleister Bauen und Wohnen Defense Energiewirtschaft Food & Beverage Gesundheitswesen Handel Life Sciences Lotteriegesellschaften Manufacturing Industry Medien und Entertainment Messegesellschaften Mobility and Logistics Öffentliche Verwaltung Sports Verkehrsbetriebe Versicherungen Weitere Branchen Impulse Digitale Souveränität Zukunfts:sicher New Sc",
+      "tech_signals": [
+        "aws",
+        "go",
+        "databricks",
+        "rag"
+      ],
+      "emails_found": [
+        "info@adesso.de"
+      ],
+      "icp_score": 0.43214285714285716
+    },
+    {
+      "domain": "aindo.com",
+      "name": "Aindo",
+      "description": "Aindo AI - Trusted synthetic data PlatformIndustriesPartnersResourcesCompany Trusted synthetic data The data you always wanted. Unlock. Innovate. Collaborate. Aindo's synthetic data allows you to: Accelerate Research &amp; Innovation Speed up your AI and BI projects. Collaborate Securely Stay compliant and keep sensitive information safe. Monetize your Data Turn your data assets into a new revenue stream. Overcome common data bottlenecks, unlocking the hidden value of your data. MobilityEnable s",
+      "tech_signals": [
+        "rust"
+      ],
+      "emails_found": [],
+      "icp_score": 0.2050595238095238
+    },
+    {
+      "domain": "aisuperior.com",
+      "name": "Aisuperior",
+      "description": "AI Services and Development Company | AI Superior Skip to content Download our AI in Business | Global Trends Report 2023 and stay ahead of the curve! HomeCompanyAbout UsCareersBlogNewsServicesArtificial Intelligence &#038; MLAI ConsultingAI and Data StrategyProcess optimization with AIAI Use Case Discovery &#038; IdentificationAI Software DevelopmentAI Components developmentAI AcademyR&#038;D for AISOTA Research / PatentsGenerative AIGenerative AI DevelopmentAI Chatbot DevelopmentLLM Developmen",
+      "tech_signals": [
+        "rust",
+        "machine learning",
+        "deep learning",
+        "llm",
+        "gpt",
+        "react",
+        "go",
+        "scala",
+        "rag",
+        "computer vision",
+        "nlp"
+      ],
+      "emails_found": [],
+      "icp_score": 0.7
+    },
+    {
+      "domain": "aleph-alpha.com",
+      "name": "Aleph Alpha",
+      "description": "Aleph Alpha Kontakt De En Vertrauen.Verantwortung.Souveränität. 01 Vision Spezialisierte Sprachmodelle für ein souveränes Europa. In enger Partnerschaft mit unseren Kunden konzipieren, entwickeln und betreiben wir individualisierte, sichere Sprachmodelle (SLLMs) für reale, geschäftskritische Umgebungen und Entscheidungen. 02 Technologie Maßgeschneiderte Sprachmodelle spezialisiert für Ihre Domäne. Wir befähigen Unternehmen und öffentliche Institutionen, ihr wichtigstes Wissen zu transformieren. ",
+      "tech_signals": [
+        "llm",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.18630952380952379
+    },
+    {
+      "domain": "alexanderthamm.com",
+      "name": "Alexanderthamm",
+      "description": "Data Science Beratung | Strategieentwicklung & Umsetzung - Alexander Thamm [at] Suche DEDEEN Services Referenzen Insights &amp; Events Karriere Über uns Kontakt Suchbegriff eingeben Branchen Leistungen Speaker &amp; Experts Data Academy Automobil- und Zulieferindustrie Finanzwesen, Banken und Versicherungen Transport und Logistik Chemie- und Pharmaindustrie Handel und E-Commerce Alle Branchen ansehen Datenplattform-Services AI-Governance-Beratung MLOps-Beratung KI-Beratung KI-Portfolio-Managemen",
+      "tech_signals": [
+        "mlops",
+        "machine learning",
+        "go",
+        "computer vision",
+        "nlp"
+      ],
+      "emails_found": [],
+      "icp_score": 0.518154761904762
+    },
+    {
+      "domain": "appliedai.de",
+      "name": "Appliedai",
+      "description": "KI-Beratung für Unternehmen – Strategie &amp; Umsetzung mit appliedAI DE EN Angebot Angebot AI Agent Lighthouse Programm Companion Partnership Programm KI-Accelerator für den Mittelstand KI Strategie &amp; Betriebsmodell KI Enablement KI Entwicklung &amp; Implementierung Referenzen KI-Ressourcen KI-Ressourcen Whitepaper Blog Unternehmen Unternehmen Karriere Presse Events Kontakt Menü Wir bringen Sie mit KI an die Spitze Ihr Partner für messbaren Vorsprung und nachhaltige Kompetenz. Hallo! Wie kö",
+      "tech_signals": [
+        "rust",
+        "mlops",
+        "machine learning",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [
+        "info@appliedai.de"
+      ],
+      "icp_score": 0.475595238095238
+    },
+    {
+      "domain": "artefact.com",
+      "name": "Artefact",
+      "description": "Artefact is a global data and AI consulting company Skip to content Contact us Search for: Toggle NavigationIndustriesAll IndustriesFMCG (Food &amp; Beverage / Consumer goods ) RetailLuxury &amp; BeautyFinancial Services &amp; Private EquityHealthcare &amp; Pharmaceuticals ManufacturingTelecommunicationsReal EstateTravel, Tourism &amp; TransportationPublic Sector &amp; Non-Profit All IndustriesFMCG (Food &#038; Beverage / Consumer goods )RetailLuxury and BeautyFinancial services (Bank, Insurance",
+      "tech_signals": [
+        "mlops",
+        "go",
+        "scala",
+        "databricks",
+        "rag",
+        "nlp"
+      ],
+      "emails_found": [],
+      "icp_score": 0.5922619047619047
+    },
+    {
+      "domain": "axyon.ai",
+      "name": "Axyon",
+      "description": "Axyon AI | Advanced AI for investment management Skip to content Close Company Who We Are Our Team Contact Us Solutions Axyon Foresight AI-Based Signals AI-Powered Strategies AI-Powered Indexes Use Cases for Asset Management for Hedge Funds for QIS Teams for Private Banks Technology Methodology R&amp;D Resources Case Studies FAQ Newsletter Webinars &amp; Videos White Papers News In the Press News Careers BOOK A DEMO Company Who We Are Our Team Contact us Solutions Axyon Foresight AI-Based Signal",
+      "tech_signals": [
+        "rust",
+        "machine learning",
+        "deep learning",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.4919642857142857
+    },
+    {
+      "domain": "bigml.com",
+      "name": "Bigml",
+      "description": "BigML.com English Sign up / in Sign up Sign in or Sign in with... Amazon Github GitLab Google Toggle navigation PRODUCT Features Releases What's New GETTING STARTED PRICING Subscriptions Private Deployments Training Certifications BigML for Education SUPPORT Toggle navigation PRODUCT Features Releases What's New GETTING STARTED PRICING Subscriptions Private Deployments Training Certifications BigML for Education SUPPORT Machine Learning made beautifully simple for everyone Take your business to ",
+      "tech_signals": [
+        "machine learning",
+        "go"
+      ],
+      "emails_found": [],
+      "icp_score": 0.17678571428571427
+    },
+    {
+      "domain": "cambridgeconsultants.com",
+      "name": "Cambridgeconsultants",
+      "description": "Cambridge Consultants | The deep tech powerhouse of Capgemini Deep tech Industries Insights Careers About us Contact Global EN 日本語 Deep tech 5G and wireless connectivity Advanced computing AI and data analytics Biotechnology Digital transformation Quantum technology Sustainability Industries Aerospace Agritech Consumer products Defence and security Energy Life sciences Medical devices Pharmaceuticals Retail and logistics Semiconductor Smart infrastructure Telecommunications Insights Expert persp",
+      "tech_signals": [
+        "rust",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.3392857142857143
+    },
+    {
+      "domain": "capgemini.com",
+      "name": "Capgemini",
+      "description": "Capgemini - Make it real. Insights linkInsightsExplore our latest thought leadership, ideas, and insights on the issues that are shaping the future of business and society.Learn more Hot topics BackHot topics Reshape your future with AI Leading sustainability The future of technology Marketing for customer experience Conversations for tomorrow The Scale Effect Initiatives with the World Economic Forum Our research library Expert perspectives Industries linkIndustriesChoose a partner with intimat",
+      "tech_signals": [
+        "go",
+        "scala"
+      ],
+      "emails_found": [],
+      "icp_score": 0.39345238095238094
+    },
+    {
+      "domain": "ceadar.ie",
+      "name": "Ceadar",
+      "description": "CeADAR | Ireland&#039;s Centre for AI HOME WHO WE ARE OUR BOARD PROJECTS SERVICES EDIH PROGRAMME DIGITAL MATURITY ASSESSMENT SKILLS AND TRAINING TEST BEFORE INVEST SUPPORT TO FIND INVESTMENT ECOSYSTEM BUILDING EDIH CASE STUDIES CONTACT US AI ACCELERATOR PROGRAMME RESOURCES LATEST NEWS EVENTS CAREERS CeADAR Ireland&#8217;s Centre for Applied AI CeADAR is Ireland’s national centre for Applied AI. We are an Enterprise Ireland and IDA funded technology centre established to support businesses and or",
+      "tech_signals": [
+        "rag"
+      ],
+      "emails_found": [
+        "ceadar@ucd.ie"
+      ],
+      "icp_score": 0.3288690476190476
+    },
+    {
+      "domain": "computas.com",
+      "name": "Computas",
+      "description": "Frontpage - Computas Frontpage - Computas Vi tilbyr Våre referanserAktueltOm ossKontaktKultur og verdierSamarbeidspartnereBærekraft og samfunnsansvarJobb hos ossLedige stillingerAnsattgoderNyutdannetStudentTrondheimskontoret no Gjeldene nettstedspråk: Norsk Norsk English Dansk Română Svenska Søk Løsninger folk elskerVidere til innholdet Computas er en nordisk leverandør av IT-tjenester og rådgivning. Vi utvikler verdiskapende og samfunnsnyttige løsninger til offentlig og privat sektor. Vi har 40",
+      "tech_signals": [
+        "rust",
+        "go"
+      ],
+      "emails_found": [
+        "20kontakt@computas.com"
+      ],
+      "icp_score": 0.16964285714285715
+    },
+    {
+      "domain": "craft.ai",
+      "name": "Craft",
+      "description": "Craft AI – Applications IA souveraines et sécurisées pour vos entreprises ProduitsCraft AIRecherche DocumentaireAgents IAAI StudioSecteursSecteur PublicIndustrieEducation &amp; FormationJuridiqueExpertiseOrchestr&#x27;IAEntrepriseÀ propos de nousCarrièresActualitésNous contacterRessourcesOrchestr&#x27;IABlogDocumentationFAQWebinairesCommunautéENFrançaisEnglishNous contacterConnecterConnecterParticiper à la soirée IA des leaders des grandes entreprises !Participer à la soirée IA des leaders des g",
+      "tech_signals": [
+        "machine learning",
+        "llm",
+        "gpt",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.29642857142857143
+    },
+    {
+      "domain": "d-fine.com",
+      "name": "D Fine",
+      "description": "Managementberatung - d-fine Skip Links Content Area Main Navigation Unsere DNAExpertise Unsere Branchenkompetenzen d-fine verfügt über zahlreiche Expertinnen und Experten mit der relevanten Praxiserfahrung aus Ihrer Branche. Erfahren Sie mehr über unsere Dienstleistungen für Ihre Branche: Banking & Capital MarketsFintechs & Neobanks, Exchanges & Clearing Houses, Supervisory Authorities & Central Banks, Industry Associations & Service ProvidersInsurance & Asset ManagementProperty & Casualty Insur",
+      "tech_signals": [
+        "machine learning",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.2675595238095238
+    },
+    {
+      "domain": "dataiku.com",
+      "name": "Dataiku",
+      "description": "Dataiku: The Platform for AI SuccessProduct Solutions Stories Company Sign inRequest a demoStart trialRequest a demoThe Platform for AI SuccessPowered by people, orchestration, and governance. Built for enterprise scale.Request a demoStart trialAI SuccessSee what it takes to go from AI chaos to AI success.Watch1:49 AI SUCCESSCUSTOMERSECOSYSTEMNovartis moved from manual spreadsheet calculations to informed decision-making with Dataiku and harnessed the Dataiku LLM Mesh to revolutionize healthcare",
+      "tech_signals": [
+        "rust",
+        "machine learning",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.38482142857142854
+    },
+    {
+      "domain": "datatonic.com",
+      "name": "Datatonic",
+      "description": "Homepage | DatatonicServicesAI WorkbenchCloud Data MigrationGemini EnterpriseGemini Enterprise for FSIGemini Enterprise for MediaGemini Enterprise for RetailGenerative AICreative AssistantFan EngagementGameplay AssistantMedia Search + DiscoveryRetail AssistantLookerManaged ServicesMarketing AnalyticsIndustriesFinancial ServicesGamingMediaRetailTelecommunicationsOur workThe hubEventsInsightsWhitepapersPartnersCareersTrainingLet&#x27;s talk Let&#x27;s talkMenuYour go-to AI Partner Solve your most ",
+      "tech_signals": [
+        "go",
+        "scala",
+        "langchain"
+      ],
+      "emails_found": [],
+      "icp_score": 0.2675595238095238
+    },
+    {
+      "domain": "deepcode.ai",
+      "name": "Deepcode",
+      "description": "DeepCode AI | AI Code Review | AI Security for SAST | Snyk AI | SnykYou need to enable JavaScript to run this app.Skip to main contentPlatformPlatformSnyk AI Security PlatformModern security in a single platformSnyk AI WorkflowsAI-driven workflows to secure applicationsDeepCode AIPurpose-built security AIIntegrationsSDLC-spanning securitySnyk LearnDeveloper security educationPricingProductsSnyk CodeSecure your code as it&#x27;s writtenSnyk Open SourceAvoid vulnerable dependenciesSnyk ContainerKe",
+      "tech_signals": [
+        "rust",
+        "machine learning",
+        "llm",
+        "gpt",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.40892857142857136
+    },
+    {
+      "domain": "deeper-insights.com",
+      "name": "Deeper Insights",
+      "description": "Deeper Insights Skip to content HomeMentoringBiographyContact Menu Anna Maria Newton I have combined a long professional career with a lifetime fascination for the science of self-actualisation. – This fascination continues to be a rich journey which informs what I bring to my work in every way.Clients – very kindly &#8211; speak of my skill in eliciting clarity and focus – my tenacity in coaching for growth and crucially: for real and lasting insight.Essentially a pragmatist I believe coaching ",
+      "tech_signals": [
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.1125
+    },
+    {
+      "domain": "deepsense.ai",
+      "name": "Deepsense",
+      "description": "Custom AI Software Development &amp; AI Consulting - deepsense.ai Tech ExpertiseIndustriesCase StudiesAI InsightsOur CompanyJoin us! Contact Us Explore all the technology expertise we have to develop AI solutions Explore All LLMs &amp; RAGAI Voice Bots for Enterprise OperationsComputer VisionPredictive AnalyticsMLOpsCustom MCP Servers as Part of Enterprise AI InfrastructureEdge SolutionsAI Guidance Deploy Agentic RAG Pipelines in Minutes with ragbits Get the Code Applied AI BlogOpen-sourceLLM St",
+      "tech_signals": [
+        "rust",
+        "kubernetes",
+        "mlops",
+        "deep learning",
+        "llm",
+        "gcp",
+        "go",
+        "scala",
+        "langchain",
+        "rag",
+        "computer vision"
+      ],
+      "emails_found": [],
+      "icp_score": 0.7523809523809524
+    },
+    {
+      "domain": "ekimetrics.com",
+      "name": "Ekimetrics",
+      "description": "AI Business Solutions – Ekimetrics This is some text inside of a div block.Let&#x27;s Discuss!Share your business problem with us, and let&#x27;s see how we can help.Contact usEkimetrics named a Leader in the Forrester Wave™ for Marketing Measurement &amp; Optimization Services, Q1 2026.Access the reportEkimetrics named a Leader in the Forrester Wave™ for Marketing Measurement &amp; Optimization Services, Q1 2026.Access the reportEkimetrics named a Leader in the Forrester Wave™ for Marketing Mea",
+      "tech_signals": [
+        "machine learning",
+        "go"
+      ],
+      "emails_found": [],
+      "icp_score": 0.27678571428571425
+    },
+    {
+      "domain": "explosion.ai",
+      "name": "Explosion",
+      "description": "Explosion · Developer tools and consulting for AI, Machine Learning and NLPAboutSoftwareTailored SolutionsEventsMerchExplosion builds developer tools for AI, Machine Learning and Natural Language Processing. →ConsultingProjectspaCyProdigyThincConsultingCase StudyTopicsLLMsNLP StrategyAnnotationBiomedicalFinanceMediaLegalHumanitiesComputer VisionCategoryBlogReleaseUniverseTalkInterviewVideoPaperBookTasksSelect...Code GenerationCoreference ResolutionDependency ParsingDistillationEmbeddings &amp; V",
+      "tech_signals": [
+        "python",
+        "machine learning",
+        "deep learning",
+        "llm",
+        "transformer",
+        "go",
+        "rag",
+        "embeddings",
+        "computer vision",
+        "nlp"
+      ],
+      "emails_found": [],
+      "icp_score": 0.8428571428571427
+    },
+    {
+      "domain": "faculty.ai",
+      "name": "Faculty",
+      "description": "Faculty - Frontier AI for the frontlines of the worldAI Services Faculty Frontier ™IndustriesImpactInsightsCareersGet startedGet startedGet startedGet startedGet startedGet startedFrontier AI for the frontlines of the world.PERSPECTIVES FROM THE FRONTLINE OF AIOur customers share their learnings from applying AI to their most important problems.Trusted by Industry LeadersOpenAI &quot;Faculty have cared about AI safety for a long time and so they&#x27;ve been a natural and wonderful partner for u",
+      "tech_signals": [
+        "rust",
+        "machine learning"
+      ],
+      "emails_found": [],
+      "icp_score": 0.29345238095238096
+    },
+    {
+      "domain": "futurice.com",
+      "name": "Futurice",
+      "description": "Futurice, digital transformations with measurable outcomesSkip to main contentServicesServices submenuServicesStrategy and TransformationAI Workflows &amp; AutomationDigital ExperiencesPlatform &amp; AI ModernizationManaged ServicesCase studiesAboutAbout submenuAboutThe Futurice CultureDiversity, equity and inclusionOur journeySpice ProgramThe Futurice FamilyPartnershipsCareersCareers submenuCareersOpen positionsFuturice InternshipsFuturice certification programIndustriesIndustries submenuIndust",
+      "tech_signals": [
+        "aws",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.25089285714285714
+    },
+    {
+      "domain": "heuritech.com",
+      "name": "Heuritech",
+      "description": "Fashion trend forecasting &amp; prediction with AI - Heuritech Aller au contenu ABOUT US About usDiscover Heuritech history, team and technology to understand how we blend artificial intelligence and fashion expertise. Luxurynsight groupAs of November 2024, Heuritech has become a part of the Luxurynsight Group, the leading data intelligence platform for luxury, fashion and beauty brands. Fashion Trend ForecastingTrend forecasting is the act of predicting fashion trends. It can help companies pro",
+      "tech_signals": [
+        "machine learning",
+        "go",
+        "rag",
+        "computer vision"
+      ],
+      "emails_found": [
+        "press@heuritech.com"
+      ],
+      "icp_score": 0.4130952380952381
+    },
+    {
+      "domain": "infermedica.com",
+      "name": "Infermedica",
+      "description": "Infermedica&#x27;s virtual triage for accurate patient care navigation Skip Navigation Link to home pageWho We HelpSolutionsPartnersResourcesCompanyWho We HelpHealth plans and insurers Public health and government Healthcare providers Telemedicine Pharmaceutical companies Who We HelpHealth plans and insurers Public health and government Healthcare providers Telemedicine Pharmaceutical companies Who We HelpHealth plans and insurers Public health and government Healthcare providers Telemedicine Ph",
+      "tech_signals": [
+        "rust",
+        "go"
+      ],
+      "emails_found": [],
+      "icp_score": 0.22678571428571426
+    },
+    {
+      "domain": "inform-software.com",
+      "name": "Inform Software",
+      "description": "AI systems to optimize business processes - INFORMSolutionsIndustriesExpertiseAbout usCareerBackSolutionsOverviewAviation Ground OperationsOverviewAirport Resource ManagementGround Handling Resource ManagementAircraft Turnaround ManagementData AnalyticsFinished Vehicle LogisticsOverviewNetwork PlanningTransport ManagementVehicle Yard ManagementWorkshop OptimizationLoad &amp; Route OptimizationLogisticsOverviewBuilding Materials LogisticsContainer and Reusable Packaging ManagementHealthcare Logis",
+      "tech_signals": [
+        "rust",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.4535714285714285
+    },
+    {
+      "domain": "kernix.com",
+      "name": "Kernix",
+      "description": "Kernix - Data, Design &amp; Développement - Agence web Passer au contenu principal Accueil - Kernix Offres Réalisations Expertises Articles Agence Recrutement Contact en Changer pour l'anglais (Nouvelle fenêtre) Aller sur le twitter Agence Web Kernix (Nouvelle fenêtre) Aller sur le linkedin Agence Web Kernix (Nouvelle fenêtre) Aller sur le facebook Agence Web Kernix (Nouvelle fenêtre) Aller sur le instagram Agence Web Kernix (Nouvelle fenêtre) Aller sur le behance Agence Web Kernix (Nouvelle fen",
+      "tech_signals": [
+        "machine learning",
+        "deep learning",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.3630952380952381
+    },
+    {
+      "domain": "lighton.ai",
+      "name": "Lighton",
+      "description": "AI Search &amp; Reason Behind Your Firewall Let&#x27;s connect at VivaTech 📍Where to find us! ProductsReady-to-use InterfaceSecure AI Chat On Your Own KnowledgeAPI EngineProduction-Ready Multimodal RAG APIServicesCustom Gen AI With Professional Services SupportPricingPartnersResources BlogGet Genai Industry Insights And Lighton Product DevelopmentsSuccess StoriesLearn How Paradigm Empowers Business UnitsR&amp;DOur Work Transforms Research Into Practical Solutions, Driving Business SuccessLLM Glo",
+      "tech_signals": [
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.4413690476190476
+    },
+    {
+      "domain": "merantix.com",
+      "name": "Merantix",
+      "description": "Merantix - Europe&#x27;s leading AI group AboutJoin us Join us Leading the AI Revolution in EuropeThe Merantix Group invests, builds, and connects to drive impactful AI made in Europe.INVESTMENTSSOLUTIONSCOMMUNITYKeep up to date with our newsletter.Thank you!Oops! Something went wrong while submitting the form. Please try again.HomeAboutCAREERSMerantix AGMax-urich str. 3 | AI Campus13355 BerlinGermanyLinkedin↗X↗©2024 Merantix AG. All rights reserveddata privacySFDRImprintBack to the topCookie Co",
+      "tech_signals": [
+        "go"
+      ],
+      "emails_found": [],
+      "icp_score": 0.32172619047619044
+    },
+    {
+      "domain": "mhp.com",
+      "name": "Mhp",
+      "description": "MHP International | MHP – A Porsche Company Jump to content For full functionality of this site it is necessary to enable JavaScript. Menu Insights Insights Insights at a Glance Industry 4.0 Barometer 2026: Software-Defined Manufacturing - The New&hellip; German Logistics Hub Publications Compliance as a Service Measuring &amp; scaling UX maturity Success Stories MyŠkoda: From SuperApp Idea to AI-Driven Digital Companion MHP Blog 16.12.2025 Human Firewall: Employees as the Key to Cyber Security ",
+      "tech_signals": [
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.3580357142857143
+    },
+    {
+      "domain": "modulos.ai",
+      "name": "Modulos",
+      "description": "AI Governance Platform for Enterprises | ModulosPlatformRegulationsResourcesCompanyLaunch PlatformRequest a DemoAI Governance, Riskand ComplianceManage AI governance, risk, and compliance from one platform, with AI agents that streamline the work.Request a DemoExplore PlatformChallengesAI Regulations and Best Practices Are Here. Is Your AI Strategy Ready for Today&#x27;s Challenges?Compliance takes foreverManual control assessments eat up 2-4 hours per system. Your team shouldn&#x27;t spend week",
+      "tech_signals": [
+        "rust",
+        "go"
+      ],
+      "emails_found": [],
+      "icp_score": 0.30297619047619045
+    },
+    {
+      "domain": "netguru.com",
+      "name": "Netguru",
+      "description": "Software Development Company | Netguru Skip menuMain menuOpen the Services submenuServicesStrategy &amp; InnovationCapabilitiesDigital Product StrategyProduct Discovery &amp; ResearchRapid PrototypingTechnology StrategyInnovation &amp; R&amp;DMethodsDesign ThinkingLean Product DevelopmentProduct AnalyticsExperimentation PlatformsSoftware EngineeringCapabilitiesSoftware DevelopmentWeb DevelopmentMobile DevelopmentMVP DevelopmentAPI DevelopmentTechnologiesReactNext.jsVueAngularPythonRuby on RailsN",
+      "tech_signals": [
+        "rust",
+        "python",
+        "machine learning",
+        "llm",
+        "gpt",
+        "aws",
+        "azure",
+        "react",
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [
+        "0000745671hello@netguru.comcertificates:next"
+      ],
+      "icp_score": 0.5380952380952381
+    },
+    {
+      "domain": "nordeus.com",
+      "name": "Nordeus",
+      "description": "Nordeus | Give the world more champions About Us Games Top Eleven Golf Rival Life at Nordeus Living in Belgrade Benefits FAQ Nordeus Foundation Our Teams Blog Careers Open Positions Early Talent GIVE THE WORLD MORE CHAMPIONS We are a mobile games company based in Belgrade, Serbia powering top sports games enjoyed around the world. OUR CULTURE=OUR SUPERPOWER Our people are what makes Nordeus special. Find out what it would be like to join our team. LIFE AT NORDEUS WE MAKE GAMES FOR CHAMPIONS Expe",
+      "tech_signals": [
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.2125
+    },
+    {
+      "domain": "ortec.com",
+      "name": "Ortec",
+      "description": "We leverage data &amp; mathematics to improve your businessIndustriesSolutionsImpact CasesSustainabilityAbout usFeatured InsightsHomeCareersContact usEnglish (Global)English (Americas)NederlandsDeutschFrançaisCareersContact usEnglish (Global)English (Americas)NederlandsDeutschFrançaisIndustriesSolutionsImpact CasesSustainabilityAbout usFeatured InsightsHomeData-driven decisions. Better results.Data-driven decisions. Better results.Data-driven decisions. Better results.We help many of the world&#",
+      "tech_signals": [
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.21964285714285714
+    },
+    {
+      "domain": "peak.ai",
+      "name": "Peak",
+      "description": "Peak | Game-Changing AI Software. What we do Main Menu AI built for your business Agentic solutions What we do Agentic Intelligence Agentic AI solutions that predict, decide, and act autonomously Agentic solutions Discover the power of Agentic Intelligence Commercial Pricing Transform your entire quote-to-order process Inventory Management Optimize inventory decisions across purchasing, production and fulfillment Merchandising Intelligent automation that optimizes every decision, from supplier t",
+      "tech_signals": [
+        "rust",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.28928571428571426
+    },
+    {
+      "domain": "profusion.com",
+      "name": "Profusion",
+      "description": "Profusion 0 Skip to Content Explore our Data and AI Services View our Adaptive CRM Agency Open Menu Close Menu Explore our Data and AI Services View our Adaptive CRM Agency Open Menu Close Menu Explore our Data and AI Services View our Adaptive CRM Agency Profusion is now part of Atombit! Learn more Powering business growth with world-class Data, AI &amp; Adaptive CRM Services We are experts in giving businesses of any size the tools they need to get the most out of AI and their data assets. Dat",
+      "tech_signals": [
+        "go"
+      ],
+      "emails_found": [],
+      "icp_score": 0.08839285714285713
+    },
+    {
+      "domain": "quostar.com",
+      "name": "Quostar",
+      "description": "IT Support, Security, Data and AI Solutions | Zenzero Solutions Prev 1 2 3 4 5 Next Managed Services Professional Services Cyber Security Data & AI Digital Inheritance Business Outcome Manage your technology estate Modernise legacy systems Microsoft 365 management Data backup and recovery Enable secure hybrid working Protect business-critical systems SOLUTIONS Fully managed support Disaster recovery Cloud transformation Cyber security &amp; risk Unified Communications SharePoint management USE C",
+      "tech_signals": [
+        "rust",
+        "azure",
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [
+        "900hello@zenzero.co.uk"
+      ],
+      "icp_score": 0.4967261904761905
+    },
+    {
+      "domain": "rasa.com",
+      "name": "Rasa",
+      "description": "Rasa | Build Trustworthy AI Agents for Real-World Use Product Platform OverviewRasa extends LLMs with structured flows, deterministic logic, and built-in recovery patterns.CALMCALM extends the flexibility of LLMs with the reliability of deterministic logic.ChatManage layered, real-world conversations with memory, logic, and adaptability built in.Enterprise RAGRetrieve information in real time, so every answer is fresh, verifiable, and aligned with your trusted data.NLUBegin with intent-based str",
+      "tech_signals": [
+        "rust",
+        "machine learning",
+        "llm",
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [],
+      "icp_score": 0.40892857142857136
+    }
+  ],
+  "duplicates_skipped": 0,
+  "fetch_errors": [
+    "2000soft.de: error sending request for url (https://2000soft.de/)",
+    "bcg.com: HTTP 403 Forbidden",
+    "datarevenue.com: error sending request for url (https://datarevenue.com/)",
+    "devoteam.com: HTTP 403 Forbidden",
+    "kinandcarta.com: error sending request for url (https://kinandcarta.com/)",
+    "mckinsey.com: error sending request for url (https://mckinsey.com/)",
+    "peltarion.com: error sending request for url (https://peltarion.com/)",
+    "polymatica.com: error sending request for url (https://polymatica.com/)",
+    "quantumblack.com: error sending request for url (https://quantumblack.com/)"
+  ]
+}
