@@ -9,7 +9,7 @@
 use anyhow::{Context, Result};
 use candle_core::Device;
 use clap::{Parser, Subcommand};
-use tracing::info;
+use tracing::{info, warn};
 
 use travel_ml::constants::{DISCOVERY_YEAR, DISCOVERY_YEAR_STR};
 use travel_ml::dedup::deduplicate;
@@ -311,14 +311,40 @@ async fn export_results(
     // De-classify "new" hotels whose review counts prove they are established
     reviews::clear_misidentified_new_hotels(&mut hotels_with_images, &analyses);
 
-    // Build enriched results
-    let mut results: Vec<EnrichedSearchResult> = hotels_with_images
-        .iter()
-        .zip(scores.iter())
+    // Drop unverifiable hotels: zero reviews + zero rating = no evidence of existence
+    // on any platform (Google Maps, Google Search, Booking.com). This catches fictional
+    // names in the curated seed list that were never validated against real listings.
+    let before_verify = hotels_with_images.len();
+    let verified: Vec<(Hotel, f32, reviews::ReviewAnalysis)> = hotels_with_images
+        .into_iter()
+        .zip(scores.iter().copied())
         .zip(analyses.into_iter())
-        .map(|((hotel, &score), analysis)| EnrichedSearchResult {
+        .filter_map(|((hotel, score), analysis)| {
+            if analysis.review_count == 0 && analysis.review_rating == 0.0 && analysis.reviews.is_empty() {
+                warn!(
+                    "Dropping unverifiable hotel '{}' — no reviews found on any platform",
+                    hotel.name,
+                );
+                None
+            } else {
+                Some((hotel, score, analysis))
+            }
+        })
+        .collect();
+    if verified.len() < before_verify {
+        info!(
+            "Existence check: dropped {} unverifiable hotels ({} remain)",
+            before_verify - verified.len(),
+            verified.len(),
+        );
+    }
+
+    // Build enriched results
+    let mut results: Vec<EnrichedSearchResult> = verified
+        .into_iter()
+        .map(|(hotel, score, analysis)| EnrichedSearchResult {
             hotel: reviews::EnrichedHotel {
-                hotel: hotel.clone(),
+                hotel,
                 analysis,
             },
             score,
