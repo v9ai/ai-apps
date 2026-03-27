@@ -203,6 +203,7 @@ export const appointments = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     doctorId: uuid("doctor_id").references(() => doctors.id, { onDelete: "set null" }),
+    familyMemberId: uuid("family_member_id").references(() => familyMembers.id, { onDelete: "set null" }),
     title: text("title").notNull(),
     provider: text("provider"),
     notes: text("notes"),
@@ -210,6 +211,23 @@ export const appointments = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("appointments_user_idx").on(table.userId)],
+);
+
+export const familyMemberDoctors = pgTable(
+  "family_member_doctors",
+  {
+    familyMemberId: uuid("family_member_id")
+      .notNull()
+      .references(() => familyMembers.id, { onDelete: "cascade" }),
+    doctorId: uuid("doctor_id")
+      .notNull()
+      .references(() => doctors.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.familyMemberId, table.doctorId] }),
+    index("fmd_family_idx").on(table.familyMemberId),
+    index("fmd_doctor_idx").on(table.doctorId),
+  ],
 );
 
 // ── Embedding tables ───────────────────────────────────────────────

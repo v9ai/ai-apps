@@ -36,7 +36,7 @@ export default function ProtectedLayout({
         }}
       >
         <header>
-          <Container size="4" px="4">
+          <Container px="4">
             <Flex justify="between" align="center" py="2">
               <Flex align="center" gap="3" asChild>
                 <Link href="/dashboard" style={{ textDecoration: "none" }}>
@@ -66,7 +66,7 @@ export default function ProtectedLayout({
       </Box>
 
       <Box style={{ flex: 1 }}>
-        <Container size="3" px="4" py="6">
+        <Container px="4" py="6">
           {children}
         </Container>
       </Box>

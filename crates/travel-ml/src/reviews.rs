@@ -1852,6 +1852,51 @@ mod tests {
         assert!(result.is_none());
     }
 
+    #[test]
+    fn load_prescraped_gallery_from_json() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("test_gallery.json");
+        let json = r#"{
+            "test-hotel": {
+                "review_rating": 8.7,
+                "review_count": 1234,
+                "review_texts": [],
+                "gallery": [
+                    "https://lh5.googleusercontent.com/p/abc=w800-h600",
+                    "https://cf.bstatic.com/images/hotel/max1024x768/123.jpg"
+                ],
+                "sources": ["google_maps", "booking"]
+            },
+            "no-gallery-hotel": {
+                "review_rating": 7.0,
+                "review_count": 100,
+                "review_texts": [],
+                "gallery": [],
+                "sources": ["booking"]
+            }
+        }"#;
+        std::fs::write(&path, json).unwrap();
+
+        let gallery = load_prescraped_gallery("test-hotel", path.to_str().unwrap()).unwrap();
+        assert_eq!(gallery.len(), 2);
+        assert!(gallery[0].contains("googleusercontent.com"));
+        assert!(gallery[1].contains("bstatic.com"));
+
+        // Empty gallery should return None
+        let empty = load_prescraped_gallery("no-gallery-hotel", path.to_str().unwrap());
+        assert!(empty.is_none());
+
+        // Missing hotel should return None
+        let missing = load_prescraped_gallery("nonexistent", path.to_str().unwrap());
+        assert!(missing.is_none());
+
+        // Missing file should return None
+        let no_file = load_prescraped_gallery("test", "/tmp/nonexistent_gallery.json");
+        assert!(no_file.is_none());
+
+        std::fs::remove_file(path).ok();
+    }
+
     // ── URL encoding ────────────────────────────────────────────────
 
     #[test]
