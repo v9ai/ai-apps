@@ -1,10 +1,1881 @@
 {
-  "contacts": [],
+  "contacts": [
+    {
+      "email": "info.@aisuperior.com",
+      "domain": "aisuperior.com",
+      "company_name": "Aisuperior",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@aisuperior.com",
+      "domain": "aisuperior.com",
+      "company_name": "Aisuperior",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@aisuperior.com",
+      "domain": "aisuperior.com",
+      "company_name": "Aisuperior",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.5
+    },
+    {
+      "email": "hello.@aisuperior.com",
+      "domain": "aisuperior.com",
+      "company_name": "Aisuperior",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@aisuperior.com",
+      "domain": "aisuperior.com",
+      "company_name": "Aisuperior",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@aisuperior.com",
+      "domain": "aisuperior.com",
+      "company_name": "Aisuperior",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@aisuperior.com",
+      "domain": "aisuperior.com",
+      "company_name": "Aisuperior",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@aisuperior.com",
+      "domain": "aisuperior.com",
+      "company_name": "Aisuperior",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@aisuperior.com",
+      "domain": "aisuperior.com",
+      "company_name": "Aisuperior",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@explosion.ai",
+      "domain": "explosion.ai",
+      "company_name": "Explosion",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@explosion.ai",
+      "domain": "explosion.ai",
+      "company_name": "Explosion",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@explosion.ai",
+      "domain": "explosion.ai",
+      "company_name": "Explosion",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@explosion.ai",
+      "domain": "explosion.ai",
+      "company_name": "Explosion",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@explosion.ai",
+      "domain": "explosion.ai",
+      "company_name": "Explosion",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@explosion.ai",
+      "domain": "explosion.ai",
+      "company_name": "Explosion",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@explosion.ai",
+      "domain": "explosion.ai",
+      "company_name": "Explosion",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@explosion.ai",
+      "domain": "explosion.ai",
+      "company_name": "Explosion",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@explosion.ai",
+      "domain": "explosion.ai",
+      "company_name": "Explosion",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.5
+    },
+    {
+      "email": "info.@deepsense.ai",
+      "domain": "deepsense.ai",
+      "company_name": "Deepsense",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@deepsense.ai",
+      "domain": "deepsense.ai",
+      "company_name": "Deepsense",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@deepsense.ai",
+      "domain": "deepsense.ai",
+      "company_name": "Deepsense",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@deepsense.ai",
+      "domain": "deepsense.ai",
+      "company_name": "Deepsense",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@deepsense.ai",
+      "domain": "deepsense.ai",
+      "company_name": "Deepsense",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@deepsense.ai",
+      "domain": "deepsense.ai",
+      "company_name": "Deepsense",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@deepsense.ai",
+      "domain": "deepsense.ai",
+      "company_name": "Deepsense",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@deepsense.ai",
+      "domain": "deepsense.ai",
+      "company_name": "Deepsense",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@deepsense.ai",
+      "domain": "deepsense.ai",
+      "company_name": "Deepsense",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@accenture.com",
+      "domain": "accenture.com",
+      "company_name": "Accenture",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0a-001dcc01.pphosted.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@accenture.com",
+      "domain": "accenture.com",
+      "company_name": "Accenture",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0a-001dcc01.pphosted.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@accenture.com",
+      "domain": "accenture.com",
+      "company_name": "Accenture",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0a-001dcc01.pphosted.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@accenture.com",
+      "domain": "accenture.com",
+      "company_name": "Accenture",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0a-001dcc01.pphosted.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@accenture.com",
+      "domain": "accenture.com",
+      "company_name": "Accenture",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0a-001dcc01.pphosted.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@accenture.com",
+      "domain": "accenture.com",
+      "company_name": "Accenture",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0a-001dcc01.pphosted.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@accenture.com",
+      "domain": "accenture.com",
+      "company_name": "Accenture",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0a-001dcc01.pphosted.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@accenture.com",
+      "domain": "accenture.com",
+      "company_name": "Accenture",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0a-001dcc01.pphosted.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@accenture.com",
+      "domain": "accenture.com",
+      "company_name": "Accenture",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0a-001dcc01.pphosted.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@cambridgeconsultants.com",
+      "domain": "cambridgeconsultants.com",
+      "company_name": "Cambridgeconsultants",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "cambridgeconsultants-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@cambridgeconsultants.com",
+      "domain": "cambridgeconsultants.com",
+      "company_name": "Cambridgeconsultants",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "cambridgeconsultants-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@cambridgeconsultants.com",
+      "domain": "cambridgeconsultants.com",
+      "company_name": "Cambridgeconsultants",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "cambridgeconsultants-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@cambridgeconsultants.com",
+      "domain": "cambridgeconsultants.com",
+      "company_name": "Cambridgeconsultants",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "cambridgeconsultants-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@cambridgeconsultants.com",
+      "domain": "cambridgeconsultants.com",
+      "company_name": "Cambridgeconsultants",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "cambridgeconsultants-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@cambridgeconsultants.com",
+      "domain": "cambridgeconsultants.com",
+      "company_name": "Cambridgeconsultants",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "cambridgeconsultants-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@cambridgeconsultants.com",
+      "domain": "cambridgeconsultants.com",
+      "company_name": "Cambridgeconsultants",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "cambridgeconsultants-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@cambridgeconsultants.com",
+      "domain": "cambridgeconsultants.com",
+      "company_name": "Cambridgeconsultants",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "cambridgeconsultants-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@cambridgeconsultants.com",
+      "domain": "cambridgeconsultants.com",
+      "company_name": "Cambridgeconsultants",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "cambridgeconsultants-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@lighton.ai",
+      "domain": "lighton.ai",
+      "company_name": "Lighton",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@lighton.ai",
+      "domain": "lighton.ai",
+      "company_name": "Lighton",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@lighton.ai",
+      "domain": "lighton.ai",
+      "company_name": "Lighton",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@lighton.ai",
+      "domain": "lighton.ai",
+      "company_name": "Lighton",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@lighton.ai",
+      "domain": "lighton.ai",
+      "company_name": "Lighton",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@lighton.ai",
+      "domain": "lighton.ai",
+      "company_name": "Lighton",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@lighton.ai",
+      "domain": "lighton.ai",
+      "company_name": "Lighton",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@lighton.ai",
+      "domain": "lighton.ai",
+      "company_name": "Lighton",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@lighton.ai",
+      "domain": "lighton.ai",
+      "company_name": "Lighton",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.5
+    },
+    {
+      "email": "info.@artefact.com",
+      "domain": "artefact.com",
+      "company_name": "Artefact",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@artefact.com",
+      "domain": "artefact.com",
+      "company_name": "Artefact",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@artefact.com",
+      "domain": "artefact.com",
+      "company_name": "Artefact",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@artefact.com",
+      "domain": "artefact.com",
+      "company_name": "Artefact",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@artefact.com",
+      "domain": "artefact.com",
+      "company_name": "Artefact",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@artefact.com",
+      "domain": "artefact.com",
+      "company_name": "Artefact",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@artefact.com",
+      "domain": "artefact.com",
+      "company_name": "Artefact",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@artefact.com",
+      "domain": "artefact.com",
+      "company_name": "Artefact",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@artefact.com",
+      "domain": "artefact.com",
+      "company_name": "Artefact",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "press@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "discovered",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.8
+    },
+    {
+      "email": "info.@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.5
+    },
+    {
+      "email": "hello.@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@heuritech.com",
+      "domain": "heuritech.com",
+      "company_name": "Heuritech",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.5
+    },
+    {
+      "email": "900hello@zenzero.co.uk",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "discovered",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@zenzero.co.uk",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "discovered",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@quostar.com",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@quostar.com",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@quostar.com",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.5
+    },
+    {
+      "email": "hello.@quostar.com",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@quostar.com",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@quostar.com",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.5
+    },
+    {
+      "email": "contact.@quostar.com",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@quostar.com",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@quostar.com",
+      "domain": "quostar.com",
+      "company_name": "Quostar",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "quostar-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "0000745671hello@netguru.comcertificates:next",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "discovered",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@netguru.com",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@netguru.com",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@netguru.com",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@netguru.com",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@netguru.com",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@netguru.com",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@netguru.com",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@netguru.com",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@netguru.com",
+      "domain": "netguru.com",
+      "company_name": "Netguru",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@dataiku.com",
+      "domain": "dataiku.com",
+      "company_name": "Dataiku",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@dataiku.com",
+      "domain": "dataiku.com",
+      "company_name": "Dataiku",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@dataiku.com",
+      "domain": "dataiku.com",
+      "company_name": "Dataiku",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@dataiku.com",
+      "domain": "dataiku.com",
+      "company_name": "Dataiku",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@dataiku.com",
+      "domain": "dataiku.com",
+      "company_name": "Dataiku",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@dataiku.com",
+      "domain": "dataiku.com",
+      "company_name": "Dataiku",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@dataiku.com",
+      "domain": "dataiku.com",
+      "company_name": "Dataiku",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@dataiku.com",
+      "domain": "dataiku.com",
+      "company_name": "Dataiku",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@dataiku.com",
+      "domain": "dataiku.com",
+      "company_name": "Dataiku",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@ekimetrics.com",
+      "domain": "ekimetrics.com",
+      "company_name": "Ekimetrics",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "ekimetrics-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@ekimetrics.com",
+      "domain": "ekimetrics.com",
+      "company_name": "Ekimetrics",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "ekimetrics-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@ekimetrics.com",
+      "domain": "ekimetrics.com",
+      "company_name": "Ekimetrics",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "ekimetrics-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@ekimetrics.com",
+      "domain": "ekimetrics.com",
+      "company_name": "Ekimetrics",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "ekimetrics-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@ekimetrics.com",
+      "domain": "ekimetrics.com",
+      "company_name": "Ekimetrics",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "ekimetrics-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@ekimetrics.com",
+      "domain": "ekimetrics.com",
+      "company_name": "Ekimetrics",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "ekimetrics-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@ekimetrics.com",
+      "domain": "ekimetrics.com",
+      "company_name": "Ekimetrics",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "ekimetrics-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@ekimetrics.com",
+      "domain": "ekimetrics.com",
+      "company_name": "Ekimetrics",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "ekimetrics-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@ekimetrics.com",
+      "domain": "ekimetrics.com",
+      "company_name": "Ekimetrics",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "ekimetrics-com.mail.protection.outlook.com",
+      "score": 0.5
+    },
+    {
+      "email": "info.@deepcode.ai",
+      "domain": "deepcode.ai",
+      "company_name": "Deepcode",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx1-hosting.jellyfish.systems",
+      "score": 0.1
+    },
+    {
+      "email": "i@deepcode.ai",
+      "domain": "deepcode.ai",
+      "company_name": "Deepcode",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx1-hosting.jellyfish.systems",
+      "score": 0.1
+    },
+    {
+      "email": "info@deepcode.ai",
+      "domain": "deepcode.ai",
+      "company_name": "Deepcode",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx1-hosting.jellyfish.systems",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@deepcode.ai",
+      "domain": "deepcode.ai",
+      "company_name": "Deepcode",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx1-hosting.jellyfish.systems",
+      "score": 0.1
+    },
+    {
+      "email": "h@deepcode.ai",
+      "domain": "deepcode.ai",
+      "company_name": "Deepcode",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx1-hosting.jellyfish.systems",
+      "score": 0.1
+    },
+    {
+      "email": "hello@deepcode.ai",
+      "domain": "deepcode.ai",
+      "company_name": "Deepcode",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx1-hosting.jellyfish.systems",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@deepcode.ai",
+      "domain": "deepcode.ai",
+      "company_name": "Deepcode",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx1-hosting.jellyfish.systems",
+      "score": 0.1
+    },
+    {
+      "email": "c@deepcode.ai",
+      "domain": "deepcode.ai",
+      "company_name": "Deepcode",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx1-hosting.jellyfish.systems",
+      "score": 0.1
+    },
+    {
+      "email": "contact@deepcode.ai",
+      "domain": "deepcode.ai",
+      "company_name": "Deepcode",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx1-hosting.jellyfish.systems",
+      "score": 0.1
+    },
+    {
+      "email": "info.@alexanderthamm.com",
+      "domain": "alexanderthamm.com",
+      "company_name": "Alexanderthamm",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "alexanderthamm-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@alexanderthamm.com",
+      "domain": "alexanderthamm.com",
+      "company_name": "Alexanderthamm",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "alexanderthamm-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@alexanderthamm.com",
+      "domain": "alexanderthamm.com",
+      "company_name": "Alexanderthamm",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "alexanderthamm-com.mail.protection.outlook.com",
+      "score": 0.5
+    },
+    {
+      "email": "hello.@alexanderthamm.com",
+      "domain": "alexanderthamm.com",
+      "company_name": "Alexanderthamm",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "alexanderthamm-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@alexanderthamm.com",
+      "domain": "alexanderthamm.com",
+      "company_name": "Alexanderthamm",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "alexanderthamm-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@alexanderthamm.com",
+      "domain": "alexanderthamm.com",
+      "company_name": "Alexanderthamm",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "alexanderthamm-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@alexanderthamm.com",
+      "domain": "alexanderthamm.com",
+      "company_name": "Alexanderthamm",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "alexanderthamm-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@alexanderthamm.com",
+      "domain": "alexanderthamm.com",
+      "company_name": "Alexanderthamm",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "alexanderthamm-com.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@alexanderthamm.com",
+      "domain": "alexanderthamm.com",
+      "company_name": "Alexanderthamm",
+      "pattern_name": "first",
+      "verified": true,
+      "verification_tier": 2,
+      "mx_host": "alexanderthamm-com.mail.protection.outlook.com",
+      "score": 0.5
+    },
+    {
+      "email": "info@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "discovered",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@axyon.ai",
+      "domain": "axyon.ai",
+      "company_name": "Axyon",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "aspmx.l.google.com",
+      "score": 0.1
+    },
+    {
+      "email": "ceadar@ucd.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "discovered",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "info.@ceadar.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "i@ceadar.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "info@ceadar.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@ceadar.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "h@ceadar.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "hello@ceadar.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@ceadar.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "c@ceadar.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "contact@ceadar.ie",
+      "domain": "ceadar.ie",
+      "company_name": "Ceadar",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx0101.titan.email",
+      "score": 0.1
+    },
+    {
+      "email": "info.@d-fine.com",
+      "domain": "d-fine.com",
+      "company_name": "D Fine",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mail2.aiinformatics.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@d-fine.com",
+      "domain": "d-fine.com",
+      "company_name": "D Fine",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mail2.aiinformatics.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@d-fine.com",
+      "domain": "d-fine.com",
+      "company_name": "D Fine",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mail2.aiinformatics.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@d-fine.com",
+      "domain": "d-fine.com",
+      "company_name": "D Fine",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mail2.aiinformatics.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@d-fine.com",
+      "domain": "d-fine.com",
+      "company_name": "D Fine",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mail2.aiinformatics.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@d-fine.com",
+      "domain": "d-fine.com",
+      "company_name": "D Fine",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mail2.aiinformatics.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@d-fine.com",
+      "domain": "d-fine.com",
+      "company_name": "D Fine",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mail2.aiinformatics.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@d-fine.com",
+      "domain": "d-fine.com",
+      "company_name": "D Fine",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mail2.aiinformatics.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@d-fine.com",
+      "domain": "d-fine.com",
+      "company_name": "D Fine",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mail2.aiinformatics.com",
+      "score": 0.1
+    },
+    {
+      "email": "info.@inform-software.com",
+      "domain": "inform-software.com",
+      "company_name": "Inform Software",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "informsoftware-com01e.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@inform-software.com",
+      "domain": "inform-software.com",
+      "company_name": "Inform Software",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "informsoftware-com01e.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@inform-software.com",
+      "domain": "inform-software.com",
+      "company_name": "Inform Software",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "informsoftware-com01e.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@inform-software.com",
+      "domain": "inform-software.com",
+      "company_name": "Inform Software",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "informsoftware-com01e.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@inform-software.com",
+      "domain": "inform-software.com",
+      "company_name": "Inform Software",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "informsoftware-com01e.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@inform-software.com",
+      "domain": "inform-software.com",
+      "company_name": "Inform Software",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "informsoftware-com01e.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@inform-software.com",
+      "domain": "inform-software.com",
+      "company_name": "Inform Software",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "informsoftware-com01e.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@inform-software.com",
+      "domain": "inform-software.com",
+      "company_name": "Inform Software",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "informsoftware-com01e.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@inform-software.com",
+      "domain": "inform-software.com",
+      "company_name": "Inform Software",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "informsoftware-com01e.mail.protection.outlook.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "discovered",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "info.@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "i@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "info@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "h@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "hello@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "c@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "contact@adesso.de",
+      "domain": "adesso.de",
+      "company_name": "Adesso",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "smail-ade-mta1.dts-security.de",
+      "score": 0.1
+    },
+    {
+      "email": "info.@kernix.com",
+      "domain": "kernix.com",
+      "company_name": "Kernix",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx01.cloud.vadesecure.com",
+      "score": 0.1
+    },
+    {
+      "email": "i@kernix.com",
+      "domain": "kernix.com",
+      "company_name": "Kernix",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx01.cloud.vadesecure.com",
+      "score": 0.1
+    },
+    {
+      "email": "info@kernix.com",
+      "domain": "kernix.com",
+      "company_name": "Kernix",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx01.cloud.vadesecure.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello.@kernix.com",
+      "domain": "kernix.com",
+      "company_name": "Kernix",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx01.cloud.vadesecure.com",
+      "score": 0.1
+    },
+    {
+      "email": "h@kernix.com",
+      "domain": "kernix.com",
+      "company_name": "Kernix",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx01.cloud.vadesecure.com",
+      "score": 0.1
+    },
+    {
+      "email": "hello@kernix.com",
+      "domain": "kernix.com",
+      "company_name": "Kernix",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx01.cloud.vadesecure.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact.@kernix.com",
+      "domain": "kernix.com",
+      "company_name": "Kernix",
+      "pattern_name": "first.last",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx01.cloud.vadesecure.com",
+      "score": 0.1
+    },
+    {
+      "email": "c@kernix.com",
+      "domain": "kernix.com",
+      "company_name": "Kernix",
+      "pattern_name": "flast",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx01.cloud.vadesecure.com",
+      "score": 0.1
+    },
+    {
+      "email": "contact@kernix.com",
+      "domain": "kernix.com",
+      "company_name": "Kernix",
+      "pattern_name": "first",
+      "verified": false,
+      "verification_tier": 1,
+      "mx_host": "mx01.cloud.vadesecure.com",
+      "score": 0.1
+    }
+  ],
   "verification_stats": {
-    "mx_checked": 0,
-    "smtp_checked": 0,
-    "verified_count": 0,
-    "failed_count": 0,
+    "mx_checked": 20,
+    "smtp_checked": 187,
+    "verified_count": 11,
+    "failed_count": 176,
     "no_mx_count": 0
   },
   "errors": []
