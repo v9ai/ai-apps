@@ -59,7 +59,7 @@ export function LandingFooter() {
               className={flex({ align: "center", gap: "2", mb: "3" })}
               style={{ textDecoration: "none" }}
             >
-              <Image src="/logo.svg" alt="scrapus" width={100} height={22} />
+              <Image src="/logo.svg" alt="Lead-gen" width={100} height={22} />
             </Link>
             <p
               className={css({
@@ -178,7 +178,7 @@ export function LandingFooter() {
               letterSpacing: "normal",
             })}
           >
-            scrapus
+            lead-gen
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

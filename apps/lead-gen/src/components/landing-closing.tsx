@@ -69,7 +69,7 @@ export function LandingClosing() {
               href="/how-it-works"
               className={button({ variant: "solid", size: "lg" })}
             >
-              deploy scrapus locally
+              deploy lead-gen locally
               <ArrowRightIcon width={14} height={14} />
             </Link>
           </div>

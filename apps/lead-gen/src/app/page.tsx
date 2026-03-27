@@ -11,7 +11,7 @@ import { LandingFooter } from "@/components/landing-footer";
 import { LandingMetrics } from "@/components/landing-metrics";
 
 /**
- * Scrapus landing page — narrative arc: what → how → proof → why → action.
+ * B2B lead generation landing page — narrative arc: what → how → proof → why → action.
  *
  * 1. Hero:     Local-first B2B lead gen value prop + pipeline stats + CTA pair
  * 2. Pipeline: 7-module visualization (crawl → extract → resolve → score → report → evaluate)

@@ -16,7 +16,7 @@ import {
 } from "@radix-ui/react-icons";
 
 /**
- * Scrapus 7-module B2B lead generation pipeline.
+ * 7-module B2B lead generation pipeline.
  *
  * Pipeline visualization with micro-interactions:
  *  #1 — Staggered card entrance + scanline glitch on hover (pipeline-card-animated, pipeline-card-hover)

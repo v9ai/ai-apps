@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 /**
- * SCRAPUS LANDING HERO
+ * LANDING HERO
  *
  * Copy: "i built a local AI pipeline to generate B2B leads without the cloud"
  *       -- personal builder voice, commodity-hardware manifesto.
@@ -212,7 +212,7 @@ export function LandingHero() {
         >
           {/* open source badge */}
           <a
-            href="https://github.com/nicolad/scrapus"
+            href="https://github.com/nicolad/lead-gen"
             target="_blank"
             rel="noopener noreferrer"
             className={css({
