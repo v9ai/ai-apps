@@ -110,7 +110,7 @@ leads: leads-discover leads-domains leads-build leads-pipeline leads-import ## F
 leads-discover: ## Scrape directories + MLX classify EU AI consultancies
 	@echo "── Phase 1: Discovery ──"
 	cd consultancies && python3 discover.py --search-only
-	cd consultancies && python3 discover.py --enrich-only
+	cd consultancies && python3 discover.py --enrich-only || echo "MLX classification skipped (mlx-lm not installed)"
 
 leads-domains: ## Extract domains from LanceDB → domains.txt
 	@echo "── Phase 2: Extract domains ──"

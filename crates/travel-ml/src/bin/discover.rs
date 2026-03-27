@@ -102,7 +102,7 @@ async fn main() -> Result<()> {
 
     // ── Stage 5: Merge scraped + curated 2026 hotels ──
     let curated = curated_2026_hotels();
-    info!("Curated 2026 dataset: {} hotels", curated.len());
+    info!("Curated {DISCOVERY_YEAR_STR} dataset: {} hotels", curated.len());
     let mut candidates = curated;
     candidates.extend(scraped_candidates);
 
@@ -118,7 +118,7 @@ async fn main() -> Result<()> {
 
 /// Fallback: generate discovery results from curated 2026 hotel data.
 async fn run_seed_fallback(engine: &EmbeddingEngine, args: &Args) -> Result<()> {
-    info!("Using curated 2026 Greece hotel dataset...");
+    info!("Using curated {DISCOVERY_YEAR_STR} Greece hotel dataset...");
 
     let hotels_2026 = curated_2026_hotels();
     info!("Curated dataset: {} hotels", hotels_2026.len());
@@ -149,8 +149,8 @@ async fn export_results(hotels: &[Hotel], engine: &EmbeddingEngine, args: &Args)
     }
 
     // Compute relevance scores via Candle embedding similarity
-    let query = "new affordable hotel Greece 2026 beach resort value cheapest budget";
-    let query_vec = engine.embed_one(query).context("embedding reference query")?;
+    let query = format!("new affordable hotel Greece {DISCOVERY_YEAR_STR} beach resort value cheapest budget");
+    let query_vec = engine.embed_one(&query).context("embedding reference query")?;
 
     let texts: Vec<String> = hotels.iter().map(|h| h.embed_text()).collect();
     let text_refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
@@ -280,9 +280,9 @@ fn curated_2026_hotels() -> Vec<Hotel> {
         Hotel {
             hotel_id: "petra-view-meteora".into(),
             name: "Petra View Hotel Meteora".into(),
-            description: "New 3-star guesthouse at the foot of the Meteora rock pillars in Kalambaka. \
+            description: format!("New 3-star guesthouse at the foot of the Meteora rock pillars in Kalambaka. \
                 24 stone-clad rooms with balcony views of the monasteries, hearty Greek breakfast, \
-                and a garden terrace. The most affordable new-build near Meteora in 2026.".into(),
+                and a garden terrace. The most affordable new-build near Meteora in {DISCOVERY_YEAR_STR}."),
             star_rating: 3,
             board_type: "Bed & Breakfast".into(),
             price_eur: 65.0,

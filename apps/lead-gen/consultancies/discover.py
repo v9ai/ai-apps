@@ -376,7 +376,7 @@ SEED_COMPANIES = [
     ("Explosion AI", "https://explosion.ai/", "Germany"),
     ("Rasa", "https://rasa.com/", "Germany"),
     ("AI Superior", "https://aisuperior.com/", "Germany"),
-    ("Alexander Thamm", "https://www.2000.com/", "Germany"),
+    ("Alexander Thamm", "https://www.alexanderthamm.com/", "Germany"),
     ("Adesso SE", "https://www.adesso.de/", "Germany"),
     ("d-fine", "https://www.d-fine.com/", "Germany"),
     ("INFORM GmbH", "https://www.inform-software.com/", "Germany"),
@@ -384,7 +384,7 @@ SEED_COMPANIES = [
     ("Merantix", "https://www.merantix.com/", "Germany"),
     ("Aleph Alpha", "https://aleph-alpha.com/", "Germany"),
     ("MHP", "https://www.mhp.com/", "Germany"),
-    ("Comma Soft", "https://www.2000.com/", "Germany"),
+    ("Comma Soft", "https://www.2000soft.de/", "Germany"),
     ("Datarevenue", "https://datarevenue.com/", "Germany"),
     # France
     ("Artefact", "https://artefact.com/", "France"),
@@ -410,7 +410,7 @@ SEED_COMPANIES = [
     ("Futurice", "https://futurice.com/", "Finland"),
     ("Computas", "https://computas.com/", "Norway"),
     # Switzerland
-    ("Zuhlke", "https://www.2000.com/", "Switzerland"),
+    ("Zuhlke", "https://www.zuehlke.com/", "Switzerland"),
     ("Modulos", "https://www.modulos.ai/", "Switzerland"),
     ("DeepCode", "https://www.deepcode.ai/", "Switzerland"),
     # CEE
