@@ -188,11 +188,25 @@ async fn export_results(hotels: &[Hotel], engine: &EmbeddingEngine, args: &Args)
         return Ok(());
     }
 
-    // ── Stage 7b: Scrape images from Google Maps ──
-    info!("Scraping hotel images from Google Maps...");
+    // ── Stage 7b: Load pre-scraped gallery images (Playwright) ──
+    info!("Loading hotel gallery images from pre-scraped data...");
     let mut hotels_with_images: Vec<Hotel> = hotels.to_vec();
+    let gallery_paths = [
+        "../../apps/travel/data/scraped_reviews.json",
+        "apps/travel/data/scraped_reviews.json",
+        "data/scraped_reviews.json",
+    ];
+    let gallery_file = gallery_paths.iter().find(|p| std::path::Path::new(p).exists());
     for hotel in &mut hotels_with_images {
-        let images = reviews::scrape_hotel_images(hotel).await;
+        if let Some(path) = gallery_file {
+            if let Some(images) = reviews::load_prescraped_gallery(&hotel.hotel_id, path) {
+                info!("  {} — {} gallery images from pre-scraped data", hotel.name, images.len());
+                hotel.gallery = images;
+                continue;
+            }
+        }
+        // Fallback to HTTP scraping (usually returns empty due to bot detection)
+        let images = reviews::scrape_hotel_images(&hotel).await;
         if !images.is_empty() {
             hotel.gallery = images;
         }
