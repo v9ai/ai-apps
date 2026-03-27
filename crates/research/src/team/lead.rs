@@ -53,6 +53,30 @@ pub struct TeamConfig {
     pub progress_report_interval: Option<Duration>,
 }
 
+impl Default for TeamConfig {
+    fn default() -> Self {
+        Self {
+            team_size: 1,
+            provider: LlmProvider::DeepSeek {
+                api_key: String::new(),
+                base_url: "https://api.deepseek.com".into(),
+            },
+            scholar_key: None,
+            code_root: None,
+            synthesis_preamble: None,
+            synthesis_prompt_template: None,
+            tool_config: None,
+            scholar_concurrency: None,
+            mailto: None,
+            output_dir: None,
+            synthesis_provider: None,
+            ranker: None,
+            timeout_check_interval: None,
+            progress_report_interval: None,
+        }
+    }
+}
+
 /// Result of a full team research run.
 pub struct TeamResult {
     /// Per-task findings: (task_id, subject, result).
