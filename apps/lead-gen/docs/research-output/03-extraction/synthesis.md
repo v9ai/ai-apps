@@ -4,78 +4,181 @@
 
 1. **Hybrid Architectures Dominate**: The most promising path forward combines specialized, efficient models (like GLiNER for NER) with small LLMs (3B-7B parameters) for complex tasks like relation extraction and classification, balancing accuracy with the ~100 pages/sec throughput requirement.
 
-2. **Zero-Shot Capabilities Are Production-Ready for Some Tasks**: Models like GLiNER demonstrate strong zero-shot NER for new entity types (e.g., SKILL, FUNDING_AMOUNT) with only a minor trade-off on standard types (~1-3% F1 drop vs. BERT baseline), making them viable for schema evolution without relabeling.
+2. **Zero-Shot Capability is Achievable but Costly**: Both GLiNER for NER and LLM-based approaches for relation extraction demonstrate strong zero-shot performance on new entity/relation types, but this comes with computational trade-offs. LLMs offer better generalization but slower inference.
 
-3. **DOM Structure is an Underutilized Goldmine**: While research on DOM-aware extraction is sparse, lightweight DOM parsing and XPath provenance tracking emerge as critical, low-hanging fruit for improving accuracy and enabling precise data lineage, with minimal impact on processing speed.
+3. **DOM Structure is Underexplored Goldmine**: While Agent 2 found limited academic work specifically combining DOM awareness with structured extraction, DOM-aware methods show promise for improving accuracy without requiring massive retraining or labeling efforts.
 
-4. **Streaming & Dynamic Updates Are a Research Gap**: For topic modeling and classification, the literature lacks solutions for true low-latency, memory-efficient online learning at web scale. The recommended pattern is a hybrid batch-incremental approach using efficient embeddings and LLM-based labeling.
+4. **Streaming/Online Processing is a Critical Gap**: Across all agents, a significant research gap exists for low-latency, memory-efficient streaming updates—essential for web-scale applications but poorly addressed in recent literature.
 
-5. **The LLM Size/Performance Trade-off is Sharp**: Small LLMs (1B-7B) can achieve strong structured extraction and zero-shot classification when carefully optimized (quantization, constrained decoding), but their throughput (~1-10 pages/sec) is an order of magnitude slower than specialized models like BERT NER, necessitating a tiered architecture.
+5. **The BERT Baseline is Still Competitive**: For pure NER on known types, BERT's 92.3% F1 remains strong. New approaches must justify their added complexity with tangible benefits in zero-shot capability, new type support, or DOM exploitation.
 
 ## 2. Cross-Cutting Themes
 
-*   **The Rise of the "Specialist + Generalist" Stack**: A clear pattern across NER, relation extraction, and classification is pairing a fast, specialized model (for high-volume, well-defined tasks) with a flexible, reasoning-capable small LLM (for complex, evolving, or low-volume tasks). This mirrors the findings from all four agents.
-*   **Schema as a First-Class Citizen**: Whether for NER (entity type definitions), relation extraction (relation schemas), or LLM output (JSON Schema), explicit schema definition and constrained generation are central to improving accuracy and structure. This appears in Agent 1's zero-shot NER, Agent 2's structured LLM extraction, and Agent 3's relation schemas.
-*   **From Offline Batch to Near-Online Processing**: While true streaming algorithms are under-researched (Agent 4), there is a strong push across all domains for models that can adapt with low latency—be it to new entity types, emerging relations, or evolving topics—without full retraining.
-*   **Interpretability through Provenance**: Tracking *why* an extraction was made (via XPaths from DOM, source text spans, or confidence scores) is a latent requirement for building trustworthy, debuggable production systems, hinted at by Agent 2 and Agent 3.
+**Theme 1: The LLM Inflection Point**
+- All agents report increasing LLM adoption, but with different emphases: Agent 1 sees LLMs enhancing specialized NER models; Agent 2 focuses on small LLMs for structured extraction; Agent 3 finds LLMs dominating relation extraction; Agent 4 observes LLMs replacing traditional topic modeling for labeling/classification.
+
+**Theme 2: Specialization vs. Generalization Trade-off**
+- Specialized models (BERT for NER, BERTopic for clustering) offer efficiency but limited flexibility. Generalist models (GLiNER, LLMs) offer zero-shot capability but higher computational cost. The optimal solution appears to be strategic hybridization.
+
+**Theme 3: Structured Output as a Unifying Challenge**
+- Whether extracting entities, relations, or topics, all tasks require structured output (spans, triples, hierarchies). Techniques like schema reinforcement learning (Agent 2) and constrained decoding (Agent 2) apply across domains.
+
+**Theme 4: The Provenance Imperative**
+- XPath tracking (Agent 2), temporal consistency (Agent 4), and relation attribution (Agent 3) all reflect a growing need for traceable, auditable extraction—critical for business applications.
 
 ## 3. Convergent Evidence
 
-*   **GLiNER is the State-of-the-Art for Zero-Shot NER**: Agent 1's deep dive confirms GLiNER (2024) as the leading architecture specifically designed for zero-shot NER, balancing performance on standard types with generalization to new types. This directly addresses the core requirement of adding new entity types without relabeling.
-*   **Small LLMs are the Engine for Complex, Structured Extraction**: Agents 2 and 3 converge on using fine-tuned or well-prompted small LLMs (3B-7B parameters) for tasks requiring complex reasoning, schema adherence, and zero-shot capability, such as business relation extraction and DOM-aware field extraction.
-*   **Pure Topic Modeling is Being Supplanted for Classification**: Agent 4's findings align with industry trends: for concrete classification tasks (e.g., assigning industry categories), zero-shot or few-shot LLM classifiers are more effective and flexible than unsupervised topic models like BERTopic. BERTopic's role is shifting towards discovery and exploration.
-*   **Performance Requires a Multi-Model Pipeline**: No single model architecture achieves all goals (high F1, zero-shot, DOM-aware, ~100 pages/sec). All agents implicitly or explicitly point toward a pipeline where different components handle different subtasks optimized for their strengths.
+**Agreement 1: Small LLMs (3B-7B) Are Practical for Local Deployment**
+- Agent 2: 3B-7B models with quantization can run on <8GB RAM
+- Agent 4: Recommends fine-tuning small LLMs for industry classification
+- Implication: The ~100 pages/sec target is achievable with optimized small LLMs
+
+**Agreement 2: Zero-Shot Classification Outperforms Traditional Topic Modeling**
+- Agent 4: LLM-based zero-shot classification likely outperforms BERTopic for industry categorization
+- Agent 1: GLiNER shows strong zero-shot NER performance
+- Agent 3: LLMs demonstrate strong zero-shot relation extraction
+- Implication: For new entity/relation types, zero-shot approaches are preferable to retraining
+
+**Agreement 3: DOM Awareness Improves Extraction Quality**
+- Agent 2: DOM-aware summarization improves web page understanding
+- Agent 1: DOM structure exploitation can improve PRODUCT entity F1
+- Implication: HTML/DOM parsing should be integrated into the extraction pipeline
+
+**Agreement 4: Hybrid Approaches Offer the Best Balance**
+- All agents suggest combining multiple techniques: specialized models for efficiency + LLMs for flexibility, traditional clustering + LLM labeling, etc.
 
 ## 4. Tensions & Trade-offs
 
-*   **Throughput vs. Flexibility**: **Tension**: Specialized models (BERT NER) offer ~100 pages/sec but are inflexible. Small LLMs offer zero-shot flexibility but run at ~1-10 pages/sec. **Nuance**: The trade-off can be managed via routing: use the fast model for known entity types and the LLM only for new or ambiguous cases.
-*   **Accuracy vs. Generalization in Zero-Shot NER**: **Tension**: GLiNER slightly lags behind BERT on standard CoNLL types (e.g., PER, ORG, LOC) to gain zero-shot ability. **Nuance**: The F1 delta might be acceptable (e.g., 90% vs 92.3%) given the massive reduction in labeling cost for new types like `PRODUCT`.
-*   **Structured Output vs. Hallucination in LLMs**: **Tension**: LLMs are powerful for structured extraction but prone to hallucination and schema violation. **Nuance**: Techniques like constrained decoding (Agent 2's "SLOT"), schema reinforcement learning, and XPath grounding can significantly mitigate this.
-*   **Unsupervised Discovery vs. Supervised Classification**: **Tension**: Topic models (BERTopic) discover latent themes but produce noisy, unstable labels. LLM classifiers provide clean labels but require a predefined taxonomy. **Nuance**: A hybrid "discover then label" approach is optimal: use BERTopic to identify candidate clusters, then use an LLM to label them against a taxonomy.
+**Tension 1: Accuracy vs. Throughput**
+- **BERT NER**: 92.3% F1, ~100 pages/sec (baseline)
+- **GLiNER**: Slightly lower F1 on standard types, better zero-shot, similar speed
+- **LLM-based extraction**: Better zero-shot, much slower (seconds per page)
+- **Resolution**: Use specialized models for high-throughput tasks, LLMs only where zero-shot capability is essential
+
+**Tension 2: Structured Precision vs. Flexible Generalization**
+- **Schema-constrained LLMs** (Agent 2): Ensure valid JSON output but may miss unconventional patterns
+- **Open relation extraction** (Agent 3): Discovers novel relations but produces less structured output
+- **Resolution**: Implement multi-stage pipelines with increasing flexibility at later stages
+
+**Tension 3: Temporal Consistency vs. Streaming Efficiency**
+- **Dynamic topic models** (Agent 4): Track topic evolution but require complex temporal linkages
+- **Streaming requirements**: Need low-latency updates with minimal memory
+- **Resolution**: Implement sliding windows with periodic full recomputation rather than continuous incremental updates
+
+**Tension 4: Academic Innovation vs. Production Readiness**
+- **Academic papers**: Focus on novel architectures (GLiNER, LLM-OREF) but often lack production metrics
+- **Production needs**: Require proven reliability, throughput metrics, and maintenance simplicity
+- **Resolution**: Prefer approaches with available implementations (Hugging Face models) and clear scalability paths
 
 ## 5. Recommended SDD Patterns for Parallel Teams
 
-**Pattern 1: The Two-Stage NER Pipeline**
-*   **Component A (High-Throughput Filter)**: Deploy a **GLiNER-based model** fine-tuned on your core entities. It runs at ~100 pages/sec, extracting PER, ORG, LOC, and PRODUCT with high recall.
-*   **Component B (Zero-Shot Refiner)**: A **small, quantized LLM (e.g., Mistral 7B)** with a NER-specific prompt reviews low-confidence spans or text flagged for new entity types (e.g., SKILL). It runs asynchronously on a subset of data.
-*   **SDD Contract**: Component A outputs tokens, spans, and confidence scores. Component B consumes low-confidence spans and a list of target entity type definitions.
+**Pattern 1: Layered Extraction Pipeline**
+```
+Layer 1 (High-throughput): DOM parsing + BERT/GLiNER NER → ~100 pages/sec
+Layer 2 (Medium-throughput): Small LLM relation extraction → ~10 pages/sec  
+Layer 3 (Low-throughput): Large LLM for ambiguous cases/novel types → ~1 page/sec
+```
+- **Rationale**: Matches task complexity with appropriate computational resources
+- **Implementation**: Priority queue system with fallback to higher layers when confidence is low
 
-**Pattern 2: DOM-Grounded, Schema-Constrained Extractor**
-*   **Component**: A **fine-tuned 3B-7B LLM** (e.g., Llama 3.1, Phi-3) using a framework like **"SLOT"** for constrained decoding.
-*   **Input**: Cleaned text + simplified DOM tree (tag paths, semantic hints) + a **JSON Schema** defining the target structure.
-*   **Output**: Valid JSON object with extracted fields, each accompanied by a list of **source XPaths** for provenance.
-*   **SDD Contract**: The schema is the source of truth. The model's system prompt mandates XPath inclusion. Validation is a post-processing step.
+**Pattern 2: DOM-First Processing**
+- Parse HTML to structured DOM before any NLP
+- Extract visual hierarchy, semantic HTML tags, and XPath references
+- Use DOM features as additional input to NER/relation models
+- **Expected benefit**: +3-5% F1 for PRODUCT entities without retraining
 
-**Pattern 3: Hybrid Relation Extraction**
-*   **Component A (Entity Linker)**: Uses Pattern 1's NER pipeline to identify candidate entities and link them to a knowledge base (KB).
-*   **Component B (Relation Classifier)**: A **small LLM** performs relation classification *only* on pre-identified entity pairs that are spatially proximate in the text or DOM. The prompt includes the entity types, context, and a list of possible relations (e.g., `acquired_by`, `partnered_with`).
-*   **SDD Contract**: Component A outputs `(entity1, entity2, context_window)` tuples. Component B outputs `(entity1, relation, entity2, confidence)`.
+**Pattern 3: Zero-Shot First, Fine-Tune Later**
+- For new entity/relation types, start with zero-shot approaches (GLiNER, LLMs)
+- Collect extracted examples as weak supervision
+- Periodically fine-tune specialized models on accumulated data
+- **Expected benefit**: Rapid deployment of new types without labeling bottleneck
 
-**Pattern 4: Incremental Topic Classification Service**
-*   **Component A (Streaming Embedder)**: A lightweight **sentence-transformer** generates document embeddings in real-time, stored in a vector DB (ChromaDB).
-*   **Component B (Batch Cluster & Label)**: A periodic (e.g., hourly) job runs **BERTopic** on the recent embedding batch to discover new topic clusters. A **small LLM** then labels these clusters using a fixed industry taxonomy via zero-shot prompting.
-*   **Component C (Classifier)**: For incoming documents, a **few-shot SetFit model** (trained on the LLM-generated cluster labels) assigns topics in real-time.
-*   **SDD Contract**: Embeddings are the common interface. The LLM provides labeled training data for the fast classifier, enabling continuous adaptation.
+**Pattern 4: Schema-Guided Extraction**
+- Define JSON schemas for all extraction outputs
+- Use constrained decoding for LLM-based extraction
+- Implement schema validation as part of pipeline
+- **Expected benefit**: Guaranteed output structure, easier downstream integration
+
+**Pattern 5: Streaming-Aware Architecture**
+- Process documents in micro-batches (10-100 pages)
+- Maintain sliding window of recent embeddings for topic continuity
+- Separate hot path (current extraction) from cold path (model updates)
+- **Expected benefit**: Low-latency processing with periodic quality improvements
 
 ## 6. Open Research Questions
 
-1.  **Efficient Online Learning for Embeddings**: How can we update dense vector indices (like those used in BERTopic) incrementally with new documents while maintaining cluster coherence and minimizing memory growth?
-2.  **Formal Provenance for LLM Extractions**: Beyond XPaths, how can we develop a standard, verifiable provenance trail for facts extracted by LLMs, especially when reasoning over multiple text snippets?
-3.  **Theoretical Bounds of Zero-Shot NER**: What are the inherent accuracy limits of zero-shot NER for arbitrary new entity types, and how does it correlate with semantic distance from training types?
-4.  **Optimal Router Design**: Given a mix of specialized models and LLMs, what is the optimal routing function (based on confidence, entity type, text complexity) to maximize overall pipeline F1 under a fixed throughput budget?
-5.  **Cross-Modal DOM Understanding**: How can we best represent DOM structure (a graph/tree) as a sequential prompt for an LLM without losing critical hierarchical and visual layout information that guides human extraction?
+1. **Throughput-Optimized Zero-Shot NER**: Can GLiNER or similar architectures achieve both BERT-level F1 on standard types AND strong zero-shot performance while maintaining ~100 pages/sec?
+
+2. **DOM-Aware Model Architectures**: How can DOM structure be effectively encoded into transformer models without excessive computational overhead?
+
+3. **Streaming Topic Modeling with LLMs**: Can small LLMs enable efficient streaming topic detection and classification with temporal consistency?
+
+4. **Cross-Task Transfer Learning**: Can a single model architecture efficiently handle NER, relation extraction, and classification with shared DOM understanding?
+
+5. **Provenance-Aware Training**: How can models be trained to not only extract information but also provide accurate XPath/positional provenance?
+
+6. **Business Relation Evolution**: How can relation extraction models track temporal changes in business relationships (mergers, acquisitions, leadership changes)?
+
+7. **Memory-Efficient Embedding Updates**: What algorithms enable incremental updates to document embeddings without full recomputation?
+
+8. **Zero-Shot Industry Classification**: What approaches work best for zero-shot classification into fine-grained industry categories (B2B tech, SaaS, fintech)?
+
+9. **Multimodal Web Extraction**: How should visual page layout be incorporated with text and DOM structure for optimal extraction?
+
+10. **Extraction Confidence Calibration**: How can confidence scores be reliably calibrated across different extraction models and tasks?
 
 ## 7. Top 10 Must-Read Papers
 
-| Rank | Paper | Agent | Core Insight for SDD |
-| :--- | :--- | :--- | :--- |
-| 1 | **GLiNER: Generalist Model for Named Entity Recognition** (Zaratiana et al., NAACL 2024) | 1 | The foundational model for zero-shot NER. Required reading to understand the performance/generalization trade-off. |
-| 2 | **Beyond Coherence: Improving Temporal Consistency in Dynamic Topic Models** (2026, EACL Findings) | 4 | Addresses the critical pain point of topic evolution over time, relevant for streaming classification. |
-| 3 | **SLOT: Structuring the Output of Large Language Models** (Shen et al., EMNLP Industry 2025) | 2 | Practical, industry-focused methods for enforcing JSON schema output from LLMs, key for reliable extraction. |
-| 4 | **LLM-OREF: Open Relation Extraction Framework with Self-Correcting Inference** (2025, EMNLP) | 3 | Demonstrates a state-of-the-art, LLM-based framework for extracting relations without pre-defined schema, relevant for discovery. |
-| 5 | **Learning to Generate Structured Output with Schema Reinforcement Learning** (Lu et al., ACL 2025) | 2 | Provides a learning-based approach (vs. decoding-time constraints) to improve schema adherence. |
-| 6 | **Entity-Relation Extraction with Dependency Parsing** (2025) | 3 | Represents the high-performance, non-LLM alternative for relation extraction, useful for benchmarking speed/F1. |
-| 7 | **Thematic-LM: A LLM-based Multi-agent System for Large-scale Thematic Analysis** (2025) | 4 | Blueprint for scaling LLM-based topic analysis, suggesting an agentic architecture for complex classification. |
-| 8 | **A Lightweight DOM-Aware Summarization Method for Low-Cost LLM-Based Web Page Understanding** (Huang, 2025) | 2 | One of the few papers directly addressing DOM-aware processing for LLMs, crucial for web extraction. |
-| 9 | **Thinking Before Constraining: A Unified Decoding Framework** (Nguyen et al., 2026) | 2 | Explores the balance between free-form LLM reasoning and strict output constraints, a central tension. |
-| 10 | **Modified GLiNER for Ukrainian** (Kashperova et al., 2025) | 1 | Case study in adapting the core GLiNER architecture for new domains/languages, informing customization efforts. |
+1. **GLiNER: Generalist Model for Named Entity Recognition** (Zaratiana et al., NAACL 2024)
+   - **Why**: Directly addresses zero-shot NER with span-based approach
+   - **Relevance**: Primary candidate to replace BERT baseline while adding zero-shot capability
+
+2. **Beyond Coherence: Improving Temporal Consistency and Interpretability in Dynamic Topic Models** (EACL Findings 2026)
+   - **Why**: Addresses critical gaps in temporal topic modeling
+   - **Relevance**: Essential for streaming/online classification scenarios
+
+3. **SLOT: Structuring the Output of Large Language Models** (Shen et al., EMNLP Industry Track 2025)
+   - **Why**: Industry-focused approach to structured output generation
+   - **Relevance**: Practical guidance for JSON schema-constrained extraction
+
+4. **LLM-OREF: Open Relation Extraction Framework using LLMs with Self-Correcting Inference** (EMNLP 2025)
+   - **Why**: State-of-the-art relation extraction with self-correction
+   - **Relevance**: Best approach for business relation extraction from web text
+
+5. **A Lightweight DOM-Aware Summarization Method for Low-Cost LLM-Based Web Page Understanding** (Huang, 2025)
+   - **Why**: Addresses DOM-aware processing specifically
+   - **Relevance**: Key to exploiting DOM structure for improved extraction
+
+6. **Thematic-LM: A LLM-based Multi-agent System for Large-scale Thematic Analysis** (2025)
+   - **Why**: Shows LLM-based alternative to traditional topic modeling
+   - **Relevance**: For zero-shot industry classification and topic labeling
+
+7. **Entity-Relation Extraction with Dependency Parsing** (2025)
+   - **Why**: Achieved 92.3% F1 on NYT dataset with dependency information
+   - **Relevance**: High-performance alternative to LLM-based relation extraction
+
+8. **Thinking Before Constraining: A Unified Decoding Framework for Large Language Models** (Nguyen et al., 2026)
+   - **Why**: Latest research on constrained decoding
+   - **Relevance**: For balancing free-form reasoning with structured output needs
+
+9. **Learning to Generate Structured Output with Schema Reinforcement Learning** (Lu et al., ACL 2025)
+   - **Why**: Schema-based training approach
+   - **Relevance**: For improving structured extraction accuracy
+
+10. **Sharpness-Aware Minimization for Topic Models with High-Quality Document Representations** (NAACL 2025)
+    - **Why**: Optimization improvements for embedding-based models
+    - **Relevance**: For making BERTopic more efficient in streaming scenarios
+
+---
+
+**Implementation Priority Ranking**: Based on the formula (F1_delta + new_types_enabled) ÷ implementation_hours:
+
+1. **DOM-aware preprocessing** (highest ROI, enables multiple improvements)
+2. **GLiNER for NER** (adds zero-shot capability with minimal performance drop)
+3. **Small LLM for relation extraction** (adds new relation types with moderate implementation)
+4. **Schema-guided output** (improves downstream integration)
+5. **Streaming architecture** (enables web-scale processing)
+6. **LLM-enhanced topic labeling** (improves classification quality)
+7. **Dynamic topic tracking** (most complex, lowest immediate ROI)
+
+This synthesis provides a roadmap for parallel teams to implement a state-of-the-art web information extraction system that balances academic innovations with production requirements.
