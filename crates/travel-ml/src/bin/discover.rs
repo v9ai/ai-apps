@@ -6,6 +6,7 @@ use candle_core::Device;
 use clap::Parser;
 use tracing::info;
 
+use travel_ml::constants::{DISCOVERY_YEAR, NEW_HOTEL_MIN_YEAR};
 use travel_ml::dedup::deduplicate;
 use travel_ml::discover::{
     extract_hotels, rank_passages, scrape_all_sources, validate_hotel,

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { css } from "styled-system/css";
 import Link from "next/link";
 import type { HotelSearchResult } from "@/lib/types";
+import { NEW_HOTEL_MIN_YEAR } from "@/lib/constants";
 
 const T = {
   ro: {
@@ -485,7 +486,7 @@ export function GreeceHotels({ results, lang }: GreeceHotelsProps) {
                   })}
                 >
                   <StarBadge count={hotel.star_rating} />
-                  {hotel.opened_year && hotel.opened_year >= new Date().getFullYear() - 1 && <NewYearBadge year={hotel.opened_year} />}
+                  {hotel.opened_year && hotel.opened_year >= NEW_HOTEL_MIN_YEAR && <NewYearBadge year={hotel.opened_year} />}
                   {hotel.value_score !== undefined && (
                     <ValueBadge score={hotel.value_score} label={t.value} />
                   )}
