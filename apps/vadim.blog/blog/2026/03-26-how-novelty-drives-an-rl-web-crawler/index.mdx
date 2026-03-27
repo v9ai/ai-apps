@@ -22,17 +22,17 @@ The most dangerous assumption in applied Reinforcement Learning (RL) is that use
 
 ## 1. Reframing the Web as a Sparse-Reward MDP
 
-To an RL agent, the web isn't a information repository; it's a punishing Markov Decision Process. The goal is clear: navigate from a corporate homepage to a high-value "lead page" containing contact info, pricing, or team bios. The reward function, however, is brutally sparse: `+1.0` for a confirmed lead, `+0.2` for a relevant entity mention, and `0` for every other page. In a crawl spanning thousands of steps, the agent might encounter only a handful of non-zero rewards. A naive Deep Q-Network (DQN) relying solely on this extrinsic signal starves, lapsing into a local optimum like refreshing a homepage or cycling through a blog archive.
+To an RL agent, the web isn't a information repository; it's a punishing Markov Decision Process. The goal is clear: navigate from a corporate homepage to a high-value "lead page" containing contact info, pricing, or team bios. The reward function, however, is brutally sparse: `+1.0` for a confirmed lead, `+0.2` for a relevant entity mention, and `0` for every other page. In a crawl spanning thousands of steps, the agent might encounter only a handful of non-zero rewards. A naive [Deep Q-Network (DQN)](https://arxiv.org/abs/1312.5602) (Mnih et al., 2015) relying solely on this extrinsic signal starves, lapsing into a local optimum like refreshing a homepage or cycling through a blog archive.
 
 This is the exploration-exploitation dilemma at its most extreme. The state space is effectively infinite (every unique URL), and the action space at each state is the set of all outbound links. Without a dense learning signal, there is nothing to exploit and no gradient to follow. The solution is to manufacture a proxy reward that pays the agent to *explore*. This proxy is **novelty**, implemented not as a single heuristic, but as three distinct mechanisms operating at the per-step, per-episode, and cross-episode levels.
 
 ## 2. Per-Step Novelty: The Intrinsic Curiosity Module (ICM)
 
-The first layer generates immediate, granular novelty signals. It implements a version of the Intrinsic Curiosity Module (ICM), a well-known RL exploration technique. Its purpose is to reward the agent for *prediction surprise*: transitioning to a page state it cannot accurately foresee.
+The first layer generates immediate, granular novelty signals. It implements a version of the [Intrinsic Curiosity Module (ICM)](https://arxiv.org/abs/1705.05363), a well-known RL exploration technique introduced by Pathak et al. (2017). Its purpose is to reward the agent for *prediction surprise*: transitioning to a page state it cannot accurately foresee.
 
 The implementation in `crawler_curiosity.py` is remarkably lightweight. It consists of three small Multi-Layer Perceptrons (MLPs) totaling about 2 MB:
 
-* **`FeatureEncoder`**: Compresses a 784-dimensional page state (768-d embeddings from Nomic plus 16 handcrafted scalar features) down to a 256-d latent representation, *phi(s)*.
+* **`FeatureEncoder`**: Compresses a 784-dimensional page state (768-d embeddings from [Nomic Embed](https://huggingface.co/nomic-ai/nomic-embed-text-v1) plus 16 handcrafted scalar features) down to a 256-d latent representation, *phi(s)*.
 * **`ForwardModel`**: The core of curiosity. Given *phi(s_t)* and the action taken, it predicts *phi(s_\{t+1\})*. The mean squared error (MSE) of this prediction becomes the intrinsic reward.
 * **`InverseModel`**: A regularizer. It takes *phi(s_t)* and *phi(s_\{t+1\})* and must predict the action taken. This forces the `FeatureEncoder` to learn a latent space that discards irrelevant noise (like ad banners, timestamps) and focuses on page structure relevant to navigation.
 
@@ -77,15 +77,15 @@ While the ICM measures novelty in *observed* transitions, the second mechanism r
 
 The `EnsembleWorldModel` in `crawler_world_model.py` is an ensemble of 5 independent neural networks. Each takes a state-action pair and predicts the next state, reward, and done flag. When their predictions disagree—manifesting as high variance in the ensemble's output—it signals the agent is in a region of the state-action space it doesn't understand. This uncertainty is a beacon for exploration.
 
-This drives a `TreeSearchPlanner` that performs forward simulation from the current state. Branches predicted to lead to high uncertainty are prioritized. The system also includes a hybrid `WebDreamerPlanner`, which uses a local, quantized LLM (e.g., DeepSeek 3B via Apple's MLX) for semantic look-ahead. Given a candidate URL and anchor text, the LLM predicts page type and estimated lead quality *before the HTTP request is made*, injecting commonsense to avoid dead ends like "Login" pages.
+This drives a `TreeSearchPlanner` that performs forward simulation from the current state. Branches predicted to lead to high uncertainty are prioritized. The system also includes a hybrid `WebDreamerPlanner`, inspired by [WebDreamer](https://arxiv.org/abs/2411.06559) (Gu et al., TMLR 2025), which uses a local, quantized LLM (e.g., DeepSeek 3B via Apple's MLX) for semantic look-ahead. Given a candidate URL and anchor text, the LLM predicts page type and estimated lead quality *before the HTTP request is made*, injecting commonsense to avoid dead ends like "Login" pages.
 
-Crucially, the world model enables **synthetic experience generation** via a `DynaTrainer`. Every real transition added to the replay buffer can spawn *N* synthetic transitions, dramatically improving sample efficiency. The implementation caps the synthetic-to-real ratio at 0.5 to prevent the agent from diverging into a fantasy world of its own making—a critical guardrail against model hallucination drift, a common pitfall in model-based RL.
+Crucially, the world model enables **synthetic experience generation** via a `DynaTrainer` — a technique rooted in [Dyna-Q](https://dl.acm.org/doi/10.1145/122344.122377) (Sutton, 1991). Every real transition added to the replay buffer can spawn *N* synthetic transitions, dramatically improving sample efficiency. The implementation caps the synthetic-to-real ratio at 0.5 to prevent the agent from diverging into a fantasy world of its own making—a critical guardrail against model hallucination drift, a common pitfall in model-based RL.
 
 ## 4. Cross-Episode Novelty: The DISCOVER Auto-Curriculum
 
 The first two mechanisms handle *how* to explore. The third, DISCOVER, solves the cold-start problem of *what* to explore *towards*. A new agent staring at a homepage has no conception of how to reach a deeply nested "Contact Sales" page.
 
-The DISCOVER algorithm, implemented in `crawler_discover.py`, automates curriculum learning. It defines a hierarchy of page types by approximate difficulty:
+The [DISCOVER algorithm](https://arxiv.org/abs/2505.19850) (Diaz-Bone et al., NeurIPS 2025), implemented in `crawler_discover.py`, automates curriculum learning. It defines a hierarchy of page types by approximate difficulty:
 `homepage (0) → listing (1) → company (2) → team (3) → about (4) → contact (5) → lead (6)`
 
 Instead of targeting the final lead page immediately, DISCOVER dynamically selects the next intermediate goal (`g`) using a formula that balances two key objectives:
@@ -213,6 +213,44 @@ A: While promising for specific discovery-focused tasks, RL crawlers with novelt
 
 **Q: What is an intrinsic reward in reinforcement learning?**
 A: An intrinsic reward is a signal generated internally by the agent, such as a bonus for visiting a novel state or reducing prediction error, which encourages exploration and learning even in the absence of external goals or explicit user feedback.
+
+## References
+
+**Foundational RL**
+
+- Mnih, V. et al. (2015). [Human-level control through deep reinforcement learning](https://arxiv.org/abs/1312.5602). *Nature*, 518, 529–533.
+- Sutton, R. S. (1991). [Dyna, an integrated architecture for learning, planning, and reacting](https://dl.acm.org/doi/10.1145/122344.122377). *ACM SIGART Bulletin*, 2(4), 160–163.
+- Schaul, T. et al. (2016). [Prioritized Experience Replay](https://arxiv.org/abs/1511.05952). *ICLR 2016*.
+
+**Intrinsic Motivation & Exploration**
+
+- Pathak, D. et al. (2017). [Curiosity-driven Exploration by Self-supervised Prediction](https://arxiv.org/abs/1705.05363). *ICML 2017*. — The original ICM paper.
+- Li, W., Huang, W. & Sun, C. (2025). [Shaping Sparse Rewards in Reinforcement Learning: A Semi-supervised Approach](https://arxiv.org/abs/2501.19128). *arXiv:2501.19128*.
+
+**Curriculum & Goal-Conditioned RL**
+
+- Diaz-Bone, L. et al. (2025). [DISCOVER: Automated Curricula for Sparse-Reward Reinforcement Learning](https://arxiv.org/abs/2505.19850). *NeurIPS 2025*. — [[code]](https://github.com/LeanderDiazBone/discover)
+- Qi, Z. et al. (2025). [WebRL: Training LLM Web Agents via Self-Evolving Online Curriculum Reinforcement Learning](https://arxiv.org/abs/2411.02337). *ICLR 2025*. — [[code]](https://github.com/THUDM/WebRL)
+
+**World Models & LLM Planners**
+
+- Gu, Y. et al. (2025). [Is Your LLM Secretly a World Model of the Internet? Model-Based Planning for Web Agents](https://arxiv.org/abs/2411.06559). *TMLR 2025*. — [[code]](https://github.com/OSU-NLP-Group/WebDreamer)
+
+**Replay & Off-policy Learning**
+
+- Song, C., Lee, J. & Park, J. (2025). [Adaptive Replay Buffer for Offline-to-Online Reinforcement Learning](https://arxiv.org/abs/2512.10510). *arXiv:2512.10510*.
+- Trella, A. L. et al. (2025). [Non-Stationary Latent Auto-Regressive Bandits](https://arxiv.org/abs/2402.03110). *RLC 2025*. — [[code]](https://github.com/annatrella/latent-auto-bandits)
+
+**Web Crawling**
+
+- Yu, S., Liu, Z. & Xiong, C. (2025). [Craw4LLM: Efficient Web Crawling for LLM Pretraining](https://arxiv.org/abs/2502.13347). *ACL 2025 (Findings)*. — [[code]](https://github.com/cxcscmu/Craw4LLM)
+- Pezzuti, F., MacAvaney, S. & Tonellotto, N. (2025). [Neural Prioritisation for Web Crawling](https://arxiv.org/abs/2506.16146). *SIGIR ICTIR 2025*.
+
+**Embeddings**
+
+- Nussbaum, Z. et al. (2024). [Nomic Embed: Training a Reproducible Long Context Text Embedder](https://huggingface.co/nomic-ai/nomic-embed-text-v1). *HuggingFace*.
+
+---
 
 ## The Orchestration Counter-Narrative
 
