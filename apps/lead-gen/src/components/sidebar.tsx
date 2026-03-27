@@ -91,6 +91,24 @@ export function Sidebar() {
           {!collapsed && <AdminNav />}
         </Flex>
 
+        {/* bottom link */}
+        <Flex direction="column" gap="1" mt="auto" pb="3">
+          <NavLink
+            href="/how-it-works"
+            title={collapsed ? "how it works" : undefined}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              justifyContent: collapsed ? "center" : "flex-start",
+              padding: collapsed ? "5px 0" : "5px 8px",
+            }}
+          >
+            <LayersIcon width={15} height={15} />
+            {!collapsed && <Text as="span" size="2">how it works</Text>}
+          </NavLink>
+        </Flex>
+
         {/* footer: auth + github + toggle */}
         <Flex
           direction="column"
