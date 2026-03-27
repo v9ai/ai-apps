@@ -247,37 +247,6 @@ const nodeDetails: Record<string, NodeDetail> = {
     dataIn: "Ingestion results", dataOut: "Stats + persisted jobs",
     insight: "Per-source stats enable tracking ingestion health and catching API degradation early", color: "green",
   },
-  // EU Classifier
-  "extract-signals": {
-    description: "Parse job listing for EU-remote signals: location mentions, timezone requirements, visa needs, legal entity hints, 'remote' keywords, and salary currency.",
-    tech: [{ name: "Rule engine" }, { name: "Regex patterns" }],
-    dataIn: "Job description + metadata", dataOut: "Structured signal dict",
-    insight: "Signal extraction is deterministic and free — provides the input for both heuristic and LLM paths", color: "blue",
-  },
-  "heuristic-check": {
-    description: "Score extracted signals using a weighted heuristic. If confidence exceeds threshold (e.g., 'Remote — EU only' in title), classify immediately without LLM.",
-    tech: [{ name: "Weighted scoring" }, { name: "Confidence threshold" }],
-    dataIn: "Extracted signals", dataOut: "Heuristic classification + confidence",
-    insight: "Fast heuristic handles ~60% of jobs, saving LLM costs for ambiguous cases only", color: "blue",
-  },
-  "route-heuristic": {
-    description: "Conditional router: if heuristic confidence is above threshold, go to persist_and_end. Otherwise escalate to DeepSeek LLM for nuanced classification.",
-    tech: [{ name: "LangGraph conditional_edges" }],
-    dataIn: "Heuristic confidence", dataOut: "Route: persist or deepseek",
-    insight: "Multi-model routing: cheap heuristic first, escalate to LLM only on low confidence", color: "crimson",
-  },
-  "deepseek-classify": {
-    description: "Use DeepSeek LLM with schema-constrained output (Zod) to classify ambiguous jobs. Receives extracted signals as context to ground the LLM decision.",
-    tech: [{ name: "DeepSeek AI" }, { name: "Zod schema" }, { name: "Vercel AI SDK" }],
-    dataIn: "Job + signals context", dataOut: "is_remote_eu + reasoning",
-    insight: "Schema-constrained LLM output prevents hallucination; signals provide grounding context", color: "amber",
-  },
-  "persist-eu": {
-    description: "Write EU classification result (boolean + confidence + source + reasoning) back to the jobs table. Records whether result came from heuristic or LLM path.",
-    tech: [{ name: "Neon PostgreSQL" }, { name: "Drizzle ORM" }],
-    dataIn: "Classification result", dataOut: "Updated job record",
-    insight: "Tracking classification source (heuristic vs LLM) enables accuracy analysis per path", color: "green",
-  },
   // Process Jobs
   enhance: {
     description: "Fetch full job details — descriptions, requirements, benefits, locations — from ATS APIs for each discovered job. Runs with concurrency limits and retry logic.",
@@ -290,12 +259,6 @@ const nodeDetails: Record<string, NodeDetail> = {
     tech: [{ name: "DeepSeek AI" }, { name: "Role taxonomy" }],
     dataIn: "Job description", dataOut: "Role category + seniority",
     insight: "Fixed taxonomy prevents category drift across classification runs", color: "amber",
-  },
-  "eu-classify": {
-    description: "Invoke the eu_classifier sub-graph to determine EU remote compatibility. Delegates to the heuristic → LLM escalation pipeline.",
-    tech: [{ name: "eu_classifier graph" }],
-    dataIn: "Enriched job", dataOut: "is_remote_eu boolean",
-    insight: "Graph composition — process_jobs delegates to eu_classifier as a sub-graph", color: "blue",
   },
   "skill-extract": {
     description: "Extract technical skills from job descriptions using LLM pipeline. All skills validated against curated taxonomy to prevent semantic drift.",
@@ -461,37 +424,17 @@ const ingestEdges: Edge[] = [
   { id: "e-ingest-sum", source: "ingest-batch", target: "summarize", ...edgeDefaults, label: "raw jobs", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
 ];
 
-// ── Stage 3: EU Classifier (heuristic → LLM escalation) ─────────────────────
-
-const euNodes: Node[] = [
-  { id: "extract-signals", type: "agent", position: { x: 0, y: 50 }, data: { label: "extract_signals", sublabel: "Location, timezone, visa", icon: Search, color: "var(--blue-9)" } },
-  { id: "heuristic-check", type: "agent", position: { x: 270, y: 50 }, data: { label: "heuristic_check", sublabel: "Weighted scoring", icon: Zap, color: "var(--blue-9)" } },
-  { id: "route-heuristic", type: "condition", position: { x: 510, y: 60 }, data: { label: "confident?", color: "var(--crimson-9)" } },
-  { id: "deepseek-classify", type: "agent", position: { x: 700, y: 0 }, data: { label: "deepseek_classify", sublabel: "Schema-constrained LLM", icon: Brain, color: "var(--amber-9)" } },
-  { id: "persist-eu", type: "dataStore", position: { x: 700, y: 110 }, data: { label: "persist_and_end", sublabel: "is_remote_eu → Neon", icon: Database, color: "var(--green-9)" } },
-];
-
-const euEdges: Edge[] = [
-  { id: "e-ext-heur", source: "extract-signals", target: "heuristic-check", ...edgeDefaults, label: "signals", style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
-  { id: "e-heur-route", source: "heuristic-check", target: "route-heuristic", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
-  { id: "e-route-ds", source: "route-heuristic", target: "deepseek-classify", ...edgeDefaults, animated: true, label: "low conf", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-route-persist", source: "route-heuristic", target: "persist-eu", ...edgeDefaults, label: "high conf", style: { ...edgeDefaults.style, stroke: "var(--green-8)" } },
-  { id: "e-ds-persist", source: "deepseek-classify", target: "persist-eu", ...edgeDefaults, label: "LLM result", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-];
-
-// ── Stage 4: Process Jobs (4-phase pipeline) ─────────────────────────────────
+// ── Stage 3: Process Jobs (3-phase pipeline) ─────────────────────────────────
 
 const processNodes: Node[] = [
   { id: "enhance", type: "agent", position: { x: 0, y: 40 }, data: { label: "enhance", sublabel: "Full details from ATS", icon: Zap, color: "var(--orange-9)" } },
-  { id: "role-tag", type: "agent", position: { x: 260, y: 40 }, data: { label: "role_tag", sublabel: "Category + seniority", icon: Layers, color: "var(--amber-9)" } },
-  { id: "eu-classify", type: "agent", position: { x: 510, y: 40 }, data: { label: "eu_classify", sublabel: "→ eu_classifier graph", icon: Globe, color: "var(--blue-9)" } },
-  { id: "skill-extract", type: "agent", position: { x: 760, y: 40 }, data: { label: "skill_extract", sublabel: "LLM + taxonomy", icon: FileText, color: "var(--amber-9)" } },
+  { id: "role-tag", type: "agent", position: { x: 300, y: 40 }, data: { label: "role_tag", sublabel: "Category + seniority", icon: Layers, color: "var(--amber-9)" } },
+  { id: "skill-extract", type: "agent", position: { x: 590, y: 40 }, data: { label: "skill_extract", sublabel: "LLM + taxonomy", icon: FileText, color: "var(--amber-9)" } },
 ];
 
 const processEdges: Edge[] = [
   { id: "e-enh-role", source: "enhance", target: "role-tag", ...edgeDefaults, label: "enriched job", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
-  { id: "e-role-eu", source: "role-tag", target: "eu-classify", ...edgeDefaults, label: "tagged job", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-eu-skill", source: "eu-classify", target: "skill-extract", ...edgeDefaults, label: "classified", style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
+  { id: "e-role-skill", source: "role-tag", target: "skill-extract", ...edgeDefaults, label: "tagged job", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
 ];
 
 // ── Stage 5: Job Matcher ─────────────────────────────────────────────────────
@@ -587,18 +530,9 @@ const stages = [
     height: 150,
   },
   {
-    title: "eu_classifier",
-    graphName: "eu_classifier",
-    description: "Heuristic-first classification with LLM escalation. Fast heuristic handles ~60% of jobs; DeepSeek only called for ambiguous cases.",
-    pattern: "Multi-model escalation",
-    nodes: euNodes,
-    edges: euEdges,
-    height: 220,
-  },
-  {
     title: "process_jobs",
     graphName: "process_jobs",
-    description: "Four-phase sequential pipeline: enhance → role_tag → eu_classify (sub-graph) → skill_extract. Accumulates results via Annotated[List, operator.add].",
+    description: "Three-phase sequential pipeline: enhance → role_tag → skill_extract. Accumulates results via Annotated[List, operator.add].",
     pattern: "Sequential accumulation",
     nodes: processNodes,
     edges: processEdges,

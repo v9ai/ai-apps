@@ -64,71 +64,22 @@ def fetch_enhanced_jobs(conn: psycopg.Connection, limit: int = 100) -> list[dict
 
 
 # ---------------------------------------------------------------------------
-# Process Jobs — Phase 3 (EU classification)
-# ---------------------------------------------------------------------------
-
-def fetch_role_match_jobs(conn: psycopg.Connection, limit: int = 100) -> list[dict]:
-    """Jobs with status='role-match' ready for EU classification."""
-    with conn.cursor(row_factory=dict_row) as cur:
-        cur.execute(
-            """SELECT id, title, location, description, country,
-                      workplace_type, source_kind, ashby_is_remote,
-                      ashby_address, ashby_secondary_locations,
-                      offices, categories
-               FROM jobs
-               WHERE status = 'role-match'
-               ORDER BY created_at DESC
-               LIMIT %s""",
-            [limit],
-        )
-        return cur.fetchall()
-
-
-# ---------------------------------------------------------------------------
-# Process Jobs — Phase 4 (skill extraction)
+# Process Jobs — Phase 3 (skill extraction)
 # ---------------------------------------------------------------------------
 
 def fetch_classified_jobs_without_skills(
     conn: psycopg.Connection, limit: int = 100
 ) -> list[dict]:
-    """Classified jobs that have no skill tags yet."""
+    """Role-matched jobs that have no skill tags yet."""
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """SELECT j.id, j.title, j.description
                FROM jobs j
                LEFT JOIN job_skill_tags t ON t.job_id = j.id
-               WHERE j.status IN ('eu-remote', 'non-eu', 'role-match')
+               WHERE j.status = 'role-match'
                  AND j.description IS NOT NULL
                  AND t.job_id IS NULL
                ORDER BY j.created_at DESC
-               LIMIT %s""",
-            [limit],
-        )
-        return cur.fetchall()
-
-
-# ---------------------------------------------------------------------------
-# EU Classifier (standalone)
-# ---------------------------------------------------------------------------
-
-def fetch_unclassified_jobs(conn: psycopg.Connection, limit: int = 200) -> list[dict]:
-    """Jobs for standalone EU classification (original classifier pipeline)."""
-    with conn.cursor(row_factory=dict_row) as cur:
-        cur.execute(
-            """SELECT
-                   j.id::text AS id,
-                   j.title,
-                   j.description,
-                   COALESCE(c.name, j.company_key) AS company_name,
-                   j.location,
-                   j.workplace_type,
-                   j.url
-               FROM jobs j
-               LEFT JOIN companies c ON c.key = j.company_key
-               WHERE j.status = 'active'
-                 AND j.description IS NOT NULL
-                 AND j.description != ''
-               ORDER BY j.posted_at DESC
                LIMIT %s""",
             [limit],
         )
@@ -142,18 +93,16 @@ def fetch_unclassified_jobs(conn: psycopg.Connection, limit: int = 200) -> list[
 def fetch_candidate_jobs_by_skills(
     conn: psycopg.Connection,
     skills: list[str],
-    remote_eu_only: bool = True,
     max_candidates: int = 50,
 ) -> list[dict]:
     """Candidate jobs that have at least one matching skill tag."""
-    eu_filter = "AND j.is_remote_eu = true" if remote_eu_only else ""
     placeholders = ",".join(["%s"] * len(skills))
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             f"""SELECT DISTINCT jst.job_id, j.title
                 FROM job_skill_tags jst
                 JOIN jobs j ON j.id = jst.job_id
-                WHERE jst.tag IN ({placeholders}) {eu_filter}
+                WHERE jst.tag IN ({placeholders})
                 LIMIT %s""",
             [*skills, max_candidates],
         )

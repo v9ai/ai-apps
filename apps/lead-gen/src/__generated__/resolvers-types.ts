@@ -182,12 +182,6 @@ export type CancelEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-/** Confidence level of a classification result. */
-export type ClassificationConfidence =
-  | 'high'
-  | 'low'
-  | 'medium';
-
 export type CompaniesResponse = {
   __typename?: 'CompaniesResponse';
   companies: Array<Company>;
@@ -913,8 +907,6 @@ export type Job = {
   external_id: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   internal_job_id: Maybe<Scalars['String']['output']>;
-  /** Whether this job is classified as Remote EU — read directly from the DB column. */
-  is_remote_eu: Scalars['Boolean']['output'];
   language: Maybe<Scalars['String']['output']>;
   location: Maybe<Scalars['String']['output']>;
   location_questions: Maybe<Array<GreenhouseQuestion>>;
@@ -928,8 +920,6 @@ export type Job = {
   publishedAt: Scalars['String']['output'];
   questions: Maybe<Array<GreenhouseQuestion>>;
   recruiter: Maybe<Contact>;
-  remote_eu_confidence: Maybe<ClassificationConfidence>;
-  remote_eu_reason: Maybe<Scalars['String']['output']>;
   requisition_id: Maybe<Scalars['String']['output']>;
   score: Maybe<Scalars['Float']['output']>;
   score_reason: Maybe<Scalars['String']['output']>;
@@ -1054,11 +1044,6 @@ export type Mutation = {
   mergeDuplicateCompanies: MergeCompaniesResult;
   mergeDuplicateContacts: MergeDuplicateContactsResult;
   previewEmail: EmailPreview;
-  /**
-   * Trigger classification/enhancement of all unprocessed jobs.
-   * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
-   */
-  processAllJobs: ProcessAllJobsResponse;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1288,11 +1273,6 @@ export type MutationPreviewEmailArgs = {
 };
 
 
-export type MutationProcessAllJobsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type MutationReportJobArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1393,25 +1373,6 @@ export type PreviewEmailInput = {
   drySend?: InputMaybe<Scalars['Boolean']['input']>;
   recipientEmail: Scalars['String']['input'];
   subject: Scalars['String']['input'];
-};
-
-/** Response from triggering job classification */
-export type ProcessAllJobsResponse = {
-  __typename?: 'ProcessAllJobsResponse';
-  /** Number of errors during ATS enhancement */
-  enhanceErrors: Maybe<Scalars['Int']['output']>;
-  /** Number of jobs enhanced with ATS data in this run */
-  enhanced: Maybe<Scalars['Int']['output']>;
-  /** Number of errors encountered during classification */
-  errors: Maybe<Scalars['Int']['output']>;
-  /** Number of jobs classified as EU-remote */
-  euRemote: Maybe<Scalars['Int']['output']>;
-  message: Maybe<Scalars['String']['output']>;
-  /** Number of jobs classified as non-EU */
-  nonEuRemote: Maybe<Scalars['Int']['output']>;
-  /** Number of jobs classified in this run */
-  processed: Maybe<Scalars['Int']['output']>;
-  success: Scalars['Boolean']['output'];
 };
 
 export type Query = {
@@ -1552,7 +1513,6 @@ export type QueryJobsArgs = {
   excludedCompanies?: InputMaybe<Array<Scalars['String']['input']>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
-  remoteEuConfidence?: InputMaybe<Scalars['String']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
   showAll?: InputMaybe<Scalars['Boolean']['input']>;
   skills?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1934,7 +1894,6 @@ export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Partial<Scalars['Boolean']['output']>>;
   CancelCompanyEmailsResult: ResolverTypeWrapper<Partial<CancelCompanyEmailsResult>>;
   CancelEmailResult: ResolverTypeWrapper<Partial<CancelEmailResult>>;
-  ClassificationConfidence: ResolverTypeWrapper<Partial<ClassificationConfidence>>;
   CompaniesResponse: ResolverTypeWrapper<Partial<CompaniesResponse>>;
   Company: ResolverTypeWrapper<Partial<Company>>;
   CompanyCategory: ResolverTypeWrapper<Partial<CompanyCategory>>;
@@ -2010,7 +1969,6 @@ export type ResolversTypes = {
   MergeDuplicateContactsResult: ResolverTypeWrapper<Partial<MergeDuplicateContactsResult>>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   PreviewEmailInput: ResolverTypeWrapper<Partial<PreviewEmailInput>>;
-  ProcessAllJobsResponse: ResolverTypeWrapper<Partial<ProcessAllJobsResponse>>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   ReceivedEmail: ResolverTypeWrapper<Partial<ReceivedEmail>>;
   ReceivedEmailsResult: ResolverTypeWrapper<Partial<ReceivedEmailsResult>>;
@@ -2132,7 +2090,6 @@ export type ResolversParentTypes = {
   MergeDuplicateContactsResult: Partial<MergeDuplicateContactsResult>;
   Mutation: Record<PropertyKey, never>;
   PreviewEmailInput: Partial<PreviewEmailInput>;
-  ProcessAllJobsResponse: Partial<ProcessAllJobsResponse>;
   Query: Record<PropertyKey, never>;
   ReceivedEmail: Partial<ReceivedEmail>;
   ReceivedEmailsResult: Partial<ReceivedEmailsResult>;
@@ -2765,7 +2722,6 @@ export type JobResolvers<ContextType = GraphQLContext, ParentType extends Resolv
   external_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   internal_job_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  is_remote_eu?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   language?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   location?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   location_questions?: Resolver<Maybe<Array<ResolversTypes['GreenhouseQuestion']>>, ParentType, ContextType>;
@@ -2774,8 +2730,6 @@ export type JobResolvers<ContextType = GraphQLContext, ParentType extends Resolv
   publishedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   questions?: Resolver<Maybe<Array<ResolversTypes['GreenhouseQuestion']>>, ParentType, ContextType>;
   recruiter?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType>;
-  remote_eu_confidence?: Resolver<Maybe<ResolversTypes['ClassificationConfidence']>, ParentType, ContextType>;
-  remote_eu_reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   requisition_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   score?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   score_reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2860,7 +2814,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   mergeDuplicateCompanies?: Resolver<ResolversTypes['MergeCompaniesResult'], ParentType, ContextType, RequireFields<MutationMergeDuplicateCompaniesArgs, 'companyIds'>>;
   mergeDuplicateContacts?: Resolver<ResolversTypes['MergeDuplicateContactsResult'], ParentType, ContextType, RequireFields<MutationMergeDuplicateContactsArgs, 'companyId'>>;
   previewEmail?: Resolver<ResolversTypes['EmailPreview'], ParentType, ContextType, RequireFields<MutationPreviewEmailArgs, 'input'>>;
-  processAllJobs?: Resolver<ResolversTypes['ProcessAllJobsResponse'], ParentType, ContextType, Partial<MutationProcessAllJobsArgs>>;
   reportJob?: Resolver<Maybe<ResolversTypes['Job']>, ParentType, ContextType, RequireFields<MutationReportJobArgs, 'id'>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
   scheduleFollowUpBatch?: Resolver<ResolversTypes['FollowUpBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleFollowUpBatchArgs, 'input'>>;
@@ -2879,17 +2832,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   upsert_company_ats_boards?: Resolver<Array<ResolversTypes['ATSBoard']>, ParentType, ContextType, RequireFields<MutationUpsert_Company_Ats_BoardsArgs, 'boards' | 'company_id'>>;
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
-};
-
-export type ProcessAllJobsResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProcessAllJobsResponse'] = ResolversParentTypes['ProcessAllJobsResponse']> = {
-  enhanceErrors?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  enhanced?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  errors?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  euRemote?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  nonEuRemote?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  processed?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
@@ -3124,7 +3066,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   MergeCompaniesResult?: MergeCompaniesResultResolvers<ContextType>;
   MergeDuplicateContactsResult?: MergeDuplicateContactsResultResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
-  ProcessAllJobsResponse?: ProcessAllJobsResponseResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   ReceivedEmail?: ReceivedEmailResolvers<ContextType>;
   ReceivedEmailsResult?: ReceivedEmailsResultResolvers<ContextType>;

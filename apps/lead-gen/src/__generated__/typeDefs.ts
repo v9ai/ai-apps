@@ -154,13 +154,6 @@ type CancelEmailResult {
   success: Boolean!
 }
 
-"""Confidence level of a classification result."""
-enum ClassificationConfidence {
-  high
-  low
-  medium
-}
-
 type CompaniesResponse {
   companies: [Company!]!
   totalCount: Int!
@@ -837,10 +830,6 @@ type Job {
   external_id: String!
   id: Int!
   internal_job_id: String
-  """
-  Whether this job is classified as Remote EU — read directly from the DB column.
-  """
-  is_remote_eu: Boolean!
   language: String
   location: String
   location_questions: [GreenhouseQuestion!]
@@ -854,8 +843,6 @@ type Job {
   publishedAt: String!
   questions: [GreenhouseQuestion!]
   recruiter: Contact
-  remote_eu_confidence: ClassificationConfidence
-  remote_eu_reason: String
   requisition_id: String
   score: Float
   score_reason: String
@@ -976,11 +963,6 @@ type Mutation {
   mergeDuplicateContacts(companyId: Int!): MergeDuplicateContactsResult!
   previewEmail(input: PreviewEmailInput!): EmailPreview!
   """
-  Trigger classification/enhancement of all unprocessed jobs.
-  Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
-  """
-  processAllJobs(limit: Int): ProcessAllJobsResponse!
-  """
   Report a job as irrelevant, spam, or incorrectly classified.
   Sets the job status to "reported" so it can be reviewed or excluded.
   Requires authentication.
@@ -1012,24 +994,6 @@ input PreviewEmailInput {
   subject: String!
 }
 
-"""Response from triggering job classification"""
-type ProcessAllJobsResponse {
-  """Number of errors during ATS enhancement"""
-  enhanceErrors: Int
-  """Number of jobs enhanced with ATS data in this run"""
-  enhanced: Int
-  """Number of errors encountered during classification"""
-  errors: Int
-  """Number of jobs classified as EU-remote"""
-  euRemote: Int
-  message: String
-  """Number of jobs classified as non-EU"""
-  nonEuRemote: Int
-  """Number of jobs classified in this run"""
-  processed: Int
-  success: Boolean!
-}
-
 type Query {
   allCompanyTags: [String!]!
   blockedCompanies: [BlockedCompany!]!
@@ -1051,7 +1015,7 @@ type Query {
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
   findCompany(name: String, website: String): FindCompanyResult!
   job(id: String!): Job
-  jobs(companyKey: String, excludedCompanies: [String!], limit: Int, offset: Int, remoteEuConfidence: String, search: String, showAll: Boolean, skills: [String!], sourceType: String, sourceTypes: [String!]): JobsResponse!
+  jobs(companyKey: String, excludedCompanies: [String!], limit: Int, offset: Int, search: String, showAll: Boolean, skills: [String!], sourceType: String, sourceTypes: [String!]): JobsResponse!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, limit: Int, offset: Int): ReceivedEmailsResult!
   resendEmail(resendId: String!): ResendEmailDetail

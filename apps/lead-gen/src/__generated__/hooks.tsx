@@ -182,12 +182,6 @@ export type CancelEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-/** Confidence level of a classification result. */
-export type ClassificationConfidence =
-  | 'high'
-  | 'low'
-  | 'medium';
-
 export type CompaniesResponse = {
   __typename?: 'CompaniesResponse';
   companies: Array<Company>;
@@ -913,8 +907,6 @@ export type Job = {
   external_id: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   internal_job_id: Maybe<Scalars['String']['output']>;
-  /** Whether this job is classified as Remote EU — read directly from the DB column. */
-  is_remote_eu: Scalars['Boolean']['output'];
   language: Maybe<Scalars['String']['output']>;
   location: Maybe<Scalars['String']['output']>;
   location_questions: Maybe<Array<GreenhouseQuestion>>;
@@ -928,8 +920,6 @@ export type Job = {
   publishedAt: Scalars['String']['output'];
   questions: Maybe<Array<GreenhouseQuestion>>;
   recruiter: Maybe<Contact>;
-  remote_eu_confidence: Maybe<ClassificationConfidence>;
-  remote_eu_reason: Maybe<Scalars['String']['output']>;
   requisition_id: Maybe<Scalars['String']['output']>;
   score: Maybe<Scalars['Float']['output']>;
   score_reason: Maybe<Scalars['String']['output']>;
@@ -1054,11 +1044,6 @@ export type Mutation = {
   mergeDuplicateCompanies: MergeCompaniesResult;
   mergeDuplicateContacts: MergeDuplicateContactsResult;
   previewEmail: EmailPreview;
-  /**
-   * Trigger classification/enhancement of all unprocessed jobs.
-   * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
-   */
-  processAllJobs: ProcessAllJobsResponse;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1288,11 +1273,6 @@ export type MutationPreviewEmailArgs = {
 };
 
 
-export type MutationProcessAllJobsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type MutationReportJobArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1393,25 +1373,6 @@ export type PreviewEmailInput = {
   drySend?: InputMaybe<Scalars['Boolean']['input']>;
   recipientEmail: Scalars['String']['input'];
   subject: Scalars['String']['input'];
-};
-
-/** Response from triggering job classification */
-export type ProcessAllJobsResponse = {
-  __typename?: 'ProcessAllJobsResponse';
-  /** Number of errors during ATS enhancement */
-  enhanceErrors: Maybe<Scalars['Int']['output']>;
-  /** Number of jobs enhanced with ATS data in this run */
-  enhanced: Maybe<Scalars['Int']['output']>;
-  /** Number of errors encountered during classification */
-  errors: Maybe<Scalars['Int']['output']>;
-  /** Number of jobs classified as EU-remote */
-  euRemote: Maybe<Scalars['Int']['output']>;
-  message: Maybe<Scalars['String']['output']>;
-  /** Number of jobs classified as non-EU */
-  nonEuRemote: Maybe<Scalars['Int']['output']>;
-  /** Number of jobs classified in this run */
-  processed: Maybe<Scalars['Int']['output']>;
-  success: Scalars['Boolean']['output'];
 };
 
 export type Query = {
@@ -1552,7 +1513,6 @@ export type QueryJobsArgs = {
   excludedCompanies?: InputMaybe<Array<Scalars['String']['input']>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
-  remoteEuConfidence?: InputMaybe<Scalars['String']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
   showAll?: InputMaybe<Scalars['Boolean']['input']>;
   skills?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -1858,7 +1818,7 @@ export type GetJobQueryVariables = Exact<{
 }>;
 
 
-export type GetJobQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, status: JobStatus | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, ashby_department: string | null, ashby_team: string | null, ashby_employment_type: string | null, ashby_is_remote: boolean | null, ashby_is_listed: boolean | null, ashby_job_url: string | null, ashby_apply_url: string | null, applied: boolean, appliedAt: string | null, archived: boolean, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, skillMatch: { __typename?: 'SkillMatch', score: number, userCoverage: number, jobCoverage: number, requiredCoverage: number, matchedCount: number, totalPreferred: number, details: Array<{ __typename?: 'SkillMatchDetail', tag: string, level: string, matched: boolean }> } | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null, ashby_secondary_locations: Array<{ __typename?: 'AshbySecondaryLocation', location: string, address: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null }> | null, ashby_compensation: { __typename?: 'AshbyCompensation', compensationTierSummary: string | null, scrapeableCompensationSalarySummary: string | null, compensationTiers: Array<{ __typename?: 'AshbyCompensationTier', id: string | null, tierSummary: string | null, title: string | null, additionalInformation: string | null, components: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> }>, summaryComponents: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> } | null, ashby_address: { __typename?: 'AshbyAddress', postalAddress: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null } | null } | null };
+export type GetJobQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, status: JobStatus | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, ashby_department: string | null, ashby_team: string | null, ashby_employment_type: string | null, ashby_is_remote: boolean | null, ashby_is_listed: boolean | null, ashby_job_url: string | null, ashby_apply_url: string | null, applied: boolean, appliedAt: string | null, archived: boolean, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, skillMatch: { __typename?: 'SkillMatch', score: number, userCoverage: number, jobCoverage: number, requiredCoverage: number, matchedCount: number, totalPreferred: number, details: Array<{ __typename?: 'SkillMatchDetail', tag: string, level: string, matched: boolean }> } | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null, ashby_secondary_locations: Array<{ __typename?: 'AshbySecondaryLocation', location: string, address: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null }> | null, ashby_compensation: { __typename?: 'AshbyCompensation', compensationTierSummary: string | null, scrapeableCompensationSalarySummary: string | null, compensationTiers: Array<{ __typename?: 'AshbyCompensationTier', id: string | null, tierSummary: string | null, title: string | null, additionalInformation: string | null, components: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> }>, summaryComponents: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> } | null, ashby_address: { __typename?: 'AshbyAddress', postalAddress: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null } | null } | null };
 
 export type GetJobsQueryVariables = Exact<{
   sourceType?: InputMaybe<Scalars['String']['input']>;
@@ -1873,7 +1833,7 @@ export type GetJobsQueryVariables = Exact<{
 }>;
 
 
-export type GetJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_kind: string, company_key: string, title: string, location: string | null, url: string, publishedAt: string, status: JobStatus | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, applied: boolean, archived: boolean, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string }> | null }> } };
+export type GetJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_kind: string, company_key: string, title: string, location: string | null, url: string, publishedAt: string, status: JobStatus | null, applied: boolean, archived: boolean, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string }> | null }> } };
 
 export type GetUserSettingsQueryVariables = Exact<{
   userId: Scalars['String']['input'];
@@ -1881,13 +1841,6 @@ export type GetUserSettingsQueryVariables = Exact<{
 
 
 export type GetUserSettingsQuery = { __typename?: 'Query', userSettings: { __typename?: 'UserSettings', id: number, preferred_locations: Array<string> | null, preferred_skills: Array<string> | null, excluded_companies: Array<string> | null } | null };
-
-export type ProcessAllJobsMutationVariables = Exact<{
-  limit?: InputMaybe<Scalars['Int']['input']>;
-}>;
-
-
-export type ProcessAllJobsMutation = { __typename?: 'Mutation', processAllJobs: { __typename?: 'ProcessAllJobsResponse', success: boolean, message: string | null, enhanced: number | null, enhanceErrors: number | null, processed: number | null, euRemote: number | null, nonEuRemote: number | null, errors: number | null } };
 
 export type ReportJobMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2431,14 +2384,14 @@ export type GetGreenhouseJobsQueryVariables = Exact<{
 }>;
 
 
-export type GetGreenhouseJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null }> } };
+export type GetGreenhouseJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null }> } };
 
 export type GetGreenhouseJobByIdQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetGreenhouseJobByIdQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null } | null };
+export type GetGreenhouseJobByIdQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null } | null };
 
 export type EnhanceJobFromAtsMutationVariables = Exact<{
   jobId: Scalars['String']['input'];
@@ -2447,7 +2400,7 @@ export type EnhanceJobFromAtsMutationVariables = Exact<{
 }>;
 
 
-export type EnhanceJobFromAtsMutation = { __typename?: 'Mutation', enhanceJobFromATS: { __typename?: 'EnhanceJobResponse', success: boolean, message: string | null, job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null } | null } };
+export type EnhanceJobFromAtsMutation = { __typename?: 'Mutation', enhanceJobFromATS: { __typename?: 'EnhanceJobResponse', success: boolean, message: string | null, job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null } | null } };
 
 export type MarkJobAppliedMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2668,9 +2621,6 @@ export const GetJobDocument = gql`
     score
     score_reason
     status
-    is_remote_eu
-    remote_eu_confidence
-    remote_eu_reason
     skills {
       tag
       level
@@ -2884,8 +2834,6 @@ export const GetJobsDocument = gql`
       url
       publishedAt
       status
-      is_remote_eu
-      remote_eu_confidence
       applied
       archived
       skills {
@@ -2987,46 +2935,6 @@ export type GetUserSettingsQueryHookResult = ReturnType<typeof useGetUserSetting
 export type GetUserSettingsLazyQueryHookResult = ReturnType<typeof useGetUserSettingsLazyQuery>;
 export type GetUserSettingsSuspenseQueryHookResult = ReturnType<typeof useGetUserSettingsSuspenseQuery>;
 export type GetUserSettingsQueryResult = Apollo.QueryResult<GetUserSettingsQuery, GetUserSettingsQueryVariables>;
-export const ProcessAllJobsDocument = gql`
-    mutation ProcessAllJobs($limit: Int) {
-  processAllJobs(limit: $limit) {
-    success
-    message
-    enhanced
-    enhanceErrors
-    processed
-    euRemote
-    nonEuRemote
-    errors
-  }
-}
-    `;
-export type ProcessAllJobsMutationFn = Apollo.MutationFunction<ProcessAllJobsMutation, ProcessAllJobsMutationVariables>;
-
-/**
- * __useProcessAllJobsMutation__
- *
- * To run a mutation, you first call `useProcessAllJobsMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useProcessAllJobsMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [processAllJobsMutation, { data, loading, error }] = useProcessAllJobsMutation({
- *   variables: {
- *      limit: // value for 'limit'
- *   },
- * });
- */
-export function useProcessAllJobsMutation(baseOptions?: Apollo.MutationHookOptions<ProcessAllJobsMutation, ProcessAllJobsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<ProcessAllJobsMutation, ProcessAllJobsMutationVariables>(ProcessAllJobsDocument, options);
-      }
-export type ProcessAllJobsMutationHookResult = ReturnType<typeof useProcessAllJobsMutation>;
-export type ProcessAllJobsMutationResult = Apollo.MutationResult<ProcessAllJobsMutation>;
-export type ProcessAllJobsMutationOptions = Apollo.BaseMutationOptions<ProcessAllJobsMutation, ProcessAllJobsMutationVariables>;
 export const ReportJobDocument = gql`
     mutation ReportJob($id: Int!) {
   reportJob(id: $id) {
@@ -5999,9 +5907,6 @@ export const GetGreenhouseJobsDocument = gql`
       publishedAt
       score
       score_reason
-      is_remote_eu
-      remote_eu_confidence
-      remote_eu_reason
       skills {
         tag
         level
@@ -6072,9 +5977,6 @@ export const GetGreenhouseJobByIdDocument = gql`
     publishedAt
     score
     score_reason
-    is_remote_eu
-    remote_eu_confidence
-    remote_eu_reason
     skills {
       tag
       level
@@ -6144,9 +6046,6 @@ export const EnhanceJobFromAtsDocument = gql`
       publishedAt
       score
       score_reason
-      is_remote_eu
-      remote_eu_confidence
-      remote_eu_reason
       skills {
         tag
         level

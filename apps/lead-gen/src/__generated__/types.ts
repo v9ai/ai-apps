@@ -179,12 +179,6 @@ export type CancelEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-/** Confidence level of a classification result. */
-export type ClassificationConfidence =
-  | 'high'
-  | 'low'
-  | 'medium';
-
 export type CompaniesResponse = {
   __typename: 'CompaniesResponse';
   companies: Array<Company>;
@@ -910,8 +904,6 @@ export type Job = {
   external_id: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   internal_job_id: Maybe<Scalars['String']['output']>;
-  /** Whether this job is classified as Remote EU — read directly from the DB column. */
-  is_remote_eu: Scalars['Boolean']['output'];
   language: Maybe<Scalars['String']['output']>;
   location: Maybe<Scalars['String']['output']>;
   location_questions: Maybe<Array<GreenhouseQuestion>>;
@@ -925,8 +917,6 @@ export type Job = {
   publishedAt: Scalars['String']['output'];
   questions: Maybe<Array<GreenhouseQuestion>>;
   recruiter: Maybe<Contact>;
-  remote_eu_confidence: Maybe<ClassificationConfidence>;
-  remote_eu_reason: Maybe<Scalars['String']['output']>;
   requisition_id: Maybe<Scalars['String']['output']>;
   score: Maybe<Scalars['Float']['output']>;
   score_reason: Maybe<Scalars['String']['output']>;
@@ -1051,11 +1041,6 @@ export type Mutation = {
   mergeDuplicateCompanies: MergeCompaniesResult;
   mergeDuplicateContacts: MergeDuplicateContactsResult;
   previewEmail: EmailPreview;
-  /**
-   * Trigger classification/enhancement of all unprocessed jobs.
-   * Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
-   */
-  processAllJobs: ProcessAllJobsResponse;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1285,11 +1270,6 @@ export type MutationPreviewEmailArgs = {
 };
 
 
-export type MutationProcessAllJobsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type MutationReportJobArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1390,25 +1370,6 @@ export type PreviewEmailInput = {
   drySend?: InputMaybe<Scalars['Boolean']['input']>;
   recipientEmail: Scalars['String']['input'];
   subject: Scalars['String']['input'];
-};
-
-/** Response from triggering job classification */
-export type ProcessAllJobsResponse = {
-  __typename: 'ProcessAllJobsResponse';
-  /** Number of errors during ATS enhancement */
-  enhanceErrors: Maybe<Scalars['Int']['output']>;
-  /** Number of jobs enhanced with ATS data in this run */
-  enhanced: Maybe<Scalars['Int']['output']>;
-  /** Number of errors encountered during classification */
-  errors: Maybe<Scalars['Int']['output']>;
-  /** Number of jobs classified as EU-remote */
-  euRemote: Maybe<Scalars['Int']['output']>;
-  message: Maybe<Scalars['String']['output']>;
-  /** Number of jobs classified as non-EU */
-  nonEuRemote: Maybe<Scalars['Int']['output']>;
-  /** Number of jobs classified in this run */
-  processed: Maybe<Scalars['Int']['output']>;
-  success: Scalars['Boolean']['output'];
 };
 
 export type Query = {
@@ -1549,7 +1510,6 @@ export type QueryJobsArgs = {
   excludedCompanies?: InputMaybe<Array<Scalars['String']['input']>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
-  remoteEuConfidence?: InputMaybe<Scalars['String']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
   showAll?: InputMaybe<Scalars['Boolean']['input']>;
   skills?: InputMaybe<Array<Scalars['String']['input']>>;

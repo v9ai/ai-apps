@@ -33,7 +33,7 @@ export type ProcessJobsMessage = z.infer<typeof ProcessJobsMessage>;
 export const JobRoleTagsResult = z.object({
   isFrontendReact: z.boolean(),
   isAIEngineer: z.boolean(),
-  confidence: ClassificationConfidence,
+  confidence: z.enum(["high", "medium", "low"]),
   reason: z.string(),
 });
 export type JobRoleTagsResult = z.infer<typeof JobRoleTagsResult>;
