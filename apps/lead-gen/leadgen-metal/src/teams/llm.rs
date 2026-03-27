@@ -1,0 +1,183 @@
+//! Minimal DeepSeek / OpenAI-compatible chat completion client.
+
+use anyhow::{bail, Result};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize)]
+struct ChatRequest<'a> {
+    model: &'a str,
+    messages: Vec<Message<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    temperature: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_tokens: Option<u32>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Message<'a> {
+    role: &'a str,
+    content: &'a str,
+}
+
+#[derive(Debug, Deserialize)]
+struct ChatResponse {
+    choices: Vec<Choice>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Choice {
+    message: ResponseMessage,
+}
+
+#[derive(Debug, Deserialize)]
+struct ResponseMessage {
+    content: String,
+}
+
+/// Send a chat completion request to DeepSeek (or any OpenAI-compatible API).
+pub async fn chat(
+    client: &reqwest::Client,
+    base_url: &str,
+    api_key: &str,
+    system: &str,
+    user: &str,
+    temperature: Option<f32>,
+) -> Result<String> {
+    let mut messages = Vec::new();
+    if !system.is_empty() {
+        messages.push(Message { role: "system", content: system });
+    }
+    messages.push(Message { role: "user", content: user });
+
+    let req = ChatRequest {
+        model: "deepseek-chat",
+        messages,
+        temperature,
+        max_tokens: Some(2048),
+    };
+
+    let resp = client
+        .post(format!("{base_url}/chat/completions"))
+        .bearer_auth(api_key)
+        .json(&req)
+        .send()
+        .await?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        bail!("LLM API {status}: {body}");
+    }
+
+    let body: ChatResponse = resp.json().await?;
+    body.choices
+        .into_iter()
+        .next()
+        .map(|c| c.message.content)
+        .ok_or_else(|| anyhow::anyhow!("empty LLM response"))
+}
+
+/// Classify a company using LLM. Returns (category, ai_tier, confidence).
+pub async fn classify_company(
+    client: &reqwest::Client,
+    base_url: &str,
+    api_key: &str,
+    name: &str,
+    domain: &str,
+    page_text: &str,
+) -> Result<CompanyClassification> {
+    let system = "You classify B2B companies. Respond ONLY with JSON, no markdown fences.\n\
+        Schema: {\"category\":\"CONSULTANCY|AGENCY|STAFFING|PRODUCT\",\"ai_tier\":\"ai_first|ai_native|other\",\"industry\":\"string\",\"confidence\":0.0-1.0}\n\
+        - CONSULTANCY: custom software/AI development for clients\n\
+        - AGENCY: digital/creative agency\n\
+        - STAFFING: recruitment/body-leasing\n\
+        - PRODUCT: own SaaS/product company\n\
+        - ai_first: AI is core business (>50% revenue)\n\
+        - ai_native: uses AI heavily but not core\n\
+        - other: minimal AI";
+
+    let truncated = if page_text.len() > 3000 { &page_text[..3000] } else { page_text };
+    let user = format!("Company: {name}\nDomain: {domain}\nPage text:\n{truncated}");
+
+    let raw = chat(client, base_url, api_key, system, &user, Some(0.1)).await?;
+
+    // Strip markdown fences if present
+    let json_str = raw
+        .trim()
+        .strip_prefix("```json")
+        .or_else(|| raw.trim().strip_prefix("```"))
+        .unwrap_or(raw.trim())
+        .strip_suffix("```")
+        .unwrap_or(raw.trim())
+        .trim();
+
+    let cls: CompanyClassification = serde_json::from_str(json_str)
+        .map_err(|e| anyhow::anyhow!("LLM classification parse error: {e}\nRaw: {raw}"))?;
+    Ok(cls)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompanyClassification {
+    pub category: String,
+    pub ai_tier: String,
+    #[serde(default)]
+    pub industry: String,
+    #[serde(default = "default_confidence")]
+    pub confidence: f64,
+}
+
+fn default_confidence() -> f64 { 0.5 }
+
+/// Draft a personalized outreach email using LLM.
+pub async fn draft_email(
+    client: &reqwest::Client,
+    base_url: &str,
+    api_key: &str,
+    contact_name: &str,
+    contact_title: &str,
+    company_name: &str,
+    company_domain: &str,
+    tech_stack: &str,
+) -> Result<EmailDraft> {
+    let system = "You draft B2B outreach emails. Respond ONLY with JSON, no markdown fences.\n\
+        Schema: {\"subject\":\"string\",\"body\":\"string\",\"personalization_score\":0.0-1.0}\n\
+        Rules:\n\
+        - Subject: < 60 chars, no spam triggers, no ALL CAPS\n\
+        - Body: 100-250 words, professional but human\n\
+        - Opening: personal connection point (shared tech, company context)\n\
+        - Value prop: specific to their tech/challenges\n\
+        - CTA: single, clear, low-friction (15-min call)\n\
+        - No generic flattery. Reference specific tech they use.";
+
+    let user = format!(
+        "Contact: {contact_name} ({contact_title})\n\
+         Company: {company_name} ({company_domain})\n\
+         Tech stack: {tech_stack}\n\
+         \n\
+         I am a senior AI/ML engineer with deep Rust, Python, and infrastructure experience, \
+         looking for fully remote EU positions. Draft a warm outreach email."
+    );
+
+    let raw = chat(client, base_url, api_key, system, &user, Some(0.7)).await?;
+
+    let json_str = raw
+        .trim()
+        .strip_prefix("```json")
+        .or_else(|| raw.trim().strip_prefix("```"))
+        .unwrap_or(raw.trim())
+        .strip_suffix("```")
+        .unwrap_or(raw.trim())
+        .trim();
+
+    let draft: EmailDraft = serde_json::from_str(json_str)
+        .map_err(|e| anyhow::anyhow!("Email draft parse error: {e}\nRaw: {raw}"))?;
+    Ok(draft)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EmailDraft {
+    pub subject: String,
+    pub body: String,
+    #[serde(default)]
+    pub personalization_score: f64,
+}

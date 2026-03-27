@@ -4,6 +4,7 @@
 //! rank by cosine similarity to a discovery query → extract hotel data.
 
 use anyhow::{Context, Result};
+use futures::stream::{self, StreamExt};
 use regex::Regex;
 use scraper::{Html, Selector};
 use tracing::{info, warn};
@@ -174,18 +175,26 @@ pub async fn scrape_passages(url: &str) -> Result<Vec<ScrapedPassage>> {
     Ok(passages)
 }
 
-/// Scrape all discovery URLs, collecting passages.
+/// Scrape all discovery URLs concurrently (up to 6 at a time).
 pub async fn scrape_all_sources() -> Vec<ScrapedPassage> {
     let urls = discovery_urls();
-    let mut all_passages = Vec::new();
+    info!("Scraping {} URLs concurrently...", urls.len());
 
-    for url in urls {
-        match scrape_passages(url).await {
-            Ok(passages) => all_passages.extend(passages),
-            Err(e) => warn!("Error scraping {url}: {e}"),
-        }
-    }
+    let results: Vec<_> = stream::iter(urls)
+        .map(|url| async move {
+            match scrape_passages(url).await {
+                Ok(passages) => passages,
+                Err(e) => {
+                    warn!("Error scraping {url}: {e}");
+                    vec![]
+                }
+            }
+        })
+        .buffer_unordered(6)
+        .collect()
+        .await;
 
+    let all_passages: Vec<ScrapedPassage> = results.into_iter().flatten().collect();
     info!("Total passages scraped: {}", all_passages.len());
     all_passages
 }

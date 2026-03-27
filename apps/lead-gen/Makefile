@@ -145,12 +145,24 @@ leads-clean: ## Remove generated lead data
 	rm -f $(DOMAINS_FILE) $(LEADS_CSV)
 	rm -rf consultancies/data/consultancies.lance consultancies/data/consultancies.json
 
-# ── Module 4: Agent Teams ────────────────────────────────────
+# ── Module 4: Rust Pipeline Teams ────────────────────────────
 
-.PHONY: start
+METAL_DIR := leadgen-metal
+METAL_BIN := $(METAL_DIR)/target/release/leadgen-metal
 
-start: ## Full autonomous cycle — launches Claude Code with /agents pipeline
-	claude "/agents pipeline"
+.PHONY: start start-build start-status start-top
+
+start-build: ## Build the Rust pipeline binary (release)
+	cd $(METAL_DIR) && cargo build --release
+
+start: start-build ## Full pipeline cycle (discover -> enrich -> contacts+qa -> outreach)
+	$(METAL_BIN) pipeline $(if $(DOMAINS),--domains $(DOMAINS),)
+
+start-status: start-build ## Show pipeline status and phase detection
+	$(METAL_BIN) status
+
+start-top: start-build ## Show top leads (pass N=50 for count)
+	$(METAL_BIN) top $(or $(N),20)
 
 # ── All ────────────────────────────────────────────────────────
 

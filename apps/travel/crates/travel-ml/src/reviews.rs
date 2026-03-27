@@ -16,6 +16,7 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
+use futures::stream::{self, StreamExt};
 use regex::Regex;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -1227,27 +1228,36 @@ pub async fn analyze_all_hotels_with_reviews_from(
         info!("No pre-scraped review data found — will try HTTP scraping (may be blocked)");
     }
 
+    // Phase 1: Scrape reviews in parallel (IO-bound)
+    info!("Scraping reviews for {} hotels concurrently...", hotels.len());
+    let prescraped_clone = prescraped_file.clone();
+    let scraped_data: Vec<ScrapedReviewData> = stream::iter(hotels.iter().enumerate())
+        .map(|(i, hotel)| {
+            let prescraped = prescraped_clone.clone();
+            let hotel = hotel.clone();
+            async move {
+                info!("  [{}/{}] Loading reviews for '{}'...", i + 1, hotels.len(), hotel.name);
+                if let Some(ref path) = prescraped {
+                    if let Some(data) = load_prescraped_reviews(&hotel.hotel_id, path) {
+                        info!("    Pre-scraped: {} texts, rating {:.1}, {} reviews from [{}]",
+                            data.review_texts.len(), data.review_rating, data.review_count,
+                            data.sources.join(", "));
+                        return data;
+                    }
+                    info!("    No pre-scraped data for '{}' — trying HTTP scrape", hotel.name);
+                }
+                scrape_hotel_reviews(&hotel).await
+            }
+        })
+        .buffered(6)
+        .collect()
+        .await;
+
+    // Phase 2: ML analysis (CPU-bound, sequential — shares EmbeddingEngine)
     info!("Running Candle ML analysis on {} hotels...", hotels.len());
     let mut analyses = Vec::with_capacity(hotels.len());
 
-    for (i, hotel) in hotels.iter().enumerate() {
-        info!("  [{}/{}] Loading reviews for '{}'...", i + 1, hotels.len(), hotel.name);
-
-        // Try pre-scraped data first (Playwright), then fall back to HTTP scraping
-        let scraped = if let Some(ref path) = prescraped_file {
-            if let Some(data) = load_prescraped_reviews(&hotel.hotel_id, path) {
-                info!("    Pre-scraped: {} texts, rating {:.1}, {} reviews from [{}]",
-                    data.review_texts.len(), data.review_rating, data.review_count,
-                    data.sources.join(", "));
-                data
-            } else {
-                info!("    No pre-scraped data for '{}' — trying HTTP scrape", hotel.name);
-                scrape_hotel_reviews(hotel).await
-            }
-        } else {
-            scrape_hotel_reviews(hotel).await
-        };
-
+    for (i, (hotel, scraped)) in hotels.iter().zip(scraped_data.iter()).enumerate() {
         let scraped_info = if scraped.review_texts.is_empty() && scraped.review_count == 0 {
             "no web reviews found".to_string()
         } else {
@@ -1260,8 +1270,7 @@ pub async fn analyze_all_hotels_with_reviews_from(
             )
         };
 
-        // Run ML analysis
-        let analysis = analyze_hotel(engine, hotel, Some(&scraped))
+        let analysis = analyze_hotel(engine, hotel, Some(scraped))
             .with_context(|| format!("analyzing hotel '{}'", hotel.name))?;
         info!(
             "  [{}/{}] {} — sentiment: {:.2}, value: {:.0}, rating: {:.1}, reviews: {}, aspects: {} ({})",

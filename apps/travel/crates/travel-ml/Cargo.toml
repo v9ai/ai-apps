@@ -41,17 +41,5 @@ default = []
 deepseek-fallback = ["deepseek"]
 
 [[bin]]
-name = "travel-ingest"
-path = "src/bin/ingest.rs"
-
-[[bin]]
-name = "travel-search"
-path = "src/bin/search.rs"
-
-[[bin]]
-name = "travel-discover"
-path = "src/bin/discover.rs"
-
-[[bin]]
-name = "travel-sanitize"
-path = "src/bin/sanitize.rs"
+name = "travel-ml"
+path = "src/bin/main.rs"

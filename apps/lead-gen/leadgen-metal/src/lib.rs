@@ -9,6 +9,7 @@ pub mod pipeline;
 pub mod queue;
 pub mod similarity;
 pub mod storage;
+pub mod teams;
 
 use std::io;
 use std::path::Path;
@@ -295,6 +296,12 @@ impl Pipeline {
         duplicates.dedup_by(|a, b| a.0 == b.0 && a.1 == b.1);
 
         duplicates
+    }
+
+    /// Check if a domain is already known (bloom filter fast-path + B-tree confirm).
+    pub fn domain_known(&self, domain: &str) -> bool {
+        self.domain_bloom.lock().contains(domain.as_bytes())
+            && self.companies.get(domain.as_bytes()).is_some()
     }
 
     pub fn flush(&self) -> io::Result<()> {
