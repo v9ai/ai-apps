@@ -38,6 +38,50 @@ export const DISCOVERY_YEAR = 2026;
 export const NEW_HOTEL_MIN_YEAR = 2025;
 
 /**
+ * Keywords that indicate a hotel is seaside / coastal.
+ *
+ * A hotel passes the seaside filter if ANY keyword appears (case-insensitive)
+ * in its description, location, or amenities.
+ *
+ * Rust mirror: `SEASIDE_KEYWORDS` in `crates/travel-ml/src/constants.rs`
+ */
+export const SEASIDE_KEYWORDS = [
+  "beach",
+  "beachfront",
+  "seaside",
+  "seafront",
+  "oceanfront",
+  "coastal",
+  "waterfront",
+  "bay",
+  "cove",
+  "shore",
+  "marina",
+  "harbour",
+  "harbor",
+  "sea view",
+  "sea-view",
+  "water sports",
+  "aegean",
+  "mediterranean",
+] as const;
+
+/**
+ * Greek island regions — every hotel on a Greek island is inherently seaside.
+ *
+ * Rust mirror: `ISLAND_REGIONS` in `crates/travel-ml/src/constants.rs`
+ */
+export const ISLAND_REGIONS = [
+  "Crete",
+  "Cyclades",
+  "Dodecanese",
+  "Ionian Islands",
+  "Sporades",
+  "NE Aegean",
+  "Saronic Islands",
+] as const;
+
+/**
  * Maximum review count plausible for a genuinely new hotel.
  *
  * If a hotel has `opened_year >= DISCOVERY_YEAR` but more reviews than this,
