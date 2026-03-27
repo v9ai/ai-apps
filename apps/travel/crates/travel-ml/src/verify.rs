@@ -154,16 +154,22 @@ pub fn check_prescraped(hotel_id: &str, prescraped_path: Option<&str>) -> Verify
 
 /// Combine all signals into a pass/fail verdict.
 ///
-/// Policy: a hotel passes if **at least one signal is Pass** and **no two
-/// signals are Fail**. This means:
-/// - A single strong positive (real reviews found) overrides weak negatives.
-/// - Two independent failures (generic URL + zero reviews) trigger rejection.
+/// Policy:
+/// - **url:Fail is a hard veto** — a generic search URL proves no property
+///   listing was ever found; scraped data is unreliable because the scraper
+///   may have matched a different hotel with a similar name.
+/// - Otherwise, pass if at least one signal is Pass, or if no signal is Fail.
 fn combine(url: VerifySignal, reviews: VerifySignal, prescraped: VerifySignal) -> bool {
-    let pass_count = [url, reviews, prescraped]
+    // Generic search URL is definitive — reject regardless of other signals.
+    if url == VerifySignal::Fail {
+        return false;
+    }
+
+    let pass_count = [reviews, prescraped]
         .iter()
         .filter(|s| **s == VerifySignal::Pass)
         .count();
-    let fail_count = [url, reviews, prescraped]
+    let fail_count = [reviews, prescraped]
         .iter()
         .filter(|s| **s == VerifySignal::Fail)
         .count();
@@ -387,8 +393,12 @@ mod tests {
     // ── combine ──────────────────────────────────────────────────────
 
     #[test]
-    fn one_pass_overrides_fails() {
-        assert!(combine(VerifySignal::Fail, VerifySignal::Pass, VerifySignal::Fail));
+    fn url_fail_is_hard_veto() {
+        // url:Fail always rejects, even with Pass from other signals
+        assert!(!combine(VerifySignal::Fail, VerifySignal::Pass, VerifySignal::Pass));
+        assert!(!combine(VerifySignal::Fail, VerifySignal::Pass, VerifySignal::Fail));
+        assert!(!combine(VerifySignal::Fail, VerifySignal::Weak, VerifySignal::Weak));
+        assert!(!combine(VerifySignal::Fail, VerifySignal::Fail, VerifySignal::Weak));
     }
 
     #[test]
@@ -397,13 +407,13 @@ mod tests {
     }
 
     #[test]
-    fn fail_plus_weak_rejects() {
-        assert!(!combine(VerifySignal::Fail, VerifySignal::Weak, VerifySignal::Weak));
+    fn weak_url_with_review_pass_passes() {
+        assert!(combine(VerifySignal::Weak, VerifySignal::Pass, VerifySignal::Fail));
     }
 
     #[test]
-    fn two_fails_rejects() {
-        assert!(!combine(VerifySignal::Fail, VerifySignal::Fail, VerifySignal::Weak));
+    fn weak_url_with_all_fail_rejects() {
+        assert!(!combine(VerifySignal::Weak, VerifySignal::Fail, VerifySignal::Fail));
     }
 
     #[test]
