@@ -32,7 +32,7 @@ arrow = "57"
 
 # DeepSeek (fallback only — gated behind feature)
 [dependencies.deepseek]
-path = "../deepseek"
+path = "../../../../crates/deepseek"
 features = ["reqwest-client"]
 optional = true
 
