@@ -5,7 +5,7 @@ use research::team::{LlmProvider, ResearchTask, TaskPriority, TeamConfig, TeamLe
 use research::tools::SearchToolConfig;
 use std::time::Duration;
 
-const OUT_DIR: &str = "../../apps/lead-gen/docs/research-output/09-novelty";
+const OUT_DIR: &str = "../../docs/research-output/09-novelty";
 
 /// Already documented — agents must NOT re-report these.
 const KNOWN_TECHNIQUES: &str = "Craw4LLM, QMin, LARL, ARB, WebDreamer, OpAgent, M2-CMAB, \
