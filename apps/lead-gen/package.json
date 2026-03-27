@@ -16,7 +16,6 @@
     "deploy": "tsx scripts/deploy.ts",
     "codegen": "graphql-codegen",
     "test:email-evals": "tsx src/evals/email-generation/__tests__/run-local.ts",
-    "boards:discover": "tsx scripts/discover-ashby-boards.ts",
     "skills:seed": "tsx scripts/seed-skill-taxonomy.ts",
     "ccx:scrape": "tsx scripts/scrape-from-ccx.ts",
     "strategy:check": "tsx scripts/enforce-strategy.ts",
