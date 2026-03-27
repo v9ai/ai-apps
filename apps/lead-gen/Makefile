@@ -147,42 +147,10 @@ leads-clean: ## Remove generated lead data
 
 # ── Module 4: Agent Teams ────────────────────────────────────
 
-.PHONY: agents
+.PHONY: start
 
-agents: ## Dispatch agent teams (usage: make agents T="pipeline discover AI consultancies")
-	@if [ -z "$(T)" ]; then \
-		echo ""; \
-		echo "Usage: make agents T=\"<team> [args]\""; \
-		echo ""; \
-		echo "  Pipeline:"; \
-		echo "    make agents T=\"pipeline\"                          # Full batch cycle"; \
-		echo "    make agents T=\"pipeline discover AI consultancies\" # Discovery-only"; \
-		echo "    make agents T=\"pipeline enrich\"                    # Enrich pending"; \
-		echo "    make agents T=\"pipeline outreach\"                  # Draft campaigns"; \
-		echo "    make agents T=\"pipeline status\"                    # Funnel metrics"; \
-		echo ""; \
-		echo "  Research:"; \
-		echo "    make agents T=\"research Acme Corp\"                 # Full research squad"; \
-		echo "    make agents T=\"research batch Acme Beta\"           # Parallel squads"; \
-		echo "    make agents T=\"research score Acme\"                # Quick ICP score"; \
-		echo ""; \
-		echo "  Improve:"; \
-		echo "    make agents T=\"improve\"                            # Full self-improvement"; \
-		echo "    make agents T=\"improve status\"                     # Health check"; \
-		echo "    make agents T=\"improve discover\"                   # Expand sources"; \
-		echo "    make agents T=\"improve classify\"                   # Tune classifier"; \
-		echo "    make agents T=\"improve skills\"                     # Optimize taxonomy"; \
-		echo ""; \
-		echo "  Codefix:"; \
-		echo "    make agents T=\"codefix\"                            # Full quality cycle"; \
-		echo "    make agents T=\"codefix audit resolvers\"            # Targeted audit"; \
-		echo "    make agents T=\"codefix apply\"                      # Implement findings"; \
-		echo "    make agents T=\"codefix verify\"                     # Verify changes"; \
-		echo "    make agents T=\"codefix status\"                     # Meta-state"; \
-		echo ""; \
-	else \
-		claude "/agents $(T)"; \
-	fi
+start: ## Full autonomous cycle: pipeline + improve + codefix
+	claude "/agents pipeline"
 
 # ── All ────────────────────────────────────────────────────────
 
