@@ -205,14 +205,14 @@ fn find_nearest_heading(doc: &Html, _el: &scraper::ElementRef) -> Option<String>
 
 // ── Phase B: Candle Semantic Passage Retrieval ─────────────────────────
 
-/// Discovery queries that capture different aspects of new 2026 Greek hotels.
-fn discovery_queries() -> Vec<&'static str> {
+/// Discovery queries that capture different aspects of new hotels in the target year window.
+fn discovery_queries() -> Vec<String> {
     vec![
-        "new hotel resort Greece opened 2026 affordable budget",
-        "brand new beachfront hotel Greek islands opening 2026",
-        "newly built boutique hotel Santorini Mykonos Crete Rhodes 2026",
-        "Greece hotel grand opening 2026 cheap value all inclusive",
-        "new budget hotel Athens Thessaloniki Corfu 2026",
+        format!("new hotel resort Greece opened {DISCOVERY_YEAR_STR} affordable budget"),
+        format!("brand new beachfront hotel Greek islands opening {DISCOVERY_YEAR_STR}"),
+        format!("newly built boutique hotel Santorini Mykonos Crete Rhodes {DISCOVERY_YEAR_STR}"),
+        format!("Greece hotel grand opening {DISCOVERY_YEAR_STR} cheap value all inclusive"),
+        format!("new budget hotel Athens Thessaloniki Corfu {DISCOVERY_YEAR_STR}"),
     ]
 }
 
@@ -230,7 +230,7 @@ pub fn rank_passages(
 
     // Embed discovery queries
     let queries = discovery_queries();
-    let query_refs: Vec<&str> = queries.to_vec();
+    let query_refs: Vec<&str> = queries.iter().map(|s| s.as_str()).collect();
     let query_vecs = engine
         .embed_batch(&query_refs)
         .context("embedding discovery queries")?;
@@ -502,7 +502,7 @@ pub async fn structure_with_deepseek(text: &str) -> Result<Hotel> {
              \"amenities\": [str]}. No markdown fences.",
         ),
         ChatMessage::user(format!(
-            "Extract hotel data from this text about a new 2026 Crete hotel:\n\n{text}"
+            "Extract hotel data from this text about a new {DISCOVERY_YEAR_STR} Crete hotel:\n\n{text}"
         )),
     ];
     let req = build_request(&DeepSeekModel::Chat, messages, None, &EffortLevel::Low);
