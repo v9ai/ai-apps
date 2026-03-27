@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { familyMembers, familyMemberDoctors, doctors } from "@/lib/db/schema";
 import { and, eq, asc, notInArray } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
-import { Box, Badge, Card, Flex, Heading, Select, Separator, Skeleton, Text, Button } from "@radix-ui/themes";
+import { Box, Badge, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Stethoscope } from "lucide-react";
@@ -122,10 +122,7 @@ async function FamilyMemberDetail({ id }: { id: string }) {
                     <DeleteConfirmButton
                       action={async () => {
                         "use server";
-                        const fd = new FormData();
-                        fd.set("familyMemberId", id);
-                        fd.set("doctorId", d.id);
-                        await unlinkDoctorFromFamilyMember(fd);
+                        await unlinkDoctorFromFamilyMember(id, d.id);
                       }}
                       description="This doctor will be unlinked from this family member."
                       stopPropagation

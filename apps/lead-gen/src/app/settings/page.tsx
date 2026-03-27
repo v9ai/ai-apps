@@ -313,7 +313,7 @@ function SettingsPageContent() {
             style={{ textDecoration: "none", color: "var(--gray-11)" }}
           >
             <Text size="3" weight="medium">
-              Jobs
+              Home
             </Text>
           </Link>
           <ChevronRightIcon style={{ color: "var(--gray-9)" }} />

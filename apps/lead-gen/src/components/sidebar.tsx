@@ -3,7 +3,6 @@
 import { Flex, Box, IconButton, Text } from "@radix-ui/themes";
 import {
   GitHubLogoIcon,
-  BackpackIcon,
   PersonIcon,
   CubeIcon,
   LayersIcon,
@@ -24,7 +23,6 @@ const SIDEBAR_COLLAPSED_WIDTH = 56;
 const NAV_ITEMS = [
   { href: "/companies", label: "companies", icon: <CubeIcon width={15} height={15} /> },
   { href: "/contacts", label: "contacts", icon: <PersonIcon width={15} height={15} /> },
-  { href: "/jobs", label: "jobs", icon: <BackpackIcon width={15} height={15} /> },
   { href: "/how-it-works", label: "how it works", icon: <LayersIcon width={15} height={15} /> },
 ];
 
