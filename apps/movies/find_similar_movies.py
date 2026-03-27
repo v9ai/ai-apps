@@ -555,6 +555,30 @@ def export_markdown(movies: list[dict], query_movie: str, output_path: str):
         f.write("\n".join(lines) + "\n")
 
 
+CACHE_DIR = os.path.join(os.path.dirname(__file__), ".cache")
+
+
+def _cache_key(movie: str, platforms: list[str], min_rating: float) -> str:
+    import hashlib
+    key = f"{movie.lower().strip()}|{','.join(sorted(platforms))}|{min_rating}"
+    return hashlib.sha1(key.encode()).hexdigest()[:16]
+
+
+def load_cache(movie: str, platforms: list[str], min_rating: float) -> dict | None:
+    path = os.path.join(CACHE_DIR, f"{_cache_key(movie, platforms, min_rating)}.json")
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        return json.load(f)
+
+
+def save_cache(data: dict, movie: str, platforms: list[str], min_rating: float):
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    path = os.path.join(CACHE_DIR, f"{_cache_key(movie, platforms, min_rating)}.json")
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="Find movies similar to a given film on streaming platforms."
@@ -593,6 +617,11 @@ def parse_args(argv=None):
         default="json",
         help="Output format: json, md (markdown), or both (default: json)",
     )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Bypass cache and re-run the full pipeline even if cached results exist",
+    )
     return parser.parse_args(argv)
 
 
@@ -617,20 +646,38 @@ def main(argv=None):
     console.print(f"\n[bold]Movie Finder[/bold] — searching for films similar to [cyan]{args.movie!r}[/cyan]")
     console.print(f"Platforms: [yellow]{', '.join(platform_labels)}[/yellow]  |  Min IMDB: [yellow]{args.min_rating}[/yellow]\n")
 
-    console.print("[bold]Building LangGraph pipeline...[/bold]")
-    app = build_graph()
+    # Check cache first
+    cached = None if args.no_cache else load_cache(args.movie, resolved_platforms, args.min_rating)
+    if cached:
+        movies = cached["results"]
+        console.print(
+            f"[dim]Loaded {len(movies)} results from cache "
+            f"(generated {cached.get('generated_at', '?')[:10]}). "
+            f"Use --no-cache to refresh.[/dim]\n"
+        )
+        # Still write to output file so downstream tools always have it
+        with open(output_file, "w") as f:
+            json.dump(cached, f, indent=2, ensure_ascii=False)
+    else:
+        console.print("[bold]Building LangGraph pipeline...[/bold]")
+        app = build_graph()
 
-    console.print("[bold]Running pipeline...[/bold]\n")
-    result = app.invoke({
-        "query_movie": args.movie,
-        "platforms": resolved_platforms,
-        "min_rating": args.min_rating,
-        "output_file": output_file,
-    })
+        console.print("[bold]Running pipeline...[/bold]\n")
+        result = app.invoke({
+            "query_movie": args.movie,
+            "platforms": resolved_platforms,
+            "min_rating": args.min_rating,
+            "output_file": output_file,
+        })
+        movies = result["similar_movies"]
 
-    movies = result["similar_movies"]
-    console.print(f"\n[bold green]Found {len(movies)} similar movies![/bold green]")
-    console.print(f"Results saved to: [underline]{result['output_file']}[/underline]\n")
+        # Load the saved JSON (has all metadata) and cache it
+        with open(output_file) as f:
+            full_data = json.load(f)
+        save_cache(full_data, args.movie, resolved_platforms, args.min_rating)
+
+        console.print(f"\n[bold green]Found {len(movies)} similar movies![/bold green]")
+        console.print(f"Results saved to: [underline]{output_file}[/underline]\n")
 
     print_rich_table(movies, args.movie)
 
