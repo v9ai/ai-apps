@@ -5,8 +5,15 @@ import { Box, Button, Flex, Select, TextField, TextArea, Text } from "@radix-ui/
 import { useRef } from "react";
 
 type Doctor = { id: string; name: string; specialty: string | null };
+type FamilyMember = { id: string; name: string; relationship: string | null };
 
-export function AddAppointmentForm({ doctors }: { doctors: Doctor[] }) {
+export function AddAppointmentForm({
+  doctors,
+  familyMembers,
+}: {
+  doctors: Doctor[];
+  familyMembers: FamilyMember[];
+}) {
   const formRef = useRef<HTMLFormElement>(null);
 
   async function handleSubmit(formData: FormData) {
@@ -49,6 +56,22 @@ export function AddAppointmentForm({ doctors }: { doctors: Doctor[] }) {
           <Flex direction="column" gap="1">
             <Text size="2" color="gray">Provider (if not in list)</Text>
             <TextField.Root name="provider" placeholder="e.g. Dr. Smith" />
+          </Flex>
+        )}
+        {familyMembers.length > 0 && (
+          <Flex direction="column" gap="1">
+            <Text size="2" color="gray">For family member</Text>
+            <Select.Root name="family_member_id">
+              <Select.Trigger placeholder="Myself" />
+              <Select.Content>
+                <Select.Item value="">Myself</Select.Item>
+                {familyMembers.map((m) => (
+                  <Select.Item key={m.id} value={m.id}>
+                    {m.name}{m.relationship ? ` · ${m.relationship}` : ""}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
           </Flex>
         )}
         <Flex direction="column" gap="1">

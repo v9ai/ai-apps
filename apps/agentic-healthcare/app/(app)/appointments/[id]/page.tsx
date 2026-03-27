@@ -1,6 +1,6 @@
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { appointments } from "@/lib/db/schema";
+import { appointments, familyMembers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Box, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";

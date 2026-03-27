@@ -453,7 +453,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 35.4800, lng: 23.9200,
             source_url: "https://www.domesresorts.com".into(),
             amenities: vec!["Lagoon pool".into(), "Spa".into(), "Kids club".into(), "Multiple restaurants".into(), "Beach access".into(), "Fitness center".into(), "Cinema".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(2019),
         },
         Hotel {
             hotel_id: "numo-ierapetra".into(),
@@ -469,7 +469,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 35.0075, lng: 25.7374,
             source_url: "https://numohotels.com".into(),
             amenities: vec!["Private pools".into(), "Spa".into(), "Beach access".into(), "Multiple restaurants".into(), "Fitness center".into(), "Kids club".into(), "Water sports".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(2021),
         },
         Hotel {
             hotel_id: "w-hotel-crete".into(),
@@ -501,7 +501,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 36.4610, lng: 25.3720,
             source_url: "https://www.canaves.com".into(),
             amenities: vec!["Private pools".into(), "Spa".into(), "Restaurant".into(), "Bar".into(), "Concierge".into(), "Butler service".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(2018),
         },
         Hotel {
             hotel_id: "costa-navarino-mandarin".into(),
@@ -518,7 +518,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 36.9600, lng: 21.6500,
             source_url: "https://www.mandarinoriental.com".into(),
             amenities: vec!["Private beach".into(), "Golf course".into(), "Spa".into(), "Kids club".into(), "Multiple restaurants".into(), "Fitness center".into(), "Tennis court".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(2023),
         },
         // ── Ultra-luxury (€500+) ──────────────────────────────────
         Hotel {
@@ -551,7 +551,7 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             lat: 37.6300, lng: 24.3200,
             source_url: "https://www.oneandonlyresorts.com".into(),
             amenities: vec!["Private pools".into(), "Spa".into(), "Private beach".into(), "Multiple restaurants".into(), "Marina".into(), "Butler service".into(), "Yoga".into()],
-            image_url: None, gallery: vec![], opened_year: Some(2026),
+            image_url: None, gallery: vec![], opened_year: Some(2023),
         },
         Hotel {
             hotel_id: "aman-elounda".into(),

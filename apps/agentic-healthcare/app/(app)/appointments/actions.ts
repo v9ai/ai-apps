@@ -14,6 +14,7 @@ export async function addAppointment(formData: FormData) {
   if (!title) return;
 
   const doctorId = (formData.get("doctor_id") as string)?.trim() || null;
+  const familyMemberId = (formData.get("family_member_id") as string)?.trim() || null;
   const provider = (formData.get("provider") as string)?.trim() || null;
   const notes = (formData.get("notes") as string)?.trim() || null;
   const appointmentDate = (formData.get("appointment_date") as string) || null;
@@ -23,6 +24,7 @@ export async function addAppointment(formData: FormData) {
     .values({
       userId,
       doctorId,
+      familyMemberId,
       title,
       provider,
       notes,
