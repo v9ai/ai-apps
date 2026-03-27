@@ -14,7 +14,11 @@ tags:
   - curriculum-learning
 ---
 
+import Flow from '@site/src/components/Flow';
+
 The most dangerous assumption in applied Reinforcement Learning (RL) is that useful exploration requires massive scale—cloud GPU clusters, terabytes of experience, and billion-parameter models. I built a system that proves the opposite. The core innovation of a production-grade, B2B lead generation web crawler isn't its performance, but its location: it runs entirely on an Apple M1 MacBook, with zero cloud dependencies. Its ability to navigate the sparse-reward desert of the web emerges not from brute force, but from a meticulously orchestrated **multi-timescale novelty engine**. This architecture, where intrinsic curiosity, predictive uncertainty, and a self-adjusting curriculum interlock, provides a general blueprint for building autonomous agents that must find needles in the world's largest haystacks.
+
+<!-- truncate -->
 
 ## 1. Reframing the Web as a Sparse-Reward MDP
 
@@ -27,14 +31,45 @@ This is the exploration-exploitation dilemma at its most extreme. The state spac
 The first layer generates immediate, granular novelty signals. It implements a version of the Intrinsic Curiosity Module (ICM), a well-known RL exploration technique. Its purpose is to reward the agent for *prediction surprise*: transitioning to a page state it cannot accurately foresee.
 
 The implementation in `crawler_curiosity.py` is remarkably lightweight. It consists of three small Multi-Layer Perceptrons (MLPs) totaling about 2 MB:
-*   **`FeatureEncoder`**: Compresses a 784-dimensional page state (768-d embeddings from Nomic plus 16 handcrafted scalar features) down to a 256-d latent representation, *phi(s)*.
-*   **`ForwardModel`**: The core of curiosity. Given *phi(s_t)* and the action taken, it predicts *phi(s_\{t+1\})*. The mean squared error (MSE) of this prediction becomes the intrinsic reward.
-*   **`InverseModel`**: A regularizer. It takes *phi(s_t)* and *phi(s_\{t+1\})* and must predict the action taken. This forces the `FeatureEncoder` to learn a latent space that discards irrelevant noise (like ad banners, timestamps) and focuses on page structure relevant to navigation.
+
+* **`FeatureEncoder`**: Compresses a 784-dimensional page state (768-d embeddings from Nomic plus 16 handcrafted scalar features) down to a 256-d latent representation, *phi(s)*.
+* **`ForwardModel`**: The core of curiosity. Given *phi(s_t)* and the action taken, it predicts *phi(s_\{t+1\})*. The mean squared error (MSE) of this prediction becomes the intrinsic reward.
+* **`InverseModel`**: A regularizer. It takes *phi(s_t)* and *phi(s_\{t+1\})* and must predict the action taken. This forces the `FeatureEncoder` to learn a latent space that discards irrelevant noise (like ad banners, timestamps) and focuses on page structure relevant to navigation.
 
 The augmented reward for the DQN is:
 `r_total = r_extrinsic + 0.1 * min(curiosity_MSE, 5.0)`
 
 The cap prevents a single, wildly novel page from skewing the reward scale. In practice, this means the agent earns a consistent micro-reward for visiting structurally new page templates—a unique "About Us" layout, a novel product catalog design—long before it finds any contact information. A `CuriosityTracker` maintains rolling averages per domain, allowing a scheduler to prioritize revisiting domains with persistently high novelty.
+
+<Flow
+  height={510}
+  nodes={[
+    { id: 'st',   position: { x: 20,  y: 20  }, data: { label: 'State s_t (784-d)' } },
+    { id: 'at',   position: { x: 230, y: 120 }, data: { label: 'Action a_t' } },
+    { id: 'st1',  position: { x: 450, y: 20  }, data: { label: 'State s_{t+1} (784-d)' } },
+    { id: 'enc1', position: { x: 20,  y: 120 }, data: { label: 'FeatureEncoder' } },
+    { id: 'enc2', position: { x: 450, y: 120 }, data: { label: 'FeatureEncoder' } },
+    { id: 'phi1', position: { x: 20,  y: 230 }, data: { label: 'phi(s_t) — 256-d latent' } },
+    { id: 'phi2', position: { x: 450, y: 230 }, data: { label: 'phi(s_{t+1}) — 256-d latent' } },
+    { id: 'fwd',  position: { x: 80,  y: 340 }, data: { label: 'ForwardModel' } },
+    { id: 'inv',  position: { x: 360, y: 340 }, data: { label: 'InverseModel (regularizer)' } },
+    { id: 'mse',  position: { x: 80,  y: 440 }, data: { label: 'MSE = r_intrinsic (cap 5.0)' } },
+    { id: 'pred', position: { x: 360, y: 440 }, data: { label: 'Predicted Action (noise filter)' } },
+  ]}
+  edges={[
+    { id: 'e1',  source: 'st',   target: 'enc1' },
+    { id: 'e2',  source: 'st1',  target: 'enc2' },
+    { id: 'e3',  source: 'enc1', target: 'phi1' },
+    { id: 'e4',  source: 'enc2', target: 'phi2' },
+    { id: 'e5',  source: 'phi1', target: 'fwd' },
+    { id: 'e6',  source: 'at',   target: 'fwd' },
+    { id: 'e7',  source: 'fwd',  target: 'mse' },
+    { id: 'e8',  source: 'phi2', target: 'mse',  label: 'compare' },
+    { id: 'e9',  source: 'phi1', target: 'inv' },
+    { id: 'e10', source: 'phi2', target: 'inv' },
+    { id: 'e11', source: 'inv',  target: 'pred' },
+  ]}
+/>
 
 ## 3. Per-Episode Novelty: Planning with Ensemble Uncertainty
 
@@ -54,31 +89,87 @@ The DISCOVER algorithm, implemented in `crawler_discover.py`, automates curricul
 `homepage (0) → listing (1) → company (2) → team (3) → about (4) → contact (5) → lead (6)`
 
 Instead of targeting the final lead page immediately, DISCOVER dynamically selects the next intermediate goal (`g`) using a formula that balances two key objectives:
-1.  **Achievability & Novelty:** `alpha * (V(s0,g) + beta*sigma(s0,g))` – The value of reaching goal `g` from the current state, plus a novelty bonus (`sigma`) for rarely-achieved goals.
-2.  **Relevance & Uncertainty:** `(1-alpha) * (V(g,g*) + beta*sigma(g,g*))` – The value of `g` as a stepping stone toward the ultimate goal `g*`.
+
+1. **Achievability & Novelty:** `alpha * (V(s0,g) + beta*sigma(s0,g))` – The value of reaching goal `g` from the current state, plus a novelty bonus (`sigma`) for rarely-achieved goals.
+2. **Relevance & Uncertainty:** `(1-alpha) * (V(g,g*) + beta*sigma(g,g*))` – The value of `g` as a stepping stone toward the ultimate goal `g*`.
 
 The adaptive parameter `alpha` is the master regulator. It self-tunes to maintain a ~50% success rate. If the agent struggles, `alpha` increases, biasing selection toward easier, more achievable goals. As it masters parts of the domain, `alpha` decreases, pushing it to attempt harder, more relevant goals. The `AchievedGoalSet`, backed by SQLite, provides the novelty signal via a KNN lookup on goal embeddings. This creates an emergent exploration drive, systematically pulling the agent toward page types it hasn't yet learned to reach.
+
+<Flow
+  height={420}
+  nodes={[
+    { id: 'g0',      position: { x: 0,   y: 20  }, data: { label: 'Homepage (0)' } },
+    { id: 'g1',      position: { x: 115, y: 20  }, data: { label: 'Listing (1)' } },
+    { id: 'g2',      position: { x: 230, y: 20  }, data: { label: 'Company (2)' } },
+    { id: 'g3',      position: { x: 345, y: 20  }, data: { label: 'Team (3)' } },
+    { id: 'g4',      position: { x: 460, y: 20  }, data: { label: 'About (4)' } },
+    { id: 'g5',      position: { x: 575, y: 20  }, data: { label: 'Contact (5)' } },
+    { id: 'g6',      position: { x: 690, y: 20  }, data: { label: 'Lead (6) ★' } },
+    { id: 'achieved', position: { x: 250, y: 150 }, data: { label: 'AchievedGoalSet (SQLite + KNN)' } },
+    { id: 'alpha',   position: { x: 550, y: 240 }, data: { label: 'Adaptive alpha (targets 50%)' } },
+    { id: 'algo',    position: { x: 190, y: 270 }, data: { label: 'alpha*(V+beta*sigma) + (1-alpha)*(V*+beta*sigma*)' } },
+    { id: 'next',    position: { x: 290, y: 370 }, data: { label: 'Selected Goal g — DQN target' } },
+  ]}
+  edges={[
+    { id: 'h1', source: 'g0',      target: 'g1',      animated: true },
+    { id: 'h2', source: 'g1',      target: 'g2',      animated: true },
+    { id: 'h3', source: 'g2',      target: 'g3',      animated: true },
+    { id: 'h4', source: 'g3',      target: 'g4',      animated: true },
+    { id: 'h5', source: 'g4',      target: 'g5',      animated: true },
+    { id: 'h6', source: 'g5',      target: 'g6',      animated: true },
+    { id: 'e1', source: 'g3',      target: 'achieved', label: 'success' },
+    { id: 'e2', source: 'achieved', target: 'algo' },
+    { id: 'e3', source: 'alpha',   target: 'algo' },
+    { id: 'e4', source: 'algo',    target: 'next' },
+  ]}
+/>
 
 ## 5. Orchestration: The Multi-Timescale Novelty Engine
 
 The power of this architecture is in the orchestration. The three mechanisms operate on complementary timescales, creating a coherent, self-regulating exploration strategy.
 
-*   **Per-Step (ICM):** Provides a dense, immediate reward signal, keeping the policy network actively updating even during long, reward-less stretches.
-*   **Per-Episode (World Model):** Guides high-level strategy, using ensemble uncertainty to target known-unknown regions of the website graph during planning and accelerating learning with synthetic data.
-*   **Cross-Episode (DISCOVER):** Manages the macro-learning trajectory, ensuring progressive mastery of the domain's hierarchy and preventing plateaus.
+* **Per-Step (ICM):** Provides a dense, immediate reward signal, keeping the policy network actively updating even during long, reward-less stretches.
+* **Per-Episode (World Model):** Guides high-level strategy, using ensemble uncertainty to target known-unknown regions of the website graph during planning and accelerating learning with synthetic data.
+* **Cross-Episode (DISCOVER):** Manages the macro-learning trajectory, ensuring progressive mastery of the domain's hierarchy and preventing plateaus.
 
 In a single operational cycle, they interact seamlessly:
-1.  A real page fetch yields an ICM curiosity reward for the DQN update.
-2.  The transition is fed to the world model ensemble to reduce its predictive uncertainty.
-3.  If the page type matches a DISCOVER goal, it's added to the `AchievedGoalSet`.
-4.  In the next planning phase, the world model may generate synthetic experiences for training.
-5.  DISCOVER recalculates the next intermediate goal based on the updated achievement history.
+
+1. A real page fetch yields an ICM curiosity reward for the DQN update.
+2. The transition is fed to the world model ensemble to reduce its predictive uncertainty.
+3. If the page type matches a DISCOVER goal, it's added to the `AchievedGoalSet`.
+4. In the next planning phase, the world model may generate synthetic experiences for training.
+5. DISCOVER recalculates the next intermediate goal based on the updated achievement history.
 
 This creates a virtuous cycle where exploration in one layer fuels learning and refines exploration in the others.
 
+<Flow
+  height={430}
+  nodes={[
+    { id: 'trans',  position: { x: 180, y: 20  }, data: { label: 'Page Transition (s_t, a_t, s_{t+1}, r_ext)' } },
+    { id: 'icm',   position: { x: 10,  y: 140 }, data: { label: 'ICM — Per-Step' } },
+    { id: 'wm',    position: { x: 220, y: 140 }, data: { label: 'World Model — Per-Episode' } },
+    { id: 'disc',  position: { x: 450, y: 140 }, data: { label: 'DISCOVER — Cross-Episode' } },
+    { id: 'rcur',  position: { x: 10,  y: 265 }, data: { label: 'r_curiosity (dense)' } },
+    { id: 'synth', position: { x: 205, y: 265 }, data: { label: 'Synthetic Transitions (ratio <= 0.5)' } },
+    { id: 'goal',  position: { x: 450, y: 265 }, data: { label: 'Intermediate Goal g' } },
+    { id: 'dqn',   position: { x: 200, y: 370 }, data: { label: 'DQN Policy — r_total = r_ext + 0.1*r_cur' } },
+  ]}
+  edges={[
+    { id: 'e1', source: 'trans', target: 'icm',   animated: true },
+    { id: 'e2', source: 'trans', target: 'wm',    animated: true },
+    { id: 'e3', source: 'trans', target: 'disc',  animated: true },
+    { id: 'e4', source: 'icm',   target: 'rcur' },
+    { id: 'e5', source: 'wm',    target: 'synth' },
+    { id: 'e6', source: 'disc',  target: 'goal' },
+    { id: 'e7', source: 'rcur',  target: 'dqn' },
+    { id: 'e8', source: 'synth', target: 'dqn' },
+    { id: 'e9', source: 'goal',  target: 'dqn' },
+  ]}
+/>
+
 ## 6. The Edge Computing Imperative
 
-A defining and contrarian feature of this implementation is its hardware footprint: it runs entirely on an Apple M1 with 16GB RAM. This is a deliberate engineering enabler, not a limitation. The novelty-driven architecture makes edge computing not just viable, but optimal for latency-sensitive, iterative tasks.
+A defining and contrarian feature of this implementation is its hardware footprint: it runs entirely on an Apple M1. This is a deliberate engineering enabler, not a limitation. The novelty-driven architecture makes edge computing not just viable, but optimal for latency-sensitive, iterative tasks.
 
 Cloud-based RL for real-time control (like crawl decisions) introduces debilitating latency and cost. Round-trips for embeddings, LLM calls, or inference add seconds of delay, destroying the tight feedback loop required for online learning. By localizing the entire stack—PyTorch on MPS, MLX for local LLM inference, SQLite for state tracking—the system achieves decision-making in milliseconds.
 
@@ -89,9 +180,10 @@ The world model and ICM use small, efficient neural networks. The LLM is a rate-
 The principles demonstrated here form a portable template for any RL agent facing a vast, sparse-reward graph. The core challenge—a reward desert, an immense state space, and the need for structured exploration—recurs in many domains.
 
 Consider these analogous applications:
-*   **Code Navigation Agents:** An agent exploring a massive codebase to find a bug or understand a system. Novelty (unseen code patterns or call graphs) can drive exploration, a world model can predict program behavior, and a curriculum can guide from simple functions to complex modules.
-*   **Scientific Hypothesis Generation:** Exploring a space of possible experiments or literature connections. Novelty (unprecedented parameter combinations or research linkages) becomes the primary reward.
-*   **Multi-Step RAG with Tool Use:** An agent using tools to answer a complex query must navigate a decision graph of API calls and database queries. Uncertainty estimation can prevent wasted tool calls, and a curriculum can break down complex questions.
+
+* **Code Navigation Agents:** An agent exploring a massive codebase to find a bug or understand a system. Novelty (unseen code patterns or call graphs) can drive exploration, a world model can predict program behavior, and a curriculum can guide from simple functions to complex modules.
+* **Scientific Hypothesis Generation:** Exploring a space of possible experiments or literature connections. Novelty (unprecedented parameter combinations or research linkages) becomes the primary reward.
+* **Multi-Step RAG with Tool Use:** An agent using tools to answer a complex query must navigate a decision graph of API calls and database queries. Uncertainty estimation can prevent wasted tool calls, and a curriculum can break down complex questions.
 
 In each case, the three-mechanism architecture provides a robust starting point for converting an intractable exploration problem into a learnable sequence of novelty-driven discoveries.
 
@@ -99,14 +191,14 @@ In each case, the three-mechanism architecture provides a robust starting point 
 
 Building a novelty-driven RL agent is an exercise in incremental, measurable engineering. Here is a decision framework derived from this implementation:
 
-1.  **Quantify Your Sparsity First:** Measure your reward density. If positive rewards occur in less than 1-2% of steps, intrinsic motivation is non-negotiable. Start simple—a count-based bonus or a basic prediction-error module.
-2.  **Layer Your Novelty Mechanisms Gradually:**
-    *   **Step 1: Immediate Novelty.** Implement a lightweight ICM or similar module. This provides the essential dense reward signal to get learning off the ground.
-    *   **Step 2: Strategic Novelty.** Add a small ensemble world model (start with 3 networks) for planning and uncertainty-driven exploration. Use it to generate a limited amount of synthetic data (cap the ratio).
-    *   **Step 3: Structural Novelty.** Finally, implement goal-oriented exploration. Begin with a manually defined difficulty hierarchy before moving to an auto-curriculum like DISCOVER.
-3.  **Design for the Edge from Day One:** Challenge every cloud dependency. Can you use a local sentence transformer instead of an OpenAI embedding call? Can a heuristic rule stand in for an LLM initially? Iteration speed is paramount, and latency kills it.
-4.  **Implement Guardrails Against Divergence:** Use hard caps on intrinsic reward scaling and enforce strict limits on the synthetic-to-real experience ratio. Continuously monitor if the agent's behavior is optimizing for real-world outcomes or its own internal novelty metrics.
-5.  **Instrument the Interaction:** Log key signals from each mechanism: ICM curiosity scores per domain, world model ensemble variance, DISCOVER's alpha value, and goal achievement rates. The learning dynamics emerge from the interaction of these signals, not from any one in isolation.
+1. **Quantify Your Sparsity First:** Measure your reward density. If positive rewards occur in less than 1-2% of steps, intrinsic motivation is non-negotiable. Start simple—a count-based bonus or a basic prediction-error module.
+2. **Layer Your Novelty Mechanisms Gradually:**
+    * **Step 1: Immediate Novelty.** Implement a lightweight ICM or similar module. This provides the essential dense reward signal to get learning off the ground.
+    * **Step 2: Strategic Novelty.** Add a small ensemble world model (start with 3 networks) for planning and uncertainty-driven exploration. Use it to generate a limited amount of synthetic data (cap the ratio).
+    * **Step 3: Structural Novelty.** Finally, implement goal-oriented exploration. Begin with a manually defined difficulty hierarchy before moving to an auto-curriculum like DISCOVER.
+3. **Design for the Edge from Day One:** Challenge every cloud dependency. Can you use a local sentence transformer instead of an OpenAI embedding call? Can a heuristic rule stand in for an LLM initially? Iteration speed is paramount, and latency kills it.
+4. **Implement Guardrails Against Divergence:** Use hard caps on intrinsic reward scaling and enforce strict limits on the synthetic-to-real experience ratio. Continuously monitor if the agent's behavior is optimizing for real-world outcomes or its own internal novelty metrics.
+5. **Instrument the Interaction:** Log key signals from each mechanism: ICM curiosity scores per domain, world model ensemble variance, DISCOVER's alpha value, and goal achievement rates. The learning dynamics emerge from the interaction of these signals, not from any one in isolation.
 
 ## Frequently Asked Questions on RL Web Crawlers
 
