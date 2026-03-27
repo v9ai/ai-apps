@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use research::team::{LlmProvider, ResearchTask, TaskPriority, TeamConfig, TeamLead};
 use std::time::Duration;
 
-const OUT_DIR: &str = "../../apps/lead-gen/docs/research-output/05-lead-matching";
+const OUT_DIR: &str = "../../docs/research-output/05-lead-matching";
 
 fn tasks() -> Vec<ResearchTask> {
     vec![
