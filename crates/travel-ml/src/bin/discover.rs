@@ -572,3 +572,47 @@ fn curated_2026_hotels() -> Vec<Hotel> {
         },
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn curated_hotels_opened_years_never_exceed_discovery_year() {
+        for h in curated_2026_hotels() {
+            if let Some(year) = h.opened_year {
+                assert!(
+                    year <= DISCOVERY_YEAR,
+                    "hotel '{}' has opened_year {year} > DISCOVERY_YEAR ({DISCOVERY_YEAR})",
+                    h.hotel_id
+                );
+                assert!(
+                    year >= 1900,
+                    "hotel '{}' has implausible opened_year {year}",
+                    h.hotel_id
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn curated_hotels_has_both_discovery_year_and_real_years() {
+        let hotels = curated_2026_hotels();
+        let discovery_count = hotels
+            .iter()
+            .filter(|h| h.opened_year == Some(DISCOVERY_YEAR))
+            .count();
+        let real_count = hotels
+            .iter()
+            .filter(|h| matches!(h.opened_year, Some(y) if y < DISCOVERY_YEAR))
+            .count();
+        assert!(
+            discovery_count > 0,
+            "curated list must contain synthetic hotels with opened_year = DISCOVERY_YEAR"
+        );
+        assert!(
+            real_count > 0,
+            "curated list must contain real hotels with opened_year < DISCOVERY_YEAR"
+        );
+    }
+}

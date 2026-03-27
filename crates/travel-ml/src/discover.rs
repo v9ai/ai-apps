@@ -855,6 +855,62 @@ mod tests {
         assert!(aman_count <= 1, "duplicate names should be deduped");
     }
 
+    // ── constants enforcement ──────────────────────────────────────
+
+    #[test]
+    fn discovery_queries_all_contain_discovery_year_str() {
+        for q in discovery_queries() {
+            assert!(
+                q.contains(DISCOVERY_YEAR_STR),
+                "discovery query missing DISCOVERY_YEAR_STR ({DISCOVERY_YEAR_STR}): {q}"
+            );
+        }
+    }
+
+    #[test]
+    fn extract_hotels_rejects_passage_with_pre_window_year() {
+        // Year below NEW_HOTEL_MIN_YEAR and no mention of DISCOVERY_YEAR_STR → must be skipped
+        let passage = RankedPassage {
+            passage: ScrapedPassage {
+                text: format!(
+                    "Kiani Beach Resort opened in {} in Chania, Crete. 5-star all-inclusive from €224.",
+                    NEW_HOTEL_MIN_YEAR - 1
+                ),
+                source_url: "https://example.com".into(),
+                heading: None,
+            },
+            score: 0.8,
+        };
+        let hotels = extract_hotels(&[passage]);
+        assert!(
+            hotels.is_empty(),
+            "passage with year below NEW_HOTEL_MIN_YEAR must be filtered out"
+        );
+    }
+
+    #[test]
+    fn extract_hotels_accepts_passage_with_discovery_year() {
+        // Passage mentioning DISCOVERY_YEAR_STR must pass the year filter
+        let passage = RankedPassage {
+            passage: ScrapedPassage {
+                text: format!(
+                    "Aegean Pearl Hotel opens in {DISCOVERY_YEAR_STR} in Chania, Crete. \
+                     5-star beachfront property with rooms from €280 per night. \
+                     Features a spa, pool, and multiple restaurants."
+                ),
+                source_url: "https://example.com".into(),
+                heading: None,
+            },
+            score: 0.85,
+        };
+        let hotels = extract_hotels(&[passage]);
+        assert!(
+            !hotels.is_empty(),
+            "passage mentioning DISCOVERY_YEAR_STR must not be filtered out"
+        );
+        assert_eq!(hotels[0].opened_year, Some(DISCOVERY_YEAR));
+    }
+
     // ── cosine_sim ─────────────────────────────────────────────────
 
     #[test]
