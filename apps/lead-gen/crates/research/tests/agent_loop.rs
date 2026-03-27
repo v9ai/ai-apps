@@ -15,7 +15,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::post,
 };
-use research::agent::{Client, Tool, ToolDefinition};
+use research::agent::{agent_builder, Tool, ToolDefinition};
 use serde_json::{Value, json};
 use tokio::net::TcpListener;
 
@@ -114,7 +114,7 @@ impl Tool for EchoTool {
         }
     }
 
-    async fn call_json(&self, args: Value) -> anyhow::Result<String> {
+    async fn call_json(&self, args: Value) -> Result<String, String> {
         Ok(args["text"].as_str().unwrap_or("").to_string())
     }
 }
@@ -133,8 +133,8 @@ impl Tool for FailingTool {
         }
     }
 
-    async fn call_json(&self, _args: Value) -> anyhow::Result<String> {
-        anyhow::bail!("tool exploded")
+    async fn call_json(&self, _args: Value) -> Result<String, String> {
+        Err("tool exploded".into())
     }
 }
 
@@ -142,7 +142,9 @@ impl Tool for FailingTool {
 
 fn stop_response(content: &str) -> Value {
     json!({
+        "id": "mock-id",
         "choices": [{
+            "index": 0,
             "finish_reason": "stop",
             "message": { "role": "assistant", "content": content }
         }]
@@ -151,7 +153,9 @@ fn stop_response(content: &str) -> Value {
 
 fn tool_call_response(calls: Vec<Value>) -> Value {
     json!({
+        "id": "mock-id",
         "choices": [{
+            "index": 0,
             "finish_reason": "tool_calls",
             "message": {
                 "role": "assistant",
@@ -175,8 +179,7 @@ fn call(id: &str, name: &str, arguments: &str) -> Value {
 #[tokio::test]
 async fn single_turn_no_tools_returns_content() {
     let mock = start_mock(vec![stop_response("Hello, world!")]).await;
-    let agent = Client::new("sk-test")
-        .agent("deepseek-reasoner")
+    let agent = agent_builder("sk-test", "deepseek-reasoner")
         .base_url(&mock.base_url)
         .build();
 
@@ -193,8 +196,7 @@ async fn one_tool_call_round_trip() {
     ])
     .await;
 
-    let result = Client::new("sk-test")
-        .agent("deepseek-chat")
+    let result = agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .tool(EchoTool)
         .build()
@@ -216,8 +218,7 @@ async fn tool_result_appended_to_messages() {
     ])
     .await;
 
-    Client::new("sk-test")
-        .agent("deepseek-chat")
+    agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .tool(EchoTool)
         .build()
@@ -249,8 +250,7 @@ async fn two_tool_calls_same_turn_both_executed() {
     ])
     .await;
 
-    let result = Client::new("sk-test")
-        .agent("deepseek-chat")
+    let result = agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .tool(EchoTool)
         .build()
@@ -278,8 +278,7 @@ async fn sequential_multi_turn_tool_calls() {
     ])
     .await;
 
-    let result = Client::new("sk-test")
-        .agent("deepseek-chat")
+    let result = agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .tool(EchoTool)
         .build()
@@ -300,8 +299,7 @@ async fn unknown_tool_name_produces_error_string_in_message() {
     .await;
 
     // No tool registered — agent should gracefully pass "Unknown tool:" message back.
-    Client::new("sk-test")
-        .agent("deepseek-chat")
+    agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .build()
         .prompt("call unknown".into())
@@ -326,8 +324,7 @@ async fn failing_tool_produces_tool_error_string() {
     ])
     .await;
 
-    Client::new("sk-test")
-        .agent("deepseek-chat")
+    agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .tool(FailingTool)
         .build()
@@ -348,8 +345,7 @@ async fn failing_tool_produces_tool_error_string() {
 async fn http_500_propagates_as_error() {
     let mock = start_mock(vec![json!({ "_status": 500, "body": {"error": "oops"} })]).await;
 
-    let err = Client::new("sk-test")
-        .agent("deepseek-chat")
+    let err = agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .build()
         .prompt("fail".into())
@@ -367,8 +363,7 @@ async fn http_500_propagates_as_error() {
 async fn http_401_propagates_as_error() {
     let mock = start_mock(vec![json!({ "_status": 401, "body": {"error": "unauthorized"} })]).await;
 
-    let err = Client::new("sk-test")
-        .agent("deepseek-chat")
+    let err = agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .build()
         .prompt("auth test".into())
@@ -386,12 +381,12 @@ async fn http_401_propagates_as_error() {
 async fn missing_content_on_stop_returns_error() {
     // Model says stop but content is null.
     let mock = start_mock(vec![json!({
-        "choices": [{ "finish_reason": "stop", "message": { "content": null } }]
+        "id": "mock-id",
+        "choices": [{ "index": 0, "finish_reason": "stop", "message": { "role": "assistant", "content": null } }]
     })])
     .await;
 
-    let err = Client::new("sk-test")
-        .agent("deepseek-chat")
+    let err = agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .build()
         .prompt("oops".into())
@@ -404,8 +399,7 @@ async fn missing_content_on_stop_returns_error() {
 #[tokio::test]
 async fn bearer_auth_header_sent() {
     let mock = start_mock(vec![stop_response("ok")]).await;
-    Client::new("my-secret-key")
-        .agent("deepseek-chat")
+    agent_builder("my-secret-key", "deepseek-chat")
         .base_url(&mock.base_url)
         .build()
         .prompt("check header".into())
@@ -419,8 +413,7 @@ async fn bearer_auth_header_sent() {
 #[tokio::test]
 async fn request_body_contains_model_name() {
     let mock = start_mock(vec![stop_response("ok")]).await;
-    Client::new("sk-test")
-        .agent("deepseek-reasoner")
+    agent_builder("sk-test", "deepseek-reasoner")
         .base_url(&mock.base_url)
         .build()
         .prompt("check model".into())
@@ -436,8 +429,7 @@ async fn request_body_contains_model_name() {
 #[tokio::test]
 async fn request_contains_system_preamble_and_user_prompt() {
     let mock = start_mock(vec![stop_response("ok")]).await;
-    Client::new("sk-test")
-        .agent("deepseek-chat")
+    agent_builder("sk-test", "deepseek-chat")
         .preamble("You are a trading assistant.")
         .base_url(&mock.base_url)
         .build()
@@ -458,8 +450,7 @@ async fn request_contains_system_preamble_and_user_prompt() {
 #[tokio::test]
 async fn tool_definitions_serialized_in_request() {
     let mock = start_mock(vec![stop_response("ok")]).await;
-    Client::new("sk-test")
-        .agent("deepseek-chat")
+    agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .tool(EchoTool)
         .build()
@@ -479,8 +470,7 @@ async fn tool_definitions_serialized_in_request() {
 #[tokio::test]
 async fn no_tools_field_in_request_when_none_registered() {
     let mock = start_mock(vec![stop_response("ok")]).await;
-    Client::new("sk-test")
-        .agent("deepseek-chat")
+    agent_builder("sk-test", "deepseek-chat")
         .base_url(&mock.base_url)
         .build() // no .tool(...)
         .prompt("no tools".into())
