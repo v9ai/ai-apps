@@ -4,14 +4,13 @@ import { chatMessages } from "@/src/db/schema";
 import { eq, asc, sql } from "drizzle-orm";
 import { embed } from "@/lib/embeddings";
 
+const LLM_BASE_URL =
+  process.env.LLM_BASE_URL || "http://localhost:11434/v1";
+const LLM_MODEL =
+  process.env.LLM_MODEL || "qwen2.5:7b-instruct-q4_K_M";
+const LLM_API_KEY = process.env.LLM_API_KEY || process.env.DEEPSEEK_API_KEY || "";
+
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "DEEPSEEK_API_KEY not configured" },
-      { status: 500 },
-    );
-  }
 
   const body = await req.json();
   const message = body.message;
@@ -99,14 +98,14 @@ export async function POST(req: NextRequest) {
     { role: "user", content: message },
   ];
 
-  const response = await fetch("https://api.deepseek.com/chat/completions", {
+  const response = await fetch(`${LLM_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      ...(LLM_API_KEY && { Authorization: `Bearer ${LLM_API_KEY}` }),
     },
     body: JSON.stringify({
-      model: "deepseek-chat",
+      model: LLM_MODEL,
       messages,
     }),
   });
@@ -114,7 +113,7 @@ export async function POST(req: NextRequest) {
   if (!response.ok) {
     const err = await response.text();
     return NextResponse.json(
-      { error: "DeepSeek API error", details: err },
+      { error: "LLM API error", details: err },
       { status: response.status },
     );
   }
