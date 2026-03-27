@@ -144,55 +144,6 @@ def process(limit: int):
                 print(f"    {k}: {v}")
 
 
-@main.command("eu-classify")
-@click.option("--limit", "-l", default=100, show_default=True, help="Max jobs to classify")
-def eu_classify(limit: int):
-    """Run standalone EU classifier on role-match jobs."""
-    from src.graphs.eu_classifier import build_eu_classifier_graph
-    from src.db.connection import get_connection
-    from src.db.queries import fetch_role_match_jobs
-
-    conn = get_connection()
-    rows = fetch_role_match_jobs(conn, limit)
-    conn.close()
-
-    if not rows:
-        print("No role-match jobs found to classify.")
-        return
-
-    graph = build_eu_classifier_graph()
-    print(f"Classifying {len(rows)} role-match jobs...\n")
-
-    stats = {"processed": 0, "euRemote": 0, "nonEu": 0, "errors": 0}
-
-    for job in rows:
-        try:
-            result = graph.invoke({
-                "job": dict(job),
-                "signals": None,
-                "classification": None,
-                "source": "",
-            })
-            classification = result.get("classification") or {}
-            is_eu = classification.get("isRemoteEU", False)
-            source = result.get("source", "?")
-            print(f"  {job.get('title', '?')[:60]:60s} -> {'EU' if is_eu else 'non-EU':6s} [{source}]")
-            stats["processed"] += 1
-            if is_eu:
-                stats["euRemote"] += 1
-            else:
-                stats["nonEu"] += 1
-        except Exception as e:
-            print(f"  Error classifying {job.get('id')}: {e}")
-            stats["errors"] += 1
-
-    print(f"\n--- EU Classification Summary ---")
-    print(f"  Processed: {stats['processed']}")
-    print(f"  EU Remote: {stats['euRemote']}")
-    print(f"  Non-EU:    {stats['nonEu']}")
-    print(f"  Errors:    {stats['errors']}")
-
-
 @main.command()
 @click.option("--skills", "-s", required=True, help="Comma-separated skill tags (e.g. react,typescript)")
 @click.option("--limit", "-l", default=20, show_default=True, help="Max results to return")
