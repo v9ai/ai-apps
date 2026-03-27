@@ -12,7 +12,7 @@ import {
 import {
   getNextBusinessDay,
   createScheduledDate,
-} from "@/lib/date/business-days";
+} from "@/lib/business-days";
 
 export { getNextBusinessDay, createScheduledDate };
 

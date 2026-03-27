@@ -1,0 +1,279 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "User Preferences Schema",
+  "description": "Schema for storing user job search preferences",
+  "type": "object",
+  "properties": {
+    "preferences": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "object",
+          "properties": {
+            "countries": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Preferred countries (ISO codes or names)"
+            },
+            "regions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Broader regions (EU, EMEA, etc.)"
+            },
+            "timeZones": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Acceptable time zones"
+            },
+            "remote": {
+              "type": "string",
+              "enum": ["fully-remote", "hybrid", "flexible", "on-site"],
+              "description": "Remote work preference"
+            },
+            "travelWillingness": {
+              "type": "string",
+              "enum": ["none", "occasional", "quarterly", "monthly", "weekly"],
+              "description": "Willingness to travel"
+            },
+            "confidence": {
+              "type": "string",
+              "enum": ["high", "medium", "low"]
+            }
+          },
+          "required": ["remote", "confidence"]
+        },
+        "role": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Primary role type (e.g., Software Engineer, Product Manager)"
+            },
+            "specialization": {
+              "type": "string",
+              "description": "Specific area (e.g., Frontend, Backend, DevOps)"
+            },
+            "seniority": {
+              "type": "string",
+              "enum": ["junior", "mid", "senior", "staff", "principal", "lead", "director"],
+              "description": "Target seniority level"
+            },
+            "track": {
+              "type": "string",
+              "enum": ["ic", "management", "flexible"],
+              "description": "Individual contributor vs management"
+            },
+            "confidence": {
+              "type": "string",
+              "enum": ["high", "medium", "low"]
+            }
+          },
+          "required": ["type", "seniority", "confidence"]
+        },
+        "skills": {
+          "type": "object",
+          "properties": {
+            "required": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Must-have skills/technologies"
+            },
+            "preferred": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Nice-to-have skills/technologies"
+            },
+            "exclude": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Technologies to avoid"
+            },
+            "domain": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Domain expertise (e.g., fintech, healthcare)"
+            },
+            "confidence": {
+              "type": "string",
+              "enum": ["high", "medium", "low"]
+            }
+          },
+          "required": ["confidence"]
+        },
+        "compensation": {
+          "type": "object",
+          "properties": {
+            "minimum": {
+              "type": "number",
+              "description": "Minimum acceptable annual salary"
+            },
+            "target": {
+              "type": "number",
+              "description": "Target annual salary"
+            },
+            "maximum": {
+              "type": "number",
+              "description": "Maximum realistic salary"
+            },
+            "currency": {
+              "type": "string",
+              "enum": ["EUR", "USD", "GBP", "CHF"],
+              "description": "Preferred currency"
+            },
+            "equityImportance": {
+              "type": "string",
+              "enum": ["critical", "important", "nice", "not-important"],
+              "description": "How important is equity compensation"
+            },
+            "confidence": {
+              "type": "string",
+              "enum": ["high", "medium", "low"]
+            }
+          },
+          "required": ["currency", "confidence"]
+        },
+        "company": {
+          "type": "object",
+          "properties": {
+            "sizes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["startup", "scale-up", "enterprise"]
+              },
+              "description": "Acceptable company sizes"
+            },
+            "stages": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["pre-seed", "seed", "series-a", "series-b", "series-c", "series-d+", "public"]
+              },
+              "description": "Acceptable company stages"
+            },
+            "industries": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Preferred industries"
+            },
+            "excludeIndustries": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Industries to exclude"
+            },
+            "excludeAgencies": {
+              "type": "boolean",
+              "default": true,
+              "description": "Exclude staffing agencies"
+            },
+            "targetCompanies": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Specific companies of interest"
+            },
+            "excludeCompanies": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Companies to exclude"
+            },
+            "confidence": {
+              "type": "string",
+              "enum": ["high", "medium", "low"]
+            }
+          },
+          "required": ["excludeAgencies", "confidence"]
+        },
+        "workArrangement": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["full-time", "part-time", "contract", "flexible"],
+              "description": "Preferred contract type"
+            },
+            "contractorOk": {
+              "type": "boolean",
+              "description": "Open to contractor/B2B arrangements"
+            },
+            "partTimeOk": {
+              "type": "boolean",
+              "description": "Open to part-time roles"
+            },
+            "startDate": {
+              "type": "string",
+              "description": "Availability (e.g., 'immediate', '2 weeks', '1 month')"
+            },
+            "confidence": {
+              "type": "string",
+              "enum": ["high", "medium", "low"]
+            }
+          },
+          "required": ["type", "confidence"]
+        },
+        "workStyle": {
+          "type": "object",
+          "properties": {
+            "asyncPreferred": {
+              "type": "boolean",
+              "description": "Prefers async-first communication"
+            },
+            "maxMeetingsPerDay": {
+              "type": "number",
+              "description": "Maximum acceptable meetings per day"
+            },
+            "teamSizePreference": {
+              "type": "string",
+              "enum": ["small", "medium", "large", "flexible"],
+              "description": "Preferred team size"
+            },
+            "confidence": {
+              "type": "string",
+              "enum": ["high", "medium", "low"]
+            }
+          }
+        },
+        "benefits": {
+          "type": "object",
+          "properties": {
+            "required": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Must-have benefits"
+            },
+            "preferred": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Nice-to-have benefits"
+            },
+            "confidence": {
+              "type": "string",
+              "enum": ["high", "medium", "low"]
+            }
+          }
+        }
+      },
+      "required": ["location", "role"]
+    },
+    "gathered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When preferences were last gathered/updated"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When preferences were last modified"
+    },
+    "needs_review": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether preferences need review/confirmation"
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Schema version for migrations"
+    }
+  },
+  "required": ["preferences", "gathered_at"]
+}
