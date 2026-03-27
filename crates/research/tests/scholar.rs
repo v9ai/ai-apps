@@ -25,8 +25,7 @@ fn client() -> SemanticScholarClient {
 /// S2 search endpoint is heavily throttled without an API key (~1 req/min).
 /// This single test covers search + result shape. Pagination is implicitly
 /// validated via offset param; a second call would 429 without a key.
-#[tokio::test]
-#[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn search_returns_results() {
     // Extra cooldown for the search endpoint's stricter rate limit
     sleep(Duration::from_secs(15)).await;
@@ -45,8 +44,7 @@ async fn search_returns_results() {
 
 // ── Get Paper ───────────────────────────────────────────────────────
 
-#[tokio::test]
-#[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn get_paper_known_id_with_full_fields() {
     polite_delay().await;
     let paper = client()
@@ -77,8 +75,7 @@ async fn get_paper_known_id_with_full_fields() {
 
 // ── Citations & References ──────────────────────────────────────────
 
-#[tokio::test]
-#[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn get_citations_returns_results() {
     polite_delay().await;
     let resp = client()
@@ -89,8 +86,7 @@ async fn get_citations_returns_results() {
     assert!(!resp.data.is_empty(), "expected citations for landmark paper");
 }
 
-#[tokio::test]
-#[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn get_references_returns_results() {
     polite_delay().await;
     let resp = client()
@@ -103,8 +99,7 @@ async fn get_references_returns_results() {
 
 // ── Recommendations ─────────────────────────────────────────────────
 
-#[tokio::test]
-#[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn get_recommendations() {
     polite_delay().await;
     // Recommendations endpoint can 404 or return empty — just verify it doesn't panic
@@ -115,8 +110,7 @@ async fn get_recommendations() {
 
 // ── Conversion to ResearchPaper ─────────────────────────────────────
 
-#[tokio::test]
-#[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn paper_converts_to_research_paper() {
     polite_delay().await;
     let paper = client()
@@ -136,8 +130,7 @@ async fn paper_converts_to_research_paper() {
 /// Verify that the year filter actually constrains results to the requested year.
 /// Papers with a None publication_date are tolerated (S2 sometimes lacks dates),
 /// but every paper that *has* a date must start with "2026".
-#[tokio::test]
-#[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn search_bulk_with_year_filter_returns_recent_papers() {
     sleep(Duration::from_secs(15)).await;
     let resp = client()
@@ -167,8 +160,7 @@ async fn search_bulk_with_year_filter_returns_recent_papers() {
 
 /// Every non-None `publication_date` returned by bulk search must be a valid
 /// YYYY-MM-DD (or YYYY-MM) date that can be parsed.
-#[tokio::test]
-#[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn search_bulk_papers_have_valid_publication_dates() {
     sleep(Duration::from_secs(15)).await;
     let resp = client()
@@ -213,8 +205,7 @@ async fn search_bulk_papers_have_valid_publication_dates() {
 
 /// When sorting by publicationDate:desc, the first paper's date should be >=
 /// the last paper's date (comparing non-None dates only).
-#[tokio::test]
-#[serial]
+#[ignore = "requires live Semantic Scholar API"]
 async fn search_bulk_sort_by_date_descending() {
     sleep(Duration::from_secs(15)).await;
     let resp = client()

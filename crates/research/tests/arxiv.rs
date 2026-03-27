@@ -6,6 +6,7 @@ use research::arxiv::{ArxivClient, ArxivPaper};
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn search_returns_results() {
     let client = ArxivClient::new();
     let resp = client
@@ -20,6 +21,7 @@ async fn search_returns_results() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn search_respects_max_results() {
     let client = ArxivClient::new();
     let resp = client
@@ -36,6 +38,7 @@ async fn search_respects_max_results() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn search_pagination_works() {
     let client = ArxivClient::new();
 
@@ -59,6 +62,7 @@ async fn search_pagination_works() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn search_sort_by_submitted_date() {
     let client = ArxivClient::new();
     let resp = client
@@ -71,6 +75,7 @@ async fn search_sort_by_submitted_date() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn search_empty_query_returns_ok() {
     let client = ArxivClient::new();
     // arXiv API handles empty-ish queries gracefully
@@ -86,6 +91,7 @@ async fn search_empty_query_returns_ok() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn get_paper_known_id() {
     let client = ArxivClient::new();
     // "Attention Is All You Need"
@@ -112,6 +118,7 @@ async fn get_paper_known_id() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn get_paper_not_found() {
     let client = ArxivClient::new();
     let result = client.get_paper("0000.00000").await;
@@ -123,6 +130,7 @@ async fn get_paper_not_found() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn fetch_batch_multiple_ids() {
     let client = ArxivClient::new();
     let ids = vec![
@@ -139,6 +147,7 @@ async fn fetch_batch_multiple_ids() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn fetch_batch_empty_input() {
     let client = ArxivClient::new();
     let papers = client.fetch_batch(&[], 10).await.unwrap();
@@ -147,6 +156,7 @@ async fn fetch_batch_empty_input() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn fetch_batch_respects_batch_size() {
     let client = ArxivClient::new();
     let ids = vec![
@@ -164,6 +174,7 @@ async fn fetch_batch_respects_batch_size() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn paper_fields_are_populated() {
     let client = ArxivClient::new();
     let paper = client.get_paper("1706.03762").await.unwrap();
@@ -243,6 +254,7 @@ fn date_range_validation() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn search_with_date_range_returns_recent_papers() {
     let client = ArxivClient::new();
 
@@ -298,6 +310,7 @@ async fn search_with_date_range_returns_recent_papers() {
 
 #[tokio::test]
 #[serial]
+#[ignore = "requires live arXiv API"]
 async fn search_results_published_field_is_valid_date() {
     let client = ArxivClient::new();
 

@@ -14,6 +14,7 @@ const RETRY_CONFIG: RetryConfig = RetryConfig {
     base_delay: Duration::from_secs(2),
     max_delay: Duration::from_secs(30),
     jitter: true,
+    retry_on_server_error: true,
 };
 
 /// Client for the Zenodo REST API.
