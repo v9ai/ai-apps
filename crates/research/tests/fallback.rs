@@ -459,6 +459,9 @@ fn format_research_papers_includes_source() {
         source: PaperSource::OpenAlex,
         source_id: "W123".into(),
         fields_of_study: None,
+        published_date: None,
+        primary_category: None,
+        categories: None,
     }];
 
     let output = format_research_papers(&papers, &SearchToolConfig::default(), "test query", 1);
@@ -486,6 +489,9 @@ fn format_paper_detail_includes_all_fields() {
         source: PaperSource::Crossref,
         source_id: "10.5678/detail".into(),
         fields_of_study: Some(vec!["Computer Science".into()]),
+        published_date: None,
+        primary_category: None,
+        categories: None,
     };
 
     let output = format_paper_detail(&paper);
