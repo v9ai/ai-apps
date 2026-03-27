@@ -25,6 +25,7 @@ pub struct EnrichedCompany {
     pub tech_stack: Vec<String>,
     pub emails_found: Vec<String>,
     pub has_careers_page: bool,
+    pub remote_policy: u8, // 0=unknown, 1=full_remote, 2=hybrid, 3=onsite
     pub enrichment_score: f64,
     pub confidence: f64,
 }
@@ -52,7 +53,7 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         let mut all_emails = company.emails_found.clone();
         let mut has_careers = false;
 
-        for path in &["/about", "/team", "/careers"] {
+        for path in &["/about", "/team", "/careers", "/jobs", "/open-positions"] {
             let url = format!("https://{}{path}", company.domain);
             match ctx.http.get(&url).send().await {
                 Ok(resp) if resp.status().is_success() => {
@@ -61,8 +62,8 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
                         all_text.push(' ');
                         all_text.push_str(&text);
 
-                        // Check for careers page
-                        if *path == "/careers" {
+                        // Check for careers/jobs pages
+                        if *path == "/careers" || *path == "/jobs" || *path == "/open-positions" {
                             has_careers = true;
                         }
 
@@ -96,8 +97,13 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
             heuristic_classify(&all_text)
         };
 
+        // Detect remote policy from all fetched text
+        let remote_policy = crate::kernel::job_ner::detect_remote_policy(
+            &all_text.to_lowercase().into_bytes(),
+        );
+
         let enrichment_score = compute_enrichment_score(
-            &category, &ai_tier, &company.tech_signals, has_careers, confidence,
+            &category, &ai_tier, &company.tech_signals, has_careers, remote_policy, confidence,
         );
 
         let enriched = EnrichedCompany {
@@ -109,6 +115,7 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
             tech_stack: company.tech_signals.clone(),
             emails_found: all_emails,
             has_careers_page: has_careers,
+            remote_policy,
             enrichment_score,
             confidence,
         };
@@ -174,33 +181,42 @@ fn heuristic_classify(text: &str) -> (String, String, String, f64) {
 }
 
 fn compute_enrichment_score(
-    category: &str, ai_tier: &str, tech: &[String], has_careers: bool, confidence: f64,
+    category: &str, ai_tier: &str, tech: &[String], has_careers: bool,
+    remote_policy: u8, confidence: f64,
 ) -> f64 {
     let mut score = 0.0;
 
     // Category weight (CONSULTANCY is primary ICP target)
     score += match category {
-        "CONSULTANCY" => 30.0,
-        "PRODUCT" => 25.0,
-        "AGENCY" => 15.0,
+        "CONSULTANCY" => 25.0,
+        "PRODUCT" => 20.0,
+        "AGENCY" => 12.0,
         _ => 5.0,
     };
 
     // AI tier
     score += match ai_tier {
-        "ai_first" => 30.0,
-        "ai_native" => 20.0,
+        "ai_first" => 25.0,
+        "ai_native" => 18.0,
         _ => 5.0,
     };
 
+    // Remote policy (critical filter)
+    score += match remote_policy {
+        1 => 20.0, // full_remote
+        2 => 12.0, // hybrid
+        3 => 0.0,  // onsite
+        _ => 0.0,  // unknown
+    };
+
     // Tech stack depth
-    score += (tech.len().min(8) as f64 / 8.0) * 20.0;
+    score += (tech.len().min(8) as f64 / 8.0) * 15.0;
 
     // Careers page
-    if has_careers { score += 10.0; }
+    if has_careers { score += 8.0; }
 
     // Confidence modifier
-    score += confidence * 10.0;
+    score += confidence * 7.0;
 
     score.min(100.0) / 100.0
 }
