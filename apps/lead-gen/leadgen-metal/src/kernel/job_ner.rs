@@ -152,7 +152,7 @@ pub fn extract_job_fields(text: &[u8], out: &mut JobExtraction) {
     out.confidence = conf;
 }
 
-fn detect_remote_policy(text: &[u8]) -> u8 {
+pub fn detect_remote_policy(text: &[u8]) -> u8 {
     let full_patterns: &[&[u8]] = &[
         b"fully remote",
         b"100% remote",

@@ -68,8 +68,15 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
     let enrichment: EnrichmentReport = state::load_report(&ctx.data_dir, "enrichment")
         .ok_or_else(|| anyhow::anyhow!("no enrichment report — run enrich first"))?;
 
-    let limit = ctx.batch.contacts.min(enrichment.companies.len());
     let mut candidates = enrichment.companies.clone();
+    // Filter to remote-friendly companies only (full_remote=1 or hybrid=2)
+    let before_filter = candidates.len();
+    candidates.retain(|c| c.remote_policy == 1 || c.remote_policy == 2);
+    let filtered_out = before_filter - candidates.len();
+    if filtered_out > 0 {
+        eprintln!("  contacts: filtered {filtered_out} non-remote companies ({} remain)", candidates.len());
+    }
+    let limit = ctx.batch.contacts.min(candidates.len());
     candidates.sort_by(|a, b| {
         b.enrichment_score
             .partial_cmp(&a.enrichment_score)
