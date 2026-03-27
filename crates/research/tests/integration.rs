@@ -193,6 +193,9 @@ fn dedup_papers_by_normalized_title() {
         source,
         source_id: format!("id-{title}"),
         fields_of_study: None,
+        published_date: None,
+        primary_category: None,
+        categories: None,
     };
 
     let mut papers = vec![
@@ -231,6 +234,9 @@ fn dedup_removes_empty_titles() {
             source: PaperSource::OpenAlex,
             source_id: "empty".into(),
             fields_of_study: None,
+            published_date: None,
+            primary_category: None,
+            categories: None,
         },
         ResearchPaper {
             title: "   ".to_string(),
@@ -244,6 +250,9 @@ fn dedup_removes_empty_titles() {
             source: PaperSource::Core,
             source_id: "blank".into(),
             fields_of_study: None,
+            published_date: None,
+            primary_category: None,
+            categories: None,
         },
     ];
 
@@ -274,6 +283,9 @@ fn papers_sort_by_citations_descending() {
         source: PaperSource::SemanticScholar,
         source_id: title.into(),
         fields_of_study: None,
+        published_date: None,
+        primary_category: None,
+        categories: None,
     };
 
     let mut papers = vec![

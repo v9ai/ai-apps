@@ -4,16 +4,14 @@
  * Export real job data from Neon for use as LLM eval test cases.
  *
  * Queries jobs that have already been classified by the pipeline and exports
- * balanced samples as TypeScript test data files. The DB labels (is_remote_eu,
- * role_ai_engineer) serve as the ground truth for eval assertions.
+ * balanced samples as TypeScript test data files. The DB labels (role_ai_engineer)
+ * serve as the ground truth for eval assertions.
  *
  * Outputs:
- *   src/evals/remote-eu/db-test-data.ts     — EU remote classification cases
  *   src/evals/role-tagging/db-test-data.ts  — AI engineer / frontend role cases
  *
  * Usage:
  *   pnpm tsx scripts/export-eval-data.ts
- *   pnpm tsx scripts/export-eval-data.ts --limit 20 --out src/evals/remote-eu/db-test-data.ts
  *
  * Requires (in .env.local):
  *   NEON_DATABASE_URL   or   DATABASE_URL
@@ -38,9 +36,6 @@ const samplesPerBucket = parseInt(
   args[args.indexOf("--limit") + 1] ?? "15",
   10,
 );
-const euOut =
-  args[args.indexOf("--out") + 1] ??
-  "src/evals/remote-eu/db-test-data.ts";
 const roleOut = "src/evals/role-tagging/db-test-data.ts";
 
 // ---------------------------------------------------------------------------
@@ -58,19 +53,6 @@ async function query<T = Record<string, unknown>>(rawSql: string, params?: unkno
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface RawJob {
-  id: number;
-  title: string;
-  location: string | null;
-  description: string | null;
-  status: string | null;
-  is_remote_eu: boolean | null;
-  remote_eu_confidence: string | null;
-  remote_eu_reason: string | null;
-  source_kind: string | null;
-  company_key: string | null;
-}
 
 interface RawRoleJob {
   id: number;
@@ -111,148 +93,6 @@ function slugId(s: string): string {
 function toConfidence(raw: string | null): "high" | "medium" | "low" {
   if (raw === "high" || raw === "medium" || raw === "low") return raw;
   return "medium";
-}
-
-// ---------------------------------------------------------------------------
-// EU remote classification export
-// ---------------------------------------------------------------------------
-
-async function exportEURemoteCases(n: number): Promise<void> {
-  console.log("\n📡 Querying EU remote classification data from Neon…");
-
-  // Sample from each bucket: true-high, true-medium, false-high, false-medium,
-  // unclassified (no label yet — useful for "live" eval without ground truth)
-  const buckets: Array<{ label: string; sql: string; params: unknown[] }> = [
-    {
-      label: "eu-remote=true, high confidence",
-      sql: `SELECT id, title, location, description, status,
-                   is_remote_eu, remote_eu_confidence, remote_eu_reason,
-                   source_kind, company_key
-            FROM jobs
-            WHERE is_remote_eu = true
-              AND remote_eu_confidence = 'high'
-              AND title IS NOT NULL
-              AND location IS NOT NULL
-            ORDER BY RANDOM()
-            LIMIT ?`,
-      params: [n],
-    },
-    {
-      label: "eu-remote=true, medium/low confidence",
-      sql: `SELECT id, title, location, description, status,
-                   is_remote_eu, remote_eu_confidence, remote_eu_reason,
-                   source_kind, company_key
-            FROM jobs
-            WHERE is_remote_eu = true
-              AND remote_eu_confidence IN ('medium', 'low')
-              AND title IS NOT NULL
-              AND location IS NOT NULL
-            ORDER BY RANDOM()
-            LIMIT ?`,
-      params: [n],
-    },
-    {
-      label: "eu-remote=false, high confidence",
-      sql: `SELECT id, title, location, description, status,
-                   is_remote_eu, remote_eu_confidence, remote_eu_reason,
-                   source_kind, company_key
-            FROM jobs
-            WHERE is_remote_eu = false
-              AND remote_eu_confidence = 'high'
-              AND title IS NOT NULL
-              AND location IS NOT NULL
-            ORDER BY RANDOM()
-            LIMIT ?`,
-      params: [n],
-    },
-    {
-      label: "eu-remote=false, medium/low confidence",
-      sql: `SELECT id, title, location, description, status,
-                   is_remote_eu, remote_eu_confidence, remote_eu_reason,
-                   source_kind, company_key
-            FROM jobs
-            WHERE is_remote_eu = false
-              AND remote_eu_confidence IN ('medium', 'low')
-              AND title IS NOT NULL
-              AND location IS NOT NULL
-            ORDER BY RANDOM()
-            LIMIT ?`,
-      params: [n],
-    },
-  ];
-
-  // Collect all rows, deduplicating by id
-  const seen = new Set<number>();
-  const allRows: Array<{ row: RawJob; bucket: string }> = [];
-
-  for (const bucket of buckets) {
-    const rows = await query<RawJob>(bucket.sql, bucket.params);
-    console.log(`  ${bucket.label}: ${rows.length} rows`);
-    for (const row of rows) {
-      if (!seen.has(row.id)) {
-        seen.add(row.id);
-        allRows.push({ row, bucket: bucket.label });
-      }
-    }
-  }
-
-  console.log(`\n  Total unique jobs: ${allRows.length}`);
-
-  // Build TypeScript source
-  const cases = allRows.map(({ row, bucket }, i) => {
-    const id = `db-${row.id}-${slugId(row.title ?? `job-${i}`)}`;
-    const desc = trimDesc(row.description);
-    const confidence = toConfidence(row.remote_eu_confidence);
-    const isRemoteEU = row.is_remote_eu === true;
-    const reason =
-      row.remote_eu_reason?.replace(/"/g, '\\"').slice(0, 200) ??
-      (isRemoteEU
-        ? "Classified as EU remote by pipeline"
-        : "Classified as non-EU by pipeline");
-
-    return `  // ${bucket} — DB id ${row.id} [${row.source_kind ?? "?"}/${row.company_key ?? "?"}]
-  {
-    id: ${JSON.stringify(id)},
-    description: ${JSON.stringify(row.title ?? "")},
-    jobPosting: {
-      title: ${JSON.stringify(row.title ?? "")},
-      location: ${JSON.stringify(row.location ?? "")},
-      description: ${JSON.stringify(desc)},
-    },
-    expectedClassification: {
-      isRemoteEU: ${isRemoteEU},
-      confidence: ${JSON.stringify(confidence)},
-      reason: ${JSON.stringify(reason)},
-    },
-  }`;
-  });
-
-  const output = `/**
- * Real job data from D1 — EU remote classification test cases.
- *
- * AUTO-GENERATED by scripts/export-eval-data.ts — DO NOT EDIT BY HAND.
- * Re-run the script to refresh from the database.
- *
- * Ground truth: is_remote_eu + remote_eu_confidence set by the
- * process-jobs pipeline (Workers AI → DeepSeek).
- *
- * Review labels before using in CI — pipeline errors can produce wrong labels.
- * Cases marked with confidence "low" or "medium" should be spot-checked.
- *
- * Generated: ${new Date().toISOString()}
- * Total cases: ${cases.length}
- */
-
-import type { RemoteEUTestCase } from "./schema";
-
-export const dbRemoteEUTestCases: RemoteEUTestCase[] = [
-${cases.join(",\n")}
-];
-`;
-
-  mkdirSync(dirname(euOut), { recursive: true });
-  writeFileSync(euOut, output, "utf8");
-  console.log(`\n✅ EU remote test cases written to ${euOut} (${cases.length} cases)`);
 }
 
 // ---------------------------------------------------------------------------
@@ -448,19 +288,6 @@ ${cases.join(",\n")}
 async function printStats(): Promise<void> {
   console.log("\n📊 Database classification stats:");
 
-  const euStats = await query<{ is_remote_eu: boolean | null; confidence: string | null; count: number }>(
-    `SELECT is_remote_eu, remote_eu_confidence AS confidence, COUNT(*) AS count
-     FROM jobs
-     WHERE is_remote_eu IS NOT NULL
-     GROUP BY is_remote_eu, remote_eu_confidence
-     ORDER BY is_remote_eu DESC, count DESC`,
-  );
-
-  for (const row of euStats) {
-    const label = row.is_remote_eu === true ? "EU remote=true " : "EU remote=false";
-    console.log(`  ${label}  conf=${row.confidence ?? "null"}  n=${row.count}`);
-  }
-
   const roleStats = await query<{ ai: boolean | null; frontend: boolean | null; count: number }>(
     `SELECT role_ai_engineer AS ai, role_frontend_react AS frontend, COUNT(*) AS count
      FROM jobs
@@ -491,15 +318,14 @@ async function main() {
   console.log("======================================================");
 
   await printStats();
-  await exportEURemoteCases(samplesPerBucket);
   await exportRoleTaggingCases(samplesPerBucket);
 
   console.log("\n🏁 Done.");
   console.log(
     "\nNext steps:",
     "\n  1. Review the generated files — spot-check low/medium confidence labels",
-    "\n  2. Import dbRemoteEUTestCases in remote-eu-eval.test.ts alongside remoteEUTestCases",
-    "\n  3. Run: pnpm test:eval",
+    "\n  2. Import dbRoleTagTestCases in role-tagging eval tests",
+    "\n  3. Run: pnpm test:email-evals",
   );
 }
 

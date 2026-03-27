@@ -35,7 +35,6 @@ const PROMPT_PATTERNS = [
   /classifier/i,
   /extraction-workflow/i,
   /process-jobs/i,
-  /remote-eu/i,
 ];
 
 const SCHEMA_PATTERNS = [/schema\/.*\.graphql$/, /schema\.graphql$/];
