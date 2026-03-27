@@ -381,11 +381,6 @@ type ImportCompanyResult {
   errors: [String!]!
 }
 
-type BlockJobsResult {
-  success: Boolean!
-  message: String!
-}
-
 type FindCompanyResult {
   found: Boolean!
   company: Company

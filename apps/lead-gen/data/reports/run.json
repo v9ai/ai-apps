@@ -15,7 +15,7 @@
       "polymatica.com: error sending request for url (https://polymatica.com/)",
       "quantumblack.com: error sending request for url (https://quantumblack.com/)"
     ],
-    "duration_ms": 128444
+    "duration_ms": 121250
   },
   {
     "stage": "enrich",
@@ -23,7 +23,7 @@
     "processed": 30,
     "created": 30,
     "errors": [],
-    "duration_ms": 78611
+    "duration_ms": 72591
   },
   {
     "stage": "contacts",
@@ -31,14 +31,14 @@
     "processed": 122,
     "created": 6,
     "errors": [],
-    "duration_ms": 31383
+    "duration_ms": 31372
   },
   {
     "stage": "qa",
-    "status": "Success",
-    "processed": 30,
-    "created": 0,
+    "status": "Partial",
+    "processed": 152,
+    "created": 3,
     "errors": [],
-    "duration_ms": 0
+    "duration_ms": 2
   }
 ]
