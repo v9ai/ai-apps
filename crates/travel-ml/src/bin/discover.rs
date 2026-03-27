@@ -148,7 +148,9 @@ async fn export_results(hotels: &[Hotel], engine: &EmbeddingEngine, args: &Args)
             .context("indexing hotels")?;
     }
 
-    // Compute relevance scores via Candle embedding similarity
+    // Compute relevance scores via Candle embedding similarity.
+    // DISCOVERY_YEAR_STR is embedded in the query so the vector space is anchored
+    // to the target year — do not replace with a literal year.
     let query = format!("new affordable hotel Greece {DISCOVERY_YEAR_STR} beach resort value cheapest budget");
     let query_vec = engine.embed_one(&query).context("embedding reference query")?;
 
@@ -272,8 +274,20 @@ async fn export_results(hotels: &[Hotel], engine: &EmbeddingEngine, args: &Args)
     Ok(())
 }
 
-/// Curated list of new hotels across Greece confirmed for 2026 opening.
-/// Sorted cheapest-first. Covers islands, mainland, and Crete.
+/// Curated seed dataset of Greece hotels for the current discovery window.
+///
+/// Synthetic hotels (no verifiable real-world opening date) are assigned
+/// `opened_year: Some(DISCOVERY_YEAR)`. Real brand hotels that opened before
+/// the current window keep their actual opening year — those will NOT receive
+/// the "NEW" badge in the UI because `opened_year < NEW_HOTEL_MIN_YEAR`.
+///
+/// When adding a new hotel:
+/// - If it is a known real property with a confirmed opening year, use that year.
+/// - If it is synthetic/illustrative, use `Some(DISCOVERY_YEAR)`.
+/// - Never hardcode a raw year literal — always use the constants from
+///   `travel_ml::constants`.
+///
+/// Sorted cheapest-first within each tier.
 fn curated_2026_hotels() -> Vec<Hotel> {
     vec![
         // ── Budget / Value (under €150) ────────────────────────────

@@ -621,6 +621,9 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
             >
               {"★".repeat(hotel.star_rating)}
             </span>
+            {/* Badge threshold: NEW_HOTEL_MIN_YEAR from @/lib/constants.
+                To change the "new" window, update that constant only —
+                never hardcode a year here. */}
             {hotel.opened_year && hotel.opened_year >= NEW_HOTEL_MIN_YEAR && (
               <span
                 className={css({

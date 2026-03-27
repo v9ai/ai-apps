@@ -20,6 +20,14 @@
         "Co-working"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/p/AF1QipNoO0hXCc8VcNc3Q5dM40wZfCHFgQdOWpylKayg=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqBIy89dnwrjd7G3ETuEGZY1y7ZRsmZrkZObmDa_-BURFUWMAIlCLzrp5ofCOoPC0y-scegBQgV2svPjwJ-i5j-C6dHgVS8c-SwE7AXIuqNvELvQeITfz8gHL0kFZD_-FhV3T9ms9XYtxIw=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoMgQRe1qwGP6QWfkEAb7H8vD-FfhCZZ9LldloWnWwYgLbgDOmWbHO6g7-Wd-J4m6NRCTgGoEkhqvSv0LkJu9-CQw-Zps3kNHQHiQ3I-4lXRoA27pHnVkHoK_iz61eJHQN411Dve5gOkVE=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoDeGT5pyYnTgx2wGFlJ3IR2tgseRwICn905Yjhsc3c3uSF6fAhfXPzA65O4h4Mh9bpIce6WhuN_g4vrWQAIXaHwKBgvCsKyHqJJsMmBCG2g5y37GsA6hSu-R-W6hkTx4sjgbeQzkLZzrI=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerTb0NcWwzgu3EKAyw0auT5yso3mIlpzy287WQ9zXR1b9CZH5lpG9BbC9DiA9bntH_xyYmX_GiVhCuGGGwy2Duuy6MZy8AAcFN46LUMV-Vc61BqzqIICTeyvWpxyFWTfDNBnU29U4qjFTny=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerGj_ar6RbTBjINJ7rtjhCJBFEdk8LBl4dbpblv5VYdObcj_QS_wnUpwF55Drn3TrF1KuvUkfsJU3VoYFPYJBd3z3SDY0qY9bgW7Dlsx0ysOSCOBJ2fOALaE44SgUNtjooziYEc6NsId84=w800-h600-k-no"
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -87,11 +95,11 @@
       ],
       "sentiment_score": 0.722341,
       "aspect_scores": {
-        "Value": 0.18431929,
         "Service": 0.2674963,
+        "Cleanliness": 0.1927175,
+        "Value": 0.18431929,
         "Food": 0.26888466,
         "Spa": 0.21457782,
-        "Cleanliness": 0.1927175,
         "Location": 0.22263904
       },
       "review_summary": "This hotel offers Restaurant. This hotel offers Bar. This hotel offers Co-working.",
@@ -132,6 +140,14 @@
         "Garden terrace"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerxkctukDOZ6BIbwQHme_hhxX2C6jwArzhBU731lfS3qaCDJJyJLxsfAIcxbF13h5ConJoulkR4uSp8PrxeOVx2qQ6ysEw4Xrj4sqZ1_ueWJMc0XVcD5gCPfrnkW0zhcHnJFFGcCg=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerxkctukDOZ6BIbwQHme_hhxX2C6jwArzhBU731lfS3qaCDJJyJLxsfAIcxbF13h5ConJoulkR4uSp8PrxeOVx2qQ6ysEw4Xrj4sqZ1_ueWJMc0XVcD5gCPfrnkW0zhcHnJFFGcCg=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqDhLKbwss-3dbRUMW1Wyis8q5auJJ_kLcmdZO4Tn_Jd4n3rt0qt-rd9tPK8MHlSieP4LXVmZpF0Vmq1s_lfsWEGByglN2UUR9vVTL-TtrGju96y_JBA4c-iXKjHtVXANdRq-dN=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoxHTxD1XV071fn8JjShENIofjPeIG4T3JDo1POrfAKjVTyHWv3Jx3F_UUqYLBrE1CiinXTUQ8HD_8_UgCifeMOJKyw0O9g2MYCmIzE0kv_5PFF5BHIpWPf9adhBvMnYLkSX03O=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoEHr3-JSmq2hXSOnCtQsy_i-VAsOs5Tznn9cLAE7YuZyr-8ENair_VMV9DiRtpB8uUCvoMZS58NH68fVJYbuGwexMCshJ11n9sb5AyKVvcPVcMsEQLzUx4_zSJlr8l4m6qROHQByz-UX-R=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerwhU11RoR35wveUCmkm8l3jyqQHZvv7YCi7XHX4Mob2wDpHLT-4FCpcJX9ZO-ydH-ppTODLCdQHeqnhpP3lHKvKJur4PdONp_wF3Rt05PKY_jlFnF81V9Ca8_tNNBHSlGwqlniiA=w800-h600-k-no"
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -200,11 +216,11 @@
       ],
       "sentiment_score": 0.72052485,
       "aspect_scores": {
-        "Value": 0.14785488,
-        "Spa": 0.21705133,
         "Location": 0.20649314,
+        "Food": 0.27315924,
+        "Spa": 0.21705133,
         "Service": 0.24540246,
-        "Food": 0.27315924
+        "Value": 0.14785488
       },
       "review_summary": "This hotel offers Restaurant. This hotel offers Garden terrace. This hotel offers Parking.",
       "pros": [
@@ -249,6 +265,14 @@
         "Aqua park"
       ],
       "image_url": null,
+      "gallery": [
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/279484742.webp?k=06598760dfdc8c7fb1bcb0c927c033de5aa7a26835c168a9cb62eec25bec6bd9&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/680241104.jpg?k=04dd40bda9760785ef41e76334b82578796b9fc2b6bee747e472a1a3cba60664&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/85714699.jpg?k=bd3f20033c49072d1ed61536fb14eb64712f791bd4e9595ffd96e3502430f0c4&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/54173954.jpg?k=5a925187dc4dd47badd996d9421ef40f983745b6ae2ba73b7995c60fd6e2b07a&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/656039409.jpg?k=0e5a2d51ce5954ba4c6b91e180863466d40464e574565f4b89971c2cec2b9faf&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/305349184.jpg?k=75beae7892001f500998e43ea89a6a8377fee6c17a1774a75f16b896d19bdef1&o="
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -318,14 +342,14 @@
       ],
       "sentiment_score": 0.7161536,
       "aspect_scores": {
-        "Family": 0.25298423,
-        "Spa": 0.26795924,
         "Cleanliness": 0.17575006,
-        "Food": 0.24375156,
         "Beach": 0.2613103,
-        "Location": 0.28642598,
         "Value": 0.14815126,
-        "Service": 0.22915053
+        "Family": 0.25298423,
+        "Food": 0.24375156,
+        "Service": 0.22915053,
+        "Spa": 0.26795924,
+        "Location": 0.28642598
       },
       "review_summary": "This hotel offers Swimming pool. This hotel offers Beach access. This hotel offers Aqua park.",
       "pros": [
@@ -367,6 +391,14 @@
         "Wi-Fi"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerNKj1STcYx5Wbst5fHw-OUiOOhVLDNX3g2V-kcM2BmEJ96aMcvMFB7Dc6bLGGaA6FVeEjtwwHSBihik1Jjf9ud9B7v8qIBAw9epg0WZfu3eW3QXhmedK04Llib2oFQ4yxgFXw=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerNKj1STcYx5Wbst5fHw-OUiOOhVLDNX3g2V-kcM2BmEJ96aMcvMFB7Dc6bLGGaA6FVeEjtwwHSBihik1Jjf9ud9B7v8qIBAw9epg0WZfu3eW3QXhmedK04Llib2oFQ4yxgFXw=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhEWI-1yhZnHx5rZ0b-Y6ONXgQVs5H_XWRWcQ3UXDRnkwOSFl_noUXwtdvHo33NECrzMC4xuQskPRjxnI9b7OtZpSUZ-7qXpQYGxkSyP_4DggKYgVh4WflMFcBWx1lcknQ3827dANJv7AL_NK31Hld9fDHB3pY8nEnC4Bbs6FEYqLSRK2TtcaQuW=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwepCQCxZgLTbP0DH1KTZ1Xcn56NbL469vi6cDlNbor-ph406pfvKxbdwDpTDi6DkKBNZ7fZKkzIygSeWkCawwICzgC0Mbb2FodyxEY20GC9ojIQV_hZa70xYQ0XIWhD1MUd8oB37mA=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/p/AF1QipOOj5xtZMmCrtc8ul-2Rjno1F9f2qUfl64m45d7=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/p/AF1QipN-K4_fhNG3wQDV2dQZGW60Gw5vNIBSgJrjStUV=w800-h600-p-k-no"
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -440,12 +472,12 @@
       ],
       "sentiment_score": 0.7384279,
       "aspect_scores": {
-        "Location": 0.285967,
-        "Beach": 0.2807605,
-        "Food": 0.26923004,
         "Cleanliness": 0.18186791,
+        "Family": 0.2502298,
+        "Beach": 0.2807605,
         "Service": 0.23965554,
-        "Family": 0.2502298
+        "Location": 0.285967,
+        "Food": 0.26923004
       },
       "review_summary": "This hotel offers Restaurant. This hotel offers Private beach. This hotel offers Kids club.",
       "pros": [
@@ -487,6 +519,14 @@
         "Beach access"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhGnyfE-1D2mv6fsIFUjbNqwPIATV9krJcRmEofdPgonBmL6OHAGy4tyVqQB6mRTHAzVkXMBgvebPEHU7Z1NJus3Ww-5pxo5EeBQLXy6i9KGunNp97NMaDbMYIrF0N31EFotYfQ6xswpRK-Zg14uQbUgrBzjJc0bohbs6yE0nF_slN-Dg4-XHIeF=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhGnyfE-1D2mv6fsIFUjbNqwPIATV9krJcRmEofdPgonBmL6OHAGy4tyVqQB6mRTHAzVkXMBgvebPEHU7Z1NJus3Ww-5pxo5EeBQLXy6i9KGunNp97NMaDbMYIrF0N31EFotYfQ6xswpRK-Zg14uQbUgrBzjJc0bohbs6yE0nF_slN-Dg4-XHIeF=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqz201St1jvxP9NZAwpzk3G_4p9XhaX7J13cp48HYmsHjHSasH__aSdpiKdlolw5wKBzlWdXCbo_jwZ00A0ddLWp2bixwzi6Vh63GCEcNjmEu0KpY0Pt2yTu9bpf28CnhEAn0xwO0NkLC9C=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwertcPyX8y5FUBGBvUGjML5yZJyIpvXtm2Mk3HAYzaoThnLiMuIWiQJ7EdY4pdRZGqGASktVXaYfPIbflsMJsWJdqjlHGvWS1Rl7zRZm_3G8eTqxjBy8opTZ6yXv0hlmHpYeQoWeveGE9MqI=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhEAIL1YCN-DD_MBoplza7vtis5L9A1USD0ALBLQz6c1ej40NQUvDvQGpVVnTJYTI7A2ntNKSzWQQF83CqRNgbRJAcVLp_SJkkQd84WxK43H9eYhOUMoeaWeCcqXsBz5aHQ-_7_kT9z7EOtHHYqy6wxeplkI4OFFOZZn0RXu3S685le-AkTjdfw=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhHfxvaRa5vWjm-_78S0eqm5WnDd38IoMqHo4PW7h6KP2Q4agnbkUZOCHv4wEh-6tMkblJL5eaDuNQRH0IsgkFgLwYN1VQJTcYnOshnGeF0MLwJbeu7Btc8bKQV_NeZ40oLjNCLpNh8c1LvblQeReWx0zNVd03KTQbxrWEE8uHdh4Tcv6iBNQhwr=w800-h600-k-no"
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -555,13 +595,13 @@
       ],
       "sentiment_score": 0.7123931,
       "aspect_scores": {
-        "Value": 0.1785685,
-        "Beach": 0.33948147,
-        "Family": 0.2167001,
-        "Location": 0.26020685,
-        "Service": 0.22977777,
         "Cleanliness": 0.2352386,
-        "Food": 0.25462633
+        "Location": 0.26020685,
+        "Beach": 0.33948147,
+        "Service": 0.22977777,
+        "Food": 0.25462633,
+        "Family": 0.2167001,
+        "Value": 0.1785685
       },
       "review_summary": "This hotel offers Beach access. This hotel offers Bar. This hotel offers Swimming pool.",
       "pros": [
@@ -575,10 +615,10 @@
         "No spa or wellness facilities mentioned",
         "No fitness center mentioned"
       ],
-      "review_count": 539,
-      "review_rating": 10.0,
-      "value_score": 59.735977,
-      "discovery_score": 82.19559
+      "review_count": 745,
+      "review_rating": 9.6,
+      "value_score": 57.346542,
+      "discovery_score": 82.32505
     },
     "score": 0.46024504
   },
@@ -604,6 +644,14 @@
         "Bike rental"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerkR9RDjvrFp8BGN6Y5fNfCRaUSvJk8FFBqpU5-_KS6z6JWZtOUPx6Rhcu1tDrLdVDD4zx0v3Zz4707rv0HmmBzc9KglNQbEOLYhdPdYCzEs9SlAtLcr3h3VbFHqUqpNVDl5Nl6eg=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerkR9RDjvrFp8BGN6Y5fNfCRaUSvJk8FFBqpU5-_KS6z6JWZtOUPx6Rhcu1tDrLdVDD4zx0v3Zz4707rv0HmmBzc9KglNQbEOLYhdPdYCzEs9SlAtLcr3h3VbFHqUqpNVDl5Nl6eg=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoi4vMpc30GybWjede1Rv5vQZJnEqu1ixa49Y9TKhUAb565ukV5DWNhT8VwXseKtHp5Pfh5BsDXwj_DZJmqvXdvk7oUHwHom8IKE_EeWV_P-3YLetoa4IA3xdp1LADsc-8vfT2i=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweobQIi10PXPZDDH49PMfkWNEl5KYnsul13Pwfpe-URL5CRp3w3snsXJCjwwUJ6ssEHhE4GsyC-TaA4aDOi-RZ2ScdR1T5K0jhHyv9NPsEFDoyzRAa9zAaRtiF3BmAhT2uJYo4tD=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoI4-Q8P5xcD0Lin7tH7Tm30BXogYkAMnJTtwwh9NOBSM2_3X_WOcK3ITmai_YZ9wL9WoMmwWpbWCvZe0F3sy1WJAUebduQWAKK5nyo5eSTyT2Gxtx5139EzWZ8ekkqzavMlQms=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqzV0WzBrAAyc3uSYXVY9ir3AOnY3wNDg9D3LDXvQ2qc-0QioMWnaBEe6AcO4dVgScI937APF62q9Gq5bjbs4Z_f4D7F54hfgJ2r75Knylsqenx5Jept2009tbhGZQyvcbF9mH4=w800-h600-k-no"
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -671,12 +719,12 @@
       ],
       "sentiment_score": 0.72084606,
       "aspect_scores": {
-        "Family": 0.22414146,
         "Beach": 0.30442402,
-        "Food": 0.23081881,
         "Cleanliness": 0.20886464,
-        "Location": 0.28987488,
-        "Service": 0.21843421
+        "Food": 0.23081881,
+        "Family": 0.22414146,
+        "Service": 0.21843421,
+        "Location": 0.28987488
       },
       "review_summary": "This hotel offers Beach access. This hotel offers Bike rental. This hotel offers Parking.",
       "pros": [
@@ -718,6 +766,14 @@
         "Beach shuttle"
       ],
       "image_url": null,
+      "gallery": [
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/315665275.webp?k=63f2a98fbfeb38dd7e9652707dd51e92648fabcb786b613b96e23119250d1377&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/77389446.jpg?k=b8cd1b22ed7811133fe5f0b581c1c37e76a1f01b2e2ef827413c5621f992fc3a&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/514842507.jpg?k=ec46322f4c8a3356dc39c03f6cbb0668e33b2c8609d09fbb2061c93926b11b1b&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/198663277.jpg?k=2808e645e1bb30e2b01119b7cf2687edde473d6fbf3837ef9ed808a823af7072&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/490755035.jpg?k=6b246d49f9a23ee67b5875a140bb603ecd1daf18121633b9afab402925d900c0&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/551410094.jpg?k=202f8387d0b75672647cf629ce208fa8b4afa645a26f229dab8f1567d9356466&o="
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -787,13 +843,13 @@
       ],
       "sentiment_score": 0.7472352,
       "aspect_scores": {
+        "Service": 0.22847857,
         "Cleanliness": 0.18633804,
+        "Location": 0.28874618,
+        "Beach": 0.2975864,
         "Food": 0.26176566,
         "Family": 0.21462782,
-        "Location": 0.28874618,
-        "Value": 0.28684905,
-        "Beach": 0.2975864,
-        "Service": 0.22847857
+        "Value": 0.28684905
       },
       "review_summary": "This hotel offers Restaurant. This hotel offers Beach shuttle. This hotel offers Swimming pool.",
       "pros": [
@@ -813,6 +869,129 @@
       "discovery_score": 81.42496
     },
     "score": 0.55688363
+  },
+  {
+    "hotel": {
+      "hotel_id": "skiathos-breeze-hotel",
+      "name": "Skiathos Breeze Hotel",
+      "description": "Brand-new 4-star hillside hotel overlooking Koukounaries bay, Skiathos. 55 rooms with pine-forest views, infinity pool, sunset cocktail bar, and complimentary beach shuttle. One of the Sporades' first new-builds in a decade.",
+      "star_rating": 4,
+      "board_type": "Bed & Breakfast",
+      "price_eur": 165.0,
+      "location": "Skiathos, Sporades, Greece",
+      "region": "Sporades",
+      "lat": 39.15,
+      "lng": 23.46,
+      "source_url": "https://www.booking.com/searchresults.html?ss=Koukounaries+Skiathos+Greece+hotel",
+      "amenities": [
+        "Infinity pool",
+        "Bar",
+        "Beach access",
+        "Wi-Fi",
+        "Fitness center"
+      ],
+      "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/p/AF1QipMnqcsG6MOi16WwG2tn5a2uJEsUk8qug8o2MMuc=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwepaKivuH5ZAyV3COAmO5Fz8uC08YefpTvKjDUxKiiK9qajCl3MlNsEbtIWTowYJ4ds0Dj8zNIXjMGuyPAIynSe6ww_KcIu8v1PNW6kPn95pq1rAw8vIw4bWhxmaBJpKrCu_DXtFUg=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqVyDJ39GaIlJ1itaHHskziPJX6t9woIqLT8-1AsSV0S7qvyRWYc2H_oBQ3sQ2aYInx_fKVL-hpLBm707fTdU_RF2C1Fgt25BhjrtDuf5Ebz2ybgJzE8OtMaGV8SFc4pFU6qHtttJRExcs=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoSqSOqkrkDq5VzJ66t2U85LTef88Ox248HDQ1hmCEuPL402_4iwRvSty06bInH4x6em80JEdvg97aMgx6V6OTxzvIy62UIPBlA9GwqaPHLbOpcG2PmnWQvIMqq9RuAv9QXPgE=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerex4Dp4IXm_eQe6J8Hn_3TiNXrPuKq1fnd_MsdZaWiBeD5flE4IqKwEEXlYscHppnklvZQRSXDSe0nOSHw1qEXIOccT6byBbpH0Pg36WINi15DxHQTqd23b1xkgi5dahcvymAZhQ=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweobiDKisABqPHXBSGQi7MZvr3kXmeC430OIQUO8zjm0GEvDPMHNczBuCq3EemnLxIeQygImMb1aLJlANdTcNqdLCNDuABeDSy9P35s6JoJFsFciaA6cVxNPHObIcACJgqiqzkUlUA=w800-h600-k-no"
+      ],
+      "opened_year": 2026,
+      "reviews": [
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Bar.",
+          "source": "ml-analysis",
+          "sentiment": 0.5314997,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Beach access.",
+          "source": "ml-analysis",
+          "sentiment": 0.5273651,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2026.",
+          "source": "ml-analysis",
+          "sentiment": 0.49659035,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "55 rooms with pine-forest views, infinity pool, sunset cocktail bar, and complimentary beach shuttle",
+          "source": "description",
+          "sentiment": 0.48001957,
+          "aspects": [
+            "Location",
+            "Beach"
+          ],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Fitness center.",
+          "source": "ml-analysis",
+          "sentiment": 0.46894142,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Infinity pool.",
+          "source": "ml-analysis",
+          "sentiment": 0.4616256,
+          "aspects": [
+            "Beach"
+          ],
+          "is_representative": true
+        },
+        {
+          "text": "Brand-new 4-star hillside hotel overlooking Koukounaries bay, Skiathos",
+          "source": "description",
+          "sentiment": 0.3688709,
+          "aspects": [
+            "Location"
+          ],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.7026473,
+      "aspect_scores": {
+        "Spa": 0.26795924,
+        "Beach": 0.26157084,
+        "Service": 0.22686052,
+        "Food": 0.21423292,
+        "Location": 0.2928132
+      },
+      "review_summary": "This hotel offers Beach access. This hotel offers Bar. This hotel offers Infinity pool.",
+      "pros": [
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Bar.",
+        "This hotel offers Beach access.",
+        "Brand new hotel opened in 2026.",
+        "55 rooms with pine-forest views, infinity pool, sunset cocktail bar, and complimentary beach shuttle"
+      ],
+      "cons": [
+        "One of the Sporades' first new-builds in a decade"
+      ],
+      "review_count": 1273,
+      "review_rating": 9.6,
+      "value_score": 32.908813,
+      "discovery_score": 80.36787
+    },
+    "score": 0.5207699
   },
   {
     "hotel": {
@@ -836,6 +1015,14 @@
         "Wi-Fi"
       ],
       "image_url": null,
+      "gallery": [
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/698377004.webp?k=a5c2025e53e46b4b651683c45720f5a6118d26ab3e16ca6bed3bd16fb424eb46&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/274157231.webp?k=5025c49d62af03e338ad160260d56d04cddd17f1ee7c6cf64ea9e7b1680e0433&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/550442324.webp?k=db118e0d57ba0f801a72f1936c86582d321cfc6cb2b2b5a6200f969d4697b5de&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/504955332.webp?k=d8a8109d828ed5fda07754e591ca1217e3dc291b90799d2ef52540824699be1d&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/251456057.webp?k=aa4a710dc783a34a7b9c399048eee97a22188945924f2b26cfbab86c51b34f95&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/463862526.webp?k=0759f31591df5839aa8e0f6208ddb3a67567680d6bbaa7c660c73c5700aa2037&o="
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -909,13 +1096,13 @@
       ],
       "sentiment_score": 0.70651245,
       "aspect_scores": {
-        "Beach": 0.3704123,
-        "Service": 0.2447055,
-        "Food": 0.26048657,
         "Family": 0.22414146,
         "Location": 0.22728705,
-        "Spa": 0.31799063,
-        "Cleanliness": 0.28728452
+        "Beach": 0.3704123,
+        "Food": 0.26048657,
+        "Cleanliness": 0.28728452,
+        "Service": 0.2447055,
+        "Spa": 0.31799063
       },
       "review_summary": "This hotel offers Restaurant. This hotel offers Spa. This hotel offers Bar.",
       "pros": [
@@ -957,6 +1144,14 @@
         "Wi-Fi"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweonvAZsFNP41ELO--W0PO7KRpjYVmOKypZZqAlCHmPD7qNqm4C9ucwazkTkaKl5Dp5xyejFUxsfAbTZubfGTcsWhNGFEP2OOVNuNvGeVpsbn9paN83zeLGS6GtIgjwFpQpikhG0=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweonvAZsFNP41ELO--W0PO7KRpjYVmOKypZZqAlCHmPD7qNqm4C9ucwazkTkaKl5Dp5xyejFUxsfAbTZubfGTcsWhNGFEP2OOVNuNvGeVpsbn9paN83zeLGS6GtIgjwFpQpikhG0=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweptHp0L1smCl8gm6pb_eDMapTxZqrcLJqEBSkJt8JeOreuT8niuw6nd0NCcmlIbigXll2h3UBNVv6ni6cP9SODbfcBkqR9VqNmRXTri0In3T-jkQ_YGECLrZo2yV2DvwPpdaJVQ=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwer-M7QTz9-mPayTsJO1lcozhpiVJGZbti5ytcgxq_o6iAudSyl0b1QIjPfTP6lFh4l6zNEDKzOOXTmr1Bt2myixnhuMXrYIqjgeaJT3kSIaosKvA8hvjk1WdeXKojbs7LaROtQq=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoAz5ulCSi8_cVhU3_PYiM-Dqws0KehhkDGe5MFcqp81EE32AjBPnxawNrcuWcosBf48kj-82zLcc1cvFjK3HGKAhlfI9brvqEKU-le6M8yzaK1WTn4QM-vEaxD0g2hXMBDzACqVQ=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwepbcOxgP_KjjyXVaE4TprAcVhaTazAOy5vqjCWY5p-5eEsY3uyxADutc9j-4ZUyvkM3DJt2vZsY_FA92ZIjO_sDEvhF1ElBEml1lkm1LNQuvvpHWVtHvpzgYrZcC2PH35S15BW-4g=w800-h600-k-no"
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -1027,11 +1222,11 @@
       "sentiment_score": 0.7275311,
       "aspect_scores": {
         "Food": 0.2616507,
+        "Cleanliness": 0.18955806,
         "Service": 0.24764812,
         "Family": 0.2399715,
-        "Beach": 0.29533342,
         "Location": 0.2815976,
-        "Cleanliness": 0.18955806
+        "Beach": 0.29533342
       },
       "review_summary": "This hotel offers Beach access. This hotel offers Restaurant. This hotel offers Bar.",
       "pros": [
@@ -1051,121 +1246,6 @@
       "discovery_score": 79.71804
     },
     "score": 0.5542423
-  },
-  {
-    "hotel": {
-      "hotel_id": "skiathos-breeze-hotel",
-      "name": "Skiathos Breeze Hotel",
-      "description": "Brand-new 4-star hillside hotel overlooking Koukounaries bay, Skiathos. 55 rooms with pine-forest views, infinity pool, sunset cocktail bar, and complimentary beach shuttle. One of the Sporades' first new-builds in a decade.",
-      "star_rating": 4,
-      "board_type": "Bed & Breakfast",
-      "price_eur": 165.0,
-      "location": "Skiathos, Sporades, Greece",
-      "region": "Sporades",
-      "lat": 39.15,
-      "lng": 23.46,
-      "source_url": "https://www.booking.com/searchresults.html?ss=Koukounaries+Skiathos+Greece+hotel",
-      "amenities": [
-        "Infinity pool",
-        "Bar",
-        "Beach access",
-        "Wi-Fi",
-        "Fitness center"
-      ],
-      "image_url": null,
-      "opened_year": 2026,
-      "reviews": [
-        {
-          "text": "This hotel offers Wi-Fi.",
-          "source": "ml-analysis",
-          "sentiment": 0.57989925,
-          "aspects": [],
-          "is_representative": false
-        },
-        {
-          "text": "This hotel offers Bar.",
-          "source": "ml-analysis",
-          "sentiment": 0.5314997,
-          "aspects": [],
-          "is_representative": true
-        },
-        {
-          "text": "This hotel offers Beach access.",
-          "source": "ml-analysis",
-          "sentiment": 0.5273651,
-          "aspects": [
-            "Beach"
-          ],
-          "is_representative": true
-        },
-        {
-          "text": "Brand new hotel opened in 2026.",
-          "source": "ml-analysis",
-          "sentiment": 0.49659035,
-          "aspects": [],
-          "is_representative": false
-        },
-        {
-          "text": "55 rooms with pine-forest views, infinity pool, sunset cocktail bar, and complimentary beach shuttle",
-          "source": "description",
-          "sentiment": 0.48001957,
-          "aspects": [
-            "Location",
-            "Beach"
-          ],
-          "is_representative": false
-        },
-        {
-          "text": "This hotel offers Fitness center.",
-          "source": "ml-analysis",
-          "sentiment": 0.46894142,
-          "aspects": [],
-          "is_representative": false
-        },
-        {
-          "text": "This hotel offers Infinity pool.",
-          "source": "ml-analysis",
-          "sentiment": 0.4616256,
-          "aspects": [
-            "Beach"
-          ],
-          "is_representative": true
-        },
-        {
-          "text": "Brand-new 4-star hillside hotel overlooking Koukounaries bay, Skiathos",
-          "source": "description",
-          "sentiment": 0.3688709,
-          "aspects": [
-            "Location"
-          ],
-          "is_representative": false
-        }
-      ],
-      "sentiment_score": 0.7026473,
-      "aspect_scores": {
-        "Food": 0.21423292,
-        "Spa": 0.26795924,
-        "Beach": 0.26157084,
-        "Service": 0.22686052,
-        "Location": 0.2928132
-      },
-      "review_summary": "This hotel offers Beach access. This hotel offers Bar. This hotel offers Infinity pool.",
-      "pros": [
-        "This hotel offers Wi-Fi.",
-        "This hotel offers Bar.",
-        "This hotel offers Beach access.",
-        "Brand new hotel opened in 2026.",
-        "55 rooms with pine-forest views, infinity pool, sunset cocktail bar, and complimentary beach shuttle"
-      ],
-      "cons": [
-        "One of the Sporades' first new-builds in a decade"
-      ],
-      "review_count": 1273,
-      "review_rating": 9.0,
-      "value_score": 30.852013,
-      "discovery_score": 79.10787
-    },
-    "score": 0.5207699
   },
   {
     "hotel": {
@@ -1190,6 +1270,14 @@
         "Cinema"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweowO7Ez7Z8PnZaNsjL3dB0p9vF3-whVi_djbiDPhEP2-AyLEIyTyxmG49ExoEAYIqVS6a6fkn8qqrQJ4Qwc4NIuXRVxEit0MhMbZYlUEbkQaAk-9mkm4WYeLNBtyDjGiFM7TXTIsdSxUsI_=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweowO7Ez7Z8PnZaNsjL3dB0p9vF3-whVi_djbiDPhEP2-AyLEIyTyxmG49ExoEAYIqVS6a6fkn8qqrQJ4Qwc4NIuXRVxEit0MhMbZYlUEbkQaAk-9mkm4WYeLNBtyDjGiFM7TXTIsdSxUsI_=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweriE0O9zjVpNfQG9G96rLhQkRMRyN1dD7U_00rbvg5C9rrF1EjbWOEsN1LgaW5OsCtXh-85BC8qU2hjL_RxRRS_9BJD-AAZJ-xfCkZ0Mh-rSlgGDQ3VcBJiqT3snfHN3xl5XgAZ2tosGW4A=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerAHGzpLbqlvtVABiwE8DoDnnjxm4Ta7ZK037-4GfKM6BdeR6yw1D77cUv3LdI9fkrYNMRBEWICEH7Adu6VAW_jSUkgP0vYmOKbdQfTlTd_PvnfRmKEpRxXG73uwWP9HBMz4zQs1leMoBOM=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwep9q5gLaIKnAAIMU57hGv-u19Uwjwq5vqi9qHVx2q6p3taqc3VvDgOrfB7YlAxlAJdTSrp5UQqWDqJic-0-EVdzvaPHn6P_B0yL6vRV1aZ51oCeeBAceGYCBd_aDusJFLsDU8hmWQ=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwepQvPlwKYqqvp847JG7hP4L7XxTcO5zZVvR704jqHoCaunB7hjf-qXBTQrR-_MSmPE0rCSB7RxVJJ1SNDr7d6iaYbKUNExu31z_yPUCFLoH7AfrvAe_9PK1OL8pvhp24xVw8HU=w800-h600-k-no"
+      ],
       "opened_year": 2019,
       "reviews": [
         {
@@ -1227,9 +1315,9 @@
           "is_representative": true
         },
         {
-          "text": "Brand new hotel opened in 2026.",
+          "text": "Brand new hotel opened in 2019.",
           "source": "ml-analysis",
-          "sentiment": 0.49659035,
+          "sentiment": 0.48172742,
           "aspects": [],
           "is_representative": false
         },
@@ -1259,15 +1347,15 @@
           "is_representative": false
         }
       ],
-      "sentiment_score": 0.7323943,
+      "sentiment_score": 0.731775,
       "aspect_scores": {
-        "Beach": 0.32237056,
         "Family": 0.24876603,
-        "Cleanliness": 0.25649574,
         "Location": 0.275797,
+        "Service": 0.21322614,
+        "Cleanliness": 0.25649574,
+        "Food": 0.25299606,
         "Spa": 0.25017706,
-        "Service": 0.21365766,
-        "Food": 0.25299606
+        "Beach": 0.32237056
       },
       "review_summary": "This hotel offers Beach access. This hotel offers Multiple restaurants. This hotel offers Spa.",
       "pros": [
@@ -1275,17 +1363,17 @@
         "This hotel offers Multiple restaurants.",
         "This hotel offers Lagoon pool.",
         "This hotel offers Beach access.",
-        "Brand new hotel opened in 2026."
+        "Brand new hotel opened in 2019."
       ],
       "cons": [
         "Premium pricing"
       ],
       "review_count": 1425,
-      "review_rating": 9.6,
-      "value_score": 24.62061,
-      "discovery_score": 74.67509
+      "review_rating": 9.4,
+      "value_score": 24.087294,
+      "discovery_score": 74.24642
     },
-    "score": 0.501998
+    "score": 0.48654455
   },
   {
     "hotel": {
@@ -1310,6 +1398,14 @@
         "Water sports"
       ],
       "image_url": null,
+      "gallery": [
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/519922468.webp?k=85c48cda8d39a4fdf5db1f201ed2a4cace40dca2c788ec46562d9d72a5935d68&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/474164294.jpg?k=a9495115265d5fbe3c1f2a37f9ef1beb22415b34a7f1aafe9ab55a762085b8a3&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/269107798.jpg?k=5452f1c5fed45494a899bb00d00e59ae9e61e2cf1cadbd09161443bcea658c14&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/725853554.jpg?k=bdfc22ea9d563b5698a80a147b42908ddef6217ab516a57089e30abca1e8c1ae&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/478630794.jpg?k=e9d8a86155cf6455bc1614b559812218efbe30ff63f95725f7b761d7b2e88c48&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/366177020.jpg?k=7e4be36ca85f5ba2e1182b61a7892bf48acb8b349b2658d89b2f1e9592dd5900&o="
+      ],
       "opened_year": 2021,
       "reviews": [
         {
@@ -1347,9 +1443,9 @@
           "is_representative": true
         },
         {
-          "text": "Brand new hotel opened in 2026.",
+          "text": "Brand new hotel opened in 2021.",
           "source": "ml-analysis",
-          "sentiment": 0.49659035,
+          "sentiment": 0.47861475,
           "aspects": [],
           "is_representative": false
         },
@@ -1379,14 +1475,14 @@
           "is_representative": false
         }
       ],
-      "sentiment_score": 0.7171254,
+      "sentiment_score": 0.7163764,
       "aspect_scores": {
         "Food": 0.23652035,
-        "Service": 0.22191617,
         "Location": 0.2896544,
+        "Service": 0.21679834,
+        "Spa": 0.27870482,
         "Family": 0.2678499,
-        "Beach": 0.2774577,
-        "Spa": 0.27870482
+        "Beach": 0.2774577
       },
       "review_summary": "This hotel offers Beach access. This hotel offers Private pools. This hotel offers Spa.",
       "pros": [
@@ -1394,17 +1490,17 @@
         "5-star All-Inclusive in Ierapetra, Crete, Greece.",
         "This hotel offers Beach access.",
         "This hotel offers Private pools.",
-        "Brand new hotel opened in 2026."
+        "Brand new hotel opened in 2021."
       ],
       "cons": [
         "Premium pricing"
       ],
       "review_count": 1767,
       "review_rating": 9.6,
-      "value_score": 21.569708,
-      "discovery_score": 73.632576
+      "value_score": 21.54718,
+      "discovery_score": 73.622086
     },
-    "score": 0.5492639
+    "score": 0.5401693
   },
   {
     "hotel": {
@@ -1429,6 +1525,14 @@
         "Rooftop terrace"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweowO7Ez7Z8PnZaNsjL3dB0p9vF3-whVi_djbiDPhEP2-AyLEIyTyxmG49ExoEAYIqVS6a6fkn8qqrQJ4Qwc4NIuXRVxEit0MhMbZYlUEbkQaAk-9mkm4WYeLNBtyDjGiFM7TXTIsdSxUsI_=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweowO7Ez7Z8PnZaNsjL3dB0p9vF3-whVi_djbiDPhEP2-AyLEIyTyxmG49ExoEAYIqVS6a6fkn8qqrQJ4Qwc4NIuXRVxEit0MhMbZYlUEbkQaAk-9mkm4WYeLNBtyDjGiFM7TXTIsdSxUsI_=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhEVz18aoawBV5RErIy03KKkHA_Exn8GIDJe4Gk3vvI-xpG5PHkJpHx6DbwfA96ViWoXN65Hbp6ghM9vpt_-M0f4Co0xT_mnoW3hr9dXSROC9Nkt6OEzvk-TWzi6oZHbHw3W87iIxwdCniVAyJnhuqC3Dlw5bhb7-rZG5if_UHuY8lxCC97m17gZ=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqn-7D3Y-ETWP9wQjFaXTf_q60d-ddViQJt2DtxgrahsXiLFE4s5lDIyo8EqmjRva2jZb929OOvvuvuryqb_N3vKHLq4451agP1wPOUl-FqQzfiXXWmKegYB515ibpzpF-WOkg2tA=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhFcjDOAF4TWfaKJIA1JlA4obMd2t5rfMvKcpTJjEiUn6emvHS_0N44an-U0SF1TViHaf08pUte3WgxJ1FKpb1yRp7-IuqseVid3FELJKB2w9KAKz0f0AK2CGFFLEUwsVU0zC6FWrXF2vJ7DIem-pkCuW5pVEYukFYYs-w5PKUWtML2icPcLgvWh=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqiTtGtNFrUZSUM0hW17Nttxqam3KWYHCOorhwOoJoljVt7PCD7iOIP5QvF4OxHhvkDx5fmuzAYZWAXRf3trbZvWBRN0IRGR3NL-5iOdw7izrxLqkiMiuln5Z0Zcb8KETQ1Ets7=w800-h600-k-no"
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -1498,12 +1602,12 @@
       ],
       "sentiment_score": 0.7448571,
       "aspect_scores": {
-        "Food": 0.24469355,
-        "Beach": 0.25024918,
         "Location": 0.25369182,
         "Service": 0.22604577,
-        "Spa": 0.27063057,
-        "Family": 0.18665195
+        "Beach": 0.25024918,
+        "Family": 0.18665195,
+        "Food": 0.24469355,
+        "Spa": 0.27063057
       },
       "review_summary": "This hotel offers Beach access. This hotel offers Spa. This hotel offers Multiple restaurants.",
       "pros": [
@@ -1545,6 +1649,14 @@
         "Butler service"
       ],
       "image_url": null,
+      "gallery": [
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/461914647.webp?k=9519bb0736e8f4764716741693b4eece526925a59c74f6904b476fd331701ad3&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/574600707.jpg?k=b8027ed4e5f686746585754aa73a426743c663f3a5e6f17d3d298665212fe5f3&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/613066530.jpg?k=a2e8f49a07fafb008a5d0d039a21058ca27a4b9601ddbc94b90a44bdd4654364&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/437218152.jpg?k=a3b4df18715275d9e03a30b7305d9b676e8bcade9b3142b0d0f988eb4ac87fce&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/449614531.jpg?k=dd46f04cc6b99907f5a32d7d77a2fa983ae11484c0b213aa6e11af0be219c9f3&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/613067137.jpg?k=e501ec5720d275639f9a05365a1d97cf2df0db9cfe13311ee6f1a6f17bc073a1&o="
+      ],
       "opened_year": 2018,
       "reviews": [
         {
@@ -1592,9 +1704,9 @@
           "is_representative": false
         },
         {
-          "text": "Brand new hotel opened in 2026.",
+          "text": "Brand new hotel opened in 2018.",
           "source": "ml-analysis",
-          "sentiment": 0.49659035,
+          "sentiment": 0.47979963,
           "aspects": [],
           "is_representative": false
         },
@@ -1617,14 +1729,14 @@
           "is_representative": false
         }
       ],
-      "sentiment_score": 0.72394156,
+      "sentiment_score": 0.7231784,
       "aspect_scores": {
-        "Spa": 0.2708033,
         "Food": 0.26833138,
-        "Service": 0.27039415,
-        "Value": 0.19859374,
         "Beach": 0.28021735,
-        "Location": 0.21279193
+        "Value": 0.19859374,
+        "Location": 0.21279193,
+        "Spa": 0.2708033,
+        "Service": 0.25806776
       },
       "review_summary": "This hotel offers Restaurant. This hotel offers Spa. This hotel offers Bar.",
       "pros": [
@@ -1640,10 +1752,10 @@
       ],
       "review_count": 1333,
       "review_rating": 9.8,
-      "value_score": 16.29208,
-      "discovery_score": 69.61878
+      "value_score": 16.274906,
+      "discovery_score": 69.6081
     },
-    "score": 0.44617876
+    "score": 0.43352592
   },
   {
     "hotel": {
@@ -1668,6 +1780,14 @@
         "Tennis court"
       ],
       "image_url": null,
+      "gallery": [
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/552532557.webp?k=890f0b8a2d667b84b4c1ed57607b84394986d56f15d4f41e8957d71c53c8592b&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/451106539.jpg?k=be25a00fe003b465c35d0b197a62150c904bfe0b95cb2351b8b4f5b2c0fa2305&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/178580294.jpg?k=a207bcbbcc7564dab799f8384790ad8a700a7135046a60e8c74c15fc13535818&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/146553829.jpg?k=889f1f46a6dd7fb50c4d62a899ccd9334461bfa5c34f8dd02be85d4e467e14e7&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/217016566.jpg?k=ab23a2cc55b6253f4b3ad0a4a028b80e2a63d8fdb65a087c4903433a1668501d&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/621419354.jpg?k=b8531d55f9a7565af141f429167a636304fc843526327441e28de669799230aa&o="
+      ],
       "opened_year": 2023,
       "reviews": [
         {
@@ -1694,9 +1814,9 @@
           "is_representative": true
         },
         {
-          "text": "Brand new hotel opened in 2026.",
+          "text": "Brand new hotel opened in 2023.",
           "source": "ml-analysis",
-          "sentiment": 0.49659035,
+          "sentiment": 0.48284665,
           "aspects": [],
           "is_representative": false
         },
@@ -1737,21 +1857,21 @@
           "is_representative": false
         }
       ],
-      "sentiment_score": 0.7290871,
+      "sentiment_score": 0.7285145,
       "aspect_scores": {
-        "Location": 0.27067035,
-        "Beach": 0.24085775,
-        "Spa": 0.24632442,
-        "Food": 0.25224915,
         "Service": 0.22620791,
-        "Family": 0.23510452
+        "Spa": 0.24632442,
+        "Family": 0.23510452,
+        "Beach": 0.24085775,
+        "Food": 0.25224915,
+        "Location": 0.27067035
       },
       "review_summary": "This hotel offers Spa. This hotel offers Multiple restaurants. This hotel offers Private beach.",
       "pros": [
         "This hotel offers Tennis court.",
         "This hotel offers Golf course.",
         "This hotel offers Multiple restaurants.",
-        "Brand new hotel opened in 2026.",
+        "Brand new hotel opened in 2023.",
         "This hotel offers Fitness center."
       ],
       "cons": [
@@ -1760,10 +1880,10 @@
       ],
       "review_count": 871,
       "review_rating": 10.0,
-      "value_score": 17.71515,
-      "discovery_score": 68.466965
+      "value_score": 17.701237,
+      "discovery_score": 68.45894
     },
-    "score": 0.49567047
+    "score": 0.49090514
   },
   {
     "hotel": {
@@ -1788,6 +1908,14 @@
         "Beach access"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhFt39wj9B1Jj17fhxVU8Y6GqUVZB_DfEOBLTDm6YPrAJWaJHrCEmMc6yqFlKUNv85i3yzQpJ0VY5-_PZTFhCBlHV0LwG_RrS1HqAmETdTkm_8TcnluDJgsVDpDJzbXyU5tcza0YuoIXkjzkAlJfIB8AkDyv81re0IfOEXUUhdklA6sutkbitIyi=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhFt39wj9B1Jj17fhxVU8Y6GqUVZB_DfEOBLTDm6YPrAJWaJHrCEmMc6yqFlKUNv85i3yzQpJ0VY5-_PZTFhCBlHV0LwG_RrS1HqAmETdTkm_8TcnluDJgsVDpDJzbXyU5tcza0YuoIXkjzkAlJfIB8AkDyv81re0IfOEXUUhdklA6sutkbitIyi=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/p/AF1QipNe0QRwWLqMeP0T3nvy5emlyu9BIIeWKp6QfmRh=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/p/AF1QipODGooMt8r5BrR3UAGYONgDykWyicfIMVGw4jx9=w800-h600-p-k-no",
+        "//lh5.googleusercontent.com/proxy/DRmCI-Z9SnZUk2xWYlzqrng1KVO4SPIYW8Nhk-rjue2eiV6zjQHS_vGuQpVJfL6aH-5iXhzQ9YpLAxVBoKwDQd6PXN3ktSnpPPLs-njWPZfVL9nkAeRwH3IulRaDxatnmkII7_8rexs-0lcGlz8rmKS6Y177C1w=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/p/AF1QipOyeiOqwRPW6572mNVdi18qlrs1Mp91IfVvX9SP=w800-h600-p-k-no"
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -1861,13 +1989,13 @@
       ],
       "sentiment_score": 0.6774405,
       "aspect_scores": {
-        "Family": 0.23433022,
+        "Location": 0.22567347,
         "Food": 0.2625731,
-        "Beach": 0.28283972,
-        "Service": 0.23282577,
         "Cleanliness": 0.17454799,
         "Spa": 0.31019342,
-        "Location": 0.22567347
+        "Service": 0.23282577,
+        "Family": 0.23433022,
+        "Beach": 0.28283972
       },
       "review_summary": "This hotel offers Spa. This hotel offers Restaurant. This hotel offers Beach access.",
       "pros": [
@@ -1910,6 +2038,14 @@
         "Yoga"
       ],
       "image_url": null,
+      "gallery": [
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/707125245.webp?k=be21404aa1ae0aaf694dcb4dc8592adfa6fbd5293e90f3d5028ea72401723680&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/836056660.jpg?k=2daf2f733bc5de5cffb7303f9be9b922a8871b1b8960404891c107138bd037b5&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/549415122.jpg?k=6aa38e1d6d970b5756c6e0bd4297a603ce8618ffec17a5e8c2332ac20ab1bc2e&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/793280202.jpg?k=c6c55804fb5ad6713406f1fbc6940d1c42aa1b04e2be521151c1917bf9cc56d9&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/537712661.jpg?k=7e1bc3d7cf53dc7c82f4ba5ffb32e28a063b0546be2b1a98444fd6012a2c0dfa&o=",
+        "https://cf.bstatic.com/xdata/images/hotel/max1024x768/647625522.jpg?k=bd0c0ef58e62097c804d4b8e4d0a0e3cd37e1c6688c31f8ccabce98bbceee3b6&o="
+      ],
       "opened_year": 2023,
       "reviews": [
         {
@@ -1965,9 +2101,9 @@
           "is_representative": false
         },
         {
-          "text": "Brand new hotel opened in 2026.",
+          "text": "Brand new hotel opened in 2023.",
           "source": "ml-analysis",
-          "sentiment": 0.49659035,
+          "sentiment": 0.48284665,
           "aspects": [],
           "is_representative": false
         },
@@ -1979,14 +2115,14 @@
           "is_representative": true
         }
       ],
-      "sentiment_score": 0.74986863,
+      "sentiment_score": 0.7492439,
       "aspect_scores": {
-        "Service": 0.23992895,
-        "Beach": 0.24140038,
-        "Spa": 0.3098575,
-        "Family": 0.19202486,
         "Food": 0.287615,
-        "Location": 0.27428523
+        "Spa": 0.3098575,
+        "Service": 0.23992895,
+        "Family": 0.19202486,
+        "Location": 0.27428523,
+        "Beach": 0.24140038
       },
       "review_summary": "This hotel offers Multiple restaurants. This hotel offers Private beach. This hotel offers Marina.",
       "pros": [
@@ -2002,10 +2138,10 @@
       ],
       "review_count": 20377,
       "review_rating": 8.9,
-      "value_score": 8.927846,
-      "discovery_score": 61.16532
+      "value_score": 8.920408,
+      "discovery_score": 61.156578
     },
-    "score": 0.4472886
+    "score": 0.44391093
   },
   {
     "hotel": {
@@ -2030,6 +2166,14 @@
         "Butler service"
       ],
       "image_url": null,
+      "gallery": [
+        "https://lh3.googleusercontent.com/p/AF1QipOFqtKPdkIfKLCy_GjIOyb7NhTj30DeOxv5fLZh=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/p/AF1QipO-7nHdlsuQXhG_6rbxypipWjk4PcREenlfDVY=w800-h600-p-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwer5Uw1f3n2XJVirJYaOq42iYJAAm1H9DuwvyirDIrLVkteZvD2M9JLEUvs14yoSjMPdcIy-R3aJU9eTSh9eZsz19wHHscLyTVmyXXuTm59mu4XHuEr3LKn4AzW2DDO3jzD0CAE=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-proxy/ALd4DhFRJb1Y_5AE6GdUSpSwczoBo6ZeXoq64Hm7bfyAgoLm_V1ecJGMA0S0TtYHDyxOnQwuzs-EAV5DpmQWGrXwr3RDj6rvj4YcFBpAPvEkyqgvWD8VKetuNaoqI05IsGVu2i-ezIzLS6SSyl2m3PLWbiZml7a7bncFnAUkyteYQjFkOrmNpbGjQK8U=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerOR4d3ZBjK7x2NiWt72Ri-YRTmaVyOndO6_1M2lN7XwYfQWJTOtSVrCeiF4I-LgvK9AbyUND5zbRx9t_aRwJtaoiSqlXN0y4p6Sp5ZSKZl-_tFsHM3S21zClZJbFZd68qeiYHhkEsY3PQP=w800-h600-k-no",
+        "https://lh3.googleusercontent.com/gps-cs-s/AHVAweq3kvaiJmFCNVmfHa9lBr6EcZHa_RMM5QcZDM60IMnr7SJBV3_VfOjTjGY5lyKkpL-w5g2wV82BqBkFk6Gz-H-7Ev0TJuoI-9JpwKP7XlgzS3D8S6Icgllza7IPgSSg8FwvMVge=w800-h600-k-no"
+      ],
       "opened_year": 2026,
       "reviews": [
         {
@@ -2099,12 +2243,12 @@
       ],
       "sentiment_score": 0.7426636,
       "aspect_scores": {
+        "Family": 0.2258248,
         "Beach": 0.22518292,
-        "Food": 0.2716406,
         "Service": 0.263076,
-        "Location": 0.24818645,
         "Spa": 0.34589782,
-        "Family": 0.2258248
+        "Location": 0.24818645,
+        "Food": 0.2716406
       },
       "review_summary": "This hotel offers Restaurant. This hotel offers Boat excursions. This hotel offers Spa.",
       "pros": [
@@ -2118,10 +2262,10 @@
         "No fitness center mentioned",
         "Premium pricing"
       ],
-      "review_count": 1535,
+      "review_count": 5369,
       "review_rating": 9.6,
       "value_score": 8.935139,
-      "discovery_score": 52.5681
+      "discovery_score": 56.32304
     },
     "score": 0.5418818
   }
