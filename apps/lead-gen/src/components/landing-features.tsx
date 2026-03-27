@@ -221,7 +221,7 @@ export function LandingFeatures() {
             </Box>
             <div className={flex({ gap: "3", flexShrink: 0 })}>
               <a
-                href="https://doi.org/10.5281/zenodo.scrapus"
+                href="https://doi.org/10.5281/zenodo.lead-gen"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={button({ variant: "solid", size: "md" })}
