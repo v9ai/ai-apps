@@ -30,8 +30,6 @@ query GetJobs(
       url
       publishedAt
       status
-      is_remote_eu
-      remote_eu_confidence
       applied
       archived
       skills {

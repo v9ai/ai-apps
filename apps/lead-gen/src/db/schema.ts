@@ -93,12 +93,6 @@ export const jobs = pgTable("jobs", {
   score: real("score"),
   score_reason: text("score_reason"),
   status: text("status"),
-  is_remote_eu: boolean("is_remote_eu"),
-  remote_eu_confidence: text("remote_eu_confidence", {
-    enum: ["high", "medium", "low"],
-  }),
-  remote_eu_reason: text("remote_eu_reason"),
-
   // Role classification
   role_ai_engineer: boolean("role_ai_engineer"),
   role_confidence: text("role_confidence", { enum: ["high", "medium", "low"] }),
@@ -177,10 +171,8 @@ export const jobs = pgTable("jobs", {
   sourceCompanyExternalIdx: uniqueIndex("idx_jobs_source_company_external").on(table.source_kind, table.company_key, table.external_id),
   externalIdIdx: index("idx_jobs_external_id").on(table.external_id),
   postedAtIdx: index("idx_jobs_posted_at_created_at").on(table.posted_at, table.created_at),
-  isRemoteEuIdx: index("idx_jobs_is_remote_eu").on(table.is_remote_eu),
   companyKeyIdx: index("idx_jobs_company_key").on(table.company_key),
   sourceKindIdx: index("idx_jobs_source_kind").on(table.source_kind),
-  remoteEuPostedIdx: index("idx_jobs_remote_eu_posted").on(table.is_remote_eu, table.posted_at, table.created_at),
 }));
 
 export type Job = typeof jobs.$inferSelect;

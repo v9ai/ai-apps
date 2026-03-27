@@ -49,13 +49,6 @@ export interface EmailComposeResult {
   body: string;
 }
 
-export interface ClassifyJobResult {
-  is_remote_eu: boolean;
-  confidence: string;
-  reason: string;
-  source: string;
-}
-
 export interface EmailOutreachResult {
   subject: string;
   text: string;

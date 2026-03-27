@@ -7,7 +7,6 @@ extend type Query {
     limit: Int
     offset: Int
     excludedCompanies: [String!]
-    remoteEuConfidence: String
     skills: [String!]
     showAll: Boolean
   ): JobsResponse!
@@ -22,11 +21,6 @@ extend type Mutation {
   ): UserSettings!
   deleteJob(id: Int!): DeleteJobResponse!
   deleteAllJobs: DeleteJobResponse!
-  """
-  Trigger classification/enhancement of all unprocessed jobs.
-  Runs DeepSeek-based classification for remote-EU eligibility on every unclassified job.
-  """
-  processAllJobs(limit: Int): ProcessAllJobsResponse!
   """
   Enhance a job posting by fetching detailed data from the ATS (Applicant Tracking System).
 
@@ -198,15 +192,6 @@ enum JobStatus {
   reported
 }
 
-"""
-Confidence level of a classification result.
-"""
-enum ClassificationConfidence {
-  high
-  medium
-  low
-}
-
 type Job {
   id: Int!
   external_id: String!
@@ -228,10 +213,6 @@ type Job {
   score: Float
   score_reason: String
   status: JobStatus
-  """Whether this job is classified as Remote EU — read directly from the DB column."""
-  is_remote_eu: Boolean!
-  remote_eu_confidence: ClassificationConfidence
-  remote_eu_reason: String
   skills: [JobSkill!]
   skillMatch: SkillMatch
 
@@ -306,38 +287,6 @@ input UserSettingsInput {
 type DeleteJobResponse {
   success: Boolean!
   message: String
-}
-
-"""
-Response from triggering job classification
-"""
-type ProcessAllJobsResponse {
-  success: Boolean!
-  message: String
-  """
-  Number of jobs enhanced with ATS data in this run
-  """
-  enhanced: Int
-  """
-  Number of errors during ATS enhancement
-  """
-  enhanceErrors: Int
-  """
-  Number of jobs classified in this run
-  """
-  processed: Int
-  """
-  Number of jobs classified as EU-remote
-  """
-  euRemote: Int
-  """
-  Number of jobs classified as non-EU
-  """
-  nonEuRemote: Int
-  """
-  Number of errors encountered during classification
-  """
-  errors: Int
 }
 
 """

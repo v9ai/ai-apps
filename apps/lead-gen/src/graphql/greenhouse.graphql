@@ -26,9 +26,6 @@ query GetGreenhouseJobs($search: String, $limit: Int, $offset: Int) {
       publishedAt
       score
       score_reason
-      is_remote_eu
-      remote_eu_confidence
-      remote_eu_reason
       skills {
         tag
         level
@@ -62,9 +59,6 @@ query GetGreenhouseJobById($id: String!) {
     publishedAt
     score
     score_reason
-    is_remote_eu
-    remote_eu_confidence
-    remote_eu_reason
     skills {
       tag
       level
@@ -102,9 +96,6 @@ mutation EnhanceJobFromATS(
       publishedAt
       score
       score_reason
-      is_remote_eu
-      remote_eu_confidence
-      remote_eu_reason
       skills {
         tag
         level
