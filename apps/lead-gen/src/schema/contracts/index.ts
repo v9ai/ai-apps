@@ -13,7 +13,6 @@
 
 export {
   JobStatus,
-  ClassificationConfidence,
   ATSVendor,
   ATSBoardType,
   CompanyCategory,
@@ -29,7 +28,6 @@ export { SKILL_TAXONOMY, SKILL_TAGS } from "./skill-taxonomy";
 export {
   QueueMessage,
   ProcessJobsMessage,
-  JobClassificationResult,
   JobRoleTagsResult,
   ExtractedSkill,
   JobSkillsOutput,

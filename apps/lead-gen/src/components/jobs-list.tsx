@@ -52,10 +52,6 @@ interface JobsListProps {
 
 const getStatusLabel = (status: Job["status"]): string => {
   switch (status) {
-    case "eu_remote":
-      return "eu remote";
-    case "non_eu":
-      return "not remote eu";
     case "enhanced":
       return "enhanced";
     case "reported":
@@ -324,13 +320,9 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
                       size="1"
                       variant="soft"
                       color={
-                        job.status === "eu_remote"
-                          ? "green"
-                          : job.status === "non_eu"
-                            ? "amber"
-                            : job.status === "reported"
-                              ? "orange"
-                              : "gray"
+                        job.status === "reported"
+                          ? "orange"
+                          : "gray"
                       }
                     >
                       {getStatusLabel(job.status)}
