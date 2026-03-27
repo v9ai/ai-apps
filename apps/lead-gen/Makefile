@@ -124,6 +124,7 @@ leads-build: ## Build Rust leadgen crate (release)
 
 leads-pipeline: leads-build ## Run full 5-stage Rust pipeline + score + export
 	@echo "── Phase 4: Rust pipeline ──"
+	@rm -f $(RUST_CRATE)/data/tantivy_index/.tantivy-writer.lock
 	$(RUST_BIN) pipeline $(RUST_CRATE)/data/eu-ai-consultancies.txt --icp-ai-consultancy
 	$(RUST_BIN) score
 	$(RUST_BIN) export $(LEADS_CSV)
