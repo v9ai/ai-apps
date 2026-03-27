@@ -7,6 +7,8 @@ import {
   symptoms,
   appointments,
   healthStateEmbeddings,
+  doctors,
+  familyMembers,
 } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 import { Card, Grid, Text } from "@radix-ui/themes";
@@ -19,6 +21,8 @@ const sections = [
   { table: symptoms, label: "Symptoms", href: "/symptoms" },
   { table: appointments, label: "Appointments", href: "/appointments" },
   { table: healthStateEmbeddings, label: "Health States", href: "/trajectory" },
+  { table: doctors, label: "Doctors", href: "/doctors" },
+  { table: familyMembers, label: "Family", href: "/family" },
 ] as const;
 
 export async function QuickStats() {

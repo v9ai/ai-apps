@@ -2,25 +2,29 @@
 
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { familyMemberDoctors, familyMembers } from "@/lib/db/schema";
+import { familyMemberDoctors, familyMembers, doctors } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-export async function linkDoctorToFamilyMember(formData: FormData) {
+export async function linkDoctorToFamilyMember(
+  familyMemberId: string,
+  doctorId: string,
+): Promise<void> {
   const { userId } = await withAuth();
 
-  const familyMemberId = formData.get("familyMemberId") as string;
-  const doctorId = formData.get("doctorId") as string;
-
-  if (!familyMemberId || !doctorId) return;
-
-  // Verify the family member belongs to this user
   const [member] = await db
     .select({ id: familyMembers.id })
     .from(familyMembers)
     .where(and(eq(familyMembers.id, familyMemberId), eq(familyMembers.userId, userId)));
 
   if (!member) return;
+
+  const [doctor] = await db
+    .select({ id: doctors.id })
+    .from(doctors)
+    .where(and(eq(doctors.id, doctorId), eq(doctors.userId, userId)));
+
+  if (!doctor) return;
 
   await db
     .insert(familyMemberDoctors)
@@ -28,23 +32,28 @@ export async function linkDoctorToFamilyMember(formData: FormData) {
     .onConflictDoNothing();
 
   revalidatePath(`/family/${familyMemberId}`);
+  revalidatePath(`/doctors/${doctorId}`);
 }
 
-export async function unlinkDoctorFromFamilyMember(formData: FormData) {
+export async function unlinkDoctorFromFamilyMember(
+  familyMemberId: string,
+  doctorId: string,
+): Promise<void> {
   const { userId } = await withAuth();
 
-  const familyMemberId = formData.get("familyMemberId") as string;
-  const doctorId = formData.get("doctorId") as string;
-
-  if (!familyMemberId || !doctorId) return;
-
-  // Verify the family member belongs to this user
   const [member] = await db
     .select({ id: familyMembers.id })
     .from(familyMembers)
     .where(and(eq(familyMembers.id, familyMemberId), eq(familyMembers.userId, userId)));
 
   if (!member) return;
+
+  const [doctor] = await db
+    .select({ id: doctors.id })
+    .from(doctors)
+    .where(and(eq(doctors.id, doctorId), eq(doctors.userId, userId)));
+
+  if (!doctor) return;
 
   await db
     .delete(familyMemberDoctors)
@@ -56,4 +65,5 @@ export async function unlinkDoctorFromFamilyMember(formData: FormData) {
     );
 
   revalidatePath(`/family/${familyMemberId}`);
+  revalidatePath(`/doctors/${doctorId}`);
 }

@@ -1,8 +1,8 @@
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { appointments, doctors } from "@/lib/db/schema";
+import { appointments, doctors, familyMembers } from "@/lib/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
-import { Box, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
+import { Badge, Box, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { AddAppointmentForm } from "./add-form";
 import { deleteAppointment } from "./actions";
@@ -14,8 +14,16 @@ async function AppointmentsList() {
   const { userId } = await withAuth();
 
   const rows = await db
-    .select()
+    .select({
+      id: appointments.id,
+      title: appointments.title,
+      provider: appointments.provider,
+      notes: appointments.notes,
+      appointmentDate: appointments.appointmentDate,
+      familyMemberName: familyMembers.name,
+    })
     .from(appointments)
+    .leftJoin(familyMembers, eq(appointments.familyMemberId, familyMembers.id))
     .where(eq(appointments.userId, userId))
     .orderBy(desc(appointments.appointmentDate));
 
@@ -51,6 +59,9 @@ async function AppointmentsList() {
                       {a.notes.slice(0, 100)}{a.notes.length > 100 ? "..." : ""}
                     </Text>
                   )}
+                  {a.familyMemberName && (
+                    <Badge color="purple" variant="soft" size="1">{a.familyMemberName}</Badge>
+                  )}
                 </Flex>
                 <DeleteConfirmButton
                   action={deleteAppointment.bind(null, a.id)}
@@ -69,17 +80,24 @@ async function AppointmentsList() {
 async function AppointmentsPageContent() {
   const { userId } = await withAuth();
 
-  const userDoctors = await db
-    .select({ id: doctors.id, name: doctors.name, specialty: doctors.specialty })
-    .from(doctors)
-    .where(eq(doctors.userId, userId))
-    .orderBy(asc(doctors.name));
+  const [userDoctors, userFamilyMembers] = await Promise.all([
+    db
+      .select({ id: doctors.id, name: doctors.name, specialty: doctors.specialty })
+      .from(doctors)
+      .where(eq(doctors.userId, userId))
+      .orderBy(asc(doctors.name)),
+    db
+      .select({ id: familyMembers.id, name: familyMembers.name, relationship: familyMembers.relationship })
+      .from(familyMembers)
+      .where(eq(familyMembers.userId, userId))
+      .orderBy(asc(familyMembers.name)),
+  ]);
 
   return (
     <>
       <Flex direction="column" gap="3">
         <Heading size="4">Add an appointment</Heading>
-        <AddAppointmentForm doctors={userDoctors} />
+        <AddAppointmentForm doctors={userDoctors} familyMembers={userFamilyMembers} />
       </Flex>
 
       <Suspense fallback={
