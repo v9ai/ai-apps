@@ -205,7 +205,14 @@ fn find_nearest_heading(doc: &Html, _el: &scraper::ElementRef) -> Option<String>
 
 // ── Phase B: Candle Semantic Passage Retrieval ─────────────────────────
 
-/// Discovery queries that capture different aspects of new hotels in the target year window.
+/// Discovery queries for Candle semantic passage ranking.
+///
+/// Each string is embedded with all-MiniLM-L6-v2 and used for cosine similarity
+/// ranking against scraped passages. All queries intentionally include
+/// `DISCOVERY_YEAR_STR` so the embedding space focuses on the target year window.
+///
+/// If you add or change queries, keep `DISCOVERY_YEAR_STR` in every entry —
+/// enforced by `tests::discovery_queries_all_contain_discovery_year_str`.
 fn discovery_queries() -> Vec<String> {
     vec![
         format!("new hotel resort Greece opened {DISCOVERY_YEAR_STR} affordable budget"),
@@ -333,16 +340,21 @@ pub fn extract_hotels(ranked: &[RankedPassage]) -> Vec<Hotel> {
             .and_then(|c| c[1].parse::<f32>().ok())
             .unwrap_or(0.0);
 
-        // Detect year — keep only 2025–2026 window
+        // Detect year — only accept the NEW_HOTEL_MIN_YEAR..=DISCOVERY_YEAR window.
+        // Any year below NEW_HOTEL_MIN_YEAR (currently 2025) is treated as an
+        // established hotel and discarded; only new/recent openings are kept.
+        // Both bounds come from constants.rs — do not inline year literals here.
         let opened_year = year_re.captures(text).and_then(|c| {
             let y: u16 = c[1].parse().ok()?;
             if y >= NEW_HOTEL_MIN_YEAR { Some(y) } else { None }
         });
-        // If no year in the new-hotel window, skip
+        // If neither a window year was parsed nor DISCOVERY_YEAR_STR appears in
+        // the text, this passage is not about a new hotel — skip it entirely.
         if opened_year.is_none() && !text.to_lowercase().contains(DISCOVERY_YEAR_STR) {
             continue;
         }
-        // Use the parsed year; fall back to DISCOVERY_YEAR when the text mentions it without a parseable year
+        // Prefer the parsed year; fall back to DISCOVERY_YEAR only when the
+        // passage mentions the target year in prose but no regex match fired.
         let opened_year = opened_year.or(Some(DISCOVERY_YEAR));
 
         // Detect location

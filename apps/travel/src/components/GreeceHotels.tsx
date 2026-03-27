@@ -486,6 +486,9 @@ export function GreeceHotels({ results, lang }: GreeceHotelsProps) {
                   })}
                 >
                   <StarBadge count={hotel.star_rating} />
+                  {/* Badge threshold: NEW_HOTEL_MIN_YEAR from @/lib/constants.
+                      To change the "new" window, update that constant only —
+                      never hardcode a year here. */}
                   {hotel.opened_year && hotel.opened_year >= NEW_HOTEL_MIN_YEAR && <NewYearBadge year={hotel.opened_year} />}
                   {hotel.value_score !== undefined && (
                     <ValueBadge score={hotel.value_score} label={t.value} />
