@@ -17,6 +17,7 @@ use research::paper::{PaperSource, ResearchPaper};
 use research::scholar::types::SEARCH_FIELDS;
 use research::scholar::SemanticScholarClient;
 use research::vector::VectorStore;
+use research::zenodo::ZenodoClient;
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -103,6 +104,7 @@ async fn main() -> Result<()> {
     let from_iso = from.format("%Y-%m-%d").to_string();
     let from_iso2 = from_iso.clone();
     let from_iso3 = from_iso.clone();
+    let from_iso4 = from_iso.clone();
     let year_str2 = year_str.clone();
 
     let mut handles: Vec<JoinHandle<Vec<PaperSummary>>> = vec![
@@ -111,6 +113,7 @@ async fn main() -> Result<()> {
         tokio::spawn(async move { fetch_openalex(&from_iso2).await }),
         tokio::spawn(async move { fetch_crossref(&from_iso3).await }),
         tokio::spawn(async move { fetch_core(&year_str2).await }),
+        tokio::spawn(async move { fetch_zenodo(&from_iso4).await }),
     ];
 
     // ── Collect & dedup ────────────────────────────────────────────
@@ -353,6 +356,7 @@ fn to_research_paper(s: &PaperSummary, week_tag: &str) -> ResearchPaper {
         "OpenAlex" => PaperSource::OpenAlex,
         "Crossref" => PaperSource::Crossref,
         "CORE" => PaperSource::Core,
+        "Zenodo" => PaperSource::Zenodo,
         _ => PaperSource::Arxiv,
     };
 
@@ -686,6 +690,59 @@ async fn fetch_core(year: &str) -> Vec<PaperSummary> {
     }
 
     info!(source = "CORE", count = papers.len(), "Fetch complete");
+    papers
+}
+
+async fn fetch_zenodo(from_date: &str) -> Vec<PaperSummary> {
+    let token = std::env::var("ZENODO_TOKEN").ok();
+    let client = ZenodoClient::new(token.as_deref());
+    let mut papers = Vec::new();
+
+    for topic in AI_TOPICS.iter() {
+        eprint!("  Zenodo/{topic}...");
+        let label = format!("Zenodo/{topic}");
+        if let Some(resp) = retry(&label, 2, || {
+            client.search_filtered(topic, Some("publication"), Some("mostrecent"), 1, 50)
+        })
+        .await
+        {
+            let records = resp.hits.map(|h| h.hits).unwrap_or_default();
+            let recent: Vec<_> = records
+                .into_iter()
+                .filter(|r| {
+                    r.metadata
+                        .as_ref()
+                        .and_then(|m| m.publication_date.as_deref())
+                        .map(|d| d >= from_date)
+                        .unwrap_or(false)
+                })
+                .collect();
+            eprintln!(" {} papers (since {from_date})", recent.len());
+            for r in recent {
+                let rp = ResearchPaper::from(r);
+                if rp.title.is_empty() {
+                    continue;
+                }
+                papers.push(PaperSummary {
+                    title: rp.title,
+                    authors: rp.authors,
+                    published: rp.published_date.unwrap_or_default(),
+                    categories: rp.categories.unwrap_or_default(),
+                    primary_category: rp.primary_category.unwrap_or_else(|| "AI".into()),
+                    source: "Zenodo".into(),
+                    source_id: rp.source_id,
+                    pdf_url: rp.pdf_url,
+                    doi: rp.doi,
+                    citation_count: rp.citation_count,
+                    abstract_text: rp.abstract_text,
+                });
+            }
+        } else {
+            eprintln!(" skipping after retries exhausted");
+        }
+    }
+
+    info!(source = "Zenodo", count = papers.len(), "Fetch complete");
     papers
 }
 
