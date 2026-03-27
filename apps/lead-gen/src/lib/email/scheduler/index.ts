@@ -10,7 +10,7 @@
  */
 
 import { addDays, addMinutes, isAfter, isBefore } from "date-fns";
-import { createScheduledDate } from "@/lib/date/business-days";
+import { createScheduledDate } from "@/lib/business-days";
 import { EMAIL_SCHEDULE_CONFIG } from "../config";
 import { calculateSchedulingPlan } from "./planning";
 
