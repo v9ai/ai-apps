@@ -4,6 +4,13 @@
 ///
 /// Uses [`TeamLead`] + [`TaskQueue`] for dynamic claiming, retry (max 2 attempts),
 /// and cooperative shutdown — matching the agent-teams coordination model.
+use anyhow::{Context, Result};
+use research::agent::agent_builder;
+use research::scholar::SemanticScholarClient;
+use research::tools::{GetPaperDetail, SearchPapers};
+use std::sync::Arc;
+use tracing::info;
+
 use crate::d1::{D1Client, StudyTopicRow};
 use crate::team::{shutdown_pair, Mailbox, TaskQueue, TeamLead};
 
@@ -16,12 +23,6 @@ pub struct TopicDef {
     pub search_queries: &'static [&'static str],
     pub prompt_focus: &'static str,
 }
-use anyhow::{Context, Result};
-use research::agent::agent_builder;
-use research::scholar::SemanticScholarClient;
-use research::tools::{GetPaperDetail, SearchPapers};
-use std::sync::Arc;
-use tracing::info;
 
 const CATEGORY: &str = "remote-job-search";
 
