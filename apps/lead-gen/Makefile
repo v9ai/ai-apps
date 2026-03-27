@@ -131,9 +131,9 @@ leads-pipeline: leads-build ## Run full 5-stage Rust pipeline + score + export
 	$(RUST_BIN) train
 	@echo "Exported to $(LEADS_CSV)"
 
-leads-import: ## Import Rust CSV into Neon PostgreSQL
+leads-import: ## Import Rust SQLite DB into Neon PostgreSQL
 	@echo "── Phase 5: Import to Neon ──"
-	pnpm tsx scripts/import-rust-leads.ts $(LEADS_CSV)
+	pnpm tsx scripts/import-rust-leads.ts $(RUST_CRATE)/data/leads.db
 
 leads-top: ## Show top 50 leads
 	$(RUST_BIN) top 50

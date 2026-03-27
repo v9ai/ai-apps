@@ -231,6 +231,65 @@ Safety: Max 3 code changes + 2 skill evolutions per cycle. Phase detection (IMPR
 
 ---
 
+## B2B Lead Generation Pipeline Team
+
+Full-lifecycle agent team for the actual lead generation pipeline. Uses Claude Code native agent teams with full parity: dynamic task claiming, dependency graphs, bidirectional messaging, plan-approval gates for outreach.
+
+### Structure
+
+| Path | Agent | Mission |
+|---|---|---|
+| `.claude/skills/pipeline-meta/SKILL.md` | Pipeline Coordinator | Batch strategy, ICP targeting, phase detection |
+| `.claude/skills/pipeline-discover/SKILL.md` | Discovery Scout | Web search, directories, Ashby boards, Common Crawl |
+| `.claude/skills/pipeline-enrich/SKILL.md` | Enrichment Specialist | Category, AI tier, ATS, tech stack, services |
+| `.claude/skills/pipeline-contacts/SKILL.md` | Contact Hunter | Email discovery, verification, LinkedIn, scoring |
+| `.claude/skills/pipeline-outreach/SKILL.md` | Outreach Composer | Email drafting, campaigns (plan-approval required) |
+| `.claude/skills/pipeline-qa/SKILL.md` | QA Auditor | Dedup, completeness, deliverability, score validation |
+| `.claude/commands/pipeline.md` | Orchestrator | Team creation, dependency graph, phase gates |
+
+### Commands
+
+| Command | Action |
+|---|---|
+| `/pipeline` | Full batch cycle (discover → enrich → contact → outreach) |
+| `/pipeline discover [vertical]` | Discovery-only for a specific vertical |
+| `/pipeline enrich` | Enrich un-enriched companies in DB |
+| `/pipeline outreach` | Draft + send campaigns for ready contacts |
+| `/pipeline status` | Show funnel metrics across all stages |
+
+### Pipeline: `discover → enrich → contacts + qa-audit → outreach`
+
+Dependency graph: discover (no deps) → enrich (needs companies) → contacts + qa-audit (parallel after enrichment) → outreach (needs verified contacts, plan-approval required). State in `~/.claude/state/pipeline-*.json`.
+
+---
+
+## Competing Hypotheses Research Squad
+
+Ad-hoc research team for deep company investigation. Created per target, destroyed after synthesis. Uses a "competing hypotheses" protocol where agents actively debate and challenge each other's findings.
+
+### Structure
+
+| Path | Agent | Mission |
+|---|---|---|
+| `.claude/skills/research-analyst/SKILL.md` | Company Analyst | Tech stack, funding, growth, AI adoption, news |
+| `.claude/skills/research-hiring/SKILL.md` | Hiring Intel | Open roles, ATS boards, team growth, org structure |
+| `.claude/skills/research-icp/SKILL.md` | ICP Matcher | Score against ICP: remote? EU? AI? Stage? DM access? |
+| `.claude/commands/research.md` | Orchestrator | Team creation, debate coordination, synthesis |
+
+### Commands
+
+| Command | Action |
+|---|---|
+| `/research {company}` | Full research squad with debate protocol |
+| `/research batch {c1} {c2} ...` | Parallel research squads, comparative summary |
+| `/research score {company}` | Quick ICP scoring only (single agent, no debate) |
+
+### Pipeline: `parallel research → debate → synthesize`
+
+Debate protocol: agents cross-read findings, challenge weak claims, resolve conflicts, update confidence scores. Synthesis produces GO/NO-GO/NEEDS-MORE-INFO verdict with outreach strategy. State in `~/.claude/state/research-*.json`.
+
+---
+
 ## Additional resources
 
 - **[SKILLS-REMOTE-WORK-EU.md](./SKILLS-REMOTE-WORK-EU.md)** — Curated agent skills and subagents for remote EU job market focus.

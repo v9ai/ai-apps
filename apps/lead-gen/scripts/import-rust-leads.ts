@@ -10,9 +10,9 @@
  *   pnpm tsx scripts/import-rust-leads.ts --dry-run ../../crates/leadgen/data/leads.db
  */
 
-import { db } from "@/db";
-import { companies } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import Database from "better-sqlite3";
 
 interface RustCompany {
@@ -42,6 +42,11 @@ function domainToKey(domain: string): string {
 }
 
 async function importFromSqlite(dbPath: string, dryRun: boolean) {
+  // Dynamic import so dotenv has loaded NEON_DATABASE_URL first
+  const { db } = await import("@/db");
+  const { companies } = await import("@/db/schema");
+  const { eq } = await import("drizzle-orm");
+
   const sqlite = new Database(dbPath, { readonly: true });
 
   const rustCompanies = sqlite
