@@ -686,7 +686,7 @@ export class AppStack extends cdk.Stack {
 }
 ```
 
-**CDK Aspects**: Cross-cutting concerns applied to the entire construct tree. Use to enforce policies (e.g., all S3 buckets must have encryption, all lambdas must have X-Ray tracing).
+**CDK Aspects**: Cross-cutting concerns applied to the entire construct tree. Use to enforce policies (e.g., all [S3](/aws-storage-s3) buckets must have encryption, all [lambdas](/aws-lambda-serverless) must have X-Ray tracing).
 
 ```typescript
 class EnforceEncryption implements cdk.IAspect {

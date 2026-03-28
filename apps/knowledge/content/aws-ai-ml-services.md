@@ -24,7 +24,7 @@ Bedrock is AWS's fully managed foundation model (FM) service. It provides API ac
 | Stability AI | Stable Diffusion | Image generation, inpainting |
 | AI21 Labs | Jamba 1.5, Jurassic | Long-context, structured generation |
 
-**Model selection heuristic**: Claude for complex reasoning/coding, Titan Embeddings for RAG pipelines (native AWS integration), Llama for cost-sensitive inference or when fine-tuning is needed, Cohere Command R+ for agentic/tool-use workflows.
+**Model selection heuristic**: Claude for complex reasoning/coding, Titan Embeddings for [RAG pipelines](/advanced-rag) (native AWS integration), Llama for cost-sensitive inference or when [fine-tuning](/fine-tuning-fundamentals) is needed, Cohere Command R+ for agentic/tool-use workflows.
 
 ### Inference Modes
 

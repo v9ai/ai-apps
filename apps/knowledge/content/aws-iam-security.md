@@ -471,7 +471,7 @@ Primary key in one region; replica keys in others. Same key material, different 
 | | Secrets Manager | Parameter Store |
 |---|---|---|
 | **Primary Use** | Database credentials, API keys, OAuth tokens | Configuration data, feature flags, secrets (via SecureString) |
-| **Automatic Rotation** | Yes — built-in Lambda rotation for RDS, Redshift, DocumentDB; custom rotation Lambda | No native rotation (can implement with EventBridge + Lambda) |
+| **Automatic Rotation** | Yes — built-in [Lambda](/aws-lambda-serverless) rotation for RDS, Redshift, DocumentDB; custom rotation Lambda | No native rotation (can implement with EventBridge + Lambda) |
 | **Cost** | $0.40/secret/month + $0.05 per 10,000 API calls | Standard: free. Advanced: $0.05/parameter/month. Higher throughput: $0.05 per 10,000 API calls |
 | **Max Secret Size** | 65,536 bytes | 4,096 bytes (standard), 8,192 bytes (advanced) |
 | **Versioning** | Yes (AWSPENDING, AWSCURRENT, AWSPREVIOUS) | Yes (version labels) |
