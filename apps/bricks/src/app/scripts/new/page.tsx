@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { css } from "styled-system/css";
 import { useSession } from "@/lib/auth-client";
 import {
@@ -153,6 +153,15 @@ export default function WizardPage() {
   const [genError, setGenError] = useState<string | null>(null);
   const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const mocId = searchParams.get("mocId");
+    const mocName = searchParams.get("mocName");
+    if (mocId && mocName) {
+      setInstructions(`Generate a Pybricks script for the LEGO MOC: ${mocName} (${mocId})`);
+    }
+  }, [searchParams]);
 
   const selectHub = useCallback((h: HubType) => {
     setHub(h);
