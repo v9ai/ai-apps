@@ -15,23 +15,9 @@ tags:
 
 The most dangerous assumption in modern AI is that bigger models are universally better. It’s a comforting, linear narrative that justifies enormous compute budgets. ScrapeGraphAI’s release shatters that narrative for a critical, real-world task: structured web extraction. Their fine-tuned 1.7 billion parameter model, [sgai-qwen3-1.7b](https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b), built from a [100k-row dataset](https://huggingface.co/datasets/scrapegraphai/scrapegraphai-100k) of real scraping attempts, doesn’t just match GPT-4o—it beats it on standard benchmarks, at roughly **1/100th** the parameter count. This isn’t an incremental improvement; it’s proof that for well-defined, narrow tasks, a small, purpose-built model fed with high-quality, domain-specific trajectories can outperform a trillion-parameter generalist. The era of throwing GPT-4 at every extraction problem is over for anyone who cares about cost, latency, or data sovereignty.
 
+<!-- truncate -->
+
 ## The Four Artifacts: A Complete, Open-Source Extraction Stack
-
-
-<Flow
-  height={500}
-  nodes={[
-    { id: "n1", position: { x: 250, y: 0 }, data: { label: "Raw Scraping Trajectories" }, type: "input" },
-    { id: "n2", position: { x: 250, y: 150 }, data: { label: "Filter High Quality Examples" } },
-    { id: "n3", position: { x: 250, y: 300 }, data: { label: "Supervised Fine Tuning" } },
-    { id: "n4", position: { x: 250, y: 450 }, data: { label: "Production Quantized Model" }, type: "output" }
-  ]}
-  edges={[
-    { id: "e1-2", source: "n1", target: "n2", label: "success=True filter" },
-    { id: "e2-3", source: "n2", target: "n3", label: "SFT training" },
-    { id: "e3-4", source: "n3", target: "n4", label: "GGUF quantization" }
-  ]}
-/>
 
 The release isn’t just a model. It’s a full stack designed for reproducibility and iteration: a raw dataset, a curated training split, a base model, and a production-ready quantized variant. This complete pipeline is the real story.
 
