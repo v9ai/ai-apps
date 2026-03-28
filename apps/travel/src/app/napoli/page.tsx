@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { NapoliPageContent } from "./NapoliPageContent";
 
 export const metadata: Metadata = {
-  title: "Naples — A Field Guide to Southern Italy's Capital",
+  title: "Naples Family Guide — 7-Day Itinerary, €1,000 Budget for 3",
   description:
-    "Ten essential places in Naples, Italy — from Spaccanapoli's Roman spine to the underground cisterns beneath the city. A curated guide to the Mediterranean's most intense city, plus how to reach Capri by ferry.",
+    "Complete Naples family travel guide for 2 adults + 1 child: ML-optimised 7-day itinerary, €1,000 budget breakdown, kid-friendly places, and ferry connections to Capri. Candle all-MiniLM-L6-v2 family scoring.",
   openGraph: {
-    title: "Naples — A Field Guide to Southern Italy's Capital",
+    title: "Naples Family Guide — 7-Day Itinerary & €1,000 Budget",
     description:
-      "Ten essential places in Naples: baroque piazzas, archaeological museums, subterranean aqueducts, and the world's most serious pizza. Plus the ferry to Capri.",
+      "Seven days in Naples with 2 adults and 1 child on €1,000: budget planner, kid-friendly ratings for every place, day-by-day itinerary from Spaccanapoli to Pompeii, and how to get to Capri.",
     locale: "en_GB",
     type: "website",
   },

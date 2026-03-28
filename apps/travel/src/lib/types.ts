@@ -57,6 +57,37 @@ export interface BookingSummary {
   group_size?: { adults: number; kids: number };
   family_total_cost?: { eur: number };
   family_ml_note?: string;
+  budget_breakdown?: BudgetBreakdown;
+  itinerary?: ItineraryDay[];
+}
+
+// ── Naples itinerary & budget types (from travel-ml Candle pipeline) ──
+
+export type KidEnergyLevel = "low" | "low-medium" | "medium" | "medium-high" | "high";
+
+export interface ItineraryDay {
+  day: number;
+  theme: string;
+  theme_ro?: string;
+  kid_energy: KidEnergyLevel;
+  places: string[];
+  tip: string;
+  tip_ro?: string;
+  cost_estimate_eur: number;
+  all_kid_friendly: boolean;
+}
+
+export interface BudgetBreakdown {
+  hotel_eur: number;
+  food_eur: number;
+  activities_eur: number;
+  transport_eur: number;
+  buffer_eur: number;
+  total_eur: number;
+  stay_days: number;
+  per_person_per_day_eur: number;
+  hotel_per_night_eur?: number;
+  notes?: Record<string, string>;
 }
 
 export interface PlacesData {
