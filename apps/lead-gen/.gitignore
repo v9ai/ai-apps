@@ -80,6 +80,10 @@ public/docs/
 # Rust build artifacts
 **/target/
 
+# MLX fine-tuning (adapters + exported training data)
+mlx-training/models/
+mlx-training/data/
+
 # LlamaIndex local storage
 llamaindex/.storage/
 

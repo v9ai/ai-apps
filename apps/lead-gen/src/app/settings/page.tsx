@@ -12,6 +12,7 @@ import {
   Dialog,
   Callout,
 } from "@radix-ui/themes";
+import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import {
   InfoCircledIcon,
@@ -183,10 +184,10 @@ function SettingsPageContent() {
       <Flex direction="column" gap="6">
         {/* Breadcrumb */}
         <Flex align="center" gap="2">
-          <Link href="/" style={{ textDecoration: "none", color: "var(--gray-11)" }}>
+          <Link href="/" style={{ textDecoration: "none" }} className={css({ color: "ui.secondary" })}>
             <Text size="3" weight="medium">Home</Text>
           </Link>
-          <ChevronRightIcon style={{ color: "var(--gray-9)" }} />
+          <ChevronRightIcon className={css({ color: "ui.tertiary" })} />
           <Text size="3" weight="medium">Settings</Text>
         </Flex>
 
@@ -247,7 +248,7 @@ function SettingsPageContent() {
         {/* Action Buttons */}
         <Flex justify="end" gap="3" align="center">
           {saveStatus === "saved" && (
-            <Flex align="center" gap="2" style={{ color: "var(--green-9)" }}>
+            <Flex align="center" gap="2" className={css({ color: "status.positive" })}>
               <CheckIcon />
               <Text size="2" weight="medium">Saved</Text>
             </Flex>
@@ -297,7 +298,7 @@ function SettingsPageContent() {
             bottom: "24px",
             right: "24px",
             padding: "12px 20px",
-            backgroundColor: toast.type === "success" ? "var(--green-9)" : "var(--red-9)",
+            backgroundColor: toast.type === "success" ? "#30A46C" : "var(--red-9)",
             color: "white",
             borderRadius: 0,
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",

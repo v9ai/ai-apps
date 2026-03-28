@@ -1,6 +1,7 @@
 "use client";
 
 import { Flex, Box, Text } from "@radix-ui/themes";
+import { css } from "styled-system/css";
 
 function renderTextWithBold(text: string) {
   const parts = text.split("**");
@@ -24,7 +25,8 @@ export function MarkdownContent({ content }: { content: string }) {
           key={key++}
           as="p"
           size="2"
-          style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}
+          className={css({ lineHeight: "relaxed" })}
+          style={{ whiteSpace: "pre-wrap" }}
         >
           {renderTextWithBold(textSegment)}
         </Text>
@@ -44,12 +46,11 @@ export function MarkdownContent({ content }: { content: string }) {
         }}
       >
         <pre
+          className={css({ fontSize: "sm", lineHeight: "normal" })}
           style={{
             margin: 0,
             fontFamily: "var(--font-mono, monospace)",
-            fontSize: 12,
             whiteSpace: "pre",
-            lineHeight: 1.5,
           }}
         >
           <code>{codeContent}</code>
@@ -67,7 +68,8 @@ export function MarkdownContent({ content }: { content: string }) {
         key={key++}
         as="p"
         size="2"
-        style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}
+        className={css({ lineHeight: "relaxed" })}
+        style={{ whiteSpace: "pre-wrap" }}
       >
         {renderTextWithBold(textSegment)}
       </Text>
@@ -80,7 +82,8 @@ export function MarkdownContent({ content }: { content: string }) {
         key={0}
         as="p"
         size="2"
-        style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}
+        className={css({ lineHeight: "relaxed" })}
+        style={{ whiteSpace: "pre-wrap" }}
       >
         {renderTextWithBold(content)}
       </Text>

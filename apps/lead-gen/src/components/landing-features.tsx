@@ -330,8 +330,8 @@ export function LandingFeatures() {
                 className={css({
                   display: "inline-flex",
                   alignItems: "center",
-                  fontSize: "14px",
-                  fontWeight: 500,
+                  fontSize: "base",
+                  fontWeight: "medium",
                   color: "var(--gray-9)",
                   textDecoration: "none",
                   textTransform: "lowercase",

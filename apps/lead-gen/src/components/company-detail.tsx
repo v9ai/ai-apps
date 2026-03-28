@@ -1414,9 +1414,9 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                                 code: ({ children, className }) => {
                                   const isBlock = className?.includes('language-');
                                   return isBlock ? (
-                                    <code style={{ display: 'block', background: 'var(--gray-3)', borderRadius: 0, padding: '0.5em 0.75em', fontSize: '0.875em', fontFamily: 'monospace', overflowX: 'auto' }}>{children}</code>
+                                    <code style={{ display: 'block', background: 'var(--gray-3)', borderRadius: 0, padding: '0.5em 0.75em', fontSize: '14px', fontFamily: 'monospace', overflowX: 'auto' }}>{children}</code>
                                   ) : (
-                                    <code style={{ background: 'var(--gray-3)', borderRadius: 0, padding: '2px 5px', fontSize: '0.875em', fontFamily: 'monospace' }}>{children}</code>
+                                    <code style={{ background: 'var(--gray-3)', borderRadius: 0, padding: '2px 5px', fontSize: '14px', fontFamily: 'monospace' }}>{children}</code>
                                   );
                                 },
                                 blockquote: ({ children }) => (

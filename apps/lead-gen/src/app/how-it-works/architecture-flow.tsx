@@ -73,11 +73,11 @@ function AgentNode({ data }: { data: Record<string, unknown> }) {
           <Icon size={16} />
         </div>
         <div style={{ textAlign: "left" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--gray-12)", lineHeight: 1.3 }}>
+          <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--gray-12)", lineHeight: 1.3 }}>
             {label}
           </div>
           {sublabel && (
-            <div style={{ fontSize: 10, color: "var(--gray-10)", marginTop: 1 }}>{sublabel}</div>
+            <div style={{ fontSize: "10px", color: "var(--gray-10)", marginTop: 1 }}>{sublabel}</div>
           )}
         </div>
       </div>
@@ -111,8 +111,8 @@ function DataStoreNode({ data }: { data: Record<string, unknown> }) {
           <Icon size={14} />
         </div>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--gray-12)" }}>{label}</div>
-          {sublabel && <div style={{ fontSize: 9, color: "var(--gray-10)" }}>{sublabel}</div>}
+          <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--gray-12)" }}>{label}</div>
+          {sublabel && <div style={{ fontSize: "9px", color: "var(--gray-10)" }}>{sublabel}</div>}
         </div>
       </div>
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
@@ -139,7 +139,7 @@ function LoopNode({ data }: { data: Record<string, unknown> }) {
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
       <RefreshCw size={12} style={{ color }} />
-      <span style={{ fontSize: 10, fontWeight: 600, color }}>{label}</span>
+      <span style={{ fontSize: "10px", fontWeight: 600, color }}>{label}</span>
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
     </div>
@@ -164,7 +164,7 @@ function ParallelNode({ data }: { data: Record<string, unknown> }) {
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
       <GitFork size={12} style={{ color }} />
-      <span style={{ fontSize: 10, fontWeight: 600, color }}>{label}</span>
+      <span style={{ fontSize: "10px", fontWeight: 600, color }}>{label}</span>
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
     </div>
