@@ -822,3 +822,150 @@ The `domUtils.js` element identification logic, the SHA-256 element hashing, and
 | `skyvern/config.py` | All configuration: LLM keys, step limits, timeouts, token limits |
 | `skyvern/webeye/browser_factory.py` | Browser session creation, CDP connect, anti-detection flags |
 | `pyproject.toml` | Full dependency manifest |
+
+---
+
+## 10. Deep ML Analysis
+
+### 10.1 Vision Model Selection and Configuration
+
+Skyvern does not hardcode a single vision model. The `LLMConfigRegistry` in `skyvern/forge/sdk/api/llm/config_registry.py` defines every supported model with explicit hyperparameters. Key vision-capable configurations used in production (from the registry source):
+
+**OpenAI:**
+- `gpt-4o`: `max_tokens=4096`, `temperature=0`, `supports_vision=True` — primary model for Skyvern 2.0 benchmark runs
+- `gpt-4o-mini`: `max_tokens=4096`, `temperature=0`, `supports_vision=True` — cost-optimization secondary model
+- `gpt-4.1`, `gpt-4.1-mini`: same token limits, vision=True
+- `gpt-5` series: `max_tokens=128000`, `temperature=1` (required), vision=True — for extended reasoning
+- `o3`, `o4-mini`: reasoning models; `reasoning_effort="high"`, no temperature parameter, `supports_vision` varies
+
+**Anthropic:**
+- `claude-3-5-sonnet-latest`: `max_tokens=8192`, vision=True, `use_assistant_prefix=True`
+- `claude-3-7-sonnet-latest`: `max_tokens=64000`, vision=True
+- `claude-sonnet-4`, `claude-opus-4`: `max_tokens=32000`–`64000`, `temperature=1` (required for extended thinking), vision=True
+
+**Google:**
+- `gemini-2.5-pro`, `gemini-2.5-flash`: `max_tokens=65536`, configurable thinking budget, vision=True
+- `gemini-3-flash-preview`: thinking level configurable (medium/minimal)
+
+**Screenshot resolution and token budget:**
+The system does not downsample screenshots before sending to the LLM. Images are captured at the browser's configured viewport width (typically 1280px) and sent as base64-encoded PNG in the prompt. The number of screenshots per step is gated by `MAX_NUM_SCREENSHOTS = 10` (for tall pages, split at scroll positions) and a token count gate in `scraper.py` that skips screenshot inclusion if the HTML element tree already exceeds a token threshold. The primary LLM call targets `max_tokens=4096` output for the action JSON — the input side can be large (element tree + 1–10 screenshots + history), which is why models with >64k context are preferred in production.
+
+**Temperature:** always `0` for deterministic action selection in non-extended-thinking models. Extended-thinking models (Claude 4 series, GPT-5) require `temperature=1` per API constraint and achieve determinism through reasoning-level consistency rather than greedy sampling.
+
+### 10.2 DOM Element Identification — The 4-Character skyvern-id
+
+**Assignment algorithm (from `domUtils.js` behavior and PR analysis):**
+
+The `skyvern-id` attribute is a 4-character alphanumeric string assigned during the CDP-injected DOM traversal. Based on code archaeology:
+- IDs are assigned sequentially per-page-scrape, not persistently across steps
+- The ID space is base-36 (0-9 + a-z), giving 36^4 = 1,679,616 unique IDs per scrape — more than enough for any real page
+- Only **interactable** elements receive an ID; non-interactable elements had their `id` attribute deleted (PR #430: "Remove id for noninteractable and interactable attr in prompt") to reduce prompt noise
+- The `SkyvernElement.get_id()` method returns the cached `_id_cache` attribute set at `__init__` time (PR #1912: 20% speedup from caching dictionary lookups, 273μs → 227μs per call)
+
+**Element hashing (for cross-step deduplication, PR #1784):**
+
+Elements are hashed using a 7-field allowlist strategy in `clean_element_before_hashing()`:
+```
+fields_for_hash = [frame, tagName, attributes, beforePseudoText, text, afterPseudoText, children]
+```
+Fields excluded from hashing: `id` (reassigned each scrape), `rect` (bounding box, changes on scroll). This produces a **structural fingerprint** that survives layout reflows and scroll position changes, enabling the system to re-identify the same element across retries without brittle ID matching.
+
+**ARIA role taxonomy:** The element tree includes ARIA `role` and `aria-label` attributes when present. Elements with `aria-hidden=true` are excluded from the scrape (PR #557). The interactability scoring is heuristic — based on tag name (`input`, `button`, `a`, `select`, `textarea`) and ARIA role semantics, not a trained classifier.
+
+### 10.3 Failure Classifier — Exact 10 Categories and Confidence Thresholds
+
+From `skyvern/forge/failure_classifier.py` (documented in Section 4.2 of the existing report):
+
+| Category | Confidence | Detection signal |
+|---|---|---|
+| `ANTI_BOT_DETECTION` | 0.7 | Keywords: "captcha", "cloudflare", "bot detect", "ip block" |
+| `BROWSER_ERROR` | 0.9 | Exception class names: Browser, CDP, TargetClosed |
+| `NAVIGATION_FAILURE` | 0.9 | `FailedToNavigateToUrl`, "404", "redirect loop" |
+| `PAGE_LOAD_TIMEOUT` | 0.8 | Timeout exceptions, "timeout" substring in reason |
+| `AUTH_FAILURE` | 0.7 | "login fail", "authentication fail", "mfa", "password" |
+| `LLM_ERROR` | 0.9 | LLMError, APIError, RateLimit exception class |
+| `DATA_EXTRACTION_FAILURE` | 0.7 | `ScrapingFailed` exception |
+| `ELEMENT_NOT_FOUND` | 0.8 | `ElementNotFound` exception |
+| `MAX_STEPS_EXCEEDED` | 0.9 | "max steps", "step limit" in reason string |
+| `LLM_REASONING_ERROR` | 0.6 | "wrong action", "invalid action", "hallucin" substring |
+
+The classifier is **purely rule-based** (keyword matching + exception type introspection) — there is no trained ML model. Confidence thresholds were set empirically, not through calibration against a labeled dataset. The lowest threshold (0.6 for `LLM_REASONING_ERROR`) reflects the ambiguity of distinguishing model hallucination from legitimate "I cannot do this" responses. Categories are returned sorted by confidence; downstream routing uses the top category (e.g., anti-bot failures → proxy rotation, auth failures → credential refresh).
+
+This is a significant limitation vs. the academic failure analysis literature (arXiv 2509.14382) which shows that fine-grained modular evaluation of pipeline stages reveals systematic issues missed by binary success/failure metrics.
+
+### 10.4 TaskV2 / Observer Meta-Planning Architecture
+
+TaskV2 (renamed from `ObserverTask` in a 10-part refactor completed mid-2025) is Skyvern's hierarchical planning layer. The architecture from PR and source analysis:
+
+**Three-level hierarchy:**
+1. **Goal decomposition (TaskV2 / `task_v2.j2`):** Given a high-level user goal, produces a sequence of `Thought` objects (renamed from `ObserverThought`). Each `Thought` represents a mini-goal — a specific sub-task achievable within a single browser session. The decomposition is bounded by `MAX_STEPS_PER_TASK_V2 = 25` steps.
+
+2. **Actor loop (per mini-goal, `extract-action.j2`):** Standard 7-step perception→action loop within each mini-goal's scope. `temperature=0`, `max_tokens=4096`.
+
+3. **Validator (`check-user-goal.j2`):** After each mini-goal's actor loop, a separate LLM call evaluates whether the overall goal has been achieved. This is the architectural change that drove the accuracy jump from 68.7% → 85.85% on WebVoyager — without it, the actor loop had no external check on whether its local actions advanced the global goal.
+
+**Chain-of-thought in observer (PR #1513):** The `observer.j2` template was augmented with a chain-of-thought field `extraction_thought` — the LLM reasons about whether information extraction is needed for the current goal state before deciding to extract. Additional boolean fields `require_extraction` and `information_extracted` gate the `user_goal_achieved` final evaluation, preventing false-positive task completion when information still needs to be gathered.
+
+**Practical decomposition depth:** TaskV2 has no explicit max decomposition depth beyond `MAX_STEPS_PER_TASK_V2 = 25` total steps across all mini-goals. There is no recursive sub-decomposition — the hierarchy is flat (one planning call → N actor loops).
+
+### 10.5 Cost Optimization — Element Format, Caching, Batch Processing
+
+**HTML vs. JSON element representation (blog post, ~1,100 task A/B test):**
+
+| Format | Success rate | Cost per task | Token reduction |
+|---|---|---|---|
+| JSON elements | 59.9% | $1.22 | baseline |
+| HTML elements | 63.8% | $1.08 | ~11.4% cost, ~55.7% tokens per element |
+
+Switching `<input id="Pwir" name="..." type="text" aria-label="Last Name">` (31 tokens) from JSON (70 tokens) saves 55.7% per element. The success rate improvement (+3.9%) is attributed to reduced hallucination from shorter context — consistent with attention dilution effects in long-context transformers.
+
+**Element caching:** The `id_to_css_dict` and `id_to_element_dict` are cached in `SkyvernContext` per step, avoiding re-traversal of the DOM for already-seen elements. The allowlist-based hashing (Section 10.2) enables cross-step identity — if the same structural element appears on the next step, its cached data is reused.
+
+**Screenshot token gating:** Scraper.py gates screenshot inclusion based on a token count threshold for the HTML element tree. If the tree alone is large, screenshots are omitted to stay within the model's effective context limit — a hard cost ceiling rather than a learned routing policy.
+
+**No batch screenshot processing:** Screenshots are taken per-step synchronously. There is no pre-fetching or batch processing of visual inputs. Each step incurs 1–10 image API calls (depending on page height). This is the primary cost driver for vision-capable models: GPT-4V charges per image token, making each page view 10–20× more expensive than reading the element tree alone.
+
+### 10.6 What Skyvern Is and Is Not Using as "ML"
+
+**Actually ML (LLM inference):**
+- Primary action planning (vision LLM, every step)
+- Goal completion verification (LLM, every step — separate call)
+- SVG/canvas shape → text description (secondary LLM call per element)
+- TaskV2 goal decomposition (LLM, per task)
+- `ConditionalBlock` branch evaluation (LLM, per workflow branch)
+
+**NOT ML — rule-based or heuristic:**
+- Failure classification (keyword matching with fixed thresholds)
+- Element interactability scoring (tag-name + ARIA heuristics)
+- Screenshot bounding box annotation (Pillow geometry — not vision)
+- DOM traversal and ID assignment (JavaScript DOM API)
+- Element hashing (SHA-style hash of 7 structural fields)
+- Token counting (tiktoken deterministic tokenization)
+- CAPTCHA solving (external service: 2Captcha / CapMonster integration, not in-house ML)
+
+**Notable gap:** There is no local vision model running on-device. All screenshots are sent to cloud LLM APIs. This means per-step latency is bounded by API round-trip time (typically 2–5s for GPT-4o), not local inference speed.
+
+---
+
+## 11. Research Papers & Prior Art
+
+| Paper | Authors | Year | Venue | Relevance | Key Finding |
+|---|---|---|---|---|---|
+| [WebVoyager: Building an End-to-End Web Agent with Large Multimodal Models](https://arxiv.org/abs/2401.13919) | He et al. (Zhejiang U. + ByteDance) | 2024 | arXiv / ACL | Defines the WebVoyager benchmark (643 tasks, 15 websites) that Skyvern 2.0 targets; uses GPT-4V + Set-of-Mark bounding boxes | 59.1% task success rate with GPT-4V; auto-eval via GPT-4V achieves 85.3% agreement with human judgment; Skyvern 2.0 reaches 85.85% on this benchmark — a major jump |
+| [GPT-4V(ision) is a Generalist Web Agent, if Grounded (SeeAct)](https://arxiv.org/abs/2401.01614) | Zheng et al. (OSU NLP) | 2024 | ICML | Most direct prior art to Skyvern: GPT-4V as web agent with HTML grounding; evaluated on Mind2Web | 51.1% task completion with oracle grounding; grounding gap of 20–25% remains; Skyvern addresses grounding by using element IDs (not coordinates) to resolve actions |
+| [Mind2Web: Towards a Generalist Agent for the Web](https://github.com/OSU-NLP-Group/Mind2Web) | Deng et al. (OSU) | 2023 | NeurIPS Spotlight | Standard offline web agent benchmark; 2,000+ tasks across 137 websites, 31 domains | Established the HTML-based element selection paradigm Skyvern's element tree inherits; multi-choice ranking formulation for action selection |
+| [VisualWebArena: Evaluating Multimodal Agents on Realistic Visually Grounded Web Tasks](https://arxiv.org/abs/2401.13649) | Koh et al. (CMU) | 2024 | arXiv | 910 visually grounded tasks across 3 simulated web environments; extends WebArena with image-based reasoning | Adds vision-required tasks (image search, visual comparison) not covered by text-only agents; most relevant for Skyvern's vision+DOM dual-modality claim |
+| [Detecting Pipeline Failures through Fine-Grained Analysis of Web Agents](https://arxiv.org/abs/2509.14382) | Multiple | 2025 | arXiv | Directly addresses Skyvern's failure classification problem — modular pipeline decomposition reveals intermediate errors missed by binary success/failure | Proposes staged error taxonomy (context fragmentation, grounding errors, HTML ambiguity); augments Mind2Web with alternative valid action annotations; extends SeeAct architecture — results show systematic failures that Skyvern's 10-category keyword classifier cannot detect |
+| [An Illusion of Progress? Assessing the Current State of Web Agents](https://arxiv.org/abs/2504.01382) | Multiple | 2025 | arXiv | Critical meta-analysis of web agent benchmarks; benchmarks Skyvern 2.0 indirectly through WebBench | Most agents don't outperform SeeAct (2024 baseline); live-website evals significantly harder; benchmark gaming common; Skyvern 2.0's 85.85% on WebVoyager partially explained by benchmark-specific optimizations |
+| [How we cut token count by 11% and boosted success rate by 3.9% by using HTML instead of JSON](https://www.skyvern.com/blog/how-we-cut-token-count-by-11-and-boosted-success-rate-by-3-9-by-using-html-instead-of-json-in-our-llm-calls) | Skyvern team | 2024 | Blog (A/B test, ~1,100 tasks) | Internal engineering study: HTML vs. JSON element format impact on LLM performance | HTML representation: -11.4% cost ($1.22→$1.08/task), +3.9% success rate (59.9%→63.8%); shorter context reduces hallucination rate |
+| [A Survey of WebAgents: Towards Next-Generation AI Agents for Web Automation](https://arxiv.org/abs/2503.23350) | Multiple | 2025 | arXiv | Survey of 2024–2025 web agent landscape; positions Skyvern in the broader research ecosystem | Classifies agents by perception (HTML-only, vision-only, multimodal), action space (clicks, forms, JS), and planning depth; Skyvern falls in multimodal + deep planning category |
+| [Building Browser Agents: Architecture, Security, and Practical Solutions](https://arxiv.org/abs/2511.19477) | Multiple | 2025 | arXiv | Practical engineering constraints for production browser agents | Security considerations (prompt injection via webpage content), resource isolation, cost-step trade-offs — all relevant to Skyvern's AGPL-licensed deployment model |
+
+**On Skyvern's 85.85% WebVoyager score in research context:**
+
+WebVoyager (643 tasks, 15 sites) is considered a relatively easy benchmark by 2025 standards. Magnitude's open-source agent achieves 94% on the same benchmark. The WebBench (5,750 tasks, 452 sites) that Skyvern reports 64.4% on is a more realistic evaluation. For reference:
+- Anthropic Sonnet 3.7 CUA: highest on WebBench overall
+- Skyvern 2.0: competitive but not leading on write-heavy tasks (form filling, 2FA, file downloads)
+- WebArena (sandboxed, complex multi-step): human baseline ~78%; GPT-4 agents initially ~14%; no published Skyvern score on WebArena as of March 2026
+
+**Academic gap:** Skyvern has not published a peer-reviewed paper. The 85.85% benchmark claim is from a blog post / YC launch post, with all tests run in Skyvern Cloud (their own infrastructure) rather than a standardized evaluation environment. Independent replication has not been published.

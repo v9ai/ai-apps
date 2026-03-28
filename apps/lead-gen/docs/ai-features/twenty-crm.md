@@ -621,3 +621,152 @@ This keeps Twenty as the authoritative CRM + workflow engine while the lead-gen 
   - `packages/twenty-server/src/engine/core-modules/tool-provider/**`
   - `packages/twenty-server/src/modules/workflow/**`
   - `packages/twenty-server/src/engine/metadata-modules/ai/ai-models/ai-providers.json`
+
+---
+
+## 10. Deep ML Analysis
+
+### 10.1 AgentTurnGraderService — Exact LLM-as-Judge Implementation
+
+**File:** `packages/twenty-server/src/engine/metadata-modules/ai/ai-agent-monitor/agent-turn-grader.service.ts`
+
+**Rubric (verbatim from source code, four dimensions):**
+```
+1. Task Completion: Did the agent accomplish what the user asked?
+2. Tool Usage: Were tools used correctly and appropriately?
+3. Response Quality: Is the response clear, accurate, and helpful?
+4. Error Handling: Were errors handled gracefully?
+```
+
+**Scale:** 0–100 integer score (not the 1–5 Likert scale used by Prometheus; this is a continuous 0–100 rubric).
+
+**Output format:** Strict JSON `{"score": <number>, "comment": "<string max 200 chars>"}`. No chain-of-thought reasoning is emitted. The `comment` field is the only human-readable diagnostic output.
+
+**Model used for grading:** `AUTO_SELECT_FAST_MODEL_ID` — the cheapest/fastest model configured for the workspace at grading time. This means grading quality is model-dependent and can degrade if a workspace operator selects a weak fast model. There is no enforced minimum model capability for the grader.
+
+**Score storage schema:**
+```typescript
+// AgentTurnEvaluationEntity
+turnId: string;          // FK → AgentTurnEntity
+score: number;           // 0-100
+comment: string;         // max 200 chars
+createdAt: Date;
+workspaceId: string;     // multi-tenant scoping
+```
+
+**Trigger:** The grader runs asynchronously after each turn completes — it does not block the chat response stream. Grading is best-effort: if the grader LLM call fails, the turn is still stored without an evaluation score.
+
+**Limitations vs. academic LLM-as-judge standards:**
+- No position-bias mitigation (single-pass, no swap re-scoring)
+- No reference answer (`evaluationInputs` seeds exist but no automated runner invokes them against the grader)
+- No calibration against human preference labels
+- 200-character comment limit means the grader cannot produce rationale chains for debugging
+
+**Comparison to Prometheus (Kim et al., ICLR 2024):** Prometheus uses a 1–5 Likert scale with full rubric definitions per score level, a reference answer, and chain-of-thought feedback. Twenty's 0–100 rubric is coarser (fewer reference anchors per score level) and has no reference answer, making it susceptible to score inflation on verbally fluent but factually wrong agent responses.
+
+### 10.2 Tool Registry Lazy-Loading — Two-Phase Protocol
+
+**The problem it solves:** With 9 tool categories × N workspace objects × 6 CRUD operations each, a medium Twenty workspace with 20 custom objects generates ~120+ tool descriptors. At ~200 tokens per tool schema, that is 24,000+ tokens just for tool definitions — exceeding 25% of a 96k-token context window before a single message is processed.
+
+**The three meta-tools (pre-loaded into every system prompt):**
+```typescript
+get_tool_catalog   // returns lightweight index: {name, description, category} for all tools
+learn_tools        // accepts string[] of tool names; returns full JSON Schema for each
+execute_tool       // accepts {toolName: string, arguments: object}; dispatches to ToolExecutorService
+```
+
+**Protocol flow:**
+```
+1. Model reads get_tool_catalog output → sees ~1,000-token index (names + one-line descriptions)
+2. Model decides it needs "create_company" → calls learn_tools(["create_company"])
+3. learn_tools returns full Zod-generated JSON Schema (~200 tokens) for that tool only
+4. Model calls execute_tool("create_company", {name: "Acme", domainName: {primaryLinkUrl: "acme.com"}})
+5. ToolExecutorService dispatches to DatabaseToolProvider → WorkspaceEntityManager → INSERT
+```
+
+**Context budget implication:** By lazy-loading, the model uses only ~1,000 tokens for the full catalog index vs. 24,000+ tokens for all schemas upfront. This is why Twenty can support 100+ tools without hitting GPT-4's function-calling limits (~128 parallel tools in OpenAI's implementation, but token budget is the real constraint).
+
+**Comparison to standard function calling:** OpenAI function calling loads all tool schemas into the system context unconditionally. The lazy-load pattern is a form of retrieval-augmented tool calling — the model retrieves the tool spec only when it decides to use it. This is architecturally similar to the "lazy-MCP" pattern (voicetreelab/lazy-mcp) documented separately in the MCP ecosystem.
+
+**Failure mode at scale:** If the model requests `learn_tools` on 10+ tools in a single step (e.g., for complex multi-entity operations), the schema tokens still accumulate in context. There is no eviction of previously loaded schemas once learned. Over a 300-step agentic run with diverse tool usage, context fills with both tool schemas and tool results — this is the primary reason the 300-step cap exists.
+
+### 10.3 Vercel AI SDK v5 (LanguageModelV3) — Custom Provider Interface
+
+**Spec version in AI SDK v5:** `LanguageModelV3` (not V1 or V2 — the spec version was incremented in the v5 alpha cycle).
+
+**Minimum interface to implement a custom provider:**
+
+```typescript
+interface LanguageModelV3 {
+  readonly specificationVersion: 'v3';
+  readonly provider: string;           // e.g., "my-provider"
+  readonly modelId: string;            // e.g., "my-model-v1"
+  readonly supportedUrls: Record<string, RegExp[]>; // IANA media types → URL patterns for multimodal
+
+  doGenerate(options: LanguageModelV3CallOptions): Promise<{
+    text?: string;
+    toolCalls?: LanguageModelV3ToolCall[];
+    finishReason: 'stop' | 'length' | 'tool-calls' | 'error' | 'other';
+    usage: { promptTokens: number; completionTokens: number };
+    rawCall: { rawPrompt: unknown; rawSettings: Record<string, unknown> };
+  }>;
+
+  doStream(options: LanguageModelV3CallOptions): Promise<{
+    stream: ReadableStream<LanguageModelV3StreamPart>;
+    rawCall: { rawPrompt: unknown; rawSettings: Record<string, unknown> };
+  }>;
+}
+```
+
+**What `LanguageModelV3CallOptions` contains:** prompt (array of user/assistant/tool messages in the AI SDK's internal `LanguageModelV3Prompt` format), `tools` (tool definitions), `toolChoice`, `temperature`, `maxTokens`, `stopSequences`, `headers`.
+
+**How Twenty uses it:** `AiModelRegistryService` builds the provider via `createAmazonBedrock()`, `@ai-sdk/openai`, etc. For `AI_SDK_OPENAI_COMPATIBLE`, it calls `createOpenAICompatible({ name, baseURL, apiKey })` from `@ai-sdk/openai-compatible`. This means any server exposing the OpenAI `/v1/chat/completions` API (including `mlx_lm.server` running Qwen2.5-3B locally) is registerable as a Twenty AI provider with no code changes.
+
+**Provider factory pattern:**
+```typescript
+const provider: ProviderV3 = {
+  languageModel: (modelId: string) => new MyLanguageModelV3(modelId),
+  textEmbeddingModel: (modelId: string) => new MyEmbeddingModelV3(modelId), // optional
+};
+```
+
+### 10.4 The 300-Step `generateText` Limit — Failure Modes
+
+**Why 300:** The `MAX_STEPS: 300` constant in `ChatExecutionService` and `AgentAsyncExecutorService` is a hard circuit-breaker, not a performance tuning parameter. Without it, a buggy tool or a confused model could loop indefinitely (tool call → tool error → model retries → tool call again). The `stopWhen: stepCountIs(300)` predicate in the Vercel AI SDK `generateText` call is the enforcement mechanism.
+
+**Failure modes observed at scale:**
+
+1. **Context accumulation overflow:** Each tool call appends ~500–2,000 tokens (tool call + tool result) to the context. At step 300 with average 1,000 tokens/step, the accumulated tool history alone is 300,000 tokens — exceeding all current commercial LLM context windows. In practice, models degrade in coherence well before step 300 as the context fills with stale intermediate results.
+
+2. **Hard stop without cleanup:** When `stepCountIs(300)` triggers, `generateText` throws a `TooManyStepsError`. If this occurs during a multi-step record creation workflow, there is no transactional rollback — partial records may be written. The codebase has no compensating transaction logic.
+
+3. **Tool repair loop amplification:** `experimental_repairToolCall` can fire a corrective LLM call on each malformed tool call. In adversarial or edge-case inputs, this can double the effective step count (each failed call + repair = 2 steps). In extreme cases, 150 actual operations consume all 300 steps.
+
+4. **Cost explosion:** At $15/1M output tokens (GPT-4.1), a 300-step run generating 500 tokens/step in responses = 150k tokens = $2.25 in output alone per single agent run. For high-volume workflows, this is a significant cost concern without per-agent step budgets.
+
+5. **Vercel serverless timeout:** Separately from the step count, a known Vercel Workflow bug causes serverless functions to hang for the full 300-second timeout even after the step logic completes in milliseconds, burning idle compute. This is distinct from the AI SDK step count but compounds cost at scale.
+
+**Mitigation pattern (not in Twenty's codebase):** Checkpoint the agent state every N steps to a durable store (Redis/DB), enabling resume after failure. This is a known gap in Twenty's agentic architecture as of March 2026.
+
+---
+
+## 11. Research Papers & Prior Art
+
+| Paper | Authors | Year | Venue | Relevance | Key Finding |
+|-------|---------|------|-------|-----------|-------------|
+| Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena (arXiv:2306.05685) | Zheng, Chiang, Sheng, Zhuang, Wu, Zhuang, Lin, Li, Li, Xing, Zhang, Gonzalez, Stoica | 2023 | NeurIPS 2023 Datasets & Benchmarks | Founding paper for Twenty's AgentTurnGraderService methodology | GPT-4 as judge achieves >80% agreement with human preferences (matching inter-human agreement); documents position bias, verbosity bias, self-enhancement bias; establishes LLM-as-judge as viable with mitigation strategies; MT-Bench (multi-turn Q&A) and Chatbot Arena (30k crowdsourced battles) are the benchmark datasets |
+| Prometheus: Inducing Fine-grained Evaluation Capability in Language Models (arXiv:2310.08491) | Kim, Shin, Cho, Jang, Longpre, Lee, Yun, Shin, Kim, Thorne, Seo | 2023 | ICLR 2024 | Open-source evaluator LLM; prior art for Twenty's 0–100 grading rubric design | LLaMA-2-13B-Chat fine-tuned on 1K rubrics / 20K instructions / 100K GPT-4 feedbacks; 1–5 Likert scale with reference answer + custom rubric; Pearson correlation with humans: 0.897 (vs GPT-4's 0.882); shows that fine-tuned evaluators match GPT-4 quality at fraction of cost — directly applicable to replacing Twenty's `AUTO_SELECT_FAST_MODEL_ID` grader with a purpose-trained evaluator |
+| Agent-as-a-Judge: Evaluate Agents with Agents (arXiv:2410.10934) | Zhuge, Zhao, Ashley, Wang, Khizbullin, Xiong, Liu, Chang, Krishnamoorthi, Tian, Shi, Chandra, Schmidhuber | 2024 | arXiv | Extends LLM-as-judge to multi-step agentic evaluation; directly applicable to Twenty's 300-step workflow agents | Agent evaluators achieve ~90% agreement with human experts vs ~70% for LLM-as-judge on final output; DevAI benchmark: 55 AI development tasks, 365 hierarchical requirements; enables intermediate-step evaluation not possible with Twenty's current single-turn grader; 97% cost reduction vs human evaluation |
+| CRMArena: Understanding the Capacity of LLM Agents to Perform Professional CRM Tasks in Realistic Environments (arXiv:2411.02305) | Huang, Prabhakar, Dhawan, Mao, Wang, Savarese, Xiong, Laban, Wu | 2024 | NAACL 2025 | First benchmark for LLM agents on CRM tasks; direct evaluation context for Twenty's AI agents | Best models achieve <40% success with ReAct, <55% with function calling on 9 professional CRM tasks (service agent, analyst, manager personas); 16 industrial objects including accounts, orders, knowledge articles, cases; shows current LLMs struggle with "function-calling and rule-following" in realistic CRM environments — directly characterizes Twenty's AI agent reliability ceiling |
+| LLM-Based Agents for Tool Learning: A Survey (Springer DSE, 2025) | Various | 2025 | Data Science and Engineering (Springer) | Survey of tool-augmented LLM agents; contextualizes Twenty's tool registry design | Three-step tool use loop: invocation trigger → tool retrieval → argument generation; lazy-loading pattern (Twenty's `learn_tools`) is identified as a key technique for handling large tool sets without context saturation; survey validates Twenty's two-phase protocol as aligned with best practices |
+| Retrieval-Augmented Generation with Knowledge Graphs for Customer Service QA (arXiv:2404.17723) | Xu, Cruz, Guevara, Wang, Deshpande, Wang, Li | 2024 | SIGIR 2024 | Relevant to augmenting Twenty's `search_help_center` and `search_conversations` tools | KG-augmented RAG outperforms text-only RAG by 77.6% MRR at LinkedIn; median issue resolution time reduced 28.6%; Twenty has no vector search at all — this paper represents the next logical capability upgrade for Twenty's CRM-native RAG |
+
+### Annotation notes
+
+**MT-Bench / Chatbot Arena (Zheng et al., 2023, NeurIPS):** The founding paper of the LLM-as-judge methodology that Twenty's `AgentTurnGraderService` implements. Three findings are critical for Twenty: (1) position bias — the judge prefers the first response when presented with alternatives; (2) verbosity bias — longer responses score higher regardless of quality; (3) self-enhancement bias — a model rates its own outputs higher. Twenty's single-pass grader with a 200-character comment cap is especially susceptible to verbosity bias: a multi-step agent that outputs verbose intermediate results will score higher than a concise agent that accomplishes the same task in fewer tokens.
+
+**Prometheus (Kim et al., 2023, ICLR 2024):** The key takeaway for Twenty is that the 0–100 scale with only 4 unlabeled dimensions is a weaker rubric than Prometheus's 1–5 scale with per-level definitions and a reference answer. The 200-character comment limit also prevents the diagnostic feedback that makes Prometheus useful for prompt debugging. An improved Twenty grader would: use a 1–5 Likert scale per dimension with explicit level definitions, provide a reference answer in `evaluationInputs`, and lift the comment length limit for development environments.
+
+**CRMArena (Huang et al., 2024, NAACL):** The most operationally relevant paper. Best available LLMs (GPT-4o, Claude) achieve only 35–55% task success on realistic CRM workflows. Twenty's `experimental_repairToolCall` mitigates some of the function-calling failures, but the fundamental gap (multi-step rule-following in schema-heavy environments) is not addressable by repair alone. The paper's recommendation — task decomposition into atomic sub-steps with explicit success criteria — aligns with Twenty's workflow step design but suggests that AI_AGENT workflow steps need clearer per-step success criteria and failure conditions.
+
+**Tool Learning Survey (2025):** Validates that Twenty's lazy-loading two-phase protocol (`get_tool_catalog` → `learn_tools` → `execute_tool`) is the correct architectural response to large tool sets. The survey identifies that 50 tool definitions consume 20,000–25,000 tokens; Twenty's catalog index approach compresses this to ~1,000 tokens regardless of tool count, which is a meaningful practical advance over raw function-calling implementations.
