@@ -519,6 +519,162 @@ function StageFlow({
   );
 }
 
+// ── Pipeline Stats Bar ───────────────────────────────────────────────────────
+
+const pipelineStats = [
+  { label: "5 stages", color: "violet" as const },
+  { label: "4 LLM calls", color: "purple" as const },
+  { label: "2-pass refinement", color: "amber" as const },
+  { label: "NeverBounce verified", color: "green" as const },
+];
+
+function PipelineStatsBar() {
+  return (
+    <Flex align="center" gap="2" wrap="wrap" mb="5">
+      {pipelineStats.map((stat) => (
+        <Badge key={stat.label} color={stat.color} variant="soft" size="2"
+          style={{ fontVariantNumeric: "tabular-nums", letterSpacing: "0.01em" }}>
+          {stat.label}
+        </Badge>
+      ))}
+    </Flex>
+  );
+}
+
+// ── Node Type Legend ─────────────────────────────────────────────────────────
+
+function NodeTypeLegend() {
+  return (
+    <Card mb="5" style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+      <Flex align="center" gap="2" mb="2">
+        <BarChart3 size={13} style={{ color: "var(--gray-9)" }} />
+        <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.07em" }}>
+          Node Types
+        </Text>
+      </Flex>
+      <Flex gap="4" wrap="wrap">
+        <Flex align="center" gap="2">
+          <div style={{
+            width: 28, height: 20, borderRadius: 6,
+            background: "color-mix(in srgb, var(--violet-9) 14%, var(--color-background))",
+            border: "1.5px solid color-mix(in srgb, var(--violet-9) 45%, transparent)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Brain size={10} style={{ color: "var(--violet-9)" }} />
+          </div>
+          <Flex direction="column" gap="0">
+            <Text size="1" weight="medium">agent</Text>
+            <Text size="1" color="gray">processing step</Text>
+          </Flex>
+        </Flex>
+        <Flex align="center" gap="2">
+          <div style={{
+            width: 28, height: 20, borderRadius: 4,
+            background: "color-mix(in srgb, var(--green-9) 10%, var(--color-background))",
+            border: "1.5px solid color-mix(in srgb, var(--green-9) 35%, transparent)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Database size={10} style={{ color: "var(--green-9)" }} />
+          </div>
+          <Flex direction="column" gap="0">
+            <Text size="1" weight="medium">dataStore</Text>
+            <Text size="1" color="gray">persistence</Text>
+          </Flex>
+        </Flex>
+        <Flex align="center" gap="2">
+          <div style={{
+            width: 28, height: 20, borderRadius: 10,
+            background: "color-mix(in srgb, var(--orange-9) 16%, var(--color-background))",
+            border: "1.5px solid color-mix(in srgb, var(--orange-9) 40%, transparent)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Filter size={10} style={{ color: "var(--orange-9)" }} />
+          </div>
+          <Flex direction="column" gap="0">
+            <Text size="1" weight="medium">condition</Text>
+            <Text size="1" color="gray">routing / filter</Text>
+          </Flex>
+        </Flex>
+      </Flex>
+    </Card>
+  );
+}
+
+// ── Stage Connector ──────────────────────────────────────────────────────────
+
+function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: string }) {
+  return (
+    <Flex align="center" justify="center" direction="column" gap="1" py="1">
+      <div style={{
+        width: 2,
+        height: 16,
+        background: "linear-gradient(to bottom, var(--gray-a5), var(--gray-a7))",
+        borderRadius: 1,
+      }} />
+      <Flex align="center" gap="2"
+        style={{
+          padding: "3px 10px",
+          borderRadius: 20,
+          background: "var(--gray-3)",
+          border: "1px solid var(--gray-a5)",
+        }}
+      >
+        <Zap size={10} style={{ color: "var(--gray-9)" }} />
+        <Text size="1" color="gray" style={{ whiteSpace: "nowrap" }}>
+          <Code size="1">{fromStage}</Code>
+          <span style={{ margin: "0 4px", color: "var(--gray-7)" }}>→</span>
+          <Code size="1">{toStage}</Code>
+        </Text>
+      </Flex>
+      <div style={{
+        width: 2,
+        height: 16,
+        background: "linear-gradient(to bottom, var(--gray-a7), var(--gray-a5))",
+        borderRadius: 1,
+      }} />
+    </Flex>
+  );
+}
+
+// ── Stage-to-stage data flow labels ─────────────────────────────────────────
+
+const stageConnectors: { fromStage: string; toStage: string }[] = [
+  { fromStage: "companies", toStage: "enrichment" },
+  { fromStage: "enriched_companies", toStage: "contact_pipeline" },
+  { fromStage: "verified_contacts", toStage: "outreach_pipeline" },
+];
+
+// ── Empty State Panel ────────────────────────────────────────────────────────
+
+function EmptyDetailPanel() {
+  return (
+    <Card mt="4" style={{ border: "1px dashed var(--gray-a6)", background: "var(--gray-2)" }}>
+      <Flex align="center" justify="center" direction="column" gap="3" py="5">
+        <div style={{
+          width: 40, height: 40, borderRadius: 10,
+          background: "var(--gray-3)",
+          border: "1px solid var(--gray-a5)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Search size={18} style={{ color: "var(--gray-9)" }} />
+        </div>
+        <Flex direction="column" align="center" gap="1">
+          <Text size="2" weight="medium">Click any node to inspect</Text>
+          <Text size="1" color="gray" style={{ textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
+            Select a node in any stage diagram to see its description, tech stack, input/output shape, and design insight.
+          </Text>
+        </Flex>
+        <Flex gap="2">
+          <Badge variant="outline" size="1" color="gray">description</Badge>
+          <Badge variant="outline" size="1" color="gray">tech stack</Badge>
+          <Badge variant="outline" size="1" color="gray">input / output</Badge>
+          <Badge variant="outline" size="1" color="gray">key insight</Badge>
+        </Flex>
+      </Flex>
+    </Card>
+  );
+}
+
 // ── Export ────────────────────────────────────────────────────────────────────
 
 export function PipelineClient() {
@@ -534,40 +690,53 @@ export function PipelineClient() {
         <LayersIcon width={22} height={22} style={{ color: "var(--violet-9)" }} />
         <Heading size="7">How It Works</Heading>
       </Flex>
-      <Flex align="center" gap="3" mb="5">
+      <Flex align="center" gap="3" mb="4">
         <Text color="gray" size="2">
           5-stage B2B lead generation pipeline — from company discovery through AI-personalized outreach.
         </Text>
       </Flex>
-      <Flex align="center" gap="2" mb="5">
+
+      <PipelineStatsBar />
+
+      <Flex align="center" gap="2" mb="4">
         <Badge color="blue" variant="soft" size="1">Interactive</Badge>
         <Text size="1" color="gray">Click a node for details. Drag to rearrange. Scroll to zoom.</Text>
       </Flex>
 
-      <Flex direction="column" gap="6">
+      <NodeTypeLegend />
+
+      <Flex direction="column" gap="0">
         {stages.map((stage, i) => (
           <div key={stage.title}>
-            <Flex align="baseline" gap="3" mb="2">
-              <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
-                {i + 1}
-              </Badge>
-              <Heading size="4" style={{ fontFamily: "var(--code-font-family, monospace)" }}>
-                {stage.graphName}
-              </Heading>
-              <Badge variant="soft" color="violet" size="1">{stage.pattern}</Badge>
-            </Flex>
-            <Text size="2" color="gray" mb="3" as="p">{stage.description}</Text>
-            <StageFlow
-              nodes={stage.nodes}
-              edges={stage.edges}
-              height={stage.height}
-              onNodeClick={onNodeClick}
-            />
+            <div>
+              <Flex align="baseline" gap="3" mb="2">
+                <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {i + 1}
+                </Badge>
+                <Heading size="4" style={{ fontFamily: "var(--code-font-family, monospace)" }}>
+                  {stage.graphName}
+                </Heading>
+                <Badge variant="soft" color="violet" size="1">{stage.pattern}</Badge>
+              </Flex>
+              <Text size="2" color="gray" mb="3" as="p">{stage.description}</Text>
+              <StageFlow
+                nodes={stage.nodes}
+                edges={stage.edges}
+                height={stage.height}
+                onNodeClick={onNodeClick}
+              />
+            </div>
+            {i < stageConnectors.length && (
+              <StageConnector
+                fromStage={stageConnectors[i].fromStage}
+                toStage={stageConnectors[i].toStage}
+              />
+            )}
           </div>
         ))}
       </Flex>
 
-      {selectedNode && <NodeDetailPanel nodeId={selectedNode} />}
+      {selectedNode ? <NodeDetailPanel nodeId={selectedNode} /> : <EmptyDetailPanel />}
     </div>
   );
 }
