@@ -44,11 +44,11 @@ const T = {
     aspects: "Aspect Analysis",
     pros: "Pros",
     cons: "Cons",
-    reviews: "ML Reviews",
+    reviews: "Reviews",
     amenities: "Amenities",
     location: "Location",
     cta: "Book now",
-    pipeline: "Candle ML Analysis",
+    pipeline: "Analysis",
     pipelineDesc:
       "Sentiment, aspects and value computed via cosine similarity with all-MiniLM-L6-v2 (384-dim).",
     notFound: "Hotel not found",
@@ -793,7 +793,7 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
           {hotel.description}
         </p>
 
-        {/* ── ML Scores Row ── */}
+        {/* ── Scores Row ── */}
         {(hotel.sentiment_score !== undefined ||
           hotel.value_score !== undefined ||
           hotel.discovery_score !== undefined) && (
@@ -948,7 +948,7 @@ export function HotelDetailContent({ hotelId }: { hotelId: string }) {
             >
               {hasRealReviews
                 ? `${t.reviews} (${hotel.review_count})`
-                : `${t.reviews} (${lang === "ro" ? "analiza ML" : "ML analysis"})`}
+                : `${t.reviews} (${lang === "ro" ? "analiză" : "analysis"})`}
             </h3>
             <div
               className={css({

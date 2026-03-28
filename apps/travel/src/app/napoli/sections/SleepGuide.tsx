@@ -7,165 +7,164 @@ import { NIGHTS, DATE_RANGE_LABEL, RECOMMENDED_TIER } from "../constants";
 const T = {
   en: {
     sectionLabel: "Where to Sleep",
-    sectionTitle: "Accommodation in Naples",
+    sectionTitle: "Accommodation on Ischia",
     sectionSubtitle:
-      `Budget allocation €300 — family room, ${NIGHTS} nights (${DATE_RANGE_LABEL.en}). Three tiers for 2 adults + 1 child.`,
+      `Ischia island, ${NIGHTS} nights (${DATE_RANGE_LABEL.en}). Three tiers for 2 adults + 1 child. Prices are family totals per night; full or half board where noted.`,
     recommended: "RECOMMENDED",
     hotelsLabel: "Properties in this tier",
     tiers: [
       {
         tier: "Budget",
-        price: "€40–60 / night",
-        total: `${NIGHTS} nights ≈ €${NIGHTS * 50}`,
-        type: "Family-run B&Bs and apartment rentals",
-        neighbourhoods: "Centro Storico, Quartieri Spagnoli",
+        price: "€130–170 / night",
+        total: `${NIGHTS} nights ≈ €${NIGHTS * 150}`,
+        type: "Agriturismo, Italy Family Hotels certified resorts, 3-star thermal B&Bs",
+        neighbourhoods: "Casamicciola Terme, Forio",
         expect:
-          "Private family room (double + extra bed for child), basic amenities, central location",
-        goodFor: "Families on a tight budget — frees €50 for extra experiences",
+          "Family room (2 adults + child sharing), thermal pool on-site or nearby, breakfast or full board included",
+        goodFor: "Families prioritising thermal access without overspending on décor",
         hotels: [
-          { name: "B&B Spaccanapoli", area: "Centro Storico", price: "€45 / night", note: "Family room with extra bed for child" },
-          { name: "A' Puteca di Napoli", area: "Quartieri Spagnoli", price: "€48 / night", note: "Family-run, quiet courtyard" },
-          { name: "Napoli Centrale Rooms", area: "Piazza Garibaldi", price: "€52 / night", note: "Triple room, steps from Circumvesuviana" },
+          { name: "Agriturismo Pera di Basso", area: "Casamicciola", price: "~€130 / night", note: "Room-only, sea-view farmhouse, pool" },
+          { name: "Le Canne Family Resort",     area: "Forio",        price: "~€150 / night", note: "Italy Family Hotels certified, HB, Mini Club" },
+          { name: "Hotel Stella Maris Terme",   area: "Casamicciola", price: "~€170 / night", note: "3★, full board, thermal pool + Jacuzzi" },
         ],
       },
       {
         tier: "Mid-Range",
-        price: "€55–75 / night",
-        total: `${NIGHTS} nights ≈ €${NIGHTS * 65}`,
-        type: "Boutique hotels with family rooms",
-        neighbourhoods: "Vomero, Lungomare, Via Toledo",
+        price: "€150–185 / night",
+        total: `${NIGHTS} nights ≈ €${NIGHTS * 165}`,
+        type: "4-star thermal hotels with family rooms",
+        neighbourhoods: "Lacco Ameno, Forio, Ischia Porto",
         expect:
-          "Family room or connecting rooms, A/C, private bathroom, breakfast sometimes included",
+          "4-star family room or connecting rooms, full/half board, thermal garden, child discount 30–50 %",
         goodFor:
-          "Families — comfortable family room, safe neighbourhood, good transport links",
+          "Families — thermal access included, children's menu, beach shuttle, safe neighbourhood",
         hotels: [
-          { name: "Hotel Piazza Bellini", area: "Centro Storico", price: "€68 / night", note: "Courtyard garden, family rooms available" },
-          { name: "Hotel de Charme Toledo", area: "Via Toledo", price: "€65 / night", note: "Connecting rooms, central location" },
-          { name: "Costantinopoli 104", area: "Centro Storico", price: "€72 / night", note: "Liberty villa with pool, child-friendly" },
+          { name: "Hotel Don Pepe",            area: "Lacco Ameno",  price: "~€150 / night", note: "4★, full board, child free under 2, opens Apr 17" },
+          { name: "Hotel Eden Park",           area: "Forio",        price: "~€165 / night", note: "4★, full board, outdoor thermal pool, entertainment" },
+          { name: "Hotel San Valentino Terme", area: "Ischia Porto", price: "~€180 / night", note: "4★, half board, indoor + outdoor thermal, babysitting" },
         ],
       },
       {
         tier: "Comfort",
-        price: "€100–160 / night",
-        total: `${NIGHTS} nights ≈ €${NIGHTS * 130}`,
-        type: "Design hotels and heritage properties",
-        neighbourhoods: "Lungomare, Chiaia, Posillipo",
+        price: "€185–260 / night",
+        total: `${NIGHTS} nights ≈ €${NIGHTS * 220}`,
+        type: "4-star thermal spa resorts",
+        neighbourhoods: "Lacco Ameno, Forio",
         expect:
-          "Junior suite or connecting rooms, room service, concierge, pool access",
+          "Multiple thermal pools incl. children's freshwater pool, Soft All-Inclusive, kids club, full spa",
         goodFor:
-          "Families wanting full comfort — extra space for a child, premium seafront location",
+          "Families wanting all-in thermal resort with children's facilities and premium dining",
         hotels: [
-          { name: "Grand Hotel Vesuvio", area: "Lungomare", price: "€145 / night", note: "Iconic seafront, junior suites" },
-          { name: "Hotel Santa Lucia", area: "Lungomare", price: "€130 / night", note: "Bay view family suites" },
-          { name: "Romeo Hotel", area: "Porto", price: "€155 / night", note: "Design hotel, Michelin restaurant on-site" },
+          { name: "Sorriso Thermae Resort & Spa",       area: "Forio",       price: "~€190 / night", note: "4★, 5 thermal pools incl. children's pool, 24h access" },
+          { name: "Park Hotel Terme Michelangelo",       area: "Lacco Ameno", price: "~€210 / night", note: "4★, Soft AI, Mini Club 9:30–23:30, giant playground" },
+          { name: "La Reginella Resort & Thermal Spa",  area: "Lacco Ameno", price: "~€240 / night", note: "4★, 7-pool thermal garden, steam cave, central piazza" },
         ],
       },
     ],
-    neighbourhoodsLabel: "Neighbourhood Guide",
+    neighbourhoodsLabel: "Ischia Area Guide",
     neighbourhoods: [
       {
-        name: "Centro Storico",
-        desc: "UNESCO-listed street grid, dense with trattorias and street food. Exciting for children during the day — loud at night, light sleepers may struggle.",
+        name: "Forio",
+        desc: "Wide sandy beaches (Citara, La Chiaia), flat walkable centre, Poseidon thermal park next door. Best overall area for families — widest hotel and restaurant choice.",
       },
       {
-        name: "Chiaia",
-        desc: "Elegant seafront district. Quieter than the historic centre. Good restaurants, lower foot traffic — manageable with a child.",
+        name: "Lacco Ameno",
+        desc: "Calm shallow San Montano bay, iconic mushroom rock for children, Negombo botanical thermal park. Quieter and more upscale — top pick for the comfort tier.",
       },
       {
-        name: "Vomero",
-        desc: "Hilltop residential quarter. Calm streets, panoramic views, funicular access. Best neighbourhood for families with young children — safe and quiet at night.",
+        name: "Casamicciola Terme",
+        desc: "Direct ferry port, natural thermal springs, cheaper accommodation. Compact and practical for families — easiest arrival, good budget options.",
       },
       {
-        name: "Lungomare",
-        desc: "Promenade along the bay. Open spaces, sea views, car-free on Sundays. Ideal for families — children love the waterfront and Castel dell'Ovo is five minutes away.",
+        name: "Ischia Porto / Ponte",
+        desc: "Most central, best transport links, lively harbour. Good base for first-timers — some noise at night, but child-friendly beaches within walking distance.",
       },
     ],
     tierLabels: {
       type: "Property type",
-      neighbourhoods: "Best neighbourhoods",
+      neighbourhoods: "Best areas",
       expect: "What to expect",
       goodFor: "Good for",
     },
   },
   ro: {
     sectionLabel: "Unde Dormi",
-    sectionTitle: "Cazare in Napoli",
+    sectionTitle: "Cazare pe Insula Ischia",
     sectionSubtitle:
-      `Buget alocat €300 — camera de familie, ${NIGHTS} nopti (${DATE_RANGE_LABEL.ro}). Trei niveluri pentru 2 adulti + 1 copil.`,
+      `Insula Ischia, ${NIGHTS} nopti (${DATE_RANGE_LABEL.ro}). Trei niveluri pentru 2 adulti + 1 copil. Preturile sunt totalul familiei pe noapte (pensiune completa sau demi unde este cazul).`,
     recommended: "RECOMANDAT",
     hotelsLabel: "Proprietăți în acest nivel",
     tiers: [
       {
         tier: "Buget",
-        price: "€40–60 / noapte",
-        total: `${NIGHTS} nopti ≈ €${NIGHTS * 50}`,
-        type: "B&B-uri de familie si apartamente de inchiriat",
-        neighbourhoods: "Centro Storico, Quartieri Spagnoli",
+        price: "€130–170 / noapte",
+        total: `${NIGHTS} nopti ≈ €${NIGHTS * 150}`,
+        type: "Agriturismo, statiuni certificate Italy Family Hotels, B&B termale 3 stele",
+        neighbourhoods: "Casamicciola Terme, Forio",
         expect:
-          "Camera de familie (pat dublu + pat suplimentar pentru copil), facilitati de baza, locatie centrala",
-        goodFor:
-          "Familii cu buget redus — elibereaza €50 pentru experiente suplimentare",
+          "Camera de familie (2 adulti + copil impartit), piscina termala la fata locului sau in apropiere, mic dejun sau pensiune completa inclusa",
+        goodFor: "Familii care prioritizeaza accesul termal fara a cheltui prea mult pe decor",
         hotels: [
-          { name: "B&B Spaccanapoli", area: "Centro Storico", price: "€45 / noapte", note: "Camera de familie cu pat suplimentar" },
-          { name: "A' Puteca di Napoli", area: "Quartieri Spagnoli", price: "€48 / noapte", note: "Condus de familie, curte interioara linistita" },
-          { name: "Napoli Centrale Rooms", area: "Piazza Garibaldi", price: "€52 / noapte", note: "Camera tripla, langa Circumvesuviana" },
+          { name: "Agriturismo Pera di Basso", area: "Casamicciola", price: "~€130 / noapte", note: "Room-only, ferma cu vedere la mare, piscina" },
+          { name: "Le Canne Family Resort",     area: "Forio",        price: "~€150 / noapte", note: "Certificat Italy Family Hotels, DP, Mini Club" },
+          { name: "Hotel Stella Maris Terme",   area: "Casamicciola", price: "~€170 / noapte", note: "3★, pensiune completa, piscina termala + Jacuzzi" },
         ],
       },
       {
         tier: "Mediu",
-        price: "€55–75 / noapte",
-        total: `${NIGHTS} nopti ≈ €${NIGHTS * 65}`,
-        type: "Hoteluri boutique cu camere de familie",
-        neighbourhoods: "Vomero, Lungomare, Via Toledo",
+        price: "€150–185 / noapte",
+        total: `${NIGHTS} nopti ≈ €${NIGHTS * 165}`,
+        type: "Hoteluri termale de 4 stele cu camere de familie",
+        neighbourhoods: "Lacco Ameno, Forio, Ischia Porto",
         expect:
-          "Camera de familie sau camere comunicante, A/C, baie proprie, mic dejun uneori inclus",
+          "Camera de familie sau camere comunicante 4 stele, pensiune completa/demi-pensiune, gradina termala, reducere copii 30–50%",
         goodFor:
-          "Familii — camera confortabila, cartier sigur, legaturi bune cu transportul",
+          "Familii — acces termal inclus, meniu pentru copii, naveta la plaja, cartier sigur",
         hotels: [
-          { name: "Hotel Piazza Bellini", area: "Centro Storico", price: "€68 / noapte", note: "Curte cu gradina, camere de familie" },
-          { name: "Hotel de Charme Toledo", area: "Via Toledo", price: "€65 / noapte", note: "Camere comunicante, locatie centrala" },
-          { name: "Costantinopoli 104", area: "Centro Storico", price: "€72 / noapte", note: "Vila Liberty cu piscina, prietenos cu copiii" },
+          { name: "Hotel Don Pepe",            area: "Lacco Ameno",  price: "~€150 / noapte", note: "4★, PC, copil gratuit sub 2 ani, deschis din 17 apr" },
+          { name: "Hotel Eden Park",           area: "Forio",        price: "~€165 / noapte", note: "4★, PC, piscina termala exterioara, animatie" },
+          { name: "Hotel San Valentino Terme", area: "Ischia Porto", price: "~€180 / noapte", note: "4★, DP, termal indoor + outdoor, babysitting" },
         ],
       },
       {
         tier: "Confort",
-        price: "€100–160 / noapte",
-        total: `${NIGHTS} nopti ≈ €${NIGHTS * 130}`,
-        type: "Hoteluri de design si proprietati istorice",
-        neighbourhoods: "Lungomare, Chiaia, Posillipo",
+        price: "€185–260 / noapte",
+        total: `${NIGHTS} nopti ≈ €${NIGHTS * 220}`,
+        type: "Statiuni termale de 4 stele",
+        neighbourhoods: "Lacco Ameno, Forio",
         expect:
-          "Junior suite sau camere comunicante, room service, concierge, acces la piscina",
+          "Piscine termale multiple incl. piscina de apa dulce pentru copii, Soft All-Inclusive, club copii, spa complet",
         goodFor:
-          "Familii care vor confort total — spatiu suplimentar pentru copil, locatie premium la malul marii",
+          "Familii care vor statiune termala all-in cu facilitati pentru copii si restaurante premium",
         hotels: [
-          { name: "Grand Hotel Vesuvio", area: "Lungomare", price: "€145 / noapte", note: "Iconic la malul marii, junior suites" },
-          { name: "Hotel Santa Lucia", area: "Lungomare", price: "€130 / noapte", note: "Suites de familie cu vedere la golf" },
-          { name: "Romeo Hotel", area: "Porto", price: "€155 / noapte", note: "Hotel de design, restaurant Michelin" },
+          { name: "Sorriso Thermae Resort & Spa",      area: "Forio",       price: "~€190 / noapte", note: "4★, 5 piscine termale incl. copii, acces 24h" },
+          { name: "Park Hotel Terme Michelangelo",      area: "Lacco Ameno", price: "~€210 / noapte", note: "4★, Soft AI, Mini Club 9:30–23:30, loc de joaca imens" },
+          { name: "La Reginella Resort & Thermal Spa", area: "Lacco Ameno", price: "~€240 / noapte", note: "4★, gradina termala 7 piscine, pestera aburi, piata centrala" },
         ],
       },
     ],
-    neighbourhoodsLabel: "Ghid de Cartiere",
+    neighbourhoodsLabel: "Ghid Zone Ischia",
     neighbourhoods: [
       {
-        name: "Centro Storico",
-        desc: "Retea de strazi inclusa in patrimoniul UNESCO, plina de trattorii si mancare stradala. Fascinant pentru copii ziua — zgomotos noaptea, copiii mici pot fi deranjati.",
+        name: "Forio",
+        desc: "Plaje largi cu nisip (Citara, La Chiaia), centru accesibil pe jos, parcul termal Poseidon alaturi. Cea mai buna zona pentru familii — oferta cea mai larga de hoteluri si restaurante.",
       },
       {
-        name: "Chiaia",
-        desc: "Cartier elegant la malul marii. Mai linistit decat centrul istoric. Restaurante bune, trafic pietonal redus — gestionabil cu un copil.",
+        name: "Lacco Ameno",
+        desc: "Golful San Montano calm si mic, stanca ciuperca iconica pentru copii, parcul botanic termal Negombo. Mai linistit si mai exclusivist — alegerea de top pentru nivelul Confort.",
       },
       {
-        name: "Vomero",
-        desc: "Cartier rezidential pe deal. Strazi calme, vedere panoramica, acces prin funicular. Cel mai bun cartier pentru familii cu copii mici — sigur si linistit noaptea.",
+        name: "Casamicciola Terme",
+        desc: "Port direct de ferry, izvoare termale naturale, cazare mai ieftina. Compact si practic pentru familii — sosire usoara si optiuni bune la buget.",
       },
       {
-        name: "Lungomare",
-        desc: "Promenada de-a lungul golfului. Spatii deschise, vedere la mare, fara masini duminica. Ideal pentru familii — copiii iubesc faleza si Castel dell'Ovo e la cinci minute.",
+        name: "Ischia Porto / Ponte",
+        desc: "Cel mai central, cele mai bune legaturi de transport, port animat. Baza buna pentru prima vizita — putina zgomot noaptea, dar plaje prietenoase pentru copii la distanta de mers pe jos.",
       },
     ],
     tierLabels: {
       type: "Tip proprietate",
-      neighbourhoods: "Cele mai bune cartiere",
+      neighbourhoods: "Cele mai bune zone",
       expect: "La ce sa te astepti",
       goodFor: "Potrivit pentru",
     },
@@ -222,7 +221,7 @@ export function SleepGuide() {
             fontSize: "body",
             color: "text.secondary",
             lineHeight: "body",
-            maxW: "560px",
+            maxW: "600px",
           })}
         >
           {t.sectionSubtitle}
@@ -344,26 +343,10 @@ export function SleepGuide() {
                   gap: "4",
                 })}
               >
-                <TierRow
-                  label={t.tierLabels.type}
-                  value={tier.type}
-                  isRecommended={isRecommended}
-                />
-                <TierRow
-                  label={t.tierLabels.neighbourhoods}
-                  value={tier.neighbourhoods}
-                  isRecommended={isRecommended}
-                />
-                <TierRow
-                  label={t.tierLabels.expect}
-                  value={tier.expect}
-                  isRecommended={isRecommended}
-                />
-                <TierRow
-                  label={t.tierLabels.goodFor}
-                  value={tier.goodFor}
-                  isRecommended={isRecommended}
-                />
+                <TierRow label={t.tierLabels.type}          value={tier.type}          isRecommended={isRecommended} />
+                <TierRow label={t.tierLabels.neighbourhoods} value={tier.neighbourhoods} isRecommended={isRecommended} />
+                <TierRow label={t.tierLabels.expect}        value={tier.expect}        isRecommended={isRecommended} />
+                <TierRow label={t.tierLabels.goodFor}       value={tier.goodFor}       isRecommended={isRecommended} />
               </dl>
 
               {/* Hotel list divider */}
@@ -461,13 +444,8 @@ export function SleepGuide() {
         })}
       </div>
 
-      {/* ── Neighbourhood guide ── */}
-      <div
-        className={css({
-          maxW: "960px",
-          mx: "auto",
-        })}
-      >
+      {/* ── Area guide ── */}
+      <div className={css({ maxW: "960px", mx: "auto" })}>
         <p
           className={css({
             fontSize: "label",

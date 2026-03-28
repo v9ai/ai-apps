@@ -783,7 +783,7 @@ export function FamilyBudget({ places, adults, kids, lang }: FamilyBudgetProps) 
         </div>
       )}
 
-      {/* ── Budget note / ML provenance ───────────────────────────── */}
+      {/* ── Budget note ────────────────────────────────────────── */}
       <div
         className={css({
           mx: { base: "5", md: "8" },

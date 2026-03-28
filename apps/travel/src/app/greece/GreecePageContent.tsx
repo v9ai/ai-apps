@@ -10,15 +10,15 @@ const T = {
   ro: {
     title: `Grecia — Noi in ${DISCOVERY_YEAR}`,
     subtitle:
-      "Cele mai ieftine hoteluri noi — sentiment, aspecte si valoare prin Candle ML",
-    tech: "Pipeline: Scrape → Candle embed → sentiment analysis → aspect extraction → value scoring → dedup",
+      "Cele mai ieftine hoteluri noi — sentiment, aspecte si valoare",
+    tech: "Pipeline: Scrape → embed → sentiment analysis → aspect extraction → value scoring → dedup",
     back: "Inapoi la Katowice",
   },
   en: {
     title: `Greece — New in ${DISCOVERY_YEAR}`,
     subtitle:
-      "Cheapest new hotels — sentiment, aspects and value analyzed via Candle ML",
-    tech: "Pipeline: Scrape → Candle embed → sentiment analysis → aspect extraction → value scoring → dedup",
+      "Cheapest new hotels — sentiment, aspects and value",
+    tech: "Pipeline: Scrape → embed → sentiment analysis → aspect extraction → value scoring → dedup",
     back: "Back to Katowice",
   },
 };

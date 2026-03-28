@@ -56,12 +56,12 @@ export interface BookingSummary {
   curated_hotels?: CuratedHotel[];
   group_size?: { adults: number; kids: number };
   family_total_cost?: { eur: number };
-  family_ml_note?: string;
+  family_note?: string;
   budget_breakdown?: BudgetBreakdown;
   itinerary?: ItineraryDay[];
 }
 
-// ── Naples itinerary & budget types (from travel-ml Candle pipeline) ──
+// ── Naples itinerary & budget types ──
 
 export type KidEnergyLevel = "low" | "low-medium" | "medium" | "medium-high" | "high";
 
@@ -103,7 +103,7 @@ export interface PlacesData {
   booking_summary?: BookingSummary;
 }
 
-// ── Hotel semantic search results (from Rust Candle+LanceDB pipeline) ──
+// ── Hotel semantic search results ──
 
 export interface ReviewResult {
   text: string;

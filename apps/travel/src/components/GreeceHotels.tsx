@@ -9,24 +9,24 @@ import { NEW_HOTEL_MIN_YEAR } from "@/lib/constants";
 const T = {
   ro: {
     eyebrow: "Hoteluri in Grecia",
-    subtitle: "Sortat dupa discovery score — sentiment, recenzii si valoare analizate prin Candle ML",
+    subtitle: "Sortat dupa discovery score — sentiment, recenzii si valoare",
     cta: "Detalii",
     stars: "stele",
     night: "noapte",
     photos: "fotografii",
     more: "inca",
-    disclosure: "Sentiment, aspecte si valoare calculate prin cosine similarity cu all-MiniLM-L6-v2 (384-dim).",
+    disclosure: "Sentiment, aspecte si valoare calculate prin analiza semantica.",
     value: "Valoare",
   },
   en: {
     eyebrow: "Greece Hotels",
-    subtitle: "Sorted by discovery score — sentiment, reviews and value analyzed via Candle ML",
+    subtitle: "Sorted by discovery score — sentiment, reviews and value",
     cta: "Details",
     stars: "stars",
     night: "night",
     photos: "photos",
     more: "more",
-    disclosure: "Sentiment, aspects and value computed via cosine similarity with all-MiniLM-L6-v2 (384-dim).",
+    disclosure: "Sentiment, aspects and value computed via semantic analysis.",
     value: "Value",
   },
 };

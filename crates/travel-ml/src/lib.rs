@@ -3,6 +3,7 @@ pub mod dedup;
 pub mod discover;
 pub mod embeddings;
 pub mod hotel;
+pub mod ischia_discover;
 pub mod reviews;
 pub mod scraper;
 pub mod store;

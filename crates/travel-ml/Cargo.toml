@@ -51,3 +51,7 @@ path = "src/bin/search.rs"
 [[bin]]
 name = "travel-discover"
 path = "src/bin/discover.rs"
+
+[[bin]]
+name = "travel-ischia"
+path = "src/bin/ischia.rs"
