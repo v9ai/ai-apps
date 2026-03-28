@@ -9,5 +9,6 @@
     "outreach_sent": 0
   },
   "quality_score": 0.6499999999999999,
-  "bounce_rate": 0.0
+  "bounce_rate": 0.0,
+  "phase_history": null
 }
