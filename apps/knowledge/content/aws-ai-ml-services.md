@@ -32,7 +32,7 @@ Bedrock is AWS's fully managed foundation model (FM) service. It provides API ac
 
 **Provisioned Throughput**: Reserve model units (MUs) for a committed period (1 month or 6 months). Guarantees consistent throughput (tokens per minute). Required for custom [fine-tuned models](/fine-tuning-fundamentals) in Bedrock. Cost is fixed regardless of actual usage—only economical at sustained high volume.
 
-**Batch Inference**: Submit a JSONL file to S3, Bedrock processes it asynchronously, outputs results to S3. Pricing is roughly 50% of on-demand. No SLA on completion time. Ideal for bulk document processing, offline evaluation, or dataset enrichment.
+**Batch Inference**: Submit a JSONL file to [S3](/aws-storage-s3), Bedrock processes it asynchronously, outputs results to S3. Pricing is roughly 50% of on-demand. No SLA on completion time. Ideal for bulk document processing, offline evaluation, or dataset enrichment.
 
 ```python
 import boto3, json
@@ -70,9 +70,9 @@ for event in response["body"]:
 
 ### Knowledge Bases (RAG)
 
-Bedrock Knowledge Bases is a fully managed RAG service. You point it at a data source (S3, Confluence, Salesforce, SharePoint, web crawl), it handles chunking, embedding, and indexing into a vector store, and exposes a `RetrieveAndGenerate` API.
+Bedrock Knowledge Bases is a fully managed [RAG](/advanced-rag) service. You point it at a data source ([S3](/aws-storage-s3), Confluence, Salesforce, SharePoint, web crawl), it handles [chunking](/chunking-strategies), [embedding](/embeddings), and indexing into a [vector store](/vector-databases), and exposes a `RetrieveAndGenerate` API.
 
-**Supported vector stores**: Amazon OpenSearch Serverless (default), Amazon Aurora PostgreSQL (pgvector), Amazon RDS PostgreSQL (pgvector), Pinecone, Redis Enterprise Cloud, MongoDB Atlas.
+**Supported [vector stores](/vector-databases)**: Amazon OpenSearch Serverless (default), Amazon Aurora PostgreSQL (pgvector), Amazon RDS PostgreSQL (pgvector), Pinecone, Redis Enterprise Cloud, MongoDB Atlas.
 
 **Key parameters**:
 - **Chunking strategy**: Fixed-size (tokens), semantic (sentence-boundary aware), hierarchical (parent-child), no chunking (full documents)

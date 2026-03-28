@@ -71,7 +71,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Private endpoints (VPC Interface Endpoints): service traffic stays on AWS backbone, never traverses internet
 - Bastion hosts → prefer SSM Session Manager (no inbound SSH ports, full audit log, no key management)
 
-**Data Protection**
+**Data Protection** — see [IAM & Security](/aws-iam-security) for KMS, Secrets Manager, and Macie deep-dives; [S3, CloudFront & Storage](/aws-storage-s3) for S3 encryption and Object Lock
 - Encryption at rest: S3 SSE-S3 (default), SSE-KMS (audit trail, key rotation, cross-account), SSE-C (customer-managed)
 - Encryption in transit: TLS 1.2+ enforced via bucket policies (`aws:SecureTransport`), ALB HTTPS listeners, API Gateway
 - KMS: regional service, key material never leaves; envelope encryption (data key encrypted by CMK); automatic annual rotation
@@ -88,8 +88,8 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Foundations**
 - Service limits / quotas: request increases proactively; use Service Quotas dashboard and alarms
-- Network topology: multi-AZ by default; Transit Gateway for hub-and-spoke VPC connectivity at scale
-- DNS: Route 53 with health checks for automated failover; private hosted zones for internal service discovery
+- Network topology: multi-AZ by default; [Transit Gateway](/aws-api-gateway-networking) for hub-and-spoke VPC connectivity at scale
+- DNS: [Route 53](/aws-api-gateway-networking) with health checks for automated failover; private hosted zones for internal service discovery
 
 **Workload Architecture**
 - Loose coupling: replace synchronous calls with async queues (SQS) or events (EventBridge) where latency allows

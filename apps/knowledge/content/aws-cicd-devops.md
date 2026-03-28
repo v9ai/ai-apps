@@ -1427,7 +1427,7 @@ aws appconfig start-deployment \
 
 **Q: What deployment strategy would you use for a Lambda function that processes financial transactions?**
 
-**A:** CodeDeploy with a canary or linear traffic shifting on a Lambda alias. I'd use `LambdaCanary10Percent5Minutes` to start: 10% of invocations go to the new version for 5 minutes while I monitor. I'd attach pre-traffic and post-traffic validation Lambda hooks—the pre-traffic hook runs integration tests against the new version before any live traffic is sent. I'd configure CloudWatch alarms on the new version's `Errors` and `Duration` metrics, linked to CodeDeploy for automatic rollback. If the error rate exceeds threshold during the canary window, CodeDeploy automatically rolls back by updating the alias to 100% on the old version. The whole thing is defined in an AppSpec file and triggered by CodePipeline.
+**A:** CodeDeploy with a canary or linear traffic shifting on a [Lambda](/aws-lambda-serverless) alias. I'd use `LambdaCanary10Percent5Minutes` to start: 10% of invocations go to the new version for 5 minutes while I monitor. I'd attach pre-traffic and post-traffic validation Lambda hooks—the pre-traffic hook runs integration tests against the new version before any live traffic is sent. I'd configure CloudWatch alarms on the new version's `Errors` and `Duration` metrics, linked to CodeDeploy for automatic rollback. If the error rate exceeds threshold during the canary window, CodeDeploy automatically rolls back by updating the alias to 100% on the old version. The whole thing is defined in an AppSpec file and triggered by CodePipeline.
 
 ---
 
@@ -1447,4 +1447,4 @@ aws appconfig start-deployment \
 - **"Rollback means I redeploy the old version."** For CodeDeploy blue/green, rollback is a traffic switch (seconds). For Lambda alias canary, it's an alias update (seconds). Redeployment as rollback strategy is too slow for production incidents.
 - **"I don't need privileged mode for CodeBuild Docker builds."** Without privileged mode, `docker build` fails at the daemon socket connection. This is a common CodeBuild gotcha.
 - **"Drift detection fixes infrastructure drift."** Drift detection only *reports* drift—it does not remediate it. You must re-deploy the CloudFormation stack or import the drifted resource to reconcile.
-- **"I use one AWS account for everything."** Multi-account is the AWS best practice. Separate accounts for dev/staging/prod provide the strongest blast radius isolation—a prod credential compromise cannot affect dev data and vice versa.
+- **"I use one AWS account for everything."** Multi-account is the [AWS best practice](/aws-architecture). Separate accounts for dev/staging/prod provide the strongest blast radius isolation—a prod credential compromise cannot affect dev data and vice versa.

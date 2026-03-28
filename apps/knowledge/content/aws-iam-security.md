@@ -615,13 +615,14 @@ Lambda:
   - Create snapshot of EBS volume for forensics
   - Send notification to Slack/PagerDuty
 ```
+See [Lambda](/aws-lambda-serverless) for function configuration and [EC2/ECS/EKS](/aws-compute-containers) for instance isolation details.
 
 ---
 
 ## 16. AWS Security Hub
 
 ### What It Does
-Single pane of glass for AWS security findings. Aggregates findings from: GuardDuty, Inspector, Macie, IAM Access Analyzer, Firewall Manager, Systems Manager Patch Manager, and third-party partners (CrowdStrike, Palo Alto, etc.).
+Single pane of glass for AWS security findings. Aggregates findings from: GuardDuty, Inspector, Macie, IAM Access Analyzer, Firewall Manager, Systems Manager Patch Manager, and third-party partners (CrowdStrike, Palo Alto, etc.). Pairs with [CI/CD pipelines](/aws-cicd-devops) for automated remediation workflows.
 
 ### CSPM (Cloud Security Posture Management)
 Security Hub runs continuous automated checks against your AWS resources. Findings are mapped to **ASFF** (Amazon Security Finding Format) and scored by severity.
