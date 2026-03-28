@@ -228,6 +228,49 @@ report: ## Print latest eval metrics
 
 RUST_FILTER_6 = ml_eval weight_optimizer data_gen
 
+# ── Fine-Tuning (MLX LoRA) ───────────────────────────────────
+# Train Qwen2.5-3B classification adapters for role-tag and remote-eu.
+# Training: Python/MLX. Inference: Rust via mlx_lm.server.
+#
+# Usage:
+#   make ft-export                  Export training data from Neon
+#   make ft-export TASK=role-tag    Export one task only
+#   make ft-stats                   Show data volume counts
+#   make ft-train TASK=role-tag     Train LoRA adapter
+#   make ft-serve TASK=role-tag     Start mlx_lm.server with adapter
+#   make ft-loop TASK=role-tag      Full cycle: export → train
+
+FT_TASK ?= all
+FT_PORT ?= 8080
+
+.PHONY: ft-export ft-stats ft-train ft-serve ft-loop
+
+ft-export: ## Export training data from Neon (TASK=role-tag|remote-eu|all)
+	python3 mlx-training/export_training_data.py --task $(FT_TASK)
+
+ft-stats: ## Show training data counts
+	python3 mlx-training/export_training_data.py --task all --stats
+
+ft-train: ## Train LoRA adapter (TASK=role-tag|remote-eu)
+	@test -n "$(TASK)" || { echo "Usage: make ft-train TASK=role-tag"; exit 1; }
+	python3 mlx-training/finetune.py --task $(TASK)
+
+ft-serve: ## Start mlx_lm.server with adapter (TASK=role-tag|remote-eu)
+	@test -n "$(TASK)" || { echo "Usage: make ft-serve TASK=role-tag"; exit 1; }
+	python3 -m mlx_lm.server \
+		--model mlx-community/Qwen2.5-3B-Instruct-4bit \
+		--adapter-path mlx-training/models/$(TASK) \
+		--port $(FT_PORT)
+
+ft-loop: ## Full cycle: export → train (TASK=role-tag|remote-eu)
+	@test -n "$(TASK)" || { echo "Usage: make ft-loop TASK=role-tag"; exit 1; }
+	$(MAKE) ft-export FT_TASK=$(TASK)
+	$(MAKE) ft-train TASK=$(TASK)
+	@echo ""
+	@echo "═══ Training complete ═══"
+	@echo "Start serving: make ft-serve TASK=$(TASK)"
+	@echo "Rust pipeline will connect to localhost:$(FT_PORT)"
+
 # ── All ────────────────────────────────────────────────────────
 
 .PHONY: install-all

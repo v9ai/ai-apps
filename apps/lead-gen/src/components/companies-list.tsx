@@ -27,6 +27,7 @@ import {
   Select,
 } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
+import { css } from "styled-system/css";
 import { TrashIcon, PlusIcon, MixIcon, UploadIcon } from "@radix-ui/react-icons";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
@@ -295,7 +296,7 @@ export function CompaniesList() {
     <Container size="4" px="8">
       {/* header */}
       <Flex justify="between" align="center" py="2" mb="3">
-        <span className="yc-row-title" style={{ fontSize: 14 }}>
+        <span className={css({ fontSize: "base" }) + " yc-row-title"}>
           companies
         </span>
         <Flex align="center" gap="3">

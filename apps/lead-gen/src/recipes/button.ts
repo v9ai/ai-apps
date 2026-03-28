@@ -36,7 +36,7 @@ export const button = cva({
       },
       solidGreen: {
         background: "status.positive",
-        color: "#FFFFFF",
+        color: "accent.contrast",
         border: "1px solid transparent",
         fontWeight: "bold",
         _hover: {

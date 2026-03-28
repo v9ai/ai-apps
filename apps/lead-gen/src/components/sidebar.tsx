@@ -11,6 +11,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { css } from "styled-system/css";
 import { NavLink } from "@/components/ui";
 import { AuthHeader } from "@/components/auth-header";
 import { AdminNav } from "@/components/admin-nav";
@@ -39,6 +40,7 @@ export function Sidebar() {
       p={collapsed ? "2" : "4"}
       gap="2"
       flexShrink="0"
+      className={css({ fontSize: "base", letterSpacing: "normal" })}
       style={{
         width,
         borderRight: "1px solid var(--gray-6)",
@@ -49,8 +51,6 @@ export function Sidebar() {
         height: "100vh",
         overflowY: "hidden",
         overflowX: "hidden",
-        fontSize: 14,
-        letterSpacing: "0.01em",
         transition: "width 0.2s ease, padding 0.2s ease",
         zIndex: 10,
       }}

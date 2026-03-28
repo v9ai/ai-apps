@@ -38,7 +38,7 @@ export default function LogoPage() {
       >
         <div className={css({ maxW: "1400px", mx: "auto" })}>
           <div className={css({ display: "flex", alignItems: "center", gap: "3", mb: "2" })}>
-            <span className={css({ fontSize: "11px", letterSpacing: "0.15em", color: "rgba(99,102,241,0.8)", textTransform: "uppercase", fontWeight: "600" })}>
+            <span className={css({ fontSize: "xs", letterSpacing: "0.15em", color: "rgba(99,102,241,0.8)", textTransform: "uppercase", fontWeight: "semibold" })}>
               100 AGENTS · 100 DESIGNS
             </span>
           </div>
@@ -47,7 +47,7 @@ export default function LogoPage() {
               fontSize: { base: "32px", md: "52px" },
               fontWeight: "800",
               letterSpacing: "-0.03em",
-              lineHeight: "1",
+              lineHeight: "none",
               mb: "3",
               background: "linear-gradient(135deg, #fff 0%, rgba(99,102,241,1) 50%, rgba(139,92,246,1) 100%)",
               WebkitBackgroundClip: "text",
@@ -73,13 +73,13 @@ export default function LogoPage() {
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "none",
                 color: "white",
-                fontSize: "14px",
+                fontSize: "base",
                 outline: "none",
                 _placeholder: { color: "rgba(255,255,255,0.3)" },
                 _focus: { borderColor: "rgba(99,102,241,0.6)", bg: "rgba(99,102,241,0.06)" },
               })}
             />
-            <span className={css({ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", fontSize: "13px" })}>
+            <span className={css({ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)", fontSize: "md" })}>
               {filtered.length}
             </span>
           </div>
@@ -131,14 +131,14 @@ export default function LogoPage() {
               {/* Label */}
               <div className={css({ px: "3", py: "2.5" })}>
                 <div className={css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "0.5" })}>
-                  <span className={css({ fontSize: "12px", fontWeight: "700", color: "rgba(255,255,255,0.9)", letterSpacing: "-0.01em" })}>
+                  <span className={css({ fontSize: "sm", fontWeight: "bold", color: "rgba(255,255,255,0.9)", letterSpacing: "-0.01em" })}>
                     {logo.title}
                   </span>
-                  <span className={css({ fontSize: "10px", color: "rgba(99,102,241,0.6)", fontWeight: "600" })}>
+                  <span className={css({ fontSize: "2xs", color: "rgba(99,102,241,0.6)", fontWeight: "semibold" })}>
                     #{logo.id}
                   </span>
                 </div>
-                <p className={css({ fontSize: "10px", color: "rgba(255,255,255,0.3)", lineHeight: "1.4", m: "0" })}>
+                <p className={css({ fontSize: "2xs", color: "rgba(255,255,255,0.3)", lineHeight: "1.4", m: "0" })}>
                   {logo.concept}
                 </p>
               </div>
@@ -153,7 +153,7 @@ export default function LogoPage() {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
               className={css({
-                px: "4", py: "2", borderRadius: "none", fontSize: "13px", fontWeight: "600",
+                px: "4", py: "2", borderRadius: "none", fontSize: "md", fontWeight: "semibold",
                 bg: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
                 color: "rgba(255,255,255,0.7)", cursor: "pointer",
                 _disabled: { opacity: "0.3", cursor: "default" },
@@ -167,7 +167,7 @@ export default function LogoPage() {
                 key={p}
                 onClick={() => setPage(p)}
                 className={css({
-                  w: "32px", h: "32px", borderRadius: "none", fontSize: "13px", fontWeight: "600",
+                  w: "32px", h: "32px", borderRadius: "none", fontSize: "md", fontWeight: "semibold",
                   bg: p === page ? "rgba(99,102,241,0.6)" : "rgba(255,255,255,0.04)",
                   border: p === page ? "1px solid rgba(99,102,241,0.8)" : "1px solid rgba(255,255,255,0.08)",
                   color: p === page ? "white" : "rgba(255,255,255,0.5)",
@@ -182,7 +182,7 @@ export default function LogoPage() {
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
               className={css({
-                px: "4", py: "2", borderRadius: "none", fontSize: "13px", fontWeight: "600",
+                px: "4", py: "2", borderRadius: "none", fontSize: "md", fontWeight: "semibold",
                 bg: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
                 color: "rgba(255,255,255,0.7)", cursor: "pointer",
                 _disabled: { opacity: "0.3", cursor: "default" },
@@ -228,21 +228,21 @@ export default function LogoPage() {
             <div className={css({ p: "6" })}>
               <div className={css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "2" })}>
                 <div>
-                  <h2 className={css({ fontSize: "22px", fontWeight: "800", letterSpacing: "-0.02em", mb: "1" })}>
+                  <h2 className={css({ fontSize: "2xl", fontWeight: "800", letterSpacing: "-0.02em", mb: "1" })}>
                     {selectedLogo.title}
                   </h2>
-                  <p className={css({ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: "1.5" })}>
+                  <p className={css({ fontSize: "md", color: "rgba(255,255,255,0.45)", lineHeight: "1.5" })}>
                     {selectedLogo.concept}
                   </p>
                 </div>
-                <span className={css({ fontSize: "28px", fontWeight: "800", color: "rgba(99,102,241,0.4)", letterSpacing: "-0.03em" })}>
+                <span className={css({ fontSize: "3xl", fontWeight: "800", color: "rgba(99,102,241,0.4)", letterSpacing: "-0.03em" })}>
                   #{selectedLogo.id}
                 </span>
               </div>
               <button
                 onClick={() => setSelected(null)}
                 className={css({
-                  mt: "4", w: "100%", py: "2.5", borderRadius: "none", fontSize: "14px", fontWeight: "600",
+                  mt: "4", w: "100%", py: "2.5", borderRadius: "none", fontSize: "base", fontWeight: "semibold",
                   bg: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
                   color: "rgba(255,255,255,0.7)", cursor: "pointer",
                   _hover: { bg: "rgba(255,255,255,0.1)" },
