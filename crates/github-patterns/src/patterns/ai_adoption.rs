@@ -82,7 +82,172 @@ pub fn detect(stack: &TechStack, repos: &[GhRepo]) -> Vec<AiSignal> {
     signals
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{AiSignal, GhRepo, TechStack};
+    use chrono::Utc;
+    use std::collections::HashMap;
+
+    fn bare_repo(name: &str) -> GhRepo {
+        GhRepo {
+            id: 1,
+            name: name.to_string(),
+            full_name: format!("org/{name}"),
+            description: None,
+            language: None,
+            stargazers_count: 0,
+            forks_count: 0,
+            open_issues_count: 0,
+            topics: None,
+            pushed_at: None,
+            created_at: Utc::now() - chrono::Duration::days(365),
+            updated_at: Utc::now(),
+            archived: false,
+            fork: false,
+            size: 1000,
+            default_branch: "main".to_string(),
+        }
+    }
+
+    fn empty_stack() -> TechStack {
+        TechStack::default()
+    }
+
+    // ── detect ───────────────────────────────────────────────────────────────
+
+    #[test]
+    fn detect_empty_input_returns_no_signals() {
+        let signals = detect(&empty_stack(), &[]);
+        assert!(signals.is_empty());
+    }
+
+    #[test]
+    fn detect_ai_topic_produces_topic_signal() {
+        let mut repo = bare_repo("some-project");
+        repo.topics = Some(vec!["machine-learning".to_string()]);
+        let signals = detect(&empty_stack(), &[repo]);
+        assert!(signals
+            .iter()
+            .any(|s| matches!(s, AiSignal::Topic(t) if t == "machine-learning")));
+    }
+
+    #[test]
+    fn detect_repo_name_hint_produces_reponame_signal() {
+        let repo = bare_repo("llm-server");
+        let signals = detect(&empty_stack(), &[repo]);
+        assert!(signals
+            .iter()
+            .any(|s| matches!(s, AiSignal::RepoName { repo } if repo == "llm-server")));
+    }
+
+    #[test]
+    fn detect_framework_in_stack_produces_framework_signal() {
+        let mut stack = empty_stack();
+        stack.ai_frameworks = vec!["pytorch".to_string()];
+        // repo whose description mentions pytorch so attribution works
+        let mut repo = bare_repo("training-scripts");
+        repo.description = Some("PyTorch training code".to_string());
+        let signals = detect(&stack, &[repo]);
+        assert!(signals.iter().any(|s| matches!(s, AiSignal::Framework { name, .. } if name == "pytorch")));
+    }
+
+    #[test]
+    fn detect_framework_attribution_falls_back_to_empty_string() {
+        // Framework in stack but no repo mentions it → repo field is empty
+        let mut stack = empty_stack();
+        stack.ai_frameworks = vec!["jax".to_string()];
+        let repo = bare_repo("random-project");
+        let signals = detect(&stack, &[repo]);
+        assert!(signals.iter().any(|s| matches!(s, AiSignal::Framework { name, repo } if name == "jax" && repo.is_empty())));
+    }
+
+    #[test]
+    fn detect_python_heavy_triggers_at_60_percent() {
+        let mut stack = empty_stack();
+        stack.languages = HashMap::from([
+            ("Python".to_string(), 600u64),
+            ("JavaScript".to_string(), 400u64),
+        ]);
+        let signals = detect(&stack, &[]);
+        assert!(signals
+            .iter()
+            .any(|s| matches!(s, AiSignal::PythonHeavy { .. })));
+    }
+
+    #[test]
+    fn detect_python_below_threshold_no_signal() {
+        let mut stack = empty_stack();
+        stack.languages = HashMap::from([
+            ("Python".to_string(), 599u64),
+            ("JavaScript".to_string(), 401u64),
+        ]);
+        let signals = detect(&stack, &[]);
+        assert!(!signals
+            .iter()
+            .any(|s| matches!(s, AiSignal::PythonHeavy { .. })));
+    }
+
+    #[test]
+    fn detect_no_python_heavy_when_no_languages() {
+        // total = 0 → skip division guard
+        let signals = detect(&empty_stack(), &[]);
+        assert!(!signals
+            .iter()
+            .any(|s| matches!(s, AiSignal::PythonHeavy { .. })));
+    }
+
+    // ── score ────────────────────────────────────────────────────────────────
+
+    #[test]
+    fn score_empty_signals_is_zero() {
+        assert_eq!(score(&[], &empty_stack()), 0.0);
+    }
+
+    #[test]
+    fn score_framework_adds_0_25() {
+        let sigs = vec![AiSignal::Framework { name: "torch".into(), repo: "".into() }];
+        assert!((score(&sigs, &empty_stack()) - 0.25).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_python_heavy_adds_0_20() {
+        let sigs = vec![AiSignal::PythonHeavy { python_bytes: 600, total_bytes: 1000 }];
+        assert!((score(&sigs, &empty_stack()) - 0.20).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_topic_adds_0_10() {
+        let sigs = vec![AiSignal::Topic("llm".into())];
+        assert!((score(&sigs, &empty_stack()) - 0.10).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_reponame_adds_0_05() {
+        let sigs = vec![AiSignal::RepoName { repo: "llm-server".into() }];
+        assert!((score(&sigs, &empty_stack()) - 0.05).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_three_frameworks_in_stack_adds_bonus() {
+        let mut stack = empty_stack();
+        stack.ai_frameworks = vec!["torch".into(), "jax".into(), "transformers".into()];
+        // one framework signal + 3-framework bonus = 0.25 + 0.15 = 0.40
+        let sigs = vec![AiSignal::Framework { name: "torch".into(), repo: "".into() }];
+        assert!((score(&sigs, &stack) - 0.40).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_capped_at_one() {
+        let sigs: Vec<AiSignal> = (0..20)
+            .map(|i| AiSignal::Framework { name: format!("fw-{i}"), repo: "".into() })
+            .collect();
+        assert!(score(&sigs, &empty_stack()) <= 1.0);
+    }
+}
+
 /// Score 0.0–1.0 from detected signals.
+#[allow(clippy::cast_precision_loss)]
 pub fn score(signals: &[AiSignal], stack: &TechStack) -> f32 {
     let mut pts = 0.0_f32;
 

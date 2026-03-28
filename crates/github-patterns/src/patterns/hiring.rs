@@ -94,3 +94,86 @@ pub fn score(signals: &[HiringSignal]) -> f32 {
     }
     pts.min(1.0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::score;
+    use crate::types::HiringSignal;
+
+    #[test]
+    fn score_empty_is_zero() {
+        assert_eq!(score(&[]), 0.0);
+    }
+
+    #[test]
+    fn score_new_repo_adds_0_15() {
+        let s = vec![HiringSignal::NewRepo { name: "foo".into(), days_ago: 5 }];
+        assert!((score(&s) - 0.15).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_tech_migration_adds_0_10() {
+        let s = vec![HiringSignal::TechMigration {
+            new_language: "Rust".into(),
+            repo: "fast-backend".into(),
+        }];
+        assert!((score(&s) - 0.10).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_growing_contributors_maxes_at_0_20() {
+        // count=20 → 20/20 = 1.0, min(0.20) → 0.20
+        let s = vec![HiringSignal::GrowingContributors {
+            repo: "core".into(),
+            contributor_count: 20,
+        }];
+        assert!((score(&s) - 0.20).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_growing_contributors_partial() {
+        // count=2 → 2/20 = 0.10
+        let s = vec![HiringSignal::GrowingContributors {
+            repo: "core".into(),
+            contributor_count: 2,
+        }];
+        assert!((score(&s) - 0.10).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_frequent_releases_maxes_at_0_25() {
+        // rate=4.0 → 4/4 = 1.0, min(0.25) → 0.25
+        let s = vec![HiringSignal::FrequentReleases {
+            repo: "app".into(),
+            releases_per_month: 4.0,
+        }];
+        assert!((score(&s) - 0.25).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_frequent_releases_below_max() {
+        // rate=0.8 → 0.8/4 = 0.20
+        let s = vec![HiringSignal::FrequentReleases {
+            repo: "app".into(),
+            releases_per_month: 0.8,
+        }];
+        assert!((score(&s) - 0.20).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_combination_of_signals() {
+        let s = vec![
+            HiringSignal::NewRepo { name: "a".into(), days_ago: 10 },        // 0.15
+            HiringSignal::TechMigration { new_language: "Go".into(), repo: "b".into() }, // 0.10
+        ];
+        assert!((score(&s) - 0.25).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_capped_at_one() {
+        let s: Vec<HiringSignal> = (0..20)
+            .map(|i| HiringSignal::NewRepo { name: format!("repo-{i}"), days_ago: i })
+            .collect();
+        assert!(score(&s) <= 1.0 + 1e-4);
+    }
+}

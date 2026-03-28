@@ -138,7 +138,7 @@ impl GhClient {
     }
 }
 
-fn urlencoding(s: &str) -> String {
+pub(crate) fn urlencoding(s: &str) -> String {
     s.chars()
         .flat_map(|c| match c {
             ' ' => vec!['+'],
@@ -149,4 +149,38 @@ fn urlencoding(s: &str) -> String {
             }
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::urlencoding;
+
+    #[test]
+    fn spaces_become_plus() {
+        assert_eq!(urlencoding("hello world"), "hello+world");
+    }
+
+    #[test]
+    fn alphanumeric_passthrough() {
+        assert_eq!(urlencoding("abc123"), "abc123");
+    }
+
+    #[test]
+    fn safe_chars_passthrough() {
+        // colon and hyphen are in the safe set
+        assert_eq!(urlencoding("topic:llm-rag"), "topic:llm-rag");
+    }
+
+    #[test]
+    fn gt_and_eq_are_encoded() {
+        assert_eq!(urlencoding(">=10"), "%3E%3D10");
+    }
+
+    #[test]
+    fn full_search_query() {
+        // Typical query built by search_repos
+        let q = "topic:llm stars:>=100 language:Python";
+        let enc = urlencoding(q);
+        assert_eq!(enc, "topic:llm+stars:%3E%3D100+language:Python");
+    }
 }

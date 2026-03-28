@@ -109,3 +109,80 @@ pub fn score(a: &ActivitySummary) -> f32 {
 
     pts.min(1.0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::score;
+    use crate::types::ActivitySummary;
+
+    #[test]
+    fn score_all_zeros_is_zero() {
+        assert_eq!(score(&ActivitySummary::default()), 0.0);
+    }
+
+    #[test]
+    fn score_fully_active_hits_one() {
+        let a = ActivitySummary {
+            total_repos: 10,
+            active_repos: 10,       // 10/10 * 0.30 = 0.30
+            avg_weekly_commits: 50.0, // 50/50 capped at 0.25
+            releases_last_90d: 4,   // 4/4 capped at 0.20
+            total_contributors: 20, // 20/20 capped at 0.15
+            total_stars: 1000,      // 1000/1000 capped at 0.10
+            last_push: None,
+        };
+        assert!((score(&a) - 1.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_half_active() {
+        let a = ActivitySummary {
+            total_repos: 10,
+            active_repos: 5,          // 0.5 * 0.30 = 0.15
+            avg_weekly_commits: 25.0, // 25/50 * 0.25 = 0.125  → but formula is (25/50).min(0.25) = 0.125?
+            // Wait: (avg/50).min(0.25) → 25/50 = 0.5, min(0.25) → 0.25. Hmm, 0.5 > 0.25 so capped.
+            // Recalculate: 25/50 = 0.5 → min(0.25) = 0.25
+            releases_last_90d: 2,     // 2/4 = 0.5 → min(0.20) = 0.20
+            total_contributors: 10,   // 10/20 = 0.5 → min(0.15) = 0.15
+            total_stars: 500,         // 500/1000 = 0.5 → min(0.10) = 0.10
+            last_push: None,
+        };
+        // 0.15 + 0.25 + 0.20 + 0.15 + 0.10 = 0.85
+        assert!((score(&a) - 0.85).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_no_divide_by_zero_on_zero_repos() {
+        let a = ActivitySummary {
+            total_repos: 0,
+            active_repos: 0,
+            avg_weekly_commits: 0.0,
+            ..Default::default()
+        };
+        // total_repos=0 → active ratio skipped, rest 0 → 0.0
+        assert_eq!(score(&a), 0.0);
+    }
+
+    #[test]
+    fn score_capped_at_one() {
+        let a = ActivitySummary {
+            total_repos: 1,
+            active_repos: 1,
+            avg_weekly_commits: 9999.0,
+            releases_last_90d: 9999,
+            total_contributors: 9999,
+            total_stars: 9_999_999,
+            last_push: None,
+        };
+        assert!(score(&a) <= 1.0 + 1e-4);
+    }
+
+    #[test]
+    fn score_commit_velocity_only() {
+        let a = ActivitySummary {
+            avg_weekly_commits: 50.0, // → 0.25
+            ..Default::default()
+        };
+        assert!((score(&a) - 0.25).abs() < 1e-4);
+    }
+}
