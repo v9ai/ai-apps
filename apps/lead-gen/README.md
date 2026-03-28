@@ -113,9 +113,6 @@ pnpm boards:discover              # Discover Ashby boards
 pnpm strategy:check               # Validate staged changes against optimization strategy
 pnpm strategy:check:all           # Validate all tracked files
 
-# Evals
-pnpm test:email-evals             # Run email generation evals
-
 # Deploy
 pnpm deploy                       # Vercel deploy
 ```
