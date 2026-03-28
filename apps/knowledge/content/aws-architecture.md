@@ -256,7 +256,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 **Command Query Responsibility Segregation (CQRS)**
 - Write model (Command side): accepts commands, validates, writes events to event store
 - Read model (Query side): denormalized read tables optimized per query pattern; updated by consuming events
-- AWS pattern: DynamoDB as event store (append-only, sort key = event sequence) → DynamoDB Streams → Lambda → read models in Aurora, OpenSearch, or ElastiCache
+- AWS pattern: [DynamoDB](/dynamodb-data-services) as event store (append-only, sort key = event sequence) → [DynamoDB Streams](/dynamodb-data-services) → [Lambda](/aws-lambda-serverless) → read models in [Aurora](/dynamodb-data-services), OpenSearch, or [ElastiCache](/dynamodb-data-services)
 
 **Event Sourcing**
 - State is derived from a sequence of immutable events, not mutated in place
@@ -292,7 +292,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 **Orchestration-based Saga**
 - Central orchestrator (Step Functions State Machine) calls each service in sequence; handles compensating transactions on failure
 - AWS Step Functions: ideal orchestrator; visual workflow, built-in retry/catch, supports Express Workflows (high volume, async)
-- Pattern: Step Function calls Lambda for each service step; on failure, runs compensating Lambdas in reverse order
+- Pattern: Step Function calls [Lambda](/aws-lambda-serverless) for each service step; on failure, runs compensating Lambdas in reverse order
 
 ```
 StepFunction: PlaceOrderSaga
@@ -308,8 +308,8 @@ StepFunction: PlaceOrderSaga
 ### Strangler Fig Pattern (Migration)
 
 - Incrementally migrate monolith by routing new functionality to new services, while old paths still go to monolith
-- AWS implementation: ALB path-based routing or CloudFront behaviors — new URLs → new microservice, old URLs → legacy app
-- API Gateway as facade: single domain, route by path to Lambda (new) or VPC Link → legacy NLB (old)
+- AWS implementation: ALB path-based routing or [CloudFront](/aws-storage-s3) behaviors — new URLs → new microservice, old URLs → legacy app
+- [API Gateway](/aws-api-gateway-networking) as facade: single domain, route by path to [Lambda](/aws-lambda-serverless) (new) or VPC Link → legacy NLB (old)
 - Migrate one bounded context at a time; when all paths migrated, retire the monolith
 - Anti-corruption layer: transform data formats between old and new models during coexistence
 
@@ -319,12 +319,12 @@ StepFunction: PlaceOrderSaga
 
 **Bulkhead**
 - Isolate failures; if one component fails, others continue
-- AWS implementation: separate thread pools / SQS queues per service; VPC isolation; separate Auto Scaling Groups
-- Lambda reserved concurrency: reserve capacity for critical functions, preventing noisy neighbors from consuming all concurrency
+- AWS implementation: separate thread pools / SQS queues per service; VPC isolation; separate [Auto Scaling Groups](/aws-compute-containers)
+- [Lambda](/aws-lambda-serverless) reserved concurrency: reserve capacity for critical functions, preventing noisy neighbors from consuming all concurrency
 
 **Circuit Breaker**
 - After N failures, open the circuit and return fallback immediately without attempting the failing dependency
-- AWS implementation: App Mesh circuit breaker (outlier detection in Envoy); custom implementation in Lambda with ElastiCache state; AWS SDK has built-in retry/backoff
+- AWS implementation: App Mesh circuit breaker (outlier detection in Envoy); custom implementation in [Lambda](/aws-lambda-serverless) with [ElastiCache](/dynamodb-data-services) state; AWS SDK has built-in retry/backoff
 - CloudWatch alarm → Lambda → SSM Parameter Store flag → application reads flag to short-circuit calls
 
 ---
@@ -344,10 +344,10 @@ StepFunction: PlaceOrderSaga
          [Aurora MySQL Multi-AZ]     [ElastiCache Redis]  ← Data Tier (private subnet, no internet access)
 ```
 
-- Web tier: static assets in S3, served via CloudFront; SPA communicates with backend API
-- App tier: private subnets; outbound internet via NAT Gateway; fetches secrets from Secrets Manager at startup
+- Web tier: static assets in [S3](/aws-storage-s3), served via [CloudFront](/aws-storage-s3); SPA communicates with backend API
+- App tier: private subnets; outbound internet via [NAT Gateway](/aws-api-gateway-networking); fetches secrets from [Secrets Manager](/aws-iam-security) at startup
 - Data tier: private subnets with no internet route; security groups restrict access to app tier only
-- ALB: sticky sessions only if stateful (prefer stateless + Redis); HTTPS listener with ACM certificate
+- ALB: sticky sessions only if stateful (prefer stateless + [ElastiCache Redis](/dynamodb-data-services)); HTTPS listener with ACM certificate
 
 ### Serverless Web Application
 
@@ -364,7 +364,7 @@ StepFunction: PlaceOrderSaga
                                   [Downstream Lambdas]
 ```
 
-- No servers to manage; scales to zero; pay per invocation
+- No servers to manage; scales to zero; pay per invocation — see [Lambda & Serverless](/aws-lambda-serverless) for full Lambda deep-dive
 - Cold start mitigation: Provisioned Concurrency for latency-sensitive paths; Lambda SnapStart for Java
 - Limits: 15-min max timeout, 10 GB memory, 512 MB–10 GB ephemeral /tmp storage, 250 MB deployment package (unzipped)
 - Use Lambda Layers for shared dependencies (reduces package size, improves deployment speed)
@@ -380,8 +380,8 @@ StepFunction: PlaceOrderSaga
                              [Aurora Serverless v2 or RDS Multi-AZ]
 ```
 
-- ECS Fargate: no EC2 management; task definitions specify vCPU + memory; pay per task-second
-- EKS: Kubernetes control plane managed by AWS; worker nodes on EC2 (managed node groups) or Fargate
+- [ECS Fargate](/aws-compute-containers): no EC2 management; task definitions specify vCPU + memory; pay per task-second
+- [EKS](/aws-compute-containers): Kubernetes control plane managed by AWS; worker nodes on EC2 (managed node groups) or Fargate — see [EC2, ECS & Containers](/aws-compute-containers) for full coverage
 - Service Connect (ECS): built-in service discovery and traffic metrics via Cloud Map
 - Karpenter (EKS): fast, cost-efficient node provisioning; replaces Cluster Autoscaler; supports Spot
 
@@ -391,18 +391,18 @@ StepFunction: PlaceOrderSaga
 
 ### Multi-AZ
 - Minimum: 2 AZs (prefer 3 for avoiding split-brain in quorum systems)
-- EC2: ASG spans AZs; ALB distributes across targets in all AZs
-- RDS Multi-AZ: synchronous replication to standby in different AZ; automated failover; standby not readable
-- Aurora: 6-way replication across 3 AZs for storage; can have reader instances in different AZs
-- ElastiCache Redis: Multi-AZ replication groups; automatic failover to replica
-- DynamoDB: inherently multi-AZ (global tables for multi-region); no configuration needed
+- [EC2](/aws-compute-containers): ASG spans AZs; ALB distributes across targets in all AZs
+- [RDS](/dynamodb-data-services) Multi-AZ: synchronous replication to standby in different AZ; automated failover; standby not readable
+- [Aurora](/dynamodb-data-services): 6-way replication across 3 AZs for storage; can have reader instances in different AZs
+- [ElastiCache Redis](/dynamodb-data-services): Multi-AZ replication groups; automatic failover to replica
+- [DynamoDB](/dynamodb-data-services): inherently multi-AZ (global tables for multi-region); no configuration needed
 
 ### Multi-Region Active-Active
 - Both regions serve production traffic simultaneously; true HA across regional failures
-- Route 53 latency-based routing: users go to nearest healthy region
-- DynamoDB Global Tables: multi-master, eventual consistency; last-writer-wins conflict resolution
-- Aurora Global Database: primary region for writes, secondary regions for reads; < 1 second replication lag; can promote in < 1 minute
-- S3 Cross-Region Replication: asynchronous; replication time control (RTC) for < 15 min SLA
+- [Route 53](/aws-api-gateway-networking) latency-based routing: users go to nearest healthy region
+- [DynamoDB Global Tables](/dynamodb-data-services): multi-master, eventual consistency; last-writer-wins conflict resolution
+- [Aurora Global Database](/dynamodb-data-services): primary region for writes, secondary regions for reads; < 1 second replication lag; can promote in < 1 minute
+- [S3 Cross-Region Replication](/aws-storage-s3): asynchronous; replication time control (RTC) for < 15 min SLA
 - Requires stateless app tier; session state in DynamoDB or ElastiCache Global Datastore
 - Active-active tradeoff: complex conflict resolution, higher cost, more operational overhead
 
@@ -412,7 +412,7 @@ StepFunction: PlaceOrderSaga
 - Lower cost than active-active; tolerate higher RTO (minutes, not seconds)
 - Suitable for internal tools, B2B SaaS with contractual SLA > 30 min RTO
 
-### Route 53 Routing Policies & Failover
+### Route 53 Routing Policies & Failover — see [API Gateway & Networking](/aws-api-gateway-networking) for full Route 53 coverage
 - Simple: one record, no health check; no failover
 - Failover: primary/secondary; requires health checks on primary; automatic failover when primary unhealthy
 - Latency-based: route to region with lowest latency for the user
@@ -440,7 +440,7 @@ StepFunction: PlaceOrderSaga
 
 **Backup & Restore**
 - RPO hours; RTO hours; lowest cost
-- AWS Backup: centralized, policy-driven, cross-region copy; backup vault with Vault Lock (WORM)
+- [AWS Backup](/aws-cicd-devops): centralized, policy-driven, cross-region copy; backup vault with Vault Lock (WORM)
 - Test restores quarterly; automate with Fault Injection Simulator
 
 **Pilot Light**
@@ -450,8 +450,8 @@ StepFunction: PlaceOrderSaga
 
 **Warm Standby**
 - Scaled-down replica of production: app servers running (minimum capacity), DB replication active
-- On failover: scale up ASG, update Route 53 weights/failover
-- RPO: seconds (if async replication) or near-zero (Aurora Global Database); RTO: minutes
+- On failover: scale up ASG, update [Route 53](/aws-api-gateway-networking) weights/failover
+- RPO: seconds (if async replication) or near-zero ([Aurora Global Database](/dynamodb-data-services)); RTO: minutes
 
 **Multi-Site Active-Active**
 - See High Availability section above
@@ -460,9 +460,9 @@ StepFunction: PlaceOrderSaga
 
 **Key DR Services**
 - AWS Elastic Disaster Recovery (formerly CloudEndure): continuous replication of on-prem or cloud servers; failover in minutes
-- AWS Backup: cross-region, cross-account backup management
-- Aurora Global Database: < 1 second cross-region replication; promote secondary in < 1 minute
-- S3 Cross-Region Replication with Replication Time Control (RTC): 99.99% of objects replicated in < 15 minutes
+- [AWS Backup](/aws-cicd-devops): cross-region, cross-account backup management
+- [Aurora Global Database](/dynamodb-data-services): < 1 second cross-region replication; promote secondary in < 1 minute
+- [S3 Cross-Region Replication](/aws-storage-s3) with Replication Time Control (RTC): 99.99% of objects replicated in < 15 minutes
 
 ---
 
@@ -473,7 +473,7 @@ StepFunction: PlaceOrderSaga
 - Step down instance family before instance size (e.g., c5.xlarge → c6g.large saves more than c5.xlarge → c5.large)
 - Graviton migration: most apps run unmodified; Arm binaries needed; test before committing
 
-### Spot Instances
+### Spot Instances — see [EC2, ECS & Containers](/aws-compute-containers) for full Spot mechanics
 - Up to 90% savings; instances can be interrupted with 2-minute warning
 - Viable for: batch jobs, CI/CD workers, stateless web tier with ASG, ML training (with checkpointing)
 - Spot best practices: diversify across multiple instance types and AZs (Spot Fleet, EC2 Fleet); use `capacity-optimized` allocation strategy; implement graceful shutdown on SIGTERM
