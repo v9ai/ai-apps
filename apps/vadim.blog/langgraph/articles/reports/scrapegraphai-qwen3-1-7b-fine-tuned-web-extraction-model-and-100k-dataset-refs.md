@@ -2,20 +2,20 @@
 
 | Total | Broken | Weak anchors | Authoritative | Credible+ | Bare URLs |
 |-------|--------|--------------|---------------|-----------|-----------|
-| 9 | 0 | 0 | 4 | 4 | 0 |
+| 9 | 0 | 0 | 6 | 6 | 0 |
 
 ### Inline Citations
 
 | Q | Domain | Status | Anchor | URL |
 |---|--------|--------|--------|-----|
-| ✓ | 🌐 | ✅ | sgai-qwen3-1.7b | https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b |
-| ✓ | 🌐 | ✅ | 100k-row dataset | https://huggingface.co/datasets/scrapegraphai/scrapegra… |
-| ✓ | 🔬 | ✅ | open-source library | https://github.com/ScrapeGraphAI/Scrapegraph-ai |
-| ✓ | 🌐 | ✅ | scrapegraph-100k-finetuning split | https://huggingface.co/datasets/scrapegraphai/scrapegra… |
+| ✓ | 🔬 | ✅ | ScrapeGraphAI team's release | https://arxiv.org/abs/2505.15812 |
+| ✓ | 🌐 | ✅ | 17 fields | https://huggingface.co/datasets/scrapegraphai/scrapegra… |
+| ✓ | 🔬 | ✅ | ScrapeGraphAI library | https://github.com/ScrapeGraphAI/Scrapegraph-ai |
+| ✓ | 🔬 | ✅ | AXE (Automatic XML Extraction) | https://arxiv.org/abs/2602.01838 |
+| ✓ | 🔬 | ✅ | Dripper | https://arxiv.org/abs/2511.23119 |
+| ✓ | 🔬 | ✅ | SLOT (Schema-Level Output Tuning) | https://arxiv.org/abs/2505.04016 |
+| ✓ | 🌐 | ✅ | agenticleadgen.xyz | https://agenticleadgen.xyz |
+| ✓ | 🔬 | ✅ | source code | https://github.com/nicolad/ai-apps/tree/main/apps/lead-… |
 | ✓ | 🌐 | ✅ | Qwen3-1.7B | https://huggingface.co/Qwen/Qwen3-1.7B |
-| ✓ | 🌐 | ✅ | GGUF quantized version | https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b-gg… |
-| ✓ | 🔬 | ✅ | arXiv:2602.01838 | https://arxiv.org/abs/2602.01838 |
-| ✓ | 🔬 | ✅ | arXiv:2511.23119 | https://arxiv.org/abs/2511.23119 |
-| ✓ | 🔬 | ✅ | arXiv:2505.04016 | https://arxiv.org/abs/2505.04016 |
 
 **9/9 links reachable**

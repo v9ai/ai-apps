@@ -263,13 +263,13 @@ Run operations at scale across billions of objects:
 
 ## S3 Event Notifications
 
-S3 can publish events on object create, delete, restore, replication, and lifecycle transitions. See [Lambda & Serverless](/aws-lambda-serverless) for how Lambda processes these events at scale.
+S3 can publish events on object create, delete, restore, replication, and lifecycle transitions. See [Lambda & Serverless](/aws/lambda-serverless) for how Lambda processes these events at scale.
 
 | Destination | Protocol | Ordering | Use Case |
 |---|---|---|---|
 | **SQS** | Poll-based | FIFO possible | Decoupled processing queue |
 | **SNS** | Push (fan-out) | No | Fan-out to multiple consumers |
-| **[Lambda](/aws-lambda-serverless)** | Direct invoke | No | Serverless immediate processing |
+| **[Lambda](/aws/lambda-serverless)** | Direct invoke | No | Serverless immediate processing |
 | **EventBridge** | Push | No | Advanced filtering, routing, archiving |
 
 **EventBridge** is the most powerful destination — supports content-based filtering on all event fields, dead-letter queues, event replay, and routing to 20+ targets.
@@ -324,9 +324,9 @@ A distribution has one or more **cache behaviors** matched by URL path pattern (
 - Forward `Accept-Language` to origin without caching per language
 
 ### OAC — Origin Access Control (Replaces OAI)
-Restricts S3 bucket access so only CloudFront can retrieve objects. OAC supersedes the older Origin Access Identity (OAI). OAC is enforced through [IAM resource-based policies](/aws-iam-security) on the S3 bucket:
+Restricts S3 bucket access so only CloudFront can retrieve objects. OAC supersedes the older Origin Access Identity (OAI). OAC is enforced through [IAM resource-based policies](/aws/iam-security) on the S3 bucket:
 - OAC uses **SigV4** signing, supporting SSE-KMS encrypted S3 buckets
-- S3 bucket policy grants `s3:GetObject` to the CloudFront service principal with a condition on `AWS:SourceArn` matching the specific distribution ARN (see [IAM & Security](/aws-iam-security) for bucket policy syntax and the principal/condition model)
+- S3 bucket policy grants `s3:GetObject` to the CloudFront service principal with a condition on `AWS:SourceArn` matching the specific distribution ARN (see [IAM & Security](/aws/iam-security) for bucket policy syntax and the principal/condition model)
 - Block all public S3 access; all requests must flow through CloudFront
 
 ### Signed URLs and Signed Cookies
@@ -551,7 +551,7 @@ AWS Backup for S3 creates continuous (PITR — point-in-time recovery to within 
 ## Architecture Patterns
 
 ### Data Lake Foundation on S3
-S3 is the standard foundation for AWS data lakes, and feeds directly into AI/ML workloads — see [Bedrock, SageMaker & AI/ML Services](/aws-ai-ml-services) for how SageMaker training jobs, Feature Store, and Bedrock Knowledge Bases consume S3-backed datasets.
+S3 is the standard foundation for AWS data lakes, and feeds directly into AI/ML workloads — see [Bedrock, SageMaker & AI/ML Services](/aws/ai-ml-services) for how SageMaker training jobs, Feature Store, and Bedrock Knowledge Bases consume S3-backed datasets.
 
 ```
 Raw Ingestion → s3://data-lake/raw/ (Standard, versioned)

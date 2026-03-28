@@ -12,7 +12,7 @@ A **principal** is an entity that can make API calls to AWS:
 - **IAM User** — long-term identity (username + password or access key). Represents a human or a machine with static credentials.
 - **IAM Group** — logical grouping of users. Policies attached to a group apply to all members. Groups cannot be principals in resource-based policies.
 - **IAM Role** — identity with no long-term credentials. A role is _assumed_ by a principal and issues temporary credentials via STS. Used for services, cross-account access, federated identity.
-- **AWS Service** — services like [Lambda](/aws-lambda-serverless), EC2, ECS that are granted roles to call other AWS services on your behalf.
+- **AWS Service** — services like [Lambda](/aws/lambda-serverless), EC2, ECS that are granted roles to call other AWS services on your behalf.
 
 ### Policy Types
 
@@ -21,7 +21,7 @@ A **principal** is an entity that can make API calls to AWS:
 | **AWS Managed Policy** | Users, Groups, Roles | AWS account (shared) | Common reusable policies (e.g., `AmazonS3ReadOnlyAccess`) |
 | **Customer Managed Policy** | Users, Groups, Roles | Your account | Custom reusable policies you maintain |
 | **Inline Policy** | Exactly one user/group/role | Embedded in the entity | Strict 1:1 relationship; deleted with entity |
-| **Resource-Based Policy** | Attached to a resource ([S3](/aws-storage-s3), KMS, [Lambda](/aws-lambda-serverless)) | The resource itself | Cross-account access without assuming a role |
+| **Resource-Based Policy** | Attached to a resource ([S3](/aws-storage-s3), KMS, [Lambda](/aws/lambda-serverless)) | The resource itself | Cross-account access without assuming a role |
 | **Permission Boundary** | IAM User or Role | Account | Maximum permissions any identity-based policy can grant (not additive) |
 | **Service Control Policy (SCP)** | AWS Organization OU or account | AWS Organizations | Maximum permissions for all principals in the OU/account |
 | **Session Policy** | Passed inline during `AssumeRole` | Temporary session | Narrow a role's permissions for a specific session |
@@ -152,7 +152,7 @@ A role has two policies:
 ```
 
 ### Service Roles vs Instance Profiles
-- **Service Role**: a role whose trust policy allows an AWS service ([Lambda](/aws-lambda-serverless), [ECS](/aws-compute-containers), Glue) to assume it.
+- **Service Role**: a role whose trust policy allows an AWS service ([Lambda](/aws/lambda-serverless), [ECS](/aws-compute-containers), Glue) to assume it.
 - **Instance Profile**: a container for a single role that can be attached to an [EC2 instance](/aws-compute-containers). EC2 retrieves temporary credentials from the IMDS (Instance Metadata Service) at `169.254.169.254/latest/meta-data/iam/security-credentials/<role-name>`. IMDSv2 is required (token-based, not just IP-hop exploitable).
 
 ### Cross-Account Roles
@@ -266,7 +266,7 @@ Block Public Access settings override bucket policies for public access. S3 Obje
 ```
 
 ### Lambda Resource Policies
-Allow other AWS services or accounts to invoke a [Lambda](/aws-lambda-serverless) function.
+Allow other AWS services or accounts to invoke a [Lambda](/aws/lambda-serverless) function.
 ```bash
 aws lambda add-permission \
   --function-name myFunction \
@@ -447,7 +447,7 @@ To decrypt:
 2. Decrypt data locally
 3. Discard plaintext data key
 ```
-This keeps KMS API calls minimal and supports large data. Used by [S3](/aws-storage-s3), EBS, RDS, [Lambda](/aws-lambda-serverless) environment variables, etc.
+This keeps KMS API calls minimal and supports large data. Used by [S3](/aws-storage-s3), EBS, RDS, [Lambda](/aws/lambda-serverless) environment variables, etc.
 
 ### Key Policies vs IAM Policies
 - Key policy is **required** and takes precedence.
@@ -471,7 +471,7 @@ Primary key in one region; replica keys in others. Same key material, different 
 | | Secrets Manager | Parameter Store |
 |---|---|---|
 | **Primary Use** | Database credentials, API keys, OAuth tokens | Configuration data, feature flags, secrets (via SecureString) |
-| **Automatic Rotation** | Yes — built-in [Lambda](/aws-lambda-serverless) rotation for RDS, Redshift, DocumentDB; custom rotation Lambda | No native rotation (can implement with EventBridge + Lambda) |
+| **Automatic Rotation** | Yes — built-in [Lambda](/aws/lambda-serverless) rotation for RDS, Redshift, DocumentDB; custom rotation Lambda | No native rotation (can implement with EventBridge + Lambda) |
 | **Cost** | $0.40/secret/month + $0.05 per 10,000 API calls | Standard: free. Advanced: $0.05/parameter/month. Higher throughput: $0.05 per 10,000 API calls |
 | **Max Secret Size** | 65,536 bytes | 4,096 bytes (standard), 8,192 bytes (advanced) |
 | **Versioning** | Yes (AWSPENDING, AWSCURRENT, AWSPREVIOUS) | Yes (version labels) |
@@ -585,7 +585,7 @@ Detects unusual API activity (write management events). Compares baseline to cur
 ## 15. Amazon GuardDuty
 
 ### What It Does
-Continuous threat detection ML service. Ingests: CloudTrail management + [S3](/aws-storage-s3) data events, VPC Flow Logs, DNS logs, [EKS](/aws-compute-containers) audit logs, RDS login activity, [Lambda](/aws-lambda-serverless) network activity, S3 access patterns, Malware Protection (EBS volumes).
+Continuous threat detection ML service. Ingests: CloudTrail management + [S3](/aws-storage-s3) data events, VPC Flow Logs, DNS logs, [EKS](/aws-compute-containers) audit logs, RDS login activity, [Lambda](/aws/lambda-serverless) network activity, S3 access patterns, Malware Protection (EBS volumes).
 
 ### Finding Types (by threat purpose)
 | Category | Example Findings |
@@ -615,7 +615,7 @@ Lambda:
   - Create snapshot of EBS volume for forensics
   - Send notification to Slack/PagerDuty
 ```
-See [Lambda](/aws-lambda-serverless) for function configuration and [EC2/ECS/EKS](/aws-compute-containers) for instance isolation details.
+See [Lambda](/aws/lambda-serverless) for function configuration and [EC2/ECS/EKS](/aws-compute-containers) for instance isolation details.
 
 ---
 
@@ -745,7 +745,7 @@ DynamoDB / S3 / RDS Proxy
         ↓
    Secrets Manager (rotation enabled, RDS Proxy caches)
 ```
-Each layer has IAM implications: [API Gateway](/aws-api-gateway-networking) authorizers validate identity, [Lambda](/aws-lambda-serverless) execution roles scope resource access, [S3](/aws-storage-s3) bucket policies enforce per-resource grants, and [DynamoDB](/dynamodb-data-services) supports fine-grained attribute-level access via IAM condition keys. Deploy and manage the full stack via [CDK / IaC](/aws-cicd-devops).
+Each layer has IAM implications: [API Gateway](/aws-api-gateway-networking) authorizers validate identity, [Lambda](/aws/lambda-serverless) execution roles scope resource access, [S3](/aws-storage-s3) bucket policies enforce per-resource grants, and [DynamoDB](/dynamodb-data-services) supports fine-grained attribute-level access via IAM condition keys. Deploy and manage the full stack via [CDK / IaC](/aws-cicd-devops).
 
 ### Secrets Management Pattern
 ```
@@ -797,7 +797,7 @@ See [CI/CD & CodePipeline](/aws-cicd-devops) for CodePipeline setup and CDK depl
 IAM is the authorization layer for every AWS service. Explore how it applies in practice:
 
 - [AWS Overview](/aws) — account structure, regions, and the shared responsibility model
-- [Lambda & Serverless](/aws-lambda-serverless) — execution roles, resource policies, environment variable encryption with KMS
+- [Lambda & Serverless](/aws/lambda-serverless) — execution roles, resource policies, environment variable encryption with KMS
 - [API Gateway & Networking](/aws-api-gateway-networking) — Cognito and Lambda authorizers, VPC integration
 - [EC2, ECS & EKS](/aws-compute-containers) — instance profiles, IMDS v2, ECS task roles, IRSA for Kubernetes
 - [S3, CloudFront & Storage](/aws-storage-s3) — bucket policies, Block Public Access, SSE-KMS, pre-signed URLs

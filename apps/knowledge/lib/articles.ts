@@ -15,6 +15,7 @@ export interface Lesson {
   difficulty: DifficultyLevel;
   wordCount: number;
   readingTimeMin: number;
+  url: string;
 }
 
 export interface LessonWithContent extends Lesson {

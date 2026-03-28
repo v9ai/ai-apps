@@ -94,7 +94,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
           {prerequisite && (
             <div className="article-prereq">
               <span className="article-prereq-label">Recommended prerequisite:</span>
-              <Link href={`/${prerequisite.slug}`} className="article-prereq-link">
+              <Link href={prerequisite.url} className="article-prereq-link">
                 #{String(prerequisite.number).padStart(2, "0")} {prerequisite.title}
               </Link>
             </div>
