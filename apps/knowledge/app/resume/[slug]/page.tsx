@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import resumeData from "@/data/resume-data.json";
+import { resumeData } from "@ai-apps/resume";
 import "./resume.css";
 import { sanitizeHtml } from "@/lib/html-sanitizer";
 

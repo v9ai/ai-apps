@@ -7,7 +7,7 @@ export async function GET(
   const { slug } = await params;
 
   // Dynamic import to avoid bundling issues
-  const { renderResumePdf } = await import("./render-resume-pdf");
+  const { renderResumePdf } = await import("@ai-apps/resume/render");
   const pdf = await renderResumePdf(slug);
 
   if (!pdf) {
