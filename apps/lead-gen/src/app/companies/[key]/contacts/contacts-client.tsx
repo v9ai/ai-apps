@@ -373,10 +373,10 @@ function CreateContactDialog({
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger>
-        <Button size="2" variant="solid">
+        <button className={button({ variant: "solid", size: "md" })}>
           <PlusIcon />
           Add contact
-        </Button>
+        </button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="440px">
@@ -447,11 +447,11 @@ function CreateContactDialog({
 
         <Flex gap="3" mt="4" justify="end">
           <Dialog.Close>
-            <Button variant="soft" color="gray">Cancel</Button>
+            <button className={button({ variant: "ghost" })}>Cancel</button>
           </Dialog.Close>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <button className={button({ variant: "ghost" })} onClick={handleSubmit} disabled={loading}>
             {loading ? "Saving…" : "Create contact"}
-          </Button>
+          </button>
         </Flex>
       </Dialog.Content>
     </Dialog.Root>
@@ -477,10 +477,10 @@ function DeleteContactButton({
   return (
     <AlertDialog.Root>
       <AlertDialog.Trigger>
-        <Button size="1" variant="soft" color="red">
+        <button className={button({ variant: "ghost", size: "sm" })}>
           <TrashIcon />
           Remove
-        </Button>
+        </button>
       </AlertDialog.Trigger>
       <AlertDialog.Content maxWidth="400px">
         <AlertDialog.Title>Remove contact</AlertDialog.Title>
@@ -489,14 +489,14 @@ function DeleteContactButton({
         </AlertDialog.Description>
         <Flex gap="3" mt="4" justify="end">
           <AlertDialog.Cancel>
-            <Button variant="soft" color="gray">
+            <button className={button({ variant: "ghost" })}>
               Cancel
-            </Button>
+            </button>
           </AlertDialog.Cancel>
           <AlertDialog.Action>
-            <Button color="red" onClick={handleDelete} disabled={loading}>
+            <button className={button({ variant: "ghost" })} onClick={handleDelete} disabled={loading}>
               {loading ? "Removing…" : "Remove"}
-            </Button>
+            </button>
           </AlertDialog.Action>
         </Flex>
       </AlertDialog.Content>
@@ -799,9 +799,9 @@ export function CompanyContactsClient({
                     : "Starting scheduler..."}
             </Callout.Text>
             {(completion || schedulerError) && (
-              <Button size="1" variant="ghost" onClick={resetScheduler} ml="2">
+              <button className={button({ variant: "ghost", size: "sm" })} onClick={resetScheduler} style={{ marginLeft: "var(--space-2)" }}>
                 Dismiss
-              </Button>
+              </button>
             )}
           </Callout.Root>
         )}
@@ -821,84 +821,68 @@ export function CompanyContactsClient({
             />
 
             {/* Email discovery actions */}
-            <Button
-              size="2"
-              variant="soft"
-              color="blue"
+            <button
+              className={button({ variant: "ghost", size: "md" })}
               onClick={handleEnhanceAll}
               disabled={enhancing || applyingPattern}
             >
               {enhancing ? <Spinner size="1" /> : <MagnifyingGlassIcon />}
               Find emails for all
-            </Button>
-            <Button
-              size="2"
-              variant="soft"
-              color="indigo"
+            </button>
+            <button
+              className={button({ variant: "ghost", size: "md" })}
               onClick={handleApplyPattern}
               disabled={applyingPattern || enhancing}
             >
               {applyingPattern ? <Spinner size="1" /> : <UpdateIcon />}
               Apply pattern
-            </Button>
+            </button>
 
-            <Button
-              size="2"
-              variant="soft"
-              color="gray"
+            <button
+              className={button({ variant: "ghost", size: "md" })}
               onClick={handleUnverifyAll}
               disabled={unverifying}
             >
               {unverifying ? <Spinner size="1" /> : null}
               Unverify all
-            </Button>
+            </button>
 
-            <Button
-              size="2"
-              variant="solid"
-              color="violet"
+            <button
+              className={button({ variant: "solid", size: "md" })}
               onClick={() => setGenerateBatchOpen(true)}
               disabled={batchEmailRecipients.length === 0}
             >
               <MagicWandIcon />
               Generate & Send
               {batchEmailRecipients.length > 0 && ` (${batchEmailRecipients.length})`}
-            </Button>
-            <Button
-              size="2"
-              variant="solid"
-              color="indigo"
+            </button>
+            <button
+              className={button({ variant: "solid", size: "md" })}
               onClick={() => setBatchEmailOpen(true)}
               disabled={batchEmailRecipients.length === 0}
             >
               <PaperPlaneIcon />
               Send Batch Email
               {batchEmailRecipients.length > 0 && ` (${batchEmailRecipients.length})`}
-            </Button>
-            <Button
-              size="2"
-              variant="soft"
-              color="orange"
+            </button>
+            <button
+              className={button({ variant: "ghost", size: "md" })}
               onClick={() => company?.id && scheduleEmails(company.id)}
               disabled={isStreaming || !company?.id}
             >
               {isStreaming ? <Spinner size="1" /> : <UpdateIcon />}
               {isStreaming ? "Scheduling..." : "Schedule All"}
-            </Button>
-            <Button
-              size="2"
-              variant="soft"
-              color="amber"
+            </button>
+            <button
+              className={button({ variant: "ghost", size: "md" })}
               onClick={() => setFollowUpOpen(true)}
               disabled={!company?.id}
             >
               <ClockIcon />
               Follow-up
-            </Button>
-            <Button
-              size="2"
-              variant="ghost"
-              color="gray"
+            </button>
+            <button
+              className={button({ variant: "ghost", size: "md" })}
               onClick={async () => {
                 if (!company?.id) return;
                 const { data: result } = await mergeDuplicateContacts({ variables: { companyId: company.id } });
@@ -911,7 +895,7 @@ export function CompanyContactsClient({
             >
               {merging ? <Spinner size="1" /> : null}
               Merge Duplicates
-            </Button>
+            </button>
 
             {/* LinkedIn import */}
             <Dialog.Root
@@ -925,10 +909,10 @@ export function CompanyContactsClient({
               }}
             >
               <Dialog.Trigger>
-                <Button size="2" variant="soft" color="gray">
+                <button className={button({ variant: "ghost", size: "md" })}>
                   <LinkedInLogoIcon />
                   Import from LinkedIn
-                </Button>
+                </button>
               </Dialog.Trigger>
 
               <Dialog.Content maxWidth="520px">
@@ -960,16 +944,17 @@ export function CompanyContactsClient({
 
                 <Flex gap="3" mt="4" justify="end">
                   <Dialog.Close>
-                    <Button variant="soft" color="gray">
+                    <button className={button({ variant: "ghost" })}>
                       Cancel
-                    </Button>
+                    </button>
                   </Dialog.Close>
-                  <Button
+                  <button
+                    className={button({ variant: "ghost" })}
                     onClick={handleImportContacts}
                     disabled={!linkedinHtml.trim() || importing}
                   >
                     {importing ? "Importing…" : "Import contacts"}
-                  </Button>
+                  </button>
                 </Flex>
               </Dialog.Content>
             </Dialog.Root>

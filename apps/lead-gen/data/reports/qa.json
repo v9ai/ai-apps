@@ -33,10 +33,10 @@
   "quality_score": 0.85,
   "recommendations": [
     {
-      "priority": "CRITICAL",
-      "issue": "Bounce rate 95.1% exceeds 15% threshold",
+      "priority": "HIGH",
+      "issue": "Email verification rate 4.9% — only 6 of 122 verified via SMTP",
       "affected_count": 116,
-      "action": "Halt outreach. Investigate email verification quality."
+      "action": "Try additional email patterns or use catch-all detection."
     }
   ]
 }

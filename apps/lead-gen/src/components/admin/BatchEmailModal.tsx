@@ -553,11 +553,11 @@ export function BatchEmailModal({
             )}
 
             <Flex justify="end" gap="3" mt="2">
-              <Button variant="soft" color="gray" onClick={resetForm}>
+              <button className={button({ variant: "ghost" })} onClick={resetForm}>
                 Compose Another
-              </Button>
+              </button>
               <Dialog.Close>
-                <Button variant="solid">Done</Button>
+                <button className={button({})}>Done</button>
               </Dialog.Close>
             </Flex>
           </Flex>

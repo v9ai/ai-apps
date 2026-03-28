@@ -663,13 +663,14 @@ export function CreateEmailClient({
                         eligible (have email, not on do-not-contact list)
                       </Text>
                     </Flex>
-                    <Button
+                    <button
+                      className={button({ variant: "ghost" })}
                       onClick={() => setBatchEmailOpen(true)}
                       style={{ alignSelf: "flex-start" }}
                     >
                       <PaperPlaneIcon />
                       Compose Batch Email
-                    </Button>
+                    </button>
                     <BatchEmailModal
                       open={batchEmailOpen}
                       onOpenChange={setBatchEmailOpen}

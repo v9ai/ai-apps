@@ -581,10 +581,10 @@ function DeleteContactDialog({
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger>
-        <Button size="2" variant="soft" color="red">
+        <button className={button({ variant: "ghost", size: "md" })}>
           <TrashIcon />
           Delete
-        </Button>
+        </button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="400px">
@@ -604,13 +604,13 @@ function DeleteContactDialog({
 
         <Flex gap="3" justify="end">
           <Dialog.Close>
-            <Button variant="soft" color="gray">
+            <button className={button({ variant: "ghost" })}>
               Cancel
-            </Button>
+            </button>
           </Dialog.Close>
-          <Button color="red" onClick={handleDelete} disabled={loading}>
+          <button className={button({ variant: "solid" })} onClick={handleDelete} disabled={loading}>
             {loading ? "Deleting…" : "Delete"}
-          </Button>
+          </button>
         </Flex>
       </Dialog.Content>
     </Dialog.Root>
@@ -752,7 +752,7 @@ function EmailDetailDialog({ email }: { email: ContactEmailRow }) {
 
         <Flex justify="end" mt="4">
           <Dialog.Close>
-            <Button variant="soft" color="gray">Close</Button>
+            <button className={button({ variant: "ghost" })}>Close</button>
           </Dialog.Close>
         </Flex>
       </Dialog.Content>
@@ -956,16 +956,14 @@ export function ContactDetailClient({ contactId }: { contactId: number }) {
                     <Text size="2" color="gray">
                       No email
                     </Text>
-                    <Button
-                      size="1"
-                      variant="soft"
-                      color="green"
+                    <button
+                      className={button({ variant: "ghost", size: "sm" })}
                       onClick={handleFindEmail}
                       disabled={finding}
                     >
                       {finding ? <Spinner size="1" /> : <MagnifyingGlassIcon />}
                       Find email
-                    </Button>
+                    </button>
                   </Flex>
                 )}
               </Box>
@@ -1140,18 +1138,16 @@ export function ContactDetailClient({ contactId }: { contactId: number }) {
         {/* Bottom actions */}
         <Flex gap="2" wrap="wrap">
           {contact.email && (
-            <Button size="2" variant="soft" asChild>
-              <a href={`mailto:${contact.email}`}>
-                <EnvelopeClosedIcon />
-                Send email
-              </a>
-            </Button>
+            <a href={`mailto:${contact.email}`} className={button({ variant: "ghost", size: "md" })}>
+              <EnvelopeClosedIcon />
+              Send email
+            </a>
           )}
           {!contact.email && (
-            <Button size="2" variant="soft" color="green" onClick={handleFindEmail} disabled={finding}>
+            <button className={button({ variant: "ghost", size: "md" })} onClick={handleFindEmail} disabled={finding}>
               {finding ? <Spinner size="1" /> : <MagnifyingGlassIcon />}
               Find email
-            </Button>
+            </button>
           )}
           <GenerateEmailDialog contact={contact} onSent={() => refetchEmails()} />
         </Flex>

@@ -617,8 +617,8 @@ function EmailTemplatesList() {
                 <TextField.Root name="category" placeholder="Category (e.g. outreach, follow-up)" />
                 <TextArea name="textContent" placeholder="Email body text" rows={6} />
                 <Flex gap="3" justify="end" mt="2">
-                  <Dialog.Close><Button variant="soft" color="gray">Cancel</Button></Dialog.Close>
-                  <Button type="submit" disabled={creating}>{creating ? "Creating…" : "Create"}</Button>
+                  <Dialog.Close><button className={button({ variant: "ghost" })}>Cancel</button></Dialog.Close>
+                  <button className={button({ variant: "ghost" })} type="submit" disabled={creating}>{creating ? "Creating…" : "Create"}</button>
                 </Flex>
               </Flex>
             </form>
@@ -642,7 +642,7 @@ function EmailTemplatesList() {
               </Box>
               <Flex align="center" gap="2">
                 <Switch checked={t.isActive} onCheckedChange={() => handleToggleActive(t.id, t.isActive)} />
-                <Button size="1" variant="ghost" color="red" onClick={() => handleDelete(t.id)}><TrashIcon /></Button>
+                <button className={button({ variant: "ghost", size: "sm" })} onClick={() => handleDelete(t.id)}><TrashIcon /></button>
               </Flex>
             </Flex>
           </Card>
@@ -683,23 +683,21 @@ function EmailsPageContent() {
           </Text>
         </Box>
         <Flex gap="2" align="center">
-          <Button
-            variant="solid"
-            size="2"
+          <button
+            className={button({ variant: "solid", size: "md" })}
             onClick={handleOpenBatchModal}
             disabled={loadingSubscribers}
           >
             {loadingSubscribers ? "Loading..." : "Send Batch Email"}
-          </Button>
-          <Button asChild variant="soft" size="2">
-            <a
-              href="https://resend.com/emails"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Resend dashboard <ExternalLinkIcon />
-            </a>
-          </Button>
+          </button>
+          <a
+            href="https://resend.com/emails"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={button({ variant: "ghost", size: "md" })}
+          >
+            Resend dashboard <ExternalLinkIcon />
+          </a>
         </Flex>
       </Flex>
 
@@ -784,9 +782,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
             <ExclamationTriangleIcon width="32" height="32" color="red" />
             <Heading size="5">Access denied</Heading>
             <Text color="gray">This page is restricted to administrators.</Text>
-            <Button asChild variant="soft">
-              <Link href="/">← Back to Jobs</Link>
-            </Button>
+            <Link href="/" className={button({ variant: "ghost" })}>← Back to Jobs</Link>
           </Flex>
         </Card>
       </Container>
