@@ -622,3 +622,68 @@ The cybersecurity literature on NRDs (Palo Alto, Stamus Networks) focuses on mal
 **CEP-30 / DiskANN:** JVector's hybrid architecture (HNSW layers + Vamana intra-layer algorithm) explains why AstraDB performs better than vanilla HNSW at mixed read/write workloads. However, for a platform under 10M company records, pgvector's HNSW implementation (added in v0.5.0, 2023) provides >95% recall at comparable latency with no separate infrastructure. The operational simplicity argument for pgvector is compelling at prototype scale.
 
 **Frontiers in AI 2025:** The strongest evidence that a simple ML classifier (Gradient Boosting, Random Forest) on structured company features outperforms heuristic thresholds for lead prioritization. The feature set available at NRD ingestion time (domain age, company name tokens, country, industry, employee count, LinkedIn presence) is sufficient for a first-pass classifier trained on historical conversion data.
+
+---
+
+## 12. Recency & Changelog
+
+### Repository Status
+
+Not archived (contradicts the "archived" label stated in the original analysis — the repo flag is `archived: false` as of March 2026). The description still reads "An AI-powered B2B lead generation system. Private preview available." The repo has 28 stars, 6 forks, and 1 open issue. The `pushed_at` timestamp is **2026-01-22** — recent only because a GitHub Actions bot committed another NRD gzip sync that day. The `updated_at` timestamp from GitHub's metadata API is **2026-02-17**, reflecting a metadata-only touch (likely a dependency graph refresh), not a code change.
+
+### Last Meaningful Activity
+
+The last human code commit by Isaac Bell was **October 22, 2024**, with the message `"Archive project"` (SHA `f7e232ad`). This commit did not toggle GitHub's archive flag — it appears to be a self-annotation commit. The two commits immediately before it (October 8, 2024) removed a comment and whitespace from `site_summarizer.py`. No functional code has changed since April 2024. All commits since October 2024 are automated `"Sync data from nrd-poll repository"` pushes by the GitHub Actions bot, which drop updated NRD gzip files into `data/daily/`. The bot ran daily through at least January 2026, meaning **the data pipeline's cron sync is still active even though the application code is frozen**. This is a zombie pipeline: data keeps arriving but nothing processes it.
+
+### Dependency Staleness
+
+**AstraDB / DataStax Data API.** The `$vector` field syntax used by LeadsDB remains valid and is not deprecated. However, the Python client (`astrapy`) has undergone two major breaking-change releases since the project was frozen:
+
+- Client **v1.5** (September 2024): deprecated `namespace` in favour of `keyspace`; either works but must be consistent.
+- Client **v2.0** (April 2025): the `create_collection()` API was overhauled — the individual `dimension`, `metric`, and `service` parameters were replaced by a single `definition` parameter. `bulk_write`, `deleteAll`, and `check_exists` methods were removed. Timeout parameters were restructured (`max_time_ms` → `timeout_ms`). `list_collections()` now returns a list, not a cursor.
+- Client **v2.1** (September 2025): added hybrid search (vector + lexical), user-defined types, and collection indexes on maps/sets/lists.
+
+LeadsDB's `astrapy` usage predates all of these. A fresh `pip install astrapy` would install v2.x and break the `create_collection()` call and any namespace references. The `$vector` insert path itself should still work since DataStax preserved backward compatibility for that specific field name.
+
+**Apache Pulsar / pulsar-client Python.** LeadsDB uses `pulsar-client` (the official Python binding). Latest release as of March 2026 is **3.10.0** (February 5, 2026); the version at the time the project was written was likely 3.x (3.5.0 was the 2024 release). The Pulsar Astra Streaming topic path (`persistent://leads/default/companies-cdc`) is still a valid Astra Streaming URI format. However, the `stream_data()` method in `db.py` references `self.producer` — an attribute that was never assigned — so the Pulsar integration has never worked regardless of client version. Apache Pulsar itself is now at **4.1** (with 3.0.16 as the current LTS patch); the 4.x series introduced breaking changes to the Java broker internals but the Python client API surface for basic produce/consume is stable.
+
+**SpaCy `en_core_web_md`.** The model is now at **3.8.0** (released September 30, 2024), requiring `spacy>=3.8.0,<3.9.0`. SpaCy itself is at 3.8.x (May 2025). The model is still actively maintained. However, `en_core_web_md` remains a 300-d GloVe-based model — the architecture has not changed, only the training data and bug fixes. The OOV and mean-pooling problems documented in Section 10 still apply. Newer additions to the spaCy model zoo include transformer-based pipelines (`en_core_web_trf`) that outperform `en_core_web_md` on every benchmark, though they are slower and require `spacy-transformers`. A `pip install spacy` today would pull 3.8.x; the `en_core_web_md-3.8.0` download is compatible. No dependency conflict, but the model choice is increasingly dated compared to sentence-transformers alternatives.
+
+### Known Bugs Status
+
+None of the 8 confirmed bugs documented in Section 8.4 have been fixed. The last functional code change (October 8, 2024 — removing a comment) did not touch any of the affected files (`api/db.py`, `api/site_summarizer.py`, `api/pinecone.py`, `api/models/company.py`, `api/index.py`). As of the `"Archive project"` commit on October 22, 2024, the following bugs remain open and unpatched:
+
+1. `db.py` — `stream_data()` references `self.producer` (undefined): Pulsar CDC broken.
+2. `db.py` — `find()` and `search_by_name()` missing `self`: uncallable.
+3. `site_summarizer.py` — `model="gpt-3.5"` invalid model ID: OpenAI calls always fail.
+4. `site_summarizer.py` — `summaries` referenced before assignment: AttributeError on every crawl.
+5. `pinecone.py` — `__init__` calls `client = client()` circular: Pinecone class uninstantiable.
+6. `models/company.py` — `data['data']` key mismatch: KeyError on get.
+7. `index.py` — Notion OAuth calls wrong endpoint: Notion subscribe always fails.
+8. `index.py` — Hardcoded personal email as Notion payload fallback: data leakage.
+
+Issue #7 ("Fix Next.js Issues", opened April 2024) remains open and uncommented.
+
+### Alternatives That Have Emerged
+
+Several projects and services now address the NRD-to-lead problem with more complete implementations:
+
+- **Dealfront** (Leadfeeder + Echobot merger, 2023–2024): The dominant EU-focused company intent platform. Closed source, SaaS. Directly competes with what LeadsDB was trying to build; now covers web visitor identification, NRD signals, and job change alerts.
+- **WhoisXML API NRD2 + direct enrichment stacks**: The data source LeadsDB abstracted over is now productised. WhoisXML sells a "Newly Registered Domains" feed with built-in WHOIS enrichment at $0.005/record, eliminating the Abstract API dependency for the core resolution step.
+- **Common Crawl + LLM extraction pipelines** (open source): Projects like `cc-net`, combined with Ollama/vLLM for local inference, can extract company descriptions from CC snapshots without Abstract API costs. The lead-gen codebase documented in this repo (`/Users/vadimnicolai/Public/ai-apps/apps/lead-gen`) implements this pattern natively.
+- **Clay.com**: Closed-source SaaS that assembles enrichment APIs into a no-code pipeline. Solves exactly LeadsDB's enrichment problem at the cost of $149–$800/month.
+- **Apollo.io / Hunter.io**: Contact discovery layer that LeadsDB never implemented. Both provide programmatic APIs that pair with NRD ingestion.
+- **pgvector 0.7+ on Neon**: Eliminates the AstraDB + Firestore dual-store architecture. A single PostgreSQL instance with `pgvector` HNSW handles vector similarity, CRUD, and full-text search. This is the approach taken in the lead-gen codebase this report supports.
+- **sentence-transformers `all-MiniLM-L6-v2`**: The replacement for `en_core_web_md` that was identified in Section 10.4 is now widely adopted. Hugging Face reports 30M+ monthly downloads (2025); it has become the default embedding model for lightweight open-source pipelines.
+
+### Verdict
+
+Do not build on LeadsDB. The application code is effectively abandoned as of October 2024, carries 8 confirmed unpatched bugs, and has never functioned end-to-end — the subscriber matching loop was never implemented, the Pulsar CDC has never worked, and the site summarizer has never produced output. The `astrapy` v2.0 breaking changes (April 2025) would require non-trivial migration work before the project could even start.
+
+**What is salvageable:**
+
+1. **The NRD-as-signal concept.** The core insight — monitor newly registered domains daily, enrich against a company data API, store for downstream filtering — is correct and worth building. Nothing in the implementation needs to be reused; the concept transfers.
+2. **The `data/daily/` gzip files.** The GitHub Actions bot is still running and committing fresh NRD domain lists daily. These files are accessible and represent months of domain history that could seed a fresh pipeline without any code dependency on LeadsDB.
+3. **The Postman collection.** `Leads DB.postman_collection.json` documents the intended API surface and is useful as a reference for designing a clean REST or GraphQL interface over the same domain.
+
+Everything else — the Flask app, the dual-store architecture, the SpaCy embeddings, the Kafka/Pulsar integration, the Pinecone dead code — should be discarded and rebuilt from scratch using the patterns documented in Sections 6 and 9.3 of this report.

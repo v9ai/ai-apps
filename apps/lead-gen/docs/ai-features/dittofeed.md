@@ -783,3 +783,107 @@ Dittofeed's ClickHouse event store contains all send/open/click/convert events w
 **DELTA / Continual Learning (CVPR 2024):** If Dittofeed adds online learning for user scoring (churn prediction, engagement propensity), the primary risk is catastrophic forgetting — the model's performance on older user patterns degrades as it learns from new data. The DELTA paper's decoupled learning approach (separate representation layer from classification head) is the state-of-the-art mitigation. Applied to Dittofeed: a separate ClickHouse-backed feature representation (stable over time) combined with a lightweight classification head that updates on new conversion events provides the right balance.
 
 **MDPI Email Review (2025):** The finding that PEFT-fine-tuned LLMs significantly outperform zero-shot LLMs for email generation has a direct design implication for the Q3 2025 authoring feature. The journey/segment *structure* generation (producing valid JSON) benefits from structured output enforcement (JSON schema mode). The *template content* generation (producing email copy) benefits from PEFT on high-performing historical emails. These are two different LLM tasks that require different optimization strategies — conflating them in a single LLM call (as a naive implementation would) will produce weak results on both.
+
+---
+
+## 12. Recency & Changelog
+
+> Researched: 2026-03-28. Sources: GitHub releases API, commits API, README roadmap (current HEAD), dittofeed.com/blog.
+
+### Latest Release
+
+**v0.23.0** — published **2025-12-01**. This is the latest stable/GA release. The project is simultaneously developing v0.24.0 through an extended alpha series (16 alpha tags as of the research date, latest alpha.16 published 2026-03-16).
+
+Key features in v0.23.0:
+- New Analysis Page (campaign performance charting)
+- Improved Broadcast flow and scheduling UX
+- `RandomCohortNode` (structural A/B splits added to the type system)
+- `Includes` segment node operator
+- Extended auth providers: Keycloak, AWS Cognito, GCP OAuth
+- SignalWire SMS provider
+- Absolute Date segment operator
+- Batch transactional messaging API endpoint
+- Workspace member management UI
+- Manual segment append operation
+- Personal Gmail broadcast sending
+- Skip-on-error for journey message nodes
+- Localized timezones in events/deliveries tables
+- CSV export for events and deliveries tables
+
+### LLM Integration Status
+
+**Did not ship. Still marked `[ ]` (not started) in the current README as of 2026-03-28.**
+
+The Q3 2025 roadmap entry reads:
+
+> **LLM integration** — Drive quicker, easier generation of journeys, segments, and templates. `[ ]`
+
+A full-text code search across the repository file tree and all merged PRs returns zero matches for `openai`, `anthropic`, `llm`, `gpt`, `embed`, or any LLM SDK dependency. No feature branch, no draft PR, no issue in the tracker references LLM work. The only AI-related GitHub issue in the entire history was issue #1830 (March 2026), which was a third-party sales pitch and was closed in one day.
+
+The Q4 2025 and Q1/Q2 2026 roadmap blocks do not exist in the README — the roadmap ends after Q3 2025. There is no announced schedule for when LLM integration will be revisited.
+
+**What was actually built instead of LLM features (Q3–Q4 2025):** random cohort A/B nodes, bloom filter indexes for ClickHouse, custom recipient property for webhook messaging, view-in-browser links, command palette, subscription management, Resend SDK upgrade, Amazon SES custom endpoint support.
+
+**Conclusion:** The Q3 2025 LLM feature was not built, not started, and has no visible timeline. Dittofeed remains zero-AI in production as of March 2026.
+
+### Recent Commits (last 90 days)
+
+Covering approximately 2026-01-01 to 2026-03-27 (12 commits on `main`):
+
+| Date | Commit |
+|---|---|
+| 2026-03-27 | fix: upgrade Resend SDK to v4, fix silent email delivery failures (#1833) |
+| 2026-03-16 | fix upload CSV for large values (#1832) |
+| 2026-01-22 | Fix Invalid URL error when apiBase is empty (#1826) |
+| 2026-01-16 | Fix v0.24.0 pre-upgrade script (#1824) |
+| 2026-01-16 | Adjust compute properties wait defaults (#1823) |
+| 2026-01-15 | Add component configurations docs (#1821) |
+| 2026-01-14 | Add subscription management page (#1811) |
+| 2026-01-14 | Fix Temporal time-skipping test sync (#1819) |
+| 2026-01-14 | Add custom endpoint support for Amazon SES (#1818) |
+| 2026-01-08 | Add subscription group unsubscribe lists (#1815) |
+| 2026-01-07 | Add command palette for quick navigation (#1806) |
+| 2026-01-06 | Add ResourceSelect with click-through navigation (#1810) |
+
+**Cadence note:** Commit velocity dropped significantly after January 2026 — only 2 commits in the 10 weeks between 2026-01-22 and 2026-03-27. The v0.24.0 alpha series has stalled at alpha.16 since March 16. This is consistent with a small team (primarily one active contributor, `@maxgurewitz`) with reduced bandwidth.
+
+### Open Issues (AI/ML relevant)
+
+No open issues are tagged with AI, ML, LLM, or NLP labels. A search across all open issues for related keywords returned zero matches.
+
+The closest open items to AI-adjacent functionality:
+- **#1831** (2026-03-10): Campaign analysis page missing — requests more analytics, not AI.
+- **#1829** (2026-02-21): Feature request: add a "contains" operator for segment matching — purely rule-based segmentation enhancement.
+- **#1362** (2025-03-19): Modular building blocks in email templates — template composition UX, not AI generation.
+
+There is no open roadmap issue, discussion, or RFC for LLM integration. The Q3 2025 roadmap item in the README exists only as a table row with an unchecked checkbox and has never had a corresponding tracking issue opened.
+
+### Roadmap / Announced Features
+
+The README roadmap (current as of HEAD, 2026-03-28) ends at Q3 2025 — there are no published Q4 2025, Q1 2026, or Q2 2026 roadmap entries. The blog has not published any announcement of upcoming AI features. The Discord and issue tracker have no visible AI roadmap discussion.
+
+The three Q3 2025 roadmap items that remain unbuilt:
+
+| Feature | Status |
+|---|---|
+| LLM integration (journey/segment/template authoring) | `[ ]` — not started |
+| Stripe integration | `[ ]` — not started |
+| Git-based resources & campaign testing | `[ ]` — not started |
+
+The "Developer-centric" section in the README mentions "Branch-based git workflows" and "Testing SDK to test messaging campaigns in CI" as aspirational features — neither has shipped.
+
+### Staleness Assessment
+
+**Release velocity:** One stable release (v0.23.0) in Q4 2025. v0.24.0 has been in alpha for 4+ months (16 alpha tags since 2025-12-23) with no stable release. Commit throughput on `main` is ~2 commits/week in Nov–Jan declining to ~1 commit/6 weeks in Feb–Mar 2026.
+
+**Production readiness:** v0.23.0 is production-ready for its stated feature set (deterministic messaging automation, multi-channel, self-hosted). The ClickHouse + Temporal + Kafka architecture is solid and battle-tested by the upstream projects.
+
+**AI feature readiness:** Not production-ready, not in development. The LLM authoring feature planned for Q3 2025 has zero implementation progress visible in the public repository as of March 2026 — approximately 6 months overdue against the original schedule.
+
+**Risk flags for adopters building AI-augmented workflows on top of Dittofeed:**
+- Single primary contributor (`@maxgurewitz`) with declining commit velocity — bus factor risk
+- No public roadmap beyond Q3 2025 — unclear when AI features will be prioritized
+- v0.24.0 alpha has been stalled for ~10 weeks — uncertain release timeline
+- No LLM dependency in the codebase means any AI integration requires a custom fork or external sidecar
+
+**Recommendation for the lead-gen platform:** Dittofeed remains a viable messaging execution layer (journey engine + ESP routing + segmentation), but AI features must be built externally and integrated via the admin API and SDK. Do not wait for Dittofeed's native LLM authoring feature — it has no visible ETA.
