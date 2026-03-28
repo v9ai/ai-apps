@@ -212,7 +212,7 @@ export function LandingHero() {
         >
           {/* open source badge */}
           <a
-            href="https://github.com/nicolad/lead-gen"
+            href="https://github.com/nicolad/agentic-lead-gen"
             target="_blank"
             rel="noopener noreferrer"
             className={css({
