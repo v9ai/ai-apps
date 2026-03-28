@@ -42,7 +42,7 @@ Signals: team page analysis, blog/case study topics, job posting requirements, t
 ### 3. ATS Board Detection
 
 Detect and scrape Applicant Tracking System boards:
-- Ashby, Greenhouse, Lever, Workable, BambooHR
+- Ashby, BambooHR
 - Extract open positions, job categories, remote policy
 - Link ATS board URL to company record
 

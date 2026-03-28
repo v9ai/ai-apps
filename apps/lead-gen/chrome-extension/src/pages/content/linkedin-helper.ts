@@ -854,8 +854,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const hostname = window.location.hostname;
   const isSupportedSite =
     hostname.includes("linkedin.com") ||
-    hostname.includes("google.com") ||
-    hostname.includes("workable.com");
+    hostname.includes("google.com");
 
   if (!isSupportedSite) return false;
 

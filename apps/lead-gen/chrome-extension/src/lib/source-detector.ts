@@ -16,13 +16,8 @@ export function detectSourceFromUrl(url: string): SourceInfo {
   if (url.includes("glassdoor.com")) {
     return { sourceType: "glassdoor", tags: ["glassdoor"] };
   }
-  if (url.includes("workable.com") || url.includes("site%3Aworkable")) {
-    return { sourceType: "workable", tags: ["workable"] };
-  }
   if (url.includes("google.com/search")) {
-    const tags = ["google_search"];
-    if (url.includes("workable")) tags.push("workable");
-    return { sourceType: "google_search", tags };
+    return { sourceType: "google_search", tags: ["google_search"] };
   }
   return { sourceType: "other", tags: [] };
 }

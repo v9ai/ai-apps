@@ -13,7 +13,6 @@ if (import.meta.env.DEV) {
           "https://*.linkedin.com/feed/*",
           "https://*.google.com/search*",
           "https://*.ashbyhq.com/*",
-          "https://*.workable.com/*",
         ]});
         for (const tab of tabs) {
           if (tab.id) chrome.tabs.reload(tab.id);
