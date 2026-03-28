@@ -744,7 +744,7 @@ exports.handler = async (event) => {
 
 **WaitForTaskToken pattern:** Lambda initiates an async operation (e.g., human approval, third-party payment) and returns immediately. Step Functions pauses and resumes when the callback `SendTaskSuccess` or `SendTaskFailure` is called with the token.
 
-**SDK Integrations (optimistic integrations):** Step Functions can call [DynamoDB](/dynamodb-data-services), SQS, SNS, [ECS](/aws-compute-containers), Glue, etc. directly without Lambda as a wrapper—reducing latency and cost.
+**SDK Integrations (optimistic integrations):** Step Functions can call [DynamoDB](/dynamodb-data-services), SQS, SNS, [ECS](/aws/compute-containers), Glue, etc. directly without Lambda as a wrapper—reducing latency and cost.
 
 ---
 
@@ -821,7 +821,7 @@ A: (1) **Ingestion:** Pre-signed S3 URLs for direct browser-to-S3 upload (no Lam
 - **"I initialize my DB connection inside the handler."** This creates a new connection on every cold start and also on every warm invocation that has an idle connection timeout. Always initialize outside the handler and handle reconnection logic gracefully.
 - **"Cold starts aren't a problem, just set the timeout high."** A high timeout doesn't prevent cold starts—it just means failures take longer. The right answer is right-sizing, fast runtimes, and Provisioned Concurrency where needed.
 - **"Lambda scales infinitely."** Lambda scales to the regional concurrency limit (default 1,000). Burst scaling is also rate-limited (500–3,000 new environments per minute depending on region). Design SQS buffers for true spike absorption.
-- **"Use Lambda for everything."** Lambda has a 15-minute timeout. ML training, video transcoding, and long ETL jobs belong in [Fargate / EC2](/aws-compute-containers), or AWS Batch.
+- **"Use Lambda for everything."** Lambda has a 15-minute timeout. ML training, video transcoding, and long ETL jobs belong in [Fargate / EC2](/aws/compute-containers), or AWS Batch.
 - **"VPC = slower Lambda"** — This was true before 2020. Hyperplane ENIs eliminated the ENI provisioning cold start. Modern VPC Lambda has negligible cold start overhead compared to non-VPC.
 - **"Standard Workflow for everything in Step Functions."** Standard Workflows are expensive ($0.025 per 1,000 state transitions) at high volume. Express Workflows at $1/M executions + duration are 100× cheaper for high-frequency flows.
 - **"Secrets in environment variables are fine."** Env vars are encrypted at rest but visible in Lambda configuration to anyone with IAM access to the function. Secrets Manager or SSM SecureString adds proper access control and rotation.

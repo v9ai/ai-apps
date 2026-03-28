@@ -10,7 +10,7 @@ AWS offers the most comprehensive managed AI/ML portfolio in the cloud, spanning
 
 ### What It Is
 
-Bedrock is AWS's fully managed foundation model (FM) service. It provides API access to third-party and Amazon-native FMs without requiring model hosting infrastructure. Think of it as a router to the best available FMs, wrapped in [AWS IAM](/aws-iam-security), VPC, and compliance controls.
+Bedrock is AWS's fully managed foundation model (FM) service. It provides API access to third-party and Amazon-native FMs without requiring model hosting infrastructure. Think of it as a router to the best available FMs, wrapped in [AWS IAM](/aws/iam-security), VPC, and compliance controls.
 
 ### Foundation Models Available
 
@@ -692,7 +692,7 @@ Lex is a managed conversational AI service for building chatbots and voice bots.
 
 ### Core Concepts
 
-**Bot**: The top-level container. Has a locale (language/region) and an [IAM](/aws-iam-security) role.
+**Bot**: The top-level container. Has a locale (language/region) and an [IAM](/aws/iam-security) role.
 
 **Intent**: What the user wants to do. Examples: `BookFlight`, `CheckOrderStatus`, `FAQ`. Each intent has:
 - **Sample utterances**: Training phrases ("I want to book a flight", "fly me to London")
@@ -768,7 +768,7 @@ Documents are indexed as a combination of text content + metadata attributes (au
 
 **Feedback API**: Submit user click data and positive/negative labels to improve ranking over time.
 
-**Access control**: Documents can have ACL metadata. Kendra filters results based on user identity (via [IAM](/aws-iam-security) or JWT tokens) so users only see documents they're authorized to access.
+**Access control**: Documents can have ACL metadata. Kendra filters results based on user identity (via [IAM](/aws/iam-security) or JWT tokens) so users only see documents they're authorized to access.
 
 ### Incremental Crawl
 
@@ -951,7 +951,7 @@ def handler(event, context):
         )
 ```
 
-**Production hardening**: Add SQS between [S3](/aws-storage-s3) events and [Lambda](/aws/lambda-serverless) for backpressure. Use DLQ for failed Lambda invocations. Enable Lambda concurrency limits to avoid overwhelming the SageMaker endpoint. Use Step Functions instead of Lambda for complex multi-step workflows with error handling. For [networking and API Gateway](/aws-api-gateway-networking) in front of this pipeline, see the dedicated article.
+**Production hardening**: Add SQS between [S3](/aws-storage-s3) events and [Lambda](/aws/lambda-serverless) for backpressure. Use DLQ for failed Lambda invocations. Enable Lambda concurrency limits to avoid overwhelming the SageMaker endpoint. Use Step Functions instead of Lambda for complex multi-step workflows with error handling. For [networking and API Gateway](/aws/api-gateway-networking) in front of this pipeline, see the dedicated article.
 
 ### Pattern 2: [RAG](/advanced-rag) with Bedrock Knowledge Bases
 
@@ -1090,7 +1090,7 @@ def handler(event, context):
 
 **Q: A client wants to add a Q&A chatbot to their internal knowledge base. Walk me through the architecture on AWS.**
 
-**A:** Start with Bedrock Knowledge Bases for the [RAG](/advanced-rag) layer. Connect it to their [S3](/aws-storage-s3) documents (or SharePoint/Confluence via native connectors). Choose the [vector store](/vector-databases) based on scale—OpenSearch Serverless for most cases. Use [Titan Embeddings V2](/embeddings) for indexing. Build the chat interface with [API Gateway](/aws-api-gateway-networking) + [Lambda](/aws/lambda-serverless) calling `RetrieveAndGenerate`. Add Bedrock Guardrails for PII protection and topic restrictions. Add a Bedrock Agent if users need to take actions (query a database, file a ticket) not just ask questions. For access control, embed document-level permissions as metadata and filter at retrieval time using [IAM](/aws-iam-security)-backed policies. Monitor via CloudWatch and Bedrock model invocation logs in S3.
+**A:** Start with Bedrock Knowledge Bases for the [RAG](/advanced-rag) layer. Connect it to their [S3](/aws-storage-s3) documents (or SharePoint/Confluence via native connectors). Choose the [vector store](/vector-databases) based on scale—OpenSearch Serverless for most cases. Use [Titan Embeddings V2](/embeddings) for indexing. Build the chat interface with [API Gateway](/aws/api-gateway-networking) + [Lambda](/aws/lambda-serverless) calling `RetrieveAndGenerate`. Add Bedrock Guardrails for PII protection and topic restrictions. Add a Bedrock Agent if users need to take actions (query a database, file a ticket) not just ask questions. For access control, embed document-level permissions as metadata and filter at retrieval time using [IAM](/aws/iam-security)-backed policies. Monitor via CloudWatch and Bedrock model invocation logs in S3.
 
 ---
 
@@ -1162,7 +1162,7 @@ def handler(event, context):
 
 **Q: A client is concerned about Bedrock sending their proprietary data to Anthropic. How do you address this?**
 
-**A:** This is a common enterprise concern. Key points: (1) AWS's data privacy commitment—Bedrock does NOT use customer data to train or improve foundation models. Inputs/outputs are not shared with model providers (Anthropic, Meta, etc.). (2) VPC-based invocation—use Bedrock VPC endpoints (PrivateLink) so model invocations never traverse the public internet (see [API Gateway & Networking](/aws-api-gateway-networking)). (3) Encryption—all data is encrypted in transit (TLS) and at rest; you can bring your own KMS key for model customization artifacts (see [IAM & Security](/aws-iam-security)). (4) Bedrock model invocation logging—log all requests/responses to your own [S3](/aws-storage-s3) bucket for audit. (5) For highly sensitive workloads, consider deploying open-source models (Llama, Mistral) via SageMaker JumpStart in your own VPC—no data leaves your AWS account at all.
+**A:** This is a common enterprise concern. Key points: (1) AWS's data privacy commitment—Bedrock does NOT use customer data to train or improve foundation models. Inputs/outputs are not shared with model providers (Anthropic, Meta, etc.). (2) VPC-based invocation—use Bedrock VPC endpoints (PrivateLink) so model invocations never traverse the public internet (see [API Gateway & Networking](/aws/api-gateway-networking)). (3) Encryption—all data is encrypted in transit (TLS) and at rest; you can bring your own KMS key for model customization artifacts (see [IAM & Security](/aws/iam-security)). (4) Bedrock model invocation logging—log all requests/responses to your own [S3](/aws-storage-s3) bucket for audit. (5) For highly sensitive workloads, consider deploying open-source models (Llama, Mistral) via SageMaker JumpStart in your own VPC—no data leaves your AWS account at all.
 
 ---
 
@@ -1174,7 +1174,7 @@ def handler(event, context):
 
 **Q: Describe how you would build an end-to-end document processing pipeline for a legal firm that needs to extract clauses from contracts and make them searchable.**
 
-**A:** Ingest: [S3](/aws-storage-s3) bucket (encrypted, versioned) as the document store. Users upload via a pre-signed URL from [API Gateway](/aws-api-gateway-networking) + [Lambda](/aws/lambda-serverless). Process: S3 event triggers a Step Functions workflow. Step 1: Textract `StartDocumentAnalysis` (async, multi-page PDF support). Step 2: Lambda parses Textract output—extracts key-value pairs, tables, and raw text by section. Step 3: Bedrock (Claude) performs clause classification and extraction from raw text (too nuanced for Textract alone). Step 4: Comprehend Custom Entity Recognizer tags legal entities (party names, dates, jurisdiction-specific terms) trained on firm's own contract corpus. Step 5: Store structured results in [DynamoDB](/dynamodb-data-services) (fast lookup by contract ID) and full text + [embeddings](/embeddings) in OpenSearch (semantic search). Search: Kendra or Bedrock KB as the search layer. Bedrock KB for natural language questions ("Which contracts mention arbitration in Delaware?")—backed by [advanced RAG](/advanced-rag) with metadata filtering. Kendra for document-level faceted search (by date, party, contract type). Security: [IAM](/aws-iam-security) and VPC PrivateLink throughout. Attorney-specific access control enforced at the Kendra/Bedrock KB query layer via ACL metadata.
+**A:** Ingest: [S3](/aws-storage-s3) bucket (encrypted, versioned) as the document store. Users upload via a pre-signed URL from [API Gateway](/aws/api-gateway-networking) + [Lambda](/aws/lambda-serverless). Process: S3 event triggers a Step Functions workflow. Step 1: Textract `StartDocumentAnalysis` (async, multi-page PDF support). Step 2: Lambda parses Textract output—extracts key-value pairs, tables, and raw text by section. Step 3: Bedrock (Claude) performs clause classification and extraction from raw text (too nuanced for Textract alone). Step 4: Comprehend Custom Entity Recognizer tags legal entities (party names, dates, jurisdiction-specific terms) trained on firm's own contract corpus. Step 5: Store structured results in [DynamoDB](/dynamodb-data-services) (fast lookup by contract ID) and full text + [embeddings](/embeddings) in OpenSearch (semantic search). Search: Kendra or Bedrock KB as the search layer. Bedrock KB for natural language questions ("Which contracts mention arbitration in Delaware?")—backed by [advanced RAG](/advanced-rag) with metadata filtering. Kendra for document-level faceted search (by date, party, contract type). Security: [IAM](/aws/iam-security) and VPC PrivateLink throughout. Attorney-specific access control enforced at the Kendra/Bedrock KB query layer via ACL metadata.
 
 ---
 

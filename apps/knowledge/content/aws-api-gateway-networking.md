@@ -2,7 +2,7 @@
 
 ## The 30-Second Pitch
 
-AWS API Gateway is a fully managed service that acts as the "front door" for backend services—[Lambda](/aws/lambda-serverless), [EC2, ECS](/aws-compute-containers), or any HTTP endpoint—handling request routing, authorization, throttling, and protocol translation at scale. It comes in three flavors: REST API (feature-rich, legacy), HTTP API (low-latency, cheap, the modern default), and WebSocket API (persistent bidirectional connections). Paired with AWS networking primitives—VPC, subnets, security groups, NACLs, NAT Gateways, and Transit Gateway—API Gateway is the backbone of serverless and [microservice](/microservices) architectures. In interviews, the ability to articulate when to use REST vs HTTP API, how Lambda authorizers work, and how traffic flows through a VPC from a private subnet out to the internet through a NAT Gateway separates strong candidates from weak ones.
+AWS API Gateway is a fully managed service that acts as the "front door" for backend services—[Lambda](/aws/lambda-serverless), [EC2, ECS](/aws/compute-containers), or any HTTP endpoint—handling request routing, authorization, throttling, and protocol translation at scale. It comes in three flavors: REST API (feature-rich, legacy), HTTP API (low-latency, cheap, the modern default), and WebSocket API (persistent bidirectional connections). Paired with AWS networking primitives—VPC, subnets, security groups, NACLs, NAT Gateways, and Transit Gateway—API Gateway is the backbone of serverless and [microservice](/microservices) architectures. In interviews, the ability to articulate when to use REST vs HTTP API, how Lambda authorizers work, and how traffic flows through a VPC from a private subnet out to the internet through a NAT Gateway separates strong candidates from weak ones.
 
 ## API Gateway Types
 
@@ -117,7 +117,7 @@ Returns a static response from API Gateway itself — Lambda is never invoked. U
 
 ### Lambda Authorizers
 
-A Lambda function you write that inspects the request and returns an [IAM](/aws-iam-security) policy document. API Gateway caches the result by the token value (TOKEN type) or full request context (REQUEST type).
+A Lambda function you write that inspects the request and returns an [IAM](/aws/iam-security) policy document. API Gateway caches the result by the token value (TOKEN type) or full request context (REQUEST type).
 
 **TOKEN authorizer**: receives only the Authorization header value. Used for bearer tokens (JWT, OAuth, custom tokens).
 
@@ -189,7 +189,7 @@ Auth:
 
 ### IAM Authorization (SigV4)
 
-The request must be signed with AWS Signature Version 4. The caller needs an [IAM](/aws-iam-security) identity (user, role) with `execute-api:Invoke` permission on the API resource. Used for service-to-service calls within AWS, or CLI/SDK access.
+The request must be signed with AWS Signature Version 4. The caller needs an [IAM](/aws/iam-security) identity (user, role) with `execute-api:Invoke` permission on the API resource. Used for service-to-service calls within AWS, or CLI/SDK access.
 
 ```bash
 # Calling an IAM-protected API with awscurl

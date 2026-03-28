@@ -200,7 +200,7 @@ export function Search({ groups }: Props) {
             return (
               <Link
                 key={`${r.resultType}-${r.title}-${i}`}
-                href={`/${r.lessonSlug}`}
+                href={meta?.url ?? `/${r.lessonSlug}`}
                 className={`search-result-card${meta ? ` cat-${meta.catSlug}` : ""}`}
               >
                 <div className="search-result-header">

@@ -346,7 +346,9 @@ graph TD
 ```
 apps/knowledge/
 ├── app/                    # Next.js App Router
-│   ├── [slug]/page.tsx     # Lesson pages (SSG)
+│   ├── [slug]/page.tsx     # Lesson pages (SSG) — non-AWS slugs only
+│   ├── aws/page.tsx        # AWS hub page (/aws)
+│   ├── aws/[slug]/page.tsx # AWS deep-dive pages (/aws/lambda-serverless, etc.)
 │   ├── api/chat/           # Streaming chat endpoint
 │   └── api/research/       # Research endpoints
 ├── components/             # React components
@@ -359,7 +361,9 @@ apps/knowledge/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (17 tables)
 ├── lib/
-│   ├── data.ts             # DB/filesystem adapter
+│   ├── articles.ts         # Lesson data layer — Lesson interface includes url field;
+│   │                       # exports AWS_DEEP_DIVE_SLUGS and getUrlPath()
+│   ├── data.ts             # DB/filesystem adapter — re-exports AWS_DEEP_DIVE_SLUGS, getUrlPath
 │   ├── db/queries.ts       # DB query layer
 │   └── actions/            # Server actions
 ├── backend/                # LangGraph content generation (Python)
