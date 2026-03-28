@@ -18,6 +18,10 @@ pub mod patterns;
 #[cfg(feature = "embed")]
 pub mod embed;
 
+/// Neon PostgreSQL writer — saves `OrgPatterns` and derived tags.
+#[cfg(feature = "neon")]
+pub mod store;
+
 // Re-exports
 pub use error::{GhError, Result};
 pub use types::*;

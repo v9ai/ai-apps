@@ -11,6 +11,9 @@ search   = ["client"]
 patterns = ["client", "dep:futures", "dep:toml"]
 # Local BERT semantic scoring via candle — no cloud, runs on Metal / CPU
 embed    = ["patterns", "dep:candle"]
+# Neon PostgreSQL writer + scan binary
+neon     = ["patterns", "dep:sqlx", "dep:dotenvy", "dep:tracing-subscriber",
+            "tokio/macros", "tokio/rt-multi-thread"]
 
 [dependencies]
 serde       = { version = "1", features = ["derive"] }
@@ -27,6 +30,14 @@ anyhow  = { version = "1", optional = true }
 futures = { version = "0.3", features = ["std"], optional = true }
 toml    = { version = "0.8", optional = true }
 candle  = { path = "../candle", optional = true, default-features = false }
+sqlx    = { version = "0.8", features = ["postgres", "runtime-tokio-rustls"], optional = true }
+dotenvy = { version = "0.15", optional = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
+
+[[bin]]
+name = "scan_orgs"
+path = "src/bin/scan_orgs.rs"
+required-features = ["neon"]
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
