@@ -5,6 +5,7 @@ import { napoliData } from "@/lib/data";
 import { Footer } from "@/components/Footer";
 import { useLang } from "@/components/LanguageSwitcher";
 import { SleepGuide } from "./sections/SleepGuide";
+import { HotelLinks } from "./sections/HotelLinks";
 
 const T = {
   ro: {
@@ -145,6 +146,9 @@ export function NapoliPageContent() {
 
       {/* ── Accommodation ────────────────────────────────── */}
       <SleepGuide />
+
+      {/* ── Booking Links ────────────────────────────────── */}
+      <HotelLinks />
 
       <Footer city={city} count={places.length} />
     </>
