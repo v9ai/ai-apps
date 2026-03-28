@@ -126,11 +126,11 @@ async fn main() -> Result<()> {
             data_gen::write_labels(&contact_samples, &output)?;
             eprintln!("  Wrote {} samples → {}", contact_samples.len(), output.display());
 
-            // Also generate EU Remote samples alongside
-            let eu_path = output.with_file_name("eu_remote_labels.jsonl");
-            let eu_samples = data_gen::generate_eu_remote_labels();
-            data_gen::write_eu_remote_labels(&eu_samples, &eu_path)?;
-            eprintln!("  Wrote {} EU Remote samples → {}", eu_samples.len(), eu_path.display());
+            // Also generate Remote Worldwide samples alongside
+            let rw_path = output.with_file_name("remote_worldwide_labels.jsonl");
+            let rw_samples = data_gen::generate_remote_worldwide_labels();
+            data_gen::write_remote_worldwide_labels(&rw_samples, &rw_path)?;
+            eprintln!("  Wrote {} Remote Worldwide samples → {}", rw_samples.len(), rw_path.display());
         }
 
         Command::MlEval { labels, report_dir, scoring_only: _ } => {

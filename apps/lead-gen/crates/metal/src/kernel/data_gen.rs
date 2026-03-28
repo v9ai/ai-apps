@@ -527,12 +527,12 @@ mod tests {
     }
 
     #[test]
-    fn test_write_eu_remote_roundtrip() {
+    fn test_write_remote_worldwide_roundtrip() {
         let dir = tempfile::tempdir().expect("tempdir");
-        let path = dir.path().join("eu_remote.jsonl");
+        let path = dir.path().join("remote_worldwide.jsonl");
 
-        let original = generate_eu_remote_labels();
-        write_eu_remote_labels(&original, &path).expect("write_eu_remote_labels failed");
+        let original = generate_remote_worldwide_labels();
+        write_remote_worldwide_labels(&original, &path).expect("write_remote_worldwide_labels failed");
 
         let file = std::fs::File::open(&path).expect("open");
         let reader = BufReader::new(file);
@@ -541,7 +541,7 @@ mod tests {
         assert_eq!(
             line_count,
             original.len(),
-            "eu_remote line count mismatch: wrote {}, read {}",
+            "remote_worldwide line count mismatch: wrote {}, read {}",
             original.len(),
             line_count
         );
