@@ -2,7 +2,7 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
-import { RECOMMENDED_TIER } from "../constants";
+import { RECOMMENDED_TIER, CHECK_IN, CHECK_OUT } from "../constants";
 
 type HotelLink = {
   name: string;
@@ -18,34 +18,34 @@ type TierGroup = {
 };
 
 const bookingUrl = (name: string) =>
-  `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(name + " Naples Italy")}`;
+  `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(name + " Ischia Italy")}&checkin=${CHECK_IN}&checkout=${CHECK_OUT}&group_adults=2&group_children=1&age=8`;
 
 const googleUrl = (name: string) =>
-  `https://www.google.com/search?q=${encodeURIComponent(name + " Naples hotel")}`;
+  `https://www.google.com/search?q=${encodeURIComponent(name + " Ischia hotel")}`;
 
 const TIERS_EN: TierGroup[] = [
   {
     tier: "Budget",
     hotels: [
-      { name: "B&B Spaccanapoli",       area: "Centro Storico",    price: "€45 / night", booking: bookingUrl("B&B Spaccanapoli"),       google: googleUrl("B&B Spaccanapoli") },
-      { name: "A' Puteca di Napoli",    area: "Quartieri Spagnoli",price: "€48 / night", booking: bookingUrl("A' Puteca di Napoli"),    google: googleUrl("A' Puteca di Napoli") },
-      { name: "Napoli Centrale Rooms",  area: "Piazza Garibaldi",  price: "€52 / night", booking: bookingUrl("Napoli Centrale Rooms"),  google: googleUrl("Napoli Centrale Rooms") },
+      { name: "Agriturismo Pera di Basso", area: "Casamicciola", price: "~€130 / night", booking: bookingUrl("Agriturismo Pera di Basso"), google: googleUrl("Agriturismo Pera di Basso") },
+      { name: "Le Canne Family Resort",    area: "Forio",        price: "~€150 / night", booking: bookingUrl("Le Canne Family Resort"),    google: googleUrl("Le Canne Family Resort Ischia") },
+      { name: "Hotel Stella Maris Terme",  area: "Casamicciola", price: "~€170 / night", booking: bookingUrl("Hotel Stella Maris Terme"),  google: googleUrl("Hotel Stella Maris Terme Ischia") },
     ],
   },
   {
     tier: "Mid-Range",
     hotels: [
-      { name: "Hotel Piazza Bellini",   area: "Centro Storico",    price: "€68 / night", booking: bookingUrl("Hotel Piazza Bellini"),   google: googleUrl("Hotel Piazza Bellini") },
-      { name: "Hotel de Charme Toledo", area: "Via Toledo",        price: "€65 / night", booking: bookingUrl("Hotel de Charme Toledo"), google: googleUrl("Hotel de Charme Toledo Naples") },
-      { name: "Costantinopoli 104",     area: "Centro Storico",    price: "€72 / night", booking: bookingUrl("Costantinopoli 104"),     google: googleUrl("Costantinopoli 104 Naples") },
+      { name: "Hotel Don Pepe",            area: "Lacco Ameno",  price: "~€150 / night", booking: bookingUrl("Hotel Don Pepe Ischia"),             google: googleUrl("Hotel Don Pepe Lacco Ameno") },
+      { name: "Hotel Eden Park",           area: "Forio",        price: "~€165 / night", booking: bookingUrl("Hotel Eden Park Forio"),            google: googleUrl("Hotel Eden Park Forio Ischia") },
+      { name: "Hotel San Valentino Terme", area: "Ischia Porto", price: "~€180 / night", booking: bookingUrl("Hotel San Valentino Terme Ischia"),  google: googleUrl("Hotel San Valentino Terme Ischia") },
     ],
   },
   {
     tier: "Comfort",
     hotels: [
-      { name: "Grand Hotel Vesuvio",    area: "Lungomare",         price: "€145 / night", booking: bookingUrl("Grand Hotel Vesuvio"),    google: googleUrl("Grand Hotel Vesuvio Naples") },
-      { name: "Hotel Santa Lucia",      area: "Lungomare",         price: "€130 / night", booking: bookingUrl("Hotel Santa Lucia Naples"), google: googleUrl("Hotel Santa Lucia Naples") },
-      { name: "Romeo Hotel",            area: "Porto",             price: "€155 / night", booking: bookingUrl("Romeo Hotel Naples"),      google: googleUrl("Romeo Hotel Naples") },
+      { name: "Sorriso Thermae Resort & Spa",      area: "Forio",       price: "~€190 / night", booking: bookingUrl("Sorriso Thermae Resort Ischia"),       google: googleUrl("Sorriso Thermae Resort Ischia") },
+      { name: "Park Hotel Terme Michelangelo",      area: "Lacco Ameno", price: "~€210 / night", booking: bookingUrl("Park Hotel Terme Michelangelo Ischia"), google: googleUrl("Park Hotel Terme Michelangelo Ischia") },
+      { name: "La Reginella Resort & Thermal Spa", area: "Lacco Ameno", price: "~€240 / night", booking: bookingUrl("La Reginella Resort Ischia"),           google: googleUrl("La Reginella Ischia") },
     ],
   },
 ];
@@ -54,25 +54,25 @@ const TIERS_RO: TierGroup[] = [
   {
     tier: "Buget",
     hotels: [
-      { name: "B&B Spaccanapoli",       area: "Centro Storico",    price: "€45 / noapte", booking: bookingUrl("B&B Spaccanapoli"),       google: googleUrl("B&B Spaccanapoli") },
-      { name: "A' Puteca di Napoli",    area: "Quartieri Spagnoli",price: "€48 / noapte", booking: bookingUrl("A' Puteca di Napoli"),    google: googleUrl("A' Puteca di Napoli") },
-      { name: "Napoli Centrale Rooms",  area: "Piazza Garibaldi",  price: "€52 / noapte", booking: bookingUrl("Napoli Centrale Rooms"),  google: googleUrl("Napoli Centrale Rooms") },
+      { name: "Agriturismo Pera di Basso", area: "Casamicciola", price: "~€130 / noapte", booking: bookingUrl("Agriturismo Pera di Basso"), google: googleUrl("Agriturismo Pera di Basso") },
+      { name: "Le Canne Family Resort",    area: "Forio",        price: "~€150 / noapte", booking: bookingUrl("Le Canne Family Resort"),    google: googleUrl("Le Canne Family Resort Ischia") },
+      { name: "Hotel Stella Maris Terme",  area: "Casamicciola", price: "~€170 / noapte", booking: bookingUrl("Hotel Stella Maris Terme"),  google: googleUrl("Hotel Stella Maris Terme Ischia") },
     ],
   },
   {
     tier: "Mediu",
     hotels: [
-      { name: "Hotel Piazza Bellini",   area: "Centro Storico",    price: "€68 / noapte", booking: bookingUrl("Hotel Piazza Bellini"),   google: googleUrl("Hotel Piazza Bellini") },
-      { name: "Hotel de Charme Toledo", area: "Via Toledo",        price: "€65 / noapte", booking: bookingUrl("Hotel de Charme Toledo"), google: googleUrl("Hotel de Charme Toledo Naples") },
-      { name: "Costantinopoli 104",     area: "Centro Storico",    price: "€72 / noapte", booking: bookingUrl("Costantinopoli 104"),     google: googleUrl("Costantinopoli 104 Naples") },
+      { name: "Hotel Don Pepe",            area: "Lacco Ameno",  price: "~€150 / noapte", booking: bookingUrl("Hotel Don Pepe Ischia"),             google: googleUrl("Hotel Don Pepe Lacco Ameno") },
+      { name: "Hotel Eden Park",           area: "Forio",        price: "~€165 / noapte", booking: bookingUrl("Hotel Eden Park Forio"),            google: googleUrl("Hotel Eden Park Forio Ischia") },
+      { name: "Hotel San Valentino Terme", area: "Ischia Porto", price: "~€180 / noapte", booking: bookingUrl("Hotel San Valentino Terme Ischia"),  google: googleUrl("Hotel San Valentino Terme Ischia") },
     ],
   },
   {
     tier: "Confort",
     hotels: [
-      { name: "Grand Hotel Vesuvio",    area: "Lungomare",         price: "€145 / noapte", booking: bookingUrl("Grand Hotel Vesuvio"),    google: googleUrl("Grand Hotel Vesuvio Naples") },
-      { name: "Hotel Santa Lucia",      area: "Lungomare",         price: "€130 / noapte", booking: bookingUrl("Hotel Santa Lucia Naples"), google: googleUrl("Hotel Santa Lucia Naples") },
-      { name: "Romeo Hotel",            area: "Porto",             price: "€155 / noapte", booking: bookingUrl("Romeo Hotel Naples"),      google: googleUrl("Romeo Hotel Naples") },
+      { name: "Sorriso Thermae Resort & Spa",      area: "Forio",       price: "~€190 / noapte", booking: bookingUrl("Sorriso Thermae Resort Ischia"),       google: googleUrl("Sorriso Thermae Resort Ischia") },
+      { name: "Park Hotel Terme Michelangelo",      area: "Lacco Ameno", price: "~€210 / noapte", booking: bookingUrl("Park Hotel Terme Michelangelo Ischia"), google: googleUrl("Park Hotel Terme Michelangelo Ischia") },
+      { name: "La Reginella Resort & Thermal Spa", area: "Lacco Ameno", price: "~€240 / noapte", booking: bookingUrl("La Reginella Resort Ischia"),           google: googleUrl("La Reginella Ischia") },
     ],
   },
 ];
@@ -80,8 +80,8 @@ const TIERS_RO: TierGroup[] = [
 const T = {
   en: {
     sectionLabel: "Booking Links",
-    sectionTitle: "Find & Book Your Hotel",
-    sectionSubtitle: "Direct search links to Booking.com and Google for each property. All 9 hotels — 3 per tier.",
+    sectionTitle: "Find & Book Your Ischia Hotel",
+    sectionSubtitle: "Booking.com links pre-filled for 31 May – 7 Jun 2026, 2 adults + 1 child. Prices are verified family totals per night.",
     recommended: "RECOMMENDED",
     bookingLabel: "Booking.com",
     googleLabel: "Google",
@@ -89,8 +89,8 @@ const T = {
   },
   ro: {
     sectionLabel: "Linkuri Rezervare",
-    sectionTitle: "Găsește și Rezervă Hotelul",
-    sectionSubtitle: "Linkuri directe pe Booking.com și Google pentru fiecare proprietate. Toate 9 hoteluri — 3 pe nivel.",
+    sectionTitle: "Găsește și Rezervă Hotelul în Ischia",
+    sectionSubtitle: "Linkuri Booking.com prefiltrate pentru 31 mai – 7 iun 2026, 2 adulți + 1 copil. Prețurile sunt totaluri verificate per noapte pentru familie.",
     recommended: "RECOMANDAT",
     bookingLabel: "Booking.com",
     googleLabel: "Google",
@@ -150,7 +150,7 @@ export function HotelLinks() {
             fontSize: "body",
             color: "text.secondary",
             lineHeight: "body",
-            maxW: "560px",
+            maxW: "600px",
           })}
         >
           {t.sectionSubtitle}
@@ -171,7 +171,7 @@ export function HotelLinks() {
           const isRecommended = gi === RECOMMENDED_TIER;
           return (
             <div key={group.tier}>
-              {/* Tier label */}
+              {/* Tier label row */}
               <div
                 className={css({
                   display: "flex",
@@ -220,13 +220,7 @@ export function HotelLinks() {
               </div>
 
               {/* Hotel rows */}
-              <div
-                className={css({
-                  display: "flex",
-                  flexDir: "column",
-                  gap: "2",
-                })}
-              >
+              <div className={css({ display: "flex", flexDir: "column", gap: "2" })}>
                 {group.hotels.map((hotel) => (
                   <div
                     key={hotel.name}
@@ -288,13 +282,7 @@ export function HotelLinks() {
                     </span>
 
                     {/* Links */}
-                    <div
-                      className={css({
-                        display: "flex",
-                        gap: "2",
-                        flexShrink: "0",
-                      })}
-                    >
+                    <div className={css({ display: "flex", gap: "2", flexShrink: "0" })}>
                       <a
                         href={hotel.booking}
                         target="_blank"
