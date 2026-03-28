@@ -221,8 +221,8 @@ export function LandingMetrics() {
             maxW: "560px",
           })}
         >
-          every Agentic Lead Gen metric is measured from real pipeline runs,
-          backed by 35 cited papers. see BENCHMARKS.md for methodology.
+          Every Agentic Lead Gen metric is measured from real pipeline runs,
+          backed by 35 cited papers. See BENCHMARKS.md for methodology.
         </p>
 
         {/* --- metric grid --- */}
@@ -253,7 +253,7 @@ export function LandingMetrics() {
             textTransform: "lowercase",
           })}
         >
-          all benchmarks from local agentic lead gen runs — no cherry-picked cloud numbers.
+          All benchmarks from local Agentic Lead Gen runs — no cherry-picked cloud numbers.
         </div>
       </div>
     </section>

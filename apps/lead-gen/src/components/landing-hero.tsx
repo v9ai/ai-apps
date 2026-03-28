@@ -173,7 +173,7 @@ function StatusIndicator() {
   );
 }
 
-const HEADLINE_WORDS = ["autonomous", "AI", "agents", "that"];
+const HEADLINE_WORDS = ["Autonomous", "AI", "agents", "that"];
 
 const STATUS_LINES = [
   "discovery agent: scanning 820 domains",
@@ -334,7 +334,7 @@ export function LandingHero() {
             )}
             style={{ animationDelay: "0.32s" }}
           >
-            discover, enrich, and close B2B leads — autonomously.
+            Discover, enrich, and close B2B leads — autonomously.
           </span>
         </h1>
 
@@ -352,10 +352,10 @@ export function LandingHero() {
             letterSpacing: "snug",
           })}
         >
-          five specialized AI agents work autonomously to find companies,
+          Five specialized AI agents work autonomously to find companies,
           enrich profiles, discover decision-maker contacts, and craft
           personalized outreach -- end to end, without human intervention.
-          your agents work 24/7 so you don&apos;t have to.
+          Your agents work 24/7 so you don&apos;t have to.
         </p>
 
         {/* --- live activity indicator --- */}
@@ -446,7 +446,7 @@ export function LandingHero() {
               "cta-solid-animated",
             )}
           >
-            meet the agents
+            Meet the agents
             <ArrowRightIcon width={14} height={14} />
           </Link>
           <Link
@@ -457,7 +457,7 @@ export function LandingHero() {
               "cta-ghost-animated",
             )}
           >
-            view documentation
+            View documentation
           </Link>
         </div>
       </div>

@@ -92,8 +92,8 @@ export function LandingBuilder() {
                   letterSpacing: "snug",
                 })}
               >
-                built by{" "}
-                <span className={css({ fontWeight: "bold" })}>vadim nicolai</span>
+                Built by{" "}
+                <span className={css({ fontWeight: "bold" })}>Vadim Nicolai</span>
                 {" "}&mdash; an AI engineer who got tired of paying $10K+/year for
                 cloud CRMs that don&apos;t understand his ICP. Agentic Lead Gen
                 deploys autonomous AI agents that crawl, extract, score, and

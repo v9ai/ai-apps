@@ -86,7 +86,7 @@ export function LandingPreview() {
             weight="bold"
             style={{ letterSpacing: "-0.02em", color: "var(--gray-12)" }}
           >
-            live pipeline output
+            Live pipeline output
           </Heading>
         </Flex>
 
@@ -216,14 +216,14 @@ export function LandingPreview() {
             href="/companies"
             className={button({ variant: "solidGreen", size: "md" })}
           >
-            view {SCORED_LEADS_COUNT} scored leads
+            View {SCORED_LEADS_COUNT} scored leads
             <ArrowRightIcon width={14} height={14} />
           </Link>
           <Link
             href="/how-it-works"
             className={button({ variant: "outline", size: "md" })}
           >
-            how it works
+            How it works
           </Link>
         </div>
 

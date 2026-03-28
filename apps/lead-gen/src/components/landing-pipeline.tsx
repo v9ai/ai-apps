@@ -42,7 +42,7 @@ interface StageData {
 const PIPELINE_STAGES: StageData[] = [
   {
     icon: <GearIcon width={20} height={20} />,
-    title: "system overview",
+    title: "System Overview",
     description:
       "SQLite WAL + LanceDB HNSW + ChromaDB hybrid storage in ~15 GB footprint",
     badge: "orchestrate",
@@ -51,7 +51,7 @@ const PIPELINE_STAGES: StageData[] = [
   },
   {
     icon: <MagnifyingGlassIcon width={20} height={20} />,
-    title: "rl crawler",
+    title: "RL Crawler",
     description:
       "DQN agent with 448-dim state + UCB1 multi-armed bandit explores 820 domains, achieving 3\u00D7 harvest rate",
     badge: "crawl",
@@ -60,7 +60,7 @@ const PIPELINE_STAGES: StageData[] = [
   },
   {
     icon: <ReaderIcon width={20} height={20} />,
-    title: "ner extraction",
+    title: "NER Extraction",
     description:
       "BERT-base-cased + spaCy + BERTopic extract entities at 92.3% F1, processing ~100 pages/sec",
     badge: "extract",
@@ -69,7 +69,7 @@ const PIPELINE_STAGES: StageData[] = [
   },
   {
     icon: <LinkBreak2Icon width={20} height={20} />,
-    title: "entity resolution",
+    title: "Entity Resolution",
     description:
       "Siamese 128-dim embeddings with SQLite CTEs deduplicate in <1ms ANN queries",
     badge: "resolve",
@@ -78,7 +78,7 @@ const PIPELINE_STAGES: StageData[] = [
   },
   {
     icon: <BarChartIcon width={20} height={20} />,
-    title: "lead scoring",
+    title: "Lead Scoring",
     description:
       "XGBoost 50% + LogReg 25% + RF 25% ensemble scores leads with 89.7% precision",
     badge: "score",
@@ -87,7 +87,7 @@ const PIPELINE_STAGES: StageData[] = [
   },
   {
     icon: <FileTextIcon width={20} height={20} />,
-    title: "report generation",
+    title: "Report Generation",
     description:
       "Agentic Lead Gen's local LLM agent (Ollama) + SQLite/ChromaDB RAG generates reports with 97% factual accuracy in 10-30s",
     badge: "report",
@@ -96,7 +96,7 @@ const PIPELINE_STAGES: StageData[] = [
   },
   {
     icon: <CheckCircledIcon width={20} height={20} />,
-    title: "evaluation",
+    title: "Evaluation",
     description:
       "SHAP explanations + cascade error tracking monitor pipeline health — keeping Agentic Lead Gen accurate at scale (CER ~0.15)",
     badge: "evaluate",
@@ -279,8 +279,8 @@ export function LandingPipeline() {
             maxW: "560px",
           })}
         >
-          from raw web pages to qualified B2B leads — seven autonomous modules,
-          zero cloud dependencies. this is the Agentic Lead Gen pipeline.
+          From raw web pages to qualified B2B leads — seven autonomous modules,
+          zero cloud dependencies. This is the Agentic Lead Gen pipeline.
         </p>
 
         {/* ── Desktop: 3-column grid of individual module diagrams ──────── */}
