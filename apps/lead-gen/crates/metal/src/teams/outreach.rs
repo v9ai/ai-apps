@@ -77,20 +77,6 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         }
     }
 
-    let api_key = match ctx.llm_api_key.as_deref() {
-        Some(key) => key,
-        None => {
-            return Ok(StageReport {
-                stage: "outreach".into(),
-                status: StageStatus::Skipped,
-                processed: 0,
-                created: 0,
-                errors: vec!["DEEPSEEK_API_KEY not set — cannot draft emails".into()],
-                duration_ms: 0,
-            });
-        }
-    };
-
     // Select top verified contacts by score
     let mut verified: Vec<_> = contacts.contacts.iter().filter(|c| c.verified).collect();
     verified.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
@@ -119,7 +105,8 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         match llm::draft_email(
             &ctx.http,
             &ctx.llm_base_url,
-            api_key,
+            ctx.llm_api_key.as_deref(),
+            &ctx.llm_model,
             &contact.email.split('@').next().unwrap_or(""),
             "",
             &contact.company_name,

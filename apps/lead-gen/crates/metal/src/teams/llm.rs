@@ -1,4 +1,4 @@
-//! Minimal DeepSeek / OpenAI-compatible chat completion client.
+//! OpenAI-compatible chat completion client for local Qwen (mlx_lm.server).
 
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
@@ -34,11 +34,13 @@ struct ResponseMessage {
     content: String,
 }
 
-/// Send a chat completion request to DeepSeek (or any OpenAI-compatible API).
+/// Send a chat completion request to a local Qwen server (mlx_lm.server)
+/// or any OpenAI-compatible endpoint.
 pub async fn chat(
     client: &reqwest::Client,
     base_url: &str,
-    api_key: &str,
+    api_key: Option<&str>,
+    model: &str,
     system: &str,
     user: &str,
     temperature: Option<f32>,
@@ -50,18 +52,17 @@ pub async fn chat(
     messages.push(Message { role: "user", content: user });
 
     let req = ChatRequest {
-        model: "deepseek-chat",
+        model,
         messages,
         temperature,
         max_tokens: Some(2048),
     };
 
-    let resp = client
-        .post(format!("{base_url}/chat/completions"))
-        .bearer_auth(api_key)
-        .json(&req)
-        .send()
-        .await?;
+    let mut builder = client.post(format!("{base_url}/chat/completions"));
+    if let Some(key) = api_key {
+        builder = builder.bearer_auth(key);
+    }
+    let resp = builder.json(&req).send().await?;
 
     let status = resp.status();
     if !status.is_success() {
@@ -81,7 +82,8 @@ pub async fn chat(
 pub async fn classify_company(
     client: &reqwest::Client,
     base_url: &str,
-    api_key: &str,
+    api_key: Option<&str>,
+    model: &str,
     name: &str,
     domain: &str,
     page_text: &str,
@@ -99,7 +101,7 @@ pub async fn classify_company(
     let truncated = if page_text.len() > 3000 { &page_text[..3000] } else { page_text };
     let user = format!("Company: {name}\nDomain: {domain}\nPage text:\n{truncated}");
 
-    let raw = chat(client, base_url, api_key, system, &user, Some(0.1)).await?;
+    let raw = chat(client, base_url, api_key, model, system, &user, Some(0.1)).await?;
 
     // Strip markdown fences if present
     let json_str = raw
@@ -132,7 +134,8 @@ fn default_confidence() -> f64 { 0.5 }
 pub async fn draft_email(
     client: &reqwest::Client,
     base_url: &str,
-    api_key: &str,
+    api_key: Option<&str>,
+    model: &str,
     contact_name: &str,
     contact_title: &str,
     company_name: &str,
@@ -158,7 +161,7 @@ pub async fn draft_email(
          looking for fully remote EU positions. Draft a warm outreach email."
     );
 
-    let raw = chat(client, base_url, api_key, system, &user, Some(0.7)).await?;
+    let raw = chat(client, base_url, api_key, model, system, &user, Some(0.7)).await?;
 
     let json_str = raw
         .trim()
