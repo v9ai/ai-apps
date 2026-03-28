@@ -202,7 +202,7 @@ Principal calls STS API
 ```
 
 ### OIDC Federation (AssumeRoleWithWebIdentity)
-Used by: Cognito Identity Pools, [GitHub Actions](/aws/cicd-devops), Kubernetes IRSA (IAM Roles for Service Accounts).
+Used by: Cognito Identity Pools, [GitHub Actions](/aws/cicd-devops), Kubernetes IRSA (IAM Roles for Service Accounts). See [CI/CD & DevOps](/aws-cicd-devops) for pipeline-level OIDC trust setup and keyless credential patterns.
 ```
 GitHub Actions workflow → OIDC token (JWT) from GitHub
   → AssumeRoleWithWebIdentity with JWT + RoleArn
@@ -530,7 +530,7 @@ Destinations: CloudWatch Logs, S3. Query with CloudWatch Insights or Athena. Use
 ## 14. CloudTrail
 
 ### What It Does
-Records **every AWS API call** (management plane actions): who called what, from where, at what time, with what result. Essential for security forensics, compliance, and change auditing.
+Records **every AWS API call** (management plane actions): who called what, from where, at what time, with what result. Essential for security forensics, compliance, and change auditing. For metrics, dashboards, and log-based alerting built on top of CloudTrail, see [Observability](/aws-observability).
 
 ### Trail Configuration
 - **Event types**: Management events (default, includes console logins, IAM changes, EC2 starts) and Data events (S3 object-level, Lambda invocations, DynamoDB item-level — not logged by default; costs more).
@@ -585,7 +585,7 @@ Detects unusual API activity (write management events). Compares baseline to cur
 ## 15. Amazon GuardDuty
 
 ### What It Does
-Continuous threat detection ML service. Ingests: CloudTrail management + [S3](/aws/storage-s3) data events, VPC Flow Logs, DNS logs, [EKS](/aws/compute-containers) audit logs, RDS login activity, [Lambda](/aws/lambda-serverless) network activity, S3 access patterns, Malware Protection (EBS volumes).
+Continuous threat detection ML service. For a full comparison of GuardDuty, Macie, Inspector, and Security Hub, see [Security Services](/aws-security-services). Ingests: CloudTrail management + [S3](/aws/storage-s3) data events, VPC Flow Logs, DNS logs, [EKS](/aws/compute-containers) audit logs, RDS login activity, [Lambda](/aws/lambda-serverless) network activity, S3 access patterns, Malware Protection (EBS volumes).
 
 ### Finding Types (by threat purpose)
 | Category | Example Findings |
@@ -776,6 +776,282 @@ Security Account (delegated admin):
   Remediation Lambda auto-isolates resources on CRITICAL findings
 ```
 See [CI/CD & CodePipeline](/aws/cicd-devops) for CodePipeline setup and CDK deployment patterns.
+
+---
+
+## AWS Organizations & Control Tower — Multi-Account Governance
+
+### AWS Organizations Structure
+```
+Root
+├── Management Account (billing only, no workloads)
+├── Security OU
+│   ├── Security Tooling Account (GuardDuty admin, Security Hub)
+│   └── Log Archive Account (CloudTrail, Config history)
+├── Infrastructure OU
+│   ├── Network Account (Transit Gateway, VPC hub)
+│   └── Shared Services Account (AD, DNS, AMI library)
+├── Workloads OU
+│   ├── Production OU
+│   │   ├── Prod Account A
+│   │   └── Prod Account B
+│   ├── Staging OU
+│   └── Development OU
+└── Sandbox OU (dev experiments, no production data)
+```
+
+### Service Control Policies (SCPs) — Organization Guardrails
+SCPs define the maximum available permissions for all IAM entities in an account. They apply in addition to (not instead of) IAM policies — the effective permission is the intersection.
+
+```json
+// Deny all actions outside allowed regions (data residency)
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "DenyOutsideAllowedRegions",
+    "Effect": "Deny",
+    "NotAction": [
+      "iam:*", "sts:*", "organizations:*", "support:*",
+      "cloudfront:*", "route53:*", "waf:*"  // global services exempt
+    ],
+    "Resource": "*",
+    "Condition": {
+      "StringNotEquals": {"aws:RequestedRegion": ["us-east-1", "eu-west-1"]}
+    }
+  }]
+}
+
+// Deny root account usage (attach to all workload OUs)
+{
+  "Statement": [{
+    "Sid": "DenyRootAccess",
+    "Effect": "Deny",
+    "Action": "*",
+    "Resource": "*",
+    "Condition": {"StringLike": {"aws:PrincipalArn": "arn:aws:iam::*:root"}}
+  }]
+}
+
+// Require MFA for sensitive actions
+{
+  "Statement": [{
+    "Sid": "DenyWithoutMFA",
+    "Effect": "Deny",
+    "Action": ["iam:DeleteVirtualMFADevice", "iam:DeactivateMFADevice"],
+    "Resource": "*",
+    "Condition": {"BoolIfExists": {"aws:MultiFactorAuthPresent": "false"}}
+  }]
+}
+
+// Prevent leaving the organization or disabling security services
+{
+  "Statement": [{
+    "Sid": "ProtectSecurityServices",
+    "Effect": "Deny",
+    "Action": [
+      "organizations:LeaveOrganization",
+      "guardduty:DeleteDetector",
+      "cloudtrail:DeleteTrail",
+      "config:DeleteConfigurationRecorder",
+      "securityhub:DeleteHub"
+    ],
+    "Resource": "*"
+  }]
+}
+```
+
+### AWS Control Tower — Landing Zone
+Control Tower automates account vending and applies a baseline of guardrails to new accounts:
+- **Landing Zone**: pre-configured multi-account structure (Management, Log Archive, Audit accounts)
+- **Account Factory**: self-service new account provisioning with VPC, IAM, security baseline pre-configured
+- **Guardrails**: preventive (SCPs) and detective (Config rules) — 300+ pre-built guardrails
+- **Drift detection**: alerts when accounts deviate from Landing Zone baseline
+
+---
+
+## IAM Identity Center (SSO) — Human Access to AWS
+
+### Why Identity Center Over IAM Users
+- IAM users = long-lived credentials (access keys + passwords); difficult to manage at scale; no MFA enforcement
+- Identity Center = federated SSO; users authenticate once to access multiple AWS accounts; MFA enforced; no permanent credentials in AWS
+
+### Architecture
+```
+Corporate AD / Okta / Azure AD
+        │ SAML 2.0 / SCIM provisioning
+        ▼
+  IAM Identity Center
+        │ Permission Sets (IAM policies)
+        ▼
+  Multiple AWS Accounts
+  (users get temporary credentials via AWS access portal)
+```
+
+### Permission Sets
+```typescript
+// CDK: IAM Identity Center permission set
+import * as sso from 'aws-cdk-lib/aws-sso';
+
+const developerPermissionSet = new sso.CfnPermissionSet(this, 'DeveloperAccess', {
+  instanceArn: 'arn:aws:sso:::instance/ssoins-...',
+  name: 'DeveloperAccess',
+  description: 'Read/write access for developers',
+  sessionDuration: 'PT8H',  // 8-hour sessions
+  managedPolicies: ['arn:aws:iam::aws:policy/PowerUserAccess'],
+  inlinePolicy: JSON.stringify({
+    Statement: [{
+      Effect: 'Deny',
+      Action: ['iam:*', 'organizations:*'],
+      Resource: '*',
+    }]
+  }),
+});
+
+// Assign: Group "Developers" → DeveloperAccess → Staging accounts
+new sso.CfnAssignment(this, 'DevAssignment', {
+  instanceArn: 'arn:aws:sso:::instance/ssoins-...',
+  permissionSetArn: developerPermissionSet.attrPermissionSetArn,
+  principalType: 'GROUP',
+  principalId: 'ad-group-id-for-developers',
+  targetType: 'AWS_ACCOUNT',
+  targetId: '111111111111',  // staging account
+});
+```
+
+### AWS CLI with Identity Center
+```bash
+# Configure SSO profile
+aws configure sso
+# → SSO start URL: https://my-company.awsapps.com/start
+# → SSO region: us-east-1
+# → Account: staging (select from list)
+# → Permission set: DeveloperAccess
+
+# Use profile (auto-refreshes temporary credentials)
+aws s3 ls --profile my-staging-developer
+
+# Authenticate (opens browser for MFA)
+aws sso login --profile my-staging-developer
+```
+
+---
+
+## ABAC — Attribute-Based Access Control
+
+ABAC grants permissions based on matching tags on the IAM principal AND the resource.
+
+### Pattern: Developers Can Only Access Their Own Resources
+```json
+// IAM policy using principal tags
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["ec2:StartInstances", "ec2:StopInstances", "ec2:TerminateInstances"],
+    "Resource": "arn:aws:ec2:us-east-1:*:instance/*",
+    "Condition": {
+      "StringEquals": {
+        "ec2:ResourceTag/Owner": "${aws:PrincipalTag/email}",
+        "ec2:ResourceTag/Environment": "${aws:PrincipalTag/environment}"
+      }
+    }
+  }]
+}
+```
+- `${aws:PrincipalTag/email}` substitutes the tag value from the IAM role/user at request time
+- Requires: tag the IAM principal with `email=dev@company.com, environment=dev`; tag EC2 instances with same `Owner` and `Environment` tags
+- Scales without policy changes: add new team members → tag their roles; add new resources → tag with team's attributes
+
+### ABAC with Permission Sets (SaaS Multi-Tenancy)
+```json
+// ECS task can only access DynamoDB items belonging to its tenant
+{
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query"],
+    "Resource": "arn:aws:dynamodb:*:*:table/Orders",
+    "Condition": {
+      "StringEquals": {
+        "dynamodb:LeadingKeys": "${aws:PrincipalTag/tenantId}"
+      }
+    }
+  }]
+}
+```
+
+---
+
+## Permission Boundaries — Delegating IAM Management Safely
+
+Permission boundaries define the maximum permissions an IAM entity can have, regardless of identity-based policies.
+
+### Use Case: Letting Developers Create IAM Roles
+Problem: You want developers to create Lambda execution roles without letting them escalate to admin.
+
+```json
+// Permission boundary: caps what the created role can do
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    // 1. Allow useful actions
+    {"Effect": "Allow", "Action": ["s3:*", "dynamodb:*", "logs:*", "xray:*"], "Resource": "*"},
+    // 2. Deny IAM (prevents privilege escalation)
+    {"Effect": "Deny", "Action": "iam:*", "Resource": "*"},
+    // 3. Deny billing
+    {"Effect": "Deny", "Action": ["aws-portal:*", "budgets:*"], "Resource": "*"}
+  ]
+}
+
+// Developer policy: allow creating roles ONLY if they attach the boundary
+{
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["iam:CreateRole", "iam:AttachRolePolicy", "iam:PutRolePolicy"],
+    "Resource": "arn:aws:iam::*:role/app-*",
+    "Condition": {
+      "StringEquals": {
+        "iam:PermissionsBoundary": "arn:aws:iam::123456789012:policy/DeveloperBoundary"
+      }
+    }
+  }]
+}
+```
+Now developers can create roles with prefix `app-*` but every created role is capped by the boundary — they can never create an admin role.
+
+---
+
+## VPC Endpoint Policies — Fine-Grained Access Control
+
+VPC Endpoint Policies restrict which S3 buckets or DynamoDB tables can be accessed via the endpoint, even if IAM allows more. See [VPC & Networking](/aws-vpc-networking) for endpoint types and setup.
+
+```json
+// S3 Gateway Endpoint policy: only allow access to company buckets
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": [
+        "arn:aws:s3:::company-data-*",
+        "arn:aws:s3:::company-data-*/*"
+      ]
+    },
+    // Block access to S3 buckets outside the organization (prevents data exfiltration)
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {"aws:ResourceOrgID": "o-exampleorgid111"}
+      }
+    }
+  ]
+}
+```
+This prevents: compromised EC2 from uploading exfiltrated data to attacker's S3 bucket (outside org).
 
 ---
 

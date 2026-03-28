@@ -189,7 +189,7 @@ docker push ACCOUNT.dkr.ecr.REGION.amazonaws.com/myapp:cache
 3. **ECR cache** (for Docker): Pull previously built image as `--cache-from`; only changed layers are rebuilt.
 
 ### VPC Integration
-For builds that need to reach private resources (RDS, ElastiCache, internal APIs), configure the CodeBuild project with a VPC, subnets, and security groups. The build container runs inside your VPC.
+For builds that need to reach private resources (RDS, ElastiCache, internal APIs), configure the CodeBuild project with a VPC, subnets, and security groups. The build container runs inside your VPC. See [VPC & Networking](/aws-vpc-networking) for subnet selection and security group rules.
 
 ### Environment Variables Precedence (important for interviews)
 Highest to lowest: **Start build override** > **Project-level env vars** > **buildspec env vars**. Never put secrets in plaintext project env vars—they show up in logs. Always use Parameter Store or Secrets Manager references.
@@ -1214,7 +1214,7 @@ This gives you per-service CPU, memory, network, and storage metrics in CloudWat
 }
 ```
 
-**CloudTrail**: Every CodePipeline, CodeBuild, CodeDeploy API call is logged to CloudTrail automatically. This is your immutable audit log: who started a deployment, when, with what source revision. Essential for compliance (SOC2, PCI-DSS).
+**CloudTrail**: Every CodePipeline, CodeBuild, CodeDeploy API call is logged to CloudTrail automatically. This is your immutable audit log: who started a deployment, when, with what source revision. Essential for compliance (SOC2, PCI-DSS). See [Observability](/aws-observability) for CloudWatch dashboards and alerting on deployment metrics.
 
 ---
 
@@ -1434,6 +1434,316 @@ aws appconfig start-deployment \
 **Q: How do you handle database migrations in a blue/green deployment?**
 
 **A:** This is the hardest part. The key constraint: during the switchover window, both blue (old) and green (new) versions may be processing requests, so the database must be compatible with both. The pattern is **expand-contract migrations** (also called parallel-change): (1) Expand: add new columns/tables as nullable with defaults—both old and new code can read/write safely; (2) deploy new code (which starts writing to new columns); (3) backfill old rows; (4) Contract: after all old code is gone, run a second migration to add constraints, remove old columns, or make nullable columns required. Never do rename-and-drop in a single deploy. For blue/green specifically, run migrations before switching traffic—the old (blue) version must tolerate the expanded schema. Tools like Flyway and Liquibase support this with their migration + undo pattern.
+
+---
+
+## GitHub Actions + AWS OIDC — No Long-Lived Credentials
+
+The modern pattern for GitHub Actions → AWS is to use OpenID Connect (OIDC) to get temporary credentials via `AssumeRoleWithWebIdentity`. No AWS access keys stored in GitHub Secrets.
+
+### Why OIDC Over Access Keys
+- Access keys are long-lived: if leaked (accidentally committed, GitHub breach), attacker has persistent access
+- OIDC tokens are short-lived: GitHub mints a token per workflow run; token expires after the job
+- Principle of least privilege: each workflow gets exactly the permissions it needs via a specific IAM role
+
+### Setup (One-Time)
+```bash
+# Step 1: Create OIDC identity provider in AWS IAM
+aws iam create-open-id-connect-provider \
+  --url https://token.actions.githubusercontent.com \
+  --client-id-list sts.amazonaws.com \
+  --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
+```
+
+```json
+// Step 2: Create IAM role with trust policy for GitHub
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {"Federated": "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"},
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringEquals": {"token.actions.githubusercontent.com:aud": "sts.amazonaws.com"},
+      "StringLike": {
+        // Restrict to your org/repo and optionally a specific branch
+        "token.actions.githubusercontent.com:sub": "repo:my-org/my-repo:ref:refs/heads/main"
+      }
+    }
+  }]
+}
+```
+
+### GitHub Actions Workflow
+```yaml
+name: Deploy to AWS
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/GitHubActionsDeployRole
+          aws-region: us-east-1
+          # No access-key-id or secret-access-key needed!
+
+      - name: Deploy with CDK
+        run: npx cdk deploy --all --require-approval never
+
+      - name: Build and push to ECR
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
+          docker build -t my-app .
+          docker push $ECR_REGISTRY/my-app:$GITHUB_SHA
+        env:
+          ECR_REGISTRY: 123456789012.dkr.ecr.us-east-1.amazonaws.com
+```
+
+### Environment-Specific Roles
+- Create separate IAM roles for staging vs production
+- Staging role: trusted for any branch push
+- Production role: trusted ONLY for `refs/heads/main` — prevents feature branches from deploying to prod
+- Use GitHub Environments with required reviewers for production deployments
+
+See also: [IAM & Security](/aws-iam-security) for OIDC identity provider configuration and trust policy patterns.
+
+---
+
+## CDK Pipelines v2 — Self-Mutating Pipeline
+
+CDK Pipelines creates a CodePipeline that can update itself before deploying your application. See [Developer Tools](/aws-developer-tools) for the full CDK ecosystem and construct library reference.
+
+### Complete Example — Multi-Stage Deployment
+```typescript
+import * as pipelines from 'aws-cdk-lib/pipelines';
+import * as codecommit from 'aws-cdk-lib/aws-codecommit';
+
+// Define your application stage (what gets deployed to each environment)
+class ApiStage extends cdk.Stage {
+  constructor(scope: Construct, id: string, props?: cdk.StageProps) {
+    super(scope, id, props);
+    new ApiStack(this, 'Api');          // Lambda + API Gateway
+    new DatabaseStack(this, 'Database'); // DynamoDB
+  }
+}
+
+class PipelineStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const pipeline = new pipelines.CodePipeline(this, 'Pipeline', {
+      // Source: GitHub via OIDC (preferred) or CodeStar connection
+      synth: new pipelines.ShellStep('Synth', {
+        input: pipelines.CodePipelineSource.connection('my-org/my-repo', 'main', {
+          connectionArn: 'arn:aws:codestar-connections:us-east-1:...:connection/...',
+        }),
+        commands: [
+          'npm ci',
+          'npm run build',
+          'npm run test',    // Unit tests before synth
+          'npx cdk synth',
+        ],
+        primaryOutputDirectory: 'cdk.out',
+      }),
+      selfMutation: true,  // Pipeline updates itself before deploying app
+      crossAccountKeys: true, // KMS keys for cross-account artifact encryption
+      dockerEnabledForSynth: true,
+      // Publish assets before pipeline execution (faster parallel deploys)
+      publishAssetsInParallel: true,
+    });
+
+    // Staging: auto-deploy, run integration tests
+    const stagingDeployment = pipeline.addStage(
+      new ApiStage(this, 'Staging', { env: { account: '111111111111', region: 'us-east-1' } }),
+      {
+        pre: [
+          new pipelines.ShellStep('LintAndTest', { commands: ['npm run lint', 'npm test'] }),
+        ],
+        post: [
+          new pipelines.ShellStep('IntegrationTests', {
+            envFromCfnOutputs: { API_URL: stagingStack.apiUrl },
+            commands: ['npm run test:integration'],
+          }),
+          new pipelines.ShellStep('LoadTest', {
+            commands: ['npm run test:load -- --threshold-p99=500ms'],
+          }),
+        ],
+      }
+    );
+
+    // Production: manual approval gate + canary deployment
+    pipeline.addStage(
+      new ApiStage(this, 'Production', { env: { account: '222222222222', region: 'us-east-1' } }),
+      {
+        pre: [
+          new pipelines.ManualApprovalStep('ApproveProductionDeploy', {
+            comment: 'Review staging test results before deploying to production',
+          }),
+        ],
+        post: [
+          new pipelines.ShellStep('SmokeTest', {
+            commands: ['curl -f $API_URL/health || exit 1'],
+          }),
+        ],
+      }
+    );
+  }
+}
+```
+
+### Self-Mutation Explained
+When the pipeline detects changes to the pipeline definition itself (new stages, new steps, CDK version upgrade):
+1. Pipeline runs the `Synth` step to generate new CloudFormation templates
+2. `UpdatePipeline` action applies the new pipeline CloudFormation definition
+3. Pipeline restarts from the beginning with the new configuration
+4. Application stages deploy with the updated pipeline
+
+This means you never manually update the pipeline — just push CDK code changes.
+
+---
+
+## SAM CLI — Local Development Workflow
+
+### End-to-End Local Testing Flow
+```bash
+# 1. Start LocalStack or real DynamoDB Local for dependencies
+docker run -p 8000:8000 amazon/dynamodb-local
+docker run -p 4566:4566 localstack/localstack  # or use real AWS in dev environment
+
+# 2. Set up environment variables for local testing
+cat > env.json << 'EOF'
+{
+  "OrdersFunction": {
+    "TABLE_NAME": "orders-dev",
+    "AWS_ENDPOINT_URL": "http://localhost:8000"
+  }
+}
+EOF
+
+# 3. Invoke a single function locally
+sam local invoke OrdersFunction \
+  --event events/create-order.json \
+  --env-vars env.json \
+  --docker-network my-local-net
+
+# 4. Start local API Gateway (all functions)
+sam local start-api \
+  --env-vars env.json \
+  --docker-network my-local-net \
+  --warm-containers EAGER  # keep containers warm between invocations
+
+# 5. Generate sample events
+sam local generate-event apigateway aws-proxy > events/api-event.json
+sam local generate-event sqs receive-message > events/sqs-event.json
+sam local generate-event s3 put > events/s3-event.json
+
+# 6. Build (using container for Lambda-compatible deps)
+sam build --use-container --container-env-var PIP_EXTRA_INDEX_URL=...
+
+# 7. Deploy with guided setup (first time)
+sam deploy --guided
+# Creates samconfig.toml with your choices
+
+# 8. Fast iteration: sam sync (no CloudFormation, direct Lambda update)
+sam sync --watch --stack-name my-app-dev
+```
+
+### SAM Accelerate vs sam deploy
+| | sam deploy | sam sync |
+|---|---|---|
+| Method | CloudFormation ChangeSet | Direct API calls |
+| Speed | 1-3 minutes | 3-5 seconds |
+| Drift | No drift | Creates drift from CF state |
+| Rollback | Yes (CloudFormation) | Manual |
+| Use for | CI/CD, staging, prod | Rapid local iteration only |
+
+---
+
+## AWS CodeDeploy — Advanced Deployment Strategies
+
+### Lambda Deployment with Pre/Post Traffic Hooks
+```yaml
+# SAM template with canary deployment
+Resources:
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      DeploymentPreference:
+        Type: Canary10Percent5Minutes  # 10% → wait 5min → 100%
+        Alarms:
+          - !Ref ErrorRateAlarm
+          - !Ref LatencyAlarm
+        Hooks:
+          PreTraffic: !Ref PreTrafficCheck
+          PostTraffic: !Ref PostTrafficCheck
+```
+
+```javascript
+// PreTraffic hook: validate new version before any traffic
+exports.handler = async (event) => {
+  const functionToTest = process.env.NewVersion; // ARN of new version
+
+  // Run validation against new version directly
+  const result = await lambda.invoke({
+    FunctionName: functionToTest,
+    Payload: JSON.stringify({ path: '/health', httpMethod: 'GET' }),
+    Qualifier: '$LATEST',
+  }).promise();
+
+  const statusCode = JSON.parse(result.Payload).statusCode;
+
+  if (statusCode !== 200) {
+    // Fail the deployment — CodeDeploy rolls back automatically
+    await codedeploy.putLifecycleEventHookExecutionStatus({
+      deploymentId: event.DeploymentId,
+      lifecycleEventHookExecutionId: event.LifecycleEventHookExecutionId,
+      status: 'Failed',
+    }).promise();
+  } else {
+    await codedeploy.putLifecycleEventHookExecutionStatus({...status: 'Succeeded'}).promise();
+  }
+};
+```
+
+### ECS Blue/Green with CodeDeploy
+- CodeDeploy shifts traffic from Blue task set to Green task set on ALB
+- Terminates blue after configurable stabilization period
+- Traffic shifting options: Canary (small% → wait → 100%), Linear (incremental %), All-at-once
+- Rollback: manual or automatic (on CloudWatch alarm)
+
+---
+
+## AWS Systems Manager — Operational Toolbox
+
+### Key SSM Capabilities
+- **Session Manager**: SSH-less access to EC2/ECS containers — no inbound port 22, uses IAM auth, logs sessions to S3/[CloudWatch](/aws-observability)
+- **Run Command**: execute scripts across fleet of EC2 instances; no SSH; results in Systems Manager console
+- **Parameter Store**: configuration store; Standard tier free (10K params); Advanced tier ($0.05/10K params/month); SecureString uses KMS
+- **Patch Manager**: automated OS patching; patch baseline (approved patches); maintenance windows
+- **State Manager**: enforce configuration state (e.g., ensure CloudWatch agent is installed and running)
+- **Automation**: multi-step operational tasks (runbooks); `AWS-CreateImage`, `AWS-StopEC2InstanceWithApproval`; event-triggered automation
+
+### Session Manager vs Bastion Host
+| Criterion | Session Manager | Bastion Host |
+|---|---|---|
+| Setup | SSM Agent (pre-installed on Amazon Linux 2) | EC2 instance + key pair + SG rule |
+| Network | No inbound port needed | Port 22 must be open from bastion |
+| Cost | Free (included with SSM) | EC2 instance cost |
+| Audit | Session logs to S3/CloudWatch | Manual logging (or Jumpcloud) |
+| MFA | IAM MFA on AssumeRole | SSH key management |
+| Verdict | Always prefer Session Manager | Legacy only |
 
 ---
 
