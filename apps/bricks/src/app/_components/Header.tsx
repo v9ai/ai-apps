@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { css } from "styled-system/css";
 import { useSession, signOut } from "@/lib/auth-client";
 import { LegoName } from "./LegoName";
@@ -9,6 +10,7 @@ const LEGO_COLORS = ["#E3000B", "#FFD500", "#006CB7", "#00852B", "#FE8A18"];
 export function Header() {
   const { data: session, isPending } = useSession();
   const user = session?.user;
+  const [signingOut, setSigningOut] = useState(false);
 
   return (
     <>
@@ -164,7 +166,13 @@ export function Header() {
               <>
                 <LegoName name={user.name || user.email || ""} />
                 <button
-                  onClick={() => signOut().then(() => window.location.reload())}
+                  disabled={signingOut}
+                  onClick={async () => {
+                    if (signingOut) return;
+                    setSigningOut(true);
+                    await signOut();
+                    window.location.reload();
+                  }}
                   className={css({
                     fontSize: "xs",
                     fontWeight: "700",

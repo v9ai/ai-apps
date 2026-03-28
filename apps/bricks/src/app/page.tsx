@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { css } from "styled-system/css";
-import { useSession, signOut } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import { VideoEmbed } from "./_components/VideoEmbed";
 import { PartsList } from "./_components/PartsList";
 import { BuildSteps } from "./_components/BuildSteps";
@@ -82,77 +82,6 @@ export default function Home() {
         py: "12",
       })}
     >
-      {/* Auth */}
-      <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "3", mb: "4" })}>
-        {isPending ? (
-          <span className={css({ fontSize: "sm", color: "ink.faint" })}>…</span>
-        ) : session ? (
-          <>
-            <span className={css({ fontSize: "sm", color: "ink.secondary", fontWeight: "500" })}>
-              {session.user.name || session.user.email}
-            </span>
-            <button
-              onClick={() => signOut().then(() => window.location.reload())}
-              className={css({
-                fontSize: "sm",
-                fontWeight: "700",
-                fontFamily: "display",
-                color: "ink.muted",
-                bg: "transparent",
-                border: "none",
-                cursor: "pointer",
-                transition: "color 0.15s",
-                _hover: { color: "ink.primary" },
-              })}
-            >
-              Sign Out
-            </button>
-          </>
-        ) : (
-          <>
-            <a
-              href="/login"
-              className={css({
-                fontSize: "sm",
-                fontWeight: "700",
-                fontFamily: "display",
-                color: "ink.secondary",
-                textDecoration: "none",
-                bg: "plate.surface",
-                border: "1px solid",
-                borderColor: "plate.border",
-                rounded: "lg",
-                px: "4",
-                py: "2",
-                transition: "all 0.15s ease",
-                _hover: { color: "ink.primary", borderColor: "plate.borderHover", bg: "plate.raised" },
-              })}
-            >
-              Sign In
-            </a>
-            <a
-              href="/signup"
-              className={css({
-                fontSize: "sm",
-                fontWeight: "700",
-                fontFamily: "display",
-                color: "white",
-                textDecoration: "none",
-                bg: "lego.red",
-                rounded: "lg",
-                px: "4",
-                py: "2",
-                transition: "all 0.15s ease",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #A30008, 0 3px 6px rgba(0,0,0,0.3)",
-                _hover: { bg: "#FF1A1A", transform: "translateY(-1px)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 0 #A30008, 0 5px 10px rgba(0,0,0,0.35)" },
-              })}
-            >
-              Sign Up
-            </a>
-          </>
-        )}
-      </div>
-
       {/* Hero */}
       <div className={css({ mb: "10", textAlign: "center" })}>
         <h1
