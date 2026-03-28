@@ -1,13 +1,11 @@
 """Export labeled job data from Neon PostgreSQL as JSONL for MLX LoRA fine-tuning.
 
 Tasks:
-  role-tag        — 1,289 DeepSeek-labeled role classifications (is AI engineer?)
-  remote-eu       — 874 labeled remote-EU classifications (27 true, 847 false)
-  remote-worldwide — ashby_is_remote-based worldwide remote classifications
+  role-tag         — 1,289 DeepSeek-labeled role classifications (is AI engineer?)
+  remote-worldwide — worldwide remote job classifications
 
 Usage:
   python3 mlx-training/export_training_data.py --task role-tag
-  python3 mlx-training/export_training_data.py --task remote-eu
   python3 mlx-training/export_training_data.py --task remote-worldwide
   python3 mlx-training/export_training_data.py --task all
   python3 mlx-training/export_training_data.py --task role-tag --stats  # counts only
