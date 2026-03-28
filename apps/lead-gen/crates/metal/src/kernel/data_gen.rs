@@ -147,37 +147,45 @@ pub fn generate_contact_labels(count: usize) -> Vec<LabeledSample> {
 }
 
 // ---------------------------------------------------------------------------
-// EU Remote job classification data
+// Remote worldwide job classification data
 // ---------------------------------------------------------------------------
 
-const EU_COUNTRIES: &[&str] = &[
-    "Austria",
-    "Belgium",
-    "Bulgaria",
-    "Croatia",
-    "Cyprus",
-    "Czech Republic",
-    "Denmark",
-    "Estonia",
-    "Finland",
-    "France",
+const WORLD_REGIONS: &[&str] = &[
+    // Europe
     "Germany",
-    "Greece",
-    "Hungary",
-    "Ireland",
-    "Italy",
-    "Latvia",
-    "Lithuania",
-    "Luxembourg",
-    "Malta",
     "Netherlands",
-    "Poland",
-    "Portugal",
-    "Romania",
-    "Slovakia",
-    "Slovenia",
+    "France",
     "Spain",
     "Sweden",
+    "Denmark",
+    "Finland",
+    "Poland",
+    "Czech Republic",
+    "Austria",
+    "Ireland",
+    "Portugal",
+    "Romania",
+    "Switzerland",
+    "UK",
+    "Norway",
+    // Americas
+    "Canada",
+    "Brazil",
+    "Argentina",
+    "Colombia",
+    "Mexico",
+    // Asia-Pacific
+    "Singapore",
+    "Australia",
+    "India",
+    "Japan",
+    "South Korea",
+    "Taiwan",
+    // MENA / Other
+    "Israel",
+    "UAE",
+    "Turkey",
+    "South Africa",
 ];
 
 const REMOTE_PATTERNS: &[&str] = &[
@@ -185,7 +193,7 @@ const REMOTE_PATTERNS: &[&str] = &[
     "100% remote",
     "remote-first",
     "work from anywhere",
-    "remote within EU",
+    "remote worldwide",
 ];
 
 const ROLE_TYPES: &[&str] = &[
@@ -201,32 +209,32 @@ const ROLE_TYPES: &[&str] = &[
     "Applied AI Engineer",
 ];
 
-const SYSTEM_PROMPT: &str = "You are a job classification assistant. Classify whether a job posting is for a remote EU AI/ML engineering position. Respond with JSON: {\"is_remote_eu_ai\": true/false, \"confidence\": 0.0-1.0, \"reason\": \"...\"}";
+const SYSTEM_PROMPT: &str = "You are a job classification assistant. Classify whether a job posting is for a fully remote AI/ML engineering position open to candidates worldwide. Respond with JSON: {\"is_remote_ai\": true/false, \"confidence\": 0.0-1.0, \"reason\": \"...\"}";
 
-/// Maximum positive examples to emit (caps the full 27×5×10=1350 cartesian
+/// Maximum positive examples to emit (caps the full 32×5×10=1600 cartesian
 /// product so the dataset stays at a practical training size).
 const MAX_POSITIVES: usize = 200;
 
-/// Generate EU Remote job classification training data.
+/// Generate Remote Worldwide job classification training data.
 ///
 /// Produces positive examples via template expansion over the cartesian
-/// product of EU countries × remote patterns × AI/ML role types (capped at
+/// product of world regions × remote patterns × AI/ML role types (capped at
 /// `MAX_POSITIVES` by cycling through the combinations with a fixed stride),
-/// plus hard negatives covering US-only, hybrid, non-EU remote, and non-AI
-/// remote EU postings.
+/// plus hard negatives covering US-only on-site, hybrid, restricted-region,
+/// and non-AI remote postings.
 ///
 /// Total: up to `MAX_POSITIVES` positives + ~130 hard negatives.
-pub fn generate_eu_remote_labels() -> Vec<EuRemoteSample> {
+pub fn generate_remote_worldwide_labels() -> Vec<EuRemoteSample> {
     let mut samples = Vec::new();
 
     // --- Positive examples ------------------------------------------------
-    let total_combos = EU_COUNTRIES.len() * REMOTE_PATTERNS.len() * ROLE_TYPES.len(); // 1350
+    let total_combos = WORLD_REGIONS.len() * REMOTE_PATTERNS.len() * ROLE_TYPES.len();
     let stride = (total_combos / MAX_POSITIVES).max(1);
 
     let mut combo_idx = 0usize;
     let mut emitted = 0usize;
 
-    'outer: for (ci, country) in EU_COUNTRIES.iter().enumerate() {
+    'outer: for (ci, region) in WORLD_REGIONS.iter().enumerate() {
         for (ri, remote_pattern) in REMOTE_PATTERNS.iter().enumerate() {
             for (ti, role_type) in ROLE_TYPES.iter().enumerate() {
                 let flat = ci * REMOTE_PATTERNS.len() * ROLE_TYPES.len()
@@ -237,12 +245,12 @@ pub fn generate_eu_remote_labels() -> Vec<EuRemoteSample> {
                 }
                 // This combo is selected — emit it.
                 let user_content = format!(
-                    "Job Title: {role_type}\nLocation: {country}, {remote_pattern}\nRequirements: Python, PyTorch, distributed training"
+                    "Job Title: {role_type}\nLocation: {region}, {remote_pattern}\nRequirements: Python, PyTorch, distributed training"
                 );
                 let assistant_content = serde_json::json!({
-                    "is_remote_eu_ai": true,
+                    "is_remote_ai": true,
                     "confidence": 0.95,
-                    "reason": format!("Remote {role_type} position in {country} within EU")
+                    "reason": format!("Fully remote {role_type} position open worldwide")
                 })
                 .to_string();
 
@@ -274,23 +282,23 @@ pub fn generate_eu_remote_labels() -> Vec<EuRemoteSample> {
             "Job Title: {role}\nLocation: {city}, on-site\nRequirements: Python, PyTorch"
         );
         let assistant_content = serde_json::json!({
-            "is_remote_eu_ai": false,
+            "is_remote_ai": false,
             "confidence": 0.97,
-            "reason": "On-site position in the US, not remote EU"
+            "reason": "On-site position, not remote"
         })
         .to_string();
         samples.push(build_chat_sample(SYSTEM_PROMPT, &user_content, &assistant_content));
     }
 
-    // 2. Hybrid EU AI roles (30 examples)
+    // 2. Hybrid roles requiring in-office presence (30 examples)
     for i in 0..30usize {
         let role = ROLE_TYPES[i % ROLE_TYPES.len()];
-        let city = EU_HYBRID_CITIES[i % EU_HYBRID_CITIES.len()];
+        let city = HYBRID_CITIES[i % HYBRID_CITIES.len()];
         let user_content = format!(
             "Job Title: {role}\nLocation: {city}, hybrid 3 days/week\nRequirements: Python, TensorFlow"
         );
         let assistant_content = serde_json::json!({
-            "is_remote_eu_ai": false,
+            "is_remote_ai": false,
             "confidence": 0.90,
             "reason": "Hybrid role requiring in-office presence, not fully remote"
         })
@@ -298,32 +306,33 @@ pub fn generate_eu_remote_labels() -> Vec<EuRemoteSample> {
         samples.push(build_chat_sample(SYSTEM_PROMPT, &user_content, &assistant_content));
     }
 
-    // 3. Non-EU remote AI roles — Switzerland (20 examples)
+    // 3. US work-authorization-restricted remote AI roles (20 examples)
     for i in 0..20usize {
         let role = ROLE_TYPES[i % ROLE_TYPES.len()];
+        let city = US_CITIES[i % US_CITIES.len()];
         let user_content = format!(
-            "Job Title: {role}\nLocation: Switzerland, remote\nRequirements: Python, JAX, TPUs"
+            "Job Title: {role}\nLocation: {city}, remote\nRequirements: Python, JAX, TPUs\nNote: Must be authorized to work in the US"
         );
         let assistant_content = serde_json::json!({
-            "is_remote_eu_ai": false,
-            "confidence": 0.92,
-            "reason": "Remote position but Switzerland is not an EU member state"
+            "is_remote_ai": false,
+            "confidence": 0.93,
+            "reason": "Remote but restricted to US work authorization — not open worldwide"
         })
         .to_string();
         samples.push(build_chat_sample(SYSTEM_PROMPT, &user_content, &assistant_content));
     }
 
-    // 4. Non-AI remote EU roles (30 examples)
+    // 4. Non-AI remote roles (30 examples)
     for i in 0..30usize {
         let role = NON_AI_ROLES[i % NON_AI_ROLES.len()];
-        let country = EU_COUNTRIES[i % EU_COUNTRIES.len()];
+        let region = WORLD_REGIONS[i % WORLD_REGIONS.len()];
         let user_content = format!(
-            "Job Title: {role}\nLocation: {country}, fully remote\nRequirements: CRM, Salesforce, communication skills"
+            "Job Title: {role}\nLocation: {region}, fully remote\nRequirements: CRM, Salesforce, communication skills"
         );
         let assistant_content = serde_json::json!({
-            "is_remote_eu_ai": false,
+            "is_remote_ai": false,
             "confidence": 0.93,
-            "reason": "Remote EU position but not an AI/ML engineering role"
+            "reason": "Remote position but not an AI/ML engineering role"
         })
         .to_string();
         samples.push(build_chat_sample(SYSTEM_PROMPT, &user_content, &assistant_content));
