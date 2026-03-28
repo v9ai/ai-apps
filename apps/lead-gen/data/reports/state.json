@@ -4,11 +4,11 @@
   "counts": {
     "discovered": 123,
     "enriched": 120,
-    "contacts_found": 30,
+    "contacts_found": 36,
     "outreach_drafted": 0,
     "outreach_sent": 0
   },
-  "quality_score": 0.85,
+  "quality_score": 1.0,
   "bounce_rate": 0.0,
   "phase_history": null
 }
