@@ -1,10 +1,11 @@
 //! travel-ml: unified CLI for the hotel discovery pipeline.
 //!
 //! Subcommands:
-//!   discover  — scrape → Candle filter → extract → dedup → reviews → JSON
-//!   sanitize  — drop non-seaside entries from JSON
-//!   ingest    — scrape hotel pages → embed → store in LanceDB
-//!   search    — semantic hotel search via LanceDB
+//!   discover     — scrape → Candle filter → extract → dedup → reviews → JSON
+//!   sanitize     — drop non-seaside entries from JSON
+//!   ingest       — scrape hotel pages → embed → store in LanceDB
+//!   search       — semantic hotel search via LanceDB
+//!   price-check  — validate current prices against the €1,000 family budget
 
 use anyhow::{Context, Result};
 use candle_core::Device;
@@ -92,6 +93,8 @@ enum Cmd {
     FamilyScore,
     /// Generate Napoli family budget plan and 7-day itinerary (no ML model needed)
     NapoliBudget,
+    /// Check current prices against the family trip budget
+    PriceCheck,
 }
 
 #[tokio::main]
@@ -146,6 +149,13 @@ async fn main() -> Result<()> {
                     "kid_max_hit": d.kid_max_hit,
                 })).collect::<Vec<_>>()
             })).unwrap());
+        }
+        Cmd::PriceCheck => {
+            use travel_ml::price_check::{run_price_check, print_price_report};
+            let report = run_price_check();
+            print_price_report(&report);
+            // Also print JSON for frontend consumption
+            println!("{}", serde_json::to_string_pretty(&report).unwrap());
         }
     }
 
