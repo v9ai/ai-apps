@@ -1,41 +1,21 @@
 {
   "duplicates": {
-    "company_dupes": [
-      {
-        "a": "deepsense.ai",
-        "b": "deepcode.ai",
-        "similarity": 0.8533333333333333,
-        "action": "review"
-      },
-      {
-        "a": "dataiku.com",
-        "b": "datatonic.com",
-        "similarity": 0.87,
-        "action": "review"
-      }
-    ],
-    "contact_dupes": [
-      {
-        "a": "info@axyon.ai",
-        "b": "info@axyon.ai",
-        "similarity": 1.0,
-        "action": "dedup"
-      }
-    ]
+    "company_dupes": [],
+    "contact_dupes": []
   },
   "completeness": {
-    "companies_audited": 30,
-    "contacts_audited": 122,
-    "companies_complete": 30,
-    "contacts_complete": 122,
+    "companies_audited": 0,
+    "contacts_audited": 0,
+    "companies_complete": 0,
+    "contacts_complete": 0,
     "missing_fields": []
   },
-  "quality_score": 0.85,
+  "quality_score": 1.0,
   "recommendations": [
     {
       "priority": "HIGH",
-      "issue": "Email verification rate 4.9% — only 6 of 122 verified via SMTP",
-      "affected_count": 116,
+      "issue": "Email verification rate 0.0% — only 0 of 0 verified via SMTP",
+      "affected_count": 0,
       "action": "Try additional email patterns or use catch-all detection."
     }
   ]
