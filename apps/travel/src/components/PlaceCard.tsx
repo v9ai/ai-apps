@@ -122,8 +122,16 @@ export function PlaceCard({
   const meta = CATEGORY_META[place.category] ?? FALLBACK_META;
   const description = lang === "ro" && place.description_ro ? place.description_ro : place.description;
   const tips = lang === "ro" && place.tips_ro ? place.tips_ro : place.tips;
+  const familyTips = lang === "ro" && place.family_tips_ro ? place.family_tips_ro : place.family_tips;
   const visitDuration = lang === "ro" && place.visit_duration_ro ? place.visit_duration_ro : place.visit_duration;
   const gradient = CATEGORY_GRADIENTS[place.category] ?? FALLBACK_GRADIENT;
+
+  // Kid-friendly badge logic
+  const showKidFriendly = place.kid_friendly === true;
+  const showAdultsOnly =
+    place.kid_friendly === false &&
+    place.family_score !== undefined &&
+    place.family_score < 0.5;
 
   return (
     <article
@@ -276,32 +284,71 @@ export function PlaceCard({
           borderColor: "steel.border",
         })}
       >
-        {/* Category pill */}
-        <span
+        {/* Category pill + kid-friendly badge — left side, space-between */}
+        <div
           className={css({
-            display: "inline-flex",
+            display: "flex",
             alignItems: "center",
-            gap: "1.5",
-            fontSize: "xs",
-            fontWeight: "700",
-            fontFamily: "display",
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            rounded: "pill",
-            px: "2.5",
-            py: "1",
+            justifyContent: "space-between",
+            gap: "2",
+            flexGrow: "1",
+            mr: "3",
           })}
-          style={{
-            color: meta.color,
-            background: `${meta.color}18`,
-            border: `1px solid ${meta.color}33`,
-          }}
         >
-          <span aria-hidden="true">{meta.icon}</span>
-          {meta.label}
-        </span>
+          {/* Category pill */}
+          <span
+            className={css({
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "1.5",
+              fontSize: "xs",
+              fontWeight: "700",
+              fontFamily: "display",
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              rounded: "pill",
+              px: "2.5",
+              py: "1",
+              flexShrink: "0",
+            })}
+            style={{
+              color: meta.color,
+              background: `${meta.color}18`,
+              border: `1px solid ${meta.color}33`,
+            }}
+          >
+            <span aria-hidden="true">{meta.icon}</span>
+            {meta.label}
+          </span>
 
-        <div className={css({ display: "flex", alignItems: "center", gap: "2" })}>
+          {/* Kid-friendly / Adults badge — inline right of category */}
+          {showKidFriendly && (
+            <span
+              className={css({
+                fontSize: "2xs",
+                fontWeight: "600",
+                fontFamily: "display",
+                color: "amber.warm",
+              })}
+            >
+              ◆ Kid-friendly
+            </span>
+          )}
+          {!showKidFriendly && showAdultsOnly && (
+            <span
+              className={css({
+                fontSize: "2xs",
+                fontWeight: "600",
+                fontFamily: "display",
+                color: "text.faint",
+              })}
+            >
+              ◇ Adults
+            </span>
+          )}
+        </div>
+
+        <div className={css({ display: "flex", alignItems: "center", gap: "2", flexShrink: "0" })}>
           {/* Ranking badges */}
           {ranking?.bestRank != null && ranking.bestRank <= 3 && (
             <span
@@ -372,30 +419,6 @@ export function PlaceCard({
             </span>
           )}
 
-          {/* Kid-friendly badge */}
-          {place.kid_friendly && (
-            <span
-              className={css({
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "1",
-                fontSize: "2xs",
-                fontWeight: "700",
-                fontFamily: "display",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                rounded: "pill",
-                px: "2",
-                py: "0.5",
-                bg: "rgba(90, 122, 92, 0.15)",
-                color: "cat.nature",
-                border: "1px solid rgba(90, 122, 92, 0.3)",
-              })}
-            >
-              ◈ Kids
-            </span>
-          )}
-
           {/* Index badge */}
           <span
             className={css({
@@ -435,11 +458,59 @@ export function PlaceCard({
             display: "flex",
             alignItems: "center",
             gap: "4",
-            mb: "5",
+            mb: "2",
             flexWrap: "wrap",
           })}
         >
           <RatingDots rating={place.rating} />
+
+          {/* ML family score inline bar */}
+          {place.family_score !== undefined && (
+            <span
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "1.5",
+              })}
+            >
+              <span
+                className={css({
+                  fontSize: "2xs",
+                  fontWeight: "600",
+                  fontFamily: "display",
+                  color: "text.faint",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                })}
+              >
+                ML
+              </span>
+              <span
+                className={css({
+                  display: "inline-block",
+                  w: "48px",
+                  h: "2px",
+                  rounded: "full",
+                  flexShrink: "0",
+                  bg: "rgba(201, 146, 42, 0.15)",
+                  overflow: "hidden",
+                })}
+              >
+                <span
+                  className={css({
+                    display: "block",
+                    h: "full",
+                    rounded: "full",
+                  })}
+                  style={{
+                    width: `${Math.round(place.family_score * 100)}%`,
+                    background: "#C9922A",
+                  }}
+                />
+              </span>
+            </span>
+          )}
+
           {place.price_display && (
             <span
               className={css({
@@ -478,23 +549,27 @@ export function PlaceCard({
             </svg>
             {visitDuration}
           </span>
-          {place.family_cost != null && (
-            <span
-              className={css({
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "1",
-                fontSize: "xs",
-                color: "text.muted",
-              })}
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              {place.family_cost.total_eur === 0 ? "Free · family" : `€${place.family_cost.total_eur} · family`}
-            </span>
-          )}
         </div>
+
+        {/* Family cost line — separate row below rating */}
+        {place.family_cost != null && (
+          <p
+            className={css({
+              fontSize: "xs",
+              color: "text.secondary",
+              mb: "4",
+            })}
+          >
+            {place.family_cost.total_eur === 0
+              ? "Free for families"
+              : `2 adults + 1 child: \u20ac${place.family_cost.total_eur}`}
+          </p>
+        )}
+
+        {/* Spacer when no family cost */}
+        {place.family_cost == null && (
+          <div className={css({ mb: "4" })} />
+        )}
 
         {/* Description */}
         <p
@@ -513,7 +588,7 @@ export function PlaceCard({
           className={css({
             display: "flex",
             gap: "3",
-            mb: "6",
+            mb: "4",
             rounded: "8px",
             p: { base: "3", sm: "4" },
             bg: "amber.glow",
@@ -554,6 +629,62 @@ export function PlaceCard({
             </p>
           </div>
         </div>
+
+        {/* Family tips — inset box with teal accent, shown when family_tips exists */}
+        {familyTips && (
+          <div
+            className={css({
+              display: "flex",
+              gap: "3",
+              mb: "6",
+              rounded: "8px",
+              p: { base: "3", sm: "4" },
+            })}
+            style={{
+              background: "rgba(58, 122, 106, 0.08)",
+              border: "1px solid rgba(58, 122, 106, 0.6)",
+            }}
+          >
+            <div
+              className={css({
+                flexShrink: "0",
+                w: "3px",
+                rounded: "full",
+                alignSelf: "stretch",
+              })}
+              style={{ background: "#3A7A6A" }}
+            />
+            <div>
+              <p
+                className={css({
+                  fontSize: "xs",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  mb: "0.5",
+                })}
+                style={{ color: "#3A7A6A" }}
+              >
+                {lang === "ro" ? "◈ Cu un copil" : "◈ With a child"}
+              </p>
+              <p
+                className={css({
+                  fontSize: "xs",
+                  lineHeight: "1.6",
+                })}
+                style={{ color: "rgba(58, 122, 106, 0.9)" }}
+              >
+                {familyTips}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Spacer when no family tips, to maintain mb:6 equivalent */}
+        {!familyTips && (
+          <div className={css({ mb: "2" })} />
+        )}
 
         {/* Footer: address + CTAs — pushed to bottom */}
         <div

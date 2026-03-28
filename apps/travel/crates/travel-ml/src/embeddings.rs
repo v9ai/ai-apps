@@ -115,4 +115,76 @@ impl EmbeddingEngine {
         let mut vecs = self.embed_batch(&[text])?;
         vecs.pop().context("empty embedding result")
     }
+
+    /// Embed text with an optional instruction prefix.
+    /// Example prefix: "Represent this sentence for retrieval: "
+    pub fn embed_with_prefix(&self, text: &str, prefix: &str) -> Result<Vec<f32>> {
+        self.embed_one(&format!("{prefix}{text}"))
+    }
+
+    /// Score a batch of texts against multiple anchor strings.
+    /// Returns Vec<Vec<f32>> of shape [texts.len()][anchors.len()].
+    /// Each inner Vec contains the cosine similarity to each anchor.
+    pub fn batch_anchor_scores(&self, texts: &[&str], anchors: &[&str]) -> Result<Vec<Vec<f32>>> {
+        let text_vecs = self.embed_batch(texts)?;
+        let anchor_vecs = self.embed_batch(anchors)?;
+        Ok(Self::cosine_similarity_matrix(&text_vecs, &anchor_vecs))
+    }
+
+    /// Compute cosine similarity between every vector in `queries` and every vector in `corpus`.
+    /// Returns a Vec<Vec<f32>> of shape [queries.len()][corpus.len()].
+    /// All input vectors must be L2-normalized (as produced by embed_batch).
+    pub fn cosine_similarity_matrix(queries: &[Vec<f32>], corpus: &[Vec<f32>]) -> Vec<Vec<f32>> {
+        queries
+            .iter()
+            .map(|q| {
+                corpus
+                    .iter()
+                    .map(|c| q.iter().zip(c.iter()).map(|(a, b)| a * b).sum())
+                    .collect()
+            })
+            .collect()
+    }
+
+    /// Find indices of the top-k most similar corpus vectors to `query`.
+    /// Returns Vec of (index, score) sorted by score descending.
+    /// Input vectors must be L2-normalized.
+    pub fn top_k_similar(query: &[f32], corpus: &[Vec<f32>], k: usize) -> Vec<(usize, f32)> {
+        let mut scores: Vec<(usize, f32)> = corpus
+            .iter()
+            .enumerate()
+            .map(|(i, c)| {
+                let dot: f32 = query.iter().zip(c.iter()).map(|(a, b)| a * b).sum();
+                (i, dot)
+            })
+            .collect();
+        scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        scores.truncate(k);
+        scores
+    }
+
+    /// Compute weighted mean cosine similarity between `text_vec` and `anchor_vecs`.
+    /// `weights` must sum to 1.0.
+    /// Input vectors must be L2-normalized.
+    pub fn weighted_anchor_score(
+        text_vec: &[f32],
+        anchor_vecs: &[Vec<f32>],
+        weights: &[f32],
+    ) -> f32 {
+        assert_eq!(
+            weights.len(),
+            anchor_vecs.len(),
+            "weights.len() ({}) must equal anchor_vecs.len() ({})",
+            weights.len(),
+            anchor_vecs.len(),
+        );
+        anchor_vecs
+            .iter()
+            .zip(weights.iter())
+            .map(|(anchor, &w)| {
+                let dot: f32 = text_vec.iter().zip(anchor.iter()).map(|(a, b)| a * b).sum();
+                w * dot
+            })
+            .sum()
+    }
 }
