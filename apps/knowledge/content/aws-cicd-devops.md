@@ -11,7 +11,7 @@ AWS CI/CD & DevOps is the integrated ecosystem of services—CodeCommit, CodeBui
 A fully managed, Git-compatible source control service. Repositories are hosted in AWS, are regionally redundant, and are encrypted at rest (KMS) and in transit (TLS). It was deprecated for new customers in July 2024—existing repos still work, but AWS is steering new workloads toward GitHub/GitLab with OIDC. **Interview insight:** Know why it's being deprecated and know the migration path, but also understand it deeply because many enterprises still run it.
 
 ### IAM Integration (Key Differentiator)
-There are no per-repository passwords. Access is governed entirely by IAM:
+There are no per-repository passwords. Access is governed entirely by [IAM](/aws-iam-security):
 - **IAM Users** get Git credentials via `aws iam upload-ssh-public-key` (SSH) or HTTP credentials generated from the IAM console.
 - **IAM Roles** can be assumed by CodeBuild/CodePipeline/Lambda to access repos—no secrets to rotate.
 - **IAM Policies** control repository-level actions: `codecommit:GitPull`, `codecommit:GitPush`, `codecommit:CreateBranch`, `codecommit:DeleteBranch`, `codecommit:GetMergeCommit`.
@@ -199,7 +199,7 @@ Highest to lowest: **Start build override** > **Project-level env vars** > **bui
 ## 3. AWS CodeDeploy
 
 ### What It Is
-A deployment service that automates application deployments to EC2, ECS, Lambda, or on-premises servers. It handles the mechanics of the deployment (stopping old versions, starting new ones, health checks) so you define the strategy, not the shell scripts.
+A deployment service that automates application deployments to EC2, [ECS](/aws-compute-containers), [Lambda](/aws-lambda-serverless), or on-premises servers. It handles the mechanics of the deployment (stopping old versions, starting new ones, health checks) so you define the strategy, not the shell scripts.
 
 ### Deployment Types
 
@@ -350,7 +350,7 @@ A fully managed continuous delivery service that models, visualizes, and automat
 - `Approval`: Manual approval (SNS notification → human approves/rejects in console/CLI)
 - `Invoke`: Lambda function (custom logic)
 
-**Artifacts**: Files passed between actions via S3 (the pipeline's artifact bucket). Each action can declare `inputArtifacts` and `outputArtifacts`. CodePipeline zips/unzips them automatically.
+**Artifacts**: Files passed between actions via [S3](/aws-storage-s3) (the pipeline's artifact bucket). Each action can declare `inputArtifacts` and `outputArtifacts`. CodePipeline zips/unzips them automatically.
 
 ```
 Source (GitHub) → [SourceArtifact]
@@ -813,7 +813,7 @@ terraform apply -var-file="prod.tfvars"
 ## 7. GitHub Actions with AWS (OIDC)
 
 ### Why OIDC (No Long-Lived Keys)
-IAM access keys (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) stored in GitHub secrets are a security liability—they don't expire, can be exfiltrated, and require manual rotation. OIDC federation lets GitHub Actions obtain short-lived credentials by exchanging a GitHub-signed JWT for temporary AWS credentials via `sts:AssumeRoleWithWebIdentity`. The credentials last ~1 hour and scope is defined by the IAM role's trust policy.
+[IAM](/aws-iam-security) access keys (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) stored in GitHub secrets are a security liability—they don't expire, can be exfiltrated, and require manual rotation. OIDC federation lets GitHub Actions obtain short-lived credentials by exchanging a GitHub-signed JWT for temporary AWS credentials via `sts:AssumeRoleWithWebIdentity`. The credentials last ~1 hour and scope is defined by the IAM role's trust policy.
 
 ### Setup
 
@@ -1006,7 +1006,7 @@ fi
 ```
 
 ### ECS Rolling Deployment
-The default ECS service update strategy. ECS gradually replaces old tasks with new ones. Controlled by two parameters on the service:
+The default [ECS](/aws-compute-containers) service update strategy. ECS gradually replaces old tasks with new ones. Controlled by two parameters on the service:
 - `minimumHealthyPercent`: Minimum % of desired tasks that must stay running (e.g., 50 means half can be stopped to deploy).
 - `maximumPercent`: Maximum % of desired tasks that can run simultaneously (e.g., 200 means double capacity during rollout).
 
@@ -1026,7 +1026,7 @@ aws ecs update-service \
 ```
 
 ### ECS Blue/Green with CodeDeploy
-ECS blue/green requires:
+[ECS](/aws-compute-containers) blue/green requires:
 1. ECS service with `deploymentController: { type: CODE_DEPLOY }`
 2. Two target groups on the ALB
 3. CodeDeploy application with ECS deployment group
@@ -1059,7 +1059,7 @@ Hooks:
 
 **Cost**: Double infrastructure during transition.
 
-**When to use**: High-stakes deployments where instant rollback capability justifies the cost. Lambda (CodeDeploy does this natively), ECS, EC2 with ALB.
+**When to use**: High-stakes deployments where instant rollback capability justifies the cost. [Lambda](/aws-lambda-serverless) (CodeDeploy does this natively), [ECS](/aws-compute-containers), EC2 with ALB.
 
 ### Canary
 **Mechanism**: Route a small percentage of traffic (e.g., 5% or 10%) to the new version. Monitor metrics. Gradually increase percentage. If metrics degrade, rollback. If stable, shift 100%.
@@ -1067,9 +1067,9 @@ Hooks:
 **AWS implementations**:
 - **Route 53 weighted routing**: `Weight: 5` for new version, `Weight: 95` for old.
 - **ALB weighted target groups**: Two target groups with weighted forwarding.
-- **Lambda aliases**: `aws lambda update-alias --routing-config AdditionalVersionWeights='{"2": 0.05}'`
+- **[Lambda](/aws-lambda-serverless) aliases**: `aws lambda update-alias --routing-config AdditionalVersionWeights='{"2": 0.05}'`
 - **CodeDeploy**: `LambdaCanary10Percent5Minutes` configs.
-- **API Gateway canary**: Built-in stage canary feature.
+- **[API Gateway](/aws-api-gateway-networking) canary**: Built-in stage canary feature.
 
 ### Rolling
 **Mechanism**: Update a fraction of instances/tasks at a time. At any point, some instances run old version and some run new. No extra infrastructure cost, but requires backward compatibility during transition.

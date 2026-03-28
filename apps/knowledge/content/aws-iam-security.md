@@ -12,7 +12,7 @@ A **principal** is an entity that can make API calls to AWS:
 - **IAM User** — long-term identity (username + password or access key). Represents a human or a machine with static credentials.
 - **IAM Group** — logical grouping of users. Policies attached to a group apply to all members. Groups cannot be principals in resource-based policies.
 - **IAM Role** — identity with no long-term credentials. A role is _assumed_ by a principal and issues temporary credentials via STS. Used for services, cross-account access, federated identity.
-- **AWS Service** — services like Lambda, EC2, ECS that are granted roles to call other AWS services on your behalf.
+- **AWS Service** — services like [Lambda](/aws-lambda-serverless), EC2, ECS that are granted roles to call other AWS services on your behalf.
 
 ### Policy Types
 
@@ -21,7 +21,7 @@ A **principal** is an entity that can make API calls to AWS:
 | **AWS Managed Policy** | Users, Groups, Roles | AWS account (shared) | Common reusable policies (e.g., `AmazonS3ReadOnlyAccess`) |
 | **Customer Managed Policy** | Users, Groups, Roles | Your account | Custom reusable policies you maintain |
 | **Inline Policy** | Exactly one user/group/role | Embedded in the entity | Strict 1:1 relationship; deleted with entity |
-| **Resource-Based Policy** | Attached to a resource (S3, KMS, Lambda) | The resource itself | Cross-account access without assuming a role |
+| **Resource-Based Policy** | Attached to a resource ([S3](/aws-storage-s3), KMS, [Lambda](/aws-lambda-serverless)) | The resource itself | Cross-account access without assuming a role |
 | **Permission Boundary** | IAM User or Role | Account | Maximum permissions any identity-based policy can grant (not additive) |
 | **Service Control Policy (SCP)** | AWS Organization OU or account | AWS Organizations | Maximum permissions for all principals in the OU/account |
 | **Session Policy** | Passed inline during `AssumeRole` | Temporary session | Narrow a role's permissions for a specific session |
@@ -152,8 +152,8 @@ A role has two policies:
 ```
 
 ### Service Roles vs Instance Profiles
-- **Service Role**: a role whose trust policy allows an AWS service (Lambda, ECS, Glue) to assume it.
-- **Instance Profile**: a container for a single role that can be attached to an EC2 instance. EC2 retrieves temporary credentials from the IMDS (Instance Metadata Service) at `169.254.169.254/latest/meta-data/iam/security-credentials/<role-name>`. IMDSv2 is required (token-based, not just IP-hop exploitable).
+- **Service Role**: a role whose trust policy allows an AWS service ([Lambda](/aws-lambda-serverless), [ECS](/aws-compute-containers), Glue) to assume it.
+- **Instance Profile**: a container for a single role that can be attached to an [EC2 instance](/aws-compute-containers). EC2 retrieves temporary credentials from the IMDS (Instance Metadata Service) at `169.254.169.254/latest/meta-data/iam/security-credentials/<role-name>`. IMDSv2 is required (token-based, not just IP-hop exploitable).
 
 ### Cross-Account Roles
 1. In Account B (resource owner): create role, trust policy allows Account A's principal, permission policy grants needed actions.
@@ -202,7 +202,7 @@ Principal calls STS API
 ```
 
 ### OIDC Federation (AssumeRoleWithWebIdentity)
-Used by: Cognito Identity Pools, GitHub Actions, Kubernetes IRSA (IAM Roles for Service Accounts).
+Used by: Cognito Identity Pools, [GitHub Actions](/aws-cicd-devops), Kubernetes IRSA (IAM Roles for Service Accounts).
 ```
 GitHub Actions workflow → OIDC token (JWT) from GitHub
   → AssumeRoleWithWebIdentity with JWT + RoleArn
@@ -226,7 +226,7 @@ Trust policy for GitHub Actions:
 ## 6. Resource-Based Policies
 
 ### S3 Bucket Policies
-Attached directly to the bucket. Can allow cross-account access without role assumption.
+Attached directly to the [S3](/aws-storage-s3) bucket. Can allow cross-account access without role assumption.
 ```json
 {
   "Statement": [{
@@ -266,7 +266,7 @@ Block Public Access settings override bucket policies for public access. S3 Obje
 ```
 
 ### Lambda Resource Policies
-Allow other AWS services or accounts to invoke a Lambda function.
+Allow other AWS services or accounts to invoke a [Lambda](/aws-lambda-serverless) function.
 ```bash
 aws lambda add-permission \
   --function-name myFunction \
@@ -383,7 +383,7 @@ Cognito-managed OAuth 2.0 / OIDC endpoint. Supports Authorization Code with PKCE
 ## 9. AWS WAF
 
 ### Core Concepts
-- **Web ACL**: collection of rules applied to CloudFront, ALB, API Gateway, AppSync, Cognito User Pool.
+- **Web ACL**: collection of rules applied to CloudFront, ALB, [API Gateway](/aws-api-gateway-networking), AppSync, Cognito User Pool.
 - **Rule**: has a statement (what to match) and an action (Allow, Block, Count, CAPTCHA, Challenge).
 - **Rule Group**: reusable set of rules with a capacity limit (WCU — WAF Capacity Units).
 - **Statement Types**: IP set match, geo match, regex pattern set, size constraint, SQL injection match, XSS match, rate-based rule, managed rule group reference.
@@ -447,7 +447,7 @@ To decrypt:
 2. Decrypt data locally
 3. Discard plaintext data key
 ```
-This keeps KMS API calls minimal and supports large data. Used by S3, EBS, RDS, Lambda environment variables, etc.
+This keeps KMS API calls minimal and supports large data. Used by [S3](/aws-storage-s3), EBS, RDS, [Lambda](/aws-lambda-serverless) environment variables, etc.
 
 ### Key Policies vs IAM Policies
 - Key policy is **required** and takes precedence.

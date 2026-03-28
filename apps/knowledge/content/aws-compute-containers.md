@@ -2,7 +2,7 @@
 
 ## The 30-Second Pitch
 
-AWS Compute & Containers is the layer of AWS that answers "where does my code run?" — spanning raw virtual machines (EC2), serverless functions (Lambda), managed containers (ECS/EKS/Fargate), and fully managed application hosting (App Runner). The core value proposition is a **spectrum of control vs. operational overhead**: EC2 gives you full OS control but requires patching; Fargate removes node management but limits customization; App Runner removes almost everything. An engineer choosing within this spectrum trades off latency-to-production, cost predictability, scaling granularity, and egress complexity. For a distributed systems or platform engineering interview, the expectation is to justify placement on that spectrum, understand the mechanics of auto scaling and load balancing, and reason about container networking, IAM delegation, and deployment safety.
+AWS Compute & Containers is the layer of AWS that answers "where does my code run?" — spanning raw virtual machines (EC2), serverless functions ([Lambda](/aws-lambda-serverless)), managed containers (ECS/EKS/Fargate), and fully managed application hosting (App Runner). The core value proposition is a **spectrum of control vs. operational overhead**: EC2 gives you full OS control but requires patching; Fargate removes node management but limits customization; App Runner removes almost everything. An engineer choosing within this spectrum trades off latency-to-production, cost predictability, scaling granularity, and egress complexity. For a distributed systems or platform engineering interview, the expectation is to justify placement on that spectrum, understand the mechanics of auto scaling and load balancing, and reason about container networking, [IAM](/aws-iam-security) delegation, and deployment safety.
 
 ## How It Actually Works
 
@@ -20,7 +20,7 @@ Every service uses EC2 hardware underneath. The higher you go, the more AWS hand
 - **ECS on EC2**: AWS manages container placement; you still manage EC2 nodes
 - **ECS Fargate / EKS Fargate**: AWS manages nodes entirely; you pay per vCPU-second
 - **App Runner**: AWS manages load balancing, scaling, TLS, deployments
-- **Lambda**: AWS manages everything except the function handler and 15-min limit
+- **[Lambda](/aws-lambda-serverless)**: AWS manages everything except the function handler and 15-min limit
 
 ---
 
@@ -76,7 +76,7 @@ An AMI is a snapshot of an instance's root volume + launch permissions + block d
 - **AWS-managed** (e.g., Amazon Linux 2023, Ubuntu 22.04): Maintained by AWS, regularly patched
 - **Marketplace AMIs**: Third-party vendors; may have licensing costs per hour
 - **Custom AMIs**: Golden images you bake with Packer; critical for fast Auto Scaling (pre-installed deps = faster boot)
-- **EBS-backed vs Instance Store-backed**: EBS-backed is standard — root volume persists on stop. Instance store is ephemeral NVMe — fastest IOPS but data lost on stop/terminate.
+- **EBS-backed vs Instance Store-backed**: EBS-backed is standard — root volume persists on stop (see [S3 & Storage](/aws-storage-s3) for EBS/EFS details). Instance store is ephemeral NVMe — fastest IOPS but data lost on stop/terminate.
 
 **AMI lifecycle**: Build → Test → Share → Deprecate. Use EC2 Image Builder for automated, pipeline-based AMI creation with CIS hardening.
 
@@ -205,6 +205,8 @@ A pool of pre-initialized, stopped (or running) instances that can be promoted t
 
 ## 4. Load Balancers
 
+> For API Gateway, VPC networking, and Route 53 integration, see [API Gateway & Networking](/aws-api-gateway-networking).
+
 ### ALB vs NLB vs CLB
 
 | Feature | ALB (Application) | NLB (Network) | CLB (Classic) |
@@ -267,6 +269,8 @@ For ALB: HTTP/HTTPS. Expect a 200 (or configurable range). For NLB: TCP (just co
 
 ## 5. ECS Fundamentals
 
+> ECS runs [Docker](/docker) containers. For Kubernetes concepts (pods, deployments, namespaces), see [Kubernetes](/kubernetes).
+
 ### Core Concepts
 
 **Cluster**: Logical grouping of compute resources (EC2 instances or Fargate capacity). Namespace for services, tasks, and capacity providers.
@@ -275,7 +279,7 @@ For ALB: HTTP/HTTPS. Expect a 200 (or configurable range). For NLB: TCP (just co
 - Container image(s) + resource requirements (CPU, memory)
 - Network mode (bridge, host, awsvpc)
 - Volumes and mounts
-- IAM task role + execution role
+- [IAM](/aws-iam-security) task role + execution role
 - Logging configuration
 - Environment variables and secrets (from SSM Parameter Store / Secrets Manager)
 - Health check command
@@ -407,6 +411,8 @@ maxPercent: 200         → allow up to 2x desired count during deployment
 **Deployment circuit breaker** (enable this): ECS detects if new tasks are crashing/failing health checks and rolls back automatically. Track `consecutiveFailureThreshold` (default 3 failures).
 
 ### Blue/Green with CodeDeploy
+
+> CodeDeploy integrates with the broader [CI/CD & DevOps](/aws-cicd-devops) pipeline (CodePipeline, CodeBuild).
 
 Two separate target groups (blue = current, green = new). Traffic shifted between them:
 
