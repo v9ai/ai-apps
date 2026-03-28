@@ -301,7 +301,6 @@ function formatScore(score?: number | null): string {
 type KeyFactsCardProps = {
   linkedinUrl?: string | null;
   score?: number | null;
-  careerPagesCount?: number | null;
   isAdmin?: boolean;
   industry?: string | null;
   updatedAt?: string | null;
@@ -310,7 +309,6 @@ type KeyFactsCardProps = {
 function KeyFactsCard({
   linkedinUrl,
   score,
-  careerPagesCount,
   isAdmin = false,
   industry,
   updatedAt,
@@ -370,16 +368,6 @@ function KeyFactsCard({
           },
         ]
       : []),
-    {
-      label: "Hiring platforms",
-      value: (
-        <Text size="2" style={{ fontVariantNumeric: "tabular-nums" }}>
-          {typeof careerPagesCount === "number" && Number.isFinite(careerPagesCount)
-            ? careerPagesCount
-            : 0}
-        </Text>
-      ),
-    },
     ...(updatedAt
       ? [
           {
@@ -461,17 +449,6 @@ const CATEGORY_OPTIONS: CompanyCategory[] = [
   "OTHER",
   "UNKNOWN",
 ];
-
-const ATS_VENDOR_COLORS: Record<string, React.ComponentProps<typeof Badge>["color"]> = {
-  GREENHOUSE: "green",
-  LEVER: "blue",
-  WORKABLE: "amber",
-  TEAMTAILOR: "violet",
-  ASHBY: "orange",
-  WORKDAY: "cyan",
-  ICIMS: "indigo",
-  SMARTRECRUITERS: "teal",
-};
 
 function LinkedInLeadDialog({
   companyId,
@@ -1366,7 +1343,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                       <KeyFactsCard
                         linkedinUrl={company.linkedin_url}
                         score={company.score}
-                        careerPagesCount={company.ats_boards?.length ?? 0}
                         isAdmin={isAdmin}
                         industry={company.industry}
                         updatedAt={company.updated_at}

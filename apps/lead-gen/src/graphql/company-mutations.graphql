@@ -31,16 +31,6 @@ mutation AddCompanyFacts($company_id: Int!, $facts: [CompanyFactInput!]!) {
   }
 }
 
-# Upsert ATS boards for a company
-mutation UpsertCompanyATSBoards(
-  $company_id: Int!
-  $boards: [ATSBoardUpsertInput!]!
-) {
-  upsert_company_ats_boards(company_id: $company_id, boards: $boards) {
-    ...ATSBoardFields
-  }
-}
-
 # Ingest a company snapshot from crawl data
 mutation IngestCompanySnapshot(
   $company_id: Int!

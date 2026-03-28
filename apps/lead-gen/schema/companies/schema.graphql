@@ -17,7 +17,6 @@ extend type Query {
     limit: Int
     offset: Int
   ): [CompanySnapshot!]!
-  company_ats_boards(company_id: Int!): [ATSBoard!]!
   allCompanyTags: [String!]!
   findCompany(name: String, website: String): FindCompanyResult!
 }
@@ -30,10 +29,6 @@ extend type Mutation {
     company_id: Int!
     facts: [CompanyFactInput!]!
   ): [CompanyFact!]!
-  upsert_company_ats_boards(
-    company_id: Int!
-    boards: [ATSBoardUpsertInput!]!
-  ): [ATSBoard!]!
   ingest_company_snapshot(
     company_id: Int!
     source_url: String!
@@ -64,29 +59,6 @@ enum CompanyCategory {
   DIRECTORY
   PRODUCT
   OTHER
-  UNKNOWN
-}
-
-enum ATSVendor {
-  GREENHOUSE
-  LEVER
-  WORKABLE
-  TEAMTAILOR
-  ASHBY
-  SMARTRECRUITERS
-  JAZZHR
-  BREEZYHR
-  ICIMS
-  JOBVITE
-  SAP_SUCCESSFACTORS
-  ORACLE_TALEO
-  OTHER
-}
-
-enum ATSBoardType {
-  JOBS_PAGE
-  BOARD_API
-  BOARD_WIDGET
   UNKNOWN
 }
 
@@ -159,22 +131,6 @@ type AshbyEnrichment {
   enriched_at: String
 }
 
-# ATS Boards
-type ATSBoard {
-  id: Int!
-  company_id: Int!
-  url: String!
-  vendor: ATSVendor!
-  board_type: ATSBoardType!
-  confidence: Float!
-  is_active: Boolean!
-  first_seen_at: String!
-  last_seen_at: String!
-  evidence: Evidence!
-  created_at: String!
-  updated_at: String!
-}
-
 # Company (Golden Record)
 type Company {
   id: Int!
@@ -218,7 +174,6 @@ type Company {
   ashby_enrichment: AshbyEnrichment
 
   # Related data
-  ats_boards: [ATSBoard!]!
   facts(limit: Int, offset: Int, field: String): [CompanyFact!]!
   facts_count: Int!
   snapshots(limit: Int, offset: Int): [CompanySnapshot!]!
@@ -310,21 +265,10 @@ input CompanyFactInput {
   evidence: EvidenceInput!
 }
 
-input ATSBoardUpsertInput {
-  url: String!
-  vendor: ATSVendor!
-  board_type: ATSBoardType!
-  confidence: Float!
-  is_active: Boolean!
-  last_seen_at: String!
-  evidence: EvidenceInput!
-}
-
 input CompanyFilterInput {
   text: String
   category_in: [CompanyCategory!]
   min_score: Float
-  has_ats_boards: Boolean
   service_taxonomy_any: [String!]
   min_ai_tier: Int
 }

@@ -2,8 +2,6 @@
 CLI entry point for langgraph pipelines.
 
 Usage:
-    python -m cli discover --topics "remote AI startups EU" --dry-run
-    python -m cli classify --limit 200
     python -m cli process --limit 5
     python -m cli match --skills react,typescript
     python -m cli cleanup --dry-run
@@ -12,10 +10,6 @@ Usage:
     python -m cli crawl --provider ashby --pages 5
     python -m cli company-jobs --hours 24 --limit 50
     python -m cli report-job --job-id 123
-    python -m cli app-prep --app-id 18
-    python -m cli resume upload --user-id u1 --pdf /path/to/resume.pdf
-    python -m cli resume search --user-id u1 --query "python experience"
-    python -m cli resume chat --user-id u1 --message "what are my skills?"
 
     # Job search pipeline (local AI)
     python -m cli job-sync                                  # Sync Neon jobs → LanceDB
@@ -41,33 +35,6 @@ def main():
 
 # ---------------------------------------------------------------------------
 # Existing commands
-# ---------------------------------------------------------------------------
-
-@main.command()
-@click.option("--limit", "-l", default=200, show_default=True, help="Max jobs to classify")
-def classify(limit: int):
-    """Run the existing job classifier pipeline (AI company + remote)."""
-    from src.graph import build_graph
-
-    graph = build_graph()
-    print(f"Starting classifier pipeline (limit={limit})...\n")
-
-    result = graph.invoke({
-        "jobs": [],
-        "classifications": [],
-        "remote_ai_companies": [],
-    })
-
-    companies = result.get("remote_ai_companies", [])
-    print(f"\n--- Remote AI Companies ({len(companies)}) ---")
-    for c in companies:
-        print(f"  {c['name']}: {c['job_count']} jobs (ai={c['ai_confidence']}, remote={c['remote_confidence']})")
-        for title in c.get("sample_titles", []):
-            print(f"    - {title}")
-
-
-# ---------------------------------------------------------------------------
-# New commands — ported from Cloudflare Workers
 # ---------------------------------------------------------------------------
 
 @main.command()
@@ -161,131 +128,6 @@ def cleanup(dry_run: bool, cutoff_days: int):
     else:
         print(f"Marked {stats.get('marked_stale', 0)} jobs stale.")
 
-
-@main.command("app-prep")
-@click.option("--app-id", "-a", type=int, default=None, help="Application ID from the database")
-@click.option("--exclude", "-x", default="", help="Comma-separated tech tags to exclude (e.g. webpack,jest)")
-@click.option("--dry-run", is_flag=True, default=False, help="Extract and show technologies without persisting")
-@click.option("--save/--no-save", default=True, show_default=True, help="Save interview report to application")
-@click.option("--eval", "run_eval", is_flag=True, default=False, help="Run eval suite (mock JDs, no DB needed)")
-@click.option("--unit-only", is_flag=True, default=False, help="With --eval: run only deterministic unit tests")
-def app_prep(app_id: int | None, exclude: str, dry_run: bool, save: bool, run_eval: bool, unit_only: bool):
-    """Full application prep: interview questions + tech knowledge in one pass.
-
-    Run on a real application:
-        python -m cli app-prep --app-id 18
-
-    Run eval suite (mock JDs, no DB):
-        python -m cli app-prep --eval
-        python -m cli app-prep --eval --unit-only
-    """
-    if run_eval:
-        from src.graphs.application_prep.evals import run_unit_tests, main as run_all
-        if unit_only:
-            run_unit_tests()
-        else:
-            run_all()
-        return
-
-    if not app_id:
-        raise click.UsageError("--app-id is required (or use --eval to run evals)")
-
-    import json as _json
-
-    from src.db.connection import get_connection
-    from src.graphs.application_prep import build_application_prep_graph
-
-    conn = get_connection()
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT id, job_title, company_name, job_description, status, tech_dismissed_tags FROM applications WHERE id = %s",
-            [app_id],
-        )
-        app = cur.fetchone()
-
-    if not app:
-        print(f"Application {app_id} not found.")
-        conn.close()
-        return
-
-    if not app.get("job_description"):
-        print("Application has no job description — cannot run prep.")
-        conn.close()
-        return
-
-    # Resolve company_key from jobs table
-    company_name = app["company_name"] or ""
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT company_key FROM jobs WHERE lower(company_name) = lower(%s) LIMIT 1",
-            [company_name],
-        )
-        key_row = cur.fetchone()
-    company_key = (key_row["company_key"] if key_row else company_name.lower()) or ""
-    conn.close()  # Close early — pipeline runs for minutes, Neon kills idle connections
-
-    # Merge CLI --exclude with DB-dismissed tags
-    exclude_tags = [t.strip() for t in exclude.split(",") if t.strip()]
-    if app.get("tech_dismissed_tags"):
-        try:
-            db_dismissed = _json.loads(app["tech_dismissed_tags"])
-            if isinstance(db_dismissed, list):
-                exclude_tags = list(set(exclude_tags) | set(db_dismissed))
-        except (ValueError, TypeError):
-            pass
-
-    print(f"\nApplication #{app_id}: {app['job_title']} @ {company_name}")
-    print(f"Status: {app['status']} | company_key: {company_key}")
-    if exclude_tags:
-        print(f"Excluded tech: {', '.join(exclude_tags)}")
-    print(f"Dry run: {dry_run}\n")
-    print("Running application prep pipeline...\n")
-
-    graph = build_application_prep_graph()
-    result = graph.invoke({
-        "application_id": app_id,
-        "job_title": app["job_title"] or "",
-        "company_name": company_name,
-        "company_key": company_key,
-        "job_description": app["job_description"] or "",
-        "parsed": None,
-        "company_context": "",
-        "role_depth": None,
-        "company_research": None,
-        "technologies": [],
-        "organized": [],
-        "existing_slugs": [],
-        "question_sets": [],
-        "generated": [],
-        "qa_scores": [],
-        "refined_count": 0,
-        "report": "",
-        "knowledge_db_ok": False,
-        "dry_run": dry_run,
-        "exclude_tags": exclude_tags,
-        "stats": {},
-    })
-
-    report = result.get("report", "")
-
-    if save and report:
-        save_conn = get_connection()
-        with save_conn.cursor() as cur:
-            cur.execute(
-                "UPDATE applications SET ai_interview_questions = %s, updated_at = now() WHERE id = %s",
-                [report, app_id],
-            )
-        save_conn.commit()
-        save_conn.close()
-        print(f"\nSaved to applications.ai_interview_questions (app #{app_id})")
-
-    print("\n" + "=" * 70)
-    print(report)
-
-
-# ---------------------------------------------------------------------------
-# Worker-ported commands (from Cloudflare Workers → LangGraph)
-# ---------------------------------------------------------------------------
 
 @main.command()
 def janitor():
@@ -429,128 +271,6 @@ def report_job(job_id: int):
     print(f"  Passes: {stats.get('passes', 0)}")
     if final.get("reasoning"):
         print(f"  Reasoning: {final['reasoning']}")
-
-
-@main.group()
-def resume():
-    """Resume RAG commands: upload, search, chat.
-
-    Ported from workers/resume-rag (Python CF Worker).
-    """
-    pass
-
-
-@resume.command()
-@click.option("--user-id", "-u", required=True, help="User ID")
-@click.option("--pdf", "-f", default=None, help="Path to PDF file")
-@click.option("--text", "-t", default=None, help="Direct resume text")
-@click.option("--resume-id", "-r", default=None, help="Resume ID (auto-generated if omitted)")
-def upload(user_id: str, pdf: str | None, text: str | None, resume_id: str | None):
-    """Upload and embed a resume (PDF or text)."""
-    import base64
-    from src.graphs.resume_rag import build_resume_rag_graph
-
-    pdf_b64 = ""
-    filename = ""
-    resume_text = text or ""
-
-    if pdf:
-        with open(pdf, "rb") as f:
-            pdf_b64 = base64.b64encode(f.read()).decode()
-        filename = pdf.split("/")[-1]
-
-    if not pdf_b64 and not resume_text:
-        print("Provide --pdf or --text.")
-        return
-
-    graph = build_resume_rag_graph()
-    print(f"Uploading resume for user {user_id}...\n")
-
-    result = graph.invoke({
-        "action": "upload",
-        "user_id": user_id,
-        "resume_id": resume_id or "",
-        "resume_text": resume_text,
-        "pdf_base64": pdf_b64,
-        "filename": filename,
-        "query": "",
-        "limit": 5,
-        "chunks_stored": 0,
-        "search_results": [],
-        "chat_response": "",
-        "stats": {},
-    })
-
-    print(f"Chunks stored: {result.get('chunks_stored', 0)}")
-    print(f"Resume ID: {result.get('resume_id', '?')}")
-
-
-@resume.command()
-@click.option("--user-id", "-u", required=True, help="User ID")
-@click.option("--query", "-q", required=True, help="Search query")
-@click.option("--limit", "-l", default=5, show_default=True, help="Max results")
-@click.option("--resume-id", "-r", default="", help="Filter by resume ID")
-def search(user_id: str, query: str, limit: int, resume_id: str):
-    """Semantic search across resume chunks."""
-    from src.graphs.resume_rag import build_resume_rag_graph
-
-    graph = build_resume_rag_graph()
-    print(f"Searching resumes for: {query}\n")
-
-    result = graph.invoke({
-        "action": "search",
-        "user_id": user_id,
-        "resume_id": resume_id,
-        "resume_text": "",
-        "pdf_base64": "",
-        "filename": "",
-        "query": query,
-        "limit": limit,
-        "chunks_stored": 0,
-        "search_results": [],
-        "chat_response": "",
-        "stats": {},
-    })
-
-    results = result.get("search_results", [])
-    if not results:
-        print("No results found.")
-        return
-
-    for i, r in enumerate(results, 1):
-        score = r.get("score", 0)
-        text_preview = (r.get("text", ""))[:200]
-        print(f"\n  {i}. (score: {score:.3f})")
-        print(f"     {text_preview}...")
-
-
-@resume.command()
-@click.option("--user-id", "-u", required=True, help="User ID")
-@click.option("--message", "-m", required=True, help="Chat message")
-@click.option("--resume-id", "-r", default="", help="Resume ID for context")
-def chat(user_id: str, message: str, resume_id: str):
-    """RAG-powered chat about your resume."""
-    from src.graphs.resume_rag import build_resume_rag_graph
-
-    graph = build_resume_rag_graph()
-    print(f"Chatting about resume...\n")
-
-    result = graph.invoke({
-        "action": "chat",
-        "user_id": user_id,
-        "resume_id": resume_id,
-        "resume_text": "",
-        "pdf_base64": "",
-        "filename": "",
-        "query": message,
-        "limit": 5,
-        "chunks_stored": 0,
-        "search_results": [],
-        "chat_response": "",
-        "stats": {},
-    })
-
-    print(result.get("chat_response", "No response generated."))
 
 
 @main.command("email-outreach")

@@ -56,13 +56,6 @@ query GetCompanyFacts(
   }
 }
 
-# Get company ATS boards
-query GetCompanyATSBoards($company_id: Int!) {
-  company_ats_boards(company_id: $company_id) {
-    ...ATSBoardFields
-  }
-}
-
 # Audit trail for a company (with all evidence)
 query CompanyAudit($key: String!) {
   company(key: $key) {

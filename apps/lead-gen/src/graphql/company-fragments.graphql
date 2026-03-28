@@ -20,24 +20,6 @@ fragment EvidenceFields on Evidence {
   }
 }
 
-# ATS Board fragment
-fragment ATSBoardFields on ATSBoard {
-  id
-  company_id
-  url
-  vendor
-  board_type
-  confidence
-  is_active
-  first_seen_at
-  last_seen_at
-  evidence {
-    ...EvidenceFields
-  }
-  created_at
-  updated_at
-}
-
 # Company Fact fragment
 fragment CompanyFactFields on CompanyFact {
   id
@@ -113,8 +95,4 @@ fragment CompanyFields on Company {
     enriched_at
   }
 
-  # Related ATS boards
-  ats_boards {
-    ...ATSBoardFields
-  }
 }
