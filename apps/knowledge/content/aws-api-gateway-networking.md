@@ -2,7 +2,7 @@
 
 ## The 30-Second Pitch
 
-AWS API Gateway is a fully managed service that acts as the "front door" for backend services—Lambda, EC2, ECS, or any HTTP endpoint—handling request routing, authorization, throttling, and protocol translation at scale. It comes in three flavors: REST API (feature-rich, legacy), HTTP API (low-latency, cheap, the modern default), and WebSocket API (persistent bidirectional connections). Paired with AWS networking primitives—VPC, subnets, security groups, NACLs, NAT Gateways, and Transit Gateway—API Gateway is the backbone of serverless and microservice architectures. In interviews, the ability to articulate when to use REST vs HTTP API, how Lambda authorizers work, and how traffic flows through a VPC from a private subnet out to the internet through a NAT Gateway separates strong candidates from weak ones.
+AWS API Gateway is a fully managed service that acts as the "front door" for backend services—[Lambda](/aws-lambda-serverless), [EC2, ECS](/aws-compute-containers), or any HTTP endpoint—handling request routing, authorization, throttling, and protocol translation at scale. It comes in three flavors: REST API (feature-rich, legacy), HTTP API (low-latency, cheap, the modern default), and WebSocket API (persistent bidirectional connections). Paired with AWS networking primitives—VPC, subnets, security groups, NACLs, NAT Gateways, and Transit Gateway—API Gateway is the backbone of serverless and microservice architectures. In interviews, the ability to articulate when to use REST vs HTTP API, how Lambda authorizers work, and how traffic flows through a VPC from a private subnet out to the internet through a NAT Gateway separates strong candidates from weak ones.
 
 ## API Gateway Types
 
