@@ -7,39 +7,41 @@ import { useEffect, useState } from "react";
 const T = {
   ro: {
     title: "Buget estimativ",
-    subtitle: "5 zile în Napoli · călător solo · sezon mediu (apr–mai)",
-    note: "Estimări bazate pe prețuri medii 2025. Costurile reale variază.",
+    group: "2 adulți + 1 copil",
+    subtitle: "5 zile în Napoli · 2 adulți + 1 copil · sezon mediu (apr–mai)",
+    note: "Estimări 2025. Copiii sub 18 ani intră GRATUIT la toate muzeele de stat (MANN, Pompei, Herculaneum, Certosa). Copiii sub 10 ani călătoresc gratuit în rețeaua ANM.",
     categories: [
-      "Zboruri",
-      "Cazare",
-      "Activități",
+      "Zboruri (3 bilete)",
+      "Cazare (cameră familie, 5 nopți)",
+      "Activități (adulți; copil gratuit)",
       "Mâncare & Băutură",
-      "Transport",
-      "Excursie Capri",
+      "Transport local",
+      "Excursie Capri (3 pers.)",
     ],
   },
   en: {
     title: "Estimated Budget",
-    subtitle: "5 days in Naples · solo traveller · shoulder season (Apr–May)",
-    note: "Based on average 2025 prices. Actual costs vary.",
+    group: "2 adults + 1 child",
+    subtitle: "5 days in Naples · 2 adults + 1 child · shoulder season (Apr–May)",
+    note: "2025 estimates. Children under 18 enter FREE at all Italian state museums (MANN, Pompeii, Herculaneum, Certosa). Children under 10 travel free on the ANM network.",
     categories: [
-      "Flights",
-      "Accommodation",
-      "Activities",
+      "Flights (3 tickets)",
+      "Accommodation (family room, 5 nights)",
+      "Activities (adults; child free)",
       "Food & Drink",
-      "Transport",
-      "Capri Day Trip",
+      "Local transport",
+      "Capri day trip (3 people)",
     ],
   },
 };
 
 const BUDGET_ITEMS = [
-  { amount: 280, percent: 28, color: "#42A5F5" },
-  { amount: 350, percent: 35, color: "#C9922A" },
-  { amount: 90,  percent: 9,  color: "#7B68EE" },
-  { amount: 180, percent: 18, color: "#FF7043" },
-  { amount: 60,  percent: 6,  color: "#4CAF50" },
-  { amount: 80,  percent: 8,  color: "#AB8B6B" },
+  { amount: 300, percent: 30, color: "#42A5F5" },
+  { amount: 300, percent: 30, color: "#C9922A" },
+  { amount: 60,  percent: 6,  color: "#7B68EE" },
+  { amount: 200, percent: 20, color: "#FF7043" },
+  { amount: 50,  percent: 5,  color: "#4CAF50" },
+  { amount: 90,  percent: 9,  color: "#AB8B6B" },
 ];
 
 export function BudgetOverview() {
@@ -100,11 +102,30 @@ export function BudgetOverview() {
           €1,000
         </p>
 
+        <div className={css({ display: "flex", alignItems: "center", gap: "2", mt: "3" })}>
+          <span className={css({
+            fontSize: "label",
+            fontWeight: "700",
+            fontFamily: "display",
+            letterSpacing: "label",
+            textTransform: "uppercase",
+            color: "amber.warm",
+            bg: "rgba(201,146,42,0.1)",
+            border: "1px solid rgba(201,146,42,0.25)",
+            rounded: "pill",
+            px: "3",
+            py: "1",
+          })}>
+            {t.group}
+          </span>
+        </div>
+
         <p
           className={css({
             fontSize: "meta",
             color: "text.muted",
             lineHeight: "1.5",
+            mt: "2",
           })}
         >
           {t.subtitle}

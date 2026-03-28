@@ -8,55 +8,67 @@ const T = {
     sectionLabel: "Where to Sleep",
     sectionTitle: "Accommodation in Naples",
     sectionSubtitle:
-      "Budget allocation €350 — five nights mid-range. Three tiers mapped to your trip.",
+      "Budget allocation €300 — family room, 5 nights. Three tiers for 2 adults + 1 child.",
     recommended: "RECOMMENDED",
+    mlLabel: "Family ML",
     tiers: [
       {
         tier: "Budget",
-        price: "€30–55 / night",
-        total: "5 nights ≈ €200",
-        type: "Hostels and family-run B&Bs",
-        neighbourhoods: "Centro Storico, near Spaccanapoli",
+        price: "€40–60 / night",
+        total: "5 nights ≈ €250",
+        type: "Family-run B&Bs and apartment rentals",
+        neighbourhoods: "Centro Storico, Quartieri Spagnoli",
         expect:
-          "Shared bathrooms possible, basic rooms, but excellent central location",
-        goodFor: "Solo backpackers, maximum budget freed for experiences",
+          "Private family room (double + extra bed for child), basic amenities, central location",
+        goodFor: "Families on a tight budget — frees €50 for extra experiences",
+        mlScore: 72,
       },
       {
         tier: "Mid-Range",
-        price: "€65–100 / night",
-        total: "5 nights ≈ €350",
-        type: "Boutique hotels and guesthouses",
-        neighbourhoods: "Chiaia, Via Toledo, Vomero",
-        expect: "Private ensuite, A/C, breakfast sometimes included",
-        goodFor: "Couples, first-time visitors wanting comfort and location",
+        price: "€55–75 / night",
+        total: "5 nights ≈ €320",
+        type: "Boutique hotels with family rooms",
+        neighbourhoods: "Vomero, Lungomare, Via Toledo",
+        expect:
+          "Family room or connecting rooms, A/C, private bathroom, breakfast sometimes included",
+        goodFor:
+          "Families — comfortable family room, safe neighbourhood, good transport links",
+        mlScore: 91,
       },
       {
         tier: "Comfort",
-        price: "€120–200 / night",
-        total: "5 nights ≈ €750",
+        price: "€100–160 / night",
+        total: "5 nights ≈ €650",
         type: "Design hotels and heritage properties",
-        neighbourhoods: "Lungomare, Posillipo",
-        expect: "Full service, rooftop bars, concierge",
-        goodFor: "Special occasions, sharing cost with a partner",
+        neighbourhoods: "Lungomare, Chiaia, Posillipo",
+        expect:
+          "Junior suite or connecting rooms, room service, concierge, pool access",
+        goodFor:
+          "Families wanting full comfort — extra space for a child, premium seafront location",
+        mlScore: 85,
       },
     ],
     neighbourhoodsLabel: "Neighbourhood Guide",
     neighbourhoods: [
       {
         name: "Centro Storico",
-        desc: "UNESCO-listed street grid, dense with trattorias and street food. Loud, alive, central.",
+        desc: "UNESCO-listed street grid, dense with trattorias and street food. Exciting for children during the day — loud at night, light sleepers may struggle.",
+        mlScore: 68,
       },
       {
         name: "Chiaia",
-        desc: "Elegant seafront district. Quieter than the historic centre, better restaurants and nightlife.",
+        desc: "Elegant seafront district. Quieter than the historic centre. Good restaurants, lower foot traffic — manageable with a child.",
+        mlScore: 82,
       },
       {
         name: "Vomero",
-        desc: "Hilltop residential quarter. Calm streets, panoramic views, funicular access to the port.",
+        desc: "Hilltop residential quarter. Calm streets, panoramic views, funicular access. Best neighbourhood for families with young children — safe and quiet at night.",
+        mlScore: 89,
       },
       {
         name: "Lungomare",
-        desc: "Promenade along the bay. Ideal for morning walks and proximity to Castel dell'Ovo.",
+        desc: "Promenade along the bay. Open spaces, sea views, car-free on Sundays. Ideal for families — children love the waterfront and Castel dell'Ovo is five minutes away.",
+        mlScore: 94,
       },
     ],
     tierLabels: {
@@ -70,56 +82,68 @@ const T = {
     sectionLabel: "Unde Dormi",
     sectionTitle: "Cazare in Napoli",
     sectionSubtitle:
-      "Buget alocat €350 — cinci nopti la categoria medie. Trei niveluri pentru alegerea ta.",
+      "Buget alocat €300 — camera de familie, 5 nopti. Trei niveluri pentru 2 adulti + 1 copil.",
     recommended: "RECOMANDAT",
+    mlLabel: "ML Familie",
     tiers: [
       {
         tier: "Buget",
-        price: "€30–55 / noapte",
-        total: "5 nopti ≈ €200",
-        type: "Hosteluri si B&B-uri de familie",
-        neighbourhoods: "Centro Storico, langa Spaccanapoli",
+        price: "€40–60 / noapte",
+        total: "5 nopti ≈ €250",
+        type: "B&B-uri de familie si apartamente de inchiriat",
+        neighbourhoods: "Centro Storico, Quartieri Spagnoli",
         expect:
-          "Posibil bai comune, camere simple, dar locatie centrala excelenta",
+          "Camera de familie (pat dublu + pat suplimentar pentru copil), facilitati de baza, locatie centrala",
         goodFor:
-          "Calatori solo, buget maxim eliberat pentru experiente",
+          "Familii cu buget redus — elibereaza €50 pentru experiente suplimentare",
+        mlScore: 72,
       },
       {
         tier: "Mediu",
-        price: "€65–100 / noapte",
-        total: "5 nopti ≈ €350",
-        type: "Hoteluri boutique si pensiuni",
-        neighbourhoods: "Chiaia, Via Toledo, Vomero",
-        expect: "Baie proprie, A/C, mic dejun uneori inclus",
-        goodFor: "Cupluri, vizitatori la prima vizita care vor confort si locatie",
+        price: "€55–75 / noapte",
+        total: "5 nopti ≈ €320",
+        type: "Hoteluri boutique cu camere de familie",
+        neighbourhoods: "Vomero, Lungomare, Via Toledo",
+        expect:
+          "Camera de familie sau camere comunicante, A/C, baie proprie, mic dejun uneori inclus",
+        goodFor:
+          "Familii — camera confortabila, cartier sigur, legaturi bune cu transportul",
+        mlScore: 91,
       },
       {
         tier: "Confort",
-        price: "€120–200 / noapte",
-        total: "5 nopti ≈ €750",
+        price: "€100–160 / noapte",
+        total: "5 nopti ≈ €650",
         type: "Hoteluri de design si proprietati istorice",
-        neighbourhoods: "Lungomare, Posillipo",
-        expect: "Servicii complete, baruri pe acoperis, concierge",
-        goodFor: "Ocazii speciale, impartirea costului cu un partener",
+        neighbourhoods: "Lungomare, Chiaia, Posillipo",
+        expect:
+          "Junior suite sau camere comunicante, room service, concierge, acces la piscina",
+        goodFor:
+          "Familii care vor confort total — spatiu suplimentar pentru copil, locatie premium la malul marii",
+        mlScore: 85,
       },
     ],
     neighbourhoodsLabel: "Ghid de Cartiere",
     neighbourhoods: [
       {
         name: "Centro Storico",
-        desc: "Retea de strazi inclusa in patrimoniul UNESCO, plina de trattorii si mancare stradala. Zgomotos, viu, central.",
+        desc: "Retea de strazi inclusa in patrimoniul UNESCO, plina de trattorii si mancare stradala. Fascinant pentru copii ziua — zgomotos noaptea, copiii mici pot fi deranjati.",
+        mlScore: 68,
       },
       {
         name: "Chiaia",
-        desc: "Cartier elegant la malul marii. Mai linistit decat centrul istoric, restaurante si viata de noapte mai bune.",
+        desc: "Cartier elegant la malul marii. Mai linistit decat centrul istoric. Restaurante bune, trafic pietonal redus — gestionabil cu un copil.",
+        mlScore: 82,
       },
       {
         name: "Vomero",
-        desc: "Cartier rezidential pe deal. Strazi calme, vedere panoramica, acces prin funicular spre port.",
+        desc: "Cartier rezidential pe deal. Strazi calme, vedere panoramica, acces prin funicular. Cel mai bun cartier pentru familii cu copii mici — sigur si linistit noaptea.",
+        mlScore: 89,
       },
       {
         name: "Lungomare",
-        desc: "Promenada de-a lungul golfului. Ideal pentru plimbari de dimineata si aproape de Castel dell'Ovo.",
+        desc: "Promenada de-a lungul golfului. Spatii deschise, vedere la mare, fara masini duminica. Ideal pentru familii — copiii iubesc faleza si Castel dell'Ovo e la cinci minute.",
+        mlScore: 94,
       },
     ],
     tierLabels: {
@@ -252,18 +276,43 @@ export function SleepGuide() {
 
               {/* Tier header */}
               <div>
-                <p
+                <div
                   className={css({
-                    fontSize: "xs",
-                    fontFamily: "display",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: isRecommended ? "amber.warm" : "text.muted",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                     mb: "2",
                   })}
                 >
-                  {tier.tier}
-                </p>
+                  <p
+                    className={css({
+                      fontSize: "xs",
+                      fontFamily: "display",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: isRecommended ? "amber.warm" : "text.muted",
+                    })}
+                  >
+                    {tier.tier}
+                  </p>
+                  <span
+                    className={css({
+                      fontSize: "2xs",
+                      fontFamily: "display",
+                      fontWeight: "700",
+                      letterSpacing: "0.06em",
+                      color: isRecommended ? "amber.bright" : "text.faint",
+                      bg: "steel.raised",
+                      border: "1px solid",
+                      borderColor: isRecommended ? "amber.warm" : "steel.border",
+                      rounded: "pill",
+                      px: "2",
+                      py: "0.5",
+                    })}
+                  >
+                    {t.mlLabel} {tier.mlScore}
+                  </span>
+                </div>
                 <p
                   className={css({
                     fontSize: "h3",
@@ -372,17 +421,41 @@ export function SleepGuide() {
                 _hover: { borderColor: "steel.borderHover" },
               })}
             >
-              <p
+              <div
                 className={css({
-                  fontSize: "label",
-                  fontWeight: "600",
-                  fontFamily: "display",
-                  color: "text.primary",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   mb: "1",
                 })}
               >
-                {n.name}
-              </p>
+                <p
+                  className={css({
+                    fontSize: "label",
+                    fontWeight: "600",
+                    fontFamily: "display",
+                    color: "text.primary",
+                  })}
+                >
+                  {n.name}
+                </p>
+                <span
+                  className={css({
+                    fontSize: "2xs",
+                    fontFamily: "display",
+                    fontWeight: "700",
+                    color: "amber.warm",
+                    bg: "rgba(201,146,42,0.08)",
+                    border: "1px solid rgba(201,146,42,0.2)",
+                    rounded: "pill",
+                    px: "2",
+                    py: "0.5",
+                    whiteSpace: "nowrap",
+                  })}
+                >
+                  {t.mlLabel} {n.mlScore}
+                </span>
+              </div>
               <p
                 className={css({
                   fontSize: "meta",
