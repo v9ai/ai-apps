@@ -3,7 +3,7 @@ import { style, keyframes } from "@vanilla-extract/css";
 export const jobListCard = style({
   background: "var(--gray-2)",
   border: "1px solid var(--gray-6)",
-  borderRadius: 8,
+  borderRadius: 0,
   overflow: "hidden",
 });
 

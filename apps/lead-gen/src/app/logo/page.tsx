@@ -71,7 +71,7 @@ export default function LogoPage() {
                 py: "2.5",
                 bg: "rgba(255,255,255,0.05)",
                 border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
+                borderRadius: "none",
                 color: "white",
                 fontSize: "14px",
                 outline: "none",
@@ -102,7 +102,7 @@ export default function LogoPage() {
               className={css({
                 bg: "rgba(255,255,255,0.03)",
                 border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: "12px",
+                borderRadius: "none",
                 overflow: "hidden",
                 cursor: "pointer",
                 textAlign: "left",
@@ -153,7 +153,7 @@ export default function LogoPage() {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
               className={css({
-                px: "4", py: "2", borderRadius: "8px", fontSize: "13px", fontWeight: "600",
+                px: "4", py: "2", borderRadius: "none", fontSize: "13px", fontWeight: "600",
                 bg: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
                 color: "rgba(255,255,255,0.7)", cursor: "pointer",
                 _disabled: { opacity: "0.3", cursor: "default" },
@@ -167,7 +167,7 @@ export default function LogoPage() {
                 key={p}
                 onClick={() => setPage(p)}
                 className={css({
-                  w: "32px", h: "32px", borderRadius: "8px", fontSize: "13px", fontWeight: "600",
+                  w: "32px", h: "32px", borderRadius: "none", fontSize: "13px", fontWeight: "600",
                   bg: p === page ? "rgba(99,102,241,0.6)" : "rgba(255,255,255,0.04)",
                   border: p === page ? "1px solid rgba(99,102,241,0.8)" : "1px solid rgba(255,255,255,0.08)",
                   color: p === page ? "white" : "rgba(255,255,255,0.5)",
@@ -182,7 +182,7 @@ export default function LogoPage() {
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
               className={css({
-                px: "4", py: "2", borderRadius: "8px", fontSize: "13px", fontWeight: "600",
+                px: "4", py: "2", borderRadius: "none", fontSize: "13px", fontWeight: "600",
                 bg: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
                 color: "rgba(255,255,255,0.7)", cursor: "pointer",
                 _disabled: { opacity: "0.3", cursor: "default" },
@@ -207,7 +207,7 @@ export default function LogoPage() {
           <div
             onClick={(e) => e.stopPropagation()}
             className={css({
-              bg: "#111118", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px",
+              bg: "#111118", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "none",
               overflow: "hidden", maxW: "640px", w: "100%",
               boxShadow: "0 40px 80px rgba(0,0,0,0.8), 0 0 80px rgba(99,102,241,0.15)",
             })}
@@ -242,7 +242,7 @@ export default function LogoPage() {
               <button
                 onClick={() => setSelected(null)}
                 className={css({
-                  mt: "4", w: "100%", py: "2.5", borderRadius: "10px", fontSize: "14px", fontWeight: "600",
+                  mt: "4", w: "100%", py: "2.5", borderRadius: "none", fontSize: "14px", fontWeight: "600",
                   bg: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
                   color: "rgba(255,255,255,0.7)", cursor: "pointer",
                   _hover: { bg: "rgba(255,255,255,0.1)" },

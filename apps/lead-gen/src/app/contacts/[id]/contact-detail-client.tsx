@@ -218,7 +218,7 @@ function GenerateEmailDialog({
             )}
 
             {content && !isStreaming && (
-              <Box style={{ background: "var(--green-2)", borderRadius: "var(--radius-3)", padding: "var(--space-3)" }}>
+              <Box style={{ background: "var(--green-2)", borderRadius: 0, padding: "var(--space-3)" }}>
                 <Flex justify="between" align="center" mb="2">
                   <Badge color="green" size="1"><CheckIcon /> Generated</Badge>
                 </Flex>
@@ -729,7 +729,7 @@ function EmailDetailDialog({ email }: { email: ContactEmailRow }) {
               <Box
                 style={{
                   background: "var(--gray-2)",
-                  borderRadius: "var(--radius-3)",
+                  borderRadius: 0,
                   padding: "var(--space-4)",
                   whiteSpace: "pre-wrap",
                   lineHeight: "1.6",

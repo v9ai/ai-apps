@@ -52,7 +52,7 @@ export function CompanySelect({ value, onChange, placeholder = "Select company..
               {value && (
                 <Box
                   onClick={() => { onChange(null); setOpen(false); }}
-                  style={{ padding: "6px 8px", borderRadius: "4px", cursor: "pointer" }}
+                  style={{ padding: "6px 8px", borderRadius: 0, cursor: "pointer" }}
                   className="hover:bg-gray-100"
                 >
                   <Text size="2" color="gray">Clear selection</Text>
@@ -68,7 +68,7 @@ export function CompanySelect({ value, onChange, placeholder = "Select company..
                   onClick={() => { onChange(company.id, company.name); setOpen(false); setSearch(""); }}
                   style={{
                     padding: "6px 8px",
-                    borderRadius: "4px",
+                    borderRadius: 0,
                     cursor: "pointer",
                     backgroundColor: company.id === value ? "var(--accent-3)" : undefined,
                   }}

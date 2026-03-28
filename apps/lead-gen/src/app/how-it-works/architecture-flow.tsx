@@ -50,7 +50,7 @@ function AgentNode({ data }: { data: Record<string, unknown> }) {
     <div
       style={{
         padding: "10px 16px",
-        borderRadius: 12,
+        borderRadius: 0,
         background: `color-mix(in srgb, ${color} 14%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 45%, transparent)`,
         boxShadow: `0 0 12px color-mix(in srgb, ${color} 15%, transparent), 0 1px 3px rgba(0,0,0,0.3)`,
@@ -64,7 +64,7 @@ function AgentNode({ data }: { data: Record<string, unknown> }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
         <div
           style={{
-            width: 32, height: 32, borderRadius: 8,
+            width: 32, height: 32, borderRadius: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
             background: `color-mix(in srgb, ${color} 22%, transparent)`,
             color, flexShrink: 0,
@@ -96,7 +96,7 @@ function DataStoreNode({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        padding: "8px 14px", borderRadius: 8,
+        padding: "8px 14px", borderRadius: 0,
         background: `color-mix(in srgb, ${color} 10%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
         boxShadow: `0 0 8px color-mix(in srgb, ${color} 10%, transparent), 0 1px 2px rgba(0,0,0,0.25)`,
@@ -128,7 +128,7 @@ function LoopNode({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        padding: "5px 12px", borderRadius: 20,
+        padding: "5px 12px", borderRadius: 0,
         background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
         boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
@@ -153,7 +153,7 @@ function ParallelNode({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        padding: "5px 12px", borderRadius: 20,
+        padding: "5px 12px", borderRadius: 0,
         background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
         boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
@@ -199,7 +199,7 @@ function MiniFlow({ nodes, edges, height = 280 }: { nodes: Node[]; edges: Edge[]
       style={{
         width: "100%",
         height,
-        borderRadius: 12,
+        borderRadius: 0,
         overflow: "hidden",
         border: "1px solid var(--gray-a4)",
         background: "color-mix(in srgb, var(--color-background) 95%, var(--gray-3))",

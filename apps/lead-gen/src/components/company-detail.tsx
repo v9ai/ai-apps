@@ -1414,9 +1414,9 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                                 code: ({ children, className }) => {
                                   const isBlock = className?.includes('language-');
                                   return isBlock ? (
-                                    <code style={{ display: 'block', background: 'var(--gray-3)', borderRadius: 4, padding: '0.5em 0.75em', fontSize: '0.875em', fontFamily: 'monospace', overflowX: 'auto' }}>{children}</code>
+                                    <code style={{ display: 'block', background: 'var(--gray-3)', borderRadius: 0, padding: '0.5em 0.75em', fontSize: '0.875em', fontFamily: 'monospace', overflowX: 'auto' }}>{children}</code>
                                   ) : (
-                                    <code style={{ background: 'var(--gray-3)', borderRadius: 3, padding: '2px 5px', fontSize: '0.875em', fontFamily: 'monospace' }}>{children}</code>
+                                    <code style={{ background: 'var(--gray-3)', borderRadius: 0, padding: '2px 5px', fontSize: '0.875em', fontFamily: 'monospace' }}>{children}</code>
                                   );
                                 },
                                 blockquote: ({ children }) => (
@@ -1537,7 +1537,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   <SectionCard title="Score breakdown">
                     <Flex direction="column" gap="2">
                       {company.score_reasons.map((reason: string, idx: number) => (
-                        <Box key={`${idx}-${reason}`} style={{ padding: '6px 10px', borderRadius: 'var(--radius-2)', background: 'var(--gray-2)', marginBottom: 4 }}><Text size="2" color="gray">{reason}</Text></Box>
+                        <Box key={`${idx}-${reason}`} style={{ padding: '6px 10px', borderRadius: 0, background: 'var(--gray-2)', marginBottom: 4 }}><Text size="2" color="gray">{reason}</Text></Box>
                       ))}
                     </Flex>
                   </SectionCard>

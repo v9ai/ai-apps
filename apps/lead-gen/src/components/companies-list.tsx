@@ -468,7 +468,7 @@ export function CompaniesList() {
           mb="2"
           style={{
             background: "var(--accent-2)",
-            borderRadius: 6,
+            borderRadius: 0,
             border: "1px solid var(--accent-6)",
           }}
         >

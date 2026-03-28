@@ -113,7 +113,7 @@ export function CompanyPicker({
             gap="2"
             style={{
               border: "1px solid var(--gray-6)",
-              borderRadius: "var(--radius-2)",
+              borderRadius: 0,
               padding: "4px 8px",
               background: "var(--gray-2)",
             }}
@@ -160,7 +160,7 @@ export function CompanyPicker({
                 onClick={() => handleSelect(c.key, c.name)}
                 style={{
                   padding: "6px 10px",
-                  borderRadius: "var(--radius-2)",
+                  borderRadius: 0,
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) =>

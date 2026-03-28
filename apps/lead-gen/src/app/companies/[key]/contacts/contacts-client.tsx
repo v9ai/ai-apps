@@ -225,7 +225,7 @@ function GenerateEmailDialog({
             <Box
               style={{
                 background: "var(--green-2)",
-                borderRadius: "var(--radius-3)",
+                borderRadius: 0,
                 padding: "var(--space-3)",
               }}
             >
