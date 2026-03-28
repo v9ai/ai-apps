@@ -137,7 +137,15 @@ async fn main() -> Result<()> {
             use leadgen_metal::kernel::ml_eval;
             use leadgen_metal::kernel::scoring::LogisticScorer;
 
-            let scorer = LogisticScorer::default_pretrained();
+            // Try to load optimized scorer, fall back to pretrained
+            let models_dir = data_dir.join("models");
+            let scorer_path = models_dir.join("logistic_scorer.json");
+            let scorer = if scorer_path.exists() {
+                eprintln!("  Loading optimized scorer from {}", scorer_path.display());
+                LogisticScorer::from_json(&scorer_path)
+            } else {
+                LogisticScorer::default_pretrained()
+            };
 
             // Find next iteration number
             let iteration = std::fs::read_dir(&report_dir)
