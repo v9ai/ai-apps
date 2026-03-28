@@ -8,6 +8,13 @@
       "when": 1773836641790,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774706855233,
+      "tag": "0001_lively_wallop",
+      "breakpoints": true
     }
   ]
 }
