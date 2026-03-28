@@ -5,7 +5,7 @@ import { DAYS } from "./constants";
 export const metadata: Metadata = {
   title: `Naples Family Guide — ${DAYS}-Day Itinerary, €1,000 Budget for 3`,
   description:
-    `Complete Naples family travel guide for 2 adults + 1 child: ML-optimised ${DAYS}-day itinerary, €1,000 budget breakdown, kid-friendly places, and ferry connections to Capri. Candle all-MiniLM-L6-v2 family scoring.`,
+    `Complete Naples family travel guide for 2 adults + 1 child: ${DAYS}-day itinerary, €1,000 budget breakdown, kid-friendly places, and ferry connections to Capri.`,
   openGraph: {
     title: `Naples Family Guide — ${DAYS}-Day Itinerary & €1,000 Budget`,
     description:

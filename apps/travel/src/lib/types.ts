@@ -31,7 +31,7 @@ export interface Place {
   price_level?: "budget" | "moderate" | "premium";
   price_display?: string;
   kid_friendly?: boolean;
-  family_score?: number;       // 0–1, ML cosine similarity score
+  family_score?: number;       // 0–1
   family_tips?: string;
   family_tips_ro?: string;
   family_cost?: {

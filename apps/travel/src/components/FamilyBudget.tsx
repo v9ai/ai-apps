@@ -36,8 +36,8 @@ const T = {
     adultsOnly: "(doar adulți)",
     unsuitable: "\u25C9 Nerecomandat copiilor",
     mlNote:
-      "\u25C8 Scoruri ML calculate cu all-MiniLM-L6-v2 \u00b7 Candle 0.9 \u00b7 similaritate cosinus pe 5 ancore semantice",
-    chartTitle: "Scoruri ML prietenie copii",
+      "\u25C8 Scoruri calculate pe baza a 5 ancore semantice de prietenie pentru copii",
+    chartTitle: "Scoruri prietenie copii",
   },
   en: {
     title: "Family Trip Budget",
@@ -53,8 +53,8 @@ const T = {
     adultsOnly: "(adults only)",
     unsuitable: "\u25C9 Not suitable for children",
     mlNote:
-      "\u25C8 ML scores computed with all-MiniLM-L6-v2 \u00b7 Candle 0.9 \u00b7 cosine similarity across 5 semantic anchors",
-    chartTitle: "ML kid-friendliness scores",
+      "\u25C8 Scores computed across 5 semantic kid-friendliness anchors",
+    chartTitle: "Kid-friendliness scores",
   },
 };
 

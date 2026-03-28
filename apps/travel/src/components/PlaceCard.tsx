@@ -251,7 +251,7 @@ export function PlaceCard({
           {meta.icon}
         </span>
 
-        {/* ML family score bar — bottom edge of visual band */}
+        {/* Family score bar — bottom edge of visual band */}
         {place.family_score != null && (
           <div
             className={css({
@@ -464,7 +464,7 @@ export function PlaceCard({
         >
           <RatingDots rating={place.rating} />
 
-          {/* ML family score inline bar */}
+          {/* Family score inline bar */}
           {place.family_score !== undefined && (
             <span
               className={css({
@@ -483,7 +483,7 @@ export function PlaceCard({
                   textTransform: "uppercase",
                 })}
               >
-                ML
+                Family
               </span>
               <span
                 className={css({

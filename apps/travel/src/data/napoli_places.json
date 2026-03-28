@@ -464,7 +464,7 @@
     "hotel_search_url": "https://www.booking.com/searchresults.html?ss=Naples+Italy",
     "group_size": { "adults": 2, "kids": 1 },
     "family_total_cost": { "eur": 1000 },
-    "family_ml_note": "Kid-friendliness scores and budget allocation computed by Candle all-MiniLM-L6-v2 ML pipeline (travel-ml). Family score threshold: 0.65. Trip: 2 adults + 1 child, 7 nights Naples, €1,000 total.",
+    "family_note": "Kid-friendliness scores and budget allocation for family trip. Score threshold: 0.65. Trip: 2 adults + 1 child, 7 nights Naples, €1,000 total.",
     "budget_breakdown": {
       "hotel_eur": 560,
       "food_eur": 210,

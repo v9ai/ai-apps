@@ -43,7 +43,6 @@ const T = {
     sectionLabel: "Validare Preturi",
     sectionTitle: "Verificare Preturi Live",
     subtitle: `2 adulti + 1 copil · ${DATE_RANGE_LABEL.ro} · Toate sumele in EUR`,
-    mlBadge: ML_BADGE.ro,
     budgetedLabel: "Bugetat",
     actualLabel: "Real",
     statusLabels: {
@@ -303,48 +302,19 @@ export function PriceCheck() {
           {t.sectionLabel}
         </p>
 
-        <div
+        <h2
           className={css({
-            display: "flex",
-            alignItems: "center",
-            gap: "3",
-            flexWrap: "wrap",
+            fontSize: "h2",
+            fontWeight: "800",
+            fontFamily: "display",
+            lineHeight: "1",
+            letterSpacing: "-0.02em",
+            color: "text.primary",
             mb: "3",
           })}
         >
-          <h2
-            className={css({
-              fontSize: "h2",
-              fontWeight: "800",
-              fontFamily: "display",
-              lineHeight: "1",
-              letterSpacing: "-0.02em",
-              color: "text.primary",
-            })}
-          >
-            {t.sectionTitle}
-          </h2>
-
-          {/* ML Verified badge */}
-          <span
-            className={css({
-              fontSize: "xs",
-              fontWeight: "700",
-              fontFamily: "display",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "amber.warm",
-              bg: "rgba(201,146,42,0.1)",
-              border: "1px solid rgba(201,146,42,0.25)",
-              rounded: "pill",
-              px: "3",
-              py: "1",
-              flexShrink: "0",
-            })}
-          >
-            {t.mlBadge}
-          </span>
-        </div>
+          {t.sectionTitle}
+        </h2>
 
         <p
           className={css({
