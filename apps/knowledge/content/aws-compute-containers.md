@@ -462,6 +462,8 @@ This runs 1 guaranteed Fargate task + 4 Fargate Spot tasks for every 1 Fargate â
 
 ## 8. EKS
 
+> EKS is managed [Kubernetes](/kubernetes) on AWS. For core K8s concepts (pods, ReplicaSets, Services), see [Kubernetes](/kubernetes).
+
 ### Managed vs Self-Managed Node Groups
 
 | Feature | Managed Node Groups | Self-Managed Node Groups |

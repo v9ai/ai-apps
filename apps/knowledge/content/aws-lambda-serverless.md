@@ -639,7 +639,7 @@ Resources:
 
 ## Lambda@Edge vs CloudFront Functions
 
-Both run code at CloudFront edge locations but differ significantly.
+Both run code at [CloudFront](/aws-storage-s3) edge locations but differ significantly.
 
 | Dimension | Lambda@Edge | CloudFront Functions |
 |---|---|---|

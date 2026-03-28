@@ -53,7 +53,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Session policies: further restrict AssumeRole sessions
 - Conditions in policies: `aws:SourceIp`, `aws:RequestedRegion`, `aws:MultiFactorAuthPresent`, `aws:PrincipalTag`
 
-**Detection**
+**Detection** — see [IAM & Security](/aws-iam-security) for full coverage of GuardDuty, Security Hub, and CloudTrail
 - CloudTrail: API call history, mandatory for forensics; enable for all regions, send to S3 + CloudWatch Logs
 - GuardDuty: ML-based threat detection (unusual API calls, crypto mining, credential exfiltration, port scanning)
 - Security Hub: aggregates findings from GuardDuty, Inspector, Macie, Firewall Manager; normalizes to ASFF
