@@ -23,21 +23,18 @@ import {
   Brain,
   Search,
   FileText,
-  Layers,
-  Workflow,
-  Zap,
+  Users,
+  Mail,
+  Shield,
   Filter,
   GitFork,
-  Trash2,
-  Mail,
-  GraduationCap,
+  Zap,
   BarChart3,
   RefreshCw,
-  Shield,
-  BookOpen,
+  Webhook,
 } from "lucide-react";
 import { Badge, Flex, Heading, Text, Card, Code } from "@radix-ui/themes";
-import { LayersIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
+import { LayersIcon } from "@radix-ui/react-icons";
 
 // ── Custom Node Components ───────────────────────────────────────────────────
 
@@ -197,373 +194,281 @@ type NodeDetail = {
 };
 
 const nodeDetails: Record<string, NodeDetail> = {
-  // Board Crawler
-  "detect-index": {
-    description: "Query Common Crawl CDX API to find pages matching Ashby job board patterns. Determines which CDX shards contain relevant data for the current crawl window.",
-    tech: [{ name: "Common Crawl CDX" }, { name: "Rust / WASM" }],
-    dataIn: "CDX API index", dataOut: "Matching page URLs",
-    insight: "Ported from Rust ashby-crawler worker — web archive analysis discovers boards at scale", color: "red",
+  // Stage 1: Company Discovery
+  "ccrawl": {
+    description: "Query the Common Crawl CDX index to find company websites matching target industry patterns. Filters by domain structure and known B2B signals before fetching content.",
+    tech: [{ name: "Common Crawl CDX" }, { name: "scripts/" }],
+    dataIn: "CDX index queries", dataOut: "Company domain URLs",
+    insight: "Common Crawl lets you discover companies at scale without hitting rate limits — terabytes of pre-crawled web data, free", color: "red",
   },
-  "crawl-pages": {
-    description: "Fetch and parse discovered pages to extract job board URLs and metadata. Handles pagination, rate limiting, and HTML parsing for ATS-specific page structures.",
-    tech: [{ name: "HTTP client" }, { name: "HTML parser" }],
-    dataIn: "CDX page URLs", dataOut: "Parsed board URLs + metadata",
-    insight: "Rate-limited crawling prevents IP blocks while maintaining high throughput", color: "red",
+  "live-fetch": {
+    description: "Live website fetching and web search for company discovery. Supplements Common Crawl with real-time signals for recently founded companies not yet in the archive.",
+    tech: [{ name: "HTTP fetch" }, { name: "Web search" }],
+    dataIn: "Search queries / seed domains", dataOut: "Company metadata",
+    insight: "Combining archive (Common Crawl) and live (web search) sources maximizes coverage across company ages", color: "blue",
   },
-  deduplicate: {
-    description: "Remove duplicate boards already in the database. Uses URL normalization and fuzzy matching to catch near-duplicates from different CDX shards.",
-    tech: [{ name: "URL normalization" }, { name: "Neon PostgreSQL" }],
-    dataIn: "Crawled board URLs", dataOut: "Net-new boards only",
-    insight: "Deduplication keeps the boards table clean and prevents redundant ingestion work", color: "orange",
+  "bulk-csv": {
+    description: "Bulk CSV import via the /api/companies/bulk-import route. Accepts CSV exports from LinkedIn Sales Navigator, Apollo, or manual lists, normalizing fields to the companies schema.",
+    tech: [{ name: "/api/companies/bulk-import" }, { name: "Drizzle ORM" }],
+    dataIn: "CSV file with company rows", dataOut: "Normalized company records",
+    insight: "CSV import is the fastest path to seeding the DB from existing prospect lists — no crawling required", color: "violet",
   },
-  "persist-boards": {
-    description: "Write newly discovered boards to Neon PostgreSQL with metadata (ATS type, company, discovery timestamp). These become ingestion sources for downstream fetching.",
+  "dedup-companies": {
+    description: "Domain and slug-based deduplication before writing to Neon. Uses URL normalization (strip www, trailing slash) and exact domain matching to prevent duplicate company records.",
+    tech: [{ name: "URL normalization" }, { name: "Neon PostgreSQL upsert" }],
+    dataIn: "Raw company URLs", dataOut: "Net-new companies only",
+    insight: "Deduplication at the slug/domain level keeps the companies table clean across all three discovery sources", color: "orange",
+  },
+  "neon-companies": {
+    description: "Persist new companies to the Neon PostgreSQL companies table via Drizzle ORM. Each row gets a unique slug, domain, name, and discovery metadata for downstream enrichment.",
     tech: [{ name: "Neon PostgreSQL" }, { name: "Drizzle ORM" }],
-    dataIn: "Deduplicated boards", dataOut: "Persisted board records",
-    insight: "Each new board automatically becomes a source for the ingest_jobs graph", color: "green",
+    dataIn: "Deduplicated company records", dataOut: "Persisted company rows",
+    insight: "Companies table is the single source of truth — all enrichment, contacts, and outreach link back here by company ID", color: "green",
   },
-  // Ingest Jobs
-  "fetch-stale": {
-    description: "Query for ATS boards that haven't been fetched recently based on configurable staleness thresholds. Prioritizes boards with highest historical job yield.",
+  // Stage 2: Enrichment
+  "fetch-site": {
+    description: "Fetch live website content for each unenriched company. Extracts homepage HTML, meta tags, About pages, and pricing pages as raw signals for downstream LLM extraction.",
+    tech: [{ name: "HTTP fetch" }, { name: "/api/companies/enhance" }],
+    dataIn: "Company domain", dataOut: "Raw website content",
+    insight: "Live fetch captures the current state of the company — crucial for fast-moving AI startups whose positioning changes frequently", color: "blue",
+  },
+  "extract-signals": {
+    description: "LLM-assisted extraction of services, industry category, tech stack mentions, and business model signals from raw website content. Output is structured JSON for DB persistence.",
+    tech: [{ name: "DeepSeek LLM" }, { name: "Zod schema" }],
+    dataIn: "Website content", dataOut: "Structured company signals",
+    insight: "Grounding-first: LLM output is schema-constrained via Zod — prevents hallucinated fields from entering the DB", color: "amber",
+  },
+  "ai-classify": {
+    description: "DeepSeek classifies each company into an AI tier: not-AI, AI-first, or AI-native. Returns a confidence score and classification rationale for audit trails.",
+    tech: [{ name: "DeepSeek LLM" }, { name: "AI tier taxonomy" }],
+    dataIn: "Company signals + description", dataOut: "AI tier + confidence score",
+    insight: "Fixed 3-tier taxonomy prevents category drift — same labels across all enrichment runs enable reliable filtering", color: "purple",
+  },
+  "deep-analysis": {
+    description: "DeepSeek generates a structured deep analysis: technical maturity signals, product focus, competitive positioning, hiring patterns, and outreach talking points.",
+    tech: [{ name: "DeepSeek LLM" }, { name: "LangSmith tracing" }],
+    dataIn: "Company context + AI tier", dataOut: "Deep analysis text",
+    insight: "Deep analysis is pre-computed once and served fast — avoids per-contact LLM latency in the outreach flow", color: "purple",
+  },
+  "neon-enriched": {
+    description: "Write enriched fields back to the companies table: category, AI tier, confidence, services, tech stack, and deep analysis. Marks company as enriched to skip on next run.",
     tech: [{ name: "Neon PostgreSQL" }, { name: "Drizzle ORM" }],
-    dataIn: "Board staleness config", dataOut: "Stale source list",
-    insight: "Prioritizing high-yield boards first maximizes new-job discovery per API call", color: "orange",
+    dataIn: "Enrichment payload", dataOut: "Updated company row",
+    insight: "Idempotent upsert with enriched_at timestamp lets you re-enrich companies on demand without creating duplicates", color: "green",
   },
-  "route-stale": {
-    description: "Conditional router: if no stale sources are found, short-circuit to END. Otherwise proceed to batch ingestion. This early-exit pattern avoids unnecessary API calls.",
-    tech: [{ name: "LangGraph conditional_edges" }],
-    dataIn: "Stale sources count", dataOut: "Route: ingest_batch or __end__",
-    insight: "Early exit optimization — skip expensive API work when all sources are fresh", color: "crimson",
+  // Stage 3: ATS Detection
+  "crawl-careers": {
+    description: "Crawl company career and hiring pages to find embedded ATS widgets and job board links. Follows /careers, /jobs, and /about/jobs URL patterns.",
+    tech: [{ name: "HTTP fetch" }, { name: "HTML parser" }],
+    dataIn: "Company domain", dataOut: "Career page HTML",
+    insight: "Probing 3–5 known URL patterns per company finds ATS boards without needing a full site crawl", color: "red",
   },
-  "ingest-batch": {
-    description: "Pull job listings from ATS APIs (Greenhouse, Lever, Ashby) in batches. A unified fetcher layer normalizes 3 different API formats into one Drizzle schema.",
-    tech: [{ name: "Greenhouse API" }, { name: "Lever API" }, { name: "Ashby API" }],
-    dataIn: "Stale board URLs", dataOut: "Raw job records",
-    insight: "Unified ingestion normalizes 3 ATS API formats into a single schema", color: "orange",
+  "detect-vendor": {
+    description: "Parse HTML to identify ATS vendor: Greenhouse, Lever, Ashby, Workable, SmartRecruiters, or custom. Uses script src patterns, iframe origins, and embed tag attributes.",
+    tech: [{ name: "DOM parser" }, { name: "ATS pattern registry" }],
+    dataIn: "Career page HTML", dataOut: "ATS vendor + board URL",
+    insight: "Pattern-matching over DOM attributes is faster and cheaper than LLM for structured vendor detection", color: "amber",
   },
-  summarize: {
-    description: "Aggregate ingestion results: count new jobs, updated jobs, and errors per source. Write stats to the ingestion_runs table for monitoring dashboards.",
-    tech: [{ name: "Neon PostgreSQL" }],
-    dataIn: "Ingestion results", dataOut: "Stats + persisted jobs",
-    insight: "Per-source stats enable tracking ingestion health and catching API degradation early", color: "green",
+  "score-ats-confidence": {
+    description: "Assign a confidence score (0–1) to each detected board based on signal strength. Multiple corroborating signals (iframe + script + link) raise confidence; single signals are low-confidence.",
+    tech: [{ name: "Signal scoring" }, { name: "Provenance metadata" }],
+    dataIn: "ATS signals", dataOut: "Confidence score + provenance",
+    insight: "Confidence scoring lets downstream agents filter out weak detections before expensive contact discovery", color: "indigo",
   },
-  // Process Jobs
-  enhance: {
-    description: "Fetch full job details — descriptions, requirements, benefits, locations — from ATS APIs for each discovered job. Runs with concurrency limits and retry logic.",
-    tech: [{ name: "ATS API clients" }, { name: "GraphQL mutations" }],
-    dataIn: "Job IDs", dataOut: "Enriched job records",
-    insight: "Batch processing with exponential backoff retry handles API rate limits gracefully", color: "orange",
-  },
-  "role-tag": {
-    description: "Classify job into role categories (engineering, product, design, etc.) and seniority levels. Uses structured LLM output validated against a fixed taxonomy.",
-    tech: [{ name: "DeepSeek AI" }, { name: "Role taxonomy" }],
-    dataIn: "Job description", dataOut: "Role category + seniority",
-    insight: "Fixed taxonomy prevents category drift across classification runs", color: "amber",
-  },
-  "skill-extract": {
-    description: "Extract technical skills from job descriptions using LLM pipeline. All skills validated against curated taxonomy to prevent semantic drift.",
-    tech: [{ name: "LLM pipeline" }, { name: "Skill taxonomy" }, { name: "Neon PostgreSQL" }],
-    dataIn: "Job description", dataOut: "Validated skill tags",
-    insight: "Grounding-first: skills validated against curated taxonomy prevents drift over time", color: "amber",
-  },
-  // Job Matcher
-  "fetch-candidates": {
-    description: "Query Neon PostgreSQL for EU-remote jobs matching basic criteria (recency, not stale, has skills). Returns candidate pool for scoring.",
+  "neon-ats": {
+    description: "Persist ATS board records to the ats_boards table: vendor, URL, board type, confidence score, and discovery provenance. One company can have multiple boards.",
     tech: [{ name: "Neon PostgreSQL" }, { name: "Drizzle ORM" }],
-    dataIn: "User skills + filters", dataOut: "Candidate job pool",
-    insight: "Database-level filtering reduces the candidate set before expensive LLM scoring", color: "green",
+    dataIn: "Board records", dataOut: "Persisted ats_boards rows",
+    insight: "ATS board detection unlocks passive job monitoring — boards are polled later to detect new open roles at target companies", color: "green",
   },
-  "score-llm": {
-    description: "Use DeepSeek to score job title relevance against user's skill profile. LLM provides nuanced understanding of role-skill fit beyond keyword matching.",
-    tech: [{ name: "DeepSeek AI" }, { name: "Batch scoring" }],
-    dataIn: "Candidate jobs + user skills", dataOut: "Per-job role relevance scores",
-    insight: "LLM scoring catches semantic matches (e.g., 'ML Engineer' matches 'PyTorch' skills)", color: "amber",
+  // Stage 4: Contact Pipeline
+  "linkedin-source": {
+    description: "LinkedIn profile data as the primary input for contact records. Profile URL, current position, and company association are extracted and linked to the company row.",
+    tech: [{ name: "LinkedIn data" }, { name: "GraphQL mutation" }],
+    dataIn: "LinkedIn profile URL", dataOut: "Contact record draft",
+    insight: "LinkedIn URL is the canonical identifier for contacts — used as the dedup key across all contact operations", color: "blue",
   },
-  "compute-composite": {
-    description: "Combine LLM role scores with skill overlap ratio and recency decay into a single composite score. Weighted formula tunable per user preference.",
-    tech: [{ name: "Composite scoring" }, { name: "Decay function" }],
-    dataIn: "Role scores + skill overlap + dates", dataOut: "Composite scores",
-    insight: "Multi-signal composite score outperforms any single ranking factor alone", color: "indigo",
+  "email-discover": {
+    description: "Email pattern discovery using company domain + name patterns (first.last@, f.last@, first@). Generates candidate emails ranked by pattern prevalence at the target company.",
+    tech: [{ name: "Email pattern engine" }, { name: "Domain SMTP probe" }],
+    dataIn: "Contact name + company domain", dataOut: "Candidate email list",
+    insight: "Pattern-based discovery generates 2–5 candidates per contact; NeverBounce then filters to the verified address", color: "amber",
   },
-  "rank-return": {
-    description: "Sort candidates by composite score, apply limit, and return ranked results with score breakdowns for transparency.",
-    tech: [{ name: "Sort + limit" }],
-    dataIn: "Scored candidates", dataOut: "Ranked job matches",
-    insight: "Score breakdowns let users understand why each job was recommended", color: "indigo",
+  "neverbounce": {
+    description: "NeverBounce API verifies email deliverability for each candidate address. Marks emails as valid, invalid, catch-all, or unknown. Invalid emails are stored but flagged, not discarded.",
+    tech: [{ name: "NeverBounce API" }, { name: "contact_emails table" }],
+    dataIn: "Candidate email list", dataOut: "Verified emails with status",
+    insight: "Storing invalid emails prevents re-verifying the same address and tracks bounce history for deliverability health monitoring", color: "green",
   },
-  // Email Outreach
-  "research-contact": {
-    description: "Research the recipient's professional background, current role, and interests from LinkedIn profile data and company context.",
-    tech: [{ name: "LinkedIn data" }, { name: "DeepSeek AI" }],
-    dataIn: "Recipient profile", dataOut: "Contact context analysis",
-    insight: "Parallel research cuts total latency by ~60% vs sequential execution", color: "purple",
+  "neon-contacts": {
+    description: "Persist verified contacts to the contacts table and associated emails to contact_emails. Links contacts to their company via foreign key for joined queries in the GraphQL API.",
+    tech: [{ name: "Neon PostgreSQL" }, { name: "Drizzle ORM" }],
+    dataIn: "Contact + verified emails", dataOut: "Persisted contact rows",
+    insight: "Splitting contacts and contact_emails into separate tables supports multiple emails per contact and bounce tracking per address", color: "green",
   },
-  "research-company": {
-    description: "Research the recipient's company: product focus, engineering culture, tech investment signals, and hiring patterns.",
-    tech: [{ name: "Company data" }, { name: "DeepSeek AI" }],
-    dataIn: "Company identifier", dataOut: "Company research context",
-    insight: "Company context grounds the email in specific, relevant details", color: "purple",
+  // Stage 5: Outreach Pipeline
+  "compose-linkedin": {
+    description: "ComposeFromLinkedIn generates personalized email drafts: parallel research on contact + company context feeds DeepSeek to draft, then a second pass refines tone and removes AI artifacts.",
+    tech: [{ name: "DeepSeek LLM" }, { name: "ComposeFromLinkedIn component" }],
+    dataIn: "Contact LinkedIn URL + company context", dataOut: "Subject + text + HTML email draft",
+    insight: "Two-pass generation (draft + refine) catches AI-sounding phrases that a single pass would miss — crucial for deliverability", color: "purple",
   },
-  "analyze-post": {
-    description: "Analyze the LinkedIn post or content being replied to. Extract topics, intent, engagement hooks, and key quotes for the email draft.",
-    tech: [{ name: "DeepSeek AI" }, { name: "PostAnalysis schema" }],
-    dataIn: "Post URL + text", dataOut: "Post analysis (topics, hooks, quotes)",
-    insight: "Post analysis creates natural conversation starters that feel genuine, not templated", color: "purple",
+  "batch-campaign": {
+    description: "Batch email campaign creation with configurable sequences, delays, and follow-up intervals. Groups contacts by company or segment for coordinated outreach.",
+    tech: [{ name: "email_campaigns table" }, { name: "GraphQL mutation" }],
+    dataIn: "Contact IDs + campaign config", dataOut: "Campaign records",
+    insight: "Configurable sequences let you time follow-ups based on no-reply windows without hardcoding delays", color: "amber",
   },
-  "draft-email": {
-    description: "Generate initial email draft using all three research contexts (contact + company + post). Structured output ensures subject, text, and HTML variants.",
-    tech: [{ name: "DeepSeek AI" }, { name: "EmailDraft schema" }],
-    dataIn: "3 research contexts joined", dataOut: "Draft email (subject + body)",
-    insight: "Three-context grounding produces highly personalized emails at scale", color: "amber",
+  "resend-deliver": {
+    description: "Resend API delivers emails with reply-to tracking. Each send is recorded in Neon with message ID for webhook correlation. Batch sends respect Resend rate limits.",
+    tech: [{ name: "Resend API" }, { name: "email_campaigns table" }],
+    dataIn: "Campaign email records", dataOut: "Delivered message IDs",
+    insight: "Storing the Resend message ID per send enables exact correlation between delivery events and webhook callbacks", color: "amber",
   },
-  "refine-email": {
-    description: "Second-pass refinement: check tone, length, remove AI-sounding phrases, ensure call-to-action is clear. Outputs final polished email.",
-    tech: [{ name: "DeepSeek AI" }, { name: "Tone calibration" }],
-    dataIn: "Draft email", dataOut: "Refined final email",
-    insight: "Two-pass generation catches AI artifacts that a single pass would miss", color: "amber",
+  "webhook-inbound": {
+    description: "Resend webhooks capture inbound replies and delivery events. Each event is parsed and stored in the received_emails table, updating contact status and pausing follow-up sequences on reply.",
+    tech: [{ name: "Resend webhooks" }, { name: "received_emails table" }],
+    dataIn: "Resend webhook payload", dataOut: "Received email records",
+    insight: "Webhook-driven reply detection pauses follow-up sequences immediately — prevents sending follow-ups after a positive reply", color: "blue",
   },
-  // Application Prep
-  "validate-urls": {
-    description: "Validate that company career page and job listing URLs are accessible before starting expensive research. Fail fast on broken links.",
-    tech: [{ name: "HTTP HEAD checks" }],
-    dataIn: "Application URLs", dataOut: "Validated URLs",
-    insight: "Fail-fast validation prevents wasted LLM calls on dead listings", color: "gray",
-  },
-  "parse-jd": {
-    description: "Parse job description to extract structured data: tech stack, requirements, role type, and seniority level.",
-    tech: [{ name: "DeepSeek AI" }, { name: "ParsedJD schema" }],
-    dataIn: "Job description text", dataOut: "Structured JD (tech, requirements, seniority)",
-    insight: "Structured JD extraction feeds all downstream generation with consistent data", color: "amber",
-  },
-  "analyze-depth": {
-    description: "Deep analysis of role signals: team structure hints, technical maturity, growth stage, hidden requirements, key challenges, and interview focus areas.",
-    tech: [{ name: "DeepSeek AI" }, { name: "RoleDepth schema" }],
-    dataIn: "Job description", dataOut: "Role depth analysis",
-    insight: "Surfaces hidden signals (team size, maturity) that candidates typically miss", color: "amber",
-  },
-  "research-co": {
-    description: "Research company background: overview, product focus, engineering culture, tech investment signals, competitive landscape, and talking points.",
-    tech: [{ name: "DeepSeek AI" }, { name: "CompanyResearch schema" }],
-    dataIn: "Company identifier", dataOut: "Company research report",
-    insight: "Company research generates interview talking points grounded in real data", color: "purple",
-  },
-  "extract-tech": {
-    description: "Extract technologies mentioned in the JD with relevance scoring. Each tech gets a tag, label, category, and relevance score.",
-    tech: [{ name: "DeepSeek AI" }, { name: "ExtractedTech schema" }],
-    dataIn: "Job description", dataOut: "Extracted technologies with scores",
-    insight: "Relevance scoring prioritizes which technologies to study first", color: "amber",
-  },
-  "organize-hier": {
-    description: "Organize extracted technologies into a learning hierarchy. Groups related techs and determines study order based on dependencies.",
-    tech: [{ name: "Taxonomy engine" }],
-    dataIn: "Extracted technologies", dataOut: "Organized tech hierarchy",
-    insight: "Hierarchy ensures prerequisites are covered before advanced topics", color: "orange",
-  },
-  "fan-work": {
-    description: "Three-way fan-out: generate interview questions, generate study content, and compile the final report — all in parallel using Annotated[List, operator.add].",
-    tech: [{ name: "LangGraph fan-out" }, { name: "operator.add accumulation" }],
-    dataIn: "All research results", dataOut: "3 parallel work streams",
-    insight: "Fan-out with accumulating state is LangGraph's killer pattern for parallel work", color: "purple",
-  },
-  "gen-questions": {
-    description: "Generate interview questions across 4 categories (technical, behavioral, system_design, company_culture) with model answers and evaluation criteria.",
-    tech: [{ name: "DeepSeek AI" }, { name: "4-category fan-out" }],
-    dataIn: "Parsed JD + role depth", dataOut: "Question sets (4 categories)",
-    insight: "4-way sub-fan-out generates all question categories in parallel", color: "amber",
-  },
-  "gen-content": {
-    description: "Generate study content for each technology in the hierarchy. Produces structured learning materials with examples and key concepts.",
-    tech: [{ name: "DeepSeek AI" }, { name: "Per-tech fan-out" }],
-    dataIn: "Tech hierarchy", dataOut: "Generated study content",
-    insight: "N-way fan-out scales content generation linearly with tech count", color: "amber",
-  },
-  "compile-report": {
-    description: "Compile all generated content into a comprehensive preparation report: questions, study materials, company talking points, and interview strategy.",
-    tech: [{ name: "Markdown generation" }],
-    dataIn: "Questions + content + research", dataOut: "Full prep report",
-    insight: "Single compilation point ensures consistency across all generated sections", color: "blue",
-  },
-  "persist-knowledge": {
-    description: "Persist generated study content to the knowledge database (LanceDB) for future retrieval. Enables building a personal tech knowledge base over time.",
-    tech: [{ name: "LanceDB" }, { name: "Neon PostgreSQL" }],
-    dataIn: "Generated content", dataOut: "Persisted knowledge entries",
-    insight: "Knowledge accumulates across applications — each prep session makes the next one better", color: "green",
+  "followup-schedule": {
+    description: "Automatic follow-up scheduling based on campaign configuration and reply status. Computes next send time, skips contacts who replied or are marked do-not-contact.",
+    tech: [{ name: "Campaign config" }, { name: "Drizzle ORM" }],
+    dataIn: "Send history + reply status", dataOut: "Scheduled follow-up sends",
+    insight: "Reply-aware scheduling prevents the classic outreach mistake of following up on a thread that already converted", color: "indigo",
   },
 };
 
-// ── All nodes for detail lookup ──────────────────────────────────────────────
-// (built lazily from stages below)
+// ── Stage 1: Company Discovery ───────────────────────────────────────────────
 
-// ── Stage 1: Board Crawler ───────────────────────────────────────────────────
-
-const crawlerNodes: Node[] = [
-  { id: "detect-index", type: "agent", position: { x: 0, y: 40 }, data: { label: "detect_index", sublabel: "Common Crawl CDX API", icon: Globe, color: "var(--red-9)" } },
-  { id: "crawl-pages", type: "agent", position: { x: 270, y: 40 }, data: { label: "crawl_pages", sublabel: "Parse ATS board HTML", icon: Search, color: "var(--red-9)" } },
-  { id: "deduplicate", type: "agent", position: { x: 530, y: 40 }, data: { label: "deduplicate", sublabel: "URL normalization", icon: Filter, color: "var(--orange-9)" } },
-  { id: "persist-boards", type: "dataStore", position: { x: 770, y: 45 }, data: { label: "persist", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
+const discoveryNodes: Node[] = [
+  { id: "ccrawl", type: "agent", position: { x: 0, y: 0 }, data: { label: "common_crawl", sublabel: "CDX index query", icon: Globe, color: "var(--red-9)" } },
+  { id: "live-fetch", type: "agent", position: { x: 0, y: 90 }, data: { label: "live_fetch", sublabel: "Web search + HTTP", icon: Search, color: "var(--blue-9)" } },
+  { id: "bulk-csv", type: "agent", position: { x: 0, y: 180 }, data: { label: "bulk_csv_import", sublabel: "/api/companies/bulk-import", icon: FileText, color: "var(--violet-9)" } },
+  { id: "dedup-companies", type: "condition", position: { x: 320, y: 85 }, data: { label: "dedup (domain/slug)", color: "var(--orange-9)" } },
+  { id: "neon-companies", type: "dataStore", position: { x: 560, y: 90 }, data: { label: "companies", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
 ];
 
-const crawlerEdges: Edge[] = [
-  { id: "e-detect-crawl", source: "detect-index", target: "crawl-pages", ...edgeDefaults, label: "page URLs", style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
-  { id: "e-crawl-dedup", source: "crawl-pages", target: "deduplicate", ...edgeDefaults, label: "raw boards", style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
-  { id: "e-dedup-persist", source: "deduplicate", target: "persist-boards", ...edgeDefaults, label: "net-new", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
+const discoveryEdges: Edge[] = [
+  { id: "e-cc-dedup", source: "ccrawl", target: "dedup-companies", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
+  { id: "e-lf-dedup", source: "live-fetch", target: "dedup-companies", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
+  { id: "e-csv-dedup", source: "bulk-csv", target: "dedup-companies", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--violet-8)" } },
+  { id: "e-dedup-neon", source: "dedup-companies", target: "neon-companies", ...edgeDefaults, label: "net-new", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
 ];
 
-// ── Stage 2: Ingest Jobs ─────────────────────────────────────────────────────
+// ── Stage 2: Enrichment ──────────────────────────────────────────────────────
 
-const ingestNodes: Node[] = [
-  { id: "fetch-stale", type: "agent", position: { x: 0, y: 40 }, data: { label: "fetch_stale_sources", sublabel: "Prioritize high-yield boards", icon: Database, color: "var(--orange-9)" } },
-  { id: "route-stale", type: "condition", position: { x: 300, y: 50 }, data: { label: "sources found?", color: "var(--crimson-9)" } },
-  { id: "ingest-batch", type: "agent", position: { x: 500, y: 40 }, data: { label: "ingest_batch", sublabel: "Greenhouse / Lever / Ashby", icon: Layers, color: "var(--orange-9)" } },
-  { id: "summarize", type: "dataStore", position: { x: 750, y: 45 }, data: { label: "summarize", sublabel: "Stats → Neon", icon: Database, color: "var(--green-9)" } },
+const enrichmentNodes: Node[] = [
+  { id: "fetch-site", type: "agent", position: { x: 0, y: 40 }, data: { label: "fetch_website", sublabel: "Live HTML extraction", icon: Globe, color: "var(--blue-9)" } },
+  { id: "extract-signals", type: "agent", position: { x: 270, y: 40 }, data: { label: "extract_signals", sublabel: "Services / tech / industry", icon: Zap, color: "var(--amber-9)" } },
+  { id: "ai-classify", type: "agent", position: { x: 530, y: 0 }, data: { label: "ai_tier_classify", sublabel: "DeepSeek — not-AI / AI-first / AI-native", icon: Brain, color: "var(--purple-9)" } },
+  { id: "deep-analysis", type: "agent", position: { x: 530, y: 90 }, data: { label: "deep_analysis", sublabel: "DeepSeek structured report", icon: Brain, color: "var(--purple-9)" } },
+  { id: "neon-enriched", type: "dataStore", position: { x: 810, y: 45 }, data: { label: "companies (enriched)", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
 ];
 
-const ingestEdges: Edge[] = [
-  { id: "e-fetch-route", source: "fetch-stale", target: "route-stale", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
-  { id: "e-route-ingest", source: "route-stale", target: "ingest-batch", ...edgeDefaults, animated: true, label: "yes", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
-  { id: "e-ingest-sum", source: "ingest-batch", target: "summarize", ...edgeDefaults, label: "raw jobs", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
+const enrichmentEdges: Edge[] = [
+  { id: "e-fs-ex", source: "fetch-site", target: "extract-signals", ...edgeDefaults, label: "raw HTML", style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
+  { id: "e-ex-cls", source: "extract-signals", target: "ai-classify", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "e-ex-da", source: "extract-signals", target: "deep-analysis", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "e-cls-neon", source: "ai-classify", target: "neon-enriched", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
+  { id: "e-da-neon", source: "deep-analysis", target: "neon-enriched", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
 ];
 
-// ── Stage 3: Process Jobs (3-phase pipeline) ─────────────────────────────────
+// ── Stage 3: ATS Detection ───────────────────────────────────────────────────
 
-const processNodes: Node[] = [
-  { id: "enhance", type: "agent", position: { x: 0, y: 40 }, data: { label: "enhance", sublabel: "Full details from ATS", icon: Zap, color: "var(--orange-9)" } },
-  { id: "role-tag", type: "agent", position: { x: 300, y: 40 }, data: { label: "role_tag", sublabel: "Category + seniority", icon: Layers, color: "var(--amber-9)" } },
-  { id: "skill-extract", type: "agent", position: { x: 590, y: 40 }, data: { label: "skill_extract", sublabel: "LLM + taxonomy", icon: FileText, color: "var(--amber-9)" } },
+const atsNodes: Node[] = [
+  { id: "crawl-careers", type: "agent", position: { x: 0, y: 40 }, data: { label: "crawl_career_pages", sublabel: "/careers, /jobs patterns", icon: Search, color: "var(--red-9)" } },
+  { id: "detect-vendor", type: "agent", position: { x: 300, y: 40 }, data: { label: "detect_ats_vendor", sublabel: "Greenhouse / Lever / Ashby…", icon: FileText, color: "var(--amber-9)" } },
+  { id: "score-ats-confidence", type: "agent", position: { x: 580, y: 40 }, data: { label: "score_confidence", sublabel: "Signal strength 0–1", icon: BarChart3, color: "var(--indigo-9)" } },
+  { id: "neon-ats", type: "dataStore", position: { x: 840, y: 45 }, data: { label: "ats_boards", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
 ];
 
-const processEdges: Edge[] = [
-  { id: "e-enh-role", source: "enhance", target: "role-tag", ...edgeDefaults, label: "enriched job", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
-  { id: "e-role-skill", source: "role-tag", target: "skill-extract", ...edgeDefaults, label: "tagged job", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+const atsEdges: Edge[] = [
+  { id: "e-cc-dv", source: "crawl-careers", target: "detect-vendor", ...edgeDefaults, label: "career HTML", style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
+  { id: "e-dv-sc", source: "detect-vendor", target: "score-ats-confidence", ...edgeDefaults, label: "vendor + URL", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "e-sc-neon", source: "score-ats-confidence", target: "neon-ats", ...edgeDefaults, label: "board record", style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" } },
 ];
 
-// ── Stage 5: Job Matcher ─────────────────────────────────────────────────────
+// ── Stage 4: Contact Pipeline ────────────────────────────────────────────────
 
-const matcherNodes: Node[] = [
-  { id: "fetch-candidates", type: "agent", position: { x: 0, y: 40 }, data: { label: "fetch_candidates", sublabel: "EU-remote + skill filter", icon: Database, color: "var(--green-9)" } },
-  { id: "score-llm", type: "agent", position: { x: 280, y: 40 }, data: { label: "score_titles_llm", sublabel: "DeepSeek role scoring", icon: Brain, color: "var(--amber-9)" } },
-  { id: "compute-composite", type: "agent", position: { x: 540, y: 40 }, data: { label: "compute_composite", sublabel: "Multi-signal ranking", icon: BarChart3, color: "var(--indigo-9)" } },
-  { id: "rank-return", type: "dataStore", position: { x: 790, y: 45 }, data: { label: "rank_and_return", sublabel: "Sorted results", icon: Search, color: "var(--indigo-9)" } },
+const contactNodes: Node[] = [
+  { id: "linkedin-source", type: "agent", position: { x: 0, y: 0 }, data: { label: "linkedin_profile", sublabel: "Profile URL + position", icon: Users, color: "var(--blue-9)" } },
+  { id: "email-discover", type: "agent", position: { x: 0, y: 100 }, data: { label: "email_discovery", sublabel: "Domain pattern generation", icon: Mail, color: "var(--amber-9)" } },
+  { id: "neverbounce", type: "agent", position: { x: 310, y: 50 }, data: { label: "neverbounce_verify", sublabel: "Deliverability check", icon: Shield, color: "var(--green-9)" } },
+  { id: "neon-contacts", type: "dataStore", position: { x: 570, y: 55 }, data: { label: "contacts + contact_emails", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
 ];
 
-const matcherEdges: Edge[] = [
-  { id: "e-fetch-score", source: "fetch-candidates", target: "score-llm", ...edgeDefaults, label: "candidate pool", style: { ...edgeDefaults.style, stroke: "var(--green-8)" } },
-  { id: "e-score-comp", source: "score-llm", target: "compute-composite", ...edgeDefaults, label: "role scores", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-comp-rank", source: "compute-composite", target: "rank-return", ...edgeDefaults, animated: true, label: "ranked", style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" } },
+const contactEdges: Edge[] = [
+  { id: "e-li-nb", source: "linkedin-source", target: "neverbounce", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
+  { id: "e-ed-nb", source: "email-discover", target: "neverbounce", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "e-nb-neon", source: "neverbounce", target: "neon-contacts", ...edgeDefaults, label: "verified", style: { ...edgeDefaults.style, stroke: "var(--green-8)" } },
 ];
 
-// ── Stage 6: Email Outreach (parallel research → draft → refine) ─────────────
+// ── Stage 5: Outreach Pipeline ───────────────────────────────────────────────
 
 const outreachNodes: Node[] = [
-  { id: "research-contact", type: "agent", position: { x: 0, y: 0 }, data: { label: "research_contact", sublabel: "LinkedIn profile analysis", icon: Search, color: "var(--purple-9)" } },
-  { id: "research-company", type: "agent", position: { x: 0, y: 100 }, data: { label: "research_company", sublabel: "Company deep-dive", icon: BookOpen, color: "var(--purple-9)" } },
-  { id: "analyze-post", type: "agent", position: { x: 0, y: 200 }, data: { label: "analyze_post", sublabel: "Post topics & hooks", icon: FileText, color: "var(--purple-9)" } },
-  { id: "draft-email", type: "agent", position: { x: 330, y: 90 }, data: { label: "draft_email", sublabel: "3-context grounded draft", icon: Mail, color: "var(--amber-9)" } },
-  { id: "refine-email", type: "agent", position: { x: 600, y: 90 }, data: { label: "refine_email", sublabel: "Tone + de-AI polish", icon: RefreshCw, color: "var(--amber-9)" } },
+  { id: "compose-linkedin", type: "agent", position: { x: 0, y: 50 }, data: { label: "compose_from_linkedin", sublabel: "Parallel research → draft → refine", icon: Brain, color: "var(--purple-9)" } },
+  { id: "batch-campaign", type: "agent", position: { x: 290, y: 0 }, data: { label: "batch_campaign", sublabel: "Sequences + delays", icon: Mail, color: "var(--amber-9)" } },
+  { id: "resend-deliver", type: "agent", position: { x: 290, y: 100 }, data: { label: "resend_deliver", sublabel: "Resend API", icon: Zap, color: "var(--amber-9)" } },
+  { id: "webhook-inbound", type: "dataStore", position: { x: 560, y: 0 }, data: { label: "received_emails", sublabel: "Resend webhooks → Neon", icon: Webhook, color: "var(--blue-9)" } },
+  { id: "followup-schedule", type: "agent", position: { x: 560, y: 100 }, data: { label: "followup_schedule", sublabel: "Reply-aware scheduling", icon: RefreshCw, color: "var(--indigo-9)" } },
 ];
 
 const outreachEdges: Edge[] = [
-  { id: "e-rc-draft", source: "research-contact", target: "draft-email", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
-  { id: "e-rco-draft", source: "research-company", target: "draft-email", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
-  { id: "e-ap-draft", source: "analyze-post", target: "draft-email", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
-  { id: "e-draft-refine", source: "draft-email", target: "refine-email", ...edgeDefaults, label: "draft v1", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "e-cl-bc", source: "compose-linkedin", target: "batch-campaign", ...edgeDefaults, label: "AI draft", style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
+  { id: "e-cl-rd", source: "compose-linkedin", target: "resend-deliver", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
+  { id: "e-bc-wi", source: "batch-campaign", target: "webhook-inbound", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "e-rd-fs", source: "resend-deliver", target: "followup-schedule", ...edgeDefaults, label: "message IDs", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "e-wi-fs", source: "webhook-inbound", target: "followup-schedule", ...edgeDefaults, label: "reply events", style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
 ];
 
-// ── Stage 7: Application Prep (mega-pipeline) ───────────────────────────────
-
-const appPrepNodes: Node[] = [
-  // Phase 1: parallel research (5-way fan-out)
-  { id: "validate-urls", type: "agent", position: { x: 0, y: 0 }, data: { label: "validate_urls", sublabel: "HTTP HEAD checks", icon: Shield, color: "var(--gray-11)" } },
-  { id: "parse-jd", type: "agent", position: { x: 0, y: 80 }, data: { label: "parse_jd", sublabel: "Tech + requirements", icon: FileText, color: "var(--amber-9)" } },
-  { id: "analyze-depth", type: "agent", position: { x: 0, y: 160 }, data: { label: "analyze_role_depth", sublabel: "Hidden signals", icon: Brain, color: "var(--amber-9)" } },
-  { id: "research-co", type: "agent", position: { x: 0, y: 240 }, data: { label: "research_company", sublabel: "Culture + tech investment", icon: BookOpen, color: "var(--purple-9)" } },
-  { id: "extract-tech", type: "agent", position: { x: 0, y: 320 }, data: { label: "extract_technologies", sublabel: "Tags + relevance scores", icon: Layers, color: "var(--amber-9)" } },
-  // Phase 2: organize
-  { id: "organize-hier", type: "agent", position: { x: 310, y: 155 }, data: { label: "organize_hierarchy", sublabel: "Learning order", icon: Workflow, color: "var(--orange-9)" } },
-  // Phase 3: fan-out work
-  { id: "fan-work", type: "parallel", position: { x: 540, y: 168 }, data: { label: "route_all_work", color: "var(--purple-9)" } },
-  { id: "gen-questions", type: "agent", position: { x: 700, y: 60 }, data: { label: "generate_questions", sublabel: "4 categories parallel", icon: GraduationCap, color: "var(--amber-9)" } },
-  { id: "gen-content", type: "agent", position: { x: 700, y: 170 }, data: { label: "generate_content", sublabel: "Per-tech study material", icon: BookOpen, color: "var(--amber-9)" } },
-  { id: "compile-report", type: "agent", position: { x: 700, y: 280 }, data: { label: "compile_report", sublabel: "Full prep document", icon: FileText, color: "var(--blue-9)" } },
-  // Phase 4: persist
-  { id: "persist-knowledge", type: "dataStore", position: { x: 960, y: 175 }, data: { label: "persist_knowledge", sublabel: "LanceDB + Neon", icon: Database, color: "var(--green-9)" } },
-];
-
-const appPrepEdges: Edge[] = [
-  // Phase 1 → organize
-  { id: "e-val-org", source: "validate-urls", target: "organize-hier", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--gray-8)" } },
-  { id: "e-parse-org", source: "parse-jd", target: "organize-hier", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-depth-org", source: "analyze-depth", target: "organize-hier", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-rco-org", source: "research-co", target: "organize-hier", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
-  { id: "e-tech-org", source: "extract-tech", target: "organize-hier", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  // organize → fan-out
-  { id: "e-org-fan", source: "organize-hier", target: "fan-work", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
-  // fan-out → work
-  { id: "e-fan-q", source: "fan-work", target: "gen-questions", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-fan-c", source: "fan-work", target: "gen-content", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-fan-r", source: "fan-work", target: "compile-report", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
-  // join → persist
-  { id: "e-q-persist", source: "gen-questions", target: "persist-knowledge", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-c-persist", source: "gen-content", target: "persist-knowledge", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-r-persist", source: "compile-report", target: "persist-knowledge", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
-];
-
-// ── Stage definitions ────────────────────────────────────────────────────────
+// ── Stage Definitions ────────────────────────────────────────────────────────
 
 const stages = [
   {
-    title: "board_crawler",
-    graphName: "board_crawler",
-    description: "Discover ATS job boards from Common Crawl CDX index. Ported from the Rust ashby-crawler worker.",
-    pattern: "Linear pipeline",
-    nodes: crawlerNodes,
-    edges: crawlerEdges,
+    title: "company_discovery",
+    graphName: "company_discovery",
+    description: "Three source types — Common Crawl CDX, live web search, and bulk CSV import — fan-in through a domain/slug dedup gate before persisting to Neon.",
+    pattern: "Multi-source fan-in",
+    nodes: discoveryNodes,
+    edges: discoveryEdges,
+    height: 280,
+  },
+  {
+    title: "enrichment",
+    graphName: "enrichment",
+    description: "Live website fetch → signal extraction → parallel DeepSeek calls for AI tier classification and deep analysis → write enriched fields back to companies table.",
+    pattern: "LLM-assisted classification",
+    nodes: enrichmentNodes,
+    edges: enrichmentEdges,
+    height: 200,
+  },
+  {
+    title: "ats_detection",
+    graphName: "ats_detection",
+    description: "Crawl career pages, detect ATS vendor from DOM patterns, score confidence, persist boards. One company can have multiple boards across vendors.",
+    pattern: "Structured signal extraction",
+    nodes: atsNodes,
+    edges: atsEdges,
     height: 150,
   },
   {
-    title: "ingest_jobs",
-    graphName: "ingest_jobs",
-    description: "Fetch jobs from stale ATS sources with early-exit optimization when all sources are fresh.",
-    pattern: "Conditional early exit",
-    nodes: ingestNodes,
-    edges: ingestEdges,
-    height: 150,
+    title: "contact_pipeline",
+    graphName: "contact_pipeline",
+    description: "LinkedIn profile data and email pattern discovery fan-in to NeverBounce verification, then persist to contacts + contact_emails tables with deliverability status.",
+    pattern: "Parallel discovery + verification",
+    nodes: contactNodes,
+    edges: contactEdges,
+    height: 200,
   },
   {
-    title: "process_jobs",
-    graphName: "process_jobs",
-    description: "Three-phase sequential pipeline: enhance → role_tag → skill_extract. Accumulates results via Annotated[List, operator.add].",
-    pattern: "Sequential accumulation",
-    nodes: processNodes,
-    edges: processEdges,
-    height: 150,
-  },
-  {
-    title: "job_matcher",
-    graphName: "job_matcher",
-    description: "Score and rank jobs against a candidate's skill profile. Combines LLM role scoring with skill overlap and recency decay.",
-    pattern: "Composite scoring pipeline",
-    nodes: matcherNodes,
-    edges: matcherEdges,
-    height: 150,
-  },
-  {
-    title: "email_outreach",
-    graphName: "email_outreach",
-    description: "Three parallel research branches (contact, company, post) join into a draft, then a refinement pass removes AI artifacts.",
-    pattern: "Parallel fan-out → join → refine",
+    title: "outreach_pipeline",
+    graphName: "outreach_pipeline",
+    description: "ComposeFromLinkedIn generates AI-personalized drafts (two-pass: draft + refine), campaigns batch via Resend, inbound replies land via webhook, follow-ups are reply-aware.",
+    pattern: "AI-personalized campaigns",
     nodes: outreachNodes,
     edges: outreachEdges,
-    height: 300,
-  },
-  {
-    title: "application_prep",
-    graphName: "application_prep",
-    description: "The largest graph: 5-way parallel research → organize → 3-way fan-out (questions, content, report) → persist to knowledge DB. Nested fan-outs for per-category and per-tech generation.",
-    pattern: "Multi-phase fan-out/join mega-pipeline",
-    nodes: appPrepNodes,
-    edges: appPrepEdges,
-    height: 420,
+    height: 220,
   },
 ];
 
@@ -584,7 +489,7 @@ function NodeDetailPanel({ nodeId }: { nodeId: string }) {
     <Card mt="4" style={{ borderLeft: `3px solid var(--${detail.color}-9)`, background: "var(--gray-2)" }}>
       <Flex direction="column" gap="3">
         <Flex align="center" gap="2" wrap="wrap">
-          <Heading size="4">{label}</Heading>
+          <Heading size="4"><Code>{label}</Code></Heading>
           {sublabel && <Text size="1" color="gray">{sublabel}</Text>}
         </Flex>
         <Text size="2" style={{ lineHeight: 1.65, color: "var(--gray-11)" }}>{detail.description}</Text>
@@ -678,14 +583,10 @@ export function PipelineClient() {
         <LayersIcon width={22} height={22} style={{ color: "var(--violet-9)" }} />
         <Heading size="7">How It Works</Heading>
       </Flex>
-      <Flex align="center" gap="3" mb="3">
+      <Flex align="center" gap="3" mb="5">
         <Text color="gray" size="2">
-          20 LangGraph StateGraphs power the pipeline — from board discovery to interview prep.
+          5-stage B2B lead generation pipeline — from company discovery through AI-personalized outreach.
         </Text>
-        <a href="https://github.com/nicolad/lead-gen" target="_blank" rel="noopener noreferrer"
-          style={{ color: "var(--gray-9)", display: "flex", alignItems: "center" }}>
-          <GitHubLogoIcon width={16} height={16} />
-        </a>
       </Flex>
       <Flex align="center" gap="2" mb="5">
         <Badge color="blue" variant="soft" size="1">Interactive</Badge>

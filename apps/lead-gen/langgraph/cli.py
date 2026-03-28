@@ -44,50 +44,6 @@ def main():
 # ---------------------------------------------------------------------------
 
 @main.command()
-@click.option(
-    "--topics", "-t", multiple=True, required=True,
-    help="Seed topics for company discovery (can pass multiple)",
-)
-@click.option("--max-results", "-n", default=10, show_default=True, help="Max search results per query")
-@click.option("--dry-run", is_flag=True, default=False, help="Run pipeline without writing to DB")
-def discover(topics: tuple[str, ...], max_results: int, dry_run: bool):
-    """Discover new remote AI companies via web search."""
-    from src.discovery.graph import build_discovery_graph
-
-    graph = build_discovery_graph()
-
-    print(f"Starting discovery pipeline")
-    print(f"  Topics: {', '.join(topics)}")
-    print(f"  Max results per query: {max_results}")
-    print(f"  Dry run: {dry_run}\n")
-
-    result = graph.invoke({
-        "seed_topics": list(topics),
-        "search_queries": [],
-        "search_results": [],
-        "candidates": [],
-        "research_results": [],
-        "persisted_companies": [],
-        "stats": {
-            "total_searched": 0,
-            "candidates_found": 0,
-            "qualified": 0,
-            "persisted": 0,
-        },
-        "dry_run": dry_run,
-        "max_results": max_results,
-    })
-
-    stats = result.get("stats", {})
-    print(f"\n--- Summary ---")
-    print(f"  Queries generated: {len(result.get('search_queries', []))}")
-    print(f"  Total search results: {stats.get('total_searched', 0)}")
-    print(f"  Unique candidates: {stats.get('candidates_found', 0)}")
-    print(f"  Qualified (AI + remote): {stats.get('qualified', 0)}")
-    print(f"  Persisted: {stats.get('persisted', 0)}")
-
-
-@main.command()
 @click.option("--limit", "-l", default=200, show_default=True, help="Max jobs to classify")
 def classify(limit: int):
     """Run the existing job classifier pipeline (AI company + remote)."""
