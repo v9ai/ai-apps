@@ -27,14 +27,6 @@ type ArchiveEmailResult {
   success: Boolean!
 }
 
-type AshbyEnrichment {
-  company_name: String
-  enriched_at: String
-  industry_tags: [String!]!
-  size_signal: String
-  tech_signals: [String!]!
-}
-
 input BatchRecipientInput {
   companyId: Int
   contactId: Int
@@ -63,7 +55,6 @@ type Company {
   ai_classification_confidence: Float!
   ai_classification_reason: String
   ai_tier: Int!
-  ashby_enrichment: AshbyEnrichment
   category: CompanyCategory!
   contacts: [Contact!]!
   created_at: String!

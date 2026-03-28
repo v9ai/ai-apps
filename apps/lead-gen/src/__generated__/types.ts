@@ -42,15 +42,6 @@ export type ArchiveEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type AshbyEnrichment = {
-  __typename: 'AshbyEnrichment';
-  company_name: Maybe<Scalars['String']['output']>;
-  enriched_at: Maybe<Scalars['String']['output']>;
-  industry_tags: Array<Scalars['String']['output']>;
-  size_signal: Maybe<Scalars['String']['output']>;
-  tech_signals: Array<Scalars['String']['output']>;
-};
-
 export type BatchRecipientInput = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   contactId?: InputMaybe<Scalars['Int']['input']>;
@@ -83,7 +74,6 @@ export type Company = {
   ai_classification_confidence: Scalars['Float']['output'];
   ai_classification_reason: Maybe<Scalars['String']['output']>;
   ai_tier: Scalars['Int']['output'];
-  ashby_enrichment: Maybe<AshbyEnrichment>;
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];

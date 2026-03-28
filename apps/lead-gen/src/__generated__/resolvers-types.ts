@@ -45,15 +45,6 @@ export type ArchiveEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type AshbyEnrichment = {
-  __typename?: 'AshbyEnrichment';
-  company_name: Maybe<Scalars['String']['output']>;
-  enriched_at: Maybe<Scalars['String']['output']>;
-  industry_tags: Array<Scalars['String']['output']>;
-  size_signal: Maybe<Scalars['String']['output']>;
-  tech_signals: Array<Scalars['String']['output']>;
-};
-
 export type BatchRecipientInput = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   contactId?: InputMaybe<Scalars['Int']['input']>;
@@ -86,7 +77,6 @@ export type Company = {
   ai_classification_confidence: Scalars['Float']['output'];
   ai_classification_reason: Maybe<Scalars['String']['output']>;
   ai_tier: Scalars['Int']['output'];
-  ashby_enrichment: Maybe<AshbyEnrichment>;
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];
@@ -1456,7 +1446,6 @@ export type ResolversTypes = {
   AnalyzeCompanyResponse: ResolverTypeWrapper<Partial<AnalyzeCompanyResponse>>;
   ApplyEmailPatternResult: ResolverTypeWrapper<Partial<ApplyEmailPatternResult>>;
   ArchiveEmailResult: ResolverTypeWrapper<Partial<ArchiveEmailResult>>;
-  AshbyEnrichment: ResolverTypeWrapper<Partial<AshbyEnrichment>>;
   BatchRecipientInput: ResolverTypeWrapper<Partial<BatchRecipientInput>>;
   Boolean: ResolverTypeWrapper<Partial<Scalars['Boolean']['output']>>;
   CancelCompanyEmailsResult: ResolverTypeWrapper<Partial<CancelCompanyEmailsResult>>;
@@ -1554,7 +1543,6 @@ export type ResolversParentTypes = {
   AnalyzeCompanyResponse: Partial<AnalyzeCompanyResponse>;
   ApplyEmailPatternResult: Partial<ApplyEmailPatternResult>;
   ArchiveEmailResult: Partial<ArchiveEmailResult>;
-  AshbyEnrichment: Partial<AshbyEnrichment>;
   BatchRecipientInput: Partial<BatchRecipientInput>;
   Boolean: Partial<Scalars['Boolean']['output']>;
   CancelCompanyEmailsResult: Partial<CancelCompanyEmailsResult>;
@@ -1663,14 +1651,6 @@ export type ArchiveEmailResultResolvers<ContextType = GraphQLContext, ParentType
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
-export type AshbyEnrichmentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AshbyEnrichment'] = ResolversParentTypes['AshbyEnrichment']> = {
-  company_name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  enriched_at?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  industry_tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  size_signal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  tech_signals?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
 export type CancelCompanyEmailsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CancelCompanyEmailsResult'] = ResolversParentTypes['CancelCompanyEmailsResult']> = {
   cancelledCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   failedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -1692,7 +1672,6 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   ai_classification_confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   ai_classification_reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   ai_tier?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  ashby_enrichment?: Resolver<Maybe<ResolversTypes['AshbyEnrichment']>, ParentType, ContextType>;
   category?: Resolver<ResolversTypes['CompanyCategory'], ParentType, ContextType>;
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
   created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2289,7 +2268,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AnalyzeCompanyResponse?: AnalyzeCompanyResponseResolvers<ContextType>;
   ApplyEmailPatternResult?: ApplyEmailPatternResultResolvers<ContextType>;
   ArchiveEmailResult?: ArchiveEmailResultResolvers<ContextType>;
-  AshbyEnrichment?: AshbyEnrichmentResolvers<ContextType>;
   CancelCompanyEmailsResult?: CancelCompanyEmailsResultResolvers<ContextType>;
   CancelEmailResult?: CancelEmailResultResolvers<ContextType>;
   CompaniesResponse?: CompaniesResponseResolvers<ContextType>;
