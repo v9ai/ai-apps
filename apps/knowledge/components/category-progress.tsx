@@ -20,7 +20,7 @@ export function CategoryProgress({ categoryLessons, currentSlug, categoryName }:
         {categoryLessons.map((l) => (
           <Link
             key={l.slug}
-            href={`/${l.slug}`}
+            href={l.url}
             className={`category-progress-dot${l.slug === currentSlug ? " category-progress-dot--current" : ""}`}
             title={l.title}
           />
