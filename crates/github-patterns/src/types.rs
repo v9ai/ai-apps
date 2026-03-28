@@ -93,12 +93,42 @@ pub struct TechStack {
     /// language → byte count across all repos
     pub languages: HashMap<String, u64>,
     pub primary_language: Option<String>,
-    /// AI/ML deps found (e.g. "transformers", "torch", "langchain")
+    /// AI/ML framework names surfaced from repo topics/names
     pub ai_frameworks: Vec<String>,
     /// infra signals (e.g. "kubernetes", "terraform", "docker")
     pub infra_tools: Vec<String>,
     /// cloud provider signals
     pub cloud_providers: Vec<String>,
+    /// AI/ML packages found by scanning dependency manifests
+    pub dep_signals: Vec<DepSignal>,
+    /// Signals extracted from the org's primary repo README
+    pub readme: Option<ReadmeSignals>,
+}
+
+/// A package-manager dependency that signals AI/ML work.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DepSignal {
+    /// Package from pip / npm / cargo that is a known AI/ML library
+    AiPackage { manager: String, name: String },
+    /// Known vector-database client library
+    VectorDb { name: String },
+}
+
+/// Signals extracted from a repo's README.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ReadmeSignals {
+    /// README mentions hiring / open roles
+    pub hiring: bool,
+    /// AI/ML concepts mentioned (e.g. "large language model", "rag")
+    pub ai_mentions: Vec<String>,
+    /// Has a CI/build badge (quality proxy)
+    pub has_ci_badge: bool,
+    /// Mentions Docker / containers (infra maturity proxy)
+    pub has_docker: bool,
+    /// Total word count (docs depth proxy)
+    pub word_count: usize,
+    /// Mentions badges / CI / coverage / pypi / license
+    pub has_quality_signals: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

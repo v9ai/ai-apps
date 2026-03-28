@@ -5,7 +5,18 @@ pub mod types;
 pub mod client;
 
 #[cfg(feature = "patterns")]
+pub mod deps;
+
+#[cfg(feature = "patterns")]
+pub mod readme;
+
+#[cfg(feature = "patterns")]
 pub mod patterns;
+
+/// Local BERT semantic scorer — no cloud required.
+/// Load once with `EmbedScorer::new()`, reuse across orgs.
+#[cfg(feature = "embed")]
+pub mod embed;
 
 // Re-exports
 pub use error::{GhError, Result};
@@ -16,3 +27,6 @@ pub use client::GhClient;
 
 #[cfg(feature = "patterns")]
 pub use patterns::analyse_org;
+
+#[cfg(feature = "embed")]
+pub use embed::EmbedScorer;

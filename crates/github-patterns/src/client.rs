@@ -3,10 +3,14 @@ use crate::types::*;
 use reqwest::{header, Client};
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
-use tracing::debug;
+use std::time::Duration;
+use tracing::{debug, warn};
 
 const BASE_URL: &str = "https://api.github.com";
+/// Delays for retry attempts: 1 s, 2 s, 4 s.
+const BACKOFF_SECS: &[u64] = &[1, 2, 4];
 
+#[derive(Clone)]
 pub struct GhClient {
     inner: Client,
     token: String,
@@ -42,13 +46,27 @@ impl GhClient {
         Self::new(token)
     }
 
-    // ── core request helper ──────────────────────────────────────────────────
+    // ── core request helpers ─────────────────────────────────────────────────
 
     async fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T> {
         self.get_url(&format!("{BASE_URL}{path}")).await
     }
 
+    /// JSON GET with exponential backoff on 429 / secondary-rate-limit 403.
     async fn get_url<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
+        for (attempt, &delay_secs) in BACKOFF_SECS.iter().enumerate() {
+            match self.get_url_once(url).await {
+                Err(GhError::RateLimit { .. }) if attempt < BACKOFF_SECS.len() - 1 => {
+                    warn!("rate-limited on {url}, retrying in {delay_secs}s");
+                    tokio::time::sleep(Duration::from_secs(delay_secs)).await;
+                }
+                other => return other,
+            }
+        }
+        self.get_url_once(url).await
+    }
+
+    async fn get_url_once<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
         debug!("GET {url}");
         let resp = self
             .inner
@@ -63,7 +81,7 @@ impl GhClient {
         if status == 404 {
             return Err(GhError::NotFound(url.to_string()));
         }
-        if status == 403 || status == 429 {
+        if status == 429 || (status == 403 && resp.headers().contains_key("x-ratelimit-remaining")) {
             let reset = resp
                 .headers()
                 .get("x-ratelimit-reset")
@@ -78,6 +96,46 @@ impl GhClient {
         }
 
         resp.json().await.map_err(GhError::Http)
+    }
+
+    /// Fetch the raw text content of a file via the GitHub contents API.
+    /// Returns `None` when the file does not exist (404).
+    pub async fn get_file_content(
+        &self,
+        owner: &str,
+        repo: &str,
+        path: &str,
+    ) -> Result<Option<String>> {
+        let url = format!("{BASE_URL}/repos/{owner}/{repo}/contents/{path}");
+        debug!("GET (raw) {url}");
+
+        let resp = self
+            .inner
+            .get(&url)
+            .bearer_auth(&self.token)
+            .header(header::ACCEPT, "application/vnd.github.raw+json")
+            .send()
+            .await
+            .map_err(GhError::Http)?;
+
+        let status = resp.status().as_u16();
+        match status {
+            404 => Ok(None),
+            200 => Ok(Some(resp.text().await.map_err(GhError::Http)?)),
+            429 | 403 => {
+                let reset = resp
+                    .headers()
+                    .get("x-ratelimit-reset")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or("unknown")
+                    .to_string();
+                Err(GhError::RateLimit { reset_at: reset })
+            }
+            _ => {
+                let body: GhApiError = resp.json().await.map_err(GhError::Http)?;
+                Err(GhError::Api { status, message: body.message })
+            }
+        }
     }
 
     // ── org / repo endpoints ─────────────────────────────────────────────────

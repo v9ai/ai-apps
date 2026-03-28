@@ -32,7 +32,7 @@ pub async fn analyse_org(client: &GhClient, org: &str, max_repos: u8) -> Result<
 
     // -- hiring
     let hiring_signals = hiring::detect(client, org, &repos).await;
-    let hiring_score = hiring::score(&hiring_signals);
+    let hiring_score = hiring::score(&hiring_signals, &tech_stack);
 
     Ok(OrgPatterns {
         org: org.to_string(),
