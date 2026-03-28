@@ -79,6 +79,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   UNKNOWN: "gray",
 };
 
+const VENDOR_COLORS: Record<string, string> = {
+  GREENHOUSE: "green",
+  LEVER: "blue",
+  WORKABLE: "purple",
+  ASHBY: "orange",
+  TEAMTAILOR: "cyan",
+  WORKDAY: "amber",
+  ICIMS: "indigo",
+  SMARTRECRUITERS: "violet",
+};
+
 function scoreColor(score?: number | null): "green" | "amber" | "red" | "gray" {
   if (score == null || !Number.isFinite(score)) return "gray";
   if (score >= 0.7) return "green";
@@ -102,7 +113,7 @@ function SectionCard({
           <Text
             size="2"
             color="gray"
-            style={{ fontWeight: 700, letterSpacing: '0.08em' }}
+            style={{ fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}
           >
             {title}
           </Text>
@@ -114,11 +125,22 @@ function SectionCard({
   );
 }
 
-function Chip({ children, title }: { children: React.ReactNode; title?: string }) {
+function Chip({
+  children,
+  title,
+  color = "gray",
+  variant = "surface",
+}: {
+  children: React.ReactNode;
+  title?: string;
+  color?: React.ComponentProps<typeof Badge>["color"];
+  variant?: React.ComponentProps<typeof Badge>["variant"];
+}) {
   return (
     <Badge
-      color="gray"
-      variant="surface"
+      color={color}
+      variant={variant}
+      size="1"
       title={title}
       style={{
         maxWidth: "100%",
@@ -165,18 +187,18 @@ function CollapsibleChips({
             type="button"
             size="2"
             variant="ghost"
-            color="gray"
             onClick={() => setExpanded((v) => !v)}
           >
-            {expanded ? (
-              <>
-                <ChevronUpIcon /> Show less
-              </>
-            ) : (
-              <>
-                <ChevronDownIcon /> Show more ({normalized.length - visibleCount})
-              </>
-            )}
+            <Box
+              style={{
+                display: "inline-flex",
+                transition: "transform 0.15s ease",
+                transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              <ChevronDownIcon />
+            </Box>
+            {expanded ? "Show less" : `Show more (${normalized.length - visibleCount})`}
           </Button>
         </Box>
       )}
@@ -205,9 +227,21 @@ function CollapsibleList({
     <Box>
       <Flex direction="column" gap="2">
         {shown.map((item) => (
-          <Text key={item} size="2" color="gray">
-            • {item}
-          </Text>
+          <Flex key={item} align="start" gap="2">
+            <Box
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: "50%",
+                background: "var(--gray-8)",
+                flexShrink: 0,
+                marginTop: 6,
+              }}
+            />
+            <Text size="2" color="gray">
+              {item}
+            </Text>
+          </Flex>
         ))}
       </Flex>
 
@@ -245,6 +279,8 @@ function CompanyAvatar({
   logoUrl?: string | null;
   size?: number;
 }) {
+  const [imgError, setImgError] = useState(false);
+
   const initials = name
     .split(/\s+/)
     .slice(0, 2)
@@ -252,7 +288,7 @@ function CompanyAvatar({
     .join("")
     .toUpperCase();
 
-  if (logoUrl) {
+  if (logoUrl && !imgError) {
     return (
       <Box
         style={{
@@ -267,6 +303,8 @@ function CompanyAvatar({
         <img
           src={logoUrl}
           alt={name}
+          loading="lazy"
+          onError={() => setImgError(true)}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       </Box>
@@ -281,12 +319,12 @@ function CompanyAvatar({
         width: size,
         height: size,
         borderRadius: "50%",
-        background: "var(--accent-3)",
-        border: "1px solid var(--accent-6)",
+        background: "var(--accent-4)",
+        border: "1px solid var(--accent-7)",
         flexShrink: 0,
       }}
     >
-      <Text size="2" weight="bold" style={{ color: "var(--accent-11)" }}>
+      <Text size="3" weight="bold" style={{ color: "var(--accent-11)" }}>
         {initials}
       </Text>
     </Flex>
@@ -1127,148 +1165,160 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
         )}
 
         {/* Header */}
-        <Flex
-          direction={{ initial: "column", sm: "row" }}
-          gap="4"
-          align={{ initial: "start", sm: "center" }}
-          justify="between"
+        <Card
+          style={{
+            background: "var(--gray-1)",
+            border: "1px solid var(--gray-3)",
+          }}
         >
-          <Flex gap="4" align="start" style={{ flex: 1, minWidth: 0 }}>
-            <CompanyAvatar name={company.name} logoUrl={company.logo_url} />
-            <Box style={{ flex: 1, minWidth: 0 }}>
-              <Heading size="8" style={{ lineHeight: 1.1 }}>
-                {company.name}
-              </Heading>
+          <Box p="5">
+            <Flex
+              direction={{ initial: "column", sm: "row" }}
+              gap="4"
+              align={{ initial: "start", sm: "center" }}
+              justify="between"
+            >
+              <Flex gap="4" align="start" style={{ flex: 1, minWidth: 0 }}>
+                <CompanyAvatar name={company.name} logoUrl={company.logo_url} size={72} />
+                <Box style={{ flex: 1, minWidth: 0 }}>
+                  <Heading size="8" style={{ lineHeight: 1.1 }}>
+                    {company.name}
+                  </Heading>
 
-              <Flex align="center" gap="3" mt="2" wrap="wrap">
-                {websiteHref && (
-                  <Flex align="center" gap="2" style={{ minWidth: 0 }}>
-                    <GlobeIcon />
-                    <RadixLink
-                      href={websiteHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      color="gray"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        minWidth: 0,
-                        maxWidth: "100%",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                      title={websiteHref}
-                    >
-                      {websiteLabel || websiteHref}
-                      <ExternalLinkIcon />
-                    </RadixLink>
+                  <Flex align="center" gap="3" mt="2" wrap="wrap">
+                    {websiteHref && (
+                      <Flex align="center" gap="2" style={{ minWidth: 0 }}>
+                        <GlobeIcon />
+                        <RadixLink
+                          href={websiteHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          color="gray"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            minWidth: 0,
+                            maxWidth: "100%",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                          title={websiteHref}
+                        >
+                          {websiteLabel || websiteHref}
+                          <ExternalLinkIcon />
+                        </RadixLink>
+                      </Flex>
+                    )}
+
+                    {company.linkedin_url && (
+                      <Flex align="center" gap="2">
+                        <RadixLink
+                          href={coerceExternalUrl(company.linkedin_url) ?? ""}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          color="gray"
+                          style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                        >
+                          <Text size="2">LinkedIn</Text>
+                          <ExternalLinkIcon />
+                        </RadixLink>
+                      </Flex>
+                    )}
                   </Flex>
-                )}
 
-                {company.linkedin_url && (
-                  <Flex align="center" gap="2">
-                    <RadixLink
-                      href={coerceExternalUrl(company.linkedin_url) ?? ""}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      color="gray"
-                      style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-                    >
-                      <Text size="2">LinkedIn</Text>
-                      <ExternalLinkIcon />
-                    </RadixLink>
+                  <Flex gap="2" wrap="wrap" mt="3">
+                    {company.category ? (
+                      <Badge
+                        color={(CATEGORY_COLORS[company.category] ?? "gray") as "blue" | "violet" | "amber" | "green" | "cyan" | "gray"}
+                        variant="soft"
+                        radius="full"
+                      >
+                        {company.category}
+                      </Badge>
+                    ) : null}
+                    {company.size ? <Chip color="blue" variant="surface">{company.size}</Chip> : null}
+                    {company.location ? <Chip color="gray" variant="surface">{company.location}</Chip> : null}
+                    {isAdmin && company.score != null && (
+                      <Badge
+                        color={scoreColor(company.score)}
+                        variant="soft"
+                        radius="full"
+                        style={{ fontVariantNumeric: "tabular-nums" }}
+                      >
+                        ★ {company.score.toFixed(2)}
+                      </Badge>
+                    )}
                   </Flex>
-                )}
-
+                </Box>
               </Flex>
 
-              <Flex gap="2" wrap="wrap" mt="3">
-                {company.category ? (
-                  <Badge
-                    color={(CATEGORY_COLORS[company.category] ?? "gray") as "blue" | "violet" | "amber" | "green" | "cyan" | "gray"}
-                    variant="soft"
-                    radius="full"
-                  >
-                    {company.category}
-                  </Badge>
-                ) : null}
-                {company.size ? <Chip>{company.size}</Chip> : null}
-                {company.location ? <Chip>{company.location}</Chip> : null}
-                {isAdmin && company.score != null && (
-                  <Badge
-                    color={scoreColor(company.score)}
-                    variant="soft"
-                    radius="full"
-                    style={{ fontVariantNumeric: "tabular-nums" }}
-                  >
-                    ★ {company.score.toFixed(2)}
-                  </Badge>
+              <Flex
+                gap="2"
+                align="center"
+                style={{ flexWrap: "wrap" }}
+              >
+                {isAdmin && company && (
+                  <LinkedInLeadDialog
+                    companyId={company.id}
+                    companyName={company.name}
+                    onCreated={refetch}
+                  />
                 )}
-              </Flex>
-            </Box>
-          </Flex>
-
-          <Flex gap="2" align="center">
-            {isAdmin && company && (
-              <LinkedInLeadDialog
-                companyId={company.id}
-                companyName={company.name}
-                onCreated={refetch}
-              />
-            )}
-            {isAdmin && (
-              <CompanyEditDialog company={company} onSaved={refetch} />
-            )}
-            {isAdmin && (
-              <Button
-                onClick={handleEnhance}
-                disabled={isEnhancing}
-                color="orange"
-                variant="solid"
-              >
-                <MagicWandIcon />
-                {isEnhancing ? "Enhancing…" : "Enhance"}
-              </Button>
-            )}
-            {isAdmin && company.website && (
-              <Button
-                onClick={handleAnalyze}
-                disabled={isAnalyzing}
-                color="violet"
-                variant="solid"
-              >
-                <MagicWandIcon />
-                {isAnalyzing ? "Analyzing…" : company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
-              </Button>
-            )}
-            {isAdmin && (
-              <AlertDialog.Root>
-                <AlertDialog.Trigger>
-                  <Button color="red" variant="soft" disabled={isDeleting}>
-                    <TrashIcon />
-                    {isDeleting ? "Deleting…" : "Delete"}
+                {isAdmin && (
+                  <CompanyEditDialog company={company} onSaved={refetch} />
+                )}
+                {isAdmin && (
+                  <Button
+                    onClick={handleEnhance}
+                    disabled={isEnhancing}
+                    color="orange"
+                    variant="solid"
+                  >
+                    <MagicWandIcon />
+                    {isEnhancing ? "Enhancing…" : "Enhance"}
                   </Button>
-                </AlertDialog.Trigger>
-                <AlertDialog.Content maxWidth="400px">
-                  <AlertDialog.Title>Delete company</AlertDialog.Title>
-                  <AlertDialog.Description size="2">
-                    Are you sure you want to delete <Strong>{company.name}</Strong>? This action cannot be undone.
-                  </AlertDialog.Description>
-                  <Flex gap="3" mt="4" justify="end">
-                    <AlertDialog.Cancel>
-                      <Button variant="soft" color="gray">Cancel</Button>
-                    </AlertDialog.Cancel>
-                    <AlertDialog.Action>
-                      <Button color="red" onClick={handleDelete}>Delete</Button>
-                    </AlertDialog.Action>
-                  </Flex>
-                </AlertDialog.Content>
-              </AlertDialog.Root>
-            )}
-          </Flex>
-        </Flex>
+                )}
+                {isAdmin && company.website && (
+                  <Button
+                    onClick={handleAnalyze}
+                    disabled={isAnalyzing}
+                    color="violet"
+                    variant="solid"
+                  >
+                    <MagicWandIcon />
+                    {isAnalyzing ? "Analyzing…" : company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
+                  </Button>
+                )}
+                {isAdmin && (
+                  <AlertDialog.Root>
+                    <AlertDialog.Trigger>
+                      <Button color="red" variant="soft" disabled={isDeleting}>
+                        <TrashIcon />
+                        {isDeleting ? "Deleting…" : "Delete"}
+                      </Button>
+                    </AlertDialog.Trigger>
+                    <AlertDialog.Content maxWidth="400px">
+                      <AlertDialog.Title>Delete company</AlertDialog.Title>
+                      <AlertDialog.Description size="2">
+                        Are you sure you want to delete <Strong>{company.name}</Strong>? This action cannot be undone.
+                      </AlertDialog.Description>
+                      <Flex gap="3" mt="4" justify="end">
+                        <AlertDialog.Cancel>
+                          <Button variant="soft" color="gray">Cancel</Button>
+                        </AlertDialog.Cancel>
+                        <AlertDialog.Action>
+                          <Button color="red" onClick={handleDelete}>Delete</Button>
+                        </AlertDialog.Action>
+                      </Flex>
+                    </AlertDialog.Content>
+                  </AlertDialog.Root>
+                )}
+              </Flex>
+            </Flex>
+          </Box>
+        </Card>
 
         {/* Tabs */}
         <Tabs.Root
@@ -1333,6 +1383,53 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                       {company.services?.length ? (
                         <SectionCard title="Services">
                           <CollapsibleList items={company.services} visibleCount={7} />
+                        </SectionCard>
+                      ) : null}
+
+                      {company.ats_boards?.length ? (
+                        <SectionCard title="Hiring Platforms">
+                          <Flex direction="column" gap="3">
+                            {company.ats_boards.map((board) => (
+                              <Flex key={board.id} align="center" gap="2" wrap="wrap">
+                                <Badge
+                                  color={(VENDOR_COLORS[board.vendor] ?? "gray") as any}
+                                  variant="soft"
+                                  radius="full"
+                                >
+                                  {board.vendor}
+                                </Badge>
+                                <Badge color="gray" variant="surface" radius="full">
+                                  {board.board_type}
+                                </Badge>
+                                <RadixLink
+                                  href={coerceExternalUrl(board.url) ?? board.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  size="2"
+                                  style={{
+                                    flex: 1,
+                                    minWidth: 0,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {board.url}
+                                  <ExternalLinkIcon style={{ marginLeft: 4, flexShrink: 0 }} />
+                                </RadixLink>
+                                {board.is_active ? (
+                                  <Badge color="green" variant="soft">active</Badge>
+                                ) : (
+                                  <Badge color="gray" variant="soft">inactive</Badge>
+                                )}
+                                {isAdmin && (
+                                  <Text size="1" color="gray">
+                                    ({Math.round(board.confidence * 100)}%)
+                                  </Text>
+                                )}
+                              </Flex>
+                            ))}
+                          </Flex>
                         </SectionCard>
                       ) : null}
                     </Flex>

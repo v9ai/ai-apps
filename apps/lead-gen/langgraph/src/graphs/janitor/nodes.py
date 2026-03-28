@@ -20,28 +20,6 @@ def _is_spam_token(token: str) -> bool:
     return digits / len(token) > 0.4
 
 
-def sync_boards_node(state: JanitorState) -> dict:
-    """Phase 1: Sync boards from ats_boards into job_sources."""
-    conn = get_connection()
-    try:
-        with conn.cursor() as cur:
-            # Sync ats_boards entries into job_sources
-            cur.execute(
-                """INSERT INTO job_sources (source_kind, token, created_at, updated_at)
-                   SELECT vendor, board_slug, now(), now()
-                   FROM ats_boards
-                   WHERE board_slug IS NOT NULL AND board_slug != ''
-                   ON CONFLICT (source_kind, token) DO NOTHING"""
-            )
-            synced = cur.rowcount
-        conn.commit()
-        return {
-            "phase_results": [{"phase": "sync_boards", "synced": synced}],
-        }
-    finally:
-        conn.close()
-
-
 def purge_spam_node(state: JanitorState) -> dict:
     """Phase 1b: Remove spam board tokens (>40% digits)."""
     conn = get_connection()

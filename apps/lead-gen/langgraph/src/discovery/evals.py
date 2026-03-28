@@ -4,7 +4,7 @@ Evals for the discovery pipeline classifier.
 Run:
     python -m src.discovery.evals
 
-Tests classification accuracy on known companies and ATS board detection.
+Tests classification accuracy on known companies.
 """
 
 from dotenv import load_dotenv
@@ -15,7 +15,7 @@ from deepeval import evaluate
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
-from .research import _probe_ashby, _probe_greenhouse, _probe_lever, research_and_classify
+from .research import research_and_classify
 
 # ---------------------------------------------------------------------------
 # Mock companies with known ground truth
@@ -61,31 +61,6 @@ _CONFIDENCE_RANK = {"low": 0, "medium": 1, "high": 2}
 
 def _confidence_ok(actual: str, minimum: str) -> bool:
     return _CONFIDENCE_RANK.get(actual, 0) >= _CONFIDENCE_RANK.get(minimum, 0)
-
-
-# ---------------------------------------------------------------------------
-# ATS Board Detection Tests
-# ---------------------------------------------------------------------------
-ATS_EXPECTATIONS = [
-    # (slug, expected_vendor, probe_fn)
-    ("huggingface", "ashby", _probe_ashby),
-    ("mistral", "greenhouse", _probe_greenhouse),
-    ("cohere", "lever", _probe_lever),
-]
-
-
-def test_ats_detection() -> int:
-    """Test that known ATS boards are detected. Returns number of passes."""
-    print("\n--- ATS Board Detection ---")
-    passes = 0
-    for slug, vendor, probe_fn in ATS_EXPECTATIONS:
-        result = probe_fn(slug)
-        if result and result.vendor == vendor:
-            print(f"  ✓ {slug} → {vendor} ({result.job_count} jobs)")
-            passes += 1
-        else:
-            print(f"  ✗ {slug} → expected {vendor}, got {result}")
-    return passes
 
 
 # ---------------------------------------------------------------------------
@@ -161,10 +136,6 @@ def build_test_cases() -> list[LLMTestCase]:
 
 
 def main() -> None:
-    # ATS detection tests
-    ats_passes = test_ats_detection()
-    print(f"\nATS detection: {ats_passes}/{len(ATS_EXPECTATIONS)} passed")
-
     # Classification tests
     print("\n--- Classification Accuracy ---")
     print("Running classifier on all eval companies...\n")
