@@ -12,7 +12,7 @@
 
 /** The owner's job-search goal in plain language. */
 export const PLATFORM_GOAL =
-  "Find a fully remote job in Europe or worldwide as an AI Engineer or as a React Engineer.";
+  "Find a fully remote job worldwide as an AI Engineer or as a React Engineer.";
 
 /** Target role families the platform optimises for. */
 export const TARGET_ROLES = [
@@ -27,17 +27,13 @@ export const TARGET_ROLES = [
 
 /** Acceptable remote scopes. */
 export const REMOTE_SCOPES = [
-  "fully remote — EU",
   "fully remote — worldwide",
-  "fully remote — EMEA",
+  "fully remote — async",
 ] as const;
 
-/** EU & adjacent regions the owner can work from. */
+/** Regions the owner can work from. */
 export const TARGET_REGIONS = [
-  "EU member states",
-  "EEA countries",
-  "UK (if remote-worldwide)",
-  "Worldwide (timezone-compatible with CET ± 3 h)",
+  "Worldwide (any timezone)",
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -64,4 +60,4 @@ Every output you produce — whether it is a SQL query, a code review, a search 
  * A concise one-liner for agents that only need light context
  * (e.g. code helpers, linters).
  */
-export const GOAL_CONTEXT_LINE = `This codebase powers Agentic Lead Gen — a job board helping its owner land a fully remote AI Engineer or React Engineer role in Europe/worldwide.`;
+export const GOAL_CONTEXT_LINE = `This codebase powers Agentic Lead Gen — a job board helping its owner land a fully remote AI Engineer or React Engineer role worldwide.`;
