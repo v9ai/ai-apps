@@ -120,7 +120,6 @@ async fn main() -> Result<()> {
 
         Command::MlDatagen { output, count } => {
             use leadgen_metal::kernel::data_gen;
-            use leadgen_metal::kernel::ml_eval::LabeledSample;
 
             eprintln!("  Generating {count} contact label samples...");
             let contact_samples = data_gen::generate_contact_labels(count);
@@ -134,7 +133,7 @@ async fn main() -> Result<()> {
             eprintln!("  Wrote {} EU Remote samples → {}", eu_samples.len(), eu_path.display());
         }
 
-        Command::MlEval { labels, report_dir, scoring_only } => {
+        Command::MlEval { labels, report_dir, scoring_only: _ } => {
             use leadgen_metal::kernel::ml_eval;
             use leadgen_metal::kernel::scoring::LogisticScorer;
 
