@@ -120,7 +120,7 @@ export function Sidebar() {
             {!collapsed && (
               <Flex asChild align="center">
                 <Link
-                  href="https://github.com/nicolad/lead-gen"
+                  href="https://github.com/nicolad/agentic-lead-gen"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
