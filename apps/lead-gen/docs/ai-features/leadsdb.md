@@ -515,3 +515,110 @@ LIMIT 50;
 LeadsDB is an early-stage prototype that correctly identifies the core loop of a domain-ingestion-based B2B lead gen system but implements it with prototype-quality code that would require near-total rewrite for production use. Its most significant gap is not technical — it is that the subscriber preference model is collected but never acted upon. The AI components (SpaCy embeddings, GPT summarization, Pinecone) are either broken, disconnected from the pipeline, or applied to the wrong problem. The architecture demonstrates intent but not execution.
 
 For a competing platform, the actionable lesson is: the NRD signal is real and worth building on, but do it with a proper async pipeline, single-store (pgvector on PostgreSQL), embedding-at-write-time using a sentence transformer, and a working preference-to-company matching query. Close the subscriber loop that LeadsDB left open.
+
+---
+
+## 10. Deep ML Analysis
+
+### 10.1 SpaCy `en_core_web_md` vectors: what they actually are
+
+`en_core_web_md` (v3.x) ships 20,000 unique 300-dimensional **GloVe** vectors trained on **Common Crawl**. This is confirmed in the model release notes: "English multi-task CNN trained on OntoNotes, with GloVe vectors trained on Common Crawl." It is not fastText (fastText uses subword character n-grams; GloVe uses global co-occurrence statistics over a fixed vocabulary). The 20k vocabulary is the key limitation: OOV tokens get a zero vector and do not contribute to the document mean, which quietly degrades results on company names, neologisms, and technical jargon — exactly the tokens most common in startup records.
+
+The `en_core_web_lg` model has 685k vocabulary entries and the same 300-d GloVe space — but neither model was trained on business or company-name corpora, so domain terms ("SaaS", "fintech", "seed-stage", "ATS") are likely OOV or have poor representations.
+
+### 10.2 Why averaging over JSON text is a poor embedding strategy
+
+The `AstraDBClient.insert()` method serializes the entire company JSON to a string (`json.dumps(data)`) and passes it to `nlp()`. SpaCy's document vector is then the **mean pool of individual token vectors** (excluding zero vectors). This has several compounding problems:
+
+**Key pollution.** JSON keys ("name", "industry", "country", "employees_count") become tokens with their own GloVe vectors. The word "name" is common in English with a specific semantic centroid; this dilutes the signal from the value tokens ("Acme Corp"). There is no weighting: a field name token and a value token contribute equally to the mean.
+
+**Curse of dimensionality / stability of mean pooling.** The 2025 paper "Breaking the Curse of Dimensionality: On the Stability of Modern Vector Retrieval" (arXiv 2512.12458, Braverman et al., 2025) formally proves that **average pooling aggregation may destroy stability** — the property that small perturbations to the query do not radically alter its nearest neighbors. The paper proves stability is preserved under Chamfer distance but not under averaging; with only 32 effective dimensions of real signal (they show dimensionality as low as 32 already triggers the CoD), mean pooling over noisy structured text is unreliable. A company record with 8 fields has roughly 30-60 tokens after JSON serialization — well within the instability regime.
+
+**Punctuation and bracket tokens.** JSON serialization produces tokens like `{`, `}`, `:`, `"` which GloVe maps to zero or near-zero vectors. These zero-vector tokens are skipped by SpaCy's mean pooling, but they are still counted in the token sequence length, affecting normalization.
+
+**No semantic field weighting.** A company description field should contribute 10x more to the embedding than "year_founded". Mean pooling treats every field equally.
+
+### 10.3 AstraDB `$vector` field: Cassandra-backed vector search via JVector
+
+AstraDB's `$vector` field support was introduced in **Apache Cassandra 5.0** (GA October 2024) via the **Storage-Attached Index (SAI)** extension. The underlying algorithm is **JVector** — DataStax's custom library that "merges the DiskANN and HNSW family trees, borrowing the hierarchical structure from HNSW and using Vamana (the algorithm behind DiskANN) within each layer."
+
+Key architectural facts confirmed by DataStax engineering blog and the CEP-30 Cassandra Enhancement Proposal:
+
+- **Non-blocking HNSW-family graph index** built in pure Java. DataStax built their own rather than use Lucene's HNSW implementation to avoid fine-grained locking bottlenecks.
+- **Memory model:** Like HNSW, JVector requires the full graph in memory for optimal performance. DataStax's blog acknowledges this as a known downside of HNSW-family algorithms.
+- **Benchmark claims (DataStax, 2024):** AstraDB with JVector is "about 10% faster than Pinecone for a static dataset and 8x to 15x faster while also indexing new data, while maintaining higher recall and precision." (Note: these are vendor-provided numbers, not independent benchmarks.)
+- **F1 recall:** DataStax reports higher F1 (combined recall + precision) than pgvector's HNSW at comparable query latency for their internal benchmarks.
+
+For pgvector comparison: pgvector 0.7+ also uses HNSW (not IVFFlat by default for approximate search). At <5M vectors — the entire addressable NRD universe for a small platform — pgvector's HNSW provides competitive recall (>0.95 at ef_search=100) with simpler operational overhead (single database). AstraDB's advantage is meaningful only at 100M+ vectors with write-heavy workloads where Cassandra's multi-region replication and compaction strategy outperform PostgreSQL's single-writer model.
+
+**Critical mismatch in LeadsDB:** The SpaCy embeddings are 300-d but the Pinecone index is configured for 1536-d. The AstraDB vector dimension is inferred from the first inserted vector — so the 300-d embeddings go into AstraDB correctly, but the Pinecone index would require re-creating with dimension=300. This was never done; Pinecone is dead code.
+
+### 10.4 GloVe 300-d vs OpenAI ada-002 1536-d: the trade-off in numbers
+
+| Metric | GloVe Common Crawl 300-d | text-embedding-ada-002 1536-d |
+|---|---|---|
+| MTEB average score | ~40-45 (estimated, pre-MTEB era) | 60.99 |
+| Dimensions | 300 | 1536 |
+| Vocabulary | Fixed (2.2M in full GloVe; 20k in en_core_web_md) | BPE tokenizer, no OOV |
+| OOV handling | Zero vector | Subword tokens always covered |
+| Cost per embedding | Free (local) | $0.10 / 1M tokens (~$0.0001 per company record) |
+| Inference latency | ~1ms (CPU) | ~50ms (API round trip) |
+| Domain adaptation | None (general English) | None (general English) |
+| Context window | Document mean (no position) | 8,191 tokens, positional attention |
+
+On the MTEB leaderboard, newer open-source models like `bge-small-en-v1.5` (384-d) score higher than ada-002 at a fraction of the cost. `all-MiniLM-L6-v2` (384-d, 22M parameters) achieves ~14.7ms inference per 1K tokens on CPU — suitable for synchronous embedding at insert time. Both outperform GloVe on downstream retrieval tasks. The 300-d GloVe in en_core_web_md is the lowest-quality option among all reasonable choices.
+
+### 10.5 NRD as a business signal: what the data shows
+
+Daily NRD feeds (e.g., WhoisXML API NRD2) average **250,000+ newly added domains** per day across 7,596+ gTLDs and ccTLDs. After filtering to business-plausible TLDs (.com, .io, .co, country codes) and excluding obvious spam/phishing patterns (DGA-like strings, excessive hyphens), the addressable startup signal is roughly 2-5% of the daily volume, or 5,000-12,500 domains per day. The enrichment cost via Abstract API at ~$0.01/call would be $50-125/day — non-trivial at this scale.
+
+NRD data quality varies significantly by source:
+- **Zone file access** (direct from registries like Verisign for .com/.net): most authoritative, near-real-time, but requires registry agreements
+- **WHOIS aggregation** (WhoisXML API NRD2): 89% coverage growth in 2023, ~250k domains/day, includes WHOIS enrichment on premium tiers
+- **Certificate transparency logs** (crt.sh): captures domain activation (TLS cert issuance), not registration — 1-7 day lag but filters to actively-deployed domains
+- **DNS passive monitoring**: captures first DNS resolution, correlates strongly with actual business launch
+
+The cybersecurity literature on NRDs (Palo Alto, Stamus Networks) focuses on malicious use rather than startup detection, but the same temporal signal applies: domain registration patterns correlate with organizational formation events.
+
+### 10.6 What is actually ML vs. rules/heuristics
+
+| Component | ML? | What it actually is |
+|---|---|---|
+| SpaCy `en_core_web_md` vectors | Yes — pre-trained GloVe embeddings | Static 300-d GloVe lookup; no training in LeadsDB |
+| AstraDB vector similarity search | Yes — ANN graph index (JVector/HNSW) | Approximate nearest neighbor; the index is ML infrastructure, not a model |
+| OpenAI GPT-3.5 summarization | Yes — transformer LM | Used for unstructured text summarization; not trained on lead data |
+| Pinecone index | Dead code | Would be ANN over ada-002 embeddings if wired up |
+| NRD ingestion pipeline | No | Pure rule: domain → Abstract API → save |
+| Lead quality threshold (`if company_data:`) | No | Boolean null check |
+| Subscriber matching | Not implemented | Would be cosine similarity + SQL filter |
+
+**Bottom line:** LeadsDB contains exactly zero trained ML models. All "AI" components are either pre-trained general models (GloVe, GPT-3.5) applied without fine-tuning, or infrastructure (ANN index) that stores pre-computed vectors. No model is trained on lead data, no scoring function is learned, and no evaluation metrics exist.
+
+---
+
+## 11. Research Papers & Prior Art
+
+| Paper | Authors | Year | Venue | Relevance | Key Finding |
+|-------|---------|------|-------|-----------|-------------|
+| GloVe: Global Vectors for Word Representation | Pennington, Socher, Manning | 2014 | EMNLP | Exact embedding method used in en_core_web_md | Co-occurrence matrix factorization over Common Crawl; fixed vocabulary, no subword |
+| Breaking the Curse of Dimensionality: On the Stability of Modern Vector Retrieval | Braverman et al. | 2025 | arXiv 2512.12458 | Explains why mean pooling over JSON text destroys retrieval stability | Proves Chamfer distance preserves stability; average pooling destroys it; CoD activates at d>=32 |
+| COMPARATIVE ANALYSIS OF WORD EMBEDDINGS FOR CAPTURING WORD SIMILARITIES | Almeida, Xexéo | 2020 | arXiv 2005.03812 | GloVe vs Word2Vec vs FastText head-to-head | FastText+SIF outperforms GloVe on semantic similarity; GloVe worse than Word2Vec/FastText on downstream tasks |
+| Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks | Reimers, Gurevych | 2019 | EMNLP | Alternative to GloVe mean pooling for company description encoding | Contrastive training produces sentence-level embeddings that outperform mean-pooled GloVe by 15-30 points on STS benchmarks |
+| CEP-30: Approximate Nearest Neighbor Vector Search via Storage-Attached Indexes | Apache Cassandra Engineering | 2023 | Apache Cassandra Wiki | Technical spec for AstraDB's `$vector` field implementation | HNSW-family JVector algorithm; non-blocking concurrent index updates; higher recall than Lucene HNSW at write-heavy workloads |
+| DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node | Subramanya et al. | 2019 | NeurIPS | JVector (AstraDB's ANN algorithm) borrows Vamana from this paper | Vamana graph algorithm achieves high recall with SSD-backed storage; JVector merges this with HNSW hierarchical structure |
+| The relevance of lead prioritization: a B2B lead scoring model based on machine learning | Caro et al. | 2025 | Frontiers in AI | Benchmarks 15 classification algorithms on real B2B CRM data | Gradient Boosting Classifier achieves 98.39% accuracy; Random Forest consistently top-3 across studies |
+| Newly Registered Domains (NRD2) Coverage Analysis | WhoisXML API | 2024 | CircleID | NRD data quality baseline | 250K+ domains/day across 7,596+ TLDs; 89% coverage growth in 2023; automatic anomaly detection |
+
+**Annotation by paper:**
+
+**GloVe (2014):** The exact algorithm behind en_core_web_md's vectors. The model vocabulary is 20k (md model) vs 685k (lg model). For B2B company names, the md model will have high OOV rates. Replacing with a domain-adapted embedding (e.g., fine-tuning all-MiniLM-L6-v2 on company description pairs) would dramatically improve retrieval quality.
+
+**arXiv 2512.12458 (2025):** Directly contradicts the design choice in LeadsDB. Mean pooling over a JSON string violates the stability property required for reliable ANN retrieval. The theoretical guarantee only holds under Chamfer distance; using the mean as the AstraDB `$vector` means that two structurally similar companies (same industry, similar employee counts) may appear far apart in vector space due to JSON key token contamination.
+
+**arXiv 2005.03812 (2020):** Empirically confirms GloVe's weaknesses. FastText's character-level subword modeling handles OOV tokens (startup names, neologisms) that GloVe maps to zero. For a lead gen platform encoding company records, fastText-based embeddings or a subword-tokenized sentence transformer would outperform GloVe on company name similarity tasks.
+
+**SBERT (2019):** The correct replacement architecture. SBERT with mean pooling over a `[company_name] [industry] [description]` text field would produce 768-d embeddings with proper sentence-level semantics. The `all-MiniLM-L6-v2` distillation runs at ~14.7ms per 1K tokens on CPU — fast enough for synchronous embedding at insert time at NRD scale.
+
+**CEP-30 / DiskANN:** JVector's hybrid architecture (HNSW layers + Vamana intra-layer algorithm) explains why AstraDB performs better than vanilla HNSW at mixed read/write workloads. However, for a platform under 10M company records, pgvector's HNSW implementation (added in v0.5.0, 2023) provides >95% recall at comparable latency with no separate infrastructure. The operational simplicity argument for pgvector is compelling at prototype scale.
+
+**Frontiers in AI 2025:** The strongest evidence that a simple ML classifier (Gradient Boosting, Random Forest) on structured company features outperforms heuristic thresholds for lead prioritization. The feature set available at NRD ingestion time (domain age, company name tokens, country, industry, employee count, LinkedIn presence) is sufficient for a first-pass classifier trained on historical conversion data.

@@ -604,3 +604,125 @@ This maps directly to the existing `Multi-Model Routing` strategy in `OPTIMIZATI
 ---
 
 *Sources researched: GitHub `ScrapeGraphAI/Scrapegraph-ai`, PyPI `scrapegraphai`, `scrapegraphai.com`, `docs.scrapegraphai.com`, arxiv.org/abs/2602.15189 (ScrapeGraphAI-100k), source files fetched via GitHub API.*
+
+---
+
+## 10. Deep ML Analysis
+
+### 10.1 Fine-Tuning Pipeline (arxiv 2602.15189)
+
+The paper establishes a complete supervised fine-tuning pipeline on top of the ScrapeGraphAI-100k dataset. All details below come from the paper directly.
+
+**Base model:** `Qwen3-1.7B` (instruction-tuned variant). Comparisons were run against `Qwen3-4B` and a 30B baseline (model identity not named in paper).
+
+**Fine-tuning method:** QLoRA — 4-bit NF4 quantization of base weights (Dettmers et al. 2023, NeurIPS 2023) with LoRA adapters applied on top.
+
+**LoRA configuration:**
+| Parameter | Value |
+|---|---|
+| Rank (r) | 16 |
+| Target modules | All linear projections in attention and MLP blocks |
+| Training type | Completion-only (response tokens only; gradient not computed on system prompt or HTML input) |
+| Learning rate | 1×10⁻⁴ |
+| LR scheduler | Cosine decay |
+| Epochs | 2 |
+| Hardware | Single NVIDIA A100 80 GB |
+
+**Why completion-only training matters:** The gradient is computed exclusively on the assistant's output tokens (the JSON extraction result), not on the input (HTML content + schema + prompt). This stabilizes training significantly — the input distribution is extremely variable (different sites, schemas, languages) while the output structure is what the model must learn. The paper reports schema compliance improving from 0.7954 → 0.9167 (+15.1 pp absolute) using this approach.
+
+**Label generation:** A re-generation pass using `GPT-5-nano` was applied to the filtered training subset to ensure 100% label consistency before fine-tuning. This addresses the inherent noise in telemetry data (original responses were from various LLM providers at various quality levels).
+
+**Training data filtering criteria:**
+- Schema length ≤ 10,000 characters
+- Content length ≤ 50,000 characters
+- Response length ≤ 10,000 characters
+- Maximum 5 examples per unique SHA256-hashed schema
+- Each retained example must originate from a distinct root domain
+
+**Fine-tuning dataset split (HuggingFace: `scrapegraphai/scrapegraph-100k-finetuning`):**
+| Split | Rows |
+|---|---|
+| Train | 25,200 |
+| Test | 2,810 |
+
+The evaluation reported in the paper uses N=2,714 examples.
+
+### 10.2 Inference Configuration
+
+- **Engine:** vLLM with greedy decoding (temperature=0, no sampling randomness)
+- **Context window:** 8,192 tokens; examples exceeding this were excluded from evaluation
+- **Large content handling:** 4,096-token sliding window for content fields that would otherwise overflow the context limit
+
+### 10.3 Evaluation Methodology (Key F1 Computation)
+
+The Key F1 metric is computed on flattened JSON key-value pairs:
+
+1. Both predicted and ground-truth JSONs are flattened using dot-notation paths, with `[*]` wildcards for arrays (e.g., `products[*].price`)
+2. **Key Precision:** fraction of predicted keys that appear in ground truth
+3. **Key Recall:** fraction of ground-truth keys that appear in predictions
+4. **Key F1:** harmonic mean of precision and recall
+
+This is a structure-only metric — it ignores whether the extracted values are correct. The companion **Value Extraction** metric uses type-aware scoring:
+- Booleans/numbers: exact match
+- Arrays: set equality (order-insensitive)
+- Strings: sentence-level BLEU (Papineni et al. 2002)
+
+**Schema compliance** uses `jsonschema-rs` (Rust-native JSON Schema validator) to check: (a) JSON parseability and (b) full schema conformance against the provided JSON Schema.
+
+### 10.4 Embedding Models
+
+No embedding model is used in the ScrapeGraphAI-100k paper or the core `scrapegraphai` library. Deduplication in the dataset pipeline used SHA256 hashing of JSON schemas — not embedding-based similarity. The `DepthSearchGraph`'s RAGNode uses OpenAI `text-embedding-ada-002` (1,536-dim, cosine distance) via LangChain, but this is a runtime LLM API call, not a locally trained embedding model.
+
+The only community fine-tuned checkpoint publicly tagged `scrapegraphai` on HuggingFace as of this report date is `vinci00/llama-3-8b-Instruct-bnb-4bit-scrapegraph-companion` (Llama 3 8B, 4-bit BnB quantization, 310 downloads). The Qwen3-1.7B fine-tuned adapter from the paper was referenced but not yet publicly indexed at report time.
+
+### 10.5 Chunking Strategy (ParseNode)
+
+From source inspection of `scrapegraphai/nodes/parse_node.py`:
+
+| Mode | Chunk size formula | Reserve tokens |
+|---|---|---|
+| `html_mode=True` | `model_tokens - 250` | 250 |
+| `html_mode=False` | `min(model_tokens - 500, 0.8 × model_tokens)` | 500 |
+
+For the 4,096-token sliding window in the fine-tuning evaluation: overlap is not specified in the paper; the library's default `TEMPLATE_CHUNKS` pattern uses `RunnableParallel` with zero explicit overlap between chunks (each chunk is independent). The `TEMPLATE_MERGE` pass synthesizes results.
+
+### 10.6 Complexity Metrics (SLOT Framework)
+
+Dataset complexity metadata follows the SLOT framework (Wang et al. 2025, arXiv:2505.04016). Five metrics computed per example:
+1. **Schema depth** — maximum nesting level
+2. **Key count** — total number of leaf fields
+3. **Element count** — total JSON Schema elements (including nested `$defs`, `items`, etc.)
+4. **Cyclomatic complexity** — number of conditional branches in schema (anyOf, oneOf, if/then)
+5. **Composite complexity score** — weighted combination of above four
+
+The paper finds non-linear failure breakpoints: validation rates plateau around 95% for low-complexity schemas and drop sharply above specific complexity thresholds — consistent with the cliff behavior SLOT identifies in LLM structured output tasks.
+
+### 10.7 Language Identification
+
+Dataset language distribution uses `facebook/fasttext-language-identification` (Joulin et al. 2016) applied to the Markdown content field. Top 15 languages reported in Appendix C of the paper; the bulk is English with meaningful Italian, Dutch, German, and Spanish representation.
+
+---
+
+## 11. Research Papers & Prior Art
+
+| Paper | Authors | Year | Venue | Relevance | Key Finding |
+|---|---|---|---|---|---|
+| **ScrapeGraphAI-100k** (arXiv:2602.15189) | Brach, Zuppichini, Vinciguerra, Padoan | 2026 | arXiv | Primary paper; dataset + fine-tuning | QLoRA Qwen3-1.7B achieves Key F1=0.8866 vs 30B baseline 0.8915; schema compliance 79.5%→91.7% via completion-only training |
+| **QLoRA: Efficient Finetuning of Quantized LLMs** (arXiv:2305.14314) | Dettmers, Pagnoni, et al. | 2023 | NeurIPS 2023 | Foundation for ScrapeGraphAI fine-tuning | 4-bit NF4 quantization + LoRA enables 65B fine-tuning on single 48GB GPU; cited directly by 2602.15189 |
+| **SLOT: Structuring the Output of LLMs** (arXiv:2505.04016) | Wang, Shen, Mishra, et al. | 2025 | arXiv | Complexity taxonomy used in ScrapeGraphAI-100k | Fine-tuned Mistral-7B achieves 99.5% schema accuracy, 94.0% content similarity; Llama-3.2-1B matches larger proprietary models with SLOT post-processing |
+| **JSONSchemaBench** (arXiv:2501.10868) | Geng, Cooper, Moskal, et al. (EPFL + Microsoft) | 2025 | arXiv | Benchmark for structured output — cited in 2602.15189 | 10K real-world JSON schemas; Guidance shows highest empirical coverage; constrained decoding speeds generation by 50% |
+| **Leveraging LLMs for Web Scraping** (arXiv:2406.08246) | Ahluwalia, Wani | 2024 | arXiv | Direct prior art for ScrapeGraphAI approach | LLMs + RAG outperform rule-based scrapers; chunking and ranking algorithms are the key differentiator |
+| **AXE: Low-Cost Cross-Domain Web Structured Information Extraction** (arXiv:2602.01838) | Mansour, Alshaer, El-Saban | 2026 | arXiv | Competing approach; DOM tree pruning | 0.6B model achieves 88.10% F1 on SWDE, 86.95% on WebSRC via DOM pruning; 97.9% token reduction |
+| **Dripper** (arXiv:2511.23119) | Liu, Peng, Ning, et al. | 2025/2026 | arXiv | Competing approach; sequence labeling | Dripper-0.6B rivals DeepSeek-V3.2 and GPT-5 on WebMainBench (7,809 pages); 3.08 pages/sec on A100 |
+| **HtmlRAG** (arXiv:2411.02959) | Tan, Dou, Wang, et al. | 2025 | WWW 2025 | Cited in 2602.15189 for HTML-vs-plaintext trade-off | HTML preserves structural context (headings, tables); two-step block-tree pruning beats plain-text RAG on 6 QA datasets |
+| **PARSE: LLM Driven Schema Optimization** (arXiv:2510.08623) | Amazon Science | 2025 | EMNLP 2025 Industry | Schema optimization for entity extraction; competing paradigm | +64.7% extraction accuracy vs SOTA on SWDE by treating schemas as optimizable artifacts (ARCHITECT + SCOPE pipeline) |
+| **SWDE Benchmark** (Hao et al., SIGIR 2011) | Hao, Zhu, et al. | 2011 | SIGIR 2011 | Standard web extraction benchmark; used to compare AXE vs ScrapeGraphAI approach | 124,291 pages, 80 websites, 8 verticals — cross-site generalization gold standard |
+| **FineWeb Datasets** (arXiv, Penedo et al.) | Penedo et al. | 2024 | NeurIPS 2024 | Referenced for web corpora methodology in 2602.15189 | Large-scale web data curation techniques for pretraining |
+
+### Notes for ML Engineers Building Competing Systems
+
+**The fine-tuning recipe in one paragraph:** Filter 93k telemetry examples to ~28k high-quality instances (schema ≤10k chars, 1 example per domain per schema). Re-generate ground-truth outputs with a strong proprietary model (GPT-5-nano) for label quality. Fine-tune `Qwen3-1.7B` with QLoRA (r=16, 4-bit NF4, cosine LR=1e-4) for 2 epochs on a single A100-80GB. Use completion-only loss. Evaluate with Key F1 on dot-notation-flattened JSON keys + jsonschema-rs for compliance. Result: near-parity with a 30B model at 1/17th the parameter count.
+
+**The gap ScrapeGraphAI does not close:** AXE (2602.01838) achieves comparable F1 (88.10% on SWDE) with a 0.6B model using DOM-tree pruning — no fine-tuning required. Dripper-0.6B outperforms GPT-5 on main-content extraction at 3.08 pages/sec. The small-model fine-tuning bet is correct, but the competition is not standing still.
+
+**Schema compliance is the real bottleneck:** SLOT (2505.04016) shows that compact models match large proprietary models on structured output when equipped with a post-processing layer. ScrapeGraphAI's jump from 79.5%→91.7% schema compliance via completion-only fine-tuning suggests the remaining 8.3% failure rate is schema-complexity-dependent and targetable with harder training examples at the high-complexity tail.

@@ -974,3 +974,212 @@ This architecture uses crawl4ai as a pure extraction substrate. The B2B-specific
 ---
 
 *Sources: GitHub repo `unclecode/crawl4ai` (source inspection via GitHub API), CHANGELOG.md, requirements.txt, source files: `extraction_strategy.py`, `chunking_strategy.py`, `content_filter_strategy.py`, `markdown_generation_strategy.py`, `async_webcrawler.py`, `async_dispatcher.py`, `adaptive_crawler.py`, `deep_crawling/scorers.py`, `deep_crawling/filters.py`, `async_configs.py`, `config.py`, `prompts.py`, `antibot_detector.py`, `async_url_seeder.py`, `models.py`.*
+
+---
+
+## 10. Deep ML Analysis
+
+### 10.1 CosineStrategy: Embedding Model and Clustering Details
+
+The `CosineStrategy` is the only ML-native (non-LLM) extraction path in Crawl4AI. All parameters below are confirmed from `crawl4ai/extraction_strategy.py` source inspection and the v0.8.x documentation.
+
+**Embedding model (default):** `sentence-transformers/all-MiniLM-L6-v2`
+- Architecture: MiniLM-L6 (6-layer transformer), 22M parameters
+- Base: `nreimers/MiniLM-L6-H384-uncased` pretrained on 1B sentence pairs
+- Output dimensionality: **384 dimensions** (dense float32 vectors)
+- Inference: mean pooling over final hidden layer token embeddings
+- Multilingual alternative supported: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
+
+**Loading mechanism:** `load_HF_embedding_model(model_name)` returns `(tokenizer, model)` tuple. Embeddings are batch-processed via the model's `forward()` pass followed by mean pooling. No ONNX / quantized inference — pure PyTorch on whatever device is available (CPU default, GPU if `torch.cuda.is_available()`).
+
+**Full CosineStrategy `__init__` signature with defaults:**
+```python
+CosineStrategy(
+    semantic_filter=None,       # str: optional query for pre-filter
+    word_count_threshold=10,    # int: prune clusters with < N words
+    max_dist=0.2,               # float: cophenetic distance threshold for fcluster
+    linkage_method="ward",      # str: scipy linkage method
+    top_k=3,                    # int: keep top-K most relevant clusters
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    sim_threshold=0.3,          # float: cosine similarity cutoff for pre-filter
+    verbose=False
+)
+```
+
+**Clustering algorithm — step by step:**
+1. HTML split into block-level text segments
+2. If `semantic_filter` is set: cosine similarity computed between query embedding and each segment embedding; segments with cosine similarity < `sim_threshold` (default 0.3) are dropped
+3. Remaining segments embedded in batch
+4. `scipy.cluster.hierarchy.linkage(embeddings, method="ward")` — Ward linkage minimizes within-cluster variance using Euclidean distance in 384-dim embedding space (note: Ward linkage operates on Euclidean distances, not cosine, even though the pre-filter uses cosine)
+5. `scipy.cluster.hierarchy.fcluster(Z, t=max_dist, criterion="distance")` — flat clusters where cophenetic distance < `max_dist=0.2` are merged
+6. Clusters with word count < `word_count_threshold=10` pruned
+7. If `semantic_filter` provided: clusters ranked by average cosine similarity to query; `top_k=3` highest returned
+8. Multilabel NLP classifier assigns topic tags to each surviving cluster
+
+**Why Ward + cophenetic distance, not cosine threshold alone:** Ward linkage produces more compact, uniform-size clusters than single/complete/average linkage in high-dimensional embedding spaces. The `max_dist=0.2` cophenetic distance threshold in 384-dim Euclidean space is roughly equivalent to cosine similarity > 0.8 between cluster members — but this is not a hard equivalence; it depends on vector norms.
+
+**Dependencies required (not installed by default):**
+```bash
+pip install crawl4ai[torch,transformer]
+# Installs: torch, transformers, scikit-learn (~3GB)
+```
+
+### 10.2 BM25ContentFilter: Full Algorithm Specification
+
+Implemented in `crawl4ai/content_filter_strategy.py` using `rank-bm25` library (BM25Okapi variant).
+
+**Full `__init__` signature:**
+```python
+BM25ContentFilter(
+    user_query=None,       # str | None: falls back to page title/h1/meta
+    bm25_threshold=1.0,    # float: minimum adjusted BM25 score to keep chunk
+    use_stemming=True,     # bool: apply SnowballStemmer before BM25
+    language="english"     # str: SnowballStemmer language config
+)
+```
+
+**SnowballStemmer:** `snowballstemmer~=2.2` package. `stemmer(language)` instantiated on init where `language="english"` is the default. Supported languages follow Snowball's language list (English, French, German, Spanish, Dutch, Italian, Portuguese, etc.). When `use_stemming=True`, each tokenized query term and each chunk term is stemmed before BM25 scoring.
+
+**BM25 IDF formula:** Delegated to `rank_bm25.BM25Okapi`. The Okapi BM25 IDF formula is:
+```
+IDF(t) = log((N - df(t) + 0.5) / (df(t) + 0.5) + 1)
+```
+where N = total number of corpus documents (chunks), df(t) = number of chunks containing term t. The `+1` inside the log prevents negative IDF for very common terms. `rank-bm25` uses k1=1.5, b=0.75 defaults.
+
+**Tag weight multiplication table (exact values from source):**
+| HTML tag | Weight multiplier |
+|---|---|
+| `h1` | 5.0× |
+| `h2` | 4.0× |
+| `h3` | 3.0× |
+| `title` | 4.0× |
+| `strong` | 2.0× |
+| `blockquote` | 2.0× |
+| `code` | 2.0× |
+| `b` | 1.5× |
+| `em` | 1.5× |
+| `pre` | 1.5× |
+| `th` | 1.5× |
+| All other content tags | 1.0× |
+
+Formula: `adjusted_score = bm25_score × tag_weight`. Chunks where `adjusted_score >= bm25_threshold (1.0)` are retained.
+
+**`extract_text_chunks()` implementation:** DFS traversal using a `deque` as stack with a visited flag. Maintains a `current_text` accumulator for inline elements (`INLINE_TAGS`). At each block-level break tag, the accumulated text is flushed as a chunk. Chunk type is classified as `"header"` (for h1–h6, title) or `"content"` (everything else).
+
+**Deduplication algorithm:** Exact text matching. A `seen_texts: set[str]` tracks processed chunks. Iterates sorted candidates by score descending, keeps first occurrence of each unique text, preserves document order in final output. No cosine similarity or embedding-based dedup — purely deterministic string comparison.
+
+**Query auto-extraction fallback:** When `user_query=None`, the filter extracts the query from the page itself via: `<title>` tag → first `<h1>` → `meta[name=description]` content. This is important for production: on pages without a strong title (generic SPA roots, dashboards), the auto-extracted query degrades BM25 quality significantly.
+
+### 10.3 LLMExtractionStrategy: Chunking and Parallelism
+
+From `config.py` constants and `extraction_strategy.py`:
+
+| Constant | Default | Meaning |
+|---|---|---|
+| `CHUNK_TOKEN_THRESHOLD` | 2048 | Max tokens per chunk submitted to LLM |
+| `OVERLAP_RATE` | 0.1 | 10% overlap (≈204 tokens at 2048-token chunks) |
+| `WORD_TOKEN_RATE` | 1.3 | Estimated tokens-per-word ratio for chunk sizing |
+
+**Chunking logic:** Content is split into word arrays. Each chunk is `ceil(CHUNK_TOKEN_THRESHOLD / WORD_TOKEN_RATE) = ceil(2048/1.3) ≈ 1576 words`. Overlap is `floor(0.1 × 1576) ≈ 157 words`. At 1.3 words/token, a 50KB page (~8,000 words) produces approximately 5–6 chunks → 5–6 LLM calls per URL.
+
+**Parallelism:** `ThreadPoolExecutor(max_workers=4)` in the synchronous `run()` method. The async `arun()` uses `asyncio.gather()` for true async parallelism (no thread pool needed — LLM calls are network I/O). Groq provider is explicitly forced to sequential submission (no parallelism) due to rate limit sensitivity.
+
+**Prompt format:** Each chunk is wrapped in XML tags:
+```
+<url>{URL}</url>
+<html>{sanitized_chunk}</html>
+```
+The schema (if provided) is injected as a separate `<schema>` section. The system prompt instructs the LLM to return JSON only.
+
+**Response parsing fallback chain:**
+1. Try `json.loads(response)` directly
+2. If fails: split on `}{` and parse individual objects
+3. If fails: look for `<blocks>` XML tag and extract contents
+4. If all fail: log error and return empty result
+
+**Quality self-reflection:** The system prompt for schema-mode extraction includes:
+```
+Quality Score:
+After reflecting, score the quality and completeness of the JSON data
+you are about to return on a scale of 1 to 5. Write the score inside <score> tags.
+```
+The `<score>` tag is parsed and returned alongside extracted data. Callers can gate acceptance on `score >= 4`.
+
+### 10.4 AdaptiveCrawler: Statistical and Embedding Stopping Criteria
+
+Implemented in `crawl4ai/adaptive_crawler.py`. Three strategies with distinct mathematical approaches.
+
+**StatisticalStrategy formulas (from docs + source):**
+
+Coverage:
+```
+Coverage(K, Q) = Σ_{t ∈ Q} score(t, K) / |Q|
+score(t, K) = doc_coverage(t) × (1 + freq_boost(t))
+```
+where `doc_coverage(t)` = fraction of crawled documents containing term t, `freq_boost(t)` = logarithmic bonus for term frequency.
+
+Consistency: pairwise Jaccard similarity between crawled documents (normalized 0–1).
+
+Saturation: slope of new-terms-per-page history. When this slope flattens below `min_gain_threshold`, saturation is declared.
+
+Composite confidence: `0.4 × coverage + 0.3 × consistency + 0.3 × saturation`
+
+Stop condition: `confidence >= confidence_threshold` (default 0.7).
+
+**EmbeddingStrategy parameters (confirmed from `AdaptiveConfig` in source + docs):**
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `embedding_model` | `"sentence-transformers/all-MiniLM-L6-v2"` | Same checkpoint as CosineStrategy |
+| `embedding_coverage_radius` | 0.2 | Radius in embedding space for alpha shape coverage |
+| `embedding_k_exp` | 1.0 | Exponent for coverage weighting |
+| `embedding_nearest_weight` | 0.7 | Weight of nearest-neighbor embedding in coverage score |
+| `embedding_overlap_threshold` | 0.85 | Links with cosine similarity > 0.85 to existing KB are deprioritized (redundancy penalty) |
+| `embedding_min_relative_improvement` | 0.1 | Stop if confidence gain < 10% relative per crawl batch |
+
+**Alpha shape geometry:** Uses `alphashape>=1.3.1` + `shapely>=2.0.0`. The crawled page embeddings (384-dim, projected to 2D via UMAP or similar for geometry purposes — exact projection method not disclosed in docs) are used to compute an alpha shape: a generalization of convex hull that captures concave regions of the embedding cloud. Coverage is measured as the fraction of query embedding variants that fall within this alpha shape (i.e., "how much of the query space do we already cover?"). `embedding_coverage_radius=0.2` controls the alpha parameter — smaller values produce tighter shapes with holes; larger values approach convex hull.
+
+**Key limitation noted in existing report (section 8.2):** Alpha shape coverage calculation via `shapely` is O(n²) in the number of embedding dimensions. For >100 page crawls, the geometry computation dominates runtime (~50–200ms overhead per page on CPU). The O(n²) claim refers to the pairwise distance matrix needed to build the Delaunay triangulation underlying the alpha shape — standard computational geometry cost.
+
+**State persistence:** `CrawlState.save(path)` serializes `kb_embeddings` (numpy array) to JSON by converting to Python lists. `CrawlState.load(path)` restores the full state including embedding arrays for crash recovery (v0.8.0 feature).
+
+### 10.5 Version History of AI Features
+
+| Version | Date | ML Features Added |
+|---|---|---|
+| v0.3.x | 2024-05 | Initial release: LLMExtractionStrategy, CosineStrategy, basic BM25 |
+| v0.4.1 | 2024-12 | Async rewrite; efficiency improvements; no new ML features |
+| v0.6.0 | 2025-Q1 | Browser pool, MCP server, table extraction; `content_source` param for markdown generator (enables `fit_html` as input) |
+| v0.7.0 | 2025-Q2 | **AdaptiveCrawler introduced** (statistical + embedding + LLM strategies); EmbeddingStrategy with alpha shape geometry; RegexExtractionStrategy; query expansion via LLM in adaptive crawling |
+| v0.7.3 | 2025-Q3 | Per-URL `CrawlerRunConfig` matching in `arun_many()`; MemoryAdaptiveDispatcher; URL scoring with CompositeScorer |
+| v0.7.7 | 2025-Q4 | Self-hosting dashboard; MCP WebSocket endpoint |
+| v0.8.0 | 2026-Q1 | Crash recovery for AdaptiveCrawler (`resume_state`, `on_state_change`); deep crawl resume; prefetch mode (5–10x URL discovery speedup) |
+| v0.8.5 | 2026-03 | Anti-bot tier system (Akamai/Cloudflare/PerimeterX/DataDome detection); Shadow DOM flattening; patchright stealth |
+
+---
+
+## 11. Research Papers & Prior Art
+
+| Paper | Authors | Year | Venue | Relevance | Key Finding |
+|---|---|---|---|---|---|
+| **HtmlRAG: HTML is Better Than Plain Text** (arXiv:2411.02959) | Tan, Dou, Wang, et al. | 2025 | WWW 2025 | Foundational justification for Crawl4AI's HTML-first approach over plain-text | Two-step block-tree pruning + HTML-aware RAG outperforms plain-text extraction on 6 QA benchmarks; structural context (headings, tables) is non-trivially informative |
+| **AXE: Low-Cost Cross-Domain Web Extraction** (arXiv:2602.01838) | Mansour, Alshaer, El-Saban | 2026 | arXiv | Direct competing approach; DOM tree pruning vs. Crawl4AI's BM25 + LLM | 0.6B model achieves 88.10% F1 (SWDE), 86.95% (WebSRC) via DOM pruning; 97.9% token reduction — 20× smaller model than typical LLM extraction approaches |
+| **Dripper: Token-Efficient HTML Extraction** (arXiv:2511.23119) | Liu, Peng, Ning, et al. | 2025/2026 | arXiv | Competing approach using sequence labeling instead of LLM generation | Dripper-0.6B rivals DeepSeek-V3.2 and GPT-5 on WebMainBench (7,809 pages, 5,434 domains); 3.08 pages/sec on single A100; eliminates hallucination via constrained sequence labeling |
+| **PARSE: LLM Driven Schema Optimization** (arXiv:2510.08623) | Amazon Science | 2025 | EMNLP 2025 Industry | Competing paradigm: treat schemas as optimizable, not static contracts | +64.7% extraction accuracy vs SOTA on SWDE by iteratively refining schema definitions (ARCHITECT component) before extraction (SCOPE component) |
+| **ScrapeGraphAI-100k** (arXiv:2602.15189) | Brach, Zuppichini, et al. | 2026 | arXiv | Benchmark dataset applicable to evaluating Crawl4AI's LLMExtractionStrategy | Key F1 evaluation methodology (dot-notation flattening + jsonschema-rs validation) is directly applicable to benchmarking Crawl4AI's schema-mode extraction |
+| **SLOT: Structuring the Output of LLMs** (arXiv:2505.04016) | Wang, Shen, Mishra, et al. | 2025 | arXiv | Post-processing layer that could augment Crawl4AI's LLM extraction | Fine-tuned 1B model (Llama-3.2-1B + SLOT) matches proprietary models on schema compliance; applicable as a structured output correction layer on top of Crawl4AI's `<score>` self-reflection |
+| **JSONSchemaBench** (arXiv:2501.10868) | Geng, Cooper, et al. (EPFL + Microsoft) | 2025 | arXiv | Benchmark for constrained decoding — relevant to Crawl4AI's `force_json_response` and schema extraction | 10K real-world JSON schemas; Guidance achieves highest coverage; constrained decoding 50% faster than unconstrained; direct benchmark for `LLMExtractionStrategy` schema compliance |
+| **Leveraging LLMs for Web Scraping** (arXiv:2406.08246) | Ahluwalia, Wani | 2024 | arXiv | Early academic validation of Crawl4AI's approach | LLMs + effective chunking/ranking algorithms match specialized scrapers; identifies chunking quality as the primary differentiator |
+| **SWDE Benchmark** (Hao et al.) | Hao, Zhu, et al. | 2011 | SIGIR 2011 | Gold-standard cross-domain web extraction benchmark | 124,291 pages, 80 websites, 8 verticals; AXE achieves 88.10% F1 zero-shot — the threshold a competing Crawl4AI-based system should match |
+| **all-MiniLM-L6-v2** (reimers/nils-reimers, sbert.net) | Reimers, Gurevych | 2019 | EMNLP 2019 | The actual embedding checkpoint used in CosineStrategy and EmbeddingAdaptiveCrawler | 22M params, 384-dim, trained on 1B sentence pairs; 14,200 sentences/sec on GPU; standard benchmark: 68.4% on STS-b (Spearman) |
+| **BM25 Okapi** (Robertson et al.) | Robertson, Walker, et al. | 1994 | TREC 1994 | IDF formula underlying BM25ContentFilter | Probabilistic retrieval model with k1=1.5, b=0.75; still state-of-art for sparse retrieval in many domains |
+
+### Notes for ML Engineers Building Competing Systems
+
+**The embedding bottleneck is `all-MiniLM-L6-v2` on CPU.** At 22M parameters with 384-dim outputs, this model runs at ~50–200ms per page on CPU (batch size 1). On GPU (A100), throughput is ~14,200 sentences/sec. For high-volume pipelines, the sentence embedding call is the dominant CPU cost in CosineStrategy and EmbeddingAdaptiveCrawler. Replacing with `fastembed-rs` (ONNX-quantized, INT8) on CPU achieves 4,618 embeddings/sec (as documented in monorepo memory) — roughly 10–20× faster for the same checkpoint.
+
+**BM25ContentFilter is the highest-ROI component.** It runs entirely in Python with no GPU, no API calls, and no large model weights. The tag-weight table (h1=5.0, h2=4.0, strong=2.0) is a manually tuned heuristic that works well for company About/careers pages. A competing system could improve on this by learning tag weights from labeled web content (supervision signal: which HTML elements actually contain the information sought by a given query type).
+
+**The alpha shape geometry in EmbeddingAdaptiveCrawler is a research prototype.** Its O(n²) complexity and 50–200ms overhead per page makes it unsuitable for high-volume production crawling. The statistical strategy (pure BM25 + Jaccard) achieves comparable stopping quality without any GPU or geometry library, and is the recommended production path.
+
+**No academic paper evaluates Crawl4AI directly.** All papers above are prior art or competing approaches. Crawl4AI has not published a formal evaluation of its extraction accuracy against SWDE, WebSRC, or any other benchmark. This is a significant gap: the `<score>` self-assessment in LLM prompts is not a substitute for ground-truth evaluation.

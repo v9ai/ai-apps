@@ -859,3 +859,185 @@ This hybrid approach uses Firecrawl's managed service only for the hard cases (a
 - [Firecrawl Pricing Analysis (ScrapeGraphAI)](https://scrapegraphai.com/blog/firecrawl-pricing)
 - [Firecrawl Fast Scraping Docs](https://docs.firecrawl.dev/features/fast-scraping)
 - [Firecrawl YC Company Profile](https://www.ycombinator.com/companies/firecrawl)
+
+---
+
+## 10. Deep ML Analysis
+
+### 10.1 Spark Model Family — What Is Actually Known
+
+Firecrawl's Spark 1 models (Fast / Mini / Pro) are described as "purpose-built reasoning models optimized for web research and extraction tasks." Mendable has not disclosed base model identity, parameter counts, attention architecture, training corpus, or fine-tuning methodology. From public announcements and the v2.8.0 release notes, the following can be inferred with reasonable confidence:
+
+**Capability profile (from benchmarks and pricing structure):**
+
+| Model | Latency class | Recall on CrawlBench-style tasks | Credit cost | Intended input |
+|---|---|---|---|---|
+| Spark 1 Fast | Sub-second ("instant") | ~30% | 10 credits/cell | Cached/indexed well-structured pages |
+| Spark 1 Mini | Fast (seconds) | ~40% | ~60% less than Pro | Contact info, pricing, well-structured sites at volume |
+| Spark 1 Pro | Slower (multi-step) | ~50% | Standard | Complex multi-domain, ambiguous data, competitor analysis |
+
+The ~50% recall ceiling on complex tasks aligns with the general capability of 7–70B-parameter models fine-tuned on web extraction tasks relative to frontier API models (GPT-4o achieves similar ceilings without fine-tuning). The intelligent waterfall (Fast → Mini upgrade on failure) is a confidence-gated routing pattern — Fast attempts cache/index retrieval, and failure triggers a full agent call.
+
+**Training inference:** The "purpose-built" framing and the stated 60% cost advantage over comparable alternatives (Manus, Exa) implies distillation or fine-tuning of a smaller base model on web extraction datasets, rather than inference-time prompting of a large frontier model. A plausible architecture is a ~7–13B model fine-tuned on a mixture of:
+- Structured extraction pairs (URL + schema → JSON)
+- Web navigation trajectories (click sequences, form fills)
+- CrawlBench-style datasets as supervision signal
+
+No arxiv paper, model card, or training config has been published.
+
+### 10.2 CrawlBench — Exact Metric Definitions
+
+CrawlBench is the primary public eval Firecrawl uses. It is not on arxiv but is open-sourced.
+
+**CrawlBench-Easy:**
+- Source: Y Combinator top-50 company database
+- Size: 1,052 extraction data points
+- Ground truth: deterministic scrapers (not LLM-generated)
+- Metrics:
+  - **Exact match**: string equality after normalization; Firecrawl score = 920/1052 = **87.5%**
+  - **ROUGE-L**: longest common subsequence F1 against ground truth; Firecrawl = **93.7%**
+- The ROUGE gap above exact match (93.7% vs 87.5%) indicates partial credit for partially correct extractions — common for descriptions and long-form text fields
+
+**CrawlBench-Hard (MiniWoB-derived):**
+- Source: OpenAI MiniWoB (Mini World of Bits) 2017 benchmark
+- Two levels:
+  - **Level 0**: Extract the list of available automation task categories (structured enumeration task) — Firecrawl: 532/532 = **100%**
+  - **Level 1**: Extract specific task instructions (multi-step reasoning) — Firecrawl: 382/768 = **49.7%**
+- Combined: 914/1300 = **70.3%**
+- Scoring: binary field accuracy (correct vs. incorrect per extracted field)
+
+**Key finding from CrawlBench research:** Prompt engineering accounts for ~41-point improvement on average, vs ~6-point improvement from model upgrade (GPT-4o-mini → GPT-4o). Claude 3.5 Haiku improved 13.8 points over Claude 3 Haiku. This finding — that prompts dominate model choice — has direct architectural implications: Firecrawl's Spark models likely encode optimized prompt strategies as fine-tuned behavior rather than relying on larger base models.
+
+**Scrape-Evals (separate benchmark, 2025):**
+- F1 score combining precision (no junk/noise in output) and recall (no missing content)
+- ~100-word "core content" snippets vs. ~10-word "noise" snippets manually labeled per page
+- Evaluates scraper quality on diverse domains, forcing coverage of different JS frameworks, rendering patterns, and anti-bot strategies
+- Not an LLM extraction benchmark — evaluates the HTML→clean-text conversion quality before LLM step
+
+### 10.3 Turndown GFM Markdown Pipeline — Structure Preservation Analysis
+
+The conversion path is: **rendered HTML (Playwright) → Turndown JS → GFM plugin → markdown string**.
+
+**What is preserved:**
+- Headings (H1–H6 → `#` through `######`)
+- Ordered and unordered lists (including nesting)
+- Tables (`|` GFM format via `turndown-plugin-gfm` `tables` rule)
+- Code blocks (` ``` ` fenced, preserving language hint from `<code class="language-X">`)
+- Links (`[text](url)`) — relative URLs resolved to absolute by Firecrawl pre-processing
+- Bold/italic (standard markdown `**` and `_`)
+- Blockquotes (`>`)
+- Images (`![alt](src)`)
+
+**What is lost or degraded:**
+- Inline CSS styles (all presentation lost)
+- Complex `colspan`/`rowspan` table cells — Turndown's table rule collapses these to flat rows, dropping cell merges
+- `<pre>` blocks with embedded newlines — known bug: Turndown strips newlines inside `<pre>` unless patched
+- SVG/canvas elements — converted to `[image]` placeholder or dropped
+- Multi-column layouts — flattened to linear text in DOM order, which may not match visual reading order
+- Base64-encoded images — Firecrawl strips these in the HTML cleaning step (before Turndown) to save tokens
+- ARIA-only text (visually hidden but screen-reader accessible) — sometimes included, sometimes not, depending on how the LLM rendered the page
+
+**Token economy rationale:** HTML has 3–5× more tokens than equivalent markdown for the same semantic content. By converting before the LLM call, each context window holds proportionally more content, reducing API costs and enabling longer documents to fit in a single call.
+
+### 10.4 Rust Components — Exact Crates and Performance
+
+**`pdf-inspector` library (GitHub: `firecrawl/pdf-inspector`):**
+- **Rust crate used:** `lopdf` (PDF parsing/manipulation) — only external dependency
+- **Classification algorithm:** Scans content streams for PDF text operators (`Tj`, `TJ`) vs image operators (`Do`); no ML required — purely structural
+- **Output classes:** `TextBased`, `Scanned`, `ImageBased`, `Mixed`
+- **Scan strategies:** `EarlyExit` (default), `Full`, `Sample(n)`, `Pages(vec)`
+- **Performance:** ~10–50ms classification for 300-page PDFs by sampling content streams; full pipeline (detection + text extraction) under 200ms for text-based PDFs
+- **Heading detection:** Font-size ratio heuristics for H1–H4 (not ML); bold/italic via font flags
+- **Table detection:** Rectangle-based and heuristic; financial tables get token splitting
+- **Markdown output:** `to_markdown_from_items_with_rects()` — positional text items with bounding rects drive layout reconstruction
+
+**Link extraction (embedded Rust FFI in Node.js pipeline):**
+- Native Rust called via Node.js FFI (not a separate crate published to crates.io)
+- Replaces regex-based JS link extraction; handles malformed URLs, relative resolution, deduplication at native speed
+- Benchmarked internally at significantly faster than the JS equivalent (exact numbers not published)
+
+**PDF Parser v2 (public API):**
+- Three modes: `fast` (Rust text-only, <200ms), `auto` (fast first, OCR fallback), `ocr` (forced OCR for scanned docs)
+- Auto mode routes ~54% of PDFs through the fast path, avoiding OCR cost entirely
+- OCR fallback: external service (RunPod or similar), not Rust-native
+- Claimed throughput: 3× faster than previous JS-based parser (hardware and dataset not disclosed)
+
+### 10.5 The 8-Engine Waterfall — Selection Scoring Logic
+
+The scraping pipeline in `apps/api/src/scraper/scrapeURL/engines/index.ts` implements a scored fallback chain. Based on deep wiki analysis and public disclosures:
+
+**Engine ordering with quality scores:**
+
+| Rank | Engine | Base Quality Score | Conditions |
+|---|---|---|---|
+| 1 | Index / cache | 100 | Cache hit for this URL |
+| 2 | Fire-Engine Chrome CDP | 50 | Default, JS rendering needed |
+| 3 | Fire-Engine TLS Client (stealth) | 10 base → **60 with `TlsClientOk` verdict** | Domain history shows TLS client works; `__experimental_engpicker` feature flag enabled |
+| 4 | Fire-Engine Playwright | 50 | Playwright mode explicitly requested |
+| 5 | Local Playwright | 40 | Self-hosted fallback |
+| 6 | Fetch (plain HTTP) | 20 | Static pages, no JS |
+| 7 | PDF Engine | Conditional | URL ends in `.pdf` or content-type is PDF |
+| 8 | Document Engine | Conditional | DOCX/ODT/RTF content-type |
+
+**Domain verdict system:** Firecrawl caches per-domain scraping success/failure signals. When the TLS client engine (`fire-engine` with stealth HTTP2 fingerprint) previously succeeded on a domain (verdict = `TlsClientOk`), its score is boosted by 50 points (10 → 60), making it preferred over Chrome CDP (score 50). This is effectively a bandit-style routing policy based on domain-level empirical success rates rather than a trained ML model.
+
+**Fallback logic:** Engines are tried in descending score order. On failure (timeout, empty response, HTTP error), the next engine is attempted. The pipeline is sequential for a single request — parallelism happens at the job queue level (many requests, each going through its own waterfall).
+
+**Feature flag `__experimental_engpicker`:** Required to enable the domain-verdict-based score boosting. Without it, the TLS engine stays at base score 10.
+
+### 10.6 Anti-Bot Evasion — ML Component Assessment
+
+Firecrawl's stealth layer is proprietary (Fire-Engine). Based on public disclosures and the scraping/bot-detection literature:
+
+**What Fire-Engine almost certainly does (industry standard for stealth scrapers):**
+- TLS fingerprint rotation (JA3/JA4 profile switching) to avoid bot-detection based on TLS handshake signature
+- Browser fingerprint randomization: canvas, WebGL, font enumeration, navigator properties
+- Residential/datacenter proxy rotation (third-party network)
+- Human-like timing jitter on keystrokes, mouse movements, scroll events
+
+**What has no confirmed ML component:**
+- The domain verdict routing — this is rule-based (success/failure cache), not a trained model
+- Engine selection — score-based heuristics, not neural
+- Bot detection evasion — deterministic fingerprint spoofing, not adaptive ML
+
+**What could theoretically use ML but doesn't (publicly):**
+- Adaptive CAPTCHA solving: the industry uses external human-solving services (2Captcha, CapMonster) or classical image classifiers, not in-house deep learning
+- Bot challenge prediction: predicting which anti-bot service a site uses and selecting the best bypass strategy could be done with a small classifier trained on domain characteristics — this would be the natural ML addition, but Firecrawl has not disclosed it
+
+**Research context:** arXiv 2406.07647 ("FP-Inconsistent: Measurement and Analysis of Fingerprint Inconsistencies in Evasive Bot Traffic") shows that ML-based bot detection systems can identify TLS profiles that are "too random" or inconsistent with other signals, achieving 52.93% average evasion rate against DataDome and 44.56% against BotD across 20 bot services. Firecrawl's proprietary Fire-Engine is presumably engineered to fall in the successful-evasion tail of that distribution.
+
+### 10.7 Structured Extraction as an ML Problem
+
+Firecrawl's `/extract` and `/agent` endpoints are instances of **constrained structured generation**: given a markdown document and a JSON Schema, produce a JSON object that satisfies the schema and faithfully represents values from the document.
+
+The ML framing:
+- **Input space:** (markdown text, JSON Schema, optional natural language prompt)
+- **Output space:** JSON object satisfying the schema
+- **Supervision signal:** field-level exact match or ROUGE against ground truth (CrawlBench)
+- **Constraint enforcement:** OpenAI function calling / tool use forces schema-compliant output at generation time (grammar-constrained decoding)
+
+The Spark models operationalize this as a single forward pass (no search/retrieval at inference), which is why the Fast model can return in sub-second: it is a fine-tuned seq2seq call, not an agentic loop. The Mini and Pro models add iterative web navigation steps before the final extraction pass.
+
+**Token efficiency optimization:** Converting HTML to markdown before the extraction call reduces token count by 3–5×, which is functionally equivalent to extending the model's effective context window without changing model architecture.
+
+---
+
+## 11. Research Papers & Prior Art
+
+| Paper | Authors | Year | Venue | Relevance | Key Finding |
+|---|---|---|---|---|---|
+| [AXE: Low-Cost Cross-Domain Web Structured Information Extraction](https://arxiv.org/abs/2602.01838) | Anonymous | 2026 | arXiv | Direct prior art: DOM-tree pruning + small LLM for structured extraction — same problem as Firecrawl's `/extract` | 0.6B model with DOM pruning reaches 88.1% F1 on SWDE, beating much larger non-pruned alternatives; confirms Firecrawl's markdown-first approach is grounded in sound ML engineering |
+| [PARSE: LLM Driven Schema Optimization for Reliable Entity Extraction](https://arxiv.org/abs/2510.08623) | Amazon | 2025 | EMNLP Industry | Schema optimization for LLM extraction (ARCHITECT component) — directly relevant to Firecrawl's schema-as-tool-definition pattern | Up to 64.7% accuracy improvement on SWDE via schema optimization alone; SCOPE adds reflection-based guardrails; combined: ~10% improvement across SGD, SWDE, retail data |
+| [WebLists: Extracting Structured Information From Complex Interactive Websites](https://arxiv.org/abs/2504.12682) | Bardeen AI | 2025 | arXiv | Benchmark for structured extraction from interactive sites — comparable to Firecrawl's multi-URL `/extract` | BardeenAgent at 66% recall vs. 31% for SOTA web agents (3× improvement); CSS-selector programs reusable across structurally similar pages |
+| [ScrapeGraphAI-100k: A Large-Scale Dataset for LLM-Based Web Information Extraction](https://arxiv.org/abs/2602.15189) | ScrapeGraphAI | 2026 | arXiv | 93,695 real-world extraction events (URL→markdown→schema→JSON); fine-tuning 1.7B model narrows gap to 30B | Fine-tuned 1.7B closes gap to 30B baseline on extraction tasks; validates small-model fine-tuning as viable alternative to large API models for Firecrawl-style workloads |
+| [Evaluating Web Data Extraction with CrawlBench](https://www.firecrawl.dev/blog/crawlbench-llm-extraction) | Mendable/Firecrawl | 2024 | Blog (open benchmark) | Firecrawl's own benchmark — primary eval for Spark models | Prompt engineering is 7× more impactful than model selection; Claude 3.5 Haiku +13.8pts vs Claude 3 Haiku; custom prompt +41pts on average |
+| [An Illusion of Progress? Assessing the Current State of Web Agents](https://arxiv.org/abs/2504.01382) | Multiple | 2025 | arXiv | Critiques benchmark inflation in web agent research — directly relevant to interpreting Firecrawl's "98% accuracy" marketing claims | Most agents don't outperform SeeAct (2024); benchmark gaming common; live-website evals significantly harder than static benchmarks |
+| [FP-Inconsistent: Measurement and Analysis of Fingerprint Inconsistencies in Evasive Bot Traffic](https://arxiv.org/abs/2406.07647) | Multiple | 2024 | arXiv | ML-based bot detection; characterizes what stealth scrapers must defeat | 52.93% average evasion rate against DataDome; ML models detect "too-random" TLS profiles; behavioral analysis hardest layer to defeat |
+
+**Additional context on the MiniWoB dataset (source of CrawlBench-Hard):**
+
+MiniWoB (2017, OpenAI) is a suite of web interaction tasks ranging from clicking specific shapes to ordering food from menus. Using it as a hard extraction benchmark (rather than an interaction benchmark) is methodologically interesting: it tests whether an LLM can infer structured data about tasks it was never asked to execute — a proxy for understanding task semantics from documentation.
+
+**On the lack of a Firecrawl arxiv paper:**
+
+Firecrawl has published no peer-reviewed paper describing its architecture, training methodology, or systematic evaluation. All quantitative claims come from blog posts with undisclosed methodology. This is common for commercial API products but limits rigorous comparison with academic systems like AXE (88.1% F1 on SWDE with a 0.6B model) or BardeenAgent (66% recall on WebLists). An ML engineer should treat Firecrawl's stated "98% extraction accuracy" as a marketing claim until a reproducible eval methodology is published.
