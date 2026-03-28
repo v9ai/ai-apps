@@ -1018,3 +1018,108 @@ Built-in scorers:
 **On the LangChain → Vercel AI SDK migration:** This architectural shift mirrors a broader industry trend documented in the agent survey literature. LangChain's abstraction overhead was a recurring complaint in community benchmarks (latency ~50–150ms per LLM call added by the adapter chain). Vercel AI SDK's flat API reduces this to ~5ms overhead. For a lead enrichment pipeline processing thousands of companies, this 10–30× overhead reduction per LLM call compounds significantly.
 
 **On the eval methodology:** n8n's LLM-as-judge implementation (specifically using `claude-haiku-4-5` as judge) aligns with Zheng et al.'s (2023) recommendation to use the strongest available model as judge and to keep judge separate from agent. The regex-based score extraction from the judge's text is a known fragility — Zheng et al. recommend structured output (JSON schema) from the judge to avoid this. The n8n implementation would benefit from: `llm(prompt, { schema: z.object({ score: z.number().min(0).max(1), reasoning: z.string() }) })` instead of regex parsing.
+
+---
+
+## 12. Recency & Changelog
+
+### Latest Release
+
+**n8n@2.13.4 (stable) / n8n@2.14.2 (beta) — 2026-03-26**
+
+The stable channel is `2.13.x`; `2.14.x` is the pre-release/beta channel. Both ship on the same date. Key AI/ML changes across the last 90 days:
+
+| Version | Date | Key AI/agent/MCP change |
+|---------|------|------------------------|
+| 2.14.0 | 2026-03-24 | Fix MCP tool name extraction in AI Agent Node; AWS Bedrock ARN region extraction; expressions in Chat Hub tool default values; new MCP tools: `search_projects`, `search_folders`, `get_execution` filter params, `(un)publish workflow`; AI workflow builder setup wizard; Agent custom tracing metadata |
+| 2.13.0 | 2026-03-16 | Chat Hub on workflow canvas; LM Studio OpenAI-compatible endpoint support for Chat Hub; MongoDB Vector Store singleton → per-execution client (memory leak fix); MCP `validate_workflow` schema warnings fixed; MCP webhook ID resolution on workflow create/update; Agent custom tracing metadata; ai-builder web-fetch tool |
+| 2.12.0 | 2026-03-09 | Chat Node new behaviour: return chat message instead of raw input data when not waiting; MCP DCR RFC 9727/8414 compliance; MCP `(un)publish workflow` tools; MCP full execution data tool; Chat Hub suggested prompts for Personal Agents |
+| 2.11.0 | 2026-03-03 | Chat Trigger Node: suggested prompts (shown on Chat Hub); Chat Hub streaming enabled on canvas; ai-builder: diff/changes list, session persistence across page refreshes; `Add ai-node-sdk package` (internal scaffolding); Ask + Build merged into unified multi-agent chat experience |
+| 2.10.0 | 2026-02-23 | Fix orphaned tool messages in AI Agent memory after buffer window slides; fix AI Agent `intermediateSteps` serialization; Anthropic Chat Model: gateway error enrichment + empty model guard; Azure OpenAI: disable Responses API for GPT-5.2 compatibility; Guardrails Node validation improvements; MCP queue mode + multi-main support; evaluation run cancellation |
+| 2.9.0 | 2026-02-16 | ai-builder: code-base workflow builder (build entire workflows from code descriptions); single-node AI Agent execution (run tool agents without sub-workflow wiring); OpenRouter tool call fix for empty arguments; EmbeddingsOpenAI dimensions/encoding options fix; Chat Memory Manager: per-item expression resolution; ai-builder: planning mode |
+| 2.8.0 | 2026-02-11 | Chat Hub: image explanation by AI models; MCP queue/multi-main; memory abstractions in AI utilities SDK; ai-builder: Workflow Context Tools for on-demand data fetching, planning mode, node parameter validation; Claude Opus 4.6 priority in Chat Hub model selector; `Motorhead` memory node hidden (deprecated) |
+
+**Release cadence:** approximately one minor release per week (7 minor versions in 90 days), with patch backports to the stable channel within days.
+
+### @n8n/agents SDK Status
+
+**Still at v0.1.0 — no new published version as of 2026-03-28.**
+
+Confirmed via npm registry: `@n8n/agents` has exactly one published version (`0.1.0`). The package is described as "AI agent SDK for n8n's code-first execution engine." Its declared dependencies are:
+
+```
+@ai-sdk/anthropic, @ai-sdk/google, @ai-sdk/openai, @ai-sdk/xai
+@ai-sdk/provider-utils, @modelcontextprotocol/sdk, ai, pg, @libsql/client, ajv, zod
+```
+
+The internal `packages/@n8n/agents` directory in the repo continues to receive commits — there is active work on the package (the 2026-02-11 `2.10.0` merge `Add ai-node-sdk package` introduced a companion `@n8n/ai-node-sdk` for community node authoring, distinct from `@n8n/agents`). However no follow-on semver bump to `0.2.0` or `1.0.0` has been published.
+
+**Assessment:** The SDK is still early-access / experimental. Using `v0.1.0` in production carries API stability risk. n8n has not committed to a stable API surface for external consumers. The `@n8n/ai-node-sdk` package (introduced 2026-02-11, separate from `@n8n/agents`) targets community node authors; it does not replace `@n8n/agents` for programmatic agent development.
+
+### New AI Nodes (last 90 days)
+
+**No new root-level AI nodes shipped to the visual canvas in the last 90 days.** Feature work was concentrated on:
+
+- **Chat Hub** (new UI surface, not a new node): a unified conversational interface surfaced from `Chat Trigger` + `AI Agent` + Chat Hub backend. Landed in 2.8.0–2.11.0. Enables image explanation, suggested prompts, streaming on canvas, and Personal Agent selection.
+- **MCP standalone Client Node** (shipped before the 90-day window, but OAuth support for it landed in this period): MCP Client can now authenticate to OAuth-protected MCP servers.
+- **Microsoft Agent 365 Trigger Node** (MCP tool logs fix in 2.13.0 and 2.14.0): this node existed before the window but received active maintenance.
+- **`ai-node-sdk` scaffolding** (2026-02-11, 2.10.0): internal package to support community AI node authoring with standardized metadata fields.
+- **Guardrails Node**: improvements to validation logic in 2.10.0. The node itself predates the window.
+
+**No new vector store nodes, embedding nodes, or memory backends were added** in this period. MongoDB Vector Store received a critical bug fix (singleton → per-execution client) in 2.13.0.
+
+### MCP Integration Updates
+
+Significant MCP development in the last 90 days:
+
+- **2.14.0**: Fixed `AI Agent Node` MCP tool name extraction bug (tool names were being incorrectly extracted from MCP tool call results — a correctness bug, not just UX). Stopped auto-applying credentials for updated MCP workflows. New MCP tools: `search_projects`, `search_folders`, `get_execution` (with filtering), `create_workflow` (folderId param).
+- **2.13.0**: Fixed `validate_workflow` MCP tool output schema warnings. Fixed MCP webhook ID resolution during workflow create/update.
+- **2.12.0**: Added `(un)publish workflow` tools to MCP. Added a separate MCP tool for full execution data (previously mixed with partial data). RFC 9727/8414 compliance for MCP Dynamic Client Registration.
+- **2.11.0**: Updated existing MCP tools (scope/content improvements).
+- **2.10.0**: MCP queue mode + multi-main support (MCP Trigger now works in horizontally-scaled deployments). Fix for tool wrapper nodes without `supplyData` in queue mode.
+- **2.9.0**: Fixed MCP toggle in workflow settings (UI bug).
+- **2.8.0**: MCP DCR base URL path fix.
+
+**Summary:** MCP is under heavy active development. The MCP server surface (n8n as an MCP server callable by Claude/Cursor/etc.) is being expanded with new tools on every minor release. The MCP client integration (consuming external MCP servers from within n8n workflows) also received OAuth support. This is the fastest-moving subsystem in n8n's AI stack right now.
+
+### License Changes
+
+**No changes to the Sustainable Use License in the last 90 days.** The license remains at v1.0 (published 2022-03-17). Key terms unchanged:
+
+- Internal business use: permitted without payment.
+- Building a competing product on top of n8n (SaaS, white-label): prohibited.
+- Commercial consulting/services *using* n8n: permitted.
+- Enterprise features (`.ee.` files): require paid enterprise license.
+
+The `@n8n/agents` package does not declare its own `LICENSE` field in `package.json`; it inherits the repository's Sustainable Use License. This means programmatically importing `@n8n/agents` into an external product that competes with n8n is restricted under the same terms.
+
+**No indication of a planned license change.** Community discussions about the SUL are ongoing but n8n has shown no movement toward a more permissive license (e.g., Apache 2.0 or MIT) for core packages.
+
+### Breaking Changes
+
+No hard breaking changes to the public AI workflow API in the last 90 days. Noteworthy behavior changes:
+
+- **Chat Node default behavior changed (2.12.0):** When a Chat Node is not waiting for user input, it now returns the chat message object instead of the raw input data. Existing workflows that read `$node["Chat"].json` downstream may see different field names.
+- **MongoDB Vector Store** (2.13.0): Switched from singleton to per-execution client. Workflows relying on shared state across executions via MongoDB will break (this was always a bug, not a feature, but code that depended on it will need review).
+- **Motorhead memory node** (2.8.0): Hidden from the UI. Motorhead (the external managed LLM memory service) is effectively deprecated in n8n. Migrate to `PostgresChatMemory` or `RedisChatMemory`.
+- **Azure OpenAI** (2.10.0): Responses API disabled for GPT-5.2 compatibility. Workflows targeting Azure OpenAI GPT-5.2 may need to re-verify their API mode settings.
+- **`ai-utilities` peer dependency change** (2.11.0): `n8n-workflow` is now a peer dependency in `@n8n/ai-utilities`. This is an internal packaging change unlikely to affect end users, but matters if you import `@n8n/ai-utilities` directly.
+
+### Staleness Assessment
+
+**n8n is not stale. AI feature velocity is high and accelerating.**
+
+Evidence from the last 90 days:
+- 7 minor releases (roughly weekly cadence)
+- MCP tools expanded on every minor release — n8n is betting heavily on MCP as the integration layer for the agentic ecosystem
+- Chat Hub (the "Instance AI" feature) shipped and iterated to production quality across 6 minor versions
+- AI Builder (natural-language workflow generation) shipped planning mode, code-base builder, and Ask+Build unification — this is a direct competitor to GitHub Copilot for workflow automation
+- `@n8n/agents` SDK still at v0.1.0 but internal development continues; companion `@n8n/ai-node-sdk` introduced for community node authors
+
+**For 2026 orchestration choice:**
+
+n8n remains a strong choice *for the integration layer* (SaaS connectors, webhook triggers, visual debugging). Its MCP-as-server positioning is unique and genuinely valuable: exposing your n8n workflows as MCP tools lets any MCP-capable client (Claude Code, Cursor, etc.) invoke your lead-gen pipeline endpoints.
+
+However, for the core AI pipeline (enrichment, scoring, contact discovery), the recommendation from Section 9.1 still holds: **do not use n8n's visual layer for the ML-intensive hot path.** Use `@n8n/agents` SDK directly (Vercel AI SDK underneath) or your own Vercel AI SDK service. The SDK is `v0.1.0` with no stability guarantees, so vendor-pin the version and write adapter isolation.
+
+The LangChain → Vercel AI SDK migration visible in n8n's own codebase validates the direction already taken in this platform's `src/agents/` implementation. n8n is following the same path you are — this is corroborating evidence, not a reason to switch orchestrators.
