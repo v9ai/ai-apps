@@ -11,6 +11,7 @@ const T = {
       "Budget allocation €300 — family room, 5 nights. Three tiers for 2 adults + 1 child.",
     recommended: "RECOMMENDED",
     mlLabel: "Family ML",
+    hotelsLabel: "Properties in this tier",
     tiers: [
       {
         tier: "Budget",
@@ -22,6 +23,11 @@ const T = {
           "Private family room (double + extra bed for child), basic amenities, central location",
         goodFor: "Families on a tight budget — frees €50 for extra experiences",
         mlScore: 72,
+        hotels: [
+          { name: "B&B Spaccanapoli", area: "Centro Storico", price: "€45 / night", note: "Family room with extra bed for child" },
+          { name: "A' Puteca di Napoli", area: "Quartieri Spagnoli", price: "€48 / night", note: "Family-run, quiet courtyard" },
+          { name: "Napoli Centrale Rooms", area: "Piazza Garibaldi", price: "€52 / night", note: "Triple room, steps from Circumvesuviana" },
+        ],
       },
       {
         tier: "Mid-Range",
@@ -34,6 +40,11 @@ const T = {
         goodFor:
           "Families — comfortable family room, safe neighbourhood, good transport links",
         mlScore: 91,
+        hotels: [
+          { name: "Hotel Piazza Bellini", area: "Centro Storico", price: "€68 / night", note: "Courtyard garden, family rooms available" },
+          { name: "Hotel de Charme Toledo", area: "Via Toledo", price: "€65 / night", note: "Connecting rooms, central location" },
+          { name: "Costantinopoli 104", area: "Centro Storico", price: "€72 / night", note: "Liberty villa with pool, child-friendly" },
+        ],
       },
       {
         tier: "Comfort",
@@ -46,6 +57,11 @@ const T = {
         goodFor:
           "Families wanting full comfort — extra space for a child, premium seafront location",
         mlScore: 85,
+        hotels: [
+          { name: "Grand Hotel Vesuvio", area: "Lungomare", price: "€145 / night", note: "Iconic seafront, junior suites" },
+          { name: "Hotel Santa Lucia", area: "Lungomare", price: "€130 / night", note: "Bay view family suites" },
+          { name: "Romeo Hotel", area: "Porto", price: "€155 / night", note: "Design hotel, Michelin restaurant on-site" },
+        ],
       },
     ],
     neighbourhoodsLabel: "Neighbourhood Guide",
@@ -85,6 +101,7 @@ const T = {
       "Buget alocat €300 — camera de familie, 5 nopti. Trei niveluri pentru 2 adulti + 1 copil.",
     recommended: "RECOMANDAT",
     mlLabel: "ML Familie",
+    hotelsLabel: "Proprietăți în acest nivel",
     tiers: [
       {
         tier: "Buget",
@@ -97,6 +114,11 @@ const T = {
         goodFor:
           "Familii cu buget redus — elibereaza €50 pentru experiente suplimentare",
         mlScore: 72,
+        hotels: [
+          { name: "B&B Spaccanapoli", area: "Centro Storico", price: "€45 / noapte", note: "Camera de familie cu pat suplimentar" },
+          { name: "A' Puteca di Napoli", area: "Quartieri Spagnoli", price: "€48 / noapte", note: "Condus de familie, curte interioara linistita" },
+          { name: "Napoli Centrale Rooms", area: "Piazza Garibaldi", price: "€52 / noapte", note: "Camera tripla, langa Circumvesuviana" },
+        ],
       },
       {
         tier: "Mediu",
@@ -109,6 +131,11 @@ const T = {
         goodFor:
           "Familii — camera confortabila, cartier sigur, legaturi bune cu transportul",
         mlScore: 91,
+        hotels: [
+          { name: "Hotel Piazza Bellini", area: "Centro Storico", price: "€68 / noapte", note: "Curte cu gradina, camere de familie" },
+          { name: "Hotel de Charme Toledo", area: "Via Toledo", price: "€65 / noapte", note: "Camere comunicante, locatie centrala" },
+          { name: "Costantinopoli 104", area: "Centro Storico", price: "€72 / noapte", note: "Vila Liberty cu piscina, prietenos cu copiii" },
+        ],
       },
       {
         tier: "Confort",
@@ -121,6 +148,11 @@ const T = {
         goodFor:
           "Familii care vor confort total — spatiu suplimentar pentru copil, locatie premium la malul marii",
         mlScore: 85,
+        hotels: [
+          { name: "Grand Hotel Vesuvio", area: "Lungomare", price: "€145 / noapte", note: "Iconic la malul marii, junior suites" },
+          { name: "Hotel Santa Lucia", area: "Lungomare", price: "€130 / noapte", note: "Suites de familie cu vedere la golf" },
+          { name: "Romeo Hotel", area: "Porto", price: "€155 / noapte", note: "Hotel de design, restaurant Michelin" },
+        ],
       },
     ],
     neighbourhoodsLabel: "Ghid de Cartiere",
@@ -375,6 +407,97 @@ export function SleepGuide() {
                   isRecommended={isRecommended}
                 />
               </dl>
+
+              {/* Hotel list divider */}
+              <div
+                className={css({
+                  h: "1px",
+                  bg: isRecommended ? "amber.warm" : "steel.border",
+                  opacity: isRecommended ? 0.3 : 0.6,
+                })}
+              />
+
+              {/* Named hotels */}
+              <div>
+                <p
+                  className={css({
+                    fontSize: "2xs",
+                    fontFamily: "display",
+                    fontWeight: "700",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "text.faint",
+                    mb: "3",
+                  })}
+                >
+                  {t.hotelsLabel}
+                </p>
+                <div
+                  className={css({
+                    display: "flex",
+                    flexDir: "column",
+                    gap: "3",
+                  })}
+                >
+                  {tier.hotels.map((hotel) => (
+                    <div
+                      key={hotel.name}
+                      className={css({
+                        bg: "steel.raised",
+                        border: "1px solid",
+                        borderColor: isRecommended ? "rgba(201,146,42,0.15)" : "steel.border",
+                        rounded: "md",
+                        px: "3",
+                        py: "2.5",
+                      })}
+                    >
+                      <div
+                        className={css({
+                          display: "flex",
+                          alignItems: "baseline",
+                          justifyContent: "space-between",
+                          gap: "2",
+                          mb: "0.5",
+                        })}
+                      >
+                        <p
+                          className={css({
+                            fontSize: "xs",
+                            fontWeight: "700",
+                            fontFamily: "display",
+                            color: isRecommended ? "text.primary" : "text.secondary",
+                            lineHeight: "1.3",
+                          })}
+                        >
+                          {hotel.name}
+                        </p>
+                        <span
+                          className={css({
+                            flexShrink: "0",
+                            fontSize: "2xs",
+                            fontWeight: "700",
+                            fontFamily: "display",
+                            color: isRecommended ? "amber.warm" : "text.muted",
+                            whiteSpace: "nowrap",
+                          })}
+                        >
+                          {hotel.price}
+                        </span>
+                      </div>
+                      <p
+                        className={css({
+                          fontSize: "2xs",
+                          color: "text.faint",
+                          fontFamily: "display",
+                          letterSpacing: "0.02em",
+                        })}
+                      >
+                        {hotel.area} · {hotel.note}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           );
         })}
