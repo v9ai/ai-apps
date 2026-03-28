@@ -69,6 +69,22 @@ function prettyUrl(raw?: string | null): string {
   return raw.trim().replace(/^https?:\/\//i, "").replace(/\/+$/g, "");
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+  PRODUCT: "blue",
+  CONSULTANCY: "violet",
+  AGENCY: "amber",
+  STAFFING: "green",
+  DIRECTORY: "cyan",
+  OTHER: "gray",
+  UNKNOWN: "gray",
+};
+
+function scoreColor(score?: number | null): "green" | "amber" | "red" | "gray" {
+  if (score == null || !Number.isFinite(score)) return "gray";
+  if (score >= 0.7) return "green";
+  if (score >= 0.4) return "amber";
+  return "red";
+}
 
 function SectionCard({
   title,
@@ -217,6 +233,63 @@ function CollapsibleList({
         </Box>
       )}
     </Box>
+  );
+}
+
+function CompanyAvatar({
+  name,
+  logoUrl,
+  size = 52,
+}: {
+  name: string;
+  logoUrl?: string | null;
+  size?: number;
+}) {
+  const initials = name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
+
+  if (logoUrl) {
+    return (
+      <Box
+        style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          overflow: "hidden",
+          border: "1px solid var(--gray-4)",
+          flexShrink: 0,
+        }}
+      >
+        <img
+          src={logoUrl}
+          alt={name}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      </Box>
+    );
+  }
+
+  return (
+    <Flex
+      align="center"
+      justify="center"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: "var(--accent-3)",
+        border: "1px solid var(--accent-6)",
+        flexShrink: 0,
+      }}
+    >
+      <Text size="2" weight="bold" style={{ color: "var(--accent-11)" }}>
+        {initials}
+      </Text>
+    </Flex>
   );
 }
 
@@ -1035,6 +1108,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           justify="between"
         >
           <Flex gap="4" align="start" style={{ flex: 1, minWidth: 0 }}>
+            <CompanyAvatar name={company.name} logoUrl={company.logo_url} />
             <Box style={{ flex: 1, minWidth: 0 }}>
               <Heading size="8" style={{ lineHeight: 1.1 }}>
                 {company.name}
@@ -1067,12 +1141,45 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   </Flex>
                 )}
 
+                {company.linkedin_url && (
+                  <Flex align="center" gap="2">
+                    <RadixLink
+                      href={coerceExternalUrl(company.linkedin_url) ?? ""}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      color="gray"
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                    >
+                      <Text size="2">LinkedIn</Text>
+                      <ExternalLinkIcon />
+                    </RadixLink>
+                  </Flex>
+                )}
+
               </Flex>
 
               <Flex gap="2" wrap="wrap" mt="3">
-                {company.category ? <Chip>{company.category}</Chip> : null}
+                {company.category ? (
+                  <Badge
+                    color={CATEGORY_COLORS[company.category] as "blue" | "violet" | "amber" | "green" | "cyan" | "gray" ?? "gray"}
+                    variant="soft"
+                    radius="full"
+                  >
+                    {company.category}
+                  </Badge>
+                ) : null}
                 {company.size ? <Chip>{company.size}</Chip> : null}
                 {company.location ? <Chip>{company.location}</Chip> : null}
+                {isAdmin && company.score != null && (
+                  <Badge
+                    color={scoreColor(company.score)}
+                    variant="soft"
+                    radius="full"
+                    style={{ fontVariantNumeric: "tabular-nums" }}
+                  >
+                    ★ {company.score.toFixed(2)}
+                  </Badge>
+                )}
               </Flex>
             </Box>
           </Flex>
