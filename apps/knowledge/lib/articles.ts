@@ -119,7 +119,7 @@ const LESSON_SLUGS = [
   "langgraph-red-teaming",
   "llamaindex",
   "ai-engineer-roadmap",
-  // Cloud Platforms (72-80)
+  // Cloud Platforms (72-81)
   "aws",
   "azure",
   "gcp",
@@ -129,7 +129,8 @@ const LESSON_SLUGS = [
   "aws-iam-security",
   "aws-api-gateway-networking",
   "aws-compute-containers",
-  // Software Engineering (81-86)
+  "aws-storage-s3",
+  // Software Engineering (82-87)
   "microservices",
   "ci-cd",
   "nodejs",
