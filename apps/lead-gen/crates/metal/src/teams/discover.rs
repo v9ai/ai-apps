@@ -250,8 +250,8 @@ fn score_icp(text: &str, tech_signals: &[String]) -> f64 {
     // Tech stack depth (0-25)
     score += (tech_signals.len().min(8) as f64 / 8.0) * 25.0;
 
-    // Remote/EU signals (0-20)
-    let geo_keywords = ["remote", "europe", "eu ", "berlin", "amsterdam", "london", "paris", "distributed"];
+    // Remote/distributed signals (0-20)
+    let geo_keywords = ["remote", "work from anywhere", "distributed", "async", "worldwide", "global", "remote-first", "fully remote"];
     let geo_hits = geo_keywords.iter().filter(|kw| lower.contains(**kw)).count();
     score += (geo_hits.min(3) as f64 / 3.0) * 20.0;
 
