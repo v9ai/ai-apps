@@ -40,12 +40,11 @@ def main():
 @main.command()
 @click.option("--limit", "-l", default=50, show_default=True, help="Max jobs per phase")
 def process(limit: int):
-    """Run the full 4-phase job processing pipeline.
+    """Run the full 3-phase job processing pipeline.
 
-    Phase 1: ATS Enhancement (fetch from Greenhouse/Lever/Ashby APIs)
+    Phase 1: Enhancement (new -> enhanced)
     Phase 2: Role Tagging (heuristic + DeepSeek)
-    Phase 3: EU Classification (heuristic + DeepSeek)
-    Phase 4: Skill Extraction (DeepSeek)
+    Phase 3: Skill Extraction (DeepSeek)
     """
     from src.graphs.process_jobs import build_process_jobs_graph
 
@@ -157,7 +156,7 @@ def janitor():
 @main.command()
 @click.option("--limit", "-l", default=500, show_default=True, help="Max stale sources to process")
 def ingest(limit: int):
-    """Ingest jobs from ATS APIs for stale sources + aggregators.
+    """Ingest jobs from job boards for stale sources + aggregators.
 
     Ported from workers/insert-jobs.ts (cron + queue).
     """
@@ -185,10 +184,10 @@ def ingest(limit: int):
 @main.command()
 @click.option("--provider", "-p", default="ashby",
               type=click.Choice(["ashby", "greenhouse", "workable", "lever"]),
-              show_default=True, help="ATS provider to crawl")
+              show_default=True, help="Job board provider to crawl")
 @click.option("--pages", default=3, show_default=True, help="CDX pages per run")
 def crawl(provider: str, pages: int):
-    """Crawl Common Crawl CDX to discover ATS job boards.
+    """Crawl Common Crawl CDX to discover job boards.
 
     Ported from workers/ashby-crawler (Rust/WASM).
     """

@@ -44,9 +44,3 @@ export const companySnapshotsRelations = relations(companySnapshots, ({one}) => 
 	}),
 }));
 
-export const atsBoardsRelations = relations(atsBoards, ({one}) => ({
-	company: one(companies, {
-		fields: [atsBoards.companyId],
-		references: [companies.id]
-	}),
-}));

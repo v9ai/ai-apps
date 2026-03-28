@@ -79,16 +79,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   UNKNOWN: "gray",
 };
 
-const VENDOR_COLORS: Record<string, string> = {
-  GREENHOUSE: "green",
-  LEVER: "blue",
-  WORKABLE: "purple",
-  ASHBY: "orange",
-  TEAMTAILOR: "cyan",
-  WORKDAY: "amber",
-  ICIMS: "indigo",
-  SMARTRECRUITERS: "violet",
-};
 
 function scoreColor(score?: number | null): "green" | "amber" | "red" | "gray" {
   if (score == null || !Number.isFinite(score)) return "gray";
@@ -1386,52 +1376,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                         </SectionCard>
                       ) : null}
 
-                      {company.ats_boards?.length ? (
-                        <SectionCard title="Hiring Platforms">
-                          <Flex direction="column" gap="3">
-                            {company.ats_boards.map((board) => (
-                              <Flex key={board.id} align="center" gap="2" wrap="wrap">
-                                <Badge
-                                  color={(VENDOR_COLORS[board.vendor] ?? "gray") as any}
-                                  variant="soft"
-                                  radius="full"
-                                >
-                                  {board.vendor}
-                                </Badge>
-                                <Badge color="gray" variant="surface" radius="full">
-                                  {board.board_type}
-                                </Badge>
-                                <RadixLink
-                                  href={coerceExternalUrl(board.url) ?? board.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  size="2"
-                                  style={{
-                                    flex: 1,
-                                    minWidth: 0,
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                >
-                                  {board.url}
-                                  <ExternalLinkIcon style={{ marginLeft: 4, flexShrink: 0 }} />
-                                </RadixLink>
-                                {board.is_active ? (
-                                  <Badge color="green" variant="soft">active</Badge>
-                                ) : (
-                                  <Badge color="gray" variant="soft">inactive</Badge>
-                                )}
-                                {isAdmin && (
-                                  <Text size="1" color="gray">
-                                    ({Math.round(board.confidence * 100)}%)
-                                  </Text>
-                                )}
-                              </Flex>
-                            ))}
-                          </Flex>
-                        </SectionCard>
-                      ) : null}
                     </Flex>
                   </Box>
 

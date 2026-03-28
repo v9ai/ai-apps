@@ -70,7 +70,7 @@ reasoning_metric = GEval(
     name="Discovery Classification Reasoning",
     criteria=(
         "The reasons list must logically justify the is_ai_company and "
-        "is_fully_remote verdicts based on website content and ATS evidence. "
+        "is_fully_remote verdicts based on website content. "
         "Reasons should reference concrete signals."
     ),
     evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],

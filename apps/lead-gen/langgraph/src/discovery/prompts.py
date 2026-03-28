@@ -3,11 +3,10 @@ QUERY_GENERATION_PROMPT = """You are an expert recruiter specializing in fully r
 Given the seed topics below, generate 5-8 diverse web search queries designed to discover companies that:
 - Build AI/ML as their core product (foundation models, LLM APIs, MLOps, vector DBs, AI agents, AI infrastructure)
 - Hire fully remote engineers in the EU or worldwide
-- Have active job boards (Greenhouse, Lever, or Ashby ATS platforms)
 
 Vary your queries across these strategies:
 - Direct company discovery ("remote AI startups hiring engineers Europe")
-- ATS-specific ("site:boards.greenhouse.io AI remote")
+- Job board queries ("site:boards.greenhouse.io AI remote")
 - Directory/list queries ("YC batch 2024 AI companies remote")
 - Role-specific ("senior ML engineer fully remote EU hiring")
 - Ecosystem queries ("European AI companies Series A B remote-first")
@@ -69,7 +68,6 @@ def build_classification_messages(
     name: str,
     domain: str,
     website_snippet: str,
-    ats_evidence: str,
 ) -> list[dict]:
     from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -77,10 +75,7 @@ def build_classification_messages(
 Domain: {domain}
 
 Website content:
-{website_snippet[:3000]}
-
-ATS board evidence:
-{ats_evidence or "No ATS boards detected"}"""
+{website_snippet[:3000]}"""
 
     return [
         SystemMessage(content=COMPANY_CLASSIFICATION_PROMPT),
