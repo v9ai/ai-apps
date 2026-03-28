@@ -63,6 +63,27 @@ const T = {
     budget: "Bugetul Călătoriei",
     budgetTag: "€1.000 · 5 zile",
     backLink: "\u2190 \u00cenapoiuri la Napoli",
+    budgetPlanner: "Planificator Buget",
+    budgetSubtitle: "€1.000 · 2 Adulți + 1 Copil · 7 Nopți",
+    budgetNote: "Alocări calculate de optimizatorul ML Candle (travel-ml). Toate costurile 2026.",
+    budgetCategories: [
+      { label: "Cazare",        detail: "7 nopți × €80 / cameră familială", amount: 560 },
+      { label: "Mâncare",       detail: "7 zile × €30 / street food + pizza", amount: 210 },
+      { label: "Obiective",     detail: "Muzeu €30 · Subteran €20 · Certosa €12 · Pompei €33", amount: 95 },
+      { label: "Transport",     detail: "Artecard metro × 3 + funicel + Circumvesuviana", amount: 65 },
+      { label: "Rezervă",       detail: "Înghețată, diverse, suveniruri artizanale", amount: 70 },
+    ],
+    itineraryTitle: "Itinerar 7 Zile",
+    itinerarySubtitle: "Optimizat ML pentru limitele de energie ale copilului și buget",
+    itinerary: [
+      { day: 1, theme: "Promenada & Castel",  places: ["Piazza del Plebiscito", "Castel dell'Ovo", "Lungomare Caracciolo"], cost: 7,  kidFriendly: true,  energy: "low",         tip: "Zi ușoară. Înghețată la apus pe faleză." },
+      { day: 2, theme: "Inima Istorică",      places: ["Spaccanapoli", "Via San Gregorio Armeno", "L'Antica Pizzeria da Michele"], cost: 21, kidFriendly: true, energy: "medium",     tip: "Pornești de la Gesù Nuovo, mergi spre est. Pizza la deschidere (11:00)." },
+      { day: 3, theme: "Cultură & Street Food", places: ["Museo Archeologico Nazionale", "Quartieri Spagnoli"], cost: 54, kidFriendly: false, energy: "medium-high", tip: "Mozaicurile muzeului pentru copii. Street food după-amiaza în Cartierele Spaniole." },
+      { day: 4, theme: "Napoli Subterană",    places: ["Napoli Sotterranea"], cost: 20, kidFriendly: false, energy: "low-medium", tip: "Părinții alternează turul. Rezervă cel mai devreme tur în engleză." },
+      { day: 5, theme: "Dealul Vomero",       places: ["Certosa di San Martino"], cost: 12, kidFriendly: false, energy: "medium", tip: "Funicel de la Via Toledo — copiii adoră. Coboară prin Chiaia." },
+      { day: 6, theme: "Excursie Pompei",     places: ["Pompei"], cost: 32, kidFriendly: true,  energy: "high",  tip: "Circumvesuviana de la Napoli Centrale (30 min). Copii sub 17 ani gratuit." },
+      { day: 7, theme: "Zi liberă & Rămas-bun", places: ["Lungomare Caracciolo"], cost: 15, kidFriendly: true,  energy: "low",  tip: "Dimineață lentă. Pizza finală. Înghețată la Mergellina înainte de plecare." },
+    ],
     familyTitle: "Călătorie cu un Copil",
     familySubtitle: "Scor ML pentru prietenie cu copiii · 2 adulți + 1 copil · Napoli 2026",
     familyBudget: "Buget de familie",
@@ -115,6 +136,27 @@ const T = {
     budget: "Trip Budget",
     budgetTag: "€1,000 · 5 days",
     backLink: "\u2190 Back to Home",
+    budgetPlanner: "Budget Planner",
+    budgetSubtitle: "€1,000 · 2 Adults + 1 Child · 7 Nights",
+    budgetNote: "Allocations computed by Candle ML budget optimizer (travel-ml). All costs 2026.",
+    budgetCategories: [
+      { label: "Accommodation", detail: "7 nights × €80 / family room", amount: 560 },
+      { label: "Food & Drink",  detail: "7 days × €30 / street food + pizza", amount: 210 },
+      { label: "Sightseeing",   detail: "Museum €30 · Sotterranea €20 · Certosa €12 · Pompeii €33", amount: 95 },
+      { label: "Transport",     detail: "Metro artecard × 3 + funicular + Circumvesuviana", amount: 65 },
+      { label: "Buffer",        detail: "Gelato, incidentals, artisan souvenirs", amount: 70 },
+    ],
+    itineraryTitle: "7-Day Itinerary",
+    itinerarySubtitle: "ML-optimised for kid energy limits and budget fit",
+    itinerary: [
+      { day: 1, theme: "Seafront & Castle",    places: ["Piazza del Plebiscito", "Castel dell'Ovo", "Lungomare Caracciolo"], cost: 7,  kidFriendly: true,  energy: "low",         tip: "Start gently. Gelato at sunset on the seafront." },
+      { day: 2, theme: "Historic Heart",       places: ["Spaccanapoli", "Via San Gregorio Armeno", "L'Antica Pizzeria da Michele"], cost: 21, kidFriendly: true, energy: "medium",     tip: "Start at Gesù Nuovo, walk east. Pizza at opening (11:00)." },
+      { day: 3, theme: "Culture & Street Food", places: ["Museo Archeologico Nazionale", "Quartieri Spagnoli"], cost: 54, kidFriendly: false, energy: "medium-high", tip: "Museum mosaics for kids. Street food afternoon in Quartieri." },
+      { day: 4, theme: "Underground Naples",   places: ["Napoli Sotterranea"], cost: 20, kidFriendly: false, energy: "low-medium", tip: "Parents alternate the underground tour. Book the earliest English slot." },
+      { day: 5, theme: "Vomero Hilltop",       places: ["Certosa di San Martino"], cost: 12, kidFriendly: false, energy: "medium", tip: "Funicolare up from Via Toledo — kids love the ride. Return through Chiaia." },
+      { day: 6, theme: "Pompeii Day Trip",     places: ["Pompeii"], cost: 32, kidFriendly: true,  energy: "high",  tip: "Circumvesuviana from Napoli Centrale (30 min). Kids under 17 free." },
+      { day: 7, theme: "Leisure & Farewell",   places: ["Lungomare Caracciolo"], cost: 15, kidFriendly: true,  energy: "low",  tip: "Slow morning. Final pizza. Gelato at Mergellina for the journey home." },
+    ],
     familyTitle: "Traveling with a Child",
     familySubtitle: "ML-scored kid-friendliness · 2 adults + 1 child · Napoli 2026",
     familyBudget: "Family trip budget",
@@ -363,6 +405,77 @@ export function NapoliPageContent() {
             <HotelPicks hotels={curatedHotels} lang={lang} />
           </section>
         )}
+
+        {/* ── Budget Planner ──────────────────────────────────────── */}
+        <section
+          className={css({
+            maxW: "5xl",
+            mx: "auto",
+            mb: { base: "16", md: "20" },
+            animation: "fadeUp 0.6s ease-out 0.12s both",
+          })}
+        >
+          <div className={css({ display: "flex", alignItems: "baseline", gap: "4", mb: "8" })}>
+            <h2 className={css({ fontSize: "h2", fontWeight: "700", fontFamily: "display", color: "text.primary", letterSpacing: "h2", lineHeight: "h2" })}>
+              {t.budgetPlanner}
+            </h2>
+            <span className={css({ flex: "1", height: "1px", bg: "steel.border", display: { base: "none", md: "block" } })} />
+          </div>
+
+          {/* Subtitle pill */}
+          <p className={css({ fontSize: "body", color: "text.secondary", lineHeight: "body", mb: "8" })}>
+            {t.budgetSubtitle}
+          </p>
+
+          {/* Budget category cards */}
+          <div className={css({ display: "grid", gap: { base: "3", md: "4" }, gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, mb: "6" })}>
+            {t.budgetCategories.map((cat, i) => (
+              <div
+                key={i}
+                className={css({
+                  bg: "steel.surface",
+                  border: "1px solid",
+                  borderColor: "steel.border",
+                  rounded: "card",
+                  p: { base: "4", md: "5" },
+                  boxShadow: "card",
+                  position: "relative",
+                  overflow: "hidden",
+                  transition: "border-color 0.15s ease",
+                  _hover: { borderColor: "steel.borderHover" },
+                })}
+              >
+                <div className={css({ position: "absolute", top: "0", left: "0", right: "0", h: "2px", bg: "linear-gradient(90deg, token(colors.amber.warm), transparent)" })} />
+                <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: "2" })}>
+                  <p className={css({ fontSize: "label", fontWeight: "700", fontFamily: "display", color: "text.primary", letterSpacing: "label", textTransform: "uppercase" })}>
+                    {cat.label}
+                  </p>
+                  <p className={css({ fontSize: "lg", fontWeight: "800", fontFamily: "display", color: "amber.warm", letterSpacing: "-0.02em" })}>
+                    €{cat.amount}
+                  </p>
+                </div>
+                <p className={css({ fontSize: "xs", color: "text.muted", lineHeight: "1.5" })}>
+                  {cat.detail}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Total row */}
+          <div className={css({ bg: "steel.surface", border: "1px solid", borderColor: "steel.border", rounded: "card", p: { base: "5", md: "6" }, boxShadow: "card", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "3" })}>
+            <div>
+              <p className={css({ fontSize: "label", fontWeight: "600", fontFamily: "display", color: "amber.warm", letterSpacing: "label", textTransform: "uppercase", mb: "1" })}>
+                {lang === "ro" ? "Total estimat" : "Total estimated"}
+              </p>
+              <p className={css({ fontSize: "xs", color: "text.muted" })}>
+                {t.budgetNote}
+              </p>
+            </div>
+            <p className={css({ fontSize: "3xl", fontWeight: "800", fontFamily: "display", color: "text.primary", letterSpacing: "-0.03em" })}>
+              €{t.budgetCategories.reduce((s, c) => s + c.amount, 0).toLocaleString()}
+            </p>
+          </div>
+        </section>
 
         {/* ── Trip Budget ─────────────────────────────────── */}
         <section
@@ -878,6 +991,105 @@ export function NapoliPageContent() {
                 </li>
               ))}
             </ul>
+          </div>
+        </section>
+
+        {/* ── 7-Day Itinerary ──────────────────────────────────────── */}
+        <section
+          className={css({
+            maxW: "5xl",
+            mx: "auto",
+            mb: { base: "16", md: "20" },
+            animation: "fadeUp 0.6s ease-out 0.22s both",
+          })}
+        >
+          <div className={css({ display: "flex", alignItems: "baseline", gap: "4", mb: "4" })}>
+            <h2 className={css({ fontSize: "h2", fontWeight: "700", fontFamily: "display", color: "text.primary", letterSpacing: "h2", lineHeight: "h2" })}>
+              {t.itineraryTitle}
+            </h2>
+            <span className={css({ flex: "1", height: "1px", bg: "steel.border", display: { base: "none", md: "block" } })} />
+          </div>
+
+          <p className={css({ fontSize: "body", color: "text.secondary", lineHeight: "body", mb: "8" })}>
+            {t.itinerarySubtitle}
+          </p>
+
+          <div className={css({ display: "flex", flexDirection: "column", gap: { base: "3", md: "4" } })}>
+            {t.itinerary.map((day) => {
+              const energyColor = day.energy === "low" ? "#5A7A5C" : day.energy === "high" || day.energy === "medium-high" ? "#B55C3A" : "#8C6E4A";
+              return (
+                <div
+                  key={day.day}
+                  className={css({
+                    bg: "steel.surface",
+                    border: "1px solid",
+                    borderColor: "steel.border",
+                    rounded: "card",
+                    p: { base: "4", md: "6" },
+                    boxShadow: "card",
+                    position: "relative",
+                    overflow: "hidden",
+                    transition: "border-color 0.15s ease",
+                    _hover: { borderColor: "steel.borderHover" },
+                  })}
+                >
+                  {/* Day number accent */}
+                  <div
+                    className={css({ position: "absolute", top: "0", left: "0", bottom: "0", w: "3px" })}
+                    style={{ background: day.kidFriendly ? "#5A7A5C" : "#8C6E4A" }}
+                  />
+
+                  <div className={css({ pl: { base: "4", md: "5" }, display: "flex", flexDirection: { base: "column", md: "row" }, gap: { base: "3", md: "6" }, alignItems: { md: "flex-start" } })}>
+                    {/* Day number + theme */}
+                    <div className={css({ flexShrink: "0", minW: { md: "160px" } })}>
+                      <div className={css({ display: "flex", alignItems: "center", gap: "2", mb: "1" })}>
+                        <span className={css({ fontSize: "2xs", fontWeight: "800", fontFamily: "display", color: "amber.warm", letterSpacing: "0.1em", textTransform: "uppercase" })}>
+                          Day {day.day}
+                        </span>
+                        {day.kidFriendly && (
+                          <span className={css({ fontSize: "2xs", fontWeight: "700", fontFamily: "display", rounded: "pill", px: "2", py: "0.5", bg: "rgba(90,122,92,0.15)", color: "cat.nature", border: "1px solid rgba(90,122,92,0.3)", textTransform: "uppercase", letterSpacing: "0.06em" })}>
+                            ◈ Kids
+                          </span>
+                        )}
+                      </div>
+                      <p className={css({ fontSize: "body", fontWeight: "700", fontFamily: "display", color: "text.primary", lineHeight: "1.3" })}>
+                        {day.theme}
+                      </p>
+                    </div>
+
+                    {/* Places + meta */}
+                    <div className={css({ flex: "1", minW: "0" })}>
+                      <div className={css({ display: "flex", flexWrap: "wrap", gap: "1.5", mb: "3" })}>
+                        {day.places.map((place) => (
+                          <span
+                            key={place}
+                            className={css({ fontSize: "xs", fontWeight: "600", fontFamily: "display", rounded: "pill", px: "2.5", py: "1", bg: "rgba(255,255,255,0.04)", border: "1px solid", borderColor: "steel.border", color: "text.secondary" })}
+                          >
+                            {place}
+                          </span>
+                        ))}
+                      </div>
+
+                      <p className={css({ fontSize: "xs", color: "text.secondary", lineHeight: "1.6", mb: "3" })}>
+                        {day.tip}
+                      </p>
+
+                      <div className={css({ display: "flex", alignItems: "center", gap: "3", flexWrap: "wrap" })}>
+                        <span className={css({ fontSize: "xs", fontWeight: "700", fontFamily: "display", color: "amber.warm" })}>
+                          ~€{day.cost}
+                        </span>
+                        <span
+                          className={css({ fontSize: "2xs", fontWeight: "700", fontFamily: "display", rounded: "pill", px: "2", py: "0.5", textTransform: "uppercase", letterSpacing: "0.06em" })}
+                          style={{ color: energyColor, background: `${energyColor}18`, border: `1px solid ${energyColor}33` }}
+                        >
+                          {day.energy} energy
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 

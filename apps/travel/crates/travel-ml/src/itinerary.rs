@@ -409,7 +409,7 @@ pub fn napoli_simple_day_plan() -> DayPlan {
 // ── Multi-day planning ────────────────────────────────────────────────────
 
 use crate::constants::{
-    KID_ENERGY_LIMIT, MAX_DAILY_WALKING_HOURS, MAX_KID_PLACES_PER_DAY, STAY_DAYS,
+    MAX_DAILY_WALKING_HOURS, MAX_KID_PLACES_PER_DAY, STAY_DAYS,
 };
 
 /// A plan spanning multiple days, each modelled as a [`DayPlan`].
