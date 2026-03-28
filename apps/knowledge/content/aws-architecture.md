@@ -92,7 +92,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - DNS: [Route 53](/aws/api-gateway-networking) with health checks for automated failover; private hosted zones for internal service discovery
 
 **Workload Architecture**
-- Loose coupling: replace synchronous calls with async queues (SQS) or events (EventBridge) where latency allows
+- Loose coupling: replace synchronous calls with async queues (SQS) or events (EventBridge) where latency allows — see [Messaging & Events](/aws-messaging-events) for SQS/SNS/EventBridge patterns
 - Stateless services: store session state in [ElastiCache (Redis)](/aws/dynamodb-data-services) or [DynamoDB](/aws/dynamodb-data-services), not on instance; enables any-instance routing
 - Idempotency: design all operations to be safely retried; use idempotency tokens (SQS message deduplication, DynamoDB conditional writes)
 - Graceful degradation: circuit breakers, bulkheads, fallback responses when dependencies fail
@@ -291,7 +291,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Orchestration-based Saga**
 - Central orchestrator (Step Functions State Machine) calls each service in sequence; handles compensating transactions on failure
-- AWS Step Functions: ideal orchestrator; visual workflow, built-in retry/catch, supports Express Workflows (high volume, async)
+- AWS [Step Functions](/aws-step-functions): ideal orchestrator; visual workflow, built-in retry/catch, supports Express Workflows (high volume, async)
 - Pattern: Step Function calls [Lambda](/aws/lambda-serverless) for each service step; on failure, runs compensating Lambdas in reverse order
 
 ```
@@ -514,7 +514,7 @@ StepFunction: PlaceOrderSaga
 
 ## 7. Observability Stack
 
-> Related: [Lambda & Serverless](/aws/lambda-serverless) for Lambda-specific observability (PowerTools, structured logging); [EC2, ECS & Containers](/aws/compute-containers) for container metrics and ADOT sidecar patterns.
+> Related: [Lambda & Serverless](/aws/lambda-serverless) for Lambda-specific observability (PowerTools, structured logging); [EC2, ECS & Containers](/aws/compute-containers) for container metrics and ADOT sidecar patterns. See also [Observability](/aws-observability) for the full dedicated deep-dive.
 
 ### CloudWatch Metrics
 - Namespaces: `AWS/EC2`, `AWS/Lambda`, `AWS/RDS`, or custom (`MyApp/Orders`)
@@ -884,6 +884,239 @@ A: SCPs flow down the hierarchy (root → OU → account) and are evaluated as a
 
 **Q: Design a cost-optimized data processing pipeline that runs nightly.**
 A: Use Spot Instances for compute — nightly batch is fault-tolerant, schedule is flexible, Spot interruption is recoverable with checkpointing. Architecture: EventBridge Scheduler triggers Step Functions at midnight. Step Function launches EMR cluster (Spot instance fleet with instance diversification) or ECS Fargate Spot tasks. Input data in S3 (Intelligent-Tiering). Results written back to S3. EMR or ECS terminates after job completes — no idle capacity. Estimated savings vs on-demand EC2 running 24/7: 80–90%. Additional: use S3 Lifecycle to transition inputs to IA after 30 days, Glacier after 90 days. Tag all resources with `Project` and `CostCenter` for attribution.
+
+---
+
+## Serverless Architecture Patterns Catalog
+
+### Pattern 1: Fan-Out (Broadcast to Multiple Consumers)
+```
+API Gateway → Lambda (publisher)
+                  ↓
+               SNS Topic
+              /    |    \
+        Lambda  Lambda  SQS Queue
+        (email) (SMS)   → Lambda (async)
+```
+Use case: User registration triggers email, SMS, and async enrichment in parallel.
+Key design: SNS subscription filter policies so each consumer only processes relevant events. See [Messaging & Events](/aws-messaging-events) for SNS/SQS deep-dive.
+
+### Pattern 2: Scatter-Gather (Parallel Queries → Aggregate)
+```
+API Request → Lambda (orchestrator)
+                  ↓ parallel invocations
+           ┌──Lambda A──┐
+           │            │
+           ├──Lambda B──┤ → Lambda (aggregator)
+           │            │
+           └──Lambda C──┘
+```
+Implementation in [Step Functions](/aws-step-functions): `Parallel` state type; all branches complete before aggregation.
+Use case: Price comparison API — query 5 suppliers in parallel, return cheapest.
+
+### Pattern 3: Claim-Check (Large Payload Handling)
+```
+Publisher → S3 (store large payload) → SNS/SQS (send S3 key only)
+                                           ↓
+                                        Consumer → S3 (retrieve payload)
+```
+Why: SQS/SNS have 256 KB payload limits; S3 objects up to 5 TB.
+Implementation: publisher writes to S3, sends `s3://bucket/key` as the event payload; consumer fetches from S3 on receipt.
+
+### Pattern 4: Saga (Distributed Transaction Compensation)
+```
+Step Functions Workflow:
+1. Reserve Inventory  → SUCCESS
+2. Charge Payment     → FAILURE
+   ↓ (Catch: PaymentFailed)
+3. Release Inventory  ← compensation step
+4. Notify Customer    ← compensation step
+5. Fail workflow
+```
+Key: each forward step has a corresponding compensation step. Compensation steps must be idempotent.
+Compare: Choreography-based Saga (each service listens for events and compensates independently) vs Orchestration-based Saga ([Step Functions](/aws-step-functions) coordinates).
+
+### Pattern 5: Competing Consumers (Work Queue)
+```
+High-volume events → SQS Standard Queue
+                          ↓
+               Lambda (auto-scales to consume)
+               (N concurrent Lambdas competing for messages)
+```
+Key settings:
+- `BatchSize`: 10-100 messages per invocation
+- `MaximumConcurrency`: cap on Lambda concurrency (protect downstream DB)
+- `BisectBatchOnFunctionError`: true — isolate poison pills
+- `ReportBatchItemFailures`: partial failure support
+
+### Pattern 6: Inbox/Outbox for Reliability
+```
+Outbox Pattern (write atomically to DB + outbox):
+  Application → DynamoDB (item + outbox record in same transaction)
+                              ↓ DynamoDB Streams
+                          Lambda → EventBridge → consumers
+
+Inbox Pattern (idempotent processing):
+  SQS message → Lambda checks DynamoDB idempotency table
+                  → already processed? Return. New? Process + mark.
+```
+Why Outbox: prevents "wrote to DB but failed to publish event" dual-write problem.
+Why Inbox: prevents duplicate processing of SQS at-least-once delivery.
+
+---
+
+## CQRS + Event Sourcing on AWS
+
+### CQRS — Command Query Responsibility Segregation
+```
+Write Path:
+  POST /orders → Lambda (Command Handler)
+                      ↓
+                 DynamoDB (write model: normalized, append-only)
+                      ↓ DynamoDB Streams
+                 Lambda (Projection) → DynamoDB (read model: denormalized, query-optimized)
+                                    → OpenSearch (full-text search)
+                                    → ElastiCache (hot read cache)
+
+Read Path:
+  GET /orders/search → Lambda → OpenSearch
+  GET /orders/{id}   → Lambda → DynamoDB read model (or ElastiCache)
+```
+
+Benefit: read model is optimized for query patterns; write model is optimized for integrity; scale read/write independently.
+
+### Event Sourcing
+Instead of storing current state, store every event that led to current state:
+```
+Events table (append-only):
+  orderId | version | eventType      | eventData
+  ord-1   | 1       | OrderCreated   | {customerId, items, total}
+  ord-1   | 2       | PaymentCharged | {amount, transactionId}
+  ord-1   | 3       | ItemShipped    | {carrier, trackingId}
+  ord-1   | 4       | OrderDelivered | {deliveredAt}
+```
+
+To get current state: replay events in order (`ORDER BY version ASC`).
+Benefits: full audit trail, time-travel (state at any past moment), event-driven projection.
+
+```javascript
+// DynamoDB event store with optimistic locking
+async function appendEvent(orderId, expectedVersion, eventType, eventData) {
+  await ddb.send(new PutItemCommand({
+    TableName: 'OrderEvents',
+    Item: {
+      orderId: { S: orderId },
+      version: { N: (expectedVersion + 1).toString() },
+      eventType: { S: eventType },
+      eventData: { M: marshall(eventData) },
+      timestamp: { S: new Date().toISOString() },
+    },
+    // Optimistic locking: fail if someone else already wrote this version
+    ConditionExpression: 'attribute_not_exists(orderId) OR version = :expected',
+    ExpressionAttributeValues: { ':expected': { N: expectedVersion.toString() } },
+  }));
+}
+```
+
+---
+
+## Multi-Region Active-Active Architecture
+
+### Design Principles
+1. **Data plane runs in every region** — no cross-region API calls for normal operations
+2. **Control plane can be regional** — deployment, management operations tolerate latency
+3. **Data replication is asynchronous** — accept < 1s lag for DynamoDB Global Tables, Aurora Global
+4. **Conflict resolution is designed upfront** — not an afterthought
+5. **DNS routing handles failover** — Route 53 latency routing + health checks; see [VPC & Networking](/aws-vpc-networking) for Route 53 routing policies
+
+### Reference Architecture
+```
+                    Route 53 (Latency routing)
+                   /                            \
+          us-east-1                          eu-west-1
+         ALB                                    ALB
+          ↓                                      ↓
+      ECS Fargate                            ECS Fargate
+          ↓                                      ↓
+   DynamoDB ←────── Global Tables ──────► DynamoDB
+   (replica)          (< 1s lag)           (primary)
+          ↓                                      ↓
+   Aurora Global                          Aurora Global
+   (secondary, read-only)                 (primary, writes)
+```
+
+### Regional Isolation Pattern (Cell-Based Architecture)
+- Assign each customer/tenant a "home cell" (cell = specific AZ or small region cluster)
+- Customer requests always routed to their home cell
+- One cell failure doesn't affect other cells
+- Eliminates cross-cell dependencies and shared-fate failures
+- Used at scale by: Amazon.com, Netflix, Route 53
+
+### Zonal Shift
+- AWS native feature for ALB/NLB: instantly remove an impaired AZ from routing
+- No DNS TTL delay (unlike Route 53 failover) — takes effect in <1 second
+- Initiated via CLI: `aws arc-zonal-shift start-zonal-shift --resource-identifier arn:aws:elasticloadbalancing:...`
+- ARC (Application Recovery Controller) manages multi-region failover manually or automated
+
+---
+
+## AWS Landing Zone Accelerator
+
+Landing Zone Accelerator on AWS is an open-source solution that automates a full multi-account AWS organization setup.
+
+### What It Deploys
+- AWS Organizations with OU structure
+- AWS Control Tower with guardrails
+- Security baseline: CloudTrail (org-level), AWS Config, Security Hub, GuardDuty, Macie across all accounts — see [Security Services](/aws-security-services) for coverage of these tools
+- Network baseline: centralized Transit Gateway, VPC templates per account, Direct Connect ready
+- Identity: IAM Identity Center with permission sets
+- Logging: centralized CloudWatch + S3 log archive account
+
+### Configuration-Driven
+```yaml
+# accounts-config.yaml (abbreviated)
+mandatoryAccounts:
+  - name: Management
+  - name: LogArchive
+  - name: Audit
+
+workloadAccounts:
+  - name: SharedServices
+    description: Shared services (AD, DNS, ECR)
+    email: shared-services@company.com
+    organizationalUnit: Infrastructure
+
+  - name: ProductionWorkload
+    email: prod@company.com
+    organizationalUnit: Workloads/Production
+```
+
+All infrastructure changes are applied via CodePipeline when configuration YAML is committed — GitOps for org-level governance.
+
+---
+
+## Well-Architected Tool — Practical Usage
+
+The AWS Well-Architected Tool provides a structured review process that produces a risk report and remediation backlog.
+
+### Conducting a Review
+1. Define the workload (name, description, team, environment)
+2. Answer ~60 questions across 6 pillars (30-90 min)
+3. Review High/Medium/Low risk findings
+4. Create improvement plan: prioritize top 5 high-risk findings
+5. Share report with stakeholders
+
+### Key Questions Often Marked "At Risk"
+- "Do you have defined recovery objectives?" — RPO/RTO must be documented
+- "How do you perform patch management?" — automated patching via SSM Patch Manager
+- "How do you implement traceability?" — distributed tracing required (X-Ray/ADOT); see [Observability](/aws-observability) for full tracing stack
+- "How do you allocate costs to workloads?" — tag governance required; see [Cost Optimization](/aws-cost-optimization) for tagging strategy
+- "How do you implement service limits management?" — Service Quotas alerting
+
+### Milestone-Based Architecture Evolution
+- Create milestone after each significant improvement
+- Compare milestones to show risk reduction over time
+- Use as evidence in compliance reviews (SOC 2, ISO 27001, HIPAA)
 
 ---
 
