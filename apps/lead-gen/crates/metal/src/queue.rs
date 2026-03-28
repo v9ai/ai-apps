@@ -15,7 +15,7 @@ pub struct CrawlTask {
 pub struct UrlFrontier {
     queue: SegQueue<CrawlTask>,
     seen_bloom: Mutex<crate::bloom::BloomFilter>,
-    seen_exact: Mutex<AHashSet<u64>>,
+    seen_exact: Mutex<AHashSet<String>>,
     domain_last_access: Mutex<ahash::AHashMap<String, Instant>>,
     enqueued: std::sync::atomic::AtomicU64,
     dequeued: std::sync::atomic::AtomicU64,
@@ -38,12 +38,13 @@ impl UrlFrontier {
     pub fn push(&self, url: &str, depth: u8, priority: u8) -> bool {
         let url_bytes = url.as_bytes();
 
+        // Fast path: bloom filter says "definitely not seen" → skip exact check.
+        // When the bloom reports a possible hit, confirm with the exact set.
         {
             let bloom = self.seen_bloom.lock();
             if bloom.contains(url_bytes) {
-                let url_hash = ahash::RandomState::new().hash_one(url);
                 let exact = self.seen_exact.lock();
-                if exact.contains(&url_hash) {
+                if exact.contains(url) {
                     self.duplicates_skipped.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     return false;
                 }
@@ -55,9 +56,8 @@ impl UrlFrontier {
             bloom.insert(url_bytes);
         }
         {
-            let url_hash = ahash::RandomState::new().hash_one(url);
             let mut exact = self.seen_exact.lock();
-            if !exact.insert(url_hash) {
+            if !exact.insert(url.to_string()) {
                 self.duplicates_skipped.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 return false;
             }
@@ -130,4 +130,59 @@ fn extract_domain(url: &str) -> String {
         .and_then(|s| s.split('/').next())
         .unwrap_or(url)
         .to_lowercase()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_push_and_pop() {
+        let frontier = UrlFrontier::new(100);
+        assert!(frontier.push("https://example.com/page1", 0, 1));
+        assert_eq!(frontier.len(), 1);
+        let task = frontier.pop(0).unwrap();
+        assert_eq!(task.url, "https://example.com/page1");
+        assert_eq!(task.domain, "example.com");
+    }
+
+    #[test]
+    fn test_duplicate_rejected() {
+        let frontier = UrlFrontier::new(100);
+        assert!(frontier.push("https://example.com/a", 0, 1));
+        assert!(!frontier.push("https://example.com/a", 0, 1));
+        assert_eq!(frontier.len(), 1);
+    }
+
+    #[test]
+    fn test_push_domain_pages() {
+        let frontier = UrlFrontier::new(100);
+        frontier.push_domain_pages("example.com", &["/", "/about", "/careers"]);
+        assert_eq!(frontier.len(), 3);
+    }
+
+    #[test]
+    fn test_stats() {
+        let frontier = UrlFrontier::new(100);
+        frontier.push("https://a.com/1", 0, 1);
+        frontier.push("https://b.com/2", 0, 1);
+        frontier.push("https://a.com/1", 0, 1); // duplicate
+        let stats = frontier.stats();
+        assert_eq!(stats.enqueued, 2);
+        assert_eq!(stats.duplicates_skipped, 1);
+    }
+
+    #[test]
+    fn test_empty_frontier() {
+        let frontier = UrlFrontier::new(100);
+        assert!(frontier.is_empty());
+        assert!(frontier.pop(0).is_none());
+    }
+
+    #[test]
+    fn test_extract_domain() {
+        assert_eq!(extract_domain("https://example.com/path"), "example.com");
+        assert_eq!(extract_domain("http://sub.domain.org/a/b"), "sub.domain.org");
+        assert_eq!(extract_domain("no-protocol"), "no-protocol");
+    }
 }

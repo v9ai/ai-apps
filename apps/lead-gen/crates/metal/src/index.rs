@@ -201,3 +201,78 @@ fn tokenize(text: &str) -> Vec<String> {
         .filter(|s| s.len() >= 2)
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_index_and_search_or() {
+        let idx = InvertedIndex::new();
+        idx.index_document("machine learning engineer");
+        idx.index_document("data scientist python");
+        let results = idx.search_or("machine");
+        assert_eq!(results, vec![0]);
+    }
+
+    #[test]
+    fn test_search_and() {
+        let idx = InvertedIndex::new();
+        idx.index_document("machine learning engineer");
+        idx.index_document("machine vision specialist");
+        let results = idx.search_and("machine engineer");
+        assert_eq!(results, vec![0]); // only doc 0 has both
+    }
+
+    #[test]
+    fn test_search_ranked_ordering() {
+        let idx = InvertedIndex::new();
+        idx.index_document("rust rust rust"); // doc 0: high TF for "rust"
+        idx.index_document("python java");    // doc 1: no "rust"
+        idx.index_document("rust python");    // doc 2: some "rust"
+        let ranked = idx.search_ranked("rust", 10);
+        assert!(!ranked.is_empty());
+        // doc 0 should rank higher than doc 2 (more occurrences)
+        // Note: BM25 uses TF=1 per token match, so ranking is by IDF only
+        // Both doc 0 and doc 2 contain "rust", so they should both appear
+        let doc_ids: Vec<u32> = ranked.iter().map(|(id, _)| *id).collect();
+        assert!(doc_ids.contains(&0));
+        assert!(doc_ids.contains(&2));
+        assert!(!doc_ids.contains(&1));
+    }
+
+    #[test]
+    fn test_search_prefix() {
+        let idx = InvertedIndex::new();
+        idx.index_document("tensorflow pytorch");
+        let results = idx.search_prefix("tensor");
+        assert_eq!(results, vec![0]);
+    }
+
+    #[test]
+    fn test_empty_search() {
+        let idx = InvertedIndex::new();
+        assert!(idx.search_or("anything").is_empty());
+        assert!(idx.search_ranked("anything", 10).is_empty());
+    }
+
+    #[test]
+    fn test_serialize_deserialize_roundtrip() {
+        let idx = InvertedIndex::new();
+        idx.index_document("hello world");
+        idx.index_document("foo bar");
+        let bytes = idx.serialize();
+        let restored = InvertedIndex::deserialize(&bytes).expect("deserialize failed");
+        assert_eq!(restored.doc_count(), 2);
+        assert!(!restored.search_or("hello").is_empty());
+    }
+
+    #[test]
+    fn test_doc_and_term_count() {
+        let idx = InvertedIndex::new();
+        assert_eq!(idx.doc_count(), 0);
+        idx.index_document("alpha beta");
+        assert_eq!(idx.doc_count(), 1);
+        assert!(idx.term_count() >= 2);
+    }
+}

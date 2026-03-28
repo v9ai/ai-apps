@@ -189,3 +189,58 @@ impl PageFile {
         self.mmap.flush()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_page_file() -> (tempfile::TempDir, PageFile) {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("test.pages");
+        let pf = PageFile::open(path.to_str().unwrap(), 16).unwrap();
+        (dir, pf)
+    }
+
+    #[test]
+    fn test_alloc_and_insert() {
+        let (_dir, pf) = temp_page_file();
+        let page_id = pf.alloc_page().unwrap();
+        let slot = pf.insert_into_page(page_id, b"hello world").unwrap();
+        let data = pf.read_slot(page_id, slot).unwrap();
+        assert_eq!(data, b"hello world");
+    }
+
+    #[test]
+    fn test_multiple_inserts() {
+        let (_dir, pf) = temp_page_file();
+        let page_id = pf.alloc_page().unwrap();
+        let s0 = pf.insert_into_page(page_id, b"first").unwrap();
+        let s1 = pf.insert_into_page(page_id, b"second").unwrap();
+        assert_ne!(s0, s1);
+        assert_eq!(pf.read_slot(page_id, s0).unwrap(), b"first");
+        assert_eq!(pf.read_slot(page_id, s1).unwrap(), b"second");
+    }
+
+    #[test]
+    fn test_page_full() {
+        let (_dir, pf) = temp_page_file();
+        let page_id = pf.alloc_page().unwrap();
+        // Fill the page with large records until it returns None
+        let big_data = vec![0xABu8; 2000]; // ~half a 4096 page
+        let first = pf.insert_into_page(page_id, &big_data);
+        assert!(first.is_some());
+        let second = pf.insert_into_page(page_id, &big_data);
+        // Second insert might fail due to page being full (header + slots + 2x2000 > 4096)
+        // Either way, this should not panic
+        if second.is_none() {
+            // Expected: page is full
+        }
+    }
+
+    #[test]
+    fn test_read_invalid_slot() {
+        let (_dir, pf) = temp_page_file();
+        let page_id = pf.alloc_page().unwrap();
+        assert!(pf.read_slot(page_id, 999).is_none());
+    }
+}

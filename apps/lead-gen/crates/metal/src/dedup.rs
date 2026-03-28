@@ -98,3 +98,74 @@ where
 
     pairs
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_blocking_keys_basic() {
+        let keys = blocking_keys_contact("John", "Smith", "john.smith@example.com");
+        assert_eq!(keys.len(), 4);
+        assert!(keys.contains(&"d:example.com".to_string()));
+        assert!(keys.contains(&"l:john.smith".to_string()));
+        // Soundex of "smith" = S530, first initial = j
+        assert!(keys.iter().any(|k| k.starts_with("s:") && k.ends_with(":j")));
+        // Prefix of "smith" (first 3 chars) = smi
+        assert!(keys.contains(&"p:smi:j".to_string()));
+    }
+
+    #[test]
+    fn test_blocking_keys_no_domain() {
+        let keys = blocking_keys_contact("Jane", "Doe", "nodomain");
+        // No @ sign means no domain key, no local-part key (the whole thing IS the local part)
+        // Should still have soundex and prefix keys
+        assert!(keys.iter().any(|k| k.starts_with("s:")));
+        assert!(keys.iter().any(|k| k.starts_with("p:")));
+    }
+
+    #[test]
+    fn test_soundex_known_values() {
+        // Standard Soundex test vectors
+        assert_eq!(soundex_code("robert"), "R163");
+        assert_eq!(soundex_code("smith"), "S530");
+        assert_eq!(soundex_code(""), "0000");
+    }
+
+    #[test]
+    fn test_build_blocks_groups_correctly() {
+        let contacts = vec![
+            ("John".into(), "Smith".into(), "john@example.com".into()),
+            ("Jane".into(), "Smith".into(), "jane@example.com".into()),
+            ("Bob".into(), "Jones".into(), "bob@other.com".into()),
+        ];
+        let blocks = build_blocks(&contacts);
+        // John and Jane share domain "example.com"
+        assert!(blocks.values().any(|indices| indices.contains(&0) && indices.contains(&1)));
+    }
+
+    #[test]
+    fn test_build_blocks_no_singletons() {
+        let contacts = vec![
+            ("Alice".into(), "Unique".into(), "alice@unique.com".into()),
+        ];
+        let blocks = build_blocks(&contacts);
+        // Single contact => all blocks have size 1 => all removed
+        assert!(blocks.is_empty());
+    }
+
+    #[test]
+    fn test_sorted_neighborhood_compare() {
+        let mut block = vec![0, 1, 2, 3];
+        let names = ["Alice", "Bob", "Charlie", "David"];
+        let sort_key = |i: usize| names[i].to_string();
+        let compare = |a: usize, b: usize| a != b; // all pairs match
+
+        let pairs = sorted_neighborhood_compare(&mut block, &sort_key, 2, &compare);
+        // Window=2: only consecutive pairs after sorting
+        // Sorted by name: Alice(0), Bob(1), Charlie(2), David(3)
+        // Window=2 means i compares with i+1 only
+        assert!(!pairs.is_empty());
+        assert!(pairs.len() <= 3); // at most 3 adjacent pairs
+    }
+}

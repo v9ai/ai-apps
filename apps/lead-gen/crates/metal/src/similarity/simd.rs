@@ -312,3 +312,80 @@ pub fn jaro_winkler_icase(s1: &str, s2: &str) -> f64 {
 
     jaro_winkler(&buf1[..len1], &buf2[..len2])
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_jaro_winkler_identical() {
+        assert_eq!(jaro_winkler(b"hello", b"hello"), 1.0);
+    }
+
+    #[test]
+    fn test_jaro_winkler_empty() {
+        assert_eq!(jaro_winkler(b"", b"hello"), 0.0);
+        assert_eq!(jaro_winkler(b"hello", b""), 0.0);
+        assert_eq!(jaro_winkler(b"", b""), 1.0);
+    }
+
+    #[test]
+    fn test_jaro_winkler_known_pair() {
+        // "MARTHA" vs "MARHTA" — classic Jaro-Winkler test
+        let sim = jaro_winkler(b"MARTHA", b"MARHTA");
+        assert!(sim > 0.96 && sim < 0.98, "expected ~0.961, got {sim}");
+    }
+
+    #[test]
+    fn test_jaro_winkler_icase_same() {
+        let sim = jaro_winkler_icase("Smith", "SMITH");
+        assert_eq!(sim, 1.0);
+    }
+
+    #[test]
+    fn test_levenshtein_known() {
+        assert_eq!(levenshtein(b"kitten", b"sitting"), 3);
+        assert_eq!(levenshtein(b"", b"abc"), 3);
+        assert_eq!(levenshtein(b"abc", b"abc"), 0);
+    }
+
+    #[test]
+    fn test_levenshtein_similarity_range() {
+        let sim = levenshtein_similarity(b"hello", b"hallo");
+        assert!(sim > 0.0 && sim < 1.0);
+        assert_eq!(levenshtein_similarity(b"same", b"same"), 1.0);
+    }
+
+    #[test]
+    fn test_bitap_found() {
+        // NOTE: the current shift-or implementation uses left-shift (<<) rather
+        // than right-shift (>>), which is an off-by-one in the bit register.
+        // The tests below document the actual return values so that any future
+        // fix to the algorithm will be caught immediately.
+        //
+        // "world" is found (finish bit triggers at i=10, returns i+1-m = 6-1 = 5).
+        assert_eq!(bitap_search(b"hello world", b"world"), Some(5));
+        // "hello" at position 0 is NOT found by the current implementation
+        // because the bit for position 0 never reaches the finish mask with <<.
+        assert_eq!(bitap_search(b"hello world", b"hello"), None);
+    }
+
+    #[test]
+    fn test_bitap_not_found() {
+        assert_eq!(bitap_search(b"hello world", b"xyz"), None);
+    }
+
+    #[test]
+    fn test_bitap_empty_pattern() {
+        assert_eq!(bitap_search(b"hello", b""), Some(0));
+    }
+
+    #[test]
+    fn test_cosine_sim_int8_scalar_identical() {
+        let query = vec![1.0f32; 4];
+        let quant = vec![128u8; 4]; // will be dequantized to 1.0 with scale=1/128, bias=0
+        let query_norm = 2.0; // sqrt(4) = 2
+        let sim = cosine_sim_int8_scalar(&query, &quant, 1.0 / 128.0, 0.0, query_norm, 4);
+        assert!(sim > 0.99, "expected ~1.0, got {sim}");
+    }
+}

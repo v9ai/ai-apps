@@ -245,3 +245,52 @@ impl<'a> Iterator for WalIterator<'a> {
         Some((header, data))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_wal() -> (tempfile::TempDir, WriteAheadLog) {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("test.wal");
+        let wal = WriteAheadLog::open(path.to_str().unwrap(), 1).unwrap();
+        (dir, wal)
+    }
+
+    #[test]
+    fn test_append_and_iterate() {
+        let (_dir, wal) = temp_wal();
+        wal.append(EntryType::CompanyInsert, b"company-1").unwrap();
+        wal.append(EntryType::ContactInsert, b"contact-1").unwrap();
+
+        let entries: Vec<_> = wal.iter().collect();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].0.entry_type, EntryType::CompanyInsert as u8);
+        assert_eq!(entries[0].1, b"company-1");
+        assert_eq!(entries[1].0.entry_type, EntryType::ContactInsert as u8);
+        assert_eq!(entries[1].1, b"contact-1");
+    }
+
+    #[test]
+    fn test_sequence_increments() {
+        let (_dir, wal) = temp_wal();
+        let seq1 = wal.append(EntryType::CompanyInsert, b"a").unwrap();
+        let seq2 = wal.append(EntryType::CompanyInsert, b"b").unwrap();
+        assert_eq!(seq2, seq1 + 1);
+    }
+
+    #[test]
+    fn test_utilization() {
+        let (_dir, wal) = temp_wal();
+        assert_eq!(wal.utilization(), 0.0);
+        wal.append(EntryType::CompanyInsert, b"data").unwrap();
+        assert!(wal.utilization() > 0.0);
+    }
+
+    #[test]
+    fn test_sync_no_panic() {
+        let (_dir, wal) = temp_wal();
+        wal.append(EntryType::CompanyInsert, b"data").unwrap();
+        wal.sync().unwrap();
+    }
+}
