@@ -669,3 +669,151 @@ The 0.3 threshold is **hardcoded** — there is no adaptive tuning, no ablation 
 **MT-Bench / Chatbot Arena (Zheng et al., 2023, NeurIPS):** The founding paper of the LLM-as-judge methodology. Chatwoot has no eval harness at all (Section 8.9). If Chatwoot were to build one, this paper provides the gold standard methodology: use GPT-4 (or a fine-tuned judge like Prometheus) on a held-out set of conversation turns, compare against human preference labels, report position-bias-corrected agreement scores.
 
 **Agent-as-a-Judge (Zhuge et al., 2024):** Directly relevant to Captain V2's multi-turn agent loop. The framework enables evaluating whether a 100-turn agentic conversation correctly resolved the customer issue, using an agent evaluator that can inspect intermediate tool calls — something LLM-as-judge cannot do on final output alone. The 97% cost reduction makes this viable for Chatwoot Cloud at scale.
+
+---
+
+## 12. Recency & Changelog
+
+### Latest Release
+
+**v4.12.1** — 2026-03-25
+
+AI/ML changes in this patch:
+- Fixed `AI Assist` returning a 404 error on Community Edition installs (regression from prior refactor).
+- Fixed webhook payloads for `message_created` / `message_updated` sending channel-rendered HTML instead of raw content — this broke downstream NLP pipelines that consumed webhook events.
+
+**v4.12.0** — 2026-03-17
+
+Captain-specific changes:
+- Captain can now decide autonomously when to resolve a conversation vs keep it open (previously it always kept conversations open post-response).
+- `feat: allow captain to access contact attributes (#13850)` — Captain agent can now read CRM contact attributes during the agent loop, enabling personalization based on company, tier, or custom fields.
+
+**v4.11.0** — 2026-02-18
+
+Major Captain Editor release:
+- New unified Captain Editor in the reply composer — agents can invoke Improve, Tone, Grammar, Reply Suggest, Summarize, and Ask Copilot from a single toolbar without leaving the editor.
+- AI reply suggestions now use Related FAQs to ground suggestions in the knowledge base.
+- Note from release: "Captain v2 now supports GPT-5.2 for self-hosted deployments."
+
+**v4.9.0** — 2025-12-20
+
+- Completed migration of the AI assistant (Captain) and the editor to `ruby_llm` gem — full LLM abstraction stack consolidated.
+- Improved observability and reliability of AI-powered workflows via the `ruby_llm` transition.
+
+---
+
+### Recent AI/ML Commits (last 90 days — Dec 2025 to Mar 2026)
+
+Significant commits by date (newest first):
+
+| Date | SHA | Commit |
+|---|---|---|
+| 2026-03-27 | `2b296c06` | `chore(security): ignore CVE-2026-33658 for Chatwoot storage defaults` |
+| 2026-03-24 | `14df7b3b` | `fix: ai-assist 404 on CE` — patched broken AI Assist endpoint in Community Edition |
+| 2026-03-23 | `30c0479e` | `fix: show agent name in unread bubble for Captain replies` |
+| 2026-03-20 | `290dd3ab` | `feat: allow captain to access contact attributes` — Captain V2 can now read CRM fields |
+| 2026-03-16 | `ac93290c` | `fix: skip captain auto-open for templates` — avoid Captain firing on outbound templates |
+| 2026-03-13 | `d6d38cdd` | `feat: captain decides if conversation should be resolved or kept open` — autonomous resolution control |
+| 2026-03-11 | `87f5af4c` | `fix: playground captain v2 scenarios` — playground UI for V2 scenario testing |
+| 2026-03-11 | `a9cabad5` | `chore: Hide reply-to when copilot is active` — UX polish for copilot mode |
+| 2026-03-05 | `fd69b4c8` | `fix: captain json parsing` — robustness fix for structured LLM output parsing |
+| 2026-03-03 | `374d2258` | `fix: captain talking over support agent` — race condition where Captain replied after human picked up |
+| 2026-02-27 | `c08fa631` | `feat: Add temporary account setting to disable Captain auto-resolve` |
+| 2026-02-25 | `b98c6146` | `feat: add campaign context to Captain v2 prompts` — campaign metadata injected into V2 system prompt |
+| 2026-02-24 | `7cec4eba` | `feat: support multimodal user messages in captain v2` — Captain V2 can now process image attachments |
+| 2026-02-20 | `d8f4bb94` | `feat: add resolve_conversation tool for Captain V2 scenarios` |
+| 2026-02-20 | `db7e02b9` | `feat: captain channel type langfuse metadata` — adds channel type to OTel/Langfuse trace spans |
+| 2026-02-17 | `38743836` | `feat: insrument captain v2` — OTel instrumentation added to the full V2 agent runner |
+| 2026-02-17 | `101eca30` | `feat: add captain editor events` — analytics event tracking for Captain Editor actions |
+| 2026-02-17 | `dae4f3ee` | `fix: move llm call of captain outside transaction` — DB transaction no longer holds open during LLM latency |
+| 2026-02-12 | `2c2f0547` | `fix: Captain not responding to campaign conversations` |
+| 2026-02-09 | `bd732f1f` | `fix: search faqs in account language` — FAQ search now translates query to account locale before embedding |
+| 2026-01-29 | `77493c5d` | `fix: captain assistant image comprehension` — multimodal image handling fix |
+| 2026-01-22 | `8eb6fd1b` | `feat: track copilot events` |
+| 2026-01-21 | `6a482926` | `feat: new Captain Editor` — full Captain Editor UI shipped |
+| 2026-01-12 | `34b42a1c` | `feat: add global config for captain settings` |
+| 2026-01-07 | `566de023` | `feat: allow agent bot and captain responses to reset waiting since` |
+| 2025-12-11 | `1de8d3e5` | `feat: legacy features to ruby llm` — final batch of legacy AI features migrated to `ruby_llm` |
+| 2025-12-04 | `eed2eace` | `feat: Migrate ruby llm captain` — Captain services ported to `ruby_llm` |
+| 2025-12-04 | `87fe1e9a` | `feat: migrate editor to ruby-llm` — Editor AI stack migrated to `ruby_llm` |
+| 2025-12-03 | `b269cca0` | `feat: Add AI credit topup flow for Stripe` — billing for Captain cloud usage |
+
+---
+
+### Open Issues (AI/ML relevant)
+
+| # | Title | Updated | Status |
+|---|---|---|---|
+| [13919](https://github.com/chatwoot/chatwoot/issues/13919) | Captain AI rewrite tasks truncate draft to 1024 chars (trimContent default) | 2026-03-26 | Open bug |
+| [13890](https://github.com/chatwoot/chatwoot/pulls/13890) | feat: captain custom tools v1 | 2026-03-26 | Open PR (not merged) |
+| [13883](https://github.com/chatwoot/chatwoot/issues/13883) | fix(captain): reset conversation context after resolution to prevent stale context | 2026-03-24 | Open PR |
+| [13847](https://github.com/chatwoot/chatwoot/pulls/13847) | feat: Auto-migrate captain v1 instructions | 2026-03-24 | Open PR — V1→V2 migration path |
+| [13881](https://github.com/chatwoot/chatwoot/issues/13881) | Handoff message is not being displayed with Captain V2 | 2026-03-23 | Bug |
+| [13880](https://github.com/chatwoot/chatwoot/issues/13880) | Captain uses entire context when ALLOW_MESSAGES_AFTER_RESOLVED | 2026-03-23 | Bug |
+| [13790](https://github.com/chatwoot/chatwoot/issues/13790) | fix(captain): localize AI summary to account language | 2026-03-18 | Open |
+| [13456](https://github.com/chatwoot/chatwoot/pulls/13456) | feat(captain): Add MCP server integration for external tool providers | 2026-03-13 | Open PR — MCP protocol support |
+| [13209](https://github.com/chatwoot/chatwoot/issues/13209) | fix: captain credit usage updation | 2026-03-14 | Open |
+| [13908](https://github.com/chatwoot/chatwoot/issues/13908) | Support 5.4-mini and make it a new default model | 2026-03-27 | Feature request |
+| [12853](https://github.com/chatwoot/chatwoot/issues/12853) | feat(captain): allow excludePaths when creating URL documents | 2026-03-16 | Community PR |
+
+**HNSW migration:** No open issue or PR for HNSW index migration as of March 2026. The IVFFlat index remains in place; no active work is tracked publicly.
+
+**Sentiment model:** No open issues for updating or retraining the ONNX sentiment model. The `vendor/db/sentiment-analysis.onnx` file (69 MB, INT8 DistilBERT) has not changed in the last 90 days.
+
+---
+
+### Merged PRs (last 90 days)
+
+The GitHub API `pulls` endpoint for closed/merged PRs did not return results matching AI/ML titles from the standard filter — Chatwoot merges PRs directly as commits via squash, so the commit list above is the canonical merged-PR record. Key AI/ML merges confirmed from commits:
+
+| Merged | PR # (via commit) | Description |
+|---|---|---|
+| 2026-03-20 | `#13850` | Captain reads contact attributes during agent loop |
+| 2026-03-13 | `#13336` | Captain autonomous conversation resolution |
+| 2026-02-25 | `#13644` | Campaign context added to Captain V2 prompts |
+| 2026-02-24 | `#13581` | Multimodal (image) support in Captain V2 |
+| 2026-02-20 | `#13597` | `resolve_conversation` tool for Captain V2 scenarios |
+| 2026-02-20 | `#13574` | Channel type added to Langfuse trace metadata |
+| 2026-02-17 | `#13439` | Full OTel instrumentation for Captain V2 agent runner |
+| 2026-02-17 | `#13524` | Captain Editor telemetry events |
+| 2026-01-21 | `#13235` | New Captain Editor (composer-integrated AI toolbar) |
+| 2025-12-11 | `#12994` | Legacy task API features migrated to `ruby_llm` |
+| 2025-12-04 | `#12981` | Captain core migrated to `ruby_llm` |
+| 2025-12-04 | `#12961` | Editor AI migrated to `ruby_llm` |
+
+---
+
+### Roadmap / Announced Features
+
+**Confirmed in-flight (open PRs, not yet merged as of 2026-03-28):**
+
+1. **Captain Custom Tools V1 (PR #13890)** — Bringing the HTTP custom tool system (previously only accessible in V2) into the V1 path. Adds the ability for operators to define external HTTP endpoints callable by the Captain agent.
+
+2. **MCP Server Integration (PR #13456, community)** — Adds Model Context Protocol server support to Captain. Enables connecting Captain to external tool providers (Cloudflare, GitHub, custom MCP servers) with authentication. Tool discovery is automatic. Community-submitted but Chatwoot is actively reviewing.
+
+3. **Captain V1 → V2 Auto-Migration (PR #13847)** — Migrates legacy `config['instructions']` field to the new `description` field on first use, with `v2_migrated` flag. Smooths the transition path for existing Captain V1 deployments upgrading to V2.
+
+4. **Firecrawl Branding API (PR #13903, internal)** — Firecrawl integration improvements (document crawling for RAG).
+
+**Anthropic / Gemini provider support:** Still marked `coming_soon: true` in `config/llm.yml` (claude-haiku-4.5, claude-sonnet-4.5, gemini-3-flash, gemini-3-pro). No merged PR or open PR enabling these as of 2026-03-28. The `ruby_llm >= 1.9.2` gem already supports Anthropic and Gemini natively — the blocker is Chatwoot Cloud billing/credit integration, not the LLM client layer.
+
+**HNSW migration:** Not announced. No roadmap item, no open issue, no PR. IVFFlat remains in place indefinitely.
+
+**Sentiment model update:** Not announced. No roadmap item.
+
+**GPT-5.4-mini support (issue #13908):** Community feature request filed 2026-03-27. Not yet triaged by Chatwoot team.
+
+---
+
+### Staleness Assessment
+
+**Captain AI is actively developed.** Evidence:
+
+- **Commit velocity:** 28+ AI/ML-related commits in the 90-day window (Dec 2025 – Mar 2026), averaging roughly one Captain-related commit every 3 days.
+- **V2 is now the primary path.** The `captain_integration_v2` flag is being treated as default for new accounts. V1→V2 auto-migration is in-flight. Legacy hub flow was cleaned up (`#13640`).
+- **Feature expansion is ongoing:** Multimodal input, autonomous resolution, contact attribute access, campaign context, and MCP protocol support all landed or are in review in Q1 2026.
+- **Observability is improving:** Full OTel instrumentation for V2 merged in February 2026; Langfuse metadata enriched with channel type. This suggests the team is investing in production monitoring of the AI layer.
+- **Known gaps not being addressed:** HNSW migration, sentiment model update, and Anthropic/Gemini enablement have no active work. The `coming_soon` Anthropic/Gemini models have been in the config since at least January 2026 with no progress.
+- **Bugs lag features:** Several V2-specific bugs are open (handoff message display, stale context after resolution, draft truncation). The team is shipping fast and cleaning up edge cases post-merge.
+
+**Assessment:** Captain is in active, high-velocity development with a clear V2 trajectory. The primary risk is that the Enterprise gating means community self-hosted users see only the task API (CE edition), while the full agentic stack requires the Enterprise build. The LLM layer is well-abstracted (`ruby_llm`) and provider expansion to Anthropic/Gemini is technically ready but commercially blocked by billing integration work.

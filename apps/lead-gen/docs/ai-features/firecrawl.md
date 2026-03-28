@@ -1041,3 +1041,162 @@ MiniWoB (2017, OpenAI) is a suite of web interaction tasks ranging from clicking
 **On the lack of a Firecrawl arxiv paper:**
 
 Firecrawl has published no peer-reviewed paper describing its architecture, training methodology, or systematic evaluation. All quantitative claims come from blog posts with undisclosed methodology. This is common for commercial API products but limits rigorous comparison with academic systems like AXE (88.1% F1 on SWDE with a 0.6B model) or BardeenAgent (66% recall on WebLists). An ML engineer should treat Firecrawl's stated "98% extraction accuracy" as a marketing claim until a reproducible eval methodology is published.
+
+---
+
+## 12. Recency & Changelog
+
+> Researched: March 28, 2026. Source: GitHub API (`mendableai/firecrawl`), release notes, and firecrawl.dev/blog.
+
+### Latest Release
+
+**v2.8.0 — February 3, 2026**
+
+Key AI/agent changes in this release:
+
+- **Parallel Agents**: Execute thousands of `/agent` queries simultaneously with automatic failure handling and intelligent waterfall execution (Fast → Mini escalation on failure).
+- **Spark Model Family expanded to three tiers**: Spark 1 Fast (sub-second, instant retrieval, Playground-only at release), Spark 1 Mini (default, 60% cheaper than Pro, ~40% recall), Spark 1 Pro (multi-step, ~50% recall, highest accuracy).
+- **Agent model selection**: `/agent` endpoint now accepts a `model` parameter (`spark-1-mini` | `spark-1-pro`); status responses include model info.
+- **Agent webhooks**: Real-time callbacks on job completion and progress.
+- **MCP Server agent tools**: New `firecrawl_agent` and `firecrawl_agent_status` MCP tools for autonomous gathering from any MCP-enabled agent.
+- **Firecrawl Skill**: `npx skills add firecrawl/cli` — enables Claude Code, Codex, and OpenCode to invoke Firecrawl autonomously in agentic loops.
+- **Firecrawl CLI**: `npm install -g firecrawl-cli` — full scrape, crawl, search, map from terminal; `--api-url` flag supports self-hosted instances.
+- **Zod v4 compatibility** in the JS SDK (schema conversion rewritten).
+- **ARM64 Docker images**: Self-hosted now supports Apple Silicon and ARM servers via multi-arch images.
+- Security: CVE-2025-59466 fixed; lodash prototype pollution patched.
+
+**v2.7.0 — December 5, 2025**
+
+- ZDR (Zero Data Retention) Search for enterprise.
+- Improved Branding Format (better logo/color detection).
+- `minAge` scrape parameter — require minimum cached age before re-scraping.
+- Extract billing credits unified (15 tokens = 1 credit).
+- NOQ Scrape System (experimental) — new pipeline with integrated concurrency checks.
+- Self-hosted: configurable crawl concurrency limits.
+- UUIDv7 IDs on all new resources.
+
+**v2.6.0 — November 14, 2025**
+
+- **Unified Billing Model**: credits and tokens merged into a single system; Extract now uses credits.
+- **Change Tracking**: faster detection of web page content updates.
+- Full release of Branding Format across Playground, MCP, JS/Python SDKs.
+
+**v2.5.0 — October 30, 2025**
+
+- **Semantic Index**: proprietary indexed content store for sub-second retrieval on well-crawled domains.
+- New crawl architecture with NUQ (Non-Uniform Queue) concurrency tracking.
+- Excel (`.xlsx`) scraping support.
+- CrawlBench v2 benchmarks published alongside this release.
+
+### Spark Model Updates
+
+The Spark family shipped in three distinct waves:
+
+| Milestone | Date | Details |
+|---|---|---|
+| Spark 1 (initial, single model) | ~Dec 2025 | Introduced with `/agent` endpoint, single "Spark 1" model |
+| Spark 1 Pro + Spark 1 Mini | January 14, 2026 | Split into two tiers; Mini is 60% cheaper; Pro targets complex multi-domain extraction |
+| Spark 1 Fast | February 3, 2026 (v2.8.0) | Sub-second retrieval model; powers Parallel Agents waterfall; initially Playground-only |
+
+**Benchmark status (as of v2.8.0, all Firecrawl-reported):**
+
+- Spark 1 Pro: ~50% recall on CrawlBench-Hard Level 1 (complex instruction-following tasks).
+- Spark 1 Mini: ~40% recall on same benchmark, at 60% lower credit cost.
+- Spark 1 Fast: No published recall figure; positioned as a "best-effort cache hit" tier that upgrades to Mini on failure.
+- Both Pro and Mini "significantly outperform tools costing 4-7× more per task" (vendor claim, methodology undisclosed).
+- No new arxiv paper or independent benchmark update published since the original CrawlBench blog post (2024).
+
+No architecture disclosures (base model, parameter count, training data) have been made for any Spark tier.
+
+### Recent Commits (last 90 days — January–March 2026)
+
+Selected significant commits by topic:
+
+**New `/interact` endpoint (March 2026):**
+- `feat(api): add scrape-to-browser api flow` — March 23, 2026 (ENG-4603, #3184): Core `scrape-to-browser` API that underlies `/interact`.
+- `(feat/interact) Interact Billing` — March 24, 2026 (#3222): Credit metering for browser interaction sessions.
+- `(feat/interact) Share the same number of concurrent browser` — March 24, 2026 (#3223): Browser pool limits applied to Interact.
+- `docs(readme): replace Browse with Interact section` — March 26, 2026: Renamed endpoint from `/browse` → `/interact` in public docs.
+
+**Agent improvements:**
+- `fix(agent): stop defaulting to spark-1-pro when model is unknown in status API` — March 25, 2026 (#3227): Bug fix — status endpoint was returning wrong model name.
+- `feat(agent): make maxCredits > 2500 a paid request` — January 2026: Agents with `maxCredits` above 2,500 are now gated to paid plans only.
+
+**Audio format (March 25, 2026):**
+- `feat: audio format (ENG-4708)` — March 25, 2026 (#3226): New `audio` output format for the scrape endpoint — details not yet in public docs.
+
+**PDF improvements:**
+- `feat(pdf): Add ocrPageCount and ocrPageRatio to Logs` — March 24, 2026 (#3218): PDF processing now reports OCR coverage metrics.
+- `chore: update pdf-inspector` — March 26, 2026: OCR detection + XObject text extraction + grid detection fixes.
+
+**Security:**
+- `fix(deps): override vulnerable transitive dependencies` — March 26, 2026 (#3233).
+- `fix(auth): clear ACUC Redis cache when API keys are deleted` — March 25, 2026 (#3228): Auth cache now invalidated correctly on key deletion.
+
+**SDK expansion:**
+- `feat(elixir-sdk): add Elixir SDK with daily auto-publish workflow` — March 27, 2026 (#3239): Official Elixir SDK added.
+- `feat(java-sdk): support user-provided OkHttpClient instance` — March 23, 2026.
+
+**Scrape eval infrastructure:**
+- `Scrape-evals dispatch workflow` — March 23, 2026 (#3217): Automated scrape quality evaluation CI pipeline added.
+
+**LLM/extraction fixes:**
+- `fix(api): strip NUL bytes from LLM output fields before API response` — March 24, 2026 (#3221): NUL bytes in LLM output were reaching API consumers as malformed JSON.
+- `fix(scraper): skip onlyCleanContent for documents exceeding model output limit` — March 28, 2026 (#3240): Large documents no longer silently truncated by the clean-content heuristic.
+
+### Open Issues (AI/ML Relevant)
+
+Issues open as of March 28, 2026 with direct AI/extraction impact:
+
+| Issue | Title | Opened |
+|---|---|---|
+| #3169 | LLM extract/AI features fail with OpenAI-compatible proxies: `USE_RESPONSES_ENDPOINT` env var is not wired up | Mar 17, 2026 |
+| #3153 | [Self-Host] Cannot set `enableWebSearch: false` on `/extract` | Mar 16, 2026 |
+| #3150 | Feature: agent-friendly rate limit headers for autonomous scraping workflows | Mar 15, 2026 |
+| #3117 | Email inbox leasing demo for agents | Mar 11, 2026 |
+| #3114 | Concurrent scraping rate limit not properly handled causing 429 errors | Mar 11, 2026 |
+
+**Most operationally impactful for self-hosters:** Issue #3169 — `USE_RESPONSES_ENDPOINT` is not properly propagated to the generic AI provider, meaning self-hosters using OpenAI-compatible proxy endpoints (local Ollama, vLLM, LM Studio, etc.) cannot get LLM extraction to work. A fix PR (#3198) exists but was open as of research date.
+
+**Most impactful for agent pipelines:** Issue #3150 — agents cannot read remaining rate-limit budget from response headers, making autonomous retry logic unreliable. No fix merged as of research date.
+
+### Breaking Changes
+
+Changes since v2.7.0 that affect existing integrations:
+
+1. **`/extract` v1 endpoint fully deprecated** (February 2026): The original single-call `/extract` is replaced by the `/agent` endpoint for multi-URL agentic extraction. Existing integrations using `/v2/extract` for automated schema extraction should migrate to `/v2/agent` with `schema` + `urls` parameters.
+
+2. **`maxCredits` > 2,500 gated to paid plans**: Agent requests with `maxCredits` above 2,500 now require a paid subscription. Free-tier users who relied on large unbounded agent queries will hit a billing gate.
+
+3. **Billing unification in v2.6.0**: Tokens and credits were merged into a single credit unit (15 tokens = 1 credit). Integrations that computed cost estimates using the old token-based pricing need recalculation.
+
+4. **Node.js version bump to 22**: Self-hosted Docker images now require Node.js 22 (was pinned to a Node 18 minor). Self-hosters with custom Dockerfiles or node version managers need to update.
+
+5. **Zod v4 compatibility**: The JS SDK now requires Zod v4. If your schema definitions use Zod v3 APIs (e.g., `.optional()` chaining patterns that changed), they need updating. The SDK includes improved error detection to surface schema conversion failures explicitly.
+
+6. **`/browse` endpoint renamed to `/interact`**: The browser interaction endpoint was renamed. Any code or documentation referencing `/browse` needs to be updated to `/interact`.
+
+### Roadmap / Announced Features
+
+Based on blog posts, open PRs, and commit messages as of March 2026:
+
+- **`/interact` endpoint GA**: Currently in active billing rollout (billing and concurrency limits landed March 24–26, 2026). Likely reaching stable GA within weeks of research date. Enables click, form-fill, and page interaction via plain English prompts or code — a direct replacement for complex `actions` arrays in `/scrape`.
+- **Audio format**: `feat: audio format (ENG-4708)` landed March 25, 2026 — not yet in public docs. Appears to add audio transcription/extraction as a scrape output format.
+- **`extract` option on `/search` endpoint** (PR #3208, open March 21, 2026): Adds consolidated extraction directly in search responses, reducing the Map → Batch Scrape → Extract roundtrip to a single call.
+- **Spark 1 Fast general availability**: Currently Playground-only at v2.8.0 release. General API availability is implied by the Parallel Agents waterfall architecture but not yet announced.
+- **Partner Integrations API**: Entered closed beta in v2.7.0 (December 2025). No public launch date announced.
+- **n8n native integration**: Announced March 26, 2026 blog post — Firecrawl as a native n8n node for no-code workflows.
+- **Elixir SDK**: Added March 27, 2026 — daily auto-publish via GitHub Actions. Now joins Python, JS/TS, Java, Go, Rust, PHP as official SDK languages.
+
+### Staleness Assessment
+
+**Release velocity:** 4 minor releases in ~5 months (v2.5.0 October 2025 → v2.8.0 February 2026), averaging one release every 5–6 weeks. Commit frequency is very high: 20–30 commits/week in the main branch throughout Q1 2026.
+
+**AI feature velocity specifically:** The Spark model family went from 1 model to 3 tiers in under 3 months. The `/agent` endpoint received webhooks, model selection, and parallel execution within a single release cycle. The `/interact` endpoint went from concept to production billing in under 2 weeks (commit history shows rapid iteration March 23–26).
+
+**Production stability signals:**
+- The NUL-byte LLM output bug (#3221) and the `spark-1-pro` status API mislabeling bug (#3227) both shipped in main and required hotfixes, indicating a fast-merge culture with acceptable tolerance for small production defects.
+- The `USE_RESPONSES_ENDPOINT` wiring bug (#3169) has been open for 11+ days with a fix PR open but unmerged — self-hosters using non-OpenAI LLM backends should treat LLM extraction as unreliable until this merges.
+- ARM64 Docker support and multi-arch images landed in v2.8.0 — self-hosting on Apple Silicon M-series machines is now officially supported.
+
+**Conclusion:** Firecrawl is in active, high-velocity development with no signs of maintenance mode or slowdown. The codebase shows a fast-ship culture, so self-hosters should pin to a release tag rather than tracking `main`. For the managed SaaS API, the Spark model tier expansion and Parallel Agents are production-hardened (billing is live). The `/interact` endpoint is the most significant upcoming capability for agentic lead-gen workflows (replacing multi-step `actions` arrays with natural language browser control).
