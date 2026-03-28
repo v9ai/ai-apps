@@ -10,7 +10,7 @@ from pathlib import Path
 from langgraph.graph import END, START, StateGraph
 
 from press import slugify, strip_fences
-from press.agents import Agent, run_parallel
+from press.agents import Agent
 from press.graphs.nodes import add_xyflow
 from press.graphs.state import BlogState
 from press.models import ModelPool, TeamRole
@@ -90,18 +90,14 @@ def build_blog_graph(
 
             (topic_dir / "research.md").write_text(notes)
 
-            # Writer + LinkedIn in parallel
+            # Writer
             writer_agent = Agent(
                 f"writer[{i}]", prompts.writer(), pool.for_role(TeamRole.REASONER)
             )
-            linkedin_agent = Agent(
-                f"linkedin[{i}]", prompts.linkedin(), pool.for_role(TeamRole.FAST)
-            )
-            blog, li = await run_parallel(writer_agent, linkedin_agent, notes)
+            blog = await writer_agent.run(notes)
 
             blog = await add_xyflow(pool, blog)
             (topic_dir / "blog.md").write_text(blog)
-            (topic_dir / "linkedin.md").write_text(li)
 
             if do_publish:
                 publish_post(blog, topic, deploy=True)
@@ -110,7 +106,6 @@ def build_blog_graph(
                 "topic": topic,
                 "slug": slug,
                 "blog": blog,
-                "linkedin": li,
                 "paper_count": paper_count,
             }
 

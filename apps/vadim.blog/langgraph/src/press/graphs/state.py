@@ -44,7 +44,6 @@ class PressState(TypedDict, total=False):
     research_output: str
     seo_output: str
     editor_output: str
-    linkedin: str
     approved: bool
     revision_rounds: int
     paper_count: int
@@ -74,7 +73,7 @@ class ArticleState(TypedDict, total=False):
     """Unified article pipeline — merges journalism + deep-dive.
 
     If ``input_file`` is set the pipeline reads source material and produces
-    a long-form deep-dive (2500-3500 words with LinkedIn).  Otherwise it
+    a long-form deep-dive (2500-3500 words).  Otherwise it
     runs a topic-only journalism flow (1200-1800 words).
     """
 
@@ -91,7 +90,6 @@ class ArticleState(TypedDict, total=False):
     seo_output: str
     draft: str
     editor_output: str
-    linkedin: str
     approved: bool
     revision_rounds: int
     paper_count: int
@@ -111,7 +109,6 @@ class CounterArticleState(TypedDict, total=False):
     seo_output: str
     draft: str
     editor_output: str
-    linkedin: str
     approved: bool
     revision_rounds: int
     paper_count: int
