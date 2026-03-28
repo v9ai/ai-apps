@@ -10,9 +10,6 @@ export function detectSourceFromUrl(url: string): SourceInfo {
   if (url.includes("linkedin.com")) {
     return { sourceType: "linkedin", tags: ["linkedin"] };
   }
-  if (url.includes("ashbyhq.com") || url.includes("site%3Aashbyhq")) {
-    return { sourceType: "ashby", tags: ["ashby"] };
-  }
   if (url.includes("indeed.com")) {
     return { sourceType: "indeed", tags: ["indeed"] };
   }
@@ -31,7 +28,6 @@ export function detectSourceFromUrl(url: string): SourceInfo {
   if (url.includes("google.com/search")) {
     const tags = ["google_search"];
     if (url.includes("workable")) tags.push("workable");
-    if (url.includes("ashby")) tags.push("ashby");
     if (url.includes("greenhouse")) tags.push("greenhouse");
     if (url.includes("lever")) tags.push("lever");
     return { sourceType: "google_search", tags };

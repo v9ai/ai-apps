@@ -205,15 +205,12 @@ export function normalizeJobInput(job: any): any {
     };
   }
 
-  // Try to extract company from Ashby/Greenhouse/Lever URLs
+  // Try to extract company from Greenhouse/Lever URLs
   if (job.url) {
-    const ashbyMatch = job.url.match(/jobs\.ashbyhq\.com\/([^/]+)/);
     const greenhouseMatch = job.url.match(/boards\.greenhouse\.io\/([^/]+)/);
     const leverMatch = job.url.match(/jobs\.lever\.co\/([^/]+)/);
 
-    if (ashbyMatch) {
-      companyKey = ashbyMatch[1];
-    } else if (greenhouseMatch) {
+    if (greenhouseMatch) {
       companyKey = greenhouseMatch[1];
     } else if (leverMatch) {
       companyKey = leverMatch[1];
@@ -225,9 +222,7 @@ export function normalizeJobInput(job: any): any {
 
   // Determine source kind from URL or sourceType
   let sourceKind = "other";
-  if (job.url?.includes("ashbyhq.com")) {
-    sourceKind = "ashby";
-  } else if (job.url?.includes("greenhouse.io")) {
+  if (job.url?.includes("greenhouse.io")) {
     sourceKind = "greenhouse";
   } else if (job.url?.includes("lever.co")) {
     sourceKind = "lever";
@@ -241,15 +236,8 @@ export function normalizeJobInput(job: any): any {
   let externalId = job.guid || job.id || job.url;
 
   if (job.url) {
-    // Extract Ashby UUID from URL: https://jobs.ashbyhq.com/sema4.ai/c58fa413-6181-4fa0-9fae-1525fa38689e
-    const ashbyUuidMatch = job.url.match(
-      /jobs\.ashbyhq\.com\/[^/]+\/([a-f0-9-]{36})/i,
-    );
-    if (ashbyUuidMatch) {
-      externalId = ashbyUuidMatch[1];
-    }
     // Extract Greenhouse ID from URL if present
-    else if (job.url.includes("greenhouse.io")) {
+    if (job.url.includes("greenhouse.io")) {
       const greenhouseIdMatch = job.url.match(/job_app\?gh_jid=(\d+)/);
       if (greenhouseIdMatch) {
         externalId = greenhouseIdMatch[1];

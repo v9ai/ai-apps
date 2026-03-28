@@ -1,17 +1,5 @@
 // LinkedIn job helper — salary extraction + Block Company button
 
-function isGoogleAshbySearch(): boolean {
-  if (
-    !window.location.hostname.includes("google.com") ||
-    !window.location.pathname.includes("/search")
-  ) return false;
-  // Check URL first (cheap), fall back to page content (expensive) only if needed
-  return (
-    window.location.search.includes("ashbyhq.com") ||
-    !!document.body.textContent?.includes("jobs.ashbyhq.com")
-  );
-}
-
 function clickDismiss(el: HTMLElement) {
   el.click();
 }
@@ -672,11 +660,6 @@ function extractJobData() {
     (window.location.pathname === "/jobs" ||
       window.location.pathname.startsWith("/job/"));
 
-  const isAshby =
-    isGoogleAshbySearch() ||
-    window.location.hostname.includes("ashbyhq.com") ||
-    window.location.hostname.includes(".ashbyhq.com");
-
   const genericJobsCount = document.querySelectorAll(
     '[data-provides="search-result"]',
   ).length;
@@ -686,9 +669,6 @@ function extractJobData() {
   if (isFounderio) {
     const founderioExtractor = (window as any).extractFounderioJobData;
     return founderioExtractor ? founderioExtractor() : [];
-  } else if (isAshby && !isGoogleSearch) {
-    const ashbyExtractor = (window as any).extractAshbyJobData;
-    return ashbyExtractor ? ashbyExtractor() : [];
   } else if (genericJobsCount > 0) {
     return extractGenericJobData();
   } else if (isLinkedIn) {
@@ -884,7 +864,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const isSupportedSite =
     hostname.includes("linkedin.com") ||
     hostname.includes("google.com") ||
-    hostname.includes("ashbyhq.com") ||
     hostname.includes("greenhouse.io") ||
     hostname.includes("lever.co") ||
     hostname.includes("founderio.com") ||
@@ -892,34 +871,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (!isSupportedSite) return false;
 
-  if (message.action === "navigateToPage") {
-    // Handle Google Ashby pagination navigation
-    const { pageNumber } = message;
-    const ashbyPageNavigator = (window as any).clickAshbyPageNumber;
-
-    if (ashbyPageNavigator) {
-      ashbyPageNavigator(pageNumber);
-      sendResponse({ success: true });
-    } else {
-      sendResponse({
-        success: false,
-        error: "Ashby navigation function not loaded",
-      });
-    }
-    return true;
-  }
-
   if (message.action === "extractJobs") {
-    // Check if this is a Google search - let Google Search Helper (ashby-helper.ts) handle it
-    const isGoogleSearch =
-      window.location.hostname.includes("google.com") &&
-      window.location.pathname.includes("/search");
-
-    if (isGoogleSearch) {
-      // Don't respond - let Google Search Helper (ashby-helper.ts) handle this
-      return false;
-    }
-
     const jobs = extractJobData();
     sendResponse({ jobs });
     return true;
@@ -928,80 +880,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "extractJobsWithPagination") {
     (async () => {
       try {
-        if (isGoogleAshbySearch()) {
-          const ashbyPaginationGetter = (window as any).getAshbyPaginationInfo;
-          const ashbyExtractor = (window as any).extractAshbyJobData;
-          const ashbyPageClicker = (window as any).clickAshbyPageNumber;
-
-          if (!ashbyPaginationGetter || !ashbyExtractor || !ashbyPageClicker) {
-            sendResponse({
-              success: false,
-              error: "Ashby helper functions not loaded",
-            });
-            return;
-          }
-
-          const allJobs: any[] = [];
-          const paginationInfo = ashbyPaginationGetter();
-
-          if (!paginationInfo) {
-            sendResponse({
-              success: false,
-              error: "No pagination found on Google search results",
-            });
-            return;
-          }
-
-          const { currentPage, totalPages } = paginationInfo;
-          const startPage = currentPage;
-
-          // Extract jobs from current page
-          const currentJobs = ashbyExtractor();
-          allJobs.push(...currentJobs);
-
-          // Send progress update
-          chrome.runtime.sendMessage({
-            action: "paginationProgress",
-            currentPage: startPage,
-            totalPages,
-            jobsCollected: allJobs.length,
-          });
-
-          // Navigate through remaining pages (limit to avoid too many pages)
-          const maxPagesToScrape = Math.min(totalPages, startPage + 4); // Scrape up to 5 pages
-          for (let page = startPage + 1; page <= maxPagesToScrape; page++) {
-
-            const success = await ashbyPageClicker(page);
-
-            if (!success) {
-              break;
-            }
-
-            // Wait longer for Google to fully load the new page
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            // Extract jobs from new page
-            const pageJobs = ashbyExtractor();
-            allJobs.push(...pageJobs);
-
-            // Send progress update
-            chrome.runtime.sendMessage({
-              action: "paginationProgress",
-              currentPage: page,
-              totalPages,
-              jobsCollected: allJobs.length,
-            });
-          }
-
-          sendResponse({
-            success: true,
-            jobs: allJobs,
-            totalPages,
-            pagesScraped: maxPagesToScrape - startPage + 1,
-          });
-          return;
-        }
-
         // LinkedIn pagination handling
         const allJobs: any[] = [];
         const paginationInfo = getLinkedInPaginationInfo();
@@ -1071,37 +949,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === "getPaginationInfo") {
-    if (isGoogleAshbySearch()) {
-      const ashbyPaginationGetter = (window as any).getAshbyPaginationInfo;
-      if (ashbyPaginationGetter) {
-        const paginationInfo = ashbyPaginationGetter();
-        sendResponse({ paginationInfo });
-      } else {
-        sendResponse({ paginationInfo: null });
-      }
-    } else {
-      const paginationInfo = getLinkedInPaginationInfo();
-      sendResponse({ paginationInfo });
-    }
+    const paginationInfo = getLinkedInPaginationInfo();
+    sendResponse({ paginationInfo });
     return true;
   }
 
   if (message.action === "goToNextPage") {
-    if (isGoogleAshbySearch()) {
-      const ashbyNextPageClicker = (window as any).clickAshbyNextPage;
-      if (ashbyNextPageClicker) {
-        ashbyNextPageClicker()
-          .then(() => sendResponse({ success: true }))
-          .catch((err: Error) =>
-            sendResponse({ success: false, error: err.message }),
-          );
-      } else {
-        sendResponse({
-          success: false,
-          error: "Ashby next page function not found",
-        });
-      }
-    } else {
+    {
       const info = getLinkedInPaginationInfo();
       if (info) {
         clickLinkedInPageNumber(info.currentPage + 1)
