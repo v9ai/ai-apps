@@ -413,7 +413,7 @@ use crate::constants::{
 };
 
 /// A plan spanning multiple days, each modelled as a [`DayPlan`].
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct MultiDayPlan {
     /// Day-by-day sequence plans.
     pub days: Vec<DayPlan>,
