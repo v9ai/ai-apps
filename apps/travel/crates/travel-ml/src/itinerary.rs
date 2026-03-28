@@ -18,6 +18,76 @@ pub struct DayPlan {
     pub kid_max_hit: bool,
 }
 
+// ── Kid Fatigue Model ─────────────────────────────────────────────────────────
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct KidFatigueModel {
+    pub energy_cap: f32,      // default 3.0 for school-age
+    pub decay_rate: f32,      // energy decay per hour of activity: 0.15
+    pub recovery_meal: f32,   // energy recovered at meal break: 0.5
+    pub recovery_rest: f32,   // energy recovered at rest stop: 0.25
+}
+
+impl Default for KidFatigueModel {
+    fn default() -> Self {
+        Self {
+            energy_cap: 3.0,
+            decay_rate: 0.15,
+            recovery_meal: 0.5,
+            recovery_rest: 0.25,
+        }
+    }
+}
+
+// ── Time Block ────────────────────────────────────────────────────────────────
+
+/// Minutes-from-09:00 boundaries: Morning 0–210, Lunch 210–270, Afternoon 270–480, Evening 480–660
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub enum TimeBlock {
+    Morning,   // 09:00 – 12:30
+    Lunch,     // 12:30 – 13:30
+    Afternoon, // 13:30 – 17:00
+    Evening,   // 17:00 – 20:00
+}
+
+impl TimeBlock {
+    pub fn from_minutes(min: u32) -> Self {
+        match min {
+            0..=209 => TimeBlock::Morning,
+            210..=269 => TimeBlock::Lunch,
+            270..=479 => TimeBlock::Afternoon,
+            _ => TimeBlock::Evening,
+        }
+    }
+}
+
+// ── Scheduled Place ───────────────────────────────────────────────────────────
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ScheduledPlace {
+    pub name: String,
+    pub start_time_min: u32, // minutes from 09:00 = 0
+    pub end_time_min: u32,
+    pub time_block: TimeBlock,
+    pub kid_energy_after: f32, // remaining kid energy after visiting
+    pub transit_min: u32,
+}
+
+// ── Family Day Plan ───────────────────────────────────────────────────────────
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FamilyDayPlan {
+    pub schedule: Vec<ScheduledPlace>,
+    pub total_duration_min: u32,
+    pub kid_energy_remaining: f32,
+    pub kid_overloaded: bool, // true if energy dropped below 0.3 at any point
+    pub meal_break_recommended_at: Option<String>, // place name after which meal break is needed
+    pub estimated_start: String, // "09:00"
+    pub estimated_end: String,   // e.g. "16:30"
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 pub fn haversine_km(a: (f64, f64), b: (f64, f64)) -> f64 {
     const R: f64 = 6371.0;
     let dlat = (b.0 - a.0).to_radians();
@@ -32,6 +102,14 @@ pub fn transit_min(a: (f64, f64), b: (f64, f64)) -> u32 {
     let raw = (haversine_km(a, b) * 1000.0 / 50.0).ceil() as u32;
     raw.min(30)
 }
+
+/// Format minutes-from-09:00 as a clock string, e.g. 90 → "10:30".
+fn fmt_time(minutes_from_nine: u32) -> String {
+    let total = 9 * 60 + minutes_from_nine;
+    format!("{:02}:{:02}", total / 60, total % 60)
+}
+
+// ── plan_day (original greedy nearest-neighbor) ───────────────────────────────
 
 pub fn plan_day(places: &[PlaceNode], max_hours: f32) -> DayPlan {
     if places.is_empty() {
@@ -96,7 +174,142 @@ pub fn plan_day(places: &[PlaceNode], max_hours: f32) -> DayPlan {
     }
 }
 
-pub fn napoli_family_plan() -> DayPlan {
+// ── plan_family_day ───────────────────────────────────────────────────────────
+
+/// Greedy nearest-neighbor day planner that models kid fatigue.
+///
+/// Rules:
+/// - Clock starts at 09:00 (minute 0).
+/// - Kid energy starts at `fatigue.energy_cap`.
+/// - After each place: energy -= `fatigue.decay_rate * (duration_min / 60)`.
+/// - If energy < 0.4 AND current_min > 210 (12:30): recommend meal break once,
+///   then recover `fatigue.recovery_meal`.
+/// - Stop if kid energy < 0.3 OR elapsed_min > max_hours * 60.
+pub fn plan_family_day(
+    places: &[PlaceNode],
+    fatigue: &KidFatigueModel,
+    max_hours: f32,
+) -> FamilyDayPlan {
+    if places.is_empty() {
+        return FamilyDayPlan {
+            schedule: vec![],
+            total_duration_min: 0,
+            kid_energy_remaining: fatigue.energy_cap,
+            kid_overloaded: false,
+            meal_break_recommended_at: None,
+            estimated_start: "09:00".into(),
+            estimated_end: "09:00".into(),
+        };
+    }
+
+    let max_min = (max_hours * 60.0) as u32;
+    let mut visited = vec![false; places.len()];
+    let mut schedule: Vec<ScheduledPlace> = Vec::new();
+    let mut current_min: u32 = 0;
+    let mut kid_energy = fatigue.energy_cap;
+    let mut kid_overloaded = false;
+    let mut meal_break_recommended_at: Option<String> = None;
+    let mut current = 0usize;
+
+    // ── Visit first place ────────────────────────────────────────────────────
+    visited[current] = true;
+    let start = current_min;
+    let end = current_min + places[current].duration_min;
+
+    let decay = fatigue.decay_rate * (places[current].duration_min as f32 / 60.0);
+    kid_energy -= decay;
+    if kid_energy < 0.3 {
+        kid_overloaded = true;
+    }
+
+    // Check for meal-break recommendation after first place (unlikely at min 0,
+    // but handled uniformly by the same logic in the loop below).
+    let energy_after_first = kid_energy;
+    schedule.push(ScheduledPlace {
+        name: places[current].name.clone(),
+        start_time_min: start,
+        end_time_min: end,
+        time_block: TimeBlock::from_minutes(start),
+        kid_energy_after: energy_after_first,
+        transit_min: 0,
+    });
+    current_min = end;
+
+    // ── Greedy loop ──────────────────────────────────────────────────────────
+    loop {
+        // Hard stop conditions
+        if kid_energy < 0.3 || current_min > max_min {
+            break;
+        }
+
+        let cur_pos = (places[current].lat, places[current].lng);
+        let next = (0..places.len())
+            .filter(|&i| !visited[i])
+            .min_by(|&a, &b| {
+                let da = haversine_km(cur_pos, (places[a].lat, places[a].lng));
+                let db = haversine_km(cur_pos, (places[b].lat, places[b].lng));
+                da.partial_cmp(&db).unwrap()
+            });
+
+        let Some(idx) = next else { break };
+
+        let t_min = transit_min(cur_pos, (places[idx].lat, places[idx].lng));
+        let step_min = t_min + places[idx].duration_min;
+
+        // Would we exceed the daily cap?
+        if current_min + step_min > max_min {
+            break;
+        }
+
+        // Apply fatigue for this place
+        let decay = fatigue.decay_rate * (places[idx].duration_min as f32 / 60.0);
+        let energy_after = kid_energy - decay;
+
+        // Meal-break recommendation: low energy AND past 12:30 AND not yet set
+        if energy_after < 0.4 && current_min > 210 && meal_break_recommended_at.is_none() {
+            meal_break_recommended_at = Some(places[idx].name.clone());
+            kid_energy = (energy_after + fatigue.recovery_meal).min(fatigue.energy_cap);
+        } else {
+            kid_energy = energy_after;
+        }
+
+        if kid_energy < 0.3 {
+            kid_overloaded = true;
+        }
+
+        let place_start = current_min + t_min;
+        let place_end = place_start + places[idx].duration_min;
+
+        visited[idx] = true;
+        schedule.push(ScheduledPlace {
+            name: places[idx].name.clone(),
+            start_time_min: place_start,
+            end_time_min: place_end,
+            time_block: TimeBlock::from_minutes(place_start),
+            kid_energy_after: kid_energy,
+            transit_min: t_min,
+        });
+
+        current_min = place_end;
+        current = idx;
+    }
+
+    let estimated_end = fmt_time(current_min);
+
+    FamilyDayPlan {
+        schedule,
+        total_duration_min: current_min,
+        kid_energy_remaining: kid_energy,
+        kid_overloaded,
+        meal_break_recommended_at,
+        estimated_start: "09:00".into(),
+        estimated_end,
+    }
+}
+
+// ── napoli_family_plan ────────────────────────────────────────────────────────
+
+pub fn napoli_family_plan() -> FamilyDayPlan {
     let places = vec![
         PlaceNode {
             name: "Piazza del Plebiscito".into(),
@@ -180,5 +393,5 @@ pub fn napoli_family_plan() -> DayPlan {
         },
     ];
 
-    plan_day(&places, 8.0)
+    plan_family_day(&places, &KidFatigueModel::default(), 8.0)
 }
