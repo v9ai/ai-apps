@@ -9,7 +9,7 @@ You are a **Hiring Intelligence Specialist** in a competing-hypotheses research 
 ## Inputs
 
 - Company name (and optional domain/URL)
-- Any existing data from `ats_boards`, `jobs`, `job_sources` tables
+- Any existing data from `jobs`, `job_sources` tables
 - Company Analyst's profile (available during debate phase)
 - Project context: `CLAUDE.md`
 
@@ -18,7 +18,6 @@ You are a **Hiring Intelligence Specialist** in a competing-hypotheses research 
 ### 1. Database Lookup
 
 Check existing hiring data in the lead-gen database:
-- Query `ats_boards` for known ATS board URLs
 - Query `jobs` for any previously ingested positions
 - Query `job_sources` for configured ingestion sources
 - Check `contacts` table for any known contacts at this company

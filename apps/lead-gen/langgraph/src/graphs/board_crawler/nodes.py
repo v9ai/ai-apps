@@ -7,8 +7,6 @@ from __future__ import annotations
 
 import logging
 
-from src.db.connection import get_connection
-
 from .common_crawl import crawl_cdx_page, detect_latest_index
 from .state import BoardCrawlerState
 
@@ -62,33 +60,3 @@ def deduplicate_node(state: BoardCrawlerState) -> dict:
     }
 
 
-def persist_node(state: BoardCrawlerState) -> dict:
-    """Persist discovered boards to ats_boards table."""
-    conn = get_connection()
-    try:
-        boards = state.get("discovered", [])
-        upserted = 0
-
-        for board in boards:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """INSERT INTO ats_boards (vendor, board_slug, url, source_type, source_url,
-                                              method, is_active, first_seen_at, last_seen_at,
-                                              created_at, updated_at)
-                       VALUES (%s, %s, %s, 'common_crawl', %s, 'crawl', true, now(), now(), now(), now())
-                       ON CONFLICT (vendor, board_slug) DO UPDATE SET
-                           last_seen_at = now(),
-                           updated_at = now()""",
-                    [board["provider"], board["token"], board["url"], board["url"]],
-                )
-                upserted += 1
-        conn.commit()
-
-        return {
-            "stats": {
-                **state.get("stats", {}),
-                "upserted": upserted,
-            },
-        }
-    finally:
-        conn.close()

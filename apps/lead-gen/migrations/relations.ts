@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { jobSources, jobs, companies, jobSkillTags, companyFacts, companySnapshots, atsBoards } from "./schema";
+import { jobSources, jobs, companies, jobSkillTags, companyFacts, companySnapshots } from "./schema";
 
 export const jobsRelations = relations(jobs, ({one, many}) => ({
 	jobSource: one(jobSources, {
@@ -21,7 +21,6 @@ export const companiesRelations = relations(companies, ({many}) => ({
 	jobs: many(jobs),
 	companyFacts: many(companyFacts),
 	companySnapshots: many(companySnapshots),
-	atsBoards: many(atsBoards),
 }));
 
 export const jobSkillTagsRelations = relations(jobSkillTags, ({one}) => ({

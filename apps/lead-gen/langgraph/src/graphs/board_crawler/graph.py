@@ -3,12 +3,12 @@
 Ported from workers/ashby-crawler (Rust/WASM).
 
 Flow:
-    START -> detect_index -> crawl_pages -> deduplicate -> persist -> END
+    START -> detect_index -> crawl_pages -> deduplicate -> END
 """
 
 from langgraph.graph import END, START, StateGraph
 
-from .nodes import crawl_pages_node, deduplicate_node, detect_index_node, persist_node
+from .nodes import crawl_pages_node, deduplicate_node, detect_index_node
 from .state import BoardCrawlerState
 
 
@@ -19,12 +19,10 @@ def build_board_crawler_graph():
     builder.add_node("detect_index", detect_index_node)
     builder.add_node("crawl_pages", crawl_pages_node)
     builder.add_node("deduplicate", deduplicate_node)
-    builder.add_node("persist", persist_node)
 
     builder.add_edge(START, "detect_index")
     builder.add_edge("detect_index", "crawl_pages")
     builder.add_edge("crawl_pages", "deduplicate")
-    builder.add_edge("deduplicate", "persist")
-    builder.add_edge("persist", END)
+    builder.add_edge("deduplicate", END)
 
     return builder.compile()

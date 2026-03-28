@@ -20,8 +20,6 @@ import { resolve, dirname } from "node:path";
 import {
   JobStatus,
   ClassificationConfidence,
-  ATSVendor,
-  ATSBoardType,
   CompanyCategory,
   SourceType,
   ExtractMethod,
@@ -112,8 +110,6 @@ function generatePython(): string {
   lines.push("");
 
   pyEnum("ClassificationConfidence", getEnumValues(ClassificationConfidence));
-  pyEnum("ATSVendor", getEnumValues(ATSVendor));
-  pyEnum("ATSBoardType", getEnumValues(ATSBoardType));
   pyEnum("CompanyCategory", getEnumValues(CompanyCategory));
   pyEnum("SourceType", getEnumValues(SourceType));
   pyEnum("ExtractMethod", getEnumValues(ExtractMethod));
@@ -162,17 +158,9 @@ function generateRust(): string {
 
   rsEnum("JobStatus", getEnumValues(JobStatus));
   rsEnum("ClassificationConfidence", getEnumValues(ClassificationConfidence));
-  rsEnum("ATSVendor", getEnumValues(ATSVendor));
-  rsEnum("ATSBoardType", getEnumValues(ATSBoardType));
   rsEnum("CompanyCategory", getEnumValues(CompanyCategory));
   rsEnum("SourceType", getEnumValues(SourceType));
   rsEnum("ExtractMethod", getEnumValues(ExtractMethod));
-
-  // ATS provider subset used by the crawler (Ashby, Greenhouse, Workable)
-  lines.push("/// Vendor strings recognized by the ashby-crawler AtsProvider enum.");
-  lines.push("/// Keep AtsProvider::from_str in sync with this list.");
-  lines.push(`pub const ATS_CRAWLER_PROVIDERS: &[&str] = &["ASHBY", "GREENHOUSE", "WORKABLE"];`);
-  lines.push("");
 
   // Skill tags as a const array
   const tags = Object.keys(SKILL_TAXONOMY);
@@ -195,8 +183,6 @@ function generateJsonSchema(): object {
   const enums: Record<string, readonly string[]> = {
     JobStatus: getEnumValues(JobStatus),
     ClassificationConfidence: getEnumValues(ClassificationConfidence),
-    ATSVendor: getEnumValues(ATSVendor),
-    ATSBoardType: getEnumValues(ATSBoardType),
     CompanyCategory: getEnumValues(CompanyCategory),
     SourceType: getEnumValues(SourceType),
     ExtractMethod: getEnumValues(ExtractMethod),
