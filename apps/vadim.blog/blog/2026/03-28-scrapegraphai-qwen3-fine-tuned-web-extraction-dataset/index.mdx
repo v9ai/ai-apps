@@ -53,6 +53,14 @@ ScrapeGraphAI’s generative JSON approach is one of several competing architect
 
 The ScrapeGraphAI model sits in a sweet spot: it’s generative (flexible for complex schemas), fine-tuned (high accuracy), and compact (cheap to run). It doesn’t require a separate pruning or repair stage; the schema conformance is baked into the model’s training.
 
+## How This Fits a Production Lead-Gen Pipeline
+
+To ground this in a concrete system: [agenticleadgen.xyz](https://agenticleadgen.xyz/) is a B2B lead generation platform built on Next.js + Rust ML crates (source on [GitHub](https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen)). Its extraction stack illustrates where specialized models slot into a real pipeline.
+
+The platform uses a zero-allocation Rust HTML scanner for high-throughput email and contact harvesting (~100 pages/sec), custom NER (92.3% F1) for company profile parsing, and `open-graph-scraper` for LinkedIn OG metadata. The pipeline is visualized end-to-end using `@xyflow/react`. The ScrapeGraphAI model fills the gap the Rust extractor can’t: flexible, schema-driven structured extraction where page layouts vary and a rigid CSS-selector approach breaks.
+
+The combination is: **Rust scanner for throughput, sgai-qwen3 for schema flexibility**. The 1.7B GGUF model runs on the same M1 infrastructure as the Rust pipeline with no additional hardware.
+
 export const pipelineNodes = [
   { id: "n1", position: { x: 0, y: 0 }, data: { label: "Raw Web Pages" }, type: "input" },
   { id: "n2", position: { x: 280, y: 0 }, data: { label: "Rust HTML Scanner" } },
