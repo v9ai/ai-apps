@@ -354,7 +354,7 @@ apps/knowledge/
 │   ├── audio-player.tsx    # TTS audio playback
 │   ├── toc.tsx             # Auto-generated ToC
 │   └── ...
-├── content/                # 87 markdown lesson files
+├── content/                # 88 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (17 tables)

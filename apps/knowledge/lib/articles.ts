@@ -131,7 +131,8 @@ const LESSON_SLUGS = [
   "aws-compute-containers",
   "aws-storage-s3",
   "aws-cicd-devops",
-  // Software Engineering (83-88)
+  "aws-architecture",
+  // Software Engineering (84-89)
   "microservices",
   "ci-cd",
   "nodejs",
@@ -156,8 +157,8 @@ export const CATEGORIES: [number, number, string][] = [
   [55, 61, "Safety & Alignment"],
   [62, 65, "Multimodal AI"],
   [66, 71, "Applied AI & Production"],
-  [72, 82, "Cloud Platforms"],
-  [83, 88, "Software Engineering"],
+  [72, 83, "Cloud Platforms"],
+  [84, 89, "Software Engineering"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
