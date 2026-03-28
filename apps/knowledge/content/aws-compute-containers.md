@@ -549,6 +549,8 @@ Run EKS on your own infrastructure (VMware vSphere, bare metal, Nutanix, Snow):
 
 ## 9. ECR (Elastic Container Registry)
 
+> ECR stores [Docker](/docker) container images. For CI/CD pipelines that build and push images, see [CI/CD & DevOps](/aws-cicd-devops).
+
 ### Image Scanning
 
 **Basic scanning** (free, deprecated): Scans on push using Clair for OS-level CVEs. Returns `COMPLETE` status.
@@ -718,7 +720,7 @@ Managed batch computing service. Provisions and manages EC2/Fargate compute base
 
 **Job Queue**: Jobs are submitted to queues. Multiple queues can map to one or more compute environments with priorities.
 
-**Job Definition**: Like an ECS task definition — Docker image, CPU/memory, retries, timeout, environment variables, IAM role, volumes.
+**Job Definition**: Like an ECS task definition — [Docker](/docker) image, CPU/memory, retries, timeout, environment variables, [IAM](/aws-iam-security) role, volumes.
 
 **Job**: A unit of work. Can be array jobs (same definition, N independent runs — useful for hyperparameter sweeps) or dependent jobs (job B waits for job A).
 
