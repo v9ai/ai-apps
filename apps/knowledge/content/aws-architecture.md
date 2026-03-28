@@ -33,7 +33,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Safe Deployments**
 - Blue/Green: maintain two identical environments; switch traffic via ELB or Route 53; instant rollback
-- Canary: route small % of traffic to new version ([CodeDeploy](/aws-cicd-devops) canary, [Lambda](/aws/lambda-serverless) weighted aliases, [ECS](/aws-compute-containers) service deployment circuit breaker)
+- Canary: route small % of traffic to new version ([CodeDeploy](/aws-cicd-devops) canary, [Lambda](/aws/lambda-serverless) weighted aliases, [ECS](/aws/compute-containers) service deployment circuit breaker)
 - Feature flags: decouple deploy from release; CloudWatch Evidently for A/B and feature flags
 - Deployment validation: pre-traffic and post-traffic hooks in CodeDeploy (Lambda), health checks in ECS
 
@@ -43,7 +43,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Design Principles:** Strong identity foundation, traceability, apply security at all layers, automate security, protect data in transit and at rest, keep people away from data, prepare for security events.
 
-**Identity & Access Management** — see [IAM & Security](/aws-iam-security) for full deep-dive
+**Identity & Access Management** — see [IAM & Security](/aws/iam-security) for full deep-dive
 - Root account: lock it, enable MFA, delete access keys — never use for daily work
 - IAM users: only for humans without SSO; prefer IAM Identity Center (SSO) for people
 - IAM roles: for services (EC2 instance profile, Lambda execution role, ECS task role) and cross-account access
@@ -53,7 +53,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Session policies: further restrict AssumeRole sessions
 - Conditions in policies: `aws:SourceIp`, `aws:RequestedRegion`, `aws:MultiFactorAuthPresent`, `aws:PrincipalTag`
 
-**Detection** — see [IAM & Security](/aws-iam-security) for full coverage of GuardDuty, Security Hub, and CloudTrail
+**Detection** — see [IAM & Security](/aws/iam-security) for full coverage of GuardDuty, Security Hub, and CloudTrail
 - CloudTrail: API call history, mandatory for forensics; enable for all regions, send to S3 + CloudWatch Logs
 - GuardDuty: ML-based threat detection (unusual API calls, crypto mining, credential exfiltration, port scanning)
 - Security Hub: aggregates findings from GuardDuty, Inspector, Macie, Firewall Manager; normalizes to ASFF
@@ -61,7 +61,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - CloudWatch Logs Insights: query logs for security events (`filter @message like /AccessDenied/`)
 - EventBridge + Lambda: auto-remediation (quarantine EC2, rotate key) on GuardDuty finding
 
-**Infrastructure Protection** — see [API Gateway & Networking](/aws/api-gateway-networking) for VPC, WAF, and Shield details; [IAM & Security](/aws-iam-security) for WAF managed rules and Network Firewall
+**Infrastructure Protection** — see [API Gateway & Networking](/aws/api-gateway-networking) for VPC, WAF, and Shield details; [IAM & Security](/aws/iam-security) for WAF managed rules and Network Firewall
 - VPC Security Groups: stateful, instance-level; use as virtual firewalls; principle: default deny, explicit allow
 - NACLs: stateless, subnet-level; use as coarse secondary layer (not primary)
 - WAF: Layer 7 rules (SQL injection, XSS, rate limiting, IP allow/block lists, AWS Managed Rules); attach to ALB, CloudFront, API Gateway
@@ -71,7 +71,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Private endpoints (VPC Interface Endpoints): service traffic stays on AWS backbone, never traverses internet
 - Bastion hosts → prefer SSM Session Manager (no inbound SSH ports, full audit log, no key management)
 
-**Data Protection** — see [IAM & Security](/aws-iam-security) for KMS, Secrets Manager, and Macie deep-dives; [S3, CloudFront & Storage](/aws-storage-s3) for S3 encryption and Object Lock
+**Data Protection** — see [IAM & Security](/aws/iam-security) for KMS, Secrets Manager, and Macie deep-dives; [S3, CloudFront & Storage](/aws-storage-s3) for S3 encryption and Object Lock
 - Encryption at rest: S3 SSE-S3 (default), SSE-KMS (audit trail, key rotation, cross-account), SSE-C (customer-managed)
 - Encryption in transit: TLS 1.2+ enforced via bucket policies (`aws:SecureTransport`), ALB HTTPS listeners, API Gateway
 - KMS: regional service, key material never leaves; envelope encryption (data key encrypted by CMK); automatic annual rotation
@@ -98,8 +98,8 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Graceful degradation: circuit breakers, bulkheads, fallback responses when dependencies fail
 
 **Change Management**
-- [Auto Scaling Groups](/aws-compute-containers): dynamic scaling (target tracking, step, scheduled); ASG + ALB provides self-healing
-- [ECS](/aws-compute-containers)/[EKS](/aws-compute-containers) rolling updates with health checks and deployment circuit breaker
+- [Auto Scaling Groups](/aws/compute-containers): dynamic scaling (target tracking, step, scheduled); ASG + ALB provides self-healing
+- [ECS](/aws/compute-containers)/[EKS](/aws/compute-containers) rolling updates with health checks and deployment circuit breaker
 - [RDS](/dynamodb-data-services): Multi-AZ synchronous standby; failover < 60 seconds; avoid single-AZ in production
 
 **Failure Management**
@@ -117,13 +117,13 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 **Design Principles:** Democratize advanced technologies, go global in minutes, use serverless architectures, experiment more often, consider mechanical sympathy.
 
 **Selection**
-- Compute: [Lambda](/aws/lambda-serverless) for bursty/event-driven, [Fargate](/aws-compute-containers) for containerized variable load, [EC2](/aws-compute-containers) for sustained/specialized
+- Compute: [Lambda](/aws/lambda-serverless) for bursty/event-driven, [Fargate](/aws/compute-containers) for containerized variable load, [EC2](/aws/compute-containers) for sustained/specialized
 - Storage: [S3](/aws-storage-s3) for objects/static, [EBS](/aws-storage-s3) gp3 for block (IOPS independent of size), io2 Block Express for databases, [EFS](/aws-storage-s3) for shared POSIX
 - Database: match data model to engine — [Aurora](/dynamodb-data-services) for relational, [DynamoDB](/dynamodb-data-services) for key-value/document, [ElastiCache](/dynamodb-data-services) for cache, [Redshift](/dynamodb-data-services) for analytics, OpenSearch for full-text/vector search
 - Networking: placement groups (cluster for HPC/low latency, spread for fault isolation), enhanced networking (SR-IOV), EFA for MPI workloads — see [API Gateway & Networking](/aws/api-gateway-networking)
 
 **Review**
-- Compute Optimizer: ML-based right-sizing recommendations for [EC2](/aws-compute-containers), ECS (Fargate), [Lambda](/aws/lambda-serverless), [EBS](/aws-storage-s3)
+- Compute Optimizer: ML-based right-sizing recommendations for [EC2](/aws/compute-containers), ECS (Fargate), [Lambda](/aws/lambda-serverless), [EBS](/aws-storage-s3)
 - Performance testing: load test with Artillery, Gatling; profile with X-Ray to find bottlenecks
 
 **Monitoring**
@@ -157,8 +157,8 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Cost-Effective Resources (see also Cost Optimization Patterns section)**
 - Right-size before committing: use Compute Optimizer; reduce instance size or switch to graviton
-- Graviton3 (arm64): up to 40% better price/performance for general compute vs x86; supported in [EC2](/aws-compute-containers), [Lambda](/aws/lambda-serverless), Fargate, RDS
-- [Spot Instances](/aws-compute-containers): up to 90% savings; use for fault-tolerant, stateless, batch workloads; Spot Fleet + capacity-optimized allocation
+- Graviton3 (arm64): up to 40% better price/performance for general compute vs x86; supported in [EC2](/aws/compute-containers), [Lambda](/aws/lambda-serverless), Fargate, RDS
+- [Spot Instances](/aws/compute-containers): up to 90% savings; use for fault-tolerant, stateless, batch workloads; Spot Fleet + capacity-optimized allocation
 - Savings Plans: 1 or 3 year; Compute SP flexible across instance family/region/OS; EC2 Instance SP for specific family
 - Storage tiering: [S3 Intelligent-Tiering](/aws-storage-s3), S3 Glacier for infrequent access, Glacier Deep Archive for archival
 - Lifecycle policies: auto-transition or delete objects after N days
@@ -198,11 +198,11 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Rule: each service should be independently deployable; a change to service A should not require redeployment of service B
 
 **Bounded Contexts on AWS**
-- Each context gets its own: [CodePipeline](/aws-cicd-devops), ECR repository, [ECS](/aws-compute-containers) service or [Lambda](/aws/lambda-serverless), [DynamoDB](/dynamodb-data-services) table or [RDS](/dynamodb-data-services) database, [IAM role](/aws-iam-security)
+- Each context gets its own: [CodePipeline](/aws-cicd-devops), ECR repository, [ECS](/aws/compute-containers) service or [Lambda](/aws/lambda-serverless), [DynamoDB](/dynamodb-data-services) table or [RDS](/dynamodb-data-services) database, [IAM role](/aws/iam-security)
 - Context boundary enforcement: services communicate only via well-defined APIs (REST, gRPC) or events — never direct DB access
 
 **Service Mesh: AWS App Mesh**
-- Envoy proxy sidecar injected alongside each service container ([ECS](/aws-compute-containers) or [EKS](/aws-compute-containers))
+- Envoy proxy sidecar injected alongside each service container ([ECS](/aws/compute-containers) or [EKS](/aws/compute-containers))
 - Provides: traffic shaping (retries, timeouts, circuit breaker), observability (metrics to CloudWatch, traces to X-Ray), mTLS encryption
 - Virtual services, virtual routers, virtual nodes: abstract the service topology
 - When to use: > 5 services with complex inter-service routing; otherwise an ALB with target groups is simpler
@@ -319,7 +319,7 @@ StepFunction: PlaceOrderSaga
 
 **Bulkhead**
 - Isolate failures; if one component fails, others continue
-- AWS implementation: separate thread pools / SQS queues per service; VPC isolation; separate [Auto Scaling Groups](/aws-compute-containers)
+- AWS implementation: separate thread pools / SQS queues per service; VPC isolation; separate [Auto Scaling Groups](/aws/compute-containers)
 - [Lambda](/aws/lambda-serverless) reserved concurrency: reserve capacity for critical functions, preventing noisy neighbors from consuming all concurrency
 
 **Circuit Breaker**
@@ -345,7 +345,7 @@ StepFunction: PlaceOrderSaga
 ```
 
 - Web tier: static assets in [S3](/aws-storage-s3), served via [CloudFront](/aws-storage-s3); SPA communicates with backend API
-- App tier: private subnets; outbound internet via [NAT Gateway](/aws/api-gateway-networking); fetches secrets from [Secrets Manager](/aws-iam-security) at startup
+- App tier: private subnets; outbound internet via [NAT Gateway](/aws/api-gateway-networking); fetches secrets from [Secrets Manager](/aws/iam-security) at startup
 - Data tier: private subnets with no internet route; security groups restrict access to app tier only
 - ALB: sticky sessions only if stateful (prefer stateless + [ElastiCache Redis](/dynamodb-data-services)); HTTPS listener with ACM certificate
 
@@ -380,8 +380,8 @@ StepFunction: PlaceOrderSaga
                              [Aurora Serverless v2 or RDS Multi-AZ]
 ```
 
-- [ECS Fargate](/aws-compute-containers): no EC2 management; task definitions specify vCPU + memory; pay per task-second
-- [EKS](/aws-compute-containers): Kubernetes control plane managed by AWS; worker nodes on EC2 (managed node groups) or Fargate — see [EC2, ECS & Containers](/aws-compute-containers) for full coverage
+- [ECS Fargate](/aws/compute-containers): no EC2 management; task definitions specify vCPU + memory; pay per task-second
+- [EKS](/aws/compute-containers): Kubernetes control plane managed by AWS; worker nodes on EC2 (managed node groups) or Fargate — see [EC2, ECS & Containers](/aws/compute-containers) for full coverage
 - Service Connect (ECS): built-in service discovery and traffic metrics via Cloud Map
 - Karpenter (EKS): fast, cost-efficient node provisioning; replaces Cluster Autoscaler; supports Spot
 
@@ -391,7 +391,7 @@ StepFunction: PlaceOrderSaga
 
 ### Multi-AZ
 - Minimum: 2 AZs (prefer 3 for avoiding split-brain in quorum systems)
-- [EC2](/aws-compute-containers): ASG spans AZs; ALB distributes across targets in all AZs
+- [EC2](/aws/compute-containers): ASG spans AZs; ALB distributes across targets in all AZs
 - [RDS](/dynamodb-data-services) Multi-AZ: synchronous replication to standby in different AZ; automated failover; standby not readable
 - [Aurora](/dynamodb-data-services): 6-way replication across 3 AZs for storage; can have reader instances in different AZs
 - [ElastiCache Redis](/dynamodb-data-services): Multi-AZ replication groups; automatic failover to replica
@@ -473,7 +473,7 @@ StepFunction: PlaceOrderSaga
 - Step down instance family before instance size (e.g., c5.xlarge → c6g.large saves more than c5.xlarge → c5.large)
 - Graviton migration: most apps run unmodified; Arm binaries needed; test before committing
 
-### Spot Instances — see [EC2, ECS & Containers](/aws-compute-containers) for full Spot mechanics
+### Spot Instances — see [EC2, ECS & Containers](/aws/compute-containers) for full Spot mechanics
 - Up to 90% savings; instances can be interrupted with 2-minute warning
 - Viable for: batch jobs, CI/CD workers, stateless web tier with ASG, ML training (with checkpointing)
 - Spot best practices: diversify across multiple instance types and AZs (Spot Fleet, EC2 Fleet); use `capacity-optimized` allocation strategy; implement graceful shutdown on SIGTERM
@@ -514,7 +514,7 @@ StepFunction: PlaceOrderSaga
 
 ## 7. Observability Stack
 
-> Related: [Lambda & Serverless](/aws/lambda-serverless) for Lambda-specific observability (PowerTools, structured logging); [EC2, ECS & Containers](/aws-compute-containers) for container metrics and ADOT sidecar patterns.
+> Related: [Lambda & Serverless](/aws/lambda-serverless) for Lambda-specific observability (PowerTools, structured logging); [EC2, ECS & Containers](/aws/compute-containers) for container metrics and ADOT sidecar patterns.
 
 ### CloudWatch Metrics
 - Namespaces: `AWS/EC2`, `AWS/Lambda`, `AWS/RDS`, or custom (`MyApp/Orders`)
@@ -574,7 +574,7 @@ StepFunction: PlaceOrderSaga
 
 ## 8. Migration Strategies — The 7 Rs
 
-> Related: [CI/CD & DevOps](/aws-cicd-devops) for pipeline automation during migration; [EC2, ECS & Containers](/aws-compute-containers) for compute targets; [DynamoDB & Data Services](/dynamodb-data-services) for DMS and database migration.
+> Related: [CI/CD & DevOps](/aws-cicd-devops) for pipeline automation during migration; [EC2, ECS & Containers](/aws/compute-containers) for compute targets; [DynamoDB & Data Services](/dynamodb-data-services) for DMS and database migration.
 
 ### Retire
 - Decommission: application has no business value; turn it off
@@ -654,12 +654,12 @@ Root
 - Sets up a landing zone: account structure, baseline configuration, guardrails in < 1 hour
 - Account Factory: self-service account vending via Service Catalog; new accounts provisioned with baseline controls, VPC, logging
 - Account Factory for Terraform (AFT): Terraform-native account vending; codify account customizations
-- Guardrails: proactive (prevent via [SCPs](/aws-iam-security)), detective (detect via Config Rules), or combination
+- Guardrails: proactive (prevent via [SCPs](/aws/iam-security)), detective (detect via Config Rules), or combination
 - Mandatory guardrails: always enabled (e.g., CloudTrail enabled, S3 public access blocked)
 - Strongly recommended guardrails: on by default but can disable
 - Elective guardrails: opt-in for specific OUs
 
-### Service Control Policies (SCPs) — see [IAM & Security](/aws-iam-security) for full SCP and IAM deep-dive
+### Service Control Policies (SCPs) — see [IAM & Security](/aws/iam-security) for full SCP and IAM deep-dive
 - Apply at OU or account level; define maximum permissions (allow list or deny list model)
 - Deny list model (default): attach AWS managed `FullAWSAccess` + explicit deny policies — more flexible
 - Allow list model: deny everything, explicitly allow what's permitted — more secure but operationally heavy
@@ -791,7 +791,7 @@ Root
 - Billing: per-account Cost Explorer; tag policies; consolidated billing in management account
 
 **Pool Model (Shared Infrastructure)**
-- All tenants share [EC2](/aws-compute-containers)/[Lambda](/aws/lambda-serverless)/[RDS](/dynamodb-data-services); tenant data isolated by `tenantId` column (row-level security) or [DynamoDB](/dynamodb-data-services) partition key
+- All tenants share [EC2](/aws/compute-containers)/[Lambda](/aws/lambda-serverless)/[RDS](/dynamodb-data-services); tenant data isolated by `tenantId` column (row-level security) or [DynamoDB](/dynamodb-data-services) partition key
 - DynamoDB: `PK = tenant#<id>#resource#<id>` — all queries must include tenantId
 - Aurora: Row Level Security (RLS) via PostgreSQL policies enforced at DB level
 - Application-level isolation: every [API Gateway](/aws/api-gateway-networking) request validated against JWT `tenantId` claim; middleware prevents cross-tenant data access
@@ -814,10 +814,10 @@ Root
 **Data Isolation**
 - Physical: separate databases (highest isolation, highest cost) — see [DynamoDB & Data Services](/dynamodb-data-services) for database options
 - Logical: shared database, separate schemas (Postgres), or row-level isolation with RLS
-- Encryption: unique [KMS key](/aws-iam-security) per tenant; data is cryptographically isolated even if logical controls fail (expensive but used in financial services)
+- Encryption: unique [KMS key](/aws/iam-security) per tenant; data is cryptographically isolated even if logical controls fail (expensive but used in financial services)
 
 **Compute Isolation**
-- [Fargate](/aws-compute-containers) task per tenant request: ephemeral, isolated, no shared process space
+- [Fargate](/aws/compute-containers) task per tenant request: ephemeral, isolated, no shared process space
 - [Lambda](/aws/lambda-serverless): separate functions per tenant tier (if behavioral customization needed) or shared function with tenant context
 
 **Network Isolation**
@@ -909,8 +909,8 @@ A: Use Spot Instances for compute — nightly batch is fault-tolerant, schedule 
 | AWS overview & services map | [/aws](/aws) |
 | Lambda, serverless, Step Functions | [/aws-lambda-serverless](/aws/lambda-serverless) |
 | API Gateway, VPC, Route 53, ALB, CloudFront | [/aws-api-gateway-networking](/aws/api-gateway-networking) |
-| IAM, SCPs, GuardDuty, KMS, Security Hub | [/aws-iam-security](/aws-iam-security) |
-| EC2, ECS, EKS, Fargate, Spot, Graviton | [/aws-compute-containers](/aws-compute-containers) |
+| IAM, SCPs, GuardDuty, KMS, Security Hub | [/aws-iam-security](/aws/iam-security) |
+| EC2, ECS, EKS, Fargate, Spot, Graviton | [/aws-compute-containers](/aws/compute-containers) |
 | S3, CloudFront CDN, EBS, EFS, Glacier | [/aws-storage-s3](/aws-storage-s3) |
 | CI/CD, CodePipeline, CDK, IaC, AWS Backup | [/aws-cicd-devops](/aws-cicd-devops) |
 | DynamoDB, RDS, Aurora, ElastiCache, Redshift | [/dynamodb-data-services](/dynamodb-data-services) |

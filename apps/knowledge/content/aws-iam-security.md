@@ -21,7 +21,7 @@ A **principal** is an entity that can make API calls to AWS:
 | **AWS Managed Policy** | Users, Groups, Roles | AWS account (shared) | Common reusable policies (e.g., `AmazonS3ReadOnlyAccess`) |
 | **Customer Managed Policy** | Users, Groups, Roles | Your account | Custom reusable policies you maintain |
 | **Inline Policy** | Exactly one user/group/role | Embedded in the entity | Strict 1:1 relationship; deleted with entity |
-| **Resource-Based Policy** | Attached to a resource ([S3](/aws-storage-s3), KMS, [Lambda](/aws/lambda-serverless)) | The resource itself | Cross-account access without assuming a role |
+| **Resource-Based Policy** | Attached to a resource ([S3](/aws/storage-s3), KMS, [Lambda](/aws/lambda-serverless)) | The resource itself | Cross-account access without assuming a role |
 | **Permission Boundary** | IAM User or Role | Account | Maximum permissions any identity-based policy can grant (not additive) |
 | **Service Control Policy (SCP)** | AWS Organization OU or account | AWS Organizations | Maximum permissions for all principals in the OU/account |
 | **Session Policy** | Passed inline during `AssumeRole` | Temporary session | Narrow a role's permissions for a specific session |
@@ -202,7 +202,7 @@ Principal calls STS API
 ```
 
 ### OIDC Federation (AssumeRoleWithWebIdentity)
-Used by: Cognito Identity Pools, [GitHub Actions](/aws-cicd-devops), Kubernetes IRSA (IAM Roles for Service Accounts).
+Used by: Cognito Identity Pools, [GitHub Actions](/aws/cicd-devops), Kubernetes IRSA (IAM Roles for Service Accounts).
 ```
 GitHub Actions workflow → OIDC token (JWT) from GitHub
   → AssumeRoleWithWebIdentity with JWT + RoleArn
@@ -226,7 +226,7 @@ Trust policy for GitHub Actions:
 ## 6. Resource-Based Policies
 
 ### S3 Bucket Policies
-Attached directly to the [S3](/aws-storage-s3) bucket. Can allow cross-account access without role assumption.
+Attached directly to the [S3](/aws/storage-s3) bucket. Can allow cross-account access without role assumption.
 ```json
 {
   "Statement": [{
@@ -371,7 +371,7 @@ User authenticates with User Pool (or Google, etc.)
 → Calls Cognito Identity Pool with JWT
 → Identity Pool calls STS AssumeRoleWithWebIdentity
 → Returns temporary AWS credentials
-→ User directly calls AWS services ([S3](/aws-storage-s3), [DynamoDB](/dynamodb-data-services)) with those credentials
+→ User directly calls AWS services ([S3](/aws/storage-s3), [DynamoDB](/dynamodb-data-services)) with those credentials
 ```
 Identity Pools define **authenticated role** and **unauthenticated role** (guest access). Enhanced flow adds fine-grained role mapping per user group.
 
@@ -447,7 +447,7 @@ To decrypt:
 2. Decrypt data locally
 3. Discard plaintext data key
 ```
-This keeps KMS API calls minimal and supports large data. Used by [S3](/aws-storage-s3), EBS, RDS, [Lambda](/aws/lambda-serverless) environment variables, etc.
+This keeps KMS API calls minimal and supports large data. Used by [S3](/aws/storage-s3), EBS, RDS, [Lambda](/aws/lambda-serverless) environment variables, etc.
 
 ### Key Policies vs IAM Policies
 - Key policy is **required** and takes precedence.
@@ -522,8 +522,8 @@ Destinations: CloudWatch Logs, S3. Query with CloudWatch Insights or Athena. Use
 - Security investigations.
 
 ### VPC Endpoints
-- **Gateway endpoints** ([S3](/aws-storage-s3), [DynamoDB](/dynamodb-data-services)): route table entries, no cost, keep traffic inside AWS.
-- **Interface endpoints** (PrivateLink): ENI in your subnet, per-hour + per-GB cost. Works for most AWS services. Use endpoint policies to restrict which [S3](/aws-storage-s3) buckets are accessible via the endpoint.
+- **Gateway endpoints** ([S3](/aws/storage-s3), [DynamoDB](/dynamodb-data-services)): route table entries, no cost, keep traffic inside AWS.
+- **Interface endpoints** (PrivateLink): ENI in your subnet, per-hour + per-GB cost. Works for most AWS services. Use endpoint policies to restrict which [S3](/aws/storage-s3) buckets are accessible via the endpoint.
 
 ---
 
@@ -585,7 +585,7 @@ Detects unusual API activity (write management events). Compares baseline to cur
 ## 15. Amazon GuardDuty
 
 ### What It Does
-Continuous threat detection ML service. Ingests: CloudTrail management + [S3](/aws-storage-s3) data events, VPC Flow Logs, DNS logs, [EKS](/aws/compute-containers) audit logs, RDS login activity, [Lambda](/aws/lambda-serverless) network activity, S3 access patterns, Malware Protection (EBS volumes).
+Continuous threat detection ML service. Ingests: CloudTrail management + [S3](/aws/storage-s3) data events, VPC Flow Logs, DNS logs, [EKS](/aws/compute-containers) audit logs, RDS login activity, [Lambda](/aws/lambda-serverless) network activity, S3 access patterns, Malware Protection (EBS volumes).
 
 ### Finding Types (by threat purpose)
 | Category | Example Findings |
@@ -622,7 +622,7 @@ See [Lambda](/aws/lambda-serverless) for function configuration and [EC2/ECS/EKS
 ## 16. AWS Security Hub
 
 ### What It Does
-Single pane of glass for AWS security findings. Aggregates findings from: GuardDuty, Inspector, Macie, IAM Access Analyzer, Firewall Manager, Systems Manager Patch Manager, and third-party partners (CrowdStrike, Palo Alto, etc.). Pairs with [CI/CD pipelines](/aws-cicd-devops) for automated remediation workflows.
+Single pane of glass for AWS security findings. Aggregates findings from: GuardDuty, Inspector, Macie, IAM Access Analyzer, Firewall Manager, Systems Manager Patch Manager, and third-party partners (CrowdStrike, Palo Alto, etc.). Pairs with [CI/CD pipelines](/aws/cicd-devops) for automated remediation workflows.
 
 ### CSPM (Cloud Security Posture Management)
 Security Hub runs continuous automated checks against your AWS resources. Findings are mapped to **ASFF** (Amazon Security Finding Format) and scored by severity.
@@ -745,7 +745,7 @@ DynamoDB / S3 / RDS Proxy
         ↓
    Secrets Manager (rotation enabled, RDS Proxy caches)
 ```
-Each layer has IAM implications: [API Gateway](/aws/api-gateway-networking) authorizers validate identity, [Lambda](/aws/lambda-serverless) execution roles scope resource access, [S3](/aws-storage-s3) bucket policies enforce per-resource grants, and [DynamoDB](/dynamodb-data-services) supports fine-grained attribute-level access via IAM condition keys. Deploy and manage the full stack via [CDK / IaC](/aws-cicd-devops).
+Each layer has IAM implications: [API Gateway](/aws/api-gateway-networking) authorizers validate identity, [Lambda](/aws/lambda-serverless) execution roles scope resource access, [S3](/aws/storage-s3) bucket policies enforce per-resource grants, and [DynamoDB](/dynamodb-data-services) supports fine-grained attribute-level access via IAM condition keys. Deploy and manage the full stack via [CDK / IaC](/aws/cicd-devops).
 
 ### Secrets Management Pattern
 ```
@@ -775,7 +775,7 @@ Security Account (delegated admin):
   Receives all GuardDuty + Security Hub findings
   Remediation Lambda auto-isolates resources on CRITICAL findings
 ```
-See [CI/CD & CodePipeline](/aws-cicd-devops) for CodePipeline setup and CDK deployment patterns.
+See [CI/CD & CodePipeline](/aws/cicd-devops) for CodePipeline setup and CDK deployment patterns.
 
 ---
 
@@ -800,7 +800,7 @@ IAM is the authorization layer for every AWS service. Explore how it applies in 
 - [Lambda & Serverless](/aws/lambda-serverless) — execution roles, resource policies, environment variable encryption with KMS
 - [API Gateway & Networking](/aws/api-gateway-networking) — Cognito and Lambda authorizers, VPC integration
 - [EC2, ECS & EKS](/aws/compute-containers) — instance profiles, IMDS v2, ECS task roles, IRSA for Kubernetes
-- [S3, CloudFront & Storage](/aws-storage-s3) — bucket policies, Block Public Access, SSE-KMS, pre-signed URLs
+- [S3, CloudFront & Storage](/aws/storage-s3) — bucket policies, Block Public Access, SSE-KMS, pre-signed URLs
 - [DynamoDB & Data Services](/dynamodb-data-services) — fine-grained IAM access control, VPC endpoint policies
-- [CI/CD & DevOps](/aws-cicd-devops) — OIDC federation for GitHub Actions, cross-account deployment roles, CDK IAM constructs
+- [CI/CD & DevOps](/aws/cicd-devops) — OIDC federation for GitHub Actions, cross-account deployment roles, CDK IAM constructs
 - [Architecture Patterns](/aws-architecture) — Well-Architected Security pillar, least-privilege design
