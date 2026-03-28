@@ -161,11 +161,11 @@ RUST_FILTER_7 = pipeline teams state enrich
 
 # ── ML Improvement Loop ───────────────────────────────────────
 # Usage:
-#   make ml-eval              Run full eval harness (scoring + NER)
-#   make ml-eval-scoring      Eval ICP scoring only
-#   make ml-optimize          Grid search + SGD + calibrate weights
-#   make ml-datagen           Generate synthetic training data
-#   make ml-report            Print current metrics dashboard
+#   make loop                 Full ML loop: datagen → eval → optimize → eval → report
+#   make eval                 Run full eval harness (scoring + NER)
+#   make optimize             Grid search + SGD + calibrate weights
+#   make datagen              Generate synthetic training data
+#   make report               Print current metrics dashboard
 
 ML_DATA      := $(METAL_DIR)/data
 EVAL_LABELS  := $(ML_DATA)/eval_labels.jsonl
@@ -173,9 +173,9 @@ EVAL_REPORTS := $(ML_DATA)/reports
 MODELS_DIR   := $(ML_DATA)/models
 ML_FLAGS     := -D $(ML_DATA)
 
-.PHONY: ml-loop ml-eval ml-eval-scoring ml-optimize ml-datagen ml-report
+.PHONY: loop eval optimize datagen report
 
-ml-loop: start-build ## Full ML loop: datagen → eval → optimize → eval → report
+loop: start-build ## Full ML loop: datagen → eval → optimize → eval → report
 	@echo "═══ ML Loop: datagen → eval → optimize → eval → report ═══"
 	@echo ""
 	@echo "── 1/5 Generating training data ──"
@@ -200,34 +200,30 @@ ml-loop: start-build ## Full ML loop: datagen → eval → optimize → eval →
 	@echo ""
 	@echo "═══ ML Loop complete ═══"
 
-ml-datagen: start-build ## Generate synthetic training data
+datagen: start-build ## Generate synthetic training data
 	@mkdir -p $(dir $(EVAL_LABELS))
 	$(METAL_BIN) $(ML_FLAGS) ml-datagen --output $(EVAL_LABELS)
 	@echo "Generated $$(wc -l < $(EVAL_LABELS)) labeled samples → $(EVAL_LABELS)"
 
-ml-eval: start-build ## Run full ML eval harness
+eval: start-build ## Run full ML eval harness
 	@mkdir -p $(EVAL_REPORTS)
 	$(METAL_BIN) $(ML_FLAGS) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
 
-ml-eval-scoring: start-build ## Eval ICP scoring only
-	@mkdir -p $(EVAL_REPORTS)
-	$(METAL_BIN) $(ML_FLAGS) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS) --scoring-only
-
-ml-optimize: start-build ## Grid search + SGD + isotonic calibration
+optimize: start-build ## Grid search + SGD + isotonic calibration
 	@mkdir -p $(MODELS_DIR)
 	$(METAL_BIN) $(ML_FLAGS) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
 
-ml-report: ## Print latest eval metrics
+report: ## Print latest eval metrics
 	@if [ -d $(EVAL_REPORTS) ]; then \
 		latest=$$(ls -t $(EVAL_REPORTS)/eval_iter_*.json 2>/dev/null | head -1); \
 		if [ -n "$$latest" ]; then \
 			echo "═══ ML Eval Report: $$latest ═══"; \
 			python3 -m json.tool "$$latest" 2>/dev/null || cat "$$latest"; \
 		else \
-			echo "No eval reports found. Run 'make ml-eval' first."; \
+			echo "No eval reports found. Run 'make eval' first."; \
 		fi; \
 	else \
-		echo "No reports directory. Run 'make ml-eval' first."; \
+		echo "No reports directory. Run 'make eval' first."; \
 	fi
 
 RUST_FILTER_6 = ml_eval weight_optimizer data_gen

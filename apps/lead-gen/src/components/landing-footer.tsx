@@ -73,7 +73,7 @@ export function LandingFooter() {
               enrichment, scoring, and outreach — end to end.
             </p>
             <a
-              href="https://github.com/nicolad/agentic-lead-gen"
+              href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
               target="_blank"
               rel="noopener noreferrer"
               className={flex({

@@ -95,7 +95,7 @@ export function LandingBuilder() {
                   backed by 35 cited papers since 2023
                 </span>
                 <a
-                  href="https://github.com/nicolad/agentic-lead-gen"
+                  href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={flex({
