@@ -119,18 +119,20 @@ const LESSON_SLUGS = [
   "langgraph-red-teaming",
   "llamaindex",
   "ai-engineer-roadmap",
-  // Cloud Platforms (72-76)
+  // Cloud Platforms (72-77)
   "aws",
   "azure",
   "gcp",
   "docker",
   "kubernetes",
-  // Software Engineering (77-81)
+  "aws-lambda-serverless",
+  // Software Engineering (78-83)
   "microservices",
   "ci-cd",
   "nodejs",
   "solid-principles",
   "acid-properties",
+  "dynamodb-data-services",
 ];
 
 export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
@@ -149,8 +151,8 @@ export const CATEGORIES: [number, number, string][] = [
   [55, 61, "Safety & Alignment"],
   [62, 65, "Multimodal AI"],
   [66, 71, "Applied AI & Production"],
-  [72, 76, "Cloud Platforms"],
-  [77, 81, "Software Engineering"],
+  [72, 77, "Cloud Platforms"],
+  [78, 83, "Software Engineering"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
