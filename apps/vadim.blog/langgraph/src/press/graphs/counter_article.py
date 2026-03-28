@@ -6,9 +6,9 @@ writes a research-grounded rebuttal, edits, and publishes.
 Flow:
     fetch_source -> research_and_seo -> write -> edit
                                                   |
-                                    approve -> linkedin -> publish -> END
+                                    approve -> publish -> END
                                     revise(<1) -> revise -> edit
-                                    revise(>=1) -> linkedin -> save_final -> END
+                                    revise(>=1) -> save_final -> END
 """
 
 from __future__ import annotations
@@ -25,12 +25,12 @@ from press.agents import Agent, run_all
 from press.graphs.nodes import (
     check_references_node,
     make_edit_node,
-    make_linkedin_node,
     make_revise_node,
     make_write_node,
+    make_xyflow_node,
     publish_node,
     save_final_node,
-    should_revise_with_linkedin,
+    should_revise_simple,
 )
 from press.graphs.state import CounterArticleState
 from press.models import ModelPool, TeamRole
@@ -133,6 +133,7 @@ def build_counter_article_graph(pool: ModelPool):
     write = make_write_node(
         pool, "counter-writer", lambda _: prompts.counter_writer(), _context
     )
+    xyflow = make_xyflow_node(pool)
     edit = make_edit_node(
         pool, "counter-editor", lambda _: prompts.journalism_editor()
     )
@@ -145,6 +146,7 @@ def build_counter_article_graph(pool: ModelPool):
     graph.add_node("fetch_source", fetch_source)
     graph.add_node("research_and_seo", research_and_seo)
     graph.add_node("write", write)
+    graph.add_node("xyflow", xyflow)
     graph.add_node("check_references", check_references_node)
     graph.add_node("edit", edit)
     graph.add_node("revise", revise)
@@ -156,7 +158,8 @@ def build_counter_article_graph(pool: ModelPool):
     graph.add_edge(START, "fetch_source")
     graph.add_edge("fetch_source", "research_and_seo")
     graph.add_edge("research_and_seo", "write")
-    graph.add_edge("write", "check_references")
+    graph.add_edge("write", "xyflow")
+    graph.add_edge("xyflow", "check_references")
     graph.add_edge("check_references", "edit")
     graph.add_conditional_edges(
         "edit",

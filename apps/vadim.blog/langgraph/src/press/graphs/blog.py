@@ -11,6 +11,7 @@ from langgraph.graph import END, START, StateGraph
 
 from press import slugify, strip_fences
 from press.agents import Agent, run_parallel
+from press.graphs.nodes import add_xyflow
 from press.graphs.state import BlogState
 from press.models import ModelPool, TeamRole
 from press import prompts
@@ -98,6 +99,7 @@ def build_blog_graph(
             )
             blog, li = await run_parallel(writer_agent, linkedin_agent, notes)
 
+            blog = await add_xyflow(pool, blog)
             (topic_dir / "blog.md").write_text(blog)
             (topic_dir / "linkedin.md").write_text(li)
 

@@ -1,0 +1,15 @@
+**DECISION: REVISE**
+
+## Critical Issues (must fix)
+-   [ ] **Incorrect Citation Format:** The curl command in the "Local Inference is Now a Production Option" section contains a bare URL (`http://localhost:8080/v1/completions`). It must be wrapped in proper markdown hyperlink format if it's meant to be a citation, e.g., `[localhost:8080/v1/completions](http://localhost:8080/v1/completions)`. Since this is a local endpoint example, it may be better to simply present it as a code snippet without a hyperlink. However, the Reference Quality check flags it as a bare URL, so it must be addressed.
+-   [ ] **Unsupported Claims in "Vision-Based Alternative" Section:** The draft states: "The research brief correctly identifies a competing paradigm: vision-based agents like MolmoWeb that interact with screenshots." The provided Research Brief contains a link to a MarkTechPost article about MolmoWeb, but the **Source Article (ground truth)** does **not** mention MolmoWeb, vision-based agents, or this architectural debate at all. This section introduces a significant technical comparison (HTML-based vs. vision-based) that is not supported by the primary source material. This is a critical factual error as it presents analysis not grounded in the article being reviewed. **Either remove this entire "The Vision-Based Alternative" section or explicitly label it as external commentary not from the source.** The SEO strategy mentions "vision-based agents" as part of the competitive landscape, but the core source material does not.
+
+## Suggestions (should fix)
+-   [ ] **Clarify Dataset Size Discrepancy:** In "The Four Core Artifacts," the draft says the full dataset has "93,700 rows." The Source Article confirms "93,700 rows." However, the H2 header and introduction call it a "100k dataset." This minor discrepancy should be acknowledged or clarified (e.g., "~100k dataset (93,700 rows)") to avoid confusion.
+-   [ ] **Strengthen the "Broader Implication" Section:** The conclusion is strong but could be more tightly coupled to the evidence presented. Specifically, link the "portfolio of specialized tools" idea back to the explicit trade-offs analyzed in the "Competitive Landscape" section (AXE vs. Dripper vs. SLOT vs. ScrapeGraphAI's approach).
+
+## Minor Notes (nice to have)
+-   [ ] **Sentence Length:** A few sentences are long (e.g., the first sentence of "The Real Moat is the Dataset, Not the Model" is 38 words). Consider breaking them for readability.
+-   [ ] **Active Voice:** The section "The Competitive Landscape: Three Research Approaches and Their Trade-offs" uses passive constructions like "The strength is its compatibility...". Could be more direct: "Its strength is compatibility..."
+
+**Important:** Once the Critical Issues are resolved—particularly the removal or disclaiming of the unsupported vision-based agent analysis—this will be a well-researched, accurate, and in-depth technical article ready for publication. The core analysis of the ScrapeGraphAI stack, its components, benchmarks, and competitive context is excellent and fully aligns with the Source Article.
