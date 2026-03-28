@@ -143,8 +143,7 @@ pub fn bitap_search(text: &[u8], pattern: &[u8]) -> Option<usize> {
     let finish_mask = 1u64 << (m - 1);
 
     for i in 0..text.len() {
-        r |= pattern_mask[text[i] as usize];
-        r <<= 1;
+        r = (r << 1) | pattern_mask[text[i] as usize];
 
         if r & finish_mask == 0 {
             return Some(i + 1 - m);
@@ -358,16 +357,9 @@ mod tests {
 
     #[test]
     fn test_bitap_found() {
-        // NOTE: the current shift-or implementation uses left-shift (<<) rather
-        // than right-shift (>>), which is an off-by-one in the bit register.
-        // The tests below document the actual return values so that any future
-        // fix to the algorithm will be caught immediately.
-        //
-        // "world" is found (finish bit triggers at i=10, returns i+1-m = 6-1 = 5).
-        assert_eq!(bitap_search(b"hello world", b"world"), Some(5));
-        // "hello" at position 0 is NOT found by the current implementation
-        // because the bit for position 0 never reaches the finish mask with <<.
-        assert_eq!(bitap_search(b"hello world", b"hello"), None);
+        assert_eq!(bitap_search(b"hello world", b"world"), Some(6));
+        assert_eq!(bitap_search(b"hello world", b"hello"), Some(0));
+        assert_eq!(bitap_search(b"abcdef", b"cde"), Some(2));
     }
 
     #[test]

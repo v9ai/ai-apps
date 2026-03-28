@@ -5,6 +5,7 @@ const DNS_TYPE_MX: u16 = 15;
 const DNS_CLASS_IN: u16 = 1;
 const DNS_FLAG_RD: u16 = 0x0100;
 
+#[derive(Debug)]
 pub struct MxRecord {
     pub priority: u16,
     pub exchange: String,
@@ -166,6 +167,142 @@ impl DnsResolver {
 
         let ret_pos = if jumped { first_jump_pos } else { pos + 1 };
         Ok((ret_pos, name))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_build_mx_query_structure() {
+        let resolver = DnsResolver::new("8.8.8.8:53");
+        let pkt = resolver.build_mx_query("example.com");
+
+        // Header: 12 bytes (ID=2, flags=2, qdcount=2, ancount=2, nscount=2, arcount=2)
+        assert!(pkt.len() >= 12);
+
+        // Flags: recursion desired (0x0100)
+        assert_eq!(u16::from_be_bytes([pkt[2], pkt[3]]), 0x0100);
+        // QDCOUNT = 1
+        assert_eq!(u16::from_be_bytes([pkt[4], pkt[5]]), 1);
+        // ANCOUNT/NSCOUNT/ARCOUNT = 0
+        assert_eq!(u16::from_be_bytes([pkt[6], pkt[7]]), 0);
+
+        // Question: \x07example\x03com\x00 + QTYPE(MX=15) + QCLASS(IN=1)
+        assert_eq!(pkt[12], 7); // "example" label length
+        assert_eq!(&pkt[13..20], b"example");
+        assert_eq!(pkt[20], 3); // "com" label length
+        assert_eq!(&pkt[21..24], b"com");
+        assert_eq!(pkt[24], 0); // root terminator
+
+        // QTYPE = MX (15), QCLASS = IN (1)
+        assert_eq!(u16::from_be_bytes([pkt[25], pkt[26]]), 15);
+        assert_eq!(u16::from_be_bytes([pkt[27], pkt[28]]), 1);
+    }
+
+    #[test]
+    fn test_build_mx_query_subdomain() {
+        let resolver = DnsResolver::new("8.8.8.8:53");
+        let pkt = resolver.build_mx_query("mail.example.co.uk");
+
+        // Labels: \x04mail\x07example\x02co\x02uk\x00
+        assert_eq!(pkt[12], 4);
+        assert_eq!(&pkt[13..17], b"mail");
+        assert_eq!(pkt[17], 7);
+        assert_eq!(&pkt[18..25], b"example");
+        assert_eq!(pkt[25], 2);
+        assert_eq!(&pkt[26..28], b"co");
+        assert_eq!(pkt[28], 2);
+        assert_eq!(&pkt[29..31], b"uk");
+        assert_eq!(pkt[31], 0);
+    }
+
+    #[test]
+    fn test_parse_mx_response_too_short() {
+        let resolver = DnsResolver::new("8.8.8.8:53");
+        let result = resolver.parse_mx_response(&[0u8; 6]);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("too short"));
+    }
+
+    #[test]
+    fn test_parse_mx_response_rcode_error() {
+        let resolver = DnsResolver::new("8.8.8.8:53");
+        // Minimal 12-byte header with rcode=3 (NXDOMAIN)
+        let mut hdr = [0u8; 12];
+        hdr[2] = 0x81; // QR=1, RD=1
+        hdr[3] = 0x03; // rcode=3
+        let result = resolver.parse_mx_response(&hdr);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("rcode=3"));
+    }
+
+    #[test]
+    fn test_parse_mx_response_crafted() {
+        let resolver = DnsResolver::new("8.8.8.8:53");
+
+        // Build a synthetic response for "example.com" with one MX record
+        let mut pkt = Vec::new();
+
+        // Header
+        pkt.extend_from_slice(&[0x00, 0x01]); // ID
+        pkt.extend_from_slice(&[0x81, 0x80]); // flags: QR=1, RD=1, RA=1, rcode=0
+        pkt.extend_from_slice(&[0x00, 0x01]); // QDCOUNT=1
+        pkt.extend_from_slice(&[0x00, 0x01]); // ANCOUNT=1
+        pkt.extend_from_slice(&[0x00, 0x00]); // NSCOUNT=0
+        pkt.extend_from_slice(&[0x00, 0x00]); // ARCOUNT=0
+
+        // Question: example.com MX IN
+        pkt.push(7); pkt.extend_from_slice(b"example");
+        pkt.push(3); pkt.extend_from_slice(b"com");
+        pkt.push(0);
+        pkt.extend_from_slice(&[0x00, 0x0F]); // QTYPE=MX
+        pkt.extend_from_slice(&[0x00, 0x01]); // QCLASS=IN
+
+        // Answer: compressed name pointer to offset 12 (question name)
+        pkt.extend_from_slice(&[0xC0, 0x0C]); // name pointer
+        pkt.extend_from_slice(&[0x00, 0x0F]); // TYPE=MX
+        pkt.extend_from_slice(&[0x00, 0x01]); // CLASS=IN
+        pkt.extend_from_slice(&[0x00, 0x00, 0x00, 0x3C]); // TTL=60
+
+        // RDATA: priority(2) + exchange name
+        let exchange = b"\x04mail\x07example\x03com\x00";
+        let rdlength = 2 + exchange.len();
+        pkt.extend_from_slice(&(rdlength as u16).to_be_bytes());
+        pkt.extend_from_slice(&10u16.to_be_bytes()); // priority=10
+        pkt.extend_from_slice(exchange);
+
+        let records = resolver.parse_mx_response(&pkt).unwrap();
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].priority, 10);
+        assert_eq!(records[0].exchange, "mail.example.com");
+    }
+
+    #[test]
+    fn test_skip_name_root() {
+        let resolver = DnsResolver::new("8.8.8.8:53");
+        // Root name: single zero byte
+        let data = [0u8];
+        assert_eq!(resolver.skip_name(&data, 0).unwrap(), 1);
+    }
+
+    #[test]
+    fn test_skip_name_compressed() {
+        let resolver = DnsResolver::new("8.8.8.8:53");
+        // Compressed pointer: 0xC0 0x0C
+        let data = [0xC0, 0x0C];
+        assert_eq!(resolver.skip_name(&data, 0).unwrap(), 2);
+    }
+
+    #[test]
+    fn test_read_name_simple() {
+        let resolver = DnsResolver::new("8.8.8.8:53");
+        // \x03foo\x03bar\x00
+        let data = [3, b'f', b'o', b'o', 3, b'b', b'a', b'r', 0];
+        let (pos, name) = resolver.read_name(&data, 0).unwrap();
+        assert_eq!(name, "foo.bar");
+        assert_eq!(pos, 9);
     }
 }
 

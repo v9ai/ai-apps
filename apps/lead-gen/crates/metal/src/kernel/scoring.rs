@@ -354,4 +354,99 @@ mod tests {
             );
         }
     }
+
+    // ── IcpMatcher tests ──
+
+    #[test]
+    fn test_icp_matcher_tech_overlap() {
+        let matcher = IcpMatcher::default();
+        assert_eq!(matcher.tech_overlap("rust, python, kubernetes"), 6);
+        assert_eq!(matcher.tech_overlap("java, go, c++"), 0);
+        assert_eq!(matcher.tech_overlap(""), 0);
+    }
+
+    #[test]
+    fn test_icp_matcher_tech_overlap_case_insensitive() {
+        let matcher = IcpMatcher::default();
+        assert_eq!(matcher.tech_overlap("RUST, PYTHON"), 4);
+    }
+
+    #[test]
+    fn test_icp_matcher_tech_overlap_empty_targets() {
+        let matcher = IcpMatcher {
+            target_tech: vec![],
+            ..IcpMatcher::default()
+        };
+        assert_eq!(matcher.tech_overlap("rust python"), 0);
+    }
+
+    #[test]
+    fn test_icp_matcher_populate_slot_hit() {
+        let matcher = IcpMatcher::default();
+        let mut batch = ContactBatch::new();
+        batch.count = 1;
+        matcher.populate_slot(
+            &mut batch, 0,
+            "AI/ML SaaS", 100, "VP Engineering", "Head of AI",
+            "rust, pytorch", "verified", 5,
+        );
+        assert_eq!(batch.industry_match[0], 1);
+        assert_eq!(batch.employee_in_range[0], 1);
+        assert_eq!(batch.seniority_match[0], 1);
+        assert_eq!(batch.department_match[0], 1);
+        assert_eq!(batch.tech_overlap[0], 4); // 2/5 * 10
+        assert_eq!(batch.email_verified[0], 2);
+        assert_eq!(batch.recency_days[0], 5);
+    }
+
+    #[test]
+    fn test_icp_matcher_populate_slot_miss() {
+        let matcher = IcpMatcher::default();
+        let mut batch = ContactBatch::new();
+        batch.count = 1;
+        matcher.populate_slot(
+            &mut batch, 0,
+            "Mining", 5, "Intern", "Sales Rep",
+            "excel, word", "unknown", 400,
+        );
+        assert_eq!(batch.industry_match[0], 0);
+        assert_eq!(batch.employee_in_range[0], 0);
+        assert_eq!(batch.seniority_match[0], 0);
+        assert_eq!(batch.department_match[0], 0);
+        assert_eq!(batch.tech_overlap[0], 0);
+        assert_eq!(batch.email_verified[0], 0);
+    }
+
+    #[test]
+    fn test_icp_matcher_email_catch_all() {
+        let matcher = IcpMatcher::default();
+        let mut batch = ContactBatch::new();
+        batch.count = 1;
+        matcher.populate_slot(&mut batch, 0, "", 100, "", "", "", "catch-all", 0);
+        assert_eq!(batch.email_verified[0], 1);
+        matcher.populate_slot(&mut batch, 0, "", 100, "", "", "", "catchall", 0);
+        assert_eq!(batch.email_verified[0], 1);
+    }
+
+    #[test]
+    fn test_icp_profile_default_weights_sum() {
+        let icp = IcpProfile::default();
+        let total = icp.industry_weight + icp.employee_weight + icp.seniority_weight
+            + icp.department_weight + icp.tech_weight + icp.email_weight;
+        assert_eq!(total, 95.0);
+    }
+
+    #[test]
+    fn test_end_to_end_icp_score() {
+        let matcher = IcpMatcher::default();
+        let mut batch = ContactBatch::new();
+        batch.count = 1;
+        matcher.populate_slot(
+            &mut batch, 0,
+            "AI Infrastructure", 200, "CTO", "Engineering",
+            "rust, python, pytorch", "verified", 3,
+        );
+        batch.compute_scores();
+        assert!(batch.scores[0] > 80.0, "got {}", batch.scores[0]);
+    }
 }
