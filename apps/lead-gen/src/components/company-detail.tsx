@@ -434,6 +434,17 @@ const CATEGORY_OPTIONS: CompanyCategory[] = [
   "UNKNOWN",
 ];
 
+const ATS_VENDOR_COLORS: Record<string, React.ComponentProps<typeof Badge>["color"]> = {
+  GREENHOUSE: "green",
+  LEVER: "blue",
+  WORKABLE: "amber",
+  TEAMTAILOR: "violet",
+  ASHBY: "orange",
+  WORKDAY: "cyan",
+  ICIMS: "indigo",
+  SMARTRECRUITERS: "teal",
+};
+
 function LinkedInLeadDialog({
   companyId,
   companyName,
