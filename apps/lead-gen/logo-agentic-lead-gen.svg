@@ -1,128 +1,261 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
   <defs>
-    <linearGradient id="blueGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#0052FF;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#4DA6FF;stop-opacity:1"/>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a0e0a;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FF3B30;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#FF7A5A;stop-opacity:1"/>
+
+    <!-- Mahogany board surface -->
+    <linearGradient id="boardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3d1a0e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#5c2a14;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2a0e08;stop-opacity:1" />
     </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+
+    <!-- Ivory square -->
+    <linearGradient id="ivoryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0e6d0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d4c4a0;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Obsidian square -->
+    <linearGradient id="obsidianGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1c1010;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0808;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Board frame edge -->
+    <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b4513;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#6b300f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3d1a0e;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- King aura pulse -->
+    <radialGradient id="kingAura" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ffcc00;stop-opacity:0.7" />
+      <stop offset="50%" style="stop-color:#ff8800;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#ff4400;stop-opacity:0" />
+    </radialGradient>
+
+    <!-- King piece body -->
+    <linearGradient id="kingBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffe566;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ffc200;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b87800;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Ivory piece -->
+    <linearGradient id="ivoryPiece" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f5ead8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c8b890;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Obsidian piece -->
+    <linearGradient id="obsidPiece" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3a2828;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f0808;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- King ambient glow filter -->
+    <filter id="kingGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
       <feMerge>
-        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+
+    <!-- Piece drop shadow -->
+    <filter id="pieceShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.8"/>
+    </filter>
+
+    <!-- Text glow -->
+    <filter id="textGlow" x="-10%" y="-20%" width="120%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Vignette -->
+    <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+      <stop offset="60%" style="stop-color:#000000;stop-opacity:0" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0.6" />
+    </radialGradient>
   </defs>
 
-  <!-- White background -->
-  <rect width="300" height="200" fill="#FFFFFF"/>
+  <!-- Background -->
+  <rect width="300" height="200" fill="url(#bgGrad)"/>
 
-  <!--
-    ICON: Dual interlocking triangles (Star of David / diamond)
-    Center: cx=68, cy=100
-    Up triangle:   apex (68,38)   base-left (26,110)  base-right (110,110)
-    Down triangle: apex (68,162)  base-left (26,90)   base-right (110,90)
+  <!-- ===== CHESSBOARD IN PERSPECTIVE ===== -->
+  <!-- Board mahogany frame -->
+  <polygon points="50,80 250,80 294,165 6,165" fill="url(#edgeGrad)" stroke="#3a1208" stroke-width="1"/>
+  <!-- Board playing surface -->
+  <polygon points="58,84 242,84 286,162 14,162" fill="url(#boardGrad)"/>
 
-    Overlap hexagon (6 intersection points):
-      top-left  (37.67, 90)   top-right  (98.33, 90)
-      right     (104.17, 100)
-      bot-right (98.33, 110)  bot-left   (37.67, 110)
-      left      (31.83, 100)
-  -->
+  <!-- Grid squares: 4 cols x 3 rows
+       Top dividers:    x: 58, 99, 140, 181, 222
+       Bottom dividers: x: 14, 81, 148, 215, 282
+       Rows: y: 84, 110, 136, 162 -->
 
-  <!-- Up-pointing triangle — electric blue (drawn first, partial opacity) -->
-  <polygon
-    points="68,38 110,110 26,110"
-    fill="url(#blueGrad)"
-    opacity="0.88"
-    filter="url(#glow)"
-  />
+  <!-- ROW 0 -->
+  <polygon points="58,84  99,84  81,110  14,110"  fill="url(#obsidianGrad)" stroke="#2a0e08" stroke-width="0.5"/>
+  <polygon points="99,84  140,84 148,110  81,110"  fill="url(#ivoryGrad)"   stroke="#2a0e08" stroke-width="0.5"/>
+  <polygon points="140,84 181,84 215,110 148,110"  fill="url(#obsidianGrad)" stroke="#2a0e08" stroke-width="0.5"/>
+  <polygon points="181,84 222,84 282,110 215,110"  fill="url(#ivoryGrad)"   stroke="#2a0e08" stroke-width="0.5"/>
 
-  <!-- Down-pointing triangle — coral red (drawn on top, partial opacity) -->
-  <polygon
-    points="68,162 110,90 26,90"
-    fill="url(#redGrad)"
-    opacity="0.88"
-    filter="url(#glow)"
-  />
+  <!-- ROW 1 -->
+  <polygon points="14,110  81,110  81,136  14,136"  fill="url(#ivoryGrad)"   stroke="#2a0e08" stroke-width="0.5"/>
+  <polygon points="81,110 148,110 148,136  81,136"  fill="url(#obsidianGrad)" stroke="#2a0e08" stroke-width="0.5"/>
+  <polygon points="148,110 215,110 215,136 148,136"  fill="url(#ivoryGrad)"   stroke="#2a0e08" stroke-width="0.5"/>
+  <polygon points="215,110 282,110 282,136 215,136"  fill="url(#obsidianGrad)" stroke="#2a0e08" stroke-width="0.5"/>
 
-  <!-- Overlap hexagon — neutral blended tone to show interlocking -->
-  <polygon
-    points="37.67,90 98.33,90 104.17,100 98.33,110 37.67,110 31.83,100"
-    fill="#7B2FBE"
-    opacity="0.30"
-  />
+  <!-- ROW 2 -->
+  <polygon points="14,136  81,136  81,162  14,162"  fill="url(#obsidianGrad)" stroke="#2a0e08" stroke-width="0.5"/>
+  <polygon points="81,136 148,136 148,162  81,162"  fill="url(#ivoryGrad)"   stroke="#2a0e08" stroke-width="0.5"/>
+  <polygon points="148,136 215,136 215,162 148,162"  fill="url(#obsidianGrad)" stroke="#2a0e08" stroke-width="0.5"/>
+  <polygon points="215,136 282,136 282,162 215,162"  fill="url(#ivoryGrad)"   stroke="#2a0e08" stroke-width="0.5"/>
 
-  <!-- Crisp outline: up triangle blue -->
-  <polygon
-    points="68,38 110,110 26,110"
-    fill="none"
-    stroke="#0052FF"
-    stroke-width="2"
-    stroke-linejoin="round"
-  />
+  <!-- Board top edge highlight -->
+  <line x1="58" y1="84" x2="222" y2="84" stroke="#7a3520" stroke-width="1" opacity="0.7"/>
 
-  <!-- Crisp outline: down triangle red -->
-  <polygon
-    points="68,162 110,90 26,90"
-    fill="none"
-    stroke="#FF3B30"
-    stroke-width="2"
-    stroke-linejoin="round"
-  />
+  <!-- ===== CHESS PIECES ===== -->
 
-  <!-- Center precision dot -->
-  <circle cx="68" cy="100" r="4.5" fill="#FFFFFF" stroke="#1A1A2E" stroke-width="1.5"/>
-  <circle cx="68" cy="100" r="1.8" fill="#1A1A2E"/>
+  <!-- ROOK — obsidian, square (0,0), center ~(46,97) -->
+  <g filter="url(#pieceShadow)">
+    <ellipse cx="46" cy="107" rx="8" ry="3" fill="url(#obsidPiece)" opacity="0.85"/>
+    <rect x="42" y="93" width="8" height="14" rx="1" fill="url(#obsidPiece)"/>
+    <rect x="41" y="88" width="3" height="6" rx="0.5" fill="url(#obsidPiece)"/>
+    <rect x="45" y="88" width="2" height="6" rx="0.5" fill="#0a0505"/>
+    <rect x="48" y="88" width="3" height="6" rx="0.5" fill="url(#obsidPiece)"/>
+    <line x1="43" y1="89" x2="43" y2="106" stroke="#5a3030" stroke-width="0.7" opacity="0.5"/>
+  </g>
 
-  <!-- ===== WORDMARK ===== -->
+  <!-- KNIGHT — ivory, square (2,0), center ~(181,97) -->
+  <g filter="url(#pieceShadow)">
+    <ellipse cx="181" cy="107" rx="8" ry="3" fill="url(#ivoryPiece)" opacity="0.85"/>
+    <rect x="177" y="96" width="8" height="11" rx="2" fill="url(#ivoryPiece)"/>
+    <ellipse cx="182" cy="92" rx="5.5" ry="5" fill="url(#ivoryPiece)"/>
+    <ellipse cx="186" cy="94" rx="3.5" ry="3" fill="url(#ivoryPiece)"/>
+    <polygon points="178,88 181,83 183,88" fill="url(#ivoryPiece)"/>
+    <circle cx="184" cy="91" r="1.1" fill="#2a1a0a"/>
+    <path d="M179,89 Q178,93 178,97" stroke="#e8d8b8" stroke-width="0.7" fill="none" opacity="0.6"/>
+  </g>
+
+  <!-- BISHOP — ivory, square (1,1), center ~(114,123) -->
+  <g filter="url(#pieceShadow)">
+    <ellipse cx="114" cy="133" rx="8" ry="3" fill="url(#ivoryPiece)" opacity="0.85"/>
+    <path d="M110,133 Q109,122 114,113 Q119,122 118,133Z" fill="url(#ivoryPiece)"/>
+    <circle cx="114" cy="111" r="4.5" fill="url(#ivoryPiece)"/>
+    <line x1="114" y1="106" x2="114" y2="115" stroke="#c8b070" stroke-width="0.9" opacity="0.55"/>
+    <path d="M111,132 Q110,122 114,113" stroke="#f0e0c0" stroke-width="0.7" fill="none" opacity="0.45"/>
+  </g>
+
+  <!-- PAWN — obsidian, square (3,1), center ~(248,123) -->
+  <g filter="url(#pieceShadow)">
+    <ellipse cx="248" cy="132" rx="7" ry="2.8" fill="url(#obsidPiece)" opacity="0.85"/>
+    <path d="M244,132 Q243,124 248,117 Q253,124 252,132Z" fill="url(#obsidPiece)"/>
+    <circle cx="248" cy="115" r="4.5" fill="url(#obsidPiece)"/>
+    <path d="M245,131 Q244,124 248,117" stroke="#5a3030" stroke-width="0.7" fill="none" opacity="0.4"/>
+  </g>
+
+  <!-- PAWN — ivory, square (0,2), center ~(47,149) -->
+  <g filter="url(#pieceShadow)">
+    <ellipse cx="47" cy="158" rx="7" ry="2.8" fill="url(#ivoryPiece)" opacity="0.85"/>
+    <path d="M43,158 Q42,150 47,143 Q52,150 51,158Z" fill="url(#ivoryPiece)"/>
+    <circle cx="47" cy="141" r="4.5" fill="url(#ivoryPiece)"/>
+    <path d="M44,157 Q43,150 47,143" stroke="#f0e0c0" stroke-width="0.7" fill="none" opacity="0.4"/>
+  </g>
+
+  <!-- ===== GLOWING KING — square (2,2), center ~(181,149) ===== -->
+  <!-- Outer ambient halo -->
+  <ellipse cx="181" cy="148" rx="32" ry="22" fill="url(#kingAura)" opacity="0.9"/>
+  <ellipse cx="181" cy="155" rx="16" ry="7" fill="#ff9900" opacity="0.25"/>
+
+  <!-- King piece with glow filter -->
+  <g filter="url(#kingGlow)">
+    <ellipse cx="181" cy="159" rx="12" ry="4.5" fill="url(#kingBody)"/>
+    <path d="M173,159 Q171,147 175,139 Q181,137 187,139 Q191,147 189,159Z" fill="url(#kingBody)"/>
+    <ellipse cx="181" cy="139" rx="8" ry="2.8" fill="#ffd700"/>
+    <rect x="179" y="121" width="4.5" height="18" rx="1.2" fill="url(#kingBody)"/>
+    <rect x="176" y="119" width="11" height="4" rx="1" fill="#ffd700"/>
+    <polygon points="176,119 178,110 180,119" fill="#ffd700"/>
+    <polygon points="180,119 181,107 182,119" fill="#ffe880"/>
+    <polygon points="182,119 184,110 186,119" fill="#ffd700"/>
+    <rect x="180.5" y="102" width="2" height="7" fill="#fff5b0"/>
+    <rect x="178" y="105" width="7" height="2" fill="#fff5b0"/>
+    <circle cx="177.5" cy="116" r="1.2" fill="#ff3300" opacity="0.95"/>
+    <circle cx="181" cy="115" r="1.4" fill="#ff6600" opacity="0.95"/>
+    <circle cx="184.5" cy="116" r="1.2" fill="#ff3300" opacity="0.95"/>
+    <path d="M180,159 Q179,147 180,139" stroke="#fff5a0" stroke-width="0.9" fill="none" opacity="0.55"/>
+  </g>
+
+  <!-- King glow rings on board -->
+  <ellipse cx="181" cy="160" rx="14" ry="4.5" fill="none" stroke="#ffaa00" stroke-width="2" opacity="0.55"/>
+  <ellipse cx="181" cy="160" rx="20" ry="7"   fill="none" stroke="#ff6600" stroke-width="1" opacity="0.25"/>
+
+  <!-- ===== AI CIRCUIT ACCENTS (corners) ===== -->
+  <g opacity="0.2" stroke="#4488ff" stroke-width="0.8" fill="none">
+    <line x1="0"   y1="18" x2="28"  y2="18"/>
+    <line x1="28"  y1="18" x2="28"  y2="36"/>
+    <line x1="28"  y1="36" x2="46"  y2="36"/>
+    <circle cx="46" cy="36" r="2" fill="#4488ff" stroke="none"/>
+    <line x1="0"   y1="28" x2="14"  y2="28"/>
+    <line x1="14"  y1="28" x2="14"  y2="46"/>
+    <circle cx="14" cy="46" r="1.5" fill="#4488ff" stroke="none"/>
+  </g>
+  <g opacity="0.2" stroke="#4488ff" stroke-width="0.8" fill="none">
+    <line x1="300"  y1="18" x2="272"  y2="18"/>
+    <line x1="272"  y1="18" x2="272"  y2="36"/>
+    <line x1="272"  y1="36" x2="254"  y2="36"/>
+    <circle cx="254" cy="36" r="2" fill="#4488ff" stroke="none"/>
+    <line x1="300"  y1="28" x2="286"  y2="28"/>
+    <line x1="286"  y1="28" x2="286"  y2="46"/>
+    <circle cx="286" cy="46" r="1.5" fill="#4488ff" stroke="none"/>
+  </g>
+
+  <!-- ===== TYPOGRAPHY ===== -->
   <text
-    x="132"
-    y="88"
-    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-size="24"
-    font-weight="800"
-    letter-spacing="-0.8"
-    fill="#0A0A1A"
-  >Agentic</text>
+    x="150" y="22"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="17"
+    font-weight="bold"
+    letter-spacing="3"
+    text-anchor="middle"
+    fill="#d4a820"
+    filter="url(#textGlow)"
+  >AGENTIC</text>
 
-  <!-- Divider rule -->
-  <line x1="132" y1="95" x2="286" y2="95" stroke="#E0E4F0" stroke-width="1"/>
-
-  <!-- "Lead" in blue -->
   <text
-    x="132"
-    y="118"
-    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-size="24"
-    font-weight="300"
-    letter-spacing="0.5"
-    fill="#0052FF"
-  >Lead</text>
+    x="150" y="38"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="10.5"
+    font-weight="normal"
+    letter-spacing="5"
+    text-anchor="middle"
+    fill="#8b7040"
+  >LEAD  GEN</text>
 
-  <!-- "Gen" in coral red -->
-  <text
-    x="196"
-    y="118"
-    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-size="24"
-    font-weight="300"
-    letter-spacing="0.5"
-    fill="#FF3B30"
-  > Gen</text>
+  <!-- Decorative rule + diamond -->
+  <line x1="78"  y1="49" x2="140" y2="49" stroke="#5c3a10" stroke-width="0.8"/>
+  <polygon points="150,45 154,49 150,53 146,49" fill="#d4a820" opacity="0.85"/>
+  <line x1="160" y1="49" x2="222" y2="49" stroke="#5c3a10" stroke-width="0.8"/>
 
-  <!-- Tagline -->
+  <!-- Bottom tagline -->
   <text
-    x="132"
-    y="138"
-    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-size="8"
-    font-weight="500"
+    x="150" y="186"
+    font-family="'Courier New', monospace"
+    font-size="6.5"
     letter-spacing="2.5"
-    fill="#9999BB"
-  >PRECISION  ·  PIPELINE  ·  AI</text>
+    text-anchor="middle"
+    fill="#5c3a10"
+    opacity="0.85"
+  >STRATEGY  ·  PRECISION  ·  AI</text>
 
+  <!-- Vignette -->
+  <rect width="300" height="200" fill="url(#vignette)"/>
 </svg>

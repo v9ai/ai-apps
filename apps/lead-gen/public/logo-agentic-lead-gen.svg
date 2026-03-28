@@ -1,51 +1,138 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
-  <rect width="300" height="200" fill="#ffffff"/>
+  <defs>
+    <linearGradient id="brainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#a855f7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d9488;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glowLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:0.05" />
+    </linearGradient>
+    <linearGradient id="glowRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d9488;stop-opacity:0.05" />
+      <stop offset="100%" style="stop-color:#14b8a6;stop-opacity:0.3" />
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#a78bfa" />
+      <stop offset="100%" style="stop-color:#2dd4bf" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="leftHalf">
+      <rect x="0" y="0" width="150" height="200"/>
+    </clipPath>
+    <clipPath id="rightHalf">
+      <rect x="150" y="0" width="150" height="200"/>
+    </clipPath>
+  </defs>
 
-  <!-- ============================================================
-       UNIFIED MARK — THE FINAL FORM
-       Concept: person silhouette + circuit node + forward arrow
-       All fused into one bold geometric icon
-       Electric blue #0066FF on white
-  ============================================================ -->
+  <!-- Background -->
+  <rect width="300" height="200" fill="#0a0a0f"/>
 
-  <!-- HEAD: filled circle — the human/lead element -->
-  <circle cx="150" cy="43" r="14" fill="#0066ff"/>
+  <!-- Brain left fill -->
+  <path d="M150,28 C138,20 122,18 110,22 C96,26 84,34 78,46 C70,46 60,50 56,60 C48,64 42,74 44,86 C38,92 36,102 40,112 C36,120 36,132 44,140 C48,152 58,160 70,162 C76,166 84,168 92,168 C104,174 118,174 130,170 C138,172 146,172 150,170 L150,28Z" fill="url(#glowLeft)" clip-path="url(#leftHalf)"/>
 
-  <!-- TORSO: clean upright rectangle, rounded corners -->
-  <rect x="134" y="61" width="32" height="30" rx="5" fill="#0066ff"/>
+  <!-- Brain right fill -->
+  <path d="M150,28 L150,170 C154,172 162,172 170,170 C182,174 196,174 208,168 C216,168 224,166 230,162 C242,160 252,152 256,140 C264,132 264,120 260,112 C264,102 262,92 256,86 C258,74 252,64 244,60 C240,50 230,46 222,46 C216,34 204,26 190,22 C178,18 162,20 150,28Z" fill="url(#glowRight)" clip-path="url(#rightHalf)"/>
 
-  <!-- AI NODE INDICATOR: white outer ring + blue inner dot on torso -->
-  <circle cx="150" cy="76" r="5.5" fill="#ffffff"/>
-  <circle cx="150" cy="76" r="2.2" fill="#0066ff"/>
+  <!-- LEFT HEMISPHERE: Organic brain folds -->
+  <g clip-path="url(#leftHalf)" filter="url(#glow)">
+    <path d="M150,38 C142,34 130,32 118,36 C106,40 96,50 92,62" fill="none" stroke="#9333ea" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M90,64 C82,70 76,80 78,92 C80,100 86,106 92,110" fill="none" stroke="#9333ea" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M82,112 C76,120 76,132 82,140 C86,148 94,154 104,156" fill="none" stroke="#9333ea" stroke-width="2" stroke-linecap="round"/>
+    <path d="M106,158 C116,164 130,166 142,164 C146,163 149,162 150,160" fill="none" stroke="#9333ea" stroke-width="2" stroke-linecap="round"/>
+    <path d="M150,52 C144,48 136,46 126,50 C116,54 108,64 110,76" fill="none" stroke="#7c3aed" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M112,78 C106,86 106,96 110,104 C114,110 122,114 130,114" fill="none" stroke="#7c3aed" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M130,116 C124,122 118,130 120,140 C122,148 130,154 140,154" fill="none" stroke="#7c3aed" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M150,66 C144,62 136,62 128,66 C120,70 116,80 120,88" fill="none" stroke="#a855f7" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+    <path d="M118,90 C114,98 116,108 122,114" fill="none" stroke="#a855f7" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+    <path d="M150,130 C144,128 136,128 130,132 C124,136 120,144 122,152" fill="none" stroke="#a855f7" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+    <path d="M150,96 C144,92 138,90 132,92 C126,94 122,100 124,108" fill="none" stroke="#7c3aed" stroke-width="1.3" stroke-linecap="round" opacity="0.6"/>
+  </g>
 
-  <!-- LEFT CIRCUIT ARM -->
-  <line x1="134" y1="76" x2="114" y2="76" stroke="#0066ff" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="107" cy="76" r="6.5" fill="none" stroke="#0066ff" stroke-width="2.5"/>
-  <circle cx="107" cy="76" r="2.5" fill="#0066ff"/>
+  <!-- RIGHT HEMISPHERE: Circuit traces -->
+  <g clip-path="url(#rightHalf)" filter="url(#glow)">
+    <line x1="150" y1="52" x2="230" y2="52" stroke="#0d9488" stroke-width="1.5" opacity="0.7"/>
+    <line x1="150" y1="76" x2="246" y2="76" stroke="#0d9488" stroke-width="1.5" opacity="0.7"/>
+    <line x1="150" y1="100" x2="252" y2="100" stroke="#0d9488" stroke-width="1.5" opacity="0.7"/>
+    <line x1="150" y1="124" x2="248" y2="124" stroke="#0d9488" stroke-width="1.5" opacity="0.7"/>
+    <line x1="150" y1="148" x2="232" y2="148" stroke="#0d9488" stroke-width="1.5" opacity="0.7"/>
+    <line x1="175" y1="44" x2="175" y2="156" stroke="#0d9488" stroke-width="1.2" opacity="0.5"/>
+    <line x1="200" y1="36" x2="200" y2="162" stroke="#0d9488" stroke-width="1.2" opacity="0.5"/>
+    <line x1="225" y1="48" x2="225" y2="152" stroke="#0d9488" stroke-width="1.2" opacity="0.5"/>
+    <line x1="245" y1="72" x2="245" y2="130" stroke="#0d9488" stroke-width="1.2" opacity="0.5"/>
+    <polyline points="163,44 163,52" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <polyline points="188,36 188,44 200,44" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <polyline points="215,42 215,52 225,52" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <polyline points="163,76 163,88 175,88" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <polyline points="213,76 213,88 225,88" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <polyline points="175,100 175,112 188,112" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <polyline points="225,100 225,112 238,112" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <polyline points="163,124 163,136 175,136" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <polyline points="200,124 200,136 213,136" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <polyline points="175,148 175,158 188,158" fill="none" stroke="#14b8a6" stroke-width="1.8"/>
+    <rect x="170" y="48" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <rect x="195" y="40" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <rect x="220" y="48" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <rect x="158" y="84" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <rect x="208" y="84" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <rect x="183" y="108" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <rect x="233" y="108" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <rect x="158" y="132" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <rect x="208" y="132" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <rect x="183" y="154" width="10" height="8" rx="1" fill="none" stroke="#2dd4bf" stroke-width="1.5"/>
+    <circle cx="175" cy="52" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="200" cy="52" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="225" cy="52" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="175" cy="76" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="200" cy="76" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="225" cy="76" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="245" cy="76" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="175" cy="100" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="200" cy="100" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="225" cy="100" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="245" cy="100" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="175" cy="124" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="200" cy="124" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="225" cy="124" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="175" cy="148" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+    <circle cx="200" cy="148" r="2.5" fill="#0d9488" filter="url(#softGlow)"/>
+  </g>
 
-  <!-- RIGHT CIRCUIT ARM -->
-  <line x1="166" y1="76" x2="186" y2="76" stroke="#0066ff" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="193" cy="76" r="6.5" fill="none" stroke="#0066ff" stroke-width="2.5"/>
-  <circle cx="193" cy="76" r="2.5" fill="#0066ff"/>
+  <!-- Brain outer outline left (purple) -->
+  <path d="M150,28 C138,20 122,18 110,22 C96,26 84,34 78,46 C70,46 60,50 56,60 C48,64 42,74 44,86 C38,92 36,102 40,112 C36,120 36,132 44,140 C48,152 58,160 70,162 C76,166 84,168 92,168 C104,174 118,174 130,170 C138,172 146,172 150,170" fill="none" stroke="#9333ea" stroke-width="2.5" stroke-linecap="round"/>
 
-  <!-- FORWARD ARROW: shaft + bold arrowhead, right-pointing -->
-  <rect x="134" y="91" width="32" height="12" rx="2" fill="#0055ee"/>
-  <polygon points="166,85 189,97 166,109" fill="#0044cc"/>
+  <!-- Brain outer outline right (teal) -->
+  <path d="M150,170 C154,172 162,172 170,170 C182,174 196,174 208,168 C216,168 224,166 230,162 C242,160 252,152 256,140 C264,132 264,120 260,112 C264,102 262,92 256,86 C258,74 252,64 244,60 C240,50 230,46 222,46 C216,34 204,26 190,22 C178,18 162,20 150,28" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
 
-  <!-- ============================================================
-       WORDMARK
-  ============================================================ -->
-  <text
-    x="150"
-    y="132"
-    text-anchor="middle"
-    font-family="'Helvetica Neue', Arial, Helvetica, sans-serif"
-    font-size="15.5"
-    font-weight="800"
-    letter-spacing="4"
-    fill="#0066ff"
-  >AGENTIC LEAD GEN</text>
+  <!-- Center dividing line -->
+  <line x1="150" y1="28" x2="150" y2="170" stroke="url(#brainGrad)" stroke-width="1.8" stroke-dasharray="4,3" opacity="0.9"/>
 
-  <!-- Hairline rule under wordmark -->
-  <line x1="86" y1="140" x2="214" y2="140" stroke="#0066ff" stroke-width="0.7" opacity="0.2"/>
+  <!-- Key nodes on center line -->
+  <circle cx="150" cy="28" r="3.5" fill="url(#brainGrad)" filter="url(#softGlow)"/>
+  <circle cx="150" cy="170" r="3.5" fill="url(#brainGrad)" filter="url(#softGlow)"/>
+  <circle cx="150" cy="99" r="5" fill="url(#brainGrad)" filter="url(#softGlow)"/>
+  <circle cx="150" cy="99" r="2.5" fill="#ffffff" opacity="0.8"/>
+
+  <!-- Cross-hemisphere connection arcs -->
+  <path d="M130,80 C140,76 160,76 170,80" fill="none" stroke="url(#brainGrad)" stroke-width="1.2" opacity="0.5" stroke-dasharray="3,2"/>
+  <path d="M128,110 C139,106 161,106 172,110" fill="none" stroke="url(#brainGrad)" stroke-width="1.2" opacity="0.5" stroke-dasharray="3,2"/>
+  <path d="M132,138 C141,134 159,134 168,138" fill="none" stroke="url(#brainGrad)" stroke-width="1.2" opacity="0.5" stroke-dasharray="3,2"/>
+
+  <!-- Wordmark -->
+  <text x="150" y="189" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="3" text-anchor="middle" fill="url(#textGrad)" filter="url(#glow)">AGENTIC LEAD GEN</text>
+  <text x="150" y="199" font-family="'Segoe UI', Arial, sans-serif" font-size="5.5" font-weight="400" letter-spacing="2.5" text-anchor="middle" fill="#6b7280" opacity="0.8">AI · DISCOVER · CONVERT</text>
 </svg>

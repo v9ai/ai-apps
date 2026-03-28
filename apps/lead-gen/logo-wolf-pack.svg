@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <defs>
+    <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e8f4fd" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#b8d4ee" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0a0f1a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#60b8ff" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#3a8fd4" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#1a4a7a" stop-opacity="0.2"/>
+    </radialGradient>
+    <radialGradient id="bgGrad" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#0d1b2e"/>
+      <stop offset="100%" stop-color="#060c14"/>
+    </radialGradient>
+    <filter id="eyeBloom" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="moonBloom" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="wolfShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000d1a" flood-opacity="0.7"/>
+    </filter>
+    <clipPath id="viewClip">
+      <rect width="300" height="200"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="200" fill="url(#bgGrad)"/>
+  <rect width="300" height="200" fill="#0a1628" opacity="0.3"/>
+
+  <!-- Moon glow backdrop -->
+  <circle cx="150" cy="52" r="38" fill="url(#moonGlow)" filter="url(#moonBloom)" opacity="0.6"/>
+  <!-- Moon crescent -->
+  <circle cx="150" cy="52" r="18" fill="#ddeef8" opacity="0.92" filter="url(#moonBloom)"/>
+  <circle cx="144" cy="48" r="13" fill="#0d1b2e" opacity="0.85"/>
+
+  <!-- Tree silhouettes left -->
+  <g fill="#060e1a" opacity="0.85">
+    <polygon points="22,170 32,120 42,170"/>
+    <polygon points="28,170 40,100 52,170"/>
+    <polygon points="14,170 22,130 30,170"/>
+    <rect x="36" y="155" width="8" height="15"/>
+  </g>
+
+  <!-- Tree silhouettes right -->
+  <g fill="#060e1a" opacity="0.85">
+    <polygon points="248,170 260,100 272,170"/>
+    <polygon points="258,170 270,120 282,170"/>
+    <polygon points="268,170 278,130 288,170"/>
+    <rect x="256" y="155" width="8" height="15"/>
+  </g>
+
+  <!-- Wolf head: geometric minimalist -->
+  <g filter="url(#wolfShadow)" clip-path="url(#viewClip)">
+    <!-- Neck base -->
+    <polygon points="128,172 140,148 160,148 172,172" fill="#1e2a38"/>
+    <!-- Main head -->
+    <polygon points="108,148 120,96 150,82 180,96 192,148 150,158" fill="#1e2a38"/>
+    <!-- Left ear outer -->
+    <polygon points="116,110 112,72 138,96" fill="#1a2534"/>
+    <!-- Left ear inner shadow -->
+    <polygon points="119,107 116,80 134,96" fill="#0d1624" opacity="0.6"/>
+    <!-- Right ear outer -->
+    <polygon points="184,110 188,72 162,96" fill="#1a2534"/>
+    <!-- Right ear inner shadow -->
+    <polygon points="181,107 184,80 166,96" fill="#0d1624" opacity="0.6"/>
+    <!-- Snout lower jaw -->
+    <polygon points="134,142 150,136 166,142 162,162 138,162" fill="#18232f"/>
+    <!-- Snout muzzle -->
+    <polygon points="136,130 150,122 164,130 162,148 138,148" fill="#202e3e"/>
+    <!-- Nose tip -->
+    <polygon points="144,122 150,116 156,122 150,126" fill="#0d1420"/>
+    <!-- Howling open mouth -->
+    <ellipse cx="150" cy="152" rx="9" ry="7" fill="#06090f"/>
+    <!-- Cheekbone highlights -->
+    <polygon points="114,130 126,120 132,138 118,142" fill="#243344" opacity="0.7"/>
+    <polygon points="186,130 174,120 168,138 182,142" fill="#243344" opacity="0.7"/>
+    <!-- Forehead plane -->
+    <polygon points="135,100 150,88 165,100 155,112 145,112" fill="#2a3c50" opacity="0.5"/>
+  </g>
+
+  <!-- Wolf eye: blue glow (left eye) -->
+  <g filter="url(#eyeBloom)">
+    <ellipse cx="136" cy="118" rx="7" ry="5.5" fill="#0a1e35" opacity="0.9"/>
+    <ellipse cx="136" cy="118" rx="5" ry="3.8" fill="url(#eyeGlow)"/>
+    <ellipse cx="136" cy="118" rx="2.5" ry="2" fill="#8dd4ff" opacity="0.95"/>
+    <ellipse cx="134.5" cy="117" rx="1" ry="0.8" fill="#ffffff" opacity="0.7"/>
+  </g>
+
+  <!-- Right eye: dark -->
+  <ellipse cx="164" cy="118" rx="6" ry="4.5" fill="#0d1824" opacity="0.8"/>
+  <ellipse cx="164" cy="118" rx="4" ry="2.8" fill="#152030" opacity="0.6"/>
+
+  <!-- Ground -->
+  <rect x="0" y="168" width="300" height="32" fill="#06090f"/>
+  <!-- Ground fog -->
+  <ellipse cx="60" cy="170" rx="50" ry="6" fill="#0d1828" opacity="0.6"/>
+  <ellipse cx="240" cy="170" rx="50" ry="6" fill="#0d1828" opacity="0.6"/>
+  <ellipse cx="150" cy="172" rx="80" ry="5" fill="#0f1e30" opacity="0.4"/>
+
+  <!-- Wordmark -->
+  <text x="150" y="187" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="10.5" font-weight="700" letter-spacing="3.5" text-anchor="middle" fill="#4a9fd4" opacity="0.92">AGENTIC LEAD GEN</text>
+  <!-- Separator lines -->
+  <line x1="42" y1="183.5" x2="88" y2="183.5" stroke="#2a5a8a" stroke-width="0.5" opacity="0.6"/>
+  <line x1="212" y1="183.5" x2="258" y2="183.5" stroke="#2a5a8a" stroke-width="0.5" opacity="0.6"/>
+</svg>

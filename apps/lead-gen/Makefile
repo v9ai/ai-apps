@@ -159,6 +159,52 @@ RUST_FILTER_3 = dedup simd filter
 RUST_FILTER_4 = scoring embedding
 RUST_FILTER_7 = pipeline teams state enrich
 
+# ── ML Improvement Loop ───────────────────────────────────────
+# Usage:
+#   make ml-eval              Run full eval harness (scoring + NER)
+#   make ml-eval-scoring      Eval ICP scoring only
+#   make ml-optimize          Grid search + SGD + calibrate weights
+#   make ml-datagen           Generate synthetic training data
+#   make ml-report            Print current metrics dashboard
+
+EVAL_LABELS  := $(METAL_DIR)/data/eval_labels.jsonl
+EVAL_REPORTS := $(METAL_DIR)/data/reports
+MODELS_DIR   := $(METAL_DIR)/data/models
+
+.PHONY: ml-eval ml-eval-scoring ml-optimize ml-datagen ml-report
+
+ml-datagen: start-build ## Generate synthetic training data
+	@mkdir -p $(dir $(EVAL_LABELS))
+	$(METAL_BIN) ml-datagen --output $(EVAL_LABELS)
+	@echo "Generated $$(wc -l < $(EVAL_LABELS)) labeled samples → $(EVAL_LABELS)"
+
+ml-eval: start-build ## Run full ML eval harness
+	@mkdir -p $(EVAL_REPORTS)
+	$(METAL_BIN) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
+
+ml-eval-scoring: start-build ## Eval ICP scoring only
+	@mkdir -p $(EVAL_REPORTS)
+	$(METAL_BIN) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS) --scoring-only
+
+ml-optimize: start-build ## Grid search + SGD + isotonic calibration
+	@mkdir -p $(MODELS_DIR)
+	$(METAL_BIN) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
+
+ml-report: ## Print latest eval metrics
+	@if [ -d $(EVAL_REPORTS) ]; then \
+		latest=$$(ls -t $(EVAL_REPORTS)/eval_iter_*.json 2>/dev/null | head -1); \
+		if [ -n "$$latest" ]; then \
+			echo "═══ ML Eval Report: $$latest ═══"; \
+			cat "$$latest" | python3 -m json.tool 2>/dev/null || cat "$$latest"; \
+		else \
+			echo "No eval reports found. Run 'make ml-eval' first."; \
+		fi; \
+	else \
+		echo "No reports directory. Run 'make ml-eval' first."; \
+	fi
+
+RUST_FILTER_6 = ml_eval weight_optimizer data_gen
+
 # ── All ────────────────────────────────────────────────────────
 
 .PHONY: install-all
