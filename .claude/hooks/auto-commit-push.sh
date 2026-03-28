@@ -51,8 +51,6 @@ if [ -n "$LAST_MSG" ]; then
     SUBJECT=$(echo "$LAST_MSG" | grep -v '^\s*$' | head -1 | sed 's/[[:space:]]*$//')
     BODY=$(echo "$LAST_MSG" | tail -n +2)
     SUBJECT="${TAG:+${TAG}: }${SUBJECT}"
-    # Truncate subject to 72 chars
-    [ "${#SUBJECT}" -gt 72 ] && SUBJECT="${SUBJECT:0:69}..."
 else
     SUBJECT="chore${TAG}: auto-commit"
     BODY=""
