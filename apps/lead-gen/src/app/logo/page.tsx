@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { css } from "styled-system/css";
 import { logos } from "./logos-data";
 
-const LOGOS_PER_PAGE = 20;
+const LOGOS_PER_PAGE = 25;
 
 export default function LogoPage() {
   const [search, setSearch] = useState("");
@@ -39,7 +39,7 @@ export default function LogoPage() {
         <div className={css({ maxW: "1400px", mx: "auto" })}>
           <div className={css({ display: "flex", alignItems: "center", gap: "3", mb: "2" })}>
             <span className={css({ fontSize: "xs", letterSpacing: "0.15em", color: "rgba(99,102,241,0.8)", textTransform: "uppercase", fontWeight: "semibold" })}>
-              100 AGENTS · 100 DESIGNS
+              CRYSTAL PRISM · 21 VARIATIONS
             </span>
           </div>
           <h1
