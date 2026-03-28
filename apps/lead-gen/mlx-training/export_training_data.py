@@ -36,29 +36,6 @@ ROLE_TAG_SYSTEM = (
     "CRITICAL: Respond with ONLY a valid JSON object, no markdown."
 )
 
-REMOTE_EU_SYSTEM = (
-    "You are an expert at classifying job postings for Remote EU eligibility. "
-    "A Remote EU position must be FULLY REMOTE and allow work from EU member countries. "
-    "Return JSON: {\"isRemoteEU\": true/false, \"confidence\": \"high\"|\"medium\"|\"low\", \"reason\": \"...\"}\n\n"
-    "CLASSIFICATION RULES (apply in order):\n\n"
-    "0. NEGATIVE SIGNALS (highest priority):\n"
-    "   - \"US only\", \"must be based in US\", \"US work authorization required\" → false (high)\n"
-    "   - Swiss-only work permit in DACH context → false (high)\n\n"
-    "1. FULLY REMOTE REQUIREMENT: Must explicitly state remote/fully remote.\n"
-    "   - Hybrid, office-based, on-site → false\n\n"
-    "2. ATS METADATA: EU country code + remote flag → true (high)\n"
-    "   - workplace_type = \"not remote\" → false (high)\n\n"
-    "3. EXPLICIT EU: \"Remote - EU\", \"EU only\" → true (high)\n\n"
-    "4. WORK AUTH: \"EU work authorization\" → true\n\n"
-    "5. REGIONAL: DACH → true (medium), Nordics → true (medium), Benelux → true (high)\n\n"
-    "6. BROADER: EMEA + EU auth → true (high), EMEA alone → true (medium), "
-    "\"Europe\" → true (medium)\n\n"
-    "7. TIMEZONE: \"EU Timezone\"/\"CET +/- N\" → true (medium)\n\n"
-    "8. WORLDWIDE: + negative → false; + EU signal → true (medium); alone → false (medium)\n\n"
-    "9. UK only (post-Brexit) → false. Switzerland only → false.\n\n"
-    "CRITICAL: Respond with ONLY a valid JSON object, no markdown."
-)
-
 REMOTE_WORLDWIDE_SYSTEM = (
     "You are an expert at classifying job postings for fully remote worldwide eligibility. "
     "A Remote Worldwide position must be FULLY REMOTE with no geographic restriction on where the candidate works. "
