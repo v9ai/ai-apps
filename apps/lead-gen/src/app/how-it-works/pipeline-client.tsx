@@ -256,31 +256,6 @@ const nodeDetails: Record<string, NodeDetail> = {
     dataIn: "Enrichment payload", dataOut: "Updated company row",
     insight: "Idempotent upsert with enriched_at timestamp lets you re-enrich companies on demand without creating duplicates", color: "green",
   },
-  // Stage 3: ATS Detection
-  "crawl-careers": {
-    description: "Crawl company career and hiring pages to find embedded ATS widgets and job board links. Follows /careers, /jobs, and /about/jobs URL patterns.",
-    tech: [{ name: "HTTP fetch" }, { name: "HTML parser" }],
-    dataIn: "Company domain", dataOut: "Career page HTML",
-    insight: "Probing 3–5 known URL patterns per company finds ATS boards without needing a full site crawl", color: "red",
-  },
-  "detect-vendor": {
-    description: "Parse HTML to identify ATS vendor: Greenhouse, Lever, Ashby, Workable, SmartRecruiters, or custom. Uses script src patterns, iframe origins, and embed tag attributes.",
-    tech: [{ name: "DOM parser" }, { name: "ATS pattern registry" }],
-    dataIn: "Career page HTML", dataOut: "ATS vendor + board URL",
-    insight: "Pattern-matching over DOM attributes is faster and cheaper than LLM for structured vendor detection", color: "amber",
-  },
-  "score-ats-confidence": {
-    description: "Assign a confidence score (0–1) to each detected board based on signal strength. Multiple corroborating signals (iframe + script + link) raise confidence; single signals are low-confidence.",
-    tech: [{ name: "Signal scoring" }, { name: "Provenance metadata" }],
-    dataIn: "ATS signals", dataOut: "Confidence score + provenance",
-    insight: "Confidence scoring lets downstream agents filter out weak detections before expensive contact discovery", color: "indigo",
-  },
-  "neon-ats": {
-    description: "Persist ATS board records to the ats_boards table: vendor, URL, board type, confidence score, and discovery provenance. One company can have multiple boards.",
-    tech: [{ name: "Neon PostgreSQL" }, { name: "Drizzle ORM" }],
-    dataIn: "Board records", dataOut: "Persisted ats_boards rows",
-    insight: "ATS board detection unlocks passive job monitoring — boards are polled later to detect new open roles at target companies", color: "green",
-  },
   // Stage 4: Contact Pipeline
   "linkedin-source": {
     description: "LinkedIn profile data as the primary input for contact records. Profile URL, current position, and company association are extracted and linked to the company row.",
@@ -374,21 +349,6 @@ const enrichmentEdges: Edge[] = [
   { id: "e-da-neon", source: "deep-analysis", target: "neon-enriched", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
 ];
 
-// ── Stage 3: ATS Detection ───────────────────────────────────────────────────
-
-const atsNodes: Node[] = [
-  { id: "crawl-careers", type: "agent", position: { x: 0, y: 40 }, data: { label: "crawl_career_pages", sublabel: "/careers, /jobs patterns", icon: Search, color: "var(--red-9)" } },
-  { id: "detect-vendor", type: "agent", position: { x: 300, y: 40 }, data: { label: "detect_ats_vendor", sublabel: "Greenhouse / Lever / Ashby…", icon: FileText, color: "var(--amber-9)" } },
-  { id: "score-ats-confidence", type: "agent", position: { x: 580, y: 40 }, data: { label: "score_confidence", sublabel: "Signal strength 0–1", icon: BarChart3, color: "var(--indigo-9)" } },
-  { id: "neon-ats", type: "dataStore", position: { x: 840, y: 45 }, data: { label: "ats_boards", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
-];
-
-const atsEdges: Edge[] = [
-  { id: "e-cc-dv", source: "crawl-careers", target: "detect-vendor", ...edgeDefaults, label: "career HTML", style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
-  { id: "e-dv-sc", source: "detect-vendor", target: "score-ats-confidence", ...edgeDefaults, label: "vendor + URL", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-sc-neon", source: "score-ats-confidence", target: "neon-ats", ...edgeDefaults, label: "board record", style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" } },
-];
-
 // ── Stage 4: Contact Pipeline ────────────────────────────────────────────────
 
 const contactNodes: Node[] = [
@@ -442,15 +402,6 @@ const stages = [
     nodes: enrichmentNodes,
     edges: enrichmentEdges,
     height: 200,
-  },
-  {
-    title: "ats_detection",
-    graphName: "ats_detection",
-    description: "Crawl career pages, detect ATS vendor from DOM patterns, score confidence, persist boards. One company can have multiple boards across vendors.",
-    pattern: "Structured signal extraction",
-    nodes: atsNodes,
-    edges: atsEdges,
-    height: 150,
   },
   {
     title: "contact_pipeline",

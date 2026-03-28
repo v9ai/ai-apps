@@ -11,19 +11,11 @@ class CandidateCompany(TypedDict):
     source_query: str
 
 
-class ATSBoardDetection(BaseModel):
-    vendor: str  # "greenhouse" | "lever" | "ashby"
-    board_slug: str
-    url: str
-    job_count: int
-
-
 class CompanyResearchResult(BaseModel):
     name: str
     domain: str
     website_snippet: str
     careers_url: str | None
-    ats_boards: list[ATSBoardDetection]
     is_ai_company: bool
     is_fully_remote: bool
     ai_tier: int  # 0 = not AI, 1 = AI-adjacent, 2 = AI-core
