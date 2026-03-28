@@ -368,13 +368,13 @@ export function LandingHero() {
                 animation: "landing-preview-pulse 2s ease-in-out infinite",
               }}
             />
-            pipeline active -- last crawl: today
+            agents active -- last run: today
           </span>
         </div>
 
         {/* --- social proof stats (count-up + stagger entrance) --- */}
         <dl
-          aria-label="Pipeline statistics"
+          aria-label="Agent statistics"
           className={cx(
             css({
               display: "grid",
