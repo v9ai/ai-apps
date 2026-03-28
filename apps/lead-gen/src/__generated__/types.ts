@@ -19,53 +19,6 @@ export type Scalars = {
   Upload: { input: File; output: File; }
 };
 
-export type AtsBoard = {
-  __typename: 'ATSBoard';
-  board_type: AtsBoardType;
-  company_id: Scalars['Int']['output'];
-  confidence: Scalars['Float']['output'];
-  created_at: Scalars['String']['output'];
-  evidence: Evidence;
-  first_seen_at: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  is_active: Scalars['Boolean']['output'];
-  last_seen_at: Scalars['String']['output'];
-  updated_at: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-  vendor: AtsVendor;
-};
-
-export type AtsBoardType =
-  | 'BOARD_API'
-  | 'BOARD_WIDGET'
-  | 'JOBS_PAGE'
-  | 'UNKNOWN';
-
-export type AtsBoardUpsertInput = {
-  board_type: AtsBoardType;
-  confidence: Scalars['Float']['input'];
-  evidence: EvidenceInput;
-  is_active: Scalars['Boolean']['input'];
-  last_seen_at: Scalars['String']['input'];
-  url: Scalars['String']['input'];
-  vendor: AtsVendor;
-};
-
-export type AtsVendor =
-  | 'ASHBY'
-  | 'BREEZYHR'
-  | 'GREENHOUSE'
-  | 'ICIMS'
-  | 'JAZZHR'
-  | 'JOBVITE'
-  | 'LEVER'
-  | 'ORACLE_TALEO'
-  | 'OTHER'
-  | 'SAP_SUCCESSFACTORS'
-  | 'SMARTRECRUITERS'
-  | 'TEAMTAILOR'
-  | 'WORKABLE';
-
 export type AnalyzeCompanyResponse = {
   __typename: 'AnalyzeCompanyResponse';
   companyId: Maybe<Scalars['Int']['output']>;
@@ -131,7 +84,6 @@ export type Company = {
   ai_classification_reason: Maybe<Scalars['String']['output']>;
   ai_tier: Scalars['Int']['output'];
   ashby_enrichment: Maybe<AshbyEnrichment>;
-  ats_boards: Array<AtsBoard>;
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];
@@ -239,7 +191,6 @@ export type CompanyFactInput = {
 
 export type CompanyFilterInput = {
   category_in?: InputMaybe<Array<CompanyCategory>>;
-  has_ats_boards?: InputMaybe<Scalars['Boolean']['input']>;
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -798,7 +749,6 @@ export type Mutation = {
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
   updateUserSettings: UserSettings;
-  upsert_company_ats_boards: Array<AtsBoard>;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -1043,12 +993,6 @@ export type MutationUpdateUserSettingsArgs = {
 };
 
 
-export type MutationUpsert_Company_Ats_BoardsArgs = {
-  boards: Array<AtsBoardUpsertInput>;
-  company_id: Scalars['Int']['input'];
-};
-
-
 export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
@@ -1066,7 +1010,6 @@ export type Query = {
   companies: CompaniesResponse;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
-  company_ats_boards: Array<AtsBoard>;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
   contact: Maybe<Contact>;
@@ -1103,11 +1046,6 @@ export type QueryCompanyArgs = {
 
 export type QueryCompanyContactEmailsArgs = {
   companyId: Scalars['Int']['input'];
-};
-
-
-export type QueryCompany_Ats_BoardsArgs = {
-  company_id: Scalars['Int']['input'];
 };
 
 

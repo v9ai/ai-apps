@@ -17,27 +17,12 @@ from psycopg.rows import dict_row
 # ---------------------------------------------------------------------------
 
 def fetch_new_jobs(conn: psycopg.Connection, limit: int = 50) -> list[dict]:
-    """Jobs with status='new' that need ATS enhancement."""
+    """Jobs with status='new' ready for processing."""
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """SELECT id, external_id, source_kind, company_key
                FROM jobs
                WHERE status IS NULL OR status = 'new'
-               ORDER BY created_at DESC
-               LIMIT %s""",
-            [limit],
-        )
-        return cur.fetchall()
-
-
-def fetch_new_ats_jobs(conn: psycopg.Connection, limit: int = 50) -> list[dict]:
-    """New jobs from ATS sources (greenhouse, lever, ashby)."""
-    with conn.cursor(row_factory=dict_row) as cur:
-        cur.execute(
-            """SELECT id, external_id, source_kind, company_key
-               FROM jobs
-               WHERE (status IS NULL OR status = 'new')
-                 AND source_kind IN ('greenhouse', 'lever', 'ashby')
                ORDER BY created_at DESC
                LIMIT %s""",
             [limit],

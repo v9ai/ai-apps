@@ -15,13 +15,12 @@ from psycopg.rows import dict_row
 # Process Jobs — Phase 1 (enhance)
 # ---------------------------------------------------------------------------
 
-def promote_non_ats_jobs(conn: psycopg.Connection) -> int:
-    """Promote non-ATS jobs directly to 'enhanced' (no external fetch needed)."""
+def promote_new_jobs(conn: psycopg.Connection) -> int:
+    """Promote all new jobs directly to 'enhanced'."""
     with conn.cursor() as cur:
         cur.execute(
             """UPDATE jobs SET status = 'enhanced', updated_at = now()
-               WHERE (status IS NULL OR status = 'new')
-                 AND source_kind NOT IN ('greenhouse', 'lever', 'ashby')"""
+               WHERE status IS NULL OR status = 'new'"""
         )
         conn.commit()
         return cur.rowcount
@@ -30,7 +29,7 @@ def promote_non_ats_jobs(conn: psycopg.Connection) -> int:
 def update_job_enhanced(
     conn: psycopg.Connection, job_id: int, cols: list[str], vals: list
 ) -> None:
-    """Update a job with ATS data and set status to 'enhanced'."""
+    """Update a job with enrichment data and set status to 'enhanced'."""
     set_parts = [f"{c} = %s" for c in cols]
     set_parts += ["status = %s", "updated_at = now()"]
     vals = list(vals) + ["enhanced", job_id]
@@ -41,7 +40,7 @@ def update_job_enhanced(
 
 
 def advance_job_to_enhanced(conn: psycopg.Connection, job_id: int) -> None:
-    """Advance a job to 'enhanced' without ATS data."""
+    """Advance a job to 'enhanced' without enrichment data."""
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE jobs SET status = 'enhanced', updated_at = now() WHERE id = %s",
@@ -131,17 +130,14 @@ def upsert_job_skills(
 # Columns NULLed on stale — everything except identity/conflict keys.
 _STALE_COLUMNS = [
     "location", "description", "score", "score_reason",
-    "company_id", "ats_data", "absolute_url", "internal_job_id",
+    "company_id", "absolute_url", "internal_job_id",
     "requisition_id", "company_name", "first_published", "language",
     "metadata", "departments", "offices", "questions",
     "location_questions", "compliance", "demographic_questions",
     "data_compliance", "categories", "workplace_type", "country",
     "opening", "opening_plain", "description_body",
     "description_body_plain", "additional", "additional_plain",
-    "lists", "ats_created_at", "ashby_department", "ashby_team",
-    "ashby_employment_type", "ashby_is_remote", "ashby_is_listed",
-    "ashby_published_at", "ashby_job_url", "ashby_apply_url",
-    "ashby_secondary_locations", "ashby_compensation", "ashby_address",
+    "lists",
 ]
 
 

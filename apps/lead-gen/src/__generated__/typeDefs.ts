@@ -7,54 +7,6 @@ schema {
   mutation: Mutation
 }
 
-type ATSBoard {
-  board_type: ATSBoardType!
-  company_id: Int!
-  confidence: Float!
-  created_at: String!
-  evidence: Evidence!
-  first_seen_at: String!
-  id: Int!
-  is_active: Boolean!
-  last_seen_at: String!
-  updated_at: String!
-  url: String!
-  vendor: ATSVendor!
-}
-
-enum ATSBoardType {
-  BOARD_API
-  BOARD_WIDGET
-  JOBS_PAGE
-  UNKNOWN
-}
-
-input ATSBoardUpsertInput {
-  board_type: ATSBoardType!
-  confidence: Float!
-  evidence: EvidenceInput!
-  is_active: Boolean!
-  last_seen_at: String!
-  url: String!
-  vendor: ATSVendor!
-}
-
-enum ATSVendor {
-  ASHBY
-  BREEZYHR
-  GREENHOUSE
-  ICIMS
-  JAZZHR
-  JOBVITE
-  LEVER
-  ORACLE_TALEO
-  OTHER
-  SAP_SUCCESSFACTORS
-  SMARTRECRUITERS
-  TEAMTAILOR
-  WORKABLE
-}
-
 type AnalyzeCompanyResponse {
   companyId: Int
   companyKey: String
@@ -112,7 +64,6 @@ type Company {
   ai_classification_reason: String
   ai_tier: Int!
   ashby_enrichment: AshbyEnrichment
-  ats_boards: [ATSBoard!]!
   category: CompanyCategory!
   contacts: [Contact!]!
   created_at: String!
@@ -206,7 +157,6 @@ input CompanyFactInput {
 
 input CompanyFilterInput {
   category_in: [CompanyCategory!]
-  has_ats_boards: Boolean
   min_ai_tier: Int
   min_score: Float
   service_taxonomy_any: [String!]
@@ -740,7 +690,6 @@ type Mutation {
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
-  upsert_company_ats_boards(boards: [ATSBoardUpsertInput!]!, company_id: Int!): [ATSBoard!]!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
 }
 
@@ -756,7 +705,6 @@ type Query {
   companies(filter: CompanyFilterInput, limit: Int, offset: Int, order_by: CompanyOrderBy): CompaniesResponse!
   company(id: Int, key: String): Company
   companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
-  company_ats_boards(company_id: Int!): [ATSBoard!]!
   company_facts(company_id: Int!, field: String, limit: Int, offset: Int): [CompanyFact!]!
   company_snapshots(company_id: Int!, limit: Int, offset: Int): [CompanySnapshot!]!
   contact(id: Int!): Contact

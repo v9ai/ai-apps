@@ -108,7 +108,7 @@ export const companyFacts = pgTable(
     company_id: integer("company_id")
       .notNull()
       .references(() => companies.id, { onDelete: "cascade" }),
-    field: text("field").notNull(), // e.g., "name", "services", "ats_boards"
+    field: text("field").notNull(), // e.g., "name", "services", "industries"
     value_json: text("value_json"), // JSON for arrays/objects
     value_text: text("value_text"), // convenience text
     normalized_value: text("normalized_value"), // JSON normalized form

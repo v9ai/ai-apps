@@ -37,7 +37,7 @@ def _classify_company(
     website_snippet: str,
 ) -> dict:
     """Call DeepSeek to classify company as AI + remote."""
-    messages = build_classification_messages(name, domain, website_snippet, "")
+    messages = build_classification_messages(name, domain, website_snippet)
     response = get_llm().invoke(messages)
 
     try:

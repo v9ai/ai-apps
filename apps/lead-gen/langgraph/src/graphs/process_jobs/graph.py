@@ -5,7 +5,7 @@ Pipeline lifecycle:
                   -> role-nomatch (terminal)
 
 Phases:
-  1. enhance       — ATS data enrichment (new -> enhanced)
+  1. enhance       — Advance new jobs to enhanced status (new -> enhanced)
   2. role_tag      — Role tagging (enhanced -> role-match | role-nomatch)
   3. skill_extract — Skill tag extraction (role-match -> job_skill_tags populated)
 """

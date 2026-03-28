@@ -22,53 +22,6 @@ export type Scalars = {
   Upload: { input: File; output: File; }
 };
 
-export type AtsBoard = {
-  __typename?: 'ATSBoard';
-  board_type: AtsBoardType;
-  company_id: Scalars['Int']['output'];
-  confidence: Scalars['Float']['output'];
-  created_at: Scalars['String']['output'];
-  evidence: Evidence;
-  first_seen_at: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  is_active: Scalars['Boolean']['output'];
-  last_seen_at: Scalars['String']['output'];
-  updated_at: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-  vendor: AtsVendor;
-};
-
-export type AtsBoardType =
-  | 'BOARD_API'
-  | 'BOARD_WIDGET'
-  | 'JOBS_PAGE'
-  | 'UNKNOWN';
-
-export type AtsBoardUpsertInput = {
-  board_type: AtsBoardType;
-  confidence: Scalars['Float']['input'];
-  evidence: EvidenceInput;
-  is_active: Scalars['Boolean']['input'];
-  last_seen_at: Scalars['String']['input'];
-  url: Scalars['String']['input'];
-  vendor: AtsVendor;
-};
-
-export type AtsVendor =
-  | 'ASHBY'
-  | 'BREEZYHR'
-  | 'GREENHOUSE'
-  | 'ICIMS'
-  | 'JAZZHR'
-  | 'JOBVITE'
-  | 'LEVER'
-  | 'ORACLE_TALEO'
-  | 'OTHER'
-  | 'SAP_SUCCESSFACTORS'
-  | 'SMARTRECRUITERS'
-  | 'TEAMTAILOR'
-  | 'WORKABLE';
-
 export type AnalyzeCompanyResponse = {
   __typename?: 'AnalyzeCompanyResponse';
   companyId: Maybe<Scalars['Int']['output']>;
@@ -134,7 +87,6 @@ export type Company = {
   ai_classification_reason: Maybe<Scalars['String']['output']>;
   ai_tier: Scalars['Int']['output'];
   ashby_enrichment: Maybe<AshbyEnrichment>;
-  ats_boards: Array<AtsBoard>;
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];
@@ -242,7 +194,6 @@ export type CompanyFactInput = {
 
 export type CompanyFilterInput = {
   category_in?: InputMaybe<Array<CompanyCategory>>;
-  has_ats_boards?: InputMaybe<Scalars['Boolean']['input']>;
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -801,7 +752,6 @@ export type Mutation = {
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
   updateUserSettings: UserSettings;
-  upsert_company_ats_boards: Array<AtsBoard>;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -1046,12 +996,6 @@ export type MutationUpdateUserSettingsArgs = {
 };
 
 
-export type MutationUpsert_Company_Ats_BoardsArgs = {
-  boards: Array<AtsBoardUpsertInput>;
-  company_id: Scalars['Int']['input'];
-};
-
-
 export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
@@ -1069,7 +1013,6 @@ export type Query = {
   companies: CompaniesResponse;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
-  company_ats_boards: Array<AtsBoard>;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
   contact: Maybe<Contact>;
@@ -1106,11 +1049,6 @@ export type QueryCompanyArgs = {
 
 export type QueryCompanyContactEmailsArgs = {
   companyId: Scalars['Int']['input'];
-};
-
-
-export type QueryCompany_Ats_BoardsArgs = {
-  company_id: Scalars['Int']['input'];
 };
 
 
@@ -1515,10 +1453,6 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
-  ATSBoard: ResolverTypeWrapper<Partial<AtsBoard>>;
-  ATSBoardType: ResolverTypeWrapper<Partial<AtsBoardType>>;
-  ATSBoardUpsertInput: ResolverTypeWrapper<Partial<AtsBoardUpsertInput>>;
-  ATSVendor: ResolverTypeWrapper<Partial<AtsVendor>>;
   AnalyzeCompanyResponse: ResolverTypeWrapper<Partial<AnalyzeCompanyResponse>>;
   ApplyEmailPatternResult: ResolverTypeWrapper<Partial<ApplyEmailPatternResult>>;
   ArchiveEmailResult: ResolverTypeWrapper<Partial<ArchiveEmailResult>>;
@@ -1617,8 +1551,6 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
-  ATSBoard: Partial<AtsBoard>;
-  ATSBoardUpsertInput: Partial<AtsBoardUpsertInput>;
   AnalyzeCompanyResponse: Partial<AnalyzeCompanyResponse>;
   ApplyEmailPatternResult: Partial<ApplyEmailPatternResult>;
   ArchiveEmailResult: Partial<ArchiveEmailResult>;
@@ -1711,21 +1643,6 @@ export type ResolversParentTypes = {
   WarcPointerInput: Partial<WarcPointerInput>;
 };
 
-export type AtsBoardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ATSBoard'] = ResolversParentTypes['ATSBoard']> = {
-  board_type?: Resolver<ResolversTypes['ATSBoardType'], ParentType, ContextType>;
-  company_id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  evidence?: Resolver<ResolversTypes['Evidence'], ParentType, ContextType>;
-  first_seen_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  is_active?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  last_seen_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updated_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  vendor?: Resolver<ResolversTypes['ATSVendor'], ParentType, ContextType>;
-};
-
 export type AnalyzeCompanyResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AnalyzeCompanyResponse'] = ResolversParentTypes['AnalyzeCompanyResponse']> = {
   companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -1776,7 +1693,6 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   ai_classification_reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   ai_tier?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   ashby_enrichment?: Resolver<Maybe<ResolversTypes['AshbyEnrichment']>, ParentType, ContextType>;
-  ats_boards?: Resolver<Array<ResolversTypes['ATSBoard']>, ParentType, ContextType>;
   category?: Resolver<ResolversTypes['CompanyCategory'], ParentType, ContextType>;
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
   created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2228,7 +2144,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationUpdateContactArgs, 'id' | 'input'>>;
   updateEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationUpdateEmailTemplateArgs, 'id' | 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
-  upsert_company_ats_boards?: Resolver<Array<ResolversTypes['ATSBoard']>, ParentType, ContextType, RequireFields<MutationUpsert_Company_Ats_BoardsArgs, 'boards' | 'company_id'>>;
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
 };
 
@@ -2237,7 +2152,6 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   companies?: Resolver<ResolversTypes['CompaniesResponse'], ParentType, ContextType, Partial<QueryCompaniesArgs>>;
   company?: Resolver<Maybe<ResolversTypes['Company']>, ParentType, ContextType, Partial<QueryCompanyArgs>>;
   companyContactEmails?: Resolver<Array<ResolversTypes['CompanyContactEmail']>, ParentType, ContextType, RequireFields<QueryCompanyContactEmailsArgs, 'companyId'>>;
-  company_ats_boards?: Resolver<Array<ResolversTypes['ATSBoard']>, ParentType, ContextType, RequireFields<QueryCompany_Ats_BoardsArgs, 'company_id'>>;
   company_facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, RequireFields<QueryCompany_FactsArgs, 'company_id'>>;
   company_snapshots?: Resolver<Array<ResolversTypes['CompanySnapshot']>, ParentType, ContextType, RequireFields<QueryCompany_SnapshotsArgs, 'company_id'>>;
   contact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactArgs, 'id'>>;
@@ -2372,7 +2286,6 @@ export type WarcPointerResolvers<ContextType = GraphQLContext, ParentType extend
 };
 
 export type Resolvers<ContextType = GraphQLContext> = {
-  ATSBoard?: AtsBoardResolvers<ContextType>;
   AnalyzeCompanyResponse?: AnalyzeCompanyResponseResolvers<ContextType>;
   ApplyEmailPatternResult?: ApplyEmailPatternResultResolvers<ContextType>;
   ArchiveEmailResult?: ArchiveEmailResultResolvers<ContextType>;
