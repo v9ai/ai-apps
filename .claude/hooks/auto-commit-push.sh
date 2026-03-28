@@ -43,15 +43,41 @@ else
     TAG=""
 fi
 
-# Build commit message from changed files
-NAMES=$(echo "$FILES" | xargs -n1 basename | sed 's/\.[^.]*$//' | sort -u)
-COUNT=$(echo "$NAMES" | wc -l | tr -d ' ')
-if [ "$COUNT" -le 5 ]; then
-    SUMMARY="chore${TAG}: $(echo "$NAMES" | paste -sd ', ' -)"
+# Build commit message from diff content
+STAT=$(git diff --cached --stat | tail -1)  # e.g. "3 files changed, 40 insertions(+), 12 deletions(-)"
+INS=$(echo "$STAT" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+DEL=$(echo "$STAT" | grep -oE '[0-9]+ deletion'  | grep -oE '[0-9]+' || echo 0)
+NEW_FILES=$(git diff --cached --diff-filter=A --name-only | wc -l | tr -d ' ')
+DEL_FILES=$(git diff --cached --diff-filter=D --name-only | wc -l | tr -d ' ')
+MOD_FILES=$(git diff --cached --diff-filter=M --name-only | wc -l | tr -d ' ')
+
+# Pick verb from what dominates
+if [ "$NEW_FILES" -gt 0 ] && [ "$MOD_FILES" -eq 0 ] && [ "$DEL_FILES" -eq 0 ]; then
+    VERB="add"
+elif [ "$DEL_FILES" -gt 0 ] && [ "$NEW_FILES" -eq 0 ]; then
+    VERB="remove"
+elif [ "${DEL:-0}" -gt "${INS:-0}" ]; then
+    VERB="refactor"
 else
-    TOP=$(echo "$NAMES" | head -3 | paste -sd ', ' -)
-    SUMMARY="chore${TAG}: ${TOP} (+$((COUNT - 3)) more)"
+    VERB="update"
 fi
+
+# Describe what changed — use directory-level grouping
+DIRS=$(echo "$FILES" | sed 's|/[^/]*$||' | sort -u)
+N_DIRS=$(echo "$DIRS" | grep -c . 2>/dev/null || echo 0)
+if [ "$N_DIRS" -eq 1 ]; then
+    WHAT=$(basename "$DIRS")
+elif [ "$N_DIRS" -le 3 ]; then
+    WHAT=$(echo "$DIRS" | xargs -n1 basename | sort -u | paste -sd ', ' -)
+else
+    TOP_DIRS=$(echo "$DIRS" | xargs -n1 basename | sort -u | head -2 | paste -sd ', ' -)
+    WHAT="${TOP_DIRS} (+$((N_DIRS - 2)) dirs)"
+fi
+
+SUMMARY="${VERB}${TAG}: ${WHAT}"
+
+# Truncate if too long
+[ "${#SUMMARY}" -gt 72 ] && SUMMARY="${SUMMARY:0:69}..."
 
 git commit -m "${SUMMARY}" --no-verify > /dev/null 2>&1 || exit 0
 git push --no-verify > /dev/null 2>&1
