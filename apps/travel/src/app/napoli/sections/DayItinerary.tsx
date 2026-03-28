@@ -2,10 +2,11 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
+import { DAYS, DATE_RANGE_LABEL } from "../constants";
 
 const T = {
   en: {
-    sectionTitle: "5-Day Itinerary",
+    sectionTitle: `${DAYS}-Day Itinerary`,
     sectionSubtitle: "2 adults + 1 child · €1,000 family budget",
     tipLabel: "Family tip",
     days: [
@@ -74,7 +75,7 @@ const T = {
     ],
   },
   ro: {
-    sectionTitle: "Itinerar 5 Zile",
+    sectionTitle: `Itinerar ${DAYS} Zile`,
     sectionSubtitle: "2 adulti + 1 copil · buget familie €1.000",
     tipLabel: "Sfat familie",
     days: [

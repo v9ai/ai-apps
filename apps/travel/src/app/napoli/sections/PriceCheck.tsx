@@ -3,6 +3,7 @@
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
 import { useEffect, useState } from "react";
+import { NIGHTS, DATE_RANGE_LABEL } from "../constants";
 
 type Status = "Ok" | "Warning" | "Over";
 
@@ -25,7 +26,7 @@ const T = {
   en: {
     sectionLabel: "Price Validation",
     sectionTitle: "Live Price Check",
-    subtitle: "2 adults + 1 child · Shoulder season 2026 · All amounts in EUR",
+    subtitle: `2 adults + 1 child · ${DATE_RANGE_LABEL.en} · All amounts in EUR`,
     mlBadge: "ML Verified",
     budgetedLabel: "Budgeted",
     actualLabel: "Actual",
@@ -42,7 +43,7 @@ const T = {
   ro: {
     sectionLabel: "Validare Preturi",
     sectionTitle: "Verificare Preturi Live",
-    subtitle: "2 adulti + 1 copil · Extrasezon 2026 · Toate sumele in EUR",
+    subtitle: `2 adulti + 1 copil · ${DATE_RANGE_LABEL.ro} · Toate sumele in EUR`,
     mlBadge: "Verificat ML",
     budgetedLabel: "Bugetat",
     actualLabel: "Real",
@@ -79,13 +80,13 @@ const CATEGORIES: Category[] = [
     status: "Warning",
     items: [
       {
-        name_en: "Family room B&B (5 nights x €60)",
-        name_ro: "Camera familie B&B (5 nopti x €60)",
+        name_en: `Family room B&B (${NIGHTS} nights x €60)`,
+        name_ro: `Camera familie B&B (${NIGHTS} nopti x €60)`,
         amount: 300,
       },
       {
-        name_en: "City tax (2 adults x 5 nights x €2)",
-        name_ro: "Taxa de sejur (2 adulti x 5 nopti)",
+        name_en: `City tax (2 adults x ${NIGHTS} nights x €2)`,
+        name_ro: `Taxa de sejur (2 adulti x ${NIGHTS} nopti)`,
         amount: 20,
       },
     ],

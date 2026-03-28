@@ -2,11 +2,12 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
+import { DAYS, DATE_RANGE_LABEL } from "../constants";
 
 const T = {
   en: {
     title: "Budget Breakdown",
-    subtitle: "Family of 3 (2 adults + 1 child) · €1,000 · 5 days · Naples",
+    subtitle: `Family of 3 (2 adults + 1 child) · €1,000 · ${DAYS} days · Naples · ${DATE_RANGE_LABEL.en}`,
     col1Title: "Where to Save",
     col2Title: "Where to Splurge",
     col3Title: "Family Notes",
@@ -69,7 +70,7 @@ const T = {
   },
   ro: {
     title: "Planificare Buget",
-    subtitle: "Unde cheltuiesti, unde economisesti si la ce sa te astepti.",
+    subtitle: `Familie de 3 (2 adulti + 1 copil) · €1.000 · ${DAYS} zile · Napoli · ${DATE_RANGE_LABEL.ro}`,
     col1Title: "Unde Economisesti",
     col2Title: "Unde Merită",
     col3Title: "Util de Stiut",

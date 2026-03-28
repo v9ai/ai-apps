@@ -2,13 +2,14 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
+import { NIGHTS, DATE_RANGE_LABEL } from "../constants";
 
 const T = {
   en: {
     sectionLabel: "Where to Sleep",
     sectionTitle: "Accommodation in Naples",
     sectionSubtitle:
-      "Budget allocation €300 — family room, 5 nights. Three tiers for 2 adults + 1 child.",
+      `Budget allocation €300 — family room, ${NIGHTS} nights (${DATE_RANGE_LABEL.en}). Three tiers for 2 adults + 1 child.`,
     recommended: "RECOMMENDED",
     mlLabel: "Family ML",
     hotelsLabel: "Properties in this tier",
@@ -16,7 +17,7 @@ const T = {
       {
         tier: "Budget",
         price: "€40–60 / night",
-        total: "5 nights ≈ €250",
+        total: `${NIGHTS} nights ≈ €${NIGHTS * 50}`,
         type: "Family-run B&Bs and apartment rentals",
         neighbourhoods: "Centro Storico, Quartieri Spagnoli",
         expect:
@@ -32,7 +33,7 @@ const T = {
       {
         tier: "Mid-Range",
         price: "€55–75 / night",
-        total: "5 nights ≈ €320",
+        total: `${NIGHTS} nights ≈ €${NIGHTS * 65}`,
         type: "Boutique hotels with family rooms",
         neighbourhoods: "Vomero, Lungomare, Via Toledo",
         expect:
@@ -49,7 +50,7 @@ const T = {
       {
         tier: "Comfort",
         price: "€100–160 / night",
-        total: "5 nights ≈ €650",
+        total: `${NIGHTS} nights ≈ €${NIGHTS * 130}`,
         type: "Design hotels and heritage properties",
         neighbourhoods: "Lungomare, Chiaia, Posillipo",
         expect:
@@ -98,7 +99,7 @@ const T = {
     sectionLabel: "Unde Dormi",
     sectionTitle: "Cazare in Napoli",
     sectionSubtitle:
-      "Buget alocat €300 — camera de familie, 5 nopti. Trei niveluri pentru 2 adulti + 1 copil.",
+      `Buget alocat €300 — camera de familie, ${NIGHTS} nopti (${DATE_RANGE_LABEL.ro}). Trei niveluri pentru 2 adulti + 1 copil.`,
     recommended: "RECOMANDAT",
     mlLabel: "ML Familie",
     hotelsLabel: "Proprietăți în acest nivel",
@@ -106,7 +107,7 @@ const T = {
       {
         tier: "Buget",
         price: "€40–60 / noapte",
-        total: "5 nopti ≈ €250",
+        total: `${NIGHTS} nopti ≈ €${NIGHTS * 50}`,
         type: "B&B-uri de familie si apartamente de inchiriat",
         neighbourhoods: "Centro Storico, Quartieri Spagnoli",
         expect:
@@ -123,7 +124,7 @@ const T = {
       {
         tier: "Mediu",
         price: "€55–75 / noapte",
-        total: "5 nopti ≈ €320",
+        total: `${NIGHTS} nopti ≈ €${NIGHTS * 65}`,
         type: "Hoteluri boutique cu camere de familie",
         neighbourhoods: "Vomero, Lungomare, Via Toledo",
         expect:
@@ -140,7 +141,7 @@ const T = {
       {
         tier: "Confort",
         price: "€100–160 / noapte",
-        total: "5 nopti ≈ €650",
+        total: `${NIGHTS} nopti ≈ €${NIGHTS * 130}`,
         type: "Hoteluri de design si proprietati istorice",
         neighbourhoods: "Lungomare, Chiaia, Posillipo",
         expect:
