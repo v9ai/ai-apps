@@ -1,24 +1,65 @@
 {
-  "generated_at": "2026-03-28T15:45:37.633193+00:00",
+  "generated_at": "2026-03-28T15:52:02.408071+00:00",
   "query_movie": "The Little Mermaid",
   "results": [
     {
-      "age_rating": "G",
-      "director": "Richard Rich",
+      "age_rating": "PG",
+      "director": "Nathan Greno, Byron Howard",
       "genre": [
         "Animation",
+        "Adventure",
+        "Comedy",
         "Family",
         "Fantasy",
         "Musical",
         "Romance"
       ],
-      "imdb_rating": 6.6,
-      "platform": "Netflix",
+      "imdb_rating": 7.7,
+      "platform": "Disney+",
       "rank": 1,
-      "similarity_score": 0.26683077216148376,
-      "title": "The Swan Princess",
-      "why_similar": "It shares a classic fairy tale structure involving a princess, a magical transformation, a true love's quest, and interference from a villain.",
-      "year": 1994
+      "similarity_score": 0.23376989364624023,
+      "title": "Tangled",
+      "why_similar": "A sheltered, long-haired protagonist yearns for freedom from a secluded life and defies a controlling parental figure to explore the human world and find love.",
+      "year": 2010
+    },
+    {
+      "age_rating": "G",
+      "director": "Ron Clements, John Musker",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Fantasy",
+        "Musical",
+        "Romance"
+      ],
+      "imdb_rating": 7.1,
+      "platform": "Disney+",
+      "rank": 2,
+      "similarity_score": 0.22274577617645264,
+      "title": "The Princess and the Frog",
+      "why_similar": "Features a transformative bargain that changes the protagonist's physical form, leading to an adventure about love and discovering what truly matters.",
+      "year": 2009
+    },
+    {
+      "age_rating": "PG",
+      "director": "Ron Clements, John Musker, Don Hall, Chris Williams",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Fantasy",
+        "Musical"
+      ],
+      "imdb_rating": 7.6,
+      "platform": "Netflix",
+      "rank": 3,
+      "similarity_score": 0.2176598608493805,
+      "title": "Moana",
+      "why_similar": "A spirited young woman defies her father's rules to embark on a transformative ocean voyage, discovering her true identity and destiny with the help of a magical demigod.",
+      "year": 2016
     },
     {
       "age_rating": "PG",
@@ -31,74 +72,53 @@
         "Fantasy"
       ],
       "imdb_rating": 7.4,
-      "platform": "Disney+",
-      "rank": 2,
-      "similarity_score": 0.25946611166000366,
+      "platform": "Netflix",
+      "rank": 4,
+      "similarity_score": 0.2067197561264038,
       "title": "Luca",
-      "why_similar": "It features sea creatures who must hide their true identities to experience life on land, exploring themes of belonging and transformation between worlds.",
+      "why_similar": "A young sea creature with a deep curiosity about the human world transforms to live on land, hiding his true identity while seeking adventure and friendship.",
       "year": 2021
     },
     {
       "age_rating": "PG",
-      "director": "Kevin Lima",
+      "director": "Mark Osborne",
       "genre": [
         "Animation",
         "Adventure",
-        "Comedy",
+        "Drama",
         "Family",
         "Fantasy",
-        "Musical",
-        "Romance"
+        "Musical"
       ],
-      "imdb_rating": 7.0,
-      "platform": "Disney+",
-      "rank": 3,
-      "similarity_score": 0.2380981594324112,
-      "title": "Enchanted",
-      "why_similar": "It involves a fairy-tale character undergoing a personal transformation after being transported to a different world, navigating a forbidden romance.",
-      "year": 2007
-    },
-    {
-      "age_rating": "G",
-      "director": "Ron Clements, John Musker",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy",
-        "Family",
-        "Fantasy",
-        "Musical",
-        "Romance"
-      ],
-      "imdb_rating": 7.1,
-      "platform": "Disney+",
-      "rank": 4,
-      "similarity_score": 0.22864483296871185,
-      "title": "The Princess and the Frog",
-      "why_similar": "It centers on a transformative curse (turning into a frog), a determined heroine, a deal with a villain, and a romance that crosses boundaries.",
-      "year": 2009
+      "imdb_rating": 7.7,
+      "platform": "Netflix",
+      "rank": 5,
+      "similarity_score": 0.2045270800590515,
+      "title": "The Little Prince",
+      "why_similar": "A young girl's life is transformed by a magical story from another world, exploring themes of imagination, holding onto wonder, and challenging rigid adult expectations.",
+      "year": 2016
     },
     {
       "age_rating": "PG",
-      "director": "Chris Williams",
+      "director": "Hayao Miyazaki",
       "genre": [
         "Animation",
-        "Action",
         "Adventure",
         "Family",
-        "Fantasy"
+        "Fantasy",
+        "Mystery"
       ],
-      "imdb_rating": 7.0,
+      "imdb_rating": 8.6,
       "platform": "Netflix",
-      "rank": 5,
-      "similarity_score": 0.2208734005689621,
-      "title": "The Sea Beast",
-      "why_similar": "It explores the relationship between humans and majestic sea creatures, challenging societal beliefs and forging an unexpected bond, much like Ariel and Eric.",
-      "year": 2022
+      "rank": 6,
+      "similarity_score": 0.2018484324216843,
+      "title": "Spirited Away",
+      "why_similar": "A young girl is thrust into a strange, magical world where she must undergo a personal transformation, show courage, and find her way back to her family.",
+      "year": 2001
     },
     {
       "age_rating": "G",
-      "director": "Clyde Geronimi, Wilfred Jackson, Hamilton Luske",
+      "director": "Clyde Geronimi, Hamilton Luske, Wilfred Jackson",
       "genre": [
         "Animation",
         "Family",
@@ -108,78 +128,60 @@
       ],
       "imdb_rating": 7.3,
       "platform": "Disney+",
-      "rank": 6,
-      "similarity_score": 0.2173967957496643,
+      "rank": 7,
+      "similarity_score": 0.198247030377388,
       "title": "Cinderella",
-      "why_similar": "It features a kind-hearted protagonist oppressed by her family who dreams of a better life and receives magical help to transform her circumstances.",
+      "why_similar": "A kind-hearted young woman trapped in a restrictive home life has her destiny transformed by magic to find true love and a sense of belonging.",
       "year": 1950
     },
     {
       "age_rating": "PG",
-      "director": "Chris Buck, Jennifer Lee",
+      "director": "Wendy Rogers",
       "genre": [
         "Animation",
         "Adventure",
-        "Comedy",
         "Family",
-        "Fantasy",
-        "Musical"
+        "Fantasy"
       ],
-      "imdb_rating": 6.8,
-      "platform": "Disney+",
-      "rank": 7,
-      "similarity_score": 0.2081516832113266,
-      "title": "Frozen II",
-      "why_similar": "It involves a journey to uncover a hidden family past connected to an enchanted realm, focusing on self-discovery and transforming the future.",
-      "year": 2019
-    },
-    {
-      "age_rating": "G",
-      "director": "Clyde Geronimi",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Family"
-      ],
-      "imdb_rating": 7.2,
-      "platform": "Disney+",
+      "imdb_rating": 6.6,
+      "platform": "Netflix",
       "rank": 8,
-      "similarity_score": 0.17609088122844696,
-      "title": "Sleeping Beauty",
-      "why_similar": "It features a princess with a forbidden romance and a conflict with a powerful magical villain, similar to Ariel's story.",
-      "year": 1959
+      "similarity_score": 0.19821254909038544,
+      "title": "The Magician's Elephant",
+      "why_similar": "An orphaned boy undertakes a seemingly impossible quest, guided by magical intervention, to find a lost family member and mend his broken world.",
+      "year": 2023
     },
     {
       "age_rating": "PG",
-      "director": "Ron Clements, John Musker",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy"
-      ],
-      "imdb_rating": 7.6,
-      "platform": "Disney+",
-      "rank": 9,
-      "similarity_score": 0.17452827095985413,
-      "title": "Moana",
-      "why_similar": "A headstrong daughter defies her father's protective rules to embark on a transformative ocean voyage to discover her true identity.",
-      "year": 2016
-    },
-    {
-      "age_rating": "G",
-      "director": "Mike Gabriel, Eric Goldberg",
+      "director": "Hiroyasu Ishida",
       "genre": [
         "Animation",
         "Adventure",
         "Drama"
       ],
-      "imdb_rating": 6.7,
-      "platform": "Disney+",
+      "imdb_rating": 6.6,
+      "platform": "Netflix",
+      "rank": 9,
+      "similarity_score": 0.19475747644901276,
+      "title": "Drifting Home",
+      "why_similar": "It features a magical ocean adventure where characters must navigate a new, watery world, similar to Ariel's journey of discovery.",
+      "year": 2022
+    },
+    {
+      "age_rating": "PG",
+      "director": "Chris Williams",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Netflix",
       "rank": 10,
-      "similarity_score": 0.17148622870445251,
-      "title": "Pocahontas",
-      "why_similar": "It centers on a spirited heroine at odds with her father's wishes and a forbidden romance between different worlds.",
-      "year": 1995
+      "similarity_score": 0.1860979050397873,
+      "title": "The Sea Beast",
+      "why_similar": "It centers on a human forming a bond with a misunderstood sea creature, challenging societal norms, much like Ariel's relationship with the human world.",
+      "year": 2022
     },
     {
       "age_rating": "PG",
@@ -192,30 +194,14 @@
       "imdb_rating": 7.4,
       "platform": "Disney+",
       "rank": 11,
-      "similarity_score": 0.1709330677986145,
+      "similarity_score": 0.18370437622070312,
       "title": "Frozen",
-      "why_similar": "It features a heroine who feels like an outsider due to her unique power and conflicts with parental fear, leading to a transformative journey.",
+      "why_similar": "It features a protagonist with a hidden, magical nature who must leave her home to discover her true self and find where she belongs.",
       "year": 2013
     },
     {
-      "age_rating": "G",
-      "director": "Wolfgang Reitherman",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Family"
-      ],
-      "imdb_rating": 7.6,
-      "platform": "Disney+",
-      "rank": 12,
-      "similarity_score": 0.15423686802387238,
-      "title": "The Jungle Book",
-      "why_similar": "A protagonist grapples with his unique identity and belonging, guided by a protective father-figure, similar to Ariel's search for her place.",
-      "year": 1967
-    },
-    {
-      "age_rating": "G",
-      "director": "Aaron Blaise, Robert Walker",
+      "age_rating": "PG",
+      "director": "Chris Buck, Jennifer Lee",
       "genre": [
         "Animation",
         "Adventure",
@@ -223,11 +209,59 @@
       ],
       "imdb_rating": 6.8,
       "platform": "Disney+",
+      "rank": 12,
+      "similarity_score": 0.183169424533844,
+      "title": "Frozen II",
+      "why_similar": "The heroine journeys into an enchanted realm connected to her past, answering a call to discover her destiny, akin to Ariel's quest for her true place.",
+      "year": 2019
+    },
+    {
+      "age_rating": "PG",
+      "director": "Mamoru Hosoda",
+      "genre": [
+        "Animation",
+        "Drama",
+        "Family"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Netflix",
       "rank": 13,
-      "similarity_score": 0.15195222198963165,
-      "title": "Brother Bear",
-      "why_similar": "The protagonist undergoes a magical transformation and a journey of understanding and empathy to reconcile with family, echoing a theme of personal change.",
-      "year": 2003
+      "similarity_score": 0.1721087545156479,
+      "title": "Mirai",
+      "why_similar": "It involves a protagonist experiencing magical, transformative adventures that help them understand their family and their own role within it.",
+      "year": 2018
+    },
+    {
+      "age_rating": "PG",
+      "director": "Giancarlo Volpe (Supervising Director)",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure"
+      ],
+      "imdb_rating": 8.3,
+      "platform": "Netflix",
+      "rank": 14,
+      "similarity_score": 0.1641194373369217,
+      "title": "The Dragon Prince",
+      "why_similar": "It features a forbidden alliance across different species/worlds and a quest that bridges divided realms, similar to Ariel's cross-species love and conflict.",
+      "year": 2019
+    },
+    {
+      "age_rating": "G",
+      "director": "Clyde Geronimi",
+      "genre": [
+        "Animation",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 7.2,
+      "platform": "Disney+",
+      "rank": 15,
+      "similarity_score": 0.16410721838474274,
+      "title": "Sleeping Beauty",
+      "why_similar": "A princess is constrained by protective rules and faces a powerful magical antagonist, culminating in a story of true love breaking a curse.",
+      "year": 1959
     },
     {
       "age_rating": "PG",
@@ -239,42 +273,10 @@
       ],
       "imdb_rating": 7.6,
       "platform": "Netflix",
-      "rank": 14,
-      "similarity_score": 0.14841309189796448,
-      "title": "The Incredibles 2",
-      "why_similar": "Violet's storyline is a coming-of-age arc about gaining confidence and embracing her unique powers, similar to Ariel's journey of self-discovery.",
-      "year": 2018
-    },
-    {
-      "age_rating": "G",
-      "director": "Ron Clements, John Musker",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy"
-      ],
-      "imdb_rating": 8.0,
-      "platform": "Disney+",
-      "rank": 15,
-      "similarity_score": 0.14589671790599823,
-      "title": "Aladdin",
-      "why_similar": "A protagonist uses a magical bargain to transform his identity and pursue forbidden love while learning to be true to himself.",
-      "year": 1992
-    },
-    {
-      "age_rating": "PG",
-      "director": "Mamoru Hosoda",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Drama"
-      ],
-      "imdb_rating": 7.0,
-      "platform": "Netflix",
       "rank": 16,
-      "similarity_score": 0.14029547572135925,
-      "title": "Mirai",
-      "why_similar": "A young protagonist embarks on magical journeys to understand his family and his place within it, focusing on themes of belonging and change.",
+      "similarity_score": 0.15633606910705566,
+      "title": "The Incredibles 2",
+      "why_similar": "While not oceanic, it explores a character (Elastigirl) stepping into a new, exciting world outside her home, creating familial tension, similar to Ariel's dual-life conflict.",
       "year": 2018
     },
     {
@@ -283,31 +285,70 @@
       "genre": [
         "Animation",
         "Adventure",
-        "Comedy"
+        "Comedy",
+        "Family",
+        "Musical"
       ],
       "imdb_rating": 6.7,
       "platform": "Netflix",
       "rank": 17,
-      "similarity_score": 0.14015188813209534,
+      "similarity_score": 0.15521563589572906,
       "title": "Vivo",
-      "why_similar": "The protagonist embarks on a perilous journey to deliver a song, exploring themes of love, connection, and transformation through a quest.",
+      "why_similar": "It shares the theme of a character embarking on a perilous journey driven by love and music, much like Ariel's journey for love and a new world.",
       "year": 2021
     },
     {
-      "age_rating": "G",
+      "age_rating": "PG",
+      "director": "Paul King",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 7.8,
+      "platform": "Netflix",
+      "rank": 18,
+      "similarity_score": 0.1503334790468216,
+      "title": "Paddington 2",
+      "why_similar": "It centers on a kind-hearted, optimistic outsider who brings positive transformation to a community, similar to Ariel's effect on the human world.",
+      "year": 2017
+    },
+    {
+      "age_rating": "PG",
       "director": "Ron Clements, John Musker",
       "genre": [
         "Animation",
         "Adventure",
-        "Comedy"
+        "Family",
+        "Sci-Fi"
       ],
-      "imdb_rating": 7.3,
+      "imdb_rating": 7.2,
       "platform": "Disney+",
-      "rank": 18,
-      "similarity_score": 0.1383817344903946,
-      "title": "Hercules",
-      "why_similar": "Like Ariel, the protagonist feels like an outsider in his world and yearns for a transformation to find his true place and purpose.",
-      "year": 1997
+      "rank": 19,
+      "similarity_score": 0.14273007214069366,
+      "title": "Treasure Planet",
+      "why_similar": "It features a rebellious young protagonist seeking adventure and forming a transformative father-son bond, echoing Ariel's journey of self-discovery and strained parental relationship.",
+      "year": 2002
+    },
+    {
+      "age_rating": "G",
+      "director": "Mike Gabriel, Eric Goldberg",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Drama",
+        "Family",
+        "Musical",
+        "Romance"
+      ],
+      "imdb_rating": 6.7,
+      "platform": "Disney+",
+      "rank": 20,
+      "similarity_score": 0.14084064960479736,
+      "title": "Pocahontas",
+      "why_similar": "It revolves around a young woman from a different world who falls into a forbidden romance that bridges two cultures, mirroring Ariel's cross-world love story.",
+      "year": 1995
     },
     {
       "age_rating": "G",
@@ -315,47 +356,159 @@
       "genre": [
         "Animation",
         "Adventure",
-        "Drama"
+        "Drama",
+        "Family",
+        "Musical"
       ],
       "imdb_rating": 7.7,
       "platform": "Disney+",
-      "rank": 19,
-      "similarity_score": 0.13231658935546875,
+      "rank": 21,
+      "similarity_score": 0.13997207581996918,
       "title": "Mulan",
-      "why_similar": "The heroine defies strict societal and family expectations by transforming her identity to protect a loved one and discover her true self.",
+      "why_similar": "It features a young woman who transforms her identity and defies societal expectations to find her true place, paralleling Ariel's desire to be part of a different world.",
       "year": 1998
     },
     {
       "age_rating": "PG",
-      "director": "Richard Linklater",
+      "director": "Mark Andrews, Brenda Chapman, Steve Purcell",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 7.1,
+      "platform": "Disney+",
+      "rank": 22,
+      "similarity_score": 0.13639980554580688,
+      "title": "Brave",
+      "why_similar": "It focuses on a headstrong princess in conflict with her parent's traditions, leading to a magical bargain that transforms their relationship, similar to Ariel's clash with King Triton.",
+      "year": 2012
+    },
+    {
+      "age_rating": "G",
+      "director": "Gary Trousdale, Kirk Wise",
+      "genre": [
+        "Animation",
+        "Family",
+        "Fantasy",
+        "Musical",
+        "Romance"
+      ],
+      "imdb_rating": 8.0,
+      "platform": "Disney+",
+      "rank": 23,
+      "similarity_score": 0.13369715213775635,
+      "title": "Beauty and the Beast",
+      "why_similar": "It involves a young woman yearning for adventure who sacrifices herself for family and finds love through a transformative magical curse, much like Ariel's deal with Ursula.",
+      "year": 1991
+    },
+    {
+      "age_rating": "G",
+      "director": "Ron Clements, John Musker",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Fantasy",
+        "Musical"
+      ],
+      "imdb_rating": 7.3,
+      "platform": "Disney+",
+      "rank": 24,
+      "similarity_score": 0.13158154487609863,
+      "title": "Hercules",
+      "why_similar": "It follows a protagonist who feels like an outsider in his world and must prove himself through a journey to find where he truly belongs, akin to Ariel's quest.",
+      "year": 1997
+    },
+    {
+      "age_rating": "PG",
+      "director": "Sergio Pablos",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Drama",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 8.2,
+      "platform": "Netflix",
+      "rank": 25,
+      "similarity_score": 0.13138221204280853,
+      "title": "Klaus",
+      "why_similar": "It features a selfish protagonist whose journey leads to personal transformation and reconciliation in a community, echoing Ariel's role in bridging two worlds and changing herself.",
+      "year": 2019
+    },
+    {
+      "age_rating": "G",
+      "director": "Ron Clements, John Musker",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Fantasy",
+        "Musical",
+        "Romance"
+      ],
+      "imdb_rating": 8.0,
+      "platform": "Disney+",
+      "rank": 26,
+      "similarity_score": 0.1311977505683899,
+      "title": "Aladdin",
+      "why_similar": "It centers on a character who uses magic to transform their identity and win love, while learning about authenticity, similar to Ariel's magical bargain and journey.",
+      "year": 1992
+    },
+    {
+      "age_rating": "PG",
+      "director": "Makoto Shinkai",
+      "genre": [
+        "Animation",
+        "Drama",
+        "Fantasy"
+      ],
+      "imdb_rating": 8.4,
+      "platform": "Netflix",
+      "rank": 27,
+      "similarity_score": 0.12512366473674774,
+      "title": "Your Name",
+      "why_similar": "It shares the core theme of a yearning, fantastical connection that transcends a seemingly impossible divide, much like Ariel's longing for a different world.",
+      "year": 2016
+    },
+    {
+      "age_rating": "PG",
+      "director": "Jared Bush, Byron Howard, Charise Castro Smith",
+      "genre": [
+        "Animation",
+        "Comedy",
+        "Family"
+      ],
+      "imdb_rating": 7.2,
+      "platform": "Disney+",
+      "rank": 28,
+      "similarity_score": 0.12096253782510756,
+      "title": "Encanto",
+      "why_similar": "It features a protagonist who feels like an outsider in her own family and yearns for a different place or purpose, echoing Ariel's sense of not belonging.",
+      "year": 2021
+    },
+    {
+      "age_rating": "G",
+      "director": "Aaron Blaise, Robert Walker",
       "genre": [
         "Animation",
         "Adventure",
         "Comedy"
       ],
-      "imdb_rating": 7.1,
-      "platform": "Netflix",
-      "rank": 20,
-      "similarity_score": 0.12614518404006958,
-      "title": "Apollo 10½: A Space Age Childhood",
-      "why_similar": "It centers on a protagonist who yearns for a fantastical, larger-than-life experience beyond their ordinary world, much like Ariel's longing for the human world.",
-      "year": 2022
-    },
-    {
-      "age_rating": "PG",
-      "director": "Don Hall, Carlos López Estrada",
-      "genre": [
-        "Animation",
-        "Action",
-        "Adventure"
-      ],
       "imdb_rating": 7.3,
       "platform": "Disney+",
-      "rank": 21,
-      "similarity_score": 0.11991215497255324,
-      "title": "Raya and the Last Dragon",
-      "why_similar": "A rebellious daughter, guided by her father's teachings, goes on a transformative quest that challenges her worldview and heals a divided realm.",
-      "year": 2021
+      "rank": 29,
+      "similarity_score": 0.11521224677562714,
+      "title": "Brother Bear",
+      "why_similar": "The protagonist undergoes a magical transformation into another being, leading to a journey of understanding a world different from his own, similar to Ariel's experience.",
+      "year": 2003
     },
     {
       "age_rating": "PG",
@@ -367,43 +520,59 @@
       ],
       "imdb_rating": 7.8,
       "platform": "Netflix",
-      "rank": 22,
-      "similarity_score": 0.11294696480035782,
+      "rank": 30,
+      "similarity_score": 0.1141236573457718,
       "title": "How to Train Your Dragon 2",
-      "why_similar": "The protagonist discovers a hidden part of his identity and must mature into a new role while navigating complex family relationships and expectations.",
+      "why_similar": "It centers on a character who bridges two different worlds (human and dragon), fostering understanding much like Ariel does between the sea and the surface.",
       "year": 2014
     },
     {
       "age_rating": "PG",
-      "director": "Peter Ramsey",
+      "director": "Don Hall, Carlos López Estrada",
       "genre": [
         "Animation",
         "Action",
         "Adventure"
       ],
-      "imdb_rating": 7.2,
-      "platform": "Netflix",
-      "rank": 23,
-      "similarity_score": 0.09727278351783752,
-      "title": "Rise of the Guardians",
-      "why_similar": "The story follows a magical outsider on a coming-of-age journey to find his purpose, belonging, and belief in himself.",
-      "year": 2012
-    },
-    {
-      "age_rating": "G",
-      "director": "Clyde Geronimi, Wilfred Jackson, Hamilton Luske",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Family"
-      ],
       "imdb_rating": 7.3,
       "platform": "Disney+",
-      "rank": 24,
-      "similarity_score": 0.09454051405191422,
-      "title": "Peter Pan",
-      "why_similar": "It features children yearning for a magical world of adventure away from parental rules, led by a rebellious figure offering escape and transformation.",
-      "year": 1953
+      "rank": 31,
+      "similarity_score": 0.10550481081008913,
+      "title": "Raya and the Last Dragon",
+      "why_similar": "The protagonist embarks on a quest to heal a fractured world by seeking out a mythical being, paralleling Ariel's journey to unite her world with another.",
+      "year": 2021
+    },
+    {
+      "age_rating": "PG",
+      "director": "Gary Trousdale, Kirk Wise",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure"
+      ],
+      "imdb_rating": 6.9,
+      "platform": "Disney+",
+      "rank": 32,
+      "similarity_score": 0.10104741156101228,
+      "title": "Atlantis: The Lost Empire",
+      "why_similar": "It follows an outsider who yearns for adventure and discovers a hidden, magical world, mirroring Ariel's curiosity and discovery of the human world.",
+      "year": 2001
+    },
+    {
+      "age_rating": "PG",
+      "director": "Jun'ichi Satô, Tomotaka Shibayama",
+      "genre": [
+        "Animation",
+        "Drama",
+        "Fantasy"
+      ],
+      "imdb_rating": 6.7,
+      "platform": "Netflix",
+      "rank": 33,
+      "similarity_score": 0.09516613185405733,
+      "title": "A Whisker Away",
+      "why_similar": "It involves a magical transformation to connect with a love interest and explore a different identity, closely mirroring Ariel's bargain to become human for love.",
+      "year": 2020
     },
     {
       "age_rating": "PG",
@@ -415,28 +584,12 @@
       ],
       "imdb_rating": 7.0,
       "platform": "Disney+",
-      "rank": 25,
-      "similarity_score": 0.09295398741960526,
+      "rank": 34,
+      "similarity_score": 0.09382195770740508,
       "title": "Elemental",
-      "why_similar": "A young woman from a closed-off community falls for someone from an opposite world, challenging strict family expectations and societal norms.",
+      "why_similar": "It features a 'forbidden' connection between characters from different worlds who challenge societal norms, directly paralleling the central romance of The Little Mermaid.",
       "year": 2023
-    },
-    {
-      "age_rating": "PG",
-      "director": "Sergio Pablos",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy"
-      ],
-      "imdb_rating": 8.1,
-      "platform": "Netflix",
-      "rank": 26,
-      "similarity_score": 0.09099316596984865,
-      "title": "Klaus",
-      "why_similar": "The protagonist undergoes a personal transformation by embracing a new community and purpose, moving from selfishness to selfless acts.",
-      "year": 2019
     }
   ],
-  "total_results": 26
+  "total_results": 34
 }
