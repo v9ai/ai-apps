@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <!-- White background -->
+  <rect width="300" height="200" fill="#ffffff"/>
+
+  <!-- Fox head - geometric low-poly triangular style -->
+  <!-- Ear left outer -->
+  <polygon points="85,30 105,75 65,70" fill="#E8520A"/>
+  <!-- Ear left inner -->
+  <polygon points="88,38 103,70 72,67" fill="#F5A623"/>
+  <!-- Ear right outer -->
+  <polygon points="215,30 195,75 235,70" fill="#E8520A"/>
+  <!-- Ear right inner -->
+  <polygon points="212,38 197,70 228,67" fill="#F5A623"/>
+
+  <!-- Main head polygon sections -->
+  <!-- Top center facet -->
+  <polygon points="150,45 105,75 195,75" fill="#F07820"/>
+  <!-- Upper left facet -->
+  <polygon points="105,75 85,100 130,105" fill="#E8520A"/>
+  <!-- Upper right facet -->
+  <polygon points="195,75 215,100 170,105" fill="#D94A08"/>
+  <!-- Upper center facet -->
+  <polygon points="105,75 195,75 170,105 130,105" fill="#F5A623"/>
+
+  <!-- Mid left dark facet -->
+  <polygon points="85,100 100,130 130,105" fill="#C84200"/>
+  <!-- Mid right dark facet -->
+  <polygon points="215,100 200,130 170,105" fill="#B83A00"/>
+  <!-- Mid center light facet -->
+  <polygon points="130,105 170,105 155,130 145,130" fill="#FBBE6E"/>
+
+  <!-- Left cheek facet -->
+  <polygon points="100,130 115,155 140,135" fill="#E8520A"/>
+  <!-- Right cheek facet -->
+  <polygon points="200,130 185,155 160,135" fill="#D94A08"/>
+  <!-- Center chin facet -->
+  <polygon points="140,135 160,135 150,158" fill="#F5A623"/>
+
+  <!-- White muzzle area -->
+  <!-- Muzzle left -->
+  <polygon points="115,120 140,135 125,148" fill="#F5E6D0"/>
+  <!-- Muzzle right -->
+  <polygon points="185,120 160,135 175,148" fill="#EDD8BC"/>
+  <!-- Muzzle center -->
+  <polygon points="125,148 175,148 150,158" fill="#F5E6D0"/>
+  <!-- Muzzle upper center -->
+  <polygon points="140,135 160,135 150,122" fill="#FFF0DC"/>
+
+  <!-- Nose -->
+  <polygon points="143,112 157,112 150,120" fill="#2C1810"/>
+
+  <!-- Left eye area -->
+  <polygon points="108,82 122,78 120,95 106,92" fill="#1A0A00"/>
+  <!-- Left eye shine -->
+  <polygon points="110,83 118,81 116,88" fill="#F5A623"/>
+  <!-- Left eye highlight -->
+  <circle cx="115" cy="87" r="2.5" fill="#ffffff"/>
+
+  <!-- Right eye area -->
+  <polygon points="192,82 178,78 180,95 194,92" fill="#1A0A00"/>
+  <!-- Right eye shine -->
+  <polygon points="190,83 182,81 184,88" fill="#F5A623"/>
+  <!-- Right eye highlight -->
+  <circle cx="185" cy="87" r="2.5" fill="#ffffff"/>
+
+  <!-- Forehead facet center -->
+  <polygon points="130,60 150,45 170,60 150,72" fill="#FBBE6E"/>
+
+  <!-- Text label -->
+  <text x="150" y="182" font-family="'Arial', 'Helvetica', sans-serif" font-size="11" font-weight="700" fill="#E8520A" text-anchor="middle" letter-spacing="2">AGENTIC LEAD GEN</text>
+</svg>

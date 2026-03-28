@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 /// ICP matching criteria — defines what signals to look for in contact records.
 pub struct IcpMatcher {
     /// Target industries (lowercase). A contact's industry matches if any substring matches.
@@ -69,6 +71,7 @@ impl Default for IcpMatcher {
 }
 
 /// ICP (Ideal Customer Profile) weight configuration for scoring.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IcpProfile {
     pub industry_weight: f32,    // default 25
     pub employee_weight: f32,    // default 15
@@ -76,6 +79,38 @@ pub struct IcpProfile {
     pub department_weight: f32,  // default 15
     pub tech_weight: f32,        // default 10 (0-10 scale input)
     pub email_weight: f32,       // default 5
+}
+
+impl IcpProfile {
+    /// Load weights from a JSON file, falling back to defaults on any error.
+    pub fn from_json(path: &std::path::Path) -> Self {
+        std::fs::read_to_string(path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default()
+    }
+
+    /// Persist weights to a JSON file.
+    pub fn to_json(&self, path: &std::path::Path) -> std::io::Result<()> {
+        let json = serde_json::to_string_pretty(self)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(path, json)
+    }
+
+    /// Return weights as an array (same order as LogisticScorer features, minus recency).
+    pub fn as_weights(&self) -> [f32; 6] {
+        [
+            self.industry_weight,
+            self.employee_weight,
+            self.seniority_weight,
+            self.department_weight,
+            self.tech_weight,
+            self.email_weight,
+        ]
+    }
 }
 
 impl Default for IcpProfile {
@@ -221,7 +256,7 @@ impl Default for ContactBatch {
 // ── Module 4: ML-based Lead Scoring ──────────────────────────────────────────
 
 /// Welford's online algorithm for running mean/variance.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WelfordStats {
     pub count: u64,
     pub mean: f32,
@@ -262,6 +297,7 @@ impl Default for WelfordStats {
 
 /// Logistic regression scorer with learned weights.
 /// Features: [industry, employee, seniority, department, tech_norm, email_norm, recency_smooth]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogisticScorer {
     pub weights: [f32; 7],
     pub bias: f32,
@@ -357,6 +393,26 @@ impl LogisticScorer {
         }
 
         self.trained = true;
+    }
+}
+
+impl LogisticScorer {
+    /// Load a trained scorer from a JSON file, falling back to pretrained defaults.
+    pub fn from_json(path: &std::path::Path) -> Self {
+        std::fs::read_to_string(path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_else(Self::default_pretrained)
+    }
+
+    /// Persist the scorer to a JSON file.
+    pub fn to_json(&self, path: &std::path::Path) -> std::io::Result<()> {
+        let json = serde_json::to_string_pretty(self)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(path, json)
     }
 }
 

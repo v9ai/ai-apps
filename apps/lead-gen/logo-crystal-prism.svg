@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <defs>
+    <!-- Dark background gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d0d2b;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- White input beam -->
+    <linearGradient id="inputBeam" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.9" />
+    </linearGradient>
+
+    <!-- Prism face gradients -->
+    <linearGradient id="prismFace1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3a4a7a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e2a5e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="prismFace2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5a6aaa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2a3a7a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="prismFace3" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2a3a6a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a2a5a;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Spectrum ray gradients -->
+    <linearGradient id="rayRed" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff2020;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#ff2020;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="rayOrange" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff7700;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#ff7700;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="rayYellow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffee00;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#ffee00;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="rayGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00dd44;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#00dd44;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="rayCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00ccff;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#00ccff;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="rayBlue" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4455ff;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#4455ff;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="rayViolet" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#aa44ff;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#aa44ff;stop-opacity:0" />
+    </linearGradient>
+
+    <!-- Glow filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Prism edge glow -->
+    <filter id="prismGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft input beam glow -->
+    <filter id="beamGlow" x="-5%" y="-50%" width="110%" height="200%">
+      <feGaussianBlur stdDeviation="1.8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Text glow -->
+    <filter id="textGlow" x="-10%" y="-30%" width="120%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="200" fill="url(#bgGrad)" rx="4"/>
+
+  <!-- Subtle star field -->
+  <circle cx="20" cy="15" r="0.7" fill="white" opacity="0.4"/>
+  <circle cx="55" cy="30" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="280" cy="20" r="0.7" fill="white" opacity="0.4"/>
+  <circle cx="260" cy="55" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="290" cy="80" r="0.6" fill="white" opacity="0.35"/>
+  <circle cx="30" cy="70" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="15" cy="130" r="0.6" fill="white" opacity="0.35"/>
+  <circle cx="50" cy="160" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="270" cy="140" r="0.7" fill="white" opacity="0.4"/>
+  <circle cx="285" cy="170" r="0.5" fill="white" opacity="0.3"/>
+
+  <!-- Input beam (white light ray entering from left) -->
+  <!-- Beam center at y=88, entering prism left edge at ~(107,88) -->
+  <rect x="30" y="86" width="77" height="4" fill="url(#inputBeam)" filter="url(#beamGlow)" rx="2"/>
+
+  <!-- Prism: equilateral triangle, apex at top-center, base at bottom -->
+  <!-- Vertices: apex (150,38), bottom-left (107,118), bottom-right (193,118) -->
+  <!-- Left face: bright (light entering) -->
+  <polygon points="107,118 150,38 107,88" fill="url(#prismFace2)" filter="url(#prismGlow)" opacity="0.7"/>
+  <!-- Right face: refraction exit face -->
+  <polygon points="150,38 193,118 107,88" fill="url(#prismFace1)" filter="url(#prismGlow)" opacity="0.5"/>
+  <!-- Bottom face -->
+  <polygon points="107,118 193,118 150,38" fill="none"/>
+
+  <!-- Prism solid fill (main body) -->
+  <polygon points="107,118 150,38 193,118" fill="#1c2a5a" opacity="0.85"/>
+
+  <!-- Prism interior light scatter highlight -->
+  <polygon points="115,113 150,45 185,113" fill="none" stroke="#7080cc" stroke-width="0.4" opacity="0.5"/>
+
+  <!-- Prism edges -->
+  <line x1="107" y1="118" x2="150" y2="38" stroke="#8899dd" stroke-width="1.2" filter="url(#prismGlow)" opacity="0.9"/>
+  <line x1="150" y1="38" x2="193" y2="118" stroke="#8899dd" stroke-width="1.2" filter="url(#prismGlow)" opacity="0.9"/>
+  <line x1="107" y1="118" x2="193" y2="118" stroke="#8899dd" stroke-width="1.2" filter="url(#prismGlow)" opacity="0.9"/>
+
+  <!-- Prism apex highlight dot -->
+  <circle cx="150" cy="38" r="2.2" fill="#aabbff" opacity="0.8" filter="url(#glow)"/>
+
+  <!-- Inner refraction highlight (simulates glass interior) -->
+  <polygon points="120,110 148,52 178,110" fill="none" stroke="#6677bb" stroke-width="0.5" opacity="0.35"/>
+
+  <!-- Spectrum rays exiting from right face of prism -->
+  <!-- Exit point is right face, fanning out to the right -->
+  <!-- Right face: from (150,38) to (193,118) -->
+  <!-- Entry at approximately x=107, y=88 on left face -->
+  <!-- Rays exit from right face fanning: top to bottom = violet to red -->
+
+  <!-- Ray: Red (bottom-most, steepest downward) -->
+  <line x1="193" y1="118" x2="270" y2="152" stroke="#ff2020" stroke-width="2.2" filter="url(#glow)" opacity="0.88"/>
+  <!-- Ray: Orange -->
+  <line x1="190" y1="113" x2="270" y2="138" stroke="#ff7700" stroke-width="2.2" filter="url(#glow)" opacity="0.88"/>
+  <!-- Ray: Yellow -->
+  <line x1="186" y1="107" x2="270" y2="124" stroke="#ffee00" stroke-width="2.2" filter="url(#glow)" opacity="0.88"/>
+  <!-- Ray: Green -->
+  <line x1="181" y1="100" x2="270" y2="110" stroke="#00dd44" stroke-width="2.2" filter="url(#glow)" opacity="0.88"/>
+  <!-- Ray: Cyan -->
+  <line x1="175" y1="91" x2="270" y2="96" stroke="#00ccff" stroke-width="2.2" filter="url(#glow)" opacity="0.88"/>
+  <!-- Ray: Blue -->
+  <line x1="168" y1="81" x2="270" y2="82" stroke="#4455ff" stroke-width="2.2" filter="url(#glow)" opacity="0.88"/>
+  <!-- Ray: Violet (top-most, slight upward) -->
+  <line x1="161" y1="71" x2="270" y2="68" stroke="#aa44ff" stroke-width="2.2" filter="url(#glow)" opacity="0.88"/>
+
+  <!-- Exit glow dots on prism face -->
+  <circle cx="193" cy="118" r="1.8" fill="#ff3030" opacity="0.7" filter="url(#glow)"/>
+  <circle cx="190" cy="113" r="1.6" fill="#ff7700" opacity="0.7" filter="url(#glow)"/>
+  <circle cx="186" cy="107" r="1.6" fill="#ffee00" opacity="0.7" filter="url(#glow)"/>
+  <circle cx="181" cy="100" r="1.6" fill="#00dd44" opacity="0.7" filter="url(#glow)"/>
+  <circle cx="175" cy="91" r="1.6" fill="#00ccff" opacity="0.7" filter="url(#glow)"/>
+  <circle cx="168" cy="81" r="1.6" fill="#4455ff" opacity="0.7" filter="url(#glow)"/>
+  <circle cx="161" cy="71" r="1.8" fill="#aa44ff" opacity="0.7" filter="url(#glow)"/>
+
+  <!-- Faint ray endpoint dots at right edge -->
+  <circle cx="270" cy="152" r="2.2" fill="#ff2020" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="270" cy="138" r="2.2" fill="#ff7700" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="270" cy="124" r="2.2" fill="#ffee00" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="270" cy="110" r="2.2" fill="#00dd44" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="270" cy="96" r="2.2" fill="#00ccff" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="270" cy="82" r="2.2" fill="#4455ff" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="270" cy="68" r="2.2" fill="#aa44ff" opacity="0.55" filter="url(#glow)"/>
+
+  <!-- Tagline label on rays side -->
+  <text x="275" y="152" font-family="'Courier New', monospace" font-size="5.5" fill="#ff2020" opacity="0.7" text-anchor="start">LEADS</text>
+
+  <!-- Logo text -->
+  <text x="150" y="147" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#e8eeff" text-anchor="middle" letter-spacing="2" filter="url(#textGlow)">AGENTIC</text>
+  <text x="150" y="162" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9" font-weight="400" fill="#8899cc" text-anchor="middle" letter-spacing="3.5">LEAD GEN</text>
+
+  <!-- Subtle horizontal rule under text -->
+  <line x1="108" y1="166" x2="192" y2="166" stroke="#4455aa" stroke-width="0.5" opacity="0.6"/>
+
+  <!-- Bottom tagline -->
+  <text x="150" y="176" font-family="'Courier New', monospace" font-size="6" fill="#556688" text-anchor="middle" letter-spacing="1.5">DATA → SIGNAL → OPPORTUNITY</text>
+</svg>
