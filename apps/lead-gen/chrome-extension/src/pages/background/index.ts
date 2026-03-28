@@ -13,9 +13,6 @@ if (import.meta.env.DEV) {
           "https://*.linkedin.com/feed/*",
           "https://*.google.com/search*",
           "https://*.ashbyhq.com/*",
-          "https://*.greenhouse.io/*",
-          "https://*.lever.co/*",
-          "https://www.founderio.com/*",
           "https://*.workable.com/*",
         ]});
         for (const tab of tabs) {

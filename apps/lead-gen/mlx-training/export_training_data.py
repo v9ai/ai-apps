@@ -141,80 +141,6 @@ def export_role_tag(conn, out_dir: Path, stats_only: bool = False):
         print(f"  {name}: {len(subset)} examples → {path}")
 
 
-# ── Export: Remote-EU ────────────────────────────────────────────────────────
-
-
-def export_remote_eu(conn, out_dir: Path, stats_only: bool = False):
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT title, location, description, company_name,
-               is_remote_eu, remote_eu_confidence, remote_eu_reason,
-               workplace_type, country, ashby_is_remote
-        FROM jobs
-        WHERE is_remote_eu IS NOT NULL
-          AND remote_eu_reason IS NOT NULL
-          AND description IS NOT NULL
-        ORDER BY id
-    """)
-    rows = cur.fetchall()
-    cur.close()
-
-    if stats_only:
-        pos = sum(1 for r in rows if r[4])
-        neg = sum(1 for r in rows if not r[4])
-        print(f"remote-eu: {len(rows)} total ({pos} true, {neg} false)")
-        return
-
-    random.seed(42)
-    random.shuffle(rows)
-
-    split = int(len(rows) * 0.9)
-    train, valid = rows[:split], rows[split:]
-
-    for name, subset in [("train", train), ("valid", valid)]:
-        path = out_dir / "remote-eu" / f"{name}.jsonl"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w") as f:
-            for (title, location, desc, company, is_remote, conf, reason,
-                 wp_type, country, ashby_remote) in subset:
-                desc_clean = strip_html(desc)[:2000]
-
-                # Build structured signals section
-                signals = []
-                if ashby_remote is not None:
-                    signals.append(f"ATS remote flag: {'YES' if ashby_remote else 'NO'}")
-                if wp_type:
-                    signals.append(f"Workplace type: {wp_type}")
-                if country:
-                    signals.append(f"Country code: {country}")
-                signals_str = "\n".join(signals) if signals else "No structured ATS signals available"
-
-                user_msg = (
-                    f"Classify this job posting as Remote EU or not.\n\n"
-                    f"JOB DETAILS:\n"
-                    f"- Title: {title}\n"
-                    f"- Company: {company or 'Unknown'}\n"
-                    f"- Location: {location or 'Unknown'}\n"
-                    f"- Description: {desc_clean}\n\n"
-                    f"STRUCTURED SIGNALS:\n{signals_str}"
-                )
-                assistant_msg = json.dumps({
-                    "isRemoteEU": bool(is_remote),
-                    "confidence": conf or "medium",
-                    "reason": reason,
-                })
-                record = {
-                    "messages": [
-                        {"role": "system", "content": REMOTE_EU_SYSTEM},
-                        {"role": "user", "content": user_msg},
-                        {"role": "assistant", "content": assistant_msg},
-                    ]
-                }
-                f.write(json.dumps(record) + "\n")
-
-        print(f"  {name}: {len(subset)} examples → {path}")
-
-
 # ── Export: Remote-Worldwide ─────────────────────────────────────────────────
 
 
@@ -290,7 +216,7 @@ def export_remote_worldwide(conn, out_dir: Path, stats_only: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(description="Export training data for MLX LoRA fine-tuning")
-    parser.add_argument("--task", choices=["role-tag", "remote-eu", "remote-worldwide", "all"], default="all")
+    parser.add_argument("--task", choices=["role-tag", "remote-worldwide", "all"], default="all")
     parser.add_argument("--stats", action="store_true", help="Print counts only, don't export")
     parser.add_argument("--out-dir", type=Path, default=Path("mlx-training/data"))
     args = parser.parse_args()
@@ -300,9 +226,6 @@ def main():
         if args.task in ("role-tag", "all"):
             print("Role Tagging:")
             export_role_tag(conn, args.out_dir, args.stats)
-        if args.task in ("remote-eu", "all"):
-            print("Remote-EU:")
-            export_remote_eu(conn, args.out_dir, args.stats)
         if args.task in ("remote-worldwide", "all"):
             print("Remote-Worldwide:")
             export_remote_worldwide(conn, args.out_dir, args.stats)

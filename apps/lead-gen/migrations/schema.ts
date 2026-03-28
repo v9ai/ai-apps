@@ -30,10 +30,6 @@ export const jobs = sqliteTable("jobs", {
 	status: text().default("new"),
 	createdAt: text("created_at").default("sql`(CURRENT_TIMESTAMP)`"),
 	updatedAt: text("updated_at").default("sql`(CURRENT_TIMESTAMP)`"),
-	isRemoteEu: integer("is_remote_eu"),
-	remoteEuConfidence: text("remote_eu_confidence"),
-	remoteEuReason: text("remote_eu_reason"),
-	remoteEuClassifiedAt: text("remote_eu_classified_at"),
 	companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" } ),
 	atsData: text("ats_data"),
 	ghInternalJobId: integer("gh_internal_job_id"),
@@ -79,20 +75,6 @@ export const jobs = sqliteTable("jobs", {
 	index("idx_jobs_posted_at").on(table.postedAt),
 	index("idx_jobs_score").on(table.score),
 	index("idx_jobs_status").on(table.status),
-]);
-
-export const ashbyBoards = sqliteTable("ashby_boards", {
-	id: integer().primaryKey({ autoIncrement: true }).notNull(),
-	boardName: text("board_name").notNull(),
-	discoveredAt: text("discovered_at").default("sql`(datetime('now'))`").notNull(),
-	lastSyncedAt: text("last_synced_at"),
-	jobCount: integer("job_count").default(0),
-	isActive: integer("is_active").default(1).notNull(),
-	createdAt: text("created_at").default("sql`(datetime('now'))`").notNull(),
-	updatedAt: text("updated_at").default("sql`(datetime('now'))`").notNull(),
-},
-(table) => [
-	uniqueIndex("ashby_boards_board_name_unique").on(table.boardName),
 ]);
 
 export const userSettings = sqliteTable("user_settings", {

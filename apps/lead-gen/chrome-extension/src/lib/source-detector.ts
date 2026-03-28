@@ -16,20 +16,12 @@ export function detectSourceFromUrl(url: string): SourceInfo {
   if (url.includes("glassdoor.com")) {
     return { sourceType: "glassdoor", tags: ["glassdoor"] };
   }
-  if (url.includes("greenhouse.io")) {
-    return { sourceType: "greenhouse", tags: ["greenhouse"] };
-  }
   if (url.includes("workable.com") || url.includes("site%3Aworkable")) {
     return { sourceType: "workable", tags: ["workable"] };
-  }
-  if (url.includes("lever.co")) {
-    return { sourceType: "lever", tags: ["lever"] };
   }
   if (url.includes("google.com/search")) {
     const tags = ["google_search"];
     if (url.includes("workable")) tags.push("workable");
-    if (url.includes("greenhouse")) tags.push("greenhouse");
-    if (url.includes("lever")) tags.push("lever");
     return { sourceType: "google_search", tags };
   }
   return { sourceType: "other", tags: [] };
