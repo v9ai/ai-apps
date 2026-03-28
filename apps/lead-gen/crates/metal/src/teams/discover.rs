@@ -32,8 +32,8 @@ pub async fn run(ctx: &TeamContext, domains_file: Option<&Path>) -> Result<Stage
     let domains = match domains_file {
         Some(path) => read_domains(path)?,
         None => {
-            // Web search fallback: search for EU AI consultancies
-            search_companies(&ctx.http).await?
+            // Web search fallback: search for companies in target vertical
+            search_companies(&ctx.http, &ctx.icp_vertical).await?
         }
     };
 
@@ -127,12 +127,12 @@ fn read_domains(path: &Path) -> Result<Vec<String>> {
     Ok(content.lines().map(|l| l.trim().to_string()).filter(|l| !l.is_empty()).collect())
 }
 
-async fn search_companies(http: &reqwest::Client) -> Result<Vec<String>> {
+async fn search_companies(http: &reqwest::Client, vertical: &str) -> Result<Vec<String>> {
     // DuckDuckGo HTML search (no API key required)
     let queries = [
-        "EU AI consultancy companies hiring remote",
-        "European machine learning engineering companies",
-        "AI infrastructure startups Europe remote",
+        format!("EU AI {} companies hiring remote", vertical),
+        "European machine learning engineering companies".to_string(),
+        format!("AI infrastructure {} Europe remote", vertical),
     ];
 
     let mut domains = Vec::new();

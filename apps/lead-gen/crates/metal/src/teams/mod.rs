@@ -59,6 +59,7 @@ pub struct TeamContext {
     pub llm_api_key: Option<String>,
     pub llm_base_url: String,
     pub llm_model: String,
+    pub icp_vertical: String,
     pub batch: BatchSizes,
     pub auto_confirm: bool,
 }
@@ -91,6 +92,18 @@ impl TeamContext {
         let llm_model = std::env::var("LLM_MODEL")
             .unwrap_or_else(|_| "mlx-community/Qwen2.5-3B-Instruct-4bit".into());
 
+        let icp_vertical = std::env::var("ICP_VERTICAL")
+            .unwrap_or_else(|_| "consultancy".into());
+
+        let valid = ["consultancy", "agency", "staffing", "product"];
+        if !valid.contains(&icp_vertical.to_lowercase().as_str()) {
+            eprintln!(
+                "  WARNING: ICP_VERTICAL='{}' is not a known category (expected: {})",
+                icp_vertical,
+                valid.join(", "),
+            );
+        }
+
         Self {
             pipeline: Arc::new(pipeline),
             http,
@@ -98,6 +111,7 @@ impl TeamContext {
             llm_api_key,
             llm_base_url,
             llm_model,
+            icp_vertical,
             batch: BatchSizes::default(),
             auto_confirm: false,
         }
