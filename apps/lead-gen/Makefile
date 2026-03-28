@@ -180,17 +180,17 @@ ml-loop: start-build ## Full ML loop: datagen → eval → optimize → eval →
 	@echo ""
 	@echo "── 1/5 Generating training data ──"
 	@mkdir -p $(dir $(EVAL_LABELS)) $(EVAL_REPORTS) $(MODELS_DIR)
-	$(METAL_BIN) ml-datagen --output $(EVAL_LABELS)
+	$(METAL_BIN) $(ML_FLAGS) ml-datagen --output $(EVAL_LABELS)
 	@echo "Generated $$(wc -l < $(EVAL_LABELS)) labeled samples"
 	@echo ""
 	@echo "── 2/5 Baseline eval ──"
-	$(METAL_BIN) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
+	$(METAL_BIN) $(ML_FLAGS) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
 	@echo ""
 	@echo "── 3/5 Optimizing weights ──"
-	$(METAL_BIN) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
+	$(METAL_BIN) $(ML_FLAGS) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
 	@echo ""
 	@echo "── 4/5 Post-optimization eval ──"
-	$(METAL_BIN) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
+	$(METAL_BIN) $(ML_FLAGS) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
 	@echo ""
 	@echo "── 5/5 Report ──"
 	@latest=$$(ls -t $(EVAL_REPORTS)/eval_iter_*.json 2>/dev/null | head -1); \
@@ -202,20 +202,20 @@ ml-loop: start-build ## Full ML loop: datagen → eval → optimize → eval →
 
 ml-datagen: start-build ## Generate synthetic training data
 	@mkdir -p $(dir $(EVAL_LABELS))
-	$(METAL_BIN) ml-datagen --output $(EVAL_LABELS)
+	$(METAL_BIN) $(ML_FLAGS) ml-datagen --output $(EVAL_LABELS)
 	@echo "Generated $$(wc -l < $(EVAL_LABELS)) labeled samples → $(EVAL_LABELS)"
 
 ml-eval: start-build ## Run full ML eval harness
 	@mkdir -p $(EVAL_REPORTS)
-	$(METAL_BIN) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
+	$(METAL_BIN) $(ML_FLAGS) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
 
 ml-eval-scoring: start-build ## Eval ICP scoring only
 	@mkdir -p $(EVAL_REPORTS)
-	$(METAL_BIN) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS) --scoring-only
+	$(METAL_BIN) $(ML_FLAGS) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS) --scoring-only
 
 ml-optimize: start-build ## Grid search + SGD + isotonic calibration
 	@mkdir -p $(MODELS_DIR)
-	$(METAL_BIN) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
+	$(METAL_BIN) $(ML_FLAGS) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
 
 ml-report: ## Print latest eval metrics
 	@if [ -d $(EVAL_REPORTS) ]; then \
