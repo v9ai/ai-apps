@@ -202,11 +202,11 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Context boundary enforcement: services communicate only via well-defined APIs (REST, gRPC) or events — never direct DB access
 
 **Service Mesh: AWS App Mesh**
-- Envoy proxy sidecar injected alongside each service container (ECS or EKS)
+- Envoy proxy sidecar injected alongside each service container ([ECS](/aws-compute-containers) or [EKS](/aws-compute-containers))
 - Provides: traffic shaping (retries, timeouts, circuit breaker), observability (metrics to CloudWatch, traces to X-Ray), mTLS encryption
 - Virtual services, virtual routers, virtual nodes: abstract the service topology
 - When to use: > 5 services with complex inter-service routing; otherwise an ALB with target groups is simpler
-- Alternative: API Gateway HTTP API for north-south; App Mesh for east-west
+- Alternative: [API Gateway](/aws-api-gateway-networking) HTTP API for north-south; App Mesh for east-west
 
 ---
 
@@ -214,9 +214,9 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **EventBridge (Event Bus)**
 - Central event bus; default bus (AWS service events), custom buses (application events), partner buses (SaaS integrations)
-- Rules: pattern-match on event JSON fields; route to Lambda, SQS, SNS, Kinesis, Step Functions, API Gateway, etc.
+- Rules: pattern-match on event JSON fields; route to [Lambda](/aws-lambda-serverless), SQS, SNS, Kinesis, Step Functions, [API Gateway](/aws-api-gateway-networking), etc.
 - Schema Registry: auto-discovers event schemas; generates code bindings for Java, Python, TypeScript
-- EventBridge Pipes: point-to-point source → filter → enrich → target; source: SQS, Kinesis, DynamoDB Streams; no polling code required
+- EventBridge Pipes: point-to-point source → filter → enrich → target; source: SQS, Kinesis, [DynamoDB Streams](/dynamodb-data-services); no polling code required
 - EventBridge Scheduler: cron/rate-based invocation of any API target without a Lambda trigger
 
 **SNS Fanout Pattern**
