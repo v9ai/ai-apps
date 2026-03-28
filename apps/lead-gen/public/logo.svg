@@ -1,159 +1,135 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
   <title>Crystal Prism</title>
   <defs>
-    <radialGradient id="cpbg" cx="18%" cy="50%" r="85%">
-      <stop offset="0%" stop-color="#0e0e1f"/>
-      <stop offset="100%" stop-color="#07070e"/>
-    </radialGradient>
-
-    <!-- Spectrum fan — violet at top, red at bottom (physics order) -->
-    <linearGradient id="cpfan" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%"    stop-color="#cc33ff"/>
-      <stop offset="14.3%" stop-color="#4455ff"/>
-      <stop offset="28.6%" stop-color="#0088ff"/>
-      <stop offset="42.9%" stop-color="#00ccff"/>
-      <stop offset="57.1%" stop-color="#00dd44"/>
-      <stop offset="71.4%" stop-color="#ffee00"/>
-      <stop offset="85.7%" stop-color="#ff7700"/>
-      <stop offset="100%"  stop-color="#ff2020"/>
+    <linearGradient id="o42bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050515"/>
+      <stop offset="100%" stop-color="#0c0c25"/>
     </linearGradient>
-
-    <!-- Fan fade: transparent at apex, fades at right edge -->
-    <linearGradient id="cpfanfade" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="white" stop-opacity="0"/>
-      <stop offset="7%"   stop-color="white" stop-opacity="1"/>
-      <stop offset="78%"  stop-color="white" stop-opacity="0.72"/>
-      <stop offset="100%" stop-color="white" stop-opacity="0.12"/>
+    <linearGradient id="o42beam" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="1"/>
     </linearGradient>
-    <mask id="cpfanmask">
-      <polygon points="70,40 172,4 172,76" fill="url(#cpfanfade)"/>
-    </mask>
-
-    <!-- Prism glass interior -->
-    <linearGradient id="cpprism" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#132050"/>
-      <stop offset="55%"  stop-color="#1c2e70"/>
-      <stop offset="100%" stop-color="#263c90"/>
+    <linearGradient id="o42pfl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6677bb" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#1e2a5e" stop-opacity="0.8"/>
     </linearGradient>
-
-    <!-- Incoming beam -->
-    <linearGradient id="cpbeam" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#6688cc" stop-opacity="0"/>
-      <stop offset="50%"  stop-color="#8899dd" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#aabbff" stop-opacity="0.55"/>
+    <linearGradient id="o42pfr" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3344aa" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#111830" stop-opacity="0.85"/>
     </linearGradient>
-
-    <!-- Brand name text gradient -->
-    <linearGradient id="cpbrand" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#ccd8ff"/>
-    </linearGradient>
-
-    <!-- Spectrum separator line -->
-    <linearGradient id="cpsep" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#cc33ff" stop-opacity="0.9"/>
-      <stop offset="30%"  stop-color="#0088ff" stop-opacity="0.65"/>
-      <stop offset="55%"  stop-color="#00dd44" stop-opacity="0.5"/>
-      <stop offset="80%"  stop-color="#ff7700" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#ff2020" stop-opacity="0.05"/>
-    </linearGradient>
-
-    <!-- Filters -->
-    <filter id="cpprismglow" x="-25%" y="-25%" width="150%" height="150%">
-      <feGaussianBlur stdDeviation="2.5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="o42glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="cpbloom" x="-5%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
-      <feComposite in="blur" in2="SourceGraphic" operator="over"/>
+    <filter id="o42eglow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="cpfansoft" x="-3%" y="-5%" width="106%" height="110%">
-      <feGaussianBlur stdDeviation="1.5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="o42pg" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="cptextglow" x="-5%" y="-20%" width="110%" height="140%">
-      <feGaussianBlur stdDeviation="1.5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="cppointglow" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="2.5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="o42tg" x="-10%" y="-30%" width="120%" height="160%">
+      <feGaussianBlur stdDeviation="1.8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
   <!-- Background -->
-  <rect width="320" height="80" fill="url(#cpbg)" rx="3"/>
+  <rect width="300" height="200" fill="url(#o42bg)" rx="4"/>
 
-  <!-- Subtle star field -->
-  <circle cx="9"  cy="7"  r="0.7" fill="white" opacity="0.35"/>
-  <circle cx="26" cy="3"  r="0.5" fill="white" opacity="0.25"/>
-  <circle cx="5"  cy="30" r="0.6" fill="white" opacity="0.28"/>
-  <circle cx="17" cy="68" r="0.6" fill="white" opacity="0.25"/>
-  <circle cx="4"  cy="52" r="0.5" fill="white" opacity="0.28"/>
-  <circle cx="315" cy="14" r="0.6" fill="white" opacity="0.2"/>
-  <circle cx="308" cy="66" r="0.5" fill="white" opacity="0.18"/>
+  <!-- Subtle grid -->
+  <line x1="0" y1="50"  x2="300" y2="50"  stroke="white" stroke-width="0.3" opacity="0.03"/>
+  <line x1="0" y1="100" x2="300" y2="100" stroke="white" stroke-width="0.3" opacity="0.03"/>
+  <line x1="0" y1="150" x2="300" y2="150" stroke="white" stroke-width="0.3" opacity="0.03"/>
 
-  <!-- Incoming light beam -->
-  <polygon points="0,37 0,43 70,41 70,39" fill="url(#cpbeam)"/>
-  <polygon points="0,39.2 0,40.8 70,40.4 70,39.6" fill="#ccdaff" opacity="0.28"/>
+  <!-- Star field -->
+  <circle cx="18"  cy="14"  r="0.8" fill="white" opacity="0.5"/>
+  <circle cx="52"  cy="30"  r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="278" cy="17"  r="0.8" fill="white" opacity="0.5"/>
+  <circle cx="258" cy="54"  r="0.5" fill="white" opacity="0.35"/>
+  <circle cx="292" cy="76"  r="0.6" fill="white" opacity="0.4"/>
+  <circle cx="28"  cy="67"  r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="14"  cy="130" r="0.7" fill="white" opacity="0.4"/>
+  <circle cx="273" cy="142" r="0.8" fill="white" opacity="0.5"/>
+  <circle cx="40"  cy="163" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="10"  cy="97"  r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="72"  cy="9"   r="0.6" fill="white" opacity="0.35"/>
 
-  <!-- Fan bloom (soft glow behind) -->
-  <polygon points="70,40 172,4 172,76" fill="url(#cpfan)" opacity="0.22" filter="url(#cpbloom)"/>
-
-  <!-- Fan main layer -->
-  <polygon points="70,40 172,4 172,76" fill="url(#cpfan)" mask="url(#cpfanmask)" opacity="0.86" filter="url(#cpfansoft)"/>
-
-  <!-- Fan overlay for richness -->
-  <polygon points="70,40 172,4 172,76" fill="url(#cpfan)" opacity="0.1"/>
-
-  <!-- Fan boundary lines -->
-  <line x1="70" y1="40" x2="172" y2="4"  stroke="#cc33ff" stroke-width="0.7" opacity="0.5"/>
-  <line x1="70" y1="40" x2="172" y2="76" stroke="#ff2020" stroke-width="0.7" opacity="0.5"/>
+  <!-- Incoming beam -->
+  <rect x="20" y="82" width="99" height="16" fill="url(#o42beam)" rx="8" opacity="0.15"/>
+  <rect x="20" y="86" width="99" height="7"  fill="url(#o42beam)" rx="3.5"/>
+  <circle cx="38"  cy="89" r="1.8" fill="white" opacity="0.75" filter="url(#o42pg)"/>
+  <circle cx="56"  cy="89" r="1.2" fill="white" opacity="0.5"/>
+  <circle cx="73"  cy="89" r="1.8" fill="white" opacity="0.7"  filter="url(#o42pg)"/>
+  <circle cx="90"  cy="89" r="1.2" fill="white" opacity="0.5"/>
+  <circle cx="108" cy="89" r="1.5" fill="white" opacity="0.65" filter="url(#o42pg)"/>
 
   <!-- Prism body -->
-  <polygon points="15,9 70,40 15,71"
-           fill="url(#cpprism)" stroke="#3a5aaa" stroke-width="1.5"
-           filter="url(#cpprismglow)" opacity="0.95"/>
+  <polygon points="100,122 150,32 200,122" fill="#0d1526" opacity="0.95"/>
+  <!-- Prism left face highlight -->
+  <polygon points="100,122 150,32 119,89"  fill="url(#o42pfl)" filter="url(#o42pg)" opacity="0.65"/>
+  <!-- Prism right face highlight -->
+  <polygon points="150,32 200,122 171,78"  fill="url(#o42pfr)" filter="url(#o42pg)" opacity="0.5"/>
+  <!-- Interior refraction line -->
+  <line x1="119" y1="89" x2="175" y2="77" stroke="#c5d5ff" stroke-width="0.8" opacity="0.35"/>
+  <!-- Prism edges -->
+  <line x1="100" y1="122" x2="150" y2="32"  stroke="#aabbee" stroke-width="1.6" filter="url(#o42pg)" opacity="0.95"/>
+  <line x1="150" y1="32"  x2="200" y2="122" stroke="#aabbee" stroke-width="1.6" filter="url(#o42pg)" opacity="0.95"/>
+  <line x1="100" y1="122" x2="200" y2="122" stroke="#aabbee" stroke-width="1.6" filter="url(#o42pg)" opacity="0.95"/>
+  <!-- Apex glow -->
+  <circle cx="150" cy="32" r="3.5" fill="#ccd5ff" opacity="0.9" filter="url(#o42glow)"/>
+  <!-- Entry/exit point -->
+  <circle cx="119" cy="89" r="3"   fill="white"   opacity="0.75" filter="url(#o42eglow)"/>
 
-  <!-- Prism edge highlights -->
-  <line x1="15" y1="9"  x2="70" y2="40" stroke="#c0d4ff" stroke-width="1"   opacity="0.42"/>
-  <line x1="70" y1="40" x2="15" y2="71" stroke="#7090cc" stroke-width="0.8" opacity="0.35"/>
-  <line x1="15" y1="9"  x2="15" y2="71" stroke="#4565bb" stroke-width="1.4" opacity="0.58"/>
+  <!-- Spectrum lines (violet → red) -->
+  <line x1="164" y1="56"  x2="283" y2="42"  stroke="#cc33ff" stroke-width="2.5" filter="url(#o42glow)" opacity="0.9"/>
+  <line x1="167" y1="63"  x2="283" y2="60"  stroke="#4455ff" stroke-width="2.5" filter="url(#o42glow)" opacity="0.9"/>
+  <line x1="171" y1="70"  x2="283" y2="78"  stroke="#0088ff" stroke-width="2.5" filter="url(#o42glow)" opacity="0.9"/>
+  <line x1="175" y1="77"  x2="283" y2="97"  stroke="#00ccff" stroke-width="2.5" filter="url(#o42glow)" opacity="0.9"/>
+  <line x1="179" y1="84"  x2="283" y2="116" stroke="#00dd44" stroke-width="2.5" filter="url(#o42glow)" opacity="0.9"/>
+  <line x1="184" y1="92"  x2="283" y2="135" stroke="#ffee00" stroke-width="2.5" filter="url(#o42glow)" opacity="0.9"/>
+  <line x1="188" y1="100" x2="283" y2="154" stroke="#ff7700" stroke-width="2.5" filter="url(#o42glow)" opacity="0.9"/>
+  <line x1="193" y1="109" x2="283" y2="173" stroke="#ff2020" stroke-width="2.5" filter="url(#o42glow)" opacity="0.9"/>
 
-  <!-- Interior refraction lines -->
-  <line x1="22" y1="40" x2="68" y2="40" stroke="#aac8ff" stroke-width="0.6" opacity="0.28"/>
-  <line x1="32" y1="27" x2="68" y2="39" stroke="#aac8ff" stroke-width="0.5" opacity="0.22"/>
-  <line x1="32" y1="53" x2="68" y2="41" stroke="#aac8ff" stroke-width="0.5" opacity="0.22"/>
+  <!-- Origin dots -->
+  <circle cx="164" cy="56"  r="2" fill="#cc33ff" opacity="0.85" filter="url(#o42glow)"/>
+  <circle cx="167" cy="63"  r="2" fill="#4455ff" opacity="0.85" filter="url(#o42glow)"/>
+  <circle cx="171" cy="70"  r="2" fill="#0088ff" opacity="0.85" filter="url(#o42glow)"/>
+  <circle cx="175" cy="77"  r="2" fill="#00ccff" opacity="0.85" filter="url(#o42glow)"/>
+  <circle cx="179" cy="84"  r="2" fill="#00dd44" opacity="0.85" filter="url(#o42glow)"/>
+  <circle cx="184" cy="92"  r="2" fill="#ffee00" opacity="0.85" filter="url(#o42glow)"/>
+  <circle cx="188" cy="100" r="2" fill="#ff7700" opacity="0.85" filter="url(#o42glow)"/>
+  <circle cx="193" cy="109" r="2" fill="#ff2020" opacity="0.85" filter="url(#o42glow)"/>
 
-  <!-- Beam entry glow -->
-  <circle cx="15" cy="40" r="2.5" fill="#aabbff" opacity="0.55" filter="url(#cppointglow)"/>
-
-  <!-- Exit point (refraction apex) -->
-  <circle cx="70" cy="40" r="3"  fill="#ffffff" opacity="0.65" filter="url(#cppointglow)"/>
-  <circle cx="70" cy="40" r="7"  fill="#aaccff" opacity="0.10"/>
-
-  <!-- Divider between icon and text zones -->
-  <line x1="188" y1="18" x2="188" y2="62" stroke="#3355aa" stroke-width="0.6" opacity="0.38"/>
+  <!-- End dots -->
+  <circle cx="283" cy="42"  r="2.5" fill="#cc33ff" opacity="0.4" filter="url(#o42glow)"/>
+  <circle cx="283" cy="60"  r="2.5" fill="#4455ff" opacity="0.4" filter="url(#o42glow)"/>
+  <circle cx="283" cy="78"  r="2.5" fill="#0088ff" opacity="0.4" filter="url(#o42glow)"/>
+  <circle cx="283" cy="97"  r="2.5" fill="#00ccff" opacity="0.4" filter="url(#o42glow)"/>
+  <circle cx="283" cy="116" r="2.5" fill="#00dd44" opacity="0.4" filter="url(#o42glow)"/>
+  <circle cx="283" cy="135" r="2.5" fill="#ffee00" opacity="0.4" filter="url(#o42glow)"/>
+  <circle cx="283" cy="154" r="2.5" fill="#ff7700" opacity="0.4" filter="url(#o42glow)"/>
+  <circle cx="283" cy="173" r="2.5" fill="#ff2020" opacity="0.4" filter="url(#o42glow)"/>
 
   <!-- Brand name -->
-  <text x="252" y="37"
-        font-family="'Arial', 'Helvetica', sans-serif"
-        font-size="17" font-weight="700"
-        fill="url(#cpbrand)"
-        letter-spacing="2"
+  <text x="150" y="151"
+        font-family="Helvetica,Arial,sans-serif"
+        font-size="13" font-weight="700"
+        fill="#e8eeff"
         text-anchor="middle"
-        filter="url(#cptextglow)"
-        opacity="0.97">Crystal Prism</text>
+        letter-spacing="3"
+        filter="url(#o42tg)">CRYSTAL PRISM</text>
 
-  <!-- Spectrum separator -->
-  <line x1="196" y1="45" x2="308" y2="45" stroke="url(#cpsep)" stroke-width="0.8" opacity="0.72"/>
+  <!-- Separator -->
+  <line x1="96" y1="160" x2="204" y2="160" stroke="#3344aa" stroke-width="0.5" opacity="0.65"/>
 
   <!-- Tagline -->
-  <text x="252" y="57"
-        font-family="'Arial', 'Helvetica', sans-serif"
-        font-size="6" font-weight="300"
-        fill="#5577bb"
-        letter-spacing="0.8"
+  <text x="150" y="172"
+        font-family="'Courier New',monospace"
+        font-size="5.5"
+        fill="#445577"
         text-anchor="middle"
-        opacity="0.72">prism refracting data into spectrum</text>
+        letter-spacing="1.2">prism refracting data into spectrum</text>
 </svg>
