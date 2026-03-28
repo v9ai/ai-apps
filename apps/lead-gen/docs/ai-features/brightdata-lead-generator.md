@@ -592,3 +592,66 @@ The standard solution is **batch-relative scoring**: after all scores are collec
 **Temperature PMC Study (2024):** Validates T=0 for extraction tasks but does not support T=0.5 for structured integer output (sample.py's scoring). The optimal temperature for tasks requiring bounded integer output (1-10 score) is T=0.1-0.2 to reduce format deviation risk.
 
 **MDPI Email Review (2025):** Summarizes 32 papers on LLM email generation. The finding that AI-generated emails are "more formal, verbose, and complex" while human-written ones are "more concise and personalized" is directly relevant to the outreach_suggestion output quality. For cold B2B outreach where authenticity matters, LLM outputs require significant post-processing or fine-tuning to avoid the formal/verbose pattern that reduces reply rates.
+
+---
+
+## 12. Recency & Changelog
+
+### Latest Release
+
+No formal releases. The repository has never tagged a version. GitHub's releases page returns an empty array. The only versioning artifact is the commit history: 5 commits all made on 2025-09-28, constituting a single one-shot upload of the entire codebase.
+
+### Recent Commits (last 90 days)
+
+Observation window: 2025-12-28 through 2026-03-28 (90 days preceding the report date).
+
+**Zero commits in the last 90 days.**
+
+Full commit history for reference (all on the same day, 2025-09-28):
+
+| Date (UTC) | SHA | Message |
+|---|---|---|
+| 2025-09-28T10:01:19Z | 7f636e0c | Update README.md |
+| 2025-09-28T09:43:07Z | efa55e6a | Add files via upload |
+| 2025-09-28T09:42:52Z | 3476a035 | Add files via upload |
+| 2025-09-28T09:37:22Z | 5a899094 | Update README.md |
+| 2025-09-28T09:34:50Z | 8616c2fe | Initial commit |
+
+The last code push was 2025-09-28. The repository `updated_at` field shows 2026-03-27T16:10:59Z — this reflects a star event (a user starred the repo on 2026-03-27), not any code change.
+
+### Open Issues (AI/ML relevant)
+
+**Zero open issues.** The GitHub API confirms `open_issues_count: 0`. No issues have ever been filed (the API returns an empty array for both open and closed issues). This is consistent with a demo/tutorial repository that is not actively used as a library or dependency by third parties.
+
+### Merged PRs (last 90 days)
+
+**Zero pull requests of any kind** — open, closed, or merged. The GitHub API returns an empty array for all PR states. The repository has never received an external contribution.
+
+### Roadmap / Announced Features
+
+No roadmap exists for this specific repository. Bright Data's blog post ["Build an AI Lead Generation Agent with Bright Data"](https://brightdata.com/blog/ai/lead-generation-agent), published 2025-09-28 (same day as the repo), contains no future-feature announcements. It is a static tutorial post with no update history (last modified 2025-09-28T07:36:30Z).
+
+Bright Data has since published a more capable successor project: [`brightdata/ai-sdr-bdr-agent`](https://github.com/brightdata/ai-sdr-bdr-agent) (pushed 2025-09-30), which automates lead discovery, trigger detection, contact research, personalized outreach, and CRM integration. It is a direct architectural evolution of `ai-lead-generator` — same Bright Data + OpenAI pattern, more pipeline stages. The `ai-sdr-bdr-agent` repo itself also shows no commits after its initial 2025-09-30 upload.
+
+Bright Data's actively maintained repos as of 2026-03 are infrastructure-focused: [`brightdata/brightdata-agent-showcase`](https://github.com/brightdata/brightdata-agent-showcase) (last pushed 2026-02-09) and [`brightdata/brightdata-mcp`](https://github.com/brightdata/brightdata-mcp) (active issues and releases). Neither is directly related to `ai-lead-generator`.
+
+### Staleness Assessment
+
+**Verdict: Archived in everything but name. Safe to study, not safe to build on.**
+
+| Signal | Finding |
+|---|---|
+| Last code commit | 2025-09-28 (182+ days ago as of 2026-03-28) |
+| Commits in last 90 days | 0 |
+| Open issues | 0 (never filed) |
+| PRs ever merged | 0 |
+| Formal releases | 0 |
+| Blog post last updated | 2025-09-28 (never revised) |
+| Active maintainer signals | None — no responses, no labels, no branch protection |
+| Star activity | Ongoing passive interest (new stars weekly as of 2026-03) but purely read-only |
+| Model versions | gpt-3.5-turbo / gpt-4o-mini — both still available but gpt-3.5-turbo is deprecated for new use cases |
+| Successor project | `brightdata/ai-sdr-bdr-agent` (more capable, also unmaintained after initial upload) |
+
+The repository was created as a companion to a one-time marketing blog post. It has never been updated after its initial upload. No contributor has merged a PR, closed an issue, or pushed a bug fix. The model choices (`gpt-3.5-turbo` in `app.py`) remain frozen at a model that OpenAI has since positioned as legacy.
+
+It is safe to use as a reference implementation to understand the pattern (NLU extract → scrape → LLM score → UI render). It is not safe to take a dependency on as a library, fork and deploy without significant rework, or treat as evidence of Bright Data's current recommended approach — their current recommended approach for agent-based lead generation appears to be the Web MCP server integration documented in [`brightdata/brightdata-mcp`](https://github.com/brightdata/brightdata-mcp), which is actively versioned and maintained.
