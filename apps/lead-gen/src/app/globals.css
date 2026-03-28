@@ -862,6 +862,7 @@ nav a.active {
 }
 .headline-word {
   display: inline-block;
+  margin-right: 0.25em;
   opacity: 0;
   animation: headline-word-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
