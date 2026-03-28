@@ -158,7 +158,7 @@ pub async fn draft_email(
          Tech stack: {tech_stack}\n\
          \n\
          I am a senior AI/ML engineer with deep Rust, Python, and infrastructure experience, \
-         looking for fully remote EU positions. Draft a warm outreach email."
+         looking for fully remote positions worldwide. Draft a warm outreach email."
     );
 
     let raw = chat(client, base_url, api_key, model, system, &user, Some(0.7)).await?;
