@@ -11,6 +11,14 @@ from .models import ATSBoardDetection, CompanyResearchResult
 
 _CONFIDENCE_MAP = {"high": 0.9, "medium": 0.6, "low": 0.3}
 
+_COMPANY_TYPE_TO_CATEGORY = {
+    "product": "PRODUCT",
+    "consultancy": "CONSULTANCY",
+    "agency": "AGENCY",
+    "staffing": "STAFFING",
+    "unknown": "UNKNOWN",
+}
+
 
 def _normalize_domain(domain: str) -> str:
     """Strip www. prefix and lowercase."""
