@@ -20,7 +20,6 @@ from src.graphs.text_to_sql.graph import build_text_to_sql_graph
 from src.graphs.email_reply.graph import build_email_reply_graph
 from src.graphs.admin_chat.graph import build_admin_chat_graph
 from src.graphs.email_compose.graph import build_email_compose_graph
-from src.graphs.resume_rag.graph import build_resume_rag_graph
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger("langgraph-api")
@@ -33,7 +32,6 @@ text_to_sql_graph = build_text_to_sql_graph()
 email_reply_graph = build_email_reply_graph()
 admin_chat_graph = build_admin_chat_graph()
 email_compose_graph = build_email_compose_graph()
-resume_rag_graph = build_resume_rag_graph()
 
 app = FastAPI(title="Lead Gen LangGraph API", version="0.1.0")
 
@@ -137,14 +135,6 @@ class EmailComposeResponse(BaseModel):
     subject: str
     body: str
 
-
-class ResumeChatRequest(BaseModel):
-    user_id: str
-    question: str
-
-
-class ResumeChatResponse(BaseModel):
-    answer: str
 
 
 # ── Routes ──────────────────────────────────────────────────
@@ -357,29 +347,3 @@ async def email_compose(req: EmailComposeRequest):
     )
 
 
-@app.post("/resume-chat", response_model=ResumeChatResponse)
-async def resume_chat(req: ResumeChatRequest):
-    log.info("── resume-chat request ──")
-    log.info("  user: %s | question: %s", req.user_id, req.question[:200])
-
-    result = resume_rag_graph.invoke(
-        {
-            "action": "chat",
-            "user_id": req.user_id,
-            "query": req.question,
-            "resume_id": "",
-            "resume_text": "",
-            "pdf_base64": "",
-            "filename": "",
-            "limit": 8,
-            "chunks_stored": 0,
-            "search_results": [],
-            "chat_response": "",
-            "stats": {},
-        }
-    )
-
-    answer = result.get("chat_response", "")
-    log.info("  answer_len: %d", len(answer))
-
-    return ResumeChatResponse(answer=answer)

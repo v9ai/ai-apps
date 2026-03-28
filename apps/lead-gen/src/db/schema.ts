@@ -197,80 +197,6 @@ export const companySnapshots = pgTable(
 export type CompanySnapshot = typeof companySnapshots.$inferSelect;
 export type NewCompanySnapshot = typeof companySnapshots.$inferInsert;
 
-// ATS Boards
-export const atsBoards = pgTable(
-  "ats_boards",
-  {
-    id: serial("id").primaryKey(),
-    company_id: integer("company_id")
-      .notNull()
-      .references(() => companies.id, { onDelete: "cascade" }),
-
-    url: text("url").notNull(),
-    vendor: text("vendor", {
-      enum: [
-        "GREENHOUSE",
-        "LEVER",
-        "WORKABLE",
-        "TEAMTAILOR",
-        "ASHBY",
-        "SMARTRECRUITERS",
-        "JAZZHR",
-        "BREEZYHR",
-        "ICIMS",
-        "JOBVITE",
-        "SAP_SUCCESSFACTORS",
-        "ORACLE_TALEO",
-        "OTHER",
-      ],
-    }).notNull(),
-    board_type: text("board_type", {
-      enum: ["JOBS_PAGE", "BOARD_API", "BOARD_WIDGET", "UNKNOWN"],
-    }).notNull(),
-
-    confidence: real("confidence").notNull(), // 0..1
-    is_active: boolean("is_active")
-      .notNull()
-      .default(true),
-
-    first_seen_at: text("first_seen_at").notNull(),
-    last_seen_at: text("last_seen_at").notNull(),
-
-    // Evidence
-    source_type: text("source_type", {
-      enum: ["COMMONCRAWL", "LIVE_FETCH", "MANUAL", "PARTNER"],
-    }).notNull(),
-    source_url: text("source_url").notNull(),
-    crawl_id: text("crawl_id"),
-    capture_timestamp: text("capture_timestamp"),
-    observed_at: text("observed_at").notNull(),
-    method: text("method", {
-      enum: ["JSONLD", "META", "DOM", "HEURISTIC", "LLM"],
-    }).notNull(),
-    extractor_version: text("extractor_version"),
-
-    // WARC pointer
-    warc_filename: text("warc_filename"),
-    warc_offset: integer("warc_offset"),
-    warc_length: integer("warc_length"),
-    warc_digest: text("warc_digest"),
-
-    created_at: text("created_at")
-      .notNull()
-      .default(sql`now()::text`),
-    updated_at: text("updated_at")
-      .notNull()
-      .default(sql`now()::text`),
-  },
-  (table) => [
-    index("idx_ats_boards_company_url").on(table.company_id, table.url),
-    index("idx_ats_boards_vendor").on(table.vendor),
-  ],
-);
-
-export type ATSBoard = typeof atsBoards.$inferSelect;
-export type NewATSBoard = typeof atsBoards.$inferInsert;
-
 // Contacts (from CRM — recruiters and company contacts)
 export const contacts = pgTable(
   "contacts",
@@ -485,18 +411,10 @@ export type NewReceivedEmail = typeof receivedEmails.$inferInsert;
 // ---------------------------------------------------------------------------
 
 export const companiesRelations = relations(companies, ({ many }) => ({
-  atsBoards: many(atsBoards),
   companyFacts: many(companyFacts),
   companySnapshots: many(companySnapshots),
   contacts: many(contacts),
   emailCampaigns: many(emailCampaigns),
-}));
-
-export const atsBoardsRelations = relations(atsBoards, ({ one }) => ({
-  company: one(companies, {
-    fields: [atsBoards.company_id],
-    references: [companies.id],
-  }),
 }));
 
 export const companyFactsRelations = relations(companyFacts, ({ one }) => ({
