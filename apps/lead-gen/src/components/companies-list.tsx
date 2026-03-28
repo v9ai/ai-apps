@@ -565,12 +565,6 @@ export function CompaniesList() {
               <span className="yc-row-meta">
                 {company.key && <span>{company.key}</span>}
                 {company.location && <span> · {company.location}</span>}
-                {company.ats_boards && company.ats_boards.length > 0 && (
-                  <span>
-                    {" · "}
-                    {company.ats_boards.map((b) => b.vendor).join(", ")}
-                  </span>
-                )}
                 {company.tags && company.tags.length > 0 && (
                   <span>
                     {" · "}

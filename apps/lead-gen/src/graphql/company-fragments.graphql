@@ -94,5 +94,4 @@ fragment CompanyFields on Company {
     size_signal
     enriched_at
   }
-
 }
