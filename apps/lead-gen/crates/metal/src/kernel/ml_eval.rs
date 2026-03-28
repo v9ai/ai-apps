@@ -56,33 +56,6 @@ impl LabeledSample {
     }
 }
 
-/// Compute binary F1 from parallel predicted/actual slices.
-///
-/// Precision = TP / (TP + FP); Recall = TP / (TP + FN).
-/// Returns `0.0` when both precision and recall are zero.
-///
-/// # Panics
-/// Panics if `predicted` and `actual` have different lengths.
-pub fn compute_f1(predicted: &[bool], actual: &[bool]) -> f32 {
-    assert_eq!(predicted.len(), actual.len(), "predicted/actual length mismatch");
-    let (mut tp, mut fp, mut fn_) = (0usize, 0usize, 0usize);
-    for (&p, &a) in predicted.iter().zip(actual.iter()) {
-        match (p, a) {
-            (true, true) => tp += 1,
-            (true, false) => fp += 1,
-            (false, true) => fn_ += 1,
-            _ => {}
-        }
-    }
-    let precision = if tp + fp == 0 { 0.0 } else { tp as f32 / (tp + fp) as f32 };
-    let recall = if tp + fn_ == 0 { 0.0 } else { tp as f32 / (tp + fn_) as f32 };
-    if precision + recall < 1e-9 {
-        0.0
-    } else {
-        2.0 * precision * recall / (precision + recall)
-    }
-}
-
 /// Binary classification metrics for the contact scorer.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScoringEval {

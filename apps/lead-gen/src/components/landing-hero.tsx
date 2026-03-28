@@ -176,18 +176,18 @@ function StatusIndicator() {
 const HEADLINE_WORDS = ["autonomous", "AI", "agents", "that"];
 
 const STATUS_LINES = [
-  "crawling 820 domains",
-  "300 qualified leads today",
-  "last crawl: 2h ago",
-  "pipeline: nominal",
-  "next crawl in 45m",
+  "discovery agent: scanning 820 domains",
+  "enrichment agent: 300 leads qualified",
+  "contact agent: 47 emails verified",
+  "outreach agent: 12 campaigns live",
+  "all agents: nominal",
 ] as const;
 
 const STATS = [
-  { value: "50,000+", label: "pages crawled", context: "RL-powered exploration (DQN + UCB1)" },
-  { value: "300+", label: "leads generated", context: "99.4% funnel reduction" },
-  { value: "92%", label: "NER accuracy", context: "BERT extraction F1 score" },
-  { value: "89%", label: "cost savings", context: "$1,500/yr vs $5,400-13,200 cloud" },
+  { value: "50,000+", label: "pages discovered", context: "autonomous crawl agents (RL + UCB1)" },
+  { value: "300+", label: "leads qualified", context: "multi-agent enrichment pipeline" },
+  { value: "92%", label: "contact accuracy", context: "AI-verified email + LinkedIn" },
+  { value: "24x7", label: "agent uptime", context: "fully autonomous, zero manual work" },
 ] as const;
 
 export function LandingHero() {

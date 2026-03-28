@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" style="background:#ffffff">
+  <defs>
+    <style>
+      .ridge { fill: none; stroke: #1a1464; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #1a1464; }
+      .node-accent { fill: #3730a3; }
+      .edge { stroke: #1a1464; stroke-linecap: round; }
+      .text-main { font-family: Georgia, serif; fill: #1a1464; letter-spacing: 0.04em; }
+      .text-sub { font-family: 'Courier New', monospace; fill: #3730a3; letter-spacing: 0.18em; }
+    </style>
+    <clipPath id="fp-clip">
+      <ellipse cx="100" cy="96" rx="52" ry="62"/>
+    </clipPath>
+    <radialGradient id="bg-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3730a3" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#1a1464" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="200" fill="#ffffff"/>
+
+  <!-- Background glow -->
+  <ellipse cx="100" cy="96" rx="70" ry="80" fill="url(#bg-glow)"/>
+
+  <!-- Fingerprint ridges clipped to oval -->
+  <g clip-path="url(#fp-clip)">
+    <!-- Core whorl -->
+    <ellipse cx="100" cy="94" rx="8" ry="9" fill="none" stroke="#1a1464" stroke-width="1.6"/>
+    <!-- Ridge 1 -->
+    <path class="ridge" stroke-width="1.5" d="M 100 75 C 112 75, 120 83, 120 94 C 120 105, 112 114, 100 115 C 88 114, 80 105, 80 94 C 80 83, 88 75, 100 75"/>
+    <!-- Ridge 2 -->
+    <path class="ridge" stroke-width="1.4" d="M 100 63 C 119 63, 133 77, 133 94 C 133 111, 119 126, 100 127 C 81 126, 67 111, 67 94 C 67 77, 81 63, 100 63"/>
+    <!-- Ridge 3 with bifurcation -->
+    <path class="ridge" stroke-width="1.3" d="M 100 51 C 125 51, 145 70, 145 94"/>
+    <path class="ridge" stroke-width="1.3" d="M 145 94 C 145 118, 125 138, 100 139 C 75 138, 55 118, 55 94 C 55 70, 75 51, 100 51"/>
+    <!-- Ridge 4 -->
+    <path class="ridge" stroke-width="1.2" d="M 63 72 C 68 57, 82 46, 100 44 C 131 44, 156 67, 156 94"/>
+    <path class="ridge" stroke-width="1.2" d="M 156 94 C 156 121, 131 150, 100 151 C 69 151, 44 122, 44 94 C 44 80, 49 68, 58 60"/>
+    <!-- Ridge 5 outer -->
+    <path class="ridge" stroke-width="1.1" d="M 77 40 C 85 35, 92 33, 100 33 C 134 33, 162 61, 162 94"/>
+    <path class="ridge" stroke-width="1.1" d="M 162 100 C 160 129, 136 160, 100 162 C 64 162, 38 132, 38 94 C 38 76, 44 62, 56 52"/>
+
+    <!-- Center node -->
+    <circle class="node" cx="100" cy="94" r="2.5"/>
+    <!-- Inner ring nodes -->
+    <circle class="node-accent" cx="100" cy="78" r="2"/>
+    <circle class="node-accent" cx="113" cy="86" r="2"/>
+    <circle class="node-accent" cx="113" cy="102" r="2"/>
+    <circle class="node-accent" cx="100" cy="112" r="2"/>
+    <circle class="node-accent" cx="87" cy="102" r="2"/>
+    <circle class="node-accent" cx="87" cy="86" r="2"/>
+    <!-- Outer ring nodes -->
+    <circle class="node" cx="100" cy="64" r="2.2"/>
+    <circle class="node" cx="122" cy="72" r="2.2"/>
+    <circle class="node" cx="131" cy="94" r="2.2"/>
+    <circle class="node" cx="122" cy="116" r="2.2"/>
+    <circle class="node" cx="100" cy="127" r="2.2"/>
+    <circle class="node" cx="78" cy="116" r="2.2"/>
+    <circle class="node" cx="69" cy="94" r="2.2"/>
+    <circle class="node" cx="78" cy="72" r="2.2"/>
+    <!-- Further outer nodes -->
+    <circle class="node" cx="100" cy="52" r="1.8"/>
+    <circle class="node" cx="132" cy="64" r="1.8"/>
+    <circle class="node" cx="144" cy="94" r="1.8"/>
+    <circle class="node" cx="132" cy="124" r="1.8"/>
+    <circle class="node" cx="100" cy="138" r="1.8"/>
+    <circle class="node" cx="68" cy="124" r="1.8"/>
+    <circle class="node" cx="56" cy="94" r="1.8"/>
+    <circle class="node" cx="68" cy="64" r="1.8"/>
+
+    <!-- Center to inner ring edges -->
+    <line class="edge" stroke-width="0.9" stroke-opacity="0.7" x1="100" y1="94" x2="100" y2="78"/>
+    <line class="edge" stroke-width="0.9" stroke-opacity="0.7" x1="100" y1="94" x2="113" y2="86"/>
+    <line class="edge" stroke-width="0.9" stroke-opacity="0.7" x1="100" y1="94" x2="113" y2="102"/>
+    <line class="edge" stroke-width="0.9" stroke-opacity="0.7" x1="100" y1="94" x2="100" y2="112"/>
+    <line class="edge" stroke-width="0.9" stroke-opacity="0.7" x1="100" y1="94" x2="87" y2="102"/>
+    <line class="edge" stroke-width="0.9" stroke-opacity="0.7" x1="100" y1="94" x2="87" y2="86"/>
+    <!-- Inner to outer cross-ridge edges -->
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="100" y1="78" x2="100" y2="64"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="100" y1="78" x2="122" y2="72"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="113" y1="86" x2="122" y2="72"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="113" y1="86" x2="131" y2="94"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="113" y1="102" x2="131" y2="94"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="113" y1="102" x2="122" y2="116"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="100" y1="112" x2="122" y2="116"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="100" y1="112" x2="100" y2="127"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="87" y1="102" x2="78" y2="116"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="87" y1="102" x2="100" y2="127"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="87" y1="86" x2="69" y2="94"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="87" y1="86" x2="78" y2="72"/>
+    <line class="edge" stroke-width="0.8" stroke-opacity="0.55" x1="78" y1="116" x2="69" y2="94"/>
+    <!-- Outer to further outer sparse edges -->
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="100" y1="64" x2="132" y2="64"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="122" y1="72" x2="132" y2="64"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="131" y1="94" x2="144" y2="94"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="122" y1="116" x2="132" y2="124"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="100" y1="127" x2="100" y2="138"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="78" y1="116" x2="68" y2="124"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="69" y1="94" x2="56" y2="94"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="78" y1="72" x2="68" y2="64"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="100" y1="64" x2="68" y2="64"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="100" y1="52" x2="100" y2="64"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="100" y1="52" x2="132" y2="64"/>
+    <line class="edge" stroke-width="0.7" stroke-opacity="0.4" x1="100" y1="52" x2="68" y2="64"/>
+  </g>
+
+  <!-- Fingerprint outline border -->
+  <ellipse cx="100" cy="96" rx="52" ry="62" fill="none" stroke="#1a1464" stroke-width="0.8" stroke-opacity="0.25"/>
+
+  <!-- Scan line accent -->
+  <line x1="48" y1="96" x2="152" y2="96" stroke="#3730a3" stroke-width="0.5" stroke-opacity="0.18" stroke-dasharray="3,4"/>
+
+  <!-- Vertical scan bars -->
+  <rect x="96" y="34" width="8" height="3" rx="1.5" fill="#3730a3" fill-opacity="0.35"/>
+  <rect x="96" y="155" width="8" height="3" rx="1.5" fill="#3730a3" fill-opacity="0.35"/>
+
+  <!-- Wordmark -->
+  <text x="168" y="83" class="text-main" font-size="17.5" font-weight="700">AGENTIC</text>
+  <text x="168" y="103" class="text-main" font-size="17.5" font-weight="700">LEAD GEN</text>
+
+  <!-- Divider rule -->
+  <line x1="168" y1="110" x2="290" y2="110" stroke="#1a1464" stroke-width="0.7" stroke-opacity="0.4"/>
+
+  <!-- Tagline -->
+  <text x="168" y="124" class="text-sub" font-size="6.8">IDENTITY INTELLIGENCE</text>
+
+  <!-- Corner forensic brackets -->
+  <path d="M 20 10 L 10 10 L 10 20" fill="none" stroke="#1a1464" stroke-width="1" stroke-opacity="0.3"/>
+  <path d="M 280 10 L 290 10 L 290 20" fill="none" stroke="#1a1464" stroke-width="1" stroke-opacity="0.3"/>
+  <path d="M 20 190 L 10 190 L 10 180" fill="none" stroke="#1a1464" stroke-width="1" stroke-opacity="0.3"/>
+  <path d="M 280 190 L 290 190 L 290 180" fill="none" stroke="#1a1464" stroke-width="1" stroke-opacity="0.3"/>
+</svg>

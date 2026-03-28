@@ -71,10 +71,10 @@ export function LandingBuilder() {
                 built by{" "}
                 <span className={css({ fontWeight: "bold" })}>vadim nicolai</span>
                 {" "}&mdash; an AI engineer who got tired of paying $10K+/year for
-                cloud CRMs that don&apos;t understand his ICP. this pipeline runs
-                entirely local: RL crawling, BERT extraction, ensemble scoring,
-                and LLM-generated reports &mdash; all on a single machine with a
-                15 GB footprint.
+                cloud CRMs that don&apos;t understand his ICP. agentic lead gen
+                deploys autonomous AI agents that crawl, extract, score, and
+                enrich B2B prospects end-to-end &mdash; no manual steps, no
+                babysitting, just agents working 24/7 on your pipeline.
               </p>
               <div
                 className={flex({
@@ -95,7 +95,7 @@ export function LandingBuilder() {
                   backed by 35 cited papers since 2023
                 </span>
                 <a
-                  href="https://github.com/nicolad/lead-gen"
+                  href="https://github.com/nicolad/agentic-lead-gen"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={flex({

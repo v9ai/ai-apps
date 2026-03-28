@@ -1,119 +1,170 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" width="360" height="220">
+  <title>Agentic Lead Gen</title>
   <defs>
+    <!-- Core gradients -->
     <linearGradient id="crownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#7B2FBE;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#5B1F8E;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#8B3FD0;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#6B25A8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4A1080;stop-opacity:1" />
     </linearGradient>
     <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#F0C040;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#F5D060;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#C89020;stop-opacity:1" />
     </linearGradient>
     <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#FFD966;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#C8950A;stop-opacity:1" />
     </linearGradient>
-    <filter id="nodeglow">
-      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+    <linearGradient id="orbitalGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#F5D060;stop-opacity:0" />
+      <stop offset="50%" style="stop-color:#F5D060;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#F5D060;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B3FD0;stop-opacity:0.15" />
+      <stop offset="100%" style="stop-color:#8B3FD0;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5A1894;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3A0A64;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="nodeglow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
       <feMerge>
         <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    <filter id="crownShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#4A1080" flood-opacity="0.25"/>
+    </filter>
+    <filter id="centralGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="6" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
+  <!-- Subtle radial glow behind crown -->
+  <ellipse cx="180" cy="72" rx="80" ry="40" fill="url(#glowGrad)" />
+
+  <!-- Orbital arcs (agent autonomy motif) -->
+  <ellipse cx="180" cy="75" rx="95" ry="18" fill="none" stroke="url(#orbitalGrad)" stroke-width="0.6" transform="rotate(-8, 180, 75)" />
+  <ellipse cx="180" cy="75" rx="105" ry="22" fill="none" stroke="url(#orbitalGrad)" stroke-width="0.4" transform="rotate(5, 180, 75)" />
+
   <!-- Crown body fill -->
-  <polygon points="88,98 88,64 106,76 124,52 124,76 150,46 176,76 176,52 194,76 212,64 212,98"
-           fill="url(#crownGrad)" />
+  <polygon points="118,100 118,68 134,78 150,56 150,78 180,46 210,78 210,56 226,78 242,68 242,100"
+           fill="url(#crownGrad)" filter="url(#crownShadow)" />
 
   <!-- Crown outline stroke -->
-  <polygon points="88,98 88,64 106,76 124,52 124,76 150,46 176,76 176,52 194,76 212,64 212,98"
-           fill="none" stroke="url(#goldGrad)" stroke-width="1.2" stroke-linejoin="round" />
+  <polygon points="118,100 118,68 134,78 150,56 150,78 180,46 210,78 210,56 226,78 242,68 242,100"
+           fill="none" stroke="url(#goldGrad)" stroke-width="1.4" stroke-linejoin="round" />
 
   <!-- Crown base band -->
-  <rect x="88" y="86" width="124" height="12" rx="2" fill="url(#crownGrad)" />
+  <rect x="118" y="88" width="124" height="12" rx="2" fill="url(#crownGrad)" />
 
   <!-- Connector lines (data network edges) -->
-  <line x1="88" y1="64" x2="124" y2="52" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.6"/>
-  <line x1="124" y1="52" x2="150" y2="46" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.6"/>
-  <line x1="150" y1="46" x2="176" y2="52" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.6"/>
-  <line x1="176" y1="52" x2="212" y2="64" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.6"/>
-  <line x1="106" y1="76" x2="124" y2="52" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.5"/>
-  <line x1="106" y1="76" x2="88" y2="64" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.5"/>
-  <line x1="194" y1="76" x2="176" y2="52" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.5"/>
-  <line x1="194" y1="76" x2="212" y2="64" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.5"/>
-  <line x1="124" y1="76" x2="150" y2="46" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.4"/>
-  <line x1="176" y1="76" x2="150" y2="46" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.4"/>
+  <line x1="118" y1="68" x2="150" y2="56" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.55"/>
+  <line x1="150" y1="56" x2="180" y2="46" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.55"/>
+  <line x1="180" y1="46" x2="210" y2="56" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.55"/>
+  <line x1="210" y1="56" x2="242" y2="68" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.55"/>
+  <line x1="134" y1="78" x2="150" y2="56" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.45"/>
+  <line x1="134" y1="78" x2="118" y2="68" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.45"/>
+  <line x1="226" y1="78" x2="210" y2="56" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.45"/>
+  <line x1="226" y1="78" x2="242" y2="68" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.45"/>
+  <line x1="150" y1="78" x2="180" y2="46" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.35"/>
+  <line x1="210" y1="78" x2="180" y2="46" stroke="url(#goldGrad)" stroke-width="0.7" opacity="0.35"/>
+
+  <!-- Extra cross-links for richer network feel -->
+  <line x1="118" y1="68" x2="180" y2="46" stroke="url(#goldGrad)" stroke-width="0.4" opacity="0.2"/>
+  <line x1="242" y1="68" x2="180" y2="46" stroke="url(#goldGrad)" stroke-width="0.4" opacity="0.2"/>
+  <line x1="134" y1="78" x2="226" y2="78" stroke="url(#goldGrad)" stroke-width="0.3" opacity="0.15"/>
 
   <!-- Data node dots at crown points -->
-  <circle cx="88" cy="64" r="4" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
-  <circle cx="88" cy="64" r="2" fill="#FFE082"/>
+  <circle cx="118" cy="68" r="4" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
+  <circle cx="118" cy="68" r="2" fill="#FFE082"/>
 
-  <circle cx="106" cy="76" r="3.5" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
-  <circle cx="106" cy="76" r="1.8" fill="#FFE082"/>
+  <circle cx="134" cy="78" r="3.5" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
+  <circle cx="134" cy="78" r="1.8" fill="#FFE082"/>
 
-  <circle cx="124" cy="52" r="4.5" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
-  <circle cx="124" cy="52" r="2.2" fill="#FFFDE7"/>
+  <circle cx="150" cy="56" r="4.5" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
+  <circle cx="150" cy="56" r="2.2" fill="#FFFDE7"/>
 
-  <circle cx="124" cy="76" r="3" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
-  <circle cx="124" cy="76" r="1.5" fill="#FFE082"/>
+  <circle cx="150" cy="78" r="3" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
+  <circle cx="150" cy="78" r="1.5" fill="#FFE082"/>
 
-  <circle cx="150" cy="46" r="5.5" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
-  <circle cx="150" cy="46" r="2.8" fill="#FFFDE7"/>
+  <!-- Central apex node (larger, more prominent) -->
+  <circle cx="180" cy="46" r="6" fill="url(#nodeGrad)" filter="url(#centralGlow)"/>
+  <circle cx="180" cy="46" r="3" fill="#FFFDE7"/>
 
-  <circle cx="176" cy="76" r="3" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
-  <circle cx="176" cy="76" r="1.5" fill="#FFE082"/>
+  <circle cx="210" cy="78" r="3" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
+  <circle cx="210" cy="78" r="1.5" fill="#FFE082"/>
 
-  <circle cx="176" cy="52" r="4.5" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
-  <circle cx="176" cy="52" r="2.2" fill="#FFFDE7"/>
+  <circle cx="210" cy="56" r="4.5" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
+  <circle cx="210" cy="56" r="2.2" fill="#FFFDE7"/>
 
-  <circle cx="194" cy="76" r="3.5" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
-  <circle cx="194" cy="76" r="1.8" fill="#FFE082"/>
+  <circle cx="226" cy="78" r="3.5" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
+  <circle cx="226" cy="78" r="1.8" fill="#FFE082"/>
 
-  <circle cx="212" cy="64" r="4" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
-  <circle cx="212" cy="64" r="2" fill="#FFE082"/>
+  <circle cx="242" cy="68" r="4" fill="url(#nodeGrad)" filter="url(#nodeglow)"/>
+  <circle cx="242" cy="68" r="2" fill="#FFE082"/>
 
   <!-- Gold accent line below crown base -->
-  <rect x="88" y="98" width="124" height="2" rx="1" fill="url(#goldGrad)" opacity="0.9"/>
+  <rect x="118" y="100" width="124" height="2" rx="1" fill="url(#goldGrad)" opacity="0.9"/>
 
   <!-- Thin decorative rule above wordmark -->
-  <line x1="106" y1="116" x2="194" y2="116" stroke="url(#goldGrad)" stroke-width="0.6" opacity="0.7"/>
+  <line x1="136" y1="118" x2="224" y2="118" stroke="url(#goldGrad)" stroke-width="0.6" opacity="0.6"/>
 
   <!-- Wordmark: AGENTIC LEAD GEN -->
   <text
-    x="150"
-    y="134"
+    x="180"
+    y="138"
     text-anchor="middle"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="14.5"
+    font-size="17"
     font-weight="700"
-    letter-spacing="4"
-    fill="#4A1080"
+    letter-spacing="5"
+    fill="url(#textGrad)"
   >AGENTIC</text>
 
   <text
-    x="150"
-    y="151"
+    x="180"
+    y="157"
     text-anchor="middle"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="14.5"
+    font-size="15"
     font-weight="700"
-    letter-spacing="4"
-    fill="#4A1080"
+    letter-spacing="6"
+    fill="url(#textGrad)"
   >LEAD GEN</text>
 
   <!-- Gold underline rule below wordmark -->
-  <line x1="100" y1="158" x2="200" y2="158" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.8"/>
+  <line x1="126" y1="165" x2="234" y2="165" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.7"/>
+
+  <!-- Small diamond accent at center of underline -->
+  <polygon points="180,162.5 182.5,165 180,167.5 177.5,165" fill="url(#goldGrad)" opacity="0.8"/>
 
   <!-- Tagline -->
   <text
-    x="150"
-    y="171"
+    x="180"
+    y="180"
     text-anchor="middle"
     font-family="Georgia, 'Times New Roman', serif"
     font-size="6.5"
     font-weight="400"
-    letter-spacing="2.5"
+    letter-spacing="3"
     fill="#9B59B6"
-    opacity="0.85"
-  >PRECISION INTELLIGENCE</text>
+    opacity="0.8"
+  >AUTONOMOUS B2B INTELLIGENCE</text>
+
+  <!-- Subtle bottom decorative dots -->
+  <circle cx="152" cy="190" r="1" fill="#C89020" opacity="0.3"/>
+  <circle cx="165" cy="190" r="0.8" fill="#C89020" opacity="0.25"/>
+  <circle cx="180" cy="190" r="1.2" fill="#C89020" opacity="0.35"/>
+  <circle cx="195" cy="190" r="0.8" fill="#C89020" opacity="0.25"/>
+  <circle cx="208" cy="190" r="1" fill="#C89020" opacity="0.3"/>
 </svg>
