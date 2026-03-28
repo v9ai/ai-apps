@@ -15,6 +15,7 @@ import { EatGuide } from "./sections/EatGuide";
 import { TransportGuide } from "./sections/TransportGuide";
 import { PompeiiGuide } from "./sections/PompeiiGuide";
 import { TripSummary } from "./sections/TripSummary";
+import { FamilyBudget } from "@/components/FamilyBudget";
 
 const T = {
   ro: {
@@ -878,6 +879,45 @@ export function NapoliPageContent() {
               ))}
             </ul>
           </div>
+        </section>
+
+        {/* ── Traveling with a Child ──────────────────────── */}
+        <section className={css({ maxW: "5xl", mx: "auto", mb: { base: "16", md: "20" }, animation: "fadeUp 0.6s ease-out 0.225s both" })}>
+          <div className={css({ display: "flex", alignItems: "baseline", gap: "4", mb: "8" })}>
+            <h2 className={css({ fontSize: "h2", fontWeight: "700", fontFamily: "display", color: "text.primary", letterSpacing: "h2", lineHeight: "h2" })}>
+              {t.familyTitle}
+            </h2>
+            <span className={css({ flex: "1", height: "1px", bg: "steel.border", display: { base: "none", md: "block" } })} />
+          </div>
+          <p className={css({ fontSize: "body", color: "text.secondary", lineHeight: "body", mb: "8" })}>
+            {t.familySubtitle}
+          </p>
+
+          {/* ML Score overview cards */}
+          <div className={css({ display: "grid", gap: { base: "3", md: "4" }, gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, mb: "8" })}>
+            {places
+              .filter((place) => place.family_score !== undefined)
+              .sort((a, b) => (b.family_score ?? 0) - (a.family_score ?? 0))
+              .slice(0, 5)
+              .map((place) => (
+                <div key={place.name} className={css({ bg: "steel.surface", border: "1px solid", borderColor: "steel.border", rounded: "card", p: "4", boxShadow: "card" })}>
+                  <p className={css({ fontSize: "label", fontWeight: "700", fontFamily: "display", color: "text.primary", mb: "2" })}>{place.name}</p>
+                  {/* Score bar */}
+                  <div className={css({ h: "2px", bg: "steel.border", rounded: "full", mb: "2", overflow: "hidden" })}>
+                    <div className={css({ h: "full", bg: "amber.warm", rounded: "full" })} style={{ width: `${(place.family_score ?? 0) * 100}%` }} />
+                  </div>
+                  <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center" })}>
+                    <span className={css({ fontSize: "xs", color: place.kid_friendly ? "amber.warm" : "text.faint" })}>
+                      {place.kid_friendly ? `◆ ${t.kidFriendly}` : `◇ ${lang === "ro" ? "Adulți recomandat" : "Adults recommended"}`}
+                    </span>
+                    <span className={css({ fontSize: "meta", fontWeight: "700", fontFamily: "display", color: "text.muted", fontVariantNumeric: "tabular-nums" })}>
+                      {t.mlScore}: {place.family_score?.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+          </div>
+
         </section>
 
         {/* ── Places ────────────────────────────────────────── */}

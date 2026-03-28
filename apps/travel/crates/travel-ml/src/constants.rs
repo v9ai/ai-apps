@@ -120,6 +120,47 @@ pub const FAMILY_ANCHORS: [&str; 3] = [
     "educational interactive experience for kids and families",
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════
+// NAPOLI BUDGET & TRIP CONSTANTS — 2 adults + 1 kid, 7 nights, €1 000
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Total family trip budget in euros.
+pub const FAMILY_BUDGET_EUR: f32 = 1_000.0;
+
+/// Target stay duration in nights.
+pub const STAY_DAYS: u8 = 7;
+
+/// Minimum acceptable stay duration in nights.
+pub const STAY_DAYS_MIN: u8 = 6;
+
+/// Nightly hotel budget (family room, 3-star B&B, Naples Centro Storico).
+pub const DAILY_HOTEL_EUR: f32 = 80.0;
+
+/// Daily food budget for the whole family (street food, pizza, markets).
+/// €30/day covers espresso + cornetto × 3 + pizza × 3 + gelato × 3.
+pub const DAILY_FOOD_EUR: f32 = 30.0;
+
+/// Total sightseeing / ticketed-entry budget for the trip.
+/// Covers: Museo Arch €30 + Sotterranea €20 + Certosa €12 + Pompeii €33.
+pub const ACTIVITIES_BUDGET_EUR: f32 = 95.0;
+
+/// Transport budget for the trip.
+/// Covers: metro/bus artecard × 3 + funicular × 3 + Circumvesuviana Pompeii × 3.
+pub const TRANSPORT_BUDGET_EUR: f32 = 65.0;
+
+/// Buffer budget (gelato extras, incidentals, artisan souvenirs).
+/// Total = DAILY_HOTEL_EUR×STAY_DAYS + DAILY_FOOD_EUR×STAY_DAYS
+///       + ACTIVITIES_BUDGET_EUR + TRANSPORT_BUDGET_EUR + BUFFER_EUR
+///     = 560 + 210 + 95 + 65 + 70 = 1_000.
+pub const BUFFER_EUR: f32 = 70.0;
+
+/// Maximum places a family with a young child visits in one day
+/// before fatigue impacts enjoyment.
+pub const MAX_KID_PLACES_PER_DAY: u8 = 3;
+
+/// Maximum comfortable walking hours per day with a young child.
+pub const MAX_DAILY_WALKING_HOURS: f32 = 7.0;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -155,6 +196,35 @@ mod tests {
             MAX_REVIEWS_NEW_HOTEL <= 200,
             "MAX_REVIEWS_NEW_HOTEL ({MAX_REVIEWS_NEW_HOTEL}) seems too high — \
              a genuinely new hotel cannot have hundreds of reviews"
+        );
+    }
+
+    #[test]
+    fn family_budget_adds_up() {
+        let computed = DAILY_HOTEL_EUR * STAY_DAYS as f32
+            + DAILY_FOOD_EUR * STAY_DAYS as f32
+            + ACTIVITIES_BUDGET_EUR
+            + TRANSPORT_BUDGET_EUR
+            + BUFFER_EUR;
+        assert!(
+            (computed - FAMILY_BUDGET_EUR).abs() < 1.0,
+            "budget constants don't sum to FAMILY_BUDGET_EUR: {computed} ≠ {FAMILY_BUDGET_EUR}"
+        );
+    }
+
+    #[test]
+    fn stay_days_min_lte_stay_days() {
+        assert!(
+            STAY_DAYS_MIN <= STAY_DAYS,
+            "STAY_DAYS_MIN ({STAY_DAYS_MIN}) must not exceed STAY_DAYS ({STAY_DAYS})"
+        );
+    }
+
+    #[test]
+    fn kid_friendly_threshold_in_range() {
+        assert!(
+            KID_FRIENDLY_THRESHOLD > 0.0 && KID_FRIENDLY_THRESHOLD < 1.0,
+            "KID_FRIENDLY_THRESHOLD must be in (0,1)"
         );
     }
 }

@@ -90,6 +90,8 @@ enum Cmd {
     },
     /// Score Napoli places for family/kid-friendliness using Candle embeddings
     FamilyScore,
+    /// Generate Napoli family budget plan and 7-day itinerary (no ML model needed)
+    NapoliBudget,
 }
 
 #[tokio::main]
@@ -121,6 +123,29 @@ async fn main() -> Result<()> {
             let device = candle_core::Device::Cpu;
             let report = generate_napoli_family_report(device)?;
             print_report(&report);
+        }
+        Cmd::NapoliBudget => {
+            use travel_ml::budget::allocate_family_budget;
+            use travel_ml::itinerary::napoli_family_7day_plan;
+            let budget = allocate_family_budget();
+            let itinerary = napoli_family_7day_plan();
+            println!("=== Napoli Family Budget Plan (2 Adults + 1 Kid, {} nights, €{:.0}) ===",
+                budget.stay_days, budget.breakdown.total_eur);
+            println!("{}", serde_json::to_string_pretty(&budget).unwrap());
+            println!("=== 7-Day Itinerary ({} days, {} places) ===",
+                itinerary.total_days, itinerary.total_places);
+            println!("{}", serde_json::to_string_pretty(&serde_json::json!({
+                "total_days": itinerary.total_days,
+                "total_places": itinerary.total_places,
+                "kid_friendly_days": itinerary.kid_friendly_days,
+                "days": itinerary.days.iter().enumerate().map(|(i, d)| serde_json::json!({
+                    "day": i + 1,
+                    "places": d.sequence,
+                    "total_min": d.total_min,
+                    "energy_used": d.energy_used,
+                    "kid_max_hit": d.kid_max_hit,
+                })).collect::<Vec<_>>()
+            })).unwrap());
         }
     }
 

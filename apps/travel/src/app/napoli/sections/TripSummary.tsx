@@ -251,7 +251,6 @@ export function TripSummary() {
                 <span
                   className={css({
                     flexShrink: "0",
-                    mt: "0.5",
                     w: "1",
                     h: "1",
                     minW: "6px",

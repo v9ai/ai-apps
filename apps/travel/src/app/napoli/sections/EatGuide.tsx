@@ -11,7 +11,7 @@ const T = {
     priceRef: "Referință prețuri",
     dailyStrategy: "Strategie zilnică",
     recommended: "RECOMANDAT",
-    budgetTarget: "€180 din €1.000 = €36/zi pentru 5 zile. Realizabil pe strategia „echilibrată".",
+    budgetTarget: "€180 din €1.000 = €36/zi pentru 5 zile. Realizabil pe strategia echilibrata.",
     etiquetteTitle: "Eticheta cafelei napolitane",
     etiquetteBody:
       "Bea întotdeauna espresso-ul stând la bar. A sta pe scaun costă de 2–3 ori mai mult. Espresso-ul din Napoli este cel mai bun din Italia — nu e un sacrificiu.",

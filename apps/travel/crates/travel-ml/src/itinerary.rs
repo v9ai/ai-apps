@@ -395,3 +395,110 @@ pub fn napoli_family_plan() -> FamilyDayPlan {
 
     plan_family_day(&places, &KidFatigueModel::default(), 8.0)
 }
+
+/// Greedy nearest-neighbour single-day plan for the canonical Napoli place set.
+///
+/// Returns a lightweight [`DayPlan`] (sequence + totals only) suitable for
+/// backwards-compatible embedding in [`crate::napoli_scorer::NapoliReport`].
+/// For the richer time-blocked schedule use [`napoli_family_plan`].
+pub fn napoli_simple_day_plan() -> DayPlan {
+    use crate::constants::MAX_DAILY_WALKING_HOURS;
+    plan_day(&napoli_all_places(), MAX_DAILY_WALKING_HOURS)
+}
+
+// ── Multi-day planning ────────────────────────────────────────────────────
+
+use crate::constants::{
+    KID_ENERGY_LIMIT, MAX_DAILY_WALKING_HOURS, MAX_KID_PLACES_PER_DAY, STAY_DAYS,
+};
+
+/// A plan spanning multiple days, each modelled as a [`DayPlan`].
+#[derive(Serialize)]
+pub struct MultiDayPlan {
+    /// Day-by-day sequence plans.
+    pub days: Vec<DayPlan>,
+    /// Total number of days planned.
+    pub total_days: u8,
+    /// Total unique places across all days.
+    pub total_places: usize,
+    /// Days where kid energy limit was not hit.
+    pub kid_friendly_days: u8,
+}
+
+/// Partition `places` across `num_days` days using a greedy energy-first
+/// strategy.
+///
+/// Algorithm:
+/// 1. Sort remaining places by `kid_friendly` DESC, then `energy_cost` ASC.
+/// 2. Fill each day greedily up to `KID_ENERGY_LIMIT` and
+///    `MAX_KID_PLACES_PER_DAY` stops.
+/// 3. Remaining places spill to the next day.
+pub fn plan_multi_day(places: &[PlaceNode], num_days: u8) -> MultiDayPlan {
+    let mut remaining: Vec<&PlaceNode> = places.iter().collect();
+    let mut days: Vec<DayPlan> = Vec::new();
+
+    for _ in 0..num_days {
+        if remaining.is_empty() {
+            break;
+        }
+
+        // Prefer kid-friendly and low-energy places first
+        remaining.sort_by(|a, b| {
+            b.kid_friendly
+                .cmp(&a.kid_friendly)
+                .then(a.energy_cost.partial_cmp(&b.energy_cost).unwrap_or(std::cmp::Ordering::Equal))
+        });
+
+        let cap = MAX_KID_PLACES_PER_DAY as usize;
+        let batch: Vec<PlaceNode> = remaining
+            .iter()
+            .take(cap.min(remaining.len()))
+            .map(|&n| n.clone())
+            .collect();
+
+        let day = plan_day(&batch, MAX_DAILY_WALKING_HOURS);
+        let used: std::collections::HashSet<&str> =
+            day.sequence.iter().map(|s| s.as_str()).collect();
+        remaining.retain(|n| !used.contains(n.name.as_str()));
+        days.push(day);
+    }
+
+    let kid_friendly_days = days.iter().filter(|d| !d.kid_max_hit).count() as u8;
+    let total_places = days.iter().map(|d| d.sequence.len()).sum();
+
+    MultiDayPlan {
+        total_days: days.len() as u8,
+        days,
+        total_places,
+        kid_friendly_days,
+    }
+}
+
+/// Canonical 7-day Napoli family plan using the full place dataset.
+pub fn napoli_family_7day_plan() -> MultiDayPlan {
+    plan_multi_day(&napoli_all_places(), STAY_DAYS)
+}
+
+/// Full Naples place dataset for multi-day planning.
+///
+/// Extends the single-day dataset with Pompeii (day trip) and
+/// Certosa di San Martino.
+fn napoli_all_places() -> Vec<PlaceNode> {
+    vec![
+        // kid-friendly cluster (waterfront)
+        PlaceNode { name: "Piazza del Plebiscito".into(),    lat: 40.8358, lng: 14.2487, duration_min: 45,  energy_cost: 0.2, kid_friendly: true  },
+        PlaceNode { name: "Castel dell'Ovo".into(),          lat: 40.8300, lng: 14.2462, duration_min: 60,  energy_cost: 0.3, kid_friendly: true  },
+        PlaceNode { name: "Lungomare Caracciolo".into(),      lat: 40.8302, lng: 14.2421, duration_min: 60,  energy_cost: 0.4, kid_friendly: true  },
+        // kid-friendly cluster (centro storico)
+        PlaceNode { name: "L'Antica Pizzeria da Michele".into(), lat: 40.8512, lng: 14.2618, duration_min: 45, energy_cost: 0.1, kid_friendly: true },
+        PlaceNode { name: "Via San Gregorio Armeno".into(),  lat: 40.8501, lng: 14.2572, duration_min: 40,  energy_cost: 0.2, kid_friendly: true  },
+        PlaceNode { name: "Spaccanapoli".into(),              lat: 40.8499, lng: 14.2531, duration_min: 90,  energy_cost: 0.5, kid_friendly: true  },
+        // day-trip (kid-friendly, high energy — place on day 6)
+        PlaceNode { name: "Pompeii".into(),                  lat: 40.7498, lng: 14.4862, duration_min: 240, energy_cost: 1.5, kid_friendly: true  },
+        // adult-primary places
+        PlaceNode { name: "Museo Archeologico Nazionale".into(), lat: 40.8531, lng: 14.2498, duration_min: 120, energy_cost: 0.7, kid_friendly: false },
+        PlaceNode { name: "Napoli Sotterranea".into(),        lat: 40.8506, lng: 14.2554, duration_min: 100, energy_cost: 0.8, kid_friendly: false },
+        PlaceNode { name: "Certosa di San Martino".into(),    lat: 40.8397, lng: 14.2344, duration_min: 120, energy_cost: 0.6, kid_friendly: false },
+        PlaceNode { name: "Quartieri Spagnoli".into(),        lat: 40.8392, lng: 14.2461, duration_min: 75,  energy_cost: 0.4, kid_friendly: false },
+    ]
+}
