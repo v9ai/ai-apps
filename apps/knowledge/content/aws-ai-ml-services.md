@@ -890,7 +890,7 @@ recommendations = [r["itemId"] for r in response["itemList"]]
 
 ## 13. AI/ML Integration Patterns
 
-### Pattern 1: Event-Driven ML Pipeline (S3 → Lambda → SageMaker → DynamoDB)
+### Pattern 1: Event-Driven ML Pipeline ([S3](/aws-storage-s3) → [Lambda](/aws-lambda-serverless) → SageMaker → [DynamoDB](/dynamodb-data-services))
 
 The canonical serverless ML inference pipeline for processing uploaded documents or images.
 
@@ -951,9 +951,9 @@ def handler(event, context):
         )
 ```
 
-**Production hardening**: Add SQS between S3 events and Lambda for backpressure. Use DLQ for failed Lambda invocations. Enable Lambda concurrency limits to avoid overwhelming the SageMaker endpoint. Use Step Functions instead of Lambda for complex multi-step workflows with error handling.
+**Production hardening**: Add SQS between [S3](/aws-storage-s3) events and [Lambda](/aws-lambda-serverless) for backpressure. Use DLQ for failed Lambda invocations. Enable Lambda concurrency limits to avoid overwhelming the SageMaker endpoint. Use Step Functions instead of Lambda for complex multi-step workflows with error handling. For [networking and API Gateway](/aws-api-gateway-networking) in front of this pipeline, see the dedicated article.
 
-### Pattern 2: RAG with Bedrock Knowledge Bases
+### Pattern 2: [RAG](/advanced-rag) with Bedrock Knowledge Bases
 
 The recommended managed RAG pattern on AWS when you want minimal infrastructure overhead.
 
