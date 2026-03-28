@@ -7,6 +7,7 @@ pub mod family_score;
 pub mod hotel;
 pub mod itinerary;
 pub mod napoli_scorer;
+pub mod price_check;
 pub mod reviews;
 pub mod scraper;
 pub mod store;

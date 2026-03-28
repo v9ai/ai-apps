@@ -15,6 +15,7 @@ import { EatGuide } from "./sections/EatGuide";
 import { TransportGuide } from "./sections/TransportGuide";
 import { PompeiiGuide } from "./sections/PompeiiGuide";
 import { TripSummary } from "./sections/TripSummary";
+import { PriceCheck } from "./sections/PriceCheck";
 
 const T = {
   ro: {
@@ -526,6 +527,9 @@ export function NapoliPageContent() {
           {/* Budget tips */}
           <TripSummary />
         </section>
+
+        {/* ── Price Check ─────────────────────────────────── */}
+        <PriceCheck />
 
         {/* ── Family Section ──────────────────────────────── */}
         <section
