@@ -14,7 +14,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Infrastructure as Code (IaC)**
 - CloudFormation: AWS-native, stateful stacks, drift detection, changesets for preview before apply
-- CDK: synthesizes to CloudFormation; use constructs library for reusable patterns
+- CDK: synthesizes to CloudFormation; use constructs library for reusable patterns — see [CI/CD & DevOps](/aws-cicd-devops) for full CDK/CodePipeline coverage
 - Terraform: cloud-agnostic, state file in S3+DynamoDB lock, better multi-account/multi-cloud
 - Best practice: store all infra in git, require PR review, run `cfn-lint` / `terraform validate` in CI
 
@@ -33,7 +33,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Safe Deployments**
 - Blue/Green: maintain two identical environments; switch traffic via ELB or Route 53; instant rollback
-- Canary: route small % of traffic to new version (CodeDeploy canary, Lambda weighted aliases, ECS service deployment circuit breaker)
+- Canary: route small % of traffic to new version ([CodeDeploy](/aws-cicd-devops) canary, [Lambda](/aws-lambda-serverless) weighted aliases, [ECS](/aws-compute-containers) service deployment circuit breaker)
 - Feature flags: decouple deploy from release; CloudWatch Evidently for A/B and feature flags
 - Deployment validation: pre-traffic and post-traffic hooks in CodeDeploy (Lambda), health checks in ECS
 
@@ -43,7 +43,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Design Principles:** Strong identity foundation, traceability, apply security at all layers, automate security, protect data in transit and at rest, keep people away from data, prepare for security events.
 
-**Identity & Access Management**
+**Identity & Access Management** — see [IAM & Security](/aws-iam-security) for full deep-dive
 - Root account: lock it, enable MFA, delete access keys — never use for daily work
 - IAM users: only for humans without SSO; prefer IAM Identity Center (SSO) for people
 - IAM roles: for services (EC2 instance profile, Lambda execution role, ECS task role) and cross-account access

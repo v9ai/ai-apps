@@ -10,7 +10,7 @@ AWS offers the most comprehensive managed AI/ML portfolio in the cloud, spanning
 
 ### What It Is
 
-Bedrock is AWS's fully managed foundation model (FM) service. It provides API access to third-party and Amazon-native FMs without requiring model hosting infrastructure. Think of it as a router to the best available FMs, wrapped in AWS IAM, VPC, and compliance controls.
+Bedrock is AWS's fully managed foundation model (FM) service. It provides API access to third-party and Amazon-native FMs without requiring model hosting infrastructure. Think of it as a router to the best available FMs, wrapped in [AWS IAM](/aws-iam-security), VPC, and compliance controls.
 
 ### Foundation Models Available
 

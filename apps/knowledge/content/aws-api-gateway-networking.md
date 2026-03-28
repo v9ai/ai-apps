@@ -2,7 +2,7 @@
 
 ## The 30-Second Pitch
 
-AWS API Gateway is a fully managed service that acts as the "front door" for backend services—[Lambda](/aws-lambda-serverless), [EC2, ECS](/aws-compute-containers), or any HTTP endpoint—handling request routing, authorization, throttling, and protocol translation at scale. It comes in three flavors: REST API (feature-rich, legacy), HTTP API (low-latency, cheap, the modern default), and WebSocket API (persistent bidirectional connections). Paired with AWS networking primitives—VPC, subnets, security groups, NACLs, NAT Gateways, and Transit Gateway—API Gateway is the backbone of serverless and microservice architectures. In interviews, the ability to articulate when to use REST vs HTTP API, how Lambda authorizers work, and how traffic flows through a VPC from a private subnet out to the internet through a NAT Gateway separates strong candidates from weak ones.
+AWS API Gateway is a fully managed service that acts as the "front door" for backend services—[Lambda](/aws-lambda-serverless), [EC2, ECS](/aws-compute-containers), or any HTTP endpoint—handling request routing, authorization, throttling, and protocol translation at scale. It comes in three flavors: REST API (feature-rich, legacy), HTTP API (low-latency, cheap, the modern default), and WebSocket API (persistent bidirectional connections). Paired with AWS networking primitives—VPC, subnets, security groups, NACLs, NAT Gateways, and Transit Gateway—API Gateway is the backbone of serverless and [microservice](/microservices) architectures. In interviews, the ability to articulate when to use REST vs HTTP API, how Lambda authorizers work, and how traffic flows through a VPC from a private subnet out to the internet through a NAT Gateway separates strong candidates from weak ones.
 
 ## API Gateway Types
 
@@ -31,7 +31,7 @@ AWS API Gateway is a fully managed service that acts as the "front door" for bac
 | Private APIs (VPC) | Yes | Yes | No |
 | WAF integration | Yes | Yes | No |
 | Response caching | Yes | No | No |
-| Edge-optimized (CloudFront) | Yes | No | No |
+| Edge-optimized ([CloudFront](/aws-storage-s3)) | Yes | No | No |
 
 **Decision rule**: Default to **HTTP API** for new Lambda-backed REST workloads. Use **REST API** only if you need usage plans, API keys, VTL mapping templates, mock integrations, or edge optimization. Use **WebSocket API** for chat, live dashboards, multiplayer, or any bidirectional streaming use case.
 
@@ -97,7 +97,7 @@ Forwards the request to any public HTTP endpoint (another service, third-party A
 
 ### AWS Service Integration
 
-Directly invokes AWS service APIs without Lambda as middleware. Example: write to SQS, trigger Step Functions, or put items in DynamoDB directly from API Gateway. Reduces latency and cost by eliminating a Lambda hop.
+Directly invokes AWS service APIs without Lambda as middleware. Example: write to SQS, trigger Step Functions, or put items in [DynamoDB](/dynamodb-data-services) directly from API Gateway. Reduces latency and cost by eliminating a Lambda hop.
 
 ```yaml
 # CloudFormation: API Gateway writing directly to SQS (no Lambda)
@@ -117,7 +117,7 @@ Returns a static response from API Gateway itself — Lambda is never invoked. U
 
 ### Lambda Authorizers
 
-A Lambda function you write that inspects the request and returns an IAM policy document. API Gateway caches the result by the token value (TOKEN type) or full request context (REQUEST type).
+A Lambda function you write that inspects the request and returns an [IAM](/aws-iam-security) policy document. API Gateway caches the result by the token value (TOKEN type) or full request context (REQUEST type).
 
 **TOKEN authorizer**: receives only the Authorization header value. Used for bearer tokens (JWT, OAuth, custom tokens).
 
@@ -189,7 +189,7 @@ Auth:
 
 ### IAM Authorization (SigV4)
 
-The request must be signed with AWS Signature Version 4. The caller needs an IAM identity (user, role) with `execute-api:Invoke` permission on the API resource. Used for service-to-service calls within AWS, or CLI/SDK access.
+The request must be signed with AWS Signature Version 4. The caller needs an [IAM](/aws-iam-security) identity (user, role) with `execute-api:Invoke` permission on the API resource. Used for service-to-service calls within AWS, or CLI/SDK access.
 
 ```bash
 # Calling an IAM-protected API with awscurl
@@ -806,7 +806,7 @@ A managed service in a public subnet that allows private subnet resources to ini
 
 Allow private connectivity to AWS services without internet routing. Two types:
 
-**Gateway Endpoint** (free): S3 and DynamoDB only. A route is added to the route table pointing to the endpoint.
+**Gateway Endpoint** (free): [S3](/aws-storage-s3) and DynamoDB only. A route is added to the route table pointing to the endpoint.
 
 **Interface Endpoint** (PrivateLink, ~$0.01/hour/AZ): Creates an ENI in your subnet with a private IP. Works for most AWS services (SQS, SNS, Secrets Manager, API Gateway, etc.).
 
