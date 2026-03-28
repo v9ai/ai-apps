@@ -60,7 +60,7 @@ export function LandingFooter() {
               className={flex({ align: "center", gap: "2", mb: "3" })}
               style={{ textDecoration: "none" }}
             >
-              <Image src="/logo.svg" alt="Agentic Lead Gen" width={100} height={22} />
+              <Image src="/logo.svg" alt="Crystal Prism" width={100} height={22} />
             </Link>
             <p
               className={css({
