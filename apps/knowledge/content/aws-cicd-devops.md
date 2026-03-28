@@ -1069,7 +1069,7 @@ Hooks:
 - **ALB weighted target groups**: Two target groups with weighted forwarding.
 - **[Lambda](/aws/lambda-serverless) aliases**: `aws lambda update-alias --routing-config AdditionalVersionWeights='{"2": 0.05}'`
 - **CodeDeploy**: `LambdaCanary10Percent5Minutes` configs.
-- **[API Gateway](/aws-api-gateway-networking) canary**: Built-in stage canary feature.
+- **[API Gateway](/aws/api-gateway-networking) canary**: Built-in stage canary feature.
 
 ### Rolling
 **Mechanism**: Update a fraction of instances/tasks at a time. At any point, some instances run old version and some run new. No extra infrastructure cost, but requires backward compatibility during transition.

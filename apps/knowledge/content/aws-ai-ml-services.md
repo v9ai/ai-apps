@@ -308,7 +308,7 @@ pipeline.start()
 
 ### Feature Store
 
-A managed repository for ML features with both online (low-latency, [DynamoDB](/dynamodb-data-services)-backed) and offline ([S3](/aws/storage-s3)/Glue-catalogued) stores. Guarantees point-in-time correctness to prevent training/serving skew.
+A managed repository for ML features with both online (low-latency, [DynamoDB](/aws/dynamodb-data-services)-backed) and offline ([S3](/aws/storage-s3)/Glue-catalogued) stores. Guarantees point-in-time correctness to prevent training/serving skew.
 
 **Key concepts**:
 - **Feature Group**: A collection of features (like a table). Has a record identifier and an event time.
@@ -890,7 +890,7 @@ recommendations = [r["itemId"] for r in response["itemList"]]
 
 ## 13. AI/ML Integration Patterns
 
-### Pattern 1: Event-Driven ML Pipeline ([S3](/aws/storage-s3) → [Lambda](/aws/lambda-serverless) → SageMaker → [DynamoDB](/dynamodb-data-services))
+### Pattern 1: Event-Driven ML Pipeline ([S3](/aws/storage-s3) → [Lambda](/aws/lambda-serverless) → SageMaker → [DynamoDB](/aws/dynamodb-data-services))
 
 The canonical serverless ML inference pipeline for processing uploaded documents or images.
 
@@ -1150,7 +1150,7 @@ def handler(event, context):
 
 **Q: How would you architect a real-time fraud detection system processing 10,000 transactions per second?**
 
-**A:** Ingest via Kinesis Data Streams (multiple shards for parallelism). Kinesis Data Analytics (Flink) performs stateful feature computation—rolling counts, velocity features, time-window aggregations—within a 100ms window. Features are enriched from [DynamoDB](/dynamodb-data-services) (merchant profile, user history from Feature Store). Flink calls a SageMaker real-time endpoint (auto-scaled, multi-AZ behind ELB) for scoring. Results flow to Kinesis Firehose → [S3](/aws/storage-s3) for audit logging and Flink → DynamoDB for the serving layer (card authorization system reads here). Alert high-risk transactions via SNS → [Lambda](/aws/lambda-serverless) for case management. Use SageMaker Model Monitor to detect data drift in the transaction features. Retrain pipeline triggered by EventBridge on a weekly schedule via SageMaker Pipelines.
+**A:** Ingest via Kinesis Data Streams (multiple shards for parallelism). Kinesis Data Analytics (Flink) performs stateful feature computation—rolling counts, velocity features, time-window aggregations—within a 100ms window. Features are enriched from [DynamoDB](/aws/dynamodb-data-services) (merchant profile, user history from Feature Store). Flink calls a SageMaker real-time endpoint (auto-scaled, multi-AZ behind ELB) for scoring. Results flow to Kinesis Firehose → [S3](/aws/storage-s3) for audit logging and Flink → DynamoDB for the serving layer (card authorization system reads here). Alert high-risk transactions via SNS → [Lambda](/aws/lambda-serverless) for case management. Use SageMaker Model Monitor to detect data drift in the transaction features. Retrain pipeline triggered by EventBridge on a weekly schedule via SageMaker Pipelines.
 
 ---
 
@@ -1174,7 +1174,7 @@ def handler(event, context):
 
 **Q: Describe how you would build an end-to-end document processing pipeline for a legal firm that needs to extract clauses from contracts and make them searchable.**
 
-**A:** Ingest: [S3](/aws/storage-s3) bucket (encrypted, versioned) as the document store. Users upload via a pre-signed URL from [API Gateway](/aws/api-gateway-networking) + [Lambda](/aws/lambda-serverless). Process: S3 event triggers a Step Functions workflow. Step 1: Textract `StartDocumentAnalysis` (async, multi-page PDF support). Step 2: Lambda parses Textract output—extracts key-value pairs, tables, and raw text by section. Step 3: Bedrock (Claude) performs clause classification and extraction from raw text (too nuanced for Textract alone). Step 4: Comprehend Custom Entity Recognizer tags legal entities (party names, dates, jurisdiction-specific terms) trained on firm's own contract corpus. Step 5: Store structured results in [DynamoDB](/dynamodb-data-services) (fast lookup by contract ID) and full text + [embeddings](/embeddings) in OpenSearch (semantic search). Search: Kendra or Bedrock KB as the search layer. Bedrock KB for natural language questions ("Which contracts mention arbitration in Delaware?")—backed by [advanced RAG](/advanced-rag) with metadata filtering. Kendra for document-level faceted search (by date, party, contract type). Security: [IAM](/aws/iam-security) and VPC PrivateLink throughout. Attorney-specific access control enforced at the Kendra/Bedrock KB query layer via ACL metadata.
+**A:** Ingest: [S3](/aws/storage-s3) bucket (encrypted, versioned) as the document store. Users upload via a pre-signed URL from [API Gateway](/aws/api-gateway-networking) + [Lambda](/aws/lambda-serverless). Process: S3 event triggers a Step Functions workflow. Step 1: Textract `StartDocumentAnalysis` (async, multi-page PDF support). Step 2: Lambda parses Textract output—extracts key-value pairs, tables, and raw text by section. Step 3: Bedrock (Claude) performs clause classification and extraction from raw text (too nuanced for Textract alone). Step 4: Comprehend Custom Entity Recognizer tags legal entities (party names, dates, jurisdiction-specific terms) trained on firm's own contract corpus. Step 5: Store structured results in [DynamoDB](/aws/dynamodb-data-services) (fast lookup by contract ID) and full text + [embeddings](/embeddings) in OpenSearch (semantic search). Search: Kendra or Bedrock KB as the search layer. Bedrock KB for natural language questions ("Which contracts mention arbitration in Delaware?")—backed by [advanced RAG](/advanced-rag) with metadata filtering. Kendra for document-level faceted search (by date, party, contract type). Security: [IAM](/aws/iam-security) and VPC PrivateLink throughout. Attorney-specific access control enforced at the Kendra/Bedrock KB query layer via ACL metadata.
 
 ---
 

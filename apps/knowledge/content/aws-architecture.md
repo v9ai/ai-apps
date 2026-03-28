@@ -914,4 +914,4 @@ A: Use Spot Instances for compute — nightly batch is fault-tolerant, schedule 
 | S3, CloudFront CDN, EBS, EFS, Glacier | [/aws-storage-s3](/aws/storage-s3) |
 | CI/CD, CodePipeline, CDK, IaC, AWS Backup | [/aws-cicd-devops](/aws/cicd-devops) |
 | DynamoDB, RDS, Aurora, ElastiCache, Redshift | [/dynamodb-data-services](/dynamodb-data-services) |
-| Bedrock, SageMaker, AI/ML services | [/aws-ai-ml-services](/aws-ai-ml-services) |
+| Bedrock, SageMaker, AI/ML services | [/aws-ai-ml-services](/aws/ai-ml-services) |
