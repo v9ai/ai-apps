@@ -726,3 +726,126 @@ Dataset language distribution uses `facebook/fasttext-language-identification` (
 **The gap ScrapeGraphAI does not close:** AXE (2602.01838) achieves comparable F1 (88.10% on SWDE) with a 0.6B model using DOM-tree pruning — no fine-tuning required. Dripper-0.6B outperforms GPT-5 on main-content extraction at 3.08 pages/sec. The small-model fine-tuning bet is correct, but the competition is not standing still.
 
 **Schema compliance is the real bottleneck:** SLOT (2505.04016) shows that compact models match large proprietary models on structured output when equipped with a post-processing layer. ScrapeGraphAI's jump from 79.5%→91.7% schema compliance via completion-only fine-tuning suggests the remaining 8.3% failure rate is schema-complexity-dependent and targetable with harder training examples at the high-complexity tail.
+
+---
+
+## 12. Recency & Changelog
+
+> Researched: 2026-03-28. Data sourced from GitHub API, HuggingFace Hub, arxiv.org, and scrapegraphai.com/blog.
+
+### Latest Release
+
+**v1.75.1** — released 2026-03-24.
+
+Key changes in recent releases (last 90 days):
+
+| Release | Date | Change |
+|---|---|---|
+| v1.75.1 | 2026-03-24 | Bug fix: replace all `print()` calls with `get_logger()` across the codebase (13 call sites fixed); library code no longer writes directly to stdout |
+| v1.75.0 | 2026-03-18 | feat: upgrade MiniMax default model to `M2.7` |
+| v1.74.0 | 2026-03-15 | feat: add MiniMax as a fully supported LLM provider |
+| v1.73.1 | 2026-02-16 | Bug fixes: custom tracing endpoint support; fix list content handling in telemetry event validation; remove client-side validation to reduce CPU overhead |
+| v1.73.0 | 2026-01-30 | feat: update `models_tokens` registry with current context window values for newer model variants |
+| v1.72.0 | 2026-01-20 | Add new test coverage |
+| v1.71.0 | 2026-01-05 | feat: LangChain v1.0 compatibility (`content` vs `context` key fix in `generate_answer_node_k_level`; updated import paths for LangChain v1.0+ API); fixes issue #1017 and #995 |
+
+A parallel beta track (`v1.60.0-beta.*`) was running alongside stable releases through March 2026. `v1.60.0-beta.2` (2026-02-24) added **OpenAI Batch API support for `SmartScraperMultiGraph`** — allowing async batch submission of multi-URL jobs for significant cost reduction on large-scale crawls.
+
+Release velocity: approximately 1 release per 2 weeks on the stable track, consistent with the prior 6-month cadence.
+
+### Fine-tuned Model Availability
+
+The QLoRA Qwen3-1.7B adapter from arxiv 2602.15189 **is now publicly available on HuggingFace** under the `scrapegraphai` organization.
+
+Two model artifacts are hosted:
+
+| Model | HuggingFace URL | Format | Size | Downloads (as of 2026-03-28) |
+|---|---|---|---|---|
+| `scrapegraphai/sgai-qwen3-1.7b` | https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b | Safetensors (BF16) | ~2B params | 19/month |
+| `scrapegraphai/sgai-qwen3-1.7b-gguf` | https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b-gguf | GGUF (quantized) | ~2B params | 32/month |
+
+Both models were published in early February 2026 (updated 2026-02-10). The GGUF variant is suitable for local inference via `llama.cpp` or `mlx_lm`. There is no model card on either page yet — no license, training details, or intended use documentation is published. A live demo is available at `https://huggingface.co/spaces/scrapegraphai/sgai-qwen3-1.7b-demo`.
+
+**Note for this codebase:** The GGUF model can be loaded directly via `mlx_lm.server` (which the monorepo memory documents as the local inference path for lead-gen). The missing model card means training details (LoRA adapter vs. merged weights, exact quantization level) are unverified directly from the HuggingFace listing — they must be inferred from the paper (Section 10.1 above).
+
+### ScrapeGraphAI-100k Dataset
+
+The dataset is **publicly available on HuggingFace** and was published with the arxiv paper in February 2026.
+
+| Property | Value |
+|---|---|
+| HuggingFace URL | https://huggingface.co/datasets/scrapegraphai/scrapegraphai-100k |
+| License | **Apache 2.0** |
+| Rows | 93,700 (train split; one split only) |
+| Format | Parquet |
+| Fields | 17 fields: `prompt`, `schema`, `schema_hash`, `response`, `content`, `llm_model`, `source`, `execution_time`, `response_size`, `schema_size`, `schema_depth`, `schema_keys`, `schema_elements`, `schema_cyclomatic_complexity`, `schema_complexity_score`, `response_is_valid`, `id` |
+| Downloads | 64/month |
+| Last updated | 2025-12-21 (v1 dataset; paper submitted 2026-02-16) |
+| Next update | Q4 2026 — longitudinal update with Q2–Q3 2026 telemetry planned |
+
+A separate **fine-tuning split** is available as a distinct dataset:
+
+| Property | Value |
+|---|---|
+| HuggingFace URL | https://huggingface.co/datasets/scrapegraphai/scrapegraph-100k-finetuning |
+| License | Apache 2.0 |
+| Rows | 28,052 (train: 25,244 / test: 2,808) |
+| Filtering | Content ≤50k chars, schema ≤10k chars, response ≤10k chars; long content chunked |
+| Downloads | 38/month |
+| Updated | 2026-02-06 |
+
+The full 93k dataset is best for benchmarking; the 28k fine-tuning split is what was actually used to train `sgai-qwen3-1.7b`.
+
+### Recent Commits (last 90 days)
+
+All significant commits since 2026-01-01 on `main`:
+
+| Date | Commit | Description |
+|---|---|---|
+| 2026-03-24 | fix/replace-print-with-logging | Replace all 13 `print()` calls with `get_logger()` |
+| 2026-03-24 | ci/reduce-actions-costs | Cut GitHub Actions costs ~85% on PRs: ubuntu-only matrix on PRs, Python 3.10/3.12 only, benchmarks on push-to-main only |
+| 2026-03-18 | feature/upgrade-minimax-m27 | MiniMax default model upgraded to M2.7 |
+| 2026-03-15 | feature/add-minimax-provider | MiniMax added as LLM provider |
+| 2026-02-24 | agentic-bench (PR #1042) | Add initial agentic benchmark test file |
+| 2026-02-16 | feat/custom-tracing-endpoint | Custom tracing API endpoint; remove client-side validation; fix list content in telemetry |
+| 2026-01-30 | — | Update `models_tokens` registry |
+| 2026-01-08 | adrienpacifico/patch-1 | Add `format` key to LLM configuration; bug fix |
+| 2026-01-05 | fix/langchain-v1-compatibility | LangChain v1.0+ import path updates; `content` vs `context` key fix in k-level generate answer node |
+
+A beta branch (`v1.60.0-beta.*`) continued in parallel with OpenAI Batch API support for `SmartScraperMultiGraph`.
+
+### New Graph Types / Features
+
+No new `AbstractGraph` subclasses were added in the past 90 days. The graph inventory remains: `SmartScraperGraph`, `SmartScraperMultiGraph`, `SearchGraph`, `ScriptCreatorGraph`, `ScriptCreatorMultiGraph`, `SpeechGraph`, `DepthSearchGraph`, `OmniScraperGraph`. The `DepthSearchGraph` documentation mismatch (issue #916 — docs copied from another class with no usage examples) remains open and unresolved as of 2026-03-28.
+
+The most significant structural addition in the last 90 days is the **OpenAI Batch API integration** in `SmartScraperMultiGraph` (beta v1.60.0-beta.2), which is a runtime optimization rather than a new graph topology.
+
+Feature additions have been provider-level (MiniMax M2.7, MiniMax as a provider) and infrastructure-level (LangChain v1.0 compatibility, custom tracing endpoints, CI optimization) rather than new extraction paradigms.
+
+### Paper Follow-ups
+
+arxiv 2602.15189 was submitted 2026-02-16. As of 2026-03-28, no citations are indexed on Semantic Scholar or arXiv (too recent for indexing lag). No follow-up papers from the same authors have been identified.
+
+Competing papers active in the same problem space (all pre-date or are concurrent with 2602.15189):
+
+| Paper | Key claim | Status vs ScrapeGraphAI |
+|---|---|---|
+| AXE (arXiv:2602.01838, 2026) | 0.6B model, 88.10% F1 on SWDE via DOM pruning; 97.9% token reduction | No fine-tuning required; directly competitive at 1/3 the parameter count |
+| Dripper (arXiv:2511.23119, 2025) | Dripper-0.6B rivals GPT-5 on main-content extraction at 3.08 pages/sec | Sequence labeling approach; higher throughput, narrower task scope |
+| SLOT (arXiv:2505.04016, 2025) | Fine-tuned Mistral-7B: 99.5% schema accuracy via post-processing layer | ScrapeGraphAI cites SLOT for complexity taxonomy; SLOT's compliance numbers exceed sgai-qwen3-1.7b |
+
+The `arxiv:2505.04016` SLOT paper is referenced directly in the ScrapeGraphAI-100k dataset metadata as a prior (listed as `arXiv reference: arxiv:2505.04016`), suggesting continued overlap between the two research tracks.
+
+### Staleness Assessment
+
+**Release velocity:** Consistent. One release every 10–14 days on the stable track since at least Q3 2025. The CI/CD pipeline is automated (semantic-release). The project is not stagnant.
+
+**Community size:** 23,145 GitHub stars, 2,027 forks, 110 contributors, 140 watchers as of 2026-03-28. Open issues: effectively 1 (unusually low, indicating active maintenance). This is a mid-size production library, not an abandoned research prototype.
+
+**Production readiness:** The OSS library is production-ready for async batch workflows with a well-understood set of failure modes (see Section 8). The v1.60.0-beta.2 OpenAI Batch API integration has not yet graduated to stable, indicating some features lag the stable channel.
+
+**Model artifacts:** The fine-tuned `sgai-qwen3-1.7b` and its GGUF quantization are live on HuggingFace but have very low download counts (19 and 32/month respectively), suggesting the research community has not yet widely adopted or tested them. Absence of a model card is a friction point.
+
+**Dataset:** The 93k dataset is stable and Apache 2.0 licensed. Fine-tuning split (28k) is cleanly separated and ready to use. No updates planned until Q4 2026.
+
+**Risk for integration:** The primary dependency risk remains LangChain version churn — v1.71.0 (2026-01-05) required non-trivial import path fixes for LangChain v1.0 compatibility. This pattern has recurred multiple times and is structural, not incidental. Projects integrating `scrapegraphai` as a dependency should pin both `scrapegraphai` and `langchain` versions tightly.
