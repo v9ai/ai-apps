@@ -17,7 +17,7 @@ const T = {
     aspects: "Analiza Aspecte",
     pros: "Avantaje",
     cons: "Dezavantaje",
-    reviews: "Recenzii ML",
+    reviews: "Recenzii",
     amenities: "Facilitati",
     location: "Locatie",
     cta: "Rezerva acum",

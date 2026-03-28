@@ -13,14 +13,14 @@ interface FamilyItineraryProps {
 const T = {
   ro: {
     sectionTitle: "Ziua ta la Napoli",
-    subtitle: "Itinerar optimizat ML · 2 adulți + 1 copil",
+    subtitle: "Itinerar optimizat · 2 adulți + 1 copil",
     morning: "Dimineață",
     lunch: "Prânz",
     afternoon: "După-amiază",
     kidFriendly: "Prieten cu copiii",
     skip: "Recomandat adulți",
-    mlScore: "Scor ML",
-    note: "Scorurile ML calculat cu all-MiniLM-L6-v2 · Candle · similaritate cosinus",
+    mlScore: "Scor",
+    note: "Scoruri calculate pe baza preferințelor familiei",
     pizzaBreak: "Pauză pizza — da Michele sau Spaccanapoli",
     totalTime: "Timp total",
     gelatoNote: "Înghețată la Mergellina la întoarcere",
