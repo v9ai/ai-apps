@@ -4,7 +4,6 @@ import { useState, useEffect, useId } from "react";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Checkbox,
   Dialog,
@@ -16,6 +15,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   CheckCircledIcon,
   Cross2Icon,
@@ -195,9 +195,9 @@ export function EmailComposer({
             <Heading size="4">Compose Email</Heading>
           </Dialog.Title>
           <Dialog.Close>
-            <Button variant="ghost" size="1" aria-label="Close dialog">
+            <button className={button({ variant: "ghost", size: "sm" })} aria-label="Close dialog">
               <Cross2Icon />
-            </Button>
+            </button>
           </Dialog.Close>
         </Flex>
 
@@ -245,21 +245,19 @@ export function EmailComposer({
 
           {/* AI Generate row */}
           <Flex gap="2" align="center">
-            <Button
-              variant="soft"
-              color="violet"
+            <button
+              className={button({ variant: "ghost" })}
               onClick={() => void handleGenerate()}
               disabled={isStreaming || hasSentSuccessfully}
-              loading={isStreaming}
             >
               <MagicWandIcon />
               {isStreaming ? "Generating…" : "AI Generate"}
-            </Button>
+            </button>
 
             {isStreaming && (
-              <Button variant="soft" color="red" size="2" onClick={stop}>
+              <button className={button({ variant: "ghost", size: "md" })} onClick={stop}>
                 Stop
-              </Button>
+              </button>
             )}
 
             {content && !isStreaming && (
@@ -270,10 +268,8 @@ export function EmailComposer({
             )}
 
             {content && !isStreaming && !hasSentSuccessfully && (
-              <Button
-                variant="ghost"
-                color="gray"
-                size="1"
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
                 onClick={() => {
                   resetStream();
                   setBody("");
@@ -281,7 +277,7 @@ export function EmailComposer({
                 }}
               >
                 Regenerate
-              </Button>
+              </button>
             )}
           </Flex>
 
@@ -383,28 +379,27 @@ export function EmailComposer({
           <Flex justify="between" align="center" gap="3" mt="1">
             {hasSentSuccessfully ? (
               <>
-                <Button
-                  variant="soft"
-                  color="gray"
+                <button
+                  className={button({ variant: "ghost" })}
                   onClick={() => {
                     resetForm();
                   }}
                 >
                   Compose Another
-                </Button>
+                </button>
                 <Dialog.Close>
-                  <Button variant="solid">Done</Button>
+                  <button className={button({ variant: "solid" })}>Done</button>
                 </Dialog.Close>
               </>
             ) : (
               <>
                 <Dialog.Close>
-                  <Button variant="soft" color="gray">
+                  <button className={button({ variant: "ghost" })}>
                     Cancel
-                  </Button>
+                  </button>
                 </Dialog.Close>
-                <Button
-                  variant="solid"
+                <button
+                  className={button({ variant: "solid" })}
                   disabled={!canSend}
                   onClick={() => void handleSend()}
                 >
@@ -419,7 +414,7 @@ export function EmailComposer({
                       Send
                     </>
                   )}
-                </Button>
+                </button>
               </>
             )}
           </Flex>

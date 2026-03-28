@@ -1,42 +1,26 @@
-import { Button as RadixButton } from "@radix-ui/themes";
-import { type ComponentPropsWithoutRef } from "react";
+import { forwardRef, type ButtonHTMLAttributes } from "react";
+import { button } from "@/recipes/button";
+import { cx } from "styled-system/css";
 
-type RadixButtonProps = ComponentPropsWithoutRef<typeof RadixButton>;
+type ButtonVariant = "solid" | "ghost" | "outline" | "solidGreen" | "link";
+type ButtonSize = "sm" | "md" | "lg";
 
-interface ButtonProps extends Omit<RadixButtonProps, "variant" | "size" | "color"> {
-  variant?: "primary" | "ghost" | "danger";
-  size?: "sm" | "md";
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
 }
 
-const variantMap: Record<
-  NonNullable<ButtonProps["variant"]>,
-  { variant: RadixButtonProps["variant"]; color: RadixButtonProps["color"] }
-> = {
-  primary: { variant: "solid", color: "indigo" },
-  ghost: { variant: "ghost", color: "gray" },
-  danger: { variant: "solid", color: "red" },
-};
-
-const sizeMap: Record<NonNullable<ButtonProps["size"]>, RadixButtonProps["size"]> = {
-  sm: "1",
-  md: "2",
-};
-
-export function Button({
-  variant = "primary",
-  size = "md",
-  children,
-  ...rest
-}: ButtonProps) {
-  const { variant: radixVariant, color } = variantMap[variant];
-  return (
-    <RadixButton
-      variant={radixVariant}
-      color={color}
-      size={sizeMap[size]}
-      {...rest}
-    >
-      {children}
-    </RadixButton>
-  );
-}
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = "solid", size = "md", className, children, ...rest }, ref) => {
+    return (
+      <button
+        ref={ref}
+        className={cx(button({ variant, size }), className)}
+        {...rest}
+      >
+        {children}
+      </button>
+    );
+  }
+);
+Button.displayName = "Button";

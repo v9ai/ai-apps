@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Dialog,
   Flex,
@@ -16,6 +15,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   CheckCircledIcon,
   Cross2Icon,
@@ -207,9 +207,9 @@ export function GenerateAndSendBatchEmailModal({
             </Heading>
           </Dialog.Title>
           <Dialog.Close>
-            <Button variant="ghost" size="1" aria-label="Close">
+            <button className={button({ variant: "ghost", size: "sm" })} aria-label="Close">
               <Cross2Icon />
-            </Button>
+            </button>
           </Dialog.Close>
         </Flex>
 
@@ -242,12 +242,12 @@ export function GenerateAndSendBatchEmailModal({
 
             <Flex justify="end" gap="3">
               <Dialog.Close>
-                <Button variant="soft" color="gray">
+                <button className={button({ variant: "ghost" })}>
                   Cancel
-                </Button>
+                </button>
               </Dialog.Close>
-              <Button
-                color="violet"
+              <button
+                className={button({})}
                 disabled={generating}
                 onClick={handleGenerate}
               >
@@ -260,7 +260,7 @@ export function GenerateAndSendBatchEmailModal({
                     <MagicWandIcon /> Generate Emails
                   </>
                 )}
-              </Button>
+              </button>
             </Flex>
           </Flex>
         )}
@@ -345,9 +345,8 @@ export function GenerateAndSendBatchEmailModal({
             <Separator size="4" />
 
             <Flex justify="between">
-              <Button
-                variant="soft"
-                color="gray"
+              <button
+                className={button({ variant: "ghost" })}
                 onClick={() => {
                   setStep("generate");
                   setGeneratedEmails([]);
@@ -355,10 +354,10 @@ export function GenerateAndSendBatchEmailModal({
                 }}
               >
                 <ResetIcon /> Back
-              </Button>
-              <Button color="green" onClick={handleSend}>
+              </button>
+              <button className={button({ variant: "solidGreen" })} onClick={handleSend}>
                 <PaperPlaneIcon /> Send All Emails
-              </Button>
+              </button>
             </Flex>
           </Flex>
         )}
@@ -397,7 +396,7 @@ export function GenerateAndSendBatchEmailModal({
 
             <Flex justify="end">
               <Dialog.Close>
-                <Button variant="solid">Done</Button>
+                <button className={button({})}>Done</button>
               </Dialog.Close>
             </Flex>
           </Flex>

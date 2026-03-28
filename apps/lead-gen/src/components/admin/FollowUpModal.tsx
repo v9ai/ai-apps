@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   Badge,
   Box,
-  Button,
   Card,
   Checkbox,
   Dialog,
@@ -14,6 +13,7 @@ import {
   Text,
   TextArea,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   ClockIcon,
   MagicWandIcon,
@@ -219,8 +219,8 @@ DO NOT:
                 Select contacts for follow-up
               </Text>
               <Flex gap="2">
-                <Button size="1" variant="ghost" onClick={selectAll}>Select All</Button>
-                <Button size="1" variant="ghost" onClick={deselectAll}>Deselect All</Button>
+                <button className={button({ variant: "ghost", size: "sm" })} onClick={selectAll}>Select All</button>
+                <button className={button({ variant: "ghost", size: "sm" })} onClick={deselectAll}>Deselect All</button>
               </Flex>
             </Flex>
 
@@ -280,11 +280,11 @@ DO NOT:
               </Text>
               <Flex gap="2">
                 <Dialog.Close>
-                  <Button variant="soft" color="gray">Cancel</Button>
+                  <button className={button({ variant: "ghost" })}>Cancel</button>
                 </Dialog.Close>
-                <Button onClick={handleGenerate} disabled={selectedEmails.size === 0 || generating}>
+                <button className={button({})} onClick={handleGenerate} disabled={selectedEmails.size === 0 || generating}>
                   {generating ? <><Spinner size="1" /> Generating...</> : <><MagicWandIcon /> Generate Follow-ups</>}
-                </Button>
+                </button>
               </Flex>
             </Flex>
           </Flex>
@@ -339,12 +339,12 @@ DO NOT:
             </ScrollArea>
 
             <Flex justify="between" align="center" mt="2">
-              <Button variant="ghost" onClick={() => setStep("select")}>
+              <button className={button({ variant: "ghost" })} onClick={() => setStep("select")}>
                 <ArrowLeftIcon /> Back
-              </Button>
-              <Button onClick={handleSend} disabled={generatedEmails.size === 0 || sending}>
+              </button>
+              <button className={button({})} onClick={handleSend} disabled={generatedEmails.size === 0 || sending}>
                 {sending ? <><Spinner size="1" /> Sending...</> : <><PaperPlaneIcon /> Send {generatedEmails.size} Follow-up{generatedEmails.size !== 1 ? "s" : ""}</>}
-              </Button>
+              </button>
             </Flex>
           </Flex>
         )}

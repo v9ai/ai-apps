@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Flex, Button, Text } from "@radix-ui/themes";
+import { Flex, Text } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 
 interface ExerciseTimerProps {
   durationMinutes?: number;

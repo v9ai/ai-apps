@@ -21,7 +21,6 @@ import {
   AlertDialog,
   Badge,
   Box,
-  Button,
   Callout,
   Card,
   Container,
@@ -38,6 +37,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   CheckCircledIcon,
   ExternalLinkIcon,
@@ -173,10 +173,9 @@ function CollapsibleChips({
 
       {canCollapse && (
         <Box mt="3">
-          <Button
+          <button
             type="button"
-            size="2"
-            variant="ghost"
+            className={button({ variant: "ghost", size: "md" })}
             onClick={() => setExpanded((v) => !v)}
           >
             <Box
@@ -189,7 +188,7 @@ function CollapsibleChips({
               <ChevronDownIcon />
             </Box>
             {expanded ? "Show less" : `Show more (${normalized.length - visibleCount})`}
-          </Button>
+          </button>
         </Box>
       )}
     </Box>
@@ -237,11 +236,9 @@ function CollapsibleList({
 
       {canCollapse && (
         <Box mt="3">
-          <Button
+          <button
             type="button"
-            size="2"
-            variant="ghost"
-            color="gray"
+            className={button({ variant: "ghost", size: "md" })}
             onClick={() => setExpanded((v) => !v)}
           >
             {expanded ? (
@@ -253,7 +250,7 @@ function CollapsibleList({
                 <ChevronDownIcon /> Show more ({normalized.length - visibleCount})
               </>
             )}
-          </Button>
+          </button>
         </Box>
       )}
     </Box>
@@ -622,10 +619,10 @@ function LinkedInLeadDialog({
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger>
-        <Button size="2" variant="soft" color="blue">
+        <button className={button({ variant: "ghost", size: "md" })}>
           <Link2Icon />
           Import Lead
-        </Button>
+        </button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="520px">
@@ -644,9 +641,9 @@ function LinkedInLeadDialog({
             </Callout.Root>
             <Flex justify="end">
               <Dialog.Close>
-                <Button variant="soft" color="gray">
+                <button className={button({ variant: "ghost" })}>
                   Close
-                </Button>
+                </button>
               </Dialog.Close>
             </Flex>
           </Flex>
@@ -686,16 +683,17 @@ function LinkedInLeadDialog({
 
             <Flex justify="end" gap="2">
               <Dialog.Close>
-                <Button variant="soft" color="gray">
+                <button className={button({ variant: "ghost" })}>
                   Cancel
-                </Button>
+                </button>
               </Dialog.Close>
-              <Button
+              <button
+                className={button({ variant: "ghost" })}
                 onClick={handleExtract}
                 disabled={!rawText.trim()}
               >
                 Extract email
-              </Button>
+              </button>
             </Flex>
           </Flex>
         ) : (
@@ -752,16 +750,19 @@ function LinkedInLeadDialog({
             </Flex>
 
             <Flex justify="end" gap="2">
-              <Button
-                variant="soft"
-                color="gray"
+              <button
+                className={button({ variant: "ghost" })}
                 onClick={() => setPhase("paste")}
               >
                 Back
-              </Button>
-              <Button onClick={handleSave} disabled={saving}>
+              </button>
+              <button
+                className={button({ variant: "ghost" })}
+                onClick={handleSave}
+                disabled={saving}
+              >
                 {saving ? "Saving..." : "Create contact"}
-              </Button>
+              </button>
             </Flex>
           </Flex>
         )}
@@ -856,10 +857,10 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger>
-        <Button size="2" variant="soft" color="gray" onClick={handleOpen}>
+        <button className={button({ variant: "ghost", size: "md" })} onClick={handleOpen}>
           <Pencil1Icon />
           Edit
-        </Button>
+        </button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="560px">
@@ -994,13 +995,17 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
 
         <Flex gap="3" mt="5" justify="end">
           <Dialog.Close>
-            <Button variant="soft" color="gray">
+            <button className={button({ variant: "ghost" })}>
               Cancel
-            </Button>
+            </button>
           </Dialog.Close>
-          <Button onClick={handleSave} disabled={loading}>
+          <button
+            className={button({ variant: "ghost" })}
+            onClick={handleSave}
+            disabled={loading}
+          >
             {loading ? "Saving…" : "Save"}
-          </Button>
+          </button>
         </Flex>
       </Dialog.Content>
     </Dialog.Root>
@@ -1294,15 +1299,14 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   <CompanyEditDialog company={company} onSaved={refetch} />
                 )}
                 {isAdmin && (
-                  <Button
+                  <button
+                    className={button({ variant: "solid" })}
                     onClick={handleEnhance}
                     disabled={isEnhancing}
-                    color="orange"
-                    variant="solid"
                   >
                     <MagicWandIcon />
                     {isEnhancing ? "Enhancing…" : "Enhance"}
-                  </Button>
+                  </button>
                 )}
                 {isAdmin && company.website && (
                   <Button

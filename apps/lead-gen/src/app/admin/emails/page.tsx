@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import {
   Badge,
   Box,
-  Button,
   Card,
   Container,
   Dialog,
@@ -18,6 +17,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   ExternalLinkIcon,
   ReloadIcon,
@@ -180,9 +180,9 @@ function EmailStatsDashboard() {
     <Flex direction="column" gap="5">
       <Flex justify="between" align="center">
         <Heading size="4">Email Statistics</Heading>
-        <Button size="1" variant="ghost" onClick={() => refetch()}>
+        <button className={button({ variant: "ghost", size: "sm" })} onClick={() => refetch()}>
           <ReloadIcon /> Refresh
-        </Button>
+        </button>
       </Flex>
 
       <StatSection
@@ -312,25 +312,23 @@ function SentList() {
           {emails.length} emails
         </Badge>
         <Flex gap="2" align="center">
-          <Button
-            size="1"
-            variant="ghost"
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={handleSync}
             disabled={syncing}
           >
             <UpdateIcon /> {syncing ? "Syncing…" : "Sync Resend"}
-          </Button>
-          <Button
-            size="1"
-            variant="ghost"
+          </button>
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={handleImport}
             disabled={importing}
           >
             <ReloadIcon /> {importing ? "Importing…" : "Import from Resend"}
-          </Button>
-          <Button size="1" variant="ghost" onClick={load}>
+          </button>
+          <button className={button({ variant: "ghost", size: "sm" })} onClick={load}>
             <ReloadIcon /> Refresh
-          </Button>
+          </button>
         </Flex>
       </Flex>
       {importSummary && (
@@ -364,15 +362,15 @@ function SentList() {
                 {new Date(email.created_at).toLocaleString()}
               </Text>
             </Box>
-            <Button asChild size="1" variant="ghost" style={{ flexShrink: 0 }}>
-              <a
-                href={`https://resend.com/emails/${email.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Resend <ExternalLinkIcon />
-              </a>
-            </Button>
+            <a
+              href={`https://resend.com/emails/${email.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={button({ variant: "ghost", size: "sm" })}
+              style={{ flexShrink: 0 }}
+            >
+              Resend <ExternalLinkIcon />
+            </a>
           </Flex>
         </Card>
       ))}
@@ -422,17 +420,16 @@ function ReceivedList() {
       <Flex justify="between" align="center" mb="2">
         <Flex gap="2" align="center">
           <Badge color="gray" size="2" variant="soft">{totalCount} emails</Badge>
-          <Button
-            size="1"
-            variant={showArchived ? "solid" : "ghost"}
+          <button
+            className={button({ variant: showArchived ? "solid" : "ghost", size: "sm" })}
             onClick={() => setShowArchived(!showArchived)}
           >
             {showArchived ? "Show Inbox" : "Show Archived"}
-          </Button>
+          </button>
         </Flex>
-        <Button size="1" variant="ghost" onClick={() => refetch()}>
+        <button className={button({ variant: "ghost", size: "sm" })} onClick={() => refetch()}>
           <ReloadIcon /> Refresh
-        </Button>
+        </button>
       </Flex>
       {emails.length === 0 ? (
         <Card>
@@ -456,14 +453,12 @@ function ReceivedList() {
                   {new Date(email.receivedAt).toLocaleString()}
                 </Text>
               </Box>
-              <Button
-                size="1"
-                variant="ghost"
-                color={showArchived ? "blue" : "gray"}
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
                 onClick={() => showArchived ? handleUnarchive(email.id) : handleArchive(email.id)}
               >
                 {showArchived ? "Unarchive" : "Archive"}
-              </Button>
+              </button>
             </Flex>
           </Card>
         ))
@@ -513,7 +508,7 @@ function CampaignsList() {
         <Badge color="gray" size="2" variant="soft">{campaigns.length} campaigns</Badge>
         <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
           <Dialog.Trigger>
-            <Button size="1"><PlusIcon /> New Campaign</Button>
+            <button className={button({ variant: "ghost", size: "sm" })}><PlusIcon /> New Campaign</button>
           </Dialog.Trigger>
           <Dialog.Content maxWidth="400px">
             <Dialog.Title>New Campaign</Dialog.Title>
@@ -522,8 +517,8 @@ function CampaignsList() {
                 <TextField.Root name="name" placeholder="Campaign name *" required />
                 <TextField.Root name="fromEmail" placeholder="From email" type="email" />
                 <Flex gap="3" justify="end" mt="2">
-                  <Dialog.Close><Button variant="soft" color="gray">Cancel</Button></Dialog.Close>
-                  <Button type="submit" disabled={creating}>{creating ? "Creating…" : "Create"}</Button>
+                  <Dialog.Close><button className={button({ variant: "ghost" })}>Cancel</button></Dialog.Close>
+                  <button className={button({ variant: "ghost" })} type="submit" disabled={creating}>{creating ? "Creating…" : "Create"}</button>
                 </Flex>
               </Flex>
             </form>
@@ -548,8 +543,8 @@ function CampaignsList() {
                 </Flex>
               </Box>
               <Flex gap="1">
-                <Button size="1" variant="ghost" onClick={() => setEditingCampaignId(c.id)}><Pencil1Icon /></Button>
-                <Button size="1" variant="ghost" color="red" onClick={() => handleDelete(c.id)}><TrashIcon /></Button>
+                <button className={button({ variant: "ghost", size: "sm" })} onClick={() => setEditingCampaignId(c.id)}><Pencil1Icon /></button>
+                <button className={button({ variant: "ghost", size: "sm" })} onClick={() => handleDelete(c.id)}><TrashIcon /></button>
               </Flex>
             </Flex>
           </Card>
@@ -611,7 +606,7 @@ function EmailTemplatesList() {
         <Badge color="gray" size="2" variant="soft">{templates.length} templates</Badge>
         <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
           <Dialog.Trigger>
-            <Button size="1"><PlusIcon /> New Template</Button>
+            <button className={button({ variant: "ghost", size: "sm" })}><PlusIcon /> New Template</button>
           </Dialog.Trigger>
           <Dialog.Content maxWidth="500px">
             <Dialog.Title>New Email Template</Dialog.Title>

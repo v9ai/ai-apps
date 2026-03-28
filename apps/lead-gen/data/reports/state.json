@@ -3,12 +3,12 @@
   "phase": null,
   "counts": {
     "discovered": 123,
-    "enriched": 90,
+    "enriched": 120,
     "contacts_found": 18,
     "outreach_drafted": 0,
     "outreach_sent": 0
   },
-  "quality_score": 0.6499999999999999,
-  "bounce_rate": 0.0,
+  "quality_score": 0.85,
+  "bounce_rate": 0.9508196721311475,
   "phase_history": null
 }

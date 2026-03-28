@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Checkbox,
   Code,
@@ -14,6 +13,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   CheckIcon,
   CopyIcon,
@@ -231,13 +231,13 @@ export function ComposeFromLinkedIn({
                 </TextField.Slot>
               </TextField.Root>
             </Box>
-            <Button
+            <button
+              className={button({ variant: "ghost" })}
               onClick={handleExtract}
               disabled={!linkedinUrl.trim() || extracting}
-              loading={extracting}
             >
-              Extract
-            </Button>
+              {extracting ? "Extracting…" : "Extract"}
+            </button>
           </Flex>
 
           {extractError && (
@@ -251,14 +251,12 @@ export function ComposeFromLinkedIn({
 
           <Separator size="4" />
 
-          <Button
-            variant="soft"
-            color="gray"
-            size="1"
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={handleSkipExtraction}
           >
             Skip extraction — paste content manually
-          </Button>
+          </button>
         </>
       )}
 
@@ -353,37 +351,37 @@ export function ComposeFromLinkedIn({
           </Box>
 
           <Flex gap="2">
-            <Button
+            <button
+              className={button({ variant: "ghost" })}
               onClick={handleGenerate}
-              loading={isStreaming}
               disabled={isStreaming}
             >
               <MagicWandIcon />
               {isStreaming ? "Generating..." : "Generate Email"}
-            </Button>
+            </button>
             {isStreaming && (
-              <Button variant="soft" color="red" onClick={stop}>
+              <button
+                className={button({ variant: "ghost" })}
+                onClick={stop}
+              >
                 Stop
-              </Button>
+              </button>
             )}
             {content && !isStreaming && (
-              <Button
-                variant="soft"
-                color="gray"
+              <button
+                className={button({ variant: "ghost" })}
                 onClick={() => resetStream()}
               >
                 Regenerate
-              </Button>
+              </button>
             )}
             <Box style={{ flex: 1 }} />
-            <Button
-              variant="ghost"
-              color="gray"
-              size="2"
+            <button
+              className={button({ variant: "ghost", size: "md" })}
               onClick={handleReset}
             >
               Start over
-            </Button>
+            </button>
           </Flex>
 
           {streamError && (
@@ -460,7 +458,12 @@ export function ComposeFromLinkedIn({
               </Flex>
 
               <Flex justify="end">
-                <Button onClick={handleProceedToEdit}>Edit & Send</Button>
+                <button
+                  className={button({ variant: "ghost" })}
+                  onClick={handleProceedToEdit}
+                >
+                  Edit & Send
+                </button>
               </Flex>
             </>
           )}
@@ -531,26 +534,28 @@ export function ComposeFromLinkedIn({
           )}
 
           <Flex gap="2" justify="between">
-            <Button
-              variant="soft"
-              color="gray"
+            <button
+              className={button({ variant: "ghost" })}
               onClick={() => setStep("extracted")}
             >
               Back
-            </Button>
+            </button>
             <Flex gap="2">
-              <Button variant="soft" onClick={handleCopy}>
+              <button
+                className={button({ variant: "ghost" })}
+                onClick={handleCopy}
+              >
                 {copied ? <CheckIcon /> : <CopyIcon />}
                 {copied ? "Copied" : "Copy"}
-              </Button>
-              <Button
+              </button>
+              <button
+                className={button({ variant: "ghost" })}
                 onClick={handleSend}
-                loading={sending}
                 disabled={sending || !recipientEmail || !editSubject || !editBody}
               >
                 <PaperPlaneIcon />
-                Send
-              </Button>
+                {sending ? "Sending…" : "Send"}
+              </button>
             </Flex>
           </Flex>
         </>
@@ -575,9 +580,12 @@ export function ComposeFromLinkedIn({
             </Callout.Text>
           </Callout.Root>
 
-          <Button variant="soft" onClick={handleReset}>
+          <button
+            className={button({ variant: "ghost" })}
+            onClick={handleReset}
+          >
             Compose Another
-          </Button>
+          </button>
         </>
       )}
     </Flex>

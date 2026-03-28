@@ -14,7 +14,6 @@ import { ADMIN_EMAIL } from "@/lib/constants";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Card,
   Container,
@@ -26,6 +25,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   EnvelopeClosedIcon,
   ExclamationTriangleIcon,
@@ -118,7 +118,7 @@ export default function AdminContactsPage() {
         <Heading size="7">Contacts</Heading>
         <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
           <Dialog.Trigger>
-            <Button size="2"><PlusIcon /> New Contact</Button>
+            <button className={button({ variant: "ghost", size: "md" })}><PlusIcon /> New Contact</button>
           </Dialog.Trigger>
           <Dialog.Content maxWidth="450px">
             <Dialog.Title>New Contact</Dialog.Title>
@@ -131,11 +131,11 @@ export default function AdminContactsPage() {
                 <TextField.Root name="linkedinUrl" placeholder="LinkedIn URL" />
                 <Flex gap="3" justify="end" mt="2">
                   <Dialog.Close>
-                    <Button variant="soft" color="gray">Cancel</Button>
+                    <button className={button({ variant: "ghost" })}>Cancel</button>
                   </Dialog.Close>
-                  <Button type="submit" disabled={creating}>
+                  <button className={button({ variant: "ghost" })} type="submit" disabled={creating}>
                     {creating ? "Creating…" : "Create"}
-                  </Button>
+                  </button>
                 </Flex>
               </Flex>
             </form>
@@ -216,14 +216,12 @@ export default function AdminContactsPage() {
                       </Flex>
                     )}
                   </Link>
-                  <Button
-                    size="1"
-                    variant="ghost"
-                    color="red"
+                  <button
+                    className={button({ variant: "ghost", size: "sm" })}
                     onClick={() => handleDelete(contact.id)}
                   >
                     <TrashIcon />
-                  </Button>
+                  </button>
                 </Flex>
               </Box>
             </Card>
@@ -233,13 +231,13 @@ export default function AdminContactsPage() {
 
       {totalPages > 1 && (
         <Flex justify="center" align="center" gap="3" mt="4">
-          <Button size="2" variant="soft" color="gray" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+          <button className={button({ variant: "ghost", size: "md" })} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
             <ChevronLeftIcon /> Previous
-          </Button>
+          </button>
           <Text size="2" color="gray">Page {page + 1} of {totalPages}</Text>
-          <Button size="2" variant="soft" color="gray" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
+          <button className={button({ variant: "ghost", size: "md" })} disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
             Next <ChevronRightIcon />
-          </Button>
+          </button>
         </Flex>
       )}
     </Container>

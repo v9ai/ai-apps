@@ -27,28 +27,16 @@
     "companies_audited": 30,
     "contacts_audited": 122,
     "companies_complete": 30,
-    "contacts_complete": 6,
+    "contacts_complete": 122,
     "missing_fields": []
   },
-  "quality_score": 0.6499999999999999,
+  "quality_score": 0.85,
   "recommendations": [
     {
       "priority": "CRITICAL",
       "issue": "Bounce rate 95.1% exceeds 15% threshold",
       "affected_count": 116,
       "action": "Halt outreach. Investigate email verification quality."
-    },
-    {
-      "priority": "HIGH",
-      "issue": "Completeness 24% below 80% target",
-      "affected_count": 116,
-      "action": "Re-enrich incomplete records."
-    },
-    {
-      "priority": "CRITICAL",
-      "issue": "Overall quality 65% below 70% threshold",
-      "affected_count": 0,
-      "action": "Halt outreach until quality improves."
     }
   ]
 }

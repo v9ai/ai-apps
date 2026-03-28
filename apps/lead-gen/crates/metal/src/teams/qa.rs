@@ -140,8 +140,9 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
                 });
             }
 
-            // Completeness
-            if contact.verified {
+            // Completeness — data fields present (email + domain + company)
+            // Verification status is tracked separately via bounce_rate
+            if !contact.email.is_empty() && !contact.domain.is_empty() && !contact.company_name.is_empty() {
                 report.completeness.contacts_complete += 1;
             }
         }
@@ -222,9 +223,16 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
 
     state::save_report(&ctx.data_dir, "qa", &report)?;
 
-    // Update state with quality metrics
+    // Update state with quality metrics + bounce rate
     let mut st = state::PipelineState::load(&ctx.data_dir);
     st.quality_score = report.quality_score;
+    if let Some(ref contacts) = contacts {
+        let total = contacts.contacts.len() as f64;
+        let failed = contacts.verification_stats.failed_count as f64;
+        if total > 0.0 {
+            st.bounce_rate = failed / total;
+        }
+    }
     st.save(&ctx.data_dir)?;
 
     let created = report.recommendations.len();

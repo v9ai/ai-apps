@@ -1,7 +1,8 @@
 "use client";
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { Box, Button, Container, Heading, Text } from "@radix-ui/themes";
+import { Box, Container, Heading, Text } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 
 interface Props {
   children: ReactNode;

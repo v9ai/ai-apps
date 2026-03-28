@@ -25,7 +25,6 @@ import {
   AlertDialog,
   Badge,
   Box,
-  Button,
   Callout,
   Card,
   Code,
@@ -38,6 +37,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -148,10 +148,10 @@ function GenerateEmailDialog({
   return (
     <Dialog.Root open={open} onOpenChange={handleOpen}>
       <Dialog.Trigger>
-        <Button size="1" variant="soft" color="gray">
+        <button className={button({ variant: "ghost", size: "sm" })}>
           <MagicWandIcon />
           Draft email
-        </Button>
+        </button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="540px">
@@ -173,23 +173,23 @@ function GenerateEmailDialog({
           />
 
           <Flex gap="2">
-            <Button
+            <button
+              className={button({ variant: "ghost" })}
               onClick={handleGenerate}
-              loading={isStreaming}
               disabled={isStreaming}
             >
               <MagicWandIcon />
               {isStreaming ? "Generating…" : "Generate"}
-            </Button>
+            </button>
             {isStreaming && (
-              <Button variant="soft" color="red" onClick={stop}>
+              <button className={button({ variant: "ghost" })} onClick={stop}>
                 Stop
-              </Button>
+              </button>
             )}
             {content && !isStreaming && (
-              <Button variant="soft" color="gray" onClick={reset}>
+              <button className={button({ variant: "ghost" })} onClick={reset}>
                 Regenerate
-              </Button>
+              </button>
             )}
           </Flex>
 
@@ -234,10 +234,10 @@ function GenerateEmailDialog({
                   <CheckIcon />
                   Generated
                 </Badge>
-                <Button size="1" variant="ghost" onClick={handleCopy}>
+                <button className={button({ variant: "ghost", size: "sm" })} onClick={handleCopy}>
                   <CopyIcon />
                   {copied ? "Copied!" : "Copy"}
-                </Button>
+                </button>
               </Flex>
 
               <Text size="1" color="gray" weight="bold" as="p" mb="1">
@@ -263,9 +263,9 @@ function GenerateEmailDialog({
 
         <Flex justify="end" mt="4">
           <Dialog.Close>
-            <Button variant="soft" color="gray">
+            <button className={button({ variant: "ghost" })}>
               Close
-            </Button>
+            </button>
           </Dialog.Close>
         </Flex>
       </Dialog.Content>
@@ -299,16 +299,14 @@ function FindEmailButton({
 
   return (
     <Flex direction="column" align="end" gap="1">
-      <Button
-        size="1"
-        variant="soft"
-        color="blue"
+      <button
+        className={button({ variant: "ghost", size: "sm" })}
         onClick={handleClick}
         disabled={loading}
       >
         {loading ? <Spinner size="1" /> : <MagnifyingGlassIcon />}
         Find email
-      </Button>
+      </button>
       {result && (
         <Text size="1" color="gray" style={{ maxWidth: 180, textAlign: "right" }}>
           {result}

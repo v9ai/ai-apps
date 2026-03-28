@@ -22,11 +22,11 @@ import {
   Spinner,
   IconButton,
   Dialog,
-  Button,
   TextArea,
   TextField,
   Select,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import { TrashIcon, PlusIcon, MixIcon, UploadIcon } from "@radix-ui/react-icons";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
