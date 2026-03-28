@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a1e"/>
+      <stop offset="100%" stop-color="#080510"/>
+    </radialGradient>
+    <linearGradient id="facetTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="40%" stop-color="#ffd6e0" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#e8005a" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="facetUL" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b9d"/>
+      <stop offset="100%" stop-color="#c0003a"/>
+    </linearGradient>
+    <linearGradient id="facetUR" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffb3cc"/>
+      <stop offset="100%" stop-color="#e8005a"/>
+    </linearGradient>
+    <linearGradient id="facetLL" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8b0030"/>
+      <stop offset="100%" stop-color="#3d0015"/>
+    </linearGradient>
+    <linearGradient id="facetLR" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#cc0047"/>
+      <stop offset="100%" stop-color="#5a001f"/>
+    </linearGradient>
+    <linearGradient id="facetBL" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6b0025"/>
+      <stop offset="100%" stop-color="#200010"/>
+    </linearGradient>
+    <linearGradient id="facetBR" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a0003a"/>
+      <stop offset="100%" stop-color="#300018"/>
+    </linearGradient>
+    <linearGradient id="facetML" x1="100%" y1="50%" x2="0%" y2="50%">
+      <stop offset="0%" stop-color="#ff4d88"/>
+      <stop offset="100%" stop-color="#9a0035"/>
+    </linearGradient>
+    <linearGradient id="facetMR" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#ff7aaa"/>
+      <stop offset="100%" stop-color="#bf0048"/>
+    </linearGradient>
+    <filter id="gemGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feColorMatrix type="matrix"
+        values="1 0 0 0 0.8  0 0 0 0 0  0 0 0 0 0.2  0 0 0 0.6 0"
+        in="blur" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="outerGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feColorMatrix type="matrix"
+        values="1 0 0 0 0.7  0 0 0 0 0  0 0 0 0 0.15  0 0 0 0.4 0"
+        in="blur" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="textGlow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="shineTop" cx="40%" cy="30%" r="35%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background: dark velvet -->
+  <rect width="300" height="200" fill="url(#bgGrad)"/>
+
+  <!-- Gem: brilliant cut ruby, centered at (105, 90) -->
+  <g transform="translate(105, 90)" filter="url(#outerGlow)">
+    <!-- Crown: table facet (top hexagon) -->
+    <polygon points="0,-44 18,-28 18,0 0,8 -18,0 -18,-28"
+             fill="url(#facetTop)" filter="url(#gemGlow)"/>
+    <!-- Crown: upper left bezel -->
+    <polygon points="-18,-28 0,-44 -30,-44 -38,-20"
+             fill="url(#facetUL)"/>
+    <!-- Crown: upper right bezel -->
+    <polygon points="0,-44 18,-28 38,-20 30,-44"
+             fill="url(#facetUR)"/>
+    <!-- Crown: left girdle facet -->
+    <polygon points="-38,-20 -18,-28 -18,0 -40,0"
+             fill="url(#facetML)"/>
+    <!-- Crown: right girdle facet -->
+    <polygon points="18,-28 38,-20 40,0 18,0"
+             fill="url(#facetMR)"/>
+    <!-- Girdle band -->
+    <polygon points="-40,0 -18,0 0,8 18,0 40,0 30,12 0,18 -30,12"
+             fill="url(#facetLL)" opacity="0.6"/>
+    <!-- Pavilion: lower left main -->
+    <polygon points="-40,0 -30,12 0,50 0,18"
+             fill="url(#facetLL)"/>
+    <!-- Pavilion: lower right main -->
+    <polygon points="40,0 30,12 0,50 0,18"
+             fill="url(#facetLR)"/>
+    <!-- Pavilion: bottom left secondary -->
+    <polygon points="-30,12 0,18 0,50"
+             fill="url(#facetBL)"/>
+    <!-- Pavilion: bottom right secondary -->
+    <polygon points="30,12 0,18 0,50"
+             fill="url(#facetBR)"/>
+    <!-- Girdle extra left -->
+    <polygon points="-40,0 -18,0 -30,12"
+             fill="url(#facetML)" opacity="0.8"/>
+    <!-- Girdle extra right -->
+    <polygon points="40,0 18,0 30,12"
+             fill="url(#facetMR)" opacity="0.8"/>
+    <!-- Shine on table -->
+    <ellipse cx="-4" cy="-22" rx="10" ry="7"
+             fill="url(#shineTop)" transform="rotate(-15)"/>
+    <!-- Specular highlight -->
+    <circle cx="-8" cy="-32" r="2.5" fill="#ffffff" opacity="0.95"/>
+    <circle cx="-8" cy="-32" r="1.2" fill="#ffffff"/>
+    <!-- Facet edge strokes -->
+    <polygon points="0,-44 18,-28 18,0 0,8 -18,0 -18,-28"
+             fill="none" stroke="#ff4d88" stroke-width="0.4" stroke-opacity="0.5"/>
+    <line x1="0" y1="-44" x2="-30" y2="-44" stroke="#cc0047" stroke-width="0.3" stroke-opacity="0.4"/>
+    <line x1="0" y1="-44" x2="30" y2="-44" stroke="#cc0047" stroke-width="0.3" stroke-opacity="0.4"/>
+    <line x1="-38" y1="-20" x2="-40" y2="0" stroke="#880030" stroke-width="0.3" stroke-opacity="0.4"/>
+    <line x1="38" y1="-20" x2="40" y2="0" stroke="#880030" stroke-width="0.3" stroke-opacity="0.4"/>
+    <line x1="-40" y1="0" x2="-30" y2="12" stroke="#660025" stroke-width="0.3" stroke-opacity="0.4"/>
+    <line x1="40" y1="0" x2="30" y2="12" stroke="#660025" stroke-width="0.3" stroke-opacity="0.4"/>
+    <line x1="-30" y1="12" x2="0" y2="50" stroke="#440018" stroke-width="0.4" stroke-opacity="0.5"/>
+    <line x1="30" y1="12" x2="0" y2="50" stroke="#440018" stroke-width="0.4" stroke-opacity="0.5"/>
+    <!-- Culet point glow -->
+    <circle cx="0" cy="50" r="1.5" fill="#ff8ab0" opacity="0.8"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="185" y="68"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="11" font-weight="400" letter-spacing="3.5"
+        fill="#cc4477" text-anchor="middle"
+        filter="url(#textGlow)">AGENTIC</text>
+  <text x="185" y="96"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="22" font-weight="700" letter-spacing="1.5"
+        fill="#f0f0f0" text-anchor="middle"
+        filter="url(#textGlow)">LEAD GEN</text>
+
+  <!-- Double rule -->
+  <line x1="148" y1="104" x2="222" y2="104"
+        stroke="#880033" stroke-width="0.7" stroke-opacity="0.8"/>
+  <line x1="154" y1="107" x2="216" y2="107"
+        stroke="#cc0047" stroke-width="0.3" stroke-opacity="0.5"/>
+
+  <!-- Tagline -->
+  <text x="185" y="120"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="7" font-weight="300" letter-spacing="2.8"
+        fill="#886688" text-anchor="middle">HIGH-VALUE INTELLIGENCE</text>
+
+  <!-- Gem-dot accents -->
+  <circle cx="148" cy="133" r="1.5" fill="#cc0047" opacity="0.7"/>
+  <circle cx="154" cy="133" r="1"   fill="#ff6699" opacity="0.5"/>
+  <circle cx="216" cy="133" r="1.5" fill="#cc0047" opacity="0.7"/>
+  <circle cx="222" cy="133" r="1"   fill="#ff6699" opacity="0.5"/>
+
+  <!-- Corner ornaments -->
+  <g opacity="0.3" fill="none" stroke="#660033" stroke-width="0.5">
+    <path d="M 12 12 L 22 12 L 22 22"/>
+    <path d="M 288 12 L 278 12 L 278 22"/>
+    <path d="M 12 188 L 22 188 L 22 178"/>
+    <path d="M 288 188 L 278 188 L 278 178"/>
+  </g>
+</svg>

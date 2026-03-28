@@ -1,114 +1,78 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
   <defs>
-    <linearGradient id="infinityGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#FF6B2B;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#A855F7;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    <linearGradient id="mainGrad" x1="0.5" y1="1" x2="0.5" y2="0">
+      <stop offset="0%" stop-color="#3b0764"/>
+      <stop offset="40%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
     </linearGradient>
-    <linearGradient id="arrowGradL" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#FF6B2B;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#A855F7;stop-opacity:1" />
+    <linearGradient id="textGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
     </linearGradient>
-    <linearGradient id="arrowGradR" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#A855F7;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
-    </linearGradient>
-    <radialGradient id="bgGlow" cx="50%" cy="45%" r="50%">
-      <stop offset="0%" style="stop-color:#1a0a2e;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#0A0A0F;stop-opacity:1"/>
-    </radialGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
       <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <filter id="softGlow">
-      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
   </defs>
 
   <!-- Background -->
-  <rect width="300" height="200" fill="#0A0A0F" rx="12"/>
-  <rect width="300" height="200" fill="url(#bgGlow)" rx="12"/>
+  <rect width="300" height="200" fill="#ffffff"/>
 
-  <!-- Outer glow layer -->
-  <g filter="url(#softGlow)" opacity="0.4">
-    <path d="M 150,95
-             C 150,95 135,68 112,68
-             C 89,68 72,82 72,95
-             C 72,108 89,122 112,122
-             C 135,122 150,95 150,95"
-          fill="none" stroke="#FF6B2B" stroke-width="14" stroke-linecap="round"/>
-    <path d="M 150,95
-             C 150,95 165,68 188,68
-             C 211,68 228,82 228,95
-             C 228,108 211,122 188,122
-             C 165,122 150,95 150,95"
-          fill="none" stroke="#3B82F6" stroke-width="14" stroke-linecap="round"/>
-  </g>
+  <!-- Letter A: left leg -->
+  <polygon
+    points="60,158 88,158 118,68 104,68"
+    fill="url(#mainGrad)"
+    filter="url(#glow)"
+  />
 
-  <!-- Left loop -->
-  <path d="M 150,95
-           C 150,95 140,72 122,69
-           C 104,66 88,70 80,80
-           C 73,88 73,102 80,110
-           C 88,120 104,124 122,121
-           C 140,118 150,95 150,95"
-        fill="none" stroke="url(#arrowGradL)" stroke-width="7" stroke-linecap="round"
-        filter="url(#glow)"/>
+  <!-- Letter A: right leg -->
+  <polygon
+    points="182,158 210,158 148,68 134,68"
+    fill="url(#mainGrad)"
+    filter="url(#glow)"
+  />
 
-  <!-- Right loop -->
-  <path d="M 150,95
-           C 150,95 160,72 178,69
-           C 196,66 212,70 220,80
-           C 227,88 227,102 220,110
-           C 212,120 196,124 178,121
-           C 160,118 150,95 150,95"
-        fill="none" stroke="url(#arrowGradR)" stroke-width="7" stroke-linecap="round"
-        filter="url(#glow)"/>
+  <!-- Left bar segment of crossbar-arrow -->
+  <rect x="81" y="107" width="32" height="11" rx="2" fill="url(#mainGrad)" filter="url(#glow)"/>
 
-  <!-- Ouroboros snake head on left loop -->
-  <circle cx="152" cy="91" r="5.5" fill="#FF6B2B" filter="url(#glow)"/>
-  <circle cx="154" cy="89.5" r="1.2" fill="#0A0A0F"/>
-  <line x1="157" y1="91" x2="161" y2="89" stroke="#FF6B2B" stroke-width="1.2" stroke-linecap="round"/>
-  <line x1="157" y1="91" x2="161" y2="93" stroke="#FF6B2B" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Right bar segment of crossbar-arrow -->
+  <rect x="157" y="107" width="32" height="11" rx="2" fill="url(#mainGrad)" filter="url(#glow)"/>
 
-  <!-- Flow direction arrows -->
-  <polygon points="113,66 119,71 107,71" fill="#FF8C4B" opacity="0.9" filter="url(#glow)"/>
-  <polygon points="187,124 181,119 193,119" fill="#60A5FA" opacity="0.9" filter="url(#glow)"/>
+  <!-- Arrow shaft -->
+  <rect x="131" y="82" width="8" height="36" rx="2" fill="url(#mainGrad)" filter="url(#glow)"/>
 
-  <!-- Center crossover dot -->
-  <circle cx="150" cy="95" r="3.5" fill="#A855F7" filter="url(#glow)" opacity="0.9"/>
+  <!-- Arrowhead pointing up -->
+  <polygon
+    points="135,62 148,84 122,84"
+    fill="url(#mainGrad)"
+    filter="url(#glow)"
+  />
 
-  <!-- Loop endpoint dots -->
-  <circle cx="75" cy="95" r="3" fill="#FF6B2B" opacity="0.7"/>
-  <circle cx="225" cy="95" r="3" fill="#3B82F6" opacity="0.7"/>
-
-  <!-- Wordmark -->
-  <text x="150" y="148"
-        font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
-        font-size="15.5"
-        font-weight="700"
-        letter-spacing="0.04em"
-        fill="url(#infinityGrad)"
-        text-anchor="middle"
-        filter="url(#glow)">AGENTIC LEAD GEN</text>
+  <!-- Wordmark: AGENTIC -->
+  <text
+    x="56"
+    y="180"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="13.5"
+    font-weight="700"
+    letter-spacing="5"
+    fill="url(#textGrad)"
+  >AGENTIC</text>
 
   <!-- Separator -->
-  <line x1="90" y1="153" x2="210" y2="153" stroke="url(#infinityGrad)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="163" y1="171" x2="163" y2="182" stroke="#7c3aed" stroke-width="1.2" opacity="0.5"/>
 
-  <!-- Tagline -->
-  <text x="150" y="165"
-        font-family="'SF Pro Text', 'Helvetica Neue', Arial, sans-serif"
-        font-size="7.5"
-        font-weight="400"
-        letter-spacing="0.18em"
-        fill="#6B7280"
-        text-anchor="middle">PERPETUAL PIPELINE · AI-NATIVE</text>
+  <!-- Wordmark: LEAD GEN -->
+  <text
+    x="170"
+    y="180"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="13.5"
+    font-weight="300"
+    letter-spacing="4"
+    fill="#1e1b4b"
+  >LEAD GEN</text>
 </svg>

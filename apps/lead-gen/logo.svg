@@ -1,30 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
   <defs>
-    <linearGradient id="oceanDeep" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#0a1628;stop-opacity:1" />
-      <stop offset="30%" style="stop-color:#0d3b6e;stop-opacity:1" />
-      <stop offset="60%" style="stop-color:#1565c0;stop-opacity:1" />
-      <stop offset="80%" style="stop-color:#42a5f5;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#e3f2fd;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="foamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#e3f2fd;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#90caf9;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#f0faf3;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#071020;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0a1f3d;stop-opacity:1" />
+    <linearGradient id="stemGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#2d8a4e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="leafGrad1" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#16a34a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#86efac;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="leafGrad2" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#15803d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a7f3d0;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="soilGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a2f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f2419;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="circuitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#4ade80;stop-opacity:0.3" />
     </linearGradient>
     <filter id="glow">
-      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
       <feMerge>
         <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    <filter id="softglow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
       <feMerge>
         <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -33,81 +41,92 @@
   </defs>
 
   <!-- Background -->
-  <rect width="300" height="200" fill="url(#bgGrad)" rx="8"/>
+  <rect width="300" height="200" fill="url(#bgGrad)" rx="12"/>
 
-  <!-- Deep water base layer -->
-  <polygon points="0,200 0,140 30,130 60,135 90,125 120,118 150,110 180,100 210,92 240,88 270,85 300,80 300,200" fill="url(#oceanDeep)" opacity="0.9"/>
+  <!-- Circuit board soil base -->
+  <rect x="60" y="128" width="180" height="36" rx="5" fill="url(#soilGrad)"/>
 
-  <!-- Wave body rear large facets -->
-  <polygon points="0,165 20,150 50,145 80,150 110,140 140,128 170,118 200,108 220,100 240,95 260,90 280,88 300,85 300,160 270,155 240,150 210,148 180,145 150,142 120,145 90,148 60,152 30,158" fill="#0d3b6e" opacity="0.85"/>
+  <!-- Circuit traces on soil -->
+  <g stroke="url(#circuitGrad)" stroke-width="1.2" fill="none" opacity="0.85">
+    <line x1="68" y1="138" x2="100" y2="138"/>
+    <line x1="108" y1="138" x2="132" y2="138"/>
+    <line x1="168" y1="138" x2="192" y2="138"/>
+    <line x1="200" y1="138" x2="232" y2="138"/>
+    <line x1="72" y1="150" x2="92" y2="150"/>
+    <line x1="108" y1="150" x2="148" y2="150"/>
+    <line x1="160" y1="150" x2="188" y2="150"/>
+    <line x1="200" y1="150" x2="228" y2="150"/>
+    <line x1="100" y1="133" x2="100" y2="143"/>
+    <line x1="132" y1="133" x2="132" y2="145"/>
+    <line x1="168" y1="133" x2="168" y2="145"/>
+    <line x1="200" y1="133" x2="200" y2="143"/>
+    <line x1="92" y1="145" x2="92" y2="155"/>
+    <line x1="148" y1="143" x2="148" y2="155"/>
+    <line x1="188" y1="143" x2="188" y2="155"/>
+    <polyline points="100,138 104,138 104,142 108,142 108,138"/>
+    <polyline points="168,138 164,138 164,142 160,142 160,138"/>
+  </g>
 
-  <!-- Large bottom-left facet -->
-  <polygon points="0,170 40,148 80,142 120,138 150,130 140,155 90,162 45,168" fill="#0d4f8c" opacity="0.9"/>
+  <!-- Circuit nodes -->
+  <g fill="#4ade80" opacity="0.9">
+    <circle cx="100" cy="138" r="2.2"/>
+    <circle cx="132" cy="138" r="2.2"/>
+    <circle cx="168" cy="138" r="2.2"/>
+    <circle cx="200" cy="138" r="2.2"/>
+    <circle cx="92"  cy="150" r="2.2"/>
+    <circle cx="148" cy="150" r="2.2"/>
+    <circle cx="188" cy="150" r="2.2"/>
+    <circle cx="72"  cy="150" r="1.6"/>
+    <circle cx="228" cy="150" r="1.6"/>
+  </g>
 
-  <!-- Center mass facets -->
-  <polygon points="80,142 130,125 175,110 210,98 220,100 200,118 160,130 110,140" fill="#1565c0" opacity="0.88"/>
-  <polygon points="130,125 180,108 220,95 250,88 260,90 235,102 190,116 145,132" fill="#1976d2" opacity="0.85"/>
+  <!-- Soil surface highlight -->
+  <rect x="60" y="128" width="180" height="3" rx="2" fill="#2d6a45" opacity="0.6"/>
 
-  <!-- Upper facets building toward crest -->
-  <polygon points="175,110 220,95 260,82 280,80 275,90 255,95 225,105 190,118" fill="#1e88e5" opacity="0.8"/>
-  <polygon points="220,95 265,78 285,75 290,78 280,85 258,88 232,100" fill="#2196f3" opacity="0.78"/>
+  <!-- Main stem -->
+  <path d="M150 128 C150 115 148 100 150 82" stroke="url(#stemGrad)" stroke-width="3.5" fill="none" stroke-linecap="round" filter="url(#glow)"/>
 
-  <!-- Transition facets mid-wave -->
-  <polygon points="150,130 200,112 240,100 260,95 250,108 215,120 175,135" fill="#42a5f5" opacity="0.75"/>
-  <polygon points="200,112 245,96 275,88 285,90 268,100 240,108 212,120" fill="#64b5f6" opacity="0.7"/>
+  <!-- Left leaf -->
+  <g filter="url(#glow)">
+    <path d="M150 100 C138 95 124 88 118 76 C128 70 142 76 150 88 Z" fill="url(#leafGrad1)" opacity="0.92"/>
+    <path d="M150 100 C140 90 128 80 120 73" stroke="#86efac" stroke-width="0.8" fill="none" opacity="0.7"/>
+    <path d="M127 82 C130 79 135 77 140 78" stroke="#ffffff" stroke-width="1.1" fill="none" opacity="0.6" stroke-linecap="round"/>
+    <path d="M122 86 C127 81 134 78 141 80" stroke="#ffffff" stroke-width="0.8" fill="none" opacity="0.35" stroke-linecap="round"/>
+  </g>
 
-  <!-- Light catching facets -->
-  <polygon points="240,92 270,80 290,76 295,82 278,88 255,94" fill="#90caf9" opacity="0.8"/>
-  <polygon points="260,85 285,72 298,70 300,75 290,80 270,86" fill="#bbdefb" opacity="0.75"/>
+  <!-- Right leaf -->
+  <g filter="url(#glow)">
+    <path d="M150 95 C162 90 176 83 182 71 C172 65 158 71 150 83 Z" fill="url(#leafGrad2)" opacity="0.92"/>
+    <path d="M150 95 C160 85 172 75 180 68" stroke="#a7f3d0" stroke-width="0.8" fill="none" opacity="0.7"/>
+    <path d="M173 77 C170 74 165 72 160 73" stroke="#ffffff" stroke-width="1.1" fill="none" opacity="0.6" stroke-linecap="round"/>
+    <path d="M178 81 C173 76 166 73 159 75" stroke="#ffffff" stroke-width="0.8" fill="none" opacity="0.35" stroke-linecap="round"/>
+  </g>
 
-  <!-- Wave crest curl base -->
-  <polygon points="255,78 272,65 290,58 300,60 300,70 288,68 270,72" fill="#bbdefb" opacity="0.85"/>
+  <!-- Sprout bud -->
+  <ellipse cx="150" cy="80" rx="4" ry="6" fill="#4ade80" filter="url(#softGlow)" opacity="0.95"/>
+  <ellipse cx="150" cy="79" rx="2.5" ry="4" fill="#86efac" opacity="0.85"/>
 
-  <!-- Crest overhang / curl -->
-  <polygon points="260,72 275,58 292,52 298,55 296,62 280,65 265,70" fill="#e3f2fd" opacity="0.9"/>
+  <!-- Wifi signal arcs rising from sprout -->
+  <g fill="none" stroke-linecap="round" opacity="0.75" filter="url(#glow)">
+    <path d="M142 70 C144 65 150 62 156 65" stroke="#22c55e" stroke-width="1.8"/>
+    <path d="M138 65 C141 58 150 54 159 58" stroke="#4ade80" stroke-width="1.4" opacity="0.7"/>
+    <path d="M135 60 C139 51 150 47 161 51" stroke="#86efac" stroke-width="1.0" opacity="0.45"/>
+  </g>
+  <circle cx="150" cy="62" r="1.8" fill="#22c55e" opacity="0.9" filter="url(#glow)"/>
 
-  <!-- Foam curl tip -->
-  <polygon points="268,65 282,52 295,46 300,50 298,57 285,60 272,64" fill="url(#foamGrad)" filter="url(#glow)"/>
+  <!-- Floating network nodes -->
+  <g fill="#22c55e" opacity="0.5">
+    <circle cx="108" cy="108" r="2"/>
+    <circle cx="192" cy="112" r="2"/>
+    <circle cx="118" cy="90" r="1.5"/>
+    <circle cx="183" cy="94" r="1.5"/>
+  </g>
+  <g stroke="#22c55e" stroke-width="0.7" fill="none" opacity="0.25" stroke-dasharray="3,3">
+    <line x1="110" y1="107" x2="136" y2="100"/>
+    <line x1="190" y1="111" x2="164" y2="100"/>
+  </g>
 
-  <!-- Foam spray at crest -->
-  <polygon points="278,58 288,46 298,42 300,47 294,52 283,56" fill="#ffffff" opacity="0.95" filter="url(#glow)"/>
-
-  <!-- Foam spray wisps -->
-  <polygon points="272,54 280,44 290,40 294,46 284,50 274,53" fill="#e3f2fd" opacity="0.85"/>
-
-  <!-- Cascading foam down the face -->
-  <polygon points="235,98 255,85 275,80 278,88 260,94 240,100" fill="#90caf9" opacity="0.6" filter="url(#softglow)"/>
-  <polygon points="215,108 240,94 262,89 264,96 244,103 220,112" fill="#bbdefb" opacity="0.55"/>
-  <polygon points="190,120 220,106 248,98 250,105 222,114 196,126" fill="#e3f2fd" opacity="0.5"/>
-
-  <!-- Foam line at base of wave -->
-  <path d="M 0,162 C 20,158 50,154 80,150 C 110,146 140,142 170,140 C 200,138 230,138 260,136 C 280,135 295,134 305,134" stroke="#90caf9" stroke-width="1.5" fill="none" opacity="0.6"/>
-  <path d="M 0,168 C 30,163 70,158 110,154 C 150,150 190,148 225,147 C 255,146 278,146 300,145" stroke="#64b5f6" stroke-width="1" fill="none" opacity="0.4"/>
-
-  <!-- Foam specks at wave face -->
-  <circle cx="242" cy="101" r="1.5" fill="#ffffff" opacity="0.8"/>
-  <circle cx="255" cy="92" r="1.2" fill="#e3f2fd" opacity="0.85"/>
-  <circle cx="268" cy="82" r="1.8" fill="#ffffff" opacity="0.9" filter="url(#glow)"/>
-  <circle cx="276" cy="74" r="1.3" fill="#ffffff" opacity="0.95"/>
-  <circle cx="283" cy="65" r="2" fill="#ffffff" opacity="0.9" filter="url(#glow)"/>
-  <circle cx="290" cy="57" r="1.5" fill="#ffffff" opacity="0.85"/>
-  <circle cx="228" cy="108" r="1.2" fill="#e3f2fd" opacity="0.7"/>
-  <circle cx="215" cy="115" r="1" fill="#ffffff" opacity="0.6"/>
-
-  <!-- Text: AGENTIC LEAD GEN -->
-  <text x="150" y="182" font-family="'Arial', 'Helvetica', sans-serif" font-size="11" font-weight="700" letter-spacing="3" fill="#90caf9" text-anchor="middle" opacity="0.9">AGENTIC LEAD GEN</text>
-
-  <!-- Subtle text underline accent -->
-  <line x1="60" y1="185" x2="240" y2="185" stroke="#1976d2" stroke-width="0.5" opacity="0.5"/>
-
-  <!-- Top-left accent: small data point dots suggesting leads -->
-  <circle cx="18" cy="22" r="2" fill="#1e88e5" opacity="0.7"/>
-  <circle cx="28" cy="18" r="1.5" fill="#42a5f5" opacity="0.6"/>
-  <circle cx="38" cy="24" r="1.8" fill="#1565c0" opacity="0.65"/>
-  <circle cx="46" cy="16" r="1.2" fill="#64b5f6" opacity="0.5"/>
-  <circle cx="55" cy="21" r="2.2" fill="#1976d2" opacity="0.7"/>
-  <circle cx="65" cy="14" r="1.5" fill="#42a5f5" opacity="0.55"/>
-
-  <!-- Connecting lines for data/lead flow -->
-  <polyline points="18,22 28,18 38,24 46,16 55,21 65,14" stroke="#2196f3" stroke-width="0.8" fill="none" opacity="0.45" stroke-dasharray="2,2"/>
+  <!-- Labels -->
+  <text x="150" y="180" font-family="'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="700" fill="#15803d" text-anchor="middle" letter-spacing="0.5">Agentic Lead Gen</text>
+  <text x="150" y="193" font-family="'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="7.5" font-weight="400" fill="#4ade80" text-anchor="middle" letter-spacing="2.5">GROW · CONNECT · CONVERT</text>
 </svg>

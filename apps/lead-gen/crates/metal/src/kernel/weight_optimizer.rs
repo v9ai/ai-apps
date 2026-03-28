@@ -137,8 +137,9 @@ pub fn grid_search_icp(
     assert!(g > 0, "grid_values must not be empty");
 
     let total_combos = g.pow(6);
+    // Initialise best to a sentinel so the first combo always wins on tie.
+    let mut best_f1 = -1.0f32;
     let mut best_icp = IcpProfile::default();
-    let mut best_f1 = icp_f1(samples, &best_icp, threshold);
 
     // Iterate over all combinations by treating the 6-weight tuple as a
     // mixed-radix number in base `g`.
