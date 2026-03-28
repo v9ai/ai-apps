@@ -1282,6 +1282,19 @@ importers:
       react:
         specifier: '>=18.0.0'
         version: 19.1.1
+    devDependencies:
+      '@ai-apps/typescript-config':
+        specifier: workspace:*
+        version: link:../config-typescript
+      '@types/node':
+        specifier: ^22
+        version: 22.19.7
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      typescript:
+        specifier: ^5
+        version: 5.9.3
 
   packages/ui:
     dependencies:
