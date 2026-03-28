@@ -97,6 +97,7 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
 
         let enrichment_score = compute_enrichment_score(
             &category, &ai_tier, &company.tech_signals, has_careers, remote_policy, confidence,
+            &ctx.icp_vertical,
         );
 
         let enriched = EnrichedCompany {
@@ -175,16 +176,20 @@ fn heuristic_classify(text: &str) -> (String, String, String, f64) {
 
 fn compute_enrichment_score(
     category: &str, ai_tier: &str, tech: &[String], has_careers: bool,
-    remote_policy: u8, confidence: f64,
+    remote_policy: u8, confidence: f64, target_vertical: &str,
 ) -> f64 {
     let mut score = 0.0;
 
-    // Category weight (CONSULTANCY is primary ICP target)
-    score += match category {
-        "CONSULTANCY" => 25.0,
-        "PRODUCT" => 20.0,
-        "AGENCY" => 12.0,
-        _ => 5.0,
+    // Category weight (target vertical gets priority)
+    let target_upper = target_vertical.to_uppercase();
+    score += if category == target_upper {
+        25.0
+    } else {
+        match category {
+            "PRODUCT" => 20.0,
+            "AGENCY" => 12.0,
+            _ => 5.0,
+        }
     };
 
     // AI tier

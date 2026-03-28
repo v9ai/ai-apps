@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { css, cx } from "styled-system/css";
 import { flex, grid, container } from "styled-system/patterns";
 import { badge } from "@/recipes/badge";
@@ -21,7 +22,6 @@ import {
   Handle,
   Position,
   type Node,
-  type Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -127,7 +127,6 @@ function PipelineNode({ data }: { data: Record<string, unknown> }) {
         style={{ opacity: 0, pointerEvents: "none" }}
       />
 
-      {/* step watermark */}
       <span
         className={css({
           fontSize: "3xl",
@@ -182,54 +181,61 @@ function PipelineNode({ data }: { data: Record<string, unknown> }) {
 
 const nodeTypes = { pipelineNode: PipelineNode };
 
-// ── Flow graph definition ──────────────────────────────────────────────────────
-//
-// DAG layout (top-to-bottom):
-//
-//        [00 system overview]       ← root
-//               ↓
-//         [01 rl crawler]
-//               ↓
-//        [02 ner extraction]
-//               ↓
-//      [03 entity resolution]       ← branch point
-//          ↙         ↘
-// [04 lead scoring]  [05 report gen]
-//          ↘         ↙
-//         [06 evaluation]           ← sink
+// ── Per-module diagram ─────────────────────────────────────────────────────────
 
-const NODE_POSITIONS: { x: number; y: number }[] = [
-  { x: 240, y: 0 },   // 00
-  { x: 240, y: 155 }, // 01
-  { x: 240, y: 310 }, // 02
-  { x: 240, y: 465 }, // 03
-  { x: 0, y: 620 },   // 04 — left branch
-  { x: 480, y: 620 }, // 05 — right branch
-  { x: 240, y: 775 }, // 06 — converge
-];
+function ModuleDiagram({ stage }: { stage: StageData }) {
+  const nodes = useMemo<Node[]>(
+    () => [
+      {
+        id: stage.step,
+        type: "pipelineNode",
+        position: { x: 0, y: 0 },
+        data: stage as unknown as Record<string, unknown>,
+      },
+    ],
+    // stage is a module-level constant — deps array is intentionally empty
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
-const FLOW_NODES: Node[] = PIPELINE_STAGES.map((stage, i) => ({
-  id: stage.step,
-  type: "pipelineNode",
-  position: NODE_POSITIONS[i],
-  data: stage as unknown as Record<string, unknown>,
-}));
-
-const EDGE_STYLE: React.CSSProperties = {
-  stroke: "rgba(62, 99, 221, 0.6)",
-  strokeWidth: 1.5,
-  strokeDasharray: "5 3",
-};
-
-const FLOW_EDGES: Edge[] = [
-  { id: "e00-01", source: "00", target: "01", animated: true, type: "smoothstep", style: EDGE_STYLE },
-  { id: "e01-02", source: "01", target: "02", animated: true, type: "smoothstep", style: EDGE_STYLE },
-  { id: "e02-03", source: "02", target: "03", animated: true, type: "smoothstep", style: EDGE_STYLE },
-  { id: "e03-04", source: "03", target: "04", animated: true, type: "smoothstep", style: EDGE_STYLE },
-  { id: "e03-05", source: "03", target: "05", animated: true, type: "smoothstep", style: EDGE_STYLE },
-  { id: "e04-06", source: "04", target: "06", animated: true, type: "smoothstep", style: EDGE_STYLE },
-  { id: "e05-06", source: "05", target: "06", animated: true, type: "smoothstep", style: EDGE_STYLE },
-];
+  return (
+    <div
+      style={{ height: 196 }}
+      className={css({
+        border: "1px solid",
+        borderColor: "ui.border",
+        position: "relative",
+        overflow: "hidden",
+        transition: "border-color 150ms ease",
+        _hover: { borderColor: "ui.borderHover" },
+      })}
+    >
+      <ReactFlow
+        nodes={nodes}
+        edges={[]}
+        nodeTypes={nodeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.1 }}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable={false}
+        panOnDrag={false}
+        zoomOnScroll={false}
+        zoomOnPinch={false}
+        zoomOnDoubleClick={false}
+        colorMode="dark"
+        style={{ background: "transparent" }}
+      >
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={20}
+          size={1}
+          color="rgba(255,255,255,0.04)"
+        />
+      </ReactFlow>
+    </div>
+  );
+}
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -277,34 +283,25 @@ export function LandingPipeline() {
           zero cloud dependencies. this is the Agentic Lead Gen pipeline.
         </p>
 
-        {/* ── Desktop: ReactFlow DAG ─────────────────────────────────────── */}
+        {/* ── Desktop: 3-column grid of individual module diagrams ──────── */}
         <div
-          className={css({ display: { base: "none", md: "block" } })}
-          style={{ height: 560 }}
+          className={css({
+            display: { base: "none", md: "grid" },
+            gridTemplateColumns: { md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+            gap: "3",
+          })}
         >
-          <ReactFlow
-            nodes={FLOW_NODES}
-            edges={FLOW_EDGES}
-            nodeTypes={nodeTypes}
-            fitView
-            fitViewOptions={{ padding: 0.06 }}
-            nodesDraggable={false}
-            nodesConnectable={false}
-            elementsSelectable={false}
-            panOnDrag={false}
-            zoomOnScroll={false}
-            zoomOnPinch={false}
-            zoomOnDoubleClick={false}
-            colorMode="dark"
-            style={{ background: "transparent" }}
-          >
-            <Background
-              variant={BackgroundVariant.Dots}
-              gap={24}
-              size={1}
-              color="rgba(255,255,255,0.04)"
-            />
-          </ReactFlow>
+          {PIPELINE_STAGES.map((stage, i) => (
+            <div
+              key={stage.step}
+              className={css({
+                // center 7th item (evaluation) in the 3-col grid's last row
+                gridColumn: i === 6 ? { lg: "2 / 3" } : undefined,
+              })}
+            >
+              <ModuleDiagram stage={stage} />
+            </div>
+          ))}
         </div>
 
         {/* ── Mobile: vertical stack ─────────────────────────────────────── */}
