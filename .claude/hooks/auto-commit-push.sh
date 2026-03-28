@@ -49,15 +49,21 @@ LAST_MSG=$(echo "$INPUT" | jq -r '.last_assistant_message // empty' 2>/dev/null)
 
 SUMMARY=""
 if [ -n "$LAST_MSG" ]; then
-    # Take first meaningful sentence (skip blank lines, code blocks, bullets)
+    # Take first meaningful sentence (skip blank lines, code blocks, bullets, headings)
     FIRST_LINE=$(echo "$LAST_MSG" \
-        | grep -v '^```' | grep -v '^\s*$' | grep -v '^\s*[-*]' | grep -v '^#' \
+        | grep -v '^```' | grep -v '^\s*$' | grep -v '^\s*[-*>]' | grep -v '^#' \
         | head -1 | sed 's/[[:space:]]*$//')
 
     if [ -n "$FIRST_LINE" ]; then
-        # Lowercase first char, strip trailing period
-        FIRST_LINE=$(echo "$FIRST_LINE" | sed 's/^./\L&/' | sed 's/\.$//')
-        SUMMARY="${TAG:+${TAG} }${FIRST_LINE}"
+        # Lowercase first char (macOS-compatible), strip trailing period
+        FIRST_LINE="$(echo "${FIRST_LINE:0:1}" | tr '[:upper:]' '[:lower:]')${FIRST_LINE:1}"
+        FIRST_LINE="${FIRST_LINE%.}"
+        # conventional commit: verb(scope): description
+        if [ -n "$TAG" ]; then
+            SUMMARY="chore${TAG}: ${FIRST_LINE}"
+        else
+            SUMMARY="chore: ${FIRST_LINE}"
+        fi
     fi
 fi
 
