@@ -317,6 +317,35 @@ export default function MocPage() {
           {/* Action buttons */}
           <div className={css({ display: "flex", gap: "3", flexWrap: "wrap" })}>
             <a
+              href={`/scripts/new?mocId=${encodeURIComponent(moc.mocId)}&mocName=${encodeURIComponent(moc.name)}`}
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "2",
+                rounded: "brick",
+                bg: "lego.blue",
+                px: "5",
+                py: "2.5",
+                fontSize: "sm",
+                fontWeight: "800",
+                fontFamily: "display",
+                color: "white",
+                textDecoration: "none",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #003A8C, 0 3px 6px rgba(0,0,0,0.3)",
+                _hover: {
+                  bg: "#0057D8",
+                  transform: "translateY(-1px)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 0 #003A8C, 0 5px 10px rgba(0,0,0,0.35)",
+                },
+              })}
+            >
+              Generate Script
+            </a>
+            <a
               href={moc.mocUrl}
               target="_blank"
               rel="noopener noreferrer"
