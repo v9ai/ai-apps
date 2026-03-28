@@ -167,9 +167,11 @@ RUST_FILTER_7 = pipeline teams state enrich
 #   make ml-datagen           Generate synthetic training data
 #   make ml-report            Print current metrics dashboard
 
-EVAL_LABELS  := $(METAL_DIR)/data/eval_labels.jsonl
-EVAL_REPORTS := $(METAL_DIR)/data/reports
-MODELS_DIR   := $(METAL_DIR)/data/models
+ML_DATA      := $(METAL_DIR)/data
+EVAL_LABELS  := $(ML_DATA)/eval_labels.jsonl
+EVAL_REPORTS := $(ML_DATA)/reports
+MODELS_DIR   := $(ML_DATA)/models
+ML_FLAGS     := -D $(ML_DATA)
 
 .PHONY: ml-loop ml-eval ml-eval-scoring ml-optimize ml-datagen ml-report
 
