@@ -291,43 +291,18 @@ export function SleepGuide() {
 
               {/* Tier header */}
               <div>
-                <div
+                <p
                   className={css({
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    fontSize: "xs",
+                    fontFamily: "display",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: isRecommended ? "amber.warm" : "text.muted",
                     mb: "2",
                   })}
                 >
-                  <p
-                    className={css({
-                      fontSize: "xs",
-                      fontFamily: "display",
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: isRecommended ? "amber.warm" : "text.muted",
-                    })}
-                  >
-                    {tier.tier}
-                  </p>
-                  <span
-                    className={css({
-                      fontSize: "2xs",
-                      fontFamily: "display",
-                      fontWeight: "700",
-                      letterSpacing: "0.06em",
-                      color: isRecommended ? "amber.bright" : "text.faint",
-                      bg: "steel.raised",
-                      border: "1px solid",
-                      borderColor: isRecommended ? "amber.warm" : "steel.border",
-                      rounded: "pill",
-                      px: "2",
-                      py: "0.5",
-                    })}
-                  >
-                    {t.mlLabel} {tier.mlScore}
-                  </span>
-                </div>
+                  {tier.tier}
+                </p>
                 <p
                   className={css({
                     fontSize: "h3",
@@ -527,41 +502,17 @@ export function SleepGuide() {
                 _hover: { borderColor: "steel.borderHover" },
               })}
             >
-              <div
+              <p
                 className={css({
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  fontSize: "label",
+                  fontWeight: "600",
+                  fontFamily: "display",
+                  color: "text.primary",
                   mb: "1",
                 })}
               >
-                <p
-                  className={css({
-                    fontSize: "label",
-                    fontWeight: "600",
-                    fontFamily: "display",
-                    color: "text.primary",
-                  })}
-                >
-                  {n.name}
-                </p>
-                <span
-                  className={css({
-                    fontSize: "2xs",
-                    fontFamily: "display",
-                    fontWeight: "700",
-                    color: "amber.warm",
-                    bg: "rgba(201,146,42,0.08)",
-                    border: "1px solid rgba(201,146,42,0.2)",
-                    rounded: "pill",
-                    px: "2",
-                    py: "0.5",
-                    whiteSpace: "nowrap",
-                  })}
-                >
-                  {t.mlLabel} {n.mlScore}
-                </span>
-              </div>
+                {n.name}
+              </p>
               <p
                 className={css({
                   fontSize: "meta",

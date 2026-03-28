@@ -27,7 +27,6 @@ const T = {
     sectionLabel: "Price Validation",
     sectionTitle: "Live Price Check",
     subtitle: `2 adults + 1 child · ${DATE_RANGE_LABEL.en} · All amounts in EUR`,
-    mlBadge: ML_BADGE.en,
     budgetedLabel: "Budgeted",
     actualLabel: "Actual",
     statusLabels: {
