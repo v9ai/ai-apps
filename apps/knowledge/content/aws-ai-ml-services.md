@@ -951,7 +951,7 @@ def handler(event, context):
         )
 ```
 
-**Production hardening**: Add SQS between [S3](/aws/storage-s3) events and [Lambda](/aws/lambda-serverless) for backpressure. Use DLQ for failed Lambda invocations. Enable Lambda concurrency limits to avoid overwhelming the SageMaker endpoint. Use Step Functions instead of Lambda for complex multi-step workflows with error handling. For [networking and API Gateway](/aws/api-gateway-networking) in front of this pipeline, see the dedicated article.
+**Production hardening**: Add SQS between [S3](/aws/storage-s3) events and [Lambda](/aws/lambda-serverless) for backpressure. Use DLQ for failed Lambda invocations. Enable Lambda concurrency limits to avoid overwhelming the SageMaker endpoint. Use [Step Functions](/aws-step-functions) instead of Lambda for complex multi-step workflows with error handling. For [networking and API Gateway](/aws/api-gateway-networking) in front of this pipeline, see the dedicated article.
 
 ### Pattern 2: [RAG](/advanced-rag) with Bedrock Knowledge Bases
 
@@ -1162,7 +1162,7 @@ def handler(event, context):
 
 **Q: A client is concerned about Bedrock sending their proprietary data to Anthropic. How do you address this?**
 
-**A:** This is a common enterprise concern. Key points: (1) AWS's data privacy commitment—Bedrock does NOT use customer data to train or improve foundation models. Inputs/outputs are not shared with model providers (Anthropic, Meta, etc.). (2) VPC-based invocation—use Bedrock VPC endpoints (PrivateLink) so model invocations never traverse the public internet (see [API Gateway & Networking](/aws/api-gateway-networking)). (3) Encryption—all data is encrypted in transit (TLS) and at rest; you can bring your own KMS key for model customization artifacts (see [IAM & Security](/aws/iam-security)). (4) Bedrock model invocation logging—log all requests/responses to your own [S3](/aws/storage-s3) bucket for audit. (5) For highly sensitive workloads, consider deploying open-source models (Llama, Mistral) via SageMaker JumpStart in your own VPC—no data leaves your AWS account at all.
+**A:** This is a common enterprise concern. Key points: (1) AWS's data privacy commitment—Bedrock does NOT use customer data to train or improve foundation models. Inputs/outputs are not shared with model providers (Anthropic, Meta, etc.). (2) VPC-based invocation—use Bedrock VPC endpoints (PrivateLink) so model invocations never traverse the public internet (see [VPC & Networking](/aws-vpc-networking) and [API Gateway & Networking](/aws/api-gateway-networking)). (3) Encryption—all data is encrypted in transit (TLS) and at rest; you can bring your own KMS key for model customization artifacts (see [IAM & Security](/aws/iam-security)). (4) Bedrock model invocation logging—log all requests/responses to your own [S3](/aws/storage-s3) bucket for audit. (5) For highly sensitive workloads, consider deploying open-source models (Llama, Mistral) via SageMaker JumpStart in your own VPC—no data leaves your AWS account at all.
 
 ---
 
@@ -1178,6 +1178,324 @@ def handler(event, context):
 
 ---
 
+## Bedrock Agents — Agentic AI Workflows
+
+Bedrock Agents enable LLMs to autonomously execute multi-step tasks by calling APIs, querying knowledge bases, and taking actions.
+
+### Architecture
+```
+User Query
+    ↓
+Bedrock Agent (Foundation Model orchestrator)
+    ├── Action Group 1: Order Management (calls Lambda → your API)
+    ├── Action Group 2: Inventory Check (calls Lambda → DynamoDB)
+    ├── Knowledge Base: Product catalog (OpenSearch/Aurora)
+    └── Return Response
+```
+
+### Action Groups — Tool Use
+Action Groups define the tools an agent can use. Each action group is backed by a [Lambda](/aws/lambda-serverless) function and described by an OpenAPI schema.
+
+```json
+// OpenAPI schema for "Order Management" action group
+{
+  "openapi": "3.0.0",
+  "info": {"title": "Order Management API", "version": "1.0"},
+  "paths": {
+    "/orders": {
+      "get": {
+        "operationId": "listOrders",
+        "description": "Get orders for a customer",
+        "parameters": [
+          {"name": "customerId", "in": "query", "required": true, "schema": {"type": "string"}},
+          {"name": "status", "in": "query", "required": false, "schema": {"type": "string", "enum": ["pending", "shipped", "delivered"]}}
+        ],
+        "responses": {"200": {"description": "List of orders"}}
+      }
+    },
+    "/orders/{orderId}/cancel": {
+      "post": {
+        "operationId": "cancelOrder",
+        "description": "Cancel a specific order",
+        "parameters": [{"name": "orderId", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Cancellation result"}}
+      }
+    }
+  }
+}
+```
+
+```python
+# Lambda function backing the action group
+def lambda_handler(event, context):
+    agent_action = event['actionGroup']
+    api_path = event['apiPath']
+    parameters = {p['name']: p['value'] for p in event.get('parameters', [])}
+
+    if api_path == '/orders':
+        orders = get_orders_from_db(parameters['customerId'], parameters.get('status'))
+        return {
+            'response': {'statusCode': 200, 'responseBody': {'application/json': {'body': json.dumps(orders)}}}
+        }
+
+    if api_path == '/orders/{orderId}/cancel':
+        order_id = parameters['orderId']
+        result = cancel_order_in_db(order_id)
+        return {
+            'response': {'statusCode': 200, 'responseBody': {'application/json': {'body': json.dumps(result)}}}
+        }
+```
+
+### Knowledge Bases — RAG Without Infrastructure
+Bedrock Knowledge Bases is managed [RAG](/advanced-rag): you connect data sources ([S3](/aws/storage-s3), Confluence, SharePoint, Web), Bedrock ingests, chunks, embeds, and stores in a [vector database](/vector-databases).
+
+```python
+import boto3
+
+bedrock_agent_runtime = boto3.client('bedrock-agent-runtime', region_name='us-east-1')
+
+# Retrieve and Generate (RAG query)
+response = bedrock_agent_runtime.retrieve_and_generate(
+    input={'text': 'What is our refund policy for digital products?'},
+    retrieveAndGenerateConfiguration={
+        'type': 'KNOWLEDGE_BASE',
+        'knowledgeBaseConfiguration': {
+            'knowledgeBaseId': 'KBID12345',
+            'modelArn': 'arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0',
+            'retrievalConfiguration': {
+                'vectorSearchConfiguration': {
+                    'numberOfResults': 5,
+                    'overrideSearchType': 'HYBRID',  # semantic + keyword
+                    'filter': {
+                        'equals': {'key': 'category', 'value': 'policy'}
+                    }
+                }
+            },
+            'generationConfiguration': {
+                'promptTemplate': {
+                    'textPromptTemplate': 'Answer based on the provided context: $search_results$\n\nQuestion: $query$'
+                }
+            }
+        }
+    }
+)
+
+print(response['output']['text'])
+print('Citations:', response['citations'])  # shows which documents were used
+
+# Retrieve only (no generation — get raw chunks)
+retrieval = bedrock_agent_runtime.retrieve(
+    knowledgeBaseId='KBID12345',
+    retrievalQuery={'text': 'refund policy digital products'},
+    retrievalConfiguration={'vectorSearchConfiguration': {'numberOfResults': 10}}
+)
+```
+
+### Supported Vector Databases for Knowledge Bases
+- **OpenSearch Serverless** (managed, recommended for most use cases)
+- **Aurora PostgreSQL** (pgvector extension)
+- **Pinecone** (third-party, bring your own)
+- **Redis Enterprise Cloud** (bring your own)
+- **MongoDB Atlas** (bring your own)
+
+### Agents + Knowledge Bases Together
+```python
+# Agent that can both call APIs AND query knowledge base
+response = bedrock_agent_runtime.invoke_agent(
+    agentId='AGENTID123',
+    agentAliasId='ALIASID456',
+    sessionId='session-user-42',
+    inputText="I want to cancel order ORD-999. Also, what's your return policy?",
+    # Agent will: 1) call Order API to cancel ORD-999, 2) query KB for return policy
+    # Then synthesize a response combining both
+)
+
+# Stream response
+for event in response['completion']:
+    if 'chunk' in event:
+        print(event['chunk']['bytes'].decode('utf-8'), end='', flush=True)
+    if 'trace' in event:
+        # Trace shows agent's reasoning: which tools it chose and why
+        print('\nTrace:', event['trace']['trace']['orchestrationTrace'])
+```
+
+For stateful multi-agent orchestration beyond the managed Bedrock Agents model, see [agent architectures](/agent-architectures) and [LangGraph](/langgraph). For Step Functions-based orchestration of the broader pipeline around agents, see [Step Functions](/aws-step-functions).
+
+---
+
+## Bedrock Guardrails — Safety Layer for GenAI Applications
+
+Guardrails provide a customizable safety layer that screens both inputs and outputs. For broader [IAM](/aws/iam-security) and security context around Bedrock deployments, see [Security Services](/aws-security-services).
+
+### Configurable Controls
+- **Content filters**: block harmful content by category (hate speech, violence, sexual, profanity, prompt injection attacks) with strength level (low/medium/high)
+- **Denied topics**: define topics the model should refuse (e.g., "competitor products", "legal advice", "financial advice")
+- **Word filters**: block specific words/phrases in input or output
+- **PII redaction**: detect and redact/block PII types (SSN, credit card, phone, email, address, name)
+- **Grounding check**: verify response is grounded in provided context (reduces hallucination for RAG use cases)
+- **Contextual grounding**: evaluate whether response is relevant to the prompt
+
+```python
+# Invoke model with guardrail
+response = bedrock.invoke_model(
+    modelId='anthropic.claude-3-5-sonnet-20241022-v2:0',
+    body=json.dumps({
+        'anthropic_version': 'bedrock-2023-05-31',
+        'max_tokens': 1024,
+        'messages': [{'role': 'user', 'content': user_message}]
+    }),
+    guardrailIdentifier='my-guardrail-id',
+    guardrailVersion='1',
+    trace='ENABLED',
+)
+
+result = json.loads(response['body'].read())
+
+# Check if guardrail intervened
+if result.get('amazon-bedrock-guardrailAction') == 'GUARDRAIL_INTERVENED':
+    # Handle blocked/modified response
+    intervention_trace = result.get('amazon-bedrock-trace', {})
+    print('Guardrail blocked or modified response:', intervention_trace)
+```
+
+---
+
+## Amazon Q — AI Assistant Portfolio
+
+Amazon Q is AWS's family of AI assistants:
+
+### Amazon Q Developer
+- AI coding assistant integrated into VS Code, JetBrains, CLI, and AWS Console
+- Features:
+  - **Inline code suggestions**: like GitHub Copilot but trained on AWS open-source + CodeWhisperer data
+  - **Chat in IDE**: ask questions about code, explain errors, refactor, generate tests
+  - **AWS Console Q chat**: explain AWS console pages, help with CloudFormation, troubleshoot errors
+  - **Code transformation**: upgrade Java 8 → 17, .NET Framework → .NET, semi-automated refactoring
+  - **Security scanning**: SAST scan of open files, suggests fixes for CVEs/security issues
+  - **CLI companion**: `q chat` in terminal, explain commands, debug errors
+- Pricing: Free tier (50 suggestions/month); Pro tier ($19/month with higher limits + SSO)
+
+### Amazon Q Business
+- Enterprise chatbot connected to company data sources ([S3](/aws/storage-s3), SharePoint, Salesforce, JIRA, Confluence, RDS)
+- Answers questions based on internal documents: "What's our PTO policy?" "Find all tickets related to customer Acme Corp"
+- Respects source permissions (user can only see docs they have access to in the source system)
+- Custom plugins: call external APIs from within Q Business conversation
+- Compare: Bedrock Agents for custom AI applications; Q Business for enterprise internal knowledge search
+
+---
+
+## SageMaker Feature Store & ML Pipelines
+
+### Feature Store — Centralized ML Features
+```python
+import boto3
+from sagemaker.feature_store.feature_group import FeatureGroup
+from sagemaker.session import Session
+
+# Define feature group
+feature_group = FeatureGroup(
+    name='customer-features',
+    sagemaker_session=Session(),
+)
+
+feature_group.load_feature_definitions(data_frame=customer_df)
+feature_group.create(
+    s3_uri=f's3://my-ml-bucket/feature-store',
+    record_identifier_name='customer_id',
+    event_time_feature_name='event_time',
+    role_arn='arn:aws:iam::...:role/SageMakerRole',
+    enable_online_store=True,   # sub-ms reads for real-time inference
+    online_store_security_config=...,
+    enable_offline_store=True,  # S3-backed for training; see [Data Analytics](/aws-data-analytics) for Glue/Athena query patterns
+)
+
+# Ingest features
+feature_group.ingest(data_frame=customer_df, max_workers=3, wait=True)
+
+# Real-time feature lookup
+runtime = boto3.client('sagemaker-featurestore-runtime')
+record = runtime.get_record(
+    FeatureGroupName='customer-features',
+    RecordIdentifierValueAsString='cust-42',
+)
+```
+
+### SageMaker Pipelines — MLOps
+```python
+from sagemaker.workflow.pipeline import Pipeline
+from sagemaker.workflow.steps import ProcessingStep, TrainingStep, TransformStep
+from sagemaker.workflow.conditions import ConditionGreaterThanOrEqualTo
+from sagemaker.workflow.condition_step import ConditionStep
+
+# Step 1: Data preprocessing
+preprocessing_step = ProcessingStep(
+    name='PreprocessData',
+    processor=SKLearnProcessor(framework_version='1.0', instance_type='ml.m5.xlarge', ...),
+    inputs=[ProcessingInput(source=data_s3_uri, destination='/opt/ml/processing/input')],
+    outputs=[ProcessingOutput(output_name='train', source='/opt/ml/processing/output/train')],
+)
+
+# Step 2: Training
+training_step = TrainingStep(
+    name='TrainModel',
+    estimator=XGBoost(instance_type='ml.m5.2xlarge', ...),
+    inputs={'train': TrainingInput(s3_data=preprocessing_step.properties.ProcessingOutputConfig.Outputs['train'].S3Output.S3Uri)},
+)
+
+# Step 3: Conditional registration — only register if accuracy > 85%
+condition = ConditionGreaterThanOrEqualTo(
+    left=JsonGet(step_name=training_step.name, property_file='metrics', json_path='accuracy'),
+    right=0.85,
+)
+
+pipeline = Pipeline(
+    name='customer-churn-pipeline',
+    steps=[preprocessing_step, training_step, ConditionStep(name='CheckAccuracy', conditions=[condition], if_steps=[register_step], else_steps=[fail_step])],
+    parameters=[instance_type_param, data_uri_param],
+)
+pipeline.upsert(role_arn=sagemaker_role)
+pipeline.start()
+```
+
+For broader AWS workflow orchestration (Lambda, Glue, EMR, SNS), see [Step Functions](/aws-step-functions). For [VPC & Networking](/aws-vpc-networking) considerations when running SageMaker in a private subnet (PrivateLink, VPC endpoints), see the dedicated networking article. Monitoring pipeline runs integrates with [Observability](/aws-observability) via CloudWatch metrics and EventBridge triggers.
+
+---
+
+## Amazon Bedrock Model Evaluation
+
+Evaluate models before choosing for production:
+
+```python
+# Create model evaluation job
+bedrock = boto3.client('bedrock')
+
+response = bedrock.create_evaluation_job(
+    jobName='claude-vs-nova-eval',
+    jobDescription='Compare Claude 3.5 Sonnet vs Amazon Nova Pro for our use case',
+    roleArn='arn:aws:iam::...:role/BedrockEvaluationRole',
+    evaluationConfig={
+        'automated': {
+            'datasetMetricConfigs': [{
+                'taskType': 'QuestionAndAnswer',
+                'dataset': {'name': 'my-eval-dataset', 's3Uri': 's3://...'},
+                'metricNames': ['Accuracy', 'Robustness', 'Toxicity']
+            }]
+        }
+    },
+    inferenceConfig={
+        'models': [
+            {'bedrockModel': {'modelIdentifier': 'anthropic.claude-3-5-sonnet-20241022-v2:0'}},
+            {'bedrockModel': {'modelIdentifier': 'amazon.nova-pro-v1:0'}},
+        ]
+    },
+    outputDataConfig={'s3Uri': 's3://my-bucket/eval-results/'},
+)
+```
+
+Evaluation results land in [S3](/aws/storage-s3) and can feed downstream reporting. For monitoring model quality in production (data drift, quality drift), see [Observability](/aws-observability) and SageMaker Model Monitor.
+
+---
+
 ## Red Flags to Avoid
 
 - **Confusing Bedrock and SageMaker**: Bedrock = managed access to third-party FMs, no model management. SageMaker = full ML lifecycle platform, bring your own model or use built-in algorithms. They are complementary, not alternatives for the same problem.
@@ -1187,4 +1505,4 @@ def handler(event, context):
 - **Not knowing the Comprehend limits**: Comprehend has a 100 KB document size limit (synchronous) and requires UTF-8 text—PDF/image input requires Textract first.
 - **Overlooking Lex's scope**: Lex does NLU (intent/slot classification), not NLG (generating responses). The response generation is your Lambda's job. Conflating Lex with a full chatbot shows a misunderstanding.
 - **Recommending Forecast or Personalize for small datasets**: Forecast requires at least a few hundred observations per time series; Personalize needs >1,000 interaction events per user to be meaningful. For smaller datasets, simpler statistical methods or Bedrock with prompt-based forecasting may be more appropriate.
-- **Not mentioning monitoring**: Production ML systems require SageMaker Model Monitor (data drift, model quality drift), CloudWatch metrics, and Bedrock model invocation logs. Always mention observability.
+- **Not mentioning monitoring**: Production ML systems require SageMaker Model Monitor (data drift, model quality drift), CloudWatch metrics, and Bedrock model invocation logs. Always mention [observability](/aws-observability).
