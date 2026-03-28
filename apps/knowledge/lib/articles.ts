@@ -346,7 +346,7 @@ export function getAllLessons(): Lesson[] {
       const readingTimeMin = Math.max(1, Math.round(wordCount / 200));
       const excerpt = extractExcerpt(raw);
       const difficulty = getDifficulty(number);
-      return { slug, fileSlug: slug, number, title, category, excerpt, difficulty, wordCount, readingTimeMin };
+      return { slug, fileSlug: slug, number, title, category, excerpt, difficulty, wordCount, readingTimeMin, url: getUrlPath(slug) };
     })
     .sort((a, b) => a.number - b.number);
   return _lessons;
@@ -363,7 +363,7 @@ export function getLessonBySlug(slug: string): LessonWithContent | null {
   const readingTimeMin = Math.max(1, Math.round(wordCount / 200));
   const excerpt = extractExcerpt(raw);
   const difficulty = getDifficulty(number);
-  return { slug, fileSlug: slug, number, title, category, excerpt, difficulty, wordCount, readingTimeMin, content: raw };
+  return { slug, fileSlug: slug, number, title, category, excerpt, difficulty, wordCount, readingTimeMin, url: getUrlPath(slug), content: raw };
 }
 
 export function getTotalWordCount(): number {
