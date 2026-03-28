@@ -161,15 +161,15 @@ Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Aut
 
 ## Autonomous Self-Improvement Team
 
-Goal-driven team of 5 specialists focused on helping find a fully remote EU AI engineering role. Grounded in autonomous agent research (AutoRefine, Meta Context Engineering, CASTER, ROMA, Phase Transition theory).
+Goal-driven team of 5 specialists focused on helping find a fully remote global AI engineering role. Grounded in autonomous agent research (AutoRefine, Meta Context Engineering, CASTER, ROMA, Phase Transition theory).
 
 ### Structure
 
 | Path | Agent | Mission |
 |---|---|---|
 | `.claude/skills/improve-mine/SKILL.md` | Pipeline Monitor | Is the pipeline healthy? Are AI jobs flowing? |
-| `.claude/skills/improve-audit/SKILL.md` | Discovery Expander | Find more companies hiring AI engineers remotely in EU |
-| `.claude/skills/improve-evolve/SKILL.md` | Classifier Tuner | Reduce missed opportunities in remote EU classification |
+| `.claude/skills/improve-audit/SKILL.md` | Discovery Expander | Find more companies hiring AI engineers remotely worldwide |
+| `.claude/skills/improve-evolve/SKILL.md` | Classifier Tuner | Reduce missed opportunities in remote global classification |
 | `.claude/skills/improve-apply/SKILL.md` | Skill Optimizer | Better AI/ML skill taxonomy, extraction, and matching |
 | `.claude/skills/improve-meta/SKILL.md` | Strategy Brain | Coordinate toward the goal: get hired |
 | `.claude/commands/improve.md` | Orchestrator | Entry point and team coordination |
@@ -274,7 +274,7 @@ Ad-hoc research team for deep company investigation. Created per target, destroy
 |---|---|---|
 | `.claude/skills/research-analyst/SKILL.md` | Company Analyst | Tech stack, funding, growth, AI adoption, news |
 | `.claude/skills/research-hiring/SKILL.md` | Hiring Intel | Open roles, ATS boards, team growth, org structure |
-| `.claude/skills/research-icp/SKILL.md` | ICP Matcher | Score against ICP: remote? EU? AI? Stage? DM access? |
+| `.claude/skills/research-icp/SKILL.md` | ICP Matcher | Score against ICP: remote? AI? Stage? DM access? |
 | `.claude/commands/agents.md` | Orchestrator | Unified dispatcher (research section) |
 
 ### Commands
@@ -293,7 +293,7 @@ Debate protocol: agents cross-read findings, challenge weak claims, resolve conf
 
 ## Additional resources
 
-- **[SKILLS-REMOTE-WORK-EU.md](./docs/SKILLS-REMOTE-WORK-EU.md)** — Curated agent skills and subagents for remote EU job market focus.
+- **[SKILLS-REMOTE-WORK-GLOBAL.md](./docs/SKILLS-REMOTE-WORK-GLOBAL.md)** — Curated agent skills and subagents for remote global job market focus.
 - **[OPTIMIZATION-STRATEGY.md](./OPTIMIZATION-STRATEGY.md)** — Full Two-Layer Model strategy document.
 
 ---

@@ -41,12 +41,6 @@ export const companies = pgTable("companies", {
   score: real("score").notNull().default(0.5), // 0..1
   score_reasons: text("score_reasons"), // JSON array
 
-  // Ashby crawler enrichment (written by ashby-crawler worker, matched by key=slug)
-  ashby_industry_tags: text("ashby_industry_tags"), // JSON array
-  ashby_tech_signals: text("ashby_tech_signals"),   // JSON array
-  ashby_size_signal: text("ashby_size_signal"),     // "startup" | "mid" | "large"
-  ashby_enriched_at: text("ashby_enriched_at"),
-
   // AI company tier: 0 = not AI, 1 = ai_first, 2 = ai_native
   ai_tier: integer("ai_tier").notNull().default(0),
   ai_classification_reason: text("ai_classification_reason"),

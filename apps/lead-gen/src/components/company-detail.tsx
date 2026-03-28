@@ -939,7 +939,7 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
             <TextField.Root
               value={form.job_board_url}
               onChange={(e) => setForm((f) => ({ ...f, job_board_url: e.target.value }))}
-              placeholder="https://jobs.ashbyhq.com/..."
+              placeholder="https://jobs.example.com/..."
             />
           </Flex>
 
@@ -1475,15 +1475,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                         </SectionCard>
                       ) : null}
 
-                      {company.ashby_enrichment?.tech_signals?.length ? (
-                        <SectionCard title="Tech stack">
-                          <CollapsibleChips
-                            items={company.ashby_enrichment.tech_signals}
-                            visibleCount={10}
-                          />
-                        </SectionCard>
-                      ) : null}
-
                       {company.tags?.length ? (
                         <SectionCard title="Tags">
                           <CollapsibleChips items={company.tags} visibleCount={10} />
@@ -1492,45 +1483,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                     </Flex>
                   </Box>
                 </Flex>
-
-                {/* Admin-only: Ashby enrichment raw data */}
-                {isAdmin && company.ashby_enrichment?.enriched_at ? (
-                  <SectionCard title="Ashby Enrichment">
-                    <Flex direction="column" gap="3">
-                      <Flex gap="4" align="center" wrap="wrap">
-                        {company.ashby_enrichment.company_name ? (
-                          <Flex gap="2" align="center">
-                            <Text size="2" color="gray">Company</Text>
-                            <Text size="2" weight="medium">{company.ashby_enrichment.company_name}</Text>
-                          </Flex>
-                        ) : null}
-                        {company.ashby_enrichment.size_signal ? (
-                          <Flex gap="2" align="center">
-                            <Text size="2" color="gray">Size signal</Text>
-                            <Badge color="amber" variant="soft" radius="full">
-                              {company.ashby_enrichment.size_signal}
-                            </Badge>
-                          </Flex>
-                        ) : null}
-                      </Flex>
-
-                      {company.ashby_enrichment.industry_tags.length ? (
-                        <Flex gap="2" wrap="wrap" align="center">
-                          <Text size="2" color="gray" style={{ minWidth: 90 }}>Industries</Text>
-                          {company.ashby_enrichment.industry_tags.map((tag) => (
-                            <Badge key={tag} color="blue" variant="soft" radius="full">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </Flex>
-                      ) : null}
-
-                      <Text size="1" color="gray">
-                        Enriched {new Date(company.ashby_enrichment.enriched_at).toLocaleDateString()}
-                      </Text>
-                    </Flex>
-                  </SectionCard>
-                ) : null}
 
                 {/* Admin-only: Score breakdown */}
                 {isAdmin && company.score_reasons?.length ? (
