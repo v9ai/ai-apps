@@ -35,8 +35,6 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
     let discovery: DiscoveryReport = state::load_report(&ctx.data_dir, "discovery")
         .ok_or_else(|| anyhow::anyhow!("no discovery report — run discover first"))?;
 
-    let api_key = ctx.llm_api_key.as_deref();
-
     let limit = ctx.batch.enrich.min(discovery.companies.len());
     // Sort by ICP score descending, enrich top N
     let mut candidates = discovery.companies.clone();
@@ -80,22 +78,16 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
             }
         }
 
-        // LLM classification (if API key available)
-        let (category, ai_tier, industry, confidence) = if let Some(key) = api_key {
-            match llm::classify_company(
-                &ctx.http, &ctx.llm_base_url, key,
-                &company.name, &company.domain, &all_text,
-            ).await {
-                Ok(cls) => (cls.category, cls.ai_tier, cls.industry, cls.confidence),
-                Err(e) => {
-                    report.errors.push(format!("{}: LLM classify: {e}", company.domain));
-                    // Fallback: heuristic classification
-                    heuristic_classify(&all_text)
-                }
+        // LLM classification via local Qwen server, heuristic fallback on error
+        let (category, ai_tier, industry, confidence) = match llm::classify_company(
+            &ctx.http, &ctx.llm_base_url, ctx.llm_api_key.as_deref(),
+            &ctx.llm_model, &company.name, &company.domain, &all_text,
+        ).await {
+            Ok(cls) => (cls.category, cls.ai_tier, cls.industry, cls.confidence),
+            Err(e) => {
+                report.errors.push(format!("{}: LLM classify: {e}", company.domain));
+                heuristic_classify(&all_text)
             }
-        } else {
-            // No API key — use heuristics
-            heuristic_classify(&all_text)
         };
 
         // Detect remote policy from all fetched text

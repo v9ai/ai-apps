@@ -58,6 +58,7 @@ pub struct TeamContext {
     pub data_dir: PathBuf,
     pub llm_api_key: Option<String>,
     pub llm_base_url: String,
+    pub llm_model: String,
     pub batch: BatchSizes,
     pub auto_confirm: bool,
 }
@@ -84,9 +85,11 @@ impl TeamContext {
             .build()
             .expect("http client");
 
-        let llm_api_key = std::env::var("DEEPSEEK_API_KEY").ok();
+        let llm_api_key = std::env::var("LLM_API_KEY").ok();
         let llm_base_url = std::env::var("LLM_BASE_URL")
-            .unwrap_or_else(|_| "https://api.deepseek.com".into());
+            .unwrap_or_else(|_| "http://localhost:8080/v1".into());
+        let llm_model = std::env::var("LLM_MODEL")
+            .unwrap_or_else(|_| "mlx-community/Qwen2.5-3B-Instruct-4bit".into());
 
         Self {
             pipeline: Arc::new(pipeline),
@@ -94,6 +97,7 @@ impl TeamContext {
             data_dir,
             llm_api_key,
             llm_base_url,
+            llm_model,
             batch: BatchSizes::default(),
             auto_confirm: false,
         }
