@@ -770,3 +770,147 @@ const provider: ProviderV3 = {
 **CRMArena (Huang et al., 2024, NAACL):** The most operationally relevant paper. Best available LLMs (GPT-4o, Claude) achieve only 35–55% task success on realistic CRM workflows. Twenty's `experimental_repairToolCall` mitigates some of the function-calling failures, but the fundamental gap (multi-step rule-following in schema-heavy environments) is not addressable by repair alone. The paper's recommendation — task decomposition into atomic sub-steps with explicit success criteria — aligns with Twenty's workflow step design but suggests that AI_AGENT workflow steps need clearer per-step success criteria and failure conditions.
 
 **Tool Learning Survey (2025):** Validates that Twenty's lazy-loading two-phase protocol (`get_tool_catalog` → `learn_tools` → `execute_tool`) is the correct architectural response to large tool sets. The survey identifies that 50 tool definitions consume 20,000–25,000 tokens; Twenty's catalog index approach compresses this to ~1,000 tokens regardless of tool count, which is a meaningful practical advance over raw function-calling implementations.
+
+---
+
+## 12. Recency & Changelog
+
+> Researched March 28, 2026. Sources: live GitHub API (commits/releases/PRs on `twentyhq/twenty` `main` branch).
+
+### Latest Release
+
+**v1.19.0** — published **March 23, 2026**
+
+Key AI/agent changes bundled into v1.19 (the release cut covers work merged between ~Feb 20 and Mar 23, 2026):
+
+- **MCP unified endpoint** (PR #18113, merged Feb 20): The internal MCP server was consolidated from two endpoints (`/mcp` + `/mcp/metadata`) into a **single `POST /mcp`** endpoint. The schema-picker dropdown ("Core Schema" vs "Metadata Schema") was removed. The five high-level tools (`get_tool_catalog`, `learn_tools`, `execute_tool`, `load_skills`, `search_help_center`) are now the sole surface. DATABASE_CRUD tools were also fixed to work correctly with API key auth — a regression that had prevented API key–authenticated clients from using database tools.
+- **MCP response shape fix** (PR #18671, merged Mar 16): `tools/list` and `prompts/list` MCP responses were returning initialize-style metadata payloads, causing strict MCP clients to reject them. Fixed to return method-specific payloads only.
+- **Vercel AI SDK upgrade from v5 to v6** (PR #18172, merged Feb 25): All `@ai-sdk/*` provider packages updated to v6-compatible versions. The spec version moved from `LanguageModelV3` to the v6 interface. Groq (`@ai-sdk/groq`) was **removed** from `packages/twenty-server/package.json` entirely (PR #18863 cleaned up the stale `yarn.lock` entry on Mar 23). Groq is no longer a supported first-party provider.
+- **Amazon Bedrock added** (PR #18155, merged Feb 22): AWS Bedrock added as an inference provider, serving Claude Opus 4.6 and Sonnet 4.6 via AWS infrastructure. Credential handling follows the existing S3/SES pattern. Bedrock-specific pricing (tiered >200k context, cache creation rates) added to the billing service.
+- **Two-layer AI model availability filtering** (PR #18170, merged Feb 24): New admin-level filtering layer (server-wide whitelist/blacklist via `AI_DISABLED_MODEL_IDS`, `AI_ENABLED_MODEL_IDS`, `AI_AUTO_ENABLE_NEW_MODELS`) plus per-workspace controls ("Use best models only" mode backed by `isRecommended` flag). Security enforcement at every backend execution point.
+- **InferenceProvider / ModelFamily refactor** (PR #18155): `ModelProvider` enum split into two orthogonal enums — `InferenceProvider` (who serves it: auth, SDK, metadata format) and `ModelFamily` (who created it: token counting semantics). This eliminates growing `||` chains for token normalization checks like `excludesCachedTokens`.
+- **AI model pricing overhaul** (PR #18155): All model constants updated with accurate per-1M-token pricing including cached input rates, cache creation rates, and tiered pricing for >200k context windows. Reasoning tokens charged at output rate.
+- **IAM role authentication for AI providers** (PR #19016, merged Mar 26): New `authType` field (`'api_key' | 'access_key' | 'iam_role'`) on AI provider config. Bedrock providers authenticated via instance profile / IAM role are now registerable without explicit API keys or access key credentials. The admin panel shows a "Configured (IAM role)" badge.
+- **AI model catalog automated sync** (daily CI job): The `ai-providers.json` catalog is now synced automatically from `models.dev` via a dedicated CI script. Three sync commits landed in a single week (Mar 21–27, 2026), indicating the catalog is refreshed nearly daily. Models are no longer manually maintained.
+- **Hardcoded model constants replaced with JSON seed catalog** (PR #18818, merged Mar 21): Per-provider TypeScript constant files replaced by a single `ai-providers.json` as source of truth. Runtime model discovery via AI SDK added for self-hosted providers. Composite model IDs introduced (`provider/modelId`). Deprecated config variables removed: `AI_DISABLED_MODEL_IDS`, `AUTO_ENABLE_NEW_AI_MODELS`.
+- **AI billing usage analytics dashboard** (PR #18592, merged Mar 23): ClickHouse-backed `billingEvent` table with 3-year TTL. New `getBillingAnalytics` GraphQL query and a frontend dashboard component showing credit consumption by user, resource, execution type, and time series. The billing UI gap identified in section 8.1 has been partially closed — analytics are now visible in-app.
+- **AI provider sections ungated from billing** (PR #18845, merged Mar 23): Providers and Custom Providers sections in Admin > AI settings were previously hidden when billing was enabled. This guard was removed — provider configuration is now always visible regardless of billing status.
+- **AI chat in navbar** (PR #18161, merged Feb 27): AI chat threads are now accessible from the navigation panel, not just as a floating side panel. Draft message persistence added for AI chat threads.
+- **Navbar AI chats scroll refactor** (PR #18999, Mar 26): Non-chat placeholder and navigation panel scroll refactored.
+- **AI agent permissions tab UI polish** (PR #19003, Mar 26): replaced custom styles with `MenuItem` and `SidePanelGroup` in the agent permissions tab.
+- **Fix: Cannot create two workflow agent nodes with the same name** (PR #19015, Mar 26): Regression fix — duplicate node names in workflows were blocked erroneously.
+- **AI tools for demo workspace creation** (PR #18236, merged Mar 5): New AI tools added to the workspace seeding utility, enabling a demo workspace to be fully configured via AI chat commands.
+- **Context usage display in AI chat** (PR #16518, in v1.14): Token context window usage indicator added to the chat UI (BREAKING: deploy server before frontend).
+- **Skills system replacing agent search** (PR #16513, in v1.14): The agent search interface was replaced by the structured Skills system surfacing domain-specific procedural knowledge.
+- **Dashboard tools for AI chat** (PR #16517, in v1.14): AI chat gained the `DASHBOARD` tool category, enabling the assistant to create and manage dashboards from the chat interface.
+
+### IS_AI_ENABLED Flag Status
+
+**Still feature-flagged as of March 28, 2026.** No PR or commit removing the `IS_AI_ENABLED` config guard was found in the commit history through v1.19. The flag controls visibility of the AI tab, chat interface, and agent management.
+
+However, several adjacent signals indicate the AI subsystem is maturing toward GA:
+
+- The `IS_PAGE_LAYOUT_ENABLED` feature flag was promoted to GA in v1.16 (PR #16997). This is the typical pattern — flags are removed once a feature is stable.
+- The MCP endpoint, two-layer filtering, billing analytics, and IAM role auth (all merged Jan–Mar 2026) represent production-hardening work, not prototype exploration.
+- The AI provider sections were **ungated from billing status** (PR #18845, Mar 23) — a sign that AI configuration is transitioning from gated preview to standard product.
+- Felix Malfait (core maintainer) has personally merged numerous AI PRs in the past 30 days, indicating the feature has moved out of experimental hands.
+
+**Rollout plan:** No public announcement was found. Given the trajectory (one major AI PR per week), `IS_AI_ENABLED` is likely to be removed (or defaulted to `true`) in a v1.20 or v2.0 release. Self-hosted operators can already enable it manually via the config variable today.
+
+### New AI Providers Added
+
+Since the report was written (July 2025 baseline), the following providers have been added or upgraded:
+
+| Provider | Status | Notes |
+|---|---|---|
+| **Amazon Bedrock** | Added (PR #18155, Feb 2026) | Serves Claude Opus 4.6 + Sonnet 4.6 via AWS. IAM role auth via PR #19016. |
+| **Groq** | **Removed** (PR #18863, Mar 2026) | `@ai-sdk/groq` dropped from package.json. No longer supported. |
+| **Mistral** | Added (PR #18155, Feb 2026) | `@ai-sdk/mistral` added to the provider catalog. |
+| OpenAI | Existing | AI SDK upgraded to v6-compatible `@ai-sdk/openai`. |
+| Anthropic | Existing | AI SDK upgraded to v6-compatible `@ai-sdk/anthropic`. |
+| Google | Existing | `@ai-sdk/google` bumped. Gemini 3.1 Flash Lite added Mar 13. |
+| xAI | Existing | `@ai-sdk/xai` bumped from 3.0.59 → 3.0.74 (auto-merge). |
+
+The catalog is now source-controlled in `ai-providers.json` and synced from `models.dev` daily by a CI automation. The 5-provider count in section 2.2 is now **6 providers** (adding Bedrock, removing Groq net = +1). Model counts are updated continuously.
+
+**Default model fallback lists** (introduced v1.14): `DEFAULT_AI_SPEED_MODEL_ID` and `DEFAULT_AI_PERFORMANCE_MODEL_ID` now accept comma-separated fallback lists (e.g., `gpt-4.1-mini,claude-haiku-4-5-20251001,grok-3-mini`), so self-hosters get working defaults regardless of which single provider they configure.
+
+### Agent/Workflow Updates
+
+- **`WorkflowActionType.AI_AGENT`**: No new step type enum values added since the original report. The `AI_AGENT` type remains the single AI workflow action type. Key improvements were in the execution path: fix for workflow agent node naming collision (PR #19015), variable interpolation fix for agent prompt nodes (PR #18275).
+- **Logic Function renamed** (v1.17, PR #17494): `serverlessFunction` was renamed to `logicFunction` throughout the codebase. Any code referencing the old name via the SDK or GraphQL API must be updated. The GraphQL mutation is now `createOneLogicFunction`, not `createOneServerlessFunction`.
+- **Logic Function `isTool` in manifest** (PR #17926, merged Feb 16): Self-hosted apps can now declare `isTool: true` on a logic function directly in their app manifest, making it discoverable as an AI tool without going through the admin UI.
+- **Logic Function `define_post_install`** (PR #18248): New lifecycle hook allowing apps to register post-install logic functions programmatically.
+- **App logic function as workflow step** (PR #17525, v1.17): Logic functions from installed apps can now be used directly as workflow steps — not just as AI tools. This broadens the reuse surface.
+- **Remove versions from logicFunction** (PR #17540, v1.17): The versioning system on logic functions was removed. This simplifies the data model but may affect any code that relied on version history.
+- **`get_current_workflow_version` tool** (PR #17177, v1.16): New tool in the `WORKFLOW` category exposing the current workflow version to the AI agent.
+- **Draft Email workflow action** (PR #17793, v1.18): `DRAFT_EMAIL` added as a workflow action type alongside `SEND_EMAIL`, enabling AI-drafted emails to go through a human review step before sending.
+
+### MCP Server Updates
+
+The internal MCP server received the most significant changes since the initial July 2025 launch:
+
+1. **Single endpoint** (PR #18113, Feb 20): Merged dual-endpoint architecture (`/mcp` + `/mcp/metadata`) into one `POST /mcp` endpoint. Eliminates the schema picker UI.
+2. **DATABASE_CRUD via API key fixed** (PR #18113): A missing guard removal now allows API key–authenticated MCP clients to access database CRUD tools. This was a blocking bug for external MCP client integrations.
+3. **STEP 1/2/3 workflow guidance** (PR #18113): Tool descriptions updated with explicit discovery flow instructions (`STEP 1: get_tool_catalog → STEP 2: learn_tools → STEP 3: execute_tool`) to prevent AI clients from guessing tool names.
+4. **Method-specific response shapes** (PR #18671, Mar 16): `tools/list` and `prompts/list` now return only the expected payload (not initialize-style metadata). Fixes compatibility with strict MCP clients.
+5. **OAuth 2.0 Dynamic Client Registration** (PR #18608, Mar 16): RFC 7591 Dynamic Client Registration implemented, enabling MCP clients to register themselves without manual admin provisioning. This is a significant improvement for external MCP integrations.
+
+The external community MCP servers (`mhenry3164/twenty-crm-mcp-server` and `jezweb/twenty-mcp`) are unchanged — they wrap the REST/GraphQL API and are unaffected by the internal MCP changes.
+
+### Vercel AI SDK Migration Status
+
+**Twenty is now on Vercel AI SDK v6 (not v5).** The migration was completed Feb 25, 2026 (PR #18172). The spec interface is no longer `LanguageModelV3` — v6 uses updated interfaces (the migration guide is at `ai-sdk.dev/docs/migration-guides/migration-guide-6-0`).
+
+**Key v6 migration notes:**
+- The PR author noted they could not test locally due to API credit constraints and relied on CI to validate. This is a risk signal — the migration may have subtle edge cases not caught by unit tests.
+- No follow-up regression PRs specifically attributed to the v6 upgrade were found in the subsequent 30 days, which is a positive signal.
+- `@ai-sdk/groq` was dropped at the same time — the Groq SDK had not yet released a v6-compatible version when the migration landed.
+- `@ai-sdk/xai` received two auto-merge dependency bumps (3.0.59 → 3.0.74) in the following weeks, confirming active maintenance of the provider packages.
+
+**Stability assessment:** The v6 migration appears stable. No critical regression issues were filed against AI features in the subsequent 30 days. The daily model catalog sync CI jobs are running without incident.
+
+### Breaking Changes
+
+Changes since the initial July 2025 report that can break existing integrations:
+
+| Change | Version | Impact |
+|---|---|---|
+| `serverlessFunction` → `logicFunction` rename | v1.17 | Any GraphQL mutation or SDK call using `createOneServerlessFunction`, `updateOneServerlessFunction`, etc. must be updated. The REST path changed accordingly. |
+| `logicFunction` versioning removed | v1.17 | Code relying on `version` field or version-scoped execution of logic functions breaks. |
+| MCP unified endpoint | v1.19 | Clients targeting `/mcp/metadata` must migrate to `POST /mcp`. The schema picker dropdown is gone; the `get_tool_catalog` tool replaced it. |
+| AI model catalog breaking change | v1.14 | Deploy server before frontend — the model catalog format changed. Existing `AgentEntity.modelId` values using old format IDs are migrated automatically, but the config variables `AI_DISABLED_MODEL_IDS` and `AUTO_ENABLE_NEW_AI_MODELS` were removed in v1.19's JSON seed catalog PR (PR #18818). |
+| Composite model IDs | ~Mar 2026 (PR #18818) | Model IDs are now `provider/modelId` format (e.g., `openai/gpt-4.1`). DB migration included, but any hardcoded model IDs in agent definitions or external scripts must be updated. |
+| Groq removed | ~Mar 2026 | Workspaces using `@ai-sdk/groq` models as their configured provider will lose AI functionality. Must migrate to another provider. |
+| AI SDK v5 → v6 interfaces | v1.19 | Custom providers implementing `LanguageModelV3` must update to the v6 interface. The `specificationVersion` field changed. |
+| Default code interpreter/logic function to disabled in production | PR #18559, Mar 11 | Both `code_interpreter` and logic function execution are now disabled by default in production environments. Must be explicitly enabled. This is a security hardening change. |
+
+### Staleness Assessment
+
+**Velocity:** Twenty's AI feature layer is shipping at approximately **5–10 merged AI PRs per week** as of March 2026. This is the highest sustained AI feature velocity observed since v1.0 (June 2025). The cadence accelerated significantly after v1.19 — the week of March 21–28 alone saw: model catalog rebuild (PR #18818), IAM role auth (PR #19016), agent UI polish (PRs #18876, #18874, #19003), daily catalog sync automation (3 commits), and MCP response shape fix (PR #18671).
+
+**Production readiness for AI-heavy workloads:**
+
+| Dimension | Assessment |
+|---|---|
+| **Multi-provider coverage** | Strong — 6 providers, 135+ models, daily catalog sync, IAM role auth for AWS-native deployments |
+| **Model catalog freshness** | Excellent — automated daily sync from `models.dev` eliminates manual maintenance lag |
+| **MCP integration** | Materially improved since July 2025 — single endpoint, API key fixed, RFC 7591 client registration |
+| **Billing/cost attribution** | Now has ClickHouse-backed analytics dashboard with per-user/resource breakdowns |
+| **Agent quality evaluation** | Unchanged — `AgentTurnGraderService` still runs best-effort, no UI for score review, `evaluationInputs` still not wired to an automated runner |
+| **Agentic reliability** | Minor improvements (workflow agent node fixes) but fundamental gaps remain: no checkpointing, no rollback, no per-agent step budget below 300 |
+| **Security hardening** | Significant — code interpreter/logic function disabled by default in production, SSRF protections on webhooks, IAM role auth |
+| **Logic Functions API stability** | Unstable — rename in v1.17, versioning removed in v1.17, manifest changes in v1.18/v1.19. Any integration built on this surface should treat it as beta. |
+
+**Overall verdict:** Twenty is **production-ready for read-heavy and enrichment-type AI workloads** (AI chat querying CRM data, AI workflow agents doing web search + record updates). It is **not yet production-ready for high-reliability agentic write workflows** requiring transactional guarantees, checkpointing, or automated quality gates. For the lead-gen use case (query contacts, score companies, draft emails via AI chat), the platform is sufficiently stable. For autonomous multi-step pipelines that must not produce partial state, the gaps in section 8.4 remain unaddressed.
+
+**Key dates:**
+- v1.0.0 released: June 25, 2025
+- AI features (IS_AI_ENABLED) introduced: July 2025 (v1.2/v1.3 window)
+- Amazon Bedrock added: February 22, 2026
+- MCP unified + API key fix: February 20, 2026
+- Vercel AI SDK v6 migration: February 25, 2026
+- JSON seed catalog + composite model IDs: March 21, 2026
+- IAM role auth for providers: March 26, 2026
+- Latest release: v1.19.0 (March 23, 2026)
+- Research date: March 28, 2026
