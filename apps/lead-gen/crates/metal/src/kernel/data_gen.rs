@@ -360,9 +360,10 @@ const US_CITIES: &[&str] = &[
     "Chicago", "Los Angeles", "Denver", "Atlanta", "San Jose",
 ];
 
-const EU_HYBRID_CITIES: &[&str] = &[
+const HYBRID_CITIES: &[&str] = &[
     "London", "Berlin", "Paris", "Amsterdam", "Dublin",
     "Stockholm", "Copenhagen", "Zurich", "Barcelona", "Milan",
+    "Toronto", "Singapore", "Sydney", "Tokyo", "New York",
 ];
 
 const NON_AI_ROLES: &[&str] = &[
@@ -395,9 +396,9 @@ pub fn write_labels(samples: &[LabeledSample], path: &Path) -> io::Result<()> {
     writer.flush()
 }
 
-/// Write EU Remote classification samples to a JSONL file (for finetune.py).
+/// Write Remote Worldwide classification samples to a JSONL file (for finetune.py).
 /// Creates parent directories if they do not already exist.
-pub fn write_eu_remote_labels(samples: &[EuRemoteSample], path: &Path) -> io::Result<()> {
+pub fn write_remote_worldwide_labels(samples: &[EuRemoteSample], path: &Path) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
             std::fs::create_dir_all(parent)?;
@@ -455,23 +456,23 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_eu_remote_has_positives_and_negatives() {
-        let samples = generate_eu_remote_labels();
+    fn test_generate_remote_worldwide_has_positives_and_negatives() {
+        let samples = generate_remote_worldwide_labels();
         assert!(!samples.is_empty(), "no samples generated");
 
         let has_positive = samples.iter().any(|s| {
             s.messages.iter().any(|m| {
-                m.role == "assistant" && m.content.contains("\"is_remote_eu_ai\":true")
+                m.role == "assistant" && m.content.contains("\"is_remote_ai\":true")
             })
         });
         let has_negative = samples.iter().any(|s| {
             s.messages.iter().any(|m| {
-                m.role == "assistant" && m.content.contains("\"is_remote_eu_ai\":false")
+                m.role == "assistant" && m.content.contains("\"is_remote_ai\":false")
             })
         });
 
-        assert!(has_positive, "no positive EU remote samples found");
-        assert!(has_negative, "no negative EU remote samples found");
+        assert!(has_positive, "no positive worldwide remote samples found");
+        assert!(has_negative, "no negative worldwide remote samples found");
 
         // Every sample must have exactly 3 messages: system, user, assistant
         for (i, sample) in samples.iter().enumerate() {

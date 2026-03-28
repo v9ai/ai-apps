@@ -185,6 +185,21 @@
     "achievements": "",
     "aiProjects": [
       {
+        "id": "0",
+        "name": "Agentic Lead Gen",
+        "description": "Autonomous B2B lead generation platform with a 5-agent agentic pipeline (Discovery Scout → Enrichment Specialist → Contact Hunter + QA Auditor → Outreach Composer), GraphQL API backed by Neon PostgreSQL, LLM-powered company enrichment, MLX local contact scoring at 4,618 embeddings/sec, and LangSmith observability.",
+        "githubUrl": "https://github.com/nicolad/agentic-lead-gen",
+        "websiteUrl": "",
+        "highlights": [
+          "Agentic pipeline, B2B lead gen.",
+          "5-agent dependency-graph pipeline: Discovery Scout (no deps) → Enrichment Specialist → Contact Hunter + QA Auditor (parallel) → Outreach Composer with mandatory plan-approval gate before any email send.",
+          "GraphQL API with Apollo Server 5, DataLoader-based N+1 prevention, Drizzle ORM + Neon PostgreSQL, and GraphQL Codegen for end-to-end TypeScript type safety from DB schema through resolver signatures to Apollo Client hooks.",
+          "LLM company enrichment: AI tier classification, tech stack detection, ATS board discovery via DeepSeek and OpenRouter with multi-model routing (cheap model first, escalate on low confidence).",
+          "Competing Hypotheses Research Squad: 3 parallel specialist agents with active debate protocol — agents cross-read and challenge each other's findings — producing GO/NO-GO verdicts with confidence scores.",
+          "MLX contact scoring at 4,618 embeddings/sec on M1 Metal; local email generation via mlx_lm.server + Qwen2.5-3B; eval-driven strategy enforcer validates every prompt/model change against 80% accuracy bar with LangSmith distributed tracing."
+        ]
+      },
+      {
         "id": "1",
         "name": "Agentic Healthcare",
         "description": "Clinical biomarker trajectory analysis across derived metrics, AI-driven risk classification with cosine embedding similarity, pgvector search, server actions, automated accuracy evals with Braintrust experiment tracking.",
