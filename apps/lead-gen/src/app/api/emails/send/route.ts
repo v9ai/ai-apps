@@ -6,13 +6,14 @@ import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
 import { db } from "@/db";
 import { contactEmails } from "@/db/schema";
+import { RESUME_PDF_PACKAGE_PATH } from "@ai-apps/resume";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const FROM = "Vadim Nicolai <contact@vadim.blog>";
-const RESUME_PATH = join(process.cwd(), "CV_Vadim_Nicolai.pdf");
+const RESUME_PATH = join(process.cwd(), RESUME_PDF_PACKAGE_PATH);
 
 interface SendEmailRequest {
   contactId: number;

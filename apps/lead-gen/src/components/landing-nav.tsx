@@ -148,7 +148,7 @@ export function LandingNav() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <Image src="/logo.svg" alt="Crystal Prism" width={100} height={22} priority />
+              <Image src="/logo.svg" alt="Agentic Lead Gen" width={100} height={22} priority />
               <span
                 className={css({
                   display: { base: "none", md: "inline" },

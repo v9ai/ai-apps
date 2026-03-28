@@ -1,0 +1,24 @@
+{
+  "name": "@ai-apps/resume",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./render": {
+      "types": "./src/render.tsx",
+      "default": "./src/render.tsx"
+    }
+  },
+  "peerDependencies": {
+    "@react-pdf/renderer": ">=4.0.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@react-pdf/renderer": { "optional": true },
+    "react": { "optional": true }
+  }
+}
