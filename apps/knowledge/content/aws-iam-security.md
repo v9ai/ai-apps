@@ -362,7 +362,7 @@ User signs in → User Pool authenticates → Returns:
   Refresh Token (long-lived, get new ID/Access tokens)
 ```
 - **ID Token**: contains user attributes (`email`, `sub`, custom attributes). Verify signature with Cognito's JWKS endpoint.
-- **Access Token**: used to call Cognito User Pool API (e.g., update user info). Can be used as a Bearer token for [API Gateway](/aws-api-gateway-networking) authorizers.
+- **Access Token**: used to call Cognito User Pool API (e.g., update user info). Can be used as a Bearer token for [API Gateway](/aws/api-gateway-networking) authorizers.
 
 ### Identity Pool Federation Flow
 ```
@@ -383,7 +383,7 @@ Cognito-managed OAuth 2.0 / OIDC endpoint. Supports Authorization Code with PKCE
 ## 9. AWS WAF
 
 ### Core Concepts
-- **Web ACL**: collection of rules applied to CloudFront, ALB, [API Gateway](/aws-api-gateway-networking), AppSync, Cognito User Pool.
+- **Web ACL**: collection of rules applied to CloudFront, ALB, [API Gateway](/aws/api-gateway-networking), AppSync, Cognito User Pool.
 - **Rule**: has a statement (what to match) and an action (Allow, Block, Count, CAPTCHA, Challenge).
 - **Rule Group**: reusable set of rules with a capacity limit (WCU — WAF Capacity Units).
 - **Statement Types**: IP set match, geo match, regex pattern set, size constraint, SQL injection match, XSS match, rate-based rule, managed rule group reference.
@@ -745,7 +745,7 @@ DynamoDB / S3 / RDS Proxy
         ↓
    Secrets Manager (rotation enabled, RDS Proxy caches)
 ```
-Each layer has IAM implications: [API Gateway](/aws-api-gateway-networking) authorizers validate identity, [Lambda](/aws/lambda-serverless) execution roles scope resource access, [S3](/aws-storage-s3) bucket policies enforce per-resource grants, and [DynamoDB](/dynamodb-data-services) supports fine-grained attribute-level access via IAM condition keys. Deploy and manage the full stack via [CDK / IaC](/aws-cicd-devops).
+Each layer has IAM implications: [API Gateway](/aws/api-gateway-networking) authorizers validate identity, [Lambda](/aws/lambda-serverless) execution roles scope resource access, [S3](/aws-storage-s3) bucket policies enforce per-resource grants, and [DynamoDB](/dynamodb-data-services) supports fine-grained attribute-level access via IAM condition keys. Deploy and manage the full stack via [CDK / IaC](/aws-cicd-devops).
 
 ### Secrets Management Pattern
 ```
@@ -798,7 +798,7 @@ IAM is the authorization layer for every AWS service. Explore how it applies in 
 
 - [AWS Overview](/aws) — account structure, regions, and the shared responsibility model
 - [Lambda & Serverless](/aws/lambda-serverless) — execution roles, resource policies, environment variable encryption with KMS
-- [API Gateway & Networking](/aws-api-gateway-networking) — Cognito and Lambda authorizers, VPC integration
+- [API Gateway & Networking](/aws/api-gateway-networking) — Cognito and Lambda authorizers, VPC integration
 - [EC2, ECS & EKS](/aws-compute-containers) — instance profiles, IMDS v2, ECS task roles, IRSA for Kubernetes
 - [S3, CloudFront & Storage](/aws-storage-s3) — bucket policies, Block Public Access, SSE-KMS, pre-signed URLs
 - [DynamoDB & Data Services](/dynamodb-data-services) — fine-grained IAM access control, VPC endpoint policies

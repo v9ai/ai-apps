@@ -45,10 +45,10 @@ export function Search({ groups }: Props) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const lessonLookup = useMemo(() => {
-    const map = new Map<string, { category: string; icon: string; catSlug: string; difficulty: string }>();
+    const map = new Map<string, { category: string; icon: string; catSlug: string; difficulty: string; url: string }>();
     for (const g of groups) {
       for (const a of g.articles) {
-        map.set(a.slug, { category: g.category, icon: g.meta.icon, catSlug: g.meta.slug, difficulty: a.difficulty });
+        map.set(a.slug, { category: g.category, icon: g.meta.icon, catSlug: g.meta.slug, difficulty: a.difficulty, url: a.url });
       }
     }
     return map;

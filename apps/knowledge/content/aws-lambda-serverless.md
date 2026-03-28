@@ -168,7 +168,7 @@ exports.handler = async (event) => {
 };
 ```
 
-**Lambda Function URLs** (no API Gateway): Simple HTTPS endpoint per function, supports [IAM](/aws-iam-security) or no auth. Cheaper, no API Gateway features. Good for webhooks, simple backends.
+**Lambda Function URLs** (no API Gateway): Simple HTTPS endpoint per function, supports [IAM](/aws/iam-security) or no auth. Cheaper, no API Gateway features. Good for webhooks, simple backends.
 
 ### SQS
 

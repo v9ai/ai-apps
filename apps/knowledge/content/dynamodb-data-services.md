@@ -2,7 +2,7 @@
 
 ## The 30-Second Pitch
 
-DynamoDB is AWS's fully managed, [serverless](/aws-lambda-serverless) NoSQL database delivering single-digit millisecond latency at any scale. It solves the problem of database operations bottlenecks by decoupling storage from compute entirely—there are no instances to size, no cluster topology to manage, and no schema migrations to run. Teams choose DynamoDB when access patterns are known upfront, write throughput is unpredictable or bursty, and consistent sub-10ms latency is non-negotiable. This knowledge base also covers the broader AWS data services ecosystem: Aurora Serverless v2, RDS, ElastiCache, and [S3](/aws-storage-s3)-as-data-lake—all with the depth required to navigate senior engineering interviews.
+DynamoDB is AWS's fully managed, [serverless](/aws/lambda-serverless) NoSQL database delivering single-digit millisecond latency at any scale. It solves the problem of database operations bottlenecks by decoupling storage from compute entirely—there are no instances to size, no cluster topology to manage, and no schema migrations to run. Teams choose DynamoDB when access patterns are known upfront, write throughput is unpredictable or bursty, and consistent sub-10ms latency is non-negotiable. This knowledge base also covers the broader AWS data services ecosystem: Aurora Serverless v2, RDS, ElastiCache, and [S3](/aws-storage-s3)-as-data-lake—all with the depth required to navigate senior engineering interviews.
 
 ---
 
@@ -273,7 +273,7 @@ while (exclusiveStartKey) {
 
 ### DynamoDB Streams
 
-Ordered, 24-hour log of item-level changes. Each stream record contains the item's old image, new image, or both (configurable via `StreamViewType`). Consumed by [Lambda](/aws-lambda-serverless) (event source mapping) or Kinesis Data Streams integration for fan-out.
+Ordered, 24-hour log of item-level changes. Each stream record contains the item's old image, new image, or both (configurable via `StreamViewType`). Consumed by [Lambda](/aws/lambda-serverless) (event source mapping) or Kinesis Data Streams integration for fan-out.
 
 **Use cases:** Cross-region replication, derived aggregations, search index synchronization (OpenSearch), event sourcing, audit logs.
 
@@ -285,7 +285,7 @@ StreamViewType options:
   NEW_AND_OLD_IMAGES -- Both (most flexible, highest cost)
 ```
 
-[Lambda](/aws-lambda-serverless) processes shards in order, guaranteeing at-least-once delivery. To avoid reprocessing, make downstream consumers idempotent.
+[Lambda](/aws/lambda-serverless) processes shards in order, guaranteeing at-least-once delivery. To avoid reprocessing, make downstream consumers idempotent.
 
 ### TTL (Time To Live)
 
@@ -481,7 +481,7 @@ Scale-down: gradual, based on sustained low utilization
 
 **Choose Aurora Serverless v2 when:** You need SQL flexibility, complex aggregations, multi-table joins, stored procedures, or you're migrating a relational application without restructuring its data model.
 
-**Choose DynamoDB when:** You need guaranteed single-digit millisecond latency at millions of requests per second, truly [serverless](/aws-lambda-serverless) scaling with zero capacity planning, or your access patterns are well-defined and key-based.
+**Choose DynamoDB when:** You need guaranteed single-digit millisecond latency at millions of requests per second, truly [serverless](/aws/lambda-serverless) scaling with zero capacity planning, or your access patterns are well-defined and key-based.
 
 ---
 
@@ -532,7 +532,7 @@ Key PostgreSQL parameters to know:
 
 A managed connection pooler that sits between your application and RDS. It multiplexes thousands of application connections into a smaller pool of long-lived database connections.
 
-**Why it matters for [serverless](/aws-lambda-serverless):** [Lambda](/aws-lambda-serverless) functions create a new database connection per invocation. Without RDS Proxy, a Lambda spike from 10 to 1,000 concurrent executions creates 1,000 simultaneous `pg_connect()` calls, exhausting `max_connections` and causing `too many connections` errors.
+**Why it matters for [serverless](/aws/lambda-serverless):** [Lambda](/aws/lambda-serverless) functions create a new database connection per invocation. Without RDS Proxy, a Lambda spike from 10 to 1,000 concurrent executions creates 1,000 simultaneous `pg_connect()` calls, exhausting `max_connections` and causing `too many connections` errors.
 
 ```
 [1,000 Lambda Invocations]
@@ -542,7 +542,7 @@ A managed connection pooler that sits between your application and RDS. It multi
    [RDS PostgreSQL] -- sees only proxy connections, not Lambda surge
 ```
 
-**Additional benefits:** Automatic failover reconnection (hides the 60-120s DNS TTL on Multi-AZ failover), [IAM](/aws-iam-security) authentication support, Secrets Manager integration for credentials.
+**Additional benefits:** Automatic failover reconnection (hides the 60-120s DNS TTL on Multi-AZ failover), [IAM](/aws/iam-security) authentication support, Secrets Manager integration for credentials.
 
 ---
 
@@ -753,7 +753,7 @@ Use an adjacency list pattern. Store two types of items for each relationship: o
 
 Multi-AZ is for **high availability**: a synchronous standby replica that takes over automatically on primary failure (no data loss, ~60–120s DNS failover). The standby cannot serve reads. Read replicas are for **read scaling**: asynchronous copies that can serve read traffic but can be seconds behind the primary. Read replicas can be promoted to primaries during disaster recovery but are not automatic failover targets. They are different features serving different purposes and can be used simultaneously.
 
-**Q: How does RDS Proxy solve the [Lambda](/aws-lambda-serverless) + RDS connection exhaustion problem?**
+**Q: How does RDS Proxy solve the [Lambda](/aws/lambda-serverless) + RDS connection exhaustion problem?**
 
 Without a proxy, each Lambda invocation opens a dedicated database connection. A spike to 1,000 concurrent Lambda executions creates 1,000 simultaneous connections, exceeding `max_connections` on most RDS instances. RDS Proxy maintains a warm connection pool to the database, multiplexing thousands of application connections through a small number of long-lived DB connections. Lambda connects to the proxy endpoint instead of the DB endpoint. The proxy also pins connections to specific DB connections when a transaction is open, and unpins them when the transaction completes.
 
@@ -780,4 +780,4 @@ It depends on query complexity and tenant isolation requirements. If your tenant
 - **"We'll use read replicas as our failover for RDS."** Read replicas are asynchronous and not automatic failover targets. Multi-AZ provides automatic failover; read replicas provide read scaling.
 - **"ElastiCache is a database."** It is a volatile cache. Never store data in ElastiCache that isn't also persisted to a durable store. Cache-aside means the DB is the source of truth.
 - **"We'll partition our Athena data by user_id."** High-cardinality partition keys create millions of tiny files and S3 prefixes, degrading Athena list performance. Partition by time dimensions first.
-- **"We don't need RDS Proxy because [Lambda](/aws-lambda-serverless) doesn't use many connections normally."** Connection counts scale with Lambda concurrency, which can spike to thousands within seconds on traffic surges. Proxy is essential for any Lambda-to-RDS integration at production scale.
+- **"We don't need RDS Proxy because [Lambda](/aws/lambda-serverless) doesn't use many connections normally."** Connection counts scale with Lambda concurrency, which can spike to thousands within seconds on traffic surges. Proxy is essential for any Lambda-to-RDS integration at production scale.

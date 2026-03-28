@@ -37,7 +37,7 @@ export function ArticleNav({ prev, next, currentCategory, prevMeta, nextMeta }: 
       )}
       {next ? (
         <Link
-          href={`/${next.slug}`}
+          href={next.url}
           className={`article-nav-card article-nav-card--next cat-${nm.slug}`}
         >
           <span className="article-nav-label">Next &rarr;</span>

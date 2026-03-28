@@ -117,11 +117,11 @@ retrieve_response = bedrock_agent.retrieve(
 
 ### Bedrock Agents
 
-Agents extend Bedrock FMs with tool use ([function calling](/function-calling)) and multi-step reasoning. You define **Action Groups** (OpenAPI schemas describing callable APIs or [Lambda](/aws-lambda-serverless) functions) and optionally attach a Knowledge Base. The agent autonomously decides which tools to call, in what order, to complete a user task. For a deeper look at agent design patterns, see [agent architectures](/agent-architectures).
+Agents extend Bedrock FMs with tool use ([function calling](/function-calling)) and multi-step reasoning. You define **Action Groups** (OpenAPI schemas describing callable APIs or [Lambda](/aws/lambda-serverless) functions) and optionally attach a Knowledge Base. The agent autonomously decides which tools to call, in what order, to complete a user task. For a deeper look at agent design patterns, see [agent architectures](/agent-architectures).
 
 **Components**:
 - **Agent**: The FM + instruction prompt + action groups + KB
-- **Action Group**: A [Lambda](/aws-lambda-serverless) function or inline code block exposed via an OpenAPI schema
+- **Action Group**: A [Lambda](/aws/lambda-serverless) function or inline code block exposed via an OpenAPI schema
 - **Session**: Maintains conversation memory across multi-turn interactions
 - **Alias**: A versioned deployment target (like a Lambda alias)
 - **Prompt overrides**: Customize the orchestration, pre-processing, post-processing, or KB response prompts
@@ -697,7 +697,7 @@ Lex is a managed conversational AI service for building chatbots and voice bots.
 **Intent**: What the user wants to do. Examples: `BookFlight`, `CheckOrderStatus`, `FAQ`. Each intent has:
 - **Sample utterances**: Training phrases ("I want to book a flight", "fly me to London")
 - **Slots**: Required parameters to fulfill the intent (Departure city, Destination, Date)
-- **Fulfillment**: [Lambda](/aws-lambda-serverless) function or dialog action to execute when slots are filled
+- **Fulfillment**: [Lambda](/aws/lambda-serverless) function or dialog action to execute when slots are filled
 
 **Slot type**: The type of data in a slot. Built-in: `AMAZON.City`, `AMAZON.Date`, `AMAZON.Number`. Custom: define allowed values (e.g., `PizzaSize`: SMALL/MEDIUM/LARGE).
 
@@ -890,7 +890,7 @@ recommendations = [r["itemId"] for r in response["itemList"]]
 
 ## 13. AI/ML Integration Patterns
 
-### Pattern 1: Event-Driven ML Pipeline ([S3](/aws-storage-s3) → [Lambda](/aws-lambda-serverless) → SageMaker → [DynamoDB](/dynamodb-data-services))
+### Pattern 1: Event-Driven ML Pipeline ([S3](/aws-storage-s3) → [Lambda](/aws/lambda-serverless) → SageMaker → [DynamoDB](/dynamodb-data-services))
 
 The canonical serverless ML inference pipeline for processing uploaded documents or images.
 
@@ -951,7 +951,7 @@ def handler(event, context):
         )
 ```
 
-**Production hardening**: Add SQS between [S3](/aws-storage-s3) events and [Lambda](/aws-lambda-serverless) for backpressure. Use DLQ for failed Lambda invocations. Enable Lambda concurrency limits to avoid overwhelming the SageMaker endpoint. Use Step Functions instead of Lambda for complex multi-step workflows with error handling. For [networking and API Gateway](/aws-api-gateway-networking) in front of this pipeline, see the dedicated article.
+**Production hardening**: Add SQS between [S3](/aws-storage-s3) events and [Lambda](/aws/lambda-serverless) for backpressure. Use DLQ for failed Lambda invocations. Enable Lambda concurrency limits to avoid overwhelming the SageMaker endpoint. Use Step Functions instead of Lambda for complex multi-step workflows with error handling. For [networking and API Gateway](/aws-api-gateway-networking) in front of this pipeline, see the dedicated article.
 
 ### Pattern 2: [RAG](/advanced-rag) with Bedrock Knowledge Bases
 
@@ -1090,7 +1090,7 @@ def handler(event, context):
 
 **Q: A client wants to add a Q&A chatbot to their internal knowledge base. Walk me through the architecture on AWS.**
 
-**A:** Start with Bedrock Knowledge Bases for the [RAG](/advanced-rag) layer. Connect it to their [S3](/aws-storage-s3) documents (or SharePoint/Confluence via native connectors). Choose the [vector store](/vector-databases) based on scale—OpenSearch Serverless for most cases. Use [Titan Embeddings V2](/embeddings) for indexing. Build the chat interface with [API Gateway](/aws-api-gateway-networking) + [Lambda](/aws-lambda-serverless) calling `RetrieveAndGenerate`. Add Bedrock Guardrails for PII protection and topic restrictions. Add a Bedrock Agent if users need to take actions (query a database, file a ticket) not just ask questions. For access control, embed document-level permissions as metadata and filter at retrieval time using [IAM](/aws-iam-security)-backed policies. Monitor via CloudWatch and Bedrock model invocation logs in S3.
+**A:** Start with Bedrock Knowledge Bases for the [RAG](/advanced-rag) layer. Connect it to their [S3](/aws-storage-s3) documents (or SharePoint/Confluence via native connectors). Choose the [vector store](/vector-databases) based on scale—OpenSearch Serverless for most cases. Use [Titan Embeddings V2](/embeddings) for indexing. Build the chat interface with [API Gateway](/aws-api-gateway-networking) + [Lambda](/aws/lambda-serverless) calling `RetrieveAndGenerate`. Add Bedrock Guardrails for PII protection and topic restrictions. Add a Bedrock Agent if users need to take actions (query a database, file a ticket) not just ask questions. For access control, embed document-level permissions as metadata and filter at retrieval time using [IAM](/aws-iam-security)-backed policies. Monitor via CloudWatch and Bedrock model invocation logs in S3.
 
 ---
 
@@ -1150,7 +1150,7 @@ def handler(event, context):
 
 **Q: How would you architect a real-time fraud detection system processing 10,000 transactions per second?**
 
-**A:** Ingest via Kinesis Data Streams (multiple shards for parallelism). Kinesis Data Analytics (Flink) performs stateful feature computation—rolling counts, velocity features, time-window aggregations—within a 100ms window. Features are enriched from [DynamoDB](/dynamodb-data-services) (merchant profile, user history from Feature Store). Flink calls a SageMaker real-time endpoint (auto-scaled, multi-AZ behind ELB) for scoring. Results flow to Kinesis Firehose → [S3](/aws-storage-s3) for audit logging and Flink → DynamoDB for the serving layer (card authorization system reads here). Alert high-risk transactions via SNS → [Lambda](/aws-lambda-serverless) for case management. Use SageMaker Model Monitor to detect data drift in the transaction features. Retrain pipeline triggered by EventBridge on a weekly schedule via SageMaker Pipelines.
+**A:** Ingest via Kinesis Data Streams (multiple shards for parallelism). Kinesis Data Analytics (Flink) performs stateful feature computation—rolling counts, velocity features, time-window aggregations—within a 100ms window. Features are enriched from [DynamoDB](/dynamodb-data-services) (merchant profile, user history from Feature Store). Flink calls a SageMaker real-time endpoint (auto-scaled, multi-AZ behind ELB) for scoring. Results flow to Kinesis Firehose → [S3](/aws-storage-s3) for audit logging and Flink → DynamoDB for the serving layer (card authorization system reads here). Alert high-risk transactions via SNS → [Lambda](/aws/lambda-serverless) for case management. Use SageMaker Model Monitor to detect data drift in the transaction features. Retrain pipeline triggered by EventBridge on a weekly schedule via SageMaker Pipelines.
 
 ---
 
@@ -1174,7 +1174,7 @@ def handler(event, context):
 
 **Q: Describe how you would build an end-to-end document processing pipeline for a legal firm that needs to extract clauses from contracts and make them searchable.**
 
-**A:** Ingest: [S3](/aws-storage-s3) bucket (encrypted, versioned) as the document store. Users upload via a pre-signed URL from [API Gateway](/aws-api-gateway-networking) + [Lambda](/aws-lambda-serverless). Process: S3 event triggers a Step Functions workflow. Step 1: Textract `StartDocumentAnalysis` (async, multi-page PDF support). Step 2: Lambda parses Textract output—extracts key-value pairs, tables, and raw text by section. Step 3: Bedrock (Claude) performs clause classification and extraction from raw text (too nuanced for Textract alone). Step 4: Comprehend Custom Entity Recognizer tags legal entities (party names, dates, jurisdiction-specific terms) trained on firm's own contract corpus. Step 5: Store structured results in [DynamoDB](/dynamodb-data-services) (fast lookup by contract ID) and full text + [embeddings](/embeddings) in OpenSearch (semantic search). Search: Kendra or Bedrock KB as the search layer. Bedrock KB for natural language questions ("Which contracts mention arbitration in Delaware?")—backed by [advanced RAG](/advanced-rag) with metadata filtering. Kendra for document-level faceted search (by date, party, contract type). Security: [IAM](/aws-iam-security) and VPC PrivateLink throughout. Attorney-specific access control enforced at the Kendra/Bedrock KB query layer via ACL metadata.
+**A:** Ingest: [S3](/aws-storage-s3) bucket (encrypted, versioned) as the document store. Users upload via a pre-signed URL from [API Gateway](/aws-api-gateway-networking) + [Lambda](/aws/lambda-serverless). Process: S3 event triggers a Step Functions workflow. Step 1: Textract `StartDocumentAnalysis` (async, multi-page PDF support). Step 2: Lambda parses Textract output—extracts key-value pairs, tables, and raw text by section. Step 3: Bedrock (Claude) performs clause classification and extraction from raw text (too nuanced for Textract alone). Step 4: Comprehend Custom Entity Recognizer tags legal entities (party names, dates, jurisdiction-specific terms) trained on firm's own contract corpus. Step 5: Store structured results in [DynamoDB](/dynamodb-data-services) (fast lookup by contract ID) and full text + [embeddings](/embeddings) in OpenSearch (semantic search). Search: Kendra or Bedrock KB as the search layer. Bedrock KB for natural language questions ("Which contracts mention arbitration in Delaware?")—backed by [advanced RAG](/advanced-rag) with metadata filtering. Kendra for document-level faceted search (by date, party, contract type). Security: [IAM](/aws-iam-security) and VPC PrivateLink throughout. Attorney-specific access control enforced at the Kendra/Bedrock KB query layer via ACL metadata.
 
 ---
 
