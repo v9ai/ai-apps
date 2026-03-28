@@ -1,8 +1,13 @@
-CRATE = crates/travel-ml
+CRATE = ../../crates/travel-ml
 
-.PHONY: start
+.PHONY: start ischia
 
 start:
-	cd $(CRATE) && cargo test --lib --bin travel-ml
-	cd $(CRATE) && RUST_LOG=info cargo run --bin travel-ml -- discover
+	cd $(CRATE) && cargo test --lib
+	cd $(CRATE) && RUST_LOG=info cargo run --bin travel-discover
+	vercel --prod --yes
+
+ischia:
+	cd $(CRATE) && cargo test --lib
+	cd $(CRATE) && RUST_LOG=info cargo run --bin travel-ischia -- --skip-reviews
 	vercel --prod --yes

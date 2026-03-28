@@ -19,7 +19,7 @@ const T = {
     afternoon: "După-amiază",
     kidFriendly: "Prieten cu copiii",
     skip: "Recomandat adulți",
-    mlScore: "Scor",
+    scoreLabel: "Scor",
     note: "Scoruri calculate pe baza preferințelor familiei",
     pizzaBreak: "Pauză pizza — da Michele sau Spaccanapoli",
     totalTime: "Timp total",
@@ -33,7 +33,7 @@ const T = {
     afternoon: "Afternoon",
     kidFriendly: "Kid-friendly",
     skip: "Adults recommended",
-    mlScore: "Score",
+    scoreLabel: "Score",
     note: "Scores based on family preference ranking",
     pizzaBreak: "Pizza break — da Michele or Spaccanapoli",
     totalTime: "Total time",
@@ -43,9 +43,8 @@ const T = {
 
 // ── Hard-coded optimal family sequence ───────────────────────────────────────
 //
-// Derived from ML scoring (all-MiniLM-L6-v2 cosine similarity, Candle).
 // Sequence applies nearest-neighbour starting from kid-friendly nodes,
-// filtered to family_score ≥ 0.45, then split into morning / afternoon slots
+// filtered to family_score >= 0.45, then split into morning / afternoon slots
 // with a fixed lunch break at 12:30.
 
 interface ItinerarySlot {
@@ -134,7 +133,7 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
-function MlScoreBar({ score }: { score: number }) {
+function ScoreBar({ score }: { score: number }) {
   const pct = Math.round(score * 100);
   return (
     <div
@@ -350,8 +349,8 @@ function TimelineRow({ slot, isAlt, lang, showCertosaNote }: TimelineRowProps) {
         {slot.durationMin} min
       </span>
 
-      {/* ML score bar */}
-      <MlScoreBar score={slot.familyScore} />
+      {/* Score bar */}
+      <ScoreBar score={slot.familyScore} />
     </div>
   );
 }
@@ -360,9 +359,9 @@ function TimelineRow({ slot, isAlt, lang, showCertosaNote }: TimelineRowProps) {
 
 export function FamilyItinerary({ places: _places, lang }: FamilyItineraryProps) {
   // `places` prop is available for runtime enrichment / filtering.
-  // The hard-coded sequence below is derived from ML scoring of the Napoli dataset
-  // and is stable for presentation. Passing `places` here allows future dynamic
-  // override if the data pipeline produces a different order.
+  // The hard-coded sequence below is stable for presentation. Passing `places`
+  // here allows future dynamic override if the data pipeline produces a
+  // different order.
   const t = T[lang];
 
   const hasCertosa = AFTERNOON_SLOTS.some((s) =>
@@ -522,7 +521,7 @@ export function FamilyItinerary({ places: _places, lang }: FamilyItineraryProps)
         </div>
       </div>
 
-      {/* ── Footer: total time + ML legend ── */}
+      {/* ── Footer: total time + legend ── */}
       <div
         className={css({
           px: { base: "4", md: "7" },
@@ -593,7 +592,7 @@ export function FamilyItinerary({ places: _places, lang }: FamilyItineraryProps)
           </span>
         </div>
 
-        {/* ML note */}
+        {/* Score note */}
         <p
           className={css({
             fontSize: "2xs",
