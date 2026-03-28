@@ -3,16 +3,17 @@
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
 import { useEffect, useState } from "react";
+import { NIGHTS, DAYS, DATE_RANGE_LABEL } from "../constants";
 
 const T = {
   ro: {
     title: "Buget estimativ",
     group: "2 adulți + 1 copil",
-    subtitle: "5 zile în Napoli · 2 adulți + 1 copil · sezon mediu (apr–mai)",
+    subtitle: `${DAYS} zile în Napoli · ${DATE_RANGE_LABEL.ro} · 2 adulți + 1 copil`,
     note: "Estimări 2025. Copiii sub 18 ani intră GRATUIT la toate muzeele de stat (MANN, Pompei, Herculaneum, Certosa). Copiii sub 10 ani călătoresc gratuit în rețeaua ANM.",
     categories: [
       "Zboruri (3 bilete)",
-      "Cazare (cameră familie, 5 nopți)",
+      `Cazare (cameră familie, ${NIGHTS} nopți)`,
       "Activități (adulți; copil gratuit)",
       "Mâncare & Băutură",
       "Transport local",
@@ -22,11 +23,11 @@ const T = {
   en: {
     title: "Estimated Budget",
     group: "2 adults + 1 child",
-    subtitle: "5 days in Naples · 2 adults + 1 child · shoulder season (Apr–May)",
+    subtitle: `${DAYS} days in Naples · ${DATE_RANGE_LABEL.en} · 2 adults + 1 child`,
     note: "2025 estimates. Children under 18 enter FREE at all Italian state museums (MANN, Pompeii, Herculaneum, Certosa). Children under 10 travel free on the ANM network.",
     categories: [
       "Flights (3 tickets)",
-      "Accommodation (family room, 5 nights)",
+      `Accommodation (family room, ${NIGHTS} nights)`,
       "Activities (adults; child free)",
       "Food & Drink",
       "Local transport",

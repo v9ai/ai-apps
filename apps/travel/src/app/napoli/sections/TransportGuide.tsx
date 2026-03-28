@@ -2,16 +2,17 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
+import { DAYS } from "../constants";
 
 const T = {
   ro: {
     title: "Cum te deplasezi",
-    subtitle: "Napoli · 5 zile · buget transport €60",
+    subtitle: `Napoli · ${DAYS} zile · buget transport €60`,
     sectionAnm: "Reteaua ANM — in interiorul Napolului",
     sectionAirport: "Aeroport",
     sectionDayTrips: "Excursii cu trenul",
     sectionCapri: "Catre Capri",
-    sectionBudget: "Defalcare buget 5 zile",
+    sectionBudget: `Defalcare buget ${DAYS} zile`,
     walkingNote:
       "Centro Storico se strabate in 30 de minute pe jos. Orasul este extrem de prietenos pentru pietoni — pastreaza abonamentele pentru Vomero si Capri.",
     validLabel: "valabil",
@@ -35,12 +36,12 @@ const T = {
   },
   en: {
     title: "Getting Around",
-    subtitle: "Naples · 5 days · transport budget €60",
+    subtitle: `Naples · ${DAYS} days · transport budget €60`,
     sectionAnm: "ANM Network — Within Naples",
     sectionAirport: "Airport",
     sectionDayTrips: "Day Trips by Train",
     sectionCapri: "To Capri",
-    sectionBudget: "5-Day Budget Breakdown",
+    sectionBudget: `${DAYS}-Day Budget Breakdown`,
     walkingNote:
       "The Centro Storico is 30 min end-to-end on foot. The city is highly walkable — save the passes for Vomero and Capri.",
     validLabel: "valid",

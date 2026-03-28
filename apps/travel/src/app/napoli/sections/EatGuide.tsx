@@ -2,16 +2,17 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
+import { DAYS } from "../constants";
 
 const T = {
   ro: {
     label: "Mâncare & Băutură",
     title: "Ghid de prețuri",
-    subtitle: "Napoli · 5 zile · buget alocat €180",
+    subtitle: `Napoli · ${DAYS} zile · buget alocat €180`,
     priceRef: "Referință prețuri",
     dailyStrategy: "Strategie zilnică",
     recommended: "RECOMANDAT",
-    budgetTarget: "€180 din €1.000 = €36/zi pentru 5 zile. Realizabil pe strategia echilibrata.",
+    budgetTarget: `€180 din €1.000 = €${Math.round(180 / DAYS)}/zi pentru ${DAYS} zile. Realizabil pe strategia echilibrata.`,
     etiquetteTitle: "Eticheta cafelei napolitane",
     etiquetteBody:
       "Bea întotdeauna espresso-ul stând la bar. A sta pe scaun costă de 2–3 ori mai mult. Espresso-ul din Napoli este cel mai bun din Italia — nu e un sacrificiu.",
@@ -63,12 +64,12 @@ const T = {
   en: {
     label: "Food & Drink",
     title: "Price guide",
-    subtitle: "Naples · 5 days · budget allocation €180",
+    subtitle: `Naples · ${DAYS} days · budget allocation €180`,
     priceRef: "Price reference",
     dailyStrategy: "Daily strategy",
     recommended: "RECOMMENDED",
     budgetTarget:
-      "€180 of €1,000 = €36/day for 5 days. Achievable on the 'balanced' strategy.",
+      `€180 of €1,000 = €${Math.round(180 / DAYS)}/day for ${DAYS} days. Achievable on the 'balanced' strategy.`,
     etiquetteTitle: "Rules of Neapolitan coffee etiquette",
     etiquetteBody:
       "Always drink espresso standing at the bar. Sitting costs 2–3x more. The espresso in Naples is the best in Italy — this is not a sacrifice.",

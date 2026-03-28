@@ -6,17 +6,18 @@ import { Footer } from "@/components/Footer";
 import { useLang } from "@/components/LanguageSwitcher";
 import { SleepGuide } from "./sections/SleepGuide";
 import { HotelLinks } from "./sections/HotelLinks";
+import { DATE_RANGE_LABEL } from "./constants";
 
 const T = {
   ro: {
     eyebrow: "Ghid de Calatorie \u2014 Italia",
     tagline: (n: number) =>
-      `Napoli, Italia\u00a0\u00a0·\u00a0\u00a02 Adulți · 1 Copil\u00a0\u00a0·\u00a0\u00a0${n} locuri esențiale`,
+      `Napoli, Italia\u00a0\u00a0·\u00a0\u00a0${DATE_RANGE_LABEL.ro}\u00a0\u00a0·\u00a0\u00a02 Adulți · 1 Copil\u00a0\u00a0·\u00a0\u00a0${n} locuri esențiale`,
   },
   en: {
     eyebrow: "Travel Guide \u2014 Italy",
     tagline: (n: number) =>
-      `Naples, Italy\u00a0\u00a0·\u00a0\u00a02 Adults · 1 Child\u00a0\u00a0·\u00a0\u00a0${n} essential places`,
+      `Naples, Italy\u00a0\u00a0·\u00a0\u00a0${DATE_RANGE_LABEL.en}\u00a0\u00a0·\u00a0\u00a02 Adults · 1 Child\u00a0\u00a0·\u00a0\u00a0${n} essential places`,
   },
 };
 
