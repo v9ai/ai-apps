@@ -32,7 +32,7 @@ function LessonCard({ lesson, isFirst }: { lesson: Lesson; isFirst?: boolean }) 
   return (
     <Link
       ref={ref}
-      href={`/${lesson.slug}`}
+      href={lesson.url}
       className="article-card"
       title={lesson.excerpt || undefined}
       onMouseMove={onMove}

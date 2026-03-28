@@ -149,7 +149,7 @@ Resources:
 
 ## Lambda Triggers
 
-### [API Gateway](/aws-api-gateway-networking) (REST API / HTTP API)
+### [API Gateway](/aws/api-gateway-networking) (REST API / HTTP API)
 
 **REST API (v1):** Full-featured, supports usage plans, API keys, request/response mapping templates, caching. Higher cost.
 
@@ -409,8 +409,8 @@ Instead of storing current state, store all events that led to that state. The c
 ### CQRS (Command Query Responsibility Segregation)
 
 Separate the write model (commands) from the read model (queries). With Lambda:
-- **Command path:** [API Gateway](/aws-api-gateway-networking) → Lambda → [DynamoDB](/dynamodb-data-services) (write-optimized)
-- **Query path:** [API Gateway](/aws-api-gateway-networking) → Lambda → ElasticSearch/DynamoDB GSI (read-optimized)
+- **Command path:** [API Gateway](/aws/api-gateway-networking) → Lambda → [DynamoDB](/dynamodb-data-services) (write-optimized)
+- **Query path:** [API Gateway](/aws/api-gateway-networking) → Lambda → ElasticSearch/DynamoDB GSI (read-optimized)
 - DynamoDB Streams → Lambda → sync read model asynchronously
 
 ```

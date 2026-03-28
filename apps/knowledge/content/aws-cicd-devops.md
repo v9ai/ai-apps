@@ -1,7 +1,7 @@
 # AWS CI/CD & DevOps
 
 ## The 30-Second Pitch
-AWS CI/CD & DevOps is the integrated ecosystem of services—CodeCommit, CodeBuild, CodeDeploy, CodePipeline, CloudFormation, CDK, and Systems Manager—that automate and govern the entire software delivery lifecycle on AWS. It solves the problem of manual, error-prone deployments and inconsistent infrastructure by giving teams a single-vendor, IAM-integrated, audit-trailed path from source code to production. Teams pick the AWS native toolchain for tight integration with [IAM](/aws-iam-security), CloudWatch, and every AWS resource (no separate credentials plumbing), for compliance (all API calls logged to CloudTrail), and for the unified billing and support model. The strategic tradeoff versus GitHub Actions + Terraform is flexibility for simplicity—AWS native tools are less portable but operationally tighter.
+AWS CI/CD & DevOps is the integrated ecosystem of services—CodeCommit, CodeBuild, CodeDeploy, CodePipeline, CloudFormation, CDK, and Systems Manager—that automate and govern the entire software delivery lifecycle on AWS. It solves the problem of manual, error-prone deployments and inconsistent infrastructure by giving teams a single-vendor, IAM-integrated, audit-trailed path from source code to production. Teams pick the AWS native toolchain for tight integration with [IAM](/aws/iam-security), CloudWatch, and every AWS resource (no separate credentials plumbing), for compliance (all API calls logged to CloudTrail), and for the unified billing and support model. The strategic tradeoff versus GitHub Actions + Terraform is flexibility for simplicity—AWS native tools are less portable but operationally tighter.
 
 ---
 
@@ -11,7 +11,7 @@ AWS CI/CD & DevOps is the integrated ecosystem of services—CodeCommit, CodeBui
 A fully managed, Git-compatible source control service. Repositories are hosted in AWS, are regionally redundant, and are encrypted at rest (KMS) and in transit (TLS). It was deprecated for new customers in July 2024—existing repos still work, but AWS is steering new workloads toward GitHub/GitLab with OIDC. **Interview insight:** Know why it's being deprecated and know the migration path, but also understand it deeply because many enterprises still run it.
 
 ### IAM Integration (Key Differentiator)
-There are no per-repository passwords. Access is governed entirely by [IAM](/aws-iam-security):
+There are no per-repository passwords. Access is governed entirely by [IAM](/aws/iam-security):
 - **IAM Users** get Git credentials via `aws iam upload-ssh-public-key` (SSH) or HTTP credentials generated from the IAM console.
 - **IAM Roles** can be assumed by CodeBuild/CodePipeline/Lambda to access repos—no secrets to rotate.
 - **IAM Policies** control repository-level actions: `codecommit:GitPull`, `codecommit:GitPush`, `codecommit:CreateBranch`, `codecommit:DeleteBranch`, `codecommit:GetMergeCommit`.
@@ -544,7 +544,7 @@ hotfix/*   ──push──→      [Fast-track: Build → Test → Manual Appro
 2. ECR repository in Tools account; grant `ecr:GetDownloadUrlForLayer` etc. to Dev/Staging/Prod account principals.
 3. KMS key policy: `kms:Decrypt` for all deployment account roles.
 4. S3 artifact bucket policy: `s3:GetObject` for all deployment account roles.
-5. Each target account has an [IAM](/aws-iam-security) role with a trust policy trusting the Tools account pipeline execution role.
+5. Each target account has an [IAM](/aws/iam-security) role with a trust policy trusting the Tools account pipeline execution role.
 
 ### Feature Branch Strategies
 
@@ -813,7 +813,7 @@ terraform apply -var-file="prod.tfvars"
 ## 7. GitHub Actions with AWS (OIDC)
 
 ### Why OIDC (No Long-Lived Keys)
-[IAM](/aws-iam-security) access keys (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) stored in GitHub secrets are a security liability—they don't expire, can be exfiltrated, and require manual rotation. OIDC federation lets GitHub Actions obtain short-lived credentials by exchanging a GitHub-signed JWT for temporary AWS credentials via `sts:AssumeRoleWithWebIdentity`. The credentials last ~1 hour and scope is defined by the IAM role's trust policy.
+[IAM](/aws/iam-security) access keys (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) stored in GitHub secrets are a security liability—they don't expire, can be exfiltrated, and require manual rotation. OIDC federation lets GitHub Actions obtain short-lived credentials by exchanging a GitHub-signed JWT for temporary AWS credentials via `sts:AssumeRoleWithWebIdentity`. The credentials last ~1 hour and scope is defined by the IAM role's trust policy.
 
 ### Setup
 

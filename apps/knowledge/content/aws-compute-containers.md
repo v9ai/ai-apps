@@ -2,7 +2,7 @@
 
 ## The 30-Second Pitch
 
-AWS Compute & Containers is the layer of AWS that answers "where does my code run?" — spanning raw virtual machines (EC2), serverless functions ([Lambda](/aws-lambda-serverless)), managed containers (ECS/EKS/Fargate), and fully managed application hosting (App Runner). The core value proposition is a **spectrum of control vs. operational overhead**: EC2 gives you full OS control but requires patching; Fargate removes node management but limits customization; App Runner removes almost everything. An engineer choosing within this spectrum trades off latency-to-production, cost predictability, scaling granularity, and egress complexity. For a distributed systems or platform engineering interview, the expectation is to justify placement on that spectrum, understand the mechanics of auto scaling and load balancing, and reason about container networking, [IAM](/aws-iam-security) delegation, and deployment safety.
+AWS Compute & Containers is the layer of AWS that answers "where does my code run?" — spanning raw virtual machines (EC2), serverless functions ([Lambda](/aws/lambda-serverless)), managed containers (ECS/EKS/Fargate), and fully managed application hosting (App Runner). The core value proposition is a **spectrum of control vs. operational overhead**: EC2 gives you full OS control but requires patching; Fargate removes node management but limits customization; App Runner removes almost everything. An engineer choosing within this spectrum trades off latency-to-production, cost predictability, scaling granularity, and egress complexity. For a distributed systems or platform engineering interview, the expectation is to justify placement on that spectrum, understand the mechanics of auto scaling and load balancing, and reason about container networking, [IAM](/aws/iam-security) delegation, and deployment safety.
 
 ## How It Actually Works
 
@@ -20,7 +20,7 @@ Every service uses EC2 hardware underneath. The higher you go, the more AWS hand
 - **ECS on EC2**: AWS manages container placement; you still manage EC2 nodes
 - **ECS Fargate / EKS Fargate**: AWS manages nodes entirely; you pay per vCPU-second
 - **App Runner**: AWS manages load balancing, scaling, TLS, deployments
-- **[Lambda](/aws-lambda-serverless)**: AWS manages everything except the function handler and 15-min limit
+- **[Lambda](/aws/lambda-serverless)**: AWS manages everything except the function handler and 15-min limit
 
 ---
 
@@ -76,7 +76,7 @@ An AMI is a snapshot of an instance's root volume + launch permissions + block d
 - **AWS-managed** (e.g., Amazon Linux 2023, Ubuntu 22.04): Maintained by AWS, regularly patched
 - **Marketplace AMIs**: Third-party vendors; may have licensing costs per hour
 - **Custom AMIs**: Golden images you bake with Packer; critical for fast Auto Scaling (pre-installed deps = faster boot)
-- **EBS-backed vs Instance Store-backed**: EBS-backed is standard — root volume persists on stop (see [S3 & Storage](/aws-storage-s3) for EBS/EFS details). Instance store is ephemeral NVMe — fastest IOPS but data lost on stop/terminate.
+- **EBS-backed vs Instance Store-backed**: EBS-backed is standard — root volume persists on stop (see [S3 & Storage](/aws/storage-s3) for EBS/EFS details). Instance store is ephemeral NVMe — fastest IOPS but data lost on stop/terminate.
 
 **AMI lifecycle**: Build → Test → Share → Deprecate. Use EC2 Image Builder for automated, pipeline-based AMI creation with CIS hardening.
 
@@ -205,7 +205,7 @@ A pool of pre-initialized, stopped (or running) instances that can be promoted t
 
 ## 4. Load Balancers
 
-> For API Gateway, VPC networking, and Route 53 integration, see [API Gateway & Networking](/aws-api-gateway-networking).
+> For API Gateway, VPC networking, and Route 53 integration, see [API Gateway & Networking](/aws/api-gateway-networking).
 
 ### ALB vs NLB vs CLB
 
@@ -279,7 +279,7 @@ For ALB: HTTP/HTTPS. Expect a 200 (or configurable range). For NLB: TCP (just co
 - Container image(s) + resource requirements (CPU, memory)
 - Network mode (bridge, host, awsvpc)
 - Volumes and mounts
-- [IAM](/aws-iam-security) task role + execution role
+- [IAM](/aws/iam-security) task role + execution role
 - Logging configuration
 - Environment variables and secrets (from SSM Parameter Store / Secrets Manager)
 - Health check command
@@ -412,7 +412,7 @@ maxPercent: 200         → allow up to 2x desired count during deployment
 
 ### Blue/Green with CodeDeploy
 
-> CodeDeploy integrates with the broader [CI/CD & DevOps](/aws-cicd-devops) pipeline (CodePipeline, CodeBuild).
+> CodeDeploy integrates with the broader [CI/CD & DevOps](/aws/cicd-devops) pipeline (CodePipeline, CodeBuild).
 
 Two separate target groups (blue = current, green = new). Traffic shifted between them:
 
@@ -503,8 +503,8 @@ Managed lifecycle for cluster-critical components. AWS tests and distributes com
 - `vpc-cni` — AWS VPC CNI (pod networking via ENIs)
 - `coredns` — Cluster DNS
 - `kube-proxy` — iptables rules for Services
-- `aws-ebs-csi-driver` — Dynamic [EBS](/aws-storage-s3) PV provisioning
-- `aws-efs-csi-driver` — [EFS](/aws-storage-s3) PV provisioning (shared RWX)
+- `aws-ebs-csi-driver` — Dynamic [EBS](/aws/storage-s3) PV provisioning
+- `aws-efs-csi-driver` — [EFS](/aws/storage-s3) PV provisioning (shared RWX)
 - `aws-load-balancer-controller` — Provisions ALB/NLB from Ingress/Service objects
 - `adot` — AWS Distro for OpenTelemetry
 - `amazon-guardduty-agent` — Runtime threat detection
@@ -513,7 +513,7 @@ Managed lifecycle for cluster-critical components. AWS tests and distributes com
 
 ### IRSA (IAM Roles for Service Accounts)
 
-> IRSA is the primary way to grant EKS workloads AWS permissions. For IAM policies, roles, and OIDC federation concepts, see [IAM & Security](/aws-iam-security).
+> IRSA is the primary way to grant EKS workloads AWS permissions. For IAM policies, roles, and OIDC federation concepts, see [IAM & Security](/aws/iam-security).
 
 Associates an IAM role with a Kubernetes service account. Pods using that SA get temporary credentials via OIDC without needing instance profile credentials (no credential sharing across pods on same node).
 
@@ -549,7 +549,7 @@ Run EKS on your own infrastructure (VMware vSphere, bare metal, Nutanix, Snow):
 
 ## 9. ECR (Elastic Container Registry)
 
-> ECR stores [Docker](/docker) container images. For CI/CD pipelines that build and push images, see [CI/CD & DevOps](/aws-cicd-devops).
+> ECR stores [Docker](/docker) container images. For CI/CD pipelines that build and push images, see [CI/CD & DevOps](/aws/cicd-devops).
 
 ### Image Scanning
 
@@ -720,7 +720,7 @@ Managed batch computing service. Provisions and manages EC2/Fargate compute base
 
 **Job Queue**: Jobs are submitted to queues. Multiple queues can map to one or more compute environments with priorities.
 
-**Job Definition**: Like an ECS task definition — [Docker](/docker) image, CPU/memory, retries, timeout, environment variables, [IAM](/aws-iam-security) role, volumes.
+**Job Definition**: Like an ECS task definition — [Docker](/docker) image, CPU/memory, retries, timeout, environment variables, [IAM](/aws/iam-security) role, volumes.
 
 **Job**: A unit of work. Can be array jobs (same definition, N independent runs — useful for hyperparameter sweeps) or dependent jobs (job B waits for job A).
 
@@ -734,8 +734,8 @@ Managed batch computing service. Provisions and manages EC2/Fargate compute base
 | Video transcoding | Spot for cost, output in S3 |
 | Nightly report generation | Scheduled, pay only when running |
 
-**Batch vs ECS vs [Lambda](/aws-lambda-serverless)**:
-- [Lambda](/aws-lambda-serverless): max 15 min, 10 GB memory — use for event-driven quick processing
+**Batch vs ECS vs [Lambda](/aws/lambda-serverless)**:
+- [Lambda](/aws/lambda-serverless): max 15 min, 10 GB memory — use for event-driven quick processing
 - ECS Service: long-running services; Batch: one-off jobs with queue semantics
 - Batch: has job queue, job dependency graph, array jobs, managed retries — ECS lacks these
 - Batch on Fargate: when you want no EC2 management AND need >15 minutes
@@ -833,31 +833,31 @@ Common in EKS: OpenTelemetry Collector as adapter, consuming app-specific teleme
 
 **Q: What's the difference between an ECS task role and an ECS execution role?**
 
-**A:** The **execution role** is used by the ECS agent (not your code) to pull images from ECR, read secrets from SSM/Secrets Manager, and write logs to CloudWatch. It's operational infrastructure — your application never uses it. The **task role** is used by your application code running inside the container to call AWS services (e.g., S3, [DynamoDB](/dynamodb-data-services), SQS). Credentials are delivered via the IMDS endpoint inside the task (`169.254.170.2` — an ECS-internal metadata endpoint). Always apply least privilege: the task role should only have permissions your application actually needs. See [IAM & Security](/aws-iam-security) for role and policy design.
+**A:** The **execution role** is used by the ECS agent (not your code) to pull images from ECR, read secrets from SSM/Secrets Manager, and write logs to CloudWatch. It's operational infrastructure — your application never uses it. The **task role** is used by your application code running inside the container to call AWS services (e.g., S3, [DynamoDB](/aws/dynamodb-data-services), SQS). Credentials are delivered via the IMDS endpoint inside the task (`169.254.170.2` — an ECS-internal metadata endpoint). Always apply least privilege: the task role should only have permissions your application actually needs. See [IAM & Security](/aws/iam-security) for role and policy design.
 
 ---
 
 **Q: ALB vs NLB — when does the choice matter?**
 
-**A:** Choose NLB when: (1) customers need to whitelist static IPs (NLB has Elastic IPs; ALB is DNS-only), (2) you have non-HTTP protocols (TCP, UDP, raw TLS passthrough), (3) ultra-low latency is critical — NLB operates at L4 with ~100 microsecond overhead vs ALB's milliseconds at L7. Choose ALB when: (1) you need content-based routing (path, host, header), (2) you need WAF integration, (3) targets include [Lambda](/aws-lambda-serverless) functions, (4) you need gRPC support, (5) you need sticky sessions or advanced health checks. A common hybrid: NLB (for static IP) in front of ALB (for routing) using ALB as an NLB target. See [API Gateway & Networking](/aws-api-gateway-networking) for VPC, Route 53, and API Gateway context.
+**A:** Choose NLB when: (1) customers need to whitelist static IPs (NLB has Elastic IPs; ALB is DNS-only), (2) you have non-HTTP protocols (TCP, UDP, raw TLS passthrough), (3) ultra-low latency is critical — NLB operates at L4 with ~100 microsecond overhead vs ALB's milliseconds at L7. Choose ALB when: (1) you need content-based routing (path, host, header), (2) you need WAF integration, (3) targets include [Lambda](/aws/lambda-serverless) functions, (4) you need gRPC support, (5) you need sticky sessions or advanced health checks. A common hybrid: NLB (for static IP) in front of ALB (for routing) using ALB as an NLB target. See [API Gateway & Networking](/aws/api-gateway-networking) for VPC, Route 53, and API Gateway context.
 
 ---
 
 **Q: Explain IRSA and why it's better than using EC2 instance profiles for EKS workloads.**
 
-**A:** With EC2 instance profiles, every pod on the same node shares the node's IAM credentials. If one pod is compromised, the attacker gets credentials for all workloads on that node. IRSA ([IAM](/aws-iam-security) Roles for Service Accounts) solves this with OIDC federation: each pod gets a projected JWT token for its service account; the AWS SDK exchanges this for temporary role credentials via STS `AssumeRoleWithWebIdentity`. The key benefit is **blast radius reduction** — a compromised pod can only access resources permitted by its specific service account's IAM role, not the entire node's permissions. Additionally, you get full auditability in CloudTrail: you can see exactly which pod (via the role session name) called which API.
+**A:** With EC2 instance profiles, every pod on the same node shares the node's IAM credentials. If one pod is compromised, the attacker gets credentials for all workloads on that node. IRSA ([IAM](/aws/iam-security) Roles for Service Accounts) solves this with OIDC federation: each pod gets a projected JWT token for its service account; the AWS SDK exchanges this for temporary role credentials via STS `AssumeRoleWithWebIdentity`. The key benefit is **blast radius reduction** — a compromised pod can only access resources permitted by its specific service account's IAM role, not the entire node's permissions. Additionally, you get full auditability in CloudTrail: you can see exactly which pod (via the role session name) called which API.
 
 ---
 
 **Q: How do you handle blue/green deployments in ECS with zero downtime?**
 
-**A:** Use ECS + CodeDeploy blue/green (see [CI/CD & DevOps](/aws-cicd-devops) for the full CodePipeline setup): 1) Service has two target groups (blue = current, green = new). ALB listener routes 100% to blue. 2) Deploy new task set to the cluster, register with green target group. 3) ALB test listener (port 8443) routes to green for automated integration tests. 4) On pass, CodeDeploy shifts production traffic: either all-at-once, canary (10% for N minutes then 100%), or linear (10% every minute). 5) Old (blue) tasks remain running during rollback window. 6) Rollback: one API call shifts traffic back to blue immediately. The key: because traffic shifting is instant (ALB routing rule change), rollback takes seconds, not minutes — unlike rolling updates which must drain and re-deploy.
+**A:** Use ECS + CodeDeploy blue/green (see [CI/CD & DevOps](/aws/cicd-devops) for the full CodePipeline setup): 1) Service has two target groups (blue = current, green = new). ALB listener routes 100% to blue. 2) Deploy new task set to the cluster, register with green target group. 3) ALB test listener (port 8443) routes to green for automated integration tests. 4) On pass, CodeDeploy shifts production traffic: either all-at-once, canary (10% for N minutes then 100%), or linear (10% every minute). 5) Old (blue) tasks remain running during rollback window. 6) Rollback: one API call shifts traffic back to blue immediately. The key: because traffic shifting is instant (ALB routing rule change), rollback takes seconds, not minutes — unlike rolling updates which must drain and re-deploy.
 
 ---
 
 **Q: You need to run 1,000 batch jobs, each processing a 100MB file from S3, completing in 2 minutes. Design the system.**
 
-**A:** This is a textbook AWS Batch array job: 1) Upload 1,000 files to S3. 2) Create a Batch job definition pointing to a container that reads `AWS_BATCH_JOB_ARRAY_INDEX` env var and maps it to a file (stored in [DynamoDB](/dynamodb-data-services) or parameter store). 3) Submit one array job with `arraySize: 1000`. 4) Compute environment: managed, Fargate Spot (2 minutes per job, low risk of spot interruption; or EC2 Spot). 5) Set job retry attempts to 3 (for spot interruptions). 6) Batch manages concurrency based on `maxvCpus` — with 1000 jobs × 0.5 vCPU each = 500 vCPUs max (adjust as needed). 7) CloudWatch metrics + EventBridge to alert on job failures. Total cost estimate: 1000 jobs × 2 min × 0.5 vCPU × Fargate Spot pricing ≈ $5–10.
+**A:** This is a textbook AWS Batch array job: 1) Upload 1,000 files to S3. 2) Create a Batch job definition pointing to a container that reads `AWS_BATCH_JOB_ARRAY_INDEX` env var and maps it to a file (stored in [DynamoDB](/aws/dynamodb-data-services) or parameter store). 3) Submit one array job with `arraySize: 1000`. 4) Compute environment: managed, Fargate Spot (2 minutes per job, low risk of spot interruption; or EC2 Spot). 5) Set job retry attempts to 3 (for spot interruptions). 6) Batch manages concurrency based on `maxvCpus` — with 1000 jobs × 0.5 vCPU each = 500 vCPUs max (adjust as needed). 7) CloudWatch metrics + EventBridge to alert on job failures. Total cost estimate: 1000 jobs × 2 min × 0.5 vCPU × Fargate Spot pricing ≈ $5–10.
 
 ---
 
@@ -869,7 +869,7 @@ Common in EKS: OpenTelemetry Collector as adapter, consuming app-specific teleme
 
 **Q: Compare ECS Fargate and Lambda for a workload that processes images uploaded to S3.**
 
-**A:** Key dimensions: **Duration** — [Lambda](/aws-lambda-serverless) max 15 minutes; if image processing takes >15 min (video, high-res), use Fargate. **Memory** — Lambda max 10 GB; Fargate up to 30 GB, GPU option. **Concurrency** — Lambda scales per-event to thousands simultaneously with no warm-up (on provisioned concurrency); Fargate scales on metrics with some lag. **Cost** — Lambda is cheaper for sporadic/short jobs (pay per 100ms); Fargate better for sustained load (pay per vCPU-second but no invocation overhead). **Operations** — Lambda is simpler (no Dockerfile, no cluster). **Decision**: For typical web images (<60s, <1GB, high burst): [Lambda](/aws-lambda-serverless). For RAW photos, ML pipelines, video thumbnailing: ECS Fargate. For batch-nightly processing of thousands of images: AWS Batch. Images are stored in [S3](/aws-storage-s3).
+**A:** Key dimensions: **Duration** — [Lambda](/aws/lambda-serverless) max 15 minutes; if image processing takes >15 min (video, high-res), use Fargate. **Memory** — Lambda max 10 GB; Fargate up to 30 GB, GPU option. **Concurrency** — Lambda scales per-event to thousands simultaneously with no warm-up (on provisioned concurrency); Fargate scales on metrics with some lag. **Cost** — Lambda is cheaper for sporadic/short jobs (pay per 100ms); Fargate better for sustained load (pay per vCPU-second but no invocation overhead). **Operations** — Lambda is simpler (no Dockerfile, no cluster). **Decision**: For typical web images (<60s, <1GB, high burst): [Lambda](/aws/lambda-serverless). For RAW photos, ML pipelines, video thumbnailing: ECS Fargate. For batch-nightly processing of thousands of images: AWS Batch. Images are stored in [S3](/aws/storage-s3).
 
 ---
 

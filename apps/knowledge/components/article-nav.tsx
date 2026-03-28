@@ -21,7 +21,7 @@ export function ArticleNav({ prev, next, currentCategory, prevMeta, nextMeta }: 
     <div className="article-nav">
       {prev ? (
         <Link
-          href={`/${prev.slug}`}
+          href={prev.url}
           className={`article-nav-card cat-${pm.slug}`}
         >
           <span className="article-nav-label">&larr; Previous</span>

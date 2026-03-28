@@ -16,7 +16,7 @@ export function RelatedLessons({ lessons, meta }: Props) {
         {lessons.map((l) => (
           <Link
             key={l.slug}
-            href={`/${l.slug}`}
+            href={l.url}
             className={`related-card cat-${meta.slug}`}
           >
             <span className="related-card-num">
