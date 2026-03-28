@@ -102,7 +102,7 @@ function SectionCard({
           <Text
             size="2"
             color="gray"
-            style={{ fontWeight: 600, letterSpacing: 0.2 }}
+            style={{ fontWeight: 700, letterSpacing: '0.08em' }}
           >
             {title}
           </Text>
@@ -1172,7 +1172,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               <Flex gap="2" wrap="wrap" mt="3">
                 {company.category ? (
                   <Badge
-                    color={CATEGORY_COLORS[company.category] as "blue" | "violet" | "amber" | "green" | "cyan" | "gray" ?? "gray"}
+                    color={(CATEGORY_COLORS[company.category] ?? "gray") as "blue" | "violet" | "amber" | "green" | "cyan" | "gray"}
                     variant="soft"
                     radius="full"
                   >
@@ -1275,7 +1275,13 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                     <Flex direction="column" gap="4">
                       {company.deep_analysis && (
                         <SectionCard title="Deep Analysis">
-                          <Box className="prose prose-sm prose-gray max-w-none">
+                          <Box
+                            className="prose prose-sm prose-gray max-w-none"
+                            style={{
+                              lineHeight: 1.7,
+                              fontSize: '0.9rem',
+                            }}
+                          >
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {company.deep_analysis}
                             </ReactMarkdown>
