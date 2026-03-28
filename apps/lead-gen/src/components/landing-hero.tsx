@@ -202,14 +202,14 @@ export function LandingHero() {
     >
       <div className={container({ maxW: "breakpoint-lg" })}>
         {/* --- brand lockup above trust badges --- */}
-        <div className={flex({ justify: "center", mb: "3" })}>
+        <div className={flex({ justify: "center", mb: "6" })}>
           <span
             className={css({
-              fontSize: "2xs",
-              color: "ui.dim",
-              letterSpacing: "widest",
+              fontSize: { base: "3xl", md: "4xl", lg: "5xl" },
+              color: "ui.heading",
+              letterSpacing: "tight",
               textTransform: "uppercase",
-              fontWeight: "medium",
+              fontWeight: "bold",
               lineHeight: "none",
             })}
           >
