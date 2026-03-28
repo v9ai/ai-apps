@@ -177,6 +177,8 @@ def research_and_classify(candidate: CandidateCompany) -> CompanyResearchResult:
         is_ai_company=bool(raw.get("is_ai_company", False)),
         is_fully_remote=bool(raw.get("is_fully_remote", False)),
         ai_tier=int(raw.get("ai_tier", 0)),
+        company_type=raw.get("company_type", "unknown"),
+        employee_range=raw.get("employee_range", "unknown"),
         confidence=raw.get("confidence", "low"),
         reasons=raw.get("reasons", []),
     )
