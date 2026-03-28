@@ -1,0 +1,29 @@
+{
+  "scoring": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc_roc": 1.0,
+    "ndcg_at_10": 1.0,
+    "sample_count": 330,
+    "positive_count": 165,
+    "threshold": 0.5,
+    "weights": [
+      0.8170877,
+      0.5845416,
+      1.1877273,
+      0.14880025,
+      9.870511,
+      9.518429,
+      7.7339625
+    ],
+    "bias": -12.149304
+  },
+  "ner": {
+    "extraction_rate": 0.0,
+    "keyword_count": 0
+  },
+  "iteration": 7,
+  "timestamp": "2026-03-28T08:18:55.556904+00:00"
+}
