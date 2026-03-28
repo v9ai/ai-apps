@@ -493,18 +493,18 @@ StepFunction: PlaceOrderSaga
 
 ### Data Transfer Cost Reduction
 - Within same AZ: free; cross-AZ: $0.01/GB each way (biggest hidden cost in naively designed systems)
-- S3 → EC2 in same region: free; S3 → internet: $0.09/GB (use CloudFront to cache and reduce origin fetches)
-- Use VPC Interface Endpoints (PrivateLink) for AWS service traffic: eliminates NAT Gateway data processing charges
+- [S3](/aws-storage-s3) → EC2 in same region: free; S3 → internet: $0.09/GB (use [CloudFront](/aws-storage-s3) to cache and reduce origin fetches)
+- Use [VPC Interface Endpoints](/aws-api-gateway-networking) (PrivateLink) for AWS service traffic: eliminates NAT Gateway data processing charges
 - CloudFront: cache-hit traffic avoids origin data transfer charges; compress responses (Gzip/Brotli)
 - Place consumers and producers in same AZ where latency-sensitive; use replica reads in same AZ
 
-### Storage Cost Optimization
-- S3 Intelligent-Tiering: auto moves objects between Frequent/Infrequent/Archive tiers; no retrieval fees for Frequent/Infrequent
+### Storage Cost Optimization — see [S3, CloudFront & Storage](/aws-storage-s3) for full S3/EBS/EFS coverage
+- [S3 Intelligent-Tiering](/aws-storage-s3): auto moves objects between Frequent/Infrequent/Archive tiers; no retrieval fees for Frequent/Infrequent
 - S3 Lifecycle policies: transition to IA after 30 days, Glacier after 90 days, Deep Archive after 180 days
-- EBS: delete unattached volumes (alarm when state = available for > 7 days); switch to gp3 (same perf as gp2, 20% cheaper)
-- RDS: use Aurora Serverless v2 for variable workloads — scales in 0.5 ACU increments, scales to zero after idle period
+- [EBS](/aws-storage-s3): delete unattached volumes (alarm when state = available for > 7 days); switch to gp3 (same perf as gp2, 20% cheaper)
+- [RDS](/dynamodb-data-services): use Aurora Serverless v2 for variable workloads — scales in 0.5 ACU increments, scales to zero after idle period
 
-### Lambda Cost Optimization
+### Lambda Cost Optimization — see [Lambda & Serverless](/aws-lambda-serverless) for full Lambda optimization guide
 - Right-size memory: use AWS Lambda Power Tuning (Step Functions) to find optimal memory/cost balance
 - ARM64 (Graviton2): 20% cheaper + 19% better performance in Lambda; change architecture field in function config
 - Avoid unnecessary invocations: filter events at EventBridge rule level, not inside Lambda
@@ -513,6 +513,8 @@ StepFunction: PlaceOrderSaga
 ---
 
 ## 7. Observability Stack
+
+> Related: [Lambda & Serverless](/aws-lambda-serverless) for Lambda-specific observability (PowerTools, structured logging); [EC2, ECS & Containers](/aws-compute-containers) for container metrics and ADOT sidecar patterns.
 
 ### CloudWatch Metrics
 - Namespaces: `AWS/EC2`, `AWS/Lambda`, `AWS/RDS`, or custom (`MyApp/Orders`)
@@ -572,6 +574,8 @@ StepFunction: PlaceOrderSaga
 
 ## 8. Migration Strategies — The 7 Rs
 
+> Related: [CI/CD & DevOps](/aws-cicd-devops) for pipeline automation during migration; [EC2, ECS & Containers](/aws-compute-containers) for compute targets; [DynamoDB & Data Services](/dynamodb-data-services) for DMS and database migration.
+
 ### Retire
 - Decommission: application has no business value; turn it off
 - Often 10–20% of application portfolio in a migration assessment
@@ -605,7 +609,7 @@ StepFunction: PlaceOrderSaga
 
 ### Refactor / Re-architect
 - Rethink architecture to be cloud-native; highest complexity, highest long-term benefit
-- Examples: decompose monolith into microservices; re-write to use Lambda + DynamoDB; implement event-driven architecture
+- Examples: decompose monolith into microservices; re-write to use [Lambda](/aws-lambda-serverless) + [DynamoDB](/dynamodb-data-services); implement event-driven architecture
 - When to use: app is a strategic differentiator; current architecture is a bottleneck to growth
 - Requires most time and investment; justified when business agility value exceeds migration cost
 
@@ -646,16 +650,16 @@ Root
  └── Production OU
 ```
 
-### AWS Control Tower
+### AWS Control Tower — see [CI/CD & DevOps](/aws-cicd-devops) for IaC and account-vending pipelines
 - Sets up a landing zone: account structure, baseline configuration, guardrails in < 1 hour
 - Account Factory: self-service account vending via Service Catalog; new accounts provisioned with baseline controls, VPC, logging
 - Account Factory for Terraform (AFT): Terraform-native account vending; codify account customizations
-- Guardrails: proactive (prevent via SCPs), detective (detect via Config Rules), or combination
+- Guardrails: proactive (prevent via [SCPs](/aws-iam-security)), detective (detect via Config Rules), or combination
 - Mandatory guardrails: always enabled (e.g., CloudTrail enabled, S3 public access blocked)
 - Strongly recommended guardrails: on by default but can disable
 - Elective guardrails: opt-in for specific OUs
 
-### Service Control Policies (SCPs)
+### Service Control Policies (SCPs) — see [IAM & Security](/aws-iam-security) for full SCP and IAM deep-dive
 - Apply at OU or account level; define maximum permissions (allow list or deny list model)
 - Deny list model (default): attach AWS managed `FullAWSAccess` + explicit deny policies — more flexible
 - Allow list model: deny everything, explicitly allow what's permitted — more secure but operationally heavy
@@ -697,8 +701,8 @@ Root
 
 **EventBridge Pipes**
 - Point-to-point integration: source → filter → enrich → target
-- Sources: SQS, Kinesis, DynamoDB Streams, Kafka (MSK/self-managed)
-- Enrichment step: Lambda, API Gateway, Step Functions (synchronous) — add data before target
+- Sources: SQS, Kinesis, [DynamoDB Streams](/dynamodb-data-services), Kafka (MSK/self-managed)
+- Enrichment step: [Lambda](/aws-lambda-serverless), [API Gateway](/aws-api-gateway-networking), Step Functions (synchronous) — add data before target
 - Target: same as EventBridge rules; also SQS, Kinesis, DynamoDB, EventBridge bus, Step Functions
 - Eliminates polling Lambda functions; reduces code; native filtering before Lambda invocation
 
@@ -787,10 +791,10 @@ Root
 - Billing: per-account Cost Explorer; tag policies; consolidated billing in management account
 
 **Pool Model (Shared Infrastructure)**
-- All tenants share EC2/Lambda/RDS; tenant data isolated by `tenantId` column (row-level security) or DynamoDB partition key
+- All tenants share [EC2](/aws-compute-containers)/[Lambda](/aws-lambda-serverless)/[RDS](/dynamodb-data-services); tenant data isolated by `tenantId` column (row-level security) or [DynamoDB](/dynamodb-data-services) partition key
 - DynamoDB: `PK = tenant#<id>#resource#<id>` — all queries must include tenantId
 - Aurora: Row Level Security (RLS) via PostgreSQL policies enforced at DB level
-- Application-level isolation: every API request validated against JWT `tenantId` claim; middleware prevents cross-tenant data access
+- Application-level isolation: every [API Gateway](/aws-api-gateway-networking) request validated against JWT `tenantId` claim; middleware prevents cross-tenant data access
 - Noisy neighbor: reserved Lambda concurrency per tenant tier; DynamoDB per-partition WCU monitoring
 
 **Tenant-Aware Observability**
@@ -799,26 +803,26 @@ Root
 - Per-tenant CloudWatch custom metrics for SLA tracking and chargeback
 
 ### White-Labeling Architecture
-- Custom domain per client: Route 53 hosted zones per tenant; ACM wildcard or per-domain certificates
-- CloudFront distribution per tenant (or SNI on shared distribution): different origins, behaviors, cache policies per tenant
-- Branding config in DynamoDB: `tenantId` → logo URL, color scheme, feature flags; fetched on UI load
+- Custom domain per client: [Route 53](/aws-api-gateway-networking) hosted zones per tenant; ACM wildcard or per-domain certificates
+- [CloudFront](/aws-storage-s3) distribution per tenant (or SNI on shared distribution): different origins, behaviors, cache policies per tenant
+- Branding config in [DynamoDB](/dynamodb-data-services): `tenantId` → logo URL, color scheme, feature flags; fetched on UI load
 - Subdomain routing: `client1.saas.com`, `client2.saas.com` → same CloudFront → same origin → tenant resolved by `Host` header
 - Custom domain BYOD (Bring Your Own Domain): client points CNAME to CloudFront distribution; ACM validates via DNS
 
 ### Client Isolation Strategies
 
 **Data Isolation**
-- Physical: separate databases (highest isolation, highest cost)
+- Physical: separate databases (highest isolation, highest cost) — see [DynamoDB & Data Services](/dynamodb-data-services) for database options
 - Logical: shared database, separate schemas (Postgres), or row-level isolation with RLS
-- Encryption: unique KMS key per tenant; data is cryptographically isolated even if logical controls fail (expensive but used in financial services)
+- Encryption: unique [KMS key](/aws-iam-security) per tenant; data is cryptographically isolated even if logical controls fail (expensive but used in financial services)
 
 **Compute Isolation**
-- Fargate task per tenant request: ephemeral, isolated, no shared process space
-- Lambda: separate functions per tenant tier (if behavioral customization needed) or shared function with tenant context
+- [Fargate](/aws-compute-containers) task per tenant request: ephemeral, isolated, no shared process space
+- [Lambda](/aws-lambda-serverless): separate functions per tenant tier (if behavioral customization needed) or shared function with tenant context
 
 **Network Isolation**
-- VPC per tenant: used in silo model; peered or via Transit Gateway to shared services
-- Security groups as tenant boundaries in pool model: restrict by app-layer tag, not network
+- [VPC](/aws-api-gateway-networking) per tenant: used in silo model; peered or via [Transit Gateway](/aws-api-gateway-networking) to shared services
+- [Security groups](/aws-api-gateway-networking) as tenant boundaries in pool model: restrict by app-layer tag, not network
 
 **Blast Radius Containment**
 - If one tenant's misconfiguration or attack compromises security, contain it to that tenant's account/resources
@@ -895,3 +899,19 @@ A: Use Spot Instances for compute — nightly batch is fault-tolerant, schedule 
 - "We'll add monitoring later." — Observability is not optional; design it in from day one. You cannot debug what you cannot observe.
 - "FIFO SQS for everything." — FIFO queues have throughput limits and higher cost; only use where strict ordering or deduplication is required.
 - "We just use the highest RDS instance size." — Oversizing is waste; right-size with Performance Insights and Compute Optimizer, then commit with RIs/Savings Plans.
+
+---
+
+## AWS Deep-Dive Articles
+
+| Topic | Article |
+|---|---|
+| AWS overview & services map | [/aws](/aws) |
+| Lambda, serverless, Step Functions | [/aws-lambda-serverless](/aws-lambda-serverless) |
+| API Gateway, VPC, Route 53, ALB, CloudFront | [/aws-api-gateway-networking](/aws-api-gateway-networking) |
+| IAM, SCPs, GuardDuty, KMS, Security Hub | [/aws-iam-security](/aws-iam-security) |
+| EC2, ECS, EKS, Fargate, Spot, Graviton | [/aws-compute-containers](/aws-compute-containers) |
+| S3, CloudFront CDN, EBS, EFS, Glacier | [/aws-storage-s3](/aws-storage-s3) |
+| CI/CD, CodePipeline, CDK, IaC, AWS Backup | [/aws-cicd-devops](/aws-cicd-devops) |
+| DynamoDB, RDS, Aurora, ElastiCache, Redshift | [/dynamodb-data-services](/dynamodb-data-services) |
+| Bedrock, SageMaker, AI/ML services | [/aws-ai-ml-services](/aws-ai-ml-services) |
