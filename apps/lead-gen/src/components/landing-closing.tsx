@@ -37,6 +37,18 @@ export function LandingClosing() {
           })}
         >
           {/* restated value prop */}
+          <span
+            className={css({
+              fontSize: "2xs",
+              fontWeight: "bold",
+              color: "accent.primary",
+              textTransform: "uppercase",
+              letterSpacing: "editorial",
+              mb: "3",
+            })}
+          >
+            Agentic Lead Gen
+          </span>
           <h2
             className={css({
               fontSize: { base: "3xl", md: "4xl" },
@@ -59,7 +71,7 @@ export function LandingClosing() {
               letterSpacing: "snug",
             })}
           >
-            autonomous agents discover, enrich, score, and deliver 300+
+            Agentic Lead Gen agents discover, enrich, score, and deliver 300+
             qualified B2B leads per cycle. fully local. $1,500/year total cost.
           </p>
 
@@ -106,7 +118,7 @@ export function LandingClosing() {
                   letterSpacing: "wide",
                 })}
               >
-                not ready yet? get agentic pipeline updates
+                not ready yet? get Agentic Lead Gen updates
               </span>
             </div>
             <form
@@ -123,7 +135,7 @@ export function LandingClosing() {
                 type="email"
                 placeholder="your@email.com"
                 required
-                aria-label="email address for agentic pipeline updates"
+                aria-label="email address for Agentic Lead Gen updates"
                 className={css({
                   flex: 1,
                   height: "40px",

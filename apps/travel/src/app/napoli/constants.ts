@@ -13,3 +13,6 @@ export const DATE_RANGE_LABEL = {
   en: `${CHECK_IN_LABEL.en} – ${CHECK_OUT_LABEL.en} 2026`,
   ro: `${CHECK_IN_LABEL.ro} – ${CHECK_OUT_LABEL.ro} 2026`,
 } as const;
+
+/** ── Recommended tier ─────────────────────────────────────────────── */
+export const RECOMMENDED_TIER = 1;  // 0 = budget, 1 = mid-range, 2 = comfort

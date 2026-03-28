@@ -73,7 +73,7 @@ const PIPELINE_STAGES = [
     icon: <FileTextIcon width={20} height={20} />,
     title: "report generation",
     description:
-      "Ollama + SQLite/ChromaDB RAG generates reports with 97% factual accuracy in 10-30s",
+      "Agentic Lead Gen's local LLM agent (Ollama) + SQLite/ChromaDB RAG generates reports with 97% factual accuracy in 10-30s",
     badge: "report",
     step: "05",
     accentOpacity: 0.9,
@@ -82,7 +82,7 @@ const PIPELINE_STAGES = [
     icon: <CheckCircledIcon width={20} height={20} />,
     title: "evaluation",
     description:
-      "SHAP explanations + cascade error tracking monitor pipeline health (CER ~0.15)",
+      "SHAP explanations + cascade error tracking monitor pipeline health — keeping Agentic Lead Gen accurate at scale (CER ~0.15)",
     badge: "evaluate",
     step: "06",
     accentOpacity: 1,
@@ -115,7 +115,7 @@ export function LandingPipeline() {
               letterSpacing: "wide",
             })}
           >
-            pipeline modules
+            agentic lead gen — pipeline modules
           </span>
         </div>
 
@@ -129,7 +129,7 @@ export function LandingPipeline() {
             maxW: "560px",
           })}
         >
-          from raw web pages to scored B2B leads with generated reports. seven modules, zero cloud dependencies.
+          from raw web pages to qualified B2B leads — seven autonomous modules, zero cloud dependencies. this is the Agentic Lead Gen pipeline.
         </p>
 
         {/* --- desktop: horizontal flow (#1: stagger + glitch, #4: arrow pulse) --- */}

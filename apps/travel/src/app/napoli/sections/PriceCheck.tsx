@@ -27,7 +27,7 @@ const T = {
     sectionLabel: "Price Validation",
     sectionTitle: "Live Price Check",
     subtitle: `2 adults + 1 child · ${DATE_RANGE_LABEL.en} · All amounts in EUR`,
-    mlBadge: "ML Verified",
+    mlBadge: ML_BADGE.en,
     budgetedLabel: "Budgeted",
     actualLabel: "Actual",
     statusLabels: {
@@ -44,7 +44,7 @@ const T = {
     sectionLabel: "Validare Preturi",
     sectionTitle: "Verificare Preturi Live",
     subtitle: `2 adulti + 1 copil · ${DATE_RANGE_LABEL.ro} · Toate sumele in EUR`,
-    mlBadge: "Verificat ML",
+    mlBadge: ML_BADGE.ro,
     budgetedLabel: "Bugetat",
     actualLabel: "Real",
     statusLabels: {

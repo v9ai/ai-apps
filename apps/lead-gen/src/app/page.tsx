@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Box } from "@radix-ui/themes";
 import { css } from "styled-system/css";
 import { LandingNav } from "@/components/landing-nav";
@@ -24,6 +25,19 @@ import { LandingMetrics } from "@/components/landing-metrics";
  * - LandingNav: sticky header with scroll progress + section anchors
  * - LandingFooter: sitemap + manifesto + back-to-top
  */
+
+export const metadata: Metadata = {
+  title: "Agentic Lead Gen — Autonomous B2B Lead Generation Pipeline",
+  description:
+    "Autonomous AI agents discover, enrich, score, and deliver qualified B2B leads end-to-end. Open-source, local-first, $1,500/year vs $13,200 cloud. 35 cited papers.",
+  keywords: ["B2B lead generation", "autonomous AI agents", "local-first CRM", "agentic pipeline"],
+  openGraph: {
+    title: "Agentic Lead Gen — Autonomous B2B Lead Generation Pipeline",
+    description:
+      "Five specialized AI agents work 24/7 to discover companies, enrich profiles, find decision-maker contacts, and craft personalized outreach — without human intervention.",
+    type: "website",
+  },
+};
 
 const sectionDivider = css({
   width: "100%",

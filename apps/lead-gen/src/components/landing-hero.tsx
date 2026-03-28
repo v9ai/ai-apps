@@ -180,7 +180,7 @@ const STATUS_LINES = [
   "enrichment agent: 300 leads qualified",
   "contact agent: 47 emails verified",
   "outreach agent: 12 campaigns live",
-  "all agents: nominal",
+  "agentic lead gen: all systems nominal",
 ] as const;
 
 const STATS = [
@@ -201,6 +201,22 @@ export function LandingHero() {
       })}
     >
       <div className={container({ maxW: "breakpoint-lg" })}>
+        {/* --- brand lockup above trust badges --- */}
+        <div className={flex({ justify: "center", mb: "3" })}>
+          <span
+            className={css({
+              fontSize: "2xs",
+              color: "ui.dim",
+              letterSpacing: "widest",
+              textTransform: "uppercase",
+              fontWeight: "medium",
+              lineHeight: "none",
+            })}
+          >
+            Agentic Lead Gen
+          </span>
+        </div>
+
         {/* --- trust badge row --- */}
         <div
           className={flex({
@@ -318,7 +334,7 @@ export function LandingHero() {
             )}
             style={{ animationDelay: "0.32s" }}
           >
-            discover, enrich, and close B2B leads
+            discover, enrich, and close B2B leads — autonomously.
           </span>
         </h1>
 
@@ -368,7 +384,7 @@ export function LandingHero() {
                 animation: "landing-preview-pulse 2s ease-in-out infinite",
               }}
             />
-            agents active -- last run: today
+            agentic lead gen — agents active
           </span>
         </div>
 

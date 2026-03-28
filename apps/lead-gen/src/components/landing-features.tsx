@@ -114,9 +114,9 @@ const features: FeatureCardProps[] = [
     ],
   },
   {
-    title: "your data never leaves your machine",
+    title: "local-first — your data, your pipeline, your control",
     description:
-      "SQLite graph + LanceDB vectors + ChromaDB embeddings \u2014 all local. no API calls to score leads. $1,500/year total cost vs $5,400-13,200 for cloud alternatives.",
+      "SQLite graph + LanceDB vectors + ChromaDB embeddings \u2014 all local. no API calls to score leads — Agentic Lead Gen runs entirely on commodity hardware. $1,500/year total cost vs $5,400-13,200 for cloud alternatives.",
     details: [
       "~15 GB footprint for the entire pipeline with all indexes",
       "182ms per-lead end-to-end latency without LLM generation",
@@ -160,7 +160,7 @@ export function LandingFeatures() {
             weight="bold"
             style={{ color: "var(--gray-12)", letterSpacing: "-0.02em" }}
           >
-            why local-first B2B lead gen
+            why Agentic Lead Gen
           </Heading>
           <Text
             as="p"
@@ -169,7 +169,7 @@ export function LandingFeatures() {
             style={{ color: "var(--gray-9)", maxWidth: 560 }}
           >
             cloud CRMs are optimized for their margins, not your pipeline.
-            Lead-gen reverses that — it works on your hardware.
+            Agentic Lead Gen reverses that — autonomous agents on your hardware, working 24/7.
           </Text>
         </Box>
 
@@ -208,7 +208,7 @@ export function LandingFeatures() {
                 weight="bold"
                 style={{ color: "var(--gray-12)", letterSpacing: "-0.01em" }}
               >
-                ready to deploy your own pipeline?
+                ready to deploy Agentic Lead Gen?
               </Text>
               <Text
                 as="p"
@@ -216,7 +216,7 @@ export function LandingFeatures() {
                 mt="1"
                 style={{ color: "var(--gray-10)" }}
               >
-                300 qualified leads per crawl cycle. fully local. backed by 35 cited papers.
+                autonomous agents. 300 qualified leads per cycle. fully local. 35 cited papers.
               </Text>
             </Box>
             <div className={flex({ gap: "3", flexShrink: 0 })}>
@@ -316,7 +316,7 @@ export function LandingFeatures() {
             gap="3"
           >
             <Text size="2" style={{ color: "var(--gray-11)" }}>
-              fully open source — fork it, self-host it, extend it for your ICP
+              Agentic Lead Gen is fully open source — fork it, self-host it, extend the agents for your ICP
             </Text>
             <div className={flex({ gap: "3", flexShrink: 0 })}>
               <Link

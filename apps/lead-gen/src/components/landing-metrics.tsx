@@ -207,7 +207,7 @@ export function LandingMetrics() {
               letterSpacing: "wide",
             })}
           >
-            pipeline benchmarks
+            agentic lead gen — benchmarks
           </span>
         </div>
 
@@ -221,8 +221,8 @@ export function LandingMetrics() {
             maxW: "560px",
           })}
         >
-          every number measured, every claim paper-backed. see BENCHMARKS.md for
-          methodology.
+          every Agentic Lead Gen metric is measured from real pipeline runs,
+          backed by 35 cited papers. see BENCHMARKS.md for methodology.
         </p>
 
         {/* --- metric grid --- */}
@@ -242,6 +242,19 @@ export function LandingMetrics() {
             />
           ))}
         </dl>
+
+        <div
+          className={css({
+            fontSize: "2xs",
+            color: "ui.dim",
+            mt: "3",
+            textAlign: "center",
+            letterSpacing: "wide",
+            textTransform: "lowercase",
+          })}
+        >
+          all benchmarks from local agentic lead gen runs — no cherry-picked cloud numbers.
+        </div>
       </div>
     </section>
   );

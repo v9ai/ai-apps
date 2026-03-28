@@ -15,9 +15,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Agentic Lead Gen — AI-Powered B2B Lead Generation",
+  title: "Agentic Lead Gen — Autonomous B2B Lead Generation Pipeline",
   description:
-    "Autonomous AI agents for B2B prospecting, company enrichment, contact discovery, and personalized outreach at scale.",
+    "Autonomous AI agents discover, enrich, score, and deliver qualified B2B leads end-to-end. Open-source, local-first, $1,500/year vs $13,200 cloud. 35 cited papers.",
 };
 
 export default function RootLayout({
