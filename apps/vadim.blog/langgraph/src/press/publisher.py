@@ -114,7 +114,9 @@ tags:
     # 8. Write to vadim.blog
     blog_dir = blog_root() / year / dir_name
     blog_dir.mkdir(parents=True, exist_ok=True)
-    post_path = blog_dir / "index.md"
+    # Use .mdx when content contains JSX components (e.g. <Flow .../>)
+    ext = ".mdx" if "<Flow" in content or "export const " in content else ".md"
+    post_path = blog_dir / f"index{ext}"
     post_path.write_text(content)
 
     # 9. Git commit + push

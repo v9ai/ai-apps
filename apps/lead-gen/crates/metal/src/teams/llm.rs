@@ -184,3 +184,67 @@ pub struct EmailDraft {
     #[serde(default)]
     pub personalization_score: f64,
 }
+
+/// Extract structured data from an HTML profile using a schema-constrained model
+/// (sgai-qwen3-1.7b or similar). The model receives a markdown rendering of the
+/// HTML profile plus a JSON schema, and returns schema-compliant JSON.
+#[cfg(feature = "kernel-extract")]
+pub async fn extract_structured(
+    client: &reqwest::Client,
+    base_url: &str,
+    api_key: Option<&str>,
+    model: &str,
+    profile: &crate::kernel::html_extractor::HtmlProfile,
+    schema: &serde_json::Value,
+) -> Result<serde_json::Value> {
+    let context = crate::kernel::html_extractor::profile_to_markdown(profile);
+    let schema_str = serde_json::to_string(schema).unwrap_or_default();
+
+    let system = "You are a structured data extraction model. \
+        Extract information from the provided web page content and return ONLY valid JSON \
+        matching the given schema. No markdown fences, no explanations.";
+
+    let user = format!(
+        "Extract structured data from this web page.\n\n\
+         {context}\n\n\
+         ---\n\n\
+         Return JSON matching this schema:\n```json\n{schema_str}\n```"
+    );
+
+    let raw = chat(client, base_url, api_key, model, system, &user, Some(0.1)).await?;
+
+    // Strip markdown fences if present
+    let json_str = raw
+        .trim()
+        .strip_prefix("```json")
+        .or_else(|| raw.trim().strip_prefix("```"))
+        .unwrap_or(raw.trim())
+        .strip_suffix("```")
+        .unwrap_or(raw.trim())
+        .trim();
+
+    let val: serde_json::Value = serde_json::from_str(json_str)
+        .map_err(|e| anyhow::anyhow!("Structured extraction parse error: {e}\nRaw: {raw}"))?;
+
+    Ok(val)
+}
+
+/// Static JSON schema for company profile extraction.
+#[cfg(feature = "kernel-extract")]
+pub fn company_profile_schema() -> serde_json::Value {
+    serde_json::json!({
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "category": {"type": "string", "enum": ["CONSULTANCY", "AGENCY", "STAFFING", "PRODUCT"]},
+            "ai_tier": {"type": "string", "enum": ["ai_first", "ai_native", "other"]},
+            "industry": {"type": "string"},
+            "tech_stack": {"type": "array", "items": {"type": "string"}},
+            "employee_count_estimate": {"type": "integer"},
+            "remote_policy": {"type": "string", "enum": ["full_remote", "hybrid", "onsite", "unknown"]},
+            "services": {"type": "array", "items": {"type": "string"}},
+            "hiring_signals": {"type": "boolean"}
+        },
+        "required": ["name", "category", "ai_tier"]
+    })
+}

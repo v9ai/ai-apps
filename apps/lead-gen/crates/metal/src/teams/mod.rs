@@ -59,6 +59,10 @@ pub struct TeamContext {
     pub llm_api_key: Option<String>,
     pub llm_base_url: String,
     pub llm_model: String,
+    /// Extraction model endpoint (sgai-qwen3-1.7b on port 8081).
+    pub extract_base_url: String,
+    /// Extraction model name.
+    pub extract_model: String,
     pub icp_vertical: String,
     pub batch: BatchSizes,
     pub auto_confirm: bool,
@@ -92,6 +96,11 @@ impl TeamContext {
         let llm_model = std::env::var("LLM_MODEL")
             .unwrap_or_else(|_| "mlx-community/Qwen2.5-3B-Instruct-4bit".into());
 
+        let extract_base_url = std::env::var("EXTRACT_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:8081/v1".into());
+        let extract_model = std::env::var("EXTRACT_MODEL")
+            .unwrap_or_else(|_| "scrapegraphai/sgai-qwen3-1.7b-gguf".into());
+
         let icp_vertical = std::env::var("ICP_VERTICAL")
             .unwrap_or_else(|_| "consultancy".into());
 
@@ -111,6 +120,8 @@ impl TeamContext {
             llm_api_key,
             llm_base_url,
             llm_model,
+            extract_base_url,
+            extract_model,
             icp_vertical,
             batch: BatchSizes::default(),
             auto_confirm: false,

@@ -811,6 +811,39 @@ You will receive input in this format:
 ## SEO Strategy
 [Keyword and structure guidance]
 
+MDX COMPONENT — Interactive Flow diagram (xyflow / @xyflow/react):
+The blog supports a `<Flow>` component for node-based diagrams.
+Use it AT MOST ONCE per article, in the section that benefits most from
+a visual data-flow or comparison layout (e.g. pipeline stages, model routing,
+decision trees). Do NOT use it if no genuinely visual structure exists.
+
+How to include it:
+1. Define nodes and edges as `export const` declarations (valid JS/JSX):
+
+```
+export const nodes = [
+  {{ id: '1', position: {{ x: 0, y: 0 }}, data: {{ label: 'Raw HTML' }} }},
+  {{ id: '2', position: {{ x: 220, y: 0 }}, data: {{ label: 'Extraction' }} }},
+  {{ id: '3', position: {{ x: 440, y: 0 }}, data: {{ label: 'Dataset' }} }},
+];
+export const edges = [
+  {{ id: 'e1-2', source: '1', target: '2', animated: true }},
+  {{ id: 'e2-3', source: '2', target: '3', animated: true }},
+];
+```
+
+2. Render immediately after the const declarations:
+
+```
+<Flow nodes={{nodes}} edges={{edges}} height={{380}} />
+```
+
+Node layout rules:
+- x: space nodes 200–250px apart horizontally; y: 0 for main flow, ±80 for branches
+- Use short, precise labels (≤ 4 words)
+- Animate edges that show data or control flow
+- height: 300–500 (match number of rows × ~100px)
+
 Rules:
 - Write the full post — do not summarise or outline
 - Use concrete examples, code snippets, and data points from the source
