@@ -122,15 +122,6 @@ type CompanySnapshot {
   created_at: String!
 }
 
-# Enrichment produced by the ashby-crawler worker (SlugExtractor + ResultPipeline)
-type AshbyEnrichment {
-  company_name: String
-  industry_tags: [String!]!
-  tech_signals: [String!]!
-  size_signal: String
-  enriched_at: String
-}
-
 # Company (Golden Record)
 type Company {
   id: Int!
@@ -169,9 +160,6 @@ type Company {
 
   # Deep company analysis (Markdown narrative)
   deep_analysis: String
-
-  # Ashby crawler enrichment (matched by company key = ashby board slug)
-  ashby_enrichment: AshbyEnrichment
 
   # Related data
   facts(limit: Int, offset: Int, field: String): [CompanyFact!]!

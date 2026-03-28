@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { createVanillaExtractPlugin } from "@vanilla-extract/next-plugin";
+import path from "path";
 
 const withVanillaExtract = createVanillaExtractPlugin();
 
@@ -7,6 +8,10 @@ const nextConfig: NextConfig = {
   // TODO: 120 TS errors across 35 files — triage and fix to remove this
   typescript: {
     ignoreBuildErrors: true,
+  },
+  outputFileTracingRoot: path.join(__dirname, "../.."),
+  outputFileTracingIncludes: {
+    "/api/emails/send": ["../../packages/resume/CV_Vadim_Nicolai.pdf"],
   },
   async rewrites() {
     return [

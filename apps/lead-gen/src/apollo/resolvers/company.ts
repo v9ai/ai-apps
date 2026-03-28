@@ -29,16 +29,6 @@ function safeJsonParse<T>(value: string | null | undefined, defaultValue: T): T 
 
 export const companyResolvers = {
   Company: {
-    ashby_enrichment(parent: any) {
-      if (!parent.ashby_enriched_at) return null;
-      return {
-        company_name: parent.name ?? null,
-        industry_tags: safeJsonParse(parent.ashby_industry_tags, []),
-        tech_signals: safeJsonParse(parent.ashby_tech_signals, []),
-        size_signal: parent.ashby_size_signal ?? null,
-        enriched_at: parent.ashby_enriched_at,
-      };
-    },
     ai_tier(parent: any) {
       return parent.ai_tier ?? 0;
     },

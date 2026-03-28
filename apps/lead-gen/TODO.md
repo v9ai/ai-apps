@@ -1,6 +1,6 @@
-# TODO: European AI Consultancy Lead Generation
+# TODO: AI Consultancy Lead Generation
 
-Target: Find leads (key contacts + emails) at all AI consultancies across Europe.
+Target: Find leads (key contacts + emails) at AI consultancies worldwide.
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ make leads-clean                      # remove generated data
 
 - [ ] `make leads-top` — review top 50 for relevance
 - [ ] Check email verification rate (target >30%)
-- [ ] Verify European country coverage (UK, DE, FR, NL, Nordics, CH, ES, IT, PL, IE)
+- [ ] Verify global coverage (US, UK, DE, FR, NL, Nordics, CA, AU, SG, etc.)
 - [ ] `make leads-report DOMAIN=<top-domain>` for top prospects
 - [ ] `make db-studio` — browse imported data
 
@@ -39,7 +39,7 @@ make leads-clean                      # remove generated data
 
 | File | Change |
 |------|--------|
-| `consultancies/discover.py` | Europe-only regions, 65 EU seed companies, EU Clutch/GoodFirms URLs |
+| `consultancies/discover.py` | Global regions, seed companies, Clutch/GoodFirms URLs |
 | `consultancies/extract_domains.py` | New: LanceDB → domains.txt extraction |
 | `scripts/import-rust-leads.ts` | New: Rust CSV → Neon PostgreSQL import |
 | `Makefile` | New `leads*` targets for full pipeline orchestration |

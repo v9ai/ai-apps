@@ -86,12 +86,4 @@ fragment CompanyFields on Company {
   last_seen_capture_timestamp
   last_seen_source_url
 
-  # Ashby crawler enrichment
-  ashby_enrichment {
-    company_name
-    industry_tags
-    tech_signals
-    size_signal
-    enriched_at
-  }
 }

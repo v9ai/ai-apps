@@ -1,12 +1,12 @@
-# Curated Agent Skills for lead-gen — Remote Work in EU Focus
+# Curated Agent Skills for lead-gen — Remote Work Global Focus
 
-This document curates relevant skills and subagents from [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) and [awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents), tailored to the lead-gen project with emphasis on **remote EU job board aggregation and matching**.
+This document curates relevant skills and subagents from [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) and [awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents), tailored to the lead-gen project with emphasis on **remote-global job board aggregation and matching**.
 
 ---
 
 ## 1. Core Frontend & UI/UX
 
-**Purpose:** Build responsive, performant job board interfaces with excellent UX for remote workers across EU markets.
+**Purpose:** Build responsive, performant job board interfaces with excellent UX for remote workers globally.
 
 ### Official Anthropic Skills
 - **Frontend Design and UI/UX Development** — Design-to-code workflows for job listings, filters, and application tracking
@@ -17,13 +17,13 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 - **nextjs-developer** (voltagent-core-dev) — Framework expertise for App Router, API routes, middleware
 - **frontend-developer** (voltagent-core-dev) — React 19 component architecture, state management
 - **react-specialist** (voltagent-lang) — Advanced patterns for job filtering, search bars, infinite scroll
-- **ui-designer** (voltagent-core-dev) — Design system consistency for multi-language job board (EU localization)
+- **ui-designer** (voltagent-core-dev) — Design system consistency for multi-language job board (i18n)
 
 ---
 
 ## 2. Backend, GraphQL & Data Architecture
 
-**Purpose:** Design scalable GraphQL API with D1 database for job aggregation, filtering, and resume matching across EU platforms.
+**Purpose:** Design scalable GraphQL API with D1 database for job aggregation, filtering, and resume matching across global platforms.
 
 ### Official Anthropic Skills
 - **MCP Server Creation** — Build Model Context Protocol servers for ATS integrations (Greenhouse, Lever, Ashby)
@@ -40,7 +40,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 
 ## 3. AI/LLM & Job Classification Pipeline
 
-**Purpose:** Develop ML pipeline for accurate remote EU job classification, skill extraction, and resume matching.
+**Purpose:** Develop ML pipeline for accurate remote-global job classification, skill extraction, and resume matching.
 
 ### Official Anthropic Skills
 - **Prompt Engineering** — Optimize prompts for job classification, bias detection, skill extraction accuracy
@@ -50,7 +50,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 - **llm-architect** (voltagent-data-ai) — Design multi-LLM pipelines (Claude, DeepSeek, Google) for job classification
 - **prompt-engineer** (voltagent-data-ai) — Refine classification and extraction prompts; manage prompt versions
 - **nlp-engineer** (voltagent-data-ai) — Skill extraction, entity recognition for remote work indicators (flexible hours, timezone-agnostic, etc.)
-- **machine-learning-engineer** (voltagent-data-ai) — Train classifiers for EU remote job signals; handle regional variations
+- **machine-learning-engineer** (voltagent-data-ai) — Train classifiers for remote job signals globally; handle regional variations
 - **ai-engineer** (voltagent-data-ai) — End-to-end ML pipeline management, model evaluation
 
 ---
@@ -62,7 +62,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 ### Claude Code Subagents
 - **data-engineer** (voltagent-data-ai) — Build ATS fetcher pipelines (Greenhouse, Lever, Ashby), ETL workflows
 - **data-analyst** (voltagent-data-ai) — Job board coverage analysis, skill taxonomy validation, remote work trend reporting
-- **data-scientist** (voltagent-data-ai) — Statistical analysis of job classifications, bias audit (fairness across EU regions)
+- **data-scientist** (voltagent-data-ai) — Statistical analysis of job classifications, bias audit (fairness across regions)
 
 ---
 
@@ -93,48 +93,47 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 - **qa-expert** (voltagent-qa-sec) — Test remote work classification accuracy across job descriptions
 - **test-automator** (voltagent-qa-sec) — Automated eval suites, regression tests for classifiers
 - **performance-engineer** (voltagent-qa-sec) — Profile job listing queries, skill extraction latency, resume RAG search speed
-- **accessibility-tester** (voltagent-qa-sec) — WCAG compliance for job board (essential for EU accessibility regulations)
+- **accessibility-tester** (voltagent-qa-sec) — WCAG compliance for job board
 
 ---
 
 ## 7. Business & Product
 
-**Purpose:** Align product with remote worker needs across EU markets; manage features and strategy.
+**Purpose:** Align product with remote worker needs globally; manage features and strategy.
 
 ### Claude Code Subagents
 - **product-manager** (voltagent-biz) — Feature prioritization, user feedback integration, remote work market research
-- **seo-specialist** (voltagent-domains) — Job board SEO, geo-targeted keywords for EU remote job search
-- **content-marketer** (voltagent-biz) — Blog posts, guides for remote EU job seekers, skill trend reports
-- **business-analyst** (voltagent-biz) — Market analysis, competitor monitoring (other EU job boards), revenue modeling
+- **seo-specialist** (voltagent-domains) — Job board SEO, geo-targeted keywords for global remote job search
+- **content-marketer** (voltagent-biz) — Blog posts, guides for remote job seekers worldwide, skill trend reports
+- **business-analyst** (voltagent-biz) — Market analysis, competitor monitoring (other global job boards), revenue modeling
 - **technical-writer** (voltagent-biz) — Documentation for job ingestion, resume upload, API endpoints
 
 ---
 
 ## 8. Security & Compliance
 
-**Purpose:** Secure user data (resumes, preferences), ensure GDPR compliance for EU operations.
+**Purpose:** Secure user data (resumes, preferences), ensure compliance and data privacy.
 
 ### Claude Code Subagents
 - **security-engineer** (voltagent-infra) — Audit GraphQL queries for injection, Better Auth session hardening, API key rotation
 - **security-auditor** (voltagent-qa-sec) — GDPR data retention audits, PII detection in job descriptions and resumes
-- **compliance-auditor** (voltagent-qa-sec) — EU employment law compliance (working hours in job postings, anti-discrimination)
+- **compliance-auditor** (voltagent-qa-sec) — Employment law compliance (working hours in job postings, anti-discrimination)
 
 ---
 
-## 9. Remote Work & EU-Specific Focus
+## 9. Remote Work Global Focus
 
 ### Key Indicators for Classification:
-- **Remote work signals:** "fully remote," "work from anywhere," "hybrid," "flexible location," "async-friendly"
-- **EU timezone compliance:** Offices or hours supporting CET/UTC±1 timezones
-- **Work-life balance:** References to max working hours (EU Directive 2003/88), flexible schedules
-- **Language diversity:** Multi-language job postings (indicator of EU-wide hiring)
-- **Visa/sponsorship:** EU visa sponsorship, relocation support (common in EU remote roles)
-- **Data residency:** Job data stored within EU (GDPR-friendly)
+- **Remote work signals:** "fully remote," "work from anywhere," "distributed team," "async-friendly," "remote-first"
+- **Global hiring signals:** "hiring worldwide," "open to applicants from any country," no location restriction in JD
+- **Async culture:** Documented async practices, overlap hours requirements (< 4 h overlap preferred)
+- **Timezone flexibility:** Multiple timezones on employee profiles, overlapping-hours policies
+- **Visa/work authorization:** "We sponsor visas worldwide" or "contractors welcome globally"
 
-### Regional Variations:
-- **Eastern EU:** Often more remote-friendly (lower cost of living, timezone flexibility)
-- **Western EU:** Hybrid patterns more common (London, Berlin, Amsterdam tech hubs)
-- **Southern EU:** Growing remote adoption (Portugal, Spain remote visa programs)
+### Regional Considerations:
+- **Americas:** US-remote roles often restrict to US residents — check explicitly
+- **Asia-Pacific:** Growing async-remote culture; check for APAC timezone requirements
+- **Global:** "Work from anywhere" roles with no overlap requirement are ideal
 
 ---
 
@@ -146,7 +145,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 - [ ] **database-administrator**: Optimize PostgreSQL schema for job queries
 
 ### Phase 2: AI Pipeline
-- [ ] **prompt-engineer**: Refine job classification prompts for "remote EU" signal detection
+- [ ] **prompt-engineer**: Refine job classification prompts for "remote global" signal detection
 - [ ] **nlm-architect**: Set up multi-LLM routing (Claude for classification, DeepSeek for cost, etc.)
 - [ ] **data-engineer**: Ingest jobs from ATS platforms
 
@@ -162,7 +161,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 
 ### Phase 5: Product & Growth
 - [ ] **product-manager**: Remote work feature prioritization, user surveys
-- [ ] **seo-specialist**: Optimize job board for "remote jobs in [EU city]" search
+- [ ] **seo-specialist**: Optimize job board for "remote jobs worldwide" search
 - [ ] **content-marketer**: Publish remote work trend reports, salary benchmarks
 
 ---

@@ -7,7 +7,6 @@ import { sourceFilterDesktop, sourceFilterMobile } from "./source-filter.css";
 
 const SOURCE_OPTIONS = [
   { value: "greenhouse", label: "Greenhouse", color: "blue" },
-  { value: "ashby", label: "Ashby", color: "violet" },
   { value: "lever", label: "Lever", color: "cyan" },
   { value: "remotive", label: "Remotive", color: "orange" },
   { value: "arbeitnow", label: "Arbeitnow", color: "grass" },
