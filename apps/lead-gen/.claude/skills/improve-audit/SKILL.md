@@ -47,7 +47,7 @@ Search the web for companies known to hire AI engineers remotely worldwide:
 
 For each company found:
 1. Check if they're already in `job_sources` or `ashby_boards`
-2. Identify their ATS platform (Ashby, Workable, etc.)
+2. Identify their ATS platform (Ashby, etc.)
 3. Find their board token/URL
 
 **Ashby boards**: `https://jobs.ashbyhq.com/{company}`
@@ -59,7 +59,7 @@ For each new source found:
 ```json
 {
   "company": "Company Name",
-  "ats_platform": "ashby|workable",
+  "ats_platform": "ashby",
   "board_url": "URL",
   "board_token": "token/name for API",
   "evidence": "Why this company hires AI engineers in EU",
@@ -71,17 +71,11 @@ For each new source found:
 ### 5. Implement Additions (if delegated)
 
 If the orchestrator delegates implementation:
-- For Greenhouse/Ashby: Add to `job_sources` via GraphQL mutation or direct SQL
+- For Ashby: Add to `job_sources` via GraphQL mutation or direct SQL
 - For unsupported ATS: Document as a feature request
 - Verify the board URL is accessible and returns jobs
 
-### 6. Lever Support Assessment
-
-Read `src/ingestion/` to check Lever support status. If incomplete:
-- Document what's missing
-- Propose implementation (many AI companies use Lever)
-
-### 7. Discover via Company Enrichment
+### 6. Discover via Company Enrichment
 
 Cross-reference with the `companies` table:
 - Companies with `category = 'PRODUCT'` and AI-related `tags`/`services`
@@ -113,7 +107,6 @@ Write to `~/.claude/state/discovery-report.json`:
     ],
     "new_sources_to_add": [ ... ],
     "platform_gaps": {
-      "workable_status": "supported|partial|missing",
       "other_platforms": ["list of ATS platforms seen but not supported"]
     },
     "recommendations": [

@@ -214,12 +214,7 @@ export function normalizeJobInput(job: any): any {
   }
 
   // Determine source kind from URL or sourceType
-  let sourceKind = "other";
-  if (job.url?.includes("workable.com")) {
-    sourceKind = "workable";
-  } else if (job.sourceType) {
-    sourceKind = job.sourceType;
-  }
+  const sourceKind = job.sourceType || "other";
 
   // Extract external ID from URL
   let externalId = job.guid || job.id || job.url;

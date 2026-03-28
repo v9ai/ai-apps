@@ -28,7 +28,6 @@ Find the company's job boards:
 
 **Check standard ATS platforms:**
 - Ashby: `https://jobs.ashbyhq.com/{company}`
-- Workable: `https://apply.workable.com/{company}`
 - SmartRecruiters: `https://jobs.smartrecruiters.com/{company}`
 - Company careers page: `{domain}/careers`, `{domain}/jobs`
 
@@ -122,7 +121,7 @@ Write findings as a structured JSON block in your task completion message:
   "company": "...",
   "job_boards": [
     {
-      "platform": "ashby|workable|other",
+      "platform": "ashby|other",
       "url": "...",
       "total_open_roles": 0,
       "engineering_roles": 0,
