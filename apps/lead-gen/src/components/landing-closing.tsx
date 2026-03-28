@@ -147,24 +147,7 @@ export function LandingClosing() {
               />
               <button
                 type="submit"
-                className={css({
-                  height: "40px",
-                  px: "5",
-                  bg: "accent.primary",
-                  color: "accent.contrast",
-                  border: "1px solid transparent",
-                  fontWeight: "bold",
-                  fontSize: "sm",
-                  cursor: "pointer",
-                  textTransform: "lowercase",
-                  letterSpacing: "normal",
-                  whiteSpace: "nowrap",
-                  borderRadius: "0",
-                  transition: "background 150ms ease",
-                  _hover: {
-                    bg: "accent.hover",
-                  },
-                })}
+                className={button({ variant: "solid", size: "md" })}
               >
                 subscribe
               </button>

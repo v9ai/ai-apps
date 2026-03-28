@@ -321,28 +321,7 @@ export function LandingFeatures() {
             <div className={flex({ gap: "3", flexShrink: 0 })}>
               <Link
                 href="/deploy"
-                className={css({
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  borderRadius: "0",
-                  padding: "6px 16px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  color: "#30A46C",
-                  background: "rgba(48, 164, 108, 0.08)",
-                  border: "1px solid rgba(48, 164, 108, 0.25)",
-                  textDecoration: "none",
-                  textTransform: "lowercase",
-                  letterSpacing: "0.01em",
-                  lineHeight: 1,
-                  cursor: "pointer",
-                  transition: "background 150ms ease, border-color 150ms ease",
-                  _hover: {
-                    background: "rgba(48, 164, 108, 0.15)",
-                    borderColor: "rgba(48, 164, 108, 0.4)",
-                  },
-                })}
+                className={button({ variant: "solidGreen", size: "sm" })}
               >
                 deploy locally
               </Link>
