@@ -93,14 +93,14 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Workload Architecture**
 - Loose coupling: replace synchronous calls with async queues (SQS) or events (EventBridge) where latency allows
-- Stateless services: store session state in ElastiCache (Redis) or DynamoDB, not on instance; enables any-instance routing
+- Stateless services: store session state in [ElastiCache (Redis)](/dynamodb-data-services) or [DynamoDB](/dynamodb-data-services), not on instance; enables any-instance routing
 - Idempotency: design all operations to be safely retried; use idempotency tokens (SQS message deduplication, DynamoDB conditional writes)
 - Graceful degradation: circuit breakers, bulkheads, fallback responses when dependencies fail
 
 **Change Management**
-- Auto Scaling Groups: dynamic scaling (target tracking, step, scheduled); ASG + ALB provides self-healing
-- ECS/EKS rolling updates with health checks and deployment circuit breaker
-- RDS: Multi-AZ synchronous standby; failover < 60 seconds; avoid single-AZ in production
+- [Auto Scaling Groups](/aws-compute-containers): dynamic scaling (target tracking, step, scheduled); ASG + ALB provides self-healing
+- [ECS](/aws-compute-containers)/[EKS](/aws-compute-containers) rolling updates with health checks and deployment circuit breaker
+- [RDS](/dynamodb-data-services): Multi-AZ synchronous standby; failover < 60 seconds; avoid single-AZ in production
 
 **Failure Management**
 - Backup strategy: AWS Backup for centralized, policy-driven backup across RDS, EBS, DynamoDB, EFS, FSx

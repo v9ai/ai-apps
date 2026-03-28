@@ -745,6 +745,7 @@ DynamoDB / S3 / RDS Proxy
         ↓
    Secrets Manager (rotation enabled, RDS Proxy caches)
 ```
+Each layer has IAM implications: [API Gateway](/aws-api-gateway-networking) authorizers validate identity, [Lambda](/aws-lambda-serverless) execution roles scope resource access, [S3](/aws-storage-s3) bucket policies enforce per-resource grants, and [DynamoDB](/dynamodb-data-services) supports fine-grained attribute-level access via IAM condition keys. Deploy and manage the full stack via [CDK / IaC](/aws-cicd-devops).
 
 ### Secrets Management Pattern
 ```
@@ -774,6 +775,7 @@ Security Account (delegated admin):
   Receives all GuardDuty + Security Hub findings
   Remediation Lambda auto-isolates resources on CRITICAL findings
 ```
+See [CI/CD & CodePipeline](/aws-cicd-devops) for CodePipeline setup and CDK deployment patterns.
 
 ---
 

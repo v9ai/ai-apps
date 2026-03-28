@@ -75,9 +75,9 @@ Bedrock Knowledge Bases is a fully managed [RAG](/advanced-rag) service. You poi
 **Supported [vector stores](/vector-databases)**: Amazon OpenSearch Serverless (default), Amazon Aurora PostgreSQL (pgvector), Amazon RDS PostgreSQL (pgvector), Pinecone, Redis Enterprise Cloud, MongoDB Atlas.
 
 **Key parameters**:
-- **Chunking strategy**: Fixed-size (tokens), semantic (sentence-boundary aware), hierarchical (parent-child), no chunking (full documents)
+- **[Chunking strategy](/chunking-strategies)**: Fixed-size (tokens), semantic (sentence-boundary aware), hierarchical (parent-child), no chunking (full documents)
 - **Overlap**: Prevents context loss at chunk boundaries
-- **Embedding model**: Titan Embeddings V2 (1,536-dim) or Cohere Embed
+- **[Embedding model](/embeddings)**: Titan Embeddings V2 (1,536-dim) or Cohere Embed
 - **Number of results (K)**: Top-K chunks retrieved before generation
 
 ```python
@@ -113,11 +113,11 @@ retrieve_response = bedrock_agent.retrieve(
 )
 ```
 
-**Metadata filtering**: Attach metadata to source documents (e.g., `department`, `document_type`, `version`). Filter at retrieval time to scope results without increasing K.
+**Metadata filtering**: Attach metadata to source documents (e.g., `department`, `document_type`, `version`). Filter at retrieval time to scope results without increasing K. See [retrieval strategies](/retrieval-strategies) for broader retrieval design patterns.
 
 ### Bedrock Agents
 
-Agents extend Bedrock FMs with tool use (function calling) and multi-step reasoning. You define **Action Groups** (OpenAPI schemas describing callable APIs or Lambda functions) and optionally attach a Knowledge Base. The agent autonomously decides which tools to call, in what order, to complete a user task.
+Agents extend Bedrock FMs with tool use ([function calling](/function-calling)) and multi-step reasoning. You define **Action Groups** (OpenAPI schemas describing callable APIs or [Lambda](/aws-lambda-serverless) functions) and optionally attach a Knowledge Base. The agent autonomously decides which tools to call, in what order, to complete a user task. For a deeper look at agent design patterns, see [agent architectures](/agent-architectures).
 
 **Components**:
 - **Agent**: The FM + instruction prompt + action groups + KB

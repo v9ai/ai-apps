@@ -734,8 +734,8 @@ Managed batch computing service. Provisions and manages EC2/Fargate compute base
 | Video transcoding | Spot for cost, output in S3 |
 | Nightly report generation | Scheduled, pay only when running |
 
-**Batch vs ECS vs Lambda**:
-- Lambda: max 15 min, 10 GB memory — use for event-driven quick processing
+**Batch vs ECS vs [Lambda](/aws-lambda-serverless)**:
+- [Lambda](/aws-lambda-serverless): max 15 min, 10 GB memory — use for event-driven quick processing
 - ECS Service: long-running services; Batch: one-off jobs with queue semantics
 - Batch: has job queue, job dependency graph, array jobs, managed retries — ECS lacks these
 - Batch on Fargate: when you want no EC2 management AND need >15 minutes
@@ -833,7 +833,7 @@ Common in EKS: OpenTelemetry Collector as adapter, consuming app-specific teleme
 
 **Q: What's the difference between an ECS task role and an ECS execution role?**
 
-**A:** The **execution role** is used by the ECS agent (not your code) to pull images from ECR, read secrets from SSM/Secrets Manager, and write logs to CloudWatch. It's operational infrastructure — your application never uses it. The **task role** is used by your application code running inside the container to call AWS services (e.g., S3, DynamoDB, SQS). Credentials are delivered via the IMDS endpoint inside the task (`169.254.170.2` — an ECS-internal metadata endpoint). Always apply least privilege: the task role should only have permissions your application actually needs.
+**A:** The **execution role** is used by the ECS agent (not your code) to pull images from ECR, read secrets from SSM/Secrets Manager, and write logs to CloudWatch. It's operational infrastructure — your application never uses it. The **task role** is used by your application code running inside the container to call AWS services (e.g., S3, [DynamoDB](/dynamodb-data-services), SQS). Credentials are delivered via the IMDS endpoint inside the task (`169.254.170.2` — an ECS-internal metadata endpoint). Always apply least privilege: the task role should only have permissions your application actually needs. See [IAM & Security](/aws-iam-security) for role and policy design.
 
 ---
 
@@ -857,7 +857,7 @@ Common in EKS: OpenTelemetry Collector as adapter, consuming app-specific teleme
 
 **Q: You need to run 1,000 batch jobs, each processing a 100MB file from S3, completing in 2 minutes. Design the system.**
 
-**A:** This is a textbook AWS Batch array job: 1) Upload 1,000 files to S3. 2) Create a Batch job definition pointing to a container that reads `AWS_BATCH_JOB_ARRAY_INDEX` env var and maps it to a file (stored in DynamoDB or parameter store). 3) Submit one array job with `arraySize: 1000`. 4) Compute environment: managed, Fargate Spot (2 minutes per job, low risk of spot interruption; or EC2 Spot). 5) Set job retry attempts to 3 (for spot interruptions). 6) Batch manages concurrency based on `maxvCpus` — with 1000 jobs × 0.5 vCPU each = 500 vCPUs max (adjust as needed). 7) CloudWatch metrics + EventBridge to alert on job failures. Total cost estimate: 1000 jobs × 2 min × 0.5 vCPU × Fargate Spot pricing ≈ $5–10.
+**A:** This is a textbook AWS Batch array job: 1) Upload 1,000 files to S3. 2) Create a Batch job definition pointing to a container that reads `AWS_BATCH_JOB_ARRAY_INDEX` env var and maps it to a file (stored in [DynamoDB](/dynamodb-data-services) or parameter store). 3) Submit one array job with `arraySize: 1000`. 4) Compute environment: managed, Fargate Spot (2 minutes per job, low risk of spot interruption; or EC2 Spot). 5) Set job retry attempts to 3 (for spot interruptions). 6) Batch manages concurrency based on `maxvCpus` — with 1000 jobs × 0.5 vCPU each = 500 vCPUs max (adjust as needed). 7) CloudWatch metrics + EventBridge to alert on job failures. Total cost estimate: 1000 jobs × 2 min × 0.5 vCPU × Fargate Spot pricing ≈ $5–10.
 
 ---
 
