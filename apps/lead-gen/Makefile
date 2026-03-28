@@ -171,7 +171,32 @@ EVAL_LABELS  := $(METAL_DIR)/data/eval_labels.jsonl
 EVAL_REPORTS := $(METAL_DIR)/data/reports
 MODELS_DIR   := $(METAL_DIR)/data/models
 
-.PHONY: ml-eval ml-eval-scoring ml-optimize ml-datagen ml-report
+.PHONY: ml-loop ml-eval ml-eval-scoring ml-optimize ml-datagen ml-report
+
+ml-loop: start-build ## Full ML loop: datagen → eval → optimize → eval → report
+	@echo "═══ ML Loop: datagen → eval → optimize → eval → report ═══"
+	@echo ""
+	@echo "── 1/5 Generating training data ──"
+	@mkdir -p $(dir $(EVAL_LABELS)) $(EVAL_REPORTS) $(MODELS_DIR)
+	$(METAL_BIN) ml-datagen --output $(EVAL_LABELS)
+	@echo "Generated $$(wc -l < $(EVAL_LABELS)) labeled samples"
+	@echo ""
+	@echo "── 2/5 Baseline eval ──"
+	$(METAL_BIN) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
+	@echo ""
+	@echo "── 3/5 Optimizing weights ──"
+	$(METAL_BIN) ml-optimize --labels $(EVAL_LABELS) --output $(MODELS_DIR)
+	@echo ""
+	@echo "── 4/5 Post-optimization eval ──"
+	$(METAL_BIN) ml-eval --labels $(EVAL_LABELS) --report-dir $(EVAL_REPORTS)
+	@echo ""
+	@echo "── 5/5 Report ──"
+	@latest=$$(ls -t $(EVAL_REPORTS)/eval_iter_*.json 2>/dev/null | head -1); \
+	if [ -n "$$latest" ]; then \
+		python3 -m json.tool "$$latest" 2>/dev/null || cat "$$latest"; \
+	fi
+	@echo ""
+	@echo "═══ ML Loop complete ═══"
 
 ml-datagen: start-build ## Generate synthetic training data
 	@mkdir -p $(dir $(EVAL_LABELS))
@@ -195,7 +220,7 @@ ml-report: ## Print latest eval metrics
 		latest=$$(ls -t $(EVAL_REPORTS)/eval_iter_*.json 2>/dev/null | head -1); \
 		if [ -n "$$latest" ]; then \
 			echo "═══ ML Eval Report: $$latest ═══"; \
-			cat "$$latest" | python3 -m json.tool 2>/dev/null || cat "$$latest"; \
+			python3 -m json.tool "$$latest" 2>/dev/null || cat "$$latest"; \
 		else \
 			echo "No eval reports found. Run 'make ml-eval' first."; \
 		fi; \
