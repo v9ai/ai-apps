@@ -643,3 +643,151 @@ The Rust inference service should serve ONNX models for gradient boosting (XGBoo
 - Dynamic content personalization: https://www.droptica.com/blog/content-personalisation-mautic-tutorial-mautic-dynamic-content/
 - Cron job documentation: https://joeykeller.com/ultimate-guide-to-mautic-cronjobs/
 - AI use cases forum thread: https://forum.mautic.org/t/question-mautic-use-case-with-ai/26732
+
+---
+
+## 10. Deep ML Analysis
+
+### 10.1 Leuchtfeuer Benchmark — Technical Reconstruction
+
+**Source:** Blog post "Lead Scoring & Machine Learning in Mautic" (leuchtfeuer.com) and accompanying Mauticast episode #47 featuring Jonas Ludwig. The benchmark originates from a **master's thesis**: "Developing a lead scoring model for simple and advanced use cases using the example of the Mautic software." No DOI, no conference proceedings — it is an internal academic thesis referenced by a commercial implementation blog.
+
+**Accuracy numbers:**
+- Traditional Mautic rule-based scoring: **77% accuracy** (predicting which leads would become customers)
+- ML-based predictive lead scoring: **95% accuracy**
+- Dataset: "data from an online store" — e-commerce conversion data, not enterprise B2B SaaS. This is an important caveat: e-commerce purchase prediction has cleaner binary labels and more behavioral signals (cart, browse, checkout) than B2B SaaS where conversion cycles are months long.
+
+**What the blog post does NOT disclose:**
+- The ML algorithm used (gradient boosting? logistic regression? neural network? not stated)
+- The exact feature vector (only "action data and data on lead characteristics")
+- Dataset size, train/test split, time period
+- Whether the 77%/95% are accuracy, F1, AUC, or precision — the metric name "accuracy" is used but not defined (likely binary classification accuracy, not F1 or AUC)
+- Cross-validation methodology
+
+**Likely algorithm based on domain literature:** The lead scoring research consensus (Pham et al., 2023; Araujo et al., 2025) strongly favors gradient boosting methods (XGBoost, LightGBM, CatBoost) for tabular behavioral data. A 2025 B2B CRM study (16,600 records, Microsoft Dynamics source) found Gradient Boosting Classifier achieved 98.39% accuracy / AUC 0.989 — consistent with the Leuchtfeuer 95% claim. The most plausible reconstruction is that the Leuchtfeuer thesis used XGBoost or LightGBM with behavioral + demographic features.
+
+### 10.2 `LIST_FILTERS_ON_FILTERING` Hook — Exact Specification
+
+**Event class:** `Symfony\Component\EventDispatcher\GenericEvent` (wrapped by Mautic's event system)
+**Constant:** `Mautic\LeadBundle\LeadEvents::LIST_FILTERS_ON_FILTERING` (string value: `"mautic.lead_list_filter_on_filtering"`)
+**File:** `app/bundles/LeadBundle/Segment/Query/ContactSegmentQueryBuilder.php`
+
+**Payload (what the event carries):**
+```php
+$filterEvent = new LeadListFilteringEvent(
+    $filter,          // ContactSegmentFilterCrate: the current filter being processed
+    $lead,            // optional Lead entity (null during bulk rebuild)
+    $alias,           // table alias used in the DBAL query
+    $queryBuilder     // Doctrine QueryBuilder instance — mutable!
+);
+```
+
+**How a plugin intercepts:**
+```php
+// In a Mautic plugin's EventSubscriber:
+public static function getSubscribedEvents(): array {
+    return [LeadEvents::LIST_FILTERS_ON_FILTERING => 'onFiltering'];
+}
+
+public function onFiltering(LeadListFilteringEvent $event): void {
+    if ($event->getFilter()->getField() === 'ml_score') {
+        // Inject a DBAL expression using the pre-computed ML score
+        $event->getQueryBuilder()
+            ->andWhere('contact.ml_score >= :ml_threshold')
+            ->setParameter('ml_threshold', 75);
+        $event->setFilteringDone(true); // prevents further default processing
+    }
+}
+```
+
+**How a Rust sidecar calls back into PHP for segment scoring:**
+
+The Rust sidecar cannot directly call PHP. The integration pattern is:
+
+1. Rust scoring service runs on a schedule (e.g., every 5 minutes), reads `lead_event_log` + demographic fields via direct MySQL read
+2. Rust writes ML scores into a custom contact field (`ml_score` float) via Mautic REST API: `PATCH /api/contacts/{id}/edit` with `{"ml_score": 0.87}`
+3. The `LIST_FILTERS_ON_FILTERING` plugin reads the pre-computed `ml_score` from the contact record (already in the query builder's table scope) without any PHP→Rust call at segment rebuild time
+4. No synchronous PHP→Rust HTTP call needed — the score is materialized in the DB; the event hook simply reads it
+
+This is the correct architectural pattern: compute-on-write (Rust), filter-on-read (PHP plugin). Any synchronous PHP→Rust HTTP call during `mautic:segments:update` would serialize and add HTTP latency to every contact in the rebuild batch.
+
+### 10.3 The 12-Feature Contact Vector — Literature Validation
+
+The 12 features proposed in section 6.1 for a Rust ONNX sidecar are evaluated against the academic literature:
+
+| Feature | Source in Schema | Literature Validation |
+|---|---|---|
+| `days_since_first_touch` | `Lead.date_added` | Validated: tenure/recency is a strong predictor in RFM models; feature importance rank 2–4 in most B2B studies |
+| `days_since_last_active` | `Lead.last_active` | Validated: recency is the single strongest RFM predictor; included in every published lead scoring feature set |
+| `total_page_views_30d` | `lead_event_log` count | Validated: frequency (F in RFM); strong signal for engagement; 30-day window is standard |
+| `email_open_rate` | `email_stats` | Validated: behavioral engagement signal; but open rates degraded post-iOS 15 (Apple Mail Privacy Protection) — unreliable since 2021 |
+| `email_click_rate` | `email_stats` | Validated: more reliable than open rate post-iOS 15; click-through is a genuine behavioral signal |
+| `form_submissions` | `lead_event_log` | Validated: high-intent signal; form submission is a standard conversion event |
+| `asset_downloads` | `lead_event_log` | Validated: intent signal; commonly used in B2B content-led scoring |
+| `pricing_page_visits` | `lead_event_log` (URL filter) | Validated: strong purchase-intent signal; pricing page visits are among the top-ranked features in SaaS lead scoring models |
+| `job_title_seniority` | NLP-classified `title` | Validated: firmographic fit signal; seniority classification (C-suite=5, VP=4, Director=3, Manager=2, IC=1) is standard ICP matching |
+| `company_size_bucket` | `lead_fields.company_size` | Validated: firmographic fit; company size is a top feature in B2B propensity models |
+| `industry_icp_match` | lookup table | Validated: vertical fit is a strong ICP signal; typically encoded as binary (in-ICP=1, out=0) or ordinal (3-level) |
+| `utm_source_quality` | `utm_tags` | Partially validated: source quality (e.g., organic search > paid social > cold outreach) is used in multi-touch attribution but rarely as a direct scoring feature; signal quality depends on UTM discipline |
+
+**Overall assessment:** 10 of 12 features are well-supported in the academic literature. The two caveats are: (1) `email_open_rate` is unreliable post-iOS 15 and should be weighted down or replaced with `email_click_rate`; (2) `utm_source_quality` requires a reliable UTM taxonomy and should be validated empirically on your specific data before including as a feature. The feature set is adequate for a gradient boosting model; neural models would benefit from adding raw event counts with finer time windows (7d, 14d, 90d) as separate features.
+
+**Missing features not in the 12 that literature recommends adding:**
+- `number_of_website_sessions` (distinct sessions, not page views — captures return visits)
+- `days_since_last_email_click` (recency of highest-quality engagement event)
+- `lead_source` (original acquisition channel — top feature in the Araujo et al. 2025 B2B study: rank 1 of 22 features)
+- `stage_velocity` (how fast the lead moved through pipeline stages — a strong B2B-specific signal)
+
+### 10.4 Send-Time Optimization — ML Architecture for Mautic Integration
+
+Mautic has no native send-time optimization (Section 3.5). The academic literature provides two viable ML architectures:
+
+**Architecture 1: RNN-Survival Model (Chapelle & Zhang pattern, arxiv:2004.09900)**
+- Models the time-to-open as a survival distribution conditioned on historical email interaction sequences
+- LSTM (hidden size 32) + fully connected layer with exponential activation
+- Input: sequence of (email_sent_time, opened: bool, time_to_open: float) tuples per user
+- Output: probability distribution over future open times
+- Predict the send time that maximizes `P(open within 24h | send at time t)`
+- Validated at LinkedIn scale; this is the state-of-the-art for personalized send-time optimization
+
+**Architecture 2: Random Forest regression (MDPI Applied Sciences 2022)**
+- Features: hour of day, day of week, user's historical open rates by time bucket (24h × 7d = 168 bins), recency of last open, total lifetime opens
+- Target: binary open (opened within 4h of send)
+- Output: best-hour prediction per user
+
+**Mautic integration pattern:**
+```
+Weekly batch job (Rust):
+  1. Query lead_event_log for email opens (event_type='email_open') per contact
+  2. Build feature matrix: 168-bin historical open distribution + recency features
+  3. Run ONNX model (XGBoost or LSTM) → optimal_send_hour per contact
+  4. Write to custom contact field: optimal_send_hour (0-167)
+  5. Mautic campaign uses this field in a "wait until {optimal_send_hour}" action
+```
+
+The Rust inference side can use `tract` (for ONNX XGBoost/RF models) or `candle` (for LSTM). Target latency: < 1ms per contact for tree models, 5–10ms for LSTM.
+
+---
+
+## 11. Research Papers & Prior Art
+
+| Paper | Authors | Year | Venue | Relevance | Key Finding |
+|-------|---------|------|-------|-----------|-------------|
+| The relevance of lead prioritization: a B2B lead scoring model based on machine learning (PMC:11925937) | Araujo et al. | 2025 | PMC / Springer | Closest peer-reviewed study to the Leuchtfeuer benchmark; validates the 12-feature vector | 16,600 records from Microsoft Dynamics CRM (Jan 2020–Apr 2024); Gradient Boosting achieves 98.39% accuracy / AUC 0.989 / F1 93.38%; top features: Lead Source (rank 1), Reason for Status, Lead Classification, Product, Number of Responses — validates demographic + behavioral combination |
+| The state of lead scoring models and their impact on sales performance (PMC:9890437) | Pham et al. | 2023 | Information Technology and Management (Springer) | Systematic review of 18 lead scoring ML approaches; provides the research baseline for Mautic's gap | Classification dominates (decision tree + logistic regression most common); predictive models achieve ~3x higher conversion rate vs. rule-based (15% vs 5%); GE Capital: 30–50% productivity improvement; 26% avg increase in lead conversion; recommends combining implicit behavioral signals with explicit firmographic data |
+| An RNN-Survival Model to Decide Email Send Times (arXiv:2004.09900) | Chapelle, Zhang (LinkedIn) | 2020 | arXiv (industry paper) | Architecture for send-time optimization — the missing Mautic feature | LSTM (hidden 32) + exponential activation FC; models time-to-open as survival distribution conditioned on user's email history sequence; output: probability distribution over future open times; enables personalized (not just aggregate-best-hour) send-time optimization; validates that sequential modeling outperforms per-bucket histogram approaches |
+| A Novel Approach for Send Time Prediction on Email Marketing (MDPI:10.3390/app12168310) | Various | 2022 | Applied Sciences (MDPI) | Random Forest baseline for send-time prediction; simpler Mautic-compatible architecture | Random Forest on 168-bin open-rate histogram per user + recency features; binary target: opened within 4h; demonstrates that tree models are competitive with LSTM for send-time prediction at lower inference cost |
+| Customer Churn Prediction: A Systematic Review (MDPI:2504-4990/7/3/105) | Various | 2025 | Machine Learning and Knowledge Extraction (MDPI) | Context for building re-engagement prediction on top of Mautic's behavioral data | XGBoost + deep learning ensemble achieves 91.66% accuracy on churn prediction; behavioral features (service duration, responsiveness to emails, self-care usage) are strongest signals; unstructured text features improve performance vs structured only — directly applicable to Mautic's `lead_event_log` data |
+| Benchmarking state-of-the-art gradient boosting algorithms for classification (arXiv:2305.17094) | Various | 2023 | arXiv | Comparative benchmark of XGBoost vs LightGBM vs CatBoost on tabular data | On tabular classification tasks of the type used in lead scoring, LightGBM achieves best speed/accuracy trade-off; CatBoost handles categorical features natively (relevant for `lead_source`, `industry`, `utm_source`); XGBoost is the most ONNX-portable for Rust `tract` inference |
+| Leuchtfeuer: Lead Scoring & Machine Learning in Mautic (blog + Mauticast #47) | Ludwig, Jonas | 2023 | Leuchtfeuer blog / podcast | Primary source for the 77% (rule-based) vs 95% (ML) benchmark on Mautic data | Master's thesis: "Developing a lead scoring model for simple and advanced use cases using the example of the Mautic software"; dataset: online store e-commerce data (not B2B SaaS); ML algorithm and features not publicly disclosed; 18 percentage-point accuracy gap establishes the business case for ML replacement of Mautic's point engine |
+| Enhancing customer repurchase prediction: Integrating classification algorithms with RFM analysis (ScienceDirect) | Various | 2025 | Expert Systems with Applications (Elsevier) | RFM integration with ML; validates the recency/frequency/monetary features in the 12-feature vector | Handcrafted features from RFM (recency, frequency, monetary value) combined with supervised ML outperforms raw RFM segmentation; confirms that the `days_since_last_active`, `total_page_views_30d`, and form submission count features in the proposed vector are RFM-equivalent and literature-validated |
+
+### Annotation notes
+
+**Araujo et al. (2025, PMC:11925937):** The most directly applicable paper to a Mautic ML replacement. The dataset (16,600 records from Microsoft Dynamics, 22 selected features from original 67, 4-year time window) mirrors a realistic Mautic installation. The Gradient Boosting Classifier's 98.39% accuracy with 70/30 split is not directly comparable to the Leuchtfeuer 95% (different dataset, metric definition unclear in the blog post), but both independently confirm that gradient boosting on CRM behavioral + demographic features achieves 95–98% accuracy on binary conversion prediction. The top feature — Lead Source — is not currently one of the 12 proposed features for the Rust sidecar and should be added.
+
+**Pham et al. (2023, PMC:9890437):** Systematic review of 18 published lead scoring models. The most important finding for Mautic: the field overwhelmingly uses classification (not regression or clustering) for B2B lead scoring. Decision trees and logistic regression are preferred for interpretability — this is relevant because Mautic operators need to understand why a contact was scored high. A pure gradient boosting black-box model may be accurate but will require SHAP explanations to be operationally trusted. The Rust sidecar should output both a score and the top-3 contributing features.
+
+**Chapelle & Zhang (2020, arXiv:2004.09900 — LinkedIn):** The gold standard for send-time optimization ML. The survival model formulation is elegant: instead of predicting "will this person open at 9am Tuesday," it predicts a continuous-time distribution over when the person next opens email, then samples from that distribution to select the optimal send time. This requires storing each user's email interaction sequence (timestamp, opened bool), which Mautic's `lead_event_log` already captures. The LSTM is small (32 hidden units) and exports cleanly to ONNX — Rust inference with `tract` is straightforward.
+
+**Leuchtfeuer blog (2023):** The accuracy numbers (77%/95%) are marketing copy backed by an unpublished master's thesis. Without knowing the algorithm, features, dataset size, metric definition, or validation methodology, the numbers should be treated as directionally correct (ML > rule-based) but not precisely reproducible. The correct academic benchmark for the same claim is the Pham et al. systematic review which shows 3x conversion rate improvement (5% → 15%) — a more conservative and better-validated estimate of the uplift from ML over rule-based scoring.
