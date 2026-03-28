@@ -27,9 +27,7 @@ Check existing hiring data in the lead-gen database:
 Find the company's job boards:
 
 **Check standard ATS platforms:**
-- Greenhouse: `https://boards.greenhouse.io/{company}`
 - Ashby: `https://jobs.ashbyhq.com/{company}`
-- Lever: `https://jobs.lever.co/{company}`
 - Workable: `https://apply.workable.com/{company}`
 - SmartRecruiters: `https://jobs.smartrecruiters.com/{company}`
 - Company careers page: `{domain}/careers`, `{domain}/jobs`

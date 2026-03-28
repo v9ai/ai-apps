@@ -30,7 +30,7 @@ Read the pipeline health report (`~/.claude/state/pipeline-health.json`) if avai
 Search the web for companies known to hire AI engineers remotely worldwide:
 
 **Search queries:**
-- "AI engineer remote job" site:greenhouse.io OR site:ashbyhq.com
+- "AI engineer remote job" site:ashbyhq.com
 - "LLM engineer remote worldwide" hiring
 - Companies using: LangChain, LangGraph, Claude, OpenAI, Hugging Face remotely
 - YC companies hiring AI engineers remotely
@@ -47,12 +47,10 @@ Search the web for companies known to hire AI engineers remotely worldwide:
 
 For each company found:
 1. Check if they're already in `job_sources` or `ashby_boards`
-2. Identify their ATS platform (Greenhouse, Ashby, Lever, Workable, etc.)
+2. Identify their ATS platform (Ashby, Workable, etc.)
 3. Find their board token/URL
 
-**Greenhouse boards**: `https://boards.greenhouse.io/{company}`
 **Ashby boards**: `https://jobs.ashbyhq.com/{company}`
-**Lever boards**: `https://jobs.lever.co/{company}`
 
 ### 4. Propose Source Additions
 
@@ -61,7 +59,7 @@ For each new source found:
 ```json
 {
   "company": "Company Name",
-  "ats_platform": "greenhouse|ashby|lever",
+  "ats_platform": "ashby|workable",
   "board_url": "URL",
   "board_token": "token/name for API",
   "evidence": "Why this company hires AI engineers in EU",
@@ -115,8 +113,7 @@ Write to `~/.claude/state/discovery-report.json`:
     ],
     "new_sources_to_add": [ ... ],
     "platform_gaps": {
-      "lever_status": "supported|partial|missing",
-      "workable_status": "...",
+      "workable_status": "supported|partial|missing",
       "other_platforms": ["list of ATS platforms seen but not supported"]
     },
     "recommendations": [
