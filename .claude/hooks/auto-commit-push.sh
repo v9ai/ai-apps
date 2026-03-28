@@ -47,12 +47,22 @@ fi
 LAST_MSG=$(echo "$INPUT" | jq -r '.last_assistant_message // empty' 2>/dev/null)
 
 if [ -n "$LAST_MSG" ]; then
-    SUMMARY="${TAG:+${TAG}: }${LAST_MSG}"
+    # First non-empty line → subject, rest → body
+    SUBJECT=$(echo "$LAST_MSG" | grep -v '^\s*$' | head -1 | sed 's/[[:space:]]*$//')
+    BODY=$(echo "$LAST_MSG" | tail -n +2)
+    SUBJECT="${TAG:+${TAG}: }${SUBJECT}"
+    # Truncate subject to 72 chars
+    [ "${#SUBJECT}" -gt 72 ] && SUBJECT="${SUBJECT:0:69}..."
 else
-    SUMMARY="chore${TAG}: auto-commit"
+    SUBJECT="chore${TAG}: auto-commit"
+    BODY=""
 fi
 
-git commit -m "${SUMMARY}" --no-verify > /dev/null 2>&1 || exit 0
+if [ -n "$BODY" ]; then
+    git commit -m "${SUBJECT}" -m "${BODY}" --no-verify > /dev/null 2>&1 || exit 0
+else
+    git commit -m "${SUBJECT}" --no-verify > /dev/null 2>&1 || exit 0
+fi
 git push --no-verify > /dev/null 2>&1
 
 exit 0

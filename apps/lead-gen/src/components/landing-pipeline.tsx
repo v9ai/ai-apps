@@ -258,15 +258,18 @@ export function LandingPipeline() {
             alignItems: "start",
           })}
         >
-          {/* ── Left: sticky header text ── */}
+          {/* ── Left: sticky header + module index ── */}
           <div
             className={css({
               position: { md: "sticky" },
               top: { md: "80px" },
               mb: { base: "5", md: "0" },
+              borderRight: { md: "1px solid" },
+              borderRightColor: { md: "ui.border" },
+              pr: { md: "6", lg: "8" },
             })}
           >
-            <div className={flex({ align: "center", gap: "2", mb: "2" })}>
+            <div className={flex({ align: "center", gap: "2", mb: "3" })}>
               <BarChartIcon
                 width={14}
                 height={14}
@@ -287,15 +290,17 @@ export function LandingPipeline() {
 
             <p
               className={css({
-                fontSize: { base: "base", md: "sm" },
+                fontSize: { base: "base", md: "xs" },
                 color: "ui.tertiary",
                 lineHeight: "relaxed",
                 letterSpacing: "snug",
+                mb: "5",
               })}
             >
               From raw web pages to qualified B2B leads — seven autonomous modules,
-              zero cloud dependencies. This is the Agentic Lead Gen pipeline.
+              zero cloud dependencies.
             </p>
+
           </div>
 
           {/* ── Right: module cards ── */}
