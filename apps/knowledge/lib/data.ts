@@ -3,7 +3,7 @@ import type { Lesson, LessonWithContent, GroupedLessons, CategoryMeta } from "./
 export type { Lesson, LessonWithContent, GroupedLessons, CategoryMeta };
 
 // Re-export static constants for FS mode consumers
-export { CATEGORIES, CATEGORY_META } from "./articles";
+export { CATEGORIES, CATEGORY_META, AWS_DEEP_DIVE_SLUGS, getUrlPath } from "./articles";
 
 export interface SearchResult {
   resultType: "lesson" | "section";

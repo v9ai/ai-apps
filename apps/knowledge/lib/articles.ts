@@ -317,6 +317,26 @@ function extractExcerpt(content: string, maxLen = 120): string {
   return "";
 }
 
+export const AWS_DEEP_DIVE_SLUGS = new Set([
+  "aws-lambda-serverless",
+  "aws-api-gateway-networking",
+  "aws-iam-security",
+  "aws-compute-containers",
+  "aws-storage-s3",
+  "aws-cicd-devops",
+  "aws-architecture",
+  "aws-ai-ml-services",
+  "dynamodb-data-services",
+]);
+
+export function getUrlPath(slug: string): string {
+  if (AWS_DEEP_DIVE_SLUGS.has(slug)) {
+    const sub = slug.startsWith("aws-") ? slug.slice(4) : slug;
+    return `/aws/${sub}`;
+  }
+  return `/${slug}`;
+}
+
 function getDifficulty(number: number): DifficultyLevel {
   const cat = CATEGORIES.find(([lo, hi]) => number >= lo && number <= hi);
   if (!cat) return "intermediate";
