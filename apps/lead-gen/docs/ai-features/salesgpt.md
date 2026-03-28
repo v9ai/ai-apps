@@ -654,3 +654,91 @@ The lack of chain-of-thought in the stage classifier prompt means the model cann
 **CSALES (Kim et al., 2025)** is the most direct academic competitor. It introduces user preference elicitation as a first-class task within the sales dialogue — something SalesGPT's "Needs analysis" stage approximates informally. The paper's LLM user simulator is also the right approach for generating labeled training data for the stage classifier, which SalesGPT currently lacks entirely.
 
 **On SPIN selling academic connections:** No academic papers specifically on AI implementations of SPIN (Situation-Problem-Implication-Need-payoff, Rackham 1988) or Challenger Sale were found on arXiv. The closest ML-adjacent work is in argumentation mining and persuasive dialogue generation (not yet at the domain specificity of B2B sales methodology). SalesGPT's author does not cite Rackham or Miller/Heiman. The 8-stage taxonomy is original to the repository, loosely inspired by standard sales funnel literature rather than academic DST research.
+
+---
+
+## 12. Recency & Changelog
+
+### Latest Release
+
+**v0.1.2** — published 2024-03-25. Added Stripe payment link integration and launched a React frontend for demo testing. The CHANGELOG.txt records a v0.1.3 entry (May 2024) for analytics tracking and local startup option, but no corresponding GitHub release tag was cut for that version. There have been **no releases since March 2024**.
+
+Release history condensed:
+
+| Tag | Date | Change |
+|---|---|---|
+| v0.1.2 | 2024-03-25 | Stripe integration, frontend launch |
+| v0.1.1 | 2024-02-05 | LangChain 0.1 compatibility, docs WIP |
+| v0.1.0 | 2023-12-10 | Poetry build, Python 3.8–3.11 support |
+| v0.0.9 | 2023-11-25 | OpenAI >=1.0.0 streaming fix |
+| v0.0.8 | 2023-10-04 | Simplified streaming, pydantic fix |
+| v0.0.7 | 2023-09-08 | LiteLLM multi-provider integration |
+
+### LangChain Migration Status
+
+**Still on LangChain 0.1 — no migration in progress, no migration PR exists.**
+
+The last commit that touched non-documentation code was in July 2024 (frontend hook fix, prod .env updates, Calendly/Gmail tests). No LCEL migration branch, no LangChain 0.2+ PR, no issue tracking this migration has been opened or merged. The repo is pinned to `langchain==0.1.0` in `pyproject.toml` (as of last commit 7cd1d4f, 2024-09-17).
+
+Breaking change risk is already materializing: issue #169 (opened 2024-12-30, still open as of 2026-03) reports `ModuleNotFoundError: No module named 'openai.types.beta.threads.message_content'` — a symptom of stale transitive dependency pinning. A workaround (`litellm==1.10.2` pin) was posted by a community member in January 2025; there has been no maintainer response or patch.
+
+The deprecated APIs currently in use — `LLMSingleActionAgent`, `LLMChain`, `RetrievalQA`, `langchain_core.agents._convert_agent_action_to_messages` (private) — were removed or moved in LangChain 0.2+. A migration to LCEL would require rewriting `salesgpt/agents.py`, `salesgpt/chains.py`, and `salesgpt/custom_invoke.py` almost entirely. No contributor has started this work.
+
+### Recent Commits (last 90 days relative to 2026-03-28)
+
+**Zero commits in the last 90 days.** The most recent commit to the repository is:
+
+| SHA | Date | Message |
+|---|---|---|
+| `7cd1d4f9` | 2024-09-17 | Update README.md |
+
+The repo's `pushed_at` timestamp is **2024-09-17**. The `updated_at` field (2026-03-27) reflects only GitHub metadata activity (e.g., a star or watch), not code changes.
+
+In the 90 days before the last commit, the only activity was documentation/README edits (PRs #160, #161, #162 — all README-only) and a July 2024 `.env` update. No functional code changes have been made to the library since June 2024 (Calendly/Gmail tests, merged via PR #149).
+
+### Open Issues
+
+As of 2026-03-28: **56 open issues**, **0 labeled with a milestone**, no triage labels on most.
+
+Key unresolved issues:
+
+| # | Title | Opened | Status |
+|---|---|---|---|
+| #172 | Jjr/hooks and connections (open PR, not reviewed) | 2026-01-20 | Open PR, no maintainer response |
+| #171 | Is this repository still being maintained? | 2025-02-06 | Community replies: "dead" (Feb 2025), "1 year, sad." (Sep 2025) — no maintainer reply |
+| #170 | Why does `determine_conversation_stage()` skip in run.py? | 2025-01-14 | No response |
+| #169 | ModuleNotFoundError: openai.types.beta.threads.message_content | 2024-12-30 | Community workaround posted; no maintainer response |
+| #124 | SalesGPT API does not respect agent_config.json when using tools | 2024-03-22 | Confirmed bug, unresolved |
+| #120 | Streaming text chunks not supported with tools (AgentExecutor) | 2024-03-22 | Known architectural gap, unresolved |
+| #26 | use_tools=True always returns apology ("unable to find the answer") | 2023-08-02 | Original streaming/tools conflict report, unresolved |
+
+The streaming/tools conflict (issues #120 and #26) remains unresolved. Section 10 of this report analyzes the root cause in detail — it requires an LCEL migration to fix properly.
+
+### Maintenance Status
+
+**Filip Michalsky is not actively maintaining SalesGPT.** Evidence:
+
+- Last non-documentation commit: June 2024
+- Last commit of any kind: September 2024 (README only)
+- Zero responses to any issue opened after August 2024
+- Issue #171 ("Is this repository still being maintained?") filed February 2025 — two community replies ("dead", "1 year, sad.") — no maintainer response through September 2025
+
+Filip Michalsky's current GitHub activity (as of March 2026) is focused on entirely different projects: `filip-michalsky/verifiers` (LLM RL environments, forked from `PrimeIntellect-ai/verifiers`, active through March 2026), `browserbase/stagehand` (AI web browsing framework, active January 2026), and contributions to HumanLayer and CrewAI. SalesGPT appears to have been deprioritized in favor of these newer projects.
+
+The primary non-maintainer contributor during the last active period (2024) was `chemik-bit`, who contributed documentation PRs. `iljamak` contributed the Calendly/Gmail tool tests. Neither has pushed code since mid-2024 either.
+
+### Staleness Assessment
+
+**LangChain 0.1 pinning makes this library a liability for any production integration.**
+
+Realistic path forward:
+
+1. **Use as reference only, not as a dependency.** The architectural patterns (dual-chain, stage taxonomy, intermediate-step capture) are sound and worth studying. The pip package itself should not be imported into production code — it pins `langchain==0.1.0` which conflicts with any LangChain 0.2+ codebase.
+
+2. **No realistic upstream fix is coming.** Filip is active on other projects; SalesGPT appears abandoned. The 56 open issues with zero responses across 18+ months and a community "dead" verdict confirm this. There is no fork with active LangChain migration underway (`chemik-bit/SalesGPT_fork` mirrors the main repo without functional changes).
+
+3. **The module import error (#169) is a canary.** The `openai.types.beta.threads.message_content` import is a sign that the transitive dependency graph is already broken for anyone not pinning every sub-dependency to exact versions. This will worsen as LiteLLM, OpenAI SDK, and Pydantic continue to evolve.
+
+4. **Migration cost is non-trivial.** Replacing `LLMSingleActionAgent` + `LLMChain` + `RetrievalQA` with LCEL runnables + `astream_events` requires rewriting the core of `agents.py`, `chains.py`, and `custom_invoke.py`. Estimated effort: 1–2 weeks for a developer familiar with both LangChain 0.1 and 0.2 APIs. Given the absence of an eval harness, any migration risks silent behavioral regressions with no way to detect them.
+
+5. **Recommended posture for this codebase:** Extract the prompt templates (`STAGE_ANALYZER_INCEPTION_PROMPT`, `SALES_AGENT_INCEPTION_PROMPT`) and the 8-stage taxonomy as plain text artifacts. Reimplement the dual-chain loop using LiteLLM directly (no LangChain dependency), replacing the regex output parser with native OpenAI function calling. This yields the same behavior with no dependency risk and full streaming+tools compatibility.

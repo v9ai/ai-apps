@@ -1183,3 +1183,136 @@ Stop condition: `confidence >= confidence_threshold` (default 0.7).
 **The alpha shape geometry in EmbeddingAdaptiveCrawler is a research prototype.** Its O(n²) complexity and 50–200ms overhead per page makes it unsuitable for high-volume production crawling. The statistical strategy (pure BM25 + Jaccard) achieves comparable stopping quality without any GPU or geometry library, and is the recommended production path.
 
 **No academic paper evaluates Crawl4AI directly.** All papers above are prior art or competing approaches. Crawl4AI has not published a formal evaluation of its extraction accuracy against SWDE, WebSRC, or any other benchmark. This is a significant gap: the `<score>` self-assessment in LLM prompts is not a substitute for ground-truth evaluation.
+
+---
+
+## 12. Recency & Changelog
+
+### Latest Release
+
+**v0.8.5** — released 2026-03-18 (PyPI + Docker `unclecode/crawl4ai:0.8.5`). As of 2026-03-28, the `main` branch is already at **v0.8.6** (bumped 2026-03-24) but not yet cut as a formal GitHub release.
+
+Key AI/ML changes in v0.8.5 (vs v0.8.0 baseline):
+
+| Area | Change |
+|---|---|
+| Anti-bot detection | Layered Tier 1/2/3 system (Akamai/Cloudflare/PerimeterX structural markers → generic block phrases → empty-shell check); re-check on fallback-fetch failure |
+| Shadow DOM | Full flattening support added to HTML scraping pipeline |
+| HTTP strategy | Detects and saves file downloads (CSV, PDF, etc.) automatically |
+| BM25ContentFilter | Fixed output deduplication bug (#1213) that caused repeated chunks |
+| `scan_full_page` | Fixed hang on dynamic/infinite-scroll pages |
+| `css_selector` | Fixed: ignored for `raw://` URLs in LXML scraping strategy |
+| Screenshot | `scan_full_page=False` now correctly respected; distortion on full-page screenshots fixed |
+| MCP endpoint | SSE crash on Starlette >=0.50 fixed; mounted via raw ASGI Route |
+| Redis | Upgraded to 7.2.7 for CVE-2025-49844 (CVSS 10.0) |
+| Regression suite | 291 tests added (2026-03-08 batch) covering 10+ previously open bugs |
+
+Key AI/ML changes in **v0.8.0** (2026-01-16) — the last major release before v0.8.5:
+
+| Area | Change |
+|---|---|
+| Security (breaking) | RCE fix: removed `__import__` from hook builtins; hooks disabled by default in Docker via `CRAWL4AI_HOOKS_ENABLED` env var |
+| Security (breaking) | LFI fix: `file://`, `javascript:`, `data:` URLs blocked in Docker API endpoints |
+| Crash recovery | `resume_state` + `on_state_change` callbacks for BFS/DFS/Best-First deep crawls |
+| Prefetch mode | Two-phase deep crawling: fast link extraction pass before full crawl |
+| `init_scripts` | Pre-page-load JS injection in `BrowserConfig` for stealth evasions |
+| Proxy | Enhanced rotation with sticky sessions; HTTP strategy now proxy-aware |
+| `base_url` param | Correct URL resolution when feeding raw HTML via `raw:` scheme |
+| `raw:`/`file://` | Screenshot, PDF, MHTML generation from cached HTML now supported |
+| Sitemap seeder | Smart TTL cache (`cache_ttl_hours`, `validate_sitemap_lastmod` params) |
+
+### Recent Commits (last 90 days)
+
+Significant commits on `main` between 2025-12-28 and 2026-03-28:
+
+| Date | SHA | Summary |
+|---|---|---|
+| 2026-03-24 | `4e4a9968` | **CRITICAL: replace litellm with `unclecode-litellm`** due to PyPI supply chain compromise of upstream `litellm`; pinned to safe fork v1.81.13 |
+| 2026-03-24 | `f4bda051` | Bump version to v0.8.6 (unreleased tag) |
+| 2026-03-23 | `219416e4` | Fix MCP SSE endpoint crash on Starlette >=0.50 |
+| 2026-03-23 | `310b52b6` | Improve browser None guard in `create_browser_context` |
+| 2026-03-18 | `c4389add` | Fix `scan_full_page` hang on dynamic/infinite-scroll pages |
+| 2026-03-16 | `9b571bb9` | HTTP strategy detects and saves file downloads (CSV, PDF) |
+| 2026-03-12 | `bf1158a6` | Upgrade Redis to 7.2.7 for CVE-2025-49844 |
+| 2026-03-12 | `57b0d099` | Fix BM25ContentFilter duplicate output (#1213) |
+| 2026-03-08 | `d788c283` | Add 291-test regression suite |
+| 2026-03-07 | `3a75dd3f` | Batch fix 10 open issues |
+| 2026-02-18 | `8576331d` | Add Shadow DOM flattening; reorder JS code execution pipeline |
+| 2026-02-17 | `d267c650` | Add sibling selector support to JSON extraction strategies |
+| 2026-02-14 | `72b546c4` | Add anti-bot detection, retry, and fallback system |
+| 2026-02-14 | `87955395` | Add `ProxyConfig.DIRECT` sentinel for direct-then-proxy escalation |
+| 2026-02-11 | `3fc7730a` | Add `remove_consent_popups` flag to scraping config |
+| 2026-02-06 | `37a49c53` | Add `redirected_status_code` to `CrawlResult` |
+| 2026-02-04 | `c046918b` | Add memory-saving mode + browser recycling |
+| 2025-12-30 | `3d78001c` | Smart TTL cache for sitemap URL seeder |
+| 2025-12-27 | `2550f3d2` | Browser pipeline support for `raw:`/`file://` URLs |
+| 2025-12-26 | `a43256b2` | Proxy support added to HTTP crawler strategy |
+
+### Breaking Changes
+
+Changes that affect existing integrations:
+
+**v0.8.0 (2026-01-16) — two hard breaking changes in Docker deployments:**
+
+1. **Hooks disabled by default in Docker.** If you call the Docker API with `js_code`, `on_execution_started`, `on_before_goto`, or similar hook parameters, they will silently no-op unless the container is launched with `CRAWL4AI_HOOKS_ENABLED=true`. The Python SDK is unaffected — hooks work as before.
+
+2. **`file://`, `javascript:`, `data:` URLs blocked in Docker API.** The `/execute_js`, `/screenshot`, `/pdf`, `/html` endpoints reject these schemes with a 400 error. Only `http://`, `https://`, and `raw:` are allowed. Python library users are unaffected.
+
+**v0.8.5 / v0.8.6 (March 2026) — supply chain response:**
+
+3. **`litellm` replaced by `unclecode-litellm`** (a pinned fork). If you inject `litellm` directly into a shared virtual environment alongside crawl4ai, you may encounter import conflicts. Pure crawl4ai installs are unaffected since `pip install crawl4ai` pulls `unclecode-litellm` automatically. A larger replacement to `nanollm` (PR #1871) is in review and may ship in a future minor release — this would reduce the installed footprint from ~150 MB to ~5.5 MB but maintains the same API surface (`completion`, `acompletion`, `batch_completion`, `aembedding`).
+
+**v0.6.0 (2025-04-22) — older but worth noting for anyone upgrading from v0.5.x:**
+
+4. `WebScrapingStrategy` is now an alias for `LXMLWebScrapingStrategy`; old `BeautifulSoup`-based scraper removed.
+5. `ProxyConfig` moved to `async_configs` module — update import paths if you import it directly.
+6. `DefaultMarkdownGenerator` renamed (old names emit deprecation warnings).
+7. Direct imports from `crawl4ai/browser/*` must be updated to the pooled browser modules.
+
+### Open Issues (AI/ML relevant)
+
+Active open issues as of 2026-03-28 (46 total open):
+
+| # | Title | Status |
+|---|---|---|
+| #1455 | `LLMExtractionStrategy` not applied when `cache_mode=ENABLED` | Root-caused, on-hold; fix PR #1866 in review |
+| #731 | `scroll_full_page`: only final DOM elements parsed in virtual-scroll pages | In-progress; multiple fix PRs (#1853, #1868, #1877) cycling |
+| #1837 | Docker API missing full `arun_many` config-list support | In-progress (PR #1852) |
+| #1878 | Docker API hook manager crashes for all user-provided hooks | Bug, Needs Triage (opened 2026-03-28) |
+| #1256 | Memory leak on repeated `/md` Docker requests — container crashes | Open question, Docker/macOS specific |
+| #1043 | Mermaid flowchart SVGs stripped during scraping | In-progress, root-caused (PR #1845 in review) |
+| #1452 | Docker API feature parity gap with Python SDK (v0.7.x+) | Under review |
+
+The virtual-scroll bug (#731) is the highest-impact open AI/ML issue for any use case involving social media or SPA-style sites — it causes partial data extraction when pages replace DOM nodes during scroll.
+
+### Roadmap / Announced Features
+
+Based on open PRs (not yet merged as of 2026-03-28) and documentation announcements:
+
+| Feature | Status | Notes |
+|---|---|---|
+| **nanollm** (replace litellm) | PR #1871 open | 108x code reduction (544K → 5K lines), 1 dep (httpx); same 4-function API; 355/356 regression tests pass |
+| **Token usage in `CrawlResult`** | PR #1874 open | `result.token_usage` dict with `prompt_tokens`, `completion_tokens`, `total_tokens` for LLMExtractionStrategy |
+| **Playwright launch param exposure** | PR #1876 open | `executable_path`, `ignore_default_args`, `skip_default_browser_args`, `skip_default_headers` on `BrowserConfig` |
+| **`--no-sandbox` configurability** | PR #1875 open | `BrowserConfig(no_sandbox=True/False)` — currently hardcoded |
+| **`arun_many` config-list in Docker API** | PR #1852 open | Per-URL `CrawlerRunConfig` list support exposed through Docker API |
+| **LLM extraction prompt caching** | PR #1873 open | Reorder extraction prompts for OpenAI/Anthropic prompt caching compatibility |
+| **Novita AI LLM provider** | PR #1847 open | Additional provider in LiteLLM bridge |
+| **Crawl4AI Cloud API** | Closed beta | "Drastically more cost-effective than existing alternatives" per docs; no public timeline |
+| **HTTPS preservation flag** | In CHANGELOG `[Unreleased]` section | `preserve_https_for_internal_links` opt-in flag; fully backward compatible |
+| **VNC streaming support** | PR #1124 open (since May 2025) | Real-time browser view during crawl; stalled |
+
+### Staleness Assessment
+
+**Release velocity:** 7 tagged releases in the 12 months prior to report date (v0.5.0.post1 through v0.8.5), with an average release cycle of 6–8 weeks. The gap between v0.8.0 (Jan 16) and v0.8.5 (Mar 18) was ~9 weeks with continuous commits throughout.
+
+**Community health:**
+- 62,782 stars / 6,402 forks as of 2026-03-28
+- 46 open issues (low for a project this size — indicates active triage)
+- `pushed_at` = 2026-03-25 (2 business days before this report)
+- Multiple contributors (hafezparast, umerkhan95, and others) merging fix PRs regularly alongside the core maintainer (`unclecode`)
+- Batch bug-fix pattern: maintainer accumulates 10–15 community PRs and merges them in coordinated batches every 2–3 weeks
+
+**Supply chain concern (active, March 2026):** The upstream `litellm` package on PyPI was subject to a supply chain compromise. The maintainer responded within hours by switching to a pinned private fork (`unclecode-litellm==1.81.13`). A longer-term replacement (`nanollm`) is in active review. This is a signal of security awareness but also of dependency risk inherent in the litellm bridge architecture.
+
+**Safe to depend on?** Yes, for the Python library. The project is actively maintained, has a real test suite (291 regression tests as of March 2026), and issues are triaged and fixed within days for critical bugs. The Docker API trails the Python SDK in feature parity (issue #1452) and has had more security gaps (hooks, URL validation). For production use: pin to a specific minor release (`crawl4ai==0.8.5`) and upgrade deliberately — don't float on `latest`.
