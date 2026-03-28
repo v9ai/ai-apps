@@ -1,6 +1,6 @@
 # Knowledge
 
-AI engineering educational platform — 87 lessons across 13 categories with search, audio, knowledge graphs, and learning analytics.
+AI engineering educational platform — 88 lessons across 13 categories with search, audio, knowledge graphs, and learning analytics.
 
 ## Stack
 
