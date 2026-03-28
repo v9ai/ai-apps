@@ -1,6 +1,7 @@
 "use client";
 
-import { Container, Heading, Text, Table, Badge, Button, Flex, Spinner } from "@radix-ui/themes";
+import { Container, Heading, Text, Table, Badge, Flex, Spinner } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import { PlusIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { useGetCompanyQuery, useGetEmailCampaignsQuery, useCreateDraftCampaignMutation } from "@/__generated__/hooks";
@@ -74,9 +75,9 @@ export function CampaignsClient({ companyKey }: { companyKey: string }) {
           </Heading>
           <Text size="2" color="gray">{campaigns.length} campaign(s)</Text>
         </div>
-        <Button onClick={handleCreate} disabled={creating}>
+        <button className={button({ variant: "ghost" })} onClick={handleCreate} disabled={creating}>
           <PlusIcon /> New Campaign
-        </Button>
+        </button>
       </Flex>
 
       {campaigns.length === 0 ? (

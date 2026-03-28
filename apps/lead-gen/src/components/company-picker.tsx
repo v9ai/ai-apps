@@ -3,13 +3,13 @@
 import { useState, useMemo, useCallback } from "react";
 import {
   Popover,
-  Button,
   Text,
   Flex,
   Box,
   Separator,
   ScrollArea,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   MagnifyingGlassIcon,
   PlusIcon,
@@ -97,9 +97,9 @@ export function CompanyPicker({
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger>
-        <Button variant="ghost" size="1" color="gray">
+        <button className={button({ variant: "ghost", size: "sm" })}>
           <Link2Icon /> Link Company
-        </Button>
+        </button>
       </Popover.Trigger>
       <Popover.Content
         side="bottom"
@@ -186,9 +186,8 @@ export function CompanyPicker({
           <>
             <Separator size="4" />
             <Box p="2">
-              <Button
-                variant="soft"
-                size="2"
+              <button
+                className={button({ variant: "ghost", size: "md" })}
                 style={{ width: "100%" }}
                 onClick={handleCreate}
                 disabled={creating}
@@ -197,7 +196,7 @@ export function CompanyPicker({
                 {creating
                   ? "Creating…"
                   : `Create "${createName}"`}
-              </Button>
+              </button>
               {error && (
                 <Text size="1" color="red" mt="1" as="div">
                   {error}

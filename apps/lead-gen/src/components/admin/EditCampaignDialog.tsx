@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Card,
   Dialog,
@@ -15,6 +14,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   Cross2Icon,
   ExclamationTriangleIcon,
@@ -179,9 +179,9 @@ export function EditCampaignDialog({
             <Heading size="5">Edit Campaign</Heading>
           </Dialog.Title>
           <Dialog.Close>
-            <Button variant="ghost" size="1">
+            <button className={button({ variant: "ghost", size: "sm" })}>
               <Cross2Icon />
-            </Button>
+            </button>
           </Dialog.Close>
         </Flex>
 
@@ -268,29 +268,26 @@ export function EditCampaignDialog({
                     }}
                   />
                 </Box>
-                <Button
-                  size="2"
-                  variant="soft"
+                <button
+                  className={button({ variant: "ghost", size: "md" })}
                   onClick={handleAddRecipient}
                   disabled={!recipientInput.trim()}
                 >
                   <PlusIcon />
-                </Button>
+                </button>
               </Flex>
               {recipients.length > 0 && (
                 <Flex gap="1" wrap="wrap" mt="2">
                   {recipients.map((email) => (
                     <Badge key={email} color="gray" variant="soft" size="2">
                       {email}
-                      <Button
-                        variant="ghost"
-                        size="1"
-                        color="gray"
+                      <button
+                        className={button({ variant: "ghost", size: "sm" })}
                         onClick={() => handleRemoveRecipient(email)}
                         style={{ marginLeft: 4, padding: 0 }}
                       >
                         <Cross2Icon />
-                      </Button>
+                      </button>
                     </Badge>
                   ))}
                 </Flex>
@@ -319,14 +316,13 @@ export function EditCampaignDialog({
                       size="2"
                     />
                   </Box>
-                  <Button
-                    size="2"
-                    variant="soft"
+                  <button
+                    className={button({ variant: "ghost", size: "md" })}
                     onClick={handleAddEmail}
                     disabled={!subjectInput.trim() || !bodyInput.trim()}
                   >
                     <PlusIcon />
-                  </Button>
+                  </button>
                 </Flex>
               </Flex>
               {emails.length > 0 && (
@@ -347,14 +343,12 @@ export function EditCampaignDialog({
                             {email.body.length > 100 ? "..." : ""}
                           </Text>
                         </Box>
-                        <Button
-                          variant="ghost"
-                          color="red"
-                          size="1"
+                        <button
+                          className={button({ variant: "ghost", size: "sm" })}
                           onClick={() => handleRemoveEmail(i)}
                         >
                           <Cross2Icon />
-                        </Button>
+                        </button>
                       </Flex>
                     </Card>
                   ))}
@@ -366,8 +360,8 @@ export function EditCampaignDialog({
             <Flex justify="between" mt="2">
               <Flex gap="2">
                 {data?.emailCampaign?.status === "draft" && (
-                  <Button
-                    color="green"
+                  <button
+                    className={button({ variant: "solidGreen" })}
                     onClick={handleLaunch}
                     disabled={launching}
                   >
@@ -378,22 +372,23 @@ export function EditCampaignDialog({
                     ) : (
                       "Launch Campaign"
                     )}
-                  </Button>
+                  </button>
                 )}
                 {(data?.emailCampaign?.status === "running" ||
                   data?.emailCampaign?.status === "pending") && (
-                  <Button color="red" variant="soft" onClick={handleStop}>
+                  <button className={button({ variant: "ghost" })} onClick={handleStop}>
                     <StopIcon /> Stop
-                  </Button>
+                  </button>
                 )}
               </Flex>
               <Flex gap="2">
                 <Dialog.Close>
-                  <Button variant="soft" color="gray">
+                  <button className={button({ variant: "ghost" })}>
                     Cancel
-                  </Button>
+                  </button>
                 </Dialog.Close>
-                <Button
+                <button
+                  className={button({ variant: "ghost" })}
                   onClick={handleSave}
                   disabled={updating || !campaignName.trim()}
                 >
@@ -406,7 +401,7 @@ export function EditCampaignDialog({
                       <Pencil1Icon /> Save
                     </>
                   )}
-                </Button>
+                </button>
               </Flex>
             </Flex>
           </Flex>

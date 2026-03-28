@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Popover, Button, TextField, ScrollArea, Text, Flex, Box } from "@radix-ui/themes";
+import { Popover, TextField, ScrollArea, Text, Flex, Box } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import { MagnifyingGlassIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 import { useGetCompaniesQuery } from "@/__generated__/hooks";
 
@@ -29,10 +30,10 @@ export function CompanySelect({ value, onChange, placeholder = "Select company..
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger>
-        <Button variant="outline" style={{ justifyContent: "space-between", width: "100%" }}>
+        <button className={button({ variant: "outline" })} style={{ justifyContent: "space-between", width: "100%" }}>
           <Text truncate>{selectedCompany?.name ?? placeholder}</Text>
           <ChevronDownIcon />
-        </Button>
+        </button>
       </Popover.Trigger>
       <Popover.Content style={{ width: "320px", padding: "8px" }}>
         <Flex direction="column" gap="2">

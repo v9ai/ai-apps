@@ -14,10 +14,10 @@ import {
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
+import { button } from "@/recipes/button";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Card,
   Code,
@@ -155,10 +155,10 @@ function GenerateEmailDialog({
   return (
     <Dialog.Root open={open} onOpenChange={handleOpen}>
       <Dialog.Trigger>
-        <Button size="2" variant="soft" color="gray">
+        <button className={button({ variant: "ghost", size: "md" })}>
           <MagicWandIcon />
           Draft email
-        </Button>
+        </button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="540px">
@@ -185,19 +185,19 @@ function GenerateEmailDialog({
             />
 
             <Flex gap="2">
-              <Button onClick={handleGenerate} loading={isStreaming} disabled={isStreaming}>
+              <button className={button({ variant: "ghost" })} onClick={handleGenerate} disabled={isStreaming}>
                 <MagicWandIcon />
                 {isStreaming ? "Generating…" : "Generate"}
-              </Button>
+              </button>
               {isStreaming && (
-                <Button variant="soft" color="red" onClick={stop}>
+                <button className={button({ variant: "ghost" })} onClick={stop}>
                   Stop
-                </Button>
+                </button>
               )}
               {content && !isStreaming && (
-                <Button variant="soft" color="gray" onClick={() => { reset(); setInstructions(""); }}>
+                <button className={button({ variant: "ghost" })} onClick={() => { reset(); setInstructions(""); }}>
                   Regenerate
-                </Button>
+                </button>
               )}
             </Flex>
 
@@ -243,12 +243,12 @@ function GenerateEmailDialog({
 
             <Flex justify="between" mt="2">
               <Dialog.Close>
-                <Button variant="soft" color="gray">Close</Button>
+                <button className={button({ variant: "ghost" })}>Close</button>
               </Dialog.Close>
               {content && !isStreaming && (
-                <Button onClick={handleProceedToEdit}>
+                <button className={button({ variant: "ghost" })} onClick={handleProceedToEdit}>
                   Edit & Send →
-                </Button>
+                </button>
               )}
             </Flex>
           </Flex>
@@ -294,28 +294,27 @@ function GenerateEmailDialog({
             )}
 
             <Flex justify="between" gap="2" wrap="wrap">
-              <Button variant="soft" color="gray" onClick={() => setStep("generate")}>
+              <button className={button({ variant: "ghost" })} onClick={() => setStep("generate")}>
                 ← Back
-              </Button>
+              </button>
               <Flex gap="2">
-                <Button variant="soft" color="gray" onClick={handleCopy}>
+                <button className={button({ variant: "ghost" })} onClick={handleCopy}>
                   <CopyIcon />
                   {copied ? "Copied!" : "Copy"}
-                </Button>
+                </button>
                 {hasEmail ? (
-                  <Button
-                    color="green"
+                  <button
+                    className={button({ variant: "solidGreen" })}
                     onClick={handleSend}
                     disabled={sending || !editSubject || !editBody}
-                    loading={sending}
                   >
                     <PaperPlaneIcon />
                     Send
-                  </Button>
+                  </button>
                 ) : (
-                  <Button disabled color="gray" variant="soft">
+                  <button className={button({ variant: "ghost" })} disabled>
                     No email address
-                  </Button>
+                  </button>
                 )}
               </Flex>
             </Flex>
@@ -415,10 +414,10 @@ function EditContactDialog({
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger>
-        <Button size="2" variant="soft">
+        <button className={button({ variant: "ghost", size: "md" })}>
           <Pencil1Icon />
           Edit
-        </Button>
+        </button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="480px">
@@ -537,13 +536,13 @@ function EditContactDialog({
 
         <Flex gap="3" mt="4" justify="end">
           <Dialog.Close>
-            <Button variant="soft" color="gray">
+            <button className={button({ variant: "ghost" })}>
               Cancel
-            </Button>
+            </button>
           </Dialog.Close>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <button className={button({ variant: "ghost" })} onClick={handleSubmit} disabled={loading}>
             {loading ? "Saving…" : "Save changes"}
-          </Button>
+          </button>
         </Flex>
       </Dialog.Content>
     </Dialog.Root>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Badge, Button, DropdownMenu, Flex, Text } from "@radix-ui/themes";
+import { Badge, DropdownMenu, Flex, Text } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { sourceFilterDesktop, sourceFilterMobile } from "./source-filter.css";
 
@@ -100,14 +101,13 @@ function SourceFilterDropdown({ selected, onChange }: SourceFilterProps) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
-        <Button
-          variant="outline"
-          size="1"
+        <button
+          className={button({ variant: "outline", size: "sm" })}
           aria-label={`Filter by source. Currently: ${label}`}
         >
           {label}
           <ChevronDownIcon />
-        </Button>
+        </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>
         <DropdownMenu.Label>Job sources</DropdownMenu.Label>

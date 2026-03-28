@@ -11,10 +11,10 @@ import { ADMIN_EMAIL } from "@/lib/constants";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
 import { ComposeFromLinkedIn } from "@/components/admin/ComposeFromLinkedIn";
 import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
+import { button } from "@/recipes/button";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Checkbox,
   Code,
@@ -231,27 +231,26 @@ function InlineCompose({
               </Box>
 
               <Flex gap="2">
-                <Button
+                <button
+                  className={button({ variant: "ghost" })}
                   onClick={handleGenerate}
-                  loading={isStreaming}
                   disabled={isStreaming}
                 >
                   <MagicWandIcon />
                   {isStreaming ? "Generating..." : "Generate Email"}
-                </Button>
+                </button>
                 {isStreaming && (
-                  <Button variant="soft" color="red" onClick={stop}>
+                  <button className={button({ variant: "ghost" })} onClick={stop}>
                     Stop
-                  </Button>
+                  </button>
                 )}
                 {content && !isStreaming && (
-                  <Button
-                    variant="soft"
-                    color="gray"
+                  <button
+                    className={button({ variant: "ghost" })}
                     onClick={() => resetStream()}
                   >
                     Regenerate
-                  </Button>
+                  </button>
                 )}
               </Flex>
 
@@ -329,7 +328,7 @@ function InlineCompose({
                   </Flex>
 
                   <Flex justify="end">
-                    <Button onClick={handleProceedToEdit}>Edit & Send</Button>
+                    <button className={button({ variant: "ghost" })} onClick={handleProceedToEdit}>Edit & Send</button>
                   </Flex>
                 </>
               )}
@@ -398,26 +397,25 @@ function InlineCompose({
           )}
 
           <Flex gap="2" justify="between">
-            <Button
-              variant="soft"
-              color="gray"
+            <button
+              className={button({ variant: "ghost" })}
               onClick={() => setStep("select")}
             >
               Back
-            </Button>
+            </button>
             <Flex gap="2">
-              <Button variant="soft" onClick={handleCopy}>
+              <button className={button({ variant: "ghost" })} onClick={handleCopy}>
                 {copied ? <CheckIcon /> : <CopyIcon />}
                 {copied ? "Copied" : "Copy"}
-              </Button>
-              <Button
+              </button>
+              <button
+                className={button({ variant: "ghost" })}
                 onClick={handleSend}
-                loading={sending}
                 disabled={sending || !editSubject || !editBody}
               >
                 <PaperPlaneIcon />
                 Send
-              </Button>
+              </button>
             </Flex>
           </Flex>
         </>
@@ -441,9 +439,9 @@ function InlineCompose({
             </Callout.Text>
           </Callout.Root>
 
-          <Button variant="soft" onClick={handleReset}>
+          <button className={button({ variant: "ghost" })} onClick={handleReset}>
             Compose Another
-          </Button>
+          </button>
         </>
       )}
     </Flex>

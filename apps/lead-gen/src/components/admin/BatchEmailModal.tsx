@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Checkbox,
   Dialog,
@@ -17,6 +16,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   CalendarIcon,
   CheckCircledIcon,
@@ -199,9 +199,9 @@ export function BatchEmailModal({
             <Heading size="5">Send Batch Email</Heading>
           </Dialog.Title>
           <Dialog.Close>
-            <Button variant="ghost" size="1" aria-label="Close">
+            <button className={button({ variant: "ghost", size: "sm" })} aria-label="Close">
               <Cross2Icon />
-            </Button>
+            </button>
           </Dialog.Close>
         </Flex>
 
@@ -219,14 +219,13 @@ export function BatchEmailModal({
                     {recipients.length === 1 ? "" : "s"}
                   </Badge>
                 </Flex>
-                <Button
-                  variant="ghost"
-                  size="1"
+                <button
+                  className={button({ variant: "ghost", size: "sm" })}
                   onClick={() => setShowRecipients(!showRecipients)}
                 >
                   {showRecipients ? <ChevronUpIcon /> : <ChevronDownIcon />}
                   {showRecipients ? "Hide" : "Preview"}
-                </Button>
+                </button>
               </Flex>
 
               {showRecipients && (
@@ -294,9 +293,8 @@ export function BatchEmailModal({
                   rows={3}
                   size="2"
                 />
-                <Button
-                  variant="soft"
-                  color="violet"
+                <button
+                  className={button({ variant: "ghost" })}
                   disabled={generating || state !== "compose"}
                   onClick={() => void handleGenerate()}
                 >
@@ -311,7 +309,7 @@ export function BatchEmailModal({
                       Generate subject &amp; body
                     </>
                   )}
-                </Button>
+                </button>
                 {genError !== null && (
                   <Callout.Root color="red" size="1">
                     <Callout.Icon>
@@ -449,15 +447,15 @@ export function BatchEmailModal({
 
             <Flex justify="end" gap="3" mt="2">
               <Dialog.Close>
-                <Button variant="soft" color="gray">
+                <button className={button({ variant: "ghost" })}>
                   Cancel
-                </Button>
+                </button>
               </Dialog.Close>
-              <Button disabled={!canSend} onClick={handleSend} variant="solid">
+              <button className={button({})} disabled={!canSend} onClick={handleSend}>
                 <PaperPlaneIcon />
                 {useScheduler ? "Schedule" : "Send"} to {recipients.length}{" "}
                 recipient{recipients.length === 1 ? "" : "s"}
-              </Button>
+              </button>
             </Flex>
           </Flex>
         )}

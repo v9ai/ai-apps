@@ -22,7 +22,7 @@ pub enum Phase {
     Bottleneck,
     /// Verticals fully covered — expand or deepen
     Saturated,
-    /// QA < 0.7 or bounce > 15% — halt outreach, run cleanup
+    /// QA < 0.7 or bounce > 15% — halt outreach, run enrich+contacts+qa to recover
     Degraded,
 }
 
@@ -265,7 +265,7 @@ pub fn assess(ctx: &TeamContext) -> Result<ActionPlan> {
             }
         }
         Phase::Saturated => (false, false, false, true, true),
-        Phase::Degraded => (false, false, false, true, false),
+        Phase::Degraded => (false, true, true, true, false),
     };
 
     Ok(ActionPlan {

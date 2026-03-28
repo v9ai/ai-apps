@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
-  Button,
   Callout,
   Checkbox,
   Dialog,
@@ -15,6 +14,7 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   PaperPlaneIcon,
   MagicWandIcon,
@@ -159,9 +159,9 @@ export function ReplyForm({ originalEmail, onSuccess }: ReplyFormProps) {
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger>
-        <Button color="gray" highContrast>
+        <button className={button({ variant: "ghost" })}>
           <PaperPlaneIcon /> Reply
-        </Button>
+        </button>
       </Dialog.Trigger>
 
       <Dialog.Content
@@ -175,9 +175,9 @@ export function ReplyForm({ originalEmail, onSuccess }: ReplyFormProps) {
             </Text>
           </Dialog.Title>
           <Dialog.Close>
-            <Button variant="ghost" size="1" aria-label="Close">
+            <button className={button({ variant: "ghost", size: "sm" })} aria-label="Close">
               <Cross2Icon />
-            </Button>
+            </button>
           </Dialog.Close>
         </Flex>
 
@@ -272,9 +272,8 @@ export function ReplyForm({ originalEmail, onSuccess }: ReplyFormProps) {
             />
           </Box>
 
-          <Button
-            variant="soft"
-            color="violet"
+          <button
+            className={button({ variant: "ghost" })}
             onClick={handleGenerate}
             disabled={generating}
           >
@@ -287,7 +286,7 @@ export function ReplyForm({ originalEmail, onSuccess }: ReplyFormProps) {
                 <MagicWandIcon /> Generate AI Reply
               </>
             )}
-          </Button>
+          </button>
 
           <Box>
             <Text size="2" weight="medium" mb="1">
@@ -327,13 +326,12 @@ export function ReplyForm({ originalEmail, onSuccess }: ReplyFormProps) {
 
           <Flex justify="end" gap="3">
             <Dialog.Close>
-              <Button variant="soft" color="gray" disabled={sending}>
+              <button className={button({ variant: "ghost" })} disabled={sending}>
                 Cancel
-              </Button>
+              </button>
             </Dialog.Close>
-            <Button
-              color="gray"
-              highContrast
+            <button
+              className={button({ variant: "ghost" })}
               onClick={handleSend}
               disabled={sending || !message.trim()}
             >
@@ -346,7 +344,7 @@ export function ReplyForm({ originalEmail, onSuccess }: ReplyFormProps) {
                   <PaperPlaneIcon /> Send Reply
                 </>
               )}
-            </Button>
+            </button>
           </Flex>
         </Flex>
       </Dialog.Content>

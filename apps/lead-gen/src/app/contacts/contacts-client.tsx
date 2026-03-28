@@ -7,10 +7,10 @@ import type { GetContactsQuery } from "@/__generated__/hooks";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
+import { button } from "@/recipes/button";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Card,
   Container,
@@ -128,29 +128,25 @@ export function ContactsClient() {
         {/* Pagination */}
         {totalPages > 1 && (
           <Flex justify="center" align="center" gap="3">
-            <Button
-              size="2"
-              variant="soft"
-              color="gray"
+            <button
+              className={button({ variant: "ghost", size: "md" })}
               disabled={page === 0}
               onClick={() => setPage((p) => p - 1)}
             >
               <ChevronLeftIcon />
               Previous
-            </Button>
+            </button>
             <Text size="2" color="gray">
               Page {page + 1} of {totalPages}
             </Text>
-            <Button
-              size="2"
-              variant="soft"
-              color="gray"
+            <button
+              className={button({ variant: "ghost", size: "md" })}
               disabled={page >= totalPages - 1}
               onClick={() => setPage((p) => p + 1)}
             >
               Next
               <ChevronRightIcon />
-            </Button>
+            </button>
           </Flex>
         )}
       </Flex>

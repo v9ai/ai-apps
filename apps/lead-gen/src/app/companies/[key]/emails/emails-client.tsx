@@ -14,10 +14,10 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
+import { button } from "@/recipes/button";
 import {
   Badge,
   Box,
-  Button,
   Callout,
   Card,
   Container,
@@ -328,26 +328,22 @@ function EmailDetailDialog({
               <>
                 <Separator size="4" />
                 <Flex gap="2" wrap="wrap">
-                  <Button
-                    size="1"
-                    variant="soft"
-                    color="green"
+                  <button
+                    className={button({ variant: "ghost", size: "sm" })}
                     onClick={handleSendNow}
                     disabled={sendingNow || cancellingEmail}
                   >
                     {sendingNow ? <Spinner size="1" /> : null}
                     Send Now
-                  </Button>
-                  <Button
-                    size="1"
-                    variant="soft"
-                    color="red"
+                  </button>
+                  <button
+                    className={button({ variant: "ghost", size: "sm" })}
                     onClick={handleCancelEmail}
                     disabled={sendingNow || cancellingEmail}
                   >
                     {cancellingEmail ? <Spinner size="1" /> : null}
                     Cancel
-                  </Button>
+                  </button>
                 </Flex>
               </>
             )}
@@ -379,9 +375,9 @@ function EmailDetailDialog({
 
         <Flex justify="end" mt="4">
           <Dialog.Close>
-            <Button variant="soft" color="gray">
+            <button className={button({ variant: "ghost" })}>
               Close
-            </Button>
+            </button>
           </Dialog.Close>
         </Flex>
       </Dialog.Content>
@@ -427,10 +423,10 @@ function CancelAllDialog({
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger>
-        <Button variant="soft" color="red" size="1">
+        <button className={button({ variant: "ghost", size: "sm" })}>
           <TrashIcon />
           Cancel Scheduled
-        </Button>
+        </button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="420px">
@@ -459,20 +455,19 @@ function CancelAllDialog({
 
         <Flex gap="2" justify="end" mt="4">
           <Dialog.Close>
-            <Button variant="soft" color="gray" disabled={loading}>
+            <button className={button({ variant: "ghost" })} disabled={loading}>
               {result ? "Close" : "Cancel"}
-            </Button>
+            </button>
           </Dialog.Close>
           {!result && (
-            <Button
-              variant="solid"
-              color="red"
+            <button
+              className={button({ variant: "solid" })}
               onClick={handleConfirm}
               disabled={loading}
             >
               {loading ? <Spinner size="1" /> : null}
               Confirm Cancel All
-            </Button>
+            </button>
           )}
         </Flex>
       </Dialog.Content>
@@ -631,48 +626,41 @@ export function CompanyEmailsClient({
           </Text>
           <Link
             href={`/companies/${companyKey}/emails/create`}
-            style={{ textDecoration: "none" }}
+            className={button({ variant: "ghost", size: "sm" })}
           >
-            <Button variant="soft" size="1">
-              <PlusIcon />
-              Compose
-            </Button>
+            <PlusIcon />
+            Compose
           </Link>
-          <Button
-            variant="soft"
-            size="1"
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={handleSyncResend}
             disabled={syncing}
           >
             {syncing ? <Spinner size="1" /> : <UpdateIcon />}
             Sync Resend
-          </Button>
+          </button>
           {scheduledCount > 0 && (
             <CancelAllDialog
               companyId={company.id}
               onRefetch={() => void refetchEmails()}
             />
           )}
-          <Button
-            variant="soft"
-            color="violet"
-            size="1"
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={() => setGenerateBatchOpen(true)}
             disabled={generateBatchContacts.length === 0}
           >
             <MagicWandIcon />
             Generate & Send ({generateBatchContacts.length})
-          </Button>
-          <Button
-            variant="soft"
-            color="indigo"
-            size="1"
+          </button>
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={() => setBatchEmailOpen(true)}
             disabled={batchEmailRecipients.length === 0}
           >
             <PaperPlaneIcon />
             Send Batch ({batchEmailRecipients.length})
-          </Button>
+          </button>
         </Flex>
 
         {/* Sync result feedback */}
@@ -727,15 +715,13 @@ export function CompanyEmailsClient({
                   <Select.Item value="sent">Sent</Select.Item>
                 </Select.Content>
               </Select.Root>
-              <Button
-                variant="ghost"
-                color="gray"
-                size="1"
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
                 onClick={() => refetchEmails()}
               >
                 <ReloadIcon />
                 Refresh
-              </Button>
+              </button>
               {statusFilter !== "all" && (
                 <Text size="1" color="gray">
                   {filteredEmails.length} of {companyEmails.length}

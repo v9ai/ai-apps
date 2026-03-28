@@ -31,7 +31,7 @@ export function AuthHeader() {
         />
         <AuthDialog
           trigger={
-            <Button variant="primary" size="sm" style={{ width: "100%" }}>
+            <Button variant="solid" size="sm" style={{ width: "100%" }}>
               sign up
             </Button>
           }

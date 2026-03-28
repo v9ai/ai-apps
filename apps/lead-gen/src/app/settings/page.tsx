@@ -8,11 +8,11 @@ import {
   Flex,
   Card,
   TextField,
-  Button,
   Badge,
   Dialog,
   Callout,
 } from "@radix-ui/themes";
+import { button } from "@/recipes/button";
 import {
   InfoCircledIcon,
   Cross2Icon,
@@ -170,8 +170,8 @@ function SettingsPageContent() {
         <Flex direction="column" gap="4">
           <Heading size="8">Settings</Heading>
           <Text>You must be signed in to access settings.</Text>
-          <Link href="/">
-            <Button>Go to Home</Button>
+          <Link href="/" className={button({ variant: "solid" })}>
+            Go to Home
           </Link>
         </Flex>
       </Container>
@@ -253,17 +253,17 @@ function SettingsPageContent() {
             </Flex>
           )}
 
-          <Button variant="soft" color="gray" onClick={handleCancel}>
+          <button className={button({ variant: "ghost" })} onClick={handleCancel}>
             Cancel
-          </Button>
+          </button>
 
-          <Button
+          <button
+            className={button({ variant: "solid" })}
             onClick={handleSave}
             disabled={updateLoading || !hasUnsavedChanges()}
-            loading={updateLoading}
           >
             {saveStatus === "saving" ? "Saving..." : "Save"}
-          </Button>
+          </button>
 
           {hasUnsavedChanges() && saveStatus === "idle" && (
             <Text size="1" color="gray">⌘↵ to save</Text>
@@ -280,11 +280,11 @@ function SettingsPageContent() {
           </Dialog.Description>
           <Flex gap="3" mt="4" justify="end">
             <Dialog.Close>
-              <Button variant="soft" color="gray">Keep editing</Button>
+              <button className={button({ variant: "ghost" })}>Keep editing</button>
             </Dialog.Close>
-            <Button variant="solid" color="red" onClick={handleDiscard}>
+            <button className={button({ variant: "solid" })} onClick={handleDiscard}>
               Discard changes
-            </Button>
+            </button>
           </Flex>
         </Dialog.Content>
       </Dialog.Root>
