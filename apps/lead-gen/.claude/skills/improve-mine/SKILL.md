@@ -127,7 +127,7 @@ Write a pipeline health report to `~/.claude/state/pipeline-health.json`:
       "total_sources": N,
       "healthy": N,
       "unhealthy": N,
-      "by_platform": { "greenhouse": N, "ashby": N, "lever": N },
+      "by_platform": { "ashby": N, "workable": N },
       "stale_sources": ["list of sources not synced in 24h+"]
     },
     "classification_funnel": {
