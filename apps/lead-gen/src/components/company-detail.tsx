@@ -303,6 +303,8 @@ type KeyFactsCardProps = {
   score?: number | null;
   careerPagesCount?: number | null;
   isAdmin?: boolean;
+  industry?: string | null;
+  updatedAt?: string | null;
 };
 
 function KeyFactsCard({
@@ -310,6 +312,8 @@ function KeyFactsCard({
   score,
   careerPagesCount,
   isAdmin = false,
+  industry,
+  updatedAt,
 }: KeyFactsCardProps) {
   const linkedinHref = useMemo(
     () => coerceExternalUrl(linkedinUrl),
@@ -320,6 +324,14 @@ function KeyFactsCard({
     label: string;
     value: React.ReactNode;
   }> = [
+    ...(industry
+      ? [
+          {
+            label: "Industry",
+            value: <Text size="2">{industry}</Text>,
+          },
+        ]
+      : []),
     {
       label: "LinkedIn",
       value: linkedinHref ? (
@@ -368,6 +380,22 @@ function KeyFactsCard({
         </Text>
       ),
     },
+    ...(updatedAt
+      ? [
+          {
+            label: "Updated",
+            value: (
+              <Text size="2" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {new Date(updatedAt).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </Text>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -1034,7 +1062,17 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   if (loading) {
     return (
       <Container size="3" p={{ initial: "4", md: "6" }}>
-        <Text color="gray">Loading company details…</Text>
+        <Flex direction="column" gap="4">
+          <Flex gap="4" align="center">
+            <Skeleton width="52px" height="52px" style={{ borderRadius: "50%" }} />
+            <Flex direction="column" gap="2" style={{ flex: 1 }}>
+              <Skeleton height="28px" width="60%" />
+              <Skeleton height="16px" width="40%" />
+            </Flex>
+          </Flex>
+          <Skeleton height="120px" />
+          <Skeleton height="80px" />
+        </Flex>
       </Container>
     );
   }
@@ -1229,15 +1267,28 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               </Button>
             )}
             {isAdmin && (
-              <Button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                color="red"
-                variant="soft"
-              >
-                <TrashIcon />
-                {isDeleting ? "Deleting…" : "Delete"}
-              </Button>
+              <AlertDialog.Root>
+                <AlertDialog.Trigger>
+                  <Button color="red" variant="soft" disabled={isDeleting}>
+                    <TrashIcon />
+                    {isDeleting ? "Deleting…" : "Delete"}
+                  </Button>
+                </AlertDialog.Trigger>
+                <AlertDialog.Content maxWidth="400px">
+                  <AlertDialog.Title>Delete company</AlertDialog.Title>
+                  <AlertDialog.Description size="2">
+                    Are you sure you want to delete <Strong>{company.name}</Strong>? This action cannot be undone.
+                  </AlertDialog.Description>
+                  <Flex gap="3" mt="4" justify="end">
+                    <AlertDialog.Cancel>
+                      <Button variant="soft" color="gray">Cancel</Button>
+                    </AlertDialog.Cancel>
+                    <AlertDialog.Action>
+                      <Button color="red" onClick={handleDelete}>Delete</Button>
+                    </AlertDialog.Action>
+                  </Flex>
+                </AlertDialog.Content>
+              </AlertDialog.Root>
             )}
           </Flex>
         </Flex>
@@ -1317,6 +1368,8 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                         score={company.score}
                         careerPagesCount={company.ats_boards?.length ?? 0}
                         isAdmin={isAdmin}
+                        industry={company.industry}
+                        updatedAt={company.updated_at}
                       />
 
                       {company.industries?.length ? (
@@ -1361,8 +1414,8 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                           <Box key={board.id}>
                             <Flex align="center" justify="between" gap="3" wrap="wrap">
                               <Flex gap="2" wrap="wrap" align="center">
-                                <Chip>{board.vendor}</Chip>
-                                <Chip>{board.board_type}</Chip>
+                                <Badge color={ATS_VENDOR_COLORS[board.vendor ?? ''] ?? 'gray'} variant="soft" radius="full">{board.vendor}</Badge>
+                                <Badge color="gray" variant="outline" radius="full">{board.board_type}</Badge>
                                 {confidence !== null && isAdmin ? (
                                   <Badge color="gray" variant="outline">
                                     {confidence}% confidence
@@ -1373,6 +1426,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                                 ) : (
                                   <Badge color="gray" variant="soft">inactive</Badge>
                                 )}
+                                {board.last_seen_at ? <Text size="1" color="gray">Last seen {new Date(board.last_seen_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</Text> : null}
                               </Flex>
                               <RadixLink
                                 href={boardHref}
@@ -1390,7 +1444,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                                 }}
                                 title={boardHref}
                               >
-                                {prettyUrl(boardHref)}
+                                {(() => { const p = prettyUrl(boardHref); return p.length > 40 ? p.slice(0, 40) + '…' : p; })()}
                                 <ExternalLinkIcon />
                               </RadixLink>
                             </Flex>
@@ -1448,9 +1502,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   <SectionCard title="Score breakdown">
                     <Flex direction="column" gap="2">
                       {company.score_reasons.map((reason: string, idx: number) => (
-                        <Text key={`${idx}-${reason}`} size="2" color="gray">
-                          • {reason}
-                        </Text>
+                        <Box key={`${idx}-${reason}`} style={{ padding: '6px 10px', borderRadius: 'var(--radius-2)', background: 'var(--gray-2)', marginBottom: 4 }}><Text size="2" color="gray">{reason}</Text></Box>
                       ))}
                     </Flex>
                   </SectionCard>
