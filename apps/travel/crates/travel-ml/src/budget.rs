@@ -151,6 +151,7 @@ pub fn is_kid_friendly(kid_score: f32) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::FAMILY_BUDGET_EUR;
 
     #[test]
     fn budget_plan_totals_correctly() {
