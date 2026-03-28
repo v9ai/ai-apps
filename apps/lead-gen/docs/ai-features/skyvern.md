@@ -969,3 +969,162 @@ WebVoyager (643 tasks, 15 sites) is considered a relatively easy benchmark by 20
 - WebArena (sandboxed, complex multi-step): human baseline ~78%; GPT-4 agents initially ~14%; no published Skyvern score on WebArena as of March 2026
 
 **Academic gap:** Skyvern has not published a peer-reviewed paper. The 85.85% benchmark claim is from a blog post / YC launch post, with all tests run in Skyvern Cloud (their own infrastructure) rather than a standardized evaluation environment. Independent replication has not been published.
+
+---
+
+## 12. Recency & Changelog
+
+### Latest Release
+
+**v1.0.28 — 2026-03-25**
+
+Key changes in the last release cycle (v1.0.24 through v1.0.28, spanning 2026-03-13 to 2026-03-25):
+
+- `execution_mode` tristate introduced: `code` (always run cached Playwright script), `code_generation` (generate script, skip agent execution), `agent` (classic LLM-every-step loop). The `run_with` field is now non-nullable and defaults to `agent`. This formalizes Code 2.0 as a first-class execution mode rather than a feature flag.
+- `adaptive_caching` was removed and replaced by `code_version` throughout the codebase (PR #5227). The naming shift is significant: the feature is no longer framed as "caching" but as a distinct execution mode.
+- MCP server expanded significantly: drag, file upload, async evaluation, Playwright-parity inspection tools (console log, network events, dialog events), script/caching visibility tools, tool annotations for Claude Desktop (PR #5225, #5229, #5243).
+- Custom Credential Service UI shipped: external secrets vaults can now be connected via the cloud settings panel (PR #5240).
+- Full-stack Docker local dev environment added (PR #5249).
+- `failure_category` field added to tasks and workflow runs for structured error taxonomy (PR #5254).
+- Agent-aware CLI shipped: `--json` envelope, TTY detection, capability flags (PR #5271).
+- `add use_in_memory_db` to `Skyvern.local()` for lightweight in-process testing (PR #5260).
+
+Prior release cycle highlights (v1.0.22 to v1.0.23, 2026-02-26 to 2026-03-02):
+
+- Gemini 3 Pro consolidated into version-agnostic `VERTEX_GEMINI_3_PRO` key.
+- Adaptive caching extended to for-loops and conditional blocks (PRs #4922, #4931).
+- MCP remote hosting deployed at `/mcp` on the existing API service (PR #4843 shipped 2026-02-22).
+- `OPENAI_COMPATIBLE` endpoint added with GitHub Copilot example (PR #3993 merged 2026-02-13).
+- MCP tool response token usage reduced by ~93% via compact response format (PR #4963, merged 2026-03-04).
+
+Release cadence: **daily to multiple-times-per-week** throughout 2026 Q1. The v1.x series launched 2025-11-15 (v1.0.0) and has reached v1.0.28 in under five months.
+
+### TaskV2 Status
+
+**Production / GA — not experimental.**
+
+TaskV2 (previously called `ObserverTask`, renamed in a 10-part refactor completed mid-2025) is the default execution path for all tasks created with `engine: "skyvern_v2"`. Evidence from the repo as of 2026-03-28:
+
+- `MAX_STEPS_PER_TASK_V2 = 25` and `MAX_ITERATIONS_PER_TASK_V2 = 10` are stable config constants — no "experimental" or "beta" annotations.
+- The `run_type: "task_v2"` appears in webhook payloads as the normal string for task runs.
+- PR #5252 ([SKY-8569], merged 2026-03-26) is a routine bug fix: "Fix task_v2 workflow runs missing HAR and browser console log artifacts." This is maintenance activity, not a beta stabilization signal.
+- The `task_v2.j2` Jinja2 prompt template is one of the 79 production prompt files and has been in stable use since the 2.0 blog post (January 2025).
+
+No architectural changes to TaskV2 were made in the last 90 days. The active development focus has shifted to Code 2.0 (cached Playwright script execution) rather than TaskV2 improvements.
+
+**Performance improvements since GA:** No new published accuracy numbers. The 85.85% WebVoyager score (using GPT-4o + GPT-4o-mini) from January 2025 remains the only public benchmark figure for TaskV2.
+
+### New Model Support
+
+Models added since January 2026:
+
+| Model | Date merged | Notes |
+|---|---|---|
+| Anthropic Claude Opus 4.6 (CUA mode) | 2026-02-18 | PR #4780 — also added to webbench eval (#4777, #4778). Temperature set to 1 (PR #4784). |
+| Gemini 3.1 Pro | 2026-02-23 | PR #4847 — direct API + Vertex AI, `thinking_level` support, router fallback config with GPT-5. |
+| Inception Mercury-2 | 2026-02-23 | PR #4847 — OpenAI-compatible endpoint at `api.inceptionlabs.ai/v1`, 128k max completion tokens, new `ENABLE_INCEPTION` / `INCEPTION_API_KEY` settings. |
+| GPT-5.4 | 2026-03-07 | PR #5010. |
+| Gemini 3.0 Flash | 2026-02-12 | PR #4687 — with docker-compose.yml updates. |
+| GPT-5 Mini Flex | 2026-02-11 | PR #4686 — added to model selector. |
+| Claude Opus 4.5, Sonnet 4.5, Haiku 4.5 | Before Jan 2026 | Already present in config.py as of the report date. |
+| Claude Opus 4.6 | Present in config.py | `BEDROCK_ANTHROPIC_CLAUDE4.6_OPUS` + `ANTHROPIC_CLAUDE4.6_OPUS` registered with temperature=1. |
+
+The full model list in `config.py` as of 2026-03-28 includes: GPT-4.1, GPT-5, GPT-5.2, GPT-5.4, GPT-5 Mini, o3, o4-mini (OpenAI/Azure); Claude 4 Opus/Sonnet/Haiku, Claude 4.5 Opus/Sonnet/Haiku, Claude 4.6 Opus (Anthropic/Bedrock); Gemini 2.5 Pro/Flash/Flash-Lite, Gemini 3.0 Flash, Gemini 3 Pro, Gemini 3.1 Pro (Google/Vertex); Inception Mercury-2. All routing is via LiteLLM.
+
+### Benchmark Updates
+
+No new eval results have been published since the WebBench blog post (May 2025) and the WebVoyager 85.85% report (January 2025).
+
+**Current published numbers:**
+
+| Benchmark | Score | Date | Notes |
+|---|---|---|---|
+| WebVoyager (643 tasks, 15 sites) | 85.85% | Jan 2025 | GPT-4o + GPT-4o-mini on Skyvern Cloud; Skyvern 2.0 architecture |
+| WebBench (5,750 tasks, 452 sites) | 64.4% overall; best on WRITE tasks | May 2025 | Against Anthropic Sonnet 3.7 CUA, Browser-use, OpenAI Operator |
+
+**Context for 2026:**
+
+- Anthropic Sonnet 3.7 CUA outperforms Skyvern 2.0 on WebBench overall; Skyvern 2.0 leads specifically on WRITE tasks (forms, logins, file downloads).
+- No WebArena score has been published for Skyvern. WebArena remains the most rigorous sandboxed benchmark; the absence of a published number here is notable.
+- Claude Opus 4.6 was added to the webbench evaluation harness (PR #4777) in February 2026, but no updated benchmark results from those runs have been published yet.
+- Magnitude's open-source agent reportedly achieves 94% on WebVoyager, making Skyvern's 85.85% no longer state-of-the-art on that benchmark as of early 2026.
+
+**Assessment:** Skyvern's public benchmark posture is approximately 12 months stale. The WebBench 64.4% from May 2025 is the most credible number for real-world comparison, and even that predates the model additions (Claude Opus 4.6, Gemini 3.1 Pro, Inception Mercury-2, GPT-5.4) that have shipped since. Internally they are running webbench evals (the harness is maintained in the repo) but results are not being published.
+
+### Cost Optimization Updates
+
+**HTML element format:** Already shipped before this report date. The blog-post A/B test (-11.4% cost, +3.9% success rate via HTML vs. JSON element format) was the published result; the feature is in production. No further cost-oriented format changes were found in the last 90 days.
+
+**MCP tool response token reduction (~93%):** Shipped 2026-03-04, PR #4963 (merged into v1.0.24). This reduces the token cost of using Skyvern via MCP — the response payload returned to the calling LLM is now compact rather than verbose. Not a per-task inference cost reduction, but reduces cost for MCP-orchestrated workflows where a Claude or GPT-4 client is consuming tool responses.
+
+**Code 2.0 / cached script execution:** The primary cost optimization strategy in active development. After the first successful LLM-agent run of a workflow, a Playwright script is generated and cached. Subsequent runs execute the cached script directly (zero LLM calls for happy-path execution), with the LLM agent as fallback only on failure. This is a fundamentally different cost model from the per-step LLM loop — it trades generation cost on first run for zero marginal cost on repeat runs. The `code_version` field and the `execution_mode: code` setting are the production interface for this. Conditional block and for-loop support for cached scripts shipped in Q1 2026 (PRs #4922, #4931, #5248).
+
+**No hard cost cap per task:** Still the case as of v1.0.28. Runaway tasks can accumulate steps indefinitely up to `MAX_STEPS_PER_TASK_V2 = 25`.
+
+### Recent Commits (last 90 days)
+
+Significant commits from 2026-01-01 to 2026-03-28, extracted from the release notes and commit log:
+
+| Date | SHA | Description |
+|---|---|---|
+| 2026-03-28 | `5aa1f2fb` | Improve error messages for custom credential service failures |
+| 2026-03-28 | `c91cd98d` | Repository Design Pattern (#SKY-8139) — DB layer refactor |
+| 2026-03-27 | `951f7567` | Agent-aware CLI with --json envelope, TTY detection, capabilities |
+| 2026-03-27 | `dc29abbf` | Error code mapping in TaskBlock with unit tests |
+| 2026-03-26 | `9d9ae67f` | Add `failure_category` to tasks and workflow runs (SKY-8469) |
+| 2026-03-26 | `78e35dfd` | Fix task_v2 workflow runs missing HAR + console log artifacts |
+| 2026-03-26 | `fca0fb45` | Refine `execution_mode`: code vs code_generation vs agent |
+| 2026-03-26 | `3cfea462` | Add full-stack Docker local dev environment |
+| 2026-03-25 | `4d04d8eb` | Replace `adaptive_caching` with `code_version`, remove code_v2 flag |
+| 2026-03-25 | `3a6a67ee` | MCP inspection tools: console, network, dialog (PR1 of Playwright parity) |
+| 2026-03-25 | `a48d2cff` | MCP drag, file upload, evaluate async, tool annotations |
+| 2026-03-25 | `e4fd3427` | Full documentation redesign |
+| 2026-03-24 | `86a4f6aa` | CDP screencast streaming + interactive input for local mode |
+| 2026-03-13 | — | v1.0.24: Add qa_test MCP prompt for diff-driven browser QA testing |
+| 2026-03-11 | — | Default MCP-created workflows to Code 2.0 (PR #5050) |
+| 2026-03-07 | — | Add GPT-5.4 support (PR #5010) |
+| 2026-03-04 | — | Reduce MCP tool response token usage by ~93% (PR #4963) |
+| 2026-03-04 | — | Fix Claude Desktop MCP setup: use stdio transport (PR #4965) |
+| 2026-02-28 | — | Consolidate Gemini 3 Pro into version-agnostic VERTEX_GEMINI_3_PRO |
+| 2026-02-23 | — | Add Gemini 3.1 Pro and Inception Mercury-2 model support (PR #4847) |
+| 2026-02-22 | — | Mount MCP remote server on existing API service at /mcp (PR #4843) |
+| 2026-02-18 | — | Support Claude Opus 4.6 CUA (PR #4780); add to webbench (PR #4777) |
+| 2026-02-13 | — | Add MCP prompt skills for workflow design, debugging, extraction (PR #4739) |
+| 2026-02-12 | — | Add GEMINI_3.0_FLASH support (PR #4687) |
+| 2026-02-12 | — | Deprecate 'task' block type in MCP — steer toward navigation/extraction (PR #4706) |
+| 2026-02-11 | — | Add GPT-5 Mini to model selector (PR #4686) |
+| 2026-02-10 | — | Add Claude 4.5 Opus support (PR #4633) |
+| 2026-02-10 | — | Workflow MCP tools — CRUD + execution (PR #4675) |
+| 2026-02-10 | — | Apply default thinking budget to all LLM prompts (PR #4671) |
+| 2026-01-22 | — | Fix Gemini 3 Flash cache creation (PR #4502) |
+| 2026-01-22 | — | Add OpenAI GPT-5 Mini Flex (PR #4432) |
+| 2026-01-22 | — | Browser Sessions v2 backend (PR #4515) |
+
+### Staleness Assessment
+
+**Is the existing report stale?**
+
+The report was written against commit `5aa1f2fb` — which is the HEAD commit as of 2026-03-28. The document is current at the commit level. The analysis of TaskV2, failure classifiers, element format, and cost model remains accurate.
+
+**What has materially changed since the report's research phase:**
+
+1. **Code 2.0 is the dominant new feature** — the entire release cadence of Q1 2026 is driven by hardening cached Playwright script execution. The original report mentions script caching but underweights it; it is now the core differentiator for repeat-task cost reduction.
+2. **MCP server is production-grade** — it has expanded from a prototype to a full Playwright-parity tool suite (drag, upload, inspect, evaluate async). Claude Desktop integration is documented and tested. The MCP angle is significantly more mature than described.
+3. **Model roster expanded significantly** — Gemini 3.1 Pro, Inception Mercury-2 (a new entrant), GPT-5.4, Claude Opus 4.6, Gemini 3.0 Flash were all added in Jan–Mar 2026. The competitive model landscape has shifted.
+4. **Benchmark posture is weaker relative to peers** — Magnitude and other agents have caught up on WebVoyager. The 85.85% number is 14 months old. On WebBench (64.4%), Skyvern is not the top performer overall.
+
+**Is Skyvern still the best LLM browser agent option?**
+
+For WRITE tasks (form filling, 2FA, file downloads, login flows) at scale: **yes, still competitive**, with Code 2.0 providing a compelling cost story for repeat workflows. For READ tasks (data extraction) at high accuracy: **Anthropic CUA and OpenAI Operator have closed the gap significantly** based on WebBench rankings. For MCP-native integration into Claude workflows: **Skyvern is the most mature option** as of March 2026.
+
+**Emerging competitors to watch:**
+
+| Competitor | Angle | Status |
+|---|---|---|
+| Browser-use (Python lib) | Lightweight, open-source, LangChain-native | Active, benchmarked on WebBench |
+| Anthropic CUA | First-party, best overall on WebBench | Cloud-only, no self-hosted |
+| OpenAI Operator | Embedded in ChatGPT | Limited API access |
+| Magnitude | 94% on WebVoyager | Smaller community, less production-hardened |
+| Stagehand (Browserbase) | TypeScript-first, Playwright wrapper with AI | Growing adoption in JS ecosystem |
+
+Skyvern's moat remains: (1) the most complete self-hosted deployment story (Docker Compose + Kubernetes), (2) TOTP/2FA/credential vault integration, (3) Code 2.0 for zero-marginal-cost repeat runs, and (4) the MCP server as a drop-in Playwright-with-AI tool for Claude Desktop. The AGPL license remains a commercial friction point for closed SaaS products.
