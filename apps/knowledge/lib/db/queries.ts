@@ -5,6 +5,7 @@ import type { InferSelectModel } from "drizzle-orm";
 
 export type JobApplication = InferSelectModel<typeof applications>;
 import type { Lesson, LessonWithContent, GroupedLessons } from "../articles";
+import { getUrlPath } from "../articles";
 
 export async function getAllLessonsFromDb(): Promise<Lesson[]> {
   const rows = await db
@@ -30,6 +31,7 @@ export async function getAllLessonsFromDb(): Promise<Lesson[]> {
     readingTimeMin: p.readingTimeMin,
     excerpt: "",
     difficulty: "intermediate" as const,
+    url: getUrlPath(p.slug),
   }));
 }
 
@@ -53,6 +55,7 @@ export async function getLessonBySlugFromDb(
     difficulty: "intermediate" as const,
     wordCount: row.wordCount,
     readingTimeMin: row.readingTimeMin,
+    url: getUrlPath(row.slug),
     content: row.content,
   };
 }
@@ -83,9 +86,10 @@ export async function getGroupedLessonsFromDb(): Promise<GroupedLessons[]> {
         title: p.title,
         category: cat.name,
         excerpt: "",
-    difficulty: "intermediate" as const,
+        difficulty: "intermediate" as const,
         wordCount: p.wordCount,
         readingTimeMin: p.readingTimeMin,
+        url: getUrlPath(p.slug),
       })),
     }))
     .filter((g) => g.articles.length > 0);
@@ -174,6 +178,7 @@ export async function getRelatedLessonsFromDb(
         readingTimeMin: p.reading_time_min,
         excerpt: "",
         difficulty: "intermediate" as const,
+        url: getUrlPath(p.slug),
       }));
     }
   } catch {
@@ -208,5 +213,6 @@ export async function getRelatedLessonsFromDb(
     readingTimeMin: p.readingTimeMin,
     excerpt: "",
     difficulty: "intermediate" as const,
+    url: getUrlPath(p.slug),
   }));
 }

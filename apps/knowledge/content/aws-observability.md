@@ -570,7 +570,31 @@ Traces   → X-Ray (Lambda, EC2, ECS simple workloads)
            ADOT → X-Ray (ECS/EKS production, multi-language)
            ↓ service map for visual dependency analysis
            ↓ trace filtering by annotation (tenantId, userId)
+
+Network  → VPC Flow Logs → CloudWatch Logs or S3
+           ↓ Logs Insights queries for security / connectivity debugging
+           ↓ metric filters: rejected traffic counters → alarms
 ```
+
+### VPC Flow Logs as a Fourth Signal
+
+VPC Flow Logs capture accepted and rejected network traffic at the ENI, subnet, or VPC level. They are CloudWatch Logs data — stored in a log group and queryable with Logs Insights. They are not application-level observability but are essential for network security forensics and connectivity debugging.
+
+Key use cases:
+- **Security**: detect port scans, lateral movement, unexpected outbound connections (e.g., data exfiltration to external IPs)
+- **Connectivity debugging**: confirm whether a packet was accepted or rejected by a security group/NACL — eliminates "is it the app or the network?" ambiguity
+- **Cost attribution**: identify which ENIs are generating cross-AZ or internet transfer costs
+
+```
+# Logs Insights: find rejected traffic to a specific port
+fields srcAddr, dstAddr, dstPort, action, protocol
+| filter action = "REJECT" and dstPort = 5432
+| stats count() as rejections by srcAddr
+| sort rejections desc
+| limit 20
+```
+
+Flow logs have 1–15 minute delivery lag (not real-time). For real-time network threat detection, combine VPC Flow Logs with Amazon GuardDuty — GuardDuty ingests flow logs automatically and applies ML threat detection without you querying them manually.
 
 ### Correlation IDs — The Connective Tissue
 
@@ -650,6 +674,47 @@ AND NOT ALARM("payment-provider-degraded")  # suppress if known upstream issue
 
 Single page fires. Alarm description includes runbook URL. On-call engineer gets one notification instead of five.
 
+### Incident Response Walkthrough — Production Latency Spike
+
+This is the end-to-end investigation flow when a composite alarm fires:
+
+```
+1. COMPOSITE ALARM fires: "checkout-service-degraded"
+   ↓ CloudWatch Alarm → SNS → PagerDuty page
+
+2. DASHBOARD CHECK (30 seconds)
+   - Open CloudWatch automatic Lambda dashboard
+   - Confirm: p99 Duration spiked from 200ms → 4s at 14:47 UTC
+   - Error rate: flat (no 5xx increase — latency, not errors)
+
+3. X-RAY SERVICE MAP (1 minute)
+   - checkout-lambda → dynamodb shows 3.8s avg latency
+   - Other downstream services (SQS, external API) look normal
+   - DynamoDB node is orange: high latency, low fault rate
+
+4. X-RAY TRACE DRILL-DOWN (2 minutes)
+   - Filter traces: annotation.service = "checkout", duration > 2s
+   - Open a slow trace: DynamoDB GetItem subsegment = 3.7s
+   - Check annotation: tableArn = "orders-table"
+   - Metadata shows: ReturnedItemCount = 1, ConsumedCapacity = 14.5 RCU
+
+5. CLOUDWATCH LOGS INSIGHTS (2 minutes)
+   filter @type = "REPORT" and @duration > 2000
+   | stats count(), avg(@duration), max(@duration) by bin(5m)
+   → spike started at 14:45 UTC, correlated with deployment event
+
+6. CLOUDTRAIL (1 minute)
+   - Filter: eventSource = dynamodb.amazonaws.com, eventTime around 14:43
+   - Find: UpdateTable event — provisioned throughput changed from 100 to 5 RCU
+   - userIdentity.arn: arn:aws:iam::123456789:role/ci-deploy-role
+
+7. ROOT CAUSE: CI/CD pipeline Terraform apply reduced DynamoDB capacity
+   RESOLUTION: Revert table throughput; add Config rule to alert on capacity decreases
+   FOLLOW-UP: Add DynamoDB ConsumedReadCapacityUnits alarm to composite alarm
+```
+
+Total investigation time: ~6 minutes with full observability stack. Without it: indefinite.
+
 ---
 
 ## 6. Amazon Managed Grafana & Managed Prometheus
@@ -684,6 +749,65 @@ exporters:
 **When to use AMP + AMG vs native CloudWatch**:
 - CloudWatch native: simple Lambda/ECS workloads, team already lives in AWS Console, minimal Kubernetes
 - AMP + AMG: Kubernetes-heavy stack, existing Grafana expertise, need PromQL flexibility, multi-cloud metrics
+
+**Example PromQL queries against AMP (EKS workloads)**:
+
+```promql
+# Request rate by pod (RED: Rate)
+sum(rate(http_requests_total{namespace="prod"}[5m])) by (pod)
+
+# Error rate percentage (RED: Errors)
+sum(rate(http_requests_total{status=~"5.."}[5m]))
+  / sum(rate(http_requests_total[5m])) * 100
+
+# p99 latency by service (RED: Duration)
+histogram_quantile(0.99,
+  sum(rate(http_request_duration_seconds_bucket{namespace="prod"}[5m]))
+  by (le, service)
+)
+
+# CPU throttling ratio (USE: Saturation)
+sum(rate(container_cpu_cfs_throttled_seconds_total[5m]))
+  / sum(rate(container_cpu_cfs_periods_total[5m])) * 100
+```
+
+### CloudWatch Evidently — Feature Flags & A/B Testing
+
+A related observability-adjacent service: **Amazon CloudWatch Evidently** lets you run controlled feature rollouts and A/B experiments. Define a feature with percentage-based traffic splits, then analyze experiment results using CloudWatch Evidently metrics alongside your standard CloudWatch dashboards. Useful when you want to gate a new payment flow to 5% of traffic and compare conversion rates before full rollout — all within the same AWS observability console rather than a third-party feature flag SaaS.
+
+### CloudWatch Internet Monitor
+
+Monitors internet-facing application health from the perspective of end users across ISPs and AWS edge locations. Automatically detects when an internet routing issue, ISP outage, or AWS region problem is impacting your users' connectivity — and tells you what percentage of your traffic is affected and from which geography. Integrates with CloudWatch alarms. Relevant for global applications where customer-reported issues may be ISP-side rather than your infrastructure.
+
+---
+
+### Lambda Cold Start Observability
+
+Cold starts are often the highest-impact latency spikes in Lambda-based systems and need dedicated observability. Key metrics and where to find them:
+
+| Signal | Source | How to Alert |
+|---|---|---|
+| `InitDuration` in REPORT logs | CloudWatch Logs | Metric filter → alarm on p99 > 2s |
+| `init_duration` metric | Lambda Insights layer | CloudWatch alarm on max |
+| Cold start rate | EMF custom metric | Emit `ColdStart=1` in first invocation, `ColdStart=0` thereafter |
+| Concurrent executions burst | `AWS/Lambda:ConcurrentExecutions` | Alarm near account concurrency limit |
+
+```typescript
+// Track cold starts with EMF
+const isColdStart = (() => {
+  let first = true;
+  return () => { const v = first; first = false; return v; };
+})();
+
+export const handler = async (event: unknown, context: Context) => {
+  metrics.addMetric('ColdStart', MetricUnits.Count, isColdStart() ? 1 : 0);
+  metrics.addDimension('FunctionName', context.functionName);
+  metrics.publishStoredMetrics();
+  // ... handler logic
+};
+```
+
+Cold start alarms should trigger investigation into: provisioned concurrency coverage gaps, Lambda layer size reduction, memory size tuning (more memory = faster init), or moving initialization code outside the handler.
 
 ---
 

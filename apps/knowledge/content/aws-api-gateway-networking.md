@@ -31,7 +31,7 @@ AWS API Gateway is a fully managed service that acts as the "front door" for bac
 | Private APIs (VPC) | Yes | Yes | No |
 | WAF integration | Yes | Yes | No |
 | Response caching | Yes | No | No |
-| Edge-optimized ([CloudFront](/aws/storage-s3)) | Yes | No | No |
+| Edge-optimized ([CloudFront](/aws-cloudfront-route53)) | Yes | No | No |
 
 **Decision rule**: Default to **HTTP API** for new Lambda-backed REST workloads. Use **REST API** only if you need usage plans, API keys, VTL mapping templates, mock integrations, or edge optimization. Use **WebSocket API** for chat, live dashboards, multiplayer, or any bidirectional streaming use case.
 
@@ -454,6 +454,8 @@ GatewayResponse:
 5. **Forgetting to deploy after enabling CORS**: REST API changes require a new deployment to take effect.
 
 ## Private APIs & VPC Integration
+
+See also [VPC & Networking](/aws-vpc-networking) for subnet design, VPC Endpoints, and Transit Gateway details.
 
 ### Private APIs
 
@@ -952,6 +954,268 @@ pl-xxxxxxxx        vpce-xxx           ← S3 Gateway Endpoint (managed prefix li
 **Q: How does throttling work in API Gateway and what happens when limits are exceeded?**
 
 **A:** API Gateway uses a token bucket per region per account. The account default is 10,000 requests/second steady-state with a 5,000-request burst. Exceeding returns HTTP 429 with the body `{"message":"Too Many Requests"}`. Throttling hierarchy: account limit → stage limit → method limit → usage plan limit (if API keys in use). Stage and method limits can only restrict below the account limit, not exceed it. Client retry strategy should use exponential backoff with jitter. In Lambda, you can also hit Lambda's own concurrency limits independently — that results in a 429 from Lambda surfaced as either 429 or 502 from API Gateway depending on whether the response mapping handles it.
+
+## WebSocket API — Real-Time Bidirectional Communication
+
+API Gateway WebSocket APIs maintain persistent connections between clients and the backend, enabling real-time applications without polling.
+
+### Connection Lifecycle
+```
+Client                    API Gateway WebSocket               Lambda / Backend
+  │──── WS Connect ──────────────────────►│
+  │                                        │──── $connect route ────►│
+  │                                        │◄─── 200 OK ─────────────│
+  │◄── WS Established ─────────────────────│
+  │                                        │
+  │──── {"action":"message","text":"Hi"} ─►│
+  │                                        │──── message route ──────►│
+  │                                        │                           │── POST to callback URL ──►
+  │◄─── {"type":"reply","text":"Hello"} ───│◄────────────────────────│
+  │                                        │
+  │──── WS Disconnect ─────────────────────►│
+  │                                        │──── $disconnect route ──►│
+```
+
+### Route Keys
+- `$connect`: invoked when client establishes connection; use to authenticate (check `Authorization` header or query param) and store `connectionId` in DynamoDB
+- `$disconnect`: invoked when connection closes; clean up DynamoDB record
+- `$default`: catch-all for messages that don't match any custom route
+- Custom routes: match `action` field in message body (e.g., `{"action": "sendMessage", "text": "Hello"}` routes to `sendMessage`)
+
+```javascript
+// $connect Lambda handler — authenticate and store connection
+const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');
+const ddb = new DynamoDBClient({});
+
+exports.handler = async (event) => {
+  const connectionId = event.requestContext.connectionId;
+  const userId = event.queryStringParameters?.userId;
+
+  // Validate auth token
+  if (!userId) return { statusCode: 401, body: 'Unauthorized' };
+
+  // Store connection in DynamoDB with TTL
+  await ddb.send(new PutItemCommand({
+    TableName: process.env.CONNECTIONS_TABLE,
+    Item: {
+      connectionId: { S: connectionId },
+      userId: { S: userId },
+      connectedAt: { N: Date.now().toString() },
+      ttl: { N: Math.floor(Date.now() / 1000 + 7200).toString() }, // 2hr TTL
+    }
+  }));
+
+  return { statusCode: 200, body: 'Connected' };
+};
+
+// Sending messages back to connected clients (from any Lambda or service)
+const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi');
+
+const apiGw = new ApiGatewayManagementApiClient({
+  endpoint: `https://${event.requestContext.domainName}/${event.requestContext.stage}`,
+});
+
+async function sendToConnection(connectionId, data) {
+  try {
+    await apiGw.send(new PostToConnectionCommand({
+      ConnectionId: connectionId,
+      Data: JSON.stringify(data),
+    }));
+  } catch (err) {
+    if (err.statusCode === 410) {
+      // Connection is stale — clean up DynamoDB
+      await deleteConnection(connectionId);
+    }
+  }
+}
+```
+
+### WebSocket Use Cases
+- Live chat, collaborative editing, multiplayer games, live dashboards, order tracking
+- Compare with Lambda Function URL streaming: Function URL streaming is one-directional (server → client); WebSocket is bidirectional
+
+---
+
+## HTTP API vs REST API — Detailed Comparison
+
+| Feature | HTTP API | REST API |
+|---|---|---|
+| **Latency** | ~1ms overhead | ~6ms overhead |
+| **Cost** | $1.00/M requests | $3.50/M (first 333M) |
+| **JWT/OIDC Authorizer** | Native (no Lambda needed) | Lambda authorizer required |
+| **Lambda Authorizer** | Yes (v2.0 payload) | Yes (v1.0 payload) |
+| **Cognito Authorizer** | Yes (native) | Yes (native) |
+| **IAM Auth** | Yes | Yes |
+| **Private integrations** | Yes (VPC Link) | Yes (VPC Link) |
+| **Request validation** | No | Yes (model-based) |
+| **Caching** | No | Yes (per-stage, per-method) |
+| **WAF integration** | Yes | Yes |
+| **Stage variables** | Yes | Yes |
+| **Usage plans + API keys** | No | Yes |
+| **Canary deployments** | No | Yes |
+| **CORS** | Native auto-config | Manual mock integration |
+| **WebSocket** | No | No (separate product) |
+| **Default: when to use** | New builds (cost + latency) | Existing, needs caching/validation/usage plans |
+
+### HTTP API JWT Authorizer — Zero Lambda
+```typescript
+// CDK: HTTP API with native JWT auth (no Lambda authorizer needed)
+const api = new apigatewayv2.HttpApi(this, 'Api', {
+  corsPreflight: {
+    allowHeaders: ['authorization', 'content-type'],
+    allowMethods: [apigatewayv2.CorsHttpMethod.ANY],
+    allowOrigins: ['https://myapp.com'],
+  },
+});
+
+const authorizer = new apigatewayv2_authorizers.HttpJwtAuthorizer('Authorizer',
+  `https://cognito-idp.us-east-1.amazonaws.com/${userPool.userPoolId}`, {
+  jwtAudience: [userPoolClient.userPoolClientId],
+});
+
+api.addRoutes({
+  path: '/orders',
+  methods: [apigatewayv2.HttpMethod.GET],
+  integration: new apigatewayv2_integrations.HttpLambdaIntegration('OrdersIntegration', ordersFunction),
+  authorizer,
+});
+```
+
+---
+
+## Private API + VPC Link — Internal Microservices
+
+### Private REST API
+- API only accessible from within a VPC (not public internet)
+- Requires Interface VPC Endpoint for `execute-api` service in the VPC
+- Resource policy must allow access from the VPC endpoint
+
+See [VPC & Networking](/aws-vpc-networking) for full VPC Endpoint and PrivateLink deep-dive.
+
+```json
+// Private REST API resource policy
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": "execute-api:Invoke",
+    "Resource": "arn:aws:execute-api:us-east-1:123456789012:api-id/*",
+    "Condition": {
+      "StringEquals": {"aws:SourceVpce": "vpce-0123456789abcdef0"}
+    }
+  }]
+}
+```
+
+### VPC Link (HTTP API) — ALB/NLB Integration
+Route API Gateway traffic to private ALB or NLB inside a VPC without exposing them to the internet:
+
+```typescript
+// CDK: HTTP API → VPC Link → private ALB
+const vpcLink = new apigatewayv2.VpcLink(this, 'VpcLink', {
+  vpc,
+  subnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+});
+
+const albIntegration = new apigatewayv2_integrations.HttpAlbIntegration('AlbIntegration',
+  privateAlbListener, { vpcLink });
+
+api.addRoutes({
+  path: '/internal/{proxy+}',
+  methods: [apigatewayv2.HttpMethod.ANY],
+  integration: albIntegration,
+});
+```
+
+---
+
+## API Gateway Caching (REST API)
+
+Stage-level cache: cache responses from backend for a configurable TTL, reducing latency and backend load.
+
+- Cache sizes: 0.5 GB to 237 GB; billed hourly (~$0.02–$3.80/hr depending on size)
+- TTL: 0 to 3600 seconds (default 300s); per-method TTL override
+- Cache key: by default, the full request path + query strings; can include headers and authorization header
+- Cache invalidation: `Cache-Control: max-age=0` header (if enabled); manual flush via console/API
+- Per-method caching: enable/disable caching per resource-method combination
+- Encrypted at rest with KMS
+
+```yaml
+# CloudFormation: REST API stage with cache
+ApiGatewayDeployment:
+  Type: AWS::ApiGateway::Deployment
+  Properties:
+    RestApiId: !Ref RestApi
+    StageName: prod
+    MethodSettings:
+      - ResourcePath: "/*"
+        HttpMethod: "*"
+        CachingEnabled: true
+        CacheTtlInSeconds: 300
+        CacheDataEncrypted: true
+    CacheClusterEnabled: true
+    CacheClusterSize: "0.5"
+```
+
+---
+
+## Usage Plans & API Keys (REST API)
+
+Throttle and monetize API access for external consumers.
+
+```javascript
+// Typical flow: create usage plan → create API key → associate
+// API key is passed in X-Api-Key header
+
+// Usage plan configuration
+// burstLimit: max concurrent requests
+// rateLimit: steady-state requests per second
+// quota: requests per day/week/month
+
+const usagePlan = {
+  name: 'StandardTier',
+  throttle: { burstLimit: 500, rateLimit: 100 },
+  quota: { limit: 1000000, period: 'MONTH' },
+};
+```
+
+Use cases: API marketplace (different tiers), partner integrations, internal rate limiting per team.
+Note: HTTP API does not support usage plans — use WAF rate-based rules (see [Security Services](/aws-security-services)) or custom Lambda authorizer with rate limiting.
+
+---
+
+## Request Validation (REST API)
+
+Validate request body, query parameters, and headers before passing to Lambda — reject invalid requests at the API Gateway layer, reducing Lambda invocations.
+
+```json
+// Model for request validation
+{
+  "title": "CreateOrderRequest",
+  "type": "object",
+  "required": ["customerId", "items"],
+  "properties": {
+    "customerId": { "type": "string", "minLength": 1 },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["productId", "quantity"],
+        "properties": {
+          "productId": { "type": "string" },
+          "quantity": { "type": "integer", "minimum": 1 }
+        }
+      }
+    }
+  }
+}
+```
+- Validator types: body only, query params + headers only, both
+- Invalid requests return 400 with a message before Lambda is invoked
+
+---
 
 ## Red Flags to Avoid
 

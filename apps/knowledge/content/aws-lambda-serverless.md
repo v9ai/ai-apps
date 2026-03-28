@@ -172,6 +172,8 @@ exports.handler = async (event) => {
 
 ### SQS
 
+See [Messaging & Events](/aws-messaging-events) for SQS, SNS, EventBridge, and Kinesis architecture details.
+
 Lambda polls SQS via a **event source mapping (ESM)**. The ESM long-polls the queue, batches messages, and invokes Lambda. Key behaviors:
 - **Batch size:** 1–10,000 messages
 - **Batch window:** Up to 300s (collects messages before invoking, reduces invocations)
@@ -426,6 +428,8 @@ Separate the write model (commands) from the read model (queries). With Lambda:
 ---
 
 ## Lambda + VPC
+
+See [VPC & Networking](/aws-vpc-networking) for subnets, routing tables, security groups, and VPC Endpoints in depth.
 
 ### When to Use
 
@@ -766,7 +770,7 @@ A: Standard queues offer unlimited throughput and at-least-once delivery with be
 ---
 
 **Q: When would you use Step Functions instead of just chaining Lambda functions directly?**
-A: Direct chaining (Lambda calls Lambda) is an anti-pattern for complex workflows: errors are hard to handle, state must be passed through all calls, and there's no visibility into where an execution failed. Use Step Functions when: (1) you need retry logic and error handling per step; (2) the workflow has branches or parallel paths; (3) you need audit trail/execution history; (4) long-running workflows exceed Lambda's 15-min timeout; (5) you need human approval steps (WaitForTaskToken); (6) you want to call AWS services without Lambda intermediaries using SDK integrations.
+A: Direct chaining (Lambda calls Lambda) is an anti-pattern for complex workflows: errors are hard to handle, state must be passed through all calls, and there's no visibility into where an execution failed. Use Step Functions when: (1) you need retry logic and error handling per step; (2) the workflow has branches or parallel paths; (3) you need audit trail/execution history; (4) long-running workflows exceed Lambda's 15-min timeout; (5) you need human approval steps (WaitForTaskToken); (6) you want to call AWS services without Lambda intermediaries using SDK integrations. See [Step Functions](/aws-step-functions) for full orchestration coverage.
 
 ---
 
@@ -813,6 +817,241 @@ A: CloudFront Functions are ultra-cheap ($0.10/M), execute in under 1ms, but are
 
 **Q: How would you design a serverless system to handle 100,000 file uploads per hour with processing?**
 A: (1) **Ingestion:** Pre-signed S3 URLs for direct browser-to-S3 upload (no Lambda in the upload path—avoids size limits and costs). (2) **Trigger:** S3 ObjectCreated event → SQS Standard queue (decouples upload rate from processing rate, absorbs bursts). (3) **Processing Lambda:** ESM from SQS with batch size 10, batch window 30s. Processes files in parallel up to Lambda concurrency limit. Implements partial batch failure reporting. (4) **Concurrency:** Set reserved concurrency to prevent starving other functions; ~28 uploads/second → ~3–5 concurrent Lambdas needed at 200ms/file. (5) **Failure path:** SQS DLQ for failed files → alert SNS → manual review. (6) **Observability:** Structured logs, CloudWatch dashboard on IteratorAge (if using Kinesis), SQS `ApproximateNumberOfMessagesNotVisible`, Lambda `Errors` and `Duration`.
+
+---
+
+## Lambda Extensions — Runtime Enhancements
+
+Lambda Extensions are processes that run alongside the Lambda function handler in the same execution environment. They enable integrations for monitoring, security, and configuration without modifying function code.
+
+### Extension Types
+- **Internal extensions**: run as part of the runtime process (e.g., exec wrappers)
+- **External extensions**: separate processes alongside the Lambda function; registered for `INVOKE` and/or `SHUTDOWN` lifecycle events
+
+### AWS-Managed Extensions (as Lambda Layers)
+| Extension | Purpose | Impact |
+|---|---|---|
+| **Parameters & Secrets** | Cache SSM Parameter Store + Secrets Manager values; HTTP API on port 2773 | Reduces calls to SSM/ASM; up to ~75% cost reduction vs direct SDK calls |
+| **CloudWatch Lambda Insights** | Per-invocation performance metrics (init duration, memory used, network) | ~1.3 MB layer; minimal overhead |
+| **ADOT (OpenTelemetry)** | Collect traces/metrics via OpenTelemetry Collector; send to X-Ray, CloudWatch, third-party | Standardized instrumentation |
+| **Datadog Agent** | Forward metrics/logs/traces to Datadog | Requires Datadog account |
+
+### Parameters & Secrets Extension — Deep Dive
+```javascript
+// Instead of calling SSM SDK (creates new HTTP call per invocation)
+// Use the Parameters & Secrets extension (caches with TTL)
+
+const PARAMS_PORT = 2773; // extension listens on this port
+
+async function getParameter(name) {
+  const response = await fetch(
+    `http://localhost:${PARAMS_PORT}/systemsmanager/parameters/get?name=${encodeURIComponent(name)}&withDecryption=true`,
+    { headers: { 'X-Aws-Parameters-Secrets-Token': process.env.AWS_SESSION_TOKEN } }
+  );
+  const { Parameter } = await response.json();
+  return Parameter.Value;
+}
+
+async function getSecret(secretId) {
+  const response = await fetch(
+    `http://localhost:${PARAMS_PORT}/secretsmanager/get?secretId=${encodeURIComponent(secretId)}`,
+    { headers: { 'X-Aws-Parameters-Secrets-Token': process.env.AWS_SESSION_TOKEN } }
+  );
+  const { SecretString } = await response.json();
+  return JSON.parse(SecretString);
+}
+
+// Cache TTL: default 300s for SSM, 300s for Secrets Manager (configurable via env vars)
+// PARAMETERS_SECRETS_EXTENSION_CACHE_SIZE: max cached items (default 1000)
+// SSM_PARAMETER_STORE_TTL: override TTL in seconds
+```
+
+---
+
+## Lambda SnapStart — Eliminating Java Cold Starts
+
+SnapStart addresses the Java JVM's notoriously long cold starts (3–10s) by pre-initializing the runtime and taking a snapshot.
+
+### How It Works
+1. Lambda initializes the function during publish of a new version (runs `INIT` phase including your init code)
+2. Takes a snapshot of the initialized execution environment (memory + disk state)
+3. Encrypts and caches the snapshot
+4. On cold start: restores from snapshot in ~150–500ms instead of running full JVM init
+
+### Supported Runtimes
+- Java 11 (Corretto), Java 17 (Corretto), Java 21 (Corretto)
+- Only for versioned functions (requires `PublishVersion: true`)
+
+### Hooks for Snapshot Safety
+```java
+import com.amazonaws.services.lambda.runtime.snapstart.CRaCInterface;
+import org.crac.Context;
+import org.crac.Resource;
+
+// Implement CRaC hooks to handle state that shouldn't persist across snapshots
+public class Handler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent>, Resource {
+
+    private DatabaseConnection dbConnection;
+
+    public Handler() {
+        Core.getGlobalContext().register(this);
+        // Initialize expensive resources once
+        dbConnection = new DatabaseConnection(System.getenv("DB_URL"));
+    }
+
+    @Override
+    public void beforeCheckpoint(Context<? extends Resource> context) {
+        // Close connections before snapshot — they'll be invalid after restore
+        dbConnection.close();
+    }
+
+    @Override
+    public void afterRestore(Context<? extends Resource> context) {
+        // Re-establish connections after restore
+        dbConnection = new DatabaseConnection(System.getenv("DB_URL"));
+    }
+}
+```
+
+### What to Avoid in SnapStart
+- **Unique random seeds**: re-seeded from same snapshot → `SecureRandom.generateSeed()` needed after restore
+- **Network connections**: close before snapshot, re-open after restore
+- **Time-dependent state**: timestamps taken during init will be stale after restore
+- **Hardcoded unique IDs**: regenerate after restore
+
+---
+
+## Lambda Function URLs
+
+Function URLs provide a built-in HTTPS endpoint for invoking Lambda directly without API Gateway.
+
+```
+https://<url-id>.lambda-url.<region>.on.aws
+```
+
+### Auth Types
+| AuthType | Use Case | IAM Required? |
+|---|---|---|
+| `NONE` | Public API, webhooks (Stripe, GitHub) | No — anyone can invoke |
+| `AWS_IAM` | Internal service-to-service | Yes — IAM Sig v4 |
+
+### CORS Configuration
+```typescript
+// CDK: Lambda Function URL with CORS
+const fnUrl = myFunction.addFunctionUrl({
+  authType: lambda.FunctionUrlAuthType.NONE,
+  cors: {
+    allowedOrigins: ['https://myapp.com'],
+    allowedHeaders: ['content-type', 'authorization'],
+    allowedMethods: [lambda.HttpMethod.POST, lambda.HttpMethod.GET],
+    maxAge: cdk.Duration.hours(1),
+  },
+});
+new cdk.CfnOutput(this, 'FunctionUrl', { value: fnUrl.url });
+```
+
+### Streaming Responses
+Function URLs support `RESPONSE_STREAM` invoke mode — return data progressively (like SSE/chunked transfer):
+```javascript
+const { Readable } = require('stream');
+
+exports.handler = awslambda.streamifyResponse(async (event, responseStream, context) => {
+  responseStream.setContentType('text/plain');
+
+  const tokens = ['Hello', ' ', 'from', ' ', 'streaming', ' ', 'Lambda'];
+  for (const token of tokens) {
+    responseStream.write(token);
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  responseStream.end();
+});
+```
+Use case: streaming LLM completions from Lambda without buffering the full response.
+
+### Function URL vs API Gateway
+| Criterion | Function URL | API Gateway |
+|---|---|---|
+| Cost | Free (Lambda invoke cost only) | $3.50-$1.00/M requests + data |
+| Features | Single endpoint, no routing | Multiple routes, auth, throttling, caching |
+| Custom domain | Via CloudFront | Native support |
+| Response streaming | Yes (RESPONSE_STREAM mode) | No (buffered only) |
+| Best for | Webhooks, simple single-function APIs, streaming | Multi-function APIs, enterprise features |
+
+---
+
+## AWS Lambda Powertools — Production Toolkit
+
+Lambda Powertools (TypeScript/Python/Java/.NET) is an AWS-maintained suite of utilities for production Lambda functions.
+
+### Logger — Structured JSON Logging
+```typescript
+import { Logger } from '@aws-lambda-powertools/logger';
+
+const logger = new Logger({ serviceName: 'orders-service', logLevel: 'INFO' });
+
+export const handler = async (event: APIGatewayProxyEvent) => {
+  // Inject correlation ID, cold start flag, account ID automatically
+  logger.addContext(context);
+
+  // Structured log — every field is queryable in CloudWatch Logs Insights
+  logger.info('Processing order', {
+    orderId: event.pathParameters?.id,
+    userId: event.requestContext.authorizer?.claims.sub,
+  });
+
+  try {
+    const result = await processOrder(event);
+    logger.info('Order processed', { orderId: result.id, durationMs: result.duration });
+    return { statusCode: 200, body: JSON.stringify(result) };
+  } catch (err) {
+    logger.error('Order processing failed', err as Error);
+    return { statusCode: 500, body: 'Internal error' };
+  }
+};
+```
+
+### Tracer — X-Ray Integration
+```typescript
+import { Tracer } from '@aws-lambda-powertools/tracer';
+
+const tracer = new Tracer({ serviceName: 'orders-service' });
+const ddb = tracer.captureAWSv3Client(new DynamoDBClient({})); // auto-trace all DDB calls
+
+export const handler = async (event: any) => {
+  const segment = tracer.getSegment();
+  const subsegment = segment.addNewSubsegment('## processPayment');
+
+  tracer.putAnnotation('orderId', event.orderId); // indexed — searchable in X-Ray
+  tracer.putMetadata('orderDetails', event);       // not indexed — visible in trace
+
+  try {
+    const result = await chargePayment(event);
+    tracer.putAnnotation('paymentStatus', 'SUCCESS');
+    return result;
+  } catch (err) {
+    subsegment.addError(err as Error);
+    throw err;
+  } finally {
+    subsegment.close();
+  }
+};
+```
+
+### Feature Flags
+```typescript
+import { AppConfigProvider } from '@aws-lambda-powertools/parameters/appconfig';
+
+const provider = new AppConfigProvider({ environment: 'production', application: 'orders' });
+
+export const handler = async (event: any) => {
+  const flags = await provider.getJSON('feature-flags');
+
+  if (flags.newCheckoutFlow) {
+    return await newCheckout(event);
+  }
+  return await legacyCheckout(event);
+};
+```
 
 ---
 
