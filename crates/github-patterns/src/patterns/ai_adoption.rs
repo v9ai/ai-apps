@@ -205,36 +205,59 @@ mod tests {
     }
 
     #[test]
-    fn score_framework_adds_0_25() {
+    fn score_framework_adds_0_20() {
         let sigs = vec![AiSignal::Framework { name: "torch".into(), repo: "".into() }];
-        assert!((score(&sigs, &empty_stack()) - 0.25).abs() < 1e-4);
-    }
-
-    #[test]
-    fn score_python_heavy_adds_0_20() {
-        let sigs = vec![AiSignal::PythonHeavy { python_bytes: 600, total_bytes: 1000 }];
         assert!((score(&sigs, &empty_stack()) - 0.20).abs() < 1e-4);
     }
 
     #[test]
-    fn score_topic_adds_0_10() {
-        let sigs = vec![AiSignal::Topic("llm".into())];
-        assert!((score(&sigs, &empty_stack()) - 0.10).abs() < 1e-4);
+    fn score_python_heavy_adds_0_15() {
+        let sigs = vec![AiSignal::PythonHeavy { python_bytes: 600, total_bytes: 1000 }];
+        assert!((score(&sigs, &empty_stack()) - 0.15).abs() < 1e-4);
     }
 
     #[test]
-    fn score_reponame_adds_0_05() {
+    fn score_topic_adds_0_08() {
+        let sigs = vec![AiSignal::Topic("llm".into())];
+        assert!((score(&sigs, &empty_stack()) - 0.08).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_reponame_adds_0_04() {
         let sigs = vec![AiSignal::RepoName { repo: "llm-server".into() }];
-        assert!((score(&sigs, &empty_stack()) - 0.05).abs() < 1e-4);
+        assert!((score(&sigs, &empty_stack()) - 0.04).abs() < 1e-4);
     }
 
     #[test]
     fn score_three_frameworks_in_stack_adds_bonus() {
         let mut stack = empty_stack();
         stack.ai_frameworks = vec!["torch".into(), "jax".into(), "transformers".into()];
-        // one framework signal + 3-framework bonus = 0.25 + 0.15 = 0.40
+        // one framework signal (0.20) + 3-framework bonus (0.12) = 0.32
         let sigs = vec![AiSignal::Framework { name: "torch".into(), repo: "".into() }];
-        assert!((score(&sigs, &stack) - 0.40).abs() < 1e-4);
+        assert!((score(&sigs, &stack) - 0.32).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_dep_signals_contribute() {
+        use crate::types::DepSignal;
+        let mut stack = empty_stack();
+        stack.dep_signals = vec![
+            DepSignal::AiPackage { manager: "pip".into(), name: "torch".into() }, // 0.12
+            DepSignal::VectorDb { name: "chromadb".into() },                       // 0.10
+        ];
+        // no AiSignals → just deps = 0.22
+        assert!((score(&[], &stack) - 0.22).abs() < 1e-4);
+    }
+
+    #[test]
+    fn score_readme_ai_mentions_contribute() {
+        use crate::types::ReadmeSignals;
+        let mut stack = empty_stack();
+        stack.readme = Some(ReadmeSignals {
+            ai_mentions: vec!["llm".into(), "rag".into()], // 2 * 0.04 = 0.08
+            ..Default::default()
+        });
+        assert!((score(&[], &stack) - 0.08).abs() < 1e-4);
     }
 
     #[test]
@@ -246,23 +269,40 @@ mod tests {
     }
 }
 
-/// Score 0.0–1.0 from detected signals.
+/// Score 0.0–1.0 from detected signals, dep manifests, and README.
 #[allow(clippy::cast_precision_loss)]
 pub fn score(signals: &[AiSignal], stack: &TechStack) -> f32 {
     let mut pts = 0.0_f32;
 
     for sig in signals {
         pts += match sig {
-            AiSignal::Framework { .. } => 0.25,
-            AiSignal::PythonHeavy { .. } => 0.20,
-            AiSignal::Topic(_) => 0.10,
-            AiSignal::RepoName { .. } => 0.05,
+            AiSignal::Framework { .. } => 0.20,
+            AiSignal::PythonHeavy { .. } => 0.15,
+            AiSignal::Topic(_) => 0.08,
+            AiSignal::RepoName { .. } => 0.04,
         };
     }
 
-    // Bonus for stacked frameworks
+    // Dep manifest signals — more reliable than topic scanning
+    use crate::types::DepSignal;
+    for dep in &stack.dep_signals {
+        pts += match dep {
+            DepSignal::AiPackage { .. } => 0.12,
+            DepSignal::VectorDb { .. }  => 0.10,
+        };
+    }
+
+    // README AI content
+    if let Some(readme) = &stack.readme {
+        pts += readme.ai_mentions.len() as f32 * 0.04;
+    }
+
+    // Bonus for stacked frameworks (topic + dep combined)
     if stack.ai_frameworks.len() >= 3 {
-        pts += 0.15;
+        pts += 0.12;
+    }
+    if stack.dep_signals.len() >= 3 {
+        pts += 0.10;
     }
 
     pts.min(1.0)
