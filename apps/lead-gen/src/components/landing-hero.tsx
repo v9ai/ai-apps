@@ -407,8 +407,8 @@ export function LandingHero() {
               textTransform: "lowercase",
             })}
           >
-            50,000 pages &rarr; 4,200 entities &rarr; 1,100 resolved &rarr; 300
-            qualified leads
+            820 domains discovered &rarr; 4,200 companies enriched &rarr; 1,100
+            contacts verified &rarr; 300 personalized outreach campaigns
           </span>
         </div>
 
@@ -430,7 +430,7 @@ export function LandingHero() {
               "cta-solid-animated",
             )}
           >
-            explore the pipeline
+            meet the agents
             <ArrowRightIcon width={14} height={14} />
           </Link>
           <Link

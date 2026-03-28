@@ -1,163 +1,368 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
   <defs>
-    <!-- Main flame gradient: deep orange base to yellow-white tip -->
-    <linearGradient id="flameGrad" x1="0.5" y1="1" x2="0.5" y2="0">
-      <stop offset="0%" stop-color="#C2300A"/>
-      <stop offset="30%" stop-color="#F05A1A"/>
-      <stop offset="60%" stop-color="#FFAA00"/>
-      <stop offset="85%" stop-color="#FFE840"/>
-      <stop offset="100%" stop-color="#FFFFF0"/>
-    </linearGradient>
-    <!-- Inner flame gradient -->
-    <linearGradient id="innerFlameGrad" x1="0.5" y1="1" x2="0.5" y2="0">
-      <stop offset="0%" stop-color="#FF5500"/>
-      <stop offset="40%" stop-color="#FFCC00"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.95"/>
-    </linearGradient>
-    <!-- Spark/glow gradient -->
-    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FF8800" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#FF4400" stop-opacity="0"/>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#050d12"/>
+      <stop offset="100%" stop-color="#020608"/>
     </radialGradient>
-    <!-- Text gradient -->
-    <linearGradient id="textGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#FF8C42"/>
-      <stop offset="50%" stop-color="#FFD166"/>
-      <stop offset="100%" stop-color="#FF6B35"/>
-    </linearGradient>
-    <!-- Sub-text gradient -->
-    <linearGradient id="subTextGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#FFAA55"/>
-      <stop offset="100%" stop-color="#FF7722"/>
-    </linearGradient>
-    <!-- Clip for flame glow -->
-    <filter id="flameShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <radialGradient id="dotTeal" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#7fffd4" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#00e5cc" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="dotWhite" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#b2fff0" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#00d4b8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="dotOuter" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#40e8cc" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#00a896" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glowBloom" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur2"/>
+      <feMerge><feMergeNode in="blur1"/><feMergeNode in="blur2"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="sparkGlow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="2.5" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="tinyGlow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.0"/>
     </filter>
   </defs>
 
-  <!-- Dark background -->
-  <rect width="300" height="200" fill="#0A0A0F"/>
+  <!-- Background -->
+  <rect width="300" height="200" fill="url(#bgGrad)"/>
 
-  <!-- Subtle radial glow behind flame -->
-  <ellipse cx="62" cy="130" rx="38" ry="38" fill="url(#glowGrad)"/>
+  <!-- Far-field scatter particles -->
+  <g filter="url(#tinyGlow)" opacity="0.55">
+    <circle cx="8"   cy="15"  r="0.8" fill="#00e5cc"/>
+    <circle cx="18"  cy="9"   r="0.6" fill="#40e8cc"/>
+    <circle cx="30"  cy="4"   r="0.7" fill="#00d4b8"/>
+    <circle cx="45"  cy="12"  r="0.9" fill="#7fffd4"/>
+    <circle cx="58"  cy="6"   r="0.6" fill="#00e5cc"/>
+    <circle cx="70"  cy="18"  r="0.8" fill="#40e8cc"/>
+    <circle cx="84"  cy="8"   r="0.7" fill="#00d4b8"/>
+    <circle cx="95"  cy="3"   r="0.6" fill="#7fffd4"/>
+    <circle cx="108" cy="14"  r="0.9" fill="#00e5cc"/>
+    <circle cx="120" cy="7"   r="0.7" fill="#40e8cc"/>
+    <circle cx="135" cy="11"  r="0.8" fill="#00d4b8"/>
+    <circle cx="148" cy="5"   r="0.6" fill="#7fffd4"/>
+    <circle cx="162" cy="16"  r="0.7" fill="#00e5cc"/>
+    <circle cx="175" cy="9"   r="0.9" fill="#40e8cc"/>
+    <circle cx="188" cy="4"   r="0.6" fill="#00d4b8"/>
+    <circle cx="200" cy="13"  r="0.8" fill="#7fffd4"/>
+    <circle cx="215" cy="7"   r="0.7" fill="#00e5cc"/>
+    <circle cx="228" cy="17"  r="0.6" fill="#40e8cc"/>
+    <circle cx="242" cy="5"   r="0.9" fill="#00d4b8"/>
+    <circle cx="255" cy="12"  r="0.7" fill="#7fffd4"/>
+    <circle cx="268" cy="8"   r="0.6" fill="#00e5cc"/>
+    <circle cx="280" cy="15"  r="0.8" fill="#40e8cc"/>
+    <circle cx="293" cy="6"   r="0.7" fill="#00d4b8"/>
+    <circle cx="5"   cy="185" r="0.8" fill="#00e5cc"/>
+    <circle cx="20"  cy="192" r="0.6" fill="#40e8cc"/>
+    <circle cx="38"  cy="188" r="0.7" fill="#00d4b8"/>
+    <circle cx="52"  cy="195" r="0.9" fill="#7fffd4"/>
+    <circle cx="67"  cy="183" r="0.6" fill="#00e5cc"/>
+    <circle cx="80"  cy="191" r="0.8" fill="#40e8cc"/>
+    <circle cx="96"  cy="186" r="0.7" fill="#00d4b8"/>
+    <circle cx="112" cy="193" r="0.6" fill="#7fffd4"/>
+    <circle cx="128" cy="182" r="0.9" fill="#00e5cc"/>
+    <circle cx="145" cy="190" r="0.7" fill="#40e8cc"/>
+    <circle cx="160" cy="185" r="0.8" fill="#00d4b8"/>
+    <circle cx="178" cy="194" r="0.6" fill="#7fffd4"/>
+    <circle cx="195" cy="183" r="0.7" fill="#00e5cc"/>
+    <circle cx="210" cy="189" r="0.9" fill="#40e8cc"/>
+    <circle cx="226" cy="186" r="0.6" fill="#00d4b8"/>
+    <circle cx="245" cy="192" r="0.8" fill="#7fffd4"/>
+    <circle cx="260" cy="184" r="0.7" fill="#00e5cc"/>
+    <circle cx="275" cy="190" r="0.6" fill="#40e8cc"/>
+    <circle cx="290" cy="186" r="0.9" fill="#00d4b8"/>
+    <circle cx="3"   cy="32"  r="0.7" fill="#00e5cc"/>
+    <circle cx="7"   cy="52"  r="0.8" fill="#40e8cc"/>
+    <circle cx="4"   cy="70"  r="0.6" fill="#00d4b8"/>
+    <circle cx="9"   cy="90"  r="0.9" fill="#7fffd4"/>
+    <circle cx="3"   cy="110" r="0.7" fill="#00e5cc"/>
+    <circle cx="8"   cy="130" r="0.8" fill="#40e8cc"/>
+    <circle cx="5"   cy="150" r="0.6" fill="#00d4b8"/>
+    <circle cx="10"  cy="168" r="0.7" fill="#7fffd4"/>
+    <circle cx="296" cy="35"  r="0.7" fill="#00e5cc"/>
+    <circle cx="292" cy="55"  r="0.8" fill="#40e8cc"/>
+    <circle cx="297" cy="75"  r="0.6" fill="#00d4b8"/>
+    <circle cx="293" cy="95"  r="0.9" fill="#7fffd4"/>
+    <circle cx="298" cy="115" r="0.7" fill="#00e5cc"/>
+    <circle cx="294" cy="135" r="0.8" fill="#40e8cc"/>
+    <circle cx="297" cy="155" r="0.6" fill="#00d4b8"/>
+    <circle cx="292" cy="172" r="0.7" fill="#7fffd4"/>
+  </g>
 
-  <!-- Outer flame body — bold geometric shape -->
-  <path d="
-    M 62 148
-    C 44 148 34 132 38 112
-    C 41 96  48 88  44 70
-    C 42 58  48 46  54 40
-    C 52 56  58 62  64 58
-    C 62 50  66 38  74 28
-    C 76 44  70 56  72 66
-    C 76 58  82 52  84 42
-    C 90 58  86 72  80 88
-    C 88 78  94 72  96 62
-    C 98 80  92 96  84 108
-    C 90 100 96 108 94 122
-    C 92 138 80 148 62 148
-    Z
-  " fill="url(#flameGrad)" filter="url(#flameShadow)"/>
+  <!-- Mid-field convergence particles -->
+  <g filter="url(#softGlow)" opacity="0.75">
+    <circle cx="14"  cy="95"  r="1.1" fill="#00e5cc"/>
+    <circle cx="18"  cy="108" r="0.9" fill="#40e8cc"/>
+    <circle cx="12"  cy="82"  r="1.0" fill="#7fffd4"/>
+    <circle cx="22"  cy="118" r="1.2" fill="#00d4b8"/>
+    <circle cx="16"  cy="70"  r="0.8" fill="#00e5cc"/>
+    <circle cx="26"  cy="130" r="1.0" fill="#40e8cc"/>
+    <circle cx="20"  cy="60"  r="1.1" fill="#7fffd4"/>
+    <circle cx="60"  cy="90"  r="1.0" fill="#00e5cc"/>
+    <circle cx="64"  cy="105" r="0.9" fill="#40e8cc"/>
+    <circle cx="58"  cy="75"  r="1.1" fill="#7fffd4"/>
+    <circle cx="66"  cy="118" r="1.0" fill="#00d4b8"/>
+    <circle cx="55"  cy="62"  r="0.8" fill="#00e5cc"/>
+    <circle cx="68"  cy="130" r="1.2" fill="#40e8cc"/>
+    <circle cx="82"  cy="88"  r="1.1" fill="#00e5cc"/>
+    <circle cx="85"  cy="103" r="0.9" fill="#40e8cc"/>
+    <circle cx="78"  cy="75"  r="1.0" fill="#7fffd4"/>
+    <circle cx="88"  cy="118" r="1.2" fill="#00d4b8"/>
+    <circle cx="80"  cy="62"  r="0.8" fill="#00e5cc"/>
+    <circle cx="170" cy="90"  r="1.0" fill="#00e5cc"/>
+    <circle cx="174" cy="108" r="0.9" fill="#40e8cc"/>
+    <circle cx="167" cy="75"  r="1.1" fill="#7fffd4"/>
+    <circle cx="176" cy="120" r="1.0" fill="#00d4b8"/>
+    <circle cx="164" cy="62"  r="0.8" fill="#00e5cc"/>
+    <circle cx="178" cy="133" r="1.2" fill="#40e8cc"/>
+    <circle cx="192" cy="88"  r="1.1" fill="#00e5cc"/>
+    <circle cx="196" cy="103" r="0.9" fill="#40e8cc"/>
+    <circle cx="189" cy="75"  r="1.0" fill="#7fffd4"/>
+    <circle cx="198" cy="118" r="1.2" fill="#00d4b8"/>
+    <circle cx="186" cy="62"  r="0.8" fill="#00e5cc"/>
+    <circle cx="270" cy="88"  r="1.0" fill="#00e5cc"/>
+    <circle cx="274" cy="105" r="0.9" fill="#40e8cc"/>
+    <circle cx="267" cy="75"  r="1.1" fill="#7fffd4"/>
+    <circle cx="276" cy="120" r="1.0" fill="#00d4b8"/>
+    <circle cx="264" cy="62"  r="0.8" fill="#00e5cc"/>
+    <circle cx="278" cy="133" r="1.2" fill="#40e8cc"/>
+  </g>
 
-  <!-- Inner flame — brighter core -->
-  <path d="
-    M 62 142
-    C 50 142 44 130 48 116
-    C 50 104 56 96  54 82
-    C 52 72  56 62  62 56
-    C 62 68  66 74  70 70
-    C 68 60  72 50  78 44
-    C 80 58  76 68  78 78
-    C 82 68  86 62  88 54
-    C 90 68  86 80  80 92
-    C 86 84  90 90  88 104
-    C 86 120 76 142 62 142
-    Z
-  " fill="url(#innerFlameGrad)" opacity="0.92" filter="url(#flameShadow)"/>
+  <!-- LETTER A — particle cluster -->
+  <g filter="url(#glowBloom)">
+    <circle cx="26"  cy="130" r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="28"  cy="122" r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="30"  cy="114" r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="32"  cy="106" r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="33"  cy="98"  r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="35"  cy="90"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="36"  cy="82"  r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="38"  cy="74"  r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="39"  cy="66"  r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="41"  cy="58"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="43"  cy="50"  r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="47"  cy="42"  r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="52"  cy="34"  r="2.4" fill="url(#dotWhite)"/>
+    <circle cx="56"  cy="26"  r="2.5" fill="url(#dotWhite)"/>
+    <circle cx="60"  cy="34"  r="2.4" fill="url(#dotWhite)"/>
+    <circle cx="64"  cy="42"  r="2.1" fill="url(#dotTeal)"/>
+    <circle cx="67"  cy="50"  r="2.3" fill="url(#dotWhite)"/>
+    <circle cx="69"  cy="58"  r="2.0" fill="url(#dotTeal)"/>
+    <circle cx="71"  cy="66"  r="2.2" fill="url(#dotWhite)"/>
+    <circle cx="72"  cy="74"  r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="74"  cy="82"  r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="75"  cy="90"  r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="77"  cy="98"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="78"  cy="106" r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="80"  cy="114" r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="82"  cy="122" r="2.0" fill="url(#dotTeal)"/>
+    <circle cx="83"  cy="130" r="2.2" fill="url(#dotWhite)"/>
+    <!-- Crossbar -->
+    <circle cx="43"  cy="88"  r="1.9" fill="url(#dotTeal)"/>
+    <circle cx="47"  cy="88"  r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="51"  cy="88"  r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="55"  cy="88"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="59"  cy="88"  r="2.1" fill="url(#dotTeal)"/>
+    <circle cx="63"  cy="88"  r="1.9" fill="url(#dotWhite)"/>
+    <circle cx="67"  cy="88"  r="2.0" fill="url(#dotTeal)"/>
+    <!-- Density fill -->
+    <circle cx="44"  cy="118" r="1.5" fill="url(#dotOuter)"/>
+    <circle cx="48"  cy="112" r="1.6" fill="url(#dotOuter)"/>
+    <circle cx="52"  cy="106" r="1.5" fill="url(#dotOuter)"/>
+    <circle cx="62"  cy="112" r="1.6" fill="url(#dotOuter)"/>
+    <circle cx="66"  cy="106" r="1.5" fill="url(#dotOuter)"/>
+    <circle cx="70"  cy="118" r="1.4" fill="url(#dotOuter)"/>
+  </g>
 
-  <!-- Highlight streak — left lean -->
-  <path d="
-    M 62 134
-    C 56 120 54 102 58 84
-    C 60 96  62 108 64 118
-    C 64 128 63 134 62 134
-    Z
-  " fill="white" opacity="0.22"/>
+  <!-- LETTER L — particle cluster -->
+  <g filter="url(#glowBloom)">
+    <circle cx="110" cy="26"  r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="110" cy="34"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="110" cy="42"  r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="110" cy="50"  r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="110" cy="58"  r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="110" cy="66"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="110" cy="74"  r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="110" cy="82"  r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="110" cy="90"  r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="110" cy="98"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="110" cy="106" r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="110" cy="114" r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="110" cy="122" r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="110" cy="130" r="2.0" fill="url(#dotWhite)"/>
+    <!-- Horizontal base -->
+    <circle cx="118" cy="130" r="2.1" fill="url(#dotTeal)"/>
+    <circle cx="126" cy="130" r="2.2" fill="url(#dotWhite)"/>
+    <circle cx="134" cy="130" r="2.0" fill="url(#dotTeal)"/>
+    <circle cx="142" cy="130" r="2.3" fill="url(#dotWhite)"/>
+    <circle cx="150" cy="130" r="2.1" fill="url(#dotTeal)"/>
+    <circle cx="158" cy="130" r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="114" cy="122" r="1.5" fill="url(#dotOuter)"/>
+    <circle cx="120" cy="126" r="1.6" fill="url(#dotOuter)"/>
+  </g>
 
-  <!-- Spark particles -->
-  <!-- Top spark — largest, brightest -->
-  <circle cx="74" cy="22" r="2.8" fill="#FFF5AA" opacity="0.95" filter="url(#sparkGlow)"/>
-  <!-- Upper right spark -->
-  <circle cx="96" cy="46" r="1.8" fill="#FFDD55" opacity="0.85" filter="url(#sparkGlow)"/>
-  <!-- Upper left spark -->
-  <circle cx="44" cy="52" r="1.5" fill="#FFB830" opacity="0.8" filter="url(#sparkGlow)"/>
-  <!-- Mid right spark -->
-  <circle cx="100" cy="76" r="1.3" fill="#FF9933" opacity="0.7"/>
-  <!-- Mid left spark -->
-  <circle cx="36" cy="86" r="1.1" fill="#FF8822" opacity="0.65"/>
-  <!-- Tiny top-right spark -->
-  <circle cx="88" cy="30" r="1.0" fill="#FFFFFF" opacity="0.75"/>
-  <!-- Tiny top-left spark -->
-  <circle cx="52" cy="30" r="0.9" fill="#FFE566" opacity="0.7"/>
+  <!-- LETTER G — particle cluster -->
+  <g filter="url(#glowBloom)">
+    <!-- Top arc -->
+    <circle cx="230" cy="26"  r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="220" cy="28"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="211" cy="33"  r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="204" cy="40"  r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="199" cy="48"  r="2.2" fill="url(#dotTeal)"/>
+    <!-- Left stroke -->
+    <circle cx="197" cy="58"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="196" cy="68"  r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="196" cy="78"  r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="196" cy="88"  r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="197" cy="98"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="199" cy="108" r="2.3" fill="url(#dotTeal)"/>
+    <!-- Bottom arc -->
+    <circle cx="204" cy="118" r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="212" cy="125" r="2.2" fill="url(#dotTeal)"/>
+    <circle cx="221" cy="130" r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="231" cy="130" r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="241" cy="128" r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="250" cy="124" r="2.2" fill="url(#dotTeal)"/>
+    <!-- Outer arc right -->
+    <circle cx="258" cy="118" r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="262" cy="110" r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="263" cy="100" r="2.1" fill="url(#dotWhite)"/>
+    <circle cx="263" cy="90"  r="2.2" fill="url(#dotTeal)"/>
+    <!-- Spur inward -->
+    <circle cx="255" cy="90"  r="2.0" fill="url(#dotWhite)"/>
+    <circle cx="247" cy="90"  r="2.3" fill="url(#dotTeal)"/>
+    <circle cx="239" cy="90"  r="2.1" fill="url(#dotWhite)"/>
+    <!-- Top right -->
+    <circle cx="242" cy="30"  r="2.2" fill="url(#dotWhite)"/>
+    <circle cx="252" cy="36"  r="2.0" fill="url(#dotTeal)"/>
+    <circle cx="259" cy="44"  r="2.3" fill="url(#dotWhite)"/>
+    <circle cx="263" cy="54"  r="2.1" fill="url(#dotTeal)"/>
+    <!-- Extras -->
+    <circle cx="206" cy="36"  r="1.5" fill="url(#dotOuter)"/>
+    <circle cx="210" cy="130" r="1.6" fill="url(#dotOuter)"/>
+    <circle cx="240" cy="120" r="1.5" fill="url(#dotOuter)"/>
+    <circle cx="256" cy="48"  r="1.4" fill="url(#dotOuter)"/>
+  </g>
 
-  <!-- Spark streaks — geometric dashes flying upward -->
-  <line x1="78" y1="35" x2="83" y2="24" stroke="#FFEE88" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
-  <line x1="92" y1="55" x2="99" y2="44" stroke="#FFBB44" stroke-width="1.0" stroke-linecap="round" opacity="0.6"/>
-  <line x1="42" y1="64" x2="36" y2="53" stroke="#FF9944" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+  <!-- Near-letter corona -->
+  <g filter="url(#softGlow)" opacity="0.85">
+    <circle cx="22"  cy="140" r="1.4" fill="#00e5cc"/>
+    <circle cx="32"  cy="142" r="1.2" fill="#40e8cc"/>
+    <circle cx="56"  cy="20"  r="1.3" fill="#7fffd4"/>
+    <circle cx="62"  cy="18"  r="1.1" fill="#00e5cc"/>
+    <circle cx="87"  cy="138" r="1.4" fill="#40e8cc"/>
+    <circle cx="77"  cy="142" r="1.2" fill="#00d4b8"/>
+    <circle cx="19"  cy="126" r="1.0" fill="#00e5cc"/>
+    <circle cx="88"  cy="125" r="1.1" fill="#40e8cc"/>
+    <circle cx="36"  cy="22"  r="1.2" fill="#7fffd4"/>
+    <circle cx="74"  cy="22"  r="1.0" fill="#00e5cc"/>
+    <circle cx="104" cy="20"  r="1.3" fill="#00e5cc"/>
+    <circle cx="116" cy="22"  r="1.1" fill="#40e8cc"/>
+    <circle cx="104" cy="136" r="1.4" fill="#7fffd4"/>
+    <circle cx="162" cy="136" r="1.2" fill="#00e5cc"/>
+    <circle cx="166" cy="128" r="1.0" fill="#40e8cc"/>
+    <circle cx="102" cy="110" r="1.1" fill="#00d4b8"/>
+    <circle cx="226" cy="18"  r="1.3" fill="#00e5cc"/>
+    <circle cx="248" cy="20"  r="1.1" fill="#40e8cc"/>
+    <circle cx="268" cy="35"  r="1.4" fill="#7fffd4"/>
+    <circle cx="270" cy="62"  r="1.2" fill="#00e5cc"/>
+    <circle cx="270" cy="96"  r="1.0" fill="#40e8cc"/>
+    <circle cx="256" cy="136" r="1.3" fill="#00d4b8"/>
+    <circle cx="226" cy="138" r="1.2" fill="#7fffd4"/>
+    <circle cx="193" cy="116" r="1.1" fill="#00e5cc"/>
+    <circle cx="191" cy="45"  r="1.4" fill="#40e8cc"/>
+    <circle cx="236" cy="92"  r="1.2" fill="#7fffd4"/>
+    <circle cx="268" cy="88"  r="1.0" fill="#00e5cc"/>
+  </g>
 
-  <!-- Tagline: "AGENTIC LEAD GEN" -->
+  <!-- Micro sparkle / quantum noise -->
+  <g opacity="0.6">
+    <circle cx="35"  cy="145" r="0.7" fill="#7fffd4"/>
+    <circle cx="55"  cy="148" r="0.6" fill="#00e5cc"/>
+    <circle cx="70"  cy="143" r="0.8" fill="#40e8cc"/>
+    <circle cx="100" cy="147" r="0.7" fill="#7fffd4"/>
+    <circle cx="118" cy="144" r="0.6" fill="#00d4b8"/>
+    <circle cx="140" cy="148" r="0.8" fill="#00e5cc"/>
+    <circle cx="158" cy="145" r="0.7" fill="#40e8cc"/>
+    <circle cx="185" cy="147" r="0.6" fill="#7fffd4"/>
+    <circle cx="205" cy="144" r="0.8" fill="#00d4b8"/>
+    <circle cx="222" cy="148" r="0.7" fill="#00e5cc"/>
+    <circle cx="248" cy="146" r="0.6" fill="#40e8cc"/>
+    <circle cx="268" cy="144" r="0.8" fill="#7fffd4"/>
+    <circle cx="285" cy="148" r="0.7" fill="#00d4b8"/>
+    <circle cx="48"  cy="155" r="0.6" fill="#00e5cc"/>
+    <circle cx="92"  cy="158" r="0.7" fill="#40e8cc"/>
+    <circle cx="130" cy="155" r="0.6" fill="#7fffd4"/>
+    <circle cx="172" cy="158" r="0.8" fill="#00d4b8"/>
+    <circle cx="214" cy="155" r="0.6" fill="#00e5cc"/>
+    <circle cx="258" cy="158" r="0.7" fill="#40e8cc"/>
+    <circle cx="15"  cy="155" r="0.6" fill="#7fffd4"/>
+    <circle cx="282" cy="155" r="0.8" fill="#00e5cc"/>
+    <circle cx="24"  cy="45"  r="0.6" fill="#00e5cc"/>
+    <circle cx="88"  cy="42"  r="0.7" fill="#40e8cc"/>
+    <circle cx="126" cy="45"  r="0.6" fill="#7fffd4"/>
+    <circle cx="164" cy="42"  r="0.8" fill="#00d4b8"/>
+    <circle cx="210" cy="48"  r="0.6" fill="#00e5cc"/>
+    <circle cx="272" cy="42"  r="0.7" fill="#40e8cc"/>
+  </g>
+
+  <!-- Tagline -->
   <text
-    x="152"
-    y="102"
-    font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
-    font-size="18"
-    font-weight="900"
-    letter-spacing="1.5"
-    text-anchor="middle"
-    fill="url(#textGrad)"
-  >AGENTIC</text>
-
-  <text
-    x="152"
-    y="124"
-    font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
-    font-size="18"
-    font-weight="900"
-    letter-spacing="1.5"
-    text-anchor="middle"
-    fill="url(#textGrad)"
-  >LEAD GEN</text>
-
-  <!-- Divider line -->
-  <line x1="112" y1="131" x2="192" y2="131" stroke="#FF7722" stroke-width="1.2" opacity="0.6"/>
-
-  <!-- Sub-tagline -->
-  <text
-    x="152"
-    y="145"
-    font-family="'Arial', 'Helvetica Neue', sans-serif"
-    font-size="7.5"
-    font-weight="400"
+    x="150"
+    y="170"
+    font-family="'Courier New', 'Lucida Console', monospace"
+    font-size="9"
+    font-weight="600"
     letter-spacing="3.5"
     text-anchor="middle"
-    fill="url(#subTextGrad)"
-    opacity="0.85"
-  >IGNITE  &bull;  SPARK  &bull;  LAUNCH</text>
+    fill="#40e8cc"
+    opacity="0.82"
+    filter="url(#softGlow)"
+  >AGENTIC LEAD GEN</text>
 
-  <!-- Bottom accent dots -->
-  <circle cx="116" cy="158" r="1.5" fill="#FF7722" opacity="0.5"/>
-  <circle cx="152" cy="158" r="1.5" fill="#FFB833" opacity="0.5"/>
-  <circle cx="188" cy="158" r="1.5" fill="#FF7722" opacity="0.5"/>
+  <!-- Tagline particle trail -->
+  <g opacity="0.45">
+    <circle cx="60"  cy="175" r="0.7" fill="#00e5cc"/>
+    <circle cx="78"  cy="174" r="0.6" fill="#40e8cc"/>
+    <circle cx="96"  cy="175" r="0.8" fill="#7fffd4"/>
+    <circle cx="114" cy="174" r="0.6" fill="#00d4b8"/>
+    <circle cx="132" cy="175" r="0.7" fill="#00e5cc"/>
+    <circle cx="150" cy="174" r="0.9" fill="#7fffd4"/>
+    <circle cx="168" cy="175" r="0.7" fill="#40e8cc"/>
+    <circle cx="186" cy="174" r="0.6" fill="#00d4b8"/>
+    <circle cx="204" cy="175" r="0.8" fill="#00e5cc"/>
+    <circle cx="222" cy="174" r="0.6" fill="#40e8cc"/>
+    <circle cx="240" cy="175" r="0.7" fill="#7fffd4"/>
+  </g>
+
+  <!-- Central convergence glints — hottest nodes -->
+  <g filter="url(#glowBloom)">
+    <!-- A apex -->
+    <circle cx="56"  cy="26"  r="3.2" fill="url(#dotWhite)"/>
+    <circle cx="56"  cy="26"  r="1.5" fill="#ffffff" opacity="0.95"/>
+    <!-- L top -->
+    <circle cx="110" cy="26"  r="2.8" fill="url(#dotWhite)"/>
+    <circle cx="110" cy="26"  r="1.4" fill="#ffffff" opacity="0.95"/>
+    <!-- L corner -->
+    <circle cx="110" cy="130" r="2.6" fill="url(#dotWhite)"/>
+    <circle cx="110" cy="130" r="1.3" fill="#ffffff" opacity="0.9"/>
+    <!-- G top right -->
+    <circle cx="263" cy="54"  r="2.8" fill="url(#dotWhite)"/>
+    <circle cx="263" cy="54"  r="1.4" fill="#ffffff" opacity="0.95"/>
+    <!-- G inner spur -->
+    <circle cx="263" cy="90"  r="2.6" fill="url(#dotWhite)"/>
+    <circle cx="263" cy="90"  r="1.3" fill="#ffffff" opacity="0.9"/>
+    <!-- A crossbar -->
+    <circle cx="55"  cy="88"  r="2.5" fill="url(#dotWhite)"/>
+    <circle cx="55"  cy="88"  r="1.2" fill="#ffffff" opacity="0.85"/>
+  </g>
+
 </svg>
