@@ -79,14 +79,6 @@ export const companyResolvers = {
     githubUrl(parent: any) {
       return parent.github_url ?? null;
     },
-    async ats_boards(parent: any, _args: any, context: GraphQLContext) {
-      try {
-        return context.loaders.atsBoardsByCompany.load(parent.id);
-      } catch (error) {
-        console.error("Error fetching ATS boards:", error);
-        return [];
-      }
-    },
     async facts(
       parent: any,
       args: { limit?: number; offset?: number; field?: string },

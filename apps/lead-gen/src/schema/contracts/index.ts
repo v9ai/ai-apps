@@ -13,8 +13,6 @@
 
 export {
   JobStatus,
-  ATSVendor,
-  ATSBoardType,
   CompanyCategory,
   SourceType,
   ExtractMethod,
