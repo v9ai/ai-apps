@@ -14,7 +14,6 @@ type HotelLink = {
 
 type TierGroup = {
   tier: string;
-  mlScore: number;
   hotels: HotelLink[];
 };
 
@@ -27,7 +26,6 @@ const googleUrl = (name: string) =>
 const TIERS_EN: TierGroup[] = [
   {
     tier: "Budget",
-    mlScore: ML_TIER_SCORES[0],
     hotels: [
       { name: "B&B Spaccanapoli",       area: "Centro Storico",    price: "€45 / night", booking: bookingUrl("B&B Spaccanapoli"),       google: googleUrl("B&B Spaccanapoli") },
       { name: "A' Puteca di Napoli",    area: "Quartieri Spagnoli",price: "€48 / night", booking: bookingUrl("A' Puteca di Napoli"),    google: googleUrl("A' Puteca di Napoli") },
@@ -36,7 +34,6 @@ const TIERS_EN: TierGroup[] = [
   },
   {
     tier: "Mid-Range",
-    mlScore: ML_TIER_SCORES[1],
     hotels: [
       { name: "Hotel Piazza Bellini",   area: "Centro Storico",    price: "€68 / night", booking: bookingUrl("Hotel Piazza Bellini"),   google: googleUrl("Hotel Piazza Bellini") },
       { name: "Hotel de Charme Toledo", area: "Via Toledo",        price: "€65 / night", booking: bookingUrl("Hotel de Charme Toledo"), google: googleUrl("Hotel de Charme Toledo Naples") },
@@ -45,7 +42,6 @@ const TIERS_EN: TierGroup[] = [
   },
   {
     tier: "Comfort",
-    mlScore: ML_TIER_SCORES[2],
     hotels: [
       { name: "Grand Hotel Vesuvio",    area: "Lungomare",         price: "€145 / night", booking: bookingUrl("Grand Hotel Vesuvio"),    google: googleUrl("Grand Hotel Vesuvio Naples") },
       { name: "Hotel Santa Lucia",      area: "Lungomare",         price: "€130 / night", booking: bookingUrl("Hotel Santa Lucia Naples"), google: googleUrl("Hotel Santa Lucia Naples") },
@@ -57,7 +53,6 @@ const TIERS_EN: TierGroup[] = [
 const TIERS_RO: TierGroup[] = [
   {
     tier: "Buget",
-    mlScore: ML_TIER_SCORES[0],
     hotels: [
       { name: "B&B Spaccanapoli",       area: "Centro Storico",    price: "€45 / noapte", booking: bookingUrl("B&B Spaccanapoli"),       google: googleUrl("B&B Spaccanapoli") },
       { name: "A' Puteca di Napoli",    area: "Quartieri Spagnoli",price: "€48 / noapte", booking: bookingUrl("A' Puteca di Napoli"),    google: googleUrl("A' Puteca di Napoli") },
@@ -66,7 +61,6 @@ const TIERS_RO: TierGroup[] = [
   },
   {
     tier: "Mediu",
-    mlScore: ML_TIER_SCORES[1],
     hotels: [
       { name: "Hotel Piazza Bellini",   area: "Centro Storico",    price: "€68 / noapte", booking: bookingUrl("Hotel Piazza Bellini"),   google: googleUrl("Hotel Piazza Bellini") },
       { name: "Hotel de Charme Toledo", area: "Via Toledo",        price: "€65 / noapte", booking: bookingUrl("Hotel de Charme Toledo"), google: googleUrl("Hotel de Charme Toledo Naples") },
@@ -75,7 +69,6 @@ const TIERS_RO: TierGroup[] = [
   },
   {
     tier: "Confort",
-    mlScore: ML_TIER_SCORES[2],
     hotels: [
       { name: "Grand Hotel Vesuvio",    area: "Lungomare",         price: "€145 / noapte", booking: bookingUrl("Grand Hotel Vesuvio"),    google: googleUrl("Grand Hotel Vesuvio Naples") },
       { name: "Hotel Santa Lucia",      area: "Lungomare",         price: "€130 / noapte", booking: bookingUrl("Hotel Santa Lucia Naples"), google: googleUrl("Hotel Santa Lucia Naples") },
@@ -90,7 +83,6 @@ const T = {
     sectionTitle: "Find & Book Your Hotel",
     sectionSubtitle: "Direct search links to Booking.com and Google for each property. All 9 hotels — 3 per tier.",
     recommended: "RECOMMENDED",
-    mlLabel: ML_SHORT_LABEL,
     bookingLabel: "Booking.com",
     googleLabel: "Google",
     tiers: TIERS_EN,
@@ -100,7 +92,6 @@ const T = {
     sectionTitle: "Găsește și Rezervă Hotelul",
     sectionSubtitle: "Linkuri directe pe Booking.com și Google pentru fiecare proprietate. Toate 9 hoteluri — 3 pe nivel.",
     recommended: "RECOMANDAT",
-    mlLabel: ML_SHORT_LABEL,
     bookingLabel: "Booking.com",
     googleLabel: "Google",
     tiers: TIERS_RO,
@@ -177,7 +168,7 @@ export function HotelLinks() {
         })}
       >
         {t.tiers.map((group, gi) => {
-          const isRecommended = gi === ML_TIER_RECOMMENDED;
+          const isRecommended = gi === RECOMMENDED_TIER;
           return (
             <div key={group.tier}>
               {/* Tier label */}
@@ -201,22 +192,6 @@ export function HotelLinks() {
                 >
                   {group.tier}
                 </p>
-                <span
-                  className={css({
-                    fontSize: "2xs",
-                    fontFamily: "display",
-                    fontWeight: "700",
-                    color: isRecommended ? "amber.bright" : "text.faint",
-                    bg: "steel.raised",
-                    border: "1px solid",
-                    borderColor: isRecommended ? "amber.warm" : "steel.border",
-                    rounded: "pill",
-                    px: "2",
-                    py: "0.5",
-                  })}
-                >
-                  {t.mlLabel} {group.mlScore}
-                </span>
                 {isRecommended && (
                   <span
                     className={css({
