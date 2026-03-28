@@ -205,16 +205,9 @@ export function normalizeJobInput(job: any): any {
     };
   }
 
-  // Try to extract company from Greenhouse/Lever URLs
+  // Try to extract company from URL or use company name
   if (job.url) {
-    const greenhouseMatch = job.url.match(/boards\.greenhouse\.io\/([^/]+)/);
-    const leverMatch = job.url.match(/jobs\.lever\.co\/([^/]+)/);
-
-    if (greenhouseMatch) {
-      companyKey = greenhouseMatch[1];
-    } else if (leverMatch) {
-      companyKey = leverMatch[1];
-    } else if (job.company) {
+    if (job.company) {
       // Slugify company name
       companyKey = job.company.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     }
@@ -222,35 +215,14 @@ export function normalizeJobInput(job: any): any {
 
   // Determine source kind from URL or sourceType
   let sourceKind = "other";
-  if (job.url?.includes("greenhouse.io")) {
-    sourceKind = "greenhouse";
-  } else if (job.url?.includes("lever.co")) {
-    sourceKind = "lever";
-  } else if (job.url?.includes("workable.com")) {
+  if (job.url?.includes("workable.com")) {
     sourceKind = "workable";
   } else if (job.sourceType) {
     sourceKind = job.sourceType;
   }
 
-  // Extract external ID (UUID) from URL for ATS platforms
+  // Extract external ID from URL
   let externalId = job.guid || job.id || job.url;
-
-  if (job.url) {
-    // Extract Greenhouse ID from URL if present
-    if (job.url.includes("greenhouse.io")) {
-      const greenhouseIdMatch = job.url.match(/job_app\?gh_jid=(\d+)/);
-      if (greenhouseIdMatch) {
-        externalId = greenhouseIdMatch[1];
-      }
-    }
-    // Extract Lever ID from URL if present
-    else if (job.url.includes("lever.co")) {
-      const leverIdMatch = job.url.match(/jobs\.lever\.co\/[^/]+\/([^/?]+)/);
-      if (leverIdMatch) {
-        externalId = leverIdMatch[1];
-      }
-    }
-  }
 
   return {
     externalId: externalId,

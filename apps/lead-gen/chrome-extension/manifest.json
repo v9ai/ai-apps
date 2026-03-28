@@ -32,10 +32,7 @@
     "http://localhost:9876/*",
     "https://*.linkedin.com/*",
     "https://*.google.com/*",
-    "https://*.greenhouse.io/*",
-    "https://*.lever.co/*",
-    "https://*.workable.com/*",
-    "https://www.founderio.com/*"
+    "https://*.workable.com/*"
   ],
   "content_scripts": [
     {
@@ -44,10 +41,6 @@
         "https://*.linkedin.com/feed/*",
         "https://*.linkedin.com/search/*",
         "https://*.google.com/search*",
-        "https://*.greenhouse.io/*",
-        "https://*.lever.co/*",
-        "https://www.founderio.com/jobs*",
-        "https://www.founderio.com/job/*",
         "https://*.workable.com/*"
       ],
       "js": ["src/pages/content/index.tsx"],
