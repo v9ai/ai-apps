@@ -203,7 +203,7 @@ S3 scales automatically per prefix. Each unique prefix path supports at least **
 - Use random or hashed prefixes for hot key patterns: `a3f2/user-uploads/...`, `b7c1/user-uploads/...`
 
 ### S3 Transfer Acceleration
-Routes uploads/downloads through **CloudFront edge locations** using AWS's private network backbone instead of the public internet. Adds ~$0.04/GB over standard transfer costs. Useful for:
+Routes uploads/downloads through **[CloudFront](/aws-cloudfront-route53) edge locations** using AWS's private network backbone instead of the public internet. Adds ~$0.04/GB over standard transfer costs. Useful for:
 - Users uploading large files from geographically distant locations
 - Global applications where latency to the bucket's Region is high
 
@@ -226,7 +226,7 @@ Execute SQL-like queries directly on S3 objects (CSV, JSON, Parquet, gzip/bzip2 
 SELECT s.name, s.age FROM S3Object s WHERE s.age > 25
 ```
 
-Reduces data transfer by up to 400x for selective queries. Does not support JOINs or aggregations across multiple files. For complex analytics, use **Amazon Athena** (S3 Select under the hood, plus query planning) or **Redshift Spectrum**.
+Reduces data transfer by up to 400x for selective queries. Does not support JOINs or aggregations across multiple files. For complex analytics, use **Amazon Athena** (S3 Select under the hood, plus query planning) or **Redshift Spectrum** — see [Data Analytics](/aws-data-analytics) for full Athena + Glue + Redshift patterns.
 
 ### S3 Object Lambda
 Intercept `GetObject` requests with a Lambda function to transform data on the fly — resize images, redact PII, convert formats — before returning it to the caller. No changes needed in the calling application.
@@ -424,7 +424,7 @@ EFS Intelligent-Tiering (similar concept to S3):
 ### Security
 - In-transit encryption: TLS via the EFS mount helper (`amazon-efs-utils`)
 - At-rest encryption: KMS (must be configured at creation time)
-- VPC security groups on mount targets control network access; IAM resource policies (EFS file system policies) control API and mount-level access
+- [VPC](/aws-vpc-networking) security groups on mount targets control network access; IAM resource policies (EFS file system policies) control API and mount-level access
 
 ---
 
@@ -586,6 +586,222 @@ On-Premises NAS
     → S3 Lifecycle → Standard-IA (30 days) → Glacier (365 days)
     → AWS Backup (Vault Lock, cross-account copy to backup account)
 ```
+
+## S3 Object Lambda — Transform Data On Retrieval
+
+S3 Object Lambda lets you intercept `GetObject` calls and transform the response using a Lambda function, without storing multiple copies of the data.
+
+### How It Works
+```
+App requests object → S3 Object Lambda Access Point → Lambda transforms → App receives modified data
+                              ↓ (fetches original from S3)
+                        Original S3 Bucket
+```
+
+### Use Cases
+- **PII masking**: redact SSN/email before returning to non-privileged callers
+- **Format conversion**: return CSV as JSON, convert image formats, compress/decompress
+- **Watermarking**: dynamically add watermark to images on retrieval
+- **Enrichment**: merge data from multiple S3 objects or databases before returning
+- **Access-tier caching**: return cached aggregation result, only re-compute when source changes
+
+```python
+import boto3
+import json
+import urllib3
+
+def lambda_handler(event, context):
+    # Get the original object from S3
+    s3 = boto3.client('s3')
+    object_context = event['getObjectContext']
+
+    # Fetch the original object from S3
+    http = urllib3.PoolManager()
+    original_object = http.request('GET', object_context['inputS3Url'])
+
+    # Transform: mask SSNs using regex
+    import re
+    content = original_object.data.decode('utf-8')
+    masked = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', '***-**-****', content)
+
+    # Return transformed object
+    s3.write_get_object_response(
+        Body=masked,
+        RequestRoute=object_context['outputRoute'],
+        RequestToken=object_context['outputToken'],
+        ContentType='text/plain',
+        StatusCode=200,
+    )
+```
+
+---
+
+## S3 Batch Operations
+
+S3 Batch Operations performs large-scale batch actions across billions of objects in a single managed job.
+
+### Supported Operations
+- **Invoke Lambda**: pass each object as an event to a Lambda function (most flexible)
+- **Copy objects**: copy between buckets (cross-region, cross-account)
+- **Replace object tags**: bulk tag update
+- **Delete objects**: bulk delete (including versioned objects)
+- **Restore objects**: bulk restore from Glacier
+- **Replicate objects**: retroactively add older objects to replication rules
+- **Apply ACL**: bulk ACL changes
+
+### Job Lifecycle
+```
+1. Create manifest (CSV or S3 Inventory report listing target objects)
+2. Create S3 Batch Operations job with operation + manifest
+3. Review estimated job scope (count, size)
+4. Confirm + run
+5. Job processes objects in parallel (scales automatically)
+6. Job completion report written to S3 (success/failure per object)
+```
+
+```python
+# Create a Batch Operations job to invoke Lambda on all objects
+s3control = boto3.client('s3control')
+
+response = s3control.create_job(
+    AccountId='123456789012',
+    Operation={
+        'LambdaInvoke': {
+            'FunctionArn': 'arn:aws:lambda:us-east-1:123456789012:function:ProcessObject',
+            'InvocationSchemaVersion': '2.0',
+        }
+    },
+    Manifest={
+        'Spec': {'Format': 'S3BatchOperations_CSV_20180820', 'Fields': ['Bucket', 'Key']},
+        'Location': {'ObjectArn': 'arn:aws:s3:::my-manifests/objects.csv', 'ETag': 'abc123'},
+    },
+    Report={
+        'Bucket': 'arn:aws:s3:::my-reports',
+        'Format': 'Report_CSV_20180820',
+        'Enabled': True,
+        'Prefix': 'batch-reports/',
+        'ReportScope': 'AllTasks',
+    },
+    Priority=10,
+    RoleArn='arn:aws:iam::123456789012:role/BatchOperationsRole',
+    ConfirmationRequired=False,
+)
+```
+
+---
+
+## S3 Access Points — Multi-Tenant Access Control
+
+S3 Access Points simplify access management for shared datasets with many applications or teams.
+
+### Problem Without Access Points
+- One bucket, 20 teams, each needing different access rules → complex, fragile bucket policy
+- Policy size limit: 20 KB — can hit this with many team rules
+
+### Solution: Named Endpoints with Policies
+```json
+// Access point for "data-science" team — read-only to /analytics/ prefix
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {"AWS": "arn:aws:iam::123456789012:role/DataScienceRole"},
+    "Action": ["s3:GetObject", "s3:ListBucket"],
+    "Resource": [
+      "arn:aws:s3:us-east-1:123456789012:accesspoint/data-science",
+      "arn:aws:s3:us-east-1:123456789012:accesspoint/data-science/object/analytics/*"
+    ]
+  }]
+}
+```
+- Each team gets their own access point ARN to use as the endpoint
+- Object Lambda Access Points: access point → Object Lambda (transform) → S3
+- VPC-restricted access points: `VpcConfiguration` restricts access to specific [VPC](/aws-vpc-networking)
+
+---
+
+## S3 Express One Zone — Ultra-Low Latency Storage
+
+S3 Express One Zone is a new storage class (2023) optimized for performance-sensitive workloads:
+
+- **Latency**: single-digit millisecond (10× faster than S3 Standard)
+- **Throughput**: higher request rate (better for ML training data loading)
+- **Availability**: single AZ (vs multi-AZ for Standard) — lower durability
+- **Cost**: higher storage cost ($0.16/GB vs $0.023/GB), lower request cost ($0.0004/1K GET vs $0.0004) — see [Cost Optimization](/aws-cost-optimization) for storage class cost trade-offs
+- **Use cases**: ML training (reduce data loading bottleneck), analytics (Athena query acceleration), real-time media processing
+- **Not for**: durable storage, compliance data, backup/archive
+
+---
+
+## S3 Select & Glacier Select
+
+Query data within S3 objects without downloading the entire object.
+
+```python
+# Retrieve only specific columns from a CSV/JSON/Parquet in S3
+response = s3.select_object_content(
+    Bucket='my-data-lake',
+    Key='orders/2024/january.parquet',
+    ExpressionType='SQL',
+    Expression="SELECT customerId, total FROM S3Object WHERE status = 'completed' AND total > 1000",
+    InputSerialization={'Parquet': {}},
+    OutputSerialization={'JSON': {'RecordDelimiter': '\n'}},
+)
+
+# Process streaming response
+for event in response['Payload']:
+    if 'Records' in event:
+        data = event['Records']['Payload'].decode('utf-8')
+        print(data)
+```
+
+- Saves bandwidth: only download matching rows/columns
+- S3 Select supports: CSV, JSON, Parquet, GZIP/BZIP2 for CSV/JSON
+- Glacier Select: same capability for archived objects (minutes retrieval vs hours for full restore)
+- Compare vs Athena: S3 Select is per-object query; Athena is cross-object SQL with partitioning — see [Data Analytics](/aws-data-analytics) for Athena, Glue, and Redshift Spectrum patterns
+
+---
+
+## FSx Family — Specialized File Systems
+
+| Service | Protocol | Optimized For | Typical Use Case |
+|---|---|---|---|
+| **FSx for Lustre** | POSIX | High-throughput parallel I/O | ML training, HPC, media rendering |
+| **FSx for Windows** | SMB/NTFS | Windows workloads | Active Directory, SQL Server backups |
+| **FSx for NetApp ONTAP** | NFS/SMB/iSCSI | Enterprise storage features | Lift-and-shift enterprise apps |
+| **FSx for OpenZFS** | NFS/ZFS | Low-latency NAS | Workloads requiring ZFS features |
+
+### FSx for Lustre — ML Training Pattern
+```
+S3 Data Lake → [lazy loading] → FSx for Lustre (linked to S3)
+                                       ↓
+                           ML Training Job (ECS/SageMaker)
+                                       ↓
+                              Results → S3 (export)
+```
+- S3 Linked File System: mount Lustre filesystem; access S3 objects as files; lazy-loaded on first access
+- 2 deployment types: Scratch (temporary, no replication, max throughput) vs Persistent (replicated within AZ, for longer jobs)
+- Throughput: 200 MB/s to 2+ GB/s depending on storage size
+- Integration: SageMaker Training Jobs support Lustre as a native data source
+
+---
+
+## Transfer Acceleration & S3 Performance
+
+### Transfer Acceleration
+- Uploads route through nearest [CloudFront](/aws-cloudfront-route53) edge PoP → AWS private network → S3
+- 50–500% faster for cross-region uploads from end users
+- Enable per bucket: `s3.us-east-1.accelerate.amazonaws.com` endpoint
+- Cost: $0.04–$0.08/GB transferred (on top of standard S3 PUT cost) — see [Cost Optimization](/aws-cost-optimization) before enabling for high-volume workloads
+- Use when: users globally upload large files to a centralized bucket; latency matters
+
+### S3 Request Rate Limits
+- > 5,500 GET/HEAD and 3,500 PUT/COPY/POST/DELETE per second per prefix (partition)
+- Spread objects across prefixes for high-throughput workloads
+- Do NOT use date-based prefixes for high-volume ingestion (all objects hash to same partition)
+- Use random prefixes: `a3f2/`, `d9b1/`, etc.
+
+---
 
 ## Red Flags to Avoid
 - **"S3 is eventually consistent."** As of December 2020, S3 provides strong read-after-write consistency for all operations. Saying otherwise signals outdated knowledge.

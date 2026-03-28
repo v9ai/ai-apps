@@ -60,7 +60,7 @@ Every service uses EC2 hardware underneath. The higher you go, the more AWS hand
 | **Dedicated Host** | On-demand or reserved | Varies | License compliance (BYOL), regulatory isolation |
 | **Dedicated Instance** | On-demand | ~10% premium | Hardware isolation from other accounts |
 
-**Spot interruption**: AWS gives a 2-minute warning via instance metadata event and an EventBridge event. You should checkpoint state, drain connections, and terminate gracefully. Spot interruption rates vary by AZ and instance type — choose instance types with `<5%` interruption frequency.
+**Spot interruption**: AWS gives a 2-minute warning via instance metadata event and an EventBridge event. You should checkpoint state, drain connections, and terminate gracefully. Spot interruption rates vary by AZ and instance type — choose instance types with `<5%` interruption frequency. See [Cost Optimization](/aws-cost-optimization) for Spot portfolio strategies and interruption-rate analysis.
 
 **Savings Plans vs Reserved Instances**: Compute Savings Plans are the modern default — they apply automatically to EC2 (any region, family, size, OS), Fargate, and Lambda. No need to manage reservation inventory. EC2 Instance Savings Plans give the highest discount but lock you to a specific instance family in a specific region.
 
@@ -324,7 +324,7 @@ For ALB: HTTP/HTTPS. Expect a 200 (or configurable range). For NLB: TCP (just co
 The key networking mode for modern ECS:
 - Each task gets its own **Elastic Network Interface (ENI)** with a private IP in the VPC
 - Security groups applied per-task (not per-host)
-- Tasks are first-class VPC citizens — can have subnet-level routing, VPC flow logs per-task IP
+- Tasks are first-class [VPC & Networking](/aws-vpc-networking) citizens — can have subnet-level routing, VPC flow logs per-task IP
 - Required for Fargate; optional but recommended for EC2 launch type
 - **Tradeoff**: ENI limits per EC2 instance (e.g., `m5.large` = 3 ENIs × 10 IPs each). For EC2 launch type with many tasks, use **ENI trunking** (allows up to 120 tasks per instance).
 
@@ -876,3 +876,260 @@ Common in EKS: OpenTelemetry Collector as adapter, consuming app-specific teleme
 **Q: How does Graviton migration work in practice for a containerized ECS service?**
 
 **A:** 1) Build a multi-arch Docker image: use `docker buildx build --platform linux/amd64,linux/arm64` and push a manifest list to ECR. 2) Update ECS task definition to add `runtimePlatform: {cpuArchitecture: ARM64}`. 3) Run the ARM64 task in a shadow environment, validate functional correctness and performance. 4) Update the service with the new task definition — rolling deploy. 5) Monitor: CPU utilization, latency p99, error rates. For most Node.js/Python/JVM services, this is a 2-4 hour effort for 20% cost reduction. The main risk: native extensions (.node files, Python C extensions) compiled for x86. Audit `package.json` for native deps and verify their ARM64 support first.
+
+---
+
+## EKS with Karpenter — Intelligent Node Auto-Scaling
+
+Karpenter is an open-source node provisioner for Kubernetes (maintained by AWS) that replaces Cluster Autoscaler with faster, more efficient scaling.
+
+### Karpenter vs Cluster Autoscaler
+| Criterion | Cluster Autoscaler | Karpenter |
+|---|---|---|
+| Scale-out latency | 2-4 min | 30-60s |
+| Node selection | Node groups (fixed type) | Any instance type (best fit) |
+| Bin packing | Suboptimal | Optimized (consolidation) |
+| Spot diversity | Manual configuration | Automatic (diversify types) |
+| Node consolidation | Manual deprovisioning | Automatic (removes underutilized nodes) |
+| Configuration | Node group limits | NodeClass + NodePool |
+
+### Karpenter NodePool Configuration
+```yaml
+# NodePool: defines constraints for nodes Karpenter can provision
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: general
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        name: al2023   # EC2NodeClass reference
+      requirements:
+        # Prefer Graviton (ARM64) for 20-40% cost savings
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["arm64", "amd64"]  # arm64 preferred by weight
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]  # prefer Spot
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          # Diverse instance types reduce Spot interruption probability
+          values: ["m7g.large", "m7g.xlarge", "m6g.large", "c7g.large", "c7g.xlarge", "m5.large", "m5.xlarge"]
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: ["us-east-1a", "us-east-1b", "us-east-1c"]
+  limits:
+    cpu: 1000        # Max 1000 vCPUs total across this NodePool
+    memory: 4000Gi
+  disruption:
+    consolidationPolicy: WhenUnderutilized  # Remove nodes with low utilization
+    consolidateAfter: 30s
+    expireAfter: 720h  # Force rotate nodes every 30 days (security patching)
+
+---
+# EC2NodeClass: AWS-specific node configuration
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: al2023
+spec:
+  amiFamily: AL2023  # Amazon Linux 2023 (vs AL2 for older AMIs)
+  role: KarpenterNodeRole
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 50Gi
+        volumeType: gp3
+        iops: 3000
+        encrypted: true
+```
+
+> Karpenter's subnet and security group selectors are tag-based — ensure your [VPC & Networking](/aws-vpc-networking) subnets carry the `karpenter.sh/discovery` tag matching the cluster name.
+
+### Pod Disruption Budgets for Karpenter Consolidation
+```yaml
+# Prevent all pods from being evicted simultaneously during consolidation
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-pdb
+spec:
+  selector:
+    matchLabels:
+      app: api
+  minAvailable: "50%"  # At least 50% of pods must remain available
+```
+
+---
+
+## Graviton Migration Guide
+
+AWS Graviton3 (ARM64) instances offer 20-40% better price-performance vs equivalent x86 instances. This is one of the highest ROI optimizations available. See [Cost Optimization](/aws-cost-optimization) for how Graviton fits into a broader savings strategy alongside Savings Plans and Spot.
+
+### Compatibility Check
+Most modern runtimes and languages are Graviton-compatible:
+- ✅ Node.js 18+, Python 3.9+, Go 1.18+, Java 11+ (Corretto), .NET 6+, Rust
+- ✅ Docker: use multi-arch base images (`node:20-alpine` is multi-arch)
+- ⚠️ Native compiled code: must recompile for `linux/arm64`
+- ❌ x86-only binaries (some older proprietary software)
+
+### Migration Steps
+```bash
+# Step 1: Check if your container images are multi-arch
+docker manifest inspect node:20-alpine | grep architecture
+# Should show both amd64 and arm64 variants
+
+# Step 2: Build multi-arch images in CI/CD
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  --tag 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:latest \
+  --push .
+
+# Step 3: Test on Graviton (canary)
+# EKS: use nodeSelector or node affinity
+spec:
+  nodeSelector:
+    kubernetes.io/arch: arm64
+  containers:
+    - image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:latest
+
+# Step 4: Update Karpenter NodePool to prefer arm64 (see above)
+# Step 5: Monitor for issues; rollback nodeSelector to amd64 if needed
+```
+
+### Cost Savings Calculator
+```
+m7g.xlarge (Graviton3 ARM64): $0.1632/hr
+m7i.xlarge (Intel x86):       $0.2016/hr
+Savings: 19% per instance
+
+r7g.2xlarge (Graviton3):      $0.5376/hr
+r7i.2xlarge (Intel):          $0.6048/hr
+Savings: 11% per instance
+
+For a 20-node cluster averaging m7g.xlarge:
+Monthly savings: 20 × ($0.2016 - $0.1632) × 730 = $561/month
+Annual savings: $6,732
+```
+
+---
+
+## AWS App Runner — Fastest Path to Production
+
+App Runner is fully managed: you provide source code or container image, AWS handles everything (load balancer, auto-scaling, TLS, deployments).
+
+### When to Choose App Runner vs ECS Fargate
+| Criterion | App Runner | ECS Fargate |
+|---|---|---|
+| Setup time | 5 minutes | 30-60 minutes |
+| Configuration | Minimal (CPU/memory only) | Full ECS task/service/ALB setup |
+| Auto-scaling | Automatic (no config) | Manual scaling policy config |
+| Custom networking | VPC connector (egress only) | Full VPC integration |
+| Load balancer | Built-in, not customizable | ALB (full control) |
+| Custom domains | Yes | Via Route 53 + ACM |
+| Health checks | HTTP path only | Full ALB health check config |
+| Cost (idle) | Scales to 0 (paused, resumes in ~seconds) | Minimum 0.25 vCPU if running |
+| Best for | Simple containerized APIs, prototypes, internal tools | Production microservices, complex networking |
+
+### App Runner Configuration
+```yaml
+# apprunner.yaml (source-based deployment)
+version: 1.0
+runtime: nodejs18
+build:
+  commands:
+    build:
+      - npm install
+      - npm run build
+run:
+  runtime-version: 18.12.0
+  command: node dist/server.js
+  network:
+    port: 8080
+    env: PORT
+  env:
+    - name: NODE_ENV
+      value: production
+  secrets:
+    - name: DATABASE_URL
+      value-from: arn:aws:secretsmanager:us-east-1:123456789012:secret:db-url
+
+# CDK: App Runner service
+const service = new apprunner.Service(this, 'ApiService', {
+  source: apprunner.Source.fromEcr({
+    imageConfiguration: { port: 8080, environmentSecrets: { DB_URL: apprunner.Secret.fromSecretsManager(dbSecret) } },
+    repository: ecrRepo,
+    tagOrDigest: 'latest',
+  }),
+  cpu: apprunner.Cpu.ONE_VCPU,
+  memory: apprunner.Memory.TWO_GB,
+  autoDeploymentsEnabled: true,  // redeploy on new ECR push
+  vpcConnector,  // for private DB access
+});
+```
+
+> The IAM role that App Runner uses to pull from ECR and read Secrets Manager is a separate service role — see [IAM & Security](/aws-iam-security) for the exact trust policy required.
+
+---
+
+## AWS Batch — Managed Batch Computing
+
+AWS Batch is ideal for ML training jobs, genomics analysis, financial simulations, and any large-scale parallel compute that would be awkward in [Lambda](/aws-lambda-serverless) or ECS.
+
+### Key Concepts
+- **Compute Environment**: pool of EC2/Fargate resources (managed or unmanaged)
+  - Managed: AWS provisions and scales instances; specify min/max vCPUs; Spot or On-Demand
+  - EC2 type: use for GPU instances (p3/g5), custom AMIs, persistent scratch storage
+  - Fargate type: no instance management; faster to start; limited to 16 vCPU, 120 GB RAM per job
+- **Job Queue**: submit jobs to queue; queue is linked to 1+ compute environments (priority order)
+- **Job Definition**: template defining container image, vCPU, memory, [IAM role](/aws-iam-security), volumes, retry strategy
+- **Job**: single execution instance of a job definition
+
+### ML Training Job Pattern
+```python
+# Submit a Batch job for model training
+import boto3
+batch = boto3.client('batch')
+
+response = batch.submit_job(
+    jobName='train-model-v42',
+    jobQueue='ml-training-queue',
+    jobDefinition='model-training-job:3',
+    containerOverrides={
+        'command': ['python', 'train.py', '--epochs', '50', '--model', 'bert-base'],
+        'environment': [
+            {'name': 'S3_TRAINING_DATA', 'value': 's3://my-ml-bucket/training/v3/'},
+            {'name': 'S3_OUTPUT', 'value': 's3://my-ml-bucket/models/v42/'},
+        ],
+        'resourceRequirements': [
+            {'type': 'GPU', 'value': '1'},  # Request 1 GPU
+        ]
+    },
+    retryStrategy={'attempts': 3},
+    timeout={'attemptDurationSeconds': 7200},  # 2-hour timeout
+)
+
+# Monitor
+batch.describe_jobs(jobs=[response['jobId']])
+```
+
+### Array Jobs — Hyperparameter Tuning
+```python
+# Submit 100 parallel jobs for hyperparameter sweep
+response = batch.submit_job(
+    jobName='hyperparam-sweep',
+    jobQueue='ml-training-queue',
+    jobDefinition='hyperparam-job',
+    arrayProperties={'size': 100},  # creates 100 child jobs (index 0-99)
+    # Each child job gets AWS_BATCH_JOB_ARRAY_INDEX env var (0-99)
+    # Use index to select hyperparameters from a config file
+)
+```

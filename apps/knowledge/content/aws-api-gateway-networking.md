@@ -218,7 +218,7 @@ Usage Plan: "premium"
   API keys: key-enterprise
 ```
 
-Always combine API keys with a real authorizer (Cognito or Lambda) when security is required.
+Always combine API keys with a real authorizer (Cognito or Lambda) when security is required. For WAF-based rate limiting and IP allowlisting, see [Security Services](/aws-security-services).
 
 ## Stages & Deployment
 

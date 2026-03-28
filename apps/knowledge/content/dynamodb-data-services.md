@@ -129,7 +129,7 @@ DynamoDB automatically scales to handle any request rate, charging per request u
 
 - **Pricing:** ~$1.25 per million WRUs, ~$0.25 per million RRUs (us-east-1).
 - **Scaling:** Instantaneous—no capacity planning, no throttling on sudden spikes (up to previous peak × 2 per 30 minutes, then uncapped).
-- **Use when:** Traffic is unpredictable, new tables, dev/test workloads, or you prioritize simplicity over cost optimization.
+- **Use when:** Traffic is unpredictable, new tables, dev/test workloads, or you prioritize simplicity over [Cost Optimization](/aws-cost-optimization).
 
 ### Provisioned Mode
 
@@ -339,7 +339,7 @@ await ddb.send(new PutItemCommand({
 
 The single biggest DynamoDB production issue. A hot partition occurs when a disproportionate share of reads or writes concentrate on one partition key value, exceeding the per-partition limit (3,000 RCU + 1,000 WCU).
 
-**Symptoms:** `ProvisionedThroughputExceededException` on specific keys even when aggregate capacity is available; CloudWatch `ConsumedWriteCapacityUnits` shows skewed distribution.
+**Symptoms:** `ProvisionedThroughputExceededException` on specific keys even when aggregate capacity is available; [Observability](/aws-observability) (CloudWatch) `ConsumedWriteCapacityUnits` shows skewed distribution.
 
 **Causes:** Sequential or auto-increment PKs (all writes go to one partition), a celebrity user in a social network, a trending product page.
 
@@ -727,7 +727,7 @@ DynamoDB PITR Export → S3 (DynamoDB JSON or Parquet format)
 
 **Q: What is a hot partition in DynamoDB, how do you detect it, and how do you fix it?**
 
-A hot partition occurs when one or more partition key values receive a disproportionate share of requests, exceeding the per-partition throughput ceiling (3,000 RCU + 1,000 WCU). Detect it via CloudWatch: look for `ConsumedWriteCapacityUnits` or `ConsumedReadCapacityUnits` spikes on specific time ranges, or enable AWS CloudWatch Contributor Insights for DynamoDB (shows top partitions by traffic). Fix it with write sharding (append random suffix 0–N to PK, scatter-gather on reads), switching frequently-read items to eventually consistent reads, or fronting the table with DAX.
+A hot partition occurs when one or more partition key values receive a disproportionate share of requests, exceeding the per-partition throughput ceiling (3,000 RCU + 1,000 WCU). Detect it via [Observability](/aws-observability) (CloudWatch): look for `ConsumedWriteCapacityUnits` or `ConsumedReadCapacityUnits` spikes on specific time ranges, or enable AWS CloudWatch Contributor Insights for DynamoDB (shows top partitions by traffic). Fix it with write sharding (append random suffix 0–N to PK, scatter-gather on reads), switching frequently-read items to eventually consistent reads, or fronting the table with DAX.
 
 **Q: Explain the difference between a GSI and an LSI. When can't you use an LSI?**
 
@@ -768,6 +768,243 @@ S3 Select pushes down a SQL filter to S3, returning only matching rows from a si
 **Q: Aurora Serverless v2 vs DynamoDB — you're building a multi-tenant SaaS. Which do you choose?**
 
 It depends on query complexity and tenant isolation requirements. If your tenants need complex SQL queries, reporting, ad-hoc aggregations, or you're lifting-and-shifting a relational app, choose Aurora Serverless v2. If your access patterns are well-defined and key-based (get tenant data by ID, list items for a tenant), choose DynamoDB for its unlimited horizontal scale, predictable single-digit millisecond latency, and zero capacity planning. For a typical SaaS with mixed workloads, a common architecture is DynamoDB for transactional hot data (with `tenantId` as partition key) and Aurora Serverless v2 (or Athena on exported DynamoDB data) for reporting and analytics.
+
+---
+
+## DynamoDB Accelerator (DAX) — Microsecond Reads
+
+DAX is an in-memory caching cluster that is fully API-compatible with DynamoDB, providing microsecond read latency for hot data.
+
+### How DAX Works
+```
+Client SDK → DAX Cluster (in-memory cache)
+                    │ cache HIT: return immediately (~microseconds)
+                    │ cache MISS: forward to DynamoDB, cache result, return (~milliseconds)
+                    ▼
+              DynamoDB Table
+```
+
+- DAX is a **write-through** cache: writes go to DynamoDB first, then invalidate the DAX cache
+- **Item cache**: caches GetItem and BatchGetItem results by primary key
+- **Query cache**: caches Query and Scan results by the full request parameters
+- Query cache has shorter TTL (default 5 minutes) because item updates don't automatically invalidate query results
+- DAX is **eventually consistent only** — if your app requires strongly consistent reads, they bypass DAX and go directly to DynamoDB
+
+### When to Use DAX
+- Hot partitions: single items read thousands of times per second
+- Read-heavy workloads: > 10:1 read/write ratio
+- Applications with predictable, repeated read patterns (product catalog, configuration, user profiles)
+- NOT for: write-heavy workloads, financial ledgers requiring strong consistency, rarely accessed data
+
+### DAX Cluster Setup
+```typescript
+// CDK: DAX cluster in private subnets
+import * as dax from 'aws-cdk-lib/aws-dax';
+
+const daxCluster = new dax.CfnCluster(this, 'DaxCluster', {
+  clusterName: 'orders-cache',
+  nodeType: 'dax.r5.large',     // r5 family: memory-optimized for cache workloads
+  replicationFactor: 3,          // 1 primary + 2 replicas for HA
+  iamRoleArn: daxRole.roleArn,
+  subnetGroupName: daxSubnetGroup.ref,
+  securityGroupIds: [daxSg.securityGroupId],
+  parameterGroupName: daxParamGroup.ref,
+  sseSpecification: { sseEnabled: true },
+});
+
+// Node types and their use cases:
+// dax.t3.small: dev/test (not recommended for production)
+// dax.r5.large: up to 40K reads/sec per node
+// dax.r5.4xlarge: up to 200K reads/sec per node
+```
+
+### DAX SDK Migration
+```javascript
+// Minimal code change: swap DynamoDB client for DAX client
+// Before (DynamoDB SDK)
+const { DynamoDBClient, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const client = new DynamoDBClient({});
+
+// After (DAX SDK — identical API)
+const AmazonDaxClient = require('amazon-dax-client');
+const client = new AmazonDaxClient({
+  endpoints: ['my-cluster.dax.us-east-1.amazonaws.com:8111'],
+  region: 'us-east-1',
+});
+// All GetItem, BatchGetItem, Query, Scan calls automatically use DAX
+```
+
+---
+
+## DynamoDB Global Tables — Multi-Region Active-Active
+
+Global Tables provide fully managed, multi-region, multi-active replication. Any region can accept writes.
+
+### Architecture
+```
+us-east-1 Table ←────── replication ──────► eu-west-1 Table
+      ↑                                            ↑
+   Writes                                       Writes
+      ↓                                            ↓
+   Reads                                        Reads
+(Route 53 latency routing directs users to nearest region)
+```
+
+### Conflict Resolution
+- "Last writer wins" by timestamp: if two regions write the same item concurrently, the write with the later timestamp wins
+- **This means you must design for convergent data** — avoid operations that depend on the current state of the item across regions (e.g., counters with `SET #n = #n + 1` across regions can produce wrong results)
+- For counters: use Kinesis Data Streams as the source of truth → aggregate in one region → replicate to others
+
+### Global Tables v2 (2019)
+- Multi-region write support (v1 was eventually consistent reads only)
+- Any region can accept writes; replication latency < 1 second
+- Requires: on-demand billing mode OR auto-scaling (provisioned throughput must be configured per table per region)
+- Enable: `aws dynamodb create-global-table --global-table-name Orders --replication-group RegionName=us-east-1 RegionName=eu-west-1`
+
+### Practical Pattern: Regional Write Isolation
+To avoid conflict resolution complexity, use **regional write isolation**: each user/tenant is assigned a "home region" (stored in their profile). Route all writes for that user to their home region. Other regions serve reads (with slight replication lag acceptable). Write conflicts become impossible.
+
+---
+
+## Advanced Single-Table Design Patterns
+
+### Pattern 1: Adjacency List (One-to-Many Relationships)
+Model an order with multiple items in a single table:
+
+```
+PK                    SK                     Data
+ORDER#1001           METADATA               {status, customerId, total}
+ORDER#1001           ITEM#prod-a            {quantity: 2, price: 29.99}
+ORDER#1001           ITEM#prod-b            {quantity: 1, price: 49.99}
+ORDER#1001           SHIPING#1              {address, carrier, trackingId}
+CUSTOMER#cust-42     ORDER#1001             {orderDate, total} ← inverted index
+CUSTOMER#cust-42     ORDER#1002             {orderDate, total}
+```
+
+Access patterns:
+- Get order + all items: `PK = ORDER#1001` (Query returns all SK values)
+- Get all orders for customer: GSI or `PK = CUSTOMER#cust-42, SK begins_with ORDER#`
+
+### Pattern 2: Overloaded GSI (Global Secondary Index Reuse)
+One GSI handles multiple entity types by overloading the GSI key attributes:
+
+```
+PK            SK                GSI1_PK        GSI1_SK
+USER#u1       PROFILE           STATUS#active  USER#u1
+ORDER#o1      USER#u1           STATUS#pending USER#u1
+PRODUCT#p1    CATEGORY#electronics  CATEGORY#electronics  PRODUCT#p1
+```
+
+GSI1 query: `GSI1_PK = STATUS#active` → returns all active users. `GSI1_PK = CATEGORY#electronics` → returns all products in category. Single GSI serves multiple query patterns.
+
+### Pattern 3: Composite Sort Key for Range Queries
+Encode multiple attributes in the sort key for flexible range queries:
+
+```javascript
+// Sort key pattern: REGION#YEAR#MONTH#DAY#ORDER_ID
+const sortKey = `${region}#${year}#${month.padStart(2,'0')}#${day.padStart(2,'0')}#${orderId}`;
+// Enables queries like:
+// - All orders in EU in 2024: SK between 'EU#2024#' and 'EU#2025#'
+// - All orders on a specific day: SK between 'EU#2024#01#15#' and 'EU#2024#01#16#'
+```
+
+### Pattern 4: Write Sharding for Hot Partitions
+If a single partition key receives > 1000 WCU/s (hot partition), append a random suffix:
+
+```javascript
+// Instead of PK = 'LEADERBOARD', shard across 10 partitions
+const shardCount = 10;
+const shard = Math.floor(Math.random() * shardCount);
+const pk = `LEADERBOARD#${shard}`;
+
+// Scatter-gather read: query all 10 shards in parallel, merge results
+const results = await Promise.all(
+  Array.from({ length: shardCount }, (_, i) =>
+    ddb.send(new QueryCommand({ TableName, KeyConditionExpression: 'PK = :pk', ExpressionAttributeValues: { ':pk': { S: `LEADERBOARD#${i}` } } }))
+  )
+);
+const allItems = results.flatMap(r => r.Items);
+allItems.sort((a, b) => b.score.N - a.score.N);
+```
+
+---
+
+## DynamoDB Streams + Lambda Patterns
+
+### CDC (Change Data Capture) for Event Sourcing
+```javascript
+// Lambda triggered by DynamoDB Streams
+exports.handler = async (event) => {
+  for (const record of event.Records) {
+    const { eventName, dynamodb } = record; // INSERT, MODIFY, REMOVE
+
+    if (eventName === 'INSERT') {
+      const newItem = AWS.DynamoDB.Converter.unmarshall(dynamodb.NewImage);
+      await publishToEventBridge('order.created', newItem);
+    }
+
+    if (eventName === 'MODIFY') {
+      const oldItem = AWS.DynamoDB.Converter.unmarshall(dynamodb.OldImage);
+      const newItem = AWS.DynamoDB.Converter.unmarshall(dynamodb.NewImage);
+      if (oldItem.status !== newItem.status) {
+        await publishToEventBridge('order.status.changed', {
+          orderId: newItem.orderId,
+          from: oldItem.status,
+          to: newItem.status
+        });
+      }
+    }
+  }
+};
+```
+
+Publishing change events to [Messaging & Events](/aws-messaging-events) (EventBridge/SNS) from Streams Lambda is the standard pattern for decoupled downstream processing. For multi-step workflows triggered by item changes, consider [Step Functions](/aws-step-functions) as the consumer instead of a single Lambda.
+
+### Materialized View Maintenance
+Streams + Lambda to maintain a pre-aggregated view in another table:
+
+```javascript
+// Maintain a count of orders per customer in a summary table
+if (eventName === 'INSERT') {
+  await ddb.send(new UpdateItemCommand({
+    TableName: 'CustomerSummary',
+    Key: { customerId: { S: newItem.customerId } },
+    UpdateExpression: 'ADD orderCount :one',
+    ExpressionAttributeValues: { ':one': { N: '1' } },
+  }));
+}
+```
+
+---
+
+## PartiQL — SQL for DynamoDB
+
+PartiQL lets you query DynamoDB using SQL-like syntax. Useful for ad-hoc exploration and migrating SQL-centric teams.
+
+```sql
+-- SELECT (equivalent to Query with filter)
+SELECT * FROM Orders WHERE customerId = 'cust-42' AND orderDate BETWEEN '2024-01-01' AND '2024-12-31';
+
+-- INSERT
+INSERT INTO Orders VALUE {
+  'orderId': 'ord-9999',
+  'customerId': 'cust-42',
+  'status': 'pending',
+  'total': 99.99
+};
+
+-- UPDATE (conditional)
+UPDATE Orders SET status = 'shipped', shippedAt = '2024-01-16T10:00:00Z'
+WHERE orderId = 'ord-9999' AND status = 'confirmed';
+
+-- DELETE
+DELETE FROM Orders WHERE orderId = 'ord-9999';
+
+-- Batch operations (more efficient)
+SELECT * FROM Orders WHERE orderId IN ['ord-1', 'ord-2', 'ord-3'];
+```
+
+**PartiQL limitations**: No JOINs (DynamoDB is schemaless), no aggregates (SUM, COUNT) without full scan, no subqueries. PartiQL is syntactic sugar — same read/write capacity consumed as SDK operations.
 
 ---
 
