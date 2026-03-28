@@ -119,7 +119,7 @@ const LESSON_SLUGS = [
   "langgraph-red-teaming",
   "llamaindex",
   "ai-engineer-roadmap",
-  // Cloud Platforms (72-82)
+  // Cloud Platforms (72-83)
   "aws",
   "azure",
   "gcp",
