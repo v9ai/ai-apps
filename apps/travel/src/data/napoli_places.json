@@ -17,12 +17,12 @@
       "tips": "Visit at dusk when the golden light catches the Doric columns — the piazza is at its best then. The Royal Palace interior is worth the €10 entry.",
       "tips_ro": "Vizitează la amurg când lumina aurie cade pe coloanele dorice — piaţa arată cel mai bine atunci. Interiorul Palatului Regal merită cei 10 € de intrare.",
       "kid_friendly": true,
-      "family_score": 0.72,
-      "family_tips": "Perfect for kids to run around freely. The open piazza feels safe and spacious — bring a ball.",
-      "family_tips_ro": "Perfect pentru copii să alerge liber. Piața deschisă este sigură și spațioasă — luați o minge.",
+      "family_score": 0.74,
+      "family_tips": "Ideal for children — the vast open piazza lets kids run freely. Arrive in the morning before the crowds. The colonnade pillars double as a hide-and-seek arena.",
+      "family_tips_ro": "Ideal pentru copii — piața vastă îi lasă pe copii să alerge liberi. Veniți dimineața înainte de aglomerație. Coloanele porticului devin perfecte pentru joc de-a v-ați ascunselea.",
       "family_cost": {
-        "adults": 2,
-        "kids": 1,
+        "adults": 0,
+        "kids": 0,
         "total_eur": 0
       },
       "image_query": "Piazza del Plebiscito Naples dusk",
@@ -412,6 +412,72 @@
         "platform_urls": {
           "google_maps": "https://www.google.com/maps/search/?api=1&query=Quartieri+Spagnoli+Naples+Italy",
           "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d7181398-Reviews-Spanish_Quarter-Naples_Campania.html"
+        }
+      }
+    },
+    {
+      "name": "Pompeii (Scavi di Pompei)",
+      "description": "The world's most famous archaeological site: a Roman city frozen in time by the eruption of Vesuvius in 79 AD. More than 66 hectares of excavated streets, houses, thermopoliae, bathhouses, and theatres reveal everyday Roman life with extraordinary intimacy. The plaster casts of victims — formed by pouring plaster into the voids left by decomposed bodies — are among the most powerful objects in archaeology.",
+      "description_ro": "Cel mai faimos sit arheologic din lume: un oras roman inghetat in timp de eruptia Vezuviului in 79 d.Hr. Mai mult de 66 de hectare de strazi, case, thermopoliae, bai si teatre dezgropate dezvaluie viata romana de zi cu zi cu o intimitate extraordinara. Mulajele de ipsos ale victimelor sunt printre cele mai tulburatoare obiecte din arheologie.",
+      "category": "history",
+      "address": "Via Villa dei Misteri 2, 80045 Pompei NA, Italy",
+      "lat": 40.7491,
+      "lng": 14.4868,
+      "rating": 4.8,
+      "visit_duration": "3–5 hours",
+      "visit_duration_ro": "3–5 ore",
+      "tips": "Take the Circumvesuviana from Napoli Garibaldi to Pompei Scavi station (40 min, EUR 2.90). Arrive at 9am opening. Bring hat, water, and comfortable shoes — the site is vast and exposed. Audio guide strongly recommended (EUR 8).",
+      "tips_ro": "Luati Circumvesuviana de la Napoli Garibaldi pana la statia Pompei Scavi (40 min, 2,90 EUR). Sositi la deschidere (ora 9). Luati palarie, apa si pantofi comozi — situl este vast si neacoperit. Audioghid recomandat (8 EUR).",
+      "image_query": "Pompeii ruins Via dell'Abbondanza aerial",
+      "price_level": "moderate",
+      "price_display": "EUR 18",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Pompeii+Scavi,+Pompei,+Italy",
+      "maps_embed_query": "Pompeii+Scavi+Pompei+Italy",
+      "booking": {
+        "type": "ticket",
+        "needs_reservation": false,
+        "best_time_to_visit": "at opening (9am), weekday",
+        "estimated_cost": { "pln": 0, "eur": 18 },
+        "nearby_hotel_area": "Naples Centro Storico",
+        "combined_with": ["Herculaneum (Ercolano)", "Mount Vesuvius"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Pompeii+Scavi+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187782-d195561-Reviews-Ruins_of_Pompeii-Pompeii_Province_of_Naples_Campania.html",
+          "official": "https://pompeiisites.org/en/"
+        }
+      }
+    },
+    {
+      "name": "Herculaneum (Ercolano)",
+      "description": "Often overshadowed by Pompeii but arguably more intimate and better preserved. Buried by pyroclastic surges rather than ash, Herculaneum's organic materials were carbonised rather than destroyed — leaving wooden furniture, food in jars, carbonised boats, and papyrus scrolls intact. The site is smaller and less crowded than Pompeii, with a higher density of remarkable finds per hectare.",
+      "description_ro": "Umbrit adesea de Pompei, dar in mod argumentabil mai intim si mai bine conservat. Ingropat de surse piroclastice mai degraba decat de cenusa, materialele organice din Herculaneum au fost carbonizate, nu distruse — lasand intacte mobile din lemn, mancare in borcane, barci carbonizate si suluri de papirus. Situl este mai mic si mai putin aglomerat decat Pompei.",
+      "category": "history",
+      "address": "Corso Resina 187, 80056 Ercolano NA, Italy",
+      "lat": 40.8058,
+      "lng": 14.3486,
+      "rating": 4.7,
+      "visit_duration": "1.5–2.5 hours",
+      "visit_duration_ro": "1,5–2,5 ore",
+      "tips": "Circumvesuviana from Napoli Garibaldi to Ercolano Scavi (20 min, EUR 2.90). Combine with Pompeii using the EUR 22 combined ticket (valid 3 days). Far less crowded than Pompeii — easier to explore at your own pace.",
+      "tips_ro": "Circumvesuviana de la Napoli Garibaldi la Ercolano Scavi (20 min, 2,90 EUR). Combinati cu Pompei folosind biletul combinat de 22 EUR (valabil 3 zile). Cu mult mai putini turisti decat Pompei.",
+      "image_query": "Herculaneum ancient Roman ruins excavation",
+      "price_level": "moderate",
+      "price_display": "EUR 15",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Herculaneum+Scavi,+Ercolano,+Italy",
+      "maps_embed_query": "Herculaneum+Scavi+Ercolano+Italy",
+      "booking": {
+        "type": "ticket",
+        "needs_reservation": false,
+        "best_time_to_visit": "morning, any day",
+        "estimated_cost": { "pln": 0, "eur": 15 },
+        "nearby_hotel_area": "Naples Centro Storico",
+        "combined_with": ["Pompeii (Scavi di Pompei)", "Mount Vesuvius"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Herculaneum+Scavi+Ercolano+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187783-d195560-Reviews-Herculaneum_Ruins-Ercolano_Province_of_Naples_Campania.html",
+          "official": "https://pompeiisites.org/en/archaeological-area/herculaneum/"
         }
       }
     }

@@ -7,6 +7,14 @@ import { Footer } from "@/components/Footer";
 import { HotelPicks } from "@/components/HotelPicks";
 import { PlaceCard } from "@/components/PlaceCard";
 import { useLang } from "@/components/LanguageSwitcher";
+import { BudgetOverview } from "./sections/BudgetOverview";
+import { DayItinerary } from "./sections/DayItinerary";
+import { FlightGuide } from "./sections/FlightGuide";
+import { SleepGuide } from "./sections/SleepGuide";
+import { EatGuide } from "./sections/EatGuide";
+import { TransportGuide } from "./sections/TransportGuide";
+import { PompeiiGuide } from "./sections/PompeiiGuide";
+import { TripSummary } from "./sections/TripSummary";
 
 const T = {
   ro: {
@@ -51,6 +59,8 @@ const T = {
       "Ia biletul de \u00edntoarcere imediat la sosire \u2014 cursele de sear\u0103 se epuizeaz\u0103.",
       "Vara, limita de pasageri pe insul\u0103 se aplic\u0103 din 2024 \u2014 verific\u0103 restric\u0163iile.",
     ],
+    budget: "Bugetul Călătoriei",
+    budgetTag: "€1.000 · 5 zile",
     backLink: "\u2190 \u00cenapoiuri la Napoli",
     familyTitle: "Călătorie cu un Copil",
     familySubtitle: "Scor ML pentru prietenie cu copiii · 2 adulți + 1 copil · Napoli 2026",
@@ -101,6 +111,8 @@ const T = {
       "Buy your return ticket immediately on arrival \u2014 evening sailings sell out.",
       "Summer passenger limits apply to Capri since 2024 \u2014 check current restrictions.",
     ],
+    budget: "Trip Budget",
+    budgetTag: "€1,000 · 5 days",
     backLink: "\u2190 Back to Home",
     familyTitle: "Traveling with a Child",
     familySubtitle: "ML-scored kid-friendliness · 2 adults + 1 child · Napoli 2026",
@@ -350,6 +362,57 @@ export function NapoliPageContent() {
             <HotelPicks hotels={curatedHotels} lang={lang} />
           </section>
         )}
+
+        {/* ── Trip Budget ─────────────────────────────────── */}
+        <section
+          className={css({
+            maxW: "5xl",
+            mx: "auto",
+            mb: { base: "16", md: "20" },
+            animation: "fadeUp 0.6s ease-out 0.12s both",
+          })}
+        >
+          {/* Section header — same pattern as Map/Places headers */}
+          <div className={css({ display: "flex", alignItems: "baseline", gap: "4", mb: "8" })}>
+            <h2 className={css({ fontSize: "h2", fontWeight: "700", fontFamily: "display", color: "text.primary", letterSpacing: "h2", lineHeight: "h2" })}>
+              {t.budget}
+            </h2>
+            <span className={css({ fontSize: "label", fontWeight: "600", fontFamily: "display", color: "amber.warm", letterSpacing: "label", textTransform: "uppercase", flexShrink: "0" })}>
+              {t.budgetTag}
+            </span>
+            <span className={css({ flex: "1", height: "1px", bg: "steel.border", display: { base: "none", md: "block" } })} />
+          </div>
+
+          {/* Budget breakdown */}
+          <div className={css({ mb: { base: "8", md: "10" } })}>
+            <BudgetOverview />
+          </div>
+
+          {/* Two-column grid: Flights + Accommodation */}
+          <div className={css({ display: "grid", gap: { base: "6", md: "8" }, gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" }, mb: { base: "8", md: "10" } })}>
+            <FlightGuide />
+            <SleepGuide />
+          </div>
+
+          {/* Two-column grid: Food + Transport */}
+          <div className={css({ display: "grid", gap: { base: "6", md: "8" }, gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" }, mb: { base: "8", md: "10" } })}>
+            <EatGuide />
+            <TransportGuide />
+          </div>
+
+          {/* Day trips: Pompeii */}
+          <div className={css({ mb: { base: "8", md: "10" } })}>
+            <PompeiiGuide />
+          </div>
+
+          {/* 5-day itinerary */}
+          <div className={css({ mb: { base: "8", md: "10" } })}>
+            <DayItinerary />
+          </div>
+
+          {/* Budget tips */}
+          <TripSummary />
+        </section>
 
         {/* ── Family Section ──────────────────────────────── */}
         <section
