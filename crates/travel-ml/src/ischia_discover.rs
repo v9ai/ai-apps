@@ -4,7 +4,7 @@
 //! Pipeline mirrors `discover.rs` but targets Ischia, Procida, Capri,
 //! Sorrento, and the Amalfi Coast.
 
-use crate::constants::{DISCOVERY_YEAR, DISCOVERY_YEAR_STR, NEW_HOTEL_MIN_YEAR};
+use crate::constants::{DISCOVERY_YEAR, DISCOVERY_YEAR_STR};
 use crate::discover::{extract_hotels_generic, RankedPassage, ScrapedPassage};
 use crate::embeddings::EmbeddingEngine;
 use crate::hotel::Hotel;
