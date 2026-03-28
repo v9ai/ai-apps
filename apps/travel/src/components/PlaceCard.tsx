@@ -242,6 +242,25 @@ export function PlaceCard({
         >
           {meta.icon}
         </span>
+
+        {/* ML family score bar — bottom edge of visual band */}
+        {place.family_score != null && (
+          <div
+            className={css({
+              position: "absolute",
+              bottom: "0",
+              left: "0",
+              right: "0",
+              h: "2px",
+              bg: "rgba(255,255,255,0.06)",
+            })}
+          >
+            <div
+              className={css({ h: "full", bg: "cat.nature", opacity: "0.7" })}
+              style={{ width: `${Math.round(place.family_score * 100)}%` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── Header band: category pill + sequence number ── */}
@@ -353,6 +372,30 @@ export function PlaceCard({
             </span>
           )}
 
+          {/* Kid-friendly badge */}
+          {place.kid_friendly && (
+            <span
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "1",
+                fontSize: "2xs",
+                fontWeight: "700",
+                fontFamily: "display",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                rounded: "pill",
+                px: "2",
+                py: "0.5",
+                bg: "rgba(90, 122, 92, 0.15)",
+                color: "cat.nature",
+                border: "1px solid rgba(90, 122, 92, 0.3)",
+              })}
+            >
+              ◈ Kids
+            </span>
+          )}
+
           {/* Index badge */}
           <span
             className={css({
@@ -435,6 +478,22 @@ export function PlaceCard({
             </svg>
             {visitDuration}
           </span>
+          {place.family_cost != null && (
+            <span
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "1",
+                fontSize: "xs",
+                color: "text.muted",
+              })}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              {place.family_cost.total_eur === 0 ? "Free · family" : `€${place.family_cost.total_eur} · family`}
+            </span>
+          )}
         </div>
 
         {/* Description */}

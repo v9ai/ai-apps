@@ -88,6 +88,8 @@ enum Cmd {
         #[arg(long)]
         out: Option<String>,
     },
+    /// Score Napoli places for family/kid-friendliness using Candle embeddings
+    FamilyScore,
 }
 
 #[tokio::main]
@@ -114,6 +116,12 @@ async fn main() -> Result<()> {
         Cmd::Sanitize { file } => run_sanitize(&file)?,
         Cmd::Ingest { urls, db, seed_only } => run_ingest(&urls, &db, seed_only).await?,
         Cmd::Search { query, db, top_k, out } => run_search(&query, &db, top_k, out.as_deref()).await?,
+        Cmd::FamilyScore => {
+            use travel_ml::napoli_scorer::{generate_napoli_family_report, print_report};
+            let device = candle_core::Device::Cpu;
+            let report = generate_napoli_family_report(device)?;
+            print_report(&report);
+        }
     }
 
     Ok(())

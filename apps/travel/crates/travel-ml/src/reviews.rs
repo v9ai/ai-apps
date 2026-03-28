@@ -13,7 +13,7 @@
 //! - Extract review ratings (N/10) and review counts from search results
 //! - Parse actual review text from scraped pages
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anyhow::{Context, Result};
 use futures::stream::{self, StreamExt};
@@ -2015,4 +2015,79 @@ mod tests {
 
         assert_eq!(hotels[0].opened_year, Some(DISCOVERY_YEAR));
     }
+}
+
+// ── Family-specific sentiment extraction ─────────────────────────────
+
+const FAMILY_KEYWORDS: &[&str] = &[
+    "child", "children", "kid", "kids", "toddler", "baby", "stroller",
+    "family", "families", "young", "infant",
+];
+
+/// Extracted family-friendliness signal derived from review text.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FamilyReviewSignal {
+    /// How many unique FAMILY_KEYWORDS were found across all reviews.
+    pub mention_count: usize,
+    /// Mean sentiment of reviews that contain at least one family keyword (-1 to +1).
+    /// Returns 0.0 when no family-keyword reviews are present.
+    pub family_sentiment: f32,
+    /// Deduplicated list of keywords that actually appeared in the review corpus.
+    pub keywords_found: Vec<String>,
+}
+
+/// Flat view of a review used by family-signal extraction.
+///
+/// Callers can build this from [`Review`] (`.text` + `.sentiment`) or from
+/// any other review type that carries those two fields.
+#[derive(Debug, Clone)]
+pub struct ReviewResult {
+    pub text: String,
+    pub sentiment: f32,
+}
+
+/// Scan `reviews` for family-related language and compute an aggregate signal.
+pub fn extract_family_signal(reviews: &[ReviewResult]) -> FamilyReviewSignal {
+    let mut keywords_found: HashSet<String> = HashSet::new();
+    let mut sentiment_sum: f32 = 0.0;
+    let mut matching_count: usize = 0;
+
+    for review in reviews {
+        let lower = review.text.to_lowercase();
+        let mut review_matched = false;
+
+        for &kw in FAMILY_KEYWORDS {
+            if lower.contains(kw) {
+                keywords_found.insert(kw.to_string());
+                review_matched = true;
+            }
+        }
+
+        if review_matched {
+            sentiment_sum += review.sentiment;
+            matching_count += 1;
+        }
+    }
+
+    let family_sentiment = if matching_count > 0 {
+        sentiment_sum / matching_count as f32
+    } else {
+        0.0
+    };
+
+    let mut keywords_vec: Vec<String> = keywords_found.into_iter().collect();
+    keywords_vec.sort();
+
+    FamilyReviewSignal {
+        mention_count: keywords_vec.len(),
+        family_sentiment,
+        keywords_found: keywords_vec,
+    }
+}
+
+/// Returns `true` when the aggregated family sentiment meets or exceeds `threshold`.
+///
+/// The conventional threshold for "family-friendly" is `0.2` (mildly positive).
+pub fn family_friendly_from_reviews(reviews: &[ReviewResult], threshold: f32) -> bool {
+    extract_family_signal(reviews).family_sentiment >= threshold
 }

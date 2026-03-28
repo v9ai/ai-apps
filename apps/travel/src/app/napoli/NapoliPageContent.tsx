@@ -12,7 +12,7 @@ const T = {
   ro: {
     eyebrow: "Ghid de Calatorie \u2014 Italia",
     tagline: (n: number) =>
-      `Napoli, Italia\u00a0\u00a0\u00b7\u00a0\u00a0Foc. Art\u0103. Savoare.\u00a0\u00a0\u00b7\u00a0\u00a0${n} locuri esen\u0163iale`,
+      `Napoli, Italia\u00a0\u00a0·\u00a0\u00a02 Adulți · 1 Copil\u00a0\u00a0·\u00a0\u00a0${n} locuri esențiale`,
     overview: "Prezentare general\u0103",
     map: "Exploreaz\u0103 harta",
     places: "Locuri de vizitat",
@@ -24,7 +24,7 @@ const T = {
         label: "Molo Beverello \u2192 Marina Grande",
         type: "Hidroglisor",
         duration: "50 min",
-        price: "de la \u20ac22",
+        price: "2 adulți + copil: ~€58",
         frequency: "8\u201310 curse/zi",
         tip: "Cel mai rapid. Rezerv\u0103 din timp vara.",
       },
@@ -32,7 +32,7 @@ const T = {
         label: "Molo Beverello \u2192 Marina Grande",
         type: "Ferry tradi\u0163ional",
         duration: "75\u201380 min",
-        price: "de la \u20ac14",
+        price: "2 adulți + copil: ~€38",
         frequency: "6\u20138 curse/zi",
         tip: "Mai ieftin, accepta biciclete \u015fi bagaje mari.",
       },
@@ -40,7 +40,7 @@ const T = {
         label: "Mergellina \u2192 Marina Grande",
         type: "Hidroglisor",
         duration: "55 min",
-        price: "de la \u20ac20",
+        price: "2 adulți + copil: ~€52",
         frequency: "4\u20136 curse/zi",
         tip: "Pleac\u0103 din cartierul Chiaia; mai pu\u0163in aglomerat.",
       },
@@ -52,11 +52,17 @@ const T = {
       "Vara, limita de pasageri pe insul\u0103 se aplic\u0103 din 2024 \u2014 verific\u0103 restric\u0163iile.",
     ],
     backLink: "\u2190 \u00cenapoiuri la Napoli",
+    familyTitle: "Călătorie cu un Copil",
+    familySubtitle: "Scor ML pentru prietenie cu copiii · 2 adulți + 1 copil · Napoli 2026",
+    familyBudget: "Buget de familie",
+    familyBudgetNote: "Total estimat pentru 2 adulți + 1 copil la toate cele 10 locuri",
+    kidFriendly: "Prietenos cu copiii",
+    mlScore: "Scor ML",
   },
   en: {
     eyebrow: "Travel Guide \u2014 Italy",
     tagline: (n: number) =>
-      `Naples, Italy\u00a0\u00a0\u00b7\u00a0\u00a0Fire. Art. Flavour.\u00a0\u00a0\u00b7\u00a0\u00a0${n} essential places`,
+      `Naples, Italy\u00a0\u00a0·\u00a0\u00a02 Adults · 1 Child\u00a0\u00a0·\u00a0\u00a0${n} essential places`,
     overview: "City Overview",
     map: "Explore the Map",
     places: "Places to Visit",
@@ -68,7 +74,7 @@ const T = {
         label: "Molo Beverello \u2192 Marina Grande",
         type: "Hydrofoil",
         duration: "50 min",
-        price: "from \u20ac22",
+        price: "2 adults + child: ~€58",
         frequency: "8\u201310 daily",
         tip: "Fastest option. Book ahead in summer.",
       },
@@ -76,7 +82,7 @@ const T = {
         label: "Molo Beverello \u2192 Marina Grande",
         type: "Traditional ferry",
         duration: "75\u201380 min",
-        price: "from \u20ac14",
+        price: "2 adults + child: ~€38",
         frequency: "6\u20138 daily",
         tip: "Cheaper, accepts bikes and large luggage.",
       },
@@ -84,7 +90,7 @@ const T = {
         label: "Mergellina \u2192 Marina Grande",
         type: "Hydrofoil",
         duration: "55 min",
-        price: "from \u20ac20",
+        price: "2 adults + child: ~€52",
         frequency: "4\u20136 daily",
         tip: "Departs from Chiaia neighbourhood; less crowded.",
       },
@@ -96,6 +102,12 @@ const T = {
       "Summer passenger limits apply to Capri since 2024 \u2014 check current restrictions.",
     ],
     backLink: "\u2190 Back to Home",
+    familyTitle: "Traveling with a Child",
+    familySubtitle: "ML-scored kid-friendliness · 2 adults + 1 child · Napoli 2026",
+    familyBudget: "Family trip budget",
+    familyBudgetNote: "Estimated total for 2 adults + 1 child across all 10 places",
+    kidFriendly: "Kid-friendly",
+    mlScore: "ML score",
   },
 };
 
@@ -338,6 +350,137 @@ export function NapoliPageContent() {
             <HotelPicks hotels={curatedHotels} lang={lang} />
           </section>
         )}
+
+        {/* ── Family Section ──────────────────────────────── */}
+        <section
+          className={css({
+            maxW: "5xl",
+            mx: "auto",
+            mb: { base: "16", md: "20" },
+            animation: "fadeUp 0.6s ease-out 0.12s both",
+          })}
+        >
+          <div className={css({ display: "flex", alignItems: "baseline", gap: "4", mb: "8" })}>
+            <h2 className={css({ fontSize: "h2", fontWeight: "700", fontFamily: "display", color: "text.primary", letterSpacing: "h2", lineHeight: "h2" })}>
+              {t.familyTitle}
+            </h2>
+            <span className={css({ flex: "1", height: "1px", bg: "steel.border", display: { base: "none", md: "block" } })} />
+          </div>
+
+          {/* Group size + ML badge */}
+          <div className={css({ display: "flex", gap: "3", mb: "8", flexWrap: "wrap" })}>
+            <span className={css({
+              display: "inline-flex", alignItems: "center", gap: "2",
+              fontSize: "label", fontWeight: "700", fontFamily: "display",
+              textTransform: "uppercase", letterSpacing: "label",
+              bg: "rgba(201,146,42,0.12)", color: "amber.warm",
+              border: "1px solid rgba(201,146,42,0.3)", rounded: "pill",
+              px: "4", py: "1.5",
+            })}>
+              2 Adults · 1 Child
+            </span>
+            <span className={css({
+              display: "inline-flex", alignItems: "center", gap: "2",
+              fontSize: "label", fontWeight: "700", fontFamily: "display",
+              textTransform: "uppercase", letterSpacing: "label",
+              bg: "rgba(90,122,92,0.12)", color: "cat.nature",
+              border: "1px solid rgba(90,122,92,0.3)", rounded: "pill",
+              px: "4", py: "1.5",
+            })}>
+              ◈ ML-scored · all-MiniLM-L6-v2
+            </span>
+          </div>
+
+          {/* Family budget card */}
+          <div className={css({
+            bg: "steel.surface", border: "1px solid", borderColor: "steel.border",
+            rounded: "card", p: { base: "5", md: "8" }, boxShadow: "card", mb: "6",
+            display: "flex", flexDirection: { base: "column", md: "row" },
+            alignItems: { base: "flex-start", md: "center" }, gap: "6",
+          })}>
+            <div className={css({ flex: "1" })}>
+              <p className={css({ fontSize: "label", fontWeight: "600", fontFamily: "display", color: "amber.warm", letterSpacing: "label", textTransform: "uppercase", mb: "2" })}>
+                {t.familyBudget}
+              </p>
+              <p className={css({ fontSize: { base: "h2", md: "h1" }, fontWeight: "800", fontFamily: "display", color: "text.primary", lineHeight: "1" })}>
+                €{booking_summary?.family_total_cost?.eur ?? 131}
+              </p>
+              <p className={css({ fontSize: "body", color: "text.secondary", mt: "2", lineHeight: "1.5" })}>
+                {t.familyBudgetNote}
+              </p>
+            </div>
+            <div className={css({ display: "flex", flexDirection: "column", gap: "2", minW: "180px" })}>
+              {[
+                { label: lang === "ro" ? "Adulți (×2)" : "Adults (×2)", value: "€50" },
+                { label: lang === "ro" ? "Copil (×1)" : "Child (×1)", value: "€28" },
+                { label: lang === "ro" ? "Mâncare & Băuturi" : "Food & Drinks", value: "€53" },
+              ].map((row) => (
+                <div key={row.label} className={css({ display: "flex", justifyContent: "space-between", gap: "4" })}>
+                  <span className={css({ fontSize: "xs", color: "text.muted", fontFamily: "display" })}>{row.label}</span>
+                  <span className={css({ fontSize: "xs", fontWeight: "700", fontFamily: "display", color: "text.primary" })}>{row.value}</span>
+                </div>
+              ))}
+              <div className={css({ borderTop: "1px solid", borderColor: "steel.border", pt: "2", display: "flex", justifyContent: "space-between", gap: "4" })}>
+                <span className={css({ fontSize: "xs", fontWeight: "700", fontFamily: "display", color: "amber.warm", textTransform: "uppercase" })}>Total</span>
+                <span className={css({ fontSize: "xs", fontWeight: "800", fontFamily: "display", color: "amber.warm" })}>€131</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Kid-friendly places ML score grid */}
+          <div className={css({ display: "grid", gap: "3", gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" } })}>
+            {places.filter(p => p.kid_friendly).map((place) => (
+              <div key={place.name} className={css({
+                bg: "steel.surface", border: "1px solid", borderColor: "steel.border",
+                rounded: "card", p: "4", boxShadow: "card",
+                position: "relative", overflow: "hidden",
+                transition: "border-color 0.15s ease",
+                _hover: { borderColor: "steel.borderHover" },
+              })}>
+                {/* ML score bar */}
+                <div className={css({ position: "absolute", top: "0", left: "0", right: "0", h: "2px", bg: "steel.border" })}>
+                  <div
+                    className={css({ h: "full", bg: "cat.nature", transition: "width 0.3s ease" })}
+                    style={{ width: `${Math.round((place.family_score ?? 0) * 100)}%` }}
+                  />
+                </div>
+                <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: "2" })}>
+                  <p className={css({ fontSize: "sm", fontWeight: "700", fontFamily: "display", color: "text.primary", lineHeight: "1.3" })}>
+                    {place.name}
+                  </p>
+                  <span className={css({
+                    flexShrink: "0", ml: "2",
+                    fontSize: "xs", fontWeight: "800", fontFamily: "display",
+                    color: "cat.nature",
+                  })}>
+                    {place.family_score != null ? `${Math.round(place.family_score * 100)}%` : "—"}
+                  </span>
+                </div>
+                <div className={css({ display: "flex", alignItems: "center", gap: "2", mb: "2" })}>
+                  <span className={css({
+                    fontSize: "2xs", fontWeight: "700", fontFamily: "display",
+                    textTransform: "uppercase", letterSpacing: "0.08em",
+                    bg: "rgba(90,122,92,0.15)", color: "cat.nature",
+                    border: "1px solid rgba(90,122,92,0.3)", rounded: "pill",
+                    px: "1.5", py: "0.5",
+                  })}>
+                    ◈ {t.kidFriendly}
+                  </span>
+                  {place.family_cost && (
+                    <span className={css({ fontSize: "xs", color: "text.muted", fontFamily: "display" })}>
+                      {place.family_cost.total_eur === 0 ? (lang === "ro" ? "Gratuit" : "Free") : `€${place.family_cost.total_eur}`}
+                    </span>
+                  )}
+                </div>
+                {place.family_tips && (
+                  <p className={css({ fontSize: "xs", color: "text.secondary", lineHeight: "1.55" })}>
+                    {lang === "ro" && place.family_tips_ro ? place.family_tips_ro : place.family_tips}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* ── Map ──────────────────────────────────────────── */}
         <section

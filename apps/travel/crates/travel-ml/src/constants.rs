@@ -102,6 +102,24 @@ pub const ISLAND_REGIONS: &[&str] = &[
 /// Mirror: `MAX_REVIEWS_NEW_HOTEL` in `apps/travel/src/lib/constants.ts`.
 pub const MAX_REVIEWS_NEW_HOTEL: u32 = 50;
 
+/// Family group size for Napoli itinerary planning.
+pub const FAMILY_ADULTS: u8 = 2;
+pub const FAMILY_KIDS: u8 = 1;
+pub const FAMILY_TOTAL: u8 = FAMILY_ADULTS + FAMILY_KIDS;
+
+/// Kid energy budget per day (sum of PlaceNode.energy_cost).
+pub const KID_ENERGY_LIMIT: f32 = 3.0;
+
+/// Cosine similarity threshold for "kid-friendly" classification.
+pub const KID_FRIENDLY_THRESHOLD: f32 = 0.65;
+
+/// Family ML anchor queries used for embedding-based scoring.
+pub const FAMILY_ANCHORS: [&str; 3] = [
+    "family-friendly activities for children and kids in the city",
+    "outdoor open space suitable for young children and toddlers",
+    "educational interactive experience for kids and families",
+];
+
 #[cfg(test)]
 mod tests {
     use super::*;

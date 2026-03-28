@@ -30,6 +30,15 @@ export interface Place {
   image_query?: string;
   price_level?: "budget" | "moderate" | "premium";
   price_display?: string;
+  kid_friendly?: boolean;
+  family_score?: number;       // 0–1, ML cosine similarity score
+  family_tips?: string;
+  family_tips_ro?: string;
+  family_cost?: {
+    adults: number;
+    kids: number;
+    total_eur: number;
+  };
   booking?: PlaceBooking;
 }
 
@@ -45,6 +54,9 @@ export interface BookingSummary {
   places_needing_reservation: string[];
   hotel_search_url: string;
   curated_hotels?: CuratedHotel[];
+  group_size?: { adults: number; kids: number };
+  family_total_cost?: { eur: number };
+  family_ml_note?: string;
 }
 
 export interface PlacesData {
