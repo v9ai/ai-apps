@@ -503,8 +503,8 @@ Managed lifecycle for cluster-critical components. AWS tests and distributes com
 - `vpc-cni` — AWS VPC CNI (pod networking via ENIs)
 - `coredns` — Cluster DNS
 - `kube-proxy` — iptables rules for Services
-- `aws-ebs-csi-driver` — Dynamic EBS PV provisioning
-- `aws-efs-csi-driver` — EFS PV provisioning (shared RWX)
+- `aws-ebs-csi-driver` — Dynamic [EBS](/aws-storage-s3) PV provisioning
+- `aws-efs-csi-driver` — [EFS](/aws-storage-s3) PV provisioning (shared RWX)
 - `aws-load-balancer-controller` — Provisions ALB/NLB from Ingress/Service objects
 - `adot` — AWS Distro for OpenTelemetry
 - `amazon-guardduty-agent` — Runtime threat detection
@@ -512,6 +512,8 @@ Managed lifecycle for cluster-critical components. AWS tests and distributes com
 **Critical**: Without `vpc-cni` add-on management, upgrading EKS minor versions can break networking. Pin add-on versions to cluster version compatibility matrix.
 
 ### IRSA (IAM Roles for Service Accounts)
+
+> IRSA is the primary way to grant EKS workloads AWS permissions. For IAM policies, roles, and OIDC federation concepts, see [IAM & Security](/aws-iam-security).
 
 Associates an IAM role with a Kubernetes service account. Pods using that SA get temporary credentials via OIDC without needing instance profile credentials (no credential sharing across pods on same node).
 

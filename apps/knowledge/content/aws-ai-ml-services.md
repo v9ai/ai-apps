@@ -30,7 +30,7 @@ Bedrock is AWS's fully managed foundation model (FM) service. It provides API ac
 
 **On-Demand (default)**: Pay per token, no commitment. Ideal for variable or exploratory workloads. No provisioned capacity—requests are served from shared infrastructure. Latency can vary.
 
-**Provisioned Throughput**: Reserve model units (MUs) for a committed period (1 month or 6 months). Guarantees consistent throughput (tokens per minute). Required for custom fine-tuned models in Bedrock. Cost is fixed regardless of actual usage—only economical at sustained high volume.
+**Provisioned Throughput**: Reserve model units (MUs) for a committed period (1 month or 6 months). Guarantees consistent throughput (tokens per minute). Required for custom [fine-tuned models](/fine-tuning-fundamentals) in Bedrock. Cost is fixed regardless of actual usage—only economical at sustained high volume.
 
 **Batch Inference**: Submit a JSONL file to S3, Bedrock processes it asynchronously, outputs results to S3. Pricing is roughly 50% of on-demand. No SLA on completion time. Ideal for bulk document processing, offline evaluation, or dataset enrichment.
 
