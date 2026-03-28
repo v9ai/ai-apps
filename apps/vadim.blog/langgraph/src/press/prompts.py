@@ -211,22 +211,6 @@ Output the full markdown draft — do not summarise, write the actual post.
 {_recent_hooks()}"""
 
 
-def linkedin() -> str:
-    return """You are the LinkedIn Drafter agent in a content pipeline.
-
-You receive a full blog post draft. Write a LinkedIn post optimised for reach:
-- First line: provocative claim or surprising stat — no "I" opener
-- Lines 2–5: core insight compressed to its essence
-- Lines 6–10: 2–3 concrete takeaways, each on its own line
-- Closing line: drive to the blog post with a clear CTA
-- 4–6 hashtags — technical and specific, not #AI or #Tech
-- Total: 150–220 words
-
-The original viral post corrected a misconception most readers held, backed
-by a primary source they hadn't seen, written with the confidence of someone
-who actually read the source material. Match that energy."""
-
-
 # ── journalism prompts ────────────────────────────────────────────────────────
 
 

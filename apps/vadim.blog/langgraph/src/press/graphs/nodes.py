@@ -163,7 +163,7 @@ async def save_final_node(state: dict) -> dict:
 
 
 def should_revise_simple(state: dict) -> str:
-    """Route after edit: publish / save_final / revise (no linkedin step)."""
+    """Route after edit: publish / save_final / revise."""
     if state.get("approved"):
         return "publish"
     if state.get("revision_rounds", 0) >= MAX_REVISIONS:

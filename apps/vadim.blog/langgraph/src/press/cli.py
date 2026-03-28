@@ -67,15 +67,12 @@ async def _article(
     papers = result.get("paper_count", 0)
     papers_info = f"  |  papers: {papers}" if papers else ""
 
-    li_lines = len(result.get("linkedin", "").splitlines()) if result.get("linkedin") else 0
-    li_info = f"  |  linkedin: {li_lines} lines" if li_lines else ""
-
     broken = result.get("broken_links", [])
     links_info = f"  |  broken links: {len(broken)}" if broken else "  |  links: ✓"
     print(
         f"\n  [{topic}]\n"
         f"  mode: {mode}  |  draft: ~{words} words  |  "
-        f"status: {status}  |  revisions: {rounds}{papers_info}{li_info}{links_info}"
+        f"status: {status}  |  revisions: {rounds}{papers_info}{links_info}"
     )
     if broken:
         print("\n  Broken links:")
@@ -149,7 +146,6 @@ async def _counter(url: str, topic: str, output_dir: str, publish: bool, git_pus
 
     status = "APPROVED" if result.get("approved") else "NEEDS REVISION"
     words = len(result.get("draft", "").split())
-    li_lines = len(result.get("linkedin", "").splitlines())
     rounds = result.get("revision_rounds", 0)
     papers = result.get("paper_count", 0)
     papers_info = f"  |  papers: {papers}" if papers else ""
@@ -158,7 +154,7 @@ async def _counter(url: str, topic: str, output_dir: str, publish: bool, git_pus
     links_info = f"  |  broken links: {len(broken)}" if broken else "  |  links: ✓"
     print(
         f"\n  [{topic}]\n"
-        f"  draft: ~{words} words  |  linkedin: {li_lines} lines  |  "
+        f"  draft: ~{words} words  |  "
         f"status: {status}  |  revisions: {rounds}{papers_info}{links_info}"
     )
     if broken:
@@ -344,8 +340,6 @@ async def _run_orchestrator(
         print(f"  draft: ~{words} words  |  status: {status}  |  revisions: {rounds}")
         if papers:
             print(f"  papers: {papers}")
-        if result.get("linkedin"):
-            print(f"  linkedin: {len(result['linkedin'].splitlines())} lines")
         if broken:
             print(f"  broken links: {len(broken)}")
             for link in broken:

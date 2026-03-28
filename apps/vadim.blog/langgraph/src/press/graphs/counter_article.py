@@ -140,7 +140,6 @@ def build_counter_article_graph(pool: ModelPool):
     revise = make_revise_node(
         pool, "counter-writer", lambda _: prompts.counter_writer(), _context
     )
-    linkedin = make_linkedin_node(pool, "counter-linkedin")
 
     # Build graph
     graph.add_node("fetch_source", fetch_source)
@@ -150,8 +149,6 @@ def build_counter_article_graph(pool: ModelPool):
     graph.add_node("check_references", check_references_node)
     graph.add_node("edit", edit)
     graph.add_node("revise", revise)
-    graph.add_node("linkedin_approved", linkedin)
-    graph.add_node("linkedin_final", linkedin)
     graph.add_node("publish", publish_node)
     graph.add_node("save_final", save_final_node)
 
@@ -163,17 +160,15 @@ def build_counter_article_graph(pool: ModelPool):
     graph.add_edge("check_references", "edit")
     graph.add_conditional_edges(
         "edit",
-        should_revise_with_linkedin,
+        should_revise_simple,
         {
-            "linkedin_approved": "linkedin_approved",
-            "linkedin_final": "linkedin_final",
+            "publish": "publish",
+            "save_final": "save_final",
             "revise": "revise",
         },
     )
     graph.add_edge("revise", "check_references")
-    graph.add_edge("linkedin_approved", "publish")
     graph.add_edge("publish", END)
-    graph.add_edge("linkedin_final", "save_final")
     graph.add_edge("save_final", END)
 
     return graph.compile()
