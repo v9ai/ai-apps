@@ -157,7 +157,7 @@ RUST_FILTER_1 = queue net dns
 RUST_FILTER_2 = job_ner html_scanner
 RUST_FILTER_3 = dedup simd filter
 RUST_FILTER_4 = scoring embedding
-RUST_FILTER_7 = pipeline teams
+RUST_FILTER_7 = pipeline teams state
 
 # ── All ────────────────────────────────────────────────────────
 

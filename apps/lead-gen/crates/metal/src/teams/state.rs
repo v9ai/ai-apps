@@ -194,3 +194,87 @@ pub fn save_report<T: serde::Serialize>(data_dir: &Path, name: &str, report: &T)
     std::fs::write(&path, serde_json::to_string_pretty(report)?)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn state_with(discovered: usize, enriched: usize, contacts: usize, quality: f64, bounce: f64) -> PipelineState {
+        PipelineState {
+            cycle_count: 1,
+            phase: None,
+            counts: StageCounts {
+                discovered, enriched, contacts_found: contacts,
+                outreach_drafted: 0, outreach_sent: 0,
+            },
+            quality_score: quality,
+            bounce_rate: bounce,
+        }
+    }
+
+    #[test]
+    fn test_phase_building() {
+        let s = state_with(10, 5, 3, 0.9, 0.05);
+        assert_eq!(s.detect_phase(), Phase::Building);
+    }
+
+    #[test]
+    fn test_phase_degraded_low_quality() {
+        let s = state_with(200, 100, 80, 0.5, 0.05);
+        assert_eq!(s.detect_phase(), Phase::Degraded);
+    }
+
+    #[test]
+    fn test_phase_degraded_high_bounce() {
+        let s = state_with(200, 100, 80, 0.9, 0.20);
+        assert_eq!(s.detect_phase(), Phase::Degraded);
+    }
+
+    #[test]
+    fn test_phase_flowing() {
+        let s = state_with(100, 60, 40, 0.9, 0.05);
+        assert_eq!(s.detect_phase(), Phase::Flowing);
+    }
+
+    #[test]
+    fn test_phase_bottleneck_enrich() {
+        // enriched >= 50 (past Building), but enrich_rate = 55/200 = 0.275 < 0.3
+        let s = state_with(200, 55, 40, 0.9, 0.05);
+        assert_eq!(s.detect_phase(), Phase::Bottleneck);
+    }
+
+    #[test]
+    fn test_phase_bottleneck_contacts() {
+        let s = state_with(100, 80, 8, 0.9, 0.05);
+        assert_eq!(s.detect_phase(), Phase::Bottleneck);
+    }
+
+    #[test]
+    fn test_phase_saturated() {
+        let s = state_with(300, 250, 200, 0.9, 0.05);
+        assert_eq!(s.detect_phase(), Phase::Saturated);
+    }
+
+    #[test]
+    fn test_phase_display() {
+        assert_eq!(format!("{}", Phase::Building), "BUILDING");
+        assert_eq!(format!("{}", Phase::Degraded), "DEGRADED");
+    }
+
+    #[test]
+    fn test_state_save_and_load() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = state_with(100, 80, 60, 0.85, 0.08);
+        state.save(dir.path()).unwrap();
+        let loaded = PipelineState::load(dir.path());
+        assert_eq!(loaded.counts.discovered, 100);
+        assert_eq!(loaded.counts.enriched, 80);
+    }
+
+    #[test]
+    fn test_state_load_missing_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = PipelineState::load(dir.path());
+        assert_eq!(state.cycle_count, 0);
+    }
+}
