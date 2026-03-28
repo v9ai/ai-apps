@@ -14,6 +14,8 @@ import {
 } from "@radix-ui/react-icons";
 import Link from "next/link";
 import Image from "next/image";
+import { button } from "@/recipes/button";
+import { cx } from "styled-system/css";
 
 const SECTION_ANCHORS = [
   { id: "hero", label: "home" },
@@ -161,32 +163,27 @@ export function LandingNav() {
                 <button
                   key={id}
                   onClick={() => scrollToSection(id)}
-                  className={css({
-                    bg: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    px: "3",
-                    py: "1.5",
-                    fontSize: "sm",
-                    fontWeight: activeSection === id ? "bold" : "medium",
-                    color: activeSection === id ? "ui.heading" : "ui.tertiary",
-                    letterSpacing: "normal",
-                    textTransform: "lowercase",
-                    transition: "color 150ms ease",
-                    position: "relative",
-                    _hover: {
-                      color: "ui.secondary",
-                    },
-                    _after: activeSection === id ? {
-                      content: '""',
-                      position: "absolute",
-                      bottom: "-1px",
-                      left: "12px",
-                      right: "12px",
-                      height: "2px",
-                      bg: "accent.primary",
-                    } : {},
-                  })}
+                  className={cx(
+                    button({ variant: "link" }),
+                    css({
+                      px: "3",
+                      py: "1.5",
+                      fontSize: "sm",
+                      fontWeight: activeSection === id ? "bold" : "medium",
+                      color: activeSection === id ? "ui.heading" : "ui.tertiary",
+                      position: "relative",
+                      _hover: { color: "ui.secondary" },
+                      _after: activeSection === id ? {
+                        content: '""',
+                        position: "absolute",
+                        bottom: "-1px",
+                        left: "12px",
+                        right: "12px",
+                        height: "2px",
+                        bg: "accent.primary",
+                      } : {},
+                    })
+                  )}
                 >
                   {label}
                 </button>
@@ -228,23 +225,17 @@ export function LandingNav() {
             {/* mobile: hamburger button */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className={css({
-                display: { base: "flex", md: "none" },
-                alignItems: "center",
-                justifyContent: "center",
-                w: "36px",
-                h: "36px",
-                bg: "transparent",
-                border: "1px solid",
-                borderColor: "ui.border",
-                cursor: "pointer",
-                color: "ui.secondary",
-                transition: "color 150ms ease, border-color 150ms ease",
-                _hover: {
-                  color: "ui.heading",
-                  borderColor: "ui.borderHover",
-                },
-              })}
+              className={cx(
+                button({ variant: "ghost", size: "sm" }),
+                css({
+                  display: { base: "flex", md: "none" },
+                  alignItems: "center",
+                  justifyContent: "center",
+                  w: "36px",
+                  h: "36px",
+                  px: "0",
+                })
+              )}
               aria-label={mobileOpen ? "close menu" : "open menu"}
             >
               {mobileOpen ? (
@@ -290,26 +281,24 @@ export function LandingNav() {
             <button
               key={id}
               onClick={() => scrollToSection(id)}
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                gap: "2",
-                bg: "transparent",
-                border: "none",
-                borderBottom: "1px solid",
-                borderBottomColor: "ui.border",
-                cursor: "pointer",
-                py: "3",
-                px: "0",
-                fontSize: "lg",
-                fontWeight: activeSection === id ? "bold" : "normal",
-                color: activeSection === id ? "ui.heading" : "ui.secondary",
-                textTransform: "lowercase",
-                letterSpacing: "snug",
-                textAlign: "left",
-                width: "100%",
-                transition: "color 150ms ease",
-              })}
+              className={cx(
+                button({ variant: "link" }),
+                css({
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "2",
+                  borderBottom: "1px solid",
+                  borderBottomColor: "ui.border",
+                  py: "3",
+                  px: "0",
+                  fontSize: "lg",
+                  fontWeight: activeSection === id ? "bold" : "normal",
+                  color: activeSection === id ? "ui.heading" : "ui.secondary",
+                  letterSpacing: "snug",
+                  textAlign: "left",
+                  width: "100%",
+                })
+              )}
             >
               {activeSection === id && (
                 <span

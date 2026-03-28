@@ -1,6 +1,7 @@
 "use client";
 
 import { css } from "styled-system/css";
+import { button } from "@/recipes/button";
 import { flex, grid, container } from "styled-system/patterns";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
@@ -182,25 +183,7 @@ export function LandingFooter() {
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className={css({
-              bg: "transparent",
-              border: "1px solid",
-              borderColor: "ui.border",
-              color: "ui.tertiary",
-              fontSize: "2xs",
-              fontWeight: "medium",
-              letterSpacing: "wide",
-              textTransform: "lowercase",
-              borderRadius: "0",
-              px: "3",
-              py: "1.5",
-              cursor: "pointer",
-              transition: "color 150ms ease, border-color 150ms ease",
-              _hover: {
-                color: "ui.heading",
-                borderColor: "ui.borderHover",
-              },
-            })}
+            className={button({ variant: "ghost", size: "sm" })}
           >
             back to top
           </button>
