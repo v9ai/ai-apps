@@ -95,3 +95,78 @@ fn optimal_hashes(m: usize, n: usize) -> u32 {
     let k = (m as f64 / n as f64) * std::f64::consts::LN_2;
     k.ceil().max(1.0) as u32
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_insert_and_contains() {
+        let mut bf = BloomFilter::new(1000, 0.01);
+        bf.insert(b"hello");
+        bf.insert(b"world");
+        assert!(bf.contains(b"hello"));
+        assert!(bf.contains(b"world"));
+    }
+
+    #[test]
+    fn test_not_contains() {
+        let bf = BloomFilter::new(1000, 0.01);
+        assert!(!bf.contains(b"never_inserted"));
+    }
+
+    #[test]
+    fn test_estimated_count() {
+        let mut bf = BloomFilter::new(1000, 0.01);
+        for i in 0..100u32 {
+            bf.insert(&i.to_le_bytes());
+        }
+        let est = bf.estimated_count();
+        // Should be approximately 100, allow ±20%
+        assert!(est >= 80 && est <= 120, "estimated count {est} too far from 100");
+    }
+
+    #[test]
+    fn test_false_positive_rate_empirical() {
+        let mut bf = BloomFilter::new(10_000, 0.01);
+        for i in 0..5_000u32 {
+            bf.insert(&i.to_le_bytes());
+        }
+        // Check items NOT in the filter
+        let mut false_positives = 0;
+        let test_count = 10_000;
+        for i in 100_000..100_000 + test_count as u32 {
+            if bf.contains(&i.to_le_bytes()) {
+                false_positives += 1;
+            }
+        }
+        let fp_rate = false_positives as f64 / test_count as f64;
+        assert!(fp_rate < 0.02, "FP rate {fp_rate} exceeds 2%");
+    }
+
+    #[test]
+    fn test_clear() {
+        let mut bf = BloomFilter::new(100, 0.01);
+        bf.insert(b"test");
+        assert!(bf.contains(b"test"));
+        bf.clear();
+        assert!(!bf.contains(b"test"));
+    }
+
+    #[test]
+    fn test_merge() {
+        let mut bf1 = BloomFilter::new(1000, 0.01);
+        let mut bf2 = BloomFilter::new(1000, 0.01);
+        bf1.insert(b"alpha");
+        bf2.insert(b"beta");
+        bf1.merge(&bf2);
+        assert!(bf1.contains(b"alpha"));
+        assert!(bf1.contains(b"beta"));
+    }
+
+    #[test]
+    fn test_size_bytes() {
+        let bf = BloomFilter::new(1000, 0.01);
+        assert!(bf.size_bytes() > 0);
+    }
+}

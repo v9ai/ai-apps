@@ -130,6 +130,35 @@ start-status: start-build ## Show pipeline status and phase detection
 start-top: start-build ## Show top leads (pass N=50 for count)
 	$(METAL_BIN) top $(or $(N),20)
 
+# ── Per-Module ML Testing ──────────────────────────────────────
+# 9 modules: 0=infra 1=crawler 2=extraction 3=entity-resolution
+#            4=scoring 5=reports 6=evaluation 7=synthesis 8=novelty
+#
+# Usage:
+#   make ml-test N=3      Test entity resolution (dedup + simd + filter)
+#   make ml-test N=2      Test extraction (job_ner + html_scanner)
+#   make ml-test-all      Test all modules
+
+.PHONY: ml-test ml-test-all
+
+ml-test: ## Test one ML module: make ml-test N=3
+	@echo "═══ Module $(N) ═══"
+	@cd $(METAL_DIR) && for p in $(RUST_FILTER_$(N)); do \
+		echo "── cargo test $$p ──"; \
+		cargo test --lib $$p 2>&1 | tail -3; \
+	done
+
+ml-test-all: ## Test all ML modules
+	@cd $(METAL_DIR) && cargo test --lib
+
+# cargo test filter patterns per module
+RUST_FILTER_0 = pipeline bplus storage bloom
+RUST_FILTER_1 = queue net dns
+RUST_FILTER_2 = job_ner html_scanner
+RUST_FILTER_3 = dedup simd filter
+RUST_FILTER_4 = scoring embedding
+RUST_FILTER_7 = pipeline teams
+
 # ── All ────────────────────────────────────────────────────────
 
 .PHONY: install-all
