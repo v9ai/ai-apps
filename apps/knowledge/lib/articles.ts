@@ -155,8 +155,8 @@ export const CATEGORIES: [number, number, string][] = [
   [55, 61, "Safety & Alignment"],
   [62, 65, "Multimodal AI"],
   [66, 71, "Applied AI & Production"],
-  [72, 80, "Cloud Platforms"],
-  [81, 86, "Software Engineering"],
+  [72, 81, "Cloud Platforms"],
+  [82, 87, "Software Engineering"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
