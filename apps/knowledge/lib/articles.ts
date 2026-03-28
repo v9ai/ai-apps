@@ -119,14 +119,17 @@ const LESSON_SLUGS = [
   "langgraph-red-teaming",
   "llamaindex",
   "ai-engineer-roadmap",
-  // Cloud Platforms (72-77)
+  // Cloud Platforms (72-80)
   "aws",
   "azure",
   "gcp",
   "docker",
   "kubernetes",
   "aws-lambda-serverless",
-  // Software Engineering (78-83)
+  "aws-iam-security",
+  "aws-api-gateway-networking",
+  "aws-compute-containers",
+  // Software Engineering (81-86)
   "microservices",
   "ci-cd",
   "nodejs",
@@ -151,8 +154,8 @@ export const CATEGORIES: [number, number, string][] = [
   [55, 61, "Safety & Alignment"],
   [62, 65, "Multimodal AI"],
   [66, 71, "Applied AI & Production"],
-  [72, 77, "Cloud Platforms"],
-  [78, 83, "Software Engineering"],
+  [72, 80, "Cloud Platforms"],
+  [81, 86, "Software Engineering"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
