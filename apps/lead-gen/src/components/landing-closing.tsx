@@ -69,7 +69,7 @@ export function LandingClosing() {
               href="/how-it-works"
               className={button({ variant: "solid", size: "lg" })}
             >
-              deploy lead-gen locally
+              deploy agentic lead gen locally
               <ArrowRightIcon width={14} height={14} />
             </Link>
           </div>
@@ -106,7 +106,7 @@ export function LandingClosing() {
                   letterSpacing: "wide",
                 })}
               >
-                not ready yet? get pipeline research updates
+                not ready yet? get agentic pipeline updates
               </span>
             </div>
             <form

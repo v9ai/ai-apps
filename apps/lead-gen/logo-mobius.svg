@@ -1,0 +1,244 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <defs>
+    <!-- Dark background gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#0d1a2e"/>
+      <stop offset="100%" stop-color="#050b14"/>
+    </radialGradient>
+
+    <!-- Metallic blue-silver ribbon gradient (main face) -->
+    <linearGradient id="ribbonMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#c8d8f0"/>
+      <stop offset="18%"  stop-color="#7aaee8"/>
+      <stop offset="38%"  stop-color="#3a72c4"/>
+      <stop offset="55%"  stop-color="#1a4a8a"/>
+      <stop offset="72%"  stop-color="#4a90d9"/>
+      <stop offset="88%"  stop-color="#9dc4f0"/>
+      <stop offset="100%" stop-color="#c8d8f0"/>
+    </linearGradient>
+
+    <!-- Ribbon underside gradient (darker, twisted side) -->
+    <linearGradient id="ribbonUnder" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#1a2a4a"/>
+      <stop offset="40%"  stop-color="#0e1d36"/>
+      <stop offset="100%" stop-color="#263a5e"/>
+    </linearGradient>
+
+    <!-- Silver highlight gradient for top arc -->
+    <linearGradient id="arcTop" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#8ab4e8"/>
+      <stop offset="25%"  stop-color="#d4e8ff"/>
+      <stop offset="50%"  stop-color="#f0f6ff"/>
+      <stop offset="75%"  stop-color="#a0c4f0"/>
+      <stop offset="100%" stop-color="#4a80c8"/>
+    </linearGradient>
+
+    <!-- Bottom arc gradient -->
+    <linearGradient id="arcBottom" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#2a4878"/>
+      <stop offset="50%"  stop-color="#1e3560"/>
+      <stop offset="100%" stop-color="#3a60a0"/>
+    </linearGradient>
+
+    <!-- Edge highlight gradient -->
+    <linearGradient id="edgeGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#7eb8f0" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#2a5498" stop-opacity="0.4"/>
+    </linearGradient>
+
+    <!-- Glow filter for ribbon -->
+    <filter id="ribbonGlow" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle glow for text -->
+    <filter id="textGlow" x="-30%" y="-80%" width="160%" height="260%">
+      <feGaussianBlur stdDeviation="1.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Ambient glow behind the loop -->
+    <radialGradient id="ambientGlow" cx="50%" cy="52%" r="38%">
+      <stop offset="0%"   stop-color="#1a3a7a" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#050b14" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Clip paths for the Möbius crossing illusion -->
+    <clipPath id="clipFront">
+      <ellipse cx="150" cy="105" rx="85" ry="44"/>
+    </clipPath>
+    <clipPath id="clipBack">
+      <rect x="65" y="61" width="170" height="44"/>
+    </clipPath>
+
+    <!-- Arrow marker -->
+    <marker id="arrowBlue" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0.5 L0,5.5 L5,3 Z" fill="#7eb8f0" opacity="0.85"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="200" fill="url(#bgGrad)"/>
+
+  <!-- Ambient glow halo behind loop -->
+  <ellipse cx="150" cy="108" rx="105" ry="54" fill="url(#ambientGlow)"/>
+
+  <!-- ============================================================
+       MÖBIUS STRIP — drawn as layered bezier ribbon segments
+       The illusion: top-right section crosses OVER bottom-left,
+       creating the characteristic half-twist topology.
+       Layer order: back-bottom → left-side → right-side → front-top
+       ============================================================ -->
+
+  <!-- SEGMENT 1: Bottom arc (back layer — darker, underside) -->
+  <!-- Outer bottom edge -->
+  <path d="M 82,130
+             C 82,148  218,148  218,130"
+        fill="none" stroke="url(#arcBottom)" stroke-width="22"
+        stroke-linecap="round" opacity="0.9"/>
+  <!-- Inner bottom edge highlight -->
+  <path d="M 92,128
+             C 92,143  208,143  208,128"
+        fill="none" stroke="#1e3a6a" stroke-width="6"
+        stroke-linecap="round" opacity="0.6"/>
+  <!-- Bottom edge sheen -->
+  <path d="M 100,131
+             C 100,144  200,144  200,131"
+        fill="none" stroke="#4a78b8" stroke-width="1.5"
+        stroke-linecap="round" opacity="0.5"/>
+
+  <!-- SEGMENT 2: Left descending side (mid layer) -->
+  <!-- Left ribbon body -->
+  <path d="M 82,80
+             C 60,80  60,130  82,130"
+        fill="none" stroke="url(#ribbonMain)" stroke-width="22"
+        stroke-linecap="butt" filter="url(#ribbonGlow)" opacity="0.95"/>
+  <!-- Left edge -->
+  <path d="M 71,82 C 52,82 52,128 71,128"
+        fill="none" stroke="#9dc4f4" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- SEGMENT 3: Right ascending side (mid layer) -->
+  <!-- Right ribbon body -->
+  <path d="M 218,80
+             C 240,80  240,130  218,130"
+        fill="none" stroke="url(#ribbonUnder)" stroke-width="22"
+        stroke-linecap="butt" opacity="0.88"/>
+  <!-- Right edge sheen -->
+  <path d="M 229,82 C 248,82 248,128 229,128"
+        fill="none" stroke="#4a78b8" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- SEGMENT 4: Top arc — FRONT layer (bright metallic, over the crossing) -->
+  <!-- Top arc body — silver/blue gradient -->
+  <path d="M 82,80
+             C 82,62  218,62  218,80"
+        fill="none" stroke="url(#arcTop)" stroke-width="22"
+        stroke-linecap="round" filter="url(#ribbonGlow)" opacity="1"/>
+  <!-- Top arc inner highlight (specular) -->
+  <path d="M 92,78 C 92,66 208,66 208,78"
+        fill="none" stroke="#e8f4ff" stroke-width="4"
+        stroke-linecap="round" opacity="0.55"/>
+  <!-- Top arc outer edge -->
+  <path d="M 82,68 C 82,55 218,55 218,68"
+        fill="none" stroke="#6aaae0" stroke-width="2"
+        stroke-linecap="round" opacity="0.7"/>
+  <!-- Top arc lower edge (shadow) -->
+  <path d="M 84,91 C 84,85 216,85 216,91"
+        fill="none" stroke="#1a3060" stroke-width="2.5"
+        stroke-linecap="round" opacity="0.6"/>
+
+  <!-- ============================================================
+       CROSSING POINT — the half-twist (Möbius characteristic)
+       Right side crosses to become the back/underside of left side
+       ============================================================ -->
+  <!-- Crossing shadow/depth left -->
+  <path d="M 72,90 C 68,100 68,110 72,120"
+        fill="none" stroke="#08101e" stroke-width="8" opacity="0.9"/>
+  <!-- Crossing shadow/depth right -->
+  <path d="M 228,90 C 232,100 232,110 228,120"
+        fill="none" stroke="#08101e" stroke-width="8" opacity="0.7"/>
+
+  <!-- ============================================================
+       STAGE LABELS along the strip
+       ============================================================ -->
+
+  <!-- DISCOVER — top arc, left portion -->
+  <g filter="url(#textGlow)">
+    <text x="108" y="74"
+          font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+          font-size="7.2" font-weight="700" letter-spacing="0.8"
+          fill="#e8f4ff" text-anchor="middle" opacity="0.95">DISCOVER</text>
+  </g>
+
+  <!-- ENRICH — top arc, right portion -->
+  <g filter="url(#textGlow)">
+    <text x="192" y="74"
+          font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+          font-size="7.2" font-weight="700" letter-spacing="0.8"
+          fill="#b8d8f8" text-anchor="middle" opacity="0.92">ENRICH</text>
+  </g>
+
+  <!-- QUALIFY — bottom arc -->
+  <g filter="url(#textGlow)">
+    <text x="150" y="144"
+          font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+          font-size="7.2" font-weight="700" letter-spacing="0.8"
+          fill="#7aaad8" text-anchor="middle" opacity="0.85">QUALIFY</text>
+  </g>
+
+  <!-- OUTREACH — right side (rotated) -->
+  <g filter="url(#textGlow)">
+    <text x="243" y="107"
+          font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+          font-size="6.5" font-weight="700" letter-spacing="0.6"
+          fill="#6898c8" text-anchor="middle" opacity="0.8"
+          transform="rotate(90, 243, 107)">OUTREACH</text>
+  </g>
+
+  <!-- ============================================================
+       DIRECTIONAL ARROWS — subtle, along the strip path
+       ============================================================ -->
+  <!-- Arrow: DISCOVER → ENRICH (top, rightward) -->
+  <path d="M 148,69 L 153,69" stroke="#c0dcf8" stroke-width="1.5"
+        marker-end="url(#arrowBlue)" opacity="0.7"/>
+
+  <!-- Arrow: bottom leftward (QUALIFY direction) -->
+  <path d="M 155,138 L 148,138" stroke="#5a88b8" stroke-width="1.5"
+        marker-end="url(#arrowBlue)" opacity="0.55"
+        transform="rotate(180,151.5,138)"/>
+
+  <!-- ============================================================
+       TITLE TEXT
+       ============================================================ -->
+  <text x="150" y="175"
+        font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+        font-size="12" font-weight="800" letter-spacing="2.5"
+        fill="#d0e8ff" text-anchor="middle" opacity="0.95"
+        filter="url(#textGlow)">AGENTIC LEAD GEN</text>
+
+  <!-- Subtitle / tagline -->
+  <text x="150" y="190"
+        font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+        font-size="6" font-weight="400" letter-spacing="3"
+        fill="#4a78b0" text-anchor="middle" opacity="0.7">PERPETUAL PIPELINE</text>
+
+  <!-- Fine decorative rule under title -->
+  <line x1="98" y1="179" x2="202" y2="179"
+        stroke="#2a5090" stroke-width="0.5" opacity="0.6"/>
+
+  <!-- Corner accent dots -->
+  <circle cx="18"  cy="18"  r="1.5" fill="#1e3a6a" opacity="0.5"/>
+  <circle cx="282" cy="18"  r="1.5" fill="#1e3a6a" opacity="0.5"/>
+  <circle cx="18"  cy="182" r="1.5" fill="#1e3a6a" opacity="0.5"/>
+  <circle cx="282" cy="182" r="1.5" fill="#1e3a6a" opacity="0.5"/>
+
+  <!-- Outer border frame -->
+  <rect x="2" y="2" width="296" height="196" rx="6" ry="6"
+        fill="none" stroke="#1e3a6a" stroke-width="0.75" opacity="0.5"/>
+</svg>

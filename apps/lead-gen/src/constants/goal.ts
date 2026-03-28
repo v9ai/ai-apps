@@ -64,4 +64,4 @@ Every output you produce — whether it is a SQL query, a code review, a search 
  * A concise one-liner for agents that only need light context
  * (e.g. code helpers, linters).
  */
-export const GOAL_CONTEXT_LINE = `This codebase powers lead-gen — a job board helping its owner land a fully remote AI Engineer or React Engineer role in Europe/worldwide.`;
+export const GOAL_CONTEXT_LINE = `This codebase powers Agentic Lead Gen — a job board helping its owner land a fully remote AI Engineer or React Engineer role in Europe/worldwide.`;
