@@ -630,4 +630,127 @@ mod tests {
         assert_eq!(cat, "PRODUCT", "Expected PRODUCT, got {cat}");
         assert!(prob > 0.3, "Expected confident classification, got {prob}");
     }
+
+    // ── heuristic_classify ──────────────────────────────────────
+
+    #[test]
+    fn test_heuristic_consultancy() {
+        let (cat, ai, industry, conf) = heuristic_classify("We offer consulting and custom development for enterprises");
+        assert_eq!(cat, "CONSULTANCY");
+        assert!(conf < 1.0);
+        assert!(!ai.is_empty());
+        assert!(!industry.is_empty());
+    }
+
+    #[test]
+    fn test_heuristic_agency() {
+        let (cat, _, _, _) = heuristic_classify("We are a creative agency specializing in digital marketing");
+        assert_eq!(cat, "AGENCY");
+    }
+
+    #[test]
+    fn test_heuristic_staffing() {
+        let (cat, _, _, _) = heuristic_classify("Global staffing and recruitment solutions for tech talent");
+        assert_eq!(cat, "STAFFING");
+    }
+
+    #[test]
+    fn test_heuristic_product_fallback() {
+        let (cat, _, _, _) = heuristic_classify("We build cloud infrastructure for teams");
+        assert_eq!(cat, "PRODUCT");
+    }
+
+    #[test]
+    fn test_heuristic_ai_first() {
+        let (_, ai, _, _) = heuristic_classify("We are an ai-first company focused on machine learning solutions");
+        assert_eq!(ai, "ai_first");
+    }
+
+    #[test]
+    fn test_heuristic_ai_native() {
+        let (_, ai, _, _) = heuristic_classify("Our platform uses AI and machine learning to automate workflows");
+        assert_eq!(ai, "ai_native");
+    }
+
+    #[test]
+    fn test_heuristic_other_ai() {
+        let (_, ai, _, _) = heuristic_classify("We build enterprise resource planning software");
+        assert_eq!(ai, "other");
+    }
+
+    #[test]
+    fn test_heuristic_healthcare_industry() {
+        let (_, _, industry, _) = heuristic_classify("We provide healthcare technology solutions for hospitals");
+        assert_eq!(industry, "healthcare");
+    }
+
+    #[test]
+    fn test_heuristic_fintech_industry() {
+        let (_, _, industry, _) = heuristic_classify("Fintech solutions for financial institutions");
+        assert_eq!(industry, "fintech");
+    }
+
+    #[test]
+    fn test_heuristic_devtools_industry() {
+        let (_, _, industry, _) = heuristic_classify("Developer tools for CI/CD and devtools workflows");
+        assert_eq!(industry, "devtools");
+    }
+
+    // ── compute_enrichment_score ────────────────────────────────
+
+    #[test]
+    fn test_enrichment_score_max_is_one() {
+        let score = compute_enrichment_score(
+            "CONSULTANCY", "ai_first",
+            &["rust", "python", "mlx", "torch", "candle", "axum", "tokio", "wasm"].map(|s| s.to_string()),
+            true, 1, 1.0, "consultancy",
+        );
+        assert!(score <= 1.0, "Score must not exceed 1.0, got {score}");
+        assert!(score > 0.0);
+    }
+
+    #[test]
+    fn test_enrichment_score_high_value_company() {
+        // ai_first + full_remote + has_careers + target vertical + deep tech + max confidence
+        let score = compute_enrichment_score(
+            "CONSULTANCY", "ai_first",
+            &["rust", "llm", "vector"].map(|s| s.to_string()),
+            true, 1, 1.0, "consultancy",
+        );
+        assert!(score > 0.7, "High-value company should score > 0.7, got {score}");
+    }
+
+    #[test]
+    fn test_enrichment_score_onsite_zero_remote() {
+        // onsite should score 0 for remote component
+        let score_onsite = compute_enrichment_score(
+            "PRODUCT", "ai_native", &[], false, 3, 0.5, "product",
+        );
+        let score_remote = compute_enrichment_score(
+            "PRODUCT", "ai_native", &[], false, 1, 0.5, "product",
+        );
+        assert!(score_remote > score_onsite, "Full remote should outscore onsite");
+    }
+
+    #[test]
+    fn test_enrichment_score_target_vertical_bonus() {
+        let score_match = compute_enrichment_score(
+            "AGENCY", "other", &[], false, 0, 0.5, "agency",
+        );
+        let score_other = compute_enrichment_score(
+            "AGENCY", "other", &[], false, 0, 0.5, "consultancy",
+        );
+        assert!(score_match > score_other, "Target vertical match should boost score");
+    }
+
+    #[test]
+    fn test_enrichment_score_unknown_remote_is_zero() {
+        let score_unknown = compute_enrichment_score(
+            "PRODUCT", "other", &[], false, 0, 0.5, "product",
+        );
+        let score_hybrid = compute_enrichment_score(
+            "PRODUCT", "other", &[], false, 2, 0.5, "product",
+        );
+        assert!(score_hybrid > score_unknown);
+    }
 }

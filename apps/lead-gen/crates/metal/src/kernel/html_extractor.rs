@@ -474,4 +474,142 @@ mod tests {
         let profile = extract_profile(html);
         assert_eq!(profile.structured_emails.len(), 1);
     }
+
+    #[test]
+    fn test_long_heading_filtered() {
+        let long = "A".repeat(200);
+        let html = format!(r#"<html><body><h1>{long}</h1><h2>Short</h2></body></html>"#);
+        let profile = extract_profile(&html);
+        assert!(!profile.headings.iter().any(|h| h.len() >= 200));
+        assert!(profile.headings.contains(&"Short".to_string()));
+    }
+
+    #[test]
+    fn test_content_falls_back_to_article() {
+        let html = r#"
+            <html><body>
+            <article>
+                <p>This is article content with enough text to meet the fifty character extraction threshold.</p>
+            </article>
+            </body></html>
+        "#;
+        let profile = extract_profile(html);
+        assert!(!profile.main_content.is_empty());
+        assert!(profile.main_content.contains("article content"));
+    }
+
+    #[test]
+    fn test_main_preferred_over_article() {
+        let html = r#"
+            <html><body>
+            <article><p>Article section — should be skipped when main tag has sufficient content.</p></article>
+            <main><p>Main section — this should be selected because main has priority over article here.</p></main>
+            </body></html>
+        "#;
+        let profile = extract_profile(html);
+        assert!(profile.main_content.contains("Main section"));
+        assert!(!profile.main_content.contains("Article section"));
+    }
+
+    #[test]
+    fn test_smart_truncate_no_sentence_boundary() {
+        // Falls back to last space when no ". " found
+        let text = "word1 word2 word3 word4 word5";
+        let truncated = smart_truncate(text, 15);
+        // "word1 word2 wor" — last space before 15 chars → "word1 word2"
+        assert_eq!(truncated, "word1 word2");
+        assert!(!truncated.ends_with(' '));
+    }
+
+    #[test]
+    fn test_smart_truncate_no_spaces() {
+        let text = "abcdefghijklmnopqrstuvwxyz";
+        let truncated = smart_truncate(text, 10);
+        assert_eq!(truncated, "abcdefghij");
+    }
+
+    #[test]
+    fn test_smart_truncate_within_limit() {
+        let text = "Short text.";
+        assert_eq!(smart_truncate(text, 100), "Short text.");
+    }
+
+    #[test]
+    fn test_profile_to_markdown_all_sections() {
+        let html = r#"
+            <html><head>
+            <script type="application/ld+json">
+            {"@type":"Organization","name":"FutureCorp","description":"AI company"}
+            </script>
+            <meta name="description" content="We build AI.">
+            <meta property="og:title" content="FutureCorp">
+            <link rel="canonical" href="https://futurecorp.ai">
+            </head><body>
+            <h1>FutureCorp</h1>
+            <nav><a href="/careers">Careers</a></nav>
+            <main><p>We are an AI-native company building intelligent automation tools for enterprises worldwide.</p></main>
+            </body></html>
+        "#;
+        let profile = extract_profile(html);
+        let md = profile_to_markdown(&profile);
+        assert!(md.contains("## Structured Data (JSON-LD)"));
+        assert!(md.contains("FutureCorp"));
+        assert!(md.contains("## Metadata"));
+        assert!(md.contains("We build AI"));
+        assert!(md.contains("## Page Headings"));
+        assert!(md.contains("## Signals"));
+        assert!(md.contains("## Page Content"));
+    }
+
+    #[test]
+    fn test_profile_to_markdown_empty_profile() {
+        let profile = HtmlProfile::default();
+        let md = profile_to_markdown(&profile);
+        assert!(!md.contains("## Structured Data"));
+        assert!(!md.contains("## Metadata"));
+    }
+
+    #[test]
+    fn test_career_keywords_in_heading() {
+        let html = r#"<html><body><h2>Join Us — Open Positions</h2></body></html>"#;
+        let profile = extract_profile(html);
+        assert!(profile.has_careers_section);
+    }
+
+    #[test]
+    fn test_leadership_heading_triggers_team() {
+        let html = r#"<html><body><h2>Our Leadership Team</h2></body></html>"#;
+        let profile = extract_profile(html);
+        assert!(profile.has_team_section);
+    }
+
+    #[test]
+    fn test_mailto_query_params_stripped() {
+        let html = r#"<html><body><a href="mailto:ceo@example.com?subject=Hello&body=Hi">Email</a></body></html>"#;
+        let profile = extract_profile(html);
+        assert!(profile.structured_emails.contains(&"ceo@example.com".to_string()));
+        assert!(!profile.structured_emails.iter().any(|e| e.contains('?')));
+    }
+
+    #[test]
+    fn test_jsonld_array_parsed() {
+        // Some sites wrap JSON-LD in an array
+        let html = r#"
+            <html><head>
+            <script type="application/ld+json">
+            [{"@context":"https://schema.org","@type":"Organization","name":"ArrayCorp"}]
+            </script>
+            </head><body></body></html>
+        "#;
+        let profile = extract_profile(html);
+        assert!(profile.jsonld.is_some());
+        // Array value is stored as-is; name accessible via index or direct
+        let jsonld = profile.jsonld.unwrap();
+        let name = if jsonld.is_array() {
+            jsonld[0]["name"].as_str().map(|s| s.to_string())
+        } else {
+            jsonld["name"].as_str().map(|s| s.to_string())
+        };
+        assert_eq!(name.as_deref(), Some("ArrayCorp"));
+    }
 }

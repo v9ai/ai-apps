@@ -130,6 +130,77 @@ pub struct CompanyClassification {
 
 fn default_confidence() -> f64 { 0.5 }
 
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "kernel-extract")]
+    #[test]
+    fn test_company_profile_schema_has_required_fields() {
+        let schema = super::company_profile_schema();
+        let required = schema["required"].as_array().expect("required must be array");
+        let required_strs: Vec<&str> = required.iter()
+            .filter_map(|v| v.as_str())
+            .collect();
+        assert!(required_strs.contains(&"name"));
+        assert!(required_strs.contains(&"category"));
+        assert!(required_strs.contains(&"ai_tier"));
+    }
+
+    #[cfg(feature = "kernel-extract")]
+    #[test]
+    fn test_company_profile_schema_properties() {
+        let schema = super::company_profile_schema();
+        let props = schema["properties"].as_object().expect("properties must be object");
+        assert!(props.contains_key("name"));
+        assert!(props.contains_key("category"));
+        assert!(props.contains_key("ai_tier"));
+        assert!(props.contains_key("tech_stack"));
+        assert!(props.contains_key("remote_policy"));
+        assert!(props.contains_key("services"));
+        assert!(props.contains_key("hiring_signals"));
+    }
+
+    #[cfg(feature = "kernel-extract")]
+    #[test]
+    fn test_company_profile_schema_category_enum() {
+        let schema = super::company_profile_schema();
+        let variants = schema["properties"]["category"]["enum"]
+            .as_array()
+            .expect("category enum must be array");
+        let strs: Vec<&str> = variants.iter().filter_map(|v| v.as_str()).collect();
+        assert!(strs.contains(&"CONSULTANCY"));
+        assert!(strs.contains(&"AGENCY"));
+        assert!(strs.contains(&"STAFFING"));
+        assert!(strs.contains(&"PRODUCT"));
+    }
+
+    #[cfg(feature = "kernel-extract")]
+    #[test]
+    fn test_company_profile_schema_ai_tier_enum() {
+        let schema = super::company_profile_schema();
+        let variants = schema["properties"]["ai_tier"]["enum"]
+            .as_array()
+            .expect("ai_tier enum must be array");
+        let strs: Vec<&str> = variants.iter().filter_map(|v| v.as_str()).collect();
+        assert!(strs.contains(&"ai_first"));
+        assert!(strs.contains(&"ai_native"));
+        assert!(strs.contains(&"other"));
+    }
+
+    #[cfg(feature = "kernel-extract")]
+    #[test]
+    fn test_company_profile_schema_remote_policy_enum() {
+        let schema = super::company_profile_schema();
+        let variants = schema["properties"]["remote_policy"]["enum"]
+            .as_array()
+            .expect("remote_policy enum must be array");
+        let strs: Vec<&str> = variants.iter().filter_map(|v| v.as_str()).collect();
+        assert!(strs.contains(&"full_remote"));
+        assert!(strs.contains(&"hybrid"));
+        assert!(strs.contains(&"onsite"));
+        assert!(strs.contains(&"unknown"));
+    }
+}
+
 /// Draft a personalized outreach email using LLM.
 pub async fn draft_email(
     client: &reqwest::Client,

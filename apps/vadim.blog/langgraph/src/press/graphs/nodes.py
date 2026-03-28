@@ -1,12 +1,13 @@
 """Shared node implementations for editorial pipelines.
 
-Deduplicates publish, save_final, linkedin, write, edit, revise, check_references,
+Deduplicates publish, save_final, write, edit, revise, check_references,
 and routing logic used across journalism, deep_dive, and counter_article graphs.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import Callable
 
@@ -170,15 +171,6 @@ def should_revise_simple(state: dict) -> str:
     return "revise"
 
 
-def should_revise_with_linkedin(state: dict) -> str:
-    """Route after edit: linkedin_approved / linkedin_final / revise."""
-    if state.get("approved"):
-        return "linkedin_approved"
-    if state.get("revision_rounds", 0) >= MAX_REVISIONS:
-        return "linkedin_final"
-    return "revise"
-
-
 # ── Factory nodes (need pool) ────────────────────────────────────────────────
 
 
@@ -290,23 +282,63 @@ def make_revise_node(
     return node
 
 
-def make_linkedin_node(pool: ModelPool, agent_name: str):
-    """Create a LinkedIn drafting node."""
+def inject_flow_into_draft(draft: str, flow_component: str, section_heading: str | None) -> str:
+    """Insert a <Flow> component after the target heading, or after the first paragraph."""
+    if section_heading:
+        pattern = re.compile(
+            r"(^#{1,3}\s+" + re.escape(section_heading) + r"\s*$)",
+            re.MULTILINE | re.IGNORECASE,
+        )
+        match = pattern.search(draft)
+        if match:
+            # Insert after the heading line, skipping any immediately following blank lines
+            insert_pos = draft.find("\n", match.end()) + 1
+            rest = draft[insert_pos:]
+            leading = len(rest) - len(rest.lstrip("\n"))
+            insert_pos += leading
+            return draft[:insert_pos] + "\n" + flow_component + "\n\n" + draft[insert_pos:]
+
+    # Fallback: insert after the first double newline (end of intro paragraph)
+    idx = draft.find("\n\n")
+    if idx != -1:
+        return draft[: idx + 2] + flow_component + "\n\n" + draft[idx + 2 :]
+    return draft + "\n\n" + flow_component
+
+
+async def add_xyflow(pool: ModelPool, draft: str) -> str:
+    """Call the xyflow agent, parse its <Flow> output, and embed it in the draft."""
+    if not draft:
+        return draft
+
+    agent = Agent("article-xyflow", prompts.xyflow_diagram(), pool.for_role(TeamRole.FAST))
+    result = await agent.run(draft)
+
+    section_match = re.search(r"<!--\s*SECTION:\s*(.+?)\s*-->", result)
+    start = result.find("<Flow")
+    if start == -1:
+        logger.warning("xyflow: no <Flow> component in LLM output")
+        return draft
+
+    end = result.rfind("/>")
+    if end == -1 or end < start:
+        logger.warning("xyflow: malformed <Flow> component (no closing />)")
+        return draft
+
+    flow_component = result[start : end + 2]
+    section_heading = section_match.group(1).strip() if section_match else None
+    return inject_flow_into_draft(draft, flow_component, section_heading)
+
+
+def make_xyflow_node(pool: ModelPool):
+    """Create a LangGraph node that generates a React Flow diagram and embeds it in the draft."""
 
     async def node(state: dict) -> dict:
-        content = (
-            extract_published_content(state["editor_output"], state["draft"])
-            if state.get("approved")
-            else state["draft"]
-        )
-        agent = Agent(agent_name, prompts.linkedin(), pool.for_role(TeamRole.FAST))
-        linkedin = await agent.run(content)
-
-        slug = slugify(_topic_key(state))
-        drafts_dir = Path(state.get("output_dir", "./articles")) / "drafts"
-        drafts_dir.mkdir(parents=True, exist_ok=True)
-        (drafts_dir / f"{slug}-linkedin.md").write_text(linkedin)
-
-        return {"linkedin": linkedin}
+        draft = state.get("draft", "")
+        updated = await add_xyflow(pool, draft)
+        if updated != draft:
+            _save_draft(state, updated)
+        return {"draft": updated}
 
     return node
+
+
