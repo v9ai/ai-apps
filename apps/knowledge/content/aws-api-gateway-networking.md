@@ -97,7 +97,7 @@ Forwards the request to any public HTTP endpoint (another service, third-party A
 
 ### AWS Service Integration
 
-Directly invokes AWS service APIs without Lambda as middleware. Example: write to SQS, trigger Step Functions, or put items in [DynamoDB](/dynamodb-data-services) directly from API Gateway. Reduces latency and cost by eliminating a Lambda hop.
+Directly invokes AWS service APIs without Lambda as middleware. Example: write to SQS, trigger Step Functions, or put items in [DynamoDB](/aws/dynamodb-data-services) directly from API Gateway. Reduces latency and cost by eliminating a Lambda hop.
 
 ```yaml
 # CloudFormation: API Gateway writing directly to SQS (no Lambda)
