@@ -13,6 +13,12 @@
       "default": "./src/render.tsx"
     }
   },
+  "devDependencies": {
+    "@ai-apps/typescript-config": "workspace:*",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "typescript": "^5"
+  },
   "peerDependencies": {
     "@react-pdf/renderer": ">=4.0.0",
     "react": ">=18.0.0"
