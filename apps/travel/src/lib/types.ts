@@ -129,7 +129,7 @@ export interface HotelResult {
   image_url: string | null;
   gallery?: string[];
   opened_year?: number;
-  // Candle ML review analysis
+  // Review analysis
   reviews?: ReviewResult[];
   sentiment_score?: number;
   value_score?: number;

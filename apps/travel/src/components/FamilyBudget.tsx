@@ -670,7 +670,7 @@ export function FamilyBudget({ places, adults, kids, lang }: FamilyBudgetProps) 
         </div>
       </div>
 
-      {/* ── ML score mini-chart ───────────────────────────────────── */}
+      {/* ── Score mini-chart ────────────────────────────────────── */}
       {chartPlaces.length > 0 && (
         <div
           className={css({

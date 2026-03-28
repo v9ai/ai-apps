@@ -399,6 +399,111 @@ pub fn extract_hotels(ranked: &[RankedPassage]) -> Vec<Hotel> {
     hotels
 }
 
+/// Generic hotel extraction with pluggable locations and fallback coordinates.
+///
+/// Used by both Greece and Ischia pipelines. `country_label` is appended to
+/// location strings when no specific match is found (e.g. "Italy", "Greece").
+pub fn extract_hotels_generic(
+    ranked: &[RankedPassage],
+    locations: &[(&str, &str, f64, f64)],
+    country_label: &str,
+    default_lat: f64,
+    default_lng: f64,
+) -> Vec<Hotel> {
+    let name_re =
+        Regex::new(r"(?i)\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,5})\s+(?:Hotel|Resort|Suites|Villas|Beach|Palace|Bay|Club|Terme|Spa)")
+            .unwrap();
+    let star_re = Regex::new(r"(\d)\s*[-–]?\s*star").unwrap();
+    let price_re = Regex::new(r"(?:€|EUR?\s*)(\d{2,4})").unwrap();
+    let year_re = Regex::new(r"\b(202[4-7])\b").unwrap();
+    let board_re =
+        Regex::new(r"(?i)(all[- ]inclusive|half[- ]board|bed\s*&?\s*breakfast|full board|room only)")
+            .unwrap();
+
+    let mut hotels: Vec<Hotel> = Vec::new();
+    let mut seen_names: Vec<String> = Vec::new();
+
+    for rp in ranked {
+        let text = &rp.passage.text;
+
+        let name = if let Some(m) = name_re.find(text) {
+            m.as_str().trim().to_string()
+        } else if let Some(heading) = &rp.passage.heading {
+            if heading.to_lowercase().contains("hotel")
+                || heading.to_lowercase().contains("resort")
+                || heading.to_lowercase().contains("terme")
+            {
+                heading.clone()
+            } else {
+                continue;
+            }
+        } else {
+            continue;
+        };
+
+        let name_lower = name.to_lowercase();
+        if seen_names.iter().any(|s| s == &name_lower) {
+            continue;
+        }
+        seen_names.push(name_lower);
+
+        let star_rating = star_re
+            .captures(text)
+            .and_then(|c| c[1].parse::<u8>().ok())
+            .unwrap_or(4);
+
+        let price_eur = price_re
+            .captures(text)
+            .and_then(|c| c[1].parse::<f32>().ok())
+            .unwrap_or(0.0);
+
+        let opened_year = year_re.captures(text).and_then(|c| {
+            let y: u16 = c[1].parse().ok()?;
+            if y >= NEW_HOTEL_MIN_YEAR { Some(y) } else { None }
+        });
+        if opened_year.is_none() && !text.to_lowercase().contains(DISCOVERY_YEAR_STR) {
+            continue;
+        }
+        let opened_year = opened_year.or(Some(DISCOVERY_YEAR));
+
+        let text_lower = text.to_lowercase();
+        let (location, region, lat, lng) = locations
+            .iter()
+            .find(|(loc, _, _, _)| text_lower.contains(&loc.to_lowercase()))
+            .map(|(loc, reg, lat, lng)| (format!("{loc}, {reg}, {country_label}"), reg.to_string(), *lat, *lng))
+            .unwrap_or_else(|| (country_label.to_string(), country_label.to_string(), default_lat, default_lng));
+
+        let board_type = board_re
+            .captures(text)
+            .map(|c| normalize_board_type(&c[1]))
+            .unwrap_or_else(|| "Standard".to_string());
+
+        let hotel_id = slug_from_name(&name);
+        let description = build_description(text, &name);
+
+        hotels.push(Hotel {
+            hotel_id,
+            name,
+            description,
+            star_rating,
+            board_type,
+            price_eur,
+            location,
+            region,
+            lat,
+            lng,
+            source_url: rp.passage.source_url.clone(),
+            amenities: extract_amenities(text),
+            image_url: None,
+            gallery: vec![],
+            opened_year,
+        });
+    }
+
+    info!("Extracted {} hotel candidates from passages", hotels.len());
+    hotels
+}
+
 fn slug_from_name(name: &str) -> String {
     name.to_lowercase()
         .chars()

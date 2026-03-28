@@ -21,7 +21,7 @@ const T = {
     amenities: "Facilitati",
     location: "Locatie",
     cta: "Rezerva acum",
-    pipeline: "Analiza Candle ML",
+    pipeline: "Analiza",
     pipelineDesc:
       "Sentiment, aspecte si valoare calculate prin cosine similarity cu all-MiniLM-L6-v2 (384-dim).",
     notFound: "Hotelul nu a fost gasit",
