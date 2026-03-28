@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <defs>
+    <!-- Dark sand gradient for top half -->
+    <linearGradient id="darkSandGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d1f0e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5c3d1e;stop-opacity:1" />
+    </linearGradient>
+    <!-- Gold gradient for bottom half -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#c8860a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5c842;stop-opacity:1" />
+    </linearGradient>
+    <!-- Hourglass glass gradient -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a2a3a;stop-opacity:0.95" />
+      <stop offset="50%" style="stop-color:#0d1b2a;stop-opacity:0.98" />
+      <stop offset="100%" style="stop-color:#1a2a3a;stop-opacity:0.95" />
+    </linearGradient>
+    <!-- Frame gradient -->
+    <linearGradient id="frameGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8a6a2a" />
+      <stop offset="50%" style="stop-color:#d4a843" />
+      <stop offset="100%" style="stop-color:#8a6a2a" />
+    </linearGradient>
+    <!-- Background -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#080f18" />
+      <stop offset="100%" style="stop-color:#0f1e2e" />
+    </linearGradient>
+    <!-- Sand fall glow -->
+    <filter id="sandGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0.6 0 0 0  0.8 0.5 0 0 0  0 0 0 0 0  0 0 0 1.5 0" result="colored" />
+      <feMerge><feMergeNode in="colored"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- Gold figure glow -->
+    <filter id="goldFigureGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0.8 0 0 0.1  0.8 0.6 0 0 0.05  0 0 0 0 0  0 0 0 2 0" result="colored" />
+      <feMerge><feMergeNode in="colored"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- Subtle outer glow for hourglass -->
+    <filter id="outerGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0.7 0 0 0.1  0.7 0.4 0 0 0.05  0 0 0 0 0  0 0 0 0.6 0" />
+    </filter>
+    <!-- Clip paths for hourglass halves -->
+    <clipPath id="topHalfClip">
+      <polygon points="88,22 212,22 162,100 138,100" />
+    </clipPath>
+    <clipPath id="bottomHalfClip">
+      <polygon points="138,102 162,102 212,178 88,178" />
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="200" fill="url(#bgGrad)" rx="8" />
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.04" stroke="#4a8fc1" stroke-width="0.5">
+    <line x1="0" y1="40" x2="300" y2="40"/>
+    <line x1="0" y1="80" x2="300" y2="80"/>
+    <line x1="0" y1="120" x2="300" y2="120"/>
+    <line x1="0" y1="160" x2="300" y2="160"/>
+    <line x1="60" y1="0" x2="60" y2="200"/>
+    <line x1="120" y1="0" x2="120" y2="200"/>
+    <line x1="180" y1="0" x2="180" y2="200"/>
+    <line x1="240" y1="0" x2="240" y2="200"/>
+  </g>
+
+  <!-- Outer glow effect behind hourglass -->
+  <polygon points="88,22 212,22 162,100 138,100 162,102 212,178 88,178 138,102 162,100 138,100"
+    fill="none" stroke="#c8860a" stroke-width="1" opacity="0.15" filter="url(#outerGlow)" />
+
+  <!-- ==================== HOURGLASS BODY ==================== -->
+
+  <!-- Top half fill - dark sand -->
+  <polygon points="90,24 210,24 161,99 139,99"
+    fill="url(#darkSandGrad)" />
+
+  <!-- Bottom half fill - gold -->
+  <polygon points="139,103 161,103 210,177 90,177"
+    fill="url(#goldGrad)" />
+
+  <!-- ==================== DARK SAND FIGURES (top - prospects) ==================== -->
+  <!-- Row 1 (top wide) - 7 small grey figures -->
+  <g fill="#7a6040" opacity="0.85" clip-path="url(#topHalfClip)">
+    <!-- Row 1 y~38 -->
+    <circle cx="112" cy="37" r="3.5"/><rect x="109.5" y="41" width="5" height="7" rx="1.5"/>
+    <circle cx="124" cy="37" r="3.5"/><rect x="121.5" y="41" width="5" height="7" rx="1.5"/>
+    <circle cx="136" cy="37" r="3.5"/><rect x="133.5" y="41" width="5" height="7" rx="1.5"/>
+    <circle cx="150" cy="37" r="3.5"/><rect x="147.5" y="41" width="5" height="7" rx="1.5"/>
+    <circle cx="164" cy="37" r="3.5"/><rect x="161.5" y="41" width="5" height="7" rx="1.5"/>
+    <circle cx="176" cy="37" r="3.5"/><rect x="173.5" y="41" width="5" height="7" rx="1.5"/>
+    <circle cx="188" cy="37" r="3.5"/><rect x="185.5" y="41" width="5" height="7" rx="1.5"/>
+    <!-- Row 2 y~53 - 6 figures -->
+    <circle cx="118" cy="53" r="3.5"/><rect x="115.5" y="57" width="5" height="7" rx="1.5"/>
+    <circle cx="130" cy="53" r="3.5"/><rect x="127.5" y="57" width="5" height="7" rx="1.5"/>
+    <circle cx="142" cy="53" r="3.5"/><rect x="139.5" y="57" width="5" height="7" rx="1.5"/>
+    <circle cx="154" cy="53" r="3.5"/><rect x="151.5" y="57" width="5" height="7" rx="1.5"/>
+    <circle cx="166" cy="53" r="3.5"/><rect x="163.5" y="57" width="5" height="7" rx="1.5"/>
+    <circle cx="178" cy="53" r="3.5"/><rect x="175.5" y="57" width="5" height="7" rx="1.5"/>
+    <!-- Row 3 y~68 - 5 figures -->
+    <circle cx="124" cy="68" r="3.5"/><rect x="121.5" y="72" width="5" height="7" rx="1.5"/>
+    <circle cx="136" cy="68" r="3.5"/><rect x="133.5" y="72" width="5" height="7" rx="1.5"/>
+    <circle cx="148" cy="68" r="3.5"/><rect x="145.5" y="72" width="5" height="7" rx="1.5"/>
+    <circle cx="160" cy="68" r="3.5"/><rect x="157.5" y="72" width="5" height="7" rx="1.5"/>
+    <circle cx="172" cy="68" r="3.5"/><rect x="169.5" y="72" width="5" height="7" rx="1.5"/>
+    <!-- Row 4 y~83 - 3 figures narrowing -->
+    <circle cx="136" cy="83" r="3.5"/><rect x="133.5" y="87" width="5" height="7" rx="1.5"/>
+    <circle cx="150" cy="83" r="3.5"/><rect x="147.5" y="87" width="5" height="7" rx="1.5"/>
+    <circle cx="164" cy="83" r="3.5"/><rect x="161.5" y="87" width="5" height="7" rx="1.5"/>
+  </g>
+
+  <!-- Sand flow particles at neck -->
+  <g filter="url(#sandGlow)">
+    <circle cx="150" cy="101" r="1.2" fill="#d4a843" opacity="0.9"/>
+    <circle cx="148" cy="103.5" r="0.9" fill="#c8860a" opacity="0.8"/>
+    <circle cx="152" cy="104" r="0.8" fill="#e8c060" opacity="0.7"/>
+    <circle cx="149.5" cy="106" r="1" fill="#d4a843" opacity="0.85"/>
+    <circle cx="151" cy="108" r="0.7" fill="#f5c842" opacity="0.6"/>
+  </g>
+
+  <!-- ==================== GOLD FIGURES (bottom - qualified leads) ==================== -->
+  <g filter="url(#goldFigureGlow)">
+    <!-- Lead 1 - left -->
+    <circle cx="122" cy="143" r="6" fill="#ffe066"/>
+    <rect x="117" y="151" width="10" height="14" rx="3" fill="#f5c842"/>
+    <!-- Lead 2 - center (larger = highest value) -->
+    <circle cx="150" cy="138" r="7" fill="#ffe880"/>
+    <rect x="144.5" y="147" width="11" height="15" rx="3" fill="#f5c842"/>
+    <!-- Center star accent -->
+    <polygon points="150,126 152,132 158,132 153,136 155,142 150,138 145,142 147,136 142,132 148,132"
+      fill="#ffe066" opacity="0.6"/>
+    <!-- Lead 3 - right -->
+    <circle cx="178" cy="143" r="6" fill="#ffe066"/>
+    <rect x="173" y="151" width="10" height="14" rx="3" fill="#f5c842"/>
+  </g>
+
+  <!-- ==================== HOURGLASS FRAME ==================== -->
+  <!-- Top bar -->
+  <rect x="86" y="19" width="128" height="7" rx="3.5" fill="url(#frameGrad)" />
+  <!-- Bottom bar -->
+  <rect x="86" y="174" width="128" height="7" rx="3.5" fill="url(#frameGrad)" />
+
+  <!-- Left side of top half -->
+  <line x1="90" y1="24" x2="140" y2="100" stroke="url(#frameGrad)" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Right side of top half -->
+  <line x1="210" y1="24" x2="160" y2="100" stroke="url(#frameGrad)" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Left side of bottom half -->
+  <line x1="140" y1="102" x2="90" y2="177" stroke="url(#frameGrad)" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Right side of bottom half -->
+  <line x1="160" y1="102" x2="210" y2="177" stroke="url(#frameGrad)" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Neck highlight -->
+  <rect x="138" y="98" width="24" height="6" rx="3" fill="#c8860a" opacity="0.6"/>
+  <rect x="140" y="99" width="20" height="4" rx="2" fill="#ffe066" opacity="0.3"/>
+
+  <!-- Frame corner dots -->
+  <circle cx="86" cy="22" r="3" fill="#d4a843"/>
+  <circle cx="214" cy="22" r="3" fill="#d4a843"/>
+  <circle cx="86" cy="178" r="3" fill="#d4a843"/>
+  <circle cx="214" cy="178" r="3" fill="#d4a843"/>
+
+  <!-- ==================== TEXT ==================== -->
+  <!-- Main title -->
+  <text x="150" y="197" text-anchor="middle"
+    font-family="'Helvetica Neue', Arial, sans-serif"
+    font-size="10" font-weight="700" letter-spacing="2.5"
+    fill="#d4a843" opacity="0.95">AGENTIC LEAD GEN</text>
+
+  <!-- Subtitle top label -->
+  <text x="150" y="14" text-anchor="middle"
+    font-family="'Helvetica Neue', Arial, sans-serif"
+    font-size="6.5" font-weight="500" letter-spacing="1.5"
+    fill="#5c8fa8" opacity="0.8">TIME TO VALUE</text>
+
+</svg>

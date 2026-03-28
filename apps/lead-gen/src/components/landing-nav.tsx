@@ -146,7 +146,7 @@ export function LandingNav() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <Image src="/logo.svg" alt="Lead-gen" width={100} height={22} priority />
+              <Image src="/logo.svg" alt="Agentic Lead Gen" width={100} height={22} priority />
             </Link>
 
             {/* desktop: section anchors */}

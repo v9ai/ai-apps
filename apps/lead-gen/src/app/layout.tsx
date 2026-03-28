@@ -15,9 +15,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Neural Lead Gen — AI-Powered Lead Generation Pipeline",
+  title: "Agentic Lead Gen — AI-Powered B2B Lead Generation",
   description:
-    "Identify high-intent hiring signals, enrich company data, and generate personalized outreach at scale with a multi-model AI pipeline.",
+    "Autonomous AI agents for B2B prospecting, company enrichment, contact discovery, and personalized outreach at scale.",
 };
 
 export default function RootLayout({

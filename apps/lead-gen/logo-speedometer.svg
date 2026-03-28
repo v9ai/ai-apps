@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <defs>
+    <radialGradient id="gaugeBody" cx="50%" cy="60%" r="50%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#111111"/>
+    </radialGradient>
+    <radialGradient id="gaugeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </radialGradient>
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="redGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="subtleGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="needleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#cc0000"/>
+      <stop offset="50%" stop-color="#ff2222"/>
+      <stop offset="100%" stop-color="#ff4444"/>
+    </linearGradient>
+    <clipPath id="gaugeClip">
+      <path d="M 30 155 A 120 120 0 0 1 270 155 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="200" fill="#0d0d0d" rx="12"/>
+
+  <!-- Outer gauge bezel -->
+  <circle cx="150" cy="155" r="128" fill="none" stroke="#333333" stroke-width="3"/>
+  <circle cx="150" cy="155" r="125" fill="url(#gaugeBody)"/>
+
+  <!-- Red zone arc (right side ~80-100%) -->
+  <path d="M 150 155 L 243 88" stroke="none" fill="none"/>
+  <!-- Red zone background fill -->
+  <path d="M 150 155 L 252 103 A 115 115 0 0 0 197 44 Z" fill="#3a0000" opacity="0.7"/>
+
+  <!-- Gauge arc track background -->
+  <path d="M 35 155 A 115 115 0 0 1 265 155" fill="none" stroke="#222222" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Green zone arc (0-60%) -->
+  <path d="M 35 155 A 115 115 0 0 1 120 47" fill="none" stroke="#1a4a1a" stroke-width="14" stroke-linecap="butt" opacity="0.8"/>
+
+  <!-- Yellow zone arc (60-80%) -->
+  <path d="M 120 47 A 115 115 0 0 1 197 44" fill="none" stroke="#3a3a00" stroke-width="14" stroke-linecap="butt" opacity="0.8"/>
+
+  <!-- Red zone arc (80-100%) -->
+  <path d="M 197 44 A 115 115 0 0 1 265 155" fill="none" stroke="#3a0808" stroke-width="14" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- Speed markings - neon green tick marks -->
+  <!-- Major ticks every 18 degrees from 210 to -30 (total 240 degrees) -->
+  <!-- 0 mark at 210deg -->
+  <line x1="150" y1="155" x2="150" y2="155"
+    transform="rotate(210 150 155) translate(0 -115)"
+    stroke="#39ff14" stroke-width="2.5"/>
+
+  <!-- Using transform approach for tick marks at specific angles -->
+  <!-- Angle mapping: 210deg = 0, 150deg = max (240 degree sweep) -->
+
+  <!-- Tick at 210deg (0) -->
+  <line x1="150" y1="42" x2="150" y2="55" transform="rotate(210 150 155)" stroke="#39ff14" stroke-width="2.5" filter="url(#subtleGlow)"/>
+  <!-- Tick at 234deg -->
+  <line x1="150" y1="42" x2="150" y2="52" transform="rotate(234 150 155)" stroke="#39ff14" stroke-width="1.5"/>
+  <!-- Tick at 258deg -->
+  <line x1="150" y1="42" x2="150" y2="55" transform="rotate(258 150 155)" stroke="#39ff14" stroke-width="2.5" filter="url(#subtleGlow)"/>
+  <!-- Tick at 282deg -->
+  <line x1="150" y1="42" x2="150" y2="52" transform="rotate(282 150 155)" stroke="#39ff14" stroke-width="1.5"/>
+  <!-- Tick at 306deg (top ~60) -->
+  <line x1="150" y1="42" x2="150" y2="55" transform="rotate(306 150 155)" stroke="#39ff14" stroke-width="2.5" filter="url(#subtleGlow)"/>
+  <!-- Tick at 330deg -->
+  <line x1="150" y1="42" x2="150" y2="52" transform="rotate(330 150 155)" stroke="#ffd700" stroke-width="1.5"/>
+  <!-- Tick at 354deg (top 12 o'clock area) -->
+  <line x1="150" y1="42" x2="150" y2="55" transform="rotate(354 150 155)" stroke="#ffd700" stroke-width="2.5"/>
+  <!-- Tick at 18deg -->
+  <line x1="150" y1="42" x2="150" y2="52" transform="rotate(18 150 155)" stroke="#ff4400" stroke-width="1.5"/>
+  <!-- Tick at 42deg -->
+  <line x1="150" y1="42" x2="150" y2="55" transform="rotate(42 150 155)" stroke="#ff2200" stroke-width="2.5" filter="url(#subtleGlow)"/>
+  <!-- Tick at 66deg -->
+  <line x1="150" y1="42" x2="150" y2="52" transform="rotate(66 150 155)" stroke="#ff0000" stroke-width="1.5"/>
+  <!-- Tick at 90deg (MAX - 150deg) -->
+  <line x1="150" y1="42" x2="150" y2="55" transform="rotate(90 150 155)" stroke="#ff0000" stroke-width="2.5" filter="url(#redGlow)"/>
+
+  <!-- Speed labels -->
+  <text transform="rotate(210 150 155) translate(150 33)" text-anchor="middle" fill="#39ff14" font-size="9" font-family="'Courier New', monospace" font-weight="bold">0</text>
+  <text transform="rotate(258 150 155) translate(150 33)" text-anchor="middle" fill="#39ff14" font-size="9" font-family="'Courier New', monospace" font-weight="bold">20</text>
+  <text transform="rotate(306 150 155) translate(150 33)" text-anchor="middle" fill="#39ff14" font-size="9" font-family="'Courier New', monospace" font-weight="bold">40</text>
+  <text transform="rotate(354 150 155) translate(150 33)" text-anchor="middle" fill="#ffd700" font-size="9" font-family="'Courier New', monospace" font-weight="bold">60</text>
+  <text transform="rotate(42 150 155) translate(150 33)" text-anchor="middle" fill="#ff4400" font-size="9" font-family="'Courier New', monospace" font-weight="bold">80</text>
+  <text transform="rotate(90 150 155) translate(150 33)" text-anchor="middle" fill="#ff0000" font-size="8" font-family="'Courier New', monospace" font-weight="bold" filter="url(#redGlow)">MAX</text>
+
+  <!-- "MAX LEADS" label in red zone -->
+  <text x="226" y="78" text-anchor="middle" fill="#ff2222" font-size="6.5" font-family="'Courier New', monospace" font-weight="bold" transform="rotate(-25 226 78)" filter="url(#redGlow)">MAX</text>
+  <text x="233" y="88" text-anchor="middle" fill="#ff2222" font-size="6.5" font-family="'Courier New', monospace" font-weight="bold" transform="rotate(-25 233 88)" filter="url(#redGlow)">LEADS</text>
+
+  <!-- Needle shadow/glow base -->
+  <line x1="150" y1="155" x2="150" y2="55"
+    transform="rotate(83 150 155)"
+    stroke="#ff000044" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Main needle - pointing to MAX LEADS (~83 degrees = ~93% of range) -->
+  <line x1="150" y1="155" x2="150" y2="58"
+    transform="rotate(83 150 155)"
+    stroke="url(#needleGrad)" stroke-width="3" stroke-linecap="round"
+    filter="url(#redGlow)"/>
+
+  <!-- Needle back counterweight -->
+  <line x1="150" y1="155" x2="150" y2="175"
+    transform="rotate(83 150 155)"
+    stroke="#cc0000" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Center hub outer ring -->
+  <circle cx="150" cy="155" r="12" fill="#1a1a1a" stroke="#444444" stroke-width="2"/>
+  <!-- Center hub inner -->
+  <circle cx="150" cy="155" r="7" fill="#cc0000" stroke="#ff2222" stroke-width="1" filter="url(#redGlow)"/>
+  <!-- Center hub dot -->
+  <circle cx="150" cy="155" r="3" fill="#ff4444"/>
+
+  <!-- Inner decorative ring -->
+  <circle cx="150" cy="155" r="95" fill="none" stroke="#1e1e1e" stroke-width="1" stroke-dasharray="3,6"/>
+
+  <!-- Title text -->
+  <text x="150" y="122" text-anchor="middle" fill="#39ff14" font-size="11" font-family="'Courier New', monospace" font-weight="bold" letter-spacing="2" filter="url(#neonGlow)">AGENTIC</text>
+  <text x="150" y="136" text-anchor="middle" fill="#39ff14" font-size="9" font-family="'Courier New', monospace" font-weight="bold" letter-spacing="3" filter="url(#neonGlow)">LEAD GEN</text>
+
+  <!-- Bottom label -->
+  <text x="150" y="182" text-anchor="middle" fill="#555555" font-size="7" font-family="'Courier New', monospace" letter-spacing="4">VELOCITY PIPELINE</text>
+
+  <!-- Outer frame accent lines -->
+  <line x1="20" y1="195" x2="80" y2="195" stroke="#39ff14" stroke-width="1" opacity="0.4"/>
+  <line x1="220" y1="195" x2="280" y2="195" stroke="#39ff14" stroke-width="1" opacity="0.4"/>
+  <circle cx="150" cy="195" r="2" fill="#39ff14" opacity="0.4"/>
+</svg>

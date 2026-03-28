@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <defs>
+    <linearGradient id="bar1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7B2FBE"/>
+      <stop offset="100%" stop-color="#4A0E8F"/>
+    </linearGradient>
+    <linearGradient id="bar2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9B4FDE"/>
+      <stop offset="100%" stop-color="#6A1FAF"/>
+    </linearGradient>
+    <linearGradient id="bar3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C47FFF"/>
+      <stop offset="100%" stop-color="#8B3FCF"/>
+    </linearGradient>
+    <linearGradient id="bar4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9B4FDE"/>
+      <stop offset="100%" stop-color="#6A1FAF"/>
+    </linearGradient>
+    <linearGradient id="bar5" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7B2FBE"/>
+      <stop offset="100%" stop-color="#4A0E8F"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#4A0E8F" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="200" fill="white"/>
+
+  <!-- Crown bar chart mark -->
+  <!-- 5 bars forming crown silhouette: outer bars shorter (crown points), inner bars taller, center tallest -->
+  <!-- Crown shape: tall-short-taller-short-tall with pointed tops -->
+
+  <!-- Bar 1 — left outer (crown left point, tall) -->
+  <g filter="url(#shadow)">
+    <rect x="52" y="48" width="28" height="90" rx="3" ry="3" fill="url(#bar1)"/>
+    <!-- Crown point top -->
+    <polygon points="52,48 66,30 80,48" fill="url(#bar1)"/>
+    <!-- Jewel dot -->
+    <circle cx="66" cy="27" r="4" fill="#E8B4FF" filter="url(#glow)"/>
+  </g>
+
+  <!-- Bar 2 — left inner (crown valley, shorter) -->
+  <g filter="url(#shadow)">
+    <rect x="86" y="82" width="28" height="56" rx="3" ry="3" fill="url(#bar2)"/>
+    <!-- Flat top — valley of crown -->
+    <rect x="86" y="79" width="28" height="6" rx="2" ry="2" fill="url(#bar2)"/>
+  </g>
+
+  <!-- Bar 3 — center (crown center point, tallest) -->
+  <g filter="url(#shadow)">
+    <rect x="120" y="42" width="32" height="96" rx="3" ry="3" fill="url(#bar3)"/>
+    <!-- Crown center point -->
+    <polygon points="120,42 136,20 152,42" fill="url(#bar3)"/>
+    <!-- Center jewel -->
+    <circle cx="136" cy="17" r="5" fill="#FFE0FF" filter="url(#glow)"/>
+    <!-- Small diamond accent -->
+    <polygon points="136,10 140,17 136,24 132,17" fill="#C47FFF" opacity="0.6"/>
+  </g>
+
+  <!-- Bar 4 — right inner (crown valley, shorter) -->
+  <g filter="url(#shadow)">
+    <rect x="158" y="82" width="28" height="56" rx="3" ry="3" fill="url(#bar4)"/>
+    <!-- Flat top — valley of crown -->
+    <rect x="158" y="79" width="28" height="6" rx="2" ry="2" fill="url(#bar4)"/>
+  </g>
+
+  <!-- Bar 5 — right outer (crown right point, tall) -->
+  <g filter="url(#shadow)">
+    <rect x="192" y="48" width="28" height="90" rx="3" ry="3" fill="url(#bar5)"/>
+    <!-- Crown point top -->
+    <polygon points="192,48 206,30 220,48" fill="url(#bar5)"/>
+    <!-- Jewel dot -->
+    <circle cx="206" cy="27" r="4" fill="#E8B4FF" filter="url(#glow)"/>
+  </g>
+
+  <!-- Crown base band connecting all bars -->
+  <rect x="52" y="130" width="168" height="8" rx="4" ry="4" fill="#6A1FAF" opacity="0.85"/>
+
+  <!-- Ground line / baseline -->
+  <rect x="42" y="138" width="188" height="3" rx="1.5" fill="#4A0E8F" opacity="0.2"/>
+
+  <!-- Subtle tick marks on bars (analytics detail) -->
+  <line x1="52" y1="100" x2="80" y2="100" stroke="white" stroke-width="1" opacity="0.25"/>
+  <line x1="120" y1="90" x2="152" y2="90" stroke="white" stroke-width="1" opacity="0.25"/>
+  <line x1="192" y1="100" x2="220" y2="100" stroke="white" stroke-width="1" opacity="0.25"/>
+
+  <!-- Wordmark -->
+  <text x="136" y="162" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="13" font-weight="700" letter-spacing="2" fill="#4A0E8F">AGENTIC</text>
+  <text x="136" y="178" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="9.5" font-weight="400" letter-spacing="3.5" fill="#7B2FBE" opacity="0.85">LEAD  GEN</text>
+
+  <!-- Decorative rule lines flanking wordmark -->
+  <line x1="42" y1="155" x2="92" y2="155" stroke="#C47FFF" stroke-width="0.75" opacity="0.5"/>
+  <line x1="180" y1="155" x2="230" y2="155" stroke="#C47FFF" stroke-width="0.75" opacity="0.5"/>
+</svg>

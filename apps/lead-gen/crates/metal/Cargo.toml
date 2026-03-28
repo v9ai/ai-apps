@@ -36,7 +36,8 @@ kernel-timer = []
 kernel-crc = []
 kernel-ner = []
 kernel-ring = []
-kernel = ["kernel-btree", "kernel-scoring", "kernel-html", "kernel-arena", "kernel-timer", "kernel-crc", "kernel-ner", "kernel-ring"]
+kernel-eval = ["kernel-scoring"]
+kernel = ["kernel-btree", "kernel-scoring", "kernel-html", "kernel-arena", "kernel-timer", "kernel-crc", "kernel-ner", "kernel-ring", "kernel-eval"]
 
 [dev-dependencies]
 tempfile = "3"

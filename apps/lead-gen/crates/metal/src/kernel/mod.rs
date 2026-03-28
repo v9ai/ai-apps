@@ -21,3 +21,12 @@ pub mod job_ner;
 
 #[cfg(feature = "kernel-ring")]
 pub mod ring;
+
+#[cfg(feature = "kernel-eval")]
+pub mod ml_eval;
+
+#[cfg(feature = "kernel-eval")]
+pub mod data_gen;
+
+#[cfg(feature = "kernel-eval")]
+pub mod weight_optimizer;

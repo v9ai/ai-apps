@@ -47,7 +47,7 @@ export function LandingClosing() {
               maxW: "560px",
             })}
           >
-            stop paying cloud CRMs to own your leads
+            stop managing pipelines. let agents do it.
           </h2>
           <p
             className={css({
