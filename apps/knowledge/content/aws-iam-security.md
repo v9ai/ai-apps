@@ -362,7 +362,7 @@ User signs in → User Pool authenticates → Returns:
   Refresh Token (long-lived, get new ID/Access tokens)
 ```
 - **ID Token**: contains user attributes (`email`, `sub`, custom attributes). Verify signature with Cognito's JWKS endpoint.
-- **Access Token**: used to call Cognito User Pool API (e.g., update user info). Can be used as a Bearer token for API Gateway authorizers.
+- **Access Token**: used to call Cognito User Pool API (e.g., update user info). Can be used as a Bearer token for [API Gateway](/aws-api-gateway-networking) authorizers.
 
 ### Identity Pool Federation Flow
 ```
@@ -371,7 +371,7 @@ User authenticates with User Pool (or Google, etc.)
 → Calls Cognito Identity Pool with JWT
 → Identity Pool calls STS AssumeRoleWithWebIdentity
 → Returns temporary AWS credentials
-→ User directly calls AWS services (S3, DynamoDB) with those credentials
+→ User directly calls AWS services ([S3](/aws-storage-s3), [DynamoDB](/dynamodb-data-services)) with those credentials
 ```
 Identity Pools define **authenticated role** and **unauthenticated role** (guest access). Enhanced flow adds fine-grained role mapping per user group.
 
@@ -789,3 +789,18 @@ See [CI/CD & CodePipeline](/aws-cicd-devops) for CodePipeline setup and CDK depl
 - **"Permission boundaries add permissions."** They only restrict; they never grant.
 - **"We encrypt everything with the same KMS key."** Use separate CMKs per service/environment; a compromised key policy then only affects one data domain.
 - **"We disable MFA for service accounts because they are automated."** Service accounts should use IAM roles (which have no password/MFA) — not IAM users.
+
+---
+
+## See Also
+
+IAM is the authorization layer for every AWS service. Explore how it applies in practice:
+
+- [AWS Overview](/aws) — account structure, regions, and the shared responsibility model
+- [Lambda & Serverless](/aws-lambda-serverless) — execution roles, resource policies, environment variable encryption with KMS
+- [API Gateway & Networking](/aws-api-gateway-networking) — Cognito and Lambda authorizers, VPC integration
+- [EC2, ECS & EKS](/aws-compute-containers) — instance profiles, IMDS v2, ECS task roles, IRSA for Kubernetes
+- [S3, CloudFront & Storage](/aws-storage-s3) — bucket policies, Block Public Access, SSE-KMS, pre-signed URLs
+- [DynamoDB & Data Services](/dynamodb-data-services) — fine-grained IAM access control, VPC endpoint policies
+- [CI/CD & DevOps](/aws-cicd-devops) — OIDC federation for GitHub Actions, cross-account deployment roles, CDK IAM constructs
+- [Architecture Patterns](/aws-architecture) — Well-Architected Security pillar, least-privilege design
