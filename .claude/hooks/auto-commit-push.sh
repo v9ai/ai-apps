@@ -2,7 +2,7 @@
 # Auto-commit and push on Claude Stop event
 set -uo pipefail
 
-cat > /dev/null  # drain stdin
+INPUT=$(cat)
 
 # Skip during iterate — kick-session.sh handles the Stop hook
 # Only skip if the iterate session is actually running (has a live PID)
@@ -43,38 +43,55 @@ else
     TAG=""
 fi
 
-# Build commit message from diff content
-STAT=$(git diff --cached --stat | tail -1)  # e.g. "3 files changed, 40 insertions(+), 12 deletions(-)"
-INS=$(echo "$STAT" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
-DEL=$(echo "$STAT" | grep -oE '[0-9]+ deletion'  | grep -oE '[0-9]+' || echo 0)
-NEW_FILES=$(git diff --cached --diff-filter=A --name-only | wc -l | tr -d ' ')
-DEL_FILES=$(git diff --cached --diff-filter=D --name-only | wc -l | tr -d ' ')
-MOD_FILES=$(git diff --cached --diff-filter=M --name-only | wc -l | tr -d ' ')
+# Extract commit message from Claude's last assistant message
+# The hook payload has last_assistant_message with what Claude just did
+LAST_MSG=$(echo "$INPUT" | jq -r '.last_assistant_message // empty' 2>/dev/null)
 
-# Pick verb from what dominates
-if [ "$NEW_FILES" -gt 0 ] && [ "$MOD_FILES" -eq 0 ] && [ "$DEL_FILES" -eq 0 ]; then
-    VERB="add"
-elif [ "$DEL_FILES" -gt 0 ] && [ "$NEW_FILES" -eq 0 ]; then
-    VERB="remove"
-elif [ "${DEL:-0}" -gt "${INS:-0}" ]; then
-    VERB="refactor"
-else
-    VERB="update"
+SUMMARY=""
+if [ -n "$LAST_MSG" ]; then
+    # Take first meaningful sentence (skip blank lines, code blocks, bullets)
+    FIRST_LINE=$(echo "$LAST_MSG" \
+        | grep -v '^```' | grep -v '^\s*$' | grep -v '^\s*[-*]' | grep -v '^#' \
+        | head -1 | sed 's/[[:space:]]*$//')
+
+    if [ -n "$FIRST_LINE" ]; then
+        # Lowercase first char, strip trailing period
+        FIRST_LINE=$(echo "$FIRST_LINE" | sed 's/^./\L&/' | sed 's/\.$//')
+        SUMMARY="${TAG:+${TAG} }${FIRST_LINE}"
+    fi
 fi
 
-# Describe what changed — use directory-level grouping
-DIRS=$(echo "$FILES" | sed 's|/[^/]*$||' | sort -u)
-N_DIRS=$(echo "$DIRS" | grep -c . 2>/dev/null || echo 0)
-if [ "$N_DIRS" -eq 1 ]; then
-    WHAT=$(basename "$DIRS")
-elif [ "$N_DIRS" -le 3 ]; then
-    WHAT=$(echo "$DIRS" | xargs -n1 basename | sort -u | paste -sd ', ' -)
-else
-    TOP_DIRS=$(echo "$DIRS" | xargs -n1 basename | sort -u | head -2 | paste -sd ', ' -)
-    WHAT="${TOP_DIRS} (+$((N_DIRS - 2)) dirs)"
-fi
+# Fallback: verb + directory-level description
+if [ -z "$SUMMARY" ] || [ "${#SUMMARY}" -gt 72 ]; then
+    NEW_FILES=$(git diff --cached --diff-filter=A --name-only | wc -l | tr -d ' ')
+    DEL_FILES=$(git diff --cached --diff-filter=D --name-only | wc -l | tr -d ' ')
+    MOD_FILES=$(git diff --cached --diff-filter=M --name-only | wc -l | tr -d ' ')
+    INS=$(git diff --cached --stat | tail -1 | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+    DEL=$(git diff --cached --stat | tail -1 | grep -oE '[0-9]+ deletion'  | grep -oE '[0-9]+' || echo 0)
 
-SUMMARY="${VERB}${TAG}: ${WHAT}"
+    if [ "$NEW_FILES" -gt 0 ] && [ "$MOD_FILES" -eq 0 ] && [ "$DEL_FILES" -eq 0 ]; then
+        VERB="add"
+    elif [ "$DEL_FILES" -gt 0 ] && [ "$NEW_FILES" -eq 0 ]; then
+        VERB="remove"
+    elif [ "${DEL:-0}" -gt "${INS:-0}" ]; then
+        VERB="refactor"
+    else
+        VERB="update"
+    fi
+
+    DIRS=$(echo "$FILES" | sed 's|/[^/]*$||' | sort -u)
+    N_DIRS=$(echo "$DIRS" | grep -c . 2>/dev/null || echo 0)
+    if [ "$N_DIRS" -eq 1 ]; then
+        WHAT=$(basename "$DIRS")
+    elif [ "$N_DIRS" -le 3 ]; then
+        WHAT=$(echo "$DIRS" | xargs -n1 basename | sort -u | paste -sd ', ' -)
+    else
+        TOP_DIRS=$(echo "$DIRS" | xargs -n1 basename | sort -u | head -2 | paste -sd ', ' -)
+        WHAT="${TOP_DIRS} (+$((N_DIRS - 2)) dirs)"
+    fi
+
+    SUMMARY="${VERB}${TAG}: ${WHAT}"
+fi
 
 # Truncate if too long
 [ "${#SUMMARY}" -gt 72 ] && SUMMARY="${SUMMARY:0:69}..."
