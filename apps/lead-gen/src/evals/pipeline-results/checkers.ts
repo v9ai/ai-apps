@@ -1,17 +1,7 @@
-import { eq, sql, count, avg, and, lt, isNull, isNotNull, ne } from "drizzle-orm";
+import { sql, count, avg, and, lt, isNotNull, ne } from "drizzle-orm";
 import { db } from "@/db";
-import {
-  companies,
-  contacts,
-  contactEmails,
-  companyFacts,
-} from "@/db/schema";
-import type {
-  StageResult,
-  StageCheck,
-  Severity,
-  Thresholds,
-} from "./schema";
+import { companies, contacts, contactEmails } from "@/db/schema";
+import type { StageResult, StageCheck, Severity, Thresholds } from "./schema";
 import { DEFAULT_THRESHOLDS } from "./schema";
 
 // ---------------------------------------------------------------------------
