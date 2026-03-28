@@ -64,29 +64,25 @@ export function ExerciseTimer({ durationMinutes = 10 }: ExerciseTimerProps) {
 
       <Flex gap="2">
         {!running ? (
-          <Button
-            size="1"
-            variant="soft"
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={() => {
               if (remaining === 0) setRemaining(totalSeconds);
               setRunning(true);
             }}
           >
             {remaining === totalSeconds ? "Start" : "Resume"}
-          </Button>
+          </button>
         ) : (
-          <Button
-            size="1"
-            variant="soft"
-            color="orange"
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={() => setRunning(false)}
           >
             Pause
-          </Button>
+          </button>
         )}
-        <Button
-          size="1"
-          variant="ghost"
+        <button
+          className={button({ variant: "ghost", size: "sm" })}
           onClick={() => {
             clear();
             setRunning(false);
@@ -94,7 +90,7 @@ export function ExerciseTimer({ durationMinutes = 10 }: ExerciseTimerProps) {
           }}
         >
           Reset
-        </Button>
+        </button>
       </Flex>
     </Flex>
   );

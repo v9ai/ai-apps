@@ -66,9 +66,9 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.error?.message || "An unexpected error occurred"}
             </Text>
             <Box style={{ marginTop: "16px" }}>
-              <Button onClick={this.reset} variant="solid">
+              <button className={button({ variant: "solid" })} onClick={this.reset}>
                 Try again
-              </Button>
+              </button>
             </Box>
           </Box>
         </Container>

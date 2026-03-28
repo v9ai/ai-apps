@@ -1309,23 +1309,22 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   </button>
                 )}
                 {isAdmin && company.website && (
-                  <Button
+                  <button
+                    className={button({ variant: "solid" })}
                     onClick={handleAnalyze}
                     disabled={isAnalyzing}
-                    color="violet"
-                    variant="solid"
                   >
                     <MagicWandIcon />
                     {isAnalyzing ? "Analyzing…" : company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
-                  </Button>
+                  </button>
                 )}
                 {isAdmin && (
                   <AlertDialog.Root>
                     <AlertDialog.Trigger>
-                      <Button color="red" variant="soft" disabled={isDeleting}>
+                      <button className={button({ variant: "ghost" })} disabled={isDeleting}>
                         <TrashIcon />
                         {isDeleting ? "Deleting…" : "Delete"}
-                      </Button>
+                      </button>
                     </AlertDialog.Trigger>
                     <AlertDialog.Content maxWidth="400px">
                       <AlertDialog.Title>Delete company</AlertDialog.Title>
@@ -1334,10 +1333,10 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                       </AlertDialog.Description>
                       <Flex gap="3" mt="4" justify="end">
                         <AlertDialog.Cancel>
-                          <Button variant="soft" color="gray">Cancel</Button>
+                          <button className={button({ variant: "ghost" })}>Cancel</button>
                         </AlertDialog.Cancel>
                         <AlertDialog.Action>
-                          <Button color="red" onClick={handleDelete}>Delete</Button>
+                          <button className={button({ variant: "ghost" })} onClick={handleDelete}>Delete</button>
                         </AlertDialog.Action>
                       </Flex>
                     </AlertDialog.Content>

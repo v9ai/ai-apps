@@ -147,17 +147,23 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
             }
         }
 
-        // Bounce rate analysis
+        // Verification rate analysis (SMTP verification failures ≠ outreach bounces)
+        // Bounce rate tracks actual outreach bounces, not pattern-guess SMTP failures
+        let verified = contacts.verification_stats.verified_count as f64;
         let total = contact_list.len() as f64;
-        let failed = contacts.verification_stats.failed_count as f64;
-        let bounce_rate = if total > 0.0 { failed / total } else { 0.0 };
+        let verification_rate = if total > 0.0 { verified / total } else { 0.0 };
 
-        if bounce_rate > 0.15 {
+        if verification_rate < 0.10 {
             report.recommendations.push(Recommendation {
-                priority: "CRITICAL".into(),
-                issue: format!("Bounce rate {:.1}% exceeds 15% threshold", bounce_rate * 100.0),
-                affected_count: contacts.verification_stats.failed_count,
-                action: "Halt outreach. Investigate email verification quality.".into(),
+                priority: "HIGH".into(),
+                issue: format!(
+                    "Email verification rate {:.1}% — only {} of {} verified via SMTP",
+                    verification_rate * 100.0,
+                    contacts.verification_stats.verified_count,
+                    contact_list.len()
+                ),
+                affected_count: contact_list.len() - contacts.verification_stats.verified_count,
+                action: "Try additional email patterns or use catch-all detection.".into(),
             });
         }
     }
@@ -223,16 +229,11 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
 
     state::save_report(&ctx.data_dir, "qa", &report)?;
 
-    // Update state with quality metrics + bounce rate
+    // Update state with quality metrics
+    // Bounce rate is only updated from actual outreach send/bounce data,
+    // not from SMTP verification failures (which are expected for pattern discovery)
     let mut st = state::PipelineState::load(&ctx.data_dir);
     st.quality_score = report.quality_score;
-    if let Some(ref contacts) = contacts {
-        let total = contacts.contacts.len() as f64;
-        let failed = contacts.verification_stats.failed_count as f64;
-        if total > 0.0 {
-            st.bounce_rate = failed / total;
-        }
-    }
     st.save(&ctx.data_dir)?;
 
     let created = report.recommendations.len();

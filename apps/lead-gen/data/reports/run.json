@@ -1,10 +1,18 @@
 [
   {
-    "stage": "qa",
-    "status": "Partial",
-    "processed": 152,
-    "created": 3,
+    "stage": "contacts",
+    "status": "Success",
+    "processed": 122,
+    "created": 6,
     "errors": [],
-    "duration_ms": 1
+    "duration_ms": 30997
+  },
+  {
+    "stage": "qa",
+    "status": "Success",
+    "processed": 152,
+    "created": 1,
+    "errors": [],
+    "duration_ms": 0
   }
 ]

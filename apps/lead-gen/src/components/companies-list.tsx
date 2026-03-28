@@ -281,7 +281,7 @@ export function CompaniesList() {
       <Container size="4" p="8">
         <Text color="red">Error loading companies: {error.message}</Text>
         <button
-          className="yc-cta"
+          className={button({ variant: "solid", size: "sm" })}
           onClick={() => refetch()}
           style={{ marginTop: 12 }}
         >
@@ -327,11 +327,11 @@ export function CompaniesList() {
                     {importError && <Text size="1" color="red">{importError}</Text>}
                     <Flex gap="2" justify="end" mt="1">
                       <Dialog.Close>
-                        <Button variant="soft" color="gray" size="2">cancel</Button>
+                        <button className={button({ variant: "ghost", size: "md" })}>cancel</button>
                       </Dialog.Close>
-                      <Button size="2" onClick={handleImport} disabled={importing}>
+                      <button className={button({ variant: "solid", size: "md" })} onClick={handleImport} disabled={importing}>
                         {importing ? "importing…" : "import"}
-                      </Button>
+                      </button>
                     </Flex>
                   </Flex>
                 </Dialog.Content>
@@ -389,11 +389,11 @@ export function CompaniesList() {
                     {addError && <Text size="1" color="red">{addError}</Text>}
                     <Flex gap="2" justify="end" mt="1">
                       <Dialog.Close>
-                        <Button variant="soft" color="gray" size="2">cancel</Button>
+                        <button className={button({ variant: "ghost", size: "md" })}>cancel</button>
                       </Dialog.Close>
-                      <Button size="2" onClick={handleAddCompany} disabled={creating}>
+                      <button className={button({ variant: "solid", size: "md" })} onClick={handleAddCompany} disabled={creating}>
                         {creating ? "adding…" : "add company"}
-                      </Button>
+                      </button>
                     </Flex>
                   </Flex>
                 </Dialog.Content>
@@ -446,8 +446,7 @@ export function CompaniesList() {
 
         {(category !== "ALL" || minTier !== "all" || sortBy !== "name") && (
           <button
-            className="yc-cta"
-            style={{ fontSize: 11, padding: "2px 8px" }}
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={() => {
               setCategory("ALL");
               setSortBy("name");
@@ -476,35 +475,30 @@ export function CompaniesList() {
           <Text size="1" weight="bold">
             {selectedCompanies.size} selected
           </Text>
-          <Button
-            size="1"
-            color="red"
-            variant="soft"
+          <button
+            className={button({ variant: "solid", size: "sm" })}
             onClick={handleBulkDelete}
             disabled={bulkDeleting}
           >
             <TrashIcon width={12} height={12} />
             {bulkDeleting ? "deleting…" : "delete"}
-          </Button>
+          </button>
           {selectedCompanies.size >= 2 && (
-            <Button
-              size="1"
-              variant="soft"
+            <button
+              className={button({ variant: "ghost", size: "sm" })}
               onClick={handleMergeSelected}
               disabled={merging}
             >
               <MixIcon width={12} height={12} />
               {merging ? "merging…" : "merge"}
-            </Button>
+            </button>
           )}
-          <Button
-            size="1"
-            variant="ghost"
-            color="gray"
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={() => setSelectedCompanies(new Set())}
           >
             clear
-          </Button>
+          </button>
         </Flex>
       )}
 
@@ -591,10 +585,7 @@ export function CompaniesList() {
               }}
             >
               {company.website && (
-                <span
-                  className="yc-cta"
-                  style={{ fontSize: 11, padding: "2px 8px" }}
-                >
+                <span className={button({ variant: "ghost", size: "sm" })}>
                   website
                 </span>
               )}
