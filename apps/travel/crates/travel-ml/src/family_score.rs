@@ -291,3 +291,282 @@ fn napoli_place_pairs() -> Vec<(&'static str, &'static str)> {
         ("Quartieri Spagnoli", "narrow alley grid street food fried seafood authentic neighbourhood laundry overhead"),
     ]
 }
+
+// ── Tests ─────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── cosine_sim ────────────────────────────────────────────────────────
+
+    #[test]
+    fn cosine_sim_identical_normalized_vectors() {
+        let v = vec![0.6_f32, 0.8, 0.0]; // |v| = 1.0
+        assert!((cosine_sim(&v, &v) - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn cosine_sim_orthogonal_vectors() {
+        let a = vec![1.0_f32, 0.0, 0.0];
+        let b = vec![0.0_f32, 1.0, 0.0];
+        assert!(cosine_sim(&a, &b).abs() < 1e-6);
+    }
+
+    #[test]
+    fn cosine_sim_zero_vectors_is_zero() {
+        let z = vec![0.0_f32, 0.0, 0.0];
+        assert_eq!(cosine_sim(&z, &z), 0.0);
+    }
+
+    #[test]
+    fn cosine_sim_dot_product_formula() {
+        // dot product of [0.6, 0.8] · [0.6, 0.0] = 0.36
+        let a = vec![0.6_f32, 0.8];
+        let b = vec![0.6_f32, 0.0];
+        assert!((cosine_sim(&a, &b) - 0.36).abs() < 1e-6);
+    }
+
+    #[test]
+    fn cosine_sim_negative_components() {
+        // [-0.6, 0.8] · [0.6, 0.8] = -0.36 + 0.64 = 0.28
+        let a = vec![-0.6_f32, 0.8];
+        let b = vec![0.6_f32, 0.8];
+        assert!((cosine_sim(&a, &b) - 0.28).abs() < 1e-6);
+    }
+
+    #[test]
+    fn cosine_sim_single_element() {
+        assert!((cosine_sim(&[0.5_f32], &[0.5]) - 0.25).abs() < 1e-6);
+    }
+
+    // ── std_dev ───────────────────────────────────────────────────────────
+
+    #[test]
+    fn std_dev_constant_values_is_zero() {
+        let v = [0.5_f32, 0.5, 0.5];
+        assert!(std_dev(&v) < 1e-6);
+    }
+
+    #[test]
+    fn std_dev_two_values_half() {
+        // [0.0, 1.0] → mean=0.5, variance=0.25, std=0.5
+        let v = [0.0_f32, 1.0];
+        assert!((std_dev(&v) - 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn std_dev_known_dataset() {
+        // [2,4,4,4,5,5,7,9] → mean=5, variance=4, std=2
+        let v = [2.0_f32, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0];
+        assert!((std_dev(&v) - 2.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn std_dev_single_value_is_zero() {
+        assert!((std_dev(&[3.14_f32]) - 0.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn std_dev_uniform_spread() {
+        // [0, 0.5, 1.0] → mean=0.5, variance=(0.25+0+0.25)/3=1/6, std=sqrt(1/6)
+        let v = [0.0_f32, 0.5, 1.0];
+        let expected = (1.0_f32 / 6.0).sqrt();
+        assert!((std_dev(&v) - expected).abs() < 1e-5);
+    }
+
+    #[test]
+    fn std_dev_nonnegative() {
+        for input in [
+            &[0.1_f32, 0.2, 0.3][..],
+            &[0.5, 0.5, 0.5],
+            &[0.0, 1.0],
+        ] {
+            assert!(std_dev(input) >= 0.0);
+        }
+    }
+
+    // ── AgeBand::anchor_weights ───────────────────────────────────────────
+
+    #[test]
+    fn age_band_weights_sum_to_one() {
+        for band in [AgeBand::Toddler, AgeBand::SchoolAge, AgeBand::Teen] {
+            let w = band.anchor_weights();
+            let sum: f32 = w.iter().sum();
+            assert!(
+                (sum - 1.0).abs() < 1e-6,
+                "{band:?} weights sum to {sum}, expected 1.0"
+            );
+        }
+    }
+
+    #[test]
+    fn age_band_toddler_outdoor_anchor_highest() {
+        let w = AgeBand::Toddler.anchor_weights();
+        // Outdoor (index 1) should dominate for toddlers
+        assert!(w[1] >= w[0], "Toddler: outdoor should be >= family-friendly");
+        assert!(w[1] >= w[2], "Toddler: outdoor should be >= educational");
+    }
+
+    #[test]
+    fn age_band_teen_educational_anchor_highest() {
+        let w = AgeBand::Teen.anchor_weights();
+        // Educational (index 2) should dominate for teens
+        assert!(w[2] >= w[0], "Teen: educational should be >= family-friendly");
+        assert!(w[2] >= w[1], "Teen: educational should be >= outdoor");
+    }
+
+    #[test]
+    fn age_band_school_age_exact_weights() {
+        let w = AgeBand::SchoolAge.anchor_weights();
+        assert!((w[0] - 0.35).abs() < 1e-6, "SchoolAge family-friendly weight");
+        assert!((w[1] - 0.30).abs() < 1e-6, "SchoolAge outdoor weight");
+        assert!((w[2] - 0.35).abs() < 1e-6, "SchoolAge educational weight");
+    }
+
+    #[test]
+    fn age_band_all_weights_positive() {
+        for band in [AgeBand::Toddler, AgeBand::SchoolAge, AgeBand::Teen] {
+            for w in band.anchor_weights() {
+                assert!(w > 0.0, "{band:?} has non-positive weight {w}");
+            }
+        }
+    }
+
+    // ── KidAgeBand ────────────────────────────────────────────────────────
+
+    #[test]
+    fn kid_age_band_extra_anchors_count() {
+        for band in [KidAgeBand::Toddler, KidAgeBand::School, KidAgeBand::Tween] {
+            assert_eq!(band.extra_anchors().len(), 2, "{band:?} should have 2 extra anchors");
+        }
+    }
+
+    #[test]
+    fn kid_age_band_extra_anchors_nonempty_strings() {
+        for band in [KidAgeBand::Toddler, KidAgeBand::School, KidAgeBand::Tween] {
+            for anchor in band.extra_anchors() {
+                assert!(anchor.len() > 10, "{band:?} anchor too short: {anchor:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn kid_age_band_extra_weight_in_range() {
+        for band in [KidAgeBand::Toddler, KidAgeBand::School, KidAgeBand::Tween] {
+            let w = band.extra_weight();
+            assert!(w > 0.0 && w < 1.0, "{band:?} extra_weight {w} not in (0, 1)");
+        }
+    }
+
+    #[test]
+    fn kid_age_band_toddler_has_highest_extra_weight() {
+        assert!(
+            KidAgeBand::Toddler.extra_weight() > KidAgeBand::Tween.extra_weight(),
+            "Toddler should have higher extra_weight than Tween"
+        );
+    }
+
+    #[test]
+    fn kid_age_band_extra_weight_decreases_with_age() {
+        let toddler = KidAgeBand::Toddler.extra_weight();
+        let school = KidAgeBand::School.extra_weight();
+        let tween = KidAgeBand::Tween.extra_weight();
+        assert!(toddler >= school, "Toddler extra_weight should >= School");
+        assert!(school >= tween, "School extra_weight should >= Tween");
+    }
+
+    #[test]
+    fn kid_age_band_toddler_anchors_mention_stroller() {
+        let anchors = KidAgeBand::Toddler.extra_anchors();
+        let combined = anchors.join(" ").to_lowercase();
+        assert!(
+            combined.contains("stroller") || combined.contains("pram"),
+            "Toddler anchors should mention stroller/pram"
+        );
+    }
+
+    #[test]
+    fn kid_age_band_tween_anchors_mention_history() {
+        let anchors = KidAgeBand::Tween.extra_anchors();
+        let combined = anchors.join(" ").to_lowercase();
+        assert!(
+            combined.contains("historical") || combined.contains("museum"),
+            "Tween anchors should mention historical/museum"
+        );
+    }
+
+    // ── napoli_place_pairs data ───────────────────────────────────────────
+
+    #[test]
+    fn napoli_place_pairs_count_is_ten() {
+        assert_eq!(napoli_place_pairs().len(), 10);
+    }
+
+    #[test]
+    fn napoli_place_pairs_unique_names() {
+        let pairs = napoli_place_pairs();
+        let mut names: Vec<&str> = pairs.iter().map(|(n, _)| *n).collect();
+        let total = names.len();
+        names.sort_unstable();
+        names.dedup();
+        assert_eq!(names.len(), total, "all place names must be unique");
+    }
+
+    #[test]
+    fn napoli_place_pairs_descriptions_nonempty() {
+        for (name, desc) in napoli_place_pairs() {
+            assert!(!desc.is_empty(), "{name}: description must not be empty");
+            assert!(desc.len() > 10, "{name}: description is too short");
+        }
+    }
+
+    #[test]
+    fn napoli_place_pairs_contains_core_places() {
+        let names: Vec<&str> = napoli_place_pairs().iter().map(|(n, _)| *n).collect();
+        for expected in [
+            "Lungomare Caracciolo",
+            "Napoli Sotterranea",
+            "L'Antica Pizzeria da Michele",
+            "Piazza del Plebiscito",
+        ] {
+            assert!(names.contains(&expected), "missing place: {expected}");
+        }
+    }
+
+    #[test]
+    fn napoli_place_sotterranea_description_warns_children() {
+        let pairs = napoli_place_pairs();
+        let (_, desc) = pairs
+            .iter()
+            .find(|(n, _)| *n == "Napoli Sotterranea")
+            .expect("Sotterranea should be in pairs");
+        let lower = desc.to_lowercase();
+        assert!(
+            lower.contains("claustrophobic") || lower.contains("not suitable") || lower.contains("dark"),
+            "Sotterranea description should warn about suitability, got: {desc}"
+        );
+    }
+
+    #[test]
+    fn napoli_place_pizzeria_description_mentions_family_food() {
+        let pairs = napoli_place_pairs();
+        let (_, desc) = pairs
+            .iter()
+            .find(|(n, _)| *n == "L'Antica Pizzeria da Michele")
+            .expect("da Michele should be in pairs");
+        let lower = desc.to_lowercase();
+        assert!(
+            lower.contains("pizza") || lower.contains("family"),
+            "da Michele description should mention pizza/family, got: {desc}"
+        );
+    }
+
+    #[test]
+    fn napoli_place_pairs_names_nonempty() {
+        for (name, _) in napoli_place_pairs() {
+            assert!(!name.is_empty(), "place name must not be empty");
+            assert!(name.len() > 2, "place name too short: {name:?}");
+        }
+    }
+}

@@ -479,6 +479,573 @@ pub fn napoli_family_7day_plan() -> MultiDayPlan {
     plan_multi_day(&napoli_all_places(), STAY_DAYS)
 }
 
+// ── Tests ─────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::constants::{MAX_KID_PLACES_PER_DAY, STAY_DAYS};
+
+    // ── helpers ───────────────────────────────────────────────────────────
+
+    fn place(name: &str, lat: f64, lng: f64, dur: u32, energy: f32, kid: bool) -> PlaceNode {
+        PlaceNode { name: name.into(), lat, lng, duration_min: dur, energy_cost: energy, kid_friendly: kid }
+    }
+
+    // ── haversine_km ──────────────────────────────────────────────────────
+
+    #[test]
+    fn haversine_same_point_is_zero() {
+        let p = (40.8358_f64, 14.2487);
+        assert!(haversine_km(p, p) < 1e-9);
+    }
+
+    #[test]
+    fn haversine_equator_one_degree_longitude_is_111km() {
+        // Using Earth radius 6371 km: 2π×6371/360 ≈ 111.195 km per degree
+        let km = haversine_km((0.0, 0.0), (0.0, 1.0));
+        assert!((km - 111.195).abs() < 0.1, "expected ~111.195 km, got {km:.3}");
+    }
+
+    #[test]
+    fn haversine_one_degree_latitude_is_111km() {
+        let km = haversine_km((0.0, 0.0), (1.0, 0.0));
+        assert!((km - 111.19).abs() < 0.1, "expected ~111.19 km, got {km:.3}");
+    }
+
+    #[test]
+    fn haversine_symmetric() {
+        let a = (40.8358, 14.2487);
+        let b = (40.7498, 14.4862);
+        assert!((haversine_km(a, b) - haversine_km(b, a)).abs() < 1e-9);
+    }
+
+    #[test]
+    fn haversine_naples_to_pompeii_roughly_24km() {
+        let naples = (40.8358_f64, 14.2487);
+        let pompeii = (40.7498_f64, 14.4862);
+        let km = haversine_km(naples, pompeii);
+        assert!(km > 20.0 && km < 30.0, "Naples–Pompeii should be ~24 km, got {km:.1}");
+    }
+
+    #[test]
+    fn haversine_naples_waterfront_places_under_1km() {
+        // Piazza del Plebiscito to Castel dell'Ovo (both on the waterfront)
+        let km = haversine_km((40.8358, 14.2487), (40.8300, 14.2462));
+        assert!(km < 1.0, "waterfront places should be < 1 km apart, got {km:.3}");
+    }
+
+    #[test]
+    fn haversine_nonnegative() {
+        let a = (40.8358_f64, 14.2487);
+        let b = (51.5074_f64, -0.1278);
+        assert!(haversine_km(a, b) >= 0.0);
+    }
+
+    // ── transit_min ───────────────────────────────────────────────────────
+
+    #[test]
+    fn transit_min_same_point_is_zero() {
+        let p = (40.8358_f64, 14.2487);
+        assert_eq!(transit_min(p, p), 0);
+    }
+
+    #[test]
+    fn transit_min_capped_at_30_for_naples_to_pompeii() {
+        // ~24 km → 24*1000/50 = 480 min → capped at 30
+        let naples = (40.8358_f64, 14.2487);
+        let pompeii = (40.7498_f64, 14.4862);
+        assert_eq!(transit_min(naples, pompeii), 30);
+    }
+
+    #[test]
+    fn transit_min_capped_at_30_for_very_distant_points() {
+        let london = (51.5074_f64, -0.1278);
+        let sydney = (-33.8688_f64, 151.2093);
+        assert_eq!(transit_min(london, sydney), 30);
+    }
+
+    #[test]
+    fn transit_min_result_always_in_range() {
+        for (a, b) in [
+            ((40.83, 14.24), (40.83, 14.24)), // same
+            ((40.83, 14.24), (40.84, 14.25)), // close
+            ((0.0, 0.0), (90.0, 0.0)),         // far
+        ] {
+            let t = transit_min(a, b);
+            assert!(t <= 30, "transit_min should be <= 30, got {t}");
+        }
+    }
+
+    #[test]
+    fn transit_min_increases_with_distance() {
+        let origin = (40.83_f64, 14.24);
+        let near = (40.831, 14.241);
+        let far = (40.90, 14.35);
+        // near is always closer to origin than far
+        assert!(transit_min(origin, near) <= transit_min(origin, far));
+    }
+
+    // ── fmt_time ──────────────────────────────────────────────────────────
+
+    #[test]
+    fn fmt_time_zero_is_nine_am() {
+        assert_eq!(fmt_time(0), "09:00");
+    }
+
+    #[test]
+    fn fmt_time_sixty_is_ten_am() {
+        assert_eq!(fmt_time(60), "10:00");
+    }
+
+    #[test]
+    fn fmt_time_ninety_is_ten_thirty() {
+        assert_eq!(fmt_time(90), "10:30");
+    }
+
+    #[test]
+    fn fmt_time_210_is_twelve_thirty() {
+        assert_eq!(fmt_time(210), "12:30");
+    }
+
+    #[test]
+    fn fmt_time_480_is_five_pm() {
+        assert_eq!(fmt_time(480), "17:00");
+    }
+
+    #[test]
+    fn fmt_time_single_digit_minutes_zero_padded() {
+        assert_eq!(fmt_time(9), "09:09");
+        assert_eq!(fmt_time(1), "09:01");
+    }
+
+    #[test]
+    fn fmt_time_660_is_eight_pm() {
+        // 9*60 + 660 = 540 + 660 = 1200 → 1200/60=20, 1200%60=0
+        assert_eq!(fmt_time(660), "20:00");
+    }
+
+    // ── TimeBlock::from_minutes ───────────────────────────────────────────
+
+    #[test]
+    fn time_block_exact_boundaries() {
+        assert_eq!(TimeBlock::from_minutes(0), TimeBlock::Morning);
+        assert_eq!(TimeBlock::from_minutes(209), TimeBlock::Morning);
+        assert_eq!(TimeBlock::from_minutes(210), TimeBlock::Lunch);
+        assert_eq!(TimeBlock::from_minutes(269), TimeBlock::Lunch);
+        assert_eq!(TimeBlock::from_minutes(270), TimeBlock::Afternoon);
+        assert_eq!(TimeBlock::from_minutes(479), TimeBlock::Afternoon);
+        assert_eq!(TimeBlock::from_minutes(480), TimeBlock::Evening);
+        assert_eq!(TimeBlock::from_minutes(9999), TimeBlock::Evening);
+    }
+
+    #[test]
+    fn time_block_morning_range() {
+        for m in [0u32, 100, 200, 209] {
+            assert_eq!(TimeBlock::from_minutes(m), TimeBlock::Morning, "min={m}");
+        }
+    }
+
+    #[test]
+    fn time_block_lunch_range() {
+        for m in [210u32, 240, 269] {
+            assert_eq!(TimeBlock::from_minutes(m), TimeBlock::Lunch, "min={m}");
+        }
+    }
+
+    #[test]
+    fn time_block_afternoon_range() {
+        for m in [270u32, 350, 479] {
+            assert_eq!(TimeBlock::from_minutes(m), TimeBlock::Afternoon, "min={m}");
+        }
+    }
+
+    #[test]
+    fn time_block_evening_range() {
+        for m in [480u32, 550, 660] {
+            assert_eq!(TimeBlock::from_minutes(m), TimeBlock::Evening, "min={m}");
+        }
+    }
+
+    // ── KidFatigueModel ───────────────────────────────────────────────────
+
+    #[test]
+    fn kid_fatigue_default_energy_cap_is_three() {
+        assert!((KidFatigueModel::default().energy_cap - 3.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn kid_fatigue_default_recovery_rest_lt_meal() {
+        let f = KidFatigueModel::default();
+        assert!(f.recovery_rest < f.recovery_meal);
+    }
+
+    #[test]
+    fn kid_fatigue_default_decay_rate_positive() {
+        assert!(KidFatigueModel::default().decay_rate > 0.0);
+    }
+
+    // ── plan_day ──────────────────────────────────────────────────────────
+
+    #[test]
+    fn plan_day_empty_input_returns_empty_plan() {
+        let plan = plan_day(&[], 8.0);
+        assert!(plan.sequence.is_empty());
+        assert_eq!(plan.total_min, 0);
+        assert_eq!(plan.energy_used, 0.0);
+        assert!(!plan.kid_max_hit);
+    }
+
+    #[test]
+    fn plan_day_single_place_always_included() {
+        let places = vec![place("A", 40.83, 14.24, 60, 0.5, true)];
+        let plan = plan_day(&places, 8.0);
+        assert_eq!(plan.sequence, vec!["A"]);
+        assert_eq!(plan.total_min, 60);
+        assert!((plan.energy_used - 0.5).abs() < 1e-6);
+        assert!(!plan.kid_max_hit);
+    }
+
+    #[test]
+    fn plan_day_respects_time_limit() {
+        // Each place is 200 min. With max 5 hrs (300 min), only the first fits.
+        let places = vec![
+            place("A", 40.83, 14.24, 200, 0.5, true),
+            place("B", 40.84, 14.25, 200, 0.5, true),
+            place("C", 40.85, 14.26, 200, 0.5, true),
+        ];
+        let plan = plan_day(&places, 5.0); // 300 min max
+        assert_eq!(plan.sequence.len(), 1, "only 1 place should fit in 300 min");
+        assert_eq!(plan.sequence[0], "A");
+    }
+
+    #[test]
+    fn plan_day_kid_max_hit_above_three_energy() {
+        // A: energy 2.0, B: energy 2.0 → total 4.0 > 3.0 → kid_max_hit
+        let places = vec![
+            place("A", 40.83, 14.24, 60, 2.0, true),
+            place("B", 40.8301, 14.2401, 60, 2.0, true),
+        ];
+        let plan = plan_day(&places, 8.0);
+        assert!(plan.kid_max_hit, "energy 4.0 should set kid_max_hit");
+    }
+
+    #[test]
+    fn plan_day_no_kid_max_hit_below_three_energy() {
+        let places = vec![
+            place("A", 40.83, 14.24, 60, 1.0, true),
+            place("B", 40.8301, 14.2401, 60, 1.0, true),
+        ];
+        let plan = plan_day(&places, 8.0);
+        assert!(!plan.kid_max_hit, "energy 2.0 should NOT set kid_max_hit");
+    }
+
+    #[test]
+    fn plan_day_selects_nearest_neighbor() {
+        // Start at A=(0,0), B=(0,0.1) is close, C=(0,10.0) is far
+        // B should be visited before C
+        let places = vec![
+            place("A", 0.0, 0.0, 30, 0.1, true),
+            place("C", 0.0, 10.0, 30, 0.1, true),
+            place("B", 0.0, 0.1, 30, 0.1, true),
+        ];
+        let plan = plan_day(&places, 8.0);
+        let b_idx = plan.sequence.iter().position(|s| s == "B");
+        let c_idx = plan.sequence.iter().position(|s| s == "C");
+        if let (Some(bi), Some(ci)) = (b_idx, c_idx) {
+            assert!(bi < ci, "B (closer to A) should be visited before C");
+        }
+    }
+
+    #[test]
+    fn plan_day_sequence_contains_no_duplicates() {
+        let places: Vec<PlaceNode> = (0..5)
+            .map(|i| place(&format!("P{i}"), 40.83 + i as f64 * 0.001, 14.24, 30, 0.1, true))
+            .collect();
+        let plan = plan_day(&places, 8.0);
+        let mut seen = std::collections::HashSet::new();
+        for name in &plan.sequence {
+            assert!(seen.insert(name.as_str()), "duplicate in sequence: {name}");
+        }
+    }
+
+    // ── plan_family_day ───────────────────────────────────────────────────
+
+    #[test]
+    fn plan_family_day_empty_returns_full_energy() {
+        let f = KidFatigueModel::default();
+        let plan = plan_family_day(&[], &f, 8.0);
+        assert!(plan.schedule.is_empty());
+        assert_eq!(plan.total_duration_min, 0);
+        assert!((plan.kid_energy_remaining - f.energy_cap).abs() < 1e-6);
+        assert!(!plan.kid_overloaded);
+        assert!(plan.meal_break_recommended_at.is_none());
+        assert_eq!(plan.estimated_start, "09:00");
+        assert_eq!(plan.estimated_end, "09:00");
+    }
+
+    #[test]
+    fn plan_family_day_single_place_scheduled() {
+        let places = vec![place("A", 40.83, 14.24, 60, 0.5, true)];
+        let plan = plan_family_day(&places, &KidFatigueModel::default(), 8.0);
+        assert_eq!(plan.schedule.len(), 1);
+        assert_eq!(plan.schedule[0].name, "A");
+        assert_eq!(plan.schedule[0].start_time_min, 0);
+        assert_eq!(plan.schedule[0].end_time_min, 60);
+        assert_eq!(plan.schedule[0].transit_min, 0);
+    }
+
+    #[test]
+    fn plan_family_day_energy_decays_after_visit() {
+        let places = vec![place("A", 40.83, 14.24, 60, 0.0, true)];
+        let f = KidFatigueModel { decay_rate: 0.6, ..Default::default() };
+        let plan = plan_family_day(&places, &f, 8.0);
+        // decay = 0.6 * (60/60) = 0.6; energy = 3.0 - 0.6 = 2.4
+        assert!((plan.schedule[0].kid_energy_after - 2.4).abs() < 1e-4);
+    }
+
+    #[test]
+    fn plan_family_day_estimated_end_reflects_duration() {
+        let places = vec![place("A", 40.83, 14.24, 90, 0.5, true)];
+        let plan = plan_family_day(&places, &KidFatigueModel::default(), 8.0);
+        assert_eq!(plan.estimated_start, "09:00");
+        assert_eq!(plan.estimated_end, "10:30"); // 90 min after 09:00
+    }
+
+    #[test]
+    fn plan_family_day_start_is_always_nine() {
+        let places = vec![place("A", 40.83, 14.24, 60, 0.5, true)];
+        let plan = plan_family_day(&places, &KidFatigueModel::default(), 8.0);
+        assert_eq!(plan.estimated_start, "09:00");
+    }
+
+    #[test]
+    fn plan_family_day_stops_when_energy_depleted() {
+        // High decay drops energy below 0.3 after first place → no more visits
+        let places = vec![
+            place("A", 40.83, 14.24, 60, 0.0, true),
+            place("B", 40.8301, 14.2401, 60, 0.0, true),
+        ];
+        let f = KidFatigueModel {
+            energy_cap: 0.4,
+            decay_rate: 0.5, // 0.5 * (60/60) = 0.5 → 0.4 - 0.5 = -0.1 → overloaded
+            recovery_meal: 0.0,
+            recovery_rest: 0.0,
+        };
+        let plan = plan_family_day(&places, &f, 8.0);
+        assert!(plan.kid_overloaded, "should be overloaded with aggressive decay");
+    }
+
+    #[test]
+    fn plan_family_day_time_blocks_assigned_correctly() {
+        // First place at 0 min → Morning
+        let places = vec![place("Morning", 40.83, 14.24, 30, 0.1, true)];
+        let plan = plan_family_day(&places, &KidFatigueModel::default(), 8.0);
+        assert_eq!(plan.schedule[0].time_block, TimeBlock::Morning);
+    }
+
+    #[test]
+    fn plan_family_day_no_duplicates_in_schedule() {
+        let places: Vec<PlaceNode> = (0..5)
+            .map(|i| place(&format!("P{i}"), 40.83 + i as f64 * 0.001, 14.24, 30, 0.1, true))
+            .collect();
+        let plan = plan_family_day(&places, &KidFatigueModel::default(), 8.0);
+        let mut seen = std::collections::HashSet::new();
+        for s in &plan.schedule {
+            assert!(seen.insert(s.name.as_str()), "duplicate in schedule: {}", s.name);
+        }
+    }
+
+    // ── plan_multi_day ────────────────────────────────────────────────────
+
+    #[test]
+    fn plan_multi_day_empty_returns_zero_days() {
+        let plan = plan_multi_day(&[], 7);
+        assert_eq!(plan.total_days, 0);
+        assert_eq!(plan.total_places, 0);
+        assert!(plan.days.is_empty());
+    }
+
+    #[test]
+    fn plan_multi_day_does_not_exceed_num_days() {
+        let places: Vec<PlaceNode> = (0..10)
+            .map(|i| place(&format!("P{i}"), 40.83 + i as f64 * 0.001, 14.24, 60, 0.3, true))
+            .collect();
+        let plan = plan_multi_day(&places, 3);
+        assert!(plan.total_days <= 3, "total_days={} > 3", plan.total_days);
+    }
+
+    #[test]
+    fn plan_multi_day_total_places_matches_sum_of_sequences() {
+        let places: Vec<PlaceNode> = (0..6)
+            .map(|i| place(&format!("P{i}"), 40.83 + i as f64 * 0.001, 14.24, 30, 0.2, true))
+            .collect();
+        let plan = plan_multi_day(&places, 3);
+        let expected: usize = plan.days.iter().map(|d| d.sequence.len()).sum();
+        assert_eq!(plan.total_places, expected);
+    }
+
+    #[test]
+    fn plan_multi_day_kid_friendly_days_counted() {
+        let places: Vec<PlaceNode> = (0..4)
+            .map(|i| place(&format!("P{i}"), 40.83 + i as f64 * 0.001, 14.24, 30, 0.1, true))
+            .collect();
+        let plan = plan_multi_day(&places, 4);
+        let manual = plan.days.iter().filter(|d| !d.kid_max_hit).count() as u8;
+        assert_eq!(plan.kid_friendly_days, manual);
+    }
+
+    #[test]
+    fn plan_multi_day_each_day_respects_max_places_per_day() {
+        let places: Vec<PlaceNode> = (0..20)
+            .map(|i| place(&format!("P{i}"), 40.83 + i as f64 * 0.0001, 14.24, 10, 0.01, true))
+            .collect();
+        let plan = plan_multi_day(&places, 7);
+        for (di, day) in plan.days.iter().enumerate() {
+            assert!(
+                day.sequence.len() <= MAX_KID_PLACES_PER_DAY as usize,
+                "day {di}: {} places > MAX_KID_PLACES_PER_DAY {}",
+                day.sequence.len(),
+                MAX_KID_PLACES_PER_DAY
+            );
+        }
+    }
+
+    #[test]
+    fn plan_multi_day_no_place_appears_twice() {
+        let places: Vec<PlaceNode> = (0..12)
+            .map(|i| place(&format!("P{i}"), 40.83 + i as f64 * 0.001, 14.24, 30, 0.2, true))
+            .collect();
+        let plan = plan_multi_day(&places, 5);
+        let mut seen = std::collections::HashSet::new();
+        for day in &plan.days {
+            for name in &day.sequence {
+                assert!(seen.insert(name.as_str()), "place {name} appears in multiple days");
+            }
+        }
+    }
+
+    // ── napoli_all_places data validation ─────────────────────────────────
+
+    #[test]
+    fn napoli_all_places_has_eleven_entries() {
+        assert_eq!(napoli_all_places().len(), 11);
+    }
+
+    #[test]
+    fn napoli_all_places_includes_pompeii() {
+        assert!(
+            napoli_all_places().iter().any(|p| p.name == "Pompeii"),
+            "Pompeii must be in napoli_all_places"
+        );
+    }
+
+    #[test]
+    fn napoli_all_places_kid_friendly_split() {
+        let places = napoli_all_places();
+        let kid_count = places.iter().filter(|p| p.kid_friendly).count();
+        let adult_count = places.iter().filter(|p| !p.kid_friendly).count();
+        assert_eq!(kid_count, 7, "expected 7 kid-friendly places, got {kid_count}");
+        assert_eq!(adult_count, 4, "expected 4 adult-primary places, got {adult_count}");
+    }
+
+    #[test]
+    fn napoli_all_places_sotterranea_not_kid_friendly() {
+        let places = napoli_all_places();
+        let sott = places.iter().find(|p| p.name == "Napoli Sotterranea").unwrap();
+        assert!(!sott.kid_friendly, "Sotterranea should not be kid_friendly");
+    }
+
+    #[test]
+    fn napoli_all_places_coordinates_in_naples_region() {
+        // Naples/Pompeii area: lat ~40.5–41.0, lng ~14.0–14.6
+        for p in napoli_all_places() {
+            assert!(
+                p.lat > 40.5 && p.lat < 41.5,
+                "{}: lat={} outside Naples region", p.name, p.lat
+            );
+            assert!(
+                p.lng > 14.0 && p.lng < 15.0,
+                "{}: lng={} outside Naples region", p.name, p.lng
+            );
+        }
+    }
+
+    #[test]
+    fn napoli_all_places_durations_positive() {
+        for p in napoli_all_places() {
+            assert!(p.duration_min > 0, "{}: duration must be positive", p.name);
+        }
+    }
+
+    #[test]
+    fn napoli_all_places_energy_costs_positive() {
+        for p in napoli_all_places() {
+            assert!(p.energy_cost > 0.0, "{}: energy_cost must be positive", p.name);
+        }
+    }
+
+    #[test]
+    fn napoli_all_places_unique_names() {
+        let places = napoli_all_places();
+        let mut names: Vec<&str> = places.iter().map(|p| p.name.as_str()).collect();
+        let total = names.len();
+        names.sort_unstable();
+        names.dedup();
+        assert_eq!(names.len(), total, "place names must be unique");
+    }
+
+    #[test]
+    fn napoli_all_places_pompeii_is_kid_friendly_high_energy() {
+        let p = napoli_all_places().into_iter().find(|p| p.name == "Pompeii").unwrap();
+        assert!(p.kid_friendly, "Pompeii should be kid_friendly");
+        assert!(p.energy_cost >= 1.0, "Pompeii should have high energy cost (day trip)");
+    }
+
+    // ── integration tests ─────────────────────────────────────────────────
+
+    #[test]
+    fn napoli_family_7day_plan_runs_without_panic() {
+        let plan = napoli_family_7day_plan();
+        assert!(plan.total_days > 0);
+        assert!(plan.total_places > 0);
+    }
+
+    #[test]
+    fn napoli_family_7day_plan_days_lte_stay_days() {
+        let plan = napoli_family_7day_plan();
+        assert!(
+            plan.total_days <= STAY_DAYS,
+            "plan has {} days, STAY_DAYS={}", plan.total_days, STAY_DAYS
+        );
+    }
+
+    #[test]
+    fn napoli_family_7day_plan_kid_friendly_days_accurate() {
+        let plan = napoli_family_7day_plan();
+        let manual = plan.days.iter().filter(|d| !d.kid_max_hit).count() as u8;
+        assert_eq!(plan.kid_friendly_days, manual);
+    }
+
+    #[test]
+    fn napoli_simple_day_plan_nonempty_sequence() {
+        let plan = napoli_simple_day_plan();
+        assert!(!plan.sequence.is_empty());
+        assert!(plan.total_min > 0);
+    }
+
+    #[test]
+    fn napoli_family_plan_produces_valid_schedule() {
+        let plan = napoli_family_plan();
+        assert!(!plan.schedule.is_empty());
+        assert_eq!(plan.estimated_start, "09:00");
+        // Each scheduled place should have end_time > start_time
+        for s in &plan.schedule {
+            assert!(s.end_time_min > s.start_time_min, "{}: end < start", s.name);
+        }
+    }
+}
+
 /// Full Naples place dataset for multi-day planning.
 ///
 /// Extends the single-day dataset with Pompeii (day trip) and

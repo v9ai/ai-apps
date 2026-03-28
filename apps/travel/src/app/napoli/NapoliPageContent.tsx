@@ -15,7 +15,6 @@ import { EatGuide } from "./sections/EatGuide";
 import { TransportGuide } from "./sections/TransportGuide";
 import { PompeiiGuide } from "./sections/PompeiiGuide";
 import { TripSummary } from "./sections/TripSummary";
-import { FamilyBudget } from "@/components/FamilyBudget";
 
 const T = {
   ro: {
