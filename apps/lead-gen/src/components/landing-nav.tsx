@@ -370,7 +370,7 @@ export function LandingNav() {
           {/* github link at bottom */}
           <div className={css({ mt: "auto", pb: "6" })}>
             <a
-              href="https://github.com/nicolad/agentic-lead-gen"
+              href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
               target="_blank"
               rel="noopener noreferrer"
               className={flex({
