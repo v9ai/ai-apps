@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { LangProvider, LanguageSwitcher, type Lang } from "@/components/LanguageSwitcher";
+import { Menu } from "@/components/Menu";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ export default async function RootLayout({
     <html lang={initialLang}>
       <body>
         <LangProvider initialLang={initialLang}>
+          <Menu />
           <LanguageSwitcher />
           {children}
         </LangProvider>

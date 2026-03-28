@@ -1,10 +1,12 @@
 import rawData from "@/data/places.json";
 import rawHotels2026 from "@/data/hotels_2026.json";
+import rawNapoliData from "@/data/napoli_places.json";
 import type { PlacesData, Place, HotelSearchResult } from "./types";
 import { type Category } from "./categories";
 
 export const data = rawData as PlacesData;
 export const hotels2026 = rawHotels2026 as HotelSearchResult[];
+export const napoliData = rawNapoliData as PlacesData;
 
 export function getPlacesByCategory(category: Category): Place[] {
   return data.places.filter((p) => p.category === category);
