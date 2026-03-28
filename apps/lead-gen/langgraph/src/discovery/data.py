@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import psycopg
 from psycopg.rows import dict_row
 
-from .models import ATSBoardDetection, CompanyResearchResult
+from .models import CompanyResearchResult
 
 _CONFIDENCE_MAP = {"high": 0.9, "medium": 0.6, "low": 0.3}
 
