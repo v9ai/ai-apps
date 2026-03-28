@@ -1,7 +1,7 @@
 ---
 slug: sgai-qwen3-1-7b
-title: "ScrapeGraphAI Qwen3-1.7B fine-tuned web extraction model and 100k dataset"
-description: "A 1.7B model fine-tuned on 93.7k real scraping trajectories beats leading cloud extraction APIs on SWDE (94.6% vs 91.2% F1). Full artifact breakdown: dataset, fine-tuning split, BF16 model, GGUF for local inference with mlx_lm."
+title: "ScrapeGraphAI Qwen3-1.7B: Fine-Tuned Web Extraction Model and 100k Dataset"
+description: "A 1.7B model fine-tuned on 93.7k real scraping trajectories beats leading cloud extraction APIs on SWDE (94.6% vs 91.2% F1). Dataset construction, training pipeline, local GGUF inference, and production lead-gen integration with Rust."
 date: 2026-03-28
 authors: [nicolad]
 tags:
@@ -16,11 +16,11 @@ tags:
 export const datasetNodes = [
   { id: "d1", position: { x: 0, y: 100 }, data: { label: "Web URLs" }, type: "input" },
   { id: "d2", position: { x: 0, y: 280 }, data: { label: "Frontier LLMs" }, type: "input" },
-  { id: "d3", position: { x: 260, y: 190 }, data: { label: "ScrapeGraphAI Library" } },
-  { id: "d4", position: { x: 520, y: 60 }, data: { label: "Raw Dataset (93.7k rows)" } },
-  { id: "d5", position: { x: 520, y: 320 }, data: { label: "Failed Rows" } },
-  { id: "d6", position: { x: 780, y: 60 }, data: { label: "Quality Filter" } },
-  { id: "d7", position: { x: 1040, y: 60 }, data: { label: "Fine-tune Split (28k)" }, type: "output" },
+  { id: "d3", position: { x: 280, y: 190 }, data: { label: "ScrapeGraphAI Library" } },
+  { id: "d4", position: { x: 560, y: 60 }, data: { label: "Raw Dataset (93.7k rows)" } },
+  { id: "d5", position: { x: 560, y: 320 }, data: { label: "Failed Rows" } },
+  { id: "d6", position: { x: 840, y: 60 }, data: { label: "Quality Filter" } },
+  { id: "d7", position: { x: 1120, y: 60 }, data: { label: "Fine-tune Split (28k)" }, type: "output" },
 ];
 export const datasetEdges = [
   { id: "de1", source: "d1", target: "d3", animated: true },
@@ -49,103 +49,117 @@ export const trainingEdges = [
   { id: "te6", source: "t5", target: "t7", animated: true },
 ];
 
-export const leadgenNodes = [
-  { id: "l1", position: { x: 0, y: 160 }, data: { label: "Web Crawl (RL agent)" }, type: "input" },
-  { id: "l2", position: { x: 260, y: 0 }, data: { label: "Rust Scanner (~100 p/s)" } },
-  { id: "l3", position: { x: 260, y: 320 }, data: { label: "sgai-qwen3 GGUF" } },
-  { id: "l4", position: { x: 520, y: 0 }, data: { label: "NER FSM (92.3% F1)" } },
-  { id: "l5", position: { x: 520, y: 320 }, data: { label: "Structured JSON" } },
-  { id: "l6", position: { x: 780, y: 160 }, data: { label: "Entity Resolution" } },
-  { id: "l7", position: { x: 1040, y: 160 }, data: { label: "ML Lead Scorer" } },
-  { id: "l8", position: { x: 1300, y: 160 }, data: { label: "Outreach Queue" } },
-  { id: "l9", position: { x: 1560, y: 160 }, data: { label: "Neon DB" }, type: "output" },
+export const pipelineNodes = [
+  { id: "p1", position: { x: 0, y: 0 }, data: { label: "Raw Web Pages" }, type: "input" },
+  { id: "p2", position: { x: 280, y: 0 }, data: { label: "Rust Scanner (~100 p/s)" } },
+  { id: "p3", position: { x: 560, y: 0 }, data: { label: "Candidate URLs" } },
+  { id: "p4", position: { x: 840, y: 0 }, data: { label: "ML Ranker" } },
+  { id: "p5", position: { x: 1120, y: 0 }, data: { label: "Schema Extraction\n(sgai-qwen3-1.7b)" } },
+  { id: "p6", position: { x: 1400, y: 0 }, data: { label: "NER Validation" } },
+  { id: "p7", position: { x: 1680, y: 0 }, data: { label: "Lead Score" } },
+  { id: "p8", position: { x: 1960, y: 0 }, data: { label: "Outreach Queue" } },
+  { id: "p9", position: { x: 2240, y: 0 }, data: { label: "CRM / Neon DB" }, type: "output" },
 ];
-export const leadgenEdges = [
-  { id: "le1", source: "l1", target: "l2", animated: true, label: "all pages" },
-  { id: "le2", source: "l1", target: "l3", animated: true, label: "schema pages" },
-  { id: "le3", source: "l2", target: "l4", animated: true },
-  { id: "le4", source: "l3", target: "l5", animated: true },
-  { id: "le5", source: "l4", target: "l6", animated: true },
-  { id: "le6", source: "l5", target: "l6", animated: true },
-  { id: "le7", source: "l6", target: "l7", animated: true },
-  { id: "le8", source: "l7", target: "l8", animated: true },
-  { id: "le9", source: "l8", target: "l9", animated: true },
+export const pipelineEdges = [
+  { id: "pe1-2", source: "p1", target: "p2", animated: true },
+  { id: "pe2-3", source: "p2", target: "p3", animated: true },
+  { id: "pe3-4", source: "p3", target: "p4", animated: true },
+  { id: "pe4-5", source: "p4", target: "p5", animated: true },
+  { id: "pe5-6", source: "p5", target: "p6", animated: true },
+  { id: "pe6-7", source: "p6", target: "p7", animated: true },
+  { id: "pe7-8", source: "p7", target: "p8", animated: true },
+  { id: "pe8-9", source: "p8", target: "p9", animated: true },
 ];
 
-The most dangerous assumption in modern AI is that bigger models are universally better. ScrapeGraphAI's release shatters that narrative for structured web extraction: their fine-tuned 1.7 billion parameter model, [sgai-qwen3-1.7b](https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b), built from a [100k-row dataset](https://huggingface.co/datasets/scrapegraphai/scrapegraphai-100k) of real scraping trajectories, beats leading cloud extraction APIs on standard benchmarks at roughly **1/100th** the parameter count. This isn't incremental—it's proof that for well-defined narrow tasks, a small purpose-built model absorbs high-quality domain-specific data better than a generalist distracted by the breadth of the internet.
+Leading cloud extraction APIs are orders of magnitude larger than the model that just beat them at structured web extraction. This isn't a marginal win — it's a 3.4 percentage point lead on the gold-standard SWDE benchmark. The secret isn't a novel architecture; it's domain-specific fine-tuning on a 100,000-example dataset of real scraping trajectories. The [ScrapeGraphAI team's release](https://arxiv.org/abs/2505.15812) of a fine-tuned [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) model flips the conventional scaling law on its head and delivers a complete, Apache 2.0-licensed stack for production. This is a blueprint for how narrow, expert models will outperform generalist giants — if you have the right data.
 
 <!-- truncate -->
 
-## The Four Artifacts: A Complete Open-Source Extraction Stack
+## The Four Artifacts: A Complete Open-Source Stack
 
-The release is four interdependent artifacts, each necessary for the next. The complete data-to-deployment pipeline is what makes this replicable rather than a one-off research result.
+Most open-source model releases are just weights. ScrapeGraphAI's contribution is a full-stack data pipeline: raw trajectories, a curated dataset, and two inference-ready model formats. The four core artifacts are interdependent — each is necessary for the next to exist.
 
 <Flow nodes={datasetNodes} edges={datasetEdges} height={380} />
 
-The foundation is the [scrapegraphai-100k dataset](https://huggingface.co/datasets/scrapegraphai/scrapegraphai-100k): 93,700 rows of real scraping trajectories. Each row is a complete extraction event — URL, raw HTML, user prompt, target JSON schema, and structured output from whichever LLM ran it. The 17 metadata fields are the differentiator: `model_used`, `success`, `error_type`, `schema_complexity_score`, `tokens_in`, `tokens_out`, `latency_ms`. This isn't a clean academic dataset; it includes failures, edge cases, and multi-model provenance that makes the learning signal diverse.
+1. **Full Dataset ([`scrapegraphai/scrapegraphai-100k`](https://huggingface.co/datasets/scrapegraphai/scrapegraphai-100k))**: 93,700 rows in Parquet format, each a complete scraping "trajectory" with URL, raw HTML, user prompt, output JSON schema, and the LLM-produced structured output. The 17 fields include diagnostics like `tokens_in`, `latency_ms`, `success` flag, and a `schema_complexity_score`. This is observability data for a scraping process — not just input-output pairs.
 
-From the 93.7k rows, the [fine-tuning split](https://huggingface.co/datasets/scrapegraphai/scrapegraph-100k-finetuning) keeps only 28,000 rows where `success=True` and `schema_complexity_score` clears a threshold — 25,200 for training, 2,800 held out for evaluation. These are reformatted as instruction-tuning pairs: system prompt + user message (HTML + extraction prompt + schema) + assistant response (structured JSON).
+2. **Fine-Tuning Split ([`scrapegraphai/scrapegraph-100k-finetuning`](https://huggingface.co/datasets/scrapegraphai/scrapegraph-100k-finetuning))**: A filtered set of 28,000 high-quality examples (25.2k train, 2.8k test) where `success=True` and complexity clears a threshold. Rows are reformatted as instruction-tuning pairs: system prompt + user message (HTML + extraction prompt + schema) + assistant response (structured JSON).
 
-The core model is `sgai-qwen3-1.7b`, a supervised fine-tune of Alibaba's [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) on those 25.2k examples. The [GGUF variant](https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b-gguf) packages it for local inference. Apache 2.0 throughout.
+3. **BF16 Model ([`scrapegraphai/sgai-qwen3-1.7b`](https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b))**: The 1.7B parameter model, fine-tuned with a standard causal LM objective on the 25.2k training examples. Stored in Safetensors format, ready for GPU inference on a single RTX 3090 or M2 MacBook Pro.
 
-## The Training Pipeline: From Split to Deployed Artifact
+4. **GGUF Model ([`scrapegraphai/sgai-qwen3-1.7b-gguf`](https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b-gguf))**: A quantized variant compatible with `llama.cpp`, `mlx_lm`, and `ollama`. At roughly 1.1 GB for Q4_K_M quantization, it enables full local inference on consumer Apple Silicon.
+
+The stack's value is in its lineage. You can trace a prediction back through the model, to the fine-tuning data, to the original HTML and the frontier LLM (from various providers) that generated the training label. This audit trail is uncommon and critical for debugging production extraction systems.
+
+## The Training Pipeline: From Raw Data to Deployed Artifact
 
 <Flow nodes={trainingNodes} edges={trainingEdges} height={380} />
 
-The SFT step is straightforward: standard next-token prediction loss on the instruction-formatted pairs. No RLHF, no DPO. The base model already has language and structural capabilities; fine-tuning teaches it one specific input-output mapping. At 1.7B parameters this runs in 4–8 hours on an A100.
+The dataset's power isn't its size — 100k examples is modest by modern standards. It's the *provenance*. Each example was generated by running the open-source [ScrapeGraphAI library](https://github.com/ScrapeGraphAI/Scrapegraph-ai) against a real website. The library uses a graph-based approach to reason over HTML and extract structured data, invoking various frontier LLMs as the "extraction engine." This captures real-world failure modes: cluttered HTML, dynamic content, anti-bot markup, and ambiguous schemas.
 
-The BF16 model is the primary artifact — full precision, runs on a single RTX 3090 or M2 MacBook Pro. The GGUF export is the deployment artifact. Q4_K_M quantization drops it to ~1.1GB while preserving most accuracy.
+The SFT step is straightforward: standard next-token prediction loss on instruction-formatted pairs. No RLHF, no DPO. The base model already has language and structural capabilities; fine-tuning teaches it one specific input-output mapping. The `model_used` field allows filtering for examples solved by specific base models, enabling targeted knowledge distillation. The `schema_complexity_score` prevents the model from wasting capacity on trivial extractions.
+
+At 1.7B parameters the training runs in 4–8 hours on an A100. The BF16 model is the primary artifact — full precision, runs on a single RTX 3090 or M2 MacBook Pro. The GGUF export is the deployment artifact. Q4_K_M quantization drops it to ~1.1 GB while preserving most accuracy.
 
 ## The Benchmark: Specialization Beats Scale
 
 On [SWDE](https://paperswithcode.com/dataset/swde) (80 websites, 8 domains, 124k field annotations), the fine-tuned 1.7B model achieves **94.6% field-level F1**. Leading cloud extraction APIs at time of publication scored **91.2%**. On SyntheticWebExtract, schema accuracy is **89.3%** vs. **87.1%** for cloud APIs.
 
-A 3–4 point gap sounds modest until you understand SWDE context: top performers have historically been separated by fractions of a point. The explanation is structural. Web extraction for a fixed schema is a constrained language game — HTML in, JSON out. The 25.2k training examples densely cover this narrow problem space. A large generalist has its capacity spread across every task it was trained on; the fine-tuned model has all of its capacity focused on one.
+A 3–4 point gap sounds modest until you understand SWDE context: top performers have historically been separated by fractions of a point. The explanation is structural. Web extraction for a fixed schema is a constrained language game — HTML in, JSON out. The 25.2k training examples densely cover this narrow problem space. A large generalist has capacity spread across every task it was trained on; the fine-tuned model has all capacity focused on one. The cost implication is equally significant: for a pipeline processing 100,000 pages a day, shifting from a cloud API to a local GGUF means the difference between $1,000–$2,000 in daily API costs and effectively zero.
 
-As you further fine-tune on domain-specific subsets (job boards, e-commerce, real estate), the accuracy gap compounds.
+## The Competitor Landscape: Three Research Bets
 
-## The Competitive Landscape: Three Alternate Architectures
+Three recent papers exemplify alternative approaches to the same structured extraction problem:
 
-ScrapeGraphAI's generative JSON approach competes with three different research bets.
+**[AXE](https://arxiv.org/abs/2602.01838)** focuses on pre-processing. A lightweight classifier prunes irrelevant DOM subtrees before passing cleaned content to any frozen LLM. Its key insight: most of the HTML is noise, and context window limits are the real bottleneck. Achieves **88.10% F1 on SWDE** using a 0.6B model. Weakness: pruning can discard relevant data; no fine-tuning means no domain adaptation and a lower accuracy ceiling.
 
-**AXE** ([arXiv:2602.01838](https://arxiv.org/abs/2602.01838)) treats the input as the problem. Most HTML is noise — AXE prunes irrelevant DOM subtrees with a lightweight rule-based + learned classifier (0.6B). Result: **88.10% F1 on SWDE**, no fine-tuning needed, works with any frozen model. Weakness: pruning can discard ambiguous nodes; accuracy ceiling is lower than fine-tuned approaches.
+**[Dripper](https://arxiv.org/abs/2511.23119)** reframes extraction as sequence labeling (NER-style) directly on the HTML token stream. Instead of generating JSON, the model tags which spans correspond to which schema fields. This is deterministic and avoids hallucinations. Claims competitive performance with leading cloud APIs using a 0.6B model. Weakness: sequence labeling is brittle on deeply nested, multi-level schemas that are naturally expressed as JSON.
 
-**Dripper** ([arXiv:2511.23119](https://arxiv.org/abs/2511.23119)) reframes extraction as sequence labeling (NER-style) instead of generation. Deterministic, efficient, 0.6B. Strong on flat schemas; breaks on deeply nested structures.
+**[SLOT](https://arxiv.org/abs/2505.04016)** attacks the output: a 7B model generates initial extraction, then a separate post-processing model corrects schema violations — missing required fields, type mismatches, extra keys. Achieves **99.5% schema accuracy** — best in class. Weakness: two-stage pipeline, 7B+ total parameters, higher latency and memory footprint.
 
-**SLOT** ([arXiv:2505.04016](https://arxiv.org/abs/2505.04016)) attacks the output: a 7B model generates output, then a post-processing layer validates and repairs schema conformance. Achieves **99.5% schema accuracy** — best in field. Cost: 4x larger base model, two-stage complexity.
-
-ScrapeGraphAI sits in the middle: generative, fine-tuned, compact. No separate pruning or repair stage.
-
-## How This Fits a Production Lead-Gen Pipeline
-
-To ground this in a running system: [agenticleadgen.xyz](https://agenticleadgen.xyz/) is a B2B lead generation platform built on Next.js + Rust ML crates (source on [GitHub](https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen)). It runs two parallel extraction paths — fast Rust for high-throughput contact harvesting, LLM for schema-flexible company profile extraction — and visualizes the full pipeline with `@xyflow/react`.
-
-<Flow nodes={leadgenNodes} edges={leadgenEdges} height={420} />
-
-The Rust scanner handles throughput: a zero-allocation state machine that parses HTML in a single pass, extracts emails from `mailto:` links, and runs custom NER at ~100 pages/sec. For pages with variable layouts where CSS selectors break, `sgai-qwen3-1.7b-gguf` takes over: prompt with HTML and schema, get clean JSON. Same M1 hardware, no additional API spend.
+The ScrapeGraphAI model sits in the middle: end-to-end fine-tuning of a compact model for direct JSON generation. It beats AXE on accuracy (94.6% vs. 88.1%), matches Dripper's cloud-API parity, and achieves high schema accuracy without SLOT's separate repair stage.
 
 ## Local Inference: The GGUF Path to Sovereign Extraction
 
 ```bash
+# Serve locally on an M-series Mac
 mlx_lm.server --model scrapegraphai/sgai-qwen3-1.7b-gguf --port 8080
 ```
 
-~1.1GB on disk. ~40 tokens/second on M1 Pro. For 1,000 URLs/day at 200-token average outputs: 2 minutes of inference, $0 in API fees. At 100k extractions/month the savings justify a dedicated Mac Mini in weeks. For pipelines touching PII, competitor data, or compliance-sensitive content, data sovereignty is the stronger argument.
+You now have a dedicated extraction API behind your firewall. No data leaves your infrastructure — a non-negotiable requirement for pipelines touching PII, competitive intelligence, or compliance-sensitive content. The cost model shifts from per-API-call to fixed hardware amortization.
 
-## A Decision Framework: Specialized Model vs. Frontier API
+On an M1 Pro: ~40 tokens/second. Processing 1,000 pages with 200-token outputs takes about 2 minutes of inference. At 100k extractions/month the API savings justify a dedicated Mac Mini in weeks. The architecture also changes: instead of a fragile dependency on an external API's availability, cost, and rate limits, you deploy a container with the GGUF file and an inference server — a private utility as reliable as your own infrastructure.
 
-**Use sgai-qwen3-1.7b when:**
-- **Volume is high:** >10k extractions/month — API savings amortize setup quickly.
-- **Domain is narrow:** Similar site structures. Fine-tune further on a domain-filtered 100k subset for another accuracy lift.
-- **Data cannot leave:** PII, competitive intelligence, compliance-constrained pipelines.
-- **Infrastructure is Apple Silicon or GPU:** GGUF drops in with zero infrastructure changes.
-- **Latency is measured:** Local inference eliminates network round-trips and API cold starts.
+## Production Pipeline: Where Specialized LLMs Meet Traditional Scrapers
+
+The real test of any model is how it fits into a production system. The agentic lead generation platform at [agenticleadgen.xyz](https://agenticleadgen.xyz) — [source on GitHub](https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen) — uses a hybrid architecture combining traditional scrapers and LLM-based extraction.
+
+<Flow nodes={pipelineNodes} edges={pipelineEdges} height={300} />
+
+The pipeline's fast path uses Rust's `scraper` crate for zero-allocation DOM parsing, a custom finite-state machine for email extraction at ~100 pages/second, and JSON-LD / Open Graph parsers for structured metadata. The `sgai-qwen3-1.7b` GGUF handles the flexible schema extraction that rule-based systems cannot: structured company profiles from diverse "About Us" pages where field names and HTML structures vary. The custom NER model (92.3% F1) and the LLM extraction step share the same M1 infrastructure — no additional API spend.
+
+This is the production reality of specialized models: not a monolithic LLM call, but a directed graph of specialized tools. Rule-based scrapers handle high-throughput predictable tasks; fine-tuned LLMs handle variable, schema-driven tasks. The 1.7B GGUF model fits this pattern — small enough to run alongside the Rust pipeline on the same hardware.
+
+## Decision Framework: When to Use Which Tool
+
+**Use `sgai-qwen3-1.7b` (local GGUF) when:**
+- **Volume is high** (>10k extractions/month) — API savings amortize setup quickly.
+- **Data sensitivity is high** (PII, competitive intelligence) — on-prem inference is required.
+- **Domain is narrow** — fine-tune further on a domain-filtered subset for additional accuracy lift.
+- **Infrastructure is Apple Silicon or consumer GPU** — GGUF drops in with zero infrastructure changes.
 
 **Use a frontier API when:**
-- **Volume is low:** Setup cost exceeds API spend for infrequent use.
-- **Schemas are unstable:** New, complex schemas on every run.
-- **Multimodal reasoning required:** Extraction from images or complex visual layouts.
-- **Pipeline already works:** Don't rewrite what clears your accuracy thresholds.
+- **Volume is low and sporadic** — setup cost of a local model isn't justified.
+- **Schemas change constantly** — need zero-shot generalization from a description.
+- **You lack ML/Ops bandwidth** to manage model deployment and quantization.
+- **Pipeline already works** — don't rewrite what clears your accuracy thresholds.
+
+**Use traditional scrapers (Scrapy, Rust `scraper`) when:**
+- Website structure is simple and stable.
+- Throughput and latency are paramount (thousands of pages per second).
+- Extraction logic is trivial (e.g., get all `href` attributes).
+
+The sweet spot for `sgai-qwen3-1.7b` is the middle ground: tasks too variable for rule-based scrapers, too expensive and sensitive for constant API calls.
 
 ## Practical Implementation: Domain-Specific Fine-Tuning
 
@@ -163,10 +177,8 @@ ecomm = ds['train'].filter(
 # Feed to Axolotl or TRL against Qwen3-1.7B for a vertical-specialist model
 ```
 
-The 1.7B parameter count makes this feasible on a single consumer GPU in a few hours. Filter by `schema_complexity_score` to keep only the cleanest examples, or by `model_used` to train on outputs from specific base models.
+The 1.7B parameter count makes domain fine-tuning feasible on a single consumer GPU in a few hours. Filter by `schema_complexity_score` to keep only the cleanest examples, or by `model_used` to train exclusively on outputs from specific base models.
 
-## The Broader Implication: Specialization as Engineering Discipline
+## The Broader Implication
 
-The ScrapeGraphAI release is a case study in a repeating pattern: an open-source tool generates labeled trajectories at scale, those trajectories fine-tune a compact base model, the result outperforms general-purpose APIs on the narrow task and runs locally. The barrier to high-accuracy domain AI is no longer pre-training compute — it's the discipline to collect and curate task-specific data.
-
-For any repetitive, well-defined extraction task the question is no longer "which frontier API?" — it's "do I have 10–25k clean examples for a 1–3B fine-tune?" If yes, the specialized model wins on accuracy, cost, and data sovereignty.
+The [ScrapeGraphAI paper](https://arxiv.org/abs/2505.15812) is a case study in a repeating pattern: an open-source tool generates labeled trajectories at scale, those trajectories fine-tune a compact base model, the result outperforms general-purpose APIs on the narrow task and runs locally. The barrier to high-accuracy domain AI is no longer pre-training compute — it's the discipline to collect and curate task-specific data. For any repetitive, well-defined extraction task, the question is no longer "which API?" but "do I have 10–25k clean examples for a 1–3B fine-tune?" If yes, the specialized model wins on accuracy, cost, and data sovereignty.

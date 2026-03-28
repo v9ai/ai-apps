@@ -93,18 +93,18 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Workload Architecture**
 - Loose coupling: replace synchronous calls with async queues (SQS) or events (EventBridge) where latency allows
-- Stateless services: store session state in [ElastiCache (Redis)](/dynamodb-data-services) or [DynamoDB](/dynamodb-data-services), not on instance; enables any-instance routing
+- Stateless services: store session state in [ElastiCache (Redis)](/aws/dynamodb-data-services) or [DynamoDB](/aws/dynamodb-data-services), not on instance; enables any-instance routing
 - Idempotency: design all operations to be safely retried; use idempotency tokens (SQS message deduplication, DynamoDB conditional writes)
 - Graceful degradation: circuit breakers, bulkheads, fallback responses when dependencies fail
 
 **Change Management**
 - [Auto Scaling Groups](/aws/compute-containers): dynamic scaling (target tracking, step, scheduled); ASG + ALB provides self-healing
 - [ECS](/aws/compute-containers)/[EKS](/aws/compute-containers) rolling updates with health checks and deployment circuit breaker
-- [RDS](/dynamodb-data-services): Multi-AZ synchronous standby; failover < 60 seconds; avoid single-AZ in production
+- [RDS](/aws/dynamodb-data-services): Multi-AZ synchronous standby; failover < 60 seconds; avoid single-AZ in production
 
 **Failure Management**
 - Backup strategy: [AWS Backup](/aws/cicd-devops) for centralized, policy-driven backup across RDS, EBS, DynamoDB, EFS, FSx
-- [RDS](/dynamodb-data-services) automated backups: 35-day retention window, point-in-time recovery
+- [RDS](/aws/dynamodb-data-services) automated backups: 35-day retention window, point-in-time recovery
 - [S3](/aws/storage-s3) Versioning + MFA delete: protect against accidental deletion
 - Chaos engineering: AWS Fault Injection Simulator (FIS) for controlled experiments (terminate instances, throttle network, inject latency)
 - Health checks: ALB target health, Route 53 health checks, ECS task health; unhealthy targets removed automatically
@@ -119,7 +119,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 **Selection**
 - Compute: [Lambda](/aws/lambda-serverless) for bursty/event-driven, [Fargate](/aws/compute-containers) for containerized variable load, [EC2](/aws/compute-containers) for sustained/specialized
 - Storage: [S3](/aws/storage-s3) for objects/static, [EBS](/aws/storage-s3) gp3 for block (IOPS independent of size), io2 Block Express for databases, [EFS](/aws/storage-s3) for shared POSIX
-- Database: match data model to engine — [Aurora](/dynamodb-data-services) for relational, [DynamoDB](/dynamodb-data-services) for key-value/document, [ElastiCache](/dynamodb-data-services) for cache, [Redshift](/dynamodb-data-services) for analytics, OpenSearch for full-text/vector search
+- Database: match data model to engine — [Aurora](/aws/dynamodb-data-services) for relational, [DynamoDB](/aws/dynamodb-data-services) for key-value/document, [ElastiCache](/aws/dynamodb-data-services) for cache, [Redshift](/aws/dynamodb-data-services) for analytics, OpenSearch for full-text/vector search
 - Networking: placement groups (cluster for HPC/low latency, spread for fault isolation), enhanced networking (SR-IOV), EFA for MPI workloads — see [API Gateway & Networking](/aws/api-gateway-networking)
 
 **Review**
@@ -133,8 +133,8 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - RDS Performance Insights: database load by wait state, SQL statement, user — pinpoint slow queries
 
 **Tradeoffs**
-- Caching layers: [CloudFront](/aws/storage-s3) (CDN), [ElastiCache Redis/Memcached](/dynamodb-data-services) (in-memory), [DynamoDB DAX](/dynamodb-data-services) (microsecond DynamoDB reads)
-- Read replicas: [Aurora](/dynamodb-data-services) up to 15 read replicas; offload read traffic; Global Database for cross-region reads
+- Caching layers: [CloudFront](/aws/storage-s3) (CDN), [ElastiCache Redis/Memcached](/aws/dynamodb-data-services) (in-memory), [DynamoDB DAX](/aws/dynamodb-data-services) (microsecond DynamoDB reads)
+- Read replicas: [Aurora](/aws/dynamodb-data-services) up to 15 read replicas; offload read traffic; Global Database for cross-region reads
 - Asynchronous processing: move work off the hot path; return 202 Accepted + polling/webhook
 - Data locality: place compute near data (same AZ) to minimize latency; use local zones for sub-millisecond to end users
 
@@ -198,7 +198,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Rule: each service should be independently deployable; a change to service A should not require redeployment of service B
 
 **Bounded Contexts on AWS**
-- Each context gets its own: [CodePipeline](/aws/cicd-devops), ECR repository, [ECS](/aws/compute-containers) service or [Lambda](/aws/lambda-serverless), [DynamoDB](/dynamodb-data-services) table or [RDS](/dynamodb-data-services) database, [IAM role](/aws/iam-security)
+- Each context gets its own: [CodePipeline](/aws/cicd-devops), ECR repository, [ECS](/aws/compute-containers) service or [Lambda](/aws/lambda-serverless), [DynamoDB](/aws/dynamodb-data-services) table or [RDS](/aws/dynamodb-data-services) database, [IAM role](/aws/iam-security)
 - Context boundary enforcement: services communicate only via well-defined APIs (REST, gRPC) or events — never direct DB access
 
 **Service Mesh: AWS App Mesh**
@@ -216,7 +216,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Central event bus; default bus (AWS service events), custom buses (application events), partner buses (SaaS integrations)
 - Rules: pattern-match on event JSON fields; route to [Lambda](/aws/lambda-serverless), SQS, SNS, Kinesis, Step Functions, [API Gateway](/aws/api-gateway-networking), etc.
 - Schema Registry: auto-discovers event schemas; generates code bindings for Java, Python, TypeScript
-- EventBridge Pipes: point-to-point source → filter → enrich → target; source: SQS, Kinesis, [DynamoDB Streams](/dynamodb-data-services); no polling code required
+- EventBridge Pipes: point-to-point source → filter → enrich → target; source: SQS, Kinesis, [DynamoDB Streams](/aws/dynamodb-data-services); no polling code required
 - EventBridge Scheduler: cron/rate-based invocation of any API target without a Lambda trigger
 
 **SNS Fanout Pattern**
@@ -256,7 +256,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 **Command Query Responsibility Segregation (CQRS)**
 - Write model (Command side): accepts commands, validates, writes events to event store
 - Read model (Query side): denormalized read tables optimized per query pattern; updated by consuming events
-- AWS pattern: [DynamoDB](/dynamodb-data-services) as event store (append-only, sort key = event sequence) → [DynamoDB Streams](/dynamodb-data-services) → [Lambda](/aws/lambda-serverless) → read models in [Aurora](/dynamodb-data-services), OpenSearch, or [ElastiCache](/dynamodb-data-services)
+- AWS pattern: [DynamoDB](/aws/dynamodb-data-services) as event store (append-only, sort key = event sequence) → [DynamoDB Streams](/aws/dynamodb-data-services) → [Lambda](/aws/lambda-serverless) → read models in [Aurora](/aws/dynamodb-data-services), OpenSearch, or [ElastiCache](/aws/dynamodb-data-services)
 
 **Event Sourcing**
 - State is derived from a sequence of immutable events, not mutated in place
@@ -324,7 +324,7 @@ StepFunction: PlaceOrderSaga
 
 **Circuit Breaker**
 - After N failures, open the circuit and return fallback immediately without attempting the failing dependency
-- AWS implementation: App Mesh circuit breaker (outlier detection in Envoy); custom implementation in [Lambda](/aws/lambda-serverless) with [ElastiCache](/dynamodb-data-services) state; AWS SDK has built-in retry/backoff
+- AWS implementation: App Mesh circuit breaker (outlier detection in Envoy); custom implementation in [Lambda](/aws/lambda-serverless) with [ElastiCache](/aws/dynamodb-data-services) state; AWS SDK has built-in retry/backoff
 - CloudWatch alarm → Lambda → SSM Parameter Store flag → application reads flag to short-circuit calls
 
 ---
@@ -347,7 +347,7 @@ StepFunction: PlaceOrderSaga
 - Web tier: static assets in [S3](/aws/storage-s3), served via [CloudFront](/aws/storage-s3); SPA communicates with backend API
 - App tier: private subnets; outbound internet via [NAT Gateway](/aws/api-gateway-networking); fetches secrets from [Secrets Manager](/aws/iam-security) at startup
 - Data tier: private subnets with no internet route; security groups restrict access to app tier only
-- ALB: sticky sessions only if stateful (prefer stateless + [ElastiCache Redis](/dynamodb-data-services)); HTTPS listener with ACM certificate
+- ALB: sticky sessions only if stateful (prefer stateless + [ElastiCache Redis](/aws/dynamodb-data-services)); HTTPS listener with ACM certificate
 
 ### Serverless Web Application
 
@@ -392,16 +392,16 @@ StepFunction: PlaceOrderSaga
 ### Multi-AZ
 - Minimum: 2 AZs (prefer 3 for avoiding split-brain in quorum systems)
 - [EC2](/aws/compute-containers): ASG spans AZs; ALB distributes across targets in all AZs
-- [RDS](/dynamodb-data-services) Multi-AZ: synchronous replication to standby in different AZ; automated failover; standby not readable
-- [Aurora](/dynamodb-data-services): 6-way replication across 3 AZs for storage; can have reader instances in different AZs
-- [ElastiCache Redis](/dynamodb-data-services): Multi-AZ replication groups; automatic failover to replica
-- [DynamoDB](/dynamodb-data-services): inherently multi-AZ (global tables for multi-region); no configuration needed
+- [RDS](/aws/dynamodb-data-services) Multi-AZ: synchronous replication to standby in different AZ; automated failover; standby not readable
+- [Aurora](/aws/dynamodb-data-services): 6-way replication across 3 AZs for storage; can have reader instances in different AZs
+- [ElastiCache Redis](/aws/dynamodb-data-services): Multi-AZ replication groups; automatic failover to replica
+- [DynamoDB](/aws/dynamodb-data-services): inherently multi-AZ (global tables for multi-region); no configuration needed
 
 ### Multi-Region Active-Active
 - Both regions serve production traffic simultaneously; true HA across regional failures
 - [Route 53](/aws/api-gateway-networking) latency-based routing: users go to nearest healthy region
-- [DynamoDB Global Tables](/dynamodb-data-services): multi-master, eventual consistency; last-writer-wins conflict resolution
-- [Aurora Global Database](/dynamodb-data-services): primary region for writes, secondary regions for reads; < 1 second replication lag; can promote in < 1 minute
+- [DynamoDB Global Tables](/aws/dynamodb-data-services): multi-master, eventual consistency; last-writer-wins conflict resolution
+- [Aurora Global Database](/aws/dynamodb-data-services): primary region for writes, secondary regions for reads; < 1 second replication lag; can promote in < 1 minute
 - [S3 Cross-Region Replication](/aws/storage-s3): asynchronous; replication time control (RTC) for < 15 min SLA
 - Requires stateless app tier; session state in DynamoDB or ElastiCache Global Datastore
 - Active-active tradeoff: complex conflict resolution, higher cost, more operational overhead
@@ -451,7 +451,7 @@ StepFunction: PlaceOrderSaga
 **Warm Standby**
 - Scaled-down replica of production: app servers running (minimum capacity), DB replication active
 - On failover: scale up ASG, update [Route 53](/aws/api-gateway-networking) weights/failover
-- RPO: seconds (if async replication) or near-zero ([Aurora Global Database](/dynamodb-data-services)); RTO: minutes
+- RPO: seconds (if async replication) or near-zero ([Aurora Global Database](/aws/dynamodb-data-services)); RTO: minutes
 
 **Multi-Site Active-Active**
 - See High Availability section above
@@ -461,7 +461,7 @@ StepFunction: PlaceOrderSaga
 **Key DR Services**
 - AWS Elastic Disaster Recovery (formerly CloudEndure): continuous replication of on-prem or cloud servers; failover in minutes
 - [AWS Backup](/aws/cicd-devops): cross-region, cross-account backup management
-- [Aurora Global Database](/dynamodb-data-services): < 1 second cross-region replication; promote secondary in < 1 minute
+- [Aurora Global Database](/aws/dynamodb-data-services): < 1 second cross-region replication; promote secondary in < 1 minute
 - [S3 Cross-Region Replication](/aws/storage-s3) with Replication Time Control (RTC): 99.99% of objects replicated in < 15 minutes
 
 ---
@@ -502,7 +502,7 @@ StepFunction: PlaceOrderSaga
 - [S3 Intelligent-Tiering](/aws/storage-s3): auto moves objects between Frequent/Infrequent/Archive tiers; no retrieval fees for Frequent/Infrequent
 - S3 Lifecycle policies: transition to IA after 30 days, Glacier after 90 days, Deep Archive after 180 days
 - [EBS](/aws/storage-s3): delete unattached volumes (alarm when state = available for > 7 days); switch to gp3 (same perf as gp2, 20% cheaper)
-- [RDS](/dynamodb-data-services): use Aurora Serverless v2 for variable workloads — scales in 0.5 ACU increments, scales to zero after idle period
+- [RDS](/aws/dynamodb-data-services): use Aurora Serverless v2 for variable workloads — scales in 0.5 ACU increments, scales to zero after idle period
 
 ### Lambda Cost Optimization — see [Lambda & Serverless](/aws/lambda-serverless) for full Lambda optimization guide
 - Right-size memory: use AWS Lambda Power Tuning (Step Functions) to find optimal memory/cost balance
@@ -574,7 +574,7 @@ StepFunction: PlaceOrderSaga
 
 ## 8. Migration Strategies — The 7 Rs
 
-> Related: [CI/CD & DevOps](/aws/cicd-devops) for pipeline automation during migration; [EC2, ECS & Containers](/aws/compute-containers) for compute targets; [DynamoDB & Data Services](/dynamodb-data-services) for DMS and database migration.
+> Related: [CI/CD & DevOps](/aws/cicd-devops) for pipeline automation during migration; [EC2, ECS & Containers](/aws/compute-containers) for compute targets; [DynamoDB & Data Services](/aws/dynamodb-data-services) for DMS and database migration.
 
 ### Retire
 - Decommission: application has no business value; turn it off
@@ -609,7 +609,7 @@ StepFunction: PlaceOrderSaga
 
 ### Refactor / Re-architect
 - Rethink architecture to be cloud-native; highest complexity, highest long-term benefit
-- Examples: decompose monolith into microservices; re-write to use [Lambda](/aws/lambda-serverless) + [DynamoDB](/dynamodb-data-services); implement event-driven architecture
+- Examples: decompose monolith into microservices; re-write to use [Lambda](/aws/lambda-serverless) + [DynamoDB](/aws/dynamodb-data-services); implement event-driven architecture
 - When to use: app is a strategic differentiator; current architecture is a bottleneck to growth
 - Requires most time and investment; justified when business agility value exceeds migration cost
 
@@ -701,7 +701,7 @@ Root
 
 **EventBridge Pipes**
 - Point-to-point integration: source → filter → enrich → target
-- Sources: SQS, Kinesis, [DynamoDB Streams](/dynamodb-data-services), Kafka (MSK/self-managed)
+- Sources: SQS, Kinesis, [DynamoDB Streams](/aws/dynamodb-data-services), Kafka (MSK/self-managed)
 - Enrichment step: [Lambda](/aws/lambda-serverless), [API Gateway](/aws/api-gateway-networking), Step Functions (synchronous) — add data before target
 - Target: same as EventBridge rules; also SQS, Kinesis, DynamoDB, EventBridge bus, Step Functions
 - Eliminates polling Lambda functions; reduces code; native filtering before Lambda invocation
@@ -791,7 +791,7 @@ Root
 - Billing: per-account Cost Explorer; tag policies; consolidated billing in management account
 
 **Pool Model (Shared Infrastructure)**
-- All tenants share [EC2](/aws/compute-containers)/[Lambda](/aws/lambda-serverless)/[RDS](/dynamodb-data-services); tenant data isolated by `tenantId` column (row-level security) or [DynamoDB](/dynamodb-data-services) partition key
+- All tenants share [EC2](/aws/compute-containers)/[Lambda](/aws/lambda-serverless)/[RDS](/aws/dynamodb-data-services); tenant data isolated by `tenantId` column (row-level security) or [DynamoDB](/aws/dynamodb-data-services) partition key
 - DynamoDB: `PK = tenant#<id>#resource#<id>` — all queries must include tenantId
 - Aurora: Row Level Security (RLS) via PostgreSQL policies enforced at DB level
 - Application-level isolation: every [API Gateway](/aws/api-gateway-networking) request validated against JWT `tenantId` claim; middleware prevents cross-tenant data access
@@ -805,14 +805,14 @@ Root
 ### White-Labeling Architecture
 - Custom domain per client: [Route 53](/aws/api-gateway-networking) hosted zones per tenant; ACM wildcard or per-domain certificates
 - [CloudFront](/aws/storage-s3) distribution per tenant (or SNI on shared distribution): different origins, behaviors, cache policies per tenant
-- Branding config in [DynamoDB](/dynamodb-data-services): `tenantId` → logo URL, color scheme, feature flags; fetched on UI load
+- Branding config in [DynamoDB](/aws/dynamodb-data-services): `tenantId` → logo URL, color scheme, feature flags; fetched on UI load
 - Subdomain routing: `client1.saas.com`, `client2.saas.com` → same CloudFront → same origin → tenant resolved by `Host` header
 - Custom domain BYOD (Bring Your Own Domain): client points CNAME to CloudFront distribution; ACM validates via DNS
 
 ### Client Isolation Strategies
 
 **Data Isolation**
-- Physical: separate databases (highest isolation, highest cost) — see [DynamoDB & Data Services](/dynamodb-data-services) for database options
+- Physical: separate databases (highest isolation, highest cost) — see [DynamoDB & Data Services](/aws/dynamodb-data-services) for database options
 - Logical: shared database, separate schemas (Postgres), or row-level isolation with RLS
 - Encryption: unique [KMS key](/aws/iam-security) per tenant; data is cryptographically isolated even if logical controls fail (expensive but used in financial services)
 
@@ -913,5 +913,5 @@ A: Use Spot Instances for compute — nightly batch is fault-tolerant, schedule 
 | EC2, ECS, EKS, Fargate, Spot, Graviton | [/aws-compute-containers](/aws/compute-containers) |
 | S3, CloudFront CDN, EBS, EFS, Glacier | [/aws-storage-s3](/aws/storage-s3) |
 | CI/CD, CodePipeline, CDK, IaC, AWS Backup | [/aws-cicd-devops](/aws/cicd-devops) |
-| DynamoDB, RDS, Aurora, ElastiCache, Redshift | [/dynamodb-data-services](/dynamodb-data-services) |
+| DynamoDB, RDS, Aurora, ElastiCache, Redshift | [/dynamodb-data-services](/aws/dynamodb-data-services) |
 | Bedrock, SageMaker, AI/ML services | [/aws-ai-ml-services](/aws/ai-ml-services) |
