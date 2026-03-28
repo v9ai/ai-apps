@@ -28,7 +28,6 @@ pnpm strategy:check:all           # Validate all tracked files
 
 # Scripts
 pnpm skills:seed                  # Seed skill taxonomy
-pnpm boards:discover              # Discover Ashby boards
 # Deployment
 pnpm deploy                       # Vercel deploy (runs scripts/deploy.ts)
 ```
