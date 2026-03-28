@@ -57,7 +57,7 @@ export default function LogoPage() {
             Agentic Lead Gen
           </h1>
           <p className={css({ color: "rgba(255,255,255,0.45)", fontSize: "15px", mb: "6", maxW: "480px" })}>
-            100 parallel AI agents each designed a unique SVG logo. Every concept is distinct — from circuit neural networks to origami birds, quantum dots to chess strategy.
+            One concept, 21 executions. Crystal Prism — prism refracting data into spectrum — explored across warm gold, neon night, isometric, double refraction, aurora, holographic, and more.
           </p>
           {/* Search */}
           <div className={css({ position: "relative", maxW: "360px" })}>
