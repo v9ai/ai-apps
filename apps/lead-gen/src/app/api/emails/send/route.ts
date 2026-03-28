@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const FROM = "Vadim Nicolai <contact@vadim.blog>";
-const RESUME_PATH = join(process.cwd(), "vadim-nicolai-resume.pdf");
+const RESUME_PATH = join(process.cwd(), "CV_Vadim_Nicolai.pdf");
 
 interface SendEmailRequest {
   contactId: number;
