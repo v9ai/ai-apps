@@ -229,6 +229,65 @@ ecomm = ds['train'].filter(lambda x: x['success'] and 'product' in x['user_promp
 
 ---
 
+## Real-World Context: Agentic Lead-Gen at agenticleadgen.xyz
+
+**Live application**: [agenticleadgen.xyz](https://agenticleadgen.xyz/) — a B2B lead generation
+platform built on Next.js + Rust ML crates, visualized with xyflow.
+
+**GitHub**: [nicolad/ai-apps — apps/lead-gen](https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen)
+
+The lead-gen app's extraction stack illustrates where and why specialized extraction
+matters in production. It uses:
+
+- **Rust `scraper` crate** (DOM-aware, CSS selectors) in `crates/metal/src/kernel/html_extractor.rs`
+- **Zero-allocation state machine** (`html_scanner.rs`) for email extraction — single-pass,
+  no heap allocations, microsecond latency
+- **JSON-LD parsing** from `<script type="application/ld+json">` tags
+- **Custom NER** Rust FSM — 92.3% F1, ~100 pages/sec on company profile pages
+- **open-graph-scraper** (Node.js) for lightweight OG metadata extraction from LinkedIn posts
+
+The pipeline is visualized using **xyflow** (`@xyflow/react` v12.10.1) in two components:
+1. `src/components/landing-pipeline.tsx` — 7-stage pipeline (RL Crawler → NER Extraction →
+   Entity Resolution → Lead Scoring → Report Generation → Evaluation)
+2. `src/app/how-it-works/pipeline-client.tsx` — Agent nodes + DataStore nodes with custom
+   handles, colors (Globe, Database, Brain, Search icons)
+
+**The ScrapeGraphAI connection**: The lead-gen app's custom Rust extractor is the
+low-level approach — fast, zero-cost, but domain-specific and schema-rigid. The
+ScrapeGraphAI fine-tuned model represents the complementary approach: schema-flexible,
+prompt-driven structured extraction. For the lead-gen pipeline, combining both gives:
+- Rust scanner for high-throughput email/contact harvesting (~100 pages/sec)
+- ScrapeGraphAI model for flexible company profile extraction where schemas vary
+
+This is the production reality: specialized extractors for hot paths, LLM-based
+extraction for flexible schemas. The 1.7B GGUF model fits this pattern — it's small
+enough to run alongside the Rust pipeline on the same M1 infrastructure.
+
+**xyflow diagram for the article should be wider** — use x positions with 280px gaps
+and show the 9-stage pipeline horizontally: Raw Web → Rust Scanner → Candidate URLs →
+ML Ranker → Schema Extraction (sgai-qwen3) → NER Validation → Lead Score → Outreach → CRM
+
+## Diagram instructions for this article
+
+The xyflow diagram should be WIDE (9 nodes across, 280px x-gap) showing the full
+extraction pipeline from raw web to CRM, with the sgai-qwen3 model as the "Schema
+Extraction" step:
+
+Nodes (left to right, y=0 main path, no branches needed):
+1. "Raw Web Pages" (x=0, type=input)
+2. "Rust HTML Scanner" (x=280)
+3. "Candidate URLs" (x=560)
+4. "ML Ranker" (x=840)
+5. "Schema Extraction\n(sgai-qwen3-1.7b)" (x=1120)
+6. "NER Validation" (x=1400)
+7. "Lead Score" (x=1680)
+8. "Outreach Queue" (x=1960)
+9. "CRM / Neon DB" (x=2240, type=output)
+
+height=300, all edges animated
+
+---
+
 ## Sources
 - Paper: arxiv 2505.15812
 - Full dataset: https://huggingface.co/datasets/scrapegraphai/scrapegraphai-100k
