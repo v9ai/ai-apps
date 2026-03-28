@@ -61,7 +61,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - CloudWatch Logs Insights: query logs for security events (`filter @message like /AccessDenied/`)
 - EventBridge + Lambda: auto-remediation (quarantine EC2, rotate key) on GuardDuty finding
 
-**Infrastructure Protection**
+**Infrastructure Protection** — see [API Gateway & Networking](/aws-api-gateway-networking) for VPC, WAF, and Shield details; [IAM & Security](/aws-iam-security) for WAF managed rules and Network Firewall
 - VPC Security Groups: stateful, instance-level; use as virtual firewalls; principle: default deny, explicit allow
 - NACLs: stateless, subnet-level; use as coarse secondary layer (not primary)
 - WAF: Layer 7 rules (SQL injection, XSS, rate limiting, IP allow/block lists, AWS Managed Rules); attach to ALB, CloudFront, API Gateway

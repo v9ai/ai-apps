@@ -522,8 +522,8 @@ Destinations: CloudWatch Logs, S3. Query with CloudWatch Insights or Athena. Use
 - Security investigations.
 
 ### VPC Endpoints
-- **Gateway endpoints** (S3, DynamoDB): route table entries, no cost, keep traffic inside AWS.
-- **Interface endpoints** (PrivateLink): ENI in your subnet, per-hour + per-GB cost. Works for most AWS services. Use endpoint policies to restrict which S3 buckets are accessible via the endpoint.
+- **Gateway endpoints** ([S3](/aws-storage-s3), [DynamoDB](/dynamodb-data-services)): route table entries, no cost, keep traffic inside AWS.
+- **Interface endpoints** (PrivateLink): ENI in your subnet, per-hour + per-GB cost. Works for most AWS services. Use endpoint policies to restrict which [S3](/aws-storage-s3) buckets are accessible via the endpoint.
 
 ---
 
@@ -585,7 +585,7 @@ Detects unusual API activity (write management events). Compares baseline to cur
 ## 15. Amazon GuardDuty
 
 ### What It Does
-Continuous threat detection ML service. Ingests: CloudTrail management + S3 data events, VPC Flow Logs, DNS logs, EKS audit logs, RDS login activity, Lambda network activity, S3 access patterns, Malware Protection (EBS volumes).
+Continuous threat detection ML service. Ingests: CloudTrail management + [S3](/aws-storage-s3) data events, VPC Flow Logs, DNS logs, [EKS](/aws-compute-containers) audit logs, RDS login activity, [Lambda](/aws-lambda-serverless) network activity, S3 access patterns, Malware Protection (EBS volumes).
 
 ### Finding Types (by threat purpose)
 | Category | Example Findings |

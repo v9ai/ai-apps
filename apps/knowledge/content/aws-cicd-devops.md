@@ -1,7 +1,7 @@
 # AWS CI/CD & DevOps
 
 ## The 30-Second Pitch
-AWS CI/CD & DevOps is the integrated ecosystem of services—CodeCommit, CodeBuild, CodeDeploy, CodePipeline, CloudFormation, CDK, and Systems Manager—that automate and govern the entire software delivery lifecycle on AWS. It solves the problem of manual, error-prone deployments and inconsistent infrastructure by giving teams a single-vendor, IAM-integrated, audit-trailed path from source code to production. Teams pick the AWS native toolchain for tight integration with IAM, CloudWatch, and every AWS resource (no separate credentials plumbing), for compliance (all API calls logged to CloudTrail), and for the unified billing and support model. The strategic tradeoff versus GitHub Actions + Terraform is flexibility for simplicity—AWS native tools are less portable but operationally tighter.
+AWS CI/CD & DevOps is the integrated ecosystem of services—CodeCommit, CodeBuild, CodeDeploy, CodePipeline, CloudFormation, CDK, and Systems Manager—that automate and govern the entire software delivery lifecycle on AWS. It solves the problem of manual, error-prone deployments and inconsistent infrastructure by giving teams a single-vendor, IAM-integrated, audit-trailed path from source code to production. Teams pick the AWS native toolchain for tight integration with [IAM](/aws-iam-security), CloudWatch, and every AWS resource (no separate credentials plumbing), for compliance (all API calls logged to CloudTrail), and for the unified billing and support model. The strategic tradeoff versus GitHub Actions + Terraform is flexibility for simplicity—AWS native tools are less portable but operationally tighter.
 
 ---
 
@@ -544,7 +544,7 @@ hotfix/*   ──push──→      [Fast-track: Build → Test → Manual Appro
 2. ECR repository in Tools account; grant `ecr:GetDownloadUrlForLayer` etc. to Dev/Staging/Prod account principals.
 3. KMS key policy: `kms:Decrypt` for all deployment account roles.
 4. S3 artifact bucket policy: `s3:GetObject` for all deployment account roles.
-5. Each target account has an IAM role with a trust policy trusting the Tools account pipeline execution role.
+5. Each target account has an [IAM](/aws-iam-security) role with a trust policy trusting the Tools account pipeline execution role.
 
 ### Feature Branch Strategies
 
