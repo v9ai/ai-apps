@@ -327,16 +327,46 @@ async fn main() -> Result<()> {
     }
     println!("{}", "─".repeat(90));
 
-    // 8. Save
+    // 8. Save JSON
     let output = json!({
         "query_movie": MOVIE,
         "generated_at": chrono::Utc::now().to_rfc3339(),
         "total_results": all_results.len(),
         "results": all_results,
     });
-    let out_path = concat!(env!("CARGO_MANIFEST_DIR"), "/similar_movies_results.json");
-    std::fs::write(out_path, serde_json::to_string_pretty(&output)?)?;
-    println!("\n✓ {} results saved to similar_movies_results.json", all_results.len());
+    let json_path = concat!(env!("CARGO_MANIFEST_DIR"), "/similar_movies_results.json");
+    std::fs::write(json_path, serde_json::to_string_pretty(&output)?)?;
+
+    // 9. Save Markdown with URLs
+    let md_path = concat!(env!("CARGO_MANIFEST_DIR"), "/similar_movies.md");
+    std::fs::write(md_path, build_markdown(MOVIE, &all_results))?;
+    println!("\n✓ {} results → similar_movies_results.json + similar_movies.md", all_results.len());
 
     Ok(())
+}
+
+fn justwatch_url(title: &str, year: u32) -> String {
+    let q = title.split_whitespace().collect::<Vec<_>>().join("+");
+    format!("https://www.justwatch.com/us/search?q={q}+{year}")
+}
+
+fn imdb_url(title: &str, year: u32) -> String {
+    let q = title.split_whitespace().collect::<Vec<_>>().join("+");
+    format!("https://www.imdb.com/find/?q={q}+{year}")
+}
+
+fn build_markdown(query: &str, results: &[MovieResult]) -> String {
+    let mut md = String::new();
+    md.push_str(&format!("# Movies similar to: {query}\n\n"));
+    md.push_str("| # | Title | Year | Platform | IMDb | JustWatch | IMDB |\n");
+    md.push_str("|---|-------|------|----------|------|-----------|------|\n");
+    for m in results {
+        let jw = justwatch_url(&m.title, m.year);
+        let imdb = imdb_url(&m.title, m.year);
+        md.push_str(&format!(
+            "| {} | {} | {} | {} | {:.1} | [Watch]({}) | [IMDb]({}) |\n",
+            m.rank, m.title, m.year, m.platform, m.imdb_rating, jw, imdb,
+        ));
+    }
+    md
 }
