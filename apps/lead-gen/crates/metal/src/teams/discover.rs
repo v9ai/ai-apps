@@ -130,9 +130,9 @@ fn read_domains(path: &Path) -> Result<Vec<String>> {
 async fn search_companies(http: &reqwest::Client, vertical: &str) -> Result<Vec<String>> {
     // DuckDuckGo HTML search (no API key required)
     let queries = [
-        format!("EU AI {} companies hiring remote", vertical),
-        "European machine learning engineering companies".to_string(),
-        format!("AI infrastructure {} Europe remote", vertical),
+        format!("AI {} companies hiring fully remote worldwide", vertical),
+        "machine learning engineering companies remote-first distributed".to_string(),
+        format!("AI infrastructure {} remote work from anywhere", vertical),
     ];
 
     let mut domains = Vec::new();
