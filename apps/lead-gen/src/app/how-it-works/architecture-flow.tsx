@@ -234,9 +234,9 @@ function MiniFlow({ nodes, edges, height = 280 }: { nodes: Node[]; edges: Edge[]
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  *  1. JOB INGESTION FLOW
  *
- *  Rust-based ats-crawler worker scrapes job boards (Ashby,
- *  Greenhouse) via Common Crawl. The insert-jobs worker queues
- *  them for classification. Simple left-to-right pipeline.
+ *  Rust-based board-crawler worker scrapes job boards via
+ *  Common Crawl. The insert-jobs worker queues them for
+ *  classification. Simple left-to-right pipeline.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const ingestionNodes: Node[] = [
@@ -244,7 +244,7 @@ const ingestionNodes: Node[] = [
     id: "crawler",
     type: "agent",
     position: { x: 0, y: 40 },
-    data: { label: "ats-crawler", sublabel: "Rust / Common Crawl", icon: Globe, color: "var(--red-9)" },
+    data: { label: "board-crawler", sublabel: "Rust / Common Crawl", icon: Globe, color: "var(--red-9)" },
   },
   {
     id: "insert",
