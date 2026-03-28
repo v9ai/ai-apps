@@ -791,3 +791,93 @@ The Rust inference side can use `tract` (for ONNX XGBoost/RF models) or `candle`
 **Chapelle & Zhang (2020, arXiv:2004.09900 — LinkedIn):** The gold standard for send-time optimization ML. The survival model formulation is elegant: instead of predicting "will this person open at 9am Tuesday," it predicts a continuous-time distribution over when the person next opens email, then samples from that distribution to select the optimal send time. This requires storing each user's email interaction sequence (timestamp, opened bool), which Mautic's `lead_event_log` already captures. The LSTM is small (32 hidden units) and exports cleanly to ONNX — Rust inference with `tract` is straightforward.
 
 **Leuchtfeuer blog (2023):** The accuracy numbers (77%/95%) are marketing copy backed by an unpublished master's thesis. Without knowing the algorithm, features, dataset size, metric definition, or validation methodology, the numbers should be treated as directionally correct (ML > rule-based) but not precisely reproducible. The correct academic benchmark for the same claim is the Pham et al. systematic review which shows 3x conversion rate improvement (5% → 15%) — a more conservative and better-validated estimate of the uplift from ML over rule-based scoring.
+
+---
+
+## 12. Recency & Changelog
+
+### Latest Release
+
+| Version | Date | Type | Notes |
+|---|---|---|---|
+| **7.1.0-rc (Canis Major)** | 2026-03-06 | Release Candidate | S/MIME email signing, login throttling, optimistic locking for emails/pages, bot-detection upgrade (500+ bots auto-blocked), PHP 8.5 compatibility (Elfinder v13). No AI/ML changes. |
+| **7.0.1 (Elkurud)** | 2026-02-24 | Security patch | One CVE fix only. No feature changes. |
+| **7.0.0 (Columba)** | 2026-01-20 | Major (latest stable) | Symfony 7.3, PHP 8.4, campaign import/export, Projects feature, API v2 (API Platform), segment-based email improvements, multilingual SMS/notifications. Zero AI/ML additions. |
+| **6.0.8** | 2026-02-24 | Security patch | CVE backport only. |
+| **5.2.10 (Celaeno)** | 2026-02-24 | Security patch | CVE backport only. 5.x LTS line receives security support until June 2026. |
+
+The most significant scoring-adjacent change in Mautic 7.0.0 was a minor integer-range guard: PR #15455 limits company score values to a configurable numeric range (preventing runaway accumulation). This is a UX fix, not an ML feature.
+
+### AI/ML Roadmap Status
+
+**AI Working Group (official, active).** The Mautic Project formed a dedicated working group (`#wg-ai` Slack channel, community.mautic.org/assemblies/ai-working-group) to coordinate AI integration. The group published an **AI Manifesto** (mautic.org/mautics-ai-manifesto) laying out five guiding principles: Accessible, Flexible, Transparent, Ethical, Inclusive/Responsible.
+
+Key manifesto commitment: *"The Mautic project is dedicated to exploring and promoting AI integrations while maintaining a strictly AI-agnostic stance. We do not currently host or maintain any AI services as part of the Mautic project."*
+
+**What this means in practice:**
+- No LLM will be bundled into Mautic core — all AI features will be opt-in plugins requiring a user-supplied API key or self-hosted model endpoint.
+- No predictive scoring is on any published 7.x milestone. The GitHub milestones for 7.1.0 and beyond contain no AI/ML issues.
+- The AI Manifesto was published and discussed at Mautic World Conference 2025 as a philosophy document, not a feature roadmap with delivery dates.
+
+**Conference 2025 AI sessions (announced topics, not shipped features):**
+- "Asynchronous AI Agents: Better at Marketing Than You" — conceptual, not a Mautic product session
+- "AI-Powered Marketing Automation: Machine Learning Strategies for Next-Gen Mautic Campaigns" — covered behavioral segmentation, predictive analytics, real-time decision engines as aspirational goals
+- "Theme Switching & AI Translation" — AI-assisted multilingual email content (closest to a concrete near-term feature)
+
+**AI coding agent documentation** was merged into the 7.0 codebase (PR #15697, December 2025): AGENTS.md, CLAUDE.md, and GEMINI.md to help AI coding assistants (Claude Code, Gemini, Codex) work effectively in the Mautic codebase. This is developer-tooling hygiene, not a user-facing AI feature.
+
+**No announced timeline** for predictive lead scoring, send-time optimization, or LLM-based content generation in Mautic core as of March 2026.
+
+### Recent Commits (last 90 days, scoring/segmentation/ML-adjacent)
+
+Scanning commits from December 2025 to March 2026, zero commits touched scoring logic, segmentation algorithms, or ML-adjacent code. All commits in this window fell into:
+- Security patches (CVE fixes, XML signature library bumps)
+- PHP 8.5 compatibility (Elfinder upgrade)
+- Email rendering fixes (Outlook CSS, UTM parameter handling)
+- Campaign controller refactors (no logic change)
+- Test suite hardening (flaky test fixes)
+
+The only Points-system commit in the window was PR #15529 (fixing a PHP warning on page hit with points — a null-check bug fix, not a feature).
+
+### Open Issues (AI/ML relevant)
+
+Searching the open issue tracker for `ai`, `ml`, `scoring`, `predictive`, and `llm` returns **2 unrelated results** (contact ownership bug, owner-as-mailer bug). No open issues exist for:
+- Predictive lead scoring
+- ML-based send-time optimization
+- LLM content generation in core
+- Embedding-based segmentation
+
+The send-time optimization feature request (issue #7855, filed 2019) was **closed** with no resolution — the label `builder-legacy` indicates it was deprioritized as part of the legacy UI cleanup. No replacement issue was opened.
+
+### Community Plugins
+
+The third-party plugin ecosystem has filled some AI gaps, but predictive scoring and send-time optimization remain absent even from plugins:
+
+| Plugin | Author | Capability | Mautic version | Notes |
+|---|---|---|---|---|
+| **ChatGPT for Mautic** | John Linhart (crafting.email) | Email + MJML generation, A/B variant creation, 95-language translation, prompt history | 5.0+ | GPL 3.0, not officially affiliated with OpenAI or Mautic |
+| **Email Wizard (Aivie)** | Aivie (Switzerland) | GPT-4 subject line + body generation inside the Mautic email editor | 5.x/6.x | Commercial plugin, pricing not public |
+| **Company Points Bundle** | Leuchtfeuer | Enhanced company-level scoring with trigger thresholds | 5.x | Open source (GitHub: Leuchtfeuer/mautic-CompanyPoints-bundle); addresses account-based scoring gap but still rule-based |
+| **Unlimited SQL segments (mtcextendee)** | mtcextendee | Arbitrary SQL as segment filter — enables importing ML scores as segment criteria | 5.x | Commercial; the closest workaround for ML-scored segments |
+
+**No plugin exists** as of March 2026 for: predictive lead scoring, automated send-time optimization, churn/re-engagement prediction, or embedding-based contact clustering.
+
+**Integration platform workarounds** (not plugins, require external infrastructure):
+- **n8n**: Mautic webhook → OpenAI/Anthropic call → write score back via REST API (`PATCH /api/contacts/{id}`)
+- **Latenode**: No-code Mautic + Mistral/GPT-4 content generation
+- **Relevance AI**: AI agent templates that treat Mautic contacts as action targets
+
+The Leuchtfeuer ML scoring prototype (from the 2023 blog post) works via batch export → Python scoring → REST import, with 1+ cron-cycle latency per scoring run. No maintained open-source plugin wraps this workflow.
+
+### Staleness Assessment
+
+**Mautic is actively maintained and not stale as a project**, but it is increasingly stale as a foundation for AI-driven B2B outreach in 2026.
+
+| Dimension | Assessment |
+|---|---|
+| **Release cadence** | Healthy. 7.0.0 (Jan 2026), 7.1.0-rc (Mar 2026). Major release roughly every 6 months. Security patches within days of CVE disclosure. |
+| **Community size** | Active. 200,000+ installs, 152+ contributors, active Slack/forums. |
+| **AI feature velocity** | Effectively zero. No AI/ML code merged in 12+ months. The AI Working Group has published principles but shipped nothing. |
+| **Competitive gap (AI)** | Widening. HubSpot Breeze AI, Salesforce Einstein, ActiveCampaign AI, Klaviyo predictive analytics all shipped production ML features in 2024–2025 that Mautic has no roadmap equivalent for. |
+| **PHP + cron architecture** | Unchanged in Mautic 7. Still PHP-FPM + cron-batch, still no event bus, still no real-time scoring. Symfony 7.3 is a framework modernization, not an architecture change. |
+| **Appropriate for new projects in 2026?** | **Conditional yes** for self-hosted, privacy-sensitive, or budget-constrained use cases where rule-based scoring is sufficient and AI features will be custom-built via the REST API. **No** if the requirement is native predictive scoring, send-time optimization, or LLM-assisted content in the UI — those capabilities do not exist natively and have no committed delivery date. For the lead-gen platform specifically (where ML scoring is the differentiator), Mautic's value is as a reference implementation and integration target, not as the ML engine. |
