@@ -586,3 +586,98 @@ The clinical NLP temperature study (PMC 2024) shows that structured data extract
 **RFM Dynamic Weights (ScienceDirect 2022):** Argues that the right way to assign weights in a lead scoring formula is through clustering (K-means or GMM on historical lead outcomes) rather than manual specification. Applied to this tool: cluster historical leads by outcome (replied / ignored / converted), find which features cluster repliers apart from non-repliers, and use the cluster centroids to set the weights. This is achievable with 100-200 labeled leads — a realistic data collection window for an active outreach campaign.
 
 **ACM WebSci 2025 (Bhatt et al.):** The linguistic analysis of AI vs human emails is the strongest evidence for why the tool needs either (a) human review of generated templates before sending, or (b) fine-tuning on high-reply-rate examples. AI emails' formal/verbose characteristics are detectable by spam filters and by prospects themselves, which contributes to lower engagement rates compared to conversational, human-sounding copy.
+
+---
+
+## 12. Recency & Changelog
+
+### Latest Release
+
+No formal releases have been published. The repository has no GitHub Releases and no version tags. The README self-labels the current state as "v2.0" but this is a marketing label in the README text only, not a tagged release. There is no changelog file (CHANGELOG.md) in the repository root.
+
+### Recent Commits (last 90 days)
+
+The repository has two distinct activity clusters with a large gap between them.
+
+**February 11, 2026** — the only recent activity:
+
+| Commit | Message | Notes |
+|---|---|---|
+| `57c316d` | Refactor and enhance UI components | SVG icon improvements to charts, responsive data tables |
+| `8426574` | Merge branch 'main' | Routine merge, no substantive change |
+| `2fdd2f6` | Centralized business profile management | Extracts OpenAI client into `src/openaiClient.js` singleton; centralizes `business-profile.json` loading |
+| `92fd4ec` | Update funding sources | Modifies `.github/FUNDING.yml` only — not a code change |
+
+**July 2025** — initial development burst (outside the 90-day window but included for context):
+
+| Date | Commit | Message |
+|---|---|---|
+| Jul 15, 2025 | `37f6081` | Enhanced MarketingAI capabilities — bilingual support, 7 industries, business size estimation |
+| Jul 15, 2025 | `a09c22c` | vCard contact export feature |
+| Jul 14, 2025 | `87fdb41` | v2.0 implementation — AI-powered lead generation and marketing automation (with cursoragent co-author) |
+| Jul 14, 2025 | `e692393` | Create UPDATE_PLANE.md (roadmap doc) |
+| Jul 5–6, 2025 | multiple | README refinements, .gitignore, license/compliance notices |
+
+**Summary:** Within the last 90 days (since approximately January 2026), there are exactly 4 commits, of which only 2 contain substantive code changes (`57c316d` UI refactor, `2fdd2f6` OpenAI client abstraction). The other two are a merge commit and a FUNDING.yml edit.
+
+### Open Issues (AI/ML relevant)
+
+Zero open issues. Zero closed issues. The repository has no issue tracker activity whatsoever — no bug reports, no feature requests, no community discussion. This is consistent with a solo author project with minimal external users engaging via GitHub.
+
+There are no tracked issues related to:
+- AI scoring model accuracy or weight tuning
+- OpenAI model version upgrades (e.g., gpt-4o vs gpt-4o-mini selection)
+- Email discovery (the broken `possibleEmails` field)
+- Temperature optimization per campaign type
+- International market support beyond Indonesia
+
+### Merged PRs (last 90 days)
+
+No PRs merged in the last 90 days. The repository has exactly 1 PR total in its history:
+
+| PR | Title | Status | Author | Date |
+|---|---|---|---|---|
+| #1 | Analyze tool improvement plan | Merged | asiifdev | Jul 14, 2025 |
+
+This was a self-merge by the author (the PR converted an AI-generated improvement plan into the v2.0 implementation) and is outside the 90-day window.
+
+### Roadmap / Announced Features
+
+The README lists the following as planned (unchecked roadmap items):
+
+- **Email discovery functionality** — fix the permanently empty `possibleEmails` field (the highest-impact missing feature)
+- **International phone number validation** — remove the Indonesian `08`/`+62` hardcoding
+- **Multiple search engine support** — beyond Google Maps (Bing Maps, Apple Maps, Yelp implied)
+- **Batch processing for multiple queries** — run multiple search queries in one campaign
+- **CRM and email marketing API integrations** — SendGrid, Mailchimp, HubSpot (no specific API named)
+
+No public announcement, GitHub Discussion, or blog post elaborates on timelines or implementation plans for any of these items. The `UPDATE_PLANE.md` file referenced in the July 14, 2025 commit returns a 404 — either deleted or moved since the initial commit.
+
+### Staleness Assessment
+
+**Verdict: Low activity, borderline stale. Acceptable as a reference implementation but not safe as a production dependency.**
+
+Key evidence:
+
+| Signal | Finding |
+|---|---|
+| Commits in last 90 days | 4 (2 substantive) |
+| Commits in last 30 days | 0 |
+| Open issues | 0 (no community engagement, not healthy silence) |
+| Pull requests | 1 total ever, none in 90 days |
+| Formal releases | 0 |
+| Changelog | None |
+| Co-contributors | 1 (cursoragent on one commit — an AI assistant) |
+| Core feature completion | Email discovery is broken/stub; no sending integration |
+
+The last meaningful code change was February 11, 2026 (the UI refactor and OpenAI client abstraction). Before that, all substantive work happened in a concentrated burst during July 2025. The 7-month gap (July 2025 → February 2026) between the initial development sprint and the February 2026 polish commits suggests this is a portfolio/side project rather than an actively maintained tool.
+
+**What this means for building on it:**
+
+- The core architecture (Puppeteer scraper + OpenAI call + Express API) is stable and will not change under you — good for forking.
+- The broken email discovery feature has no scheduled fix — assume it will remain a stub indefinitely.
+- The Indonesia-specific hardcoding has no scheduled fix — international use requires your own modifications.
+- DOM selectors for Google Maps are fragile and will break when Google updates their frontend — no evidence the author monitors or patches these.
+- The `openai` npm package is pinned at `^4.104.0` (as of last analysis); no automated dependency updates (Dependabot/Renovate not configured).
+
+**Recommendation:** Fork and modify rather than pulling as a dependency. The codebase is small enough (~1,200 lines of meaningful JS) that a fork is manageable. Do not rely on upstream patches for the email discovery gap or internationalization.
