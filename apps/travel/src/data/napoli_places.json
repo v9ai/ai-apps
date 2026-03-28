@@ -1,0 +1,370 @@
+{
+  "city": "Naples",
+  "city_overview": "Naples is raw, loud, and completely alive — a city that grabs you by the collar and refuses to let go. Draped across the bay beneath Vesuvius, it has been the crossroads of Mediterranean civilisation for over 2,700 years: Greek colony, Roman playground, Bourbon capital, and one of the most densely layered urban environments on the planet. Every alley is a palimpsest; every piazza a stage. The historic centre, a UNESCO World Heritage Site, is not a preserved relic but a living, breathing organism where laundry strings above baroque churches, scooters weave through Roman-grid streets, and the smell of sfogliatelle drifts from doorways that haven't changed since the Enlightenment.\n\nBut Naples is also a city that demands you shed your travel autopilot. The chaos is the point. Wander Spaccanapoli without a plan. Let a side street pull you into a courtyard. Argue good-naturedly with a barista about whether your espresso needs sugar. The Neapolitan relationship with food is not culinary tourism — it is identity and pride, refined over centuries under poverty and plenty alike. Pizza was invented here, and eating a margherita at its source is one of those rare moments where a cliché turns out to be entirely true.\n\nBelow street level, a second city exists: 2,400 years of cisterns, aqueducts, and wartime shelters honeycomb the volcanic tufa beneath your feet. Above, on the Vomero hill, the Certosa di San Martino surveys the whole bay with aristocratic calm. And just across the water — close enough to feel like a promise — Capri rises from the Tyrrhenian Sea, best reached by an early hydrofoil before the day-trippers arrive.",
+  "city_overview_ro": "Napoli este brută, zgomotoasă și complet vie — un oraș care te prinde de guler și refuză să te lase să pleci. Aşezată de-a lungul golfului, sub umbra Vezuviului, a fost timp de peste 2.700 de ani un nod al civilizaţiei mediteraneene: colonie greacă, paradis roman, capitală burbonică şi unul dintre cele mai stratificate medii urbane de pe planetă. Fiecare alee este un palimpsest; fiecare piaţă, o scenă. Centrul istoric, patrimoniu UNESCO, nu este o relicvă conservată, ci un organism viu şi pulsant, unde rufe atârnă deasupra bisericilor baroce, scuterele şerpuiesc prin străzile trasate pe grila romană, iar mirosul de sfogliatelle iese pe uşi care nu s-au schimbat de pe vremea Iluminismului.\n\nNapoli este şi un oraş care îţi cere să renunţi la pilotul automat al călătorului. Haosul este tocmai miza. Rătăceşte pe Spaccanapoli fără niciun plan. Lasă o ulicioară să te tragă într-o curte interioară. Discută cu voie bună cu un barista despre dacă espresso-ul tău are nevoie de zahăr. Relaţia napolitană cu mâncarea nu este turism culinar — este identitate şi mândrie, rafinată de-a lungul secolelor între sărăcie şi belşug. Pizza a fost inventată aici, iar a mânca o margherita la sursă este unul dintre acele rare momente în care un clişeu se dovedeşte a fi complet adevărat.\n\nSub nivelul străzii există un al doilea oraş: 2.400 de ani de cisterne, apeducte şi adăposturi din timp de război brăzdează tuful vulcanic de sub picioarele tale. Sus, pe dealul Vomero, Certosa di San Martino contemplă întregul golf cu o calm aristocratic. Iar chiar peste apă — atât de aproape încât pare o promisiune — Capri se ridică din Marea Tireniană, cel mai bine vizitată cu primul hidrogliseur de dimineaţă, înainte de sosirea turiştilor de o zi.",
+  "places": [
+    {
+      "name": "Piazza del Plebiscito",
+      "description": "Naples' grandest civic space: a vast neoclassical arc framed by the Basilica of San Francesco di Paola and the Royal Palace. The scale is deliberately imperial — this was the stage for Bourbon court ceremony — but today it belongs to the city, filled with footballers, families, and the constant hum of scooters on the perimeter.",
+      "description_ro": "Cel mai grandios spaţiu civic din Napoli: un arc neoclasic vast, încadrat de Bazilica San Francesco di Paola şi Palatul Regal. Scara este deliberat imperială — aceasta era scena ceremoniei curţii burbonice — dar astăzi aparţine oraşului, plină de jucători de fotbal, familii şi zumzetul constant al scuterelor pe perimetru.",
+      "category": "architecture",
+      "address": "Piazza del Plebiscito, 80132 Naples NA, Italy",
+      "lat": 40.8358,
+      "lng": 14.2487,
+      "rating": 4.7,
+      "visit_duration": "30–60 min",
+      "visit_duration_ro": "30–60 min",
+      "tips": "Visit at dusk when the golden light catches the Doric columns — the piazza is at its best then. The Royal Palace interior is worth the €10 entry.",
+      "tips_ro": "Vizitează la amurg când lumina aurie cade pe coloanele dorice — piaţa arată cel mai bine atunci. Interiorul Palatului Regal merită cei 10 € de intrare.",
+      "image_query": "Piazza del Plebiscito Naples dusk",
+      "price_level": "budget",
+      "price_display": "Free",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Piazza+del+Plebiscito,+Naples,+Italy",
+      "maps_embed_query": "Piazza+del+Plebiscito,+Naples,+Italy",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "dusk or early morning",
+        "estimated_cost": { "pln": 0, "eur": 0 },
+        "nearby_hotel_area": "Chiaia / Lungomare",
+        "combined_with": ["Castel dell'Ovo", "Lungomare Caracciolo"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Piazza+del+Plebiscito+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d195604-Reviews-Piazza_del_Plebiscito-Naples_Campania.html"
+        }
+      }
+    },
+    {
+      "name": "Museo Archeologico Nazionale",
+      "description": "One of the world's great archaeology museums, housing the finest collection of Greco-Roman antiquities outside Rome: the Farnese Bull, the Alexander Mosaic from Pompeii, an entire floor of erotic art from the Secret Cabinet. The collections from Herculaneum and Pompeii alone justify the journey to Naples.",
+      "description_ro": "Unul dintre cele mai mari muzee de arheologie din lume, adăpostind cea mai valoroasă colecţie de antichităţi greco-romane din afara Romei: Taurul Farnese, mozaicul lui Alexandru de la Pompei, un etaj întreg de artă erotică din Camera Secretă. Colecţiile de la Herculanum şi Pompei justifică singure călătoria la Napoli.",
+      "category": "culture",
+      "address": "Piazza Museo, 19, 80135 Naples NA, Italy",
+      "lat": 40.8531,
+      "lng": 14.2498,
+      "rating": 4.6,
+      "visit_duration": "2–4 hours",
+      "visit_duration_ro": "2–4 ore",
+      "tips": "Book tickets online to skip the queue. The Secret Cabinet (Gabinetto Segreto) requires separate advance booking — don't miss it. Tuesday closure.",
+      "tips_ro": "Rezervă biletele online pentru a sări coada. Cabinetul Secret (Gabinetto Segreto) necesită rezervare separată în avans — nu-l rata. Marţi este închis.",
+      "image_query": "Museo Archeologico Nazionale Napoli Farnese collection",
+      "price_level": "moderate",
+      "price_display": "€15",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Museo+Archeologico+Nazionale,+Naples,+Italy",
+      "maps_embed_query": "Museo+Archeologico+Nazionale+Naples+Italy",
+      "booking": {
+        "type": "ticket",
+        "needs_reservation": true,
+        "best_time_to_visit": "morning, weekday",
+        "estimated_cost": { "pln": 0, "eur": 15 },
+        "nearby_hotel_area": "Centro Storico",
+        "combined_with": ["Spaccanapoli", "Via San Gregorio Armeno"],
+        "advance_booking_days": 2,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Museo+Archeologico+Nazionale+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d195603-Reviews-National_Archaeological_Museum-Naples_Campania.html",
+          "official": "https://mann-napoli.it/en/"
+        }
+      }
+    },
+    {
+      "name": "Spaccanapoli",
+      "description": "A dead-straight Roman road that bisects the old city from end to end — its name literally means 'split Naples'. Walking it from Gesù Nuovo to Forcella is a crash course in the city's character: baroque churches, apothecary-fronted pasticcerie, artisan workshops, and the organised chaos of street life that makes Naples unlike anywhere else in Europe.",
+      "description_ro": "Un drum roman complet drept care bisectează oraşul vechi de la un capăt la altul — numele înseamnă literalmente \"despica Napoli\". A-l parcurge pe jos de la Gesù Nuovo până la Forcella este un curs intensiv în caracterul oraşului: biserici baroce, patiserii cu vitrine de farmacie, ateliere meşteşugăreşti şi haosul organizat al vieţii de stradă care face Napoli unic în Europa.",
+      "category": "history",
+      "address": "Via Benedetto Croce / Via San Biagio dei Librai, 80134 Naples NA, Italy",
+      "lat": 40.8499,
+      "lng": 14.2531,
+      "rating": 4.8,
+      "visit_duration": "1–3 hours",
+      "visit_duration_ro": "1–3 ore",
+      "tips": "Start at the western end (Piazza del Gesù Nuovo) and walk east. The street is busiest mid-afternoon; go early or late for a calmer pace. Stop at any bar for a standing espresso — €1.10 is the going rate.",
+      "tips_ro": "Porneşte de la capătul de vest (Piazza del Gesù Nuovo) şi mergi spre est. Strada e cel mai aglomerată la mijlocul după-amiezii; du-te dimineaţa devreme sau seara pentru un ritm mai liniştit. Opreşte-te la orice bar pentru un espresso în picioare — 1,10 € este tariful curent.",
+      "image_query": "Spaccanapoli Naples street view",
+      "price_level": "budget",
+      "price_display": "Free",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Spaccanapoli,+Naples,+Italy",
+      "maps_embed_query": "Spaccanapoli+Naples+Italy",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "early morning or late afternoon",
+        "estimated_cost": { "pln": 0, "eur": 0 },
+        "nearby_hotel_area": "Centro Storico",
+        "combined_with": ["Museo Archeologico Nazionale", "Via San Gregorio Armeno", "Napoli Sotterranea"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Spaccanapoli+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d195582-Reviews-Spaccanapoli-Naples_Campania.html"
+        }
+      }
+    },
+    {
+      "name": "Castel dell'Ovo",
+      "description": "Naples' oldest surviving fortification, built on a tiny islet in the bay. The name — 'Castle of the Egg' — comes from a legend that Virgil placed a magic egg in its foundations whose breaking would spell doom for the city. The views from the battlements across the bay toward Vesuvius and Capri are among the finest in Italy.",
+      "description_ro": "Cea mai veche fortăreaţă supravieţuitoare din Napoli, construită pe un mic izbucit în golf. Numele — \"Castelul Oului\" — vine dintr-o legendă conform căreia Virgiliu a ascuns un ou magic în fundaţii, a cărui spargere ar aduce pieirea oraşului. Vederea de pe creneluri peste golf spre Vezuviu şi Capri este printre cele mai frumoase din Italia.",
+      "category": "history",
+      "address": "Via Eldorado, 3, 80132 Naples NA, Italy",
+      "lat": 40.8300,
+      "lng": 14.2462,
+      "rating": 4.5,
+      "visit_duration": "45–90 min",
+      "visit_duration_ro": "45–90 min",
+      "tips": "Entry is free. Go mid-morning before tourist coaches arrive. The walk along the Borgo Marinari waterfront below the castle is excellent for aperitivo in the evening.",
+      "tips_ro": "Intrarea este gratuită. Du-te la mijlocul dimineţii, înainte de sosirea autocarelor de turişti. Plimbarea de-a lungul digului Borgo Marinari de sub castel este excelentă pentru aperitivo seara.",
+      "image_query": "Castel dell'Ovo Naples bay view",
+      "price_level": "budget",
+      "price_display": "Free",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Castel+dell%27Ovo,+Naples,+Italy",
+      "maps_embed_query": "Castel+dell%27Ovo+Naples+Italy",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "morning",
+        "estimated_cost": { "pln": 0, "eur": 0 },
+        "nearby_hotel_area": "Chiaia / Lungomare",
+        "combined_with": ["Piazza del Plebiscito", "Lungomare Caracciolo"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Castel+dell%27Ovo+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d195592-Reviews-Castel_dell_Ovo-Naples_Campania.html"
+        }
+      }
+    },
+    {
+      "name": "Napoli Sotterranea",
+      "description": "A guided tour through 2,400 years of subterranean history: Greek aqueducts turned Roman cisterns turned wartime air-raid shelters turned theatre prop storage. The underground city is vast, complex, and genuinely thrilling — sections require squeezing through passages carved in volcanic tufa rock, with a candle for light.",
+      "description_ro": "Un tur ghidat prin 2.400 de ani de istorie subterană: apeducte greceşti transformate în cisterne romane, transformate în adăposturi antiaeriene din timp de război, transformate în depozit de recuzită teatrală. Oraşul subteran este vast, complex şi cu adevărat palpitant — unele secţiuni necesită strecurarea prin pasaje săpate în tuful vulcanic, cu o lumânare drept sursă de lumină.",
+      "category": "history",
+      "address": "Piazza San Gaetano 68, 80138 Naples NA, Italy",
+      "lat": 40.8506,
+      "lng": 14.2554,
+      "rating": 4.7,
+      "visit_duration": "1.5–2 hours",
+      "visit_duration_ro": "1,5–2 ore",
+      "tips": "Book tours in advance — English tours run at specific times (check website). Bring a light jacket: underground temperature stays around 15°C year-round. Not suitable for claustrophobics.",
+      "tips_ro": "Rezervaţi tururile în avans — tururile în engleză au loc la ore specifice (verificaţi site-ul). Luaţi o jachetă uşoară: temperatura subterană rămâne în jur de 15°C tot anul. Nerecomandat persoanelor claustrofobe.",
+      "image_query": "Napoli Sotterranea underground tour candle",
+      "price_level": "moderate",
+      "price_display": "€10",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Napoli+Sotterranea,+Naples,+Italy",
+      "maps_embed_query": "Napoli+Sotterranea+Naples+Italy",
+      "booking": {
+        "type": "guided_tour",
+        "needs_reservation": true,
+        "best_time_to_visit": "morning or early afternoon",
+        "estimated_cost": { "pln": 0, "eur": 10 },
+        "nearby_hotel_area": "Centro Storico",
+        "combined_with": ["Spaccanapoli", "Via San Gregorio Armeno"],
+        "advance_booking_days": 3,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Napoli+Sotterranea+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d195610-Reviews-Napoli_Sotterranea-Naples_Campania.html",
+          "official": "https://www.napolisotterranea.org/en/"
+        }
+      }
+    },
+    {
+      "name": "Certosa di San Martino",
+      "description": "A 14th-century Carthusian monastery turned national museum, perched on the Vomero hill with a panoramic terrace that frames the entire Bay of Naples. The cloisters — designed by Cosimo Fanzago — are among the finest Baroque spaces in Italy. The museum within holds an extraordinary collection of Neapolitan presepe (nativity scenes) and vedute paintings.",
+      "description_ro": "O mănăstire cartuziană din secolul al XIV-lea transformată în muzeu naţional, aşezată pe dealul Vomero cu o terasă panoramică ce cuprinde întregul Golf Napoli. Claustrele — proiectate de Cosimo Fanzago — sunt printre cele mai rafinate spaţii baroce din Italia. Muzeul interior adăposteşte o colecţie extraordinară de presepe (scene de crăciun) napolitane şi picturi vedute.",
+      "category": "culture",
+      "address": "Largo San Martino, 5, 80129 Naples NA, Italy",
+      "lat": 40.8397,
+      "lng": 14.2344,
+      "rating": 4.6,
+      "visit_duration": "2–3 hours",
+      "visit_duration_ro": "2–3 ore",
+      "tips": "Take the Funicolare Centrale up from Via Toledo (one stop) — the funicular itself is worth the experience. Visit on a clear morning for the best panoramic views. Closed Wednesdays.",
+      "tips_ro": "Urcă cu Funicolare Centrale de la Via Toledo (o staţie) — funicelul în sine merită experienţa. Vizitează dimineaţa pe vreme senină pentru cele mai bune vederi panoramice. Miercuri este închis.",
+      "image_query": "Certosa di San Martino Naples cloisters panorama",
+      "price_level": "moderate",
+      "price_display": "€6",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Certosa+di+San+Martino,+Naples,+Italy",
+      "maps_embed_query": "Certosa+di+San+Martino+Naples+Italy",
+      "booking": {
+        "type": "ticket",
+        "needs_reservation": false,
+        "best_time_to_visit": "morning, clear day",
+        "estimated_cost": { "pln": 0, "eur": 6 },
+        "nearby_hotel_area": "Vomero",
+        "combined_with": ["Castel Sant'Elmo"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Certosa+di+San+Martino+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d195597-Reviews-Certosa_e_Museo_di_San_Martino-Naples_Campania.html"
+        }
+      }
+    },
+    {
+      "name": "Via San Gregorio Armeno",
+      "description": "The world's most concentrated street of nativity scene artisans — a Neapolitan tradition stretching back to the 18th century. At Christmas the crowds are biblical, but even in summer you'll find master craftsmen working on miniature saints, devils, politicians, and footballers. The workshops are open; watching the artisans is free.",
+      "description_ro": "Cea mai densă stradă de artizani de scene de crăciun din lume — o tradiţie napolitană care datează din secolul al XVIII-lea. De Crăciun, mulţimile sunt biblice, dar chiar şi vara vei găsi maeştri meşteşugari lucrând la sfinţi miniatural, diavoli, politicieni şi fotbalişti. Atelierele sunt deschise; privitul artizanilor este gratuit.",
+      "category": "culture",
+      "address": "Via San Gregorio Armeno, 80138 Naples NA, Italy",
+      "lat": 40.8501,
+      "lng": 14.2572,
+      "rating": 4.4,
+      "visit_duration": "30–60 min",
+      "visit_duration_ro": "30–60 min",
+      "tips": "Come on a weekday morning when the artisans are actively working. Prices are negotiable off-season. The street runs off Spaccanapoli — easy to combine.",
+      "tips_ro": "Vino într-o dimineaţă de săptămână când artizanii lucrează activ. Preţurile sunt negociabile în afara sezonului. Strada porneşte din Spaccanapoli — uşor de combinat.",
+      "image_query": "Via San Gregorio Armeno artisan workshop Naples",
+      "price_level": "budget",
+      "price_display": "Free",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Via+San+Gregorio+Armeno,+Naples,+Italy",
+      "maps_embed_query": "Via+San+Gregorio+Armeno+Naples+Italy",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "weekday morning",
+        "estimated_cost": { "pln": 0, "eur": 0 },
+        "nearby_hotel_area": "Centro Storico",
+        "combined_with": ["Spaccanapoli", "Napoli Sotterranea"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Via+San+Gregorio+Armeno+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d195576-Reviews-Via_San_Gregorio_Armeno-Naples_Campania.html"
+        }
+      }
+    },
+    {
+      "name": "L'Antica Pizzeria da Michele",
+      "description": "Since 1870, this family-run institution has served only two pizzas: margherita and marinara. No mozzarella di bufala upgrades, no appetisers, no dessert — just the Platonic form of Neapolitan pizza from a wood-fired oven that has never really changed. The queue stretches around the block for good reason.",
+      "description_ro": "Din 1870, această instituţie de familie a servit doar două pizza: margherita şi marinara. Fără upgrade-uri cu mozzarella di bufala, fără aperitive, fără desert — doar forma platonică a pizza napolitane dintr-un cuptor pe lemne care nu s-a schimbat cu adevărat niciodată. Coada se întinde în jurul blocului cu un motiv bun.",
+      "category": "food",
+      "address": "Via Cesare Sersale 1/3, 80139 Naples NA, Italy",
+      "lat": 40.8512,
+      "lng": 14.2618,
+      "rating": 4.7,
+      "visit_duration": "30–60 min",
+      "visit_duration_ro": "30–60 min",
+      "tips": "Arrive when they open (11:00) or after 14:30 to avoid the worst queues. Cash only. The marinara (no cheese, just tomato, garlic, oregano) is the more traditional order.",
+      "tips_ro": "Soseşte când deschid (11:00) sau după 14:30 pentru a evita cele mai proaste cozi. Numai numerar. Marinara (fără brânză, doar roşii, usturoi, oregano) este comanda mai tradiţională.",
+      "image_query": "Antica Pizzeria da Michele Naples margherita oven",
+      "price_level": "budget",
+      "price_display": "€5–7",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=L%27Antica+Pizzeria+da+Michele,+Naples,+Italy",
+      "maps_embed_query": "L%27Antica+Pizzeria+da+Michele+Naples+Italy",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "at opening or after 14:30",
+        "estimated_cost": { "pln": 0, "eur": 7 },
+        "nearby_hotel_area": "Centro Storico",
+        "combined_with": ["Spaccanapoli", "Via San Gregorio Armeno"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=L%27Antica+Pizzeria+da+Michele+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Restaurant_Review-g187785-d1049337-Reviews-L_Antica_Pizzeria_da_Michele-Naples_Campania.html"
+        }
+      }
+    },
+    {
+      "name": "Lungomare Caracciolo",
+      "description": "A 2.5-kilometre seafront promenade stretching from the Castel dell'Ovo toward Mergellina, with Vesuvius framed at one end and the islands of Capri and Ischia visible on clear days. Free to walk, closed to traffic on weekends, and one of the most pleasant strolls in southern Italy — Neapolitans do it as a matter of civic right.",
+      "description_ro": "O promenadă maritimă de 2,5 kilometri care se întinde de la Castel dell'Ovo spre Mergellina, cu Vezuviul încadrat la un capăt şi insulele Capri şi Ischia vizibile pe vreme senină. Liberă pentru plimbare, închisă traficului în weekend, şi una dintre cele mai plăcute plimbări din sudul Italiei — napolitanii o fac ca pe un drept civic.",
+      "category": "nature",
+      "address": "Via Francesco Caracciolo, 80122 Naples NA, Italy",
+      "lat": 40.8302,
+      "lng": 14.2421,
+      "rating": 4.5,
+      "visit_duration": "1–2 hours",
+      "visit_duration_ro": "1–2 ore",
+      "tips": "Walk it at sunset for the best light on Vesuvius. On Sundays the seafront is car-free — ideal for the full experience. The gelaterie at Mergellina end are worth the walk.",
+      "tips_ro": "Parcurge-o la apus pentru cea mai bună lumină pe Vezuviu. Duminica, faleza este fără maşini — ideal pentru experienţa completă. Gelateria de la capătul Mergellina merită drumul.",
+      "image_query": "Lungomare Caracciolo Naples waterfront Vesuvius sunset",
+      "price_level": "budget",
+      "price_display": "Free",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Lungomare+Caracciolo,+Naples,+Italy",
+      "maps_embed_query": "Lungomare+Caracciolo+Naples+Italy",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "sunset or Sunday morning",
+        "estimated_cost": { "pln": 0, "eur": 0 },
+        "nearby_hotel_area": "Chiaia / Lungomare",
+        "combined_with": ["Castel dell'Ovo", "Piazza del Plebiscito"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Lungomare+Caracciolo+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d2437779-Reviews-Lungomare_di_Napoli-Naples_Campania.html"
+        }
+      }
+    },
+    {
+      "name": "Quartieri Spagnoli",
+      "description": "The Spanish Quarters — a tightly packed grid of alleyways built in the 16th century to house the Spanish garrison — is the most viscerally Neapolitan part of the city. Lines of drying laundry overhead, shrines to Maradona on corners, the best street food in the city (cuoppo of fried seafood, frittatina di pasta), and a neighbourhood life utterly indifferent to tourism.",
+      "description_ro": "Cartierele Spaniole — o reţea compactă de alei construite în secolul al XVI-lea pentru a găzdui garnizoana spaniolă — este partea cel mai visceral napolitană a oraşului. Sfori cu rufe uscate deasupra, altare pentru Maradona pe colţuri, cel mai bun street food din oraş (cuoppo de fructe de mare prăjite, frittatina di pasta) şi o viaţă de cartier complet indiferentă la turism.",
+      "category": "food",
+      "address": "Quartieri Spagnoli, 80134 Naples NA, Italy",
+      "lat": 40.8392,
+      "lng": 14.2461,
+      "rating": 4.4,
+      "visit_duration": "1–2 hours",
+      "visit_duration_ro": "1–2 ore",
+      "tips": "Wander without a map — the grid is small enough not to get lost. The best cuoppo fritto comes from the stalls on Via Toledo side. Come for lunch or early evening.",
+      "tips_ro": "Rătăceşte fără hartă — grila este suficient de mică pentru a nu te pierde. Cel mai bun cuoppo fritto vine de la standurile de pe Via Toledo. Vino la prânz sau seara devreme.",
+      "image_query": "Quartieri Spagnoli Naples alley laundry street food",
+      "price_level": "budget",
+      "price_display": "€3–10",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Quartieri+Spagnoli,+Naples,+Italy",
+      "maps_embed_query": "Quartieri+Spagnoli+Naples+Italy",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "lunch or early evening",
+        "estimated_cost": { "pln": 0, "eur": 8 },
+        "nearby_hotel_area": "Centro Storico / Via Toledo",
+        "combined_with": ["Spaccanapoli", "Piazza del Plebiscito"],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Quartieri+Spagnoli+Naples+Italy",
+          "tripadvisor": "https://www.tripadvisor.com/Attraction_Review-g187785-d7181398-Reviews-Spanish_Quarter-Naples_Campania.html"
+        }
+      }
+    }
+  ],
+  "rankings": {
+    "best": [
+      "Spaccanapoli",
+      "Museo Archeologico Nazionale",
+      "Napoli Sotterranea",
+      "Piazza del Plebiscito",
+      "Certosa di San Martino"
+    ],
+    "cheapest": [
+      "Piazza del Plebiscito",
+      "Lungomare Caracciolo",
+      "Spaccanapoli",
+      "Via San Gregorio Armeno",
+      "Quartieri Spagnoli"
+    ]
+  },
+  "booking_summary": {
+    "total_estimated_cost": { "pln": 0, "eur": 46 },
+    "places_needing_reservation": ["Museo Archeologico Nazionale", "Napoli Sotterranea"],
+    "hotel_search_url": "https://www.booking.com/searchresults.html?ss=Naples+Italy",
+    "curated_hotels": [
+      {
+        "name": "Hotel Romeo",
+        "property_id": "hotel-romeo-naples",
+        "address": "Via Cristoforo Colombo 45, 80133 Naples",
+        "url": "https://www.booking.com/hotel/it/romeo.html"
+      },
+      {
+        "name": "Grand Hotel Santa Lucia",
+        "property_id": "grand-hotel-santa-lucia-naples",
+        "address": "Via Partenope 46, 80121 Naples",
+        "url": "https://www.booking.com/hotel/it/grand-santa-lucia.html"
+      },
+      {
+        "name": "Hotel Palazzo Caracciolo",
+        "property_id": "palazzo-caracciolo-naples",
+        "address": "Via Carbonara 112, 80139 Naples",
+        "url": "https://www.booking.com/hotel/it/palazzo-caracciolo.html"
+      }
+    ]
+  }
+}
