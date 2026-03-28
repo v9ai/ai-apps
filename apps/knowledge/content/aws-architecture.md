@@ -33,7 +33,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Safe Deployments**
 - Blue/Green: maintain two identical environments; switch traffic via ELB or Route 53; instant rollback
-- Canary: route small % of traffic to new version ([CodeDeploy](/aws-cicd-devops) canary, [Lambda](/aws-lambda-serverless) weighted aliases, [ECS](/aws-compute-containers) service deployment circuit breaker)
+- Canary: route small % of traffic to new version ([CodeDeploy](/aws-cicd-devops) canary, [Lambda](/aws/lambda-serverless) weighted aliases, [ECS](/aws-compute-containers) service deployment circuit breaker)
 - Feature flags: decouple deploy from release; CloudWatch Evidently for A/B and feature flags
 - Deployment validation: pre-traffic and post-traffic hooks in CodeDeploy (Lambda), health checks in ECS
 
@@ -61,7 +61,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - CloudWatch Logs Insights: query logs for security events (`filter @message like /AccessDenied/`)
 - EventBridge + Lambda: auto-remediation (quarantine EC2, rotate key) on GuardDuty finding
 
-**Infrastructure Protection** — see [API Gateway & Networking](/aws-api-gateway-networking) for VPC, WAF, and Shield details; [IAM & Security](/aws-iam-security) for WAF managed rules and Network Firewall
+**Infrastructure Protection** — see [API Gateway & Networking](/aws/api-gateway-networking) for VPC, WAF, and Shield details; [IAM & Security](/aws-iam-security) for WAF managed rules and Network Firewall
 - VPC Security Groups: stateful, instance-level; use as virtual firewalls; principle: default deny, explicit allow
 - NACLs: stateless, subnet-level; use as coarse secondary layer (not primary)
 - WAF: Layer 7 rules (SQL injection, XSS, rate limiting, IP allow/block lists, AWS Managed Rules); attach to ALB, CloudFront, API Gateway
@@ -88,8 +88,8 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Foundations**
 - Service limits / quotas: request increases proactively; use Service Quotas dashboard and alarms
-- Network topology: multi-AZ by default; [Transit Gateway](/aws-api-gateway-networking) for hub-and-spoke VPC connectivity at scale
-- DNS: [Route 53](/aws-api-gateway-networking) with health checks for automated failover; private hosted zones for internal service discovery
+- Network topology: multi-AZ by default; [Transit Gateway](/aws/api-gateway-networking) for hub-and-spoke VPC connectivity at scale
+- DNS: [Route 53](/aws/api-gateway-networking) with health checks for automated failover; private hosted zones for internal service discovery
 
 **Workload Architecture**
 - Loose coupling: replace synchronous calls with async queues (SQS) or events (EventBridge) where latency allows
@@ -117,13 +117,13 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 **Design Principles:** Democratize advanced technologies, go global in minutes, use serverless architectures, experiment more often, consider mechanical sympathy.
 
 **Selection**
-- Compute: [Lambda](/aws-lambda-serverless) for bursty/event-driven, [Fargate](/aws-compute-containers) for containerized variable load, [EC2](/aws-compute-containers) for sustained/specialized
+- Compute: [Lambda](/aws/lambda-serverless) for bursty/event-driven, [Fargate](/aws-compute-containers) for containerized variable load, [EC2](/aws-compute-containers) for sustained/specialized
 - Storage: [S3](/aws-storage-s3) for objects/static, [EBS](/aws-storage-s3) gp3 for block (IOPS independent of size), io2 Block Express for databases, [EFS](/aws-storage-s3) for shared POSIX
 - Database: match data model to engine — [Aurora](/dynamodb-data-services) for relational, [DynamoDB](/dynamodb-data-services) for key-value/document, [ElastiCache](/dynamodb-data-services) for cache, [Redshift](/dynamodb-data-services) for analytics, OpenSearch for full-text/vector search
-- Networking: placement groups (cluster for HPC/low latency, spread for fault isolation), enhanced networking (SR-IOV), EFA for MPI workloads — see [API Gateway & Networking](/aws-api-gateway-networking)
+- Networking: placement groups (cluster for HPC/low latency, spread for fault isolation), enhanced networking (SR-IOV), EFA for MPI workloads — see [API Gateway & Networking](/aws/api-gateway-networking)
 
 **Review**
-- Compute Optimizer: ML-based right-sizing recommendations for [EC2](/aws-compute-containers), ECS (Fargate), [Lambda](/aws-lambda-serverless), [EBS](/aws-storage-s3)
+- Compute Optimizer: ML-based right-sizing recommendations for [EC2](/aws-compute-containers), ECS (Fargate), [Lambda](/aws/lambda-serverless), [EBS](/aws-storage-s3)
 - Performance testing: load test with Artillery, Gatling; profile with X-Ray to find bottlenecks
 
 **Monitoring**
@@ -157,7 +157,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Cost-Effective Resources (see also Cost Optimization Patterns section)**
 - Right-size before committing: use Compute Optimizer; reduce instance size or switch to graviton
-- Graviton3 (arm64): up to 40% better price/performance for general compute vs x86; supported in [EC2](/aws-compute-containers), [Lambda](/aws-lambda-serverless), Fargate, RDS
+- Graviton3 (arm64): up to 40% better price/performance for general compute vs x86; supported in [EC2](/aws-compute-containers), [Lambda](/aws/lambda-serverless), Fargate, RDS
 - [Spot Instances](/aws-compute-containers): up to 90% savings; use for fault-tolerant, stateless, batch workloads; Spot Fleet + capacity-optimized allocation
 - Savings Plans: 1 or 3 year; Compute SP flexible across instance family/region/OS; EC2 Instance SP for specific family
 - Storage tiering: [S3 Intelligent-Tiering](/aws-storage-s3), S3 Glacier for infrequent access, Glacier Deep Archive for archival
@@ -180,7 +180,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Spot/Fargate: bin-packing by the provider reduces overall server count
 
 **Software & Architecture Patterns**
-- Minimize data movement: process at the edge ([Lambda@Edge](/aws-lambda-serverless), [CloudFront Functions](/aws-storage-s3)) or in the same AZ
+- Minimize data movement: process at the edge ([Lambda@Edge](/aws/lambda-serverless), [CloudFront Functions](/aws-storage-s3)) or in the same AZ
 - Asynchronous & batch: group work to maximize hardware utilization (SQS batching, Lambda batch processing)
 - Serverless: eliminates idle capacity; resources only allocated during actual execution
 - Managed services: AWS optimizes hardware, cooling, and power at scale better than individual customers
@@ -198,7 +198,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Rule: each service should be independently deployable; a change to service A should not require redeployment of service B
 
 **Bounded Contexts on AWS**
-- Each context gets its own: [CodePipeline](/aws-cicd-devops), ECR repository, [ECS](/aws-compute-containers) service or [Lambda](/aws-lambda-serverless), [DynamoDB](/dynamodb-data-services) table or [RDS](/dynamodb-data-services) database, [IAM role](/aws-iam-security)
+- Each context gets its own: [CodePipeline](/aws-cicd-devops), ECR repository, [ECS](/aws-compute-containers) service or [Lambda](/aws/lambda-serverless), [DynamoDB](/dynamodb-data-services) table or [RDS](/dynamodb-data-services) database, [IAM role](/aws-iam-security)
 - Context boundary enforcement: services communicate only via well-defined APIs (REST, gRPC) or events — never direct DB access
 
 **Service Mesh: AWS App Mesh**
@@ -206,7 +206,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Provides: traffic shaping (retries, timeouts, circuit breaker), observability (metrics to CloudWatch, traces to X-Ray), mTLS encryption
 - Virtual services, virtual routers, virtual nodes: abstract the service topology
 - When to use: > 5 services with complex inter-service routing; otherwise an ALB with target groups is simpler
-- Alternative: [API Gateway](/aws-api-gateway-networking) HTTP API for north-south; App Mesh for east-west
+- Alternative: [API Gateway](/aws/api-gateway-networking) HTTP API for north-south; App Mesh for east-west
 
 ---
 
@@ -214,7 +214,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **EventBridge (Event Bus)**
 - Central event bus; default bus (AWS service events), custom buses (application events), partner buses (SaaS integrations)
-- Rules: pattern-match on event JSON fields; route to [Lambda](/aws-lambda-serverless), SQS, SNS, Kinesis, Step Functions, [API Gateway](/aws-api-gateway-networking), etc.
+- Rules: pattern-match on event JSON fields; route to [Lambda](/aws/lambda-serverless), SQS, SNS, Kinesis, Step Functions, [API Gateway](/aws/api-gateway-networking), etc.
 - Schema Registry: auto-discovers event schemas; generates code bindings for Java, Python, TypeScript
 - EventBridge Pipes: point-to-point source → filter → enrich → target; source: SQS, Kinesis, [DynamoDB Streams](/dynamodb-data-services); no polling code required
 - EventBridge Scheduler: cron/rate-based invocation of any API target without a Lambda trigger
@@ -256,7 +256,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 **Command Query Responsibility Segregation (CQRS)**
 - Write model (Command side): accepts commands, validates, writes events to event store
 - Read model (Query side): denormalized read tables optimized per query pattern; updated by consuming events
-- AWS pattern: [DynamoDB](/dynamodb-data-services) as event store (append-only, sort key = event sequence) → [DynamoDB Streams](/dynamodb-data-services) → [Lambda](/aws-lambda-serverless) → read models in [Aurora](/dynamodb-data-services), OpenSearch, or [ElastiCache](/dynamodb-data-services)
+- AWS pattern: [DynamoDB](/dynamodb-data-services) as event store (append-only, sort key = event sequence) → [DynamoDB Streams](/dynamodb-data-services) → [Lambda](/aws/lambda-serverless) → read models in [Aurora](/dynamodb-data-services), OpenSearch, or [ElastiCache](/dynamodb-data-services)
 
 **Event Sourcing**
 - State is derived from a sequence of immutable events, not mutated in place
@@ -292,7 +292,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 **Orchestration-based Saga**
 - Central orchestrator (Step Functions State Machine) calls each service in sequence; handles compensating transactions on failure
 - AWS Step Functions: ideal orchestrator; visual workflow, built-in retry/catch, supports Express Workflows (high volume, async)
-- Pattern: Step Function calls [Lambda](/aws-lambda-serverless) for each service step; on failure, runs compensating Lambdas in reverse order
+- Pattern: Step Function calls [Lambda](/aws/lambda-serverless) for each service step; on failure, runs compensating Lambdas in reverse order
 
 ```
 StepFunction: PlaceOrderSaga
@@ -309,7 +309,7 @@ StepFunction: PlaceOrderSaga
 
 - Incrementally migrate monolith by routing new functionality to new services, while old paths still go to monolith
 - AWS implementation: ALB path-based routing or [CloudFront](/aws-storage-s3) behaviors — new URLs → new microservice, old URLs → legacy app
-- [API Gateway](/aws-api-gateway-networking) as facade: single domain, route by path to [Lambda](/aws-lambda-serverless) (new) or VPC Link → legacy NLB (old)
+- [API Gateway](/aws/api-gateway-networking) as facade: single domain, route by path to [Lambda](/aws/lambda-serverless) (new) or VPC Link → legacy NLB (old)
 - Migrate one bounded context at a time; when all paths migrated, retire the monolith
 - Anti-corruption layer: transform data formats between old and new models during coexistence
 
@@ -320,11 +320,11 @@ StepFunction: PlaceOrderSaga
 **Bulkhead**
 - Isolate failures; if one component fails, others continue
 - AWS implementation: separate thread pools / SQS queues per service; VPC isolation; separate [Auto Scaling Groups](/aws-compute-containers)
-- [Lambda](/aws-lambda-serverless) reserved concurrency: reserve capacity for critical functions, preventing noisy neighbors from consuming all concurrency
+- [Lambda](/aws/lambda-serverless) reserved concurrency: reserve capacity for critical functions, preventing noisy neighbors from consuming all concurrency
 
 **Circuit Breaker**
 - After N failures, open the circuit and return fallback immediately without attempting the failing dependency
-- AWS implementation: App Mesh circuit breaker (outlier detection in Envoy); custom implementation in [Lambda](/aws-lambda-serverless) with [ElastiCache](/dynamodb-data-services) state; AWS SDK has built-in retry/backoff
+- AWS implementation: App Mesh circuit breaker (outlier detection in Envoy); custom implementation in [Lambda](/aws/lambda-serverless) with [ElastiCache](/dynamodb-data-services) state; AWS SDK has built-in retry/backoff
 - CloudWatch alarm → Lambda → SSM Parameter Store flag → application reads flag to short-circuit calls
 
 ---
@@ -345,7 +345,7 @@ StepFunction: PlaceOrderSaga
 ```
 
 - Web tier: static assets in [S3](/aws-storage-s3), served via [CloudFront](/aws-storage-s3); SPA communicates with backend API
-- App tier: private subnets; outbound internet via [NAT Gateway](/aws-api-gateway-networking); fetches secrets from [Secrets Manager](/aws-iam-security) at startup
+- App tier: private subnets; outbound internet via [NAT Gateway](/aws/api-gateway-networking); fetches secrets from [Secrets Manager](/aws-iam-security) at startup
 - Data tier: private subnets with no internet route; security groups restrict access to app tier only
 - ALB: sticky sessions only if stateful (prefer stateless + [ElastiCache Redis](/dynamodb-data-services)); HTTPS listener with ACM certificate
 
@@ -364,7 +364,7 @@ StepFunction: PlaceOrderSaga
                                   [Downstream Lambdas]
 ```
 
-- No servers to manage; scales to zero; pay per invocation — see [Lambda & Serverless](/aws-lambda-serverless) for full Lambda deep-dive
+- No servers to manage; scales to zero; pay per invocation — see [Lambda & Serverless](/aws/lambda-serverless) for full Lambda deep-dive
 - Cold start mitigation: Provisioned Concurrency for latency-sensitive paths; Lambda SnapStart for Java
 - Limits: 15-min max timeout, 10 GB memory, 512 MB–10 GB ephemeral /tmp storage, 250 MB deployment package (unzipped)
 - Use Lambda Layers for shared dependencies (reduces package size, improves deployment speed)
@@ -399,7 +399,7 @@ StepFunction: PlaceOrderSaga
 
 ### Multi-Region Active-Active
 - Both regions serve production traffic simultaneously; true HA across regional failures
-- [Route 53](/aws-api-gateway-networking) latency-based routing: users go to nearest healthy region
+- [Route 53](/aws/api-gateway-networking) latency-based routing: users go to nearest healthy region
 - [DynamoDB Global Tables](/dynamodb-data-services): multi-master, eventual consistency; last-writer-wins conflict resolution
 - [Aurora Global Database](/dynamodb-data-services): primary region for writes, secondary regions for reads; < 1 second replication lag; can promote in < 1 minute
 - [S3 Cross-Region Replication](/aws-storage-s3): asynchronous; replication time control (RTC) for < 15 min SLA
@@ -412,7 +412,7 @@ StepFunction: PlaceOrderSaga
 - Lower cost than active-active; tolerate higher RTO (minutes, not seconds)
 - Suitable for internal tools, B2B SaaS with contractual SLA > 30 min RTO
 
-### Route 53 Routing Policies & Failover — see [API Gateway & Networking](/aws-api-gateway-networking) for full Route 53 coverage
+### Route 53 Routing Policies & Failover — see [API Gateway & Networking](/aws/api-gateway-networking) for full Route 53 coverage
 - Simple: one record, no health check; no failover
 - Failover: primary/secondary; requires health checks on primary; automatic failover when primary unhealthy
 - Latency-based: route to region with lowest latency for the user
@@ -450,7 +450,7 @@ StepFunction: PlaceOrderSaga
 
 **Warm Standby**
 - Scaled-down replica of production: app servers running (minimum capacity), DB replication active
-- On failover: scale up ASG, update [Route 53](/aws-api-gateway-networking) weights/failover
+- On failover: scale up ASG, update [Route 53](/aws/api-gateway-networking) weights/failover
 - RPO: seconds (if async replication) or near-zero ([Aurora Global Database](/dynamodb-data-services)); RTO: minutes
 
 **Multi-Site Active-Active**
@@ -494,7 +494,7 @@ StepFunction: PlaceOrderSaga
 ### Data Transfer Cost Reduction
 - Within same AZ: free; cross-AZ: $0.01/GB each way (biggest hidden cost in naively designed systems)
 - [S3](/aws-storage-s3) → EC2 in same region: free; S3 → internet: $0.09/GB (use [CloudFront](/aws-storage-s3) to cache and reduce origin fetches)
-- Use [VPC Interface Endpoints](/aws-api-gateway-networking) (PrivateLink) for AWS service traffic: eliminates NAT Gateway data processing charges
+- Use [VPC Interface Endpoints](/aws/api-gateway-networking) (PrivateLink) for AWS service traffic: eliminates NAT Gateway data processing charges
 - CloudFront: cache-hit traffic avoids origin data transfer charges; compress responses (Gzip/Brotli)
 - Place consumers and producers in same AZ where latency-sensitive; use replica reads in same AZ
 
@@ -504,7 +504,7 @@ StepFunction: PlaceOrderSaga
 - [EBS](/aws-storage-s3): delete unattached volumes (alarm when state = available for > 7 days); switch to gp3 (same perf as gp2, 20% cheaper)
 - [RDS](/dynamodb-data-services): use Aurora Serverless v2 for variable workloads — scales in 0.5 ACU increments, scales to zero after idle period
 
-### Lambda Cost Optimization — see [Lambda & Serverless](/aws-lambda-serverless) for full Lambda optimization guide
+### Lambda Cost Optimization — see [Lambda & Serverless](/aws/lambda-serverless) for full Lambda optimization guide
 - Right-size memory: use AWS Lambda Power Tuning (Step Functions) to find optimal memory/cost balance
 - ARM64 (Graviton2): 20% cheaper + 19% better performance in Lambda; change architecture field in function config
 - Avoid unnecessary invocations: filter events at EventBridge rule level, not inside Lambda
@@ -514,7 +514,7 @@ StepFunction: PlaceOrderSaga
 
 ## 7. Observability Stack
 
-> Related: [Lambda & Serverless](/aws-lambda-serverless) for Lambda-specific observability (PowerTools, structured logging); [EC2, ECS & Containers](/aws-compute-containers) for container metrics and ADOT sidecar patterns.
+> Related: [Lambda & Serverless](/aws/lambda-serverless) for Lambda-specific observability (PowerTools, structured logging); [EC2, ECS & Containers](/aws-compute-containers) for container metrics and ADOT sidecar patterns.
 
 ### CloudWatch Metrics
 - Namespaces: `AWS/EC2`, `AWS/Lambda`, `AWS/RDS`, or custom (`MyApp/Orders`)
@@ -609,7 +609,7 @@ StepFunction: PlaceOrderSaga
 
 ### Refactor / Re-architect
 - Rethink architecture to be cloud-native; highest complexity, highest long-term benefit
-- Examples: decompose monolith into microservices; re-write to use [Lambda](/aws-lambda-serverless) + [DynamoDB](/dynamodb-data-services); implement event-driven architecture
+- Examples: decompose monolith into microservices; re-write to use [Lambda](/aws/lambda-serverless) + [DynamoDB](/dynamodb-data-services); implement event-driven architecture
 - When to use: app is a strategic differentiator; current architecture is a bottleneck to growth
 - Requires most time and investment; justified when business agility value exceeds migration cost
 
@@ -702,7 +702,7 @@ Root
 **EventBridge Pipes**
 - Point-to-point integration: source → filter → enrich → target
 - Sources: SQS, Kinesis, [DynamoDB Streams](/dynamodb-data-services), Kafka (MSK/self-managed)
-- Enrichment step: [Lambda](/aws-lambda-serverless), [API Gateway](/aws-api-gateway-networking), Step Functions (synchronous) — add data before target
+- Enrichment step: [Lambda](/aws/lambda-serverless), [API Gateway](/aws/api-gateway-networking), Step Functions (synchronous) — add data before target
 - Target: same as EventBridge rules; also SQS, Kinesis, DynamoDB, EventBridge bus, Step Functions
 - Eliminates polling Lambda functions; reduces code; native filtering before Lambda invocation
 
@@ -791,10 +791,10 @@ Root
 - Billing: per-account Cost Explorer; tag policies; consolidated billing in management account
 
 **Pool Model (Shared Infrastructure)**
-- All tenants share [EC2](/aws-compute-containers)/[Lambda](/aws-lambda-serverless)/[RDS](/dynamodb-data-services); tenant data isolated by `tenantId` column (row-level security) or [DynamoDB](/dynamodb-data-services) partition key
+- All tenants share [EC2](/aws-compute-containers)/[Lambda](/aws/lambda-serverless)/[RDS](/dynamodb-data-services); tenant data isolated by `tenantId` column (row-level security) or [DynamoDB](/dynamodb-data-services) partition key
 - DynamoDB: `PK = tenant#<id>#resource#<id>` — all queries must include tenantId
 - Aurora: Row Level Security (RLS) via PostgreSQL policies enforced at DB level
-- Application-level isolation: every [API Gateway](/aws-api-gateway-networking) request validated against JWT `tenantId` claim; middleware prevents cross-tenant data access
+- Application-level isolation: every [API Gateway](/aws/api-gateway-networking) request validated against JWT `tenantId` claim; middleware prevents cross-tenant data access
 - Noisy neighbor: reserved Lambda concurrency per tenant tier; DynamoDB per-partition WCU monitoring
 
 **Tenant-Aware Observability**
@@ -803,7 +803,7 @@ Root
 - Per-tenant CloudWatch custom metrics for SLA tracking and chargeback
 
 ### White-Labeling Architecture
-- Custom domain per client: [Route 53](/aws-api-gateway-networking) hosted zones per tenant; ACM wildcard or per-domain certificates
+- Custom domain per client: [Route 53](/aws/api-gateway-networking) hosted zones per tenant; ACM wildcard or per-domain certificates
 - [CloudFront](/aws-storage-s3) distribution per tenant (or SNI on shared distribution): different origins, behaviors, cache policies per tenant
 - Branding config in [DynamoDB](/dynamodb-data-services): `tenantId` → logo URL, color scheme, feature flags; fetched on UI load
 - Subdomain routing: `client1.saas.com`, `client2.saas.com` → same CloudFront → same origin → tenant resolved by `Host` header
@@ -818,11 +818,11 @@ Root
 
 **Compute Isolation**
 - [Fargate](/aws-compute-containers) task per tenant request: ephemeral, isolated, no shared process space
-- [Lambda](/aws-lambda-serverless): separate functions per tenant tier (if behavioral customization needed) or shared function with tenant context
+- [Lambda](/aws/lambda-serverless): separate functions per tenant tier (if behavioral customization needed) or shared function with tenant context
 
 **Network Isolation**
-- [VPC](/aws-api-gateway-networking) per tenant: used in silo model; peered or via [Transit Gateway](/aws-api-gateway-networking) to shared services
-- [Security groups](/aws-api-gateway-networking) as tenant boundaries in pool model: restrict by app-layer tag, not network
+- [VPC](/aws/api-gateway-networking) per tenant: used in silo model; peered or via [Transit Gateway](/aws/api-gateway-networking) to shared services
+- [Security groups](/aws/api-gateway-networking) as tenant boundaries in pool model: restrict by app-layer tag, not network
 
 **Blast Radius Containment**
 - If one tenant's misconfiguration or attack compromises security, contain it to that tenant's account/resources
@@ -907,8 +907,8 @@ A: Use Spot Instances for compute — nightly batch is fault-tolerant, schedule 
 | Topic | Article |
 |---|---|
 | AWS overview & services map | [/aws](/aws) |
-| Lambda, serverless, Step Functions | [/aws-lambda-serverless](/aws-lambda-serverless) |
-| API Gateway, VPC, Route 53, ALB, CloudFront | [/aws-api-gateway-networking](/aws-api-gateway-networking) |
+| Lambda, serverless, Step Functions | [/aws-lambda-serverless](/aws/lambda-serverless) |
+| API Gateway, VPC, Route 53, ALB, CloudFront | [/aws-api-gateway-networking](/aws/api-gateway-networking) |
 | IAM, SCPs, GuardDuty, KMS, Security Hub | [/aws-iam-security](/aws-iam-security) |
 | EC2, ECS, EKS, Fargate, Spot, Graviton | [/aws-compute-containers](/aws-compute-containers) |
 | S3, CloudFront CDN, EBS, EFS, Glacier | [/aws-storage-s3](/aws-storage-s3) |

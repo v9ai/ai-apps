@@ -152,8 +152,8 @@ A role has two policies:
 ```
 
 ### Service Roles vs Instance Profiles
-- **Service Role**: a role whose trust policy allows an AWS service ([Lambda](/aws/lambda-serverless), [ECS](/aws-compute-containers), Glue) to assume it.
-- **Instance Profile**: a container for a single role that can be attached to an [EC2 instance](/aws-compute-containers). EC2 retrieves temporary credentials from the IMDS (Instance Metadata Service) at `169.254.169.254/latest/meta-data/iam/security-credentials/<role-name>`. IMDSv2 is required (token-based, not just IP-hop exploitable).
+- **Service Role**: a role whose trust policy allows an AWS service ([Lambda](/aws/lambda-serverless), [ECS](/aws/compute-containers), Glue) to assume it.
+- **Instance Profile**: a container for a single role that can be attached to an [EC2 instance](/aws/compute-containers). EC2 retrieves temporary credentials from the IMDS (Instance Metadata Service) at `169.254.169.254/latest/meta-data/iam/security-credentials/<role-name>`. IMDSv2 is required (token-based, not just IP-hop exploitable).
 
 ### Cross-Account Roles
 1. In Account B (resource owner): create role, trust policy allows Account A's principal, permission policy grants needed actions.
@@ -585,7 +585,7 @@ Detects unusual API activity (write management events). Compares baseline to cur
 ## 15. Amazon GuardDuty
 
 ### What It Does
-Continuous threat detection ML service. Ingests: CloudTrail management + [S3](/aws-storage-s3) data events, VPC Flow Logs, DNS logs, [EKS](/aws-compute-containers) audit logs, RDS login activity, [Lambda](/aws/lambda-serverless) network activity, S3 access patterns, Malware Protection (EBS volumes).
+Continuous threat detection ML service. Ingests: CloudTrail management + [S3](/aws-storage-s3) data events, VPC Flow Logs, DNS logs, [EKS](/aws/compute-containers) audit logs, RDS login activity, [Lambda](/aws/lambda-serverless) network activity, S3 access patterns, Malware Protection (EBS volumes).
 
 ### Finding Types (by threat purpose)
 | Category | Example Findings |
@@ -615,7 +615,7 @@ Lambda:
   - Create snapshot of EBS volume for forensics
   - Send notification to Slack/PagerDuty
 ```
-See [Lambda](/aws/lambda-serverless) for function configuration and [EC2/ECS/EKS](/aws-compute-containers) for instance isolation details.
+See [Lambda](/aws/lambda-serverless) for function configuration and [EC2/ECS/EKS](/aws/compute-containers) for instance isolation details.
 
 ---
 
@@ -799,7 +799,7 @@ IAM is the authorization layer for every AWS service. Explore how it applies in 
 - [AWS Overview](/aws) — account structure, regions, and the shared responsibility model
 - [Lambda & Serverless](/aws/lambda-serverless) — execution roles, resource policies, environment variable encryption with KMS
 - [API Gateway & Networking](/aws/api-gateway-networking) — Cognito and Lambda authorizers, VPC integration
-- [EC2, ECS & EKS](/aws-compute-containers) — instance profiles, IMDS v2, ECS task roles, IRSA for Kubernetes
+- [EC2, ECS & EKS](/aws/compute-containers) — instance profiles, IMDS v2, ECS task roles, IRSA for Kubernetes
 - [S3, CloudFront & Storage](/aws-storage-s3) — bucket policies, Block Public Access, SSE-KMS, pre-signed URLs
 - [DynamoDB & Data Services](/dynamodb-data-services) — fine-grained IAM access control, VPC endpoint policies
 - [CI/CD & DevOps](/aws-cicd-devops) — OIDC federation for GitHub Actions, cross-account deployment roles, CDK IAM constructs

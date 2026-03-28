@@ -2,7 +2,7 @@
 
 ## The 30-Second Pitch
 
-DynamoDB is AWS's fully managed, [serverless](/aws/lambda-serverless) NoSQL database delivering single-digit millisecond latency at any scale. It solves the problem of database operations bottlenecks by decoupling storage from compute entirely—there are no instances to size, no cluster topology to manage, and no schema migrations to run. Teams choose DynamoDB when access patterns are known upfront, write throughput is unpredictable or bursty, and consistent sub-10ms latency is non-negotiable. This knowledge base also covers the broader AWS data services ecosystem: Aurora Serverless v2, RDS, ElastiCache, and [S3](/aws-storage-s3)-as-data-lake—all with the depth required to navigate senior engineering interviews.
+DynamoDB is AWS's fully managed, [serverless](/aws/lambda-serverless) NoSQL database delivering single-digit millisecond latency at any scale. It solves the problem of database operations bottlenecks by decoupling storage from compute entirely—there are no instances to size, no cluster topology to manage, and no schema migrations to run. Teams choose DynamoDB when access patterns are known upfront, write throughput is unpredictable or bursty, and consistent sub-10ms latency is non-negotiable. This knowledge base also covers the broader AWS data services ecosystem: Aurora Serverless v2, RDS, ElastiCache, and [S3](/aws/storage-s3)-as-data-lake—all with the depth required to navigate senior engineering interviews.
 
 ---
 
@@ -665,7 +665,7 @@ response = s3.select_object_content(
 
 ### Athena Integration
 
-Athena is serverless SQL on [S3](/aws-storage-s3). It uses Presto/Trino under the hood and integrates with the AWS Glue Data Catalog for schema management. Pay per TB scanned (~$5/TB). Parquet + ZSTD compression reduces cost by 10-20×.
+Athena is serverless SQL on [S3](/aws/storage-s3). It uses Presto/Trino under the hood and integrates with the AWS Glue Data Catalog for schema management. Pay per TB scanned (~$5/TB). Parquet + ZSTD compression reduces cost by 10-20×.
 
 **Partition projection:** Define partition schemes in the table DDL so Athena prunes partitions without consulting Glue on every query.
 

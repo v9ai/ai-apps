@@ -199,7 +199,7 @@ Highest to lowest: **Start build override** > **Project-level env vars** > **bui
 ## 3. AWS CodeDeploy
 
 ### What It Is
-A deployment service that automates application deployments to EC2, [ECS](/aws-compute-containers), [Lambda](/aws-lambda-serverless), or on-premises servers. It handles the mechanics of the deployment (stopping old versions, starting new ones, health checks) so you define the strategy, not the shell scripts.
+A deployment service that automates application deployments to EC2, [ECS](/aws/compute-containers), [Lambda](/aws/lambda-serverless), or on-premises servers. It handles the mechanics of the deployment (stopping old versions, starting new ones, health checks) so you define the strategy, not the shell scripts.
 
 ### Deployment Types
 
@@ -686,7 +686,7 @@ export class AppStack extends cdk.Stack {
 }
 ```
 
-**CDK Aspects**: Cross-cutting concerns applied to the entire construct tree. Use to enforce policies (e.g., all [S3](/aws-storage-s3) buckets must have encryption, all [lambdas](/aws-lambda-serverless) must have X-Ray tracing).
+**CDK Aspects**: Cross-cutting concerns applied to the entire construct tree. Use to enforce policies (e.g., all [S3](/aws-storage-s3) buckets must have encryption, all [lambdas](/aws/lambda-serverless) must have X-Ray tracing).
 
 ```typescript
 class EnforceEncryption implements cdk.IAspect {
@@ -1006,7 +1006,7 @@ fi
 ```
 
 ### ECS Rolling Deployment
-The default [ECS](/aws-compute-containers) service update strategy. ECS gradually replaces old tasks with new ones. Controlled by two parameters on the service:
+The default [ECS](/aws/compute-containers) service update strategy. ECS gradually replaces old tasks with new ones. Controlled by two parameters on the service:
 - `minimumHealthyPercent`: Minimum % of desired tasks that must stay running (e.g., 50 means half can be stopped to deploy).
 - `maximumPercent`: Maximum % of desired tasks that can run simultaneously (e.g., 200 means double capacity during rollout).
 
@@ -1026,7 +1026,7 @@ aws ecs update-service \
 ```
 
 ### ECS Blue/Green with CodeDeploy
-[ECS](/aws-compute-containers) blue/green requires:
+[ECS](/aws/compute-containers) blue/green requires:
 1. ECS service with `deploymentController: { type: CODE_DEPLOY }`
 2. Two target groups on the ALB
 3. CodeDeploy application with ECS deployment group
@@ -1059,7 +1059,7 @@ Hooks:
 
 **Cost**: Double infrastructure during transition.
 
-**When to use**: High-stakes deployments where instant rollback capability justifies the cost. [Lambda](/aws-lambda-serverless) (CodeDeploy does this natively), [ECS](/aws-compute-containers), EC2 with ALB.
+**When to use**: High-stakes deployments where instant rollback capability justifies the cost. [Lambda](/aws/lambda-serverless) (CodeDeploy does this natively), [ECS](/aws/compute-containers), EC2 with ALB.
 
 ### Canary
 **Mechanism**: Route a small percentage of traffic (e.g., 5% or 10%) to the new version. Monitor metrics. Gradually increase percentage. If metrics degrade, rollback. If stable, shift 100%.
@@ -1067,7 +1067,7 @@ Hooks:
 **AWS implementations**:
 - **Route 53 weighted routing**: `Weight: 5` for new version, `Weight: 95` for old.
 - **ALB weighted target groups**: Two target groups with weighted forwarding.
-- **[Lambda](/aws-lambda-serverless) aliases**: `aws lambda update-alias --routing-config AdditionalVersionWeights='{"2": 0.05}'`
+- **[Lambda](/aws/lambda-serverless) aliases**: `aws lambda update-alias --routing-config AdditionalVersionWeights='{"2": 0.05}'`
 - **CodeDeploy**: `LambdaCanary10Percent5Minutes` configs.
 - **[API Gateway](/aws-api-gateway-networking) canary**: Built-in stage canary feature.
 
@@ -1427,7 +1427,7 @@ aws appconfig start-deployment \
 
 **Q: What deployment strategy would you use for a Lambda function that processes financial transactions?**
 
-**A:** CodeDeploy with a canary or linear traffic shifting on a [Lambda](/aws-lambda-serverless) alias. I'd use `LambdaCanary10Percent5Minutes` to start: 10% of invocations go to the new version for 5 minutes while I monitor. I'd attach pre-traffic and post-traffic validation Lambda hooks—the pre-traffic hook runs integration tests against the new version before any live traffic is sent. I'd configure CloudWatch alarms on the new version's `Errors` and `Duration` metrics, linked to CodeDeploy for automatic rollback. If the error rate exceeds threshold during the canary window, CodeDeploy automatically rolls back by updating the alias to 100% on the old version. The whole thing is defined in an AppSpec file and triggered by CodePipeline.
+**A:** CodeDeploy with a canary or linear traffic shifting on a [Lambda](/aws/lambda-serverless) alias. I'd use `LambdaCanary10Percent5Minutes` to start: 10% of invocations go to the new version for 5 minutes while I monitor. I'd attach pre-traffic and post-traffic validation Lambda hooks—the pre-traffic hook runs integration tests against the new version before any live traffic is sent. I'd configure CloudWatch alarms on the new version's `Errors` and `Duration` metrics, linked to CodeDeploy for automatic rollback. If the error rate exceeds threshold during the canary window, CodeDeploy automatically rolls back by updating the alias to 100% on the old version. The whole thing is defined in an AppSpec file and triggered by CodePipeline.
 
 ---
 
