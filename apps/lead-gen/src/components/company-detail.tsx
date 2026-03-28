@@ -328,6 +328,7 @@ function formatScore(score?: number | null): string {
 
 type KeyFactsCardProps = {
   linkedinUrl?: string | null;
+  jobBoardUrl?: string | null;
   score?: number | null;
   isAdmin?: boolean;
   industry?: string | null;
@@ -336,6 +337,7 @@ type KeyFactsCardProps = {
 
 function KeyFactsCard({
   linkedinUrl,
+  jobBoardUrl,
   score,
   isAdmin = false,
   industry,
@@ -344,6 +346,10 @@ function KeyFactsCard({
   const linkedinHref = useMemo(
     () => coerceExternalUrl(linkedinUrl),
     [linkedinUrl]
+  );
+  const jobBoardHref = useMemo(
+    () => coerceExternalUrl(jobBoardUrl),
+    [jobBoardUrl]
   );
 
   const rows: Array<{
@@ -378,6 +384,32 @@ function KeyFactsCard({
           }}
         >
           linkedin.com
+          <ExternalLinkIcon />
+        </RadixLink>
+      ) : (
+        <Text size="2">—</Text>
+      ),
+    },
+    {
+      label: "Job board",
+      value: jobBoardHref ? (
+        <RadixLink
+          href={jobBoardHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          color="gray"
+          title={jobBoardHref}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            maxWidth: "100%",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Jobs
           <ExternalLinkIcon />
         </RadixLink>
       ) : (
@@ -1171,7 +1203,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               <Flex gap="4" align="start" style={{ flex: 1, minWidth: 0 }}>
                 <CompanyAvatar name={company.name} logoUrl={company.logo_url} size={72} />
                 <Box style={{ flex: 1, minWidth: 0 }}>
-                  <Heading size="8" style={{ lineHeight: 1.1 }}>
+                  <Heading size="6" style={{ lineHeight: 1.2, wordBreak: 'break-word' }}>
                     {company.name}
                   </Heading>
 
@@ -1230,7 +1262,8 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                     ) : null}
                     {company.size ? <Chip color="blue" variant="surface">{company.size}</Chip> : null}
                     {company.location ? <Chip color="gray" variant="surface">{company.location}</Chip> : null}
-                    {isAdmin && company.score != null && (
+                    {company.industry ? <Chip color="teal" variant="surface">{company.industry}</Chip> : null}
+                    {company.score != null && (
                       <Badge
                         color={scoreColor(company.score)}
                         variant="soft"
@@ -1247,7 +1280,8 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               <Flex
                 gap="2"
                 align="center"
-                style={{ flexWrap: "wrap" }}
+                wrap="wrap"
+                justify={{ initial: "start", sm: "end" }}
               >
                 {isAdmin && company && (
                   <LinkedInLeadDialog
@@ -1318,12 +1352,12 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           <Tabs.List>
             <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
             {isAdmin && (
-              <Link href={`/companies/${effectiveKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", paddingLeft: "var(--tabs-trigger-padding-x)", paddingRight: "var(--tabs-trigger-padding-x)" }}>
+              <Link href={`/companies/${effectiveKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "var(--space-2)", padding: "0 var(--space-3)", height: "var(--tabs-trigger-height, 36px)" }}>
                 Contacts
               </Link>
             )}
             {isAdmin && (
-              <Link href={`/companies/${effectiveKey}/emails`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", paddingLeft: "var(--tabs-trigger-padding-x)", paddingRight: "var(--tabs-trigger-padding-x)" }}>
+              <Link href={`/companies/${effectiveKey}/emails`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "var(--space-2)", padding: "0 var(--space-3)", height: "var(--tabs-trigger-height, 36px)" }}>
                 Emails
               </Link>
             )}
@@ -1343,14 +1377,53 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                     <Flex direction="column" gap="4">
                       {company.deep_analysis && (
                         <SectionCard title="Deep Analysis">
-                          <Box
-                            className="prose prose-sm prose-gray max-w-none"
-                            style={{
-                              lineHeight: 1.7,
-                              fontSize: '0.9rem',
-                            }}
-                          >
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          <Box style={{ fontSize: '0.875rem' }}>
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                h1: ({ children }) => (
+                                  <h1 style={{ color: 'var(--gray-12)', fontWeight: 600, fontSize: '1.35em', marginTop: '1em', marginBottom: '0.4em' }}>{children}</h1>
+                                ),
+                                h2: ({ children }) => (
+                                  <h2 style={{ color: 'var(--gray-12)', fontWeight: 600, fontSize: '1.15em', marginTop: '0.9em', marginBottom: '0.35em' }}>{children}</h2>
+                                ),
+                                h3: ({ children }) => (
+                                  <h3 style={{ color: 'var(--gray-12)', fontWeight: 600, fontSize: '1em', marginTop: '0.75em', marginBottom: '0.3em' }}>{children}</h3>
+                                ),
+                                p: ({ children }) => (
+                                  <p style={{ color: 'var(--gray-11)', lineHeight: 1.7, marginBottom: '0.75em' }}>{children}</p>
+                                ),
+                                ul: ({ children }) => (
+                                  <ul style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ul>
+                                ),
+                                ol: ({ children }) => (
+                                  <ol style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ol>
+                                ),
+                                li: ({ children }) => (
+                                  <li style={{ color: 'var(--gray-11)', marginBottom: '0.25em', lineHeight: 1.6 }}>{children}</li>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong style={{ color: 'var(--gray-12)', fontWeight: 600 }}>{children}</strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em style={{ fontStyle: 'italic' }}>{children}</em>
+                                ),
+                                code: ({ children, className }) => {
+                                  const isBlock = className?.includes('language-');
+                                  return isBlock ? (
+                                    <code style={{ display: 'block', background: 'var(--gray-3)', borderRadius: 4, padding: '0.5em 0.75em', fontSize: '0.875em', fontFamily: 'monospace', overflowX: 'auto' }}>{children}</code>
+                                  ) : (
+                                    <code style={{ background: 'var(--gray-3)', borderRadius: 3, padding: '2px 5px', fontSize: '0.875em', fontFamily: 'monospace' }}>{children}</code>
+                                  );
+                                },
+                                blockquote: ({ children }) => (
+                                  <blockquote style={{ borderLeft: '3px solid var(--accent-6)', paddingLeft: '0.75em', color: 'var(--gray-10)', margin: '0.5em 0' }}>{children}</blockquote>
+                                ),
+                                hr: () => (
+                                  <hr style={{ border: 'none', borderTop: '1px solid var(--gray-4)', margin: '1em 0' }} />
+                                ),
+                              }}
+                            >
                               {company.deep_analysis}
                             </ReactMarkdown>
                           </Box>
@@ -1372,7 +1445,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
 
                       {company.services?.length ? (
                         <SectionCard title="Services">
-                          <CollapsibleList items={company.services} visibleCount={7} />
+                          <CollapsibleChips items={company.services} visibleCount={8} />
                         </SectionCard>
                       ) : null}
 
@@ -1383,6 +1456,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                     <Flex direction="column" gap="4">
                       <KeyFactsCard
                         linkedinUrl={company.linkedin_url}
+                        jobBoardUrl={company.job_board_url}
                         score={company.score}
                         isAdmin={isAdmin}
                         industry={company.industry}

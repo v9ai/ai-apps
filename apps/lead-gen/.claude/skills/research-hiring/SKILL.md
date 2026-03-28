@@ -122,7 +122,7 @@ Write findings as a structured JSON block in your task completion message:
 {
   "agent": "hiring_intel",
   "company": "...",
-  "ats_boards": [
+  "job_boards": [
     {
       "platform": "greenhouse|ashby|lever|workable|other",
       "url": "...",
