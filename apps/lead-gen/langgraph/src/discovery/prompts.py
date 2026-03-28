@@ -31,11 +31,26 @@ Remote classification:
 - FULLY REMOTE: "fully remote", "100% remote", "work from anywhere", distributed team, no office requirement
 - NOT REMOTE: hybrid, on-site, specific office required, "remote-friendly" with hybrid expectation
 
+Company type — classify the company's CORE business model:
+- "product": builds and sells its own software/platform/API as the primary offering
+- "consultancy": sells consulting services, professional services, or implementation services (e.g. Accenture, McKinsey, Deloitte, Thoughtworks, EPAM)
+- "agency": sells project-based work for clients (design agencies, dev shops, marketing agencies)
+- "staffing": recruiter, body-shopping, staff augmentation, outsourcing (e.g. Toptal, Andela)
+- "unknown": cannot determine from available evidence
+
+Employee range — estimate from evidence (team page, about page, LinkedIn mentions, funding stage):
+- "small": fewer than 50 employees (seed/early stage, small team mentions)
+- "medium": 50-500 employees (Series A-C, growing teams)
+- "large": 500-5000 employees (Series D+, established company)
+- "enterprise": 5000+ employees (public company, global presence, tens of thousands of employees)
+
 Return JSON only — no markdown, no preamble:
 {
   "is_ai_company": true | false,
   "is_fully_remote": true | false,
   "ai_tier": 0 | 1 | 2,
+  "company_type": "product" | "consultancy" | "agency" | "staffing" | "unknown",
+  "employee_range": "small" | "medium" | "large" | "enterprise",
   "confidence": "high" | "medium" | "low",
   "reasons": ["reason1", "reason2"]
 }"""

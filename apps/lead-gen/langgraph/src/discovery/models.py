@@ -27,6 +27,8 @@ class CompanyResearchResult(BaseModel):
     is_ai_company: bool
     is_fully_remote: bool
     ai_tier: int  # 0 = not AI, 1 = AI-adjacent, 2 = AI-core
+    company_type: str  # "product" | "consultancy" | "agency" | "staffing" | "unknown"
+    employee_range: str  # "small" (<50) | "medium" (50-500) | "large" (500-5000) | "enterprise" (5000+)
     confidence: str  # "high" | "medium" | "low"
     reasons: list[str]
 
