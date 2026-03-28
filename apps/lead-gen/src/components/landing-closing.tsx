@@ -123,7 +123,7 @@ export function LandingClosing() {
                 type="email"
                 placeholder="your@email.com"
                 required
-                aria-label="email address for pipeline research updates"
+                aria-label="email address for agentic pipeline updates"
                 className={css({
                   flex: 1,
                   height: "40px",
@@ -178,7 +178,7 @@ export function LandingClosing() {
                 letterSpacing: "normal",
               })}
             >
-              one email per month. new papers, benchmarks, and module upgrades.
+              one email per month. new agents, benchmarks, and autonomy upgrades.
             </p>
           </div>
         </div>

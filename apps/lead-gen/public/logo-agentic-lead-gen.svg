@@ -1,115 +1,141 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
   <defs>
-    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0a1628" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#1a2f5a" stop-opacity="1"/>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0c10"/>
+      <stop offset="100%" stop-color="#111520"/>
     </linearGradient>
-    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#f5d060" stop-opacity="1"/>
-      <stop offset="50%" stop-color="#c9940a" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#a87200" stop-opacity="1"/>
+    <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="18%" stop-color="#e8e8e8"/>
+      <stop offset="42%" stop-color="#c0a855"/>
+      <stop offset="68%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#b8860b"/>
     </linearGradient>
-    <linearGradient id="crownGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffe87a" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#c9940a" stop-opacity="1"/>
+    <linearGradient id="barGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a2540" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#2563eb" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#1a2540" stop-opacity="0.9"/>
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+    <linearGradient id="barGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a2540" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#1a2540" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="barGrad3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a2540" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#0891b2" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#1a2540" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="guardGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6b4f00"/>
+      <stop offset="30%" stop-color="#d4af37"/>
+      <stop offset="50%" stop-color="#fff5cc"/>
+      <stop offset="70%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#6b4f00"/>
+    </linearGradient>
+    <radialGradient id="pommelGrad" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#fff0a0"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#7a5c00"/>
+    </radialGradient>
+    <linearGradient id="gripGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="50%" stop-color="#2d2d4e"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <filter id="tipGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
-      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000000" flood-opacity="0.5"/>
+    <filter id="guardGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
-    <clipPath id="shieldClip">
-      <path d="M150,28 L198,42 L198,110 Q198,148 150,170 Q102,148 102,110 L102,42 Z"/>
+    <filter id="ambientGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="bladeClip">
+      <polygon points="150,18 157,118 143,118"/>
     </clipPath>
   </defs>
 
   <!-- Background -->
-  <rect width="300" height="200" fill="#f0f4ff"/>
+  <rect width="300" height="200" fill="url(#bgGrad)" rx="8"/>
 
-  <!-- Shield outer glow -->
-  <path d="M150,28 L198,42 L198,110 Q198,148 150,170 Q102,148 102,110 L102,42 Z"
-        fill="none" stroke="#c9940a" stroke-width="4" opacity="0.3" filter="url(#glow)"/>
+  <!-- Soft ambient light behind sword -->
+  <ellipse cx="150" cy="88" rx="36" ry="85" fill="#d4af37" opacity="0.04"/>
 
-  <!-- Shield body -->
-  <path d="M150,28 L198,42 L198,110 Q198,148 150,170 Q102,148 102,110 L102,42 Z"
-        fill="url(#shieldGrad)" filter="url(#shadow)"/>
-
-  <!-- Shield inner border -->
-  <path d="M150,32 L194,45 L194,110 Q194,144 150,164 Q106,144 106,110 L106,45 Z"
-        fill="none" stroke="url(#goldGrad)" stroke-width="1.5" opacity="0.7"/>
-
-  <!-- Gold dividing cross - vertical -->
-  <line x1="150" y1="32" x2="150" y2="164" stroke="url(#goldGrad)" stroke-width="2.5" clip-path="url(#shieldClip)"/>
-  <!-- Gold dividing cross - horizontal -->
-  <line x1="102" y1="99" x2="198" y2="99" stroke="url(#goldGrad)" stroke-width="2.5" clip-path="url(#shieldClip)"/>
-
-  <!-- Q1 (top-left): Discovery / Radar icon -->
-  <g clip-path="url(#shieldClip)">
-    <circle cx="126" cy="68" r="14" fill="none" stroke="#3a7bd5" stroke-width="1.2" opacity="0.6"/>
-    <circle cx="126" cy="68" r="9" fill="none" stroke="#3a7bd5" stroke-width="1.2" opacity="0.7"/>
-    <circle cx="126" cy="68" r="4" fill="#3a7bd5" opacity="0.9"/>
-    <line x1="126" y1="68" x2="135" y2="58" stroke="#5a9ff5" stroke-width="1.5" opacity="0.9"/>
-    <circle cx="132" cy="61" r="1.8" fill="#7fc8ff" opacity="0.9"/>
+  <!-- Data visualization bars clipped to blade shape -->
+  <g clip-path="url(#bladeClip)" opacity="0.55">
+    <rect x="140" y="95" width="20" height="5" rx="1" fill="url(#barGrad1)"/>
+    <rect x="140" y="87" width="20" height="5" rx="1" fill="url(#barGrad2)"/>
+    <rect x="140" y="79" width="20" height="5" rx="1" fill="url(#barGrad3)"/>
+    <rect x="140" y="71" width="20" height="5" rx="1" fill="url(#barGrad1)"/>
+    <rect x="140" y="63" width="20" height="5" rx="1" fill="url(#barGrad2)"/>
+    <rect x="140" y="55" width="20" height="5" rx="1" fill="url(#barGrad3)"/>
+    <rect x="140" y="47" width="20" height="5" rx="1" fill="url(#barGrad1)"/>
+    <rect x="140" y="39" width="20" height="5" rx="1" fill="url(#barGrad2)"/>
+    <rect x="140" y="31" width="20" height="5" rx="1" fill="url(#barGrad3)"/>
+    <rect x="140" y="23" width="20" height="5" rx="1" fill="url(#barGrad1)"/>
   </g>
 
-  <!-- Q2 (top-right): Enrichment / Gear icon -->
-  <g clip-path="url(#shieldClip)">
-    <circle cx="174" cy="68" r="7" fill="none" stroke="#4daa6e" stroke-width="2"/>
-    <circle cx="174" cy="68" r="3" fill="#4daa6e"/>
-    <rect x="172.5" y="58" width="3" height="4" rx="1" fill="#4daa6e"/>
-    <rect x="172.5" y="74" width="3" height="4" rx="1" fill="#4daa6e"/>
-    <rect x="164" y="66.5" width="4" height="3" rx="1" fill="#4daa6e"/>
-    <rect x="180" y="66.5" width="4" height="3" rx="1" fill="#4daa6e"/>
-    <rect x="166.5" y="60.5" width="3.5" height="3" rx="1" fill="#4daa6e" transform="rotate(45 168.25 62)"/>
-    <rect x="178" y="73" width="3.5" height="3" rx="1" fill="#4daa6e" transform="rotate(45 179.75 74.5)"/>
-    <rect x="166.5" y="73" width="3.5" height="3" rx="1" fill="#4daa6e" transform="rotate(-45 168.25 74.5)"/>
-    <rect x="178" y="60.5" width="3.5" height="3" rx="1" fill="#4daa6e" transform="rotate(-45 179.75 62)"/>
+  <!-- Ambient gold glow behind blade -->
+  <polygon points="150,18 156,118 144,118" fill="#d4af37" opacity="0.13" filter="url(#ambientGlow)"/>
+
+  <!-- Blade body (tip at top) -->
+  <polygon points="150,18 157,118 143,118" fill="url(#bladeGrad)" filter="url(#tipGlow)"/>
+
+  <!-- Blade ridge and edge highlights -->
+  <line x1="150" y1="22" x2="150" y2="115" stroke="#ffffff" stroke-width="0.6" opacity="0.45"/>
+  <line x1="150" y1="22" x2="143.5" y2="116" stroke="#e0e0e0" stroke-width="0.4" opacity="0.3"/>
+  <line x1="150" y1="22" x2="156.5" y2="116" stroke="#e0e0e0" stroke-width="0.4" opacity="0.3"/>
+
+  <!-- Crossguard -->
+  <g filter="url(#guardGlow)">
+    <rect x="124" y="116" width="52" height="7" rx="3.5" fill="url(#guardGrad)"/>
+    <ellipse cx="124.5" cy="119.5" rx="4" ry="2.5" fill="#d4af37" opacity="0.9"/>
+    <ellipse cx="175.5" cy="119.5" rx="4" ry="2.5" fill="#d4af37" opacity="0.9"/>
+    <polygon points="150,114 153,119.5 150,125 147,119.5" fill="#fff5a0" opacity="0.85"/>
   </g>
 
-  <!-- Q3 (bottom-left): Contacts / Person + verified badge -->
-  <g clip-path="url(#shieldClip)">
-    <circle cx="126" cy="114" r="6" fill="#e8a020" opacity="0.9"/>
-    <path d="M115,132 Q115,124 126,124 Q137,124 137,132" fill="#e8a020" opacity="0.9"/>
-    <circle cx="134" cy="113" r="5" fill="#1a2f5a" stroke="#e8a020" stroke-width="1"/>
-    <polyline points="131,113 133,115.5 137,111" fill="none" stroke="#f5d060" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
+  <!-- Grip -->
+  <rect x="146" y="123" width="8" height="28" rx="3" fill="url(#gripGrad)"/>
+  <line x1="146" y1="128" x2="154" y2="128" stroke="#d4af37" stroke-width="0.8" opacity="0.5"/>
+  <line x1="146" y1="133" x2="154" y2="133" stroke="#d4af37" stroke-width="0.8" opacity="0.5"/>
+  <line x1="146" y1="138" x2="154" y2="138" stroke="#d4af37" stroke-width="0.8" opacity="0.5"/>
+  <line x1="146" y1="143" x2="154" y2="143" stroke="#d4af37" stroke-width="0.8" opacity="0.5"/>
 
-  <!-- Q4 (bottom-right): Outreach / Email send icon -->
-  <g clip-path="url(#shieldClip)">
-    <rect x="163" y="112" width="22" height="15" rx="2" fill="none" stroke="#d45a7a" stroke-width="1.8"/>
-    <polyline points="163,112 174,121 185,112" fill="none" stroke="#d45a7a" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="178" y1="108" x2="188" y2="104" stroke="#f5d060" stroke-width="1.5" stroke-linecap="round"/>
-    <polygon points="188,104 182,102 184,108" fill="#f5d060"/>
-  </g>
+  <!-- Pommel -->
+  <ellipse cx="150" cy="155" rx="7" ry="5.5" fill="url(#pommelGrad)" filter="url(#guardGlow)"/>
+  <ellipse cx="150" cy="154" rx="3.5" ry="2" fill="#fff8cc" opacity="0.6"/>
 
-  <!-- Shield outer border final -->
-  <path d="M150,28 L198,42 L198,110 Q198,148 150,170 Q102,148 102,110 L102,42 Z"
-        fill="none" stroke="url(#goldGrad)" stroke-width="2.5"/>
-
-  <!-- Crown above shield -->
-  <g filter="url(#glow)">
-    <rect x="130" y="19" width="40" height="10" rx="1.5" fill="url(#crownGrad)"/>
-    <polygon points="150,5 145,19 155,19" fill="url(#crownGrad)"/>
-    <polygon points="135,9 131,19 139,19" fill="url(#crownGrad)"/>
-    <polygon points="165,9 161,19 169,19" fill="url(#crownGrad)"/>
-    <circle cx="150" cy="6" r="2" fill="#fff" opacity="0.95"/>
-    <circle cx="135" cy="10" r="1.5" fill="#fff" opacity="0.9"/>
-    <circle cx="165" cy="10" r="1.5" fill="#fff" opacity="0.9"/>
-    <circle cx="140" cy="24" r="1.5" fill="#0a1628" opacity="0.6"/>
-    <circle cx="150" cy="24" r="1.5" fill="#0a1628" opacity="0.6"/>
-    <circle cx="160" cy="24" r="1.5" fill="#0a1628" opacity="0.6"/>
-  </g>
-
-  <!-- Bottom text: AGENTIC LEAD GEN -->
-  <text x="150" y="185" font-family="Georgia, 'Times New Roman', serif" font-size="11" font-weight="bold"
-        fill="#0a1628" text-anchor="middle" letter-spacing="2">AGENTIC LEAD GEN</text>
+  <!-- Wordmark -->
+  <text
+    x="150" y="177"
+    font-family="'Helvetica Neue', Arial, sans-serif"
+    font-size="11" font-weight="700" letter-spacing="3.5"
+    text-anchor="middle" fill="#d4af37" opacity="0.95"
+  >AGENTIC LEAD GEN</text>
 
   <!-- Tagline -->
-  <text x="150" y="196" font-family="Georgia, 'Times New Roman', serif" font-size="6.5"
-        fill="#8a9bbf" text-anchor="middle" letter-spacing="1.5">B2B INTELLIGENCE · PROTECTED</text>
+  <text
+    x="150" y="191"
+    font-family="'Helvetica Neue', Arial, sans-serif"
+    font-size="6.5" font-weight="400" letter-spacing="2.2"
+    text-anchor="middle" fill="#8899bb" opacity="0.75"
+  >EXCALIBUR OF SALES</text>
+
+  <!-- Decorative rules flanking wordmark -->
+  <line x1="30" y1="177" x2="94" y2="177" stroke="#d4af37" stroke-width="0.5" opacity="0.3"/>
+  <line x1="206" y1="177" x2="270" y2="177" stroke="#d4af37" stroke-width="0.5" opacity="0.3"/>
 </svg>

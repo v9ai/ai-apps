@@ -316,9 +316,9 @@ export function LandingHero() {
               }),
               "headline-word",
             )}
-            style={{ animationDelay: "0.46s" }}
+            style={{ animationDelay: "0.32s" }}
           >
-            generate B2B leads without the cloud
+            discover, enrich, and close B2B leads
           </span>
         </h1>
 
@@ -336,10 +336,10 @@ export function LandingHero() {
             letterSpacing: "snug",
           })}
         >
-          this pipeline crawls 820+ domains with RL-powered exploration,
-          extracts entities with 92.3% F1, resolves duplicates in &lt;1ms,
-          and scores leads with an XGBoost ensemble. because paying $13K/year
-          for a cloud CRM is not a strategy.
+          five specialized AI agents work autonomously to find companies,
+          enrich profiles, discover decision-maker contacts, and craft
+          personalized outreach -- end to end, without human intervention.
+          your agents work 24/7 so you don&apos;t have to.
         </p>
 
         {/* --- live activity indicator --- */}
