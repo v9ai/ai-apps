@@ -121,7 +121,7 @@ Agents extend Bedrock FMs with tool use ([function calling](/function-calling)) 
 
 **Components**:
 - **Agent**: The FM + instruction prompt + action groups + KB
-- **Action Group**: A Lambda function or inline code block exposed via an OpenAPI schema
+- **Action Group**: A [Lambda](/aws-lambda-serverless) function or inline code block exposed via an OpenAPI schema
 - **Session**: Maintains conversation memory across multi-turn interactions
 - **Alias**: A versioned deployment target (like a Lambda alias)
 - **Prompt overrides**: Customize the orchestration, pre-processing, post-processing, or KB response prompts
@@ -140,7 +140,7 @@ for event in response["completion"]:
         print(event["chunk"]["bytes"].decode(), end="")
 ```
 
-**Return of control (ROC)**: The agent can pause and return tool call parameters to your application instead of executing them directly—useful when you need to perform actions in your own backend before resuming.
+**Return of control (ROC)**: The agent can pause and return tool call parameters to your application instead of executing them directly—useful when you need to perform actions in your own backend before resuming. See [LangGraph](/langgraph) for an alternative open-source approach to stateful agent orchestration.
 
 ### Guardrails
 
@@ -201,7 +201,7 @@ Studio is a web-based IDE for ML workflows. It integrates JupyterLab notebooks, 
 
 ### Training Jobs
 
-A Training Job is a managed, containerized execution of your training script. You specify the algorithm (built-in or custom container), instance type, S3 input/output paths, and hyperparameters.
+A Training Job is a managed, containerized execution of your training script. You specify the algorithm (built-in or custom container), instance type, [S3](/aws-storage-s3) input/output paths, and hyperparameters. Training containers run on [EC2-backed instances](/aws-compute-containers) (p3, p4d, p5 families for GPU workloads).
 
 **Built-in algorithms**: XGBoost, Linear Learner, K-Means, PCA, BlazingText (word2vec/text classification), Object Detection, Semantic Segmentation, Seq2Seq, Factorization Machines, KNN, LDA, Random Cut Forest (anomaly detection).
 
@@ -274,7 +274,7 @@ aas.put_scaling_policy(
 
 ### SageMaker Pipelines
 
-Pipelines is a CI/CD workflow orchestration service for ML. Define steps as a DAG: Processing (data prep), Training, Evaluation, Condition (if/else branching), Model creation, Register, Transform. Integrated with Model Registry and Experiments.
+Pipelines is a CI/CD workflow orchestration service for ML. For broader AWS CI/CD tooling (CodePipeline, CDK), see [CI/CD & DevOps](/aws-cicd-devops). Define steps as a DAG: Processing (data prep), Training, Evaluation, Condition (if/else branching), Model creation, Register, Transform. Integrated with Model Registry and Experiments.
 
 ```python
 from sagemaker.workflow.pipeline import Pipeline
@@ -308,7 +308,7 @@ pipeline.start()
 
 ### Feature Store
 
-A managed repository for ML features with both online (low-latency, DynamoDB-backed) and offline (S3/Glue-catalogued) stores. Guarantees point-in-time correctness to prevent training/serving skew.
+A managed repository for ML features with both online (low-latency, [DynamoDB](/dynamodb-data-services)-backed) and offline ([S3](/aws-storage-s3)/Glue-catalogued) stores. Guarantees point-in-time correctness to prevent training/serving skew.
 
 **Key concepts**:
 - **Feature Group**: A collection of features (like a table). Has a record identifier and an event time.
@@ -332,7 +332,7 @@ A catalog for versioning, staging, and approving ML models. Integrates with Pipe
 
 ### JumpStart
 
-Pre-trained foundation models and ML solutions deployable in one click (or one API call). Includes Llama, Falcon, Stable Diffusion, and hundreds of HuggingFace models. Handles containerization, hardware selection, and endpoint setup automatically.
+Pre-trained foundation models and ML solutions deployable in one click (or one API call). Includes Llama, Falcon, Stable Diffusion, and hundreds of HuggingFace models. Handles containerization (via [ECS/EKS-backed infrastructure](/aws-compute-containers)), hardware selection, and endpoint setup automatically. JumpStart also provides [fine-tuning](/fine-tuning-fundamentals) workflows for supported models, including [LoRA adapters](/lora-adapters) on select LLMs.
 
 ```python
 from sagemaker.jumpstart.model import JumpStartModel
@@ -768,7 +768,7 @@ Documents are indexed as a combination of text content + metadata attributes (au
 
 **Feedback API**: Submit user click data and positive/negative labels to improve ranking over time.
 
-**Access control**: Documents can have ACL metadata. Kendra filters results based on user identity (via IAM or JWT tokens) so users only see documents they're authorized to access.
+**Access control**: Documents can have ACL metadata. Kendra filters results based on user identity (via [IAM](/aws-iam-security) or JWT tokens) so users only see documents they're authorized to access.
 
 ### Incremental Crawl
 
@@ -784,6 +784,8 @@ Each data source has a sync schedule (on-demand or scheduled). Kendra tracks doc
 | Customization | Relevance tuning, boosting | Chunking strategy, embedding model, vector store |
 | Cost | $1,000+/month (Enterprise) | Pay-per-use (tokens + retrieval) |
 | Best for | Enterprise document search, compliance | Conversational AI assistant |
+
+For a deeper treatment of RAG evaluation, retrieval quality, and hybrid search tuning, see [RAG evaluation](/rag-evaluation) and [advanced RAG](/advanced-rag).
 
 ---
 

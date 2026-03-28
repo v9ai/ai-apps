@@ -103,9 +103,9 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - [RDS](/dynamodb-data-services): Multi-AZ synchronous standby; failover < 60 seconds; avoid single-AZ in production
 
 **Failure Management**
-- Backup strategy: AWS Backup for centralized, policy-driven backup across RDS, EBS, DynamoDB, EFS, FSx
-- RDS automated backups: 35-day retention window, point-in-time recovery
-- S3 Versioning + MFA delete: protect against accidental deletion
+- Backup strategy: [AWS Backup](/aws-cicd-devops) for centralized, policy-driven backup across RDS, EBS, DynamoDB, EFS, FSx
+- [RDS](/dynamodb-data-services) automated backups: 35-day retention window, point-in-time recovery
+- [S3](/aws-storage-s3) Versioning + MFA delete: protect against accidental deletion
 - Chaos engineering: AWS Fault Injection Simulator (FIS) for controlled experiments (terminate instances, throttle network, inject latency)
 - Health checks: ALB target health, Route 53 health checks, ECS task health; unhealthy targets removed automatically
 - CloudWatch alarms → SNS → Auto Scaling: automated capacity response
@@ -117,13 +117,13 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 **Design Principles:** Democratize advanced technologies, go global in minutes, use serverless architectures, experiment more often, consider mechanical sympathy.
 
 **Selection**
-- Compute: Lambda for bursty/event-driven, Fargate for containerized variable load, EC2 for sustained/specialized
-- Storage: S3 for objects/static, EBS gp3 for block (IOPS independent of size), io2 Block Express for databases, EFS for shared POSIX
-- Database: match data model to engine — Aurora for relational, DynamoDB for key-value/document, ElastiCache for cache, Redshift for analytics, OpenSearch for full-text/vector search
-- Networking: placement groups (cluster for HPC/low latency, spread for fault isolation), enhanced networking (SR-IOV), EFA for MPI workloads
+- Compute: [Lambda](/aws-lambda-serverless) for bursty/event-driven, [Fargate](/aws-compute-containers) for containerized variable load, [EC2](/aws-compute-containers) for sustained/specialized
+- Storage: [S3](/aws-storage-s3) for objects/static, [EBS](/aws-storage-s3) gp3 for block (IOPS independent of size), io2 Block Express for databases, [EFS](/aws-storage-s3) for shared POSIX
+- Database: match data model to engine — [Aurora](/dynamodb-data-services) for relational, [DynamoDB](/dynamodb-data-services) for key-value/document, [ElastiCache](/dynamodb-data-services) for cache, [Redshift](/dynamodb-data-services) for analytics, OpenSearch for full-text/vector search
+- Networking: placement groups (cluster for HPC/low latency, spread for fault isolation), enhanced networking (SR-IOV), EFA for MPI workloads — see [API Gateway & Networking](/aws-api-gateway-networking)
 
 **Review**
-- Compute Optimizer: ML-based right-sizing recommendations for EC2, ECS (Fargate), Lambda, EBS
+- Compute Optimizer: ML-based right-sizing recommendations for [EC2](/aws-compute-containers), ECS (Fargate), [Lambda](/aws-lambda-serverless), [EBS](/aws-storage-s3)
 - Performance testing: load test with Artillery, Gatling; profile with X-Ray to find bottlenecks
 
 **Monitoring**
@@ -133,8 +133,8 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - RDS Performance Insights: database load by wait state, SQL statement, user — pinpoint slow queries
 
 **Tradeoffs**
-- Caching layers: CloudFront (CDN), ElastiCache Redis/Memcached (in-memory), DynamoDB DAX (microsecond DynamoDB reads)
-- Read replicas: Aurora up to 15 read replicas; offload read traffic; Global Database for cross-region reads
+- Caching layers: [CloudFront](/aws-storage-s3) (CDN), [ElastiCache Redis/Memcached](/dynamodb-data-services) (in-memory), [DynamoDB DAX](/dynamodb-data-services) (microsecond DynamoDB reads)
+- Read replicas: [Aurora](/dynamodb-data-services) up to 15 read replicas; offload read traffic; Global Database for cross-region reads
 - Asynchronous processing: move work off the hot path; return 202 Accepted + polling/webhook
 - Data locality: place compute near data (same AZ) to minimize latency; use local zones for sub-millisecond to end users
 
@@ -157,10 +157,10 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Cost-Effective Resources (see also Cost Optimization Patterns section)**
 - Right-size before committing: use Compute Optimizer; reduce instance size or switch to graviton
-- Graviton3 (arm64): up to 40% better price/performance for general compute vs x86; supported in EC2, Lambda, Fargate, RDS
-- Spot Instances: up to 90% savings; use for fault-tolerant, stateless, batch workloads; Spot Fleet + capacity-optimized allocation
+- Graviton3 (arm64): up to 40% better price/performance for general compute vs x86; supported in [EC2](/aws-compute-containers), [Lambda](/aws-lambda-serverless), Fargate, RDS
+- [Spot Instances](/aws-compute-containers): up to 90% savings; use for fault-tolerant, stateless, batch workloads; Spot Fleet + capacity-optimized allocation
 - Savings Plans: 1 or 3 year; Compute SP flexible across instance family/region/OS; EC2 Instance SP for specific family
-- Storage tiering: S3 Intelligent-Tiering, S3 Glacier for infrequent access, Glacier Deep Archive for archival
+- Storage tiering: [S3 Intelligent-Tiering](/aws-storage-s3), S3 Glacier for infrequent access, Glacier Deep Archive for archival
 - Lifecycle policies: auto-transition or delete objects after N days
 
 ---
@@ -180,7 +180,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Spot/Fargate: bin-packing by the provider reduces overall server count
 
 **Software & Architecture Patterns**
-- Minimize data movement: process at the edge (Lambda@Edge, CloudFront Functions) or in the same AZ
+- Minimize data movement: process at the edge ([Lambda@Edge](/aws-lambda-serverless), [CloudFront Functions](/aws-storage-s3)) or in the same AZ
 - Asynchronous & batch: group work to maximize hardware utilization (SQS batching, Lambda batch processing)
 - Serverless: eliminates idle capacity; resources only allocated during actual execution
 - Managed services: AWS optimizes hardware, cooling, and power at scale better than individual customers
@@ -198,7 +198,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Rule: each service should be independently deployable; a change to service A should not require redeployment of service B
 
 **Bounded Contexts on AWS**
-- Each context gets its own: CodePipeline, ECR repository, ECS service or Lambda, DynamoDB table or RDS database, IAM role
+- Each context gets its own: [CodePipeline](/aws-cicd-devops), ECR repository, [ECS](/aws-compute-containers) service or [Lambda](/aws-lambda-serverless), [DynamoDB](/dynamodb-data-services) table or [RDS](/dynamodb-data-services) database, [IAM role](/aws-iam-security)
 - Context boundary enforcement: services communicate only via well-defined APIs (REST, gRPC) or events — never direct DB access
 
 **Service Mesh: AWS App Mesh**
