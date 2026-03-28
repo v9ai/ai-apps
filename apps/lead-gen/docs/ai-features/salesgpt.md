@@ -542,3 +542,115 @@ from salesgpt.salesgptapi import SalesGPTAPI
 ---
 
 *Sources: GitHub repository `filip-michalsky/SalesGPT`, commit 7cd1d4f; files analyzed: `salesgpt/agents.py`, `salesgpt/chains.py`, `salesgpt/prompts.py`, `salesgpt/tools.py`, `salesgpt/stages.py`, `salesgpt/models.py`, `salesgpt/parsers.py`, `salesgpt/templates.py`, `salesgpt/salesgptapi.py`, `salesgpt/custom_invoke.py`, `salesgpt/logger.py`, `tests/test_salesgpt.py`, `examples/example_agent_setup.json`, `pyproject.toml`, GitHub Issues list.*
+
+---
+
+## 10. Deep ML Analysis
+
+### Stage Classifier: Zero-Shot LLM, No Fine-Tuned Model
+
+The conversation stage classifier is **pure zero-shot LLM prompting**. There is no fine-tuned model, no labeled dataset in the repo, no training code, and no model artifact. The `StageAnalyzerChain` sends the full conversation history + the 8-stage dictionary to the same `ChatLiteLLM` instance as the conversation model and parses a single digit from the completion.
+
+Implications for an ML engineer:
+- The classifier has no calibration. The LLM does not output a probability — it outputs a single character. There is no way to measure classification confidence or trigger a fallback.
+- A fine-tuned `deberta-v3-small` (82M parameters) classifier trained on even 1,000 labeled conversation fragments would be strictly better on latency (~8ms CPU vs. ~300ms API), cost (zero API spend), determinism, and measurability.
+- The prior-biasing trick (`{conversation_stage_id}` fed back) is a lightweight form of sequential state smoothing. It prevents wild jumps but also makes the classifier sticky — it will rarely classify backward more than one stage even when the conversation regresses.
+- No training data is included in the repository. No synthetic dataset generation script exists. The paper does not cite any sales-specific DST benchmark (MultiWOZ, SGD, etc.).
+
+### ChromaDB RAG: Exact Configuration
+
+From `salesgpt/tools.py`:
+
+```python
+text_splitter = CharacterTextSplitter(chunk_size=5000, chunk_overlap=200)
+embeddings = OpenAIEmbeddings()  # → text-embedding-ada-002, 1536 dimensions
+docsearch = Chroma.from_texts(
+    texts, embeddings,
+    collection_name="product-knowledge-base"
+)
+knowledge_base = RetrievalQA.from_chain_type(
+    llm=ChatOpenAI(model_name="gpt-4-0125-preview"),
+    chain_type="stuff",
+    retriever=docsearch.as_retriever()  # k=4 default, no override set
+)
+```
+
+**Index type:** ChromaDB defaults to HNSW with `space=l2`, `ef_construction=100`, `ef_search=100`, `max_neighbors=16` (M parameter). None of these are overridden in SalesGPT — it uses raw ChromaDB defaults.
+
+**Chunk size analysis:** `chunk_size=5000` characters (not tokens) is extremely large. The `CharacterTextSplitter` splits on `\n\n` by default, falling back to `\n`, then spaces. A 5,000-character chunk averages ~1,200 tokens for English prose — more than 75% of the context window of a GPT-3.5 "stuff" chain. With a single-document catalog, this often means the entire catalog is one chunk (no meaningful chunking occurs), and the retrieval step returns the full text regardless of query.
+
+**k value:** `as_retriever()` with no `search_kwargs` uses LangChain's default `k=4`. With `chunk_size=5000` and a short catalog, there are typically 1–3 chunks total, making k=4 irrelevant in practice.
+
+**Distance metric:** L2 (Euclidean) on `text-embedding-ada-002` 1536-dim vectors. Cosine similarity is strictly more appropriate for semantic similarity of high-dimensional embeddings from OpenAI models (the `text-embedding-ada-002` documentation recommends cosine). The L2/cosine distinction is immaterial when all vectors are normalized, but ChromaDB's default L2 space does not normalize vectors at indexing time.
+
+**In-memory, no persistence:** `Chroma.from_texts()` creates an ephemeral collection. There is no `persist_directory` set. On every `SalesGPT` initialization, the entire product catalog is re-embedded and re-indexed. This is a cold-start cost that scales linearly with catalog size.
+
+### Streaming + Tool Use Conflict: Root Cause
+
+`custom_invoke.py` implements `CustomAgentExecutor.invoke()` as a synchronous step accumulator:
+
+```python
+intermediate_steps = []
+intermediate_steps.append({"event": "Chain Started", ...})
+# ... ReAct loop iterations ...
+intermediate_steps.append({"event": "Call Successful", ...})
+final_outputs["intermediate_steps"] = intermediate_steps
+return final_outputs
+```
+
+The streaming path (`_streaming_generator` / `_astreaming_generator`) bypasses `CustomAgentExecutor` entirely and calls `completion_with_retry(stream=True)` directly on the LiteLLM client. This means:
+
+1. Streaming requires bypassing the ReAct loop — tools cannot be called.
+2. The ReAct loop requires buffering all steps before returning — streaming cannot interleave.
+
+The root cause is architectural: the `AgentExecutor` pattern (from LangChain 0.1.x) is designed around request-response semantics. The newer `AgentStreaming` APIs (LCEL's `astream_events`) fix this by yielding partial completions and tool-call events on the same async generator. The fix requires migrating from `LLMSingleActionAgent` to an LCEL runnable with `.astream_events(version="v2")`.
+
+### ReAct Parser Fragility
+
+`SalesConvoOutputParser.parse()` uses:
+```python
+regex = r"Action\s*\d*\s*:[\s]*(.*?)[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
+```
+This regex requires exact spacing. LLMs frequently produce `Action:` vs. `Action :`, `Action Input:` vs. `ActionInput:`, or wrap tool call lines in markdown code fences. Any mismatch causes the parser to return `AgentFinish` instead of `AgentAction`, silently skipping the tool call. Native function calling (OpenAI `tool_calls`, Anthropic `tool_use`) eliminates this fragility entirely.
+
+### Prompt Engineering Assessment
+
+The two few-shot examples in `SALES_AGENT_INCEPTION_PROMPT` demonstrate:
+1. Graceful end-of-call behavior (output `<END_OF_CALL>`)
+2. Pivot from rejection to needs discovery
+
+This is a correct application of few-shot prompting for behavioral steering. However, there are no examples demonstrating:
+- Stage transitions (e.g., correctly moving from Qualification to Value Proposition)
+- Tool invocation reasoning
+- Handling of profanity or abusive prospect input
+- Multi-language edge cases
+
+The lack of chain-of-thought in the stage classifier prompt means the model cannot explain its classification decision, making debugging opaque.
+
+---
+
+## 11. Research Papers & Prior Art
+
+| Paper | Authors | Year | Venue | Relevance | Key Finding |
+|-------|---------|------|-------|-----------|-------------|
+| ReAct: Synergizing Reasoning and Acting in Language Models | Yao et al. | 2022 | ICLR 2023 | SalesGPT's tool-use architecture (Thought/Action/Observation loop) directly implements ReAct | Interleaving reasoning traces with tool actions outperforms either alone; 34% gain on ALFWorld |
+| In-Context Learning for Few-Shot Dialogue State Tracking (IC-DST) | Hu, Lee, Xie, Yu, Smith, Ostendorf | 2022 | EMNLP Findings 2022 | Closest academic analog to SalesGPT's zero-shot stage classifier — shows LLM-based DST via few-shot prompting substantially outperforms fine-tuned models in low-data regimes | Converts DST to text-to-SQL; retrieval of exemplar dialogues is the key variable |
+| S3-DST: Structured Open-Domain Dialogue Segmentation and State Tracking | Das et al. (Microsoft Research) | 2023 | arXiv 2309.08827 | Directly addresses the open-domain multi-topic DST problem that SalesGPT ignores — sales conversations drift topics; S3-DST handles segment-level state | Pre-Analytical Recollection grounding mechanism consistently outperforms prior state-of-the-art on long dialogues |
+| Diverse Retrieval-Augmented In-Context Learning for Dialogue State Tracking | King, Flanigan | 2023 | ACL Findings 2023 | Shows that diverse exemplar retrieval (not just nearest-neighbor) dramatically improves zero-shot DST — directly applicable to SalesGPT's stage classifier | Python-code formulation of DST + diverse retrieval achieves state-of-the-art zero-shot DST on MultiWOZ |
+| Reflexion: Language Agents with Verbal Reinforcement Learning | Shinn, Cassano, Berman, Gopinath, Narasimhan, Yao | 2023 | arXiv 2303.11366 | SalesGPT has no self-correction mechanism. Reflexion shows how agents can reflect on failed tool calls and try again — directly applicable to improving `SalesConvoOutputParser` failures | 91% pass@1 on HumanEval via verbal self-reflection; no weight updates required |
+| A Survey on Large Language Model based Autonomous Agents | Wang et al. | 2023 | arXiv 2308.11432 | Situates SalesGPT's dual-chain architecture within the broader agent taxonomy; the paper's "action space" analysis shows SalesGPT uses a narrow sub-space (text actions only, no memory management) | Proposes unified framework: profile + memory + planning + action; SalesGPT implements profile (persona) + limited action only |
+| Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena | Zheng et al. | 2023 | NeurIPS 2023 | Foundation for any eval harness built on top of SalesGPT; shows GPT-4 as judge achieves >80% agreement with humans — viable for automated stage classification accuracy measurement | Identifies position bias and verbosity bias in LLM judges; mitigation: swap position in pair comparisons |
+| Towards Personalized Conversational Sales Agents: Contextual User Profiling for Strategic Action | Kim et al. | 2025 | arXiv 2504.08754 | Direct competitor to SalesGPT conceptually — introduces CSALES task combining preference elicitation, recommendation, and persuasion; uses LLM-based user simulation | Shows that contextual user profiling enables substantially more strategic action selection than stage-only classification |
+| A Two-dimensional Zero-shot DST Evaluation Method using GPT-4 | Gu, Yang | 2024 | arXiv 2406.11651 | Provides the evaluation framework missing from SalesGPT — two-dimensional (accuracy + completeness) GPT-4 judge for DST output | Consistent with exact-match baselines; enables zero-shot eval without labeled test data |
+
+### Annotations
+
+**IC-DST (Hu et al., 2022)** is the closest academic grounding for SalesGPT's stage classifier design. It formulates DST as text-to-SQL with retrieval-selected exemplars. SalesGPT uses a simpler approach (no retrieval, no SQL), which underperforms IC-DST on ambiguous stages. A direct improvement: add a retrieval step that pulls the 2–3 most similar historical conversation fragments from a small labeled set as in-context examples before the stage classification call.
+
+**S3-DST (Das et al., 2023)** is particularly relevant because real sales calls have topic shifts that SalesGPT's linear 8-stage model cannot handle. A prospect who completes a demo and circles back to pricing objections 20 turns later will confuse the classifier. S3-DST's segmentation approach (detecting topic shifts and tracking state per segment) would make SalesGPT's stage model much more robust.
+
+**Reflexion (Shinn et al., 2023)** addresses the tool-call fragility problem orthogonally. Instead of fixing the regex parser, Reflexion would allow the agent to detect that a tool call produced no result, reflect on why ("I may have formatted the action incorrectly"), and retry. This is implementable without changing SalesGPT's prompt architecture.
+
+**CSALES (Kim et al., 2025)** is the most direct academic competitor. It introduces user preference elicitation as a first-class task within the sales dialogue — something SalesGPT's "Needs analysis" stage approximates informally. The paper's LLM user simulator is also the right approach for generating labeled training data for the stage classifier, which SalesGPT currently lacks entirely.
+
+**On SPIN selling academic connections:** No academic papers specifically on AI implementations of SPIN (Situation-Problem-Implication-Need-payoff, Rackham 1988) or Challenger Sale were found on arXiv. The closest ML-adjacent work is in argumentation mining and persuasive dialogue generation (not yet at the domain specificity of B2B sales methodology). SalesGPT's author does not cite Rackham or Miller/Heiman. The 8-stage taxonomy is original to the repository, loosely inspired by standard sales funnel literature rather than academic DST research.
