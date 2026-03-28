@@ -350,7 +350,7 @@ A fully managed continuous delivery service that models, visualizes, and automat
 - `Approval`: Manual approval (SNS notification → human approves/rejects in console/CLI)
 - `Invoke`: Lambda function (custom logic)
 
-**Artifacts**: Files passed between actions via [S3](/aws-storage-s3) (the pipeline's artifact bucket). Each action can declare `inputArtifacts` and `outputArtifacts`. CodePipeline zips/unzips them automatically.
+**Artifacts**: Files passed between actions via [S3](/aws/storage-s3) (the pipeline's artifact bucket). Each action can declare `inputArtifacts` and `outputArtifacts`. CodePipeline zips/unzips them automatically.
 
 ```
 Source (GitHub) → [SourceArtifact]
@@ -686,7 +686,7 @@ export class AppStack extends cdk.Stack {
 }
 ```
 
-**CDK Aspects**: Cross-cutting concerns applied to the entire construct tree. Use to enforce policies (e.g., all [S3](/aws-storage-s3) buckets must have encryption, all [lambdas](/aws/lambda-serverless) must have X-Ray tracing).
+**CDK Aspects**: Cross-cutting concerns applied to the entire construct tree. Use to enforce policies (e.g., all [S3](/aws/storage-s3) buckets must have encryption, all [lambdas](/aws/lambda-serverless) must have X-Ray tracing).
 
 ```typescript
 class EnforceEncryption implements cdk.IAspect {

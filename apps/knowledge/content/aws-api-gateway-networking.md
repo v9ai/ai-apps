@@ -31,7 +31,7 @@ AWS API Gateway is a fully managed service that acts as the "front door" for bac
 | Private APIs (VPC) | Yes | Yes | No |
 | WAF integration | Yes | Yes | No |
 | Response caching | Yes | No | No |
-| Edge-optimized ([CloudFront](/aws-storage-s3)) | Yes | No | No |
+| Edge-optimized ([CloudFront](/aws/storage-s3)) | Yes | No | No |
 
 **Decision rule**: Default to **HTTP API** for new Lambda-backed REST workloads. Use **REST API** only if you need usage plans, API keys, VTL mapping templates, mock integrations, or edge optimization. Use **WebSocket API** for chat, live dashboards, multiplayer, or any bidirectional streaming use case.
 
@@ -806,7 +806,7 @@ A managed service in a public subnet that allows private subnet resources to ini
 
 Allow private connectivity to AWS services without internet routing. Two types:
 
-**Gateway Endpoint** (free): [S3](/aws-storage-s3) and DynamoDB only. A route is added to the route table pointing to the endpoint.
+**Gateway Endpoint** (free): [S3](/aws/storage-s3) and DynamoDB only. A route is added to the route table pointing to the endpoint.
 
 **Interface Endpoint** (PrivateLink, ~$0.01/hour/AZ): Creates an ENI in your subnet with a private IP. Works for most AWS services (SQS, SNS, Secrets Manager, API Gateway, etc.).
 

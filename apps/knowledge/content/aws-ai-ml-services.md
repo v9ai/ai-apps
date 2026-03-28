@@ -201,7 +201,7 @@ Studio is a web-based IDE for ML workflows. It integrates JupyterLab notebooks, 
 
 ### Training Jobs
 
-A Training Job is a managed, containerized execution of your training script. You specify the algorithm (built-in or custom container), instance type, [S3](/aws-storage-s3) input/output paths, and hyperparameters. Training containers run on [EC2-backed instances](/aws-compute-containers) (p3, p4d, p5 families for GPU workloads).
+A Training Job is a managed, containerized execution of your training script. You specify the algorithm (built-in or custom container), instance type, [S3](/aws-storage-s3) input/output paths, and hyperparameters. Training containers run on [EC2-backed instances](/aws/compute-containers) (p3, p4d, p5 families for GPU workloads).
 
 **Built-in algorithms**: XGBoost, Linear Learner, K-Means, PCA, BlazingText (word2vec/text classification), Object Detection, Semantic Segmentation, Seq2Seq, Factorization Machines, KNN, LDA, Random Cut Forest (anomaly detection).
 
@@ -332,7 +332,7 @@ A catalog for versioning, staging, and approving ML models. Integrates with Pipe
 
 ### JumpStart
 
-Pre-trained foundation models and ML solutions deployable in one click (or one API call). Includes Llama, Falcon, Stable Diffusion, and hundreds of HuggingFace models. Handles containerization (via [ECS/EKS-backed infrastructure](/aws-compute-containers)), hardware selection, and endpoint setup automatically. JumpStart also provides [fine-tuning](/fine-tuning-fundamentals) workflows for supported models, including [LoRA adapters](/lora-adapters) on select LLMs.
+Pre-trained foundation models and ML solutions deployable in one click (or one API call). Includes Llama, Falcon, Stable Diffusion, and hundreds of HuggingFace models. Handles containerization (via [ECS/EKS-backed infrastructure](/aws/compute-containers)), hardware selection, and endpoint setup automatically. JumpStart also provides [fine-tuning](/fine-tuning-fundamentals) workflows for supported models, including [LoRA adapters](/lora-adapters) on select LLMs.
 
 ```python
 from sagemaker.jumpstart.model import JumpStartModel
