@@ -59,8 +59,8 @@ export function LandingClosing() {
               letterSpacing: "snug",
             })}
           >
-            300 qualified B2B leads per cycle — extracted, deduplicated, scored,
-            and reported. fully local. $1,500/year total cost.
+            autonomous agents discover, enrich, score, and deliver 300+
+            qualified B2B leads per cycle. fully local. $1,500/year total cost.
           </p>
 
           {/* primary CTA repeated */}

@@ -60,9 +60,9 @@ export function Sidebar() {
         <Flex asChild align="center" justify="center" style={{ paddingLeft: collapsed ? 0 : 10, overflow: "hidden" }}>
         <Link href="/">
           {collapsed ? (
-            <Image src="/logo.svg" alt="Lead-Gen" width={32} height={32} priority style={{ objectFit: "contain" }} />
+            <Image src="/logo.svg" alt="Agentic Lead Gen" width={32} height={32} priority style={{ objectFit: "contain" }} />
           ) : (
-            <Image src="/logo.svg" alt="Lead-Gen" width={160} height={36} priority />
+            <Image src="/logo.svg" alt="Agentic Lead Gen" width={160} height={36} priority />
           )}
         </Link>
         </Flex>

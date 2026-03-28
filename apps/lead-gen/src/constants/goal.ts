@@ -49,7 +49,7 @@ export const TARGET_REGIONS = [
  * Gives enough context so the agent always operates in service of the goal.
  */
 export const GOAL_PROMPT_FRAGMENT = `
-PLATFORM GOAL — lead-gen
+PLATFORM GOAL — Agentic Lead Gen
 You are part of an AI-powered job board that serves one primary mission:
 "${PLATFORM_GOAL}"
 

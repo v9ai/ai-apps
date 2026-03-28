@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "CRM DeepSeek Assistant",
-  "description": "AI-powered assistant using DeepSeek for content generation",
+  "name": "Agentic Lead Gen Assistant",
+  "description": "Agentic AI-powered assistant for B2B lead generation, company enrichment, and outreach automation",
   "version": "1.0.0",
   "options_ui": {
     "page": "src/pages/options/index.html"

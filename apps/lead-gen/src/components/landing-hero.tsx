@@ -14,18 +14,18 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 /**
- * LANDING HERO
+ * LANDING HERO — Agentic Lead Gen
  *
- * Copy: "i built a local AI pipeline to generate B2B leads without the cloud"
- *       -- personal builder voice, commodity-hardware manifesto.
+ * Copy: "autonomous AI agents that discover, enrich, and close B2B leads"
+ *       -- agentic autonomy voice, agents-do-the-work manifesto.
  *
- * Badge: live rotating pipeline status replaces static copy.
- *        Creates liveness -- the page feels like a dashboard, not a brochure.
+ * Badge: live rotating agent status replaces static copy.
+ *        Creates liveness -- the page feels like a mission control, not a brochure.
  *
  * Animations: word-by-word headline entrance, stat count-up, CTA micro-interactions,
  *             badge scan-line overlay -- all wired from globals.css.
  *
- * Subheadline: ends with "because paying $13K/year for a cloud CRM is not a strategy"
+ * Subheadline: ends with "your agents work 24/7 so you don't have to"
  *              -- a personality line that makes the page memorable.
  */
 
@@ -173,7 +173,7 @@ function StatusIndicator() {
   );
 }
 
-const HEADLINE_WORDS = ["i", "built", "a", "local", "AI", "pipeline", "to"];
+const HEADLINE_WORDS = ["autonomous", "AI", "agents", "that"];
 
 const STATUS_LINES = [
   "crawling 820 domains",
