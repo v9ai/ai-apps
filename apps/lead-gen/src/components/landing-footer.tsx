@@ -169,8 +169,8 @@ export function LandingFooter() {
             })}
           >
             Agentic Lead Gen was built by one person who got tired of paying
-            cloud CRMs $10K/year to own their own leads. this is not a startup. there is no pricing page.
-            it is a pipeline that does one thing well: generate qualified B2B
+            cloud CRMs $10K/year to own their own leads. This is not a startup. There is no pricing page.
+            It is a pipeline that does one thing well: generate qualified B2B
             leads on commodity hardware.
           </p>
         </div>
@@ -198,7 +198,7 @@ export function LandingFooter() {
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className={button({ variant: "ghost", size: "sm" })}
           >
-            back to top
+            Back to top
           </button>
         </div>
       </div>

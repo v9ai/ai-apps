@@ -1,6 +1,6 @@
 {
-  "cycle_count": 0,
-  "phase": null,
+  "cycle_count": 1,
+  "phase": "Flowing",
   "counts": {
     "discovered": 123,
     "enriched": 120,

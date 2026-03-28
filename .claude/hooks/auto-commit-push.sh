@@ -43,25 +43,14 @@ else
     TAG=""
 fi
 
-# Try LLM-generated commit message from diff
-DIFF_STAT=$(git diff --cached --stat | tail -1)
-DIFF_BODY=$(git diff --cached -- '*.ts' '*.tsx' '*.rs' '*.py' '*.graphql' '*.sql' | head -400)
-LLM_MSG=$(printf 'Scope: %s\nSummary: %s\nFiles:\n%s\n\nDiff:\n%s\n\nWrite ONE conventional commit line (<72 chars). Use feat/fix/refactor/chore. Include scope from above if single. Output only the message.' \
-    "${TAG}" "${DIFF_STAT}" "$FILES" "$DIFF_BODY" \
-    | claude -p --model claude-haiku-4-5-20251001 --output-format text 2>/dev/null | head -1 | tr -d '\n')
-
-if [ -n "$LLM_MSG" ] && [ "${#LLM_MSG}" -le 100 ]; then
-    SUMMARY="$LLM_MSG"
+# Build commit message from changed files
+NAMES=$(echo "$FILES" | xargs -n1 basename | sed 's/\.[^.]*$//' | sort -u)
+COUNT=$(echo "$NAMES" | wc -l | tr -d ' ')
+if [ "$COUNT" -le 5 ]; then
+    SUMMARY="chore${TAG}: $(echo "$NAMES" | paste -sd ', ' -)"
 else
-    # Fallback: strip extensions, dedupe, truncate if too many
-    NAMES=$(echo "$FILES" | xargs -n1 basename | sed 's/\.[^.]*$//' | sort -u)
-    COUNT=$(echo "$NAMES" | wc -l | tr -d ' ')
-    if [ "$COUNT" -le 5 ]; then
-        SUMMARY="chore${TAG}: $(echo "$NAMES" | paste -sd ', ' -)"
-    else
-        TOP=$(echo "$NAMES" | head -3 | paste -sd ', ' -)
-        SUMMARY="chore${TAG}: ${TOP} (+$((COUNT - 3)) more)"
-    fi
+    TOP=$(echo "$NAMES" | head -3 | paste -sd ', ' -)
+    SUMMARY="chore${TAG}: ${TOP} (+$((COUNT - 3)) more)"
 fi
 
 git commit -m "${SUMMARY}" --no-verify > /dev/null 2>&1 || exit 0

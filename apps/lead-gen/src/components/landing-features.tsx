@@ -94,13 +94,13 @@ function FeatureCard({ title, description, details, index = 0 }: FeatureCardProp
 
 const features: FeatureCardProps[] = [
   {
-    title: "reinforcement learning finds what keyword crawlers miss",
+    title: "Reinforcement learning finds what keyword crawlers miss",
     description:
       "DQN with 448-dimensional state space and UCB1 multi-armed bandit learns which domains yield the best leads. 3\u00d7 harvest rate over baseline random crawling.",
     details: [
       "448-dim state encodes page structure, link density, and domain history",
       "UCB1 bandit balances exploration vs exploitation across 820 domains",
-      "you get 3\u00d7 more relevant pages per crawl cycle, automatically",
+      "You get 3\u00d7 more relevant pages per crawl cycle, automatically",
     ],
   },
   {
@@ -108,13 +108,13 @@ const features: FeatureCardProps[] = [
     description:
       "XGBoost handles 50% of scoring weight, logistic regression 25%, random forest 25%. each model catches what the others miss \u2014 89.7% precision, 86.5% recall.",
     details: [
-      "ensemble outperforms any single model by 4-7% on precision-recall AUC",
+      "Ensemble outperforms any single model by 4-7% on precision-recall AUC",
       "SHAP explanations show why each lead scored high or low",
-      "conformal prediction gives calibrated confidence intervals on every score",
+      "Conformal prediction gives calibrated confidence intervals on every score",
     ],
   },
   {
-    title: "local-first — your data, your pipeline, your control",
+    title: "Local-first — your data, your pipeline, your control",
     description:
       "SQLite graph + LanceDB vectors + ChromaDB embeddings \u2014 all local. no API calls to score leads — Agentic Lead Gen runs entirely on commodity hardware. $1,500/year total cost vs $5,400-13,200 for cloud alternatives.",
     details: [
@@ -160,7 +160,7 @@ export function LandingFeatures() {
             weight="bold"
             style={{ color: "var(--gray-12)", letterSpacing: "-0.02em" }}
           >
-            why Agentic Lead Gen
+            Why Agentic Lead Gen
           </Heading>
           <Text
             as="p"
@@ -168,7 +168,7 @@ export function LandingFeatures() {
             mt="2"
             style={{ color: "var(--gray-9)", maxWidth: 560 }}
           >
-            cloud CRMs are optimized for their margins, not your pipeline.
+            Cloud CRMs are optimized for their margins, not your pipeline.
             Agentic Lead Gen reverses that — autonomous agents on your hardware, working 24/7.
           </Text>
         </Box>
@@ -208,7 +208,7 @@ export function LandingFeatures() {
                 weight="bold"
                 style={{ color: "var(--gray-12)", letterSpacing: "-0.01em" }}
               >
-                ready to deploy Agentic Lead Gen?
+                Ready to deploy Agentic Lead Gen?
               </Text>
               <Text
                 as="p"
@@ -216,7 +216,7 @@ export function LandingFeatures() {
                 mt="1"
                 style={{ color: "var(--gray-10)" }}
               >
-                autonomous agents. 300 qualified leads per cycle. fully local. 35 cited papers.
+                Autonomous agents. 300 qualified leads per cycle. Fully local. 35 cited papers.
               </Text>
             </Box>
             <div className={flex({ gap: "3", flexShrink: 0 })}>
@@ -226,7 +226,7 @@ export function LandingFeatures() {
                 rel="noopener noreferrer"
                 className={button({ variant: "solid", size: "md" })}
               >
-                read the paper
+                Read the paper
                 <ArrowRightIcon width={14} height={14} />
               </a>
             </div>
@@ -323,7 +323,7 @@ export function LandingFeatures() {
                 href="/deploy"
                 className={button({ variant: "solidGreen", size: "sm" })}
               >
-                deploy locally
+                Deploy locally
               </Link>
               <a
                 href="/architecture"
@@ -344,7 +344,7 @@ export function LandingFeatures() {
                   },
                 })}
               >
-                architecture docs
+                Architecture docs
               </a>
             </div>
           </Flex>

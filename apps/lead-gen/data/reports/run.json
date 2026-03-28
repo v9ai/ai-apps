@@ -5,7 +5,7 @@
     "processed": 0,
     "created": 0,
     "errors": [],
-    "duration_ms": 402
+    "duration_ms": 1080
   },
   {
     "stage": "enrich",
@@ -33,12 +33,10 @@
   },
   {
     "stage": "outreach",
-    "status": "Skipped",
+    "status": "Success",
     "processed": 0,
     "created": 0,
-    "errors": [
-      "DEEPSEEK_API_KEY not set — cannot draft emails"
-    ],
+    "errors": [],
     "duration_ms": 0
   }
 ]

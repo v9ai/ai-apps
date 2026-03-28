@@ -292,7 +292,7 @@ export function LandingNav() {
                 mt: "1",
               })}
             >
-              autonomous B2B lead generation
+              Autonomous B2B lead generation
             </p>
           </div>
 

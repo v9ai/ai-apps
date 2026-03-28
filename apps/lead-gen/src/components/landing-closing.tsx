@@ -59,7 +59,7 @@ export function LandingClosing() {
               maxW: "560px",
             })}
           >
-            stop managing pipelines. let agents do it.
+            Stop managing pipelines. Let agents do it.
           </h2>
           <p
             className={css({
@@ -72,7 +72,7 @@ export function LandingClosing() {
             })}
           >
             Agentic Lead Gen agents discover, enrich, score, and deliver 300+
-            qualified B2B leads per cycle. fully local. $1,500/year total cost.
+            qualified B2B leads per cycle. Fully local. $1,500/year total cost.
           </p>
 
           {/* primary CTA repeated */}
@@ -81,7 +81,7 @@ export function LandingClosing() {
               href="/how-it-works"
               className={button({ variant: "solid", size: "lg" })}
             >
-              deploy agentic lead gen locally
+              Deploy Agentic Lead Gen locally
               <ArrowRightIcon width={14} height={14} />
             </Link>
           </div>
@@ -118,7 +118,7 @@ export function LandingClosing() {
                   letterSpacing: "wide",
                 })}
               >
-                not ready yet? get Agentic Lead Gen updates
+                Not ready yet? Get Agentic Lead Gen updates
               </span>
             </div>
             <form
@@ -173,7 +173,7 @@ export function LandingClosing() {
                 letterSpacing: "normal",
               })}
             >
-              one email per month. new agents, benchmarks, and autonomy upgrades.
+              One email per month. New agents, benchmarks, and autonomy upgrades.
             </p>
           </div>
         </div>
