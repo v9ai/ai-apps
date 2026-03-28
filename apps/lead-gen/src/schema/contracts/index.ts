@@ -5,7 +5,7 @@
  * consumed across TypeScript, Python, and Rust workers.
  *
  * Usage:
- *   import { JobStatus, ATSVendor, SKILL_TAXONOMY } from "@/schema/contracts";
+ *   import { JobStatus, CompanyCategory, SKILL_TAXONOMY } from "@/schema/contracts";
  *
  * Codegen:
  *   pnpm schema:generate  — regenerates Python/Rust constants from these definitions
