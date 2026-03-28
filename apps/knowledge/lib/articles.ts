@@ -119,26 +119,28 @@ const LESSON_SLUGS = [
   "langgraph-red-teaming",
   "llamaindex",
   "ai-engineer-roadmap",
-  // Cloud Platforms (72-83)
+  // Cloud Platforms (72-76)
   "aws",
   "azure",
   "gcp",
   "docker",
   "kubernetes",
+  // AWS Deep Dives (77-85)
   "aws-lambda-serverless",
-  "aws-iam-security",
   "aws-api-gateway-networking",
+  "aws-iam-security",
   "aws-compute-containers",
   "aws-storage-s3",
   "aws-cicd-devops",
   "aws-architecture",
-  // Software Engineering (84-89)
+  "aws-ai-ml-services",
+  "dynamodb-data-services",
+  // Software Engineering (86-90)
   "microservices",
   "ci-cd",
   "nodejs",
   "solid-principles",
   "acid-properties",
-  "dynamodb-data-services",
 ];
 
 export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
@@ -157,8 +159,9 @@ export const CATEGORIES: [number, number, string][] = [
   [55, 61, "Safety & Alignment"],
   [62, 65, "Multimodal AI"],
   [66, 71, "Applied AI & Production"],
-  [72, 83, "Cloud Platforms"],
-  [84, 89, "Software Engineering"],
+  [72, 76, "Cloud Platforms"],
+  [77, 85, "AWS Deep Dives"],
+  [86, 90, "Software Engineering"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
@@ -242,9 +245,16 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
   "Cloud Platforms": {
     slug: "cloud-platforms",
     icon: "☁",
-    description: "Cloud providers, containers, and orchestration — the infrastructure backbone for AI systems",
+    description: "Overview of the major cloud providers, container runtimes, and orchestration platforms",
     gradient: ["#0284c7", "#38bdf8"],
-    outcomes: ["Deploy on AWS, Azure, and GCP", "Containerize with Docker", "Orchestrate with Kubernetes"],
+    outcomes: ["Compare AWS, Azure, and GCP capabilities", "Containerize workloads with Docker", "Orchestrate containers with Kubernetes"],
+  },
+  "AWS Deep Dives": {
+    slug: "aws-deep-dives",
+    icon: "☁",
+    description: "Deep-dive reference guides for core AWS services — Lambda, ECS/EKS, IAM, S3, CI/CD, and AI/ML",
+    gradient: ["#f59e0b", "#fbbf24"],
+    outcomes: ["Master Lambda, API Gateway, and serverless patterns", "Secure workloads with IAM, KMS, and VPC", "Build CI/CD pipelines and IaC with CDK/CloudFormation"],
   },
   "Software Engineering": {
     slug: "software-engineering",
