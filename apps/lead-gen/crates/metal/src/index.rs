@@ -2,9 +2,55 @@ use ahash::AHashMap;
 use parking_lot::RwLock;
 use roaring::RoaringBitmap;
 
+// ── Adaptive BM25 ────────────────────────────────────────────
+
+/// BM25 parameters that adapt based on corpus statistics.
+#[derive(Debug, Clone)]
+pub struct BM25Config {
+    pub k1: f64,
+    pub b: f64,
+    pub avg_dl: f64,
+    pub total_docs: u32,
+    pub total_terms: u64,
+}
+
+impl Default for BM25Config {
+    fn default() -> Self {
+        Self { k1: 1.2, b: 0.75, avg_dl: 100.0, total_docs: 0, total_terms: 0 }
+    }
+}
+
+impl BM25Config {
+    /// Derive k1 and b from corpus statistics.
+    /// Dense corpus → higher b; short docs → higher k1.
+    pub fn from_corpus_stats(doc_count: u32, total_terms: u64, avg_doc_len: f64) -> Self {
+        let density = if doc_count > 0 { total_terms as f64 / doc_count as f64 } else { 0.0 };
+        let b = if density > 100.0 { 0.9 } else if density > 10.0 { 0.75 } else { 0.5 };
+        let k1 = if avg_doc_len < 100.0 { 2.0 } else if avg_doc_len < 500.0 { 1.5 } else { 1.2 };
+        Self { k1, b, avg_dl: avg_doc_len, total_docs: doc_count, total_terms }
+    }
+
+    fn recalculate(&mut self) {
+        if self.total_docs > 0 {
+            self.avg_dl = self.total_terms as f64 / self.total_docs as f64;
+            let derived = Self::from_corpus_stats(self.total_docs, self.total_terms, self.avg_dl);
+            self.k1 = derived.k1;
+            self.b = derived.b;
+        }
+    }
+}
+
+// ── Inverted Index ───────────────────────────────────────────
+
 pub struct InvertedIndex {
     postings: RwLock<AHashMap<String, RoaringBitmap>>,
     doc_count: std::sync::atomic::AtomicU32,
+    /// Per-doc term frequencies: term → (doc_id → count)
+    term_freqs: RwLock<AHashMap<String, AHashMap<u32, u32>>>,
+    /// Per-doc token count
+    doc_lengths: RwLock<AHashMap<u32, u32>>,
+    /// Adaptive BM25 configuration
+    bm25: RwLock<BM25Config>,
 }
 
 impl Default for InvertedIndex {
@@ -18,33 +64,46 @@ impl InvertedIndex {
         Self {
             postings: RwLock::new(AHashMap::new()),
             doc_count: std::sync::atomic::AtomicU32::new(0),
+            term_freqs: RwLock::new(AHashMap::new()),
+            doc_lengths: RwLock::new(AHashMap::new()),
+            bm25: RwLock::new(BM25Config::default()),
         }
     }
 
     pub fn index_document(&self, text: &str) -> u32 {
         let doc_id = self.doc_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let tokens = tokenize(text);
-
-        let mut postings = self.postings.write();
-        for token in tokens {
-            postings
-                .entry(token)
-                .or_default()
-                .insert(doc_id);
-        }
-
+        self.index_tokens(doc_id, text);
         doc_id
     }
 
     pub fn index_with_id(&self, doc_id: u32, text: &str) {
+        self.index_tokens(doc_id, text);
+    }
+
+    fn index_tokens(&self, doc_id: u32, text: &str) {
         let tokens = tokenize(text);
-        let mut postings = self.postings.write();
-        for token in tokens {
-            postings
-                .entry(token)
-                .or_default()
-                .insert(doc_id);
+        let doc_len = tokens.len() as u32;
+
+        // Count per-term frequencies
+        let mut local_freqs: AHashMap<String, u32> = AHashMap::new();
+        for token in &tokens {
+            *local_freqs.entry(token.clone()).or_insert(0) += 1;
         }
+
+        let mut postings = self.postings.write();
+        let mut term_freqs = self.term_freqs.write();
+        for (token, freq) in &local_freqs {
+            postings.entry(token.clone()).or_default().insert(doc_id);
+            term_freqs.entry(token.clone()).or_default().insert(doc_id, *freq);
+        }
+
+        self.doc_lengths.write().insert(doc_id, doc_len);
+
+        // Update BM25 stats
+        let mut bm25 = self.bm25.write();
+        bm25.total_docs += 1;
+        bm25.total_terms += doc_len as u64;
+        bm25.recalculate();
     }
 
     pub fn search_and(&self, query: &str) -> Vec<u32> {
@@ -102,10 +161,14 @@ impl InvertedIndex {
         if tokens.is_empty() { return vec![]; }
 
         let postings = self.postings.read();
+        let term_freqs = self.term_freqs.read();
+        let doc_lengths = self.doc_lengths.read();
+        let bm25 = self.bm25.read();
+
         let n = self.doc_count.load(std::sync::atomic::Ordering::SeqCst) as f64;
-        let k1 = 1.2f64;
-        let b = 0.75f64;
-        let avg_dl = 100.0f64;
+        let k1 = bm25.k1;
+        let b = bm25.b;
+        let avg_dl = bm25.avg_dl;
 
         let mut scores: AHashMap<u32, f64> = AHashMap::new();
 
@@ -115,8 +178,13 @@ impl InvertedIndex {
                 let idf = ((n - df + 0.5) / (df + 0.5) + 1.0).ln();
 
                 for doc_id in bitmap.iter() {
-                    let tf = 1.0;
-                    let dl = avg_dl;
+                    // Real term frequency from index
+                    let tf = term_freqs.get(token)
+                        .and_then(|m| m.get(&doc_id))
+                        .copied()
+                        .unwrap_or(1) as f64;
+                    // Real document length
+                    let dl = doc_lengths.get(&doc_id).copied().unwrap_or(1) as f64;
                     let tf_norm = (tf * (k1 + 1.0)) / (tf + k1 * (1.0 - b + b * dl / avg_dl));
                     *scores.entry(doc_id).or_insert(0.0) += idf * tf_norm;
                 }
@@ -127,6 +195,11 @@ impl InvertedIndex {
         results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         results.truncate(limit);
         results
+    }
+
+    /// Get the current BM25 configuration.
+    pub fn bm25_config(&self) -> BM25Config {
+        self.bm25.read().clone()
     }
 
     pub fn term_count(&self) -> usize {
@@ -191,6 +264,9 @@ impl InvertedIndex {
         Some(Self {
             postings: RwLock::new(postings),
             doc_count: std::sync::atomic::AtomicU32::new(doc_count),
+            term_freqs: RwLock::new(AHashMap::new()),
+            doc_lengths: RwLock::new(AHashMap::new()),
+            bm25: RwLock::new(BM25Config::default()),
         })
     }
 }
@@ -232,13 +308,34 @@ mod tests {
         idx.index_document("rust python");    // doc 2: some "rust"
         let ranked = idx.search_ranked("rust", 10);
         assert!(!ranked.is_empty());
-        // doc 0 should rank higher than doc 2 (more occurrences)
-        // Note: BM25 uses TF=1 per token match, so ranking is by IDF only
-        // Both doc 0 and doc 2 contain "rust", so they should both appear
-        let doc_ids: Vec<u32> = ranked.iter().map(|(id, _)| *id).collect();
-        assert!(doc_ids.contains(&0));
-        assert!(doc_ids.contains(&2));
-        assert!(!doc_ids.contains(&1));
+        // With real TF, doc 0 (TF=3) should rank higher than doc 2 (TF=1)
+        assert_eq!(ranked[0].0, 0, "Doc with 3x 'rust' should rank first");
+        assert!(ranked[0].1 > ranked[1].1, "Higher TF → higher score");
+        assert!(!ranked.iter().any(|(id, _)| *id == 1));
+    }
+
+    #[test]
+    fn test_bm25_config_adaptive() {
+        let sparse = BM25Config::from_corpus_stats(100, 500, 5.0);
+        assert_eq!(sparse.b, 0.5);
+        assert_eq!(sparse.k1, 2.0);
+
+        let dense = BM25Config::from_corpus_stats(100, 50_000, 500.0);
+        assert_eq!(dense.b, 0.9);
+        assert_eq!(dense.k1, 1.2);
+    }
+
+    #[test]
+    fn test_bm25_stats_update() {
+        let idx = InvertedIndex::new();
+        idx.index_document("hello world");
+        idx.index_document("foo bar baz");
+        idx.index_document("rust systems programming");
+        let config = idx.bm25_config();
+        assert_eq!(config.total_docs, 3);
+        assert!(config.total_terms > 0);
+        let expected_avg = config.total_terms as f64 / 3.0;
+        assert!((config.avg_dl - expected_avg).abs() < 0.01);
     }
 
     #[test]

@@ -152,12 +152,12 @@ ml-test-all: ## Test all ML modules
 	@cd $(METAL_DIR) && cargo test --lib
 
 # cargo test filter patterns per module
-RUST_FILTER_0 = pipeline bplus storage bloom
+RUST_FILTER_0 = pipeline bplus storage bloom index hll sketch
 RUST_FILTER_1 = queue net dns
 RUST_FILTER_2 = job_ner html_scanner
 RUST_FILTER_3 = dedup simd filter
 RUST_FILTER_4 = scoring embedding
-RUST_FILTER_7 = pipeline teams state
+RUST_FILTER_7 = pipeline teams state enrich
 
 # ── All ────────────────────────────────────────────────────────
 

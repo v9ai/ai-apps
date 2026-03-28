@@ -2,12 +2,14 @@ pub mod bloom;
 pub mod dedup;
 pub mod dns;
 pub mod email_metal;
+pub mod hll;
 pub mod index;
 pub mod kernel;
 pub mod net;
 pub mod pipeline;
 pub mod queue;
 pub mod similarity;
+pub mod sketch;
 pub mod storage;
 pub mod teams;
 

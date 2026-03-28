@@ -38,6 +38,21 @@ impl fmt::Display for Phase {
     }
 }
 
+// ── Phase history (hysteresis) ────────────────────────────────
+
+/// Phase transition history for hysteresis.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhaseHistory {
+    pub previous: Phase,
+    pub consecutive_count: u8,
+}
+
+impl Default for PhaseHistory {
+    fn default() -> Self {
+        Self { previous: Phase::Building, consecutive_count: 0 }
+    }
+}
+
 // ── Pipeline state ────────────────────────────────────────────
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -47,6 +62,8 @@ pub struct PipelineState {
     pub counts: StageCounts,
     pub quality_score: f64,
     pub bounce_rate: f64,
+    #[serde(default)]
+    pub phase_history: Option<PhaseHistory>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -102,6 +119,88 @@ impl PipelineState {
             return Phase::Saturated;
         }
         Phase::Flowing
+    }
+
+    /// Bayesian phase detection with confidence score and hysteresis.
+    /// Returns (phase, confidence) where confidence is in [0.0, 1.0].
+    pub fn detect_phase_bayesian(&self) -> (Phase, f32) {
+        // Beta-Bernoulli enrichment rate model
+        let (enrich_mean, enrich_ci_width) = if self.counts.discovered > 0 {
+            let alpha = self.counts.enriched as f64 + 1.0;
+            let beta_param = (self.counts.discovered.saturating_sub(self.counts.enriched)) as f64 + 1.0;
+            let mean = alpha / (alpha + beta_param);
+            let var = (alpha * beta_param) / ((alpha + beta_param).powi(2) * (alpha + beta_param + 1.0));
+            let ci_width = 2.0 * 1.96 * var.sqrt();
+            (mean, ci_width)
+        } else {
+            (0.0, 1.0)
+        };
+
+        let (contact_mean, contact_ci_width) = if self.counts.enriched > 0 {
+            let contacts_clamped = self.counts.contacts_found.min(self.counts.enriched);
+            let alpha = contacts_clamped as f64 + 1.0;
+            let beta_param = (self.counts.enriched - contacts_clamped) as f64 + 1.0;
+            let mean = alpha / (alpha + beta_param);
+            let var = (alpha * beta_param) / ((alpha + beta_param).powi(2) * (alpha + beta_param + 1.0));
+            let ci_width = 2.0 * 1.96 * var.sqrt();
+            (mean, ci_width)
+        } else {
+            (0.0, 1.0)
+        };
+
+        // Phase classification using posterior means (same thresholds as detect_phase)
+        let raw_phase = if self.quality_score > 0.0 && self.quality_score < 0.7 {
+            Phase::Degraded
+        } else if self.bounce_rate > 0.15 {
+            Phase::Degraded
+        } else if self.counts.enriched < 50 {
+            Phase::Building
+        } else if enrich_mean < 0.3 || contact_mean < 0.3 {
+            Phase::Bottleneck
+        } else if self.counts.discovered > 200 && enrich_mean > 0.7 && contact_mean > 0.7 {
+            Phase::Saturated
+        } else {
+            Phase::Flowing
+        };
+
+        // Confidence from credible interval width
+        let avg_ci = (enrich_ci_width + contact_ci_width) / 2.0;
+        let confidence = (1.0 - avg_ci.min(1.0)) as f32;
+
+        // Hysteresis: require 2 consecutive cycles in new phase
+        let final_phase = if let Some(ref history) = self.phase_history {
+            if raw_phase == history.previous {
+                raw_phase
+            } else if history.consecutive_count >= 2 {
+                raw_phase // enough consecutive cycles, allow transition
+            } else {
+                history.previous // stay in current phase
+            }
+        } else {
+            raw_phase
+        };
+
+        (final_phase, confidence)
+    }
+
+    /// Update phase history after detection.
+    pub fn update_phase_history(&mut self, detected: Phase) {
+        match &mut self.phase_history {
+            Some(history) => {
+                if detected == history.previous {
+                    history.consecutive_count = history.consecutive_count.saturating_add(1);
+                } else {
+                    history.previous = detected;
+                    history.consecutive_count = 1;
+                }
+            }
+            None => {
+                self.phase_history = Some(PhaseHistory {
+                    previous: detected,
+                    consecutive_count: 1,
+                });
+            }
+        }
     }
 }
 
@@ -209,6 +308,7 @@ mod tests {
             },
             quality_score: quality,
             bounce_rate: bounce,
+            phase_history: None,
         }
     }
 
@@ -276,5 +376,95 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let state = PipelineState::load(dir.path());
         assert_eq!(state.cycle_count, 0);
+    }
+
+    // ── Bayesian phase detection tests ───────────────────────────
+
+    #[test]
+    fn test_bayesian_building() {
+        let s = state_with(10, 5, 3, 0.9, 0.05);
+        let (phase, _confidence) = s.detect_phase_bayesian();
+        assert_eq!(phase, Phase::Building);
+    }
+
+    #[test]
+    fn test_bayesian_degraded() {
+        let s = state_with(200, 100, 80, 0.5, 0.05);
+        let (phase, _confidence) = s.detect_phase_bayesian();
+        assert_eq!(phase, Phase::Degraded);
+    }
+
+    #[test]
+    fn test_bayesian_high_confidence() {
+        // Many observations → narrow credible interval → high confidence
+        let s = state_with(500, 400, 350, 0.9, 0.05);
+        let (_phase, confidence) = s.detect_phase_bayesian();
+        assert!(confidence > 0.8, "Expected confidence > 0.8, got {confidence}");
+    }
+
+    #[test]
+    fn test_bayesian_low_confidence() {
+        // Few observations → wide credible interval → low confidence
+        let s = state_with(5, 3, 2, 0.9, 0.05);
+        let (_phase, confidence) = s.detect_phase_bayesian();
+        assert!(confidence < 0.5, "Expected confidence < 0.5, got {confidence}");
+    }
+
+    #[test]
+    fn test_hysteresis_prevents_flapping() {
+        // History says Flowing with only 1 consecutive — raw detects Building
+        // Hysteresis should keep Flowing (need >= 2 consecutive for transition)
+        let mut s = state_with(10, 5, 3, 0.9, 0.05);
+        s.phase_history = Some(PhaseHistory {
+            previous: Phase::Flowing,
+            consecutive_count: 1,
+        });
+        let (phase, _) = s.detect_phase_bayesian();
+        assert_eq!(phase, Phase::Flowing, "Hysteresis should prevent transition with consecutive_count=1");
+    }
+
+    #[test]
+    fn test_hysteresis_allows_transition() {
+        // History says Flowing with 2 consecutive — raw detects Building
+        // Hysteresis allows transition since consecutive >= 2
+        let mut s = state_with(10, 5, 3, 0.9, 0.05);
+        s.phase_history = Some(PhaseHistory {
+            previous: Phase::Flowing,
+            consecutive_count: 2,
+        });
+        let (phase, _) = s.detect_phase_bayesian();
+        assert_eq!(phase, Phase::Building, "Hysteresis should allow transition with consecutive_count=2");
+    }
+
+    #[test]
+    fn test_phase_history_serialization() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut state = state_with(100, 80, 60, 0.85, 0.08);
+        state.phase_history = Some(PhaseHistory {
+            previous: Phase::Flowing,
+            consecutive_count: 3,
+        });
+        state.save(dir.path()).unwrap();
+        let loaded = PipelineState::load(dir.path());
+        let history = loaded.phase_history.expect("phase_history should be Some after roundtrip");
+        assert_eq!(history.previous, Phase::Flowing);
+        assert_eq!(history.consecutive_count, 3);
+    }
+
+    #[test]
+    fn test_bayesian_backward_compat() {
+        // Simulate loading old JSON without phase_history field
+        let json = r#"{
+            "cycle_count": 5,
+            "phase": null,
+            "counts": { "discovered": 100, "enriched": 80, "contacts_found": 60, "outreach_drafted": 10, "outreach_sent": 5 },
+            "quality_score": 0.9,
+            "bounce_rate": 0.05
+        }"#;
+        let state: PipelineState = serde_json::from_str(json).expect("Should deserialize without phase_history");
+        assert!(state.phase_history.is_none(), "phase_history should be None for old format");
+        // Should still detect phases correctly
+        let (phase, _) = state.detect_phase_bayesian();
+        assert_eq!(phase, Phase::Flowing);
     }
 }
