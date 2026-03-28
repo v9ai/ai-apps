@@ -52,11 +52,18 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         let mut all_emails = company.emails_found.clone();
         let mut has_careers = false;
 
+        // Collect raw HTML bodies for structured extraction
+        #[cfg(feature = "kernel-extract")]
+        let mut raw_htmls: Vec<String> = Vec::new();
+
         for path in &["/about", "/team", "/careers", "/jobs", "/open-positions"] {
             let url = format!("https://{}{path}", company.domain);
             match ctx.http.get(&url).send().await {
                 Ok(resp) if resp.status().is_success() => {
                     if let Ok(body) = resp.text().await {
+                        #[cfg(feature = "kernel-extract")]
+                        raw_htmls.push(body.clone());
+
                         let text = strip_tags(&body);
                         all_text.push(' ');
                         all_text.push_str(&text);
@@ -78,17 +85,34 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
             }
         }
 
-        // LLM classification via local Qwen server, heuristic fallback on error
-        let (category, ai_tier, industry, confidence) = match llm::classify_company(
-            &ctx.http, &ctx.llm_base_url, ctx.llm_api_key.as_deref(),
-            &ctx.llm_model, &company.name, &company.domain, &all_text,
-        ).await {
-            Ok(cls) => (cls.category, cls.ai_tier, cls.industry, cls.confidence),
-            Err(e) => {
-                report.errors.push(format!("{}: LLM classify: {e}", company.domain));
-                heuristic_classify(&all_text)
+        // Try structured extraction via sgai-qwen3-1.7b first, fall back to classify_company
+        let (category, ai_tier, industry, confidence) = {
+            #[cfg(feature = "kernel-extract")]
+            {
+                match try_structured_extraction(ctx, &company.name, &raw_htmls).await {
+                    Some(result) => result,
+                    None => classify_fallback(ctx, &company, &all_text, &mut report.errors).await,
+                }
+            }
+            #[cfg(not(feature = "kernel-extract"))]
+            {
+                classify_fallback(ctx, &company, &all_text, &mut report.errors).await
             }
         };
+
+        // Merge structured emails from HTML profiles
+        #[cfg(feature = "kernel-extract")]
+        for html in &raw_htmls {
+            let profile = crate::kernel::html_extractor::extract_profile(html);
+            for email in &profile.structured_emails {
+                if !all_emails.contains(email) {
+                    all_emails.push(email.clone());
+                }
+            }
+            if profile.has_careers_section {
+                has_careers = true;
+            }
+        }
 
         // Detect remote policy from all fetched text
         let remote_policy = crate::kernel::job_ner::detect_remote_policy(
@@ -136,6 +160,101 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         errors,
         duration_ms: 0,
     })
+}
+
+/// Try structured extraction via sgai-qwen3-1.7b. Returns None if the
+/// extraction endpoint is unavailable or the response doesn't parse.
+#[cfg(feature = "kernel-extract")]
+async fn try_structured_extraction(
+    ctx: &TeamContext,
+    company_name: &str,
+    raw_htmls: &[String],
+) -> Option<(String, String, String, f64)> {
+    use crate::kernel::html_extractor;
+
+    // Build a merged profile from all fetched pages
+    let mut merged = html_extractor::HtmlProfile::default();
+    for html in raw_htmls {
+        let profile = html_extractor::extract_profile(html);
+        // Take first non-None values
+        if merged.jsonld.is_none() { merged.jsonld = profile.jsonld; }
+        if merged.meta_description.is_none() { merged.meta_description = profile.meta_description; }
+        if merged.og_title.is_none() { merged.og_title = profile.og_title; }
+        if merged.og_description.is_none() { merged.og_description = profile.og_description; }
+        if merged.canonical_url.is_none() { merged.canonical_url = profile.canonical_url; }
+        merged.headings.extend(profile.headings);
+        if merged.main_content.is_empty() {
+            merged.main_content = profile.main_content;
+        } else if !profile.main_content.is_empty() {
+            merged.main_content.push(' ');
+            merged.main_content.push_str(&profile.main_content);
+        }
+        merged.has_careers_section |= profile.has_careers_section;
+        merged.has_team_section |= profile.has_team_section;
+        for email in profile.structured_emails {
+            if !merged.structured_emails.contains(&email) {
+                merged.structured_emails.push(email);
+            }
+        }
+    }
+
+    // Skip if we have almost no content
+    if merged.main_content.len() < 50 && merged.jsonld.is_none() && merged.meta_description.is_none() {
+        return None;
+    }
+
+    // If no OG title, use company name
+    if merged.og_title.is_none() {
+        merged.og_title = Some(company_name.to_string());
+    }
+
+    let schema = llm::company_profile_schema();
+
+    match llm::extract_structured(
+        &ctx.http,
+        &ctx.extract_base_url,
+        ctx.llm_api_key.as_deref(),
+        &ctx.extract_model,
+        &merged,
+        &schema,
+    ).await {
+        Ok(val) => {
+            let category = val.get("category")
+                .and_then(|v| v.as_str())
+                .unwrap_or("PRODUCT")
+                .to_string();
+            let ai_tier = val.get("ai_tier")
+                .and_then(|v| v.as_str())
+                .unwrap_or("other")
+                .to_string();
+            let industry = val.get("industry")
+                .and_then(|v| v.as_str())
+                .unwrap_or("technology")
+                .to_string();
+            // Structured extraction gives high confidence
+            Some((category, ai_tier, industry, 0.85))
+        }
+        Err(_) => None,
+    }
+}
+
+/// Fallback: classify via Qwen2.5-3B (existing flow).
+async fn classify_fallback(
+    ctx: &TeamContext,
+    company: &super::discover::DiscoveredCompany,
+    all_text: &str,
+    errors: &mut Vec<String>,
+) -> (String, String, String, f64) {
+    match llm::classify_company(
+        &ctx.http, &ctx.llm_base_url, ctx.llm_api_key.as_deref(),
+        &ctx.llm_model, &company.name, &company.domain, all_text,
+    ).await {
+        Ok(cls) => (cls.category, cls.ai_tier, cls.industry, cls.confidence),
+        Err(e) => {
+            errors.push(format!("{}: LLM classify: {e}", company.domain));
+            heuristic_classify(all_text)
+        }
+    }
 }
 
 fn heuristic_classify(text: &str) -> (String, String, String, f64) {

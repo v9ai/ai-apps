@@ -216,6 +216,27 @@ ft-loop: ## Full cycle: export → train (TASK=role-tag|remote-eu)
 	@echo "Start serving: make ft-serve TASK=$(TASK)"
 	@echo "Rust pipeline will connect to localhost:$(FT_PORT)"
 
+# ── Structured Extraction (sgai-qwen3-1.7b) ──────────────────
+# Separate mlx_lm.server on port 8081 for HTML→structured JSON extraction.
+# Works alongside the Qwen2.5-3B classification server on port 8080.
+#
+# Usage:
+#   make extract-serve                Start extraction server (port 8081)
+#   make extract-stop                 Stop extraction server
+
+EXTRACT_PORT ?= 8081
+EXTRACT_MODEL ?= scrapegraphai/sgai-qwen3-1.7b-gguf
+
+.PHONY: extract-serve extract-stop
+
+extract-serve: ## Start sgai-qwen3-1.7b extraction server on port 8081
+	python3 -m mlx_lm.server \
+		--model $(EXTRACT_MODEL) \
+		--port $(EXTRACT_PORT)
+
+extract-stop: ## Stop extraction server
+	@pkill -f "mlx_lm.server.*$(EXTRACT_PORT)" 2>/dev/null && echo "Stopped extraction server" || echo "Not running"
+
 # ── All ────────────────────────────────────────────────────────
 
 .PHONY: install-all
