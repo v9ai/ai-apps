@@ -6,8 +6,6 @@ import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { sourceFilterDesktop, sourceFilterMobile } from "./source-filter.css";
 
 const SOURCE_OPTIONS = [
-  { value: "greenhouse", label: "Greenhouse", color: "blue" },
-  { value: "lever", label: "Lever", color: "cyan" },
   { value: "remotive", label: "Remotive", color: "orange" },
   { value: "arbeitnow", label: "Arbeitnow", color: "grass" },
   { value: "workable", label: "Workable", color: "teal" },
