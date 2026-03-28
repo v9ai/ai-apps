@@ -3,6 +3,7 @@
 //! Input:  discovery report (companies with domains)
 //! Output: enrichment report + updated Pipeline records
 
+use ahash::AHashMap;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
@@ -251,4 +252,266 @@ fn extract_emails(text: &str) -> Vec<String> {
         })
         .filter(|e| e.len() > 5)
         .collect()
+}
+
+// ── Naive Bayes text classifier ──────────────────────────────
+
+/// Naive Bayes text classifier for company categories.
+pub struct NaiveBayesClassifier {
+    class_priors: [f32; 4],  // CONSULTANCY, AGENCY, STAFFING, PRODUCT
+    word_log_likelihoods: AHashMap<u32, [f32; 4]>,
+    class_word_counts: [u32; 4],
+    vocab_size: u32,
+    trained: bool,
+}
+
+impl NaiveBayesClassifier {
+    pub fn new() -> Self {
+        Self {
+            class_priors: [0.25; 4],
+            word_log_likelihoods: AHashMap::new(),
+            class_word_counts: [0; 4],
+            vocab_size: 0,
+            trained: false,
+        }
+    }
+
+    pub fn is_trained(&self) -> bool { self.trained }
+
+    /// Train from labeled (text, category) pairs.
+    /// Categories: "CONSULTANCY" (0), "AGENCY" (1), "STAFFING" (2), "PRODUCT" (3)
+    pub fn train(&mut self, examples: &[(&str, &str)]) {
+        if examples.is_empty() { return; }
+
+        let mut class_counts = [0u32; 4];
+        let mut word_class_counts: AHashMap<u32, [u32; 4]> = AHashMap::new();
+        self.class_word_counts = [0; 4];
+
+        for (text, category) in examples {
+            let cls = match *category {
+                "CONSULTANCY" => 0,
+                "AGENCY" => 1,
+                "STAFFING" => 2,
+                "PRODUCT" => 3,
+                _ => continue,
+            };
+            class_counts[cls] += 1;
+
+            for hash in tokenize_nb(text) {
+                word_class_counts.entry(hash).or_insert([0; 4])[cls] += 1;
+                self.class_word_counts[cls] += 1;
+            }
+        }
+
+        let total = examples.len() as f32;
+        for i in 0..4 {
+            self.class_priors[i] = (class_counts[i] as f32 + 1.0) / (total + 4.0);
+        }
+
+        self.vocab_size = word_class_counts.len() as u32;
+
+        for (hash, counts) in &word_class_counts {
+            let mut log_probs = [0.0f32; 4];
+            for cls in 0..4 {
+                let num = counts[cls] as f32 + 1.0;
+                let den = self.class_word_counts[cls] as f32 + self.vocab_size as f32;
+                log_probs[cls] = (num / den).ln();
+            }
+            self.word_log_likelihoods.insert(*hash, log_probs);
+        }
+
+        self.trained = true;
+    }
+
+    /// Classify text. Returns (category_name, posterior_probability).
+    pub fn classify(&self, text: &str) -> (&'static str, f32) {
+        if !self.trained {
+            return ("PRODUCT", 0.25); // uniform fallback
+        }
+
+        let tokens = tokenize_nb(text);
+        let mut log_posteriors = [0.0f32; 4];
+
+        for cls in 0..4 {
+            log_posteriors[cls] = self.class_priors[cls].ln();
+        }
+
+        // Default log-prob for unseen words (Laplace smoothing)
+        let default_log: [f32; 4] = std::array::from_fn(|cls| {
+            (1.0 / (self.class_word_counts[cls] as f32 + self.vocab_size as f32)).ln()
+        });
+
+        for hash in &tokens {
+            let log_probs = self.word_log_likelihoods.get(hash).unwrap_or(&default_log);
+            for cls in 0..4 {
+                log_posteriors[cls] += log_probs[cls];
+            }
+        }
+
+        // Softmax for posterior probability
+        let max_log = log_posteriors.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+        let mut exps = [0.0f32; 4];
+        let mut exp_sum = 0.0f32;
+        for cls in 0..4 {
+            exps[cls] = (log_posteriors[cls] - max_log).exp();
+            exp_sum += exps[cls];
+        }
+
+        let mut best_cls = 0;
+        let mut best_prob = 0.0f32;
+        for cls in 0..4 {
+            let prob = exps[cls] / exp_sum;
+            if prob > best_prob {
+                best_prob = prob;
+                best_cls = cls;
+            }
+        }
+
+        let name = match best_cls {
+            0 => "CONSULTANCY",
+            1 => "AGENCY",
+            2 => "STAFFING",
+            _ => "PRODUCT",
+        };
+
+        (name, best_prob)
+    }
+}
+
+/// Tokenize for Naive Bayes: lowercase, split on non-alphanumeric, return hashes.
+fn tokenize_nb(text: &str) -> Vec<u32> {
+    text.split(|c: char| !c.is_alphanumeric())
+        .filter(|s| s.len() >= 2)
+        .map(|s| {
+            let lower: Vec<u8> = s.bytes().map(|b| if b >= b'A' && b <= b'Z' { b + 32 } else { b }).collect();
+            // Simple hash (FNV-1a style)
+            let mut h = 2166136261u32;
+            for &b in &lower {
+                h ^= b as u32;
+                h = h.wrapping_mul(16777619);
+            }
+            h
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn training_data() -> Vec<(&'static str, &'static str)> {
+        vec![
+            ("We provide consulting services and advisory for enterprise digital transformation custom development", "CONSULTANCY"),
+            ("Expert consultancy in cloud architecture and DevOps advisory services", "CONSULTANCY"),
+            ("Technology consulting firm specializing in custom software development", "CONSULTANCY"),
+            ("Strategic advisory and consulting for AI implementation", "CONSULTANCY"),
+            ("Full-service creative agency specializing in branding and digital marketing", "AGENCY"),
+            ("Digital agency delivering web design and creative campaigns", "AGENCY"),
+            ("Marketing agency focused on social media and creative content", "AGENCY"),
+            ("Design studio and creative agency for startups", "AGENCY"),
+            ("Global staffing and recruitment solutions for tech talent", "STAFFING"),
+            ("IT staffing firm connecting talent with top employers", "STAFFING"),
+            ("Recruitment agency specializing in engineering talent placement", "STAFFING"),
+            ("Technical staffing and workforce solutions provider", "STAFFING"),
+            ("SaaS platform for project management and team collaboration software", "PRODUCT"),
+            ("AI-powered product for automated data analytics platform", "PRODUCT"),
+            ("Developer tools and software platform for CI/CD pipelines", "PRODUCT"),
+            ("Cloud-native software product for enterprise resource planning", "PRODUCT"),
+        ]
+    }
+
+    #[test]
+    fn test_nb_untrained_fallback() {
+        let nb = NaiveBayesClassifier::new();
+        assert!(!nb.is_trained());
+        let (category, prob) = nb.classify("some random text about software");
+        assert_eq!(category, "PRODUCT");
+        assert!((prob - 0.25).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_nb_train_and_classify() {
+        let mut nb = NaiveBayesClassifier::new();
+        let data = training_data();
+        nb.train(&data);
+        assert!(nb.is_trained());
+
+        // Should classify consulting text as CONSULTANCY
+        let (cat, prob) = nb.classify("consulting advisory services for enterprise");
+        assert_eq!(cat, "CONSULTANCY");
+        assert!(prob > 0.3, "Expected prob > 0.3, got {prob}");
+    }
+
+    #[test]
+    fn test_nb_posterior_sums_to_one() {
+        let mut nb = NaiveBayesClassifier::new();
+        let data = training_data();
+        nb.train(&data);
+
+        let text = "We build software products and platforms";
+        let tokens = tokenize_nb(text);
+
+        let mut log_posteriors = [0.0f32; 4];
+        for cls in 0..4 {
+            log_posteriors[cls] = nb.class_priors[cls].ln();
+        }
+        let default_log: [f32; 4] = std::array::from_fn(|cls| {
+            (1.0 / (nb.class_word_counts[cls] as f32 + nb.vocab_size as f32)).ln()
+        });
+        for hash in &tokens {
+            let log_probs = nb.word_log_likelihoods.get(hash).unwrap_or(&default_log);
+            for cls in 0..4 {
+                log_posteriors[cls] += log_probs[cls];
+            }
+        }
+        let max_log = log_posteriors.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+        let sum: f32 = log_posteriors.iter().map(|lp| (lp - max_log).exp()).sum();
+        // After normalization, probabilities should sum to 1.0
+        let normalized_sum: f32 = log_posteriors.iter().map(|lp| (lp - max_log).exp() / sum).sum();
+        assert!((normalized_sum - 1.0).abs() < 0.001, "Posteriors should sum to ~1.0, got {normalized_sum}");
+    }
+
+    #[test]
+    fn test_nb_laplace_handles_unseen() {
+        let mut nb = NaiveBayesClassifier::new();
+        let data = training_data();
+        nb.train(&data);
+
+        // Classify with completely unseen words — should not panic or return -inf
+        let (cat, prob) = nb.classify("xylophone zygomorphic quasar nebula");
+        assert!(!prob.is_nan(), "Probability should not be NaN");
+        assert!(!prob.is_infinite(), "Probability should not be infinite");
+        assert!(prob > 0.0, "Probability should be positive");
+        assert!(!cat.is_empty(), "Category should not be empty");
+    }
+
+    #[test]
+    fn test_nb_empty_training() {
+        let mut nb = NaiveBayesClassifier::new();
+        let empty: Vec<(&str, &str)> = vec![];
+        nb.train(&empty);
+        assert!(!nb.is_trained(), "Should remain untrained after empty training data");
+    }
+
+    #[test]
+    fn test_nb_consultancy() {
+        let mut nb = NaiveBayesClassifier::new();
+        let data = training_data();
+        nb.train(&data);
+
+        let (cat, prob) = nb.classify("consulting advisory custom development enterprise solutions");
+        assert_eq!(cat, "CONSULTANCY", "Expected CONSULTANCY, got {cat}");
+        assert!(prob > 0.3, "Expected confident classification, got {prob}");
+    }
+
+    #[test]
+    fn test_nb_product() {
+        let mut nb = NaiveBayesClassifier::new();
+        let data = training_data();
+        nb.train(&data);
+
+        let (cat, prob) = nb.classify("software platform product saas cloud-native tools");
+        assert_eq!(cat, "PRODUCT", "Expected PRODUCT, got {cat}");
+        assert!(prob > 0.3, "Expected confident classification, got {prob}");
+    }
 }

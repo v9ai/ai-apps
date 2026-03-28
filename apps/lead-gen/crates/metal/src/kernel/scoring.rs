@@ -218,6 +218,275 @@ impl Default for ContactBatch {
     }
 }
 
+// ── Module 4: ML-based Lead Scoring ──────────────────────────────────────────
+
+/// Welford's online algorithm for running mean/variance.
+#[derive(Debug, Clone)]
+pub struct WelfordStats {
+    pub count: u64,
+    pub mean: f32,
+    pub m2: f32,
+}
+
+impl WelfordStats {
+    pub fn new() -> Self {
+        Self { count: 0, mean: 0.0, m2: 0.0 }
+    }
+
+    pub fn update(&mut self, value: f32) {
+        self.count += 1;
+        let delta = value - self.mean;
+        self.mean += delta / self.count as f32;
+        let delta2 = value - self.mean;
+        self.m2 += delta * delta2;
+    }
+
+    pub fn variance(&self) -> f32 {
+        if self.count < 2 { 1.0 } else { self.m2 / self.count as f32 }
+    }
+
+    pub fn std_dev(&self) -> f32 {
+        self.variance().sqrt().max(1e-6)
+    }
+
+    pub fn normalize(&self, value: f32) -> f32 {
+        (value - self.mean) / self.std_dev()
+    }
+}
+
+impl Default for WelfordStats {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Logistic regression scorer with learned weights.
+/// Features: [industry, employee, seniority, department, tech_norm, email_norm, recency_smooth]
+pub struct LogisticScorer {
+    pub weights: [f32; 7],
+    pub bias: f32,
+    pub feature_stats: [WelfordStats; 7],
+    pub trained: bool,
+}
+
+impl LogisticScorer {
+    pub fn new() -> Self {
+        Self {
+            weights: [0.0; 7],
+            bias: 0.0,
+            feature_stats: std::array::from_fn(|_| WelfordStats::new()),
+            trained: false,
+        }
+    }
+
+    /// Pre-trained weights calibrated for B2B lead scoring.
+    pub fn default_pretrained() -> Self {
+        Self {
+            weights: [0.8, 0.5, 0.8, 0.5, 0.3, 0.2, 0.3],
+            bias: -1.5,
+            feature_stats: std::array::from_fn(|_| WelfordStats::new()),
+            trained: true,
+        }
+    }
+
+    /// Numerically stable sigmoid activation.
+    #[inline]
+    pub fn sigmoid(x: f32) -> f32 {
+        1.0 / (1.0 + (-x.clamp(-88.0, 88.0)).exp())
+    }
+
+    /// Exponential recency decay: 1.0 at day 0, ~0.5 at day 46, <0.1 at day 180.
+    #[inline]
+    pub fn smooth_recency(days: u16) -> f32 {
+        (-0.015 * days as f32).exp()
+    }
+
+    /// Extract a 7-feature vector from a ContactBatch at a given index.
+    pub fn extract_features(batch: &ContactBatch, idx: usize) -> [f32; 7] {
+        [
+            batch.industry_match[idx] as f32,
+            batch.employee_in_range[idx] as f32,
+            batch.seniority_match[idx] as f32,
+            batch.department_match[idx] as f32,
+            batch.tech_overlap[idx] as f32 / 10.0,
+            batch.email_verified[idx] as f32 / 2.0,
+            Self::smooth_recency(batch.recency_days[idx]),
+        ]
+    }
+
+    /// Score a single feature vector.
+    pub fn score(&self, features: &[f32; 7]) -> f32 {
+        let mut dot = self.bias;
+        for i in 0..7 {
+            dot += self.weights[i] * features[i];
+        }
+        Self::sigmoid(dot)
+    }
+
+    /// Score all contacts in a batch, writing results to batch.scores (0-100 scale).
+    pub fn score_batch(&self, batch: &mut ContactBatch) {
+        for i in 0..batch.count {
+            let features = Self::extract_features(batch, i);
+            batch.scores[i] = self.score(&features) * 100.0;
+        }
+    }
+
+    /// Train via stochastic gradient descent on labeled data.
+    pub fn fit(
+        &mut self,
+        features: &[[f32; 7]],
+        labels: &[f32],
+        learning_rate: f32,
+        epochs: usize,
+    ) {
+        for sample in features {
+            for j in 0..7 {
+                self.feature_stats[j].update(sample[j]);
+            }
+        }
+
+        for _epoch in 0..epochs {
+            for (x, &y) in features.iter().zip(labels.iter()) {
+                let pred = self.score(x);
+                let error = pred - y;
+                for j in 0..7 {
+                    self.weights[j] -= learning_rate * error * x[j];
+                }
+                self.bias -= learning_rate * error;
+            }
+        }
+
+        self.trained = true;
+    }
+}
+
+impl Default for LogisticScorer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ContactBatch {
+    /// Score contacts using a logistic regression model.
+    /// Falls back to rule-based scoring if the model is untrained.
+    pub fn compute_scores_logistic(&mut self, scorer: &LogisticScorer) {
+        if !scorer.trained {
+            self.compute_scores();
+            return;
+        }
+        for i in 0..self.count {
+            let features = LogisticScorer::extract_features(self, i);
+            self.scores[i] = scorer.score(&features) * 100.0;
+        }
+    }
+}
+
+/// Isotonic regression calibrator using Pool Adjacent Violators Algorithm.
+pub struct IsotonicCalibrator {
+    breakpoints: Vec<(f32, f32)>,
+    pub fitted: bool,
+}
+
+impl IsotonicCalibrator {
+    pub fn new() -> Self {
+        Self {
+            breakpoints: Vec::new(),
+            fitted: false,
+        }
+    }
+
+    /// Fit the calibrator using the Pool Adjacent Violators Algorithm (PAVA).
+    /// Sorts (score, label) pairs by score, then merges adjacent blocks where
+    /// the label average decreases to enforce monotonicity.
+    pub fn fit(&mut self, scores: &[f32], labels: &[f32]) {
+        assert_eq!(scores.len(), labels.len(), "scores and labels must have same length");
+        if scores.is_empty() {
+            return;
+        }
+
+        // Sort by score
+        let mut pairs: Vec<(f32, f32)> = scores.iter().copied().zip(labels.iter().copied()).collect();
+        pairs.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+
+        // PAVA: maintain blocks of (score_sum, label_sum, count)
+        let mut blocks: Vec<(f32, f32, usize)> = Vec::new();
+        for (score, label) in &pairs {
+            blocks.push((*score, *label, 1));
+
+            // Merge adjacent blocks where the new block's average is less than the previous
+            while blocks.len() >= 2 {
+                let n = blocks.len();
+                let avg_last = blocks[n - 1].1 / blocks[n - 1].2 as f32;
+                let avg_prev = blocks[n - 2].1 / blocks[n - 2].2 as f32;
+                if avg_last < avg_prev {
+                    let last = blocks.pop().unwrap();
+                    let prev = blocks.last_mut().unwrap();
+                    prev.0 += last.0; // accumulate score sum
+                    prev.1 += last.1; // accumulate label sum
+                    prev.2 += last.2; // accumulate count
+                } else {
+                    break;
+                }
+            }
+        }
+
+        // Convert blocks to breakpoints: (average_score, average_label)
+        self.breakpoints.clear();
+        for (score_sum, label_sum, count) in &blocks {
+            let avg_score = score_sum / *count as f32;
+            let avg_label = label_sum / *count as f32;
+            self.breakpoints.push((avg_score, avg_label));
+        }
+
+        self.fitted = true;
+    }
+
+    /// Calibrate a raw score using binary search + linear interpolation.
+    /// Returns the raw score unchanged if the calibrator is not fitted.
+    pub fn calibrate(&self, raw_score: f32) -> f32 {
+        if !self.fitted || self.breakpoints.is_empty() {
+            return raw_score;
+        }
+
+        // Clamp to breakpoint range
+        if raw_score <= self.breakpoints[0].0 {
+            return self.breakpoints[0].1;
+        }
+        let last = self.breakpoints.len() - 1;
+        if raw_score >= self.breakpoints[last].0 {
+            return self.breakpoints[last].1;
+        }
+
+        // Binary search for the interval
+        let pos = self.breakpoints.partition_point(|bp| bp.0 <= raw_score);
+        if pos == 0 {
+            return self.breakpoints[0].1;
+        }
+
+        let (x0, y0) = self.breakpoints[pos - 1];
+        let (x1, y1) = self.breakpoints[pos];
+
+        // Linear interpolation
+        let t = if (x1 - x0).abs() < 1e-10 { 0.5 } else { (raw_score - x0) / (x1 - x0) };
+        y0 + t * (y1 - y0)
+    }
+
+    /// Calibrate all scores in a batch (scores are on 0-100 scale, normalize to 0-1 for
+    /// calibration, then scale back).
+    pub fn calibrate_batch(&self, batch: &mut ContactBatch) {
+        for i in 0..batch.count {
+            let raw = batch.scores[i] / 100.0;
+            batch.scores[i] = self.calibrate(raw) * 100.0;
+        }
+    }
+}
+
+impl Default for IsotonicCalibrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -448,5 +717,324 @@ mod tests {
         );
         batch.compute_scores();
         assert!(batch.scores[0] > 80.0, "got {}", batch.scores[0]);
+    }
+
+    // ── WelfordStats tests ──
+
+    #[test]
+    fn test_welford_stats_basic() {
+        let mut ws = WelfordStats::new();
+        for v in [2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0] {
+            ws.update(v);
+        }
+        assert!((ws.mean - 5.0).abs() < 0.01, "mean={}", ws.mean);
+        assert!((ws.variance() - 4.0).abs() < 0.01, "variance={}", ws.variance());
+    }
+
+    #[test]
+    fn test_welford_stats_normalize() {
+        let mut ws = WelfordStats::new();
+        for v in [2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0] {
+            ws.update(v);
+        }
+        // mean=5, std=2 → z-score of 7 = (7-5)/2 = 1.0
+        let z = ws.normalize(7.0);
+        assert!((z - 1.0).abs() < 0.01, "z={}", z);
+        // z-score of 5 = 0
+        let z0 = ws.normalize(5.0);
+        assert!(z0.abs() < 0.01, "z0={}", z0);
+    }
+
+    #[test]
+    fn test_welford_stats_single() {
+        let mut ws = WelfordStats::new();
+        ws.update(42.0);
+        assert_eq!(ws.count, 1);
+        // variance returns 1.0 for count < 2
+        assert_eq!(ws.variance(), 1.0);
+        assert!(ws.std_dev() >= 1e-6);
+    }
+
+    #[test]
+    fn test_sigmoid_bounds() {
+        let mid = LogisticScorer::sigmoid(0.0);
+        assert!((mid - 0.5).abs() < 1e-6, "sigmoid(0)={}", mid);
+
+        let high = LogisticScorer::sigmoid(100.0);
+        assert!(high > 0.999, "sigmoid(100)={}", high);
+
+        let low = LogisticScorer::sigmoid(-100.0);
+        assert!(low < 0.001, "sigmoid(-100)={}", low);
+    }
+
+    #[test]
+    fn test_smooth_recency() {
+        let day0 = LogisticScorer::smooth_recency(0);
+        assert!((day0 - 1.0).abs() < 1e-6, "day0={}", day0);
+
+        let day46 = LogisticScorer::smooth_recency(46);
+        assert!((day46 - 0.5).abs() < 0.05, "day46={}", day46);
+
+        let day180 = LogisticScorer::smooth_recency(180);
+        assert!(day180 < 0.1, "day180={}", day180);
+    }
+
+    #[test]
+    fn test_logistic_untrained_fallback() {
+        let scorer = LogisticScorer::new();
+        assert!(!scorer.trained);
+
+        let matcher = IcpMatcher::default();
+        let mut batch = ContactBatch::new();
+        batch.count = 1;
+        matcher.populate_slot(
+            &mut batch, 0,
+            "AI SaaS", 100, "CTO", "Engineering",
+            "rust, python", "verified", 3,
+        );
+
+        // Save expected rule-based score
+        let mut batch_rule = ContactBatch::new();
+        batch_rule.count = 1;
+        batch_rule.industry_match[0] = batch.industry_match[0];
+        batch_rule.employee_in_range[0] = batch.employee_in_range[0];
+        batch_rule.seniority_match[0] = batch.seniority_match[0];
+        batch_rule.department_match[0] = batch.department_match[0];
+        batch_rule.tech_overlap[0] = batch.tech_overlap[0];
+        batch_rule.email_verified[0] = batch.email_verified[0];
+        batch_rule.recency_days[0] = batch.recency_days[0];
+        batch_rule.compute_scores();
+
+        batch.compute_scores_logistic(&scorer);
+        assert!(
+            (batch.scores[0] - batch_rule.scores[0]).abs() < 0.01,
+            "logistic={} rule={}",
+            batch.scores[0],
+            batch_rule.scores[0]
+        );
+    }
+
+    #[test]
+    fn test_logistic_pretrained_ordering() {
+        let scorer = LogisticScorer::default_pretrained();
+
+        // Good lead: all signals positive
+        let mut batch = ContactBatch::new();
+        batch.count = 2;
+        batch.industry_match[0] = 1;
+        batch.employee_in_range[0] = 1;
+        batch.seniority_match[0] = 1;
+        batch.department_match[0] = 1;
+        batch.tech_overlap[0] = 8;
+        batch.email_verified[0] = 2;
+        batch.recency_days[0] = 3;
+
+        // Bad lead: no signals
+        batch.industry_match[1] = 0;
+        batch.employee_in_range[1] = 0;
+        batch.seniority_match[1] = 0;
+        batch.department_match[1] = 0;
+        batch.tech_overlap[1] = 0;
+        batch.email_verified[1] = 0;
+        batch.recency_days[1] = 365;
+
+        batch.compute_scores_logistic(&scorer);
+        assert!(
+            batch.scores[0] > batch.scores[1],
+            "good={} bad={}",
+            batch.scores[0],
+            batch.scores[1]
+        );
+    }
+
+    #[test]
+    fn test_logistic_fit() {
+        let mut scorer = LogisticScorer::new();
+
+        // 10 positive examples (all features high)
+        // 10 negative examples (all features low)
+        let mut features = Vec::new();
+        let mut labels = Vec::new();
+        for _ in 0..10 {
+            features.push([1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9]);
+            labels.push(1.0);
+        }
+        for _ in 0..10 {
+            features.push([0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1]);
+            labels.push(0.0);
+        }
+
+        scorer.fit(&features, &labels, 0.5, 100);
+        assert!(scorer.trained);
+
+        let pos_score = scorer.score(&[1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9]);
+        let neg_score = scorer.score(&[0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1]);
+        assert!(
+            pos_score > neg_score,
+            "pos={} neg={}",
+            pos_score,
+            neg_score
+        );
+        assert!(pos_score > 0.7, "pos_score={}", pos_score);
+        assert!(neg_score < 0.3, "neg_score={}", neg_score);
+    }
+
+    #[test]
+    fn test_logistic_batch() {
+        let scorer = LogisticScorer::default_pretrained();
+        let matcher = IcpMatcher::default();
+
+        let mut batch = ContactBatch::new();
+        batch.count = 3;
+
+        // Strong lead
+        matcher.populate_slot(&mut batch, 0, "AI SaaS", 100, "CTO", "Engineering", "rust, python, pytorch", "verified", 1);
+        // Medium lead
+        matcher.populate_slot(&mut batch, 1, "AI", 200, "Manager", "Data", "python", "catch-all", 30);
+        // Weak lead
+        matcher.populate_slot(&mut batch, 2, "Mining", 5, "Intern", "Sales", "excel", "unknown", 365);
+
+        scorer.score_batch(&mut batch);
+        assert!(batch.scores[0] > batch.scores[1], "0={} 1={}", batch.scores[0], batch.scores[1]);
+        assert!(batch.scores[1] > batch.scores[2], "1={} 2={}", batch.scores[1], batch.scores[2]);
+    }
+
+    #[test]
+    fn test_feature_extraction() {
+        let mut batch = ContactBatch::new();
+        batch.count = 1;
+        batch.industry_match[0] = 1;
+        batch.employee_in_range[0] = 1;
+        batch.seniority_match[0] = 0;
+        batch.department_match[0] = 1;
+        batch.tech_overlap[0] = 5;
+        batch.email_verified[0] = 2;
+        batch.recency_days[0] = 0;
+
+        let features = LogisticScorer::extract_features(&batch, 0);
+        assert_eq!(features[0], 1.0); // industry
+        assert_eq!(features[1], 1.0); // employee
+        assert_eq!(features[2], 0.0); // seniority
+        assert_eq!(features[3], 1.0); // department
+        assert!((features[4] - 0.5).abs() < 1e-6); // tech: 5/10
+        assert!((features[5] - 1.0).abs() < 1e-6); // email: 2/2
+        assert!((features[6] - 1.0).abs() < 1e-6); // recency: day 0 = 1.0
+    }
+
+    // ── IsotonicCalibrator tests ──
+
+    #[test]
+    fn test_isotonic_identity() {
+        // Already monotonic data should pass through approximately unchanged
+        let mut cal = IsotonicCalibrator::new();
+        let scores = vec![0.1, 0.3, 0.5, 0.7, 0.9];
+        let labels = vec![0.1, 0.3, 0.5, 0.7, 0.9];
+        cal.fit(&scores, &labels);
+        assert!(cal.fitted);
+        for &s in &scores {
+            let c = cal.calibrate(s);
+            assert!((c - s).abs() < 0.01, "score={} calibrated={}", s, c);
+        }
+    }
+
+    #[test]
+    fn test_isotonic_pava_merges() {
+        // Non-monotonic: label drops then rises — PAVA should merge
+        let mut cal = IsotonicCalibrator::new();
+        let scores = vec![0.1, 0.2, 0.3, 0.4, 0.5];
+        let labels = vec![0.2, 0.8, 0.3, 0.7, 0.9];
+        cal.fit(&scores, &labels);
+        assert!(cal.fitted);
+
+        // After PAVA, output at 0.2 should not be > output at 0.3
+        let c1 = cal.calibrate(0.2);
+        let c2 = cal.calibrate(0.3);
+        assert!(c2 >= c1 - 0.01, "c1={} c2={}", c1, c2);
+    }
+
+    #[test]
+    fn test_isotonic_clamp_edges() {
+        let mut cal = IsotonicCalibrator::new();
+        let scores = vec![0.2, 0.5, 0.8];
+        let labels = vec![0.1, 0.5, 0.9];
+        cal.fit(&scores, &labels);
+
+        // Below range → clamp to first breakpoint's label
+        let low = cal.calibrate(0.0);
+        assert!((low - 0.1).abs() < 0.01, "low={}", low);
+
+        // Above range → clamp to last breakpoint's label
+        let high = cal.calibrate(1.0);
+        assert!((high - 0.9).abs() < 0.01, "high={}", high);
+    }
+
+    #[test]
+    fn test_isotonic_monotonic_output() {
+        let mut cal = IsotonicCalibrator::new();
+        // Deliberately non-monotonic labels
+        let scores = vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
+        let labels = vec![0.5, 0.3, 0.6, 0.2, 0.7, 0.4, 0.8, 0.5, 0.9];
+        cal.fit(&scores, &labels);
+
+        // Verify output is non-decreasing
+        let mut prev = f32::NEG_INFINITY;
+        for i in 0..100 {
+            let s = i as f32 / 100.0;
+            let c = cal.calibrate(s);
+            assert!(c >= prev - 1e-6, "non-monotonic at s={}: prev={} c={}", s, prev, c);
+            prev = c;
+        }
+    }
+
+    #[test]
+    fn test_isotonic_unfitted_passthrough() {
+        let cal = IsotonicCalibrator::new();
+        assert!(!cal.fitted);
+        assert_eq!(cal.calibrate(0.42), 0.42);
+        assert_eq!(cal.calibrate(0.99), 0.99);
+    }
+
+    #[test]
+    fn test_isotonic_batch() {
+        let mut cal = IsotonicCalibrator::new();
+        let scores = vec![0.1, 0.3, 0.5, 0.7, 0.9];
+        let labels = vec![0.1, 0.3, 0.5, 0.7, 0.9];
+        cal.fit(&scores, &labels);
+
+        let mut batch = ContactBatch::new();
+        batch.count = 3;
+        batch.scores[0] = 30.0; // 0.30 normalized
+        batch.scores[1] = 70.0; // 0.70 normalized
+        batch.scores[2] = 50.0; // 0.50 normalized
+
+        cal.calibrate_batch(&mut batch);
+
+        // Ordering should be preserved
+        assert!(batch.scores[1] > batch.scores[2], "1={} 2={}", batch.scores[1], batch.scores[2]);
+        assert!(batch.scores[2] > batch.scores[0], "2={} 0={}", batch.scores[2], batch.scores[0]);
+    }
+
+    #[test]
+    fn test_isotonic_single_point() {
+        let mut cal = IsotonicCalibrator::new();
+        cal.fit(&[0.5], &[0.8]);
+        assert!(cal.fitted);
+        // Single breakpoint: everything maps to 0.8
+        assert!((cal.calibrate(0.5) - 0.8).abs() < 0.01);
+        assert!((cal.calibrate(0.0) - 0.8).abs() < 0.01); // clamped to edge
+        assert!((cal.calibrate(1.0) - 0.8).abs() < 0.01); // clamped to edge
+    }
+
+    #[test]
+    fn test_backward_compat() {
+        // Verify existing compute_scores still works identically
+        let matcher = IcpMatcher::default();
+        let mut batch = ContactBatch::new();
+        batch.count = 2;
+        matcher.populate_slot(&mut batch, 0, "AI SaaS", 100, "CTO", "Engineering", "rust, python", "verified", 3);
+        matcher.populate_slot(&mut batch, 1, "Mining", 5, "Intern", "Sales", "excel", "unknown", 365);
+        batch.compute_scores();
+        assert!(batch.scores[0] > batch.scores[1]);
+        assert!(batch.scores[0] > 0.0);
     }
 }
