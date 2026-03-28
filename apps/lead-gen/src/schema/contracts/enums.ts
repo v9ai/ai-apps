@@ -41,39 +41,6 @@ export const JOB_STATUS_PYTHON_MAP: Record<JobStatus, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// ATS vendor / provider
-// ---------------------------------------------------------------------------
-
-export const ATSVendor = z.enum([
-  "GREENHOUSE",
-  "LEVER",
-  "WORKABLE",
-  "TEAMTAILOR",
-  "ASHBY",
-  "SMARTRECRUITERS",
-  "JAZZHR",
-  "BREEZYHR",
-  "ICIMS",
-  "JOBVITE",
-  "SAP_SUCCESSFACTORS",
-  "ORACLE_TALEO",
-  "OTHER",
-]);
-export type ATSVendor = z.infer<typeof ATSVendor>;
-
-// ---------------------------------------------------------------------------
-// ATS board type
-// ---------------------------------------------------------------------------
-
-export const ATSBoardType = z.enum([
-  "JOBS_PAGE",
-  "BOARD_API",
-  "BOARD_WIDGET",
-  "UNKNOWN",
-]);
-export type ATSBoardType = z.infer<typeof ATSBoardType>;
-
-// ---------------------------------------------------------------------------
 // Company category
 // ---------------------------------------------------------------------------
 

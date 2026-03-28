@@ -2,10 +2,8 @@ import {
   companies,
   companyFacts,
   companySnapshots,
-  atsBoards,
   contacts,
   contactEmails,
-
 } from "@/db/schema";
 import { eq, and, or, like, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";

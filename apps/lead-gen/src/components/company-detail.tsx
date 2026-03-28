@@ -1375,65 +1375,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   </Box>
                 </Flex>
 
-                {/* Career pages */}
-                {company.ats_boards?.length ? (
-                  <SectionCard title={`Hiring platforms (${company.ats_boards.length})`}>
-                    <Flex direction="column">
-                      {company.ats_boards.map((board, idx) => {
-                        const confidence =
-                          typeof board.confidence === "number" &&
-                          Number.isFinite(board.confidence)
-                            ? Math.round(board.confidence * 100)
-                            : null;
-                        const boardHref = coerceExternalUrl(board.url) ?? board.url;
-                        return (
-                          <Box key={board.id}>
-                            <Flex align="center" justify="between" gap="3" wrap="wrap">
-                              <Flex gap="2" wrap="wrap" align="center">
-                                <Badge color={ATS_VENDOR_COLORS[board.vendor ?? ''] ?? 'gray'} variant="soft" radius="full">{board.vendor}</Badge>
-                                <Badge color="gray" variant="outline" radius="full">{board.board_type}</Badge>
-                                {confidence !== null && isAdmin ? (
-                                  <Badge color="gray" variant="outline">
-                                    {confidence}% confidence
-                                  </Badge>
-                                ) : null}
-                                {board.is_active ? (
-                                  <Badge color="green" variant="soft">active</Badge>
-                                ) : (
-                                  <Badge color="gray" variant="soft">inactive</Badge>
-                                )}
-                                {board.last_seen_at ? <Text size="1" color="gray">Last seen {new Date(board.last_seen_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</Text> : null}
-                              </Flex>
-                              <RadixLink
-                                href={boardHref}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                color="gray"
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 6,
-                                  maxWidth: "100%",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                                title={boardHref}
-                              >
-                                {(() => { const p = prettyUrl(boardHref); return p.length > 40 ? p.slice(0, 40) + '…' : p; })()}
-                                <ExternalLinkIcon />
-                              </RadixLink>
-                            </Flex>
-                            {idx < company.ats_boards.length - 1 ? (
-                              <Separator size="4" my="3" />
-                            ) : null}
-                          </Box>
-                        );
-                      })}
-                    </Flex>
-                  </SectionCard>
-                ) : null}
-
                 {/* Admin-only: Ashby enrichment raw data */}
                 {isAdmin && company.ashby_enrichment?.enriched_at ? (
                   <SectionCard title="Ashby Enrichment">
