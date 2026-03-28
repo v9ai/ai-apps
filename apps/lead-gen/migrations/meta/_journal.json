@@ -15,6 +15,13 @@
       "when": 1774706855233,
       "tag": "0001_lively_wallop",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774714923129,
+      "tag": "0002_ordinary_molten_man",
+      "breakpoints": true
     }
   ]
 }

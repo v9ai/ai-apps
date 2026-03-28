@@ -54,6 +54,14 @@ export const companies = pgTable("companies", {
   emails: text("emails"), // JSON array
   github_url: text("github_url"),
 
+  // GitHub pattern analysis (populated by github-patterns crate)
+  github_org: text("github_org"),                         // extracted org login
+  github_ai_score: real("github_ai_score"),               // 0..1 AI adoption
+  github_hiring_score: real("github_hiring_score"),       // 0..1 hiring signals
+  github_activity_score: real("github_activity_score"),   // 0..1 commit/release velocity
+  github_patterns: text("github_patterns"),               // full OrgPatterns JSON
+  github_analyzed_at: text("github_analyzed_at"),         // ISO timestamp of last scan
+
   // Common Crawl / last-seen metadata
   last_seen_crawl_id: text("last_seen_crawl_id"),
   last_seen_capture_timestamp: text("last_seen_capture_timestamp"),
