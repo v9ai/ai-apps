@@ -78,3 +78,150 @@ pub fn passes_icp(org: &GhOrg, repos: &[GhRepo], criteria: &IcpCriteria) -> bool
     }
     true
 }
+
+#[cfg(test)]
+mod tests {
+    use super::passes_icp;
+    use crate::types::{GhOrg, GhRepo, IcpCriteria};
+    use chrono::Utc;
+
+    fn make_org(public_repos: u32) -> GhOrg {
+        GhOrg {
+            login: "test-org".to_string(),
+            name: Some("Test Org".to_string()),
+            description: None,
+            blog: None,
+            location: None,
+            email: None,
+            public_repos,
+            followers: 0,
+            following: 0,
+            created_at: Utc::now() - chrono::Duration::days(1000),
+            updated_at: Utc::now(),
+        }
+    }
+
+    fn make_repo(name: &str) -> GhRepo {
+        GhRepo {
+            id: 1,
+            name: name.to_string(),
+            full_name: format!("org/{name}"),
+            description: None,
+            language: None,
+            stargazers_count: 0,
+            forks_count: 0,
+            open_issues_count: 0,
+            topics: None,
+            pushed_at: None,
+            created_at: Utc::now() - chrono::Duration::days(365),
+            updated_at: Utc::now(),
+            archived: false,
+            fork: false,
+            size: 1000,
+            default_branch: "main".to_string(),
+        }
+    }
+
+    #[test]
+    fn empty_criteria_always_passes() {
+        let org = make_org(5);
+        let repos = vec![make_repo("repo-a")];
+        assert!(passes_icp(&org, &repos, &IcpCriteria::default()));
+    }
+
+    #[test]
+    fn min_repos_too_few_fails() {
+        let org = make_org(3);
+        let criteria = IcpCriteria { min_repos: Some(5), ..Default::default() };
+        assert!(!passes_icp(&org, &[], &criteria));
+    }
+
+    #[test]
+    fn min_repos_enough_passes() {
+        let org = make_org(10);
+        let criteria = IcpCriteria { min_repos: Some(5), ..Default::default() };
+        assert!(passes_icp(&org, &[], &criteria));
+    }
+
+    #[test]
+    fn min_stars_no_repo_qualifies_fails() {
+        let org = make_org(5);
+        let mut repo = make_repo("tiny");
+        repo.stargazers_count = 50;
+        let criteria = IcpCriteria { min_stars: Some(100), ..Default::default() };
+        assert!(!passes_icp(&org, &[repo], &criteria));
+    }
+
+    #[test]
+    fn min_stars_one_repo_qualifies_passes() {
+        let org = make_org(5);
+        let mut repo = make_repo("popular");
+        repo.stargazers_count = 500;
+        let criteria = IcpCriteria { min_stars: Some(100), ..Default::default() };
+        assert!(passes_icp(&org, &[repo], &criteria));
+    }
+
+    #[test]
+    fn active_within_days_stale_repo_fails() {
+        let org = make_org(5);
+        let mut repo = make_repo("old");
+        repo.pushed_at = Some(Utc::now() - chrono::Duration::days(200));
+        let criteria = IcpCriteria { active_within_days: Some(30), ..Default::default() };
+        assert!(!passes_icp(&org, &[repo], &criteria));
+    }
+
+    #[test]
+    fn active_within_days_recent_repo_passes() {
+        let org = make_org(5);
+        let mut repo = make_repo("active");
+        repo.pushed_at = Some(Utc::now() - chrono::Duration::days(5));
+        let criteria = IcpCriteria { active_within_days: Some(30), ..Default::default() };
+        assert!(passes_icp(&org, &[repo], &criteria));
+    }
+
+    #[test]
+    fn active_within_days_null_pushed_at_fails() {
+        let org = make_org(5);
+        let repo = make_repo("no-push-date"); // pushed_at = None
+        let criteria = IcpCriteria { active_within_days: Some(30), ..Default::default() };
+        assert!(!passes_icp(&org, &[repo], &criteria));
+    }
+
+    #[test]
+    fn language_filter_no_match_fails() {
+        let org = make_org(5);
+        let mut repo = make_repo("ts-project");
+        repo.language = Some("TypeScript".to_string());
+        let criteria = IcpCriteria {
+            languages: vec!["Rust".to_string()],
+            ..Default::default()
+        };
+        assert!(!passes_icp(&org, &[repo], &criteria));
+    }
+
+    #[test]
+    fn language_filter_match_passes() {
+        let org = make_org(5);
+        let mut repo = make_repo("rust-project");
+        repo.language = Some("Rust".to_string());
+        let criteria = IcpCriteria {
+            languages: vec!["Rust".to_string(), "Go".to_string()],
+            ..Default::default()
+        };
+        assert!(passes_icp(&org, &[repo], &criteria));
+    }
+
+    #[test]
+    fn all_criteria_must_pass() {
+        // Passes min_repos but fails language filter
+        let org = make_org(10);
+        let mut repo = make_repo("py-project");
+        repo.language = Some("Python".to_string());
+        let criteria = IcpCriteria {
+            min_repos: Some(5),
+            languages: vec!["Rust".to_string()],
+            ..Default::default()
+        };
+        assert!(!passes_icp(&org, &[repo], &criteria));
+    }
+}
