@@ -69,8 +69,8 @@ export function LandingFooter() {
                 maxW: "200px",
               })}
             >
-              local-first B2B lead generation pipeline. RL crawling, ML scoring,
-              LLM reports — zero cloud dependencies.
+              agentic B2B lead generation platform. AI agents handle discovery,
+              enrichment, scoring, and outreach — end to end.
             </p>
             <a
               href="https://github.com/nicolad/lead-gen"
@@ -178,7 +178,7 @@ export function LandingFooter() {
               letterSpacing: "normal",
             })}
           >
-            lead-gen
+            Agentic Lead Gen
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

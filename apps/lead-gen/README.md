@@ -1,4 +1,4 @@
-# Lead Gen
+# Agentic Lead Gen
 
 Remote EU job board aggregator with locally-trained ML models, multi-armed bandit crawlers, zero-alloc NER, Candle embeddings on M1 Metal, and a Next.js frontend for job matching and skill extraction.
 

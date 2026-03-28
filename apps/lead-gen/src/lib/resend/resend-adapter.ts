@@ -3,7 +3,7 @@ import type { Attachment } from "resend";
 import _ from "lodash";
 import type { ReceivedEmail, ListReceivedEmailsResponse } from "./types";
 
-const DEFAULT_FROM = "Lead-Gen <noreply@lead-gen>";
+const DEFAULT_FROM = "Agentic Lead Gen <noreply@agentic-lead-gen>";
 
 /**
  * Email sending parameters

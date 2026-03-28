@@ -7,7 +7,7 @@ import { GitHubLogoIcon } from "@radix-ui/react-icons";
 /**
  * TRUST IMPROVEMENT 4: "Built by" human element.
  *
- * Builder attribution strip for B2B lead generation pipeline.
+ * Builder attribution strip for Agentic Lead Gen pipeline.
  * First-person voice + specific technical detail + mission statement.
  * Positioned between preview (proof) and features (differentiators) to bridge
  * "this works" into "here's why it's built well".
