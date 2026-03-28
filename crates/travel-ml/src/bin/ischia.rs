@@ -6,7 +6,7 @@ use candle_core::Device;
 use clap::Parser;
 use tracing::info;
 
-use travel_ml::constants::{DISCOVERY_YEAR, DISCOVERY_YEAR_STR};
+use travel_ml::constants::DISCOVERY_YEAR_STR;
 use travel_ml::dedup::deduplicate;
 use travel_ml::embeddings::EmbeddingEngine;
 use travel_ml::hotel::{Hotel, HotelSearchResult};
