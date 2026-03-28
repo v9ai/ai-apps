@@ -654,22 +654,13 @@ function extractJobData() {
     window.location.hostname.includes("google.com") &&
     window.location.pathname.includes("/search");
 
-  // Check if we're on Founderio
-  const isFounderio =
-    window.location.hostname.includes("founderio.com") &&
-    (window.location.pathname === "/jobs" ||
-      window.location.pathname.startsWith("/job/"));
-
   const genericJobsCount = document.querySelectorAll(
     '[data-provides="search-result"]',
   ).length;
 
   if (isGoogleSearch) return [];
 
-  if (isFounderio) {
-    const founderioExtractor = (window as any).extractFounderioJobData;
-    return founderioExtractor ? founderioExtractor() : [];
-  } else if (genericJobsCount > 0) {
+  if (genericJobsCount > 0) {
     return extractGenericJobData();
   } else if (isLinkedIn) {
     return extractLinkedInJobData();
@@ -864,9 +855,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const isSupportedSite =
     hostname.includes("linkedin.com") ||
     hostname.includes("google.com") ||
-    hostname.includes("greenhouse.io") ||
-    hostname.includes("lever.co") ||
-    hostname.includes("founderio.com") ||
     hostname.includes("workable.com");
 
   if (!isSupportedSite) return false;
