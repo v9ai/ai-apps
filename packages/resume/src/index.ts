@@ -1,4 +1,4 @@
-import resumeData from "./data.json";
+import resumeData from "./data.json" with { type: "json" };
 
 export { resumeData };
 
