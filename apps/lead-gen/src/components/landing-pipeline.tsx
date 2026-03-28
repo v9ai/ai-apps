@@ -294,13 +294,11 @@ export function LandingPipeline() {
                 color: "ui.tertiary",
                 lineHeight: "relaxed",
                 letterSpacing: "snug",
-                mb: "5",
               })}
             >
               From raw web pages to qualified B2B leads — seven autonomous modules,
               zero cloud dependencies.
             </p>
-
           </div>
 
           {/* ── Right: module cards ── */}
