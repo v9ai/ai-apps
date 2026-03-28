@@ -249,70 +249,87 @@ export function LandingPipeline() {
       })}
     >
       <div className={container({ maxW: "breakpoint-lg" })}>
-        {/* section header */}
-        <div className={flex({ align: "center", gap: "2", mb: "2" })}>
-          <BarChartIcon
-            width={14}
-            height={14}
-            className={css({ color: "accent.primary" })}
-          />
-          <span
+        {/* ── Two-column vertical split on desktop ── */}
+        <div
+          className={css({
+            display: { base: "block", md: "grid" },
+            gridTemplateColumns: { md: "200px 1fr", lg: "240px 1fr" },
+            gap: { md: "8", lg: "12" },
+            alignItems: "start",
+          })}
+        >
+          {/* ── Left: sticky header text ── */}
+          <div
             className={css({
-              fontSize: "sm",
-              fontWeight: "bold",
-              color: "ui.secondary",
-              textTransform: "lowercase",
-              letterSpacing: "wide",
+              position: { md: "sticky" },
+              top: { md: "80px" },
+              mb: { base: "5", md: "0" },
             })}
           >
-            agentic lead gen — pipeline modules
-          </span>
-        </div>
+            <div className={flex({ align: "center", gap: "2", mb: "2" })}>
+              <BarChartIcon
+                width={14}
+                height={14}
+                className={css({ color: "accent.primary" })}
+              />
+              <span
+                className={css({
+                  fontSize: "sm",
+                  fontWeight: "bold",
+                  color: "ui.secondary",
+                  textTransform: "lowercase",
+                  letterSpacing: "wide",
+                })}
+              >
+                agentic lead gen — pipeline modules
+              </span>
+            </div>
 
-        <p
-          className={css({
-            fontSize: { base: "base", md: "lg" },
-            color: "ui.tertiary",
-            mb: "5",
-            lineHeight: "relaxed",
-            letterSpacing: "snug",
-            maxW: "560px",
-          })}
-        >
-          From raw web pages to qualified B2B leads — seven autonomous modules,
-          zero cloud dependencies. This is the Agentic Lead Gen pipeline.
-        </p>
-
-        {/* ── Desktop: 3-column grid of individual module diagrams ──────── */}
-        <div
-          className={css({
-            display: { base: "none", md: "grid" },
-            gridTemplateColumns: { md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
-            gap: "3",
-          })}
-        >
-          {PIPELINE_STAGES.map((stage, i) => (
-            <div
-              key={stage.step}
+            <p
               className={css({
-                // center 7th item (evaluation) in the 3-col grid's last row
-                gridColumn: i === 6 ? { lg: "2 / 3" } : undefined,
+                fontSize: { base: "base", md: "sm" },
+                color: "ui.tertiary",
+                lineHeight: "relaxed",
+                letterSpacing: "snug",
               })}
             >
-              <ModuleDiagram stage={stage} />
-            </div>
-          ))}
-        </div>
+              From raw web pages to qualified B2B leads — seven autonomous modules,
+              zero cloud dependencies. This is the Agentic Lead Gen pipeline.
+            </p>
+          </div>
 
-        {/* ── Mobile: vertical stack ─────────────────────────────────────── */}
-        <div
-          className={grid({
-            columns: 1,
-            gap: "3",
-            display: { base: "grid", md: "none" },
-          })}
-        >
-          {PIPELINE_STAGES.map((stage, i) => (
+          {/* ── Right: module cards ── */}
+          <div>
+            {/* ── Desktop: 2-column grid of individual module diagrams ──── */}
+            <div
+              className={css({
+                display: { base: "none", md: "grid" },
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "3",
+              })}
+            >
+              {PIPELINE_STAGES.map((stage, i) => (
+                <div
+                  key={stage.step}
+                  className={css({
+                    // span full width for the last (7th) card
+                    gridColumn: i === 6 ? "1 / -1" : undefined,
+                  })}
+                >
+                  <ModuleDiagram stage={stage} />
+                </div>
+              ))}
+            </div>
+
+            {/* ── Mobile: vertical stack ───────────────────────────────── */}
+            <div
+              className={grid({
+                columns: 1,
+                gap: "3",
+                display: { base: "grid", md: "none" },
+              })}
+            >
+              {PIPELINE_STAGES.map((stage, i) => (
             <div key={stage.title} className="pipeline-card-animated">
               {i > 0 && (
                 <div className={flex({ justify: "center", mb: "3" })}>
@@ -380,7 +397,9 @@ export function LandingPipeline() {
                 </p>
               </div>
             </div>
-          ))}
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
