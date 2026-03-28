@@ -24,33 +24,6 @@
         "low"
       ]
     },
-    "ATSVendor": {
-      "type": "string",
-      "enum": [
-        "GREENHOUSE",
-        "LEVER",
-        "WORKABLE",
-        "TEAMTAILOR",
-        "ASHBY",
-        "SMARTRECRUITERS",
-        "JAZZHR",
-        "BREEZYHR",
-        "ICIMS",
-        "JOBVITE",
-        "SAP_SUCCESSFACTORS",
-        "ORACLE_TALEO",
-        "OTHER"
-      ]
-    },
-    "ATSBoardType": {
-      "type": "string",
-      "enum": [
-        "JOBS_PAGE",
-        "BOARD_API",
-        "BOARD_WIDGET",
-        "UNKNOWN"
-      ]
-    },
     "CompanyCategory": {
       "type": "string",
       "enum": [

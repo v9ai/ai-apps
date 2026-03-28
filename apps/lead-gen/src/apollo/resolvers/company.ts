@@ -198,27 +198,6 @@ export const companyResolvers = {
     },
   },
 
-  ATSBoard: {
-    evidence(parent: any) {
-      return {
-        source_type: parent.source_type,
-        source_url: parent.source_url,
-        crawl_id: parent.crawl_id,
-        capture_timestamp: parent.capture_timestamp,
-        observed_at: parent.observed_at,
-        method: parent.method,
-        extractor_version: parent.extractor_version,
-        http_status: parent.http_status,
-        mime: parent.mime,
-        content_hash: parent.content_hash,
-        warc_filename: parent.warc_filename,
-        warc_offset: parent.warc_offset,
-        warc_length: parent.warc_length,
-        warc_digest: parent.warc_digest,
-      };
-    },
-  },
-
   Query: {
     async companies(
       _parent: any,
@@ -227,7 +206,6 @@ export const companyResolvers = {
           text?: string;
           category_in?: string[];
           min_score?: number;
-          has_ats_boards?: boolean;
           service_taxonomy_any?: string[];
           ai_native_only?: boolean;
           ai_first_only?: boolean;
@@ -288,18 +266,7 @@ export const companyResolvers = {
 
         let allResults = await query;
 
-        // Post-filter for has_ats_boards and service_taxonomy_any
-        if (args.filter?.has_ats_boards) {
-          const companyIdsWithBoards = await context.db
-            .select({ company_id: atsBoards.company_id })
-            .from(atsBoards)
-            .where(eq(atsBoards.is_active, true));
-          const boardCompanyIds = new Set(
-            companyIdsWithBoards.map((b) => b.company_id),
-          );
-          allResults = allResults.filter((c) => boardCompanyIds.has(c.id));
-        }
-
+        // Post-filter for service_taxonomy_any
         if (
           args.filter?.service_taxonomy_any &&
           args.filter.service_taxonomy_any.length > 0
@@ -471,22 +438,6 @@ export const companyResolvers = {
       }
     },
 
-    async company_ats_boards(
-      _parent: any,
-      args: { company_id: number },
-      context: GraphQLContext,
-    ) {
-      try {
-        const boards = await context.db
-          .select()
-          .from(atsBoards)
-          .where(eq(atsBoards.company_id, args.company_id));
-        return boards || [];
-      } catch (error) {
-        console.error("Error fetching ATS boards:", error);
-        return [];
-      }
-    },
   },
 
   Mutation: {
@@ -733,95 +684,6 @@ export const companyResolvers = {
         return insertedFacts;
       } catch (error) {
         console.error("Error adding company facts:", error);
-        throw error;
-      }
-    },
-
-    async upsert_company_ats_boards(
-      _parent: any,
-      args: {
-        company_id: number;
-        boards: Array<{
-          url: string;
-          vendor: string;
-          board_type: string;
-          confidence: number;
-          is_active: boolean;
-          last_seen_at: string;
-          evidence: any;
-        }>;
-      },
-      context: GraphQLContext,
-    ) {
-      try {
-        if (!context.userId) {
-          throw new Error("Unauthorized");
-        }
-
-        if (!isAdminEmail(context.userEmail)) {
-          throw new Error("Forbidden - Admin access required");
-        }
-
-        const upsertedBoards = [];
-
-        for (const board of args.boards) {
-          // Check if board exists
-          const [existing] = await context.db
-            .select()
-            .from(atsBoards)
-            .where(
-              and(
-                eq(atsBoards.company_id, args.company_id),
-                eq(atsBoards.url, board.url),
-              )!,
-            )
-            .limit(1);
-
-          const boardData: any = {
-            company_id: args.company_id,
-            url: board.url,
-            vendor: board.vendor,
-            board_type: board.board_type,
-            confidence: board.confidence,
-            is_active: board.is_active,
-            last_seen_at: board.last_seen_at,
-            // Evidence fields
-            source_type: board.evidence.source_type,
-            source_url: board.evidence.source_url,
-            crawl_id: board.evidence.crawl_id,
-            capture_timestamp: board.evidence.capture_timestamp,
-            observed_at: board.evidence.observed_at,
-            method: board.evidence.method,
-            extractor_version: board.evidence.extractor_version,
-            warc_filename: board.evidence.warc?.filename,
-            warc_offset: board.evidence.warc?.offset,
-            warc_length: board.evidence.warc?.length,
-            warc_digest: board.evidence.warc?.digest,
-          };
-
-          if (existing) {
-            // Update
-            boardData.updated_at = new Date().toISOString();
-            const [updated] = await context.db
-              .update(atsBoards)
-              .set(boardData)
-              .where(eq(atsBoards.id, existing.id))
-              .returning();
-            upsertedBoards.push(updated);
-          } else {
-            // Insert
-            boardData.first_seen_at = board.last_seen_at;
-            const [inserted] = await context.db
-              .insert(atsBoards)
-              .values(boardData)
-              .returning();
-            upsertedBoards.push(inserted);
-          }
-        }
-
-        return upsertedBoards;
-      } catch (error) {
-        console.error("Error upserting ATS boards:", error);
         throw error;
       }
     },

@@ -53,7 +53,7 @@ export const papers: Paper[] = [
     authors: "Neon",
     year: 2024,
     finding: "Serverless PostgreSQL with branching and auto-scaling for transactional data",
-    relevance: "Stores primary data — companies, contacts, email campaigns, ATS boards, and company facts — via Drizzle ORM with indexed queries for filtering and pagination",
+    relevance: "Stores primary data — companies, contacts, email campaigns, and company facts — via Drizzle ORM with indexed queries for filtering and pagination",
     url: "https://neon.tech",
     categoryColor: "var(--green-9)",
   },
@@ -67,7 +67,7 @@ export const papers: Paper[] = [
     authors: "Drizzle Team",
     year: 2024,
     finding: "Type-safe SQL query builder with migrations and schema management",
-    relevance: "Defines database schema in src/db/schema.ts and handles all queries for the GraphQL API, including tables like companies, contacts, and ats_boards",
+    relevance: "Defines database schema in src/db/schema.ts and handles all queries for the GraphQL API, including tables like companies and contacts",
     url: "https://orm.drizzle.team",
     categoryColor: "var(--green-9)",
   },
@@ -119,8 +119,8 @@ export const papers: Paper[] = [
 
 export const researchStats: Stat[] = [
   {
-    number: "6",
-    label: "Pipeline stages: discover, enrich, detect ATS, find contacts, verify emails, outreach",
+    number: "5",
+    label: "Pipeline stages: discover, enrich, find contacts, verify emails, outreach",
     source: "End-to-end B2B lead generation pipeline",
   },
   {
@@ -144,11 +144,6 @@ export const pipelineAgents: PipelineAgent[] = [
     researchBasis: "LLM-assisted information extraction and classification",
   },
   {
-    name: "ATS Board Detection",
-    description: "Detects ATS boards (Greenhouse, Lever, Ashby, Workable, SmartRecruiters, etc.) associated with each company, storing vendor, URL, board type, and confidence scores with full provenance tracking.",
-    researchBasis: "Structured signal extraction from web pages",
-  },
-  {
     name: "Contact Discovery & Verification",
     description: "Contacts are linked to companies with LinkedIn URLs, emails, and positions. NeverBounce verifies email deliverability. Bounced emails are tracked and contacts can be flagged as do-not-contact.",
     researchBasis: "Entity resolution and email hygiene pipelines",
@@ -168,7 +163,7 @@ export const pipelineAgents: PipelineAgent[] = [
 // ── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "The platform discovers B2B companies via Common Crawl, web search, and Ashby boards, then enriches them with AI classification and deep analysis. It detects ATS hiring boards, discovers and verifies contact emails, and enables personalized outreach campaigns with AI-drafted emails, automated follow-up sequences, and inbound reply tracking.";
+  "The platform discovers B2B companies via Common Crawl, web search, and Ashby boards, then enriches them with AI classification and deep analysis. It discovers and verifies contact emails, and enables personalized outreach campaigns with AI-drafted emails, automated follow-up sequences, and inbound reply tracking.";
 
 // ── Deep-Dive Sections ────────────────────────────────────────────
 
@@ -179,7 +174,7 @@ export const extraSections: { heading: string; content: string }[] = [
   },
   {
     heading: "Database Design",
-    content: "PostgreSQL schema includes tables for companies, contacts, contact_emails, email_campaigns, email_templates, ats_boards, company_facts, company_snapshots, and received_emails — all managed by Drizzle ORM with proper indexes for filtering performance.",
+    content: "PostgreSQL schema includes tables for companies, contacts, contact_emails, email_campaigns, email_templates, company_facts, company_snapshots, and received_emails — all managed by Drizzle ORM with proper indexes for filtering performance.",
   },
   {
     heading: "Security & Auth",

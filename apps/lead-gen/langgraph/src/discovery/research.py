@@ -1,11 +1,11 @@
-"""Per-company research: fetch website, probe ATS boards, classify with DeepSeek."""
+"""Per-company research: fetch website and classify with DeepSeek."""
 
 import json
 import re
 
 import httpx
 
-from .models import ATSBoardDetection, CandidateCompany, CompanyResearchResult
+from .models import CandidateCompany, CompanyResearchResult
 from .prompts import build_classification_messages
 from .search import get_llm
 

@@ -359,35 +359,6 @@ export const companySnapshots = sqliteTable("company_snapshots", {
 	index("idx_company_snapshots_company_hash").on(table.companyId, table.contentHash),
 ]);
 
-export const atsBoards = sqliteTable("ats_boards", {
-	id: integer().primaryKey({ autoIncrement: true }),
-	companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" } ),
-	url: text().notNull(),
-	vendor: text().notNull(),
-	boardType: text("board_type").notNull(),
-	confidence: real().notNull(),
-	isActive: integer("is_active").default(1).notNull(),
-	firstSeenAt: text("first_seen_at").notNull(),
-	lastSeenAt: text("last_seen_at").notNull(),
-	sourceType: text("source_type").notNull(),
-	sourceUrl: text("source_url").notNull(),
-	crawlId: text("crawl_id"),
-	captureTimestamp: text("capture_timestamp"),
-	observedAt: text("observed_at").notNull(),
-	method: text().notNull(),
-	extractorVersion: text("extractor_version"),
-	warcFilename: text("warc_filename"),
-	warcOffset: integer("warc_offset"),
-	warcLength: integer("warc_length"),
-	warcDigest: text("warc_digest"),
-	createdAt: text("created_at").default("sql`(datetime('now'))`").notNull(),
-	updatedAt: text("updated_at").default("sql`(datetime('now'))`").notNull(),
-},
-(table) => [
-	index("idx_ats_boards_vendor").on(table.vendor),
-	index("idx_ats_boards_company_url").on(table.companyId, table.url),
-]);
-
 export const applications = sqliteTable("applications", {
 	id: integer().primaryKey({ autoIncrement: true }).notNull(),
 	userEmail: text("user_email").notNull(),
