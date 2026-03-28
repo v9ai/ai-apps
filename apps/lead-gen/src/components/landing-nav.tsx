@@ -149,6 +149,15 @@ export function LandingNav() {
               }}
             >
               <Image src="/logo.svg" alt="Agentic Lead Gen" width={100} height={22} priority />
+              <span
+                className={css({
+                  display: { base: "none", md: "inline" },
+                  fontSize: "2xs",
+                  color: "ui.dim",
+                })}
+              >
+                / agentic lead gen
+              </span>
             </Link>
 
             {/* desktop: section anchors */}
@@ -264,6 +273,29 @@ export function LandingNav() {
           })}
           style={{ WebkitBackdropFilter: "blur(16px)" }}
         >
+          {/* brand header */}
+          <div className={css({ mb: "6" })}>
+            <p
+              className={css({
+                fontSize: "xl",
+                fontWeight: "bold",
+                color: "ui.heading",
+                letterSpacing: "snug",
+              })}
+            >
+              Agentic Lead Gen
+            </p>
+            <p
+              className={css({
+                fontSize: "2xs",
+                color: "ui.dim",
+                mt: "1",
+              })}
+            >
+              autonomous B2B lead generation
+            </p>
+          </div>
+
           {/* section anchors */}
           <p
             className={css({

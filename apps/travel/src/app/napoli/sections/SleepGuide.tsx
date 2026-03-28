@@ -2,7 +2,7 @@
 
 import { css } from "styled-system/css";
 import { useLang } from "@/components/LanguageSwitcher";
-import { NIGHTS, DATE_RANGE_LABEL } from "../constants";
+import { NIGHTS, DATE_RANGE_LABEL, RECOMMENDED_TIER } from "../constants";
 
 const T = {
   en: {
@@ -11,7 +11,6 @@ const T = {
     sectionSubtitle:
       `Budget allocation €300 — family room, ${NIGHTS} nights (${DATE_RANGE_LABEL.en}). Three tiers for 2 adults + 1 child.`,
     recommended: "RECOMMENDED",
-    mlLabel: "Family ML",
     hotelsLabel: "Properties in this tier",
     tiers: [
       {
@@ -23,7 +22,6 @@ const T = {
         expect:
           "Private family room (double + extra bed for child), basic amenities, central location",
         goodFor: "Families on a tight budget — frees €50 for extra experiences",
-        mlScore: 72,
         hotels: [
           { name: "B&B Spaccanapoli", area: "Centro Storico", price: "€45 / night", note: "Family room with extra bed for child" },
           { name: "A' Puteca di Napoli", area: "Quartieri Spagnoli", price: "€48 / night", note: "Family-run, quiet courtyard" },
@@ -40,7 +38,6 @@ const T = {
           "Family room or connecting rooms, A/C, private bathroom, breakfast sometimes included",
         goodFor:
           "Families — comfortable family room, safe neighbourhood, good transport links",
-        mlScore: 91,
         hotels: [
           { name: "Hotel Piazza Bellini", area: "Centro Storico", price: "€68 / night", note: "Courtyard garden, family rooms available" },
           { name: "Hotel de Charme Toledo", area: "Via Toledo", price: "€65 / night", note: "Connecting rooms, central location" },
@@ -57,7 +54,6 @@ const T = {
           "Junior suite or connecting rooms, room service, concierge, pool access",
         goodFor:
           "Families wanting full comfort — extra space for a child, premium seafront location",
-        mlScore: 85,
         hotels: [
           { name: "Grand Hotel Vesuvio", area: "Lungomare", price: "€145 / night", note: "Iconic seafront, junior suites" },
           { name: "Hotel Santa Lucia", area: "Lungomare", price: "€130 / night", note: "Bay view family suites" },
@@ -70,22 +66,18 @@ const T = {
       {
         name: "Centro Storico",
         desc: "UNESCO-listed street grid, dense with trattorias and street food. Exciting for children during the day — loud at night, light sleepers may struggle.",
-        mlScore: 68,
       },
       {
         name: "Chiaia",
         desc: "Elegant seafront district. Quieter than the historic centre. Good restaurants, lower foot traffic — manageable with a child.",
-        mlScore: 82,
       },
       {
         name: "Vomero",
         desc: "Hilltop residential quarter. Calm streets, panoramic views, funicular access. Best neighbourhood for families with young children — safe and quiet at night.",
-        mlScore: 89,
       },
       {
         name: "Lungomare",
         desc: "Promenade along the bay. Open spaces, sea views, car-free on Sundays. Ideal for families — children love the waterfront and Castel dell'Ovo is five minutes away.",
-        mlScore: 94,
       },
     ],
     tierLabels: {
@@ -101,7 +93,6 @@ const T = {
     sectionSubtitle:
       `Buget alocat €300 — camera de familie, ${NIGHTS} nopti (${DATE_RANGE_LABEL.ro}). Trei niveluri pentru 2 adulti + 1 copil.`,
     recommended: "RECOMANDAT",
-    mlLabel: "ML Familie",
     hotelsLabel: "Proprietăți în acest nivel",
     tiers: [
       {
@@ -114,7 +105,6 @@ const T = {
           "Camera de familie (pat dublu + pat suplimentar pentru copil), facilitati de baza, locatie centrala",
         goodFor:
           "Familii cu buget redus — elibereaza €50 pentru experiente suplimentare",
-        mlScore: 72,
         hotels: [
           { name: "B&B Spaccanapoli", area: "Centro Storico", price: "€45 / noapte", note: "Camera de familie cu pat suplimentar" },
           { name: "A' Puteca di Napoli", area: "Quartieri Spagnoli", price: "€48 / noapte", note: "Condus de familie, curte interioara linistita" },
@@ -131,7 +121,6 @@ const T = {
           "Camera de familie sau camere comunicante, A/C, baie proprie, mic dejun uneori inclus",
         goodFor:
           "Familii — camera confortabila, cartier sigur, legaturi bune cu transportul",
-        mlScore: 91,
         hotels: [
           { name: "Hotel Piazza Bellini", area: "Centro Storico", price: "€68 / noapte", note: "Curte cu gradina, camere de familie" },
           { name: "Hotel de Charme Toledo", area: "Via Toledo", price: "€65 / noapte", note: "Camere comunicante, locatie centrala" },
@@ -148,7 +137,6 @@ const T = {
           "Junior suite sau camere comunicante, room service, concierge, acces la piscina",
         goodFor:
           "Familii care vor confort total — spatiu suplimentar pentru copil, locatie premium la malul marii",
-        mlScore: 85,
         hotels: [
           { name: "Grand Hotel Vesuvio", area: "Lungomare", price: "€145 / noapte", note: "Iconic la malul marii, junior suites" },
           { name: "Hotel Santa Lucia", area: "Lungomare", price: "€130 / noapte", note: "Suites de familie cu vedere la golf" },
@@ -161,22 +149,18 @@ const T = {
       {
         name: "Centro Storico",
         desc: "Retea de strazi inclusa in patrimoniul UNESCO, plina de trattorii si mancare stradala. Fascinant pentru copii ziua — zgomotos noaptea, copiii mici pot fi deranjati.",
-        mlScore: 68,
       },
       {
         name: "Chiaia",
         desc: "Cartier elegant la malul marii. Mai linistit decat centrul istoric. Restaurante bune, trafic pietonal redus — gestionabil cu un copil.",
-        mlScore: 82,
       },
       {
         name: "Vomero",
         desc: "Cartier rezidential pe deal. Strazi calme, vedere panoramica, acces prin funicular. Cel mai bun cartier pentru familii cu copii mici — sigur si linistit noaptea.",
-        mlScore: 89,
       },
       {
         name: "Lungomare",
         desc: "Promenada de-a lungul golfului. Spatii deschise, vedere la mare, fara masini duminica. Ideal pentru familii — copiii iubesc faleza si Castel dell'Ovo e la cinci minute.",
-        mlScore: 94,
       },
     ],
     tierLabels: {
@@ -187,8 +171,6 @@ const T = {
     },
   },
 };
-
-const RECOMMENDED_INDEX = 1;
 
 export function SleepGuide() {
   const { lang } = useLang();
@@ -262,7 +244,7 @@ export function SleepGuide() {
         })}
       >
         {t.tiers.map((tier, i) => {
-          const isRecommended = i === RECOMMENDED_INDEX;
+          const isRecommended = i === RECOMMENDED_TIER;
           return (
             <div
               key={tier.tier}

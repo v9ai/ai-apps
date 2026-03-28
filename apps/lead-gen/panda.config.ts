@@ -51,6 +51,7 @@ export default defineConfig({
 
           // ---- status (Radix green dark) ----
           "status.positive": { value: "#30A46C" },
+          "status.positiveHover": { value: "#2B9362" },
           "status.positiveDim": { value: "rgba(48, 164, 108, 0.15)" },
 
           // ---- white-alpha scale ----

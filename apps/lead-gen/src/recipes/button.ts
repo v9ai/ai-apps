@@ -13,7 +13,7 @@ export const button = cva({
     fontFamily: "inherit",
     lineHeight: "none",
     textDecoration: "none",
-    transition: "background 150ms ease, color 150ms ease, border-color 150ms ease",
+    transition: "background 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease",
     outline: "none",
     userSelect: "none",
     whiteSpace: "nowrap",
@@ -21,6 +21,11 @@ export const button = cva({
       outline: "2px solid",
       outlineColor: "accent.primary",
       outlineOffset: "2px",
+    },
+    _disabled: {
+      opacity: "0.4",
+      cursor: "not-allowed",
+      pointerEvents: "none",
     },
   },
   variants: {
@@ -40,7 +45,7 @@ export const button = cva({
         border: "1px solid transparent",
         fontWeight: "bold",
         _hover: {
-          background: "#2B9362",
+          background: "status.positiveHover",
         },
       },
       ghost: {

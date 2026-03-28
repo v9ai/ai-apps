@@ -2,7 +2,7 @@
 
 import { css } from "styled-system/css";
 import { flex, container } from "styled-system/patterns";
-import { GitHubLogoIcon } from "@radix-ui/react-icons";
+import { GitHubLogoIcon, LightningBoltIcon } from "@radix-ui/react-icons";
 
 /**
  * TRUST IMPROVEMENT 4: "Built by" human element.
@@ -21,6 +21,30 @@ export function LandingBuilder() {
       })}
     >
       <div className={container({ maxW: "breakpoint-lg" })}>
+        <div
+          className={flex({
+            align: "center",
+            gap: "1.5",
+            mb: "2",
+          })}
+        >
+          <LightningBoltIcon
+            width={12}
+            height={12}
+            style={{ color: "var(--gray-9)" }}
+          />
+          <span
+            className={css({
+              fontSize: "sm",
+              fontWeight: "bold",
+              color: "ui.secondary",
+              textTransform: "lowercase",
+              letterSpacing: "wide",
+            })}
+          >
+            about agentic lead gen
+          </span>
+        </div>
         <div
           className={css({
             border: "1px solid",
@@ -71,7 +95,7 @@ export function LandingBuilder() {
                 built by{" "}
                 <span className={css({ fontWeight: "bold" })}>vadim nicolai</span>
                 {" "}&mdash; an AI engineer who got tired of paying $10K+/year for
-                cloud CRMs that don&apos;t understand his ICP. agentic lead gen
+                cloud CRMs that don&apos;t understand his ICP. Agentic Lead Gen
                 deploys autonomous AI agents that crawl, extract, score, and
                 enrich B2B prospects end-to-end &mdash; no manual steps, no
                 babysitting, just agents working 24/7 on your pipeline.

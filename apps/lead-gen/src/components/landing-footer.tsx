@@ -64,14 +64,27 @@ export function LandingFooter() {
             </Link>
             <p
               className={css({
+                fontSize: "2xs",
+                fontWeight: "bold",
+                color: "accent.primary",
+                textTransform: "lowercase",
+                letterSpacing: "wide",
+                mb: "2",
+              })}
+            >
+              autonomous B2B lead generation
+            </p>
+            <p
+              className={css({
                 fontSize: "xs",
                 color: "ui.tertiary",
                 lineHeight: "relaxed",
                 maxW: "200px",
               })}
             >
-              agentic B2B lead generation platform. AI agents handle discovery,
-              enrichment, scoring, and outreach — end to end.
+              Agentic Lead Gen is the open-source, local-first B2B pipeline that
+              puts autonomous AI agents to work on your hardware — discovery,
+              enrichment, scoring, and outreach, end to end.
             </p>
             <a
               href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
@@ -155,8 +168,8 @@ export function LandingFooter() {
               maxW: "560px",
             })}
           >
-            built by one person who got tired of paying cloud CRMs $10K/year to
-            own their own leads. this is not a startup. there is no pricing page.
+            Agentic Lead Gen was built by one person who got tired of paying
+            cloud CRMs $10K/year to own their own leads. this is not a startup. there is no pricing page.
             it is a pipeline that does one thing well: generate qualified B2B
             leads on commodity hardware.
           </p>
@@ -179,7 +192,7 @@ export function LandingFooter() {
               letterSpacing: "normal",
             })}
           >
-            Agentic Lead Gen
+            © 2025 Agentic Lead Gen
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
