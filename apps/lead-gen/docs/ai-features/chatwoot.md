@@ -1,0 +1,535 @@
+# Chatwoot — AI Features Deep Report
+
+> Researched from source: https://github.com/chatwoot/chatwoot (develop branch, March 2026)
+> Platform version: v4.12.1 | Stars: 28,084 | License: MIT (FOSS core) + Enterprise overlay
+
+---
+
+## 1. Overview
+
+Chatwoot is an open-source omnichannel customer support platform — a self-hosted alternative to Intercom and Zendesk. It is written in Ruby on Rails (45.9%) with a Vue.js frontend (28.2%), backed by PostgreSQL and Redis, with Sidekiq for background job processing.
+
+| Metric | Value |
+|---|---|
+| GitHub Stars | 28,084 |
+| Forks | 6,696 |
+| License | MIT (FOSS core) + proprietary Enterprise tier |
+| Primary Language | Ruby on Rails |
+| Frontend | Vue.js 3 + Vite |
+| Last commit | March 28, 2026 |
+| Version | v4.12.1 |
+
+The platform supports live chat, email, WhatsApp, Telegram, Instagram, Facebook, Twitter/X, SMS, and API-driven inboxes from a single unified inbox. The AI layer (branded "Captain") was introduced in early 2025 and has grown into a multi-component system encompassing a customer-facing autonomous agent, an agent-facing copilot, and several inline editor assist tools.
+
+---
+
+## 2. AI Architecture
+
+### 2.1 Two-tier AI subsystem
+
+Chatwoot's AI is split across two tiers:
+
+**Tier 1 — FOSS + OpenAI hook (community)**
+Available to any self-hosted instance that configures an `OPENAI_API_KEY` via the settings UI. Accessed through an "OpenAI integration hook" stored per-account. Powers: conversation summarization, reply suggestion, label suggestion, tone rewrite, fix spelling/grammar, improve text. These route through `Captain::BaseTaskService` with Liquid-template prompts.
+
+**Tier 2 — Enterprise / Captain**
+Gate-flagged behind `captain` and `captain_tasks` feature flags. Requires the Enterprise build or Chatwoot Cloud. Includes: the Captain AI agent (autonomous inbox bot), the Copilot sidebar assistant, document RAG, embedding-based FAQ search, per-assistant model selection, custom tools (HTTP), memory (contact notes), and the full `captain_integration_v2` multi-agent runner.
+
+### 2.2 LLM abstraction layer
+
+All LLM calls route through one of two base classes:
+
+- `Llm::BaseAiService` — new path, wraps `ruby_llm` gem (`>= 1.9.2`), reads model from `InstallationConfig`. Used by Captain assistant, copilot, FAQ/embedding services.
+- `Captain::BaseTaskService` — task path, also wraps `ruby_llm`, reads API key from per-account hook or `CAPTAIN_OPEN_AI_API_KEY` system config. Used by summarize, reply-suggest, rewrite, label-suggest, follow-up.
+
+Both inherit from `Integrations::LlmInstrumentation`, which wraps every call in an OpenTelemetry span with Langfuse attribute mapping (`langfuse.trace.input`, `langfuse.observation.output`, `langfuse.tags`, etc.) for production tracing.
+
+### 2.3 Model configuration
+
+`config/llm.yml` defines the available models per feature with credit multipliers:
+
+```yaml
+# config/llm.yml (develop branch, March 2026)
+models:
+  gpt-4.1:          { provider: openai, credit_multiplier: 3 }
+  gpt-4.1-mini:     { provider: openai, credit_multiplier: 1 }
+  gpt-4.1-nano:     { provider: openai, credit_multiplier: 1 }
+  gpt-5.1:          { provider: openai, credit_multiplier: 2 }
+  gpt-5-mini:       { provider: openai, credit_multiplier: 1 }
+  claude-haiku-4.5: { provider: anthropic, coming_soon: true, credit_multiplier: 2 }
+  claude-sonnet-4.5:{ provider: anthropic, coming_soon: true, credit_multiplier: 3 }
+  gemini-3-flash:   { provider: gemini,   coming_soon: true, credit_multiplier: 1 }
+  gemini-3-pro:     { provider: gemini,   coming_soon: true, credit_multiplier: 3 }
+  text-embedding-3-small: { provider: openai, credit_multiplier: 1 }
+
+features:
+  editor:       { default: gpt-4.1-mini }
+  assistant:    { default: gpt-5.1 }
+  copilot:      { default: gpt-5.1 }
+  label_suggestion: { default: gpt-4.1-nano }
+  audio_transcription: { default: whisper-1 }
+  help_center_search:  { default: text-embedding-3-small }
+```
+
+Anthropic and Gemini models are in the config as `coming_soon: true`. All routing still goes through the OpenAI-compatible endpoint. Self-hosted operators can point `CAPTAIN_OPEN_AI_ENDPOINT` at any proxy (LiteLLM, Ollama with openai-compat) to swap providers.
+
+### 2.4 Ruby gem stack
+
+| Gem | Purpose |
+|---|---|
+| `ruby_llm >= 1.9.2` | Unified LLM client (OpenAI, Anthropic, Gemini via one API) |
+| `ai-agents >= 0.9.1` | Agent runner loop (`Agents::Runner`) used by Captain V2 |
+| `neighbor` | Vector similarity search (cosine, dot product) in ActiveRecord |
+| `pgvector` | PostgreSQL `vector` column type + IVFFlat index |
+| `google-cloud-dialogflow-v2` | Legacy Dialogflow integration (still present) |
+| `ruby-openai` | Used only for PDF upload to OpenAI Files API (legacy path) |
+| `opentelemetry-*` | Full OTel instrumentation stack |
+
+---
+
+## 3. Key AI Features
+
+### 3.1 AI-suggested replies
+
+**File:** `lib/captain/reply_suggestion_service.rb`
+**API endpoint:** `POST /api/v1/accounts/:id/captain/tasks/reply_suggestion`
+
+Fetches the full conversation history (token-limited to 400,000 characters ≈ 100k tokens), formats it via `LlmFormatter::ConversationLlmFormatter`, and sends it to the configured model with a Liquid-template system prompt (`lib/integrations/openai/openai_prompts/reply.liquid`).
+
+The prompt is channel-aware: email conversations get a formal email format with agent signature; chat conversations get a short conversational reply. The prompt explicitly instructs the model to `search_documentation` first if the hook has a search tool enabled, grounding the suggestion in the knowledge base.
+
+Results are cached in Redis per `(event_name, conversation_id, last_activity_at)` to avoid duplicate LLM calls on fast re-requests.
+
+### 3.2 Conversation summarization
+
+**File:** `lib/captain/summary_service.rb`
+**Prompt:** `lib/integrations/openai/openai_prompts/summary.liquid`
+
+Summarizes the full conversation into a ~200-word markdown document structured as: Customer Intent, Conversation Summary, Action Items, Follow-up Items. The prompt strictly rules out agent opinions and instructs the model to reply in the user's language.
+
+### 3.3 Label suggestion
+
+**File:** `lib/captain/label_suggestion_service.rb`
+**Model:** `gpt-4.1-nano` (cheapest; no semantic reasoning needed)
+
+Activates only when: ≥3 incoming messages, ≤100 total messages, and (if >20 messages) the last message is incoming. Formats the conversation as `Customer: ... \nAgent: ...` pairs, appends the account's full label list, and asks the model to pick the two most accurate labels. Result is Redis-cached.
+
+### 3.4 Tone rewrite / editor assist
+
+**File:** `lib/captain/rewrite_service.rb`
+**Operations:** `fix_spelling_grammar`, `improve`, `casual`, `professional`, `friendly`, `confident`, `straightforward`
+
+Inline editor assist. The agent's draft reply in the editor is sent to the LLM with the selected operation. Tone variants use `lib/integrations/openai/openai_prompts/tone_rewrite.liquid` with a Liquid `{% case tone %}` switch. Grammar fix and improve have their own separate prompts. None of these add new information — they are style-only transforms.
+
+### 3.5 Sentiment analysis (ONNX, bundled model)
+
+**File:** `vendor/db/sentiment-analysis.onnx` (69 MB)
+**Migration:** `db/migrate/20230706090122_sentiment_column_to_messages.rb`
+
+A `sentiment` JSONB column was added to the `messages` table in mid-2023. The 69 MB ONNX file is a bundled local sentiment classification model — no API call. The Ruby service layer for invoking it is not exposed in the public file tree (likely enterprise-only), but the schema and model file confirm it is an on-device inference path: no cloud latency, no cost per message. The output is stored as JSON on each message record.
+
+### 3.6 Captain AI Agent (autonomous bot)
+
+The core enterprise AI feature. An AI agent that automatically responds to incoming conversations on connected inboxes, with handoff-to-human logic.
+
+**Data model (`enterprise/app/models/captain/assistant.rb`):**
+```
+captain_assistants
+  config: jsonb           # product_name, temperature, feature_faq, feature_memory,
+                          # feature_contact_attributes, welcome_message, handoff_message,
+                          # resolution_message, instructions, feature_citation
+  response_guidelines: jsonb
+  guardrails: jsonb
+  name, description
+```
+
+**Captain V1 path:** `Captain::Llm::AssistantChatService` — single-shot LLM call with the system prompt + conversation history. The system prompt is generated by `Captain::Llm::SystemPromptsService.assistant_response_generator()` which injects: assistant name, product name, contact info (if `feature_contact_attributes` enabled), custom instructions, response guidelines (tone/style rules), guardrails (prohibited topics), and citation instructions. The model is instructed to return JSON `{reasoning, response}`.
+
+**Captain V2 path (`captain_integration_v2` feature flag):** `Captain::Assistant::AgentRunnerService` — uses the `ai-agents` gem's `Agents::Runner` with a full multi-agent handoff graph. The assistant agent can hand off to scenario agents (specialized sub-agents with their own tools and instructions). Scenario agents can hand back to the main agent. Tool calls are fully traced via OTel.
+
+**Trigger:** `enterprise/app/listeners/captain_listener.rb` — not present for `conversation_created` directly. The job `Captain::Conversation::ResponseBuilderJob` is enqueued when a new pending-status conversation arrives on a Captain-enabled inbox. The job checks `conversation_pending?` before every LLM call and aborts cleanly if the status has changed (human picked it up).
+
+**Handoff:** If the LLM returns `"response": "conversation_handoff"`, the job calls `@conversation.bot_handoff!` which transitions the conversation from `pending` to `open` and posts the configured handoff message. Out-of-office templates are also triggered post-handoff if configured and the conversation is not a campaign.
+
+### 3.7 Captain Copilot (agent-side assistant)
+
+A sidebar panel inside the agent UI that lets human support agents query an AI assistant while handling a conversation.
+
+**Files:** `enterprise/app/services/captain/copilot/chat_service.rb`
+
+The Copilot uses the same `Captain::Assistant` record as the inbox bot but operates with a richer tool set:
+
+| Tool | What it does |
+|---|---|
+| `SearchDocumentationService` | Vector search over approved FAQ responses |
+| `GetConversationService` | Retrieve full conversation detail by display ID |
+| `SearchConversationsService` | Semantic search across conversations |
+| `GetContactService` | Pull contact record |
+| `SearchContactsService` | Search contacts by query |
+| `GetArticleService` | Retrieve help center article |
+| `SearchArticlesService` | Search help center articles |
+| `SearchLinearIssuesService` | Search Linear issues (if Linear integration enabled) |
+
+The system prompt (`SystemPromptsService.copilot_response_generator`) instructs the model to return JSON `{reasoning, content, reply_suggestion}`. `reply_suggestion: true` is only set if the agent explicitly asked to draft a response for the customer.
+
+Copilot threads are persisted (`CopilotThread`, `CopilotMessage` models) so the conversation context survives page reloads.
+
+### 3.8 Built-in Captain agent tools
+
+**Config file:** `config/agents/tools.yml`
+**Tool implementations:** `enterprise/lib/captain/tools/`
+
+| Tool ID | Class | Action |
+|---|---|---|
+| `faq_lookup` | `FaqLookupTool` | Cosine vector search over `captain_assistant_responses` |
+| `handoff` | `HandoffTool` | Hands off conversation to human agent |
+| `resolve_conversation` | `ResolveConversationTool` | Marks conversation resolved |
+| `add_contact_note` | `AddContactNoteTool` | Appends note to contact CRM profile |
+| `add_private_note` | `AddPrivateNoteTool` | Internal-only message in thread |
+| `update_priority` | `UpdatePriorityTool` | Sets conversation priority |
+| `add_label_to_conversation` | `AddLabelToConversationTool` | Applies label |
+
+### 3.9 Custom Tools (HTTP tool-calling)
+
+**Model:** `captain_custom_tools` table
+**File:** `enterprise/app/models/captain/custom_tool.rb`
+
+Operators can define arbitrary HTTP endpoints as tools. Fields: `endpoint_url`, `http_method` (GET/POST), `param_schema` (JSON Schema array), `auth_config` (none/bearer/basic/api_key), `request_template`, `response_template`. The tool is assigned a `slug` and exposed as a callable function in the agent/copilot. This is Chatwoot's equivalent of OpenAI function calling against external APIs — no code deploy needed.
+
+### 3.10 Knowledge base RAG
+
+**Document ingestion pipeline:**
+
+1. Operator adds a document URL or PDF via the UI.
+2. `Captain::Document` record is created; `enqueue_crawl_job` fires `Captain::Documents::CrawlJob`.
+3. Crawl job dispatches one of three paths:
+   - **PDF:** `Captain::Llm::PdfProcessingService` — uploads to OpenAI Files API (`purpose: assistants`), stores `openai_file_id`.
+   - **Simple crawl:** `Captain::Tools::SimplePageCrawlService` — fetches page links, enqueues `SimplePageCrawlParserJob` per URL.
+   - **Firecrawl:** `Captain::Tools::FirecrawlService` — webhooks back via `enterprise_webhooks_firecrawl_url` with token-signed auth.
+4. Once `status: :available`, `Captain::Documents::ResponseBuilderJob` fires.
+5. `Captain::Llm::FaqGeneratorService` (and `PaginatedFaqGeneratorService` for PDFs) chunks content and calls the LLM with `Captain::Llm::SystemPromptsService.faq_generator()`.
+6. Generated Q/A pairs become `Captain::AssistantResponse` records with `status: pending`.
+7. Operators review and approve in the "Responses" UI. Only `status: approved` records are returned by `search()`.
+8. After approval, `after_commit :update_response_embedding` fires `Captain::Llm::UpdateEmbeddingJob` which calls `Captain::Llm::EmbeddingService#get_embedding(content)` → `text-embedding-3-small` → stores `vector(1536)` in the `embedding` column.
+
+**Semantic search:** `AssistantResponse.search(query)` translates the query to the account language via `Captain::Llm::TranslateQueryService` (uses `gpt-4.1-nano` + CLD3 language detection to skip translation if already correct), embeds the translated query, then calls `nearest_neighbors(:embedding, embedding, distance: 'cosine').limit(5)` via the `neighbor` gem.
+
+**Vector index:** `ivfflat` index on both `captain_assistant_responses.embedding` and `article_embeddings.embedding` columns. Dimensionality: 1536 (matching `text-embedding-3-small`).
+
+### 3.11 Memory and CRM enrichment
+
+Triggered in `CaptainListener#conversation_resolved`:
+
+- **Feature memory (`feature_memory`):** `Captain::Llm::ContactNotesService` — formats `#Contact\n#{contact.to_llm_text}\n#Conversation\n#{conversation.to_llm_text}`, sends to LLM with `notes_generator` prompt, creates CRM notes on the contact for each generated note. Only notes not already present.
+- **Feature FAQ (`feature_faq`):** `Captain::Llm::ConversationFaqService` — generates Q/A pairs from the resolved conversation. Before saving, deduplicates against existing approved responses using cosine distance threshold of 0.3.
+
+### 3.12 CSAT / WhatsApp template AI
+
+**File:** `lib/integrations/openai/openai_prompts/csat_utility_analysis.liquid`
+
+When sending a CSAT survey via WhatsApp, the system needs to classify the message template as UTILITY vs MARKETING (Meta policy). The LLM classifies the message and rewrites it to be "utility-safe" if needed.
+
+---
+
+## 4. Data Pipeline
+
+### 4.1 Inbound conversation flow (Captain Agent)
+
+```
+Incoming message (any channel)
+        |
+[Inbox webhook / ActionCable push]
+        |
+conversation.status = :pending
+        |
+Captain::Conversation::ResponseBuilderJob.perform_later(conversation, assistant)
+        |
+[Check conversation_pending?]
+        |
+captain_integration_v2?
+    YES --> Captain::Assistant::AgentRunnerService
+                |
+                +--> Agents::Runner (ai-agents gem)
+                |       |
+                |       +--> build_and_wire_agents()
+                |       |       +--> assistant.agent (main)
+                |       |       +--> scenario_agents (handoff sub-agents)
+                |       |
+                |       +--> max_turns: 100 agentic loop
+                |       |       +--> tool calls (faq_lookup, handoff, resolve, etc.)
+                |       |       +--> LLM calls (ruby_llm)
+                |       |
+                |       +--> result.output = {response, reasoning, agent_name}
+                |
+    NO  --> Captain::Llm::AssistantChatService (single-shot)
+                |
+                +--> SystemPromptsService.assistant_response_generator()
+                +--> SearchDocumentationService (faq vector search)
+                +--> ruby_llm.chat().ask()
+        |
+process_response()
+    handoff? --> bot_handoff! + handoff_message + out_of_office template
+    else     --> conversation.messages.create!(outgoing)
+                 account.increment_response_usage
+```
+
+### 4.2 Conversation resolved → learning pipeline
+
+```
+conversation.resolved event
+        |
+CaptainListener#conversation_resolved
+        |
+        +--> feature_memory? --> ContactNotesService
+        |       --> LLM generates notes --> contact.notes.create!
+        |
+        +--> feature_faq? --> ConversationFaqService
+                --> LLM generates Q/A pairs
+                --> dedup via vector cosine (threshold 0.3)
+                --> AssistantResponse.create!(status: :pending)
+                         |
+                         +--> after_commit: UpdateEmbeddingJob (low queue)
+                                  --> EmbeddingService.get_embedding()
+                                  --> response.update!(embedding: vector)
+```
+
+### 4.3 Task API (inline editor, agent UI)
+
+```
+Agent UI action (summarize / suggest / rewrite / label)
+        |
+POST /api/v1/accounts/:id/captain/tasks/:action
+        |
+Captain::{Summary,ReplySuggestion,Rewrite,LabelSuggestion}Service
+        |
+[Redis cache check] --> hit: return cached
+        |
+[Enterprise guard: captain_tasks feature flag]
+[API key check: per-account hook OR system CAPTAIN_OPEN_AI_API_KEY]
+        |
+LLM call (ruby_llm with OTel span)
+        |
+[Redis cache write]
+        |
+JSON response: {message, usage, follow_up_context}
+```
+
+### 4.4 Event system
+
+Chatwoot uses a publish/subscribe listener model (`BaseListener`). `CaptainListener` is the only AI listener in the enterprise codebase and responds to `conversation_resolved`. There is no background streaming consumer — all AI triggers are either:
+
+1. **Sidekiq job** (Captain response, embedding update, document crawl/parse, copilot response)
+2. **Synchronous inline** (task API calls: summarize, suggest — blocked on LLM response before HTTP response returns)
+
+Webhook events are dispatched for conversation status changes, message created, etc. AI processing is not exposed to external webhooks by default — it happens internally before or after the event.
+
+---
+
+## 5. Evaluation / Quality
+
+### 5.1 Human-in-the-loop FAQ review
+
+Generated FAQ responses have a two-status flow: `pending` (generated by LLM from document or resolved conversation) → `approved` (operator approved in UI). Only `approved` responses appear in semantic search. This is the primary quality gate.
+
+The "Responses" UI page (`captain/responses/Pending.vue`) shows all pending responses for review. There is no automated eval pass — it is purely human-reviewed.
+
+### 5.2 Deduplication threshold
+
+When generating FAQs from resolved conversations, `ConversationFaqService` checks cosine distance against existing approved responses. Distance < 0.3 = duplicate (discarded). This prevents knowledge base bloat but the threshold is hardcoded — no adaptive tuning.
+
+### 5.3 OTel / Langfuse tracing
+
+Every LLM call emits an OTel span with:
+- `langfuse.trace.input` / `langfuse.observation.output`
+- `langfuse.tags` (e.g., `['captain_v2']`)
+- `langfuse.metadata.assistant_id`, `conversation_id`, `channel_type`
+- `langfuse.metadata.credit_used` (true/false based on whether handoff tool fired)
+
+This enables per-conversation, per-feature cost tracking in Langfuse. However, there is no automated accuracy eval loop, A/B testing, or feedback capture on individual suggestions. The platform has CSAT but it measures agent performance, not AI suggestion quality directly.
+
+### 5.4 Usage limits
+
+Per-account `usage_limits[:captain][:documents]` and `[:responses]` are enforced at create time. Document limit is checked in `Captain::Document#ensure_within_plan_limit`. There is no rate limiting on the task API itself beyond the account feature flag check.
+
+---
+
+## 6. Rust/ML Relevance
+
+### 6.1 Current ML approach
+
+All inference is delegated to cloud LLM APIs (OpenAI, with Anthropic/Gemini coming). The only on-device model is the 69 MB ONNX sentiment classifier (`vendor/db/sentiment-analysis.onnx`). Ruby has no Candle or `tract` bindings, so it likely runs via `onnxruntime` Ruby gem.
+
+### 6.2 What it would take to add Rust ML inference
+
+The current architecture has several clean injection points:
+
+**Option A: Rust sidecar service**
+The `CAPTAIN_OPEN_AI_ENDPOINT` config key allows pointing the entire LLM stack at any OpenAI-compatible endpoint. A Rust inference server (e.g., `candle` + a quantized Qwen/Llama) exposing `/v1/chat/completions` and `/v1/embeddings` would require zero Rails code changes. Full feature parity for the Captain agent, copilot, and task API.
+
+**Option B: Rust embedding microservice**
+Embedding is the highest-throughput operation (every FAQ update, every document chunk). Replace `text-embedding-3-small` with a local model: Rust service using `candle` with `nomic-embed-text` or `bge-small-en-v1.5` (INT8, ~25 MB). Called via `CAPTAIN_OPEN_AI_ENDPOINT` with `/v1/embeddings`.
+
+**Option C: Rust sentiment service**
+The ONNX sentiment model is already on-device. Rewriting the inference path in Rust (`ort` crate, OpenINT8 quantized) would remove the Ruby ONNX runtime overhead and enable batch-scoring messages without a Ruby process.
+
+**Most portable features:**
+1. Embedding (stateless, easy to parallelize, high frequency)
+2. Sentiment scoring (already local ONNX)
+3. FAQ generation from conversations (deterministic prompt, JSON output — easy to eval)
+4. Reply suggestion (Liquid prompt is already externalized)
+
+**Hardest to port:**
+The V2 multi-agent loop (`ai-agents` gem) because it relies on Ruby object graphs, callbacks, and `Agents::Runner` internals. Would require reimplementing the handoff protocol or using an agent framework like `rig` (Rust).
+
+---
+
+## 7. Integration Points
+
+### 7.1 REST API
+
+Chatwoot exposes a comprehensive REST API (`/api/v1/`) documented via Swagger at `/swagger/index.html`. AI-relevant endpoints:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/v1/accounts/:id/captain/assistants` | CRUD | Manage Captain AI assistants |
+| `/api/v1/accounts/:id/captain/assistants/:id/playground` | POST | Test assistant with messages |
+| `/api/v1/accounts/:id/captain/assistants/:id/tools` | GET | List available tools |
+| `/api/v1/accounts/:id/captain/documents` | CRUD | Manage knowledge base documents |
+| `/api/v1/accounts/:id/captain/responses` | CRUD | Manage FAQ responses |
+| `/api/v1/accounts/:id/captain/inboxes` | CRUD | Connect assistant to inboxes |
+| `/api/v1/accounts/:id/captain/scenarios` | CRUD | Manage agent scenarios |
+| `/api/v1/accounts/:id/captain/custom_tools` | CRUD | Define custom HTTP tools |
+| `/api/v1/accounts/:id/captain/copilot_threads` | CRUD | Copilot session threads |
+| `/api/v1/accounts/:id/captain/copilot_messages` | CRUD | Copilot messages |
+| `/api/v1/accounts/:id/captain/tasks/summarize` | POST | Generate conversation summary |
+| `/api/v1/accounts/:id/captain/tasks/reply_suggestion` | POST | Suggest reply |
+| `/api/v1/accounts/:id/captain/tasks/rewrite` | POST | Rewrite agent draft |
+| `/api/v1/accounts/:id/captain/tasks/label_suggestion` | POST | Suggest labels |
+| `/api/v1/accounts/:id/captain/tasks/follow_up` | POST | Follow-up context generation |
+
+### 7.2 Webhooks
+
+Chatwoot supports account-level webhooks for conversation and message events. Webhook events include: `conversation_created`, `conversation_status_changed`, `conversation_updated`, `message_created`, `message_updated`, `contact_created`, `contact_updated`, and reporting events.
+
+There is no native webhook that fires when Captain produces a response or when a suggestion is generated — those are synchronous or internal. However, `message_created` fires when Captain sends a message, so an external system could detect Captain messages via the `sender.type == 'captain_assistant'` check in the event payload.
+
+### 7.3 AI from external systems via the API
+
+Pattern 1: **Inject AI messages** — POST to `/api/v1/accounts/:id/conversations/:conv_id/messages` with `message_type: outgoing` from an external AI service. No Captain license required.
+
+Pattern 2: **Trigger task endpoints** — Use the tasks API from your own system to get summarization or reply suggestions on conversations you already have, feeding the responses into your own UI.
+
+Pattern 3: **AgentBot integration** — Chatwoot has a built-in `AgentBot` framework (pre-Captain, still present) where an external webhook URL receives conversation events and can reply via the API. This is the FOSS-compatible path for plugging in an external AI — no Captain license needed.
+
+Pattern 4: **Custom Tool endpoint** — Define a Captain Custom Tool pointing at your own API. Captain will call it during the agent loop via HTTP, passing structured parameters from the LLM's tool-call decision.
+
+### 7.4 MCP / AI assistant integration
+
+There is no MCP (Model Context Protocol) server in Chatwoot. The codebase has a `CLAUDE.md` and `AGENTS.md` in the repo root (AI-friendly instructions for contributors), but no outward-facing MCP server exposing Chatwoot capabilities to external AI agents.
+
+The closest equivalent is the Custom Tools feature, which lets external services be callable by the Captain agent. For an MCP-style integration, you would expose your external tools as Custom Tool endpoints that Captain can invoke via HTTP, effectively acting as a bridge.
+
+---
+
+## 8. Gaps / Weaknesses
+
+### 8.1 No native streaming
+
+The task API (`/captain/tasks/*`) is blocking — the HTTP request waits for the full LLM response. There is no SSE or WebSocket streaming for suggestion results. The Copilot sidebar uses a job queue (`Captain::Copilot::ResponseJob`) but the result is pushed via ActionCable after completion, not token-streamed.
+
+### 8.2 Single embedding model, fixed dimensionality
+
+Everything is `text-embedding-3-small` at `vector(1536)`. The IVFFlat index is not automatically re-tuned. Switching embedding models requires re-embedding the entire knowledge base — there is no migration path in the codebase for this.
+
+### 8.3 No RLHF or feedback loops on suggestions
+
+Reply suggestions and summaries have no thumbs up/down capture. Users can ignore them or edit them, but there is no feedback signal fed back into the model or prompt. Label suggestions are cached and forgotten. There is no system to detect when a suggested reply was used verbatim vs edited vs discarded.
+
+### 8.4 Captain is Enterprise-only (the good parts)
+
+The autonomous agent (`Captain::Assistant`), copilot, document RAG, custom tools, memory, and multi-agent scenarios are all gated behind the Enterprise build. The FOSS community edition only gets the inline task API (summarize, suggest, rewrite, label) — and only if they wire their own OpenAI API key. Self-hosted users wanting the full agentic stack must run the `EE` Docker image.
+
+### 8.5 PDF processing still uses OpenAI Files API
+
+PDF ingestion calls `openai_files.upload(purpose: 'assistants')` via the legacy `ruby-openai` gem, storing the `openai_file_id` on the document. This hardcodes OpenAI as the PDF processor. Routing PDFs through an alternative provider or a local PDF parser is not natively supported.
+
+### 8.6 Auto-assignment is not AI-driven
+
+The enterprise balanced assignment (`Enterprise::AutoAssignment::BalancedSelector`) uses load-balancing by open conversation count, not semantic matching. There is no skill-based routing, no intent classification feeding routing decisions, and no LLM-powered triage. Routing is rule/round-robin-based.
+
+### 8.7 Sentiment data is siloed
+
+The `sentiment` JSONB column on messages is populated but there is no UI to surface it, no filter to find high-negative-sentiment conversations, and no alert/escalation trigger based on sentiment. It is instrumented but not operationalized.
+
+### 8.8 Dialogflow integration is legacy
+
+`google-cloud-dialogflow-v2` is still in the Gemfile as a non-optional dependency. Dialogflow was Chatwoot's pre-Captain NLU integration. It still works but receives no development attention, and it competes with Captain for the same "automated response" slot.
+
+### 8.9 No eval harness
+
+There is no test suite for LLM output quality. The `spec/` tree has unit tests for service plumbing but not for prompt effectiveness. No golden-set evals, no accuracy metrics, no regression detection when prompts change.
+
+---
+
+## 9. Takeaways for a B2B Lead Gen Platform
+
+### 9.1 Inbound lead response pattern
+
+Chatwoot's Captain agent pattern maps cleanly to a B2B lead gen inbound flow:
+
+1. A prospect fills out a contact form or sends a live-chat message.
+2. A Captain-style agent (pending-status trigger) fires immediately, asks qualifying questions, and performs FAQ lookup.
+3. If the prospect qualifies (intent matches ICP), the agent sets a label, creates a contact note with extracted attributes, and hands off to a human SDR.
+4. If not qualified, the agent resolves the conversation automatically.
+
+The `feature_contact_attributes` flag in Captain is exactly this: extract structured attributes (company, role, use case) from the conversation and write them to the contact record. The `ContactAttributesService` code (`generate_and_update_attributes`) is implemented but the update step is marked `# to implement` — meaning the extraction works but the write-back is not yet live in the codebase as of March 2026.
+
+### 9.2 Webhook-driven AI enrichment pattern
+
+Chatwoot's webhook on `message_created` is a viable trigger for external enrichment:
+
+```
+Chatwoot webhook --> your enrichment API
+  event: message_created
+  sender.type: contact (not agent/bot)
+  conversation.status: open
+        |
+        v
+Extract company from email domain / message content
+Run enrichment (Clearbit / LinkedIn / your ML pipeline)
+Write back via POST /api/v1/accounts/:id/conversations/:id/attributes
+```
+
+The `conversation_custom_attributes` and `contact_custom_attributes` are full CRUD via the REST API. A thin webhook receiver can run real-time enrichment and write ICP score, company size, funding, etc. back to the contact profile — visible to the agent immediately.
+
+### 9.3 Vector store pattern is solid and forkable
+
+The `Captain::AssistantResponse` + IVFFlat + `neighbor` gem pattern is clean and directly portable:
+- PostgreSQL with `pgvector` extension
+- `vector(1536)` column on Q/A pairs
+- `nearest_neighbors(:embedding, embedding, distance: 'cosine').limit(5)` ActiveRecord scope
+- Cosine dedup threshold (0.3) on insert
+
+For a lead gen platform, this same pattern can be applied to: company profiles (embed description → find similar ICP targets), email templates (embed subject → find similar past campaigns), and contact notes (embed notes → surface relevant context at outreach time).
+
+### 9.4 Custom Tools as a data enrichment gateway
+
+The Custom Tools HTTP endpoint pattern is directly applicable. Instead of "look up a Linear issue," a lead gen platform could configure tools like "enrich company by domain" or "check email validity" as HTTP tools. The LLM agent then calls them during a qualification conversation as needed — no hardcoded integration code.
+
+### 9.5 Credit multiplier as a cost model reference
+
+The `credit_multiplier` field in `config/llm.yml` is a clean billing abstraction. `gpt-4.1-nano` = 1 credit, `gpt-5.1` = 2 credits, `gpt-5.2` = 3 credits. This is worth replicating in any multi-tenant AI platform where you need to expose model selection to customers without exposing raw API cost.
+
+### 9.6 What Chatwoot is missing that a lead gen platform needs
+
+| Missing in Chatwoot | Lead Gen Need |
+|---|---|
+| No lead scoring | ICP fit score on contacts/companies |
+| No company enrichment pipeline | Clearbit/Apollo-style enrichment on contact creation |
+| No outbound sequencing | Multi-step email cadences with AI personalization |
+| No intent signal tracking | Web visit, job posting, funding round triggers |
+| No CRM sync (native) | Bidirectional HubSpot/Salesforce sync |
+| Routing is not intent-based | Route by industry / company size / job title intent |
+| No account-based grouping | Contacts from the same company grouped as an account |
+
+The architecture (PostgreSQL, Sidekiq, REST API, webhook events, pgvector) is a solid foundation. The gap is domain logic, not infrastructure.
