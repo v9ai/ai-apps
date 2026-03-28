@@ -840,3 +840,81 @@ Recommended alternatives with better legal standing: Apollo.io, PDL (People Data
 **On LLM-as-judge bias (Zheng et al., 2023):** The proof-reader pass (Flash reviewing Flash-generated content) has the specific "self-enhancement bias" identified in this paper — a model tends to rate outputs from the same model family higher. For a production system, the proofreader should use a different model family than the drafter (e.g., GPT-4o proofing Gemini-generated content) to get genuinely independent editorial review.
 
 *Sources: [GitHub repository](https://github.com/kaymen99/sales-outreach-automation-langgraph), [DEV.to article by kaymen99](https://dev.to/kaymen99/how-ai-automation-can-transform-your-sales-outreach-strategy-aop), [customization docs](https://github.com/kaymen99/sales-outreach-automation-langgraph/blob/main/docs/customization.md)*
+
+---
+
+## 12. Recency & Changelog
+
+### Latest Commit
+
+**2025-01-15 — "Updated README"** (SHA `2e2761c`). This is a documentation-only change. The last substantive code commit was **2024-12-22 ("Updated nodes & tools")**, followed by a cluster of README/docs updates through January 15. No code changes have been committed since that December 2024 push.
+
+### Repository Activity
+
+| Metric | Value |
+|---|---|
+| Total commits | 30 |
+| First commit | 2024-08-01 |
+| Last code change | 2024-12-22 |
+| Last any commit | 2025-01-15 (README only) |
+| Stars | 258 |
+| Forks | 69 |
+| Open issues | 1 |
+| Open PRs | 0 |
+
+Commit cadence breaks into three distinct bursts: initial release (Aug 2024, 6 commits), a quiet phase (Sep 2024, 3 commits), and a December 2024 feature push (16 commits over Dec 5–22) that added `.env.example`, automation workflow updates, and node/tool changes. After January 15, 2025, the repository went silent. **No commits in the last 14+ months** (as of 2026-03-28). The project is effectively in maintenance-freeze; it is not actively maintained.
+
+### Dependency Freshness
+
+The `requirements.txt` **pins no versions** — all packages (`langgraph`, `langchain-core`, `langchain_google_genai`, etc.) are listed as bare names. This creates a double-edged problem:
+
+- **At time of authoring (Dec 2024):** The repo was written against LangGraph **0.2.55–0.2.60** (the 0.2.x series was current then).
+- **Latest LangGraph today (2026-03-28):** **1.1.3** (released 2026-03-18).
+- **Gap:** 0.2.x → 1.1.3 spans two major version bumps (0.3.x, 0.4.x, 0.5.x, 0.6.x, 1.0.x, 1.1.x) and 14+ months of releases.
+
+| Package | Implied version at authoring | Latest (2026-03-28) | Risk |
+|---|---|---|---|
+| `langgraph` | ~0.2.60 | 1.1.3 | High — two major bumps |
+| `langchain-core` | ~0.3.x | 1.2.x | Medium |
+| `langchain_google_genai` | ~2.x | unknown | Medium |
+| `chromadb` | ~0.5.x | ~0.6.x | Low |
+| `langchain_chroma` | ~0.1.x | ~0.2.x | Low |
+
+Because `requirements.txt` has no pins, `pip install -r requirements.txt` today will pull the latest versions of everything, likely breaking the graph construction API.
+
+### Open Issues
+
+**1 open issue** (as of 2026-03-28):
+
+- **Issue #2 — "Any idea on the cost implications with this approach?"** (opened 2025-06-03, unanswered). No response from the author. The author has not engaged with GitHub issues since the repo went quiet.
+
+No bug reports, no feature requests, no dependency update PRs. The absence of issues does not indicate quality — it indicates low traffic and an inactive maintainer.
+
+### LangGraph Framework Changes (last 90 days)
+
+The last 90 days covers LangGraph **1.0.8 through 1.1.3** (February–March 2026). Key upstream changes relevant to this repo:
+
+**LangGraph 1.1.0 (2026-03-10) — Type-Safe Streaming v2 (opt-in)**
+A new `version="v2"` parameter on `invoke()` and `stream()` produces strongly-typed `GraphOutput` and `StreamPart` objects instead of raw dicts/tuples. Old-style dict access on `invoke()` results now emits `LangGraphDeprecatedSinceV11` warnings. The repo's `app.invoke({"leads_ids": [...]})` usage is v1-style and will generate deprecation warnings on 1.1.x. No runtime breakage yet, but this is queued for removal in v3.0.
+
+**LangGraph 1.0.0 (2025-10-17) — Major version, no breaking changes**
+LangGraph announced 1.0 with explicit backward compatibility. The one notable deprecation was `langgraph.prebuilt` moving to `langchain.agents`. This repo does not import `langgraph.prebuilt`, so that deprecation is not directly relevant.
+
+**LangGraph 0.3.x → 0.4.x → 0.5.x → 0.6.x (Feb–Aug 2025)**
+The 0.3.x series (Feb 2025) introduced the `functional API` and restructured some checkpoint internals. The 0.5.x / 0.6.x series added distributed runtime and LangGraph Platform features. None of these changes remove the `StateGraph` / `add_edge` / `add_conditional_edges` API that this repo uses — those primitives are the stable core of LangGraph and have not been broken across any release.
+
+**The critical unknown:** The 0.2.x → 0.3.x boundary (February 2025) may have changed internal module paths or import signatures. The repo was written on 0.2.x and has never been tested against any newer version. Without running it, the exact failure surface is unknown.
+
+### Staleness Assessment
+
+**Safe to fork, risky to run as-is.** The graph topology, prompting strategy, and architectural patterns remain fully valid — the LangGraph `StateGraph` primitive is stable and backward-compatible. However:
+
+1. **Dependency installation will pull breaking versions.** Running `pip install -r requirements.txt` today installs LangGraph 1.1.3, which is ~14 months newer than what the code was written against. The `StateGraph` core API is intact, but edge cases in state reducers, streaming behavior, and the checkpoint layer may behave differently.
+
+2. **Gemini 1.5 Flash and 1.5 Pro are not deprecated but may change defaults.** Google has released Gemini 2.0 and the `google-generativeai` / `langchain_google_genai` package may have updated default model routing. Hardcoded model strings (`gemini-1.5-flash`, `gemini-1.5-pro`) still work but are no longer Google's current recommended models.
+
+3. **No maintenance signal.** Zero commits in 14+ months, zero issue responses, zero PR activity. If a dependency breaks the graph construction API, there is no maintainer to fix it.
+
+4. **Recommended approach for forking:** Pin specific versions in a fresh `requirements.txt` using the dependency matrix the repo was authored against (`langgraph==0.2.60`, `langchain-core==0.3.x`) for reproducibility, then upgrade incrementally with testing. The graph topology and prompt logic are worth copying; the dependency configuration is not.
+
+*Sources: [GitHub commits](https://github.com/kaymen99/sales-outreach-automation-langgraph/commits/main), [GitHub issues](https://github.com/kaymen99/sales-outreach-automation-langgraph/issues), [LangGraph releases](https://github.com/langchain-ai/langgraph/releases), [LangGraph 1.0 changelog](https://changelog.langchain.com/announcements/langgraph-1-0-is-now-generally-available), [DEV.to article by kaymen99](https://dev.to/kaymen99/how-ai-automation-can-transform-your-sales-outreach-strategy-aop)*
