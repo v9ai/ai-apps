@@ -14,7 +14,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Infrastructure as Code (IaC)**
 - CloudFormation: AWS-native, stateful stacks, drift detection, changesets for preview before apply
-- CDK: synthesizes to CloudFormation; use constructs library for reusable patterns — see [CI/CD & DevOps](/aws-cicd-devops) for full CDK/CodePipeline coverage
+- CDK: synthesizes to CloudFormation; use constructs library for reusable patterns — see [CI/CD & DevOps](/aws/cicd-devops) for full CDK/CodePipeline coverage
 - Terraform: cloud-agnostic, state file in S3+DynamoDB lock, better multi-account/multi-cloud
 - Best practice: store all infra in git, require PR review, run `cfn-lint` / `terraform validate` in CI
 
@@ -33,7 +33,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Safe Deployments**
 - Blue/Green: maintain two identical environments; switch traffic via ELB or Route 53; instant rollback
-- Canary: route small % of traffic to new version ([CodeDeploy](/aws-cicd-devops) canary, [Lambda](/aws/lambda-serverless) weighted aliases, [ECS](/aws/compute-containers) service deployment circuit breaker)
+- Canary: route small % of traffic to new version ([CodeDeploy](/aws/cicd-devops) canary, [Lambda](/aws/lambda-serverless) weighted aliases, [ECS](/aws/compute-containers) service deployment circuit breaker)
 - Feature flags: decouple deploy from release; CloudWatch Evidently for A/B and feature flags
 - Deployment validation: pre-traffic and post-traffic hooks in CodeDeploy (Lambda), health checks in ECS
 
@@ -71,7 +71,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Private endpoints (VPC Interface Endpoints): service traffic stays on AWS backbone, never traverses internet
 - Bastion hosts → prefer SSM Session Manager (no inbound SSH ports, full audit log, no key management)
 
-**Data Protection** — see [IAM & Security](/aws/iam-security) for KMS, Secrets Manager, and Macie deep-dives; [S3, CloudFront & Storage](/aws-storage-s3) for S3 encryption and Object Lock
+**Data Protection** — see [IAM & Security](/aws/iam-security) for KMS, Secrets Manager, and Macie deep-dives; [S3, CloudFront & Storage](/aws/storage-s3) for S3 encryption and Object Lock
 - Encryption at rest: S3 SSE-S3 (default), SSE-KMS (audit trail, key rotation, cross-account), SSE-C (customer-managed)
 - Encryption in transit: TLS 1.2+ enforced via bucket policies (`aws:SecureTransport`), ALB HTTPS listeners, API Gateway
 - KMS: regional service, key material never leaves; envelope encryption (data key encrypted by CMK); automatic annual rotation
@@ -103,9 +103,9 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - [RDS](/dynamodb-data-services): Multi-AZ synchronous standby; failover < 60 seconds; avoid single-AZ in production
 
 **Failure Management**
-- Backup strategy: [AWS Backup](/aws-cicd-devops) for centralized, policy-driven backup across RDS, EBS, DynamoDB, EFS, FSx
+- Backup strategy: [AWS Backup](/aws/cicd-devops) for centralized, policy-driven backup across RDS, EBS, DynamoDB, EFS, FSx
 - [RDS](/dynamodb-data-services) automated backups: 35-day retention window, point-in-time recovery
-- [S3](/aws-storage-s3) Versioning + MFA delete: protect against accidental deletion
+- [S3](/aws/storage-s3) Versioning + MFA delete: protect against accidental deletion
 - Chaos engineering: AWS Fault Injection Simulator (FIS) for controlled experiments (terminate instances, throttle network, inject latency)
 - Health checks: ALB target health, Route 53 health checks, ECS task health; unhealthy targets removed automatically
 - CloudWatch alarms → SNS → Auto Scaling: automated capacity response
@@ -118,12 +118,12 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 
 **Selection**
 - Compute: [Lambda](/aws/lambda-serverless) for bursty/event-driven, [Fargate](/aws/compute-containers) for containerized variable load, [EC2](/aws/compute-containers) for sustained/specialized
-- Storage: [S3](/aws-storage-s3) for objects/static, [EBS](/aws-storage-s3) gp3 for block (IOPS independent of size), io2 Block Express for databases, [EFS](/aws-storage-s3) for shared POSIX
+- Storage: [S3](/aws/storage-s3) for objects/static, [EBS](/aws/storage-s3) gp3 for block (IOPS independent of size), io2 Block Express for databases, [EFS](/aws/storage-s3) for shared POSIX
 - Database: match data model to engine — [Aurora](/dynamodb-data-services) for relational, [DynamoDB](/dynamodb-data-services) for key-value/document, [ElastiCache](/dynamodb-data-services) for cache, [Redshift](/dynamodb-data-services) for analytics, OpenSearch for full-text/vector search
 - Networking: placement groups (cluster for HPC/low latency, spread for fault isolation), enhanced networking (SR-IOV), EFA for MPI workloads — see [API Gateway & Networking](/aws/api-gateway-networking)
 
 **Review**
-- Compute Optimizer: ML-based right-sizing recommendations for [EC2](/aws/compute-containers), ECS (Fargate), [Lambda](/aws/lambda-serverless), [EBS](/aws-storage-s3)
+- Compute Optimizer: ML-based right-sizing recommendations for [EC2](/aws/compute-containers), ECS (Fargate), [Lambda](/aws/lambda-serverless), [EBS](/aws/storage-s3)
 - Performance testing: load test with Artillery, Gatling; profile with X-Ray to find bottlenecks
 
 **Monitoring**
@@ -133,7 +133,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - RDS Performance Insights: database load by wait state, SQL statement, user — pinpoint slow queries
 
 **Tradeoffs**
-- Caching layers: [CloudFront](/aws-storage-s3) (CDN), [ElastiCache Redis/Memcached](/dynamodb-data-services) (in-memory), [DynamoDB DAX](/dynamodb-data-services) (microsecond DynamoDB reads)
+- Caching layers: [CloudFront](/aws/storage-s3) (CDN), [ElastiCache Redis/Memcached](/dynamodb-data-services) (in-memory), [DynamoDB DAX](/dynamodb-data-services) (microsecond DynamoDB reads)
 - Read replicas: [Aurora](/dynamodb-data-services) up to 15 read replicas; offload read traffic; Global Database for cross-region reads
 - Asynchronous processing: move work off the hot path; return 202 Accepted + polling/webhook
 - Data locality: place compute near data (same AZ) to minimize latency; use local zones for sub-millisecond to end users
@@ -160,7 +160,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Graviton3 (arm64): up to 40% better price/performance for general compute vs x86; supported in [EC2](/aws/compute-containers), [Lambda](/aws/lambda-serverless), Fargate, RDS
 - [Spot Instances](/aws/compute-containers): up to 90% savings; use for fault-tolerant, stateless, batch workloads; Spot Fleet + capacity-optimized allocation
 - Savings Plans: 1 or 3 year; Compute SP flexible across instance family/region/OS; EC2 Instance SP for specific family
-- Storage tiering: [S3 Intelligent-Tiering](/aws-storage-s3), S3 Glacier for infrequent access, Glacier Deep Archive for archival
+- Storage tiering: [S3 Intelligent-Tiering](/aws/storage-s3), S3 Glacier for infrequent access, Glacier Deep Archive for archival
 - Lifecycle policies: auto-transition or delete objects after N days
 
 ---
@@ -180,7 +180,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Spot/Fargate: bin-packing by the provider reduces overall server count
 
 **Software & Architecture Patterns**
-- Minimize data movement: process at the edge ([Lambda@Edge](/aws/lambda-serverless), [CloudFront Functions](/aws-storage-s3)) or in the same AZ
+- Minimize data movement: process at the edge ([Lambda@Edge](/aws/lambda-serverless), [CloudFront Functions](/aws/storage-s3)) or in the same AZ
 - Asynchronous & batch: group work to maximize hardware utilization (SQS batching, Lambda batch processing)
 - Serverless: eliminates idle capacity; resources only allocated during actual execution
 - Managed services: AWS optimizes hardware, cooling, and power at scale better than individual customers
@@ -198,7 +198,7 @@ The AWS Well-Architected Framework is a set of design principles and best practi
 - Rule: each service should be independently deployable; a change to service A should not require redeployment of service B
 
 **Bounded Contexts on AWS**
-- Each context gets its own: [CodePipeline](/aws-cicd-devops), ECR repository, [ECS](/aws/compute-containers) service or [Lambda](/aws/lambda-serverless), [DynamoDB](/dynamodb-data-services) table or [RDS](/dynamodb-data-services) database, [IAM role](/aws/iam-security)
+- Each context gets its own: [CodePipeline](/aws/cicd-devops), ECR repository, [ECS](/aws/compute-containers) service or [Lambda](/aws/lambda-serverless), [DynamoDB](/dynamodb-data-services) table or [RDS](/dynamodb-data-services) database, [IAM role](/aws/iam-security)
 - Context boundary enforcement: services communicate only via well-defined APIs (REST, gRPC) or events — never direct DB access
 
 **Service Mesh: AWS App Mesh**
@@ -308,7 +308,7 @@ StepFunction: PlaceOrderSaga
 ### Strangler Fig Pattern (Migration)
 
 - Incrementally migrate monolith by routing new functionality to new services, while old paths still go to monolith
-- AWS implementation: ALB path-based routing or [CloudFront](/aws-storage-s3) behaviors — new URLs → new microservice, old URLs → legacy app
+- AWS implementation: ALB path-based routing or [CloudFront](/aws/storage-s3) behaviors — new URLs → new microservice, old URLs → legacy app
 - [API Gateway](/aws/api-gateway-networking) as facade: single domain, route by path to [Lambda](/aws/lambda-serverless) (new) or VPC Link → legacy NLB (old)
 - Migrate one bounded context at a time; when all paths migrated, retire the monolith
 - Anti-corruption layer: transform data formats between old and new models during coexistence
@@ -344,7 +344,7 @@ StepFunction: PlaceOrderSaga
          [Aurora MySQL Multi-AZ]     [ElastiCache Redis]  ← Data Tier (private subnet, no internet access)
 ```
 
-- Web tier: static assets in [S3](/aws-storage-s3), served via [CloudFront](/aws-storage-s3); SPA communicates with backend API
+- Web tier: static assets in [S3](/aws/storage-s3), served via [CloudFront](/aws/storage-s3); SPA communicates with backend API
 - App tier: private subnets; outbound internet via [NAT Gateway](/aws/api-gateway-networking); fetches secrets from [Secrets Manager](/aws/iam-security) at startup
 - Data tier: private subnets with no internet route; security groups restrict access to app tier only
 - ALB: sticky sessions only if stateful (prefer stateless + [ElastiCache Redis](/dynamodb-data-services)); HTTPS listener with ACM certificate
@@ -402,7 +402,7 @@ StepFunction: PlaceOrderSaga
 - [Route 53](/aws/api-gateway-networking) latency-based routing: users go to nearest healthy region
 - [DynamoDB Global Tables](/dynamodb-data-services): multi-master, eventual consistency; last-writer-wins conflict resolution
 - [Aurora Global Database](/dynamodb-data-services): primary region for writes, secondary regions for reads; < 1 second replication lag; can promote in < 1 minute
-- [S3 Cross-Region Replication](/aws-storage-s3): asynchronous; replication time control (RTC) for < 15 min SLA
+- [S3 Cross-Region Replication](/aws/storage-s3): asynchronous; replication time control (RTC) for < 15 min SLA
 - Requires stateless app tier; session state in DynamoDB or ElastiCache Global Datastore
 - Active-active tradeoff: complex conflict resolution, higher cost, more operational overhead
 
@@ -440,7 +440,7 @@ StepFunction: PlaceOrderSaga
 
 **Backup & Restore**
 - RPO hours; RTO hours; lowest cost
-- [AWS Backup](/aws-cicd-devops): centralized, policy-driven, cross-region copy; backup vault with Vault Lock (WORM)
+- [AWS Backup](/aws/cicd-devops): centralized, policy-driven, cross-region copy; backup vault with Vault Lock (WORM)
 - Test restores quarterly; automate with Fault Injection Simulator
 
 **Pilot Light**
@@ -460,9 +460,9 @@ StepFunction: PlaceOrderSaga
 
 **Key DR Services**
 - AWS Elastic Disaster Recovery (formerly CloudEndure): continuous replication of on-prem or cloud servers; failover in minutes
-- [AWS Backup](/aws-cicd-devops): cross-region, cross-account backup management
+- [AWS Backup](/aws/cicd-devops): cross-region, cross-account backup management
 - [Aurora Global Database](/dynamodb-data-services): < 1 second cross-region replication; promote secondary in < 1 minute
-- [S3 Cross-Region Replication](/aws-storage-s3) with Replication Time Control (RTC): 99.99% of objects replicated in < 15 minutes
+- [S3 Cross-Region Replication](/aws/storage-s3) with Replication Time Control (RTC): 99.99% of objects replicated in < 15 minutes
 
 ---
 
@@ -493,15 +493,15 @@ StepFunction: PlaceOrderSaga
 
 ### Data Transfer Cost Reduction
 - Within same AZ: free; cross-AZ: $0.01/GB each way (biggest hidden cost in naively designed systems)
-- [S3](/aws-storage-s3) → EC2 in same region: free; S3 → internet: $0.09/GB (use [CloudFront](/aws-storage-s3) to cache and reduce origin fetches)
+- [S3](/aws/storage-s3) → EC2 in same region: free; S3 → internet: $0.09/GB (use [CloudFront](/aws/storage-s3) to cache and reduce origin fetches)
 - Use [VPC Interface Endpoints](/aws/api-gateway-networking) (PrivateLink) for AWS service traffic: eliminates NAT Gateway data processing charges
 - CloudFront: cache-hit traffic avoids origin data transfer charges; compress responses (Gzip/Brotli)
 - Place consumers and producers in same AZ where latency-sensitive; use replica reads in same AZ
 
-### Storage Cost Optimization — see [S3, CloudFront & Storage](/aws-storage-s3) for full S3/EBS/EFS coverage
-- [S3 Intelligent-Tiering](/aws-storage-s3): auto moves objects between Frequent/Infrequent/Archive tiers; no retrieval fees for Frequent/Infrequent
+### Storage Cost Optimization — see [S3, CloudFront & Storage](/aws/storage-s3) for full S3/EBS/EFS coverage
+- [S3 Intelligent-Tiering](/aws/storage-s3): auto moves objects between Frequent/Infrequent/Archive tiers; no retrieval fees for Frequent/Infrequent
 - S3 Lifecycle policies: transition to IA after 30 days, Glacier after 90 days, Deep Archive after 180 days
-- [EBS](/aws-storage-s3): delete unattached volumes (alarm when state = available for > 7 days); switch to gp3 (same perf as gp2, 20% cheaper)
+- [EBS](/aws/storage-s3): delete unattached volumes (alarm when state = available for > 7 days); switch to gp3 (same perf as gp2, 20% cheaper)
 - [RDS](/dynamodb-data-services): use Aurora Serverless v2 for variable workloads — scales in 0.5 ACU increments, scales to zero after idle period
 
 ### Lambda Cost Optimization — see [Lambda & Serverless](/aws/lambda-serverless) for full Lambda optimization guide
@@ -574,7 +574,7 @@ StepFunction: PlaceOrderSaga
 
 ## 8. Migration Strategies — The 7 Rs
 
-> Related: [CI/CD & DevOps](/aws-cicd-devops) for pipeline automation during migration; [EC2, ECS & Containers](/aws/compute-containers) for compute targets; [DynamoDB & Data Services](/dynamodb-data-services) for DMS and database migration.
+> Related: [CI/CD & DevOps](/aws/cicd-devops) for pipeline automation during migration; [EC2, ECS & Containers](/aws/compute-containers) for compute targets; [DynamoDB & Data Services](/dynamodb-data-services) for DMS and database migration.
 
 ### Retire
 - Decommission: application has no business value; turn it off
@@ -650,7 +650,7 @@ Root
  └── Production OU
 ```
 
-### AWS Control Tower — see [CI/CD & DevOps](/aws-cicd-devops) for IaC and account-vending pipelines
+### AWS Control Tower — see [CI/CD & DevOps](/aws/cicd-devops) for IaC and account-vending pipelines
 - Sets up a landing zone: account structure, baseline configuration, guardrails in < 1 hour
 - Account Factory: self-service account vending via Service Catalog; new accounts provisioned with baseline controls, VPC, logging
 - Account Factory for Terraform (AFT): Terraform-native account vending; codify account customizations
@@ -804,7 +804,7 @@ Root
 
 ### White-Labeling Architecture
 - Custom domain per client: [Route 53](/aws/api-gateway-networking) hosted zones per tenant; ACM wildcard or per-domain certificates
-- [CloudFront](/aws-storage-s3) distribution per tenant (or SNI on shared distribution): different origins, behaviors, cache policies per tenant
+- [CloudFront](/aws/storage-s3) distribution per tenant (or SNI on shared distribution): different origins, behaviors, cache policies per tenant
 - Branding config in [DynamoDB](/dynamodb-data-services): `tenantId` → logo URL, color scheme, feature flags; fetched on UI load
 - Subdomain routing: `client1.saas.com`, `client2.saas.com` → same CloudFront → same origin → tenant resolved by `Host` header
 - Custom domain BYOD (Bring Your Own Domain): client points CNAME to CloudFront distribution; ACM validates via DNS
@@ -911,7 +911,7 @@ A: Use Spot Instances for compute — nightly batch is fault-tolerant, schedule 
 | API Gateway, VPC, Route 53, ALB, CloudFront | [/aws-api-gateway-networking](/aws/api-gateway-networking) |
 | IAM, SCPs, GuardDuty, KMS, Security Hub | [/aws-iam-security](/aws/iam-security) |
 | EC2, ECS, EKS, Fargate, Spot, Graviton | [/aws-compute-containers](/aws/compute-containers) |
-| S3, CloudFront CDN, EBS, EFS, Glacier | [/aws-storage-s3](/aws-storage-s3) |
-| CI/CD, CodePipeline, CDK, IaC, AWS Backup | [/aws-cicd-devops](/aws-cicd-devops) |
+| S3, CloudFront CDN, EBS, EFS, Glacier | [/aws-storage-s3](/aws/storage-s3) |
+| CI/CD, CodePipeline, CDK, IaC, AWS Backup | [/aws-cicd-devops](/aws/cicd-devops) |
 | DynamoDB, RDS, Aurora, ElastiCache, Redshift | [/dynamodb-data-services](/dynamodb-data-services) |
 | Bedrock, SageMaker, AI/ML services | [/aws-ai-ml-services](/aws-ai-ml-services) |

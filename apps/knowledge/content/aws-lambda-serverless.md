@@ -1,7 +1,7 @@
 # AWS Lambda & Serverless
 
 ## The 30-Second Pitch
-AWS Lambda is a serverless compute service that runs code in response to events without provisioning or managing servers. It solves the operational overhead problem—no patching, no capacity planning, no idle-resource cost—by executing functions on demand and billing only for actual execution time (millisecond granularity). A team picks Lambda for event-driven workloads, APIs with variable traffic, background processing, and glue code in data pipelines. The broader "serverless" paradigm extends this to managed databases ([DynamoDB](/dynamodb-data-services), Aurora Serverless), queues (SQS), storage ([S3](/aws/storage-s3)), and orchestration (Step Functions), enabling entire applications that scale to zero and to millions of requests with no infrastructure management.
+AWS Lambda is a serverless compute service that runs code in response to events without provisioning or managing servers. It solves the operational overhead problem—no patching, no capacity planning, no idle-resource cost—by executing functions on demand and billing only for actual execution time (millisecond granularity). A team picks Lambda for event-driven workloads, APIs with variable traffic, background processing, and glue code in data pipelines. The broader "serverless" paradigm extends this to managed databases ([DynamoDB](/aws/dynamodb-data-services), Aurora Serverless), queues (SQS), storage ([S3](/aws/storage-s3)), and orchestration (Step Functions), enabling entire applications that scale to zero and to millions of requests with no infrastructure management.
 
 ## How It Actually Works
 
@@ -213,7 +213,7 @@ exports.handler = async (event) => {
 };
 ```
 
-### [DynamoDB](/dynamodb-data-services) Streams
+### [DynamoDB](/aws/dynamodb-data-services) Streams
 
 Lambda polls the stream via ESM. Receives ordered, batched change records (INSERT, MODIFY, REMOVE) with before/after images. Used for: cache invalidation, replication, triggering downstream workflows.
 - **Parallelization factor:** 1–10 per shard (process multiple batches from a shard concurrently)
@@ -409,7 +409,7 @@ Instead of storing current state, store all events that led to that state. The c
 ### CQRS (Command Query Responsibility Segregation)
 
 Separate the write model (commands) from the read model (queries). With Lambda:
-- **Command path:** [API Gateway](/aws/api-gateway-networking) → Lambda → [DynamoDB](/dynamodb-data-services) (write-optimized)
+- **Command path:** [API Gateway](/aws/api-gateway-networking) → Lambda → [DynamoDB](/aws/dynamodb-data-services) (write-optimized)
 - **Query path:** [API Gateway](/aws/api-gateway-networking) → Lambda → ElasticSearch/DynamoDB GSI (read-optimized)
 - DynamoDB Streams → Lambda → sync read model asynchronously
 
@@ -744,7 +744,7 @@ exports.handler = async (event) => {
 
 **WaitForTaskToken pattern:** Lambda initiates an async operation (e.g., human approval, third-party payment) and returns immediately. Step Functions pauses and resumes when the callback `SendTaskSuccess` or `SendTaskFailure` is called with the token.
 
-**SDK Integrations (optimistic integrations):** Step Functions can call [DynamoDB](/dynamodb-data-services), SQS, SNS, [ECS](/aws/compute-containers), Glue, etc. directly without Lambda as a wrapper—reducing latency and cost.
+**SDK Integrations (optimistic integrations):** Step Functions can call [DynamoDB](/aws/dynamodb-data-services), SQS, SNS, [ECS](/aws/compute-containers), Glue, etc. directly without Lambda as a wrapper—reducing latency and cost.
 
 ---
 

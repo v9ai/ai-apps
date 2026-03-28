@@ -371,7 +371,7 @@ User authenticates with User Pool (or Google, etc.)
 → Calls Cognito Identity Pool with JWT
 → Identity Pool calls STS AssumeRoleWithWebIdentity
 → Returns temporary AWS credentials
-→ User directly calls AWS services ([S3](/aws/storage-s3), [DynamoDB](/dynamodb-data-services)) with those credentials
+→ User directly calls AWS services ([S3](/aws/storage-s3), [DynamoDB](/aws/dynamodb-data-services)) with those credentials
 ```
 Identity Pools define **authenticated role** and **unauthenticated role** (guest access). Enhanced flow adds fine-grained role mapping per user group.
 
@@ -522,7 +522,7 @@ Destinations: CloudWatch Logs, S3. Query with CloudWatch Insights or Athena. Use
 - Security investigations.
 
 ### VPC Endpoints
-- **Gateway endpoints** ([S3](/aws/storage-s3), [DynamoDB](/dynamodb-data-services)): route table entries, no cost, keep traffic inside AWS.
+- **Gateway endpoints** ([S3](/aws/storage-s3), [DynamoDB](/aws/dynamodb-data-services)): route table entries, no cost, keep traffic inside AWS.
 - **Interface endpoints** (PrivateLink): ENI in your subnet, per-hour + per-GB cost. Works for most AWS services. Use endpoint policies to restrict which [S3](/aws/storage-s3) buckets are accessible via the endpoint.
 
 ---
@@ -745,7 +745,7 @@ DynamoDB / S3 / RDS Proxy
         ↓
    Secrets Manager (rotation enabled, RDS Proxy caches)
 ```
-Each layer has IAM implications: [API Gateway](/aws/api-gateway-networking) authorizers validate identity, [Lambda](/aws/lambda-serverless) execution roles scope resource access, [S3](/aws/storage-s3) bucket policies enforce per-resource grants, and [DynamoDB](/dynamodb-data-services) supports fine-grained attribute-level access via IAM condition keys. Deploy and manage the full stack via [CDK / IaC](/aws/cicd-devops).
+Each layer has IAM implications: [API Gateway](/aws/api-gateway-networking) authorizers validate identity, [Lambda](/aws/lambda-serverless) execution roles scope resource access, [S3](/aws/storage-s3) bucket policies enforce per-resource grants, and [DynamoDB](/aws/dynamodb-data-services) supports fine-grained attribute-level access via IAM condition keys. Deploy and manage the full stack via [CDK / IaC](/aws/cicd-devops).
 
 ### Secrets Management Pattern
 ```
@@ -801,6 +801,6 @@ IAM is the authorization layer for every AWS service. Explore how it applies in 
 - [API Gateway & Networking](/aws/api-gateway-networking) — Cognito and Lambda authorizers, VPC integration
 - [EC2, ECS & EKS](/aws/compute-containers) — instance profiles, IMDS v2, ECS task roles, IRSA for Kubernetes
 - [S3, CloudFront & Storage](/aws/storage-s3) — bucket policies, Block Public Access, SSE-KMS, pre-signed URLs
-- [DynamoDB & Data Services](/dynamodb-data-services) — fine-grained IAM access control, VPC endpoint policies
+- [DynamoDB & Data Services](/aws/dynamodb-data-services) — fine-grained IAM access control, VPC endpoint policies
 - [CI/CD & DevOps](/aws/cicd-devops) — OIDC federation for GitHub Actions, cross-account deployment roles, CDK IAM constructs
-- [Architecture Patterns](/aws-architecture) — Well-Architected Security pillar, least-privilege design
+- [Architecture Patterns](/aws/architecture) — Well-Architected Security pillar, least-privilege design
