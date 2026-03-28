@@ -802,25 +802,23 @@ a visual data-flow or comparison layout (e.g. pipeline stages, model routing,
 decision trees). Do NOT use it if no genuinely visual structure exists.
 
 How to include it:
-1. Define nodes and edges as `export const` declarations (valid JS/JSX):
+1. Define nodes and edges as BARE `export const` declarations directly in MDX body.
+   NEVER wrap them in code fences (``` blocks) — code fences make them display as
+   text only; the variables must be actual MDX module-level exports to be usable.
 
-```
-export const nodes = [
-  {{ id: '1', position: {{ x: 0, y: 0 }}, data: {{ label: 'Raw HTML' }} }},
-  {{ id: '2', position: {{ x: 220, y: 0 }}, data: {{ label: 'Extraction' }} }},
-  {{ id: '3', position: {{ x: 440, y: 0 }}, data: {{ label: 'Dataset' }} }},
+export const pipelineNodes = [
+  {{ id: "n1", position: {{ x: 0, y: 0 }}, data: {{ label: "Raw HTML" }}, type: "input" }},
+  {{ id: "n2", position: {{ x: 220, y: 0 }}, data: {{ label: "Extraction" }} }},
+  {{ id: "n3", position: {{ x: 440, y: 0 }}, data: {{ label: "Dataset" }}, type: "output" }},
 ];
-export const edges = [
-  {{ id: 'e1-2', source: '1', target: '2', animated: true }},
-  {{ id: 'e2-3', source: '2', target: '3', animated: true }},
+export const pipelineEdges = [
+  {{ id: "e1-2", source: "n1", target: "n2", animated: true }},
+  {{ id: "e2-3", source: "n2", target: "n3", animated: true }},
 ];
-```
 
-2. Render immediately after the const declarations:
+2. Render immediately after (also bare, NOT in a code fence):
 
-```
-<Flow nodes={{nodes}} edges={{edges}} height={{380}} />
-```
+<Flow nodes={{pipelineNodes}} edges={{pipelineEdges}} height={{380}} />
 
 Node layout rules:
 - x: space nodes 200–250px apart horizontally; y: 0 for main flow, ±80 for branches
