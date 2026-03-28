@@ -48,7 +48,7 @@ function AgentNode({ data }: { data: Record<string, unknown> }) {
     <div
       style={{
         padding: "10px 16px",
-        borderRadius: 12,
+        borderRadius: 0,
         background: `color-mix(in srgb, ${color} 14%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 45%, transparent)`,
         boxShadow: `0 0 12px color-mix(in srgb, ${color} 15%, transparent), 0 1px 3px rgba(0,0,0,0.3)`,
@@ -62,7 +62,7 @@ function AgentNode({ data }: { data: Record<string, unknown> }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
         <div
           style={{
-            width: 32, height: 32, borderRadius: 8,
+            width: 32, height: 32, borderRadius: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
             background: `color-mix(in srgb, ${color} 22%, transparent)`,
             color, flexShrink: 0,
@@ -94,7 +94,7 @@ function DataStoreNode({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        padding: "8px 14px", borderRadius: 8,
+        padding: "8px 14px", borderRadius: 0,
         background: `color-mix(in srgb, ${color} 10%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
         boxShadow: `0 0 8px color-mix(in srgb, ${color} 10%, transparent), 0 1px 2px rgba(0,0,0,0.25)`,
@@ -125,7 +125,7 @@ function ConditionNode({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        padding: "5px 12px", borderRadius: 20,
+        padding: "5px 12px", borderRadius: 0,
         background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
         boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
@@ -149,7 +149,7 @@ function ParallelNode({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        padding: "5px 12px", borderRadius: 20,
+        padding: "5px 12px", borderRadius: 0,
         background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
         boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
@@ -626,7 +626,7 @@ function StageFlow({
       style={{
         width: "100%",
         height,
-        borderRadius: 12,
+        borderRadius: 0,
         overflow: "hidden",
         border: "1px solid var(--gray-a4)",
         background: "color-mix(in srgb, var(--color-background) 95%, var(--gray-3))",
@@ -692,7 +692,7 @@ function NodeTypeLegend() {
       <Flex gap="4" wrap="wrap">
         <Flex align="center" gap="2">
           <div style={{
-            width: 28, height: 20, borderRadius: 6,
+            width: 28, height: 20, borderRadius: 0,
             background: "color-mix(in srgb, var(--violet-9) 14%, var(--color-background))",
             border: "1.5px solid color-mix(in srgb, var(--violet-9) 45%, transparent)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -706,7 +706,7 @@ function NodeTypeLegend() {
         </Flex>
         <Flex align="center" gap="2">
           <div style={{
-            width: 28, height: 20, borderRadius: 4,
+            width: 28, height: 20, borderRadius: 0,
             background: "color-mix(in srgb, var(--green-9) 10%, var(--color-background))",
             border: "1.5px solid color-mix(in srgb, var(--green-9) 35%, transparent)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -720,7 +720,7 @@ function NodeTypeLegend() {
         </Flex>
         <Flex align="center" gap="2">
           <div style={{
-            width: 28, height: 20, borderRadius: 10,
+            width: 28, height: 20, borderRadius: 0,
             background: "color-mix(in srgb, var(--orange-9) 16%, var(--color-background))",
             border: "1.5px solid color-mix(in srgb, var(--orange-9) 40%, transparent)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -746,12 +746,12 @@ function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: st
         width: 2,
         height: 16,
         background: "linear-gradient(to bottom, var(--gray-a5), var(--gray-a7))",
-        borderRadius: 1,
+        borderRadius: 0,
       }} />
       <Flex align="center" gap="2"
         style={{
           padding: "3px 10px",
-          borderRadius: 20,
+          borderRadius: 0,
           background: "var(--gray-3)",
           border: "1px solid var(--gray-a5)",
         }}
@@ -767,7 +767,7 @@ function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: st
         width: 2,
         height: 16,
         background: "linear-gradient(to bottom, var(--gray-a7), var(--gray-a5))",
-        borderRadius: 1,
+        borderRadius: 0,
       }} />
     </Flex>
   );
@@ -789,7 +789,7 @@ function EmptyDetailPanel() {
     <Card mt="4" style={{ border: "1px dashed var(--gray-a6)", background: "var(--gray-2)" }}>
       <Flex align="center" justify="center" direction="column" gap="3" py="5">
         <div style={{
-          width: 40, height: 40, borderRadius: 10,
+          width: 40, height: 40, borderRadius: 0,
           background: "var(--gray-3)",
           border: "1px solid var(--gray-a5)",
           display: "flex", alignItems: "center", justifyContent: "center",

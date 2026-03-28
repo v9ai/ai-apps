@@ -299,7 +299,7 @@ function SettingsPageContent() {
             padding: "12px 20px",
             backgroundColor: toast.type === "success" ? "var(--green-9)" : "var(--red-9)",
             color: "white",
-            borderRadius: "8px",
+            borderRadius: 0,
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             zIndex: 1000,
           }}

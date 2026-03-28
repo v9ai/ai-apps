@@ -307,7 +307,7 @@ function EmailDetailDialog({
               <Box
                 style={{
                   background: "var(--gray-2)",
-                  borderRadius: "var(--radius-3)",
+                  borderRadius: 0,
                   padding: "var(--space-4)",
                   whiteSpace: "pre-wrap",
                   lineHeight: "1.6",
