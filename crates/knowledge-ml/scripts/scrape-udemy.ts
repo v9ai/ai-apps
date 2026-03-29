@@ -79,11 +79,20 @@ function extractJsonLd(html: string): any {
   while ((m = re.exec(html)) !== null) {
     try {
       const data = JSON.parse(m[1]);
-      if (data?.["@type"] === "Course" || data?.name) return data;
+      // Direct Course object
+      if (data?.["@type"] === "Course") return data;
+      // @graph wrapper (Udemy's format)
+      if (data?.["@graph"] && Array.isArray(data["@graph"])) {
+        const found = data["@graph"].find((d: any) => d["@type"] === "Course");
+        if (found) return found;
+      }
+      // Plain array
       if (Array.isArray(data)) {
         const found = data.find((d: any) => d["@type"] === "Course");
         if (found) return found;
       }
+      // Fallback: has a name
+      if (data?.name) return data;
     } catch {}
   }
   return null;
@@ -110,14 +119,14 @@ function parseCourseHtml(html: string, pageUrl: string): Course {
   const review_count =
     Number(jsonld?.aggregateRating?.reviewCount || jsonld?.aggregateRating?.ratingCount) || 0;
 
-  // Instructor
+  // Instructor — Udemy uses "author" in JSON-LD, with "instructor" inside hasCourseInstance
   let instructor = "";
-  if (jsonld?.instructor) {
-    const instr = jsonld.instructor;
-    if (Array.isArray(instr)) {
-      instructor = instr.map((i: any) => i.name).filter(Boolean).join(", ");
-    } else if (instr?.name) {
-      instructor = instr.name;
+  const instrSource = jsonld?.author || jsonld?.instructor || jsonld?.hasCourseInstance?.instructor;
+  if (instrSource) {
+    if (Array.isArray(instrSource)) {
+      instructor = instrSource.map((i: any) => i.name).filter(Boolean).join(", ");
+    } else if (instrSource?.name) {
+      instructor = instrSource.name;
     }
   }
 
@@ -127,21 +136,36 @@ function parseCourseHtml(html: string, pageUrl: string): Course {
   // Language
   const language = jsonld?.inLanguage || "English";
 
-  // Category
-  const category = extractMeta(html, "udemy_com:category") || "";
+  // Category — from JSON-LD "about" or meta tag
+  const aboutName = jsonld?.about?.name;
+  const category =
+    (Array.isArray(aboutName) ? aboutName[0] : aboutName) ||
+    extractMeta(html, "udemy_com:category") ||
+    "";
 
-  // Level — scan text content
+  // Level — prefer JSON-LD educationalLevel, fallback to text scan
   const lower = html.toLowerCase();
-  let level = "All Levels";
-  if (lower.includes("all levels")) level = "All Levels";
-  else if (lower.includes("beginner level")) level = "Beginner";
-  else if (lower.includes("intermediate level")) level = "Intermediate";
-  else if (lower.includes("advanced level")) level = "Advanced";
+  let level = jsonld?.educationalLevel || "";
+  if (!level) {
+    if (lower.includes("all levels")) level = "All Levels";
+    else if (lower.includes("beginner level")) level = "Beginner";
+    else if (lower.includes("intermediate level")) level = "Intermediate";
+    else if (lower.includes("advanced level")) level = "Advanced";
+    else level = "All Levels";
+  }
 
-  // Duration
+  // Duration — parse ISO 8601 courseWorkload (e.g. "PT7H16M"), fallback to text
   let duration_hours = 0;
-  const durationMatch = lower.match(/([\d.]+)\s*(?:total\s+)?hours?\s+(?:of\s+)?(?:video|on-demand)/);
-  if (durationMatch) duration_hours = parseFloat(durationMatch[1]) || 0;
+  const workload = jsonld?.hasCourseInstance?.courseWorkload || "";
+  const isoMatch = workload.match(/PT(\d+)H(?:(\d+)M)?/);
+  if (isoMatch) {
+    duration_hours = parseInt(isoMatch[1], 10) + (parseInt(isoMatch[2] || "0", 10) / 60);
+    duration_hours = Math.round(duration_hours * 10) / 10;
+  }
+  if (!duration_hours) {
+    const durationMatch = lower.match(/([\d.]+)\s*(?:total\s+)?hours?\s+(?:of\s+)?(?:video|on-demand)/);
+    if (durationMatch) duration_hours = parseFloat(durationMatch[1]) || 0;
+  }
 
   // Price
   let price = extractMeta(html, "udemy_com:price") || extractMeta(html, "product:price:amount") || "";
@@ -198,22 +222,34 @@ async function main() {
 
   const allCourses: Course[] = [];
 
+  // Collect all course URLs to scrape
+  const courseUrls: string[] = [];
+
   for (const url of urls) {
     if (url.includes("/topic/")) {
       console.log(`Topic page: ${url}`);
-      const courseUrls = await extractCourseUrls(context, url);
-      console.log(`  Found ${courseUrls.length} courses`);
-      for (const courseUrl of courseUrls) {
-        const course = await scrapeCourse(context, courseUrl);
-        if (course) allCourses.push(course);
-        await sleep(1500);
-      }
+      const found = await extractCourseUrls(context, url);
+      console.log(`  Found ${found.length} course URLs`);
+      courseUrls.push(...found);
     } else if (url.includes("/course/")) {
-      const course = await scrapeCourse(context, url);
-      if (course) allCourses.push(course);
+      courseUrls.push(url);
     } else {
       console.warn(`Skipping unrecognized URL: ${url}`);
     }
+  }
+
+  // Scrape each course in its own fresh context (Cloudflare challenge resolves
+  // per-context for individual course pages in headless mode)
+  for (const courseUrl of courseUrls) {
+    const freshCtx = await browser.newContext({
+      userAgent:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      locale: "en-US",
+    });
+    const course = await scrapeCourse(freshCtx, courseUrl);
+    if (course) allCourses.push(course);
+    await freshCtx.close();
+    await sleep(2000);
   }
 
   await browser.close();
@@ -239,6 +275,10 @@ async function extractCourseUrls(context: any, topicUrl: string): Promise<string
     }
 
     const html: string = await page.content();
+    if (process.env.DEBUG) {
+      writeFileSync("/tmp/udemy-topic-debug.html", html);
+      console.log(`    [debug] Topic HTML dumped (${html.length} bytes)`);
+    }
     const re = /href="(\/course\/[\w-]+\/?)" /gi;
     const set = new Set<string>();
     let m;
@@ -264,16 +304,23 @@ async function scrapeCourse(context: any, url: string): Promise<Course | null> {
   try {
     console.log(`  Scraping: ${url}`);
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
-    // Wait for Cloudflare challenge to resolve — look for real page content
-    await page
-      .waitForSelector('h1, [data-purpose="lead-title"], meta[property="og:title"]', {
-        timeout: 20000,
-      })
-      .catch(() => {});
+    // Wait for Cloudflare challenge to resolve
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const title = await page.title();
+      if (title && !title.includes("Just a moment") && title !== "www.udemy.com") {
+        break;
+      }
+      await sleep(1000);
+    }
     // Extra settle time for hydration
-    await sleep(3000);
+    await sleep(2000);
 
     const html: string = await page.content();
+    // Debug: dump first course HTML to diagnose Cloudflare
+    if (process.env.DEBUG) {
+      writeFileSync("/tmp/udemy-debug.html", html);
+      console.log(`    [debug] HTML dumped to /tmp/udemy-debug.html (${html.length} bytes)`);
+    }
     const course = parseCourseHtml(html, url);
 
     console.log(`    ✓ ${course.title} — ${course.rating}★ (${course.review_count} reviews)`);
