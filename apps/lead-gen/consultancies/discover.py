@@ -103,17 +103,20 @@ def build_search_queries() -> list[str]:
         "data science consultancy",
     ]
     regions = [
-        # Major markets
-        "Europe", "UK", "United Kingdom", "Germany", "France", "Netherlands",
-        "Switzerland", "Sweden", "Denmark", "Norway", "Finland",
-        "Spain", "Italy", "Portugal", "Ireland", "Belgium", "Austria",
-        "Poland", "Romania", "Czech Republic", "Hungary", "Bulgaria",
-        "Croatia", "Serbia", "Greece", "Estonia", "Latvia", "Lithuania",
-        "Slovakia", "Slovenia", "Luxembourg", "Malta", "Cyprus", "Iceland",
-        # Sub-regions
-        "DACH", "Nordics", "Scandinavia", "Benelux", "Baltics",
-        "Central Europe", "Eastern Europe", "Western Europe", "Southern Europe",
-        "remote Europe", "EU remote",
+        # Global / remote
+        "remote", "remote-first", "worldwide", "global",
+        # North America
+        "USA", "United States", "Canada", "Silicon Valley", "New York", "Austin",
+        # Europe
+        "UK", "Germany", "France", "Netherlands", "Switzerland",
+        "Sweden", "Denmark", "Ireland", "Spain", "Poland",
+        # Asia-Pacific
+        "India", "Singapore", "Australia", "Japan", "South Korea",
+        "Israel", "UAE", "Dubai",
+        # Latin America
+        "Brazil", "Mexico", "Colombia", "Argentina",
+        # Africa
+        "South Africa", "Nigeria", "Kenya",
     ]
     queries = []
     for term in base_terms:
@@ -169,35 +172,29 @@ CLUTCH_URLS = [
     "https://clutch.co/developers/artificial-intelligence",
     "https://clutch.co/developers/machine-learning",
     "https://clutch.co/developers/natural-language-processing",
-    # Western Europe
+    # North America
+    "https://clutch.co/us/developers/artificial-intelligence",
+    "https://clutch.co/us/developers/machine-learning",
+    "https://clutch.co/ca/developers/artificial-intelligence",
+    # Europe
     "https://clutch.co/uk/developers/artificial-intelligence",
-    "https://clutch.co/uk/developers/machine-learning",
     "https://clutch.co/de/developers/artificial-intelligence",
-    "https://clutch.co/de/developers/machine-learning",
     "https://clutch.co/fr/developers/artificial-intelligence",
     "https://clutch.co/nl/developers/artificial-intelligence",
     "https://clutch.co/ch/developers/artificial-intelligence",
-    "https://clutch.co/be/developers/artificial-intelligence",
-    "https://clutch.co/ie/developers/artificial-intelligence",
-    "https://clutch.co/at/developers/artificial-intelligence",
-    # Nordics
     "https://clutch.co/se/developers/artificial-intelligence",
-    "https://clutch.co/dk/developers/artificial-intelligence",
-    "https://clutch.co/fi/developers/artificial-intelligence",
-    "https://clutch.co/no/developers/artificial-intelligence",
-    # Southern Europe
+    "https://clutch.co/ie/developers/artificial-intelligence",
     "https://clutch.co/es/developers/artificial-intelligence",
-    "https://clutch.co/pt/developers/artificial-intelligence",
-    "https://clutch.co/it/developers/artificial-intelligence",
-    "https://clutch.co/gr/developers/artificial-intelligence",
-    # Central & Eastern Europe
     "https://clutch.co/pl/developers/artificial-intelligence",
-    "https://clutch.co/ro/developers/artificial-intelligence",
-    "https://clutch.co/hu/developers/artificial-intelligence",
-    "https://clutch.co/bg/developers/artificial-intelligence",
-    "https://clutch.co/ee/developers/artificial-intelligence",
-    "https://clutch.co/lt/developers/artificial-intelligence",
-    "https://clutch.co/lv/developers/artificial-intelligence",
+    # Asia-Pacific
+    "https://clutch.co/in/developers/artificial-intelligence",
+    "https://clutch.co/au/developers/artificial-intelligence",
+    "https://clutch.co/sg/developers/artificial-intelligence",
+    "https://clutch.co/il/developers/artificial-intelligence",
+    # Latin America
+    "https://clutch.co/br/developers/artificial-intelligence",
+    "https://clutch.co/mx/developers/artificial-intelligence",
+    "https://clutch.co/co/developers/artificial-intelligence",
 ]
 
 async def scrape_clutch(
@@ -261,22 +258,18 @@ GOODFIRMS_URLS = [
     "https://www.goodfirms.co/natural-language-processing/companies",
     "https://www.goodfirms.co/computer-vision/companies",
     "https://www.goodfirms.co/deep-learning/companies",
-    # European regions
+    # Key regions
+    "https://www.goodfirms.co/artificial-intelligence/companies/usa",
     "https://www.goodfirms.co/artificial-intelligence/companies/uk",
+    "https://www.goodfirms.co/artificial-intelligence/companies/canada",
     "https://www.goodfirms.co/artificial-intelligence/companies/germany",
+    "https://www.goodfirms.co/artificial-intelligence/companies/india",
+    "https://www.goodfirms.co/artificial-intelligence/companies/australia",
+    "https://www.goodfirms.co/artificial-intelligence/companies/israel",
+    "https://www.goodfirms.co/artificial-intelligence/companies/singapore",
     "https://www.goodfirms.co/artificial-intelligence/companies/france",
     "https://www.goodfirms.co/artificial-intelligence/companies/netherlands",
-    "https://www.goodfirms.co/artificial-intelligence/companies/switzerland",
-    "https://www.goodfirms.co/artificial-intelligence/companies/sweden",
-    "https://www.goodfirms.co/artificial-intelligence/companies/denmark",
-    "https://www.goodfirms.co/artificial-intelligence/companies/norway",
-    "https://www.goodfirms.co/artificial-intelligence/companies/finland",
-    "https://www.goodfirms.co/artificial-intelligence/companies/belgium",
-    "https://www.goodfirms.co/artificial-intelligence/companies/austria",
-    "https://www.goodfirms.co/artificial-intelligence/companies/poland",
-    "https://www.goodfirms.co/artificial-intelligence/companies/spain",
-    "https://www.goodfirms.co/artificial-intelligence/companies/italy",
-    "https://www.goodfirms.co/artificial-intelligence/companies/ireland",
+    "https://www.goodfirms.co/artificial-intelligence/companies/brazil",
 ]
 
 async def scrape_goodfirms(
@@ -463,77 +456,75 @@ async def discover_from_search(
 # --- Source: Curated seed list -------------------------------------------
 
 SEED_COMPANIES = [
+    # Global / Big consultancies
+    ("BCG Gamma", "https://www.bcg.com/beyond-consulting/bcg-gamma/", "Global"),
+    ("McKinsey QuantumBlack", "https://www.mckinsey.com/capabilities/quantumblack/", "Global"),
+    ("Accenture AI", "https://www.accenture.com/", "Global"),
+    ("Capgemini AI", "https://www.capgemini.com/", "Global"),
+    ("Deloitte AI", "https://www2.deloitte.com/", "Global"),
+    ("Booz Allen Hamilton", "https://www.boozallen.com/", "USA"),
+    # USA
+    ("Palantir", "https://www.palantir.com/", "USA"),
+    ("DataRobot", "https://www.datarobot.com/", "USA"),
+    ("C3.ai", "https://c3.ai/", "USA"),
+    ("Weights & Biases", "https://wandb.ai/", "USA"),
+    ("Scale AI", "https://scale.com/", "USA"),
+    ("Anyscale", "https://www.anyscale.com/", "USA"),
+    ("Hugging Face", "https://huggingface.co/", "USA"),
+    ("Cohere", "https://cohere.com/", "USA/Canada"),
+    ("Databricks", "https://www.databricks.com/", "USA"),
+    ("Domino Data Lab", "https://www.dominodatalab.com/", "USA"),
+    ("H2O.ai", "https://h2o.ai/", "USA"),
+    ("Moveworks", "https://www.moveworks.com/", "USA"),
+    ("Snorkel AI", "https://snorkel.ai/", "USA"),
+    ("Tecton", "https://www.tecton.ai/", "USA"),
+    ("Labelbox", "https://labelbox.com/", "USA"),
+    # Canada
+    ("Element AI", "https://www.elementai.com/", "Canada"),
+    ("Layer 6", "https://layer6.ai/", "Canada"),
     # UK
     ("Faculty AI", "https://faculty.ai/", "UK"),
     ("Datatonic", "https://datatonic.com/", "UK"),
-    ("Cambridge Consultants", "https://www.cambridgeconsultants.com/", "UK"),
+    ("QuantumBlack", "https://www.quantumblack.com/", "UK"),
     ("Deeper Insights", "https://deeper-insights.com/", "UK"),
     ("Peak AI", "https://peak.ai/", "UK"),
-    ("Profusion", "https://profusion.com/", "UK"),
-    ("QuantumBlack", "https://www.quantumblack.com/", "UK"),
-    ("Kin + Carta", "https://www.kinandcarta.com/", "UK"),
-    ("Polymatica", "https://polymatica.com/", "UK"),
-    ("Satalia", "https://www.satalia.com/", "UK"),
-    ("Secondmind", "https://www.secondmind.ai/", "UK"),
     # Germany
     ("Explosion AI", "https://explosion.ai/", "Germany"),
     ("Rasa", "https://rasa.com/", "Germany"),
-    ("AI Superior", "https://aisuperior.com/", "Germany"),
-    ("Alexander Thamm", "https://www.alexanderthamm.com/", "Germany"),
-    ("Adesso SE", "https://www.adesso.de/", "Germany"),
-    ("d-fine", "https://www.d-fine.com/", "Germany"),
-    ("INFORM GmbH", "https://www.inform-software.com/", "Germany"),
-    ("appliedAI", "https://www.appliedai.de/", "Germany"),
-    ("Merantix", "https://www.merantix.com/", "Germany"),
     ("Aleph Alpha", "https://aleph-alpha.com/", "Germany"),
-    ("MHP", "https://www.mhp.com/", "Germany"),
-    ("Comma Soft", "https://www.commasoft.de/", "Germany"),
-    ("Datarevenue", "https://datarevenue.com/", "Germany"),
+    ("Merantix", "https://www.merantix.com/", "Germany"),
+    ("appliedAI", "https://www.appliedai.de/", "Germany"),
     # France
-    ("Artefact", "https://artefact.com/", "France"),
-    ("Devoteam AI", "https://devoteam.com/", "France"),
-    ("Heuritech", "https://www.heuritech.com/", "France"),
     ("Dataiku", "https://www.dataiku.com/", "France"),
-    ("Ekimetrics", "https://ekimetrics.com/", "France"),
-    ("Kernix", "https://www.kernix.com/", "France"),
+    ("Artefact", "https://artefact.com/", "France"),
     ("LightOn", "https://www.lighton.ai/", "France"),
-    ("Sicara", "https://www.sicara.fr/", "France"),
-    ("Craft AI", "https://www.craft.ai/", "France"),
-    # Netherlands
-    ("Xomnia", "https://xomnia.com/", "Netherlands"),
-    ("Ortec", "https://ortec.com/", "Netherlands"),
-    ("Xebia AI", "https://xebia.com/", "Netherlands"),
-    ("Zeta Alpha", "https://www.zeta-alpha.com/", "Netherlands"),
-    ("Axyon AI", "https://www.axyon.ai/", "Netherlands"),
-    ("Aindo", "https://www.aindo.com/", "Italy"),
-    # Nordics
-    ("Peltarion", "https://peltarion.com/", "Sweden"),
-    ("Acoustic AI", "https://www.acousticai.com/", "Sweden"),
+    # Israel
+    ("AI21 Labs", "https://www.ai21.com/", "Israel"),
+    ("Run:ai", "https://www.run.ai/", "Israel"),
+    ("Mobileye", "https://www.mobileye.com/", "Israel"),
+    ("Hailo", "https://hailo.ai/", "Israel"),
+    # India
+    ("Fractal Analytics", "https://fractal.ai/", "India"),
+    ("Tiger Analytics", "https://www.tigeranalytics.com/", "India"),
+    ("Mu Sigma", "https://www.mu-sigma.com/", "India"),
+    ("Latentview Analytics", "https://www.latentview.com/", "India"),
+    # Singapore / APAC
+    ("AI Singapore", "https://aisingapore.org/", "Singapore"),
+    ("Handshakes", "https://www.handshakes.com.sg/", "Singapore"),
+    # Japan / South Korea
+    ("Preferred Networks", "https://www.preferred.jp/en/", "Japan"),
+    ("Kakao Brain", "https://www.kakaobrain.com/", "South Korea"),
+    # Australia
+    ("Canva AI", "https://www.canva.com/", "Australia"),
+    ("Appen", "https://appen.com/", "Australia"),
+    # Latin America
+    ("Nuveo", "https://nuveo.ai/", "Brazil"),
+    ("Globant AI", "https://www.globant.com/", "Argentina"),
+    # Other Europe
     ("Silo AI", "https://www.silo.ai/", "Finland"),
-    ("Futurice", "https://futurice.com/", "Finland"),
-    ("Computas", "https://computas.com/", "Norway"),
-    # Switzerland
-    ("Zuhlke", "https://www.zuehlke.com/", "Switzerland"),
-    ("Modulos", "https://www.modulos.ai/", "Switzerland"),
-    ("DeepCode", "https://www.deepcode.ai/", "Switzerland"),
-    # CEE
-    ("Nordeus Data", "https://nordeus.com/", "Serbia"),
-    ("Netguru", "https://www.netguru.com/", "Poland"),
+    ("Xebia AI", "https://xebia.com/", "Netherlands"),
     ("Deepsense.ai", "https://deepsense.ai/", "Poland"),
-    ("Infermedica", "https://infermedica.com/", "Poland"),
     ("UiPath", "https://www.uipath.com/", "Romania"),
-    # Iberia
-    ("BigML", "https://bigml.com/", "Spain"),
-    ("Quostar", "https://www.quostar.com/", "Spain"),
-    # Ireland
-    ("Accenture The Dock", "https://www.accenture.com/", "Ireland"),
-    ("CeADAR", "https://ceadar.ie/", "Ireland"),
-    # Big 4 / MBB Europe
-    ("BCG Gamma", "https://www.bcg.com/beyond-consulting/bcg-gamma/", "Global/Europe"),
-    ("McKinsey QuantumBlack", "https://www.mckinsey.com/capabilities/quantumblack/", "Global/Europe"),
-    ("Sopra Steria AI", "https://www.soprasteria.com/", "France/Europe"),
-    ("Capgemini AI", "https://www.capgemini.com/", "France/Europe"),
-    ("Reply AI", "https://www.reply.com/", "Italy/Europe"),
 ]
 
 def load_seed_companies() -> list[Company]:

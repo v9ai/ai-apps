@@ -241,7 +241,7 @@ extract-stop: ## Stop extraction server
 
 CONSULT_DIR  := consultancies
 CONSULT_PY   := $(CONSULT_DIR)/.venv/bin/python3
-DOMAINS_FILE := $(CONSULT_DIR)/data/eu-ai-consultancies.txt
+DOMAINS_FILE := $(CONSULT_DIR)/data/ai-consultancies.txt
 DISCOVERY_TS := $(CONSULT_DIR)/data/.discovery-timestamp
 
 .PHONY: leads leads-preflight leads-status
