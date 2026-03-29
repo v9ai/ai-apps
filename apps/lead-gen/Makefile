@@ -242,14 +242,35 @@ extract-stop: ## Stop extraction server
 CONSULT_DIR  := consultancies
 CONSULT_PY   := $(CONSULT_DIR)/.venv/bin/python3
 DOMAINS_FILE := $(CONSULT_DIR)/data/eu-ai-consultancies.txt
+DISCOVERY_TS := $(CONSULT_DIR)/data/.discovery-timestamp
 
-.PHONY: leads
+.PHONY: leads leads-preflight leads-status
 
-leads: start-build ## Discover → domains → Rust pipeline → import to Neon
-	$(CONSULT_PY) $(CONSULT_DIR)/discover.py
+leads-preflight: start-build ## Pre-flight: verify venv, LLM servers, binary
+	@echo "── Pre-flight checks ──"
+	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; echo "  Fix: cd $(CONSULT_DIR) && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"; exit 1; }
+	@$(CONSULT_PY) -c "import aiohttp, bs4, lancedb" 2>/dev/null || { echo "FAIL: Missing Python packages (aiohttp, bs4, lancedb)"; echo "  Fix: $(CONSULT_PY) -m pip install aiohttp beautifulsoup4 lancedb"; exit 1; }
+	@curl -sf --max-time 2 http://localhost:8080/v1/models > /dev/null 2>&1 || { echo "FAIL: Classification LLM not running on :8080"; echo "  Fix: make ft-serve TASK=role-tag"; exit 1; }
+	@curl -sf --max-time 2 http://localhost:8081/v1/models > /dev/null 2>&1 || { echo "FAIL: Extraction LLM not running on :8081"; echo "  Fix: make extract-serve"; exit 1; }
+	@echo "── All checks passed ──"
+
+leads: leads-preflight ## Full leads pipeline with pre-flight + resume
+	@if [ -f $(DISCOVERY_TS) ] && \
+	   [ $$(( $$(date +%s) - $$(cat $(DISCOVERY_TS)) )) -lt 3600 ]; then \
+		echo "  SKIP: Python discovery (< 1 hour old)"; \
+	else \
+		$(CONSULT_PY) $(CONSULT_DIR)/discover.py; \
+	fi
 	$(CONSULT_PY) $(CONSULT_DIR)/extract_domains.py -o $(DOMAINS_FILE)
 	$(METAL_BIN) pipeline --domains $(DOMAINS_FILE) --yes --all
-	pnpm tsx scripts/import-rust-leads.ts $(METAL_DIR)/data/pipeline
+	@if [ -n "$$NEON_DATABASE_URL" ]; then \
+		pnpm tsx scripts/import-rust-leads.ts $(METAL_DIR)/data/pipeline; \
+	else \
+		echo "  SKIP: Neon import (set NEON_DATABASE_URL to enable)"; \
+	fi
+
+leads-status: start-build ## Show pipeline progress history
+	$(METAL_BIN) status
 
 # ── All ────────────────────────────────────────────────────────
 

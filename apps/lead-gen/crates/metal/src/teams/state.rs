@@ -305,8 +305,155 @@ pub fn load_report<T: serde::de::DeserializeOwned>(data_dir: &Path, name: &str) 
 pub fn save_report<T: serde::Serialize>(data_dir: &Path, name: &str, report: &T) -> Result<()> {
     let path = data_dir.join(format!("reports/{name}.json"));
     std::fs::create_dir_all(path.parent().unwrap())?;
-    std::fs::write(&path, serde_json::to_string_pretty(report)?)?;
+    atomic_write(&path, &serde_json::to_string_pretty(report)?)?;
     Ok(())
+}
+
+/// Atomic write: write to temp file then rename (survives kill/crash).
+fn atomic_write(path: &Path, content: &str) -> Result<()> {
+    let tmp = path.with_extension("tmp");
+    std::fs::write(&tmp, content)?;
+    std::fs::rename(&tmp, path)?;
+    Ok(())
+}
+
+// ── Stage checkpoint (crash resume) ──────────────────────────
+
+/// Tracks which stages completed in the current run.
+/// If the process crashes, the next run reads this to skip done stages.
+/// Deleted on successful completion of all stages.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StageCheckpoint {
+    pub run_id: u32,
+    pub started_at: String,
+    pub completed_stages: Vec<CompletedStage>,
+    pub current_stage: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CompletedStage {
+    pub name: String,
+    pub status: super::StageStatus,
+}
+
+impl StageCheckpoint {
+    pub fn new(run_id: u32) -> Self {
+        Self {
+            run_id,
+            started_at: now_iso(),
+            completed_stages: Vec::new(),
+            current_stage: None,
+        }
+    }
+
+    pub fn load(data_dir: &Path) -> Option<Self> {
+        let path = data_dir.join("reports/checkpoint.json");
+        std::fs::read_to_string(&path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+    }
+
+    pub fn save(&self, data_dir: &Path) -> Result<()> {
+        let path = data_dir.join("reports/checkpoint.json");
+        std::fs::create_dir_all(path.parent().unwrap())?;
+        atomic_write(&path, &serde_json::to_string_pretty(self)?)?;
+        Ok(())
+    }
+
+    pub fn clear(data_dir: &Path) -> Result<()> {
+        let path = data_dir.join("reports/checkpoint.json");
+        if path.exists() {
+            std::fs::remove_file(&path)?;
+        }
+        Ok(())
+    }
+
+    pub fn is_stage_done(&self, name: &str) -> bool {
+        self.completed_stages.iter().any(|s| {
+            s.name == name && matches!(s.status, super::StageStatus::Success)
+        })
+    }
+
+    pub fn mark_started(&mut self, name: &str) {
+        self.current_stage = Some(name.into());
+    }
+
+    pub fn mark_done(&mut self, name: &str, status: super::StageStatus) {
+        self.completed_stages.push(CompletedStage {
+            name: name.into(),
+            status,
+        });
+        self.current_stage = None;
+    }
+}
+
+// ── Pipeline progress (cross-run history) ────────────────────
+
+/// Append-only history of pipeline runs. Never overwritten, only appended.
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct PipelineProgress {
+    pub runs: Vec<RunRecord>,
+    pub last_updated: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RunRecord {
+    pub run_id: u32,
+    pub started_at: String,
+    pub finished_at: String,
+    pub duration_ms: u64,
+    pub phase: Phase,
+    pub stages_completed: Vec<String>,
+    pub stages_failed: Vec<String>,
+    pub counts: RunCounts,
+    pub exit_status: String,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct RunCounts {
+    pub discovered: usize,
+    pub enriched: usize,
+    pub contacts_found: usize,
+    pub outreach_drafted: usize,
+    pub errors: usize,
+}
+
+impl PipelineProgress {
+    pub fn load(data_dir: &Path) -> Self {
+        let path = data_dir.join("reports/pipeline-progress.json");
+        std::fs::read_to_string(&path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default()
+    }
+
+    pub fn save(&self, data_dir: &Path) -> Result<()> {
+        let path = data_dir.join("reports/pipeline-progress.json");
+        std::fs::create_dir_all(path.parent().unwrap())?;
+        atomic_write(&path, &serde_json::to_string_pretty(self)?)?;
+        Ok(())
+    }
+
+    pub fn next_run_id(&self) -> u32 {
+        self.runs.last().map_or(1, |r| r.run_id + 1)
+    }
+
+    /// Aggregate totals across all runs.
+    pub fn totals(&self) -> RunCounts {
+        let mut t = RunCounts::default();
+        for r in &self.runs {
+            t.discovered += r.counts.discovered;
+            t.enriched += r.counts.enriched;
+            t.contacts_found += r.counts.contacts_found;
+            t.outreach_drafted += r.counts.outreach_drafted;
+            t.errors += r.counts.errors;
+        }
+        t
+    }
+}
+
+fn now_iso() -> String {
+    chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
 }
 
 #[cfg(test)]

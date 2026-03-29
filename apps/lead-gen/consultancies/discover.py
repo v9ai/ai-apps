@@ -888,8 +888,17 @@ def main():
             companies = [Company(**d) for d in data]
             companies = classify_with_mlx(companies)
             store_in_lancedb(companies)
+            _write_discovery_timestamp()
     else:
         asyncio.run(run_discovery(skip_llm=args.search_only))
+        _write_discovery_timestamp()
+
+
+def _write_discovery_timestamp():
+    """Write unix timestamp so Makefile can skip re-runs within 1 hour."""
+    ts_path = Path("./data/.discovery-timestamp")
+    ts_path.parent.mkdir(parents=True, exist_ok=True)
+    ts_path.write_text(str(int(time.time())))
 
 
 if __name__ == "__main__":
