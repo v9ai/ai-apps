@@ -2,7 +2,46 @@
 
 from __future__ import annotations
 
-from typing import Literal, Required, TypedDict
+from typing import Literal, TypedDict
+
+
+# ── Input schemas (required fields only) ─────────────────────────────────────
+# These are passed as input_schema= to StateGraph so LangGraph enforces them
+# at invocation time.  All fields here are required (no total=False).
+
+
+class PressInputState(TypedDict):
+    """Required inputs for the main orchestrator graph."""
+
+    pipeline: Literal["blog", "article", "counter", "review"]
+
+
+class BlogInputState(TypedDict):
+    """Required inputs for the blog pipeline."""
+
+    niche: str
+
+
+class ArticleInputState(TypedDict):
+    """Required inputs for the article pipeline."""
+
+    topic: str
+
+
+class CounterArticleInputState(TypedDict):
+    """Required inputs for the counter-article pipeline."""
+
+    source_url: str
+    topic: str
+
+
+class ReviewInputState(TypedDict):
+    """Required inputs for the review pipeline."""
+
+    input_file: str
+
+
+# ── Full internal state schemas (all fields optional) ─────────────────────────
 
 
 class PressState(TypedDict, total=False):
@@ -12,7 +51,7 @@ class PressState(TypedDict, total=False):
     optional and passed through to the chosen pipeline.
     """
 
-    pipeline: Required[Literal["blog", "article", "counter", "review"]]
+    pipeline: Literal["blog", "article", "counter", "review"]
 
     # Shared across most pipelines
     output_dir: str
@@ -59,7 +98,7 @@ class PressState(TypedDict, total=False):
 
 
 class BlogState(TypedDict, total=False):
-    niche: Required[str]
+    niche: str
     count: int
     output_dir: str
     publish: bool
@@ -77,7 +116,7 @@ class ArticleState(TypedDict, total=False):
     runs a topic-only journalism flow (1200-1800 words).
     """
 
-    topic: Required[str]
+    topic: str
     title: str
     niche: str
     input_file: str
@@ -99,9 +138,9 @@ class ArticleState(TypedDict, total=False):
 
 
 class CounterArticleState(TypedDict, total=False):
-    source_url: Required[str]
+    source_url: str
     source_content: str
-    topic: Required[str]
+    topic: str
     output_dir: str
     publish: bool
     git_push: bool
@@ -118,7 +157,7 @@ class CounterArticleState(TypedDict, total=False):
 
 
 class ReviewState(TypedDict, total=False):
-    input_file: Required[str]
+    input_file: str
     research_file: str
     seo_file: str
     output_dir: str

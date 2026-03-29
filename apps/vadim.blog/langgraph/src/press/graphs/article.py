@@ -32,7 +32,7 @@ from press.graphs.nodes import (
     save_final_node,
     should_revise_simple,
 )
-from press.graphs.state import ArticleState
+from press.graphs.state import ArticleInputState, ArticleState
 from press.models import ModelPool, TeamRole
 from press import prompts
 from press.papers.editorial import search_editorial
@@ -51,7 +51,7 @@ def _topic_or_title(state: dict) -> str:
 
 def build_article_graph(pool: ModelPool):
     """Build the unified Article pipeline StateGraph."""
-    graph = StateGraph(ArticleState)
+    graph = StateGraph(ArticleState, input_schema=ArticleInputState)
 
     # ── Nodes ────────────────────────────────────────────────────────────
 

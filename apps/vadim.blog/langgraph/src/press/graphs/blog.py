@@ -12,7 +12,7 @@ from langgraph.graph import END, START, StateGraph
 from press import slugify, strip_fences
 from press.agents import Agent
 from press.graphs.nodes import add_xyflow
-from press.graphs.state import BlogState
+from press.graphs.state import BlogInputState, BlogState
 from press.models import ModelPool, TeamRole
 from press import prompts
 from press.publisher import publish as publish_post
@@ -29,7 +29,7 @@ def build_blog_graph(
 
     Flow: scout -> pick -> process_topics -> END
     """
-    graph = StateGraph(BlogState)
+    graph = StateGraph(BlogState, input_schema=BlogInputState)
 
     async def scout_node(state: BlogState) -> dict:
         niche = state["niche"]
