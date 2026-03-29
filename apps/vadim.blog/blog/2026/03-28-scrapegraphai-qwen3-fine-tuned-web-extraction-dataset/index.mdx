@@ -182,3 +182,49 @@ The 1.7B parameter count makes domain fine-tuning feasible on a single consumer 
 ## The Broader Implication
 
 The [ScrapeGraphAI paper](https://arxiv.org/abs/2505.15812) is a case study in a repeating pattern: an open-source tool generates labeled trajectories at scale, those trajectories fine-tune a compact base model, the result outperforms general-purpose APIs on the narrow task and runs locally. The barrier to high-accuracy domain AI is no longer pre-training compute — it's the discipline to collect and curate task-specific data. For any repetitive, well-defined extraction task, the question is no longer "which API?" but "do I have 10–25k clean examples for a 1–3B fine-tune?" If yes, the specialized model wins on accuracy, cost, and data sovereignty.
+
+## Getting Started
+
+Install the [ScrapeGraphAI library](https://github.com/ScrapeGraphAI/Scrapegraph-ai) and point it at the local model server:
+
+```bash
+pip install scrapegraphai
+mlx_lm.server --model scrapegraphai/sgai-qwen3-1.7b-gguf --port 8080
+```
+
+```python
+from scrapegraphai.graphs import SmartScraperGraph
+
+graph_config = {
+    "llm": {
+        "model": "scrapegraphai/sgai-qwen3-1.7b",
+        "base_url": "http://localhost:8080",
+    },
+    "verbose": True,
+    "headless": True,
+}
+
+graph = SmartScraperGraph(
+    prompt="Extract company name, founding year, and employee count",
+    source="https://example.com/about",
+    config=graph_config,
+)
+print(graph.run())
+```
+
+## FAQ
+
+**Q: What is ScrapeGraphAI?**
+A: An open-source Python library that uses LLMs to build web scraping pipelines via natural language prompts. The [`sgai-qwen3-1.7b`](https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b) model is fine-tuned specifically for its extraction tasks.
+
+**Q: How does the 1.7B model beat larger cloud APIs?**
+A: Fine-tuning on 25.2k real scraping trajectories teaches the model one constrained task — HTML in, JSON out — densely covering the problem space that larger generalists spread capacity across every task.
+
+**Q: What hardware does local inference require?**
+A: The Q4_K_M GGUF (~1.1 GB) runs on any Apple Silicon Mac or consumer GPU (RTX 3090). On an M1 Pro expect ~40 tokens/second — 1,000 pages with 200-token outputs takes roughly 2 minutes.
+
+**Q: When should I fine-tune further on my own data?**
+A: When your domain has consistent HTML structure (e.g., a single vertical like e-commerce or job boards). Filter the [100k dataset](https://huggingface.co/datasets/scrapegraphai/scrapegraphai-100k) by domain and `schema_complexity_score`, then run SFT on the filtered subset for an additional accuracy lift.
+
+**Q: Is the model free to use?**
+A: Yes — Apache 2.0 license. Both the model weights and the dataset are fully open.

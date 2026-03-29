@@ -193,7 +193,7 @@
         "highlights": [
           "5-agent pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
           "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
-          "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
+          "LLM enrichment: tier classification, tech stack detection, ATS board discovery via multi-model routing.",
           "3 parallel competing-hypotheses research agents with active debate — cross-reading findings — producing GO/NO-GO verdicts.",
           "On-device MLX scoring at 4,618 embeddings/sec on M1; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing."
         ]
@@ -220,7 +220,7 @@
         "websiteUrl": "https://agentic-knowledge.vercel.app/",
         "highlights": [
           "Semantic knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
-          "Bayesian knowledge tracing (mastery, transit, slip, guess per concept), novice → expert classification.",
+          "Per-user Bayesian knowledge tracing (mastery, transit, slip, guess per concept), novice → expert classification.",
           "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
           "LangGraph 6-agent fan-out/fan-in editorial pipeline with revision loops, DeepSeek R1 + OpenAI.",
           "Real-time streaming chat with thread-scoped persistence, 17-table Drizzle schema, pgvector embeddings."
@@ -236,7 +236,7 @@
           "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
           "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
           "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval.",
-          "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2.",
+          "Serverless TTS microservice: RAG-based chunking, streaming audio to Cloudflare R2.",
           "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents."
         ]
       },
@@ -250,7 +250,7 @@
           "6-agent adversarial pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
           "Automated citation verification and fabrication detection with audit trails.",
           "Jurisdiction-specific legal precedent mapping, multi-jurisdiction comparison.",
-          "Real-time SSE streaming with per-agent logging.",
+          "Real-time SSE streaming with structured per-agent logging.",
           "Promptfoo: 8 eval suites, LLM-as-judge rubrics; DeepTeam red-teaming."
         ]
       }
