@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { resumeData } from "@ai-apps/resume";
 import "./resume.css";
-import { sanitizeHtml } from "@/lib/html-sanitizer";
 
 const SLUGS: Record<string, typeof resumeData> = {
   vadim: resumeData,
@@ -25,190 +24,28 @@ export default async function ResumePdfPage({ params }: Props) {
   const data = SLUGS[slug];
   if (!data) notFound();
 
-  const { basics, skills, work, education, activities, volunteer } = data;
+  const pdfUrl = `/api/resume-pdf/${slug}`;
 
   return (
-    <div className="resume">
-      {/* Header */}
-      <header className="resume-header">
-        <h1>{basics.name}</h1>
-        <p className="label">{basics.label}</p>
-        <div className="contact">
-          <span>{basics.email}</span>
-          <span>{basics.phone}</span>
-          {basics.profiles.map((p) => (
-            <a key={p.network} href={p.url} target="_blank" rel="noopener noreferrer">
-              {p.network === "blog" ? "Blog" : p.network === "github" ? "GitHub" : "LinkedIn"}: {p.username}
-            </a>
-          ))}
-          {basics.url && (
-            <a href={basics.url} target="_blank" rel="noopener noreferrer">
-              {basics.url.replace("https://", "")}
-            </a>
-          )}
+    <div className="resume-pdf-page">
+      <div className="resume-pdf-toolbar">
+        <div className="resume-pdf-title">
+          <h1>{data.basics.name}</h1>
+          <span>{data.basics.label}</span>
         </div>
-      </header>
-
-      {/* Key Skills banner */}
-      {basics.keySkills && (
-        <div className="resume-key-skills">{basics.keySkills}</div>
-      )}
-
-      {/* Summary */}
-      <section className="resume-section">
-        <h2>Summary</h2>
-        <p style={{ fontSize: 12, lineHeight: 1.6 }}>{basics.summary}</p>
-      </section>
-
-      {/* Two-column body */}
-      <div className="resume-body">
-        {/* Left column — experience + projects + open source */}
-        <div className="resume-main">
-          <section className="resume-section">
-            <h2>Experience</h2>
-            {work.map((job) => (
-              <div key={job.id} className="resume-entry">
-                <div className="resume-entry-header">
-                  <h3>{job.position}</h3>
-                  <span className="dates">{job.startDate} — {job.endDate ?? "Present"}</span>
-                </div>
-                <div className="company">{job.name}</div>
-                <div
-                  className="summary"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(job.summary) }}
-                />
-              </div>
-            ))}
-          </section>
-
-          {/* AI Projects */}
-          {activities.aiProjects && activities.aiProjects.length > 0 && (
-            <section className="resume-section">
-              <h3>AI Projects</h3>
-              {activities.aiProjects.map((proj) => (
-                <div key={proj.id} className="resume-project">
-                  <h3>
-                    {proj.websiteUrl ? (
-                      <a href={proj.websiteUrl} target="_blank" rel="noopener noreferrer">
-                        {proj.name}
-                      </a>
-                    ) : (
-                      proj.name
-                    )}
-                  </h3>
-                  <div className="description">{proj.description}</div>
-                  {proj.highlights.length > 0 && (
-                    <ul>
-                      {proj.highlights.map((h, i) => (
-                        <li key={i}>{h}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </section>
-          )}
-
-          {/* Open Source */}
-          {volunteer.length > 0 && (
-            <section className="resume-section">
-              <h2>Open Source</h2>
-              {volunteer.map((v) => (
-                <div key={v.id} className="resume-volunteer">
-                  <h3>
-                    {v.url ? (
-                      <a href={v.url} target="_blank" rel="noopener noreferrer">
-                        {v.organization}
-                      </a>
-                    ) : (
-                      v.organization
-                    )}
-                  </h3>
-                  <div className="role">
-                    {v.position} · {v.startDate} — {v.endDate ?? "Present"}
-                  </div>
-                  <div
-                    className="summary"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(v.summary) }}
-                  />
-                </div>
-              ))}
-            </section>
-          )}
-        </div>
-
-        {/* Right column — skills + education */}
-        <div className="resume-sidebar">
-          <section className="resume-section">
-            <h2>Skills</h2>
-
-            <div className="resume-skill-group">
-              <h3>Languages</h3>
-              <div className="resume-skill-list">
-                {skills.languages.map((s) => (
-                  <span key={s.name} className="resume-skill-tag">{s.name}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="resume-skill-group">
-              <h3>Frameworks &amp; Libraries</h3>
-              <div className="resume-skill-list">
-                {[...skills.frameworks, ...skills.libraries].map((s) => (
-                  <span key={s.name} className="resume-skill-tag">{s.name}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="resume-skill-group">
-              <h3>Technologies</h3>
-              <div className="resume-skill-list">
-                {skills.technologies.map((s) => (
-                  <span key={s.name} className="resume-skill-tag">{s.name}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="resume-skill-group">
-              <h3>Databases</h3>
-              <div className="resume-skill-list">
-                {skills.databases.map((s) => (
-                  <span key={s.name} className="resume-skill-tag">{s.name}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="resume-skill-group">
-              <h3>Tools &amp; Platforms</h3>
-              <div className="resume-skill-list">
-                {skills.tools.map((s) => (
-                  <span key={s.name} className="resume-skill-tag">{s.name}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="resume-skill-group">
-              <h3>Practices</h3>
-              <div className="resume-skill-list">
-                {skills.practices.map((s) => (
-                  <span key={s.name} className="resume-skill-tag">{s.name}</span>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="resume-section">
-            <h2>Education</h2>
-            {education.map((edu) => (
-              <div key={edu.id} className="resume-edu">
-                <h3>{edu.studyType} — {edu.area}</h3>
-                <div className="institution">{edu.institution}</div>
-                <div className="dates">{edu.startDate} — {edu.endDate}</div>
-              </div>
-            ))}
-          </section>
-        </div>
+        <a
+          href={pdfUrl}
+          download={`${slug}-resume.pdf`}
+          className="resume-pdf-download"
+        >
+          Download PDF
+        </a>
       </div>
+      <iframe
+        src={pdfUrl}
+        className="resume-pdf-viewer"
+        title={`${data.basics.name} Resume`}
+      />
     </div>
   );
 }

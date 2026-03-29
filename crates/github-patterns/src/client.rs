@@ -176,6 +176,11 @@ impl GhClient {
             .await
     }
 
+    /// Fetch full profile for a single user login.
+    pub async fn get_user(&self, login: &str) -> Result<GhUser> {
+        self.get(&format!("/users/{login}")).await
+    }
+
     /// Search repos by topic + optional language.
     pub async fn search_repos(
         &self,
