@@ -199,7 +199,7 @@ assert(
 
 ## Classification Result Validations
 
-### Remote EU Classification
+### Remote Work Classification
 
 ```typescript
 interface ClassificationResult {
@@ -238,7 +238,7 @@ function validateClassification(result: ClassificationResult) {
 
   // Check for contradictory evidence
   const hasYesEvidence = result.evidence.some(
-    (e) => e.toLowerCase().includes("remote") || e.toLowerCase().includes("eu"),
+    (e) => e.toLowerCase().includes("remote") || e.toLowerCase().includes("worldwide"),
   );
   const hasNoEvidence = result.evidence.some(
     (e) =>

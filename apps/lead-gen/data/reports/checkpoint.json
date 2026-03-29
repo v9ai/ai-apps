@@ -1,0 +1,11 @@
+{
+  "run_id": 2,
+  "started_at": "2026-03-29T19:45:23Z",
+  "completed_stages": [
+    {
+      "name": "discover",
+      "status": "Partial"
+    }
+  ],
+  "current_stage": "enrich"
+}

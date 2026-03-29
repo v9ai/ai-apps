@@ -54,7 +54,7 @@ Based on the literature for **AI hiring bias**:
 
 3. **Incorporate human oversight** – Maintain a human‑in‑the‑loop review step for final candidate shortlisting, especially for roles where algorithmic bias could have high‑stakes consequences.
 
-4. **Ensure regulatory compliance** – Align algorithmic practices with the EU AI Act and GDPR requirements for automated decision‑making, including right to explanation and non‑discrimination provisions.
+4. **Ensure regulatory compliance** – Align algorithmic practices with the EU AI Act, GDPR, and equivalent regulations in target markets (e.g., CCPA, local non‑discrimination laws) for automated decision‑making, including right to explanation and non‑discrimination provisions.
 
 5. **Develop inclusive training data** – Curate job‑posting and resume datasets that reflect diverse geographic, cultural, and ability backgrounds, and use data‑augmentation techniques to balance underrepresented groups.
 
@@ -62,4 +62,4 @@ Based on the literature for **AI hiring bias**:
 - Total papers reviewed: 4
 - Industry reports: 0
 - Academic papers: 4
-- Overall confidence: **80%** – The literature provides strong empirical evidence of AI hiring bias and effective mitigation techniques, but direct research on remote‑work and EU‑specific employment contexts is limited. More targeted studies on distributed teams and EU regulatory landscapes would increase confidence.
+- Overall confidence: **80%** – The literature provides strong empirical evidence of AI hiring bias and effective mitigation techniques, but direct research on remote‑work and global employment contexts is limited. More targeted studies on distributed teams and worldwide regulatory landscapes would increase confidence.

@@ -9,7 +9,7 @@ interface JobAnalysis {
   title: string;
   company: string;
   industry?: string;
-  remoteEU: 'yes' | 'maybe' | 'no';
+  remoteStatus: 'yes' | 'maybe' | 'no';
   salary?: string;
   requirements: string[];
   technicalStack: Array<{ skill: string; priority: 'required' | 'preferred'; note?: string }>;
@@ -32,10 +32,10 @@ export function validateAnalysis(analysis: Partial<JobAnalysis>): { valid: boole
   // Required fields
   if (!analysis.title) errors.push('Missing: job title');
   if (!analysis.company) errors.push('Missing: company name');
-  if (!analysis.remoteEU) {
-    errors.push('Missing: remote EU classification');
-  } else if (!['yes', 'maybe', 'no'].includes(analysis.remoteEU)) {
-    errors.push('Invalid remote EU value: must be yes, maybe, or no');
+  if (!analysis.remoteStatus) {
+    errors.push('Missing: remote work classification');
+  } else if (!['yes', 'maybe', 'no'].includes(analysis.remoteStatus)) {
+    errors.push('Invalid remote status value: must be yes, maybe, or no');
   }
 
   // Arrays must be present
@@ -78,8 +78,8 @@ export function formatAnalysis(analysis: JobAnalysis): string {
   if (analysis.industry) output += ` (${analysis.industry})`;
   output += '\n';
   
-  const remoteIcon = analysis.remoteEU === 'yes' ? '✅' : analysis.remoteEU === 'maybe' ? '⚠️' : '❌';
-  output += `**Remote EU:** ${remoteIcon} ${analysis.remoteEU.charAt(0).toUpperCase() + analysis.remoteEU.slice(1)}\n`;
+  const remoteIcon = analysis.remoteStatus === 'yes' ? '✅' : analysis.remoteStatus === 'maybe' ? '⚠️' : '❌';
+  output += `**Remote:** ${remoteIcon} ${analysis.remoteStatus.charAt(0).toUpperCase() + analysis.remoteStatus.slice(1)}\n`;
   
   if (analysis.salary) {
     output += `**Salary:** ${analysis.salary}\n`;
@@ -123,36 +123,35 @@ export function formatAnalysis(analysis: JobAnalysis): string {
 }
 
 /**
- * Extract remote EU classification from job text
+ * Extract remote work classification from job text
  */
-export function classifyRemoteEU(jobText: string): 'yes' | 'maybe' | 'no' {
+export function classifyRemoteStatus(jobText: string): 'yes' | 'maybe' | 'no' {
   const text = jobText.toLowerCase();
   
   // Positive indicators
   const remoteKeywords = ['remote', 'work from home', 'wfh', 'distributed', 'remote-first'];
-  const euKeywords = ['europe', 'european union', 'eu ', 'cet', 'cest', 'gmt', 'bst'];
-  const euCountries = ['germany', 'france', 'spain', 'italy', 'netherlands', 'belgium', 'austria', 
-                      'portugal', 'sweden', 'denmark', 'finland', 'poland', 'ireland'];
-  
+  const globalKeywords = ['worldwide', 'global', 'work from anywhere', 'any location', 'international'];
+  const regionKeywords = ['europe', 'americas', 'apac', 'emea'];
+
   // Negative indicators
   const officeKeywords = ['in-office', 'on-site', 'hybrid', 'relocation required'];
-  const nonEuOnly = ['us only', 'uk only', 'local candidates only'];
-  
+  const localOnly = ['local candidates only', 'citizens only'];
+
   const hasRemote = remoteKeywords.some(kw => text.includes(kw));
-  const hasEU = euKeywords.some(kw => text.includes(kw)) || 
-                euCountries.some(country => text.includes(country));
+  const hasGlobal = globalKeywords.some(kw => text.includes(kw)) ||
+                    regionKeywords.some(kw => text.includes(kw));
   const hasOfficeReq = officeKeywords.some(kw => text.includes(kw));
-  const hasNonEuOnly = nonEuOnly.some(kw => text.includes(kw));
-  
-  if (hasNonEuOnly || (hasOfficeReq && !hasEU)) {
+  const hasLocalOnly = localOnly.some(kw => text.includes(kw));
+
+  if (hasLocalOnly || (hasOfficeReq && !hasGlobal)) {
     return 'no';
   }
-  
-  if (hasRemote && hasEU) {
+
+  if (hasRemote && hasGlobal) {
     return 'yes';
   }
-  
-  if (hasRemote || hasEU) {
+
+  if (hasRemote || hasGlobal) {
     return 'maybe';
   }
   
@@ -165,7 +164,7 @@ if (import.meta.main) {
     title: 'Senior Full-Stack Engineer',
     company: 'Acme Corp',
     industry: 'SaaS',
-    remoteEU: 'yes',
+    remoteStatus: 'yes',
     salary: '€80k - €120k',
     requirements: [
       '5+ years full-stack development',

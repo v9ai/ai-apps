@@ -51,7 +51,7 @@ Generated: [date]
 
 **Why it matches:**
 
-- ✅ Remote EU: Yes
+- ✅ Remote: Yes
 - ✅ Skills: 8/10 required skills match
 - ✅ Salary: Within your range (€X-Y)
 - ✅ Company: Scale-up (your preference)
@@ -91,7 +91,7 @@ Focus: [role/location/industry]
 ## Summary Statistics
 
 - Total listings: [N]
-- Remote EU jobs: [N] ([X%])
+- Remote jobs: [N] ([X%])
 - Average salary: €X (±Y)
 - Top hiring companies: [list]
 
@@ -198,7 +198,7 @@ Nice-to-haves:
 
 Your preferences will match jobs that:
 
-1. Are remote from EU
+1. Are fully remote
 2. Require [skill 1], [skill 2], or similar
 3. Pay at least €X
 4. Are from [company types]
@@ -290,7 +290,7 @@ Comparing: [N] jobs
 | ------------- | -------- | ---------- | ---------- |
 | Company       | [name]   | [name]     | [name]     |
 | Title         | [title]  | [title]    | [title]    |
-| Remote EU     | ✅ Yes   | ⚠️ Maybe   | ❌ No      |
+| Remote     | ✅ Yes   | ⚠️ Maybe   | ❌ No      |
 | Salary        | €X-Y     | €X-Y       | Not listed |
 | Skills Match  | 8/10     | 6/10       | 9/10       |
 | Company Stage | Series B | Enterprise | Seed       |
@@ -356,7 +356,7 @@ graph LR
 ```mermaid
 graph TD
     A[Total Jobs: 1000] --> B[Remote: 650]
-    B --> C[Remote EU: 450]
+    B --> C[Remote: 450]
     C --> D[Skills Match: 120]
     D --> E[Salary Match: 45]
     E --> F[Strong Match: 15]

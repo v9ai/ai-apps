@@ -668,7 +668,7 @@ Issue #7 ("Fix Next.js Issues", opened April 2024) remains open and uncommented.
 
 Several projects and services now address the NRD-to-lead problem with more complete implementations:
 
-- **Dealfront** (Leadfeeder + Echobot merger, 2023–2024): The dominant EU-focused company intent platform. Closed source, SaaS. Directly competes with what LeadsDB was trying to build; now covers web visitor identification, NRD signals, and job change alerts.
+- **Dealfront** (Leadfeeder + Echobot merger, 2023–2024): A dominant company intent platform (strongest in Europe, expanding globally). Closed source, SaaS. Directly competes with what LeadsDB was trying to build; now covers web visitor identification, NRD signals, and job change alerts.
 - **WhoisXML API NRD2 + direct enrichment stacks**: The data source LeadsDB abstracted over is now productised. WhoisXML sells a "Newly Registered Domains" feed with built-in WHOIS enrichment at $0.005/record, eliminating the Abstract API dependency for the core resolution step.
 - **Common Crawl + LLM extraction pipelines** (open source): Projects like `cc-net`, combined with Ollama/vLLM for local inference, can extract company descriptions from CC snapshots without Abstract API costs. The lead-gen codebase documented in this repo (`/Users/vadimnicolai/Public/ai-apps/apps/lead-gen`) implements this pattern natively.
 - **Clay.com**: Closed-source SaaS that assembles enrichment APIs into a no-code pipeline. Solves exactly LeadsDB's enrichment problem at the cost of $149–$800/month.

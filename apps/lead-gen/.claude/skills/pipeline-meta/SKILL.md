@@ -46,7 +46,7 @@ Evaluate which Ideal Customer Profile to target:
   "vertical": "CONSULTANCY|AGENCY|PRODUCT|STAFFING",
   "ai_tier": "ai_first|ai_native|other",
   "size_signal": "startup|scaleup|enterprise",
-  "geo": "EU|US|GLOBAL",
+  "geo": "GLOBAL",
   "hiring_signals": ["active_ats", "ai_jobs_posted", "growth_indicators"],
   "exclusions": ["blocked_domains", "already_contacted", "no_ai_presence"]
 }

@@ -1,0 +1,28 @@
+{
+  "runs": [
+    {
+      "run_id": 1,
+      "started_at": "2026-03-29T19:33:56Z",
+      "finished_at": "2026-03-29T19:42:09Z",
+      "duration_ms": 492810,
+      "phase": "Flowing",
+      "stages_completed": [
+        "discover",
+        "enrich",
+        "contacts",
+        "qa",
+        "outreach"
+      ],
+      "stages_failed": [],
+      "counts": {
+        "discovered": 29,
+        "enriched": 29,
+        "contacts_found": 13,
+        "outreach_drafted": 0,
+        "errors": 50
+      },
+      "exit_status": "success"
+    }
+  ],
+  "last_updated": "2026-03-29T19:42:09Z"
+}

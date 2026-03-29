@@ -18,7 +18,7 @@
             "regions": {
               "type": "array",
               "items": { "type": "string" },
-              "description": "Broader regions (EU, EMEA, etc.)"
+              "description": "Broader regions (Americas, EMEA, APAC, etc.)"
             },
             "timeZones": {
               "type": "array",

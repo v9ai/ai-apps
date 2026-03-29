@@ -1,7 +1,7 @@
 # Research Insights — ESCO skill taxonomy matching
 
 ## Executive Summary
-Recent research demonstrates that large language models (LLMs) and specialized multilingual models like ESCOXLM-R enable highly accurate, zero-shot skill matching against the ESCO taxonomy. Combining synthetic data generation with negative sampling strategies and shared embedding spaces (e.g., CareerBERT) significantly improves skill extraction and job‑resume matching, offering ready‑to‑implement solutions for EU‑focused job‑board aggregation.
+Recent research demonstrates that large language models (LLMs) and specialized multilingual models like ESCOXLM-R enable highly accurate, zero-shot skill matching against the ESCO taxonomy. Combining synthetic data generation with negative sampling strategies and shared embedding spaces (e.g., CareerBERT) significantly improves skill extraction and job‑resume matching, offering ready‑to‑implement solutions for global job‑board aggregation.
 
 ## Papers Reviewed
 
@@ -19,7 +19,7 @@ Recent research demonstrates that large language models (LLMs) and specialized m
 - **Relevance:** high
 - **Domain:** Multilingual NLP, job‑market tasks, taxonomy learning
 - **Key Finding:** ESCOXLM‑R, a domain‑adaptive pre‑trained model based on XLM‑R‑large and trained on the ESCO taxonomy across 27 languages, achieves state‑of‑the‑art results on 6 out of 9 job‑market tasks (skill extraction, classification, etc.).
-- **Actionable Insight:** Use ESCOXLM‑R as the base model for all skill‑extraction and classification pipelines across EU languages. Fine‑tune it on your own job‑posting corpus to leverage its built‑in taxonomical knowledge.
+- **Actionable Insight:** Use ESCOXLM‑R as the base model for all skill‑extraction and classification pipelines across multiple languages. Fine‑tune it on your own job‑posting corpus to leverage its built‑in taxonomical knowledge.
 - **Confidence:** high
 - **Source:** https://www.semanticscholar.org/paper/c07618042c9ad4ae4b296cc307f21d6b28d3dcdd
 
@@ -46,7 +46,7 @@ Recent research demonstrates that large language models (LLMs) and specialized m
 - **Relevance:** medium
 - **Domain:** Low‑resource NLP, distant supervision, skill classification
 - **Key Finding:** RemBERT significantly outperforms both English‑based and in‑language Danish models for zero‑shot and few‑shot skill classification when fine‑tuned with distant supervision from the ESCO API.
-- **Actionable Insight:** For low‑resource EU languages, adopt RemBERT as the backbone model and use the ESCO API to generate distant‑supervision labels. This approach works well with minimal annotated data.
+- **Actionable Insight:** For low‑resource languages, adopt RemBERT as the backbone model and use the ESCO API to generate distant‑supervision labels. This approach works well with minimal annotated data.
 - **Confidence:** medium
 - **Source:** https://www.semanticscholar.org/paper/dda533c329bf6594c7957836eceef0ff6c223f81
 
@@ -64,11 +64,12 @@ Recent research demonstrates that large language models (LLMs) and specialized m
 | Insight | Source Papers | Implementation Priority |
 |---------|---------------|------------------------|
 | Use LLMs for zero‑shot ESCO skill matching with synthetic data generation and GPT‑4 re‑ranking | [1] | P0 (immediate) |
-| Adopt ESCOXLM‑R as a multilingual base model for skill extraction and classification across 27 EU languages | [2] | P0 (immediate) |
+| Adopt ESCOXLM‑R as a multilingual base model for skill extraction and classification across 27 languages | [2] | P0 (immediate) |
 | Build a shared embedding space (CareerBERT‑style) to match resumes and job postings directly via ESCO‑based representations | [3] | P1 (next sprint) |
 | Implement fine‑grained skill classification using transformer models enriched with ESCO ontology context | [4] | P1 (next sprint) |
 | Apply negative sampling strategies that exploit ESCO taxonomic relations to improve skill‑extraction generalization | [6] | P1 (next sprint) |
 | Use RemBERT for low‑resource language skill classification with distant supervision from the ESCO API | [5] | P2 (backlog) |
+
 
 ## Implementation Roadmap
 
@@ -83,18 +84,18 @@ Recent research demonstrates that large language models (LLMs) and specialized m
 - **Integrate negative sampling:** Extend your skill‑extraction training with smart negative sampling that selects negatives from related ESCO skills (as in [6]).
 
 ### P2 (Backlog)
-- **Extend to low‑resource EU languages:** Apply RemBERT‑based zero‑shot classification for languages with limited training data (e.g., Danish, Finnish, Hungarian).
+- **Extend to low‑resource languages:** Apply RemBERT‑based zero‑shot classification for languages with limited training data (e.g., Danish, Finnish, Hungarian, Japanese, Korean).
 - **Build a multilingual skill‑normalization pipeline:** Use ESCOXLM‑R to normalize skill phrases across languages, mapping them to standardized ESCO identifiers.
 - **Integrate with job‑board aggregation:** Connect the skill‑matching pipeline to your job‑board aggregator to enable real‑time skill‑based filtering and recommendations.
 
 ## Open Questions
-- **Handling out‑of‑taxonomy skills:** How should skills that are not yet covered by ESCO be captured and incorporated into the matching pipeline?
+- **Handling out‑of‑taxonomy skills:** How should skills not yet covered by ESCO (or regional equivalents like O*NET) be captured and incorporated into the matching pipeline?
 - **GDPR compliance:** What safeguards are needed when using LLMs on job postings and resume data, especially for synthetic data generation?
 - **Cost‑effectiveness:** Is GPT‑4 re‑ranking economically viable at scale, or should open‑source LLMs (e.g., Llama, Mistral) be prioritized?
-- **Multilingual evaluation:** How well do these methods perform on job postings in less‑common EU languages (e.g., Bulgarian, Maltese)?
+- **Multilingual evaluation:** How well do these methods perform on job postings in less‑common languages worldwide (e.g., Bulgarian, Maltese, Thai, Arabic)?
 
 ## Confidence Assessment
 - **Total papers reviewed:** 6
 - **With code/benchmarks:** 6 (all papers include empirical evaluations and benchmarks)
-- **EU‑specific:** 6 (all papers explicitly focus on the ESCO taxonomy and EU labor‑market context)
+- **ESCO‑specific:** 6 (all papers explicitly focus on the ESCO taxonomy and labor‑market context)
 - **Overall confidence:** 85% – The literature provides strong, consistent evidence that ESCO‑driven NLP techniques (LLMs, multilingual pre‑training, negative sampling, shared embeddings) deliver robust skill‑matching performance. Implementation details are sufficiently concrete to guide immediate development.

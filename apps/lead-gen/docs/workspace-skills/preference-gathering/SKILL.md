@@ -243,11 +243,11 @@ You can update these anytime. Ready to see some matching jobs?"
 
 ### Unrealistic Combinations
 
-**Example:** "Fully remote from EU with required daily 9am PST meetings"
+**Example:** "Fully remote with required daily 9am PST meetings"
 
 **Response:**
 
-> "I see you want fully remote from EU, but the 9am PST requirement would mean starting work at 5-6pm CET. Is that feasible for you, or should we focus on roles with European time zones?"
+> "I see you want fully remote, but the 9am PST requirement would limit your timezone flexibility. Is that feasible for you, or should we focus on roles with more flexible time zone overlap?"
 
 ### Vague Responses
 
@@ -283,7 +283,7 @@ Implied from context but not explicitly confirmed:
 
 - User mentions React projects → inferred React preference
 - User says "startup" → might mean early-stage or scale-up
-- User mentions Germany → might be open to other EU countries
+- User mentions Germany → might be open to other countries in that region
 
 ### ❓ Low Confidence (Uncertain)
 

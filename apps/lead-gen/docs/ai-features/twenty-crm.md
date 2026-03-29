@@ -553,7 +553,7 @@ Twenty is the best available open-source CRM foundation for an AI-native B2B lea
 
 **Pattern A — External MCP for AI Desktop clients:**
 
-Deploy `jezweb/twenty-mcp` (or fork it) pointed at the self-hosted Twenty instance. This gives Claude Desktop, Cursor, and other MCP clients full CRM access. The lead-gen team can then use Claude to run queries like "show me all contacts at Series B companies in the EU with no outreach in 30 days."
+Deploy `jezweb/twenty-mcp` (or fork it) pointed at the self-hosted Twenty instance. This gives Claude Desktop, Cursor, and other MCP clients full CRM access. The lead-gen team can then use Claude to run queries like "show me all contacts at Series B companies worldwide with no outreach in 30 days."
 
 **Pattern B — Logic Function MCP bridge:**
 

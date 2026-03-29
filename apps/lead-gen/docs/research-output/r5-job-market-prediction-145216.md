@@ -29,9 +29,9 @@
 ### [4] Predictive Algorithms in the Delivery of Public Employment Services (2021, 22 citations)
 - **Authors:** John L. Körtner, G. Bonoli
 - **Relevance:** medium
-- **Domain:** recruitment tech / EU employment
+- **Domain:** recruitment tech / public employment
 - **Key Finding:** Predictive algorithms are used in public employment services for profiling, targeting, and matching; algorithmic fairness and caseworker interaction are critical considerations.
-- **Actionable Insight:** Adopt similar predictive profiling for job seekers on the platform, but ensure fairness and transparency to avoid bias; consider hybrid human‑AI decision support to align with EU regulatory expectations.
+- **Actionable Insight:** Adopt similar predictive profiling for job seekers on the platform, but ensure fairness and transparency to avoid bias; consider hybrid human‑AI decision support to align with regulatory expectations worldwide.
 - **Source:** https://www.semanticscholar.org/paper/56206add8fc115e1c2e4529555a338b87f2b4e5c
 
 ### [5] A New Spatial Hedonic Equilibrium in the Emerging Work‑from‑Home Economy? (2021, 105 citations)
@@ -60,7 +60,7 @@ Based on the literature for **job market prediction**:
 2. **Implement a neural matching engine** with explainable attention mechanisms for person‑job fit, improving match accuracy and providing transparent reasoning to users.
 3. **Build a dynamic graph‑based forecasting system** that predicts regional skill demand‑supply imbalances, enabling proactive job recommendations and early‑warning alerts for employers.
 4. **Incorporate fairness audits and transparency reports** for any algorithmic profiling used on the platform, aligning with EU AI Act principles and building user trust.
-5. **Track remote‑work adoption across EU regions** and adjust job‑aggregation strategies to capture emerging remote hubs, ensuring comprehensive coverage of distributed opportunities.
+5. **Track remote‑work adoption across global regions** and adjust job‑aggregation strategies to capture emerging remote hubs, ensuring comprehensive coverage of distributed opportunities worldwide.
 
 ## Confidence Assessment
 - **Total papers reviewed:** 5
@@ -68,4 +68,4 @@ Based on the literature for **job market prediction**:
 - **Academic papers:** 5
 - **Overall confidence:** 75%
 
-*Rationale:* The literature provides strong coverage of prediction methods (neural matching, graph‑based forecasting, algorithmic profiling) and highlights key trends (LLM impact, remote‑work spatial shifts). However, direct research on EU‑specific remote‑job‑market prediction is sparse, and no recent industry reports were found. Additional field‑specific studies (e.g., tech‑job forecasting, EU labour‑market reports) would raise confidence further.
+*Rationale:* The literature provides strong coverage of prediction methods (neural matching, graph-based forecasting, algorithmic profiling) and highlights key trends (LLM impact, remote-work spatial shifts). However, direct research on global remote-job-market prediction is sparse, and no recent industry reports were found. Additional field-specific studies (e.g., tech-job forecasting, global labour-market reports) would raise confidence further.

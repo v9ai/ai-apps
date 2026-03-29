@@ -60,7 +60,7 @@ Key file: `langgraph/src/graphs/linkedin_contact/` (company discovery component)
 ### 1. Scope
 
 Read the action plan for target ICP and batch size. Examples:
-- "Discover 50 AI consultancies in EU with 50-500 employees"
+- "Discover 50 AI consultancies worldwide with 50-500 employees"
 - "Find product companies with active Ashby boards posting ML roles"
 
 ### 2. Search

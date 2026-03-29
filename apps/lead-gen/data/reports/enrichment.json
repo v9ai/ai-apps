@@ -1,4 +1,600 @@
 {
-  "companies": [],
-  "errors": []
+  "companies": [
+    {
+      "domain": "deepsense.ai",
+      "name": "Deepsense",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "kubernetes",
+        "mlops",
+        "deep learning",
+        "llm",
+        "gcp",
+        "go",
+        "scala",
+        "langchain",
+        "rag",
+        "computer vision"
+      ],
+      "emails_found": [
+        "recruitment@deepsense.ai"
+      ],
+      "has_careers_page": true,
+      "remote_policy": 1,
+      "enrichment_score": 0.888,
+      "confidence": 0.4
+    },
+    {
+      "domain": "aisuperior.com",
+      "name": "Aisuperior",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "technology",
+      "tech_stack": [
+        "rust",
+        "machine learning",
+        "deep learning",
+        "llm",
+        "gpt",
+        "react",
+        "go",
+        "scala",
+        "rag",
+        "computer vision",
+        "nlp"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 3,
+      "enrichment_score": 0.758,
+      "confidence": 0.4
+    },
+    {
+      "domain": "explosion.ai",
+      "name": "Explosion",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "devtools",
+      "tech_stack": [
+        "python",
+        "machine learning",
+        "deep learning",
+        "llm",
+        "transformer",
+        "go",
+        "rag",
+        "embeddings",
+        "computer vision",
+        "nlp"
+      ],
+      "emails_found": [
+        "matt@explosion.ai",
+        "ines@explosion.ai",
+        "contact@explosion.ai"
+      ],
+      "has_careers_page": false,
+      "remote_policy": 2,
+      "enrichment_score": 0.7979999999999999,
+      "confidence": 0.4
+    },
+    {
+      "domain": "netguru.com",
+      "name": "Netguru",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "python",
+        "machine learning",
+        "llm",
+        "gpt",
+        "aws",
+        "azure",
+        "react",
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [
+        "0000745671hello@netguru.comcertificates:next",
+        "hello@netguru.com"
+      ],
+      "has_careers_page": true,
+      "remote_policy": 1,
+      "enrichment_score": 0.888,
+      "confidence": 0.4
+    },
+    {
+      "domain": "artefact.com",
+      "name": "Artefact",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "mlops",
+        "go",
+        "scala",
+        "databricks",
+        "rag",
+        "nlp"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 2,
+      "enrichment_score": 0.7705,
+      "confidence": 0.4
+    },
+    {
+      "domain": "inform-software.com",
+      "name": "Inform Software",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "remote_policy": 0,
+      "enrichment_score": 0.483,
+      "confidence": 0.4
+    },
+    {
+      "domain": "xebia.com",
+      "name": "Xebia",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "technology",
+      "tech_stack": [
+        "rust",
+        "aws",
+        "go",
+        "scala",
+        "databricks",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.7204999999999999,
+      "confidence": 0.4
+    },
+    {
+      "domain": "accenture.com",
+      "name": "Accenture",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "go",
+        "spark",
+        "databricks"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.6829999999999999,
+      "confidence": 0.4
+    },
+    {
+      "domain": "capgemini.com",
+      "name": "Capgemini",
+      "category": "STAFFING",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "go",
+        "scala"
+      ],
+      "emails_found": [
+        "@capgemini.com",
+        "@sogeti.com",
+        "@frog.co"
+      ],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.44549999999999995,
+      "confidence": 0.4
+    },
+    {
+      "domain": "appliedai.de",
+      "name": "Appliedai",
+      "category": "STAFFING",
+      "ai_tier": "ai_first",
+      "industry": "technology",
+      "tech_stack": [
+        "rust",
+        "mlops",
+        "machine learning",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [
+        "info@appliedai.de"
+      ],
+      "has_careers_page": false,
+      "remote_policy": 0,
+      "enrichment_score": 0.44049999999999995,
+      "confidence": 0.4
+    },
+    {
+      "domain": "cambridgeconsultants.com",
+      "name": "Cambridgeconsultants",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "llm",
+        "go",
+        "rag"
+      ],
+      "emails_found": [
+        "demian.till@cambridgeconsultants.com"
+      ],
+      "has_careers_page": true,
+      "remote_policy": 2,
+      "enrichment_score": 0.8029999999999999,
+      "confidence": 0.4
+    },
+    {
+      "domain": "reply.com",
+      "name": "Reply",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "technology",
+      "tech_stack": [
+        "aws",
+        "go",
+        "rag",
+        "computer vision"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "remote_policy": 2,
+      "enrichment_score": 0.723,
+      "confidence": 0.4
+    },
+    {
+      "domain": "alexanderthamm.com",
+      "name": "Alexanderthamm",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "mlops",
+        "machine learning",
+        "go",
+        "computer vision",
+        "nlp"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "remote_policy": 0,
+      "enrichment_score": 0.5017499999999999,
+      "confidence": 0.4
+    },
+    {
+      "domain": "ekimetrics.com",
+      "name": "Ekimetrics",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "machine learning",
+        "go"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 2,
+      "enrichment_score": 0.6955,
+      "confidence": 0.4
+    },
+    {
+      "domain": "sicara.fr",
+      "name": "Sicara",
+      "category": "PRODUCT",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.633,
+      "confidence": 0.4
+    },
+    {
+      "domain": "kernix.com",
+      "name": "Kernix",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "machine learning",
+        "deep learning",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "remote_policy": 0,
+      "enrichment_score": 0.483,
+      "confidence": 0.4
+    },
+    {
+      "domain": "zeta-alpha.com",
+      "name": "Zeta Alpha",
+      "category": "AGENCY",
+      "ai_tier": "ai_first",
+      "industry": "devtools",
+      "tech_stack": [
+        "llm",
+        "go",
+        "scala",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.5529999999999999,
+      "confidence": 0.4
+    },
+    {
+      "domain": "ortec.com",
+      "name": "Ortec",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.5255,
+      "confidence": 0.4
+    },
+    {
+      "domain": "d-fine.com",
+      "name": "D Fine",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "machine learning",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "remote_policy": 0,
+      "enrichment_score": 0.51425,
+      "confidence": 0.4
+    },
+    {
+      "domain": "futurice.com",
+      "name": "Futurice",
+      "category": "AGENCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "aws",
+        "go",
+        "rag"
+      ],
+      "emails_found": [
+        "nordicsrecruitment@futurice.comnea",
+        "finlandrecruitment@futurice.comtheresa",
+        "hctheresa.glanzberg@futurice.comhannah",
+        "director+447432081344hannah.rawlinson@futurice.commaria",
+        "6950maria.calonius@futurice.comluana",
+        "recruitment@futurice.com",
+        "theresa.glanzberg@futurice.com",
+        "hannah.rawlinson@futurice.com",
+        "maria.calonius@futurice.com"
+      ],
+      "has_careers_page": true,
+      "remote_policy": 1,
+      "enrichment_score": 0.66425,
+      "confidence": 0.4
+    },
+    {
+      "domain": "faculty.ai",
+      "name": "Faculty",
+      "category": "STAFFING",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "machine learning"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.37549999999999994,
+      "confidence": 0.4
+    },
+    {
+      "domain": "commasoft.de",
+      "name": "Commasoft",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "mlops",
+        "go",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.66425,
+      "confidence": 0.4
+    },
+    {
+      "domain": "datatonic.com",
+      "name": "Datatonic",
+      "category": "AGENCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "go",
+        "scala",
+        "langchain"
+      ],
+      "emails_found": [
+        "jobs@datatonic.com"
+      ],
+      "has_careers_page": true,
+      "remote_policy": 2,
+      "enrichment_score": 0.5842499999999999,
+      "confidence": 0.4
+    },
+    {
+      "domain": "ceadar.ie",
+      "name": "Ceadar",
+      "category": "PRODUCT",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "rag"
+      ],
+      "emails_found": [
+        "ceadar@ucd.ie"
+      ],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.5067499999999999,
+      "confidence": 0.4
+    },
+    {
+      "domain": "merantix.com",
+      "name": "Merantix",
+      "category": "STAFFING",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "go"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.35674999999999996,
+      "confidence": 0.4
+    },
+    {
+      "domain": "aleph-alpha.com",
+      "name": "Aleph Alpha",
+      "category": "PRODUCT",
+      "ai_tier": "other",
+      "industry": "technology",
+      "tech_stack": [
+        "llm",
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": false,
+      "remote_policy": 0,
+      "enrichment_score": 0.3155,
+      "confidence": 0.4
+    },
+    {
+      "domain": "computas.com",
+      "name": "Computas",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_first",
+      "industry": "healthcare",
+      "tech_stack": [
+        "rust",
+        "go"
+      ],
+      "emails_found": [
+        "20kontakt@computas.com",
+        "contact@computas.com"
+      ],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.6455,
+      "confidence": 0.4
+    },
+    {
+      "domain": "zuehlke.com",
+      "name": "Zuehlke",
+      "category": "CONSULTANCY",
+      "ai_tier": "ai_native",
+      "industry": "technology",
+      "tech_stack": [
+        "rag"
+      ],
+      "emails_found": [],
+      "has_careers_page": true,
+      "remote_policy": 0,
+      "enrichment_score": 0.55675,
+      "confidence": 0.4
+    },
+    {
+      "domain": "profusion.com",
+      "name": "Profusion",
+      "category": "AGENCY",
+      "ai_tier": "ai_native",
+      "industry": "healthcare",
+      "tech_stack": [
+        "go"
+      ],
+      "emails_found": [
+        "recruitment@profusion.com.",
+        "recruitment@profusion.com"
+      ],
+      "has_careers_page": true,
+      "remote_policy": 2,
+      "enrichment_score": 0.54675,
+      "confidence": 0.4
+    }
+  ],
+  "errors": [
+    "deepsense.ai: LLM classify: LLM classification parse error: trailing characters at line 1 column 80\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"Technology & Software\"}<|im_end|>",
+    "aisuperior.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 68\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"Insurance\"}<|im_end|>",
+    "explosion.ai: LLM classify: LLM classification parse error: trailing characters at line 1 column 78\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"TECHNOLOGY_SERVICES\"}<|im_end|>",
+    "netguru.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 74\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"other\",\"industry\":\"Retail & E-commerce\"}<|im_end|>",
+    "artefact.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 98\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"Financial Services &amp; Private Equity\"}<|im_end|>",
+    "inform-software.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 79\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"other\",\"industry\":\"Logistics & Supply Chain\"}<|im_end|>",
+    "xebia.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 80\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"Technology & Software\"}<|im_end|>",
+    "accenture.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 64\nRaw: {\"category\":\"AGENCY\",\"ai_tier\":\"ai_first\",\"industry\":\"FINANCE\"}<|im_end|>",
+    "capgemini.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 71\nRaw: {\"category\":\"AGENCY\",\"ai_tier\":\"ai_native\",\"industry\":\"Manufacturing\"}<|im_end|>",
+    "appliedai.de: LLM classify: LLM classification parse error: trailing characters at line 1 column 69\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"TECHNOLOGY\"}<|im_end|>",
+    "cambridgeconsultants.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 249\nRaw: {\"category\":\"CONSULTANCY|AGENCY|STAFFING|PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"Technology|Aerospace|Agriculture|Consumer Products|Defense and Security|Energy|Life Sciences|Pharmaceuticals|Retail and Logistics|Semiconductor|Telecommunications\"}<|im_end|>",
+    "reply.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 84\nRaw: {\"category\":\"AGENCY\",\"ai_tier\":\"ai_native\",\"industry\":\"TECHNOLOGY AND CONSULTANCY\"}<|im_end|>",
+    "alexanderthamm.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 111\nRaw: {\"category\":\"AGENCY\",\"ai_tier\":\"ai_native\",\"industry\":\"FINANCE|LOGISTICS|CHEMICAL|ELECTRONIC|MANUFACTURINGUN\"}}<|im_end|>",
+    "ekimetrics.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 77\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"FINANCIAL_SERVICES\"}<|im_end|>",
+    "sicara.fr: LLM classify: LLM classification parse error: trailing characters at line 1 column 66\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"FINANCE\"}<|im_end|>",
+    "kernix.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 73\nRaw: {\"category\":\"AGENCY\",\"ai_tier\":\"other\",\"industry\":\"WEBSITES & SOFTWARE\"}<|im_end|>",
+    "zeta-alpha.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 78\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"TECHNOLOGY_SERVICES\"}<|im_end|>",
+    "ortec.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 94\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"other\",\"industry\":\"Manufacturing|Retail & Wholesale|Energy\"}<|im_end|>",
+    "d-fine.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 822\nRaw: {\"category\":\"CONSULTANCY|AGENCY|STAFFING\",\"ai_tier\":\"other\",\"industry\":\"Banking & Capital Markets; Fintechs & Neobanks; Exchanges & Clearing Houses; Supervisory Authorities & Central Banks; Industry Associations & Service Providers; Insurance & Asset Management; Property & Casualty Insurance; Life & Health Insurance; Re-Insurance; Capital Management Companies; Asset Management; Pension Funds; Energy & Industrials; Utilities; Construction; Logistics; Consumer & Services; Consumer Products; Retail; Mobility; Real Estate Operations; Transportation; Automotive; Sports; Healthcare; Life Sciences; Pharma; Distribution; Medtech; Care; Technology; Software; Infrastructure; Telecom; Media; Public Sector; National and EU Authorities; Public Companies; Healthcare; Public Transport; Research and Non-Profit Organizations\"}<|im_end|>",
+    "futurice.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 76\nRaw: {\"category\":\"AGENCY\",\"ai_tier\":\"ai_first\",\"industry\":\"Technology Services\"}<|im_end|>",
+    "faculty.ai: LLM classify: LLM classification parse error: trailing characters at line 1 column 70\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"AI_SERVICES\"}<|im_end|>",
+    "commasoft.de: LLM classify: LLM classification parse error: trailing characters at line 1 column 111\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"FINANCE|PHARMA|HEALTHCARE|MANUFACTURINGING|INSURANCE\"}<|im_end|>",
+    "datatonic.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 77\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"FINANCIAL_SERVICES\"}<|im_end|>",
+    "ceadar.ie: LLM classify: LLM classification parse error: trailing characters at line 1 column 62\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"other\",\"industry\":\"FINANCE\"}<|im_end|>",
+    "merantix.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 86\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"AI Development & Consulting\"}<|im_end|>",
+    "aleph-alpha.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 66\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"FINANCE\"}<|im_end|>",
+    "computas.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 70\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"other\",\"industry\":\"Technology & IT\"}<|im_end|>",
+    "zuehlke.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 78\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"other\",\"industry\":\"Technology & Innovation\"}<|im_end|>",
+    "profusion.com: LLM classify: LLM classification parse error: trailing characters at line 1 column 66\nRaw: {\"category\":\"PRODUCT\",\"ai_tier\":\"ai_native\",\"industry\":\"FINANCE\"}<|im_end|>"
+  ]
 }

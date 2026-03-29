@@ -1,5 +1,5 @@
 /**
- * Location filter for excluding non-EU/non-remote job postings.
+ * Location filter for excluding non-remote job postings from specific regions.
  * Filters out jobs clearly located in South Asia regions (India, Pakistan, Sri Lanka).
  */
 export const EXCLUDED_LOCATION_PATTERNS =

@@ -23,7 +23,7 @@ function findDismissButton(card: Element): HTMLButtonElement | null {
 
 
 
-// ── Auto-Dismiss Non-EU Location Jobs ───────────────────────────────
+// ── Auto-Dismiss Excluded-Location Jobs ─────────────────────────────
 
 const DISMISS_LOCATION_PATTERNS = /\b(india|bengaluru|bangalore|mumbai|navi mumbai|hyderabad|new delhi|delhi|ncr|chennai|pune|gurugram|gurgaon|noida|greater noida|kolkata|ahmedabad|jaipur|lucknow|thiruvananthapuram|kochi|coimbatore|indore|nagpur|chandigarh|bhubaneswar|visakhapatnam|vizag|mysore|mysuru|mangalore|mangaluru|trivandrum|secunderabad|thane|vadodara|surat|rajkot|tiruchirappalli|trichy|madurai|vijayawada|warangal|guntur|nellore|kurnool|rajahmundry|kakinada|tirupati|anantapur|karimnagar|nizamabad|khammam|sri\s*lanka|colombo|kandy|galle|negombo|jaffna|pakistan|karachi|lahore|islamabad|rawalpindi|faisalabad|multan|peshawar|quetta|sialkot|gujranwala)\b/i;
 

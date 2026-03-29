@@ -13,17 +13,17 @@ Reference guide for identifying remote work compatibility in job postings.
 
 ### Location Indicators
 
-- "Europe" / "European Union" / "EU"
-- Lists multiple EU countries (Germany, France, Spain, etc.)
-- "EMEA" (Europe, Middle East, Africa) - often includes EU
-- Specific EU cities with "or remote"
+- "Worldwide" / "Global" / "Work from anywhere"
+- Lists multiple countries or regions (Europe, Americas, APAC, etc.)
+- "EMEA" / "APAC" / "Americas" - regional indicators
+- Specific cities with "or remote"
 
 ### Time Zone Mentions
 
 - "CET" / "CEST" (Central European Time)
 - "GMT" / "BST" (UK time zones)
-- "European time zones"
-- "Flexible working hours"
+- "EST" / "PST" (US time zones)
+- "Any time zone" / "Flexible working hours"
 - "Async-first" / "Asynchronous communication"
 
 ### Company Culture
@@ -33,29 +33,28 @@ Reference guide for identifying remote work compatibility in job postings.
 - "Async communication preferred"
 - "Results-oriented work environment"
 
-## Negative Indicators (Not Remote EU)
+## Negative Indicators (Not Remote-Friendly)
 
 ### Office Requirements
 
 - "In-office" / "On-site"
-- "Hybrid" (without EU office location)
+- "Hybrid" (without remote option)
 - "3 days per week in office"
 - "Relocation required"
-- "Must be local to [non-EU city]"
+- "Must be local to [specific city]"
 
 ### Location Restrictions
 
-- "US citizens only"
-- "Must be authorized to work in [non-EU country]"
-- "Local candidates only" (when not EU location)
-- "No visa sponsorship" (from non-EU country)
+- "[Country] citizens only"
+- "Must be authorized to work in [specific country]"
+- "Local candidates only"
+- "No visa sponsorship"
 
 ### Time Zone Requirements
 
-- "Must work PST hours" (Pacific Standard Time)
-- "EST/CST working hours required"
-- "Overlap with San Francisco office 9-5"
-- "Real-time availability during US business hours"
+- "Must work [specific timezone] hours" with no flexibility
+- "Real-time availability during [specific] business hours only"
+- Strict overlap requirements incompatible with remote worldwide
 
 ## Ambiguous Indicators (Needs Verification)
 
@@ -63,53 +62,53 @@ Reference guide for identifying remote work compatibility in job postings.
 
 - "Remote" without location details
 - "Flexible work arrangement"
-- "EMEA region" (too broad)
-- "Global team"
+- Single region listed (e.g., "EMEA only")
+- "Global team" without specifying hiring regions
 
 ### Hybrid Mentions
 
-- "Hybrid" (check if EU office exists)
-- "Office-optional" (verify EU presence)
-- "Quarterly team gatherings" (travel feasible from EU?)
+- "Hybrid" (check if remote option exists)
+- "Office-optional" (verify true remote availability)
+- "Quarterly team gatherings" (travel requirements unclear)
 
 ### Visa/Legal Unclear
 
-- "Contractor" (might allow EU, check details)
-- "B2B arrangement" (often more flexible)
-- "EOR supported" (Employer of Record can enable EU)
+- "Contractor" (might allow worldwide, check details)
+- "B2B arrangement" (often more flexible for international)
+- "EOR supported" (Employer of Record enables international hiring)
 
 ## Classification Guidelines
 
-### Classify as ✅ YES if:
+### Classify as ✅ YES (remote_match) if:
 
-- Explicitly states remote AND allows EU
-- Lists EU countries or European time zones
-- Company is known remote-first with EU employees
-- No office requirement AND no location restrictions
+- Explicitly states remote AND open to worldwide/global hiring
+- Lists multiple countries or "work from anywhere"
+- Company is known remote-first with global employees
+- No office requirement AND no restrictive location limitations
 
 ### Classify as ⚠️ MAYBE if:
 
 - Says remote but no location details
-- EMEA listed (too broad, could exclude EU)
+- Single region listed (could be restrictive)
 - Contractor role without location specified
 - Hybrid with unclear office locations
 
-### Classify as ❌ NO if:
+### Classify as ❌ NO (remote_nomatch) if:
 
-- Requires office presence in non-EU location
-- Explicitly excludes EU
-- Requires non-EU work authorization only
-- Time zone requirements incompatible with EU
-- "Local only" to non-EU area
+- Requires office presence
+- Restricts to a single country's residents only
+- Requires specific work authorization only
+- Strict time zone requirements incompatible with remote worldwide
+- "Local only" to a specific area
 
 ## Examples
 
 ### ✅ Clear YES
 
 ```
-"Remote across Europe (Germany, France, Netherlands, Spain)"
-"CET timezone, fully remote"
-"We're a remote-first company with employees across the EU"
+"Remote - work from anywhere worldwide"
+"Fully distributed team across 30+ countries"
+"We're a remote-first company hiring globally"
 ```
 
 ### ⚠️ Needs Verification
@@ -117,7 +116,7 @@ Reference guide for identifying remote work compatibility in job postings.
 ```
 "Remote, but must overlap with PST hours"
 "EMEA region" (no specifics)
-"Remote with occasional travel to London office"
+"Remote with occasional travel to HQ"
 ```
 
 ### ❌ Clear NO
@@ -126,7 +125,7 @@ Reference guide for identifying remote work compatibility in job postings.
 "Hybrid - 3 days/week in our San Francisco office"
 "Must be local to New York"
 "Remote US only"
-"UK-based candidates only" (post-Brexit, not EU)
+"Must be authorized to work in [specific country] only"
 ```
 
 ## Tips for Agents
@@ -134,6 +133,6 @@ Reference guide for identifying remote work compatibility in job postings.
 1. **Look for multiple signals**: Don't rely on a single keyword
 2. **Company research helps**: Known remote-first companies are safer bets
 3. **When unclear, flag as MAYBE**: Let users verify with recruiters
-4. **Time zones matter**: PST/EST requirements often exclude EU
+4. **Time zones matter**: Strict single-timezone requirements limit remote worldwide viability
 5. **Contractor > Employee**: For cross-border, contractor roles more flexible
 6. **EOR is good**: "Employer of Record" enables international hiring
