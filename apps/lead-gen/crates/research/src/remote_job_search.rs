@@ -1,5 +1,5 @@
 /// 15 parallel DeepSeek agents researching how to land a fully remote AI/ML
-/// engineering role in the EU, backed by Semantic Scholar paper search, saving
+/// engineering role worldwide, backed by Semantic Scholar paper search, saving
 /// results to D1.
 ///
 /// Uses [`TeamLead`] + [`TaskQueue`] for dynamic claiming, retry (max 2 attempts),
@@ -36,7 +36,7 @@ pub const TOPICS: &[TopicDef] = &[
             "AI engineer job market trends 2024 2025",
             "machine learning engineer hiring demand remote",
         ],
-        prompt_focus: "Current AI/ML hiring landscape: which roles are in highest demand, which companies hire remotely in EU, remote vs hybrid ratios, compensation trends for AI engineers.",
+        prompt_focus: "Current AI/ML hiring landscape: which roles are in highest demand, which companies hire remotely worldwide, remote vs hybrid ratios, compensation trends for AI engineers.",
     },
     TopicDef {
         slug: "ai-ml-skill-signals-hiring",
@@ -116,15 +116,15 @@ pub const TOPICS: &[TopicDef] = &[
         prompt_focus: "How remote-first AI teams hire: async assessments, distributed onboarding, culture fit evaluation, timezone considerations, remote collaboration tool proficiency signals.",
     },
     TopicDef {
-        slug: "eu-cross-border-ai-employment",
-        title: "EU Cross-Border Employment for AI Engineers",
+        slug: "cross-border-ai-employment",
+        title: "Cross-Border Employment for Remote AI Engineers",
         difficulty: "advanced",
-        tags: &["EU", "employment-law", "EOR", "cross-border"],
+        tags: &["employment-law", "EOR", "cross-border", "global"],
         search_queries: &[
-            "cross-border remote employment European Union",
-            "employer of record EU technology workers",
+            "cross-border remote employment technology workers",
+            "employer of record global remote engineers",
         ],
-        prompt_focus: "EU employment for AI engineers: EOR platforms (Deel, Remote.com), contractor vs employee status, work permits, tax implications, which EU countries are most favorable for remote AI workers.",
+        prompt_focus: "Global remote employment for AI engineers: EOR platforms (Deel, Remote.com, Oyster), contractor vs employee status, work permits, tax implications, which countries are most favorable for remote AI workers.",
     },
     TopicDef {
         slug: "salary-negotiation-ai-remote",
@@ -135,7 +135,7 @@ pub const TOPICS: &[TopicDef] = &[
             "salary negotiation strategies software engineers",
             "remote work compensation AI engineer benchmarks",
         ],
-        prompt_focus: "Compensation benchmarks for remote AI engineers in EU, location-adjusted pay, equity negotiation, negotiation research and frameworks, total compensation optimization.",
+        prompt_focus: "Compensation benchmarks for remote AI engineers globally, location-adjusted pay, equity negotiation, negotiation research and frameworks, total compensation optimization.",
     },
     TopicDef {
         slug: "ai-recruiter-screening-signals",
@@ -226,7 +226,7 @@ pub async fn run_synthesis(api_key: &str, d1: &D1Client) -> Result<()> {
         combined.push_str(&format!("\n\n---\n# {title}\n\n{body}"));
     }
 
-    let preamble = r#"You are a career strategy advisor for a senior software engineer seeking a fully remote AI/ML engineering position in the European Union in 2026.
+    let preamble = r#"You are a career strategy advisor for a senior software engineer seeking a fully remote AI/ML engineering position worldwide in 2026.
 
 You have just read 15 research reports covering every aspect of this job search — from market analysis to interview prep to salary negotiation.
 
@@ -252,7 +252,7 @@ What to prepare, in what order, with specific resources and practice approaches.
 ## Networking & Visibility Plan
 Specific actions to build visibility in the AI engineering community.
 
-## EU Employment Logistics
+## Remote Employment Logistics
 EOR, tax, contracts — practical logistics distilled from the research.
 
 ## Salary & Negotiation Playbook
@@ -290,7 +290,7 @@ Be specific, actionable, and data-backed. No fluff. This is a senior engineer's 
     let row = StudyTopicRow {
         category: CATEGORY.into(),
         topic: "synthesis".into(),
-        title: "Master Job Search Playbook — Remote AI/ML Engineer in EU".into(),
+        title: "Master Job Search Playbook — Remote AI/ML Engineer Worldwide".into(),
         summary,
         body_md,
         difficulty: "advanced".into(),
@@ -415,13 +415,13 @@ async fn search_topic_papers(
 ) -> Result<String> {
     let system = format!(
         "You are a research assistant helping a senior software engineer find a fully remote \
-         AI/ML engineering position in the European Union.\n\n\
+         AI/ML engineering position worldwide.\n\n\
          Your task: Find the most relevant academic papers and research on \"{title}\".\n\
          Use the search tools to find at least 7 key papers. Prefer papers from 2024 or later.\n\
          For each paper return:\n\
          - Title, year, citation count\n\
          - Key contribution in 1-2 sentences\n\
-         - Why it matters for finding a remote AI engineering job in the EU\n\
+         - Why it matters for finding a remote AI engineering job globally\n\
          Return ONLY a markdown bullet list of findings — no study guide, no extra text.",
         title = topic.title,
     );
@@ -436,7 +436,7 @@ async fn search_topic_papers(
 
     let prompt = format!(
         "Find academic papers on: **{title}**\n\nTry these queries:\n{queries}\n\n\
-         Then try 3-4 additional queries you think are relevant to finding a remote AI job in the EU.\n\
+         Then try 3-4 additional queries you think are relevant to finding a remote AI job globally.\n\
          Target at least 7 papers. Prefer 2024+ publications.\n\n\
          Return a markdown bullet list of the most relevant papers found.",
         title = topic.title,
@@ -463,14 +463,14 @@ async fn write_strategy_report(
     api_key: &str,
 ) -> Result<StudyTopicRow> {
     let preamble = format!(
-        r#"You are a career strategy advisor for a senior software engineer seeking a fully remote AI/ML engineering position in the European Union in 2026.
+        r#"You are a career strategy advisor for a senior software engineer seeking a fully remote AI/ML engineering position worldwide in 2026.
 
 Your task: Write an actionable strategy report on "{title}" using the research findings provided.
 
 Write in this EXACT format — return ONLY the markdown body, no JSON wrapper:
 
 ## Overview
-2-3 paragraphs: what the research says about this topic and why it matters for landing a remote AI engineering role in the EU.
+2-3 paragraphs: what the research says about this topic and why it matters for landing a remote AI engineering role globally.
 
 ## Key Findings
 Data-backed insights from the research. Cite specific papers, statistics, and evidence.

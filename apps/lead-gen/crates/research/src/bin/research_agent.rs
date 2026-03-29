@@ -69,7 +69,7 @@ enum Command {
         topic: String,
 
         /// Focus areas (comma-separated)
-        #[arg(short, long, default_value = "remote work,distributed teams,EU employment")]
+        #[arg(short, long, default_value = "remote work,distributed teams,global employment")]
         focus: String,
 
         /// Output directory
@@ -173,13 +173,13 @@ async fn main() -> Result<()> {
                 std::env::var("SEMANTIC_SCHOLAR_API_KEY").ok().as_deref(),
             );
 
-            let preamble = r#"You are a research analyst for a remote EU job board aggregator.
+            let preamble = r#"You are a research analyst for a global remote job board aggregator.
 You have access to the Semantic Scholar API via search_papers and get_paper_detail.
 
 Research standards:
 - Always run ≥3 search_papers calls with different query terms
 - Call get_paper_detail on the 3–4 most promising papers for full abstracts
-- Weight recent papers (2020+) on remote work, distributed teams, EU employment higher
+- Weight recent papers (2020+) on remote work, distributed teams, global employment higher
 - Extract actionable insights for job board aggregation (classification, skill matching, etc.)
 - Report confidence honestly — say 'insufficient evidence' if the literature is sparse"#;
 

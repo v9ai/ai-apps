@@ -11,7 +11,7 @@ pub struct Verdict {
 const THRESHOLD: i32 = 2;
 
 /// Score a post for job-search relevance.
-/// Positive signals: hiring, AI/ML, remote/EU, engineering, company insight.
+/// Positive signals: hiring, AI/ML, remote/global, engineering, company insight.
 /// Negative signals: empty text, pure social noise, very short.
 pub fn score(post: &Post) -> Verdict {
     let text = match &post.post_text {
@@ -42,8 +42,8 @@ pub fn score(post: &Post) -> Verdict {
         .count() as i32;
     s += (ai_hits * 2).min(6);
 
-    // ── Remote / EU signals (+2 each, cap at 4) ──
-    let remote_hits = REMOTE_EU_KEYWORDS
+    // ── Remote / global signals (+2 each, cap at 4) ──
+    let remote_hits = REMOTE_KEYWORDS
         .iter()
         .filter(|kw| lower.contains(*kw))
         .count() as i32;
@@ -87,7 +87,7 @@ pub fn score(post: &Post) -> Verdict {
         } else if ai_hits > 0 {
             "AI/ML content"
         } else if remote_hits > 0 {
-            "remote/EU signal"
+            "remote signal"
         } else {
             "relevant"
         }
@@ -153,7 +153,7 @@ static AI_KEYWORDS: &[&str] = &[
     "reinforcement learning",
 ];
 
-static REMOTE_EU_KEYWORDS: &[&str] = &[
+static REMOTE_KEYWORDS: &[&str] = &[
     "fully remote",
     "remote-first",
     "remote first",
@@ -161,28 +161,10 @@ static REMOTE_EU_KEYWORDS: &[&str] = &[
     "remote position",
     "remote role",
     "remote opportunity",
-    " emea",
-    "europe",
-    "european",
-    " eu ",
-    "germany",
-    "netherlands",
-    "spain",
-    "france",
-    "portugal",
-    "ireland",
-    "sweden",
-    "denmark",
-    "finland",
-    "austria",
-    "switzerland",
-    "berlin",
-    "amsterdam",
-    "london",
-    "dublin",
-    "lisbon",
-    "barcelona",
-    "stockholm",
+    "distributed team",
+    "async-first",
+    "global team",
+    "worldwide",
 ];
 
 static ENGINEERING_KEYWORDS: &[&str] = &[
@@ -309,9 +291,9 @@ mod tests {
     }
 
     #[test]
-    fn keeps_remote_eu_role() {
+    fn keeps_remote_role() {
         let v = score(&post(
-            "Open position: Platform Engineer at our Amsterdam office. We're remote-first across Europe and looking for someone passionate about Kubernetes and distributed systems.",
+            "Open position: Platform Engineer. We're remote-first and looking for someone passionate about Kubernetes and distributed systems. Work from anywhere.",
         ));
         assert!(v.keep, "score={} reason={}", v.score, v.reason);
     }
