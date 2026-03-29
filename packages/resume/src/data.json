@@ -195,7 +195,7 @@
           "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
           "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
           "3 parallel research agents with active debate — cross-reading findings — producing GO/NO-GO verdicts.",
-          "MLX scoring at 4,618 embeddings/sec on M1; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing."
+          "On-device MLX scoring at 4,618 embeddings/sec on M1; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing."
         ]
       },
       {
@@ -219,7 +219,7 @@
         "githubUrl": "https://github.com/nicolad/knowledge",
         "websiteUrl": "https://agentic-knowledge.vercel.app/",
         "highlights": [
-          "Knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
+          "Semantic knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
           "Bayesian knowledge tracing (mastery, transit, slip, guess per concept), novice → expert classification.",
           "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
           "LangGraph 6-agent fan-out/fan-in editorial pipeline with revision loops, DeepSeek R1 + OpenAI.",
@@ -237,7 +237,7 @@
           "DeepSeek-as-judge scorer; 3-threshold gating filtering unsupported claims.",
           "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval.",
           "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2.",
-          "Harbor eval harness: containerized trials across 6-20 non-deterministic agents."
+          "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents."
         ]
       },
       {
@@ -248,7 +248,7 @@
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
           "6-agent pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
-          "Citation verification and fabrication detection with audit trails.",
+          "Automated citation verification and fabrication detection with audit trails.",
           "Jurisdiction-specific precedent mapping, multi-jurisdiction comparison.",
           "Real-time SSE streaming with per-agent logging.",
           "Promptfoo: 8 eval suites, LLM-as-judge rubrics; DeepTeam red-teaming."
