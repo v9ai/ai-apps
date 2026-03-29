@@ -1,0 +1,19 @@
+# Udemy course URLs — one per line
+# Lines starting with # are skipped
+
+# Docker & Kubernetes
+https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/
+
+# AWS
+https://www.udemy.com/course/awsintro/
+https://www.udemy.com/course/aws-lambda-serverless-architecture/
+https://www.udemy.com/course/aws-machine-learning-a-complete-guide-with-python/
+
+# Node.js
+https://www.udemy.com/course/nodejs-express-mongodb-bootcamp/
+
+# Software Architecture
+https://www.udemy.com/course/software-architecture-learnit/
+
+# CI/CD
+https://www.udemy.com/course/the-complete-github-actions-docker-course/

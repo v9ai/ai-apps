@@ -18,6 +18,14 @@ path = "src/bin/embed_lessons.rs"
 name = "search"
 path = "src/bin/search.rs"
 
+[[bin]]
+name = "scrape-courses"
+path = "src/bin/scrape_courses.rs"
+
+[[bin]]
+name = "search-courses"
+path = "src/bin/search_courses.rs"
+
 [dependencies]
 candle    = { path = "../candle", default-features = false }
 lancedb   = "0.27"
@@ -33,3 +41,5 @@ tracing   = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 walkdir   = "2"
 clap      = { version = "4", features = ["derive"] }
+reqwest   = { version = "0.12", features = ["json"] }
+scraper   = "0.22"

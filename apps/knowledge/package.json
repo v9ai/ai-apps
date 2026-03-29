@@ -35,7 +35,8 @@
     "generate:missing": "cd backend && uv run python -m graph.cli --list-missing",
     "generate:batch": "cd backend && uv run python -m graph.cli --batch",
     "generate:test": "cd backend && uv run pytest tests/ -v",
-    "seed:courses": "tsx --env-file=.env.local scripts/seed-courses.ts"
+    "seed:courses": "tsx --env-file=.env.local scripts/seed-courses.ts",
+    "scrape:udemy": "tsx --env-file=.env.local scripts/scrape-udemy-courses.ts"
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
@@ -59,6 +60,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.9",
+    "playwright": "^1.52.0",
     "tsx": "^4.21.0",
     "typescript": "^5"
   }
