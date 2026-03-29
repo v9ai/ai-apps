@@ -29,6 +29,18 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+function ExpertBadge({ score, verdict }: { score: number; verdict: string }) {
+  const color = verdict === 'excellent' ? 'var(--green-9)'
+    : verdict === 'recommended' ? 'var(--blue-9)'
+    : verdict === 'average' ? 'var(--amber-9)'
+    : 'var(--red-9)';
+  return (
+    <span className="course-expert-badge" style={{ color }}>
+      AI {score.toFixed(1)}★
+    </span>
+  );
+}
+
 function ProviderIcon({ provider }: { provider: string }) {
   const p = provider.toLowerCase();
   if (p.includes("coursera")) return <span className="course-provider-icon">🎓</span>;
@@ -61,6 +73,9 @@ export function ExternalCourses({ courses }: Props) {
               <ProviderIcon provider={c.provider} />
               <span className="course-provider-name">{c.provider}</span>
               {c.isFree && <span className="badge-pill badge-pill--free">Free</span>}
+              {c.review?.aggregateScore != null && c.review.verdict && (
+                <ExpertBadge score={c.review.aggregateScore} verdict={c.review.verdict} />
+              )}
             </div>
 
             <div className="course-card-title">{c.title}</div>
