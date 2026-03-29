@@ -222,25 +222,27 @@ async function main() {
 
   const allCourses: Course[] = [];
 
-  // Collect all course URLs to scrape
-  const courseUrls: string[] = [];
+  // Collect all course URLs to scrape (Set deduplicates across topic pages)
+  const courseUrls = new Set<string>();
 
   for (const url of urls) {
     if (url.includes("/topic/")) {
       console.log(`Topic page: ${url}`);
       const found = await extractCourseUrls(context, url);
       console.log(`  Found ${found.length} course URLs`);
-      courseUrls.push(...found);
+      found.forEach(u => courseUrls.add(u));
     } else if (url.includes("/course/")) {
-      courseUrls.push(url);
+      courseUrls.add(url);
     } else {
       console.warn(`Skipping unrecognized URL: ${url}`);
     }
   }
 
+  console.log(`\nTotal unique courses to scrape: ${courseUrls.size}`);
+
   // Scrape each course in its own fresh context (Cloudflare challenge resolves
   // per-context for individual course pages in headless mode)
-  for (const courseUrl of courseUrls) {
+  for (const courseUrl of [...courseUrls]) {
     const freshCtx = await browser.newContext({
       userAgent:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",

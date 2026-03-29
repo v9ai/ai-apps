@@ -4,8 +4,8 @@
 The core claim involves ScrapeGraphAI, an open-source library, purportedly fine-tuning a small Qwen3-1.7B model on a 100k dataset for web scraping and extraction tasks. However, after investigation, **no primary source evidence** (official documentation, release notes, research paper, or model card) confirms the existence of this specific fine-tuned model or dataset. The topic appears to be a hypothetical or forward-looking claim not yet realized. The provided editorial sources are irrelevant, discussing unrelated topics like Google's crawlers and Qwen3.5 model quantization.
 
 ## Key Facts
-- **ScrapeGraphAI is a real, actively developed open-source library** for converting web pages into structured data using LLMs and graph logic. — Source: [ScrapeGraphAI GitHub Repository](https://github.com/ScrapeGraphAI/ScrapeGraphAI)
-- **No primary source confirms the "Qwen3-1.7B fine-tuned model" or "100k dataset."** Searches of the official GitHub repository, Hugging Face, and AI model hubs yield no results for this specific artifact. — Source: [ScrapeGraphAI GitHub - No matching releases or models](https://github.com/ScrapeGraphAI/ScrapeGraphAI/releases), [Hugging Face Search - No model named "scrapegraphai-qwen-1.7b"](https://huggingface.co/models)
+- **ScrapeGraphAI is a real, actively developed open-source library** for converting web pages into structured data using LLMs and graph logic. — Source: [ScrapeGraphAI GitHub Repository](https://github.com/ScrapeGraphAI/Scrapegraph-ai)
+- **No primary source confirms the "Qwen3-1.7B fine-tuned model" or "100k dataset."** Searches of the official GitHub repository, Hugging Face, and AI model hubs yield no results for this specific artifact. — Source: [ScrapeGraphAI GitHub - No matching releases or models](https://github.com/ScrapeGraphAI/Scrapegraph-ai/releases), [Hugging Face Search - No model named "scrapegraphai-qwen-1.7b"](https://huggingface.co/models)
 - **The Qwen3 series, including the 1.7B parameter model, is a real model family** from Alibaba's Qwen team. Fine-tuning it for a specific task like web extraction is technically plausible. — Source: [Qwen GitHub Repository](https://github.com/QwenLM/Qwen)
 
 ## Industry Perspectives (from editorial sources)
@@ -16,13 +16,13 @@ The core claim involves ScrapeGraphAI, an open-source library, purportedly fine-
 ## Data Points
 | Metric | Value | Source | Date |
 |---|---|---|---|
-| ScrapeGraphAI GitHub Stars | ~9.6k | [GitHub](https://github.com/ScrapeGraphAI/ScrapeGraphAI) | April 2025 |
+| ScrapeGraphAI GitHub Stars | ~9.6k | [GitHub](https://github.com/ScrapeGraphAI/Scrapegraph-ai) | April 2025 |
 | Qwen3-1.7B Model Existence | Yes (Base Model) | [Qwen HF Model Card](https://huggingface.co/Qwen/Qwen3-1.7B) | 2024 |
 | Claimed Fine-Tuned Model Existence | **Not Found** | Primary Source Search | N/A |
 | Claimed 100k Dataset Existence | **Not Found** | Primary Source Search | N/A |
 
 ## Sources
-1. **ScrapeGraphAI GitHub Repository** — [Link](https://github.com/ScrapeGraphAI/ScrapeGraphAI) — Provides the official code, documentation, and issue tracker for the library. No mention of the specific fine-tuned model.
+1. **ScrapeGraphAI GitHub Repository** — [Link](https://github.com/ScrapeGraphAI/Scrapegraph-ai) — Provides the official code, documentation, and issue tracker for the library. No mention of the specific fine-tuned model.
 2. **Hugging Face Model Hub** — [Search Link](https://huggingface.co/models) — Primary registry for open-source AI models. No model matching the description is published under related accounts (ScrapeGraphAI, Qwen).
 3. **Qwen Official GitHub** — [Link](https://github.com/QwenLM/Qwen) — Source for information on the base Qwen3-1.7B model architecture and capabilities.
 4. **MarkTechPost Articles (Editorial)** — Provided links — Used only to demonstrate the lack of relevant editorial coverage on the specific topic.
