@@ -14,7 +14,7 @@ use scraper::{Html, Selector};
 use serde::Deserialize;
 use tracing::{info, warn};
 
-use crate::course::Course;
+use crate::types::Course;
 
 /// Load courses from a JSON file (output of `scripts/scrape-udemy.ts`).
 pub fn load_courses_json(path: &Path) -> Result<Vec<Course>> {

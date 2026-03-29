@@ -1,15 +1,15 @@
 //! Semantic search over a Lance course store.
 //!
 //! Usage:
-//!   cargo run --bin search-courses -- "docker kubernetes deployment"
-//!   cargo run --bin search-courses -- --db ./lance-db --top 5 "machine learning AWS"
+//!   cargo run --bin search-udemy -- "docker kubernetes deployment"
+//!   cargo run --bin search-udemy -- --db ./lance-db --top 5 "machine learning AWS"
 //!
 //! Requires the Candle embed server running on localhost:9999.
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use knowledge_ml::CourseStore;
 use serde::Deserialize;
+use udemy::CourseStore;
 
 #[derive(Parser)]
 #[command(about = "Semantic search over embedded Udemy courses")]
@@ -17,7 +17,7 @@ struct Args {
     /// The search query
     query: String,
 
-    /// Lance database path (must have been populated by scrape-courses first)
+    /// Lance database path (must have been populated by scrape-udemy first)
     #[arg(long, default_value = "./lance-db")]
     db: String,
 
@@ -62,14 +62,13 @@ async fn main() -> Result<()> {
         .next()
         .context("empty embed response")?
         .embedding;
-    // Dimension matches whatever the embed server provides
 
     // ── Search ────────────────────────────────────────────────────────────────
     let store = CourseStore::connect(&args.db).await?;
     let results = store.search(vec, args.top).await?;
 
     if results.is_empty() {
-        eprintln!("No results — is the store populated? Run scrape-courses first.");
+        eprintln!("No results — is the store populated? Run scrape-udemy first.");
         return Ok(());
     }
 
