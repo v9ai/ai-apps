@@ -1,7 +1,13 @@
-//! Udemy course page scraper.
+//! Udemy course page parser.
 //!
-//! Extracts structured data from Udemy course pages using JSON-LD (schema.org)
-//! and HTML meta tags / content as fallback.
+//! Udemy is behind Cloudflare bot protection, so we can't fetch pages with
+//! reqwest directly. Instead, a Playwright script (`scripts/scrape-udemy.ts`)
+//! fetches the HTML and this module parses the already-fetched content.
+//!
+//! Also provides `load_courses_json` for importing courses from a JSON file
+//! (the output of the Playwright scraper).
+
+use std::path::Path;
 
 use anyhow::{Context, Result};
 use scraper::{Html, Selector};
@@ -9,6 +15,16 @@ use serde::Deserialize;
 use tracing::{info, warn};
 
 use crate::course::Course;
+
+/// Load courses from a JSON file (output of `scripts/scrape-udemy.ts`).
+pub fn load_courses_json(path: &Path) -> Result<Vec<Course>> {
+    let content = std::fs::read_to_string(path)
+        .with_context(|| format!("reading {}", path.display()))?;
+    let courses: Vec<Course> =
+        serde_json::from_str(&content).context("parsing courses JSON")?;
+    info!("Loaded {} courses from {}", courses.len(), path.display());
+    Ok(courses)
+}
 
 /// JSON-LD schema.org Course object embedded in Udemy pages.
 #[derive(Debug, Deserialize)]
@@ -20,7 +36,7 @@ struct JsonLdCourse {
     in_language: Option<String>,
     #[serde(rename = "aggregateRating")]
     aggregate_rating: Option<JsonLdRating>,
-    provider: Option<JsonLdProvider>,
+    instructor: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -33,32 +49,9 @@ struct JsonLdRating {
     review_count: Option<u64>,
 }
 
-#[derive(Debug, Deserialize)]
-struct JsonLdProvider {
-    name: Option<String>,
-}
-
-/// Scrape a single Udemy course page into a `Course`.
-pub async fn scrape_course(url: &str) -> Result<Course> {
-    info!("Scraping {url}");
-
-    let client = reqwest::Client::new();
-    let body = client
-        .get(url)
-        .header(
-            "User-Agent",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 \
-             (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        )
-        .header("Accept-Language", "en-US,en;q=0.9")
-        .send()
-        .await
-        .context("fetching Udemy course page")?
-        .text()
-        .await
-        .context("reading response body")?;
-
-    let doc = Html::parse_document(&body);
+/// Parse a Udemy course page from pre-fetched HTML + its URL.
+pub fn parse_course_html(html: &str, url: &str) -> Result<Course> {
+    let doc = Html::parse_document(html);
 
     // ── JSON-LD extraction (primary source) ─────────────────────────────
     let jsonld = extract_jsonld_course(&doc);
@@ -86,9 +79,7 @@ pub async fn scrape_course(url: &str) -> Result<Course> {
         .map(|r| {
             (
                 r.rating_value.unwrap_or(0.0) as f32,
-                r.review_count
-                    .or(r.rating_count)
-                    .unwrap_or(0) as u32,
+                r.review_count.or(r.rating_count).unwrap_or(0) as u32,
             )
         })
         .unwrap_or((0.0, 0));
@@ -107,29 +98,24 @@ pub async fn scrape_course(url: &str) -> Result<Course> {
         .unwrap_or_else(|| "English".to_string());
 
     // ── Instructor ──────────────────────────────────────────────────────
-    let instructor = extract_instructor(&doc, &body);
+    let instructor = extract_instructor_jsonld(&jsonld)
+        .or_else(|| extract_instructor_html(&doc, html))
+        .unwrap_or_default();
 
     // ── Level ───────────────────────────────────────────────────────────
-    let level = extract_level(&body);
+    let level = extract_level(html);
 
     // ── Duration ────────────────────────────────────────────────────────
-    let duration_hours = extract_duration(&body);
+    let duration_hours = extract_duration(html);
 
     // ── Price ───────────────────────────────────────────────────────────
-    let price = extract_price(&doc, &body);
+    let price = extract_price(&doc, html);
 
     // ── Number of students ──────────────────────────────────────────────
-    let num_students = extract_num_students(&body);
+    let num_students = extract_num_students(html);
 
     // ── Category ────────────────────────────────────────────────────────
-    let category = extract_category(&doc)
-        .or_else(|| {
-            jsonld
-                .as_ref()
-                .and_then(|j| j.provider.as_ref())
-                .and_then(|p| p.name.clone())
-        })
-        .unwrap_or_default();
+    let category = extract_category(&doc).unwrap_or_default();
 
     // ── Topics ("What you'll learn") ────────────────────────────────────
     let topics = extract_topics(&doc);
@@ -154,7 +140,7 @@ pub async fn scrape_course(url: &str) -> Result<Course> {
     };
 
     info!(
-        "Scraped: {} — {:.1}★ ({} reviews)",
+        "Parsed: {} — {:.1}★ ({} reviews)",
         course.title, course.rating, course.review_count
     );
     Ok(course)
@@ -163,7 +149,6 @@ pub async fn scrape_course(url: &str) -> Result<Course> {
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 /// Derive a slug from a Udemy course URL.
-/// e.g. "https://www.udemy.com/course/docker-and-kubernetes/" → "docker-and-kubernetes"
 fn slug_from_url(url: &str) -> String {
     url.trim_end_matches('/')
         .rsplit('/')
@@ -177,13 +162,13 @@ fn extract_jsonld_course(doc: &Html) -> Option<JsonLdCourse> {
     let sel = Selector::parse("script[type=\"application/ld+json\"]").ok()?;
     for el in doc.select(&sel) {
         let text = el.text().collect::<String>();
-        // Try parsing as a single Course object
+        // Single Course object
         if let Ok(course) = serde_json::from_str::<JsonLdCourse>(&text) {
             if course.name.is_some() {
                 return Some(course);
             }
         }
-        // Try parsing as a JSON array and find a Course-like object
+        // JSON array — find the Course entry
         if let Ok(arr) = serde_json::from_str::<Vec<serde_json::Value>>(&text) {
             for item in arr {
                 if let Some(t) = item.get("@type").and_then(|v| v.as_str()) {
@@ -202,10 +187,7 @@ fn extract_jsonld_course(doc: &Html) -> Option<JsonLdCourse> {
 fn extract_meta(doc: &Html, name: &str) -> Option<String> {
     for attr in ["property", "name"] {
         let selector_str = format!("meta[{attr}=\"{name}\"]");
-        let sel = match Selector::parse(&selector_str) {
-            Ok(s) => s,
-            Err(_) => continue,
-        };
+        let sel = Selector::parse(&selector_str).ok()?;
         if let Some(el) = doc.select(&sel).next() {
             if let Some(content) = el.value().attr("content") {
                 let trimmed = content.trim().to_string();
@@ -226,33 +208,26 @@ fn extract_h1(doc: &Html) -> Option<String> {
         .filter(|s| !s.is_empty())
 }
 
-fn extract_instructor(doc: &Html, body: &str) -> String {
-    // Try schema.org Person in JSON-LD
-    if let Ok(sel) = Selector::parse("script[type=\"application/ld+json\"]") {
-        for el in doc.select(&sel) {
-            let text = el.text().collect::<String>();
-            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&text) {
-                // Check for instructor array or single object
-                if let Some(instructors) = v.get("instructor") {
-                    if let Some(arr) = instructors.as_array() {
-                        let names: Vec<String> = arr
-                            .iter()
-                            .filter_map(|i| i.get("name").and_then(|n| n.as_str()))
-                            .map(|s| s.to_string())
-                            .collect();
-                        if !names.is_empty() {
-                            return names.join(", ");
-                        }
-                    }
-                    if let Some(name) = instructors.get("name").and_then(|n| n.as_str()) {
-                        return name.to_string();
-                    }
-                }
-            }
+fn extract_instructor_jsonld(jsonld: &Option<JsonLdCourse>) -> Option<String> {
+    let j = jsonld.as_ref()?;
+    let instr = j.instructor.as_ref()?;
+    if let Some(arr) = instr.as_array() {
+        let names: Vec<String> = arr
+            .iter()
+            .filter_map(|i| i.get("name").and_then(|n| n.as_str()))
+            .map(|s| s.to_string())
+            .collect();
+        if !names.is_empty() {
+            return Some(names.join(", "));
         }
     }
+    instr
+        .get("name")
+        .and_then(|n| n.as_str())
+        .map(|s| s.to_string())
+}
 
-    // Fallback: look for instructor link/span patterns
+fn extract_instructor_html(doc: &Html, body: &str) -> Option<String> {
     for selector_str in [
         "a[data-purpose=\"instructor-url\"]",
         ".instructor-links a",
@@ -262,40 +237,32 @@ fn extract_instructor(doc: &Html, body: &str) -> String {
             if let Some(el) = doc.select(&sel).next() {
                 let text = el.text().collect::<String>().trim().to_string();
                 if !text.is_empty() {
-                    return text;
+                    return Some(text);
                 }
             }
         }
     }
-
-    // Last resort: regex-like scan for "Created by ..."
+    // "Created by ..."
     if let Some(idx) = body.find("Created by") {
         let after = &body[idx + 10..];
         let end = after.find('<').unwrap_or(80).min(80);
         let name = after[..end].trim().to_string();
         if !name.is_empty() {
-            return name;
+            return Some(name);
         }
     }
-
-    String::new()
+    None
 }
 
 fn extract_level(body: &str) -> String {
     let lower = body.to_lowercase();
     if lower.contains("all levels") {
         "All Levels".to_string()
-    } else if lower.contains("beginner") && lower.contains("level") {
+    } else if lower.contains("beginner level") {
         "Beginner".to_string()
-    } else if lower.contains("intermediate") && lower.contains("level") {
+    } else if lower.contains("intermediate level") {
         "Intermediate".to_string()
-    } else if lower.contains("advanced") && lower.contains("level") {
-        "Advanced".to_string()
-    } else if lower.contains("beginner") {
-        "Beginner".to_string()
-    } else if lower.contains("intermediate") {
-        "Intermediate".to_string()
-    } else if lower.contains("advanced") {
+    } else if lower.contains("advanced level") {
         "Advanced".to_string()
     } else {
         "All Levels".to_string()
@@ -303,11 +270,9 @@ fn extract_level(body: &str) -> String {
 }
 
 fn extract_duration(body: &str) -> f32 {
-    // Look for patterns like "22 total hours" or "15.5 hours"
     let lower = body.to_lowercase();
     for pattern in ["total hours", "hours of video", "hours on-demand"] {
         if let Some(idx) = lower.find(pattern) {
-            // Walk backwards to find the number
             let before = &lower[..idx];
             let num_str: String = before
                 .chars()
@@ -328,7 +293,6 @@ fn extract_duration(body: &str) -> f32 {
 }
 
 fn extract_price(doc: &Html, body: &str) -> String {
-    // Try meta tag
     if let Some(price) = extract_meta(doc, "udemy_com:price") {
         return price;
     }
@@ -340,7 +304,6 @@ fn extract_price(doc: &Html, body: &str) -> String {
             format!("{price} {currency}")
         };
     }
-    // Scan for price patterns
     let lower = body.to_lowercase();
     if lower.contains("free") && lower.contains("enroll") {
         return "Free".to_string();
@@ -349,7 +312,6 @@ fn extract_price(doc: &Html, body: &str) -> String {
 }
 
 fn extract_num_students(body: &str) -> u32 {
-    // Look for "123,456 students" pattern
     let lower = body.to_lowercase();
     if let Some(idx) = lower.find(" students") {
         let before = &lower[..idx];
@@ -370,11 +332,9 @@ fn extract_num_students(body: &str) -> u32 {
 }
 
 fn extract_category(doc: &Html) -> Option<String> {
-    // Breadcrumb or category meta
     if let Some(cat) = extract_meta(doc, "udemy_com:category") {
         return Some(cat);
     }
-    // Try breadcrumb links
     for selector_str in [
         "nav[aria-label=\"Breadcrumb\"] a",
         "[data-purpose=\"breadcrumb\"] a",
@@ -394,7 +354,6 @@ fn extract_category(doc: &Html) -> Option<String> {
 }
 
 fn extract_topics(doc: &Html) -> Vec<String> {
-    // "What you'll learn" section — list items
     for selector_str in [
         "[data-purpose=\"course-objectives\"] li",
         "[class*=\"what-you-will-learn\"] li",
@@ -411,8 +370,6 @@ fn extract_topics(doc: &Html) -> Vec<String> {
             }
         }
     }
-
-    // Fallback: try span elements within objectives
     if let Ok(sel) = Selector::parse("[data-purpose=\"objective\"] span") {
         let items: Vec<String> = doc
             .select(&sel)
@@ -423,14 +380,6 @@ fn extract_topics(doc: &Html) -> Vec<String> {
             return items;
         }
     }
-
-    if items_empty_log() {
-        warn!("Could not extract 'What you'll learn' topics");
-    }
-
+    warn!("Could not extract 'What you'll learn' topics");
     Vec::new()
-}
-
-fn items_empty_log() -> bool {
-    true
 }

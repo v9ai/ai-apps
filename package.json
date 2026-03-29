@@ -33,6 +33,7 @@
   "devDependencies": {
     "napi-postinstall": "^0.2.4",
     "prettier": "^3.6.0",
+    "tsx": "^4.21.0",
     "turbo": "^2.8.12",
     "vercel": "^50.32.5"
   },
