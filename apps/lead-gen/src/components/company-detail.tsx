@@ -9,6 +9,8 @@ import {
   useUpdateCompanyMutation,
   useCreateContactMutation,
   useDeleteCompanyMutation,
+  useBlockCompanyMutation,
+  useUnblockCompanyMutation,
 } from "@/__generated__/hooks";
 import { useRouter } from "next/navigation";
 import type { CompanyCategory } from "@/__generated__/graphql";
@@ -37,7 +39,7 @@ import {
   Separator,
   Skeleton,
   Strong,
-  Tabs,
+  TabNav,
   Text,
   TextArea,
   TextField,
@@ -51,6 +53,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   Link2Icon,
+  CrossCircledIcon,
   Pencil1Icon,
   TrashIcon,
 } from "@radix-ui/react-icons";
@@ -838,7 +841,7 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
           </Flex>
 
           <Flex gap="3">
-            <Flex direction="column" gap="1" style={{ flex: 1 }}>
+            <Flex direction="column" gap="1" flexGrow="1">
               <Text size="2" weight="medium">Size</Text>
               <TextField.Root
                 value={form.size}
@@ -846,7 +849,7 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
                 placeholder="e.g. 51-200"
               />
             </Flex>
-            <Flex direction="column" gap="1" style={{ flex: 1 }}>
+            <Flex direction="column" gap="1" flexGrow="1">
               <Text size="2" weight="medium">Industry</Text>
               <TextField.Root
                 value={form.industry}
@@ -882,7 +885,7 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
                 setForm((f) => ({ ...f, category: v === "__none__" ? null : (v as CompanyCategory) }))
               }
             >
-              <Select.Trigger placeholder="Select…" style={{ width: "100%" }} />
+              <Box width="100%"><Select.Trigger placeholder="Select…" /></Box>
               <Select.Content>
                 <Select.Item value="__none__">— none —</Select.Item>
                 {CATEGORY_OPTIONS.map((c) => (
@@ -972,6 +975,13 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
 
   const [deleteCompany, { loading: isDeleting }] = useDeleteCompanyMutation();
 
+  const [blockCompany, { loading: isBlocking }] = useBlockCompanyMutation({
+    onCompleted: () => refetch(),
+  });
+  const [unblockCompany, { loading: isUnblocking }] = useUnblockCompanyMutation({
+    onCompleted: () => refetch(),
+  });
+
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [analyzeSuccess, setAnalyzeSuccess] = useState<string | null>(null);
   const [analyzeCompany, { loading: isAnalyzing }] = useAnalyzeCompanyMutation({
@@ -1032,6 +1042,15 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
       console.error("Analysis error:", e);
     }
   }, [company, analyzeCompany]);
+
+  const handleToggleBlock = useCallback(async () => {
+    if (!company) return;
+    if (company.blocked) {
+      await unblockCompany({ variables: { id: company.id } });
+    } else {
+      await blockCompany({ variables: { id: company.id } });
+    }
+  }, [company, blockCompany, unblockCompany]);
 
   if (loading) {
     return (
@@ -1238,6 +1257,17 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   </Button>
                 )}
                 {isAdmin && (
+                  <Button
+                    variant={company?.blocked ? "solid" : "ghost"}
+                    color={company?.blocked ? "red" : "gray"}
+                    onClick={handleToggleBlock}
+                    disabled={isBlocking || isUnblocking}
+                  >
+                    <CrossCircledIcon />
+                    {isBlocking || isUnblocking ? "Updating…" : company?.blocked ? "Blocked" : "Block"}
+                  </Button>
+                )}
+                {isAdmin && (
                   <AlertDialog.Root>
                     <AlertDialog.Trigger>
                       <Button variant="ghost" color="gray" disabled={isDeleting}>
@@ -1266,28 +1296,22 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           </Box>
         </Card>
 
-        {/* Tabs */}
-        <Tabs.Root
-          defaultValue="overview"
-          aria-label="Company sections"
-        >
-          <Tabs.List>
-            <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-            {isAdmin && (
-              <Tabs.Trigger value="contacts" asChild>
-                <Link href={`/companies/${effectiveKey}/contacts`}>Contacts</Link>
-              </Tabs.Trigger>
-            )}
-            {isAdmin && (
-              <Tabs.Trigger value="emails" asChild>
-                <Link href={`/companies/${effectiveKey}/emails`}>Emails</Link>
-              </Tabs.Trigger>
-            )}
-          </Tabs.List>
+        {/* Tab nav */}
+        <TabNav.Root>
+          <TabNav.Link active>Overview</TabNav.Link>
+          {isAdmin && (
+            <TabNav.Link asChild>
+              <Link href={`/companies/${effectiveKey}/contacts`}>Contacts</Link>
+            </TabNav.Link>
+          )}
+          {isAdmin && (
+            <TabNav.Link asChild>
+              <Link href={`/companies/${effectiveKey}/emails`}>Emails</Link>
+            </TabNav.Link>
+          )}
+        </TabNav.Root>
 
-          {/* Overview tab */}
-          <Tabs.Content value="overview">
-            <Box pt="4">
+        <Box pt="4">
               <Flex direction="column" gap="5">
                 {/* Balanced 2/3 + 1/3 layout */}
                 <Flex
@@ -1295,11 +1319,11 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   gap="4"
                   align="start"
                 >
-                  <Box style={{ flex: 2, minWidth: 0 }}>
+                  <Box flexGrow="2" minWidth="0">
                     <Flex direction="column" gap="4">
                       {company.deep_analysis && (
                         <SectionCard title="Deep Analysis">
-                          <Box style={{ fontSize: '0.875rem' }}>
+                          <Text size="2" as="div">
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
                               components={{
@@ -1348,7 +1372,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                             >
                               {company.deep_analysis}
                             </ReactMarkdown>
-                          </Box>
+                          </Text>
                         </SectionCard>
                       )}
 
@@ -1358,7 +1382,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                             as="p"
                             size="3"
                             color="gray"
-                            style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}
+                            style={{ whiteSpace: "pre-wrap" }}
                           >
                             {company.description}
                           </Text>
@@ -1411,15 +1435,13 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   <SectionCard title="Score breakdown">
                     <Flex direction="column" gap="2">
                       {company.score_reasons.map((reason: string, idx: number) => (
-                        <Box key={`${idx}-${reason}`} style={{ padding: '6px 10px', borderRadius: 0, background: 'var(--gray-2)', marginBottom: 4 }}><Text size="2" color="gray">{reason}</Text></Box>
+                        <Box key={`${idx}-${reason}`} px="3" py="1" style={{ background: 'var(--gray-2)' }}><Text size="2" color="gray">{reason}</Text></Box>
                       ))}
                     </Flex>
                   </SectionCard>
                 ) : null}
               </Flex>
             </Box>
-          </Tabs.Content>
-        </Tabs.Root>
       </Flex>
     </Container>
   );

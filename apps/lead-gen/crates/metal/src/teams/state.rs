@@ -456,6 +456,80 @@ fn now_iso() -> String {
     chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
 }
 
+// ── Blocklist ──────────────────────────────────────────────
+
+use std::collections::HashSet;
+use std::path::PathBuf;
+
+pub struct Blocklist {
+    domains: HashSet<String>,
+    path: PathBuf,
+}
+
+impl Blocklist {
+    /// Load blocklist from `{data_dir}/blocklist.txt`.
+    /// Returns empty blocklist if file doesn't exist.
+    pub fn load(data_dir: &Path) -> Self {
+        let path = data_dir.join("blocklist.txt");
+        let domains = match std::fs::read_to_string(&path) {
+            Ok(content) => content
+                .lines()
+                .map(|l| l.trim())
+                .filter(|l| !l.is_empty() && !l.starts_with('#'))
+                .map(|l| l.to_lowercase())
+                .collect(),
+            Err(_) => HashSet::new(),
+        };
+        Self { domains, path }
+    }
+
+    pub fn contains(&self, domain: &str) -> bool {
+        self.domains.contains(&domain.to_lowercase())
+    }
+
+    pub fn add(&mut self, domain: &str) -> std::io::Result<()> {
+        let d = domain.to_lowercase();
+        if self.domains.insert(d.clone()) {
+            // Ensure parent dir exists
+            if let Some(parent) = self.path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            use std::io::Write;
+            let mut f = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&self.path)?;
+            writeln!(f, "{d}")?;
+        }
+        Ok(())
+    }
+
+    pub fn remove(&mut self, domain: &str) -> std::io::Result<bool> {
+        let d = domain.to_lowercase();
+        if !self.domains.remove(&d) {
+            return Ok(false);
+        }
+        // Rewrite file without the removed domain
+        let content: String = self.domains.iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .into_iter()
+            .map(|d| format!("{d}\n"))
+            .collect();
+        std::fs::write(&self.path, content)?;
+        Ok(true)
+    }
+
+    pub fn list(&self) -> Vec<&str> {
+        let mut v: Vec<&str> = self.domains.iter().map(|s| s.as_str()).collect();
+        v.sort();
+        v
+    }
+
+    pub fn len(&self) -> usize {
+        self.domains.len()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

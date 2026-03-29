@@ -262,6 +262,9 @@ leads: leads-preflight ## Full leads pipeline with pre-flight + resume
 		$(CONSULT_PY) $(CONSULT_DIR)/discover.py; \
 	fi
 	$(CONSULT_PY) $(CONSULT_DIR)/extract_domains.py -o $(DOMAINS_FILE)
+	@if [ -n "$$NEON_DATABASE_URL" ]; then \
+		pnpm tsx scripts/export-blocklist.ts; \
+	fi
 	$(METAL_BIN) pipeline --domains $(DOMAINS_FILE) --yes --all
 	@if [ -n "$$NEON_DATABASE_URL" ]; then \
 		pnpm tsx scripts/import-rust-leads.ts $(METAL_DIR)/data/pipeline; \
@@ -271,6 +274,24 @@ leads: leads-preflight ## Full leads pipeline with pre-flight + resume
 
 leads-status: start-build ## Show pipeline progress history
 	$(METAL_BIN) status
+
+# ── Blocklist ────────────────────────────────────────────────
+
+.PHONY: block unblock blocklist export-blocklist
+
+block: start-build ## Block a domain: make block DOMAIN=example.com
+	@test -n "$(DOMAIN)" || { echo "Usage: make block DOMAIN=example.com"; exit 1; }
+	$(METAL_BIN) block add $(DOMAIN)
+
+unblock: start-build ## Unblock a domain: make unblock DOMAIN=example.com
+	@test -n "$(DOMAIN)" || { echo "Usage: make unblock DOMAIN=example.com"; exit 1; }
+	$(METAL_BIN) block remove $(DOMAIN)
+
+blocklist: start-build ## Show blocked domains
+	$(METAL_BIN) block list
+
+export-blocklist: ## Export blocked domains from Neon → data/blocklist.txt
+	pnpm tsx scripts/export-blocklist.ts
 
 # ── All ────────────────────────────────────────────────────────
 

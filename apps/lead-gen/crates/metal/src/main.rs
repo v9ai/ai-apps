@@ -92,6 +92,22 @@ enum Command {
         #[arg(short, long)]
         output: PathBuf,
     },
+
+    /// Manage domain blocklist (block/unblock domains from pipeline processing)
+    Block {
+        #[command(subcommand)]
+        action: BlockAction,
+    },
+}
+
+#[derive(Subcommand)]
+enum BlockAction {
+    /// Add a domain to the blocklist
+    Add { domain: String },
+    /// Remove a domain from the blocklist
+    Remove { domain: String },
+    /// List all blocked domains
+    List,
 }
 
 #[tokio::main]
@@ -209,6 +225,36 @@ async fn main() -> Result<()> {
             eprintln!("  Best threshold: {:.2}", result.best_threshold);
             eprintln!("  Best F1:        {:.3}", result.best_f1);
             eprintln!("  Calibrated:     {}", result.calibrated);
+        }
+
+        Command::Block { action } => {
+            let mut blocklist = teams::state::Blocklist::load(data_dir);
+            match action {
+                BlockAction::Add { domain } => {
+                    blocklist.add(&domain)?;
+                    eprintln!("  Blocked: {domain}");
+                    eprintln!("  Total: {} blocked domains", blocklist.len());
+                }
+                BlockAction::Remove { domain } => {
+                    if blocklist.remove(&domain)? {
+                        eprintln!("  Unblocked: {domain}");
+                    } else {
+                        eprintln!("  Not found: {domain}");
+                    }
+                    eprintln!("  Total: {} blocked domains", blocklist.len());
+                }
+                BlockAction::List => {
+                    let domains = blocklist.list();
+                    if domains.is_empty() {
+                        eprintln!("  No blocked domains");
+                    } else {
+                        eprintln!("  Blocked domains ({}):", domains.len());
+                        for d in &domains {
+                            eprintln!("    {d}");
+                        }
+                    }
+                }
+            }
         }
 
         Command::Stage { name, domains } => {
