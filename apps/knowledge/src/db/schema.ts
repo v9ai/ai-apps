@@ -514,6 +514,41 @@ export const lessonCourses = pgTable(
 
 export type ExternalCourse = typeof externalCourses.$inferSelect;
 
+export const courseReviews = pgTable(
+  "course_reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    courseId: uuid("course_id")
+      .references(() => externalCourses.id, { onDelete: "cascade" })
+      .notNull(),
+    pedagogyScore: integer("pedagogy_score"),
+    technicalAccuracyScore: integer("technical_accuracy_score"),
+    contentDepthScore: integer("content_depth_score"),
+    practicalApplicationScore: integer("practical_application_score"),
+    instructorClarityScore: integer("instructor_clarity_score"),
+    curriculumFitScore: integer("curriculum_fit_score"),
+    prerequisitesScore: integer("prerequisites_score"),
+    aiDomainRelevanceScore: integer("ai_domain_relevance_score"),
+    communityHealthScore: integer("community_health_score"),
+    valuePropositionScore: integer("value_proposition_score"),
+    aggregateScore: real("aggregate_score"),
+    verdict: text("verdict"),
+    summary: text("summary"),
+    expertDetails: jsonb("expert_details"),
+    modelVersion: text("model_version").notNull().default("deepseek-chat"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("course_reviews_course_idx").on(table.courseId),
+    uniqueIndex("course_reviews_course_unique").on(table.courseId),
+  ],
+);
+
+export type CourseReview = typeof courseReviews.$inferSelect;
+export type NewCourseReview = typeof courseReviews.$inferInsert;
+
 // ── Relations ──────────────────────────────────────────────────────
 
 export const categoriesRelations = relations(categories, ({ many }) => ({

@@ -18,6 +18,10 @@ neon     = ["patterns", "dep:sqlx", "dep:dotenvy", "dep:tracing-subscriber",
 lance    = ["client", "dep:lancedb", "dep:arrow-array", "dep:arrow-schema",
             "dep:futures", "dep:dotenvy", "dep:tracing-subscriber",
             "tokio/macros", "tokio/rt-multi-thread"]
+# Embed contributor bio+repos text into LanceDB for semantic search
+contrib-embed = ["lance", "embed"]
+# ICP feature bridge — map RisingStar → Vec<f32> for ML scorers (no leadgen dep)
+icp      = ["lance"]
 
 [dependencies]
 serde       = { version = "1", features = ["derive"] }
@@ -50,6 +54,11 @@ required-features = ["neon"]
 name = "scrape_contributors"
 path = "src/bin/scrape_contributors.rs"
 required-features = ["lance"]
+
+[[bin]]
+name = "export_contributors"
+path = "src/bin/export_contributors.rs"
+required-features = ["lance", "neon"]
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

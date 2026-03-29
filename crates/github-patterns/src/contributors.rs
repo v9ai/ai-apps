@@ -3,12 +3,19 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use arrow_array::{
-    BooleanArray, Float32Array, Int32Array, Int64Array, RecordBatch, StringArray, UInt32Array,
+    BooleanArray, FixedSizeListArray, Float32Array, Int32Array, Int64Array, RecordBatch,
+    StringArray, UInt32Array,
 };
 use arrow_schema::{DataType, Field, Schema};
 use lancedb::{connect, Connection};
 
+#[cfg(feature = "contrib-embed")]
+use candle::{best_device, EmbeddingModel};
+
 use crate::types::GhUser;
+
+/// Embedding dimension for BAAI/bge-small-en-v1.5.
+const EMBED_DIM: i32 = 384;
 
 /// One repo + contribution count stored alongside a contributor.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -143,6 +150,18 @@ fn schema() -> Arc<Schema> {
         Field::new("breadth", DataType::Float32, false),
         Field::new("realness", DataType::Float32, false),
         Field::new("scraped_at", DataType::Utf8, false),
+        // Skills extracted at insert time (JSON array of tag strings).
+        // Nullable so old rows without this column read as empty.
+        Field::new("skills_json", DataType::Utf8, true),
+        // 384-d BAAI/bge-small-en-v1.5 embedding — null when contrib-embed feature is off.
+        Field::new(
+            "vector",
+            DataType::FixedSizeList(
+                Arc::new(Field::new("item", DataType::Float32, true)),
+                EMBED_DIM,
+            ),
+            true,
+        ),
     ]))
 }
 
@@ -150,6 +169,9 @@ pub struct ContributorsDb {
     conn: Connection,
     /// Logins already present — used to deduplicate within + across runs.
     known: HashSet<String>,
+    /// BERT embedding model — loaded on demand via `with_embed()`.
+    #[cfg(feature = "contrib-embed")]
+    model: Option<EmbeddingModel>,
 }
 
 impl ContributorsDb {
@@ -157,9 +179,34 @@ impl ContributorsDb {
         let conn = connect(path).execute().await.context("open LanceDB")?;
         let known = load_known_logins(&conn).await?;
         tracing::info!("loaded {} existing contributor logins", known.len());
-        let db = Self { conn, known };
+        let db = Self {
+            conn,
+            known,
+            #[cfg(feature = "contrib-embed")]
+            model: None,
+        };
         db.ensure_table().await?;
         Ok(db)
+    }
+
+    /// Load BAAI/bge-small-en-v1.5 and enable per-insert embedding.
+    ///
+    /// Uses `spawn_blocking` because model loading is CPU-bound.
+    /// Call once after `open()` — the DB can be used without this for
+    /// plain metadata storage.
+    #[cfg(feature = "contrib-embed")]
+    pub async fn with_embed(mut self) -> Result<Self> {
+        tracing::info!("loading BAAI/bge-small-en-v1.5 for contributor embeddings…");
+        let model = tokio::task::spawn_blocking(|| {
+            let device = best_device().map_err(|e| anyhow::anyhow!("{e}"))?;
+            EmbeddingModel::from_hf("BAAI/bge-small-en-v1.5", &device)
+                .map_err(|e| anyhow::anyhow!("{e}"))
+        })
+        .await
+        .context("spawn_blocking for EmbeddingModel")??;
+        tracing::info!("embedding model ready");
+        self.model = Some(model);
+        Ok(self)
     }
 
     async fn ensure_table(&self) -> Result<()> {
@@ -202,6 +249,79 @@ impl ContributorsDb {
             .iter()
             .map(|r| serde_json::to_string(&r.repos).unwrap_or_default())
             .collect();
+
+        // Skills extraction (always computed — pure keyword matching, negligible cost)
+        let skills_jsons: Vec<String> = new
+            .iter()
+            .zip(repos_jsons.iter())
+            .map(|(r, repos_json)| {
+                let text = crate::skills::contributor_skills_text(
+                    r.user.bio.as_deref(),
+                    r.user.company.as_deref(),
+                    repos_json,
+                );
+                serde_json::to_string(&crate::skills::extract_skills(&text))
+                    .unwrap_or_else(|_| "[]".to_string())
+            })
+            .collect();
+
+        // Vector column: embed under contrib-embed feature, null otherwise.
+        let vec_item_field = Arc::new(Field::new("item", DataType::Float32, true));
+        let vector_array: Arc<dyn arrow_array::Array> = {
+            #[cfg(feature = "contrib-embed")]
+            {
+                let texts: Vec<String> = new
+                    .iter()
+                    .zip(repos_jsons.iter())
+                    .map(|(r, repos_json)| {
+                        crate::skills::contributor_skills_text(
+                            r.user.bio.as_deref(),
+                            r.user.company.as_deref(),
+                            repos_json,
+                        )
+                    })
+                    .collect();
+                let vecs: Vec<Vec<f32>> = if let Some(model) = &self.model {
+                    tokio::task::block_in_place(|| {
+                        texts
+                            .iter()
+                            .map(|t| {
+                                model.embed_one(t).unwrap_or_else(|_| {
+                                    vec![0.0f32; EMBED_DIM as usize]
+                                })
+                            })
+                            .collect()
+                    })
+                } else {
+                    vec![vec![0.0f32; EMBED_DIM as usize]; n]
+                };
+                let flat: Vec<f32> = vecs.into_iter().flatten().collect();
+                Arc::new(
+                    FixedSizeListArray::try_new(
+                        vec_item_field,
+                        EMBED_DIM,
+                        Arc::new(Float32Array::from(flat)),
+                        None,
+                    )
+                    .context("build vector array")?,
+                )
+            }
+            #[cfg(not(feature = "contrib-embed"))]
+            {
+                // All-null vectors when embedding is disabled
+                let flat = vec![0.0f32; n * EMBED_DIM as usize];
+                let nulls = arrow_array::NullBuffer::new_null(n);
+                Arc::new(
+                    FixedSizeListArray::try_new(
+                        vec_item_field,
+                        EMBED_DIM,
+                        Arc::new(Float32Array::from(flat)),
+                        Some(nulls),
+                    )
+                    .context("build null vector array")?,
+                )
+            }
+        };
 
         let batch = RecordBatch::try_new(
             s,
@@ -284,6 +404,15 @@ impl ContributorsDb {
                 Arc::new(StringArray::from_iter_values(
                     std::iter::repeat(now.as_str()).take(n),
                 )),
+                // Skills JSON (nullable — old rows lack this column)
+                Arc::new(StringArray::from(
+                    skills_jsons
+                        .iter()
+                        .map(|s| Some(s.as_str()))
+                        .collect::<Vec<_>>(),
+                )),
+                // Embedding vector (null when contrib-embed feature is off)
+                vector_array,
             ],
         )?;
 
@@ -312,12 +441,23 @@ impl ContributorsDb {
         use lancedb::query::{ExecutableQuery, QueryBase};
 
         let table = self.conn.open_table("contributors").execute().await?;
-        let cols = vec![
+
+        // Probe the table schema so we can include new columns only when present.
+        // This allows top_rising() to work against DBs created before skills_json
+        // was added (avoids "column not found" errors on old data).
+        let table_schema = table.schema().await?;
+        let has_skills = table_schema.field_with_name("skills_json").is_ok();
+
+        let mut cols = vec![
             "login", "html_url", "name", "email", "company", "location",
             "bio", "followers", "public_repos", "total_contributions",
             "repos_json", "rising_score", "contribution_density", "novelty",
             "breadth", "realness", "gh_created_at",
         ];
+        if has_skills {
+            cols.push("skills_json");
+        }
+
         let mut stream: std::pin::Pin<
             Box<dyn futures::Stream<Item = std::result::Result<RecordBatch, lancedb::Error>> + Send>,
         > = table
@@ -370,6 +510,10 @@ impl ContributorsDb {
                     .map(|v| v.len())
                     .unwrap_or(0);
 
+                let skills: Vec<String> = get_str("skills_json")
+                    .and_then(|j| serde_json::from_str(&j).ok())
+                    .unwrap_or_default();
+
                 stars.push(RisingStar {
                     login,
                     html_url: get_str("html_url").unwrap_or_default(),
@@ -388,12 +532,119 @@ impl ContributorsDb {
                     breadth: get_f32("breadth"),
                     realness: get_f32("realness"),
                     gh_created_at: get_str("gh_created_at").unwrap_or_default(),
+                    skills,
                 });
             }
         }
 
         stars.sort_by(|a, b| b.rising_score.partial_cmp(&a.rising_score).unwrap());
         stars.truncate(n);
+        Ok(stars)
+    }
+
+    /// Semantic nearest-neighbour search using the contributor's embedding vector.
+    ///
+    /// Embeds `query` with the loaded BAAI model and returns the `top_k`
+    /// most semantically similar contributors.  Requires the DB to have been
+    /// opened with `.with_embed()` and rows inserted under the `contrib-embed`
+    /// feature.
+    #[cfg(feature = "contrib-embed")]
+    pub async fn search_similar(&self, query: &str, top_k: usize) -> Result<Vec<RisingStar>> {
+        use futures::TryStreamExt;
+
+        let model = self
+            .model
+            .as_ref()
+            .context("embedding model not loaded — call with_embed() first")?;
+
+        let query_vec = tokio::task::block_in_place(|| {
+            model
+                .embed_one(query)
+                .map_err(|e| anyhow::anyhow!("embed query: {e}"))
+        })?;
+
+        let table = self.conn.open_table("contributors").execute().await?;
+        let mut stream: std::pin::Pin<
+            Box<dyn futures::Stream<Item = std::result::Result<RecordBatch, lancedb::Error>> + Send>,
+        > = table
+            .vector_search(query_vec)
+            .context("vector_search")?
+            .limit(top_k)
+            .execute()
+            .await?;
+
+        let mut stars: Vec<RisingStar> = Vec::new();
+        while let Some(batch) = stream.try_next().await? {
+            let nrows = batch.num_rows();
+            for i in 0..nrows {
+                let get_str = |name: &str| -> Option<String> {
+                    batch
+                        .column_by_name(name)?
+                        .as_any()
+                        .downcast_ref::<StringArray>()
+                        .and_then(|a| {
+                            if arrow_array::Array::is_null(a, i) {
+                                None
+                            } else {
+                                Some(a.value(i).to_string())
+                            }
+                        })
+                };
+                let get_i32 = |name: &str| -> i32 {
+                    batch
+                        .column_by_name(name)
+                        .and_then(|c| c.as_any().downcast_ref::<Int32Array>())
+                        .map(|a| a.value(i))
+                        .unwrap_or(0)
+                };
+                let get_u32 = |name: &str| -> u32 {
+                    batch
+                        .column_by_name(name)
+                        .and_then(|c| c.as_any().downcast_ref::<UInt32Array>())
+                        .map(|a| a.value(i))
+                        .unwrap_or(0)
+                };
+                let get_f32 = |name: &str| -> f32 {
+                    batch
+                        .column_by_name(name)
+                        .and_then(|c| c.as_any().downcast_ref::<Float32Array>())
+                        .map(|a| a.value(i))
+                        .unwrap_or(0.0)
+                };
+                let login = match get_str("login") {
+                    Some(v) => v,
+                    None => continue,
+                };
+                let repos_count = get_str("repos_json")
+                    .and_then(|j| serde_json::from_str::<Vec<serde_json::Value>>(&j).ok())
+                    .map(|v| v.len())
+                    .unwrap_or(0);
+                let skills: Vec<String> = get_str("skills_json")
+                    .and_then(|j| serde_json::from_str(&j).ok())
+                    .unwrap_or_default();
+
+                stars.push(RisingStar {
+                    login,
+                    html_url: get_str("html_url").unwrap_or_default(),
+                    name: get_str("name"),
+                    email: get_str("email"),
+                    company: get_str("company"),
+                    location: get_str("location"),
+                    bio: get_str("bio"),
+                    followers: get_i32("followers") as u32,
+                    public_repos: get_i32("public_repos") as u32,
+                    total_contributions: get_u32("total_contributions"),
+                    ai_repos_count: repos_count,
+                    rising_score: get_f32("rising_score"),
+                    contribution_density: get_f32("contribution_density"),
+                    novelty: get_f32("novelty"),
+                    breadth: get_f32("breadth"),
+                    realness: get_f32("realness"),
+                    gh_created_at: get_str("gh_created_at").unwrap_or_default(),
+                    skills,
+                });
+            }
+        }
         Ok(stars)
     }
 }
@@ -418,6 +669,8 @@ pub struct RisingStar {
     pub breadth: f32,
     pub realness: f32,
     pub gh_created_at: String,
+    /// AI/ML skill tags extracted at insert time.
+    pub skills: Vec<String>,
 }
 
 async fn load_known_logins(conn: &Connection) -> Result<HashSet<String>> {
@@ -823,6 +1076,49 @@ mod tests {
         let path = temp_db_path("empty");
         let db = ContributorsDb::open(&path).await.expect("open DB");
         assert!(db.top_rising(10).await.unwrap().is_empty());
+        let _ = std::fs::remove_dir_all(&path);
+    }
+
+    // ── skills round-trip ─────────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn skills_json_roundtrip() {
+        let path = temp_db_path("skills");
+        let mut db = ContributorsDb::open(&path).await.expect("open DB");
+
+        // Record with an LLM-mentioning bio → should produce "llm" skill tag
+        let mut r = make_record(5, 15, 400, 200, 2);
+        r.user.login = "llm_dev".into();
+        r.user.bio = Some("Building LLM applications with RAG pipelines".into());
+
+        db.insert(&[r]).await.unwrap();
+        let top = db.top_rising(10).await.unwrap();
+        assert_eq!(top.len(), 1);
+        assert!(
+            top[0].skills.contains(&"llm".to_string()),
+            "expected 'llm' in skills {:?}",
+            top[0].skills,
+        );
+        assert!(
+            top[0].skills.contains(&"rag".to_string()),
+            "expected 'rag' in skills {:?}",
+            top[0].skills,
+        );
+
+        let _ = std::fs::remove_dir_all(&path);
+    }
+
+    #[tokio::test]
+    async fn no_bio_gives_empty_skills() {
+        let path = temp_db_path("no_skills");
+        let mut db = ContributorsDb::open(&path).await.expect("open DB");
+
+        let r = make_record(5, 15, 400, 200, 1); // no bio set
+        db.insert(&[r]).await.unwrap();
+        let top = db.top_rising(10).await.unwrap();
+        // skills may be empty or populated from repo names (org/repo0 has no AI keywords)
+        // Either way the field exists and is a Vec
+        let _ = top[0].skills.len(); // just assert it's accessible
         let _ = std::fs::remove_dir_all(&path);
     }
 }

@@ -1,6 +1,6 @@
 import { eq, sql, desc } from "drizzle-orm";
 import { db } from "@/src/db";
-import { lessons, categories, applications, externalCourses, lessonCourses } from "@/src/db/schema";
+import { lessons, categories, applications, externalCourses, lessonCourses, courseReviews } from "@/src/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
 
 export type ExternalCourse = InferSelectModel<typeof externalCourses>;
