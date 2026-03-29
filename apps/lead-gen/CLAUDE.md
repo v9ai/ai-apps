@@ -134,7 +134,7 @@ The strategy enforcer (`src/agents/strategy-enforcer.ts`) is available as a plai
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Auth (`BETTER_AUTH_SECRET`, `NEXT_PUBLIC_BETTER_AUTH_URL`), AI provider keys (Anthropic, DeepSeek, OpenAI, Gemini), LangSmith observability, admin email, app URL. See `.env.example` for full list.
+Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Auth (`BETTER_AUTH_SECRET`, `NEXT_PUBLIC_BETTER_AUTH_URL`), AI provider keys (Anthropic, DeepSeek, OpenAI), LangSmith observability, admin email, app URL. See `.env.example` for full list.
 
 ---
 
