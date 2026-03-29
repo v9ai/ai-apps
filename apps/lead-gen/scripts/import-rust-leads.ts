@@ -1,153 +1,316 @@
 /**
- * Import companies from Rust pipeline SQLite database into Neon PostgreSQL.
+ * Import companies + contacts from Rust pipeline JSON reports into Neon PostgreSQL.
  *
- * Reads companies + crawl_stats + enrichment_cache from the Rust SQLite DB
- * and imports them as CONSULTANCY companies into the Next.js Neon database.
+ * Reads enrichment.json + contacts.json from the Rust pipeline reports directory
+ * and upserts them into the Neon database.
  *
  * Usage:
- *   pnpm tsx scripts/import-rust-leads.ts <sqlite-db-path>
- *   pnpm tsx scripts/import-rust-leads.ts ../../crates/leadgen/data/leads.db
- *   pnpm tsx scripts/import-rust-leads.ts --dry-run ../../crates/leadgen/data/leads.db
+ *   pnpm tsx scripts/import-rust-leads.ts data/reports
+ *   pnpm tsx scripts/import-rust-leads.ts --dry-run data/reports
  */
 
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
-import Database from "better-sqlite3";
+import { readFileSync } from "fs";
+import { join } from "path";
 
-interface RustCompany {
-  id: string;
+// ── Report types (match Rust serde output) ───────────────────
+
+interface EnrichmentReport {
+  companies: EnrichedCompany[];
+}
+
+interface EnrichedCompany {
+  domain: string;
   name: string;
-  domain: string;
-  industry: string | null;
-  employee_count: number | null;
-  funding_stage: string | null;
-  tech_stack: string | null;
-  location: string | null;
-  description: string | null;
-  source: string | null;
+  category: string;
+  ai_tier: string;
+  industry: string;
+  tech_stack: string[];
+  emails_found: string[];
+  has_careers_page: boolean;
+  remote_policy: number; // 0=unknown, 1=remote, 2=hybrid, 3=onsite
+  enrichment_score: number;
+  confidence: number;
 }
 
-interface CrawlStats {
-  domain: string;
-  total_crawls: number;
-  total_pages: number;
-  total_contacts: number;
-  total_emails: number;
-  harvest_rate: number;
+interface ContactsReport {
+  contacts: FoundContact[];
+  verification_stats: {
+    mx_checked: number;
+    smtp_checked: number;
+    verified_count: number;
+    failed_count: number;
+    no_mx_count: number;
+  };
 }
+
+interface FoundContact {
+  email: string;
+  domain: string;
+  company_name: string;
+  pattern_name: string;
+  verified: boolean;
+  verification_tier: number;
+  mx_host: string;
+  score: number;
+}
+
+// ── Helpers ──────────────────────────────────────────────────
 
 function domainToKey(domain: string): string {
-  return domain.replace(/\./g, "-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
+  return domain
+    .replace(/\./g, "-")
+    .replace(/[^a-z0-9-]/gi, "")
+    .toLowerCase();
 }
 
-async function importFromSqlite(dbPath: string, dryRun: boolean) {
-  // Dynamic import so dotenv has loaded NEON_DATABASE_URL first
+function aiTierToInt(tier: string): number {
+  switch (tier) {
+    case "ai_first":
+      return 1;
+    case "ai_native":
+      return 2;
+    default:
+      return 0;
+  }
+}
+
+const REMOTE_LABELS: Record<number, string> = {
+  0: "unknown",
+  1: "remote",
+  2: "hybrid",
+  3: "onsite",
+};
+
+function loadReport<T>(reportsDir: string, name: string): T | null {
+  try {
+    const raw = readFileSync(join(reportsDir, `${name}.json`), "utf-8");
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+// ── Main ─────────────────────────────────────────────────────
+
+async function importFromReports(reportsDir: string, dryRun: boolean) {
   const { db } = await import("@/db");
-  const { companies } = await import("@/db/schema");
+  const { companies, contacts } = await import("@/db/schema");
   const { eq } = await import("drizzle-orm");
 
-  const sqlite = new Database(dbPath, { readonly: true });
+  // Load reports
+  const enrichment = loadReport<EnrichmentReport>(reportsDir, "enrichment");
+  const contactsReport = loadReport<ContactsReport>(reportsDir, "contacts");
 
-  const rustCompanies = sqlite
-    .prepare("SELECT * FROM companies ORDER BY domain")
-    .all() as RustCompany[];
+  if (!enrichment || enrichment.companies.length === 0) {
+    console.error("No enrichment report found or empty. Run the pipeline first.");
+    process.exit(1);
+  }
 
-  const crawlStats = sqlite
-    .prepare("SELECT * FROM crawl_stats")
-    .all() as CrawlStats[];
-
-  const statsMap = new Map(crawlStats.map((s) => [s.domain, s]));
-
-  console.log(`Found ${rustCompanies.length} companies in Rust DB`);
-  console.log(`Found ${crawlStats.length} crawl stats records`);
+  console.log(`Enrichment: ${enrichment.companies.length} companies`);
+  console.log(
+    `Contacts:   ${contactsReport?.contacts.length ?? 0} contacts`
+  );
   if (dryRun) console.log("DRY RUN — no database writes\n");
 
-  let imported = 0;
-  let skipped = 0;
+  // Build contacts lookup: domain → contacts[]
+  const contactsByDomain = new Map<string, FoundContact[]>();
+  for (const c of contactsReport?.contacts ?? []) {
+    const list = contactsByDomain.get(c.domain) ?? [];
+    list.push(c);
+    contactsByDomain.set(c.domain, list);
+  }
 
-  for (const rc of rustCompanies) {
-    const key = domainToKey(rc.domain);
-    const stats = statsMap.get(rc.domain);
+  let companiesCreated = 0;
+  let companiesSkipped = 0;
+  let contactsCreated = 0;
+  let contactsSkipped = 0;
 
-    // Check if already exists
+  for (const ec of enrichment.companies) {
+    const key = domainToKey(ec.domain);
+
+    // Check if company already exists
     const existing = await db
       .select({ id: companies.id })
       .from(companies)
       .where(eq(companies.key, key))
       .limit(1);
 
+    let companyId: number;
+
     if (existing.length > 0) {
-      skipped++;
-      continue;
-    }
+      companyId = existing[0].id;
+      companiesSkipped++;
 
-    const emailCount = stats?.total_emails ?? 0;
-    const pagesCount = stats?.total_pages ?? 0;
+      if (!dryRun) {
+        // Update enrichment fields even if company exists
+        await db
+          .update(companies)
+          .set({
+            category: ec.category,
+            ai_tier: aiTierToInt(ec.ai_tier),
+            ai_classification_confidence: ec.confidence,
+            score: ec.enrichment_score,
+            score_reasons: JSON.stringify([
+              `Category: ${ec.category}`,
+              `AI tier: ${ec.ai_tier}`,
+              `Industry: ${ec.industry}`,
+              `Remote: ${REMOTE_LABELS[ec.remote_policy] ?? "unknown"}`,
+              `Tech: ${ec.tech_stack.join(", ")}`,
+              `Confidence: ${ec.confidence}`,
+            ]),
+            tags: JSON.stringify([
+              "ai-consultancy",
+              "leadgen-import",
+              ...ec.tech_stack,
+            ]),
+            industries: JSON.stringify(
+              ["AI", ec.industry].filter(Boolean)
+            ),
+            emails: ec.emails_found.length
+              ? JSON.stringify(ec.emails_found)
+              : undefined,
+            email: ec.emails_found[0] ?? undefined,
+          })
+          .where(eq(companies.id, companyId));
+      }
+    } else {
+      if (dryRun) {
+        console.log(
+          `  [DRY] + ${ec.domain} — ${ec.category} / ${ec.ai_tier} / ${ec.industry} (score: ${ec.enrichment_score.toFixed(2)})`
+        );
+        companiesCreated++;
+        continue;
+      }
 
-    if (dryRun) {
+      const [inserted] = await db
+        .insert(companies)
+        .values({
+          key,
+          name: ec.name || ec.domain,
+          website: `https://${ec.domain}`,
+          canonical_domain: ec.domain,
+          industry: ec.industry || "AI Consulting",
+          category: ec.category,
+          ai_tier: aiTierToInt(ec.ai_tier),
+          ai_classification_reason: `Rust pipeline: ${ec.category} / ${ec.ai_tier}`,
+          ai_classification_confidence: ec.confidence,
+          score: ec.enrichment_score,
+          score_reasons: JSON.stringify([
+            `Category: ${ec.category}`,
+            `AI tier: ${ec.ai_tier}`,
+            `Industry: ${ec.industry}`,
+            `Remote: ${REMOTE_LABELS[ec.remote_policy] ?? "unknown"}`,
+            `Tech: ${ec.tech_stack.join(", ")}`,
+            `Confidence: ${ec.confidence}`,
+          ]),
+          tags: JSON.stringify([
+            "ai-consultancy",
+            "leadgen-import",
+            ...ec.tech_stack,
+          ]),
+          industries: JSON.stringify(["AI", ec.industry].filter(Boolean)),
+          service_taxonomy: JSON.stringify(["AI Consulting"]),
+          emails: ec.emails_found.length
+            ? JSON.stringify(ec.emails_found)
+            : null,
+          email: ec.emails_found[0] ?? null,
+          job_board_url: ec.has_careers_page
+            ? `https://${ec.domain}/careers`
+            : null,
+        })
+        .returning({ id: companies.id });
+
+      companyId = inserted.id;
+      companiesCreated++;
       console.log(
-        `  [DRY] ${rc.domain} — industry: ${rc.industry ?? "?"}, pages: ${pagesCount}, emails: ${emailCount}`
+        `  + ${ec.domain} — ${ec.category} / ${ec.ai_tier} (score: ${ec.enrichment_score.toFixed(2)})`
       );
-      continue;
     }
 
-    await db.insert(companies).values({
-      key,
-      name: rc.name || rc.domain,
-      website: `https://${rc.domain}`,
-      industry: rc.industry || "AI Consulting",
-      size: rc.employee_count ? String(rc.employee_count) : null,
-      location: rc.location,
-      description: rc.description,
-      category: "CONSULTANCY",
-      canonical_domain: rc.domain,
-      ai_tier: rc.industry?.toLowerCase().includes("ai") ? 1 : 0,
-      ai_classification_reason: "Rust pipeline crawl + NER extraction",
-      ai_classification_confidence: 0.5,
-      score: emailCount > 0 ? Math.min(emailCount / 50, 1.0) : 0.1,
-      score_reasons: JSON.stringify([
-        `${pagesCount} pages crawled`,
-        `${emailCount} emails discovered`,
-        "Source: Rust leadgen pipeline",
-      ]),
-      industries: JSON.stringify(
-        ["AI", "Consulting", rc.industry].filter(Boolean)
-      ),
-      service_taxonomy: JSON.stringify(["AI Consulting"]),
-      tags: JSON.stringify([
-        "ai-consultancy",
-        "leadgen-import",
-        ...(rc.tech_stack ? JSON.parse(rc.tech_stack) : []),
-      ]),
-    });
+    // Import contacts for this company
+    const domainContacts = contactsByDomain.get(ec.domain) ?? [];
+    for (const fc of domainContacts) {
+      // Skip contacts without valid-looking emails
+      if (!fc.email || !fc.email.includes("@")) continue;
 
-    imported++;
-    console.log(`  + ${rc.domain} (${rc.industry ?? "?"})`);
+      // Check if contact already exists by email
+      const existingContact = await db
+        .select({ id: contacts.id })
+        .from(contacts)
+        .where(eq(contacts.email, fc.email))
+        .limit(1);
+
+      if (existingContact.length > 0) {
+        contactsSkipped++;
+        continue;
+      }
+
+      if (dryRun) {
+        console.log(
+          `    [DRY] + ${fc.email} (${fc.pattern_name}, tier ${fc.verification_tier})`
+        );
+        contactsCreated++;
+        continue;
+      }
+
+      // Derive first/last name from email pattern
+      const localPart = fc.email.split("@")[0];
+      const parts = localPart.split(/[._-]/);
+      const firstName = parts[0] ?? localPart;
+      const lastName = parts.length > 1 ? parts[parts.length - 1] : "";
+
+      await db.insert(contacts).values({
+        first_name: firstName,
+        last_name: lastName,
+        email: fc.email,
+        emails: JSON.stringify([fc.email]),
+        company: fc.company_name,
+        company_id: companyId,
+        email_verified: fc.verified,
+        tags: JSON.stringify([
+          `pattern:${fc.pattern_name}`,
+          `tier:${fc.verification_tier}`,
+          `mx:${fc.mx_host}`,
+          "leadgen-import",
+        ]),
+      });
+
+      contactsCreated++;
+    }
   }
 
-  sqlite.close();
-
   console.log(`\nImport complete:`);
-  console.log(`  Companies: ${imported} created, ${skipped} already existed`);
   console.log(
-    `  Total emails discovered: ${crawlStats.reduce((s, c) => s + c.total_emails, 0)}`
+    `  Companies: ${companiesCreated} created, ${companiesSkipped} updated`
   );
+  console.log(
+    `  Contacts:  ${contactsCreated} created, ${contactsSkipped} skipped`
+  );
+  if (contactsReport?.verification_stats) {
+    const vs = contactsReport.verification_stats;
+    console.log(
+      `  SMTP:      ${vs.verified_count} verified, ${vs.failed_count} failed, ${vs.no_mx_count} no MX`
+    );
+  }
 }
 
-// CLI
+// ── CLI ──────────────────────────────────────────────────────
+
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
-const dbPath = args.find((a) => !a.startsWith("--"));
+const reportsDir = args.find((a) => !a.startsWith("--"));
 
-if (!dbPath) {
+if (!reportsDir) {
   console.error(
-    "Usage: pnpm tsx scripts/import-rust-leads.ts [--dry-run] <sqlite-db>"
+    "Usage: pnpm tsx scripts/import-rust-leads.ts [--dry-run] <reports-dir>"
   );
   process.exit(1);
 }
 
-importFromSqlite(dbPath, dryRun).catch((e) => {
+importFromReports(reportsDir, dryRun).catch((e) => {
   console.error("Import failed:", e);
   process.exit(1);
 });
