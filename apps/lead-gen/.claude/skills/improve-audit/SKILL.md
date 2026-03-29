@@ -41,7 +41,7 @@ Search the web for companies known to hire AI engineers remotely worldwide:
 - Vercel, Supabase, Cloudflare (developer tools with AI)
 - Scale AI, Weights & Biases, Neptune.ai, Arize AI
 - Datadog, New Relic (observability + AI)
-- European AI startups: Aleph Alpha, DeepL, Helsing, Photoroom
+- Global AI startups: Aleph Alpha, DeepL, Helsing, Photoroom, Cohere, Mistral
 
 ### 3. Find Missing Boards
 
@@ -62,7 +62,7 @@ For each new source found:
   "ats_platform": "ashby",
   "board_url": "URL",
   "board_token": "token/name for API",
-  "evidence": "Why this company hires AI engineers in EU",
+  "evidence": "Why this company hires AI engineers remotely",
   "expected_yield": "Estimated relevant jobs",
   "priority": "high|medium|low"
 }

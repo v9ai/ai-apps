@@ -82,13 +82,13 @@ Follow schema in `preference-gathering` skill.
 - Junior role + high salary → flag for review
 - Senior role + junior salary → flag for review
 - Exclude agencies + prefer staffing industry → contradiction
-- US time zone + EU location → potential conflict
+- Incompatible time zone + preferred location → potential conflict
 
 ### 3. Classification Results Validation
 
-When validating job classifications (remote EU, skills, etc.):
+When validating job classifications (remote worldwide, skills, etc.):
 
-**Remote EU Classification:**
+**Remote Work Classification:**
 
 ```
 ✅ Classification has confidence score
@@ -262,7 +262,7 @@ Data is valid but incomplete. Consider requesting salary information from source
 
 // Locations
 - Valid countries/regions
-- No contradictions (US only + EU)
+- No contradictions (conflicting location restrictions)
 ```
 
 ## Error Messages

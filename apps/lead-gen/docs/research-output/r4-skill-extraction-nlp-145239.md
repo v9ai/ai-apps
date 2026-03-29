@@ -13,25 +13,25 @@
 ### [2] ESCOXLM‑R: Multilingual Taxonomy‑driven Pre‑training for the Job Market Domain (2023, 27 citations)
 - **Authors:** Mike Zhang, Rob van der Goot, Barbara Plank
 - **Relevance:** high
-- **Domain:** EU employment, recruitment tech
+- **Domain:** employment, recruitment tech
 - **Key Finding:** A language model pre‑trained on the European Skills, Competences, Qualifications and Occupations (ESCO) taxonomy (27 languages) achieves state‑of‑the‑art results on 6 out of 9 job‑market NLP tasks, especially for short‑span skill and occupation entities.
-- **Actionable Insight:** Adopt ESCO‑based multilingual models (e.g., ESCOXLM‑R) to normalize skills across EU job boards and improve cross‑border job matching.
+- **Actionable Insight:** Adopt ESCO‑based multilingual models (e.g., ESCOXLM‑R) to normalize skills across global job boards and improve cross‑border job matching.
 - **Source:** https://www.semanticscholar.org/paper/c07618042c9ad4ae4b296cc307f21d6b28d3dcdd
 
 ### [3] Large Language Models as Batteries‑Included Zero‑Shot ESCO Skills Matchers (2023, 25 citations)
 - **Authors:** Benjamin Clavié, Guillaume Soulié
 - **Relevance:** high
-- **Domain:** EU employment, AI/ML hiring
+- **Domain:** employment, AI/ML hiring
 - **Key Finding:** An end‑to‑end zero‑shot system using LLMs and synthetic training data for the entire ESCO skill ontology (13,000+ skills) achieves RP@10 scores 10–22 points higher than previous distant‑supervision methods, with no human annotation.
-- **Actionable Insight:** Use LLM‑driven zero‑shot skill extraction with synthetic data to rapidly deploy accurate skill‑matching across EU job boards without costly manual labeling.
+- **Actionable Insight:** Use LLM‑driven zero‑shot skill extraction with synthetic data to rapidly deploy accurate skill‑matching across global job boards without costly manual labeling.
 - **Source:** https://www.semanticscholar.org/paper/c4f9f0cc8c138047a61bdb11b1a352e3d1aed035
 
 ### [4] Fine‑Grained Extraction and Classification of Skill Requirements in German‑Speaking Job Ads (2022, 20 citations)
 - **Authors:** Ann‑Sophie Gnehm, Eva Bühlmann, Helen Buchs, Simon Clematide
 - **Relevance:** medium
-- **Domain:** EU employment, recruitment tech
+- **Domain:** employment, recruitment tech
 - **Key Finding:** Transformer‑based models adapted with ESCO context achieve a mean average precision of 0.969 at the skill‑class level for German job ads, demonstrating that domain‑specific pre‑training and ontology‑guided classification yield high‑precision skill extraction.
-- **Actionable Insight:** Apply fine‑grained, ontology‑aware extraction models for specific EU languages to improve skill‑classification accuracy in local job markets.
+- **Actionable Insight:** Apply fine‑grained, ontology‑aware extraction models for specific languages to improve skill‑classification accuracy in local job markets worldwide.
 - **Source:** https://www.semanticscholar.org/paper/c4c949b11e6d4385c87b76104ad9d5cdac6f532e
 
 ### [5] Extreme Multi‑Label Skill Extraction Training using Large Language Models (2023, 22 citations)
@@ -56,7 +56,7 @@ Based on the literature for **skill extraction NLP**:
 
 | Insight | Source Papers | Priority |
 |---------|---------------|----------|
-| ESCO taxonomy enables multilingual skill normalization across EU job markets, improving cross‑border matching. | [2, 3, 4] | high |
+| ESCO taxonomy enables multilingual skill normalization across global job markets, improving cross‑border matching. | [2, 3, 4] | high |
 | Large language models (LLMs) can perform zero‑shot skill extraction with synthetic data, drastically reducing annotation overhead. | [3, 5] | high |
 | Implicit skill extraction using document embeddings (e.g., Doc2Vec) enriches job‑posting profiles and boosts matching accuracy. | [1] | high |
 | Fine‑grained skill classification achieves high precision when transformer models are adapted with domain‑specific ontologies (e.g., ESCO). | [2, 4] | medium |
@@ -65,7 +65,7 @@ Based on the literature for **skill extraction NLP**:
 
 ## Recommendations
 
-1. **Adopt the ESCO taxonomy** as the backbone for skill normalization across EU job boards, and integrate multilingual models like ESCOXLM‑R to handle cross‑lingual skill matching.
+1. **Adopt the ESCO taxonomy** as the backbone for skill normalization across global job boards, and integrate multilingual models like ESCOXLM‑R to handle cross‑lingual skill matching.
 
 2. **Implement LLM‑based zero‑shot skill extraction** using synthetic data generation (as in [3,5]) to quickly deploy accurate skill‑matching without manual annotation, especially for new or niche skill categories.
 
@@ -81,4 +81,4 @@ Based on the literature for **skill extraction NLP**:
 - Academic papers: 6
 - Overall confidence: 85%
 
-**Rationale:** The reviewed literature provides robust, recent (2020‑2024) evidence on NLP‑based skill extraction, with strong emphasis on EU‑relevant taxonomies (ESCO) and practical LLM‑driven methods. However, direct studies focusing on remote‑work‑specific skill extraction or distributed‑team dynamics are sparse; insights in those areas must be extrapolated from general job‑matching research.
+**Rationale:** The reviewed literature provides robust, recent (2020-2024) evidence on NLP-based skill extraction, with strong emphasis on taxonomies like ESCO and practical LLM-driven methods. However, direct studies focusing on remote-work-specific skill extraction or distributed-team dynamics are sparse; insights in those areas must be extrapolated from general job-matching research.

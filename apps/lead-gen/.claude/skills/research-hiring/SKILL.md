@@ -45,7 +45,7 @@ For engineering/AI roles found:
 - Title and seniority level
 - Tech stack mentioned in JD
 - Remote policy (fully remote, hybrid, office)
-- Location requirements (EU, US, global)
+- Location requirements (global, regional, specific countries)
 - Team they'd join (signals about org structure)
 - Posted date (fresh vs stale)
 ```

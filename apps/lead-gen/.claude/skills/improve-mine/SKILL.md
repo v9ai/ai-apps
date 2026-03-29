@@ -1,6 +1,6 @@
 # Pipeline Monitor — Job Search Self-Improvement
 
-> Goal: Ensure the job discovery → classification → serving pipeline is healthy and maximizing the flow of relevant remote EU AI engineering jobs to Vadim.
+> Goal: Ensure the job discovery → classification → serving pipeline is healthy and maximizing the flow of relevant remote AI engineering jobs worldwide to Vadim.
 
 ## Role
 
@@ -36,10 +36,10 @@ Track how jobs flow through the pipeline:
 -- Jobs by status (the funnel)
 SELECT status, COUNT(*) as count FROM jobs GROUP BY status;
 
--- Remote EU yield rate
+-- Remote match yield rate
 SELECT
   COUNT(*) as total_classified,
-  SUM(CASE WHEN is_remote_eu = 1 THEN 1 ELSE 0 END) as remote_eu,
+  SUM(CASE WHEN status = 'remote_match' THEN 1 ELSE 0 END) as remote_match,
   SUM(CASE WHEN status = 'role_match' THEN 1 ELSE 0 END) as role_match,
   SUM(CASE WHEN status = 'role_nomatch' THEN 1 ELSE 0 END) as role_nomatch
 FROM jobs WHERE status NOT IN ('new', 'enhanced');
@@ -47,7 +47,7 @@ FROM jobs WHERE status NOT IN ('new', 'enhanced');
 -- Recent classification (last 7 days)
 SELECT DATE(created_at) as day,
   COUNT(*) as total,
-  SUM(CASE WHEN is_remote_eu = 1 THEN 1 ELSE 0 END) as remote_eu
+  SUM(CASE WHEN status = 'remote_match' THEN 1 ELSE 0 END) as remote_match
 FROM jobs WHERE created_at > datetime('now', '-7 days')
 GROUP BY DATE(created_at) ORDER BY day;
 ```
@@ -57,13 +57,13 @@ GROUP BY DATE(created_at) ORDER BY day;
 The most important metric — how many AI engineering jobs are reaching the user:
 
 ```sql
--- AI engineer jobs that are remote EU
+-- AI engineer jobs that are remote match
 SELECT COUNT(*) FROM jobs
-WHERE is_remote_eu = 1 AND role_ai_engineer = 1 AND status = 'eu_remote';
+WHERE status = 'remote_match' AND role_ai_engineer = 1;
 
 -- Recent AI engineering jobs (last 30 days)
-SELECT title, company_key, posted_at, remote_eu_confidence
-FROM jobs WHERE is_remote_eu = 1
+SELECT title, company_key, posted_at, remote_confidence
+FROM jobs WHERE status = 'remote_match'
   AND (title LIKE '%AI%' OR title LIKE '%Machine Learning%'
        OR title LIKE '%LLM%' OR title LIKE '%ML Engineer%'
        OR role_ai_engineer = 1)
@@ -75,16 +75,16 @@ ORDER BY posted_at DESC LIMIT 20;
 ```sql
 -- Jobs with vs without skills
 SELECT
-  COUNT(DISTINCT j.id) as total_remote_eu,
+  COUNT(DISTINCT j.id) as total_remote,
   COUNT(DISTINCT jst.job_id) as with_skills
 FROM jobs j LEFT JOIN job_skill_tags jst ON j.id = jst.job_id
-WHERE j.is_remote_eu = 1;
+WHERE j.status = 'remote_match';
 
 -- Top skills in AI engineering jobs
 SELECT jst.tag, COUNT(*) as frequency
 FROM job_skill_tags jst
 JOIN jobs j ON j.id = jst.job_id
-WHERE j.is_remote_eu = 1 AND j.role_ai_engineer = 1
+WHERE j.status = 'remote_match' AND j.role_ai_engineer = 1
 GROUP BY jst.tag ORDER BY frequency DESC LIMIT 30;
 ```
 
@@ -103,9 +103,9 @@ FROM applications ORDER BY created_at DESC LIMIT 10;
 
 ```sql
 -- Are we confident in our classifications?
-SELECT remote_eu_confidence, COUNT(*)
-FROM jobs WHERE is_remote_eu = 1
-GROUP BY remote_eu_confidence;
+SELECT remote_confidence, COUNT(*)
+FROM jobs WHERE status = 'remote_match'
+GROUP BY remote_confidence;
 ```
 
 ## How to Query
@@ -135,12 +135,12 @@ Write a pipeline health report to `~/.claude/state/pipeline-health.json`:
       "enhanced": N,
       "role_match": N,
       "role_nomatch": N,
-      "eu_remote": N,
-      "non_eu": N,
-      "yield_rate": "X% of classified jobs are remote EU"
+      "remote_match": N,
+      "remote_nomatch": N,
+      "yield_rate": "X% of classified jobs are remote match"
     },
     "ai_engineering_yield": {
-      "total_remote_eu_ai": N,
+      "total_remote_ai": N,
       "last_30_days": N,
       "last_7_days": N,
       "recent_titles": ["..."],
@@ -175,5 +175,5 @@ Write a pipeline health report to `~/.claude/state/pipeline-health.json`:
 1. Query the actual database — don't guess or estimate
 2. If you can't query the DB directly, read the resolver code to understand what queries would give the data
 3. Focus on metrics that matter for finding AI engineering jobs — not generic code health
-4. A healthy pipeline should yield 5+ new AI engineering remote EU jobs per week
+4. A healthy pipeline should yield 5+ new AI engineering remote jobs per week
 5. Flag any stage where the conversion rate drops below 10%

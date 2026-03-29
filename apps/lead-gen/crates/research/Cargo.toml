@@ -2,7 +2,7 @@
 name = "research-agent"
 version = "0.1.0"
 edition = "2021"
-description = "DeepSeek Reasoner + Semantic Scholar research agent for remote EU job market analysis"
+description = "DeepSeek Reasoner + Semantic Scholar research agent for global remote job market analysis"
 
 [[bin]]
 name = "research-agent"

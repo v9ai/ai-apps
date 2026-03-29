@@ -58,14 +58,14 @@ Query the database for skill tag distribution:
 SELECT tag, COUNT(*) as frequency
 FROM job_skill_tags jst
 JOIN jobs j ON j.id = jst.job_id
-WHERE j.is_remote_eu = 1 AND j.role_ai_engineer = 1
+WHERE j.status = 'remote_match' AND j.role_ai_engineer = 1
 GROUP BY tag ORDER BY frequency DESC LIMIT 50;
 
 -- Jobs with zero skills extracted
 SELECT j.id, j.title, j.company_key
 FROM jobs j
 LEFT JOIN job_skill_tags jst ON j.id = jst.job_id
-WHERE j.is_remote_eu = 1 AND jst.id IS NULL
+WHERE j.status = 'remote_match' AND jst.id IS NULL
 LIMIT 20;
 ```
 

@@ -218,7 +218,7 @@ Competing-hypotheses research squad. Created per target, destroyed after synthes
 |---|---|---|
 | **Company Analyst** | `research-analyst` | Tech stack, funding, growth, AI adoption |
 | **Hiring Intel** | `research-hiring` | Open roles, ATS boards, team growth, org structure |
-| **ICP Matcher** | `research-icp` | Score against ICP: remote? EU? AI? Stage? DM access? |
+| **ICP Matcher** | `research-icp` | Score against ICP: remote? Global? AI? Stage? DM access? |
 
 ## Debate Protocol
 
@@ -280,7 +280,7 @@ Single subagent with `research-icp` skill. No team, no debate.
 
 # Team: Improve
 
-Job search self-improvement. Goal: fully remote EU AI engineering role.
+Job search self-improvement. Goal: fully remote AI engineering role worldwide.
 
 Agents: `improve-mine` (Pipeline Monitor), `improve-audit` (Discovery Expander), `improve-evolve` (Classifier Tuner), `improve-apply` (Skill Optimizer), `improve-meta` (Strategy Brain).
 

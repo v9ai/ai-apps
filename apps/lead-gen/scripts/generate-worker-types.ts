@@ -82,10 +82,10 @@ function generatePython(): string {
   lines.push("");
 
   // JobStatus: enum VALUES use the DB-native hyphenated format so that
-  // `JobStatus.EU_REMOTE.value` returns "eu-remote" (what D1 stores).
-  // Enum KEYS use UPPER_SNAKE for Pythonic access (JobStatus.EU_REMOTE).
+  // `JobStatus.REMOTE_MATCH.value` returns "remote-match" (what Neon stores).
+  // Enum KEYS use UPPER_SNAKE for Pythonic access (JobStatus.REMOTE_MATCH).
   lines.push("class JobStatus(str, Enum):");
-  lines.push("    \"\"\"Pipeline status — .value returns the D1-native hyphenated form.\"\"\"");
+  lines.push("    \"\"\"Pipeline status — .value returns the DB-native hyphenated form.\"\"\"");
   for (const [canonical, dbValue] of Object.entries(JOB_STATUS_PYTHON_MAP)) {
     const pyKey = canonical.toUpperCase();
     lines.push(`    ${pyKey} = "${dbValue}"`);

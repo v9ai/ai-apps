@@ -1,7 +1,7 @@
 # Research Insights — job posting deduplication
 
 ## Executive Summary
-The academic literature specifically focused on job posting deduplication is sparse, but one key paper provides a concrete framework and benchmark. **A Framework for Duplicate Detection from Online Job Postings (2021)** systematically compares 24 methods and identifies overlap-based similarity measures (skip‑gram and n‑gram) as the most effective. Other relevant work treats deduplication as a necessary preprocessing step within larger job‑market analysis pipelines, but EU‑specific research and implementations for remote‑work aggregation are absent.
+The academic literature specifically focused on job posting deduplication is sparse, but one key paper provides a concrete framework and benchmark. **A Framework for Duplicate Detection from Online Job Postings (2021)** systematically compares 24 methods and identifies overlap-based similarity measures (skip‑gram and n‑gram) as the most effective. Other relevant work treats deduplication as a necessary preprocessing step within larger job‑market analysis pipelines, but region‑specific research and implementations for global remote‑work aggregation are absent.
 
 ## Papers Reviewed
 
@@ -74,11 +74,11 @@ The academic literature specifically focused on job posting deduplication is spa
 
 ### P2 (Backlog)
 - **Explore deep‑learning embeddings:** Fine‑tune a Sentence‑BERT model on the labelled duplicate pairs to capture semantic paraphrasing.
-- **Multilingual deduplication:** Investigate methods for handling duplicate postings across different EU languages (e.g., using multilingual embeddings).
+- **Multilingual deduplication:** Investigate methods for handling duplicate postings across different languages worldwide (e.g., using multilingual embeddings).
 - **Real‑time deduplication:** Optimise the pipeline for streaming aggregation, possibly using locality‑sensitive hashing (LSH) for scalable similarity search.
 
 ## Open Questions
-- **Threshold tuning:** What similarity threshold maximises precision/recall for remote EU job postings?
+- **Threshold tuning:** What similarity threshold maximises precision/recall for global remote job postings?
 - **Cross‑language duplicates:** How to detect duplicates when the same job is posted in English, German, and French?
 - **Temporal aspects:** Should duplicates be detected only within a certain time window (e.g., 30 days)?
 - **ATS‑specific formatting:** How to normalise postings that come from different Applicant Tracking Systems (ATS) with vastly different HTML structures and boilerplate?
@@ -86,5 +86,5 @@ The academic literature specifically focused on job posting deduplication is spa
 ## Confidence Assessment
 - **Total papers reviewed:** 5
 - **With code/benchmarks:** 1 ([1] provides a full framework and evaluation)
-- **EU‑specific:** 0 (none of the papers focus on EU remote‑work aggregation or ESCO in deduplication)
-- **Overall confidence:** **40%** – While one paper offers a strong foundation, the literature is extremely limited for the specific context of remote EU job‑board aggregation. Most insights are extrapolated from broader job‑market analysis or duplicate‑detection in other domains. Practical implementation will require extensive experimentation with lead-gen’s own data.
+- **Region‑specific:** 0 (none of the papers focus on global remote‑work aggregation or ESCO in deduplication)
+- **Overall confidence:** **40%** – While one paper offers a strong foundation, the literature is extremely limited for the specific context of global remote job‑board aggregation. Most insights are extrapolated from broader job‑market analysis or duplicate‑detection in other domains. Practical implementation will require extensive experimentation with lead-gen’s own data.

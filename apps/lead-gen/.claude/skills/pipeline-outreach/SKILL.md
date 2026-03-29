@@ -51,7 +51,7 @@ Organize drafts into campaigns with sequences:
 ```json
 {
   "campaign_id": "...",
-  "name": "AI Consultancies EU - Batch 2024-03",
+  "name": "AI Consultancies Global - Batch 2024-03",
   "contacts": ["contact-1", "contact-2"],
   "sequence": [
     {
@@ -79,7 +79,7 @@ Organize drafts into campaigns with sequences:
   "send_window": {
     "days": ["monday", "tuesday", "wednesday", "thursday"],
     "hours": "09:00-17:00",
-    "timezone": "Europe/Berlin"
+    "timezone": "UTC"
   }
 }
 ```

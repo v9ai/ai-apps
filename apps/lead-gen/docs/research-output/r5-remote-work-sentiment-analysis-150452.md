@@ -25,11 +25,11 @@ The literature reveals robust sentiment analysis methodologies applied to remote
 
 ### [3] Hierarchical Classification of Transversal Skills in Job Ads Based on Sentence Embeddings (2024, 7 citations)
 - **Authors:** Florin Leon, M. Gavrilescu, S. Floria, A. Minea
-- **Relevance:** high (EU‑specific)
+- **Relevance:** high (ESCO‑specific)
 - **Domain:** Computer Science / Information Systems
-- **Key Finding:** A deep‑learning framework using ESCO taxonomy for hierarchical multi‑label classification of transversal skills in job ads; multi‑language sentence‑embedding models perform comparably to English‑only models, making the approach suitable for the diverse European job market.
-- **Actionable Insight:** Integrate ESCO taxonomy and a hierarchical classifier (e.g., BERT‑based sentence embeddings) to standardize skill labels across EU job ads, enabling consistent skill‑based filtering and cross‑border job recommendations.
-- **Confidence:** medium (small citation count but recent and EU‑focused)
+- **Key Finding:** A deep‑learning framework using ESCO taxonomy for hierarchical multi‑label classification of transversal skills in job ads; multi‑language sentence‑embedding models perform comparably to English‑only models, making the approach suitable for diverse global job markets.
+- **Actionable Insight:** Integrate ESCO taxonomy and a hierarchical classifier (e.g., BERT‑based sentence embeddings) to standardize skill labels across global job ads, enabling consistent skill‑based filtering and cross‑border job recommendations.
+- **Confidence:** medium (small citation count but recent and ESCO‑focused)
 - **Source:** https://www.semanticscholar.org/paper/7339d859eac02eaa33266ecf9cc655771c99ce6b
 
 ### [4] Employee Sentiment Analysis Towards Remote Work during COVID‑19 Using Twitter Data (2022, 10 citations)
@@ -65,7 +65,7 @@ The literature reveals robust sentiment analysis methodologies applied to remote
 |---------|---------------|------------------------|
 | Use ensemble classifiers (NB, RF, SVM, LR) for remote‑work sentiment detection in user‑generated content | [4] | P1 |
 | Extract implicit skills via document embeddings of similar job ads to enrich job profiles | [2] | P0 |
-| Adopt ESCO taxonomy + hierarchical classification for standardized skill labeling across EU job ads | [3] | P1 |
+| Adopt ESCO taxonomy + hierarchical classification for standardized skill labeling across global job ads | [3] | P1 |
 | Cluster job ads using sentence‑BERT → UMAP → HDBSCAN to identify remote‑work archetypes | [5] | P1 |
 | Fine‑tune an LLM for skill extraction and extend it to detect remote‑work signals as a special skill category | [6] | P2 |
 | Monitor real‑time remote‑work sentiment on social media to identify emerging concerns (cybersecurity, work‑life balance) | [1] | P2 |
@@ -77,7 +77,7 @@ The literature reveals robust sentiment analysis methodologies applied to remote
 - **Implicit skill inference:** Build a Doc2Vec model (or sentence‑BERT) trained on your job‑ad corpus; for each job ad, find the top‑k similar ads and aggregate their skills as implicit skills.
 
 ### P1 (Next Sprint)
-- **ESCO integration:** Map extracted skills to ESCO taxonomy using the hierarchical classification approach from [3]; store ESCO codes alongside raw skill phrases.
+- **ESCO integration:** Map extracted skills to ESCO taxonomy (and regional equivalents) using the hierarchical classification approach from [3]; store ESCO codes alongside raw skill phrases.
 - **Remote‑work archetype clustering:** Apply sentence‑BERT embeddings + UMAP + HDBSCAN to segment job ads into remote‑work categories (fully remote, hybrid, on‑site). Use cluster labels as a new filter in the job board.
 - **Ensemble sentiment classifier:** Train an ensemble (NB, RF, SVM, LR) on labeled remote‑work sentiment data (e.g., from Twitter) to classify job‑description snippets that mention remote‑work culture.
 
@@ -87,12 +87,12 @@ The literature reveals robust sentiment analysis methodologies applied to remote
 
 ## Open Questions
 - How can we reliably label remote‑work signals in job descriptions at scale? (Supervised training data is lacking.)
-- What are the GDPR/AI Act implications of using LLMs for skill extraction on EU job seekers’ data?
+- What are the GDPR/AI Act and other regional privacy implications of using LLMs for skill extraction on job seekers’ data worldwide?
 - Does implicit skill inference introduce bias (e.g., reinforcing geographic or industry stereotypes)?
-- How do remote‑work sentiment patterns differ across EU member states (cultural, linguistic, regulatory variations)?
+- How do remote‑work sentiment patterns differ across regions worldwide (cultural, linguistic, regulatory variations)?
 
 ## Confidence Assessment
 - **Total papers reviewed:** 6
 - **With code/benchmarks:** 5 (all except [1])
-- **EU‑specific:** 1 ([3] uses ESCO taxonomy; [5] focuses on Lithuanian job market)
+- **Taxonomy‑specific:** 1 ([3] uses ESCO taxonomy; [5] focuses on Lithuanian job market)
 - **Overall confidence:** 70% – Strong technical foundations for skill extraction and sentiment analysis, but limited direct research on remote‑work sentiment in job descriptions. Adaptation of existing methods is required.

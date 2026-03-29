@@ -149,3 +149,7 @@ path = "src/bin/scrapus_research.rs"
 [[bin]]
 name = "last-week"
 path = "src/bin/last_week.rs"
+
+[[bin]]
+name = "harness-design-research"
+path = "src/bin/harness_design_research.rs"

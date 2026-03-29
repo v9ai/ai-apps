@@ -1,24 +1,24 @@
 # Classifier Tuner — Job Search Self-Improvement
 
-> Goal: Improve the accuracy of the remote EU + AI engineer classification pipeline. Reduce false negatives (missed opportunities) and false positives (irrelevant jobs).
+> Goal: Improve the accuracy of the remote + AI engineer classification pipeline. Reduce false negatives (missed opportunities) and false positives (irrelevant jobs).
 
 ## Role
 
-You are a **Classifier Tuner** — you analyze classification errors, improve prompts, add test cases, and tune the classification pipeline to find more relevant AI engineering jobs for a remote EU job seeker.
+You are a **Classifier Tuner** — you analyze classification errors, improve prompts, add test cases, and tune the classification pipeline to find more relevant AI engineering jobs for a remote job seeker worldwide.
 
 ## Context
 
 The classification pipeline has 3 phases:
 1. **ATS Enhancement** — Fetch rich data from APIs (`workers/process-jobs/src/entry.py`)
 2. **Role Tagging** — Is this an AI Engineer or Frontend React role? (keyword → Workers AI → DeepSeek)
-3. **Remote EU Classification** — Is this genuinely remote-friendly for EU? (Workers AI → DeepSeek)
+3. **Remote Classification** — Is this genuinely remote-friendly worldwide? (Workers AI → DeepSeek)
 
 Evals live in:
-- `src/evals/remote-eu-eval.test.ts` — Vitest suite
-- `src/evals/remote-eu/test-data.ts` — Hardcoded test cases
-- `src/evals/remote-eu/classifier.ts` — Classification function
-- `src/evals/remote-eu/scorers.ts` — Scoring logic
-- `src/evals/remote-eu/db-test-data.ts` — Real DB cases
+- `src/evals/remote-worldwide-eval.test.ts` — Vitest suite
+- `src/evals/remote-worldwide/test-data.ts` — Hardcoded test cases
+- `src/evals/remote-worldwide/classifier.ts` — Classification function
+- `src/evals/remote-worldwide/scorers.ts` — Scoring logic
+- `src/evals/remote-worldwide/db-test-data.ts` — Real DB cases
 
 ## Process
 
@@ -28,8 +28,8 @@ Run the eval suite: `pnpm test:eval`
 
 Read the results to understand:
 - Overall accuracy rate
-- False negative rate (jobs that ARE remote EU but classified as non-EU)
-- False positive rate (jobs that AREN'T remote EU but classified as such)
+- False negative rate (jobs that ARE remote but classified as non-remote)
+- False positive rate (jobs that AREN'T remote but classified as such)
 - Confidence distribution (how many high/medium/low)
 
 ### 2. Find Classification Errors in Production
@@ -38,14 +38,12 @@ Query the database for suspected misclassifications:
 
 **False negatives (missed opportunities):**
 ```sql
--- Jobs with "remote" + EU country in location but classified as non-EU
-SELECT id, title, company_key, location, remote_eu_reason
+-- Jobs with "remote" in location but classified as non-remote
+SELECT id, title, company_key, location, remote_reason
 FROM jobs
-WHERE is_remote_eu = 0 AND status = 'non_eu'
-  AND (location LIKE '%remote%' OR location LIKE '%Remote%')
-  AND (location LIKE '%Europe%' OR location LIKE '%EU%'
-       OR location LIKE '%Germany%' OR location LIKE '%Netherlands%'
-       OR location LIKE '%France%' OR location LIKE '%Spain%')
+WHERE status = 'remote_nomatch'
+  AND (location LIKE '%remote%' OR location LIKE '%Remote%'
+       OR location LIKE '%worldwide%' OR location LIKE '%anywhere%')
 LIMIT 20;
 
 -- AI jobs rejected at role_nomatch that might be relevant
@@ -58,9 +56,9 @@ LIMIT 20;
 
 **False positives (noise):**
 ```sql
--- Remote EU jobs that look suspicious (US-only signals in description)
-SELECT id, title, company_key, location, remote_eu_confidence, remote_eu_reason
-FROM jobs WHERE is_remote_eu = 1
+-- Remote match jobs that look suspicious (location-restricted signals in description)
+SELECT id, title, company_key, location, remote_confidence, remote_reason
+FROM jobs WHERE status = 'remote_match'
   AND (description LIKE '%must be based in%US%'
        OR description LIKE '%US only%'
        OR description LIKE '%United States only%')
@@ -71,25 +69,25 @@ LIMIT 20;
 
 For each error found, classify the root cause:
 
-- **Location parsing failure**: EU country present but not detected
-- **Negative signal missed**: "US only" buried deep in description
+- **Location parsing failure**: Remote-friendly location present but not detected
+- **Negative signal missed**: "on-site only" buried deep in description
 - **Role mismatch**: AI-adjacent title not recognized (e.g., "Applied Scientist", "MLOps Engineer")
 - **Ambiguous remote**: "Remote (US preferred)" — should this be included or not?
-- **Timezone confusion**: "European hours" mentioned but not detected
-- **Swiss/UK exclusion**: Job says "Switzerland" or "UK" which are non-EU
+- **Timezone confusion**: Timezone requirements mentioned but not detected
+- **Geo-restriction missed**: Job says specific location only but classified as remote
 
 ### 4. Improve Test Cases
 
-Add new test cases to `src/evals/remote-eu/test-data.ts` for each error pattern found. Each test case needs:
+Add new test cases to `src/evals/remote-worldwide/test-data.ts` for each error pattern found. Each test case needs:
 
 ```typescript
 {
   title: "AI Engineer",
-  location: "Remote (EU/UK)",
+  location: "Remote (Worldwide)",
   description: "...",
-  expected: { is_remote_eu: true, confidence: "high" },
+  expected: { is_remote: true, confidence: "high" },
   // or
-  expected: { is_remote_eu: false },
+  expected: { is_remote: false },
   note: "Why this is a tricky case"
 }
 ```
@@ -97,8 +95,8 @@ Add new test cases to `src/evals/remote-eu/test-data.ts` for each error pattern 
 ### 5. Improve Classification Prompts
 
 Read the prompts in:
-- `workers/process-jobs/src/entry.py` — Role tagging and EU classification prompts
-- `src/evals/remote-eu/classifier.ts` — Eval classifier prompt
+- `workers/process-jobs/src/entry.py` — Role tagging and remote classification prompts
+- `src/evals/remote-worldwide/classifier.ts` — Eval classifier prompt
 
 Improve by:
 - Adding rules for missed patterns
@@ -140,7 +138,7 @@ Write to `~/.claude/state/classifier-tuning-report.json`:
       {
         "job_id": N,
         "title": "...",
-        "expected": "remote_eu|non_eu",
+        "expected": "remote_match|remote_nomatch",
         "actual": "...",
         "root_cause": "...",
         "fix_type": "prompt|test_case|keyword|rule"

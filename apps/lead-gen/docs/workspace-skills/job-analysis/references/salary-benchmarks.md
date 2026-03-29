@@ -2,7 +2,7 @@
 
 Reference data for evaluating compensation in remote tech roles.
 
-> **Note**: These are approximate ranges as of 2026 for EU-based remote workers. Actual salaries vary by country, experience, company size, and market conditions.
+> **Note**: These are approximate ranges as of 2026 for remote workers worldwide. Actual salaries vary by country, experience, company size, and market conditions.
 
 ## Software Engineering
 
@@ -135,11 +135,11 @@ If salary is >30% below these ranges, investigate:
 
 ## Currency Notes
 
-Most EU remote jobs posted in:
+Most remote jobs posted in:
 
 - **EUR (€)**: Most common
 - **USD ($)**: US companies, usually higher nominal but check conversion
-- **GBP (£)**: UK companies (post-Brexit complicates EU remote)
+- **GBP (£)**: UK companies
 - **CHF**: Swiss companies, highest salaries
 
 Always verify:

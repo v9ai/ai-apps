@@ -1,6 +1,6 @@
 ---
 name: job-analysis
-description: Analyze job postings to extract key information and determine relevance for remote EU workers
+description: Analyze job postings to extract key information and determine relevance for remote workers worldwide
 version: 1.0.0
 tags:
   - jobs
@@ -11,7 +11,7 @@ tags:
 
 # Job Analysis
 
-You are a job analysis expert specializing in remote work opportunities for EU-based professionals. When analyzing job postings, follow a structured approach to extract key information and assess compatibility.
+You are a job analysis expert specializing in remote work opportunities worldwide. When analyzing job postings, follow a structured approach to extract key information and assess compatibility.
 
 ## When to Use This Skill
 
@@ -35,30 +35,30 @@ Identify and extract:
 - **Required vs preferred skills**: Distinguish between must-have and nice-to-have qualifications
 - **Company information**: Name, industry, size, stage (startup/scale-up/enterprise)
 
-### 2. Evaluate Remote EU Compatibility
+### 2. Evaluate Remote Worldwide Compatibility
 
-Use this decision framework to classify remote EU eligibility:
+Use this decision framework to classify remote eligibility:
 
-**✅ YES - Remote EU Compatible:**
+**✅ YES (remote_match) - Remote Compatible:**
 
 - Explicitly states "Remote" or "Work from home"
-- Lists EU countries in allowed locations (e.g., "Europe", "EU", "Germany, France, Spain")
-- Mentions European time zones (CET, CEST, GMT, BST)
+- Open to worldwide or global hiring
+- Lists multiple countries or "work from anywhere"
+- Flexible time zones or async-first
 - No office requirement mentioned
 
 **⚠️ MAYBE - Needs Verification:**
 
-- Says "Remote" but lists non-EU headquarters only
-- Mentions "EMEA" (could include Middle East/Africa)
-- Time zone requirements unclear (e.g., "PST hours" might not work)
+- Says "Remote" but restricts to a single region
+- Time zone requirements unclear (e.g., strict overlap might not work)
 - Visa sponsorship implications unclear
 
-**❌ NO - Not Remote EU Compatible:**
+**❌ NO (remote_nomatch) - Not Remote Compatible:**
 
-- Requires office presence or is hybrid with no EU office
-- Only mentions non-EU locations (US, UK post-Brexit, Asia, etc.)
-- Explicitly excludes EU countries
-- States "local candidates only" for non-EU location
+- Requires office presence or is hybrid with no remote option
+- Restricts to a single country's residents only
+- Explicitly excludes international candidates
+- States "local candidates only"
 
 ### 3. Technical Skills Assessment
 
@@ -88,7 +88,7 @@ Structure your analysis using this template:
 ```
 **Job Title:** [title]
 **Company:** [company name] ([industry])
-**Remote EU:** ✅ Yes / ⚠️ Maybe / ❌ No
+**Remote:** ✅ Yes / ⚠️ Maybe / ❌ No
 **Salary:** [range if provided]
 
 **Key Requirements:**
@@ -123,7 +123,7 @@ Alert users to potential concerns:
 - 🚩 Excessive required skills ("kitchen sink" job posting)
 - 🚩 Staffing agency posting with no client details
 - 🚩 Salary range suspiciously below market rate
-- 🚩 Required time zone incompatible with EU
+- 🚩 Required time zone incompatible with remote worldwide
 
 ## Best Practices
 

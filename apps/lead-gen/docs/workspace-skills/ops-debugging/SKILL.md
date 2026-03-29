@@ -109,7 +109,7 @@ Once confirmed:
 
 ### Job Classification Issues
 
-**Symptom:** Jobs classified incorrectly (remote EU)
+**Symptom:** Jobs classified incorrectly (remote status)
 
 **Debug steps:**
 
@@ -199,10 +199,10 @@ Use SQL to investigate:
 
 ```sql
 -- Find jobs with inconsistent classifications
-SELECT id, title, company, remote_eu_classification
+SELECT id, title, company, status
 FROM jobs
-WHERE remote_eu_classification = 'yes'
-  AND (location NOT LIKE '%EU%' AND location NOT LIKE '%Europe%')
+WHERE status = 'remote_match'
+  AND (location NOT LIKE '%remote%' AND location NOT LIKE '%worldwide%')
 LIMIT 20;
 
 -- Check for duplicate jobs
@@ -215,7 +215,7 @@ HAVING COUNT(*) > 1;
 SELECT id, title, updated_at
 FROM jobs
 WHERE updated_at > NOW() - INTERVAL '24 hours'
-  AND remote_eu_classification IS NOT NULL
+  AND status IS NOT NULL
 ORDER BY updated_at DESC;
 ```
 

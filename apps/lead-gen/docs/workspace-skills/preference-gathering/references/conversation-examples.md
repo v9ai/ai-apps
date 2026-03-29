@@ -10,7 +10,7 @@ Real-world examples of effective preference gathering conversations.
 
 **Agent:** Great! Let me capture that. You're looking for senior backend roles, fully remote from Europe, with Node.js and Python. A few follow-ups:
 
-1. Any specific European countries you prefer?
+1. Any specific countries or regions you prefer?
 2. Do you have a minimum salary in mind?
 3. Any particular company size or stage you're interested in?
 
@@ -19,7 +19,7 @@ Real-world examples of effective preference gathering conversations.
 **Agent:** Perfect! Let me confirm what I've gathered:
 
 - **Role**: Senior Backend Engineer
-- **Location**: EU remote (Germany, Netherlands preferred)
+- **Location**: Remote (Germany, Netherlands preferred)
 - **Tech**: Node.js, Python
 - **Salary**: Minimum €100k
 - **Company**: Scale-ups preferred
@@ -67,15 +67,15 @@ Does that sound right?
 
 **Agent:** Awesome! Two more quick questions:
 
-1. Any location requirements? (EU, US, anywhere?)
+1. Any location requirements? (Specific countries, regions, or anywhere?)
 2. Any minimum salary you need?
 
-**User:** EU would be great, I'm in Spain. Salary... maybe €50k?
+**User:** Remote worldwide would be great, I'm in Spain. Salary... maybe €50k?
 
 **Agent:** Perfect! I've captured everything:
 
 - **Role**: Mid-level Frontend Engineer
-- **Location**: EU remote (based in Spain)
+- **Location**: Remote (based in Spain)
 - **Tech**: React, JavaScript, Node.js
 - **Salary**: ~€50k minimum
 - **Work-life balance**: Normal hours, no weekends
@@ -146,7 +146,7 @@ These usually point to different experience levels. Could you help me understand
 
 Any location requirements?
 
-**User:** I'm in Portugal, so EU remote would be ideal.
+**User:** I'm in Portugal, so remote worldwide would be ideal.
 
 **Agent:** Excellent! And salary expectations?
 
@@ -159,7 +159,7 @@ Any location requirements?
 **Agent:** Perfect! Here's your complete profile:
 
 - **Role**: Mid-level Full-Stack Engineer
-- **Location**: EU remote (based in Portugal)
+- **Location**: Remote (based in Portugal)
 - **Tech**: React, Node.js (preferred), open to learning
 - **Salary**: €50k+ minimum
 - **Experience**: 2 years

@@ -33,23 +33,23 @@ async function demoBM25SkillDiscovery() {
   const agent = mastra.getAgent('jobClassifierAgent');
   
   const jobPosting = `
-    Senior Backend Engineer - Remote EU
-    TechCorp - €95,000 - €125,000
-    
-    We're hiring a senior backend engineer to work remotely from anywhere in the EU.
-    
+    Senior Backend Engineer - Remote Worldwide
+    TechCorp - $95,000 - $125,000
+
+    We're hiring a senior backend engineer to work remotely from anywhere in the world.
+
     Requirements:
     - 5+ years with Node.js and TypeScript
     - PostgreSQL and microservices experience
-    - EU work authorization required
+    - Authorized to work in your country of residence
   `;
   
   console.log('\n📝 Job Posting:');
   console.log(jobPosting);
   
   console.log('\n🔍 How BM25 Discovers the Job Analysis Skill:');
-  console.log('  Query keywords: "job", "remote", "EU", "salary", "requirements"');
-  console.log('  Skill keywords: "job-analysis", "classification", "remote", "EU", "salary"');
+  console.log('  Query keywords: "job", "remote", "worldwide", "salary", "requirements"');
+  console.log('  Skill keywords: "job-analysis", "classification", "remote", "worldwide", "salary"');
   console.log('  → BM25 scores high match → skill activated\n');
   
   console.log('🤔 Asking agent to analyze (skill auto-activated via BM25)...\n');
@@ -122,7 +122,7 @@ async function demoBM25SkillDiscovery() {
   console.log('  • Transparent: Explainable scores\n');
   
   console.log('📚 Key Keywords by Skill:\n');
-  console.log('  job-analysis: remote, EU, classification, salary, skills');
+  console.log('  job-analysis: remote, worldwide, classification, salary, skills');
   console.log('  preference-gathering: user, preferences, conversation');
   console.log('  data-validation: validate, quality, rules, schema');
   console.log('  report-generation: report, analytics, insights');
