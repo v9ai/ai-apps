@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
-export function Topbar({ lessonCount }: { lessonCount: number }) {
+export function Topbar({ lessonCount }: { lessonCount?: number }) {
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -14,9 +14,11 @@ export function Topbar({ lessonCount }: { lessonCount: number }) {
         <span className="yc-topbar-logo" />
         AI ENGINEERING
       </Link>
-      <span className="yc-topbar-count">
-        {lessonCount} lessons
-      </span>
+      {lessonCount != null && (
+        <span className="yc-topbar-count">
+          {lessonCount} lessons
+        </span>
+      )}
       {session?.user ? (
         <div className="yc-topbar-user">
           <Link href="/applications" className="yc-topbar-signin">
