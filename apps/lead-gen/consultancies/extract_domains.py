@@ -67,10 +67,10 @@ def extract_domains(min_confidence: float = 0.0, output: Path = DEFAULT_OUTPUT):
 
     # Filter out aggregator/directory domains
     skip_domains = {
-        "clutch.co", "goodfirms.co", "wellfound.com", "linkedin.com",
-        "twitter.com", "facebook.com", "youtube.com", "wikipedia.org",
-        "crunchbase.com", "glassdoor.com", "indeed.com", "g2.com",
-        "github.com", "medium.com", "substack.com",
+        "clutch.co", "goodfirms.co", "wellfound.com", "itfirms.co",
+        "linkedin.com", "twitter.com", "facebook.com", "youtube.com",
+        "wikipedia.org", "crunchbase.com", "glassdoor.com", "indeed.com",
+        "g2.com", "github.com", "medium.com", "substack.com",
     }
     domains = {d for d in domains if not any(s in d for s in skip_domains)}
 

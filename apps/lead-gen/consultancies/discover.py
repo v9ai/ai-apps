@@ -165,60 +165,87 @@ async def scrape_searxng(
 # --- Source: Clutch.co ---------------------------------------------------
 
 CLUTCH_URLS = [
+    # Global categories
     "https://clutch.co/developers/artificial-intelligence",
     "https://clutch.co/developers/machine-learning",
     "https://clutch.co/developers/natural-language-processing",
+    # Western Europe
     "https://clutch.co/uk/developers/artificial-intelligence",
+    "https://clutch.co/uk/developers/machine-learning",
     "https://clutch.co/de/developers/artificial-intelligence",
+    "https://clutch.co/de/developers/machine-learning",
     "https://clutch.co/fr/developers/artificial-intelligence",
     "https://clutch.co/nl/developers/artificial-intelligence",
-    "https://clutch.co/se/developers/artificial-intelligence",
-    "https://clutch.co/ie/developers/artificial-intelligence",
     "https://clutch.co/ch/developers/artificial-intelligence",
-    "https://clutch.co/pl/developers/artificial-intelligence",
+    "https://clutch.co/be/developers/artificial-intelligence",
+    "https://clutch.co/ie/developers/artificial-intelligence",
+    "https://clutch.co/at/developers/artificial-intelligence",
+    # Nordics
+    "https://clutch.co/se/developers/artificial-intelligence",
+    "https://clutch.co/dk/developers/artificial-intelligence",
+    "https://clutch.co/fi/developers/artificial-intelligence",
+    "https://clutch.co/no/developers/artificial-intelligence",
+    # Southern Europe
     "https://clutch.co/es/developers/artificial-intelligence",
+    "https://clutch.co/pt/developers/artificial-intelligence",
+    "https://clutch.co/it/developers/artificial-intelligence",
+    "https://clutch.co/gr/developers/artificial-intelligence",
+    # Central & Eastern Europe
+    "https://clutch.co/pl/developers/artificial-intelligence",
+    "https://clutch.co/ro/developers/artificial-intelligence",
+    "https://clutch.co/hu/developers/artificial-intelligence",
+    "https://clutch.co/bg/developers/artificial-intelligence",
+    "https://clutch.co/ee/developers/artificial-intelligence",
+    "https://clutch.co/lt/developers/artificial-intelligence",
+    "https://clutch.co/lv/developers/artificial-intelligence",
 ]
 
 async def scrape_clutch(
     session: aiohttp.ClientSession, sem: asyncio.Semaphore
 ) -> list[Company]:
-    """Scrape AI consultancy listings from Clutch.co."""
+    """Scrape AI consultancy listings from Clutch.co with pagination."""
     companies = []
     for url in CLUTCH_URLS:
-        html = await fetch(session, url, sem)
-        if not html:
-            continue
-        soup = BeautifulSoup(html, "html.parser")
+        for page in range(3):  # up to 3 pages per URL
+            page_url = url if page == 0 else f"{url}?page={page}"
+            html = await fetch(session, page_url, sem)
+            if not html:
+                break
+            soup = BeautifulSoup(html, "html.parser")
 
-        for card in soup.select(".provider-row, .provider-info, [data-provider]"):
-            name_el = card.select_one(
-                "h3.company_info a, .company-name a, a.provider-name, "
-                "[data-link-to-profile]"
-            )
-            if not name_el:
-                continue
-            name = name_el.get_text(strip=True)
-            href = name_el.get("href", "")
-            website = urljoin("https://clutch.co", href) if href else ""
+            page_count = 0
+            for card in soup.select(".provider-row, .provider-info, [data-provider]"):
+                name_el = card.select_one(
+                    "h3.company_info a, .company-name a, a.provider-name, "
+                    "[data-link-to-profile]"
+                )
+                if not name_el:
+                    continue
+                name = name_el.get_text(strip=True)
+                href = name_el.get("href", "")
+                website = urljoin("https://clutch.co", href) if href else ""
 
-            loc_el = card.select_one(".locality, .location")
-            location = loc_el.get_text(strip=True) if loc_el else ""
+                loc_el = card.select_one(".locality, .location")
+                location = loc_el.get_text(strip=True) if loc_el else ""
 
-            desc_el = card.select_one(".company-description, .tagline")
-            desc = desc_el.get_text(strip=True) if desc_el else ""
+                desc_el = card.select_one(".company-description, .tagline")
+                desc = desc_el.get_text(strip=True) if desc_el else ""
 
-            size_el = card.select_one(".company-size, [data-employees]")
-            size = size_el.get_text(strip=True) if size_el else ""
+                size_el = card.select_one(".company-size, [data-employees]")
+                size = size_el.get_text(strip=True) if size_el else ""
 
-            companies.append(Company(
-                name=name,
-                website=website,
-                source="clutch.co",
-                description=desc,
-                location=location,
-                employee_range=size,
-            ))
-        await asyncio.sleep(RATE_LIMIT_DELAY)
+                companies.append(Company(
+                    name=name,
+                    website=website,
+                    source="clutch.co",
+                    description=desc,
+                    location=location,
+                    employee_range=size,
+                ))
+                page_count += 1
+            if page_count == 0:
+                break  # no more results
+            await asyncio.sleep(RATE_LIMIT_DELAY)
 
     log.info(f"Clutch: found {len(companies)} companies")
     return companies
@@ -227,12 +254,29 @@ async def scrape_clutch(
 # --- Source: GoodFirms.co ------------------------------------------------
 
 GOODFIRMS_URLS = [
+    # Global categories
     "https://www.goodfirms.co/artificial-intelligence/companies",
     "https://www.goodfirms.co/machine-learning/companies",
+    "https://www.goodfirms.co/data-science/companies",
+    "https://www.goodfirms.co/natural-language-processing/companies",
+    "https://www.goodfirms.co/computer-vision/companies",
+    "https://www.goodfirms.co/deep-learning/companies",
+    # European regions
     "https://www.goodfirms.co/artificial-intelligence/companies/uk",
     "https://www.goodfirms.co/artificial-intelligence/companies/germany",
     "https://www.goodfirms.co/artificial-intelligence/companies/france",
     "https://www.goodfirms.co/artificial-intelligence/companies/netherlands",
+    "https://www.goodfirms.co/artificial-intelligence/companies/switzerland",
+    "https://www.goodfirms.co/artificial-intelligence/companies/sweden",
+    "https://www.goodfirms.co/artificial-intelligence/companies/denmark",
+    "https://www.goodfirms.co/artificial-intelligence/companies/norway",
+    "https://www.goodfirms.co/artificial-intelligence/companies/finland",
+    "https://www.goodfirms.co/artificial-intelligence/companies/belgium",
+    "https://www.goodfirms.co/artificial-intelligence/companies/austria",
+    "https://www.goodfirms.co/artificial-intelligence/companies/poland",
+    "https://www.goodfirms.co/artificial-intelligence/companies/spain",
+    "https://www.goodfirms.co/artificial-intelligence/companies/italy",
+    "https://www.goodfirms.co/artificial-intelligence/companies/ireland",
 ]
 
 async def scrape_goodfirms(
@@ -318,6 +362,65 @@ async def scrape_wellfound(
         await asyncio.sleep(RATE_LIMIT_DELAY)
 
     log.info(f"Wellfound: found {len(companies)} companies")
+    return companies
+
+
+# --- Source: ITFirms.co --------------------------------------------------
+
+ITFIRMS_URLS = [
+    "https://www.itfirms.co/top-artificial-intelligence-companies/",
+    "https://www.itfirms.co/top-machine-learning-companies/",
+    "https://www.itfirms.co/top-generative-ai-companies/",
+]
+
+async def scrape_itfirms(
+    session: aiohttp.ClientSession, sem: asyncio.Semaphore
+) -> list[Company]:
+    """Scrape AI company listings from ITFirms.co (WordPress editorial directory)."""
+    companies = []
+    for url in ITFIRMS_URLS:
+        html = await fetch(session, url, sem)
+        if not html:
+            continue
+        soup = BeautifulSoup(html, "html.parser")
+
+        for heading in soup.select("h3, h4"):
+            text = heading.get_text(strip=True)
+            if not text or len(text) > 100 or len(text) < 3:
+                continue
+            # Strip leading numbers like "1. " or "1) "
+            name = re.sub(r"^\d+[\.\)]\s*", "", text).strip()
+            if not name:
+                continue
+
+            # Find nearest link to company website
+            website = ""
+            link = heading.find("a", href=True)
+            if link and "itfirms.co" not in link["href"]:
+                website = link["href"]
+            if not website:
+                for sibling in heading.find_next_siblings(limit=5):
+                    ext_link = sibling.find("a", href=True)
+                    if ext_link and "itfirms.co" not in ext_link["href"]:
+                        website = ext_link["href"]
+                        break
+
+            # Get description from next <p> tag
+            desc = ""
+            next_p = heading.find_next_sibling("p")
+            if next_p:
+                desc = next_p.get_text(strip=True)[:500]
+
+            if name and len(name) > 2:
+                companies.append(Company(
+                    name=name,
+                    website=website,
+                    source="itfirms.co",
+                    description=desc,
+                ))
+        await asyncio.sleep(RATE_LIMIT_DELAY)
+
+    log.info(f"ITFirms: found {len(companies)} companies")
     return companies
 
 
@@ -709,6 +812,7 @@ async def run_discovery(skip_llm: bool = False):
             scrape_clutch(session, sem),
             scrape_goodfirms(session, sem),
             scrape_wellfound(session, sem),
+            scrape_itfirms(session, sem),
             discover_from_search(session, sem),
             return_exceptions=True,
         )
