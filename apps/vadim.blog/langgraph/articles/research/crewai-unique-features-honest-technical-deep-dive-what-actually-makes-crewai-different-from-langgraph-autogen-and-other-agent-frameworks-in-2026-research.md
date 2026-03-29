@@ -17,7 +17,7 @@ CrewAI's primary differentiator is its high-level, role-based, and process-centr
 ## Data Points
 | Metric | Value | Source | Date |
 |---|---|---|---|
-| GitHub Stars (CrewAI) | ~ 15.7k | [CrewAI GitHub](https://github.com/crewai/crewai) | Apr 2025 |
+| GitHub Stars (CrewAI) | ~ 15.7k | [CrewAI GitHub](https://github.com/crewAI-Inc/crewAI) | Apr 2025 |
 | GitHub Stars (LangGraph) | ~ 14.1k | [LangGraph GitHub](https://github.com/langchain-ai/langgraph) | Apr 2025 |
 | GitHub Stars (AutoGen) | ~ 23.6k | [AutoGen GitHub](https://github.com/microsoft/autogen) | Apr 2025 |
 | Core Concept | Role-based Crews & Tasks | CrewAI Docs | 2025 |
