@@ -13,7 +13,7 @@ export default async function CompanyContactsPage({ params }: Props) {
     <Suspense
       fallback={
         <Container size="4" p="8">
-          <Flex justify="center" align="center" style={{ minHeight: "400px" }}>
+          <Flex justify="center" align="center" minHeight="400px">
             <Spinner size="3" />
           </Flex>
         </Container>
