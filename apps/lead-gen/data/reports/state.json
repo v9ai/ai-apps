@@ -1,10 +1,10 @@
 {
-  "cycle_count": 3,
+  "cycle_count": 4,
   "phase": "Flowing",
   "counts": {
     "discovered": 181,
     "enriched": 178,
-    "contacts_found": 49,
+    "contacts_found": 62,
     "outreach_drafted": 0,
     "outreach_sent": 0
   },
