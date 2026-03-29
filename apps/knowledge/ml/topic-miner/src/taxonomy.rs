@@ -181,3 +181,73 @@ pub fn categories() -> Vec<&'static str> {
     cats.dedup();
     cats
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn taxonomy_is_not_empty() {
+        assert!(TAXONOMY.len() > 100, "expected 100+ skills, got {}", TAXONOMY.len());
+    }
+
+    #[test]
+    fn all_patterns_are_valid_regex() {
+        for skill in TAXONOMY.values() {
+            for pat in skill.patterns {
+                regex::RegexBuilder::new(pat)
+                    .case_insensitive(true)
+                    .build()
+                    .unwrap_or_else(|e| panic!("bad regex for {}: {pat} — {e}", skill.tag));
+            }
+        }
+    }
+
+    #[test]
+    fn get_known_tag() {
+        let skill = get("graphql").expect("graphql should exist");
+        assert_eq!(skill.label, "GraphQL");
+        assert_eq!(skill.category, "Architecture");
+    }
+
+    #[test]
+    fn get_missing_tag_is_none() {
+        assert!(get("nonexistent-tag-xyz").is_none());
+    }
+
+    #[test]
+    fn categories_are_non_empty() {
+        let cats = categories();
+        assert!(!cats.is_empty());
+        assert!(cats.contains(&"Languages"));
+        assert!(cats.contains(&"Frontend"));
+        assert!(cats.contains(&"Backend"));
+    }
+
+    #[test]
+    fn no_duplicate_tags() {
+        // HashMap enforces uniqueness, but verify count matches vec construction
+        let tags: Vec<&str> = TAXONOMY.keys().copied().collect();
+        let unique: std::collections::HashSet<&str> = tags.iter().copied().collect();
+        assert_eq!(tags.len(), unique.len(), "duplicate tags in taxonomy");
+    }
+
+    #[test]
+    fn spot_check_patterns_match() {
+        let re = |pat: &str| -> regex::Regex {
+            regex::RegexBuilder::new(pat)
+                .case_insensitive(true)
+                .build()
+                .unwrap()
+        };
+
+        let react = get("react").unwrap();
+        assert!(react.patterns.iter().any(|p| re(p).is_match("import { useState } from 'react'")));
+
+        let rust = get("rust").unwrap();
+        assert!(rust.patterns.iter().any(|p| re(p).is_match("use std::collections::HashMap;")));
+
+        let docker = get("docker").unwrap();
+        assert!(docker.patterns.iter().any(|p| re(p).is_match("Dockerfile")));
+    }
+}
