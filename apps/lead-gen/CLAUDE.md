@@ -86,7 +86,6 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 | API | Apollo Server 5 (GraphQL) |
 | Auth | Better Auth (`@ai-apps/auth`) |
 | AI/ML | Vercel AI SDK, DeepSeek, OpenRouter |
-| Observability | LangSmith |
 | Deployment | Vercel |
 | Package manager | pnpm 10.10 |
 | UI | Radix UI (Themes + Icons) |
