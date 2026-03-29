@@ -6,6 +6,7 @@
 
 use std::sync::Arc;
 
+use anyhow::Result;
 use arrow_array::{
     Array, ArrayRef, FixedSizeListArray, Float32Array, Float64Array, RecordBatch, StringArray,
     UInt32Array,
@@ -16,8 +17,7 @@ use lancedb::query::{ExecutableQuery, QueryBase};
 use lancedb::Connection;
 use tracing::info;
 
-use crate::course::{Course, CourseSearchResult};
-use crate::error::Result;
+use crate::types::{Course, CourseSearchResult};
 
 const TABLE: &str = "courses";
 
@@ -64,7 +64,6 @@ pub struct CourseStore {
 
 impl CourseStore {
     /// Open (or create) a Lance store at `path`.
-    /// The dimension is detected from the first `add()` call.
     pub async fn connect(path: &str) -> Result<Self> {
         let conn = lancedb::connect(path).execute().await?;
         Ok(Self { conn, dim: 0 })

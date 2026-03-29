@@ -1,7 +1,7 @@
 //! Ingest Udemy courses into a Lance vector store.
 //!
 //! Usage:
-//!   cargo run --bin scrape-courses -- --json ./data/courses.json [--db ./lance-db]
+//!   cargo run --bin scrape-udemy -- --json ./data/courses.json [--db ./lance-db]
 //!
 //! Requires the Candle embed server running on localhost:9999:
 //!   cargo run -p candle --bin embed-server --features server
@@ -12,15 +12,15 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use knowledge_ml::scraper::load_courses_json;
-use knowledge_ml::{Course, CourseStore};
 use serde::Deserialize;
 use tracing::info;
+use udemy::scraper::load_courses_json;
+use udemy::{Course, CourseStore};
 
 #[derive(Parser)]
 #[command(about = "Embed Udemy courses into a Lance vector store")]
 struct Args {
-    /// Path to a JSON file with course data (from scrape-udemy.ts)
+    /// Path to a JSON file with course data (from scripts/scrape-udemy.ts)
     #[arg(long)]
     json: PathBuf,
 
