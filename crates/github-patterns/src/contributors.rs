@@ -89,9 +89,11 @@ pub fn compute_rising_score(record: &ContributorRecord) -> RisingScore {
     // Obscurity bonus: less famous = more "rising"
     let obscurity = 1.0 / (1.0 + followers / 500.0);
 
-    // Ghost-account guard: require at least some public presence.
-    // tanh(0) = 0, tanh(large) → 1; reaches 0.76 at public_repos+followers=1.
-    let realness = ((public_repos + followers) * 0.1_f32.recip().recip()).tanh();
+    // Ghost-account guard: discount accounts with zero public footprint.
+    // Floor of 0.5 so real employees with only private repos aren't zeroed out.
+    // presence=0 → 0.5, presence=5 → ~0.88, presence=50+ → ~1.0
+    let presence = public_repos + followers;
+    let realness = 0.5 + 0.5 * (presence * 0.2_f32).tanh();
 
     let (w_d, w_n, w_b, w_a, w_o) = SCORE_WEIGHTS;
     let raw = w_d * contribution_density
@@ -459,6 +461,8 @@ mod tests {
     use super::*;
     use chrono::{Duration, Utc};
 
+    const EPSILON: f32 = 1e-5;
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     fn make_user(followers: u32, public_repos: u32, age_days: i64) -> GhUser {
@@ -505,106 +509,215 @@ mod tests {
         }
     }
 
+    fn temp_db_path(tag: &str) -> String {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .subsec_nanos();
+        std::env::temp_dir()
+            .join(format!("gh_contributors_{tag}_{nanos}"))
+            .to_string_lossy()
+            .into_owned()
+    }
+
+    // ── bot detection ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn is_bot_detects_github_app_suffix() {
+        assert!(is_bot("devin-ai-integration[bot]"));
+        assert!(is_bot("github-actions[bot]"));
+        assert!(is_bot("some-tool[BOT]")); // case-insensitive
+    }
+
+    #[test]
+    fn is_bot_detects_dependabot_variants() {
+        assert!(is_bot("dependabot"));
+        assert!(is_bot("dependabot[bot]"));
+        assert!(is_bot("Dependabot")); // case-insensitive
+    }
+
+    #[test]
+    fn is_bot_detects_renovate() {
+        assert!(is_bot("renovate[bot]"));
+        assert!(is_bot("renovate-bot"));
+    }
+
+    #[test]
+    fn is_bot_passes_real_humans() {
+        assert!(!is_bot("torvalds"));
+        assert!(!is_bot("bot-enthusiast")); // has "bot" but not as a suffix pattern
+        assert!(!is_bot("nikolinaspehar"));
+        assert!(!is_bot("Copilot")); // GitHub Copilot user (404 on /users, but not a [bot])
+    }
+
     // ── score range ───────────────────────────────────────────────────────────
 
     #[test]
-    fn score_in_unit_range() {
+    fn all_components_in_unit_range() {
         for (followers, public_repos, age_days, contributions, repos) in [
             (0, 0, 1, 1, 1),
             (0, 100, 30, 500, 5),
             (100_000, 5, 3650, 10, 1),
             (50, 25, 400, 200, 3),
+            (0, 0, 365 * 10, 1000, 1), // ghost account, very old
         ] {
-            let s = compute_rising_score(&make_record(followers, public_repos, age_days, contributions, repos));
-            assert!(
-                (0.0..=1.0).contains(&s.score),
-                "score={} out of range for followers={followers} age_days={age_days}",
-                s.score
+            let s = compute_rising_score(
+                &make_record(followers, public_repos, age_days, contributions, repos)
             );
-            assert!((0.0..=1.0).contains(&s.contribution_density));
-            assert!((0.0..=1.0).contains(&s.novelty));
-            assert!((0.0..=1.0).contains(&s.breadth));
-            assert!((0.0..=1.0).contains(&s.activity));
-            assert!((0.0..=1.0).contains(&s.obscurity));
+            for (name, val) in [
+                ("score", s.score),
+                ("contribution_density", s.contribution_density),
+                ("novelty", s.novelty),
+                ("breadth", s.breadth),
+                ("activity", s.activity),
+                ("obscurity", s.obscurity),
+                ("realness", s.realness),
+            ] {
+                assert!(
+                    (0.0..=1.0).contains(&val),
+                    "{name}={val} out of [0,1] for followers={followers} public_repos={public_repos}"
+                );
+            }
         }
+    }
+
+    // ── formula verification ──────────────────────────────────────────────────
+
+    #[test]
+    fn score_equals_weighted_sum_times_realness() {
+        let r = make_record(20, 15, 500, 200, 3);
+        let s = compute_rising_score(&r);
+        let (w_d, w_n, w_b, w_a, w_o) = SCORE_WEIGHTS;
+        let expected_raw =
+            w_d * s.contribution_density
+            + w_n * s.novelty
+            + w_b * s.breadth
+            + w_a * s.activity
+            + w_o * s.obscurity;
+        let expected = (expected_raw * s.realness).clamp(0.0, 1.0);
+        assert!(
+            (s.score - expected).abs() < EPSILON,
+            "score={} expected={expected} (diff={})",
+            s.score, (s.score - expected).abs()
+        );
+    }
+
+    #[test]
+    fn score_weights_sum_to_one() {
+        let (w_d, w_n, w_b, w_a, w_o) = SCORE_WEIGHTS;
+        let sum = w_d + w_n + w_b + w_a + w_o;
+        assert!((sum - 1.0).abs() < EPSILON, "weights sum={sum}, expected 1.0");
     }
 
     // ── component invariants ──────────────────────────────────────────────────
 
     #[test]
     fn contribution_density_increases_with_commits() {
-        // Same followers, more contributions → higher density
         let low = compute_rising_score(&make_record(10, 5, 365, 10, 1));
         let high = compute_rising_score(&make_record(10, 5, 365, 500, 1));
         assert!(
             high.contribution_density > low.contribution_density,
-            "expected density to rise with contributions: {} vs {}",
-            low.contribution_density,
-            high.contribution_density,
+            "density low={} high={}",
+            low.contribution_density, high.contribution_density,
         );
     }
 
     #[test]
     fn contribution_density_decreases_with_followers() {
-        // Same contributions, more followers → lower density
         let obscure = compute_rising_score(&make_record(5, 10, 365, 100, 1));
         let famous = compute_rising_score(&make_record(10_000, 10, 365, 100, 1));
         assert!(
             obscure.contribution_density > famous.contribution_density,
-            "obscure={} should beat famous={}",
-            obscure.contribution_density,
-            famous.contribution_density,
+            "obscure={} famous={}",
+            obscure.contribution_density, famous.contribution_density,
         );
     }
 
     #[test]
     fn novelty_decreases_with_age() {
-        let new_acc = compute_rising_score(&make_record(0, 0, 100, 1, 1));
-        let old_acc = compute_rising_score(&make_record(0, 0, 2000, 1, 1));
-        assert!(
-            new_acc.novelty > old_acc.novelty,
-            "newer account should have higher novelty: {} vs {}",
-            new_acc.novelty,
-            old_acc.novelty,
-        );
+        let new_acc = compute_rising_score(&make_record(0, 5, 100, 1, 1));
+        let old_acc = compute_rising_score(&make_record(0, 5, 2000, 1, 1));
+        assert!(new_acc.novelty > old_acc.novelty);
     }
 
     #[test]
-    fn novelty_zero_for_very_old_accounts() {
-        // Account created 10 years ago → novelty should be 0
+    fn novelty_zero_after_five_years() {
         let old = compute_rising_score(&make_record(0, 0, 365 * 10, 1, 1));
-        assert_eq!(old.novelty, 0.0, "novelty should be 0 after 5+ years");
+        assert_eq!(old.novelty, 0.0);
+    }
+
+    #[test]
+    fn novelty_at_five_year_boundary() {
+        // Exactly 5 years (1825 days) → novelty should be very close to 0
+        let boundary = compute_rising_score(&make_record(0, 5, 1825, 50, 1));
+        assert!(boundary.novelty < 0.01, "novelty={}", boundary.novelty);
     }
 
     #[test]
     fn breadth_increases_with_repo_count() {
         let single = compute_rising_score(&make_record(0, 5, 365, 100, 1));
         let multi = compute_rising_score(&make_record(0, 5, 365, 100, 5));
-        assert!(
-            multi.breadth > single.breadth,
-            "multi-repo should have higher breadth: {} vs {}",
-            single.breadth,
-            multi.breadth,
-        );
+        assert!(multi.breadth > single.breadth);
     }
 
     #[test]
     fn breadth_caps_at_five_repos() {
         let five = compute_rising_score(&make_record(0, 5, 365, 100, 5));
         let ten = compute_rising_score(&make_record(0, 5, 365, 100, 10));
-        assert_eq!(five.breadth, ten.breadth, "breadth should cap at 5 repos");
         assert_eq!(five.breadth, 1.0);
+        assert_eq!(ten.breadth, 1.0);
+    }
+
+    #[test]
+    fn activity_caps_at_fifty_public_repos() {
+        let fifty = compute_rising_score(&make_record(0, 50, 365, 10, 1));
+        let hundred = compute_rising_score(&make_record(0, 100, 365, 10, 1));
+        assert_eq!(fifty.activity, 1.0);
+        assert_eq!(hundred.activity, 1.0);
     }
 
     #[test]
     fn obscurity_decreases_with_followers() {
         let nobody = compute_rising_score(&make_record(0, 5, 365, 10, 1));
         let celebrity = compute_rising_score(&make_record(50_000, 5, 365, 10, 1));
+        assert!(nobody.obscurity > celebrity.obscurity);
+    }
+
+    #[test]
+    fn obscurity_at_500_followers_is_half() {
+        // formula: 1 / (1 + followers/500) → at 500 followers = 0.5
+        let r = compute_rising_score(&make_record(500, 10, 365, 50, 1));
+        assert!((r.obscurity - 0.5).abs() < EPSILON, "obscurity={}", r.obscurity);
+    }
+
+    // ── realness (ghost-account penalty) ─────────────────────────────────────
+
+    #[test]
+    fn realness_is_half_for_ghost_account() {
+        // 0 public repos, 0 followers → realness = 0.5 + 0.5*tanh(0) = 0.5
+        let ghost = compute_rising_score(&make_record(0, 0, 200, 383, 1));
+        assert!((ghost.realness - 0.5).abs() < EPSILON, "realness={}", ghost.realness);
+    }
+
+    #[test]
+    fn realness_approaches_one_for_established_account() {
+        // 50 public repos, 200 followers → presence=250 → tanh(50) ≈ 1.0
+        let established = compute_rising_score(&make_record(200, 50, 500, 100, 1));
+        assert!(established.realness > 0.99, "realness={}", established.realness);
+    }
+
+    #[test]
+    fn ghost_account_scores_lower_than_equivalent_active_account() {
+        // Same commits, same age — only difference is public presence
+        let ghost = make_record(0, 0, 500, 383, 1);    // no public repos, no followers
+        let active = make_record(0, 10, 500, 383, 1);  // 10 public repos
+
+        let s_ghost = compute_rising_score(&ghost).score;
+        let s_active = compute_rising_score(&active).score;
+
         assert!(
-            nobody.obscurity > celebrity.obscurity,
-            "unknown person should score higher obscurity: {} vs {}",
-            nobody.obscurity,
-            celebrity.obscurity,
+            s_active > s_ghost,
+            "active ({s_active:.3}) should beat ghost ({s_ghost:.3})"
         );
     }
 
@@ -612,51 +725,50 @@ mod tests {
 
     #[test]
     fn undiscovered_talent_beats_famous_contributor() {
-        // High commits, low followers, new account
         let rising = make_record(10, 30, 300, 400, 3);
-        // Same commits but huge follower count and old account
         let famous = make_record(50_000, 30, 2000, 400, 3);
-
         let s_rising = compute_rising_score(&rising).score;
         let s_famous = compute_rising_score(&famous).score;
+        assert!(s_rising > s_famous, "rising={s_rising:.3} famous={s_famous:.3}");
+    }
 
+    #[test]
+    fn prolific_multi_repo_beats_single_repo() {
+        let broad = make_record(20, 40, 500, 300, 5);
+        let narrow = make_record(20, 40, 500, 300, 1);
         assert!(
-            s_rising > s_famous,
-            "rising star (score={s_rising:.3}) should beat famous (score={s_famous:.3})"
+            compute_rising_score(&broad).score > compute_rising_score(&narrow).score
         );
     }
 
     #[test]
-    fn prolific_multi_repo_beats_one_repo_same_followers() {
-        let broad = make_record(20, 40, 500, 300, 5);
-        let narrow = make_record(20, 40, 500, 300, 1);
-
-        let s_broad = compute_rising_score(&broad).score;
-        let s_narrow = compute_rising_score(&narrow).score;
-
-        assert!(
-            s_broad > s_narrow,
-            "broad contributor (score={s_broad:.3}) should beat narrow (score={s_narrow:.3})"
-        );
+    fn score_monotone_in_contributions() {
+        // Fixed followers/age/repos, only contributions vary
+        let scores: Vec<f32> = [10u32, 50, 200, 1000]
+            .iter()
+            .map(|&c| compute_rising_score(&make_record(5, 10, 400, c, 1)).score)
+            .collect();
+        for w in scores.windows(2) {
+            assert!(w[1] > w[0], "score should increase with contributions: {:?}", scores);
+        }
     }
 
-    // ── LanceDB round-trip ────────────────────────────────────────────────────
+    #[test]
+    fn score_is_deterministic() {
+        let r = make_record(20, 15, 730, 300, 3);
+        let s1 = compute_rising_score(&r).score;
+        let s2 = compute_rising_score(&r).score;
+        // Age is in whole days, so two calls in the same test always agree
+        assert_eq!(s1, s2, "score must be deterministic");
+    }
+
+    // ── LanceDB round-trips ───────────────────────────────────────────────────
 
     #[tokio::test]
     async fn insert_and_top_rising_roundtrip() {
-        let dir = std::env::temp_dir().join(format!(
-            "gh_contributors_test_{}",
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .subsec_nanos()
-        ));
+        let path = temp_db_path("roundtrip");
+        let mut db = ContributorsDb::open(&path).await.expect("open DB");
 
-        let mut db = ContributorsDb::open(dir.to_str().unwrap())
-            .await
-            .expect("open DB");
-
-        // Insert two records with different rising potential
         let rising = {
             let mut r = make_record(5, 20, 200, 300, 4);
             r.user.login = "rising_star".into();
@@ -668,48 +780,49 @@ mod tests {
             r
         };
 
-        let inserted = db.insert(&[rising, veteran]).await.expect("insert");
-        assert_eq!(inserted, 2);
+        assert_eq!(db.insert(&[rising, veteran]).await.unwrap(), 2);
 
-        // Dedup: re-inserting the same logins should be a no-op
-        let dup = {
-            let mut r = make_record(5, 20, 200, 300, 4);
-            r.user.login = "rising_star".into();
-            r
-        };
-        let reinserted = db.insert(&[dup]).await.expect("insert dup");
-        assert_eq!(reinserted, 0, "duplicate should be skipped");
+        // Dedup: re-inserting the same login must be a no-op
+        let dup = { let mut r = make_record(5, 20, 200, 300, 4); r.user.login = "rising_star".into(); r };
+        assert_eq!(db.insert(&[dup]).await.unwrap(), 0, "duplicate should be skipped");
 
-        // Top rising: rising_star should rank above veteran
         let top = db.top_rising(10).await.expect("top_rising");
         assert_eq!(top.len(), 2);
         assert_eq!(
             top[0].login, "rising_star",
-            "rising_star should be ranked first, got {} (score={:.3})",
-            top[0].login,
-            top[0].rising_score,
+            "rising_star should be #1, got {} (score={:.3})",
+            top[0].login, top[0].rising_score,
         );
 
-        // Clean up
-        let _ = std::fs::remove_dir_all(&dir);
+        let _ = std::fs::remove_dir_all(&path);
+    }
+
+    #[tokio::test]
+    async fn ghost_does_not_beat_active_contributor_in_db() {
+        let path = temp_db_path("ghost");
+        let mut db = ContributorsDb::open(&path).await.expect("open DB");
+
+        // Ghost: 383 commits like nikolinaspehar but 0 public repos, 0 followers
+        let ghost = { let mut r = make_record(0, 0, 500, 383, 1); r.user.login = "ghost_account".into(); r };
+        // Active: same commits, same age, but has public presence
+        let active = { let mut r = make_record(0, 8, 500, 383, 1); r.user.login = "active_dev".into(); r };
+
+        db.insert(&[ghost, active]).await.unwrap();
+        let top = db.top_rising(10).await.unwrap();
+        assert_eq!(
+            top[0].login, "active_dev",
+            "active dev should outrank ghost, got {} (score={:.3})",
+            top[0].login, top[0].rising_score,
+        );
+
+        let _ = std::fs::remove_dir_all(&path);
     }
 
     #[tokio::test]
     async fn empty_db_returns_empty_top() {
-        let dir = std::env::temp_dir().join(format!(
-            "gh_contributors_empty_{}",
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .subsec_nanos()
-        ));
-
-        let db = ContributorsDb::open(dir.to_str().unwrap())
-            .await
-            .expect("open DB");
-        let top = db.top_rising(10).await.expect("top_rising on empty DB");
-        assert!(top.is_empty());
-
-        let _ = std::fs::remove_dir_all(&dir);
+        let path = temp_db_path("empty");
+        let db = ContributorsDb::open(&path).await.expect("open DB");
+        assert!(db.top_rising(10).await.unwrap().is_empty());
+        let _ = std::fs::remove_dir_all(&path);
     }
 }
