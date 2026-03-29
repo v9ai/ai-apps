@@ -149,3 +149,145 @@ fn synthesize_description(title: &str, source_count: usize, evidence: &[Evidence
         "{title} is used in {source_count} {file_word} across the lead-gen codebase. Found in: {examples}."
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sig(tag: &str, file: &str, line: usize) -> RawSignal {
+        RawSignal {
+            tag: tag.to_string(),
+            file: file.to_string(),
+            line,
+            snippet: format!("snippet from {file}"),
+        }
+    }
+
+    #[test]
+    fn aggregate_groups_by_tag() {
+        let signals = vec![
+            sig("react", "app.tsx", 1),
+            sig("react", "page.tsx", 5),
+            sig("typescript", "app.tsx", 1),
+        ];
+        let topics = aggregate(signals);
+        assert_eq!(topics.len(), 2);
+        let react = topics.iter().find(|t| t.slug == "react").unwrap();
+        assert_eq!(react.source_count, 2);
+        assert_eq!(react.evidence.len(), 2);
+    }
+
+    #[test]
+    fn aggregate_sorts_by_source_count_desc() {
+        let signals = vec![
+            sig("react", "a.tsx", 1),
+            sig("react", "b.tsx", 1),
+            sig("react", "c.tsx", 1),
+            sig("typescript", "a.tsx", 1),
+        ];
+        let topics = aggregate(signals);
+        assert_eq!(topics[0].slug, "react");
+        assert_eq!(topics[0].source_count, 3);
+        assert_eq!(topics[1].slug, "typescript");
+        assert_eq!(topics[1].source_count, 1);
+    }
+
+    #[test]
+    fn aggregate_deduplicates_source_files() {
+        let signals = vec![
+            sig("react", "app.tsx", 1),
+            sig("react", "app.tsx", 10), // same file
+        ];
+        let topics = aggregate(signals);
+        let react = topics.iter().find(|t| t.slug == "react").unwrap();
+        assert_eq!(react.source_count, 1, "source_count should deduplicate files");
+    }
+
+    #[test]
+    fn aggregate_caps_evidence_at_10() {
+        let signals: Vec<RawSignal> = (0..15)
+            .map(|i| sig("react", &format!("file{i}.tsx"), i))
+            .collect();
+        let topics = aggregate(signals);
+        let react = topics.iter().find(|t| t.slug == "react").unwrap();
+        assert_eq!(react.evidence.len(), 10, "evidence should be capped at 10");
+        assert_eq!(react.source_count, 15, "source_count should reflect all files");
+    }
+
+    #[test]
+    fn resolve_taxonomy_label() {
+        let (title, category) = resolve_label_category("graphql");
+        assert_eq!(title, "GraphQL");
+        assert_eq!(category, "Architecture");
+    }
+
+    #[test]
+    fn resolve_extra_rule_label() {
+        let (title, category) = resolve_label_category("dataloader-pattern");
+        assert_eq!(title, "Dataloader Pattern");
+        assert_eq!(category, "Architecture");
+    }
+
+    #[test]
+    fn resolve_unknown_tag_falls_back() {
+        let (title, category) = resolve_label_category("my-custom-thing");
+        assert_eq!(title, "My Custom Thing");
+        assert_eq!(category, "Other");
+    }
+
+    #[test]
+    fn description_singular_file() {
+        let evidence = vec![Evidence {
+            file: "app.tsx".to_string(),
+            line: 1,
+            snippet: "test".to_string(),
+        }];
+        let desc = synthesize_description("React", 1, &evidence);
+        assert!(desc.contains("1 file"), "should say 'file' not 'files': {desc}");
+    }
+
+    #[test]
+    fn description_plural_files() {
+        let evidence = vec![
+            Evidence { file: "a.tsx".to_string(), line: 1, snippet: "test".to_string() },
+            Evidence { file: "b.tsx".to_string(), line: 1, snippet: "test".to_string() },
+        ];
+        let desc = synthesize_description("React", 5, &evidence);
+        assert!(desc.contains("5 files"), "should say 'files': {desc}");
+    }
+
+    #[test]
+    fn description_limits_to_3_files() {
+        let evidence: Vec<Evidence> = (0..5)
+            .map(|i| Evidence {
+                file: format!("file{i}.tsx"),
+                line: 1,
+                snippet: "test".to_string(),
+            })
+            .collect();
+        let desc = synthesize_description("React", 5, &evidence);
+        // Should mention file0, file1, file2 but not file3/file4
+        assert!(desc.contains("file0.tsx"));
+        assert!(desc.contains("file2.tsx"));
+        assert!(!desc.contains("file3.tsx"));
+    }
+
+    #[test]
+    fn embed_text_format() {
+        let topic = Topic {
+            slug: "react".to_string(),
+            title: "React".to_string(),
+            description: "React is used in 5 files.".to_string(),
+            category: "Frontend".to_string(),
+            evidence: vec![],
+            source_count: 5,
+        };
+        assert_eq!(topic.embed_text(), "React\n\nReact is used in 5 files.");
+    }
+
+    #[test]
+    fn aggregate_empty_signals() {
+        let topics = aggregate(vec![]);
+        assert!(topics.is_empty());
+    }
+}

@@ -60,3 +60,48 @@ pub static EXTRA_RULES: LazyLock<Vec<(&'static str, &'static str, Regex)>> = Laz
         })
         .collect()
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rules_compile_without_errors() {
+        // Accessing RULES forces LazyLock to compile all patterns.
+        assert!(!RULES.is_empty(), "RULES should not be empty");
+    }
+
+    #[test]
+    fn extra_rules_compile_without_errors() {
+        assert!(!EXTRA_RULES.is_empty(), "EXTRA_RULES should not be empty");
+        assert_eq!(EXTRA_RULES.len(), 6, "expected 6 extra rules");
+    }
+
+    #[test]
+    fn rules_have_valid_taxonomy_tags() {
+        use crate::taxonomy::TAXONOMY;
+        for rule in RULES.iter() {
+            assert!(
+                TAXONOMY.contains_key(rule.tag),
+                "rule tag '{}' not in taxonomy",
+                rule.tag
+            );
+        }
+    }
+
+    #[test]
+    fn extra_rules_match_expected_patterns() {
+        let tags: Vec<&str> = EXTRA_RULES.iter().map(|(t, _, _)| *t).collect();
+        assert!(tags.contains(&"dataloader-pattern"));
+        assert!(tags.contains(&"server-components"));
+        assert!(tags.contains(&"streaming"));
+    }
+
+    #[test]
+    fn rules_match_sample_lines() {
+        let react_rules: Vec<&Rule> = RULES.iter().filter(|r| r.tag == "react").collect();
+        assert!(!react_rules.is_empty());
+        let matches = react_rules.iter().any(|r| r.regex.is_match("import React from 'react'"));
+        assert!(matches, "react rules should match react import");
+    }
+}

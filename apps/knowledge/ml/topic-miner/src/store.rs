@@ -183,3 +183,115 @@ pub struct SearchResult {
     pub source_count: usize,
     pub score: f32,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::topic::Evidence;
+    use tempfile::TempDir;
+
+    fn fake_topic(slug: &str, title: &str, category: &str, source_count: usize) -> Topic {
+        Topic {
+            slug: slug.to_string(),
+            title: title.to_string(),
+            description: format!("{title} is used in {source_count} files."),
+            category: category.to_string(),
+            evidence: vec![Evidence {
+                file: "test.ts".to_string(),
+                line: 1,
+                snippet: "test snippet".to_string(),
+            }],
+            source_count,
+        }
+    }
+
+    fn fake_vector() -> Vec<f32> {
+        vec![0.0f32; DIM]
+    }
+
+    #[tokio::test]
+    async fn connect_creates_table() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().to_str().unwrap();
+        let store = TopicStore::connect(path).await.unwrap();
+        let count = store.count().await.unwrap();
+        assert_eq!(count, 0);
+    }
+
+    #[tokio::test]
+    async fn connect_idempotent() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().to_str().unwrap();
+        let _store1 = TopicStore::connect(path).await.unwrap();
+        let store2 = TopicStore::connect(path).await.unwrap();
+        assert_eq!(store2.count().await.unwrap(), 0);
+    }
+
+    #[tokio::test]
+    async fn add_and_count() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().to_str().unwrap();
+        let store = TopicStore::connect(path).await.unwrap();
+
+        let topics = vec![
+            fake_topic("react", "React", "Frontend", 5),
+            fake_topic("typescript", "TypeScript", "Languages", 10),
+        ];
+        let vectors = vec![fake_vector(), fake_vector()];
+
+        let added = store.add(&topics, &vectors).await.unwrap();
+        assert_eq!(added, 2);
+
+        let count = store.count().await.unwrap();
+        assert_eq!(count, 2);
+    }
+
+    #[tokio::test]
+    async fn add_empty_returns_zero() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().to_str().unwrap();
+        let store = TopicStore::connect(path).await.unwrap();
+
+        let added = store.add(&[], &[]).await.unwrap();
+        assert_eq!(added, 0);
+    }
+
+    #[tokio::test]
+    async fn search_returns_results() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().to_str().unwrap();
+        let store = TopicStore::connect(path).await.unwrap();
+
+        let topics = vec![
+            fake_topic("react", "React", "Frontend", 5),
+            fake_topic("vue", "Vue.js", "Frontend", 3),
+        ];
+        // Give them slightly different vectors so search can rank them
+        let mut v1 = vec![0.1f32; DIM];
+        v1[0] = 1.0;
+        let mut v2 = vec![0.1f32; DIM];
+        v2[1] = 1.0;
+
+        store.add(&topics, &vec![v1.clone(), v2]).await.unwrap();
+
+        let results = store.search(v1, 2).await.unwrap();
+        assert_eq!(results.len(), 2);
+        // The first result should be "react" since the query vector matches v1
+        assert_eq!(results[0].slug, "react");
+        assert!(results[0].score > 0.0);
+        assert!(!results[0].evidence.is_empty());
+    }
+
+    #[test]
+    fn schema_has_correct_fields() {
+        let s = schema();
+        assert_eq!(s.fields().len(), 7);
+        assert!(s.field_with_name("slug").is_ok());
+        assert!(s.field_with_name("title").is_ok());
+        assert!(s.field_with_name("description").is_ok());
+        assert!(s.field_with_name("category").is_ok());
+        assert!(s.field_with_name("evidence").is_ok());
+        assert!(s.field_with_name("source_count").is_ok());
+        assert!(s.field_with_name("vector").is_ok());
+    }
+}
