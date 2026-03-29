@@ -496,7 +496,18 @@ fn score_authority(papers: &[ResearchPaper], threshold: u32, min_fraction: f32) 
         return 0.0;
     }
 
-    let landmark_count = papers
+    // Only score authority against papers that actually track citations.
+    // Sources like Zenodo don't provide citation counts, so including them
+    // in the denominator would unfairly penalise corpora with Zenodo papers.
+    let papers_with_citations: Vec<_> = papers
+        .iter()
+        .filter(|p| p.citation_count.is_some())
+        .collect();
+    if papers_with_citations.is_empty() {
+        return 0.5; // neutral when no source provides citation data
+    }
+
+    let landmark_count = papers_with_citations
         .iter()
         .filter(|p| {
             p.citation_count
@@ -504,7 +515,7 @@ fn score_authority(papers: &[ResearchPaper], threshold: u32, min_fraction: f32) 
                 .unwrap_or(false)
         })
         .count();
-    let fraction = landmark_count as f32 / papers.len() as f32;
+    let fraction = landmark_count as f32 / papers_with_citations.len() as f32;
 
     (fraction / min_fraction.max(0.01)).min(1.0)
 }

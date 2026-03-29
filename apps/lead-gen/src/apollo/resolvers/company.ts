@@ -49,7 +49,11 @@ export const companyResolvers = {
       return safeJsonParse(parent.tags, []);
     },
     services(parent: any) {
-      return safeJsonParse(parent.services, []);
+      if (!parent.services) return [];
+      const parsed = safeJsonParse<string[] | null>(parent.services, null);
+      if (parsed !== null) return parsed;
+      // Fallback: plain comma-separated string
+      return parent.services.split(',').map((s: string) => s.trim()).filter(Boolean);
     },
     service_taxonomy(parent: any) {
       return safeJsonParse(parent.service_taxonomy, []);

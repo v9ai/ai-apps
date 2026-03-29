@@ -121,3 +121,19 @@ mutation ImportCompanies($companies: [CompanyImportInput!]!) {
     errors
   }
 }
+
+mutation BlockCompany($id: Int!) {
+  blockCompany(id: $id) {
+    id
+    key
+    blocked
+  }
+}
+
+mutation UnblockCompany($id: Int!) {
+  unblockCompany(id: $id) {
+    id
+    key
+    blocked
+  }
+}

@@ -115,6 +115,7 @@ fn parse_source(s: &str) -> PaperSource {
         "OpenAlex" => PaperSource::OpenAlex,
         "Crossref" => PaperSource::Crossref,
         "Core" => PaperSource::Core,
+        "Zenodo" => PaperSource::Zenodo,
         _ => PaperSource::SemanticScholar,
     }
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "companies" ADD COLUMN "blocked" boolean DEFAULT false NOT NULL;
