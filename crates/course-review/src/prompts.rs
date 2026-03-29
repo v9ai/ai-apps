@@ -76,7 +76,8 @@ Scoring rubric:\n\
 7-8 Good — Solid scaffolding and clear objectives; most modules include knowledge checks.\n\
 9-10 Excellent — Masterful progressive disclosure; every module has objectives and verification; \
 cognitive load is actively managed throughout.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
 
 fn technical_accuracy_system() -> String {
@@ -95,7 +96,8 @@ Scoring rubric:\n\
 7-8 Good — Accurate throughout; rare minor version drift; no conceptual errors.\n\
 9-10 Excellent — Fully accurate, current, and precise; code runs on latest stable runtimes; \
 concepts are explained with expert-level correctness.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
 
 fn content_depth_system() -> String {
@@ -115,7 +117,8 @@ Scoring rubric:\n\
 7-8 Good — Comprehensive for its stated level; minor gaps only; edge cases mentioned.\n\
 9-10 Excellent — Complete, deep, and appropriately calibrated; edge cases handled; \
 no meaningful gaps for the stated audience.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
 
 fn practical_application_system() -> String {
@@ -134,7 +137,8 @@ Scoring rubric:\n\
 7-8 Good — Solid projects with real data; output is presentable; production practices included.\n\
 9-10 Excellent — Capstone-quality projects; end-to-end production pipeline; \
 learner graduates with a demonstrable artifact.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
 
 fn instructor_clarity_system() -> String {
@@ -152,7 +156,8 @@ Scoring rubric:\n\
 7-8 Good — Clear, well-paced, good examples; rare clarity issues.\n\
 9-10 Excellent — Exceptionally lucid explanations; every abstraction grounded with an example; \
 pacing is near perfect; learner never feels lost.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
 
 fn curriculum_fit_system() -> String {
@@ -169,7 +174,8 @@ Scoring rubric:\n\
 7-8 Good — Covers most key AI engineering topics with reasonable depth.\n\
 9-10 Excellent — Comprehensive alignment with the full AI engineering stack; \
 transformers, RAG, agents, fine-tuning, evals, inference, safety, and multimodal all addressed.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
 
 fn prerequisites_system() -> String {
@@ -186,7 +192,8 @@ Scoring rubric:\n\
 7-8 Good — Clear prerequisites; achievable skill gap; some onboarding support.\n\
 9-10 Excellent — Precise entry requirements; smooth on-ramp; optional refreshers provided; \
 expectations are honest and learners arrive prepared.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
 
 fn ai_domain_relevance_system() -> String {
@@ -203,7 +210,8 @@ Scoring rubric:\n\
 7-8 Good — Solid modern AI coverage; LLMs, embeddings, and at least one generative modality.\n\
 9-10 Excellent — Current and comprehensive; covers the full 2023-2025 AI landscape including \
 LLMs, diffusion, embeddings, agents, and inference; genuinely up to date.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
 
 fn community_health_system() -> String {
@@ -220,7 +228,8 @@ Scoring rubric:\n\
 7-8 Good — Mostly recent reviews; active Q&A; course updated in the past year.\n\
 9-10 Excellent — Vibrant, recent community; instructor highly engaged in Q&A; \
 course updated frequently; overwhelmingly positive and recent sentiment.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
 
 fn value_proposition_system() -> String {
@@ -241,5 +250,6 @@ certificate is neutral.\n\
 7-8 Good — Clear advantages over free content; fair pricing; certificate carries some weight.\n\
 9-10 Excellent — Exceptional value; free alternatives cannot match depth or structure; \
 certificate is industry-recognized; unique content unavailable elsewhere.\n\n\
-Output ONLY valid JSON. No explanation outside the JSON object. No markdown fences.".to_string()
+Output ONLY valid JSON: {\"score\": N, \"reasoning\": \"...\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"]}\n\
+No explanation outside the JSON object. No markdown fences.".to_string()
 }
