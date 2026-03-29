@@ -80,7 +80,6 @@ const config: Config = {
             type: ["rss", "atom"],
             xslt: true,
           },
-          editUrl: "https://github.com/nicolad/vadim.blog/edit/main",
           // Useful options to enforce blogging best practices
           onInlineTags: "ignore",
           onInlineAuthors: "warn",
