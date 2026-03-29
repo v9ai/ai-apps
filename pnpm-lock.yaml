@@ -241,6 +241,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.9
         version: 0.31.9
+      playwright:
+        specifier: ^1.52.0
+        version: 1.58.2
       tsx:
         specifier: ^4.21.0
         version: 4.21.0

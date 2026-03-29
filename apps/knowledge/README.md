@@ -408,6 +408,7 @@ apps/knowledge/
 │   └── course_review/      # LangGraph 10-expert course review pipeline (build_course_review_graph)
 ├── scripts/seed.ts              # DB seeder (lessons from markdown)
 ├── scripts/seed-courses.ts      # Class Central course catalog seeder
+├── scripts/scrape-udemy-courses.ts  # Playwright scraper — deep-scrapes Udemy topic pages into external_courses
 ├── scripts/review_courses.py    # Batch course review runner — fetches unreviewed external_courses, invokes 10-expert LangGraph pipeline, upserts to course_reviews
 ├── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
 └── sql/add_course_reviews.sql  # course_reviews table (10-expert scores, verdict, aggregate)
@@ -421,6 +422,7 @@ pnpm db:push      # sync schema to Neon
 pnpm db:studio    # open Drizzle Studio
 pnpm seed         # seed DB from markdown files
 pnpm seed:courses # seed Class Central course catalog
+pnpm scrape:udemy # scrape Udemy vector-databases topic → external_courses
 pnpm generate -- prompt-caching            # generate article via LangGraph
 pnpm generate:dry -- prompt-caching        # preview without saving
 pnpm generate -- prompt-caching --model deepseek-reasoner  # use specific model
