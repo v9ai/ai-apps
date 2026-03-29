@@ -194,9 +194,9 @@
           "5-agent pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
           "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
           "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
-          "3 parallel competing-hypotheses agents — cross-reading and challenging findings — producing GO/NO-GO verdicts.",
-          "MLX scoring at 4,618 embeddings/sec on M1 Metal; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing.",
-          "Candle-based Rust ML inference for contact scoring with INT8 quantization and Metal acceleration."
+          "3 competing-hypotheses agents — cross-reading findings — producing GO/NO-GO verdicts.",
+          "MLX scoring at 4,618 embeddings/sec on M1; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing.",
+          "Candle Rust ML inference for contact scoring with INT8 quantization."
         ]
       },
       {
@@ -206,9 +206,9 @@
         "githubUrl": "https://github.com/nicolad/agentic-healthcare",
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
-          "Biomarker trajectory analysis across 7 clinical metrics with abnormal flag detection and velocity computation.",
-          "Risk classification via cosine similarity (threshold 0.3) against 1024-dim Qwen embeddings across 7 tables.",
-          "7 protected server actions with 15 test cases covering diverse metabolic profiles.",
+          "Biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
+          "Risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
+          "7 server actions with 15 test cases covering diverse metabolic profiles.",
           "Braintrust autoevals: Factuality and Relevance scorers, model version experiment tracking.",
           "Supabase + pgvector with Row Level Security, Drizzle ORM, medication and diagnosis management."
         ]
@@ -220,9 +220,9 @@
         "githubUrl": "https://github.com/nicolad/knowledge",
         "websiteUrl": "https://agentic-knowledge.vercel.app/",
         "highlights": [
-          "Semantic knowledge graph with 6 relationship types, pgvector cosine similarity search at 1024 dimensions.",
+          "Knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
           "Per-user Bayesian knowledge tracing (p_mastery, p_transit, p_slip, p_guess per concept), novice → expert classification.",
-          "DeepEval quality framework: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
+          "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
           "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI.",
           "Real-time streaming chat with thread-scoped persistence, 17-table Drizzle schema, pgvector embeddings."
         ]
@@ -234,7 +234,7 @@
         "githubUrl": "https://github.com/nicolad/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source clinical ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
+          "Agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
           "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
           "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
           "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2 via background tasks.",
@@ -249,7 +249,7 @@
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
           "6-agent adversarial pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
-          "Automated citation verification and fabrication detection with chain-of-thought audit trails.",
+          "Citation verification and fabrication detection with chain-of-thought audit trails.",
           "Jurisdiction-specific legal precedent hierarchy mapping, multi-jurisdiction comparison.",
           "Real-time SSE streaming with structured per-agent logging.",
           "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics; DeepTeam safety red-teaming via 7 attack methods."
