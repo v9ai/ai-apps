@@ -208,17 +208,17 @@ function GenerateEmailDialog({
               <Text size="1" color="gray" mb="1" as="p">
                 Streaming…
               </Text>
-              <Code
-                size="1"
-                style={{
-                  display: "block",
-                  whiteSpace: "pre-wrap",
-                  maxHeight: 200,
-                  overflow: "auto",
-                }}
-              >
-                {partialContent}
-              </Code>
+              <Box overflow="auto" maxHeight="200px">
+                <Code
+                  size="1"
+                  style={{
+                    display: "block",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  {partialContent}
+                </Code>
+              </Box>
             </Box>
           )}
 
@@ -399,7 +399,7 @@ function CreateContactDialog({
           )}
 
           <Flex gap="2">
-            <Box style={{ flex: 1 }}>
+            <Box flexGrow="1">
               <Text size="1" color="gray" mb="1" as="p">First name *</Text>
               <TextField.Root
                 placeholder="First name"
@@ -407,7 +407,7 @@ function CreateContactDialog({
                 onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
               />
             </Box>
-            <Box style={{ flex: 1 }}>
+            <Box flexGrow="1">
               <Text size="1" color="gray" mb="1" as="p">Last name</Text>
               <TextField.Root
                 placeholder="Last name"
@@ -960,7 +960,7 @@ export function CompanyContactsClient({
               </Dialog.Content>
             </Dialog.Root>
 
-            <Box style={{ width: 240 }}>
+            <Box width="240px">
               <TextField.Root
                 size="2"
                 placeholder="Search contacts…"
@@ -1044,8 +1044,10 @@ export function CompanyContactsClient({
                               size="2"
                               color="gray"
                             >
-                              LinkedIn
-                              <ExternalLinkIcon style={{ marginLeft: 4 }} />
+                              <Flex as="span" align="center" gap="1">
+                                LinkedIn
+                                <ExternalLinkIcon />
+                              </Flex>
                             </RadixLink>
                           </Flex>
                         )}
