@@ -38,6 +38,9 @@ export const companyResolvers = {
     ai_classification_reason(parent: any) {
       return parent.ai_classification_reason ?? null;
     },
+    blocked(parent: any) {
+      return parent.blocked ?? false;
+    },
     // Validate and sanitize category enum
     category(parent: any) {
       const validCategories = ["CONSULTANCY", "AGENCY", "STAFFING", "DIRECTORY", "PRODUCT", "OTHER", "UNKNOWN"];
@@ -213,6 +216,9 @@ export const companyResolvers = {
     ) {
       try {
         const conditions = [];
+
+        // Always exclude blocked companies unless explicitly filtered
+        conditions.push(eq(companies.blocked, false));
 
         if (args.filter) {
           if (args.filter.text) {
@@ -1087,6 +1093,40 @@ export const companyResolvers = {
         companyId: args.id ?? null,
         companyKey: args.key ?? null,
       };
+    },
+
+    async blockCompany(
+      _parent: any,
+      args: { id: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+      const [updated] = await context.db
+        .update(companies)
+        .set({ blocked: true, updated_at: new Date().toISOString() })
+        .where(eq(companies.id, args.id))
+        .returning();
+      if (!updated) throw new Error("Company not found");
+      return updated;
+    },
+
+    async unblockCompany(
+      _parent: any,
+      args: { id: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+      const [updated] = await context.db
+        .update(companies)
+        .set({ blocked: false, updated_at: new Date().toISOString() })
+        .where(eq(companies.id, args.id))
+        .returning();
+      if (!updated) throw new Error("Company not found");
+      return updated;
     },
   },
 };
