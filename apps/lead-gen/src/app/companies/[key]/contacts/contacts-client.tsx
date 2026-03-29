@@ -753,19 +753,17 @@ export function CompanyContactsClient({
           </Link>
 
           {/* Tab navigation */}
-          <div className="rt-TabsRoot" style={{ marginBottom: "var(--space-4)" }}>
-            <div className="rt-TabsList" style={{ display: "flex", gap: 0 }}>
-              <Link href={`/companies/${companyKey}`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
-                Overview
-              </Link>
-              <Link href={`/companies/${companyKey}/contacts`} className="rt-reset rt-TabsTrigger" data-state="active" style={{ textDecoration: "none" }}>
-                Contacts
-              </Link>
-              <Link href={`/companies/${companyKey}/emails`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
-                Emails
-              </Link>
-            </div>
-          </div>
+          <TabNav.Root mb="4">
+            <TabNav.Link asChild>
+              <Link href={`/companies/${companyKey}`}>Overview</Link>
+            </TabNav.Link>
+            <TabNav.Link asChild active>
+              <Link href={`/companies/${companyKey}/contacts`}>Contacts</Link>
+            </TabNav.Link>
+            <TabNav.Link asChild>
+              <Link href={`/companies/${companyKey}/emails`}>Emails</Link>
+            </TabNav.Link>
+          </TabNav.Root>
         </Box>
 
         {/* Email discovery status */}
