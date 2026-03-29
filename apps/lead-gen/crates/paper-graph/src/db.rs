@@ -11,6 +11,8 @@ pub async fn connect() -> Result<Client> {
         .replace("&channel_binding=require", "")
         .replace("?channel_binding=require", "?");
 
+    let _ = rustls::crypto::ring::default_provider().install_default();
+
     let mut roots = rustls::RootCertStore::empty();
     roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
     let tls_config = rustls::ClientConfig::builder()
