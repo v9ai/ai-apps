@@ -588,6 +588,30 @@ const CATALOG: CourseEntry[] = [
 
   // ── AWS Deep Dives ──────────────────────────────────────────────────────
   {
+    title: "Introduction to AWS - Understand AWS basics in 4 hours!",
+    provider: "Udemy / Rick Crisci",
+    description:
+      "A quick, fun, and easy to follow introduction to AWS — covers EC2, S3, IAM, VPC, Lambda, ECS, RDS, DynamoDB and more with hands-on demos and quizzes.",
+    level: "Beginner",
+    isFree: false,
+    rating: 4.6,
+    reviewCount: 19946,
+    durationHours: 5.3,
+    url: "https://www.udemy.com/course/awsintro/",
+    slugs: [
+      "aws",
+      "aws-lambda-serverless",
+      "aws-api-gateway-networking",
+      "aws-iam-security",
+      "aws-compute-containers",
+      "aws-storage-s3",
+      "aws-cicd-devops",
+      "aws-architecture",
+      "aws-ai-ml-services",
+      "dynamodb-data-services",
+    ],
+  },
+  {
     title: "AWS Lambda and the Serverless Framework",
     provider: "Udemy / Stephane Maarek",
     description:

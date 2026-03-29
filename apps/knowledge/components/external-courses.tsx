@@ -40,7 +40,7 @@ export function ExternalCourses({ courses }: Props) {
 
   return (
     <div className="courses-section">
-      <div className="related-heading">Further Learning on Class Central</div>
+      <div className="related-heading">Further Learning</div>
       <div className="courses-grid">
         {courses.map((c) => (
           <a
@@ -91,16 +91,6 @@ export function ExternalCourses({ courses }: Props) {
             </div>
           </a>
         ))}
-      </div>
-      <div className="courses-footer">
-        <a
-          href="https://www.classcentral.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="courses-browse-link"
-        >
-          Browse all courses on Class Central →
-        </a>
       </div>
     </div>
   );

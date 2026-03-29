@@ -71,6 +71,59 @@ export const pipelineEdges = [
   { id: "pe8-9", source: "p8", target: "p9", animated: true },
 ];
 
+export const benchmarkNodes = [
+  { id: "bm0", position: { x: 0, y: 175 }, data: { label: "SWDE Benchmark\n(124k annotations)" }, type: "input" },
+  { id: "bm1", position: { x: 280, y: 0 }, data: { label: "SLOT (7B+)\nTwo-stage pipeline" } },
+  { id: "bm2", position: { x: 280, y: 117 }, data: { label: "sgai-qwen3 (1.7B)\nEnd-to-end SFT · local" } },
+  { id: "bm3", position: { x: 280, y: 234 }, data: { label: "Cloud APIs (>100B)\nHosted · per-call billing" } },
+  { id: "bm4", position: { x: 280, y: 350 }, data: { label: "AXE (0.6B)\nDOM pruning · frozen LLM" } },
+  { id: "bm5", position: { x: 580, y: 0 }, data: { label: "99.5% schema accuracy" }, type: "output" },
+  { id: "bm6", position: { x: 580, y: 117 }, data: { label: "94.6% field F1 ★" }, type: "output" },
+  { id: "bm7", position: { x: 580, y: 234 }, data: { label: "91.2% field F1" }, type: "output" },
+  { id: "bm8", position: { x: 580, y: 350 }, data: { label: "88.1% field F1" }, type: "output" },
+];
+export const benchmarkEdges = [
+  { id: "bme1", source: "bm0", target: "bm1" },
+  { id: "bme2", source: "bm0", target: "bm2", animated: true },
+  { id: "bme3", source: "bm0", target: "bm3" },
+  { id: "bme4", source: "bm0", target: "bm4" },
+  { id: "bme5", source: "bm1", target: "bm5" },
+  { id: "bme6", source: "bm2", target: "bm6", animated: true, label: "+3.4pp vs cloud" },
+  { id: "bme7", source: "bm3", target: "bm7" },
+  { id: "bme8", source: "bm4", target: "bm8" },
+];
+
+export const competitorNodes = [
+  { id: "cp1", position: { x: 0, y: 0 }, data: { label: "AXE · 0.6B\nDOM pruning\n88.1% SWDE F1" }, type: "input" },
+  { id: "cp2", position: { x: 0, y: 160 }, data: { label: "Dripper · 0.6B\nNER on HTML tokens\nCloud-parity F1" }, type: "input" },
+  { id: "cp3", position: { x: 0, y: 320 }, data: { label: "SLOT · 7B+\nGenerate + repair stage\n99.5% schema accuracy" }, type: "input" },
+  { id: "cp4", position: { x: 380, y: 160 }, data: { label: "sgai-qwen3-1.7b\nEnd-to-end SFT · direct JSON\n94.6% SWDE · local GGUF" }, type: "output" },
+];
+export const competitorEdges = [
+  { id: "cpe1", source: "cp1", target: "cp4", label: "+6.5pp accuracy" },
+  { id: "cpe2", source: "cp2", target: "cp4", label: "handles nested schemas" },
+  { id: "cpe3", source: "cp3", target: "cp4", label: "4× lighter, single stage" },
+];
+
+export const decisionNodes = [
+  { id: "dc1", position: { x: 280, y: 0 }, data: { label: "New web extraction task" }, type: "input" },
+  { id: "dc2", position: { x: 280, y: 100 }, data: { label: "HTML structure\nsimple & stable?" } },
+  { id: "dc3", position: { x: 0, y: 220 }, data: { label: "Traditional scrapers\n(Scrapy, Rust scraper)" }, type: "output" },
+  { id: "dc4", position: { x: 480, y: 220 }, data: { label: "Volume >10k/month\nor data sensitive?" } },
+  { id: "dc5", position: { x: 480, y: 340 }, data: { label: "Schemas change\nconstantly?" } },
+  { id: "dc6", position: { x: 280, y: 460 }, data: { label: "sgai-qwen3-1.7b GGUF\n(local · ~1.1 GB)" }, type: "output" },
+  { id: "dc7", position: { x: 680, y: 460 }, data: { label: "Frontier API\n(zero-shot generalization)" }, type: "output" },
+];
+export const decisionEdges = [
+  { id: "dce1", source: "dc1", target: "dc2" },
+  { id: "dce2", source: "dc2", target: "dc3", label: "Yes" },
+  { id: "dce3", source: "dc2", target: "dc4", label: "No" },
+  { id: "dce4", source: "dc4", target: "dc6", animated: true, label: "Yes" },
+  { id: "dce5", source: "dc4", target: "dc5", label: "No" },
+  { id: "dce6", source: "dc5", target: "dc7", label: "Yes" },
+  { id: "dce7", source: "dc5", target: "dc6", animated: true, label: "No" },
+];
+
 Leading cloud extraction APIs are orders of magnitude larger than the model that just beat them at structured web extraction. This isn't a marginal win — it's a 3.4 percentage point lead on the gold-standard SWDE benchmark. The secret isn't a novel architecture; it's domain-specific fine-tuning on a 100,000-example dataset of real scraping trajectories. The [ScrapeGraphAI team's release](https://arxiv.org/abs/2505.15812) of a fine-tuned [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) model flips the conventional scaling law on its head and delivers a complete, Apache 2.0-licensed stack for production. This is a blueprint for how narrow, expert models will outperform generalist giants — if you have the right data.
 
 <!-- truncate -->
@@ -104,6 +157,8 @@ At 1.7B parameters the training runs in 4–8 hours on an A100. The BF16 model i
 ## The Benchmark: Specialization Beats Scale
 
 On [SWDE](https://paperswithcode.com/dataset/swde) (80 websites, 8 domains, 124k field annotations), the fine-tuned 1.7B model achieves **94.6% field-level F1**. Leading cloud extraction APIs at time of publication scored **91.2%**. On SyntheticWebExtract, schema accuracy is **89.3%** vs. **87.1%** for cloud APIs.
+
+<Flow nodes={benchmarkNodes} edges={benchmarkEdges} height={430} />
 
 A 3–4 point gap sounds modest until you understand SWDE context: top performers have historically been separated by fractions of a point. The explanation is structural. Web extraction for a fixed schema is a constrained language game — HTML in, JSON out. The 25.2k training examples densely cover this narrow problem space. A large generalist has capacity spread across every task it was trained on; the fine-tuned model has all capacity focused on one. The cost implication is equally significant: for a pipeline processing 100,000 pages a day, shifting from a cloud API to a local GGUF means the difference between $1,000–$2,000 in daily API costs and effectively zero.
 
