@@ -359,7 +359,7 @@ apps/knowledge/
 ├── content/                # 88 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
-│   └── schema.ts           # Drizzle schema (17 tables)
+│   └── schema.ts           # Drizzle schema (19 tables, incl. external_courses + lesson_courses for Class Central)
 ├── lib/
 │   ├── articles.ts         # Lesson data layer — Lesson interface includes url field;
 │   │                       # exports AWS_DEEP_DIVE_SLUGS and getUrlPath()
