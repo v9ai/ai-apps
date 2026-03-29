@@ -229,6 +229,18 @@ The pipeline's fast path uses Rust's `scraper` crate for zero-allocation DOM par
 
 This is the production reality of specialized models: not a monolithic LLM call, but a directed graph of specialized tools. Rule-based scrapers handle high-throughput predictable tasks; fine-tuned LLMs handle variable, schema-driven tasks. The 1.7B GGUF model fits this pattern — small enough to run alongside the Rust pipeline on the same hardware.
 
+## Practical Applications
+
+The 1.7B parameter count and local GGUF deployment open use cases that cloud APIs cannot serve economically or safely.
+
+**Large-scale data aggregation.** A research firm monitoring product prices across 10,000 e-commerce sites daily runs ~300k extractions/month. At typical cloud API pricing that's $3,000–$6,000/month. The same workload on a dedicated Mac Mini with `sgai-qwen3-1.7b-gguf` runs on fixed hardware cost, amortized within weeks.
+
+**Compliance-sensitive extraction.** Financial institutions, healthcare providers, and legal teams often cannot send document content to third-party APIs. On-premise GGUF inference satisfies data residency requirements with no change to the extraction pipeline.
+
+**Real-time enrichment in user-facing products.** A CRM can pull and display structured company data from a prospect's website during a sales call — latency under 2 seconds on M1, zero API spend, no external dependency in the critical path.
+
+**Vertical specialization.** The public [100k dataset](https://huggingface.co/datasets/scrapegraphai/scrapegraphai-100k) covers diverse domains. Filtering to a single vertical (e-commerce, job boards, real estate) and fine-tuning further takes hours on a consumer GPU and typically pushes accuracy above 96% for that domain.
+
 ## Decision Framework: When to Use Which Tool
 
 <Flow nodes={decisionNodes} edges={decisionEdges} height={520} />

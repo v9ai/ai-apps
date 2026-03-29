@@ -196,7 +196,7 @@
           "LLM enrichment: AI tier classification, tech stack detection, ATS board discovery via smart multi-model routing.",
           "3 parallel competing-hypotheses research agents with active debate — cross-reading and challenging findings — producing GO/NO-GO verdicts.",
           "On-device MLX scoring at 4,618 embeddings/sec on M1 Metal; local email gen via Qwen2.5-3B; eval enforcer with LangSmith distributed tracing.",
-          "Chrome extension for LinkedIn profile extraction with background service worker and content script injection."
+          "Candle-based Rust ML inference for contact scoring with INT8 quantization and Metal GPU acceleration."
         ]
       },
       {
