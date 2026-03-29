@@ -144,6 +144,21 @@ export async function getJobApplicationsFromDb(userId: string): Promise<JobAppli
     .orderBy(applications.createdAt);
 }
 
+export async function getCoursesForLessonFromDb(
+  slug: string,
+  limit = 4,
+): Promise<ExternalCourse[]> {
+  const rows = await db
+    .select({ course: externalCourses })
+    .from(lessonCourses)
+    .innerJoin(externalCourses, eq(lessonCourses.courseId, externalCourses.id))
+    .where(eq(lessonCourses.lessonSlug, slug))
+    .orderBy(desc(lessonCourses.relevance), desc(externalCourses.rating))
+    .limit(limit);
+
+  return rows.map((r) => r.course);
+}
+
 export async function getRelatedLessonsFromDb(
   slug: string,
   limit = 4,
