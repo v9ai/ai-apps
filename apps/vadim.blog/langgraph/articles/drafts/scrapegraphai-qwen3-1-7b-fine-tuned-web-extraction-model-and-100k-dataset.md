@@ -1,166 +1,113 @@
-# ScrapeGraphAI Qwen3-1.7B fine-tuned web extraction model and 100k dataset
+---
+title: "ScrapeGraphAI Qwen3-1.7B: Fine-Tuned Web Extraction Model"
+description: "Explore the ScrapeGraphAI Qwen3-1.7B fine-tuned model for web scraping. Learn about its 100k dataset, capabilities, and how it improves structured data extraction from HTML."
+og_title: "ScrapeGraphAI's Fine-Tuned Model for Smarter Web Scraping"
+og_description: "See how a 100k dataset fine-tuned Qwen3-1.7B model extracts clean data from messy HTML. A new tool for developers and researchers."
+tags: [web-scraping, machine-learning, llm, fine-tuning, data-extraction, open-source]
+status: draft
+---
+
+ScrapeGraphAI Qwen3-1.7B is a fine-tuned version of the Alibaba Qwen3-1.7B large language model, specifically optimized for parsing and extracting structured data from web pages using a 100k+ example dataset. It enhances accuracy in understanding HTML/CSS selectors and natural language queries for web scraping tasks.
+
+The web is no longer a passive database to be crawled at will. A subtle but critical line now separates an AI-powered web agent from a traditional search bot, a distinction Google is actively hardening in its infrastructure [Source: MarkTechPost: Google-Agent vs Googlebot](https://www.marktechpost.com/2026/03/28/google-agent-vs-googlebot-google-defines-the-technical-boundary-between-user-triggered-ai-access-and-search-crawling-systems-today/). At the same time, the drive for efficiency is pushing developers away from massive, general-purpose LLMs towards compact, specialized models that can be fine-tuned and run locally. The reported development of a ScrapeGraphAI model fine-tuned on Qwen3-1.7B with a 100k dataset is a direct response to these twin pressures.
+
+This isn't about brute-force scraping with a giant model. It's about building a precise, cost-effective tool that operates within the new rules of the web.
+
+# ScrapeGraphAI's Qwen3-1.7B: A Fine-Tuned Powerhouse for Web Data Extraction
+
+## What is the ScrapeGraphAI Qwen3-1.7B Model?
+To understand this tool, you must first break it into its core components. **ScrapeGraphAI** is an open-source library designed to use LLMs for creating scraping pipelines. Its primary function is to convert semi-structured data like HTML into structured outputs like JSON based on natural language prompts [Source: ScrapeGraphAI GitHub Repository](https://github.com/VinciGit00/ScrapeGraphAI).
+
+The base model, **Qwen3-1.7B**, is a 1.7 billion parameter model from Alibaba's Qwen team. It's part of a generation of compact models engineered for efficiency, making it a prime candidate for task-specific fine-tuning where larger models would be overkill or too expensive [Source: Qwen GitHub Repository - Qwen3 Models](https://github.com/QwenLM/Qwen3).
+
+The reported innovation is the marriage of these two elements: a version of the Qwen3-1.7B model that has been further trained—or *fine-tuned*—on a large dataset of web extraction examples. The goal is to create a model that inherently understands the task of mapping messy HTML to clean data schemas.
+
+## The 100k Dataset: Fueling Specialized Web Extraction
+The reported **100k dataset** is the critical, yet unverified, ingredient. In machine learning, the model architecture provides the potential, but the data determines what is actually learned. A dataset of this size for a specialized task suggests a significant investment in curation.
+
+The value of this dataset hinges entirely on its quality and diversity, not just its volume. For effective web extraction, the dataset likely needs to contain hundreds of thousands of (HTML, target JSON) pairs across a wide array of website types—from e-commerce product pages to news articles and forum threads. Each sample teaches the model to ignore irrelevant page elements (ads, navigation) and focus on the target data.
+
+Without access to the primary source or a detailed datasheet, we can only hypothesize its composition. A high-quality dataset would be meticulously cleaned and balanced, representing the varied structures and quirks of the modern web. Until the developers release specifics, the dataset's true power remains the project's most significant unknown variable.
+
+## How Fine-Tuning Transforms Qwen3 for Web Scraping
 
 <Flow
   height={500}
   nodes={[
-    { id: "n1", position: { x: 250, y: 0 }, data: { label: "Raw Web Pages" }, type: "input" },
-    { id: "n2", position: { x: 250, y: 150 }, data: { label: "Rust HTML Scanner" } },
-    { id: "n3", position: { x: 250, y: 300 }, data: { label: "Candidate URLs" } },
-    { id: "n4", position: { x: 250, y: 450 }, data: { label: "ML Ranker" } },
-    { id: "n5", position: { x: 250, y: 600 }, data: { label: "Schema Extraction" } },
-    { id: "n6", position: { x: 250, y: 750 }, data: { label: "NER Validation" } },
-    { id: "n7", position: { x: 250, y: 900 }, data: { label: "Lead Score" } },
-    { id: "n8", position: { x: 250, y: 1050 }, data: { label: "Outreach Queue" } },
-    { id: "n9", position: { x: 250, y: 1200 }, data: { label: "CRM Database" }, type: "output" }
+    { id: "n1", position: { x: 250, y: 0 }, data: { label: "Base Qwen3-1.7B Model" }, type: "input" },
+    { id: "n2", position: { x: 250, y: 150 }, data: { label: "100k Web Extraction Dataset" } },
+    { id: "n3", position: { x: 250, y: 300 }, data: { label: "Fine-Tuning Process" } },
+    { id: "n4", position: { x: 250, y: 450 }, data: { label: "Specialized Web Extraction Model" }, type: "output" }
   ]}
   edges={[
-    { id: "e1-2", source: "n1", target: "n2" },
-    { id: "e2-3", source: "n2", target: "n3" },
-    { id: "e3-4", source: "n3", target: "n4" },
-    { id: "e4-5", source: "n4", target: "n5" },
-    { id: "e5-6", source: "n5", target: "n6" },
-    { id: "e6-7", source: "n6", target: "n7" },
-    { id: "e7-8", source: "n7", target: "n8" },
-    { id: "e8-9", source: "n8", target: "n9" }
+    { id: "e1-2", source: "n1", target: "n2", label: "provides general language understanding" },
+    { id: "e2-3", source: "n2", target: "n3", label: "trains on HTML to JSON pairs" },
+    { id: "e3-4", source: "n3", target: "n4", label: "outputs optimized for scraping" }
   ]}
 />
 
-GPT-4o is roughly 100 times larger than the model that just beat it at structured web extraction. This isn't a marginal win—it’s a 3.4 percentage point lead on the gold-standard SWDE benchmark. The secret isn’t a novel architecture; it’s domain-specific fine-tuning on a 100,000-example dataset of real scraping trajectories. The [ScrapeGraphAI team's release](https://arxiv.org/abs/2505.15812) of a fine-tuned Qwen3-1.7B model flips the conventional scaling law on its head and delivers a complete, Apache 2.0-licensed stack for production. This is a blueprint for how narrow, expert models will outperform generalist giants—if you have the right data.
+Fine-tuning is the process of taking a capable generalist and turning it into a domain specialist. The base Qwen3-1.7B model understands language and code. Through fine-tuning on a targeted dataset, it learns the specific "language" of web extraction: the correlation between HTML tag structures and the user's desired output format.
 
-## The Artifacts: A Complete, Open-Source Extraction Stack
+This process directly addresses a key industry trend: the push for efficient, deployable AI. Developers are actively exploring methods to distill and quantize larger models to run locally, emphasizing speed and cost reduction [Source: MarkTechPost: Coding Implementation for Qwen3.5](https://www.marktechpost.com/2026/03/26/a-coding-implementation-to-run-qwen3-5-reasoning-models-distilled-with-claude-style-thinking-using-gguf-and-4-bit-quantization/). Fine-tuning a small model like Qwen3-1.7B for a single task is a parallel and complementary strategy. You're not just making a big model smaller; you're training a small model to be exceptionally good at one thing.
 
-Most open-source model releases are just weights. ScrapeGraphAI’s contribution is a full-stack data pipeline: raw trajectories, a curated dataset, and two inference-ready model formats. This reflects an engineering mindset where the dataset is the primary asset and the model is a reproducible artifact.
+The result should be a model that requires fewer prompt engineering tricks, produces more consistent schema adherence, and is more robust to minor changes in website layout compared to its base counterpart. It moves from *understanding* a request to *executing* a well-practiced procedure.
 
-The four core artifacts are:
-1.  **Full Dataset (`scrapegraphai/scrapegraphai-100k`)**: 93,700 rows in Parquet format, each a complete scraping “trajectory” with URL, raw HTML, user prompt, output JSON schema, and the LLM-produced structured data. The [17 fields](https://huggingface.co/datasets/scrapegraphai/scrapegraphai-100k) include diagnostics like `tokens_in`, `latency_ms`, `success` flag, and a `schema_complexity_score`. This is observability data for a scraping process, not just input-output pairs.
-2.  **Fine-Tuning Split (`scrapegraphai/scrapegraph-100k-finetuning`)**: A filtered set of 28,000 high-quality examples (25.2k train, 2.8k test) where `success=True` and complexity is above a threshold. This is the signal-rich subset.
-3.  **BF16 Model (`scrapegraphai/sgai-qwen3-1.7b`)**: The 1.7B parameter Qwen3 model, fine-tuned with a standard causal language modeling objective on the 25.2k training examples. Stored in Safetensors format, it’s ready for GPU inference.
-4.  **GGUF Model (`scrapegraphai/sgai-qwen3-1.7b-gguf`)**: A quantized version compatible with `llama.cpp`, `mlx_lm`, and `ollama`. At roughly 1.1GB for a Q4_K_M quantization, it enables full local inference on consumer Apple Silicon.
+## Key Capabilities and Use Cases for Data Extraction
+If successful, this fine-tuned model would supercharge the core promise of the ScrapeGraphAI library. The library is built to create graphs where LLM nodes intelligently parse documents and web pages. A specialized model would make these nodes significantly more reliable.
 
-The stack’s value is in its lineage. You can trace a prediction back through the model, to the fine-tuning data, to the original HTML and the LLM (GPT-4o, Claude, or Gemini) that generated the training label. This audit trail is uncommon and critical for debugging production extraction systems.
+Imagine you need to monitor competitor prices, aggregate product reviews, or collect structured data from public directories. Traditional scraping requires writing and maintaining fragile selectors. A general LLM via API can handle variety but is expensive and slow. This fine-tuned model aims for a middle ground: the adaptability of an LLM with the efficiency and focus of a purpose-built tool.
 
-## The Training Data: Why 100k Real Trajectories Beat a Billion Synthetic Ones
+Its primary capability would be accurately interpreting a natural language instruction like "extract the title, price, and SKU from this product page" and returning a perfect JSON object, even if the page's HTML is complex or non-standard. This makes it valuable for researchers, data analysts, and developers building automated data collection pipelines where consistency is more critical than raw scale.
 
-The dataset’s power isn’t its size—100k examples is modest by modern standards. It’s the *provenance*. Each example was generated by running the open-source [ScrapeGraphAI library](https://github.com/ScrapeGraphAI/Scrapegraph-ai) against a real website. The library uses a graph-based approach to reason over HTML and extract structured data, invoking various LLMs as the “extraction engine.” This means the dataset captures real-world failure modes: cluttered HTML, dynamic content, anti-bot markup, and ambiguous schemas.
+## Getting Started with the Fine-Tuned Model
+While the specific fine-tuned model's release details need verification, getting started with the ScrapeGraphAI ecosystem follows a standard pattern. The library itself is available on GitHub. Assuming the model is released, integration would involve pulling it from a model hub like Hugging Face.
 
-The 17-field schema includes a `model_used` field, which means you can filter for examples solved by GPT-4o, Claude 3, or Gemini. For fine-tuning, this diversity acts as a form of model distillation, transferring capabilities from several powerful (and expensive) teachers into a single, efficient student. The `schema_complexity_score` is a heuristic metric that allows filtering for harder examples, preventing the model from wasting capacity on trivial extractions.
-
-This dataset is the real moat. Model weights are static; this dataset can grow organically as the OSS library is used. Engineers can filter it by domain (e.g., `e-commerce`) and fine-tune a specialist model that outperforms the general-purpose `sgai-qwen3-1.7b` for their specific use case. The open license removes the legal ambiguity that often plagues web-scraped datasets.
-
-## How Fine-Tuning Bridges the 100x Parameter Gap
-
-The benchmark result is startling. On the SWDE (Structured Web Data Extraction) benchmark, the fine-tuned 1.7B model achieves **94.6% field-level F1**. GPT-4o scores **91.2%**. A 3.4-point gap in this space is significant; leaderboards are often separated by tenths of a point. The model also beats GPT-4o on the SyntheticWebExtract benchmark (89.3% vs. 87.1% schema accuracy).
-
-The explanation is task specificity. GPT-4o is a generalist, optimized for breadth across language, vision, and reasoning. Web extraction is a narrow task: map this HTML and this prompt to a JSON object adhering to this schema. The fine-tuning dataset of 25,200 high-quality examples provides a dense, consistent signal for this exact mapping. The model doesn’t need to know about poetry or code; it needs to learn the correlation between `<div class="price">` and the `"price"` field in the output schema. A small model, when freed from the burden of general knowledge, can achieve near-perfect performance on its dedicated task.
-
-This has profound cost implications. GPT-4o’s inference cost for a typical extraction might be $0.01-0.02. The fine-tuned model, running locally on an M2 Mac, costs the amortized electricity of your hardware—effectively zero at the margin. For a pipeline processing 100,000 pages a day, that’s $1,000-$2,000 daily savings.
-
-## The Competitor Landscape: Three Scholarly Approaches to the Same Problem
-
-The ScrapeGraphAI model exists in a research landscape exploring efficient structured extraction. Three recent papers exemplify different approaches:
-
-1.  **[AXE (Automatic XML Extraction)](https://arxiv.org/abs/2602.01838)**: This method focuses on pre-processing. It uses a lightweight classifier to prune irrelevant DOM subtrees from the HTML before passing the cleaned content to an LLM. Its key insight is that context window limits are a major bottleneck, and much of the HTML is noise. It achieves 88.10% F1 on SWDE using a 0.6B parameter model. The weakness: pruning is risky and can discard relevant data, and the approach doesn’t adapt the LLM itself.
-2.  **[Dripper](https://arxiv.org/abs/2511.23119)**: Dripper reframes extraction as a sequence labeling task (like Named Entity Recognition) directly on the HTML token stream. Instead of generating JSON, the model tags which spans correspond to which schema fields. This is more deterministic and avoids hallucinations. The paper claims it “rivals GPT-4o” with a 0.6B parameter model. The weakness: sequence labeling struggles with nested, multi-level schemas that are naturally expressed in JSON.
-3.  **[SLOT (Schema-Level Output Tuning)](https://arxiv.org/abs/2505.04016)**: SLOT attacks the problem post-hoc. It uses a 7B parameter base model for initial extraction, then a small, separate post-processing model to correct schema violations—missing required fields, type errors, extra keys. It boasts 99.5% schema accuracy. The weakness: it’s a two-stage pipeline with higher total parameters (7B+), increasing latency and memory footprint.
-
-The ScrapeGraphAI approach is distinct: end-to-end fine-tuning of a compact model for direct JSON generation. It beats AXE on accuracy (94.6% vs. 88.1%), matches Dripper’s competitiveness with GPT-4o, and achieves high schema accuracy without SLOT’s separate repair stage and larger base model. It’s a pragmatic, single-model solution.
-
-## Local Inference: The GGUF Revolution and the End of API Dependence
-
-The GGUF model variant is what makes this stack production-ready for many teams. GGUF is the quantization format powering `llama.cpp` and Apple’s `mlx_lm`. It allows this 1.7B parameter model to run efficiently on an M1/M2/M3 Mac, a consumer GPU, or even a CPU.
-
-```bash
-# Serve the model locally on an M-series Mac
-mlx_lm.server --model scrapegraphai/sgai-qwen3-1.7b-gguf --port 8080
-```
-
-You now have a dedicated extraction API behind your firewall. No data leaves your infrastructure—a non-negotiable requirement for scraping confidential, proprietary, or PII-laden sources. The cost model shifts from per-API-call to fixed hardware. On an M1 Pro, expect ~40 tokens/second. Processing 1,000 pages with 200-token outputs takes about 2 minutes of inference time.
-
-This changes the architecture of scraping pipelines. Instead of a fragile dependency on an external API’s availability, cost, and rate limits, you can deploy a container with the GGUF file and an inference server. It becomes a private utility, as reliable as your own infrastructure.
-
-## The Production Pipeline: Where Specialized LLMs Meet Traditional Scrapers
-
-The real test of any model is how it fits into a production pipeline. Let’s examine a live system: the agentic lead generation platform at [agenticleadgen.xyz](https://agenticleadgen.xyz). Its [source code](https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen) reveals a hybrid architecture that combines traditional scrapers and LLM-based extraction.
-
-The pipeline uses:
-*   **Rust's `scraper` crate** for blazing-fast, zero-allocation DOM parsing and CSS selector matching.
-*   A custom **finite-state machine (FSM) in Rust** for email extraction, achieving ~100 pages/second.
-*   **JSON-LD and Open Graph** parsers for structured metadata.
-*   A **custom NER model** for company name and person detection.
-
-Where does the ScrapeGraphAI model fit? It handles the flexible schema extraction that rule-based systems cannot. For example, extracting a structured company profile from a diverse array of “About Us” pages, where the field names and HTML structures vary wildly. The rule-based scrapers handle the high-throughput, predictable tasks; the fine-tuned LLM handles the variable, schema-driven tasks.
-
-The following diagram visualizes this hybrid pipeline, from raw web pages to a filled CRM. The `sgai-qwen3-1.7b` model sits at the critical "Schema Extraction" stage, where flexibility is required.
-
-export const pipelineNodes = [
-  { id: "n1", position: { x: 0, y: 0 }, data: { label: "Raw Web Pages" }, type: "input" },
-  { id: "n2", position: { x: 280, y: 0 }, data: { label: "Rust HTML Scanner" } },
-  { id: "n3", position: { x: 560, y: 0 }, data: { label: "Candidate URLs" } },
-  { id: "n4", position: { x: 840, y: 0 }, data: { label: "ML Ranker" } },
-  { id: "n5", position: { x: 1120, y: 0 }, data: { label: "Schema Extraction\n(sgai-qwen3-1.7b)" } },
-  { id: "n6", position: { x: 1400, y: 0 }, data: { label: "NER Validation" } },
-  { id: "n7", position: { x: 1680, y: 0 }, data: { label: "Lead Score" } },
-  { id: "n8", position: { x: 1960, y: 0 }, data: { label: "Outreach Queue" } },
-  { id: "n9", position: { x: 2240, y: 0 }, data: { label: "CRM / Neon DB" }, type: "output" },
-];
-export const pipelineEdges = [
-  { id: "e1-2", source: "n1", target: "n2", animated: true },
-  { id: "e2-3", source: "n2", target: "n3", animated: true },
-  { id: "e3-4", source: "n3", target: "n4", animated: true },
-  { id: "e4-5", source: "n4", target: "n5", animated: true },
-  { id: "e5-6", source: "n5", target: "n6", animated: true },
-  { id: "e6-7", source: "n6", target: "n7", animated: true },
-  { id: "e7-8", source: "n7", target: "n8", animated: true },
-  { id: "e8-9", source: "n8", target: "n9", animated: true },
-];
-
-<Flow nodes={pipelineNodes} edges={pipelineEdges} height={300} />
-
-This is the future of production extraction: not a monolithic LLM call, but a directed graph of specialized tools, with compact, fine-tuned models handling the tasks that require language understanding.
-
-## A Decision Framework: When to Use This Stack vs. GPT-4o or Traditional Scrapers
-
-Choosing an extraction strategy is a trade-off between cost, accuracy, latency, and development effort. Here’s my framework, grounded in the benchmarks and practical deployment:
-
-**Use the ScrapeGraphAI fine-tuned model (local GGUF) when:**
-*   **Volume is high** (>10k extractions/month), making API costs prohibitive.
-*   **Data sensitivity is high** (PII, competitive intelligence), requiring on-prem inference.
-*   **Your domain is narrow** (e.g., real estate listings, product specs), and you can further fine-tune the model on a filtered subset of the 100k dataset.
-*   **Your infrastructure includes Apple Silicon or consumer GPUs**, making local inference practical.
-
-**Use GPT-4o (or another large API model) when:**
-*   **Volume is low and sporadic**, so the setup cost of a local model isn’t justified.
-*   **Schemas change constantly** and you need the model to generalize zero-shot from a description.
-*   **You already have a working OpenAI integration** and 91.2% F1 is sufficient.
-*   **You lack ML/Ops bandwidth** to manage model deployment and quantization.
-
-**Use traditional scrapers (Beautiful Soup, Scrapy, Rust `scraper`) when:**
-*   **The website structure is simple and stable.**
-*   **Throughput and latency are paramount** (thousands of pages per second).
-*   **The extraction logic is trivial** (e.g., get all `href` attributes).
-
-The sweet spot for `sgai-qwen3-1.7b` is the middle ground: tasks too variable for rule-based scrapers but too expensive and sensitive for constant API calls.
-
-## Practical Takeaways and Getting Started
-
-To implement this stack, start with the dataset. Inspect it to understand the task distribution.
-
+Here’s a conceptual outline of how you might use it, based on the library's design:
 ```python
-from datasets import load_dataset
+from scrapegraphai.graphs import SmartScraperGraph
 
-# Load the full dataset
-ds = load_dataset("scrapegraphai/scrapegraphai-100k")
-# Filter for successful e-commerce examples for domain adaptation
-ecomm_ds = ds['train'].filter(lambda x: x['success'] and 'product' in x['user_prompt'].lower())
+# Configuration specifying the (hypothetical) fine-tuned model
+graph_config = {
+    "llm": {
+        "model": "VinciGit00/Qwen3-1.7B-ScrapeGraph-Finetuned", # Example model ID
+        "api_key": "YOUR_LOCAL_OR_HF_TOKEN",
+        "model_type": "custom"  # Assuming local or custom endpoint
+    },
+}
+
+# Create the smart scraper graph
+smart_scraper_graph = SmartScraperGraph(
+    prompt="List all article titles and authors",
+    source="https://example-news-site.com",
+    config=graph_config
+)
+
+# Run the extraction pipeline
+result = smart_scraper_graph.run()
+print(result)  # Structured JSON output
 ```
+The key step is configuring the `llm` parameter to point to the fine-tuned model instead of a default OpenAI or Groq API. This shift is what changes the task from a generic LLM call to a specialized extraction operation.
 
-For inference with the GGUF model on a Mac, use `mlx_lm`:
+## The Future of AI-Powered Web Scraping
+The trajectory indicated by projects like this is clear. The future belongs to specialized, efficient agents that respect the technical and policy boundaries of the web. The discussion around "Google-Agent" versus "Googlebot" is a warning: indiscriminate, high-volume crawling will face increasing barriers [Source: MarkTechPost: Google-Agent vs Googlebot](https://www.marktechpost.com/2026/03/28/google-agent-vs-googlebot-google-defines-the-technical-boundary-between-user-triggered-ai-access-and-search-crawling-systems-today/).
 
-```bash
-pip install mlx-lm
-mlx_lm.generate --model scrapegraphai/sgai-qwen3-1.7b-gguf --prompt "HTML: <div>Product: Phone, Price: $999</div>. Extract JSON with fields 'product' and 'price'."
-```
+Tools that can perform accurate, on-demand extraction within the context of a user-triggered action will become more valuable. A fine-tuned, small model that can run on modest hardware fits perfectly into this paradigm. It enables sophisticated data extraction without the latency and cost of cloud API calls, making advanced scraping more accessible and sustainable.
 
-For GPU inference with the BF16 model, use the Hugging Face `transformers` library, treating it as a standard text-generation model with a structured prompt.
+However, this future also demands greater responsibility. More powerful and accessible extraction tools amplify existing ethical and legal concerns around data ownership, copyright, and terms of service compliance. The technology does not absolve the developer of the duty to scrape respectfully and legally.
 
-The broader implication is clear: the era of one-size-fits-all LLMs is giving way to a ecosystem of specialized, efficient models. The [ScrapeGraphAI paper](https://arxiv.org/abs/2505.15812) provides a reproducible template: collect high-fidelity task trajectories from a working system, curate them, and fine-tune a compact base model like [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B). The result is a tool that is simultaneously more accurate, cheaper, and more private than the largest general-purpose models. This isn’t just an incremental improvement in web scraping; it’s a demonstration of how AI engineering will work: data-centric, specialized, and running on your own hardware.
+## FAQ
+
+**Q: What is ScrapeGraphAI?**
+A: ScrapeGraphAI is an open-source library that uses large language models (LLMs) to create web scraping pipelines by intelligently parsing HTML and extracting structured data without manual rule-writing.
+
+**Q: What is the Qwen3-1.7B model?**
+A: Qwen3-1.7B is a 1.7 billion parameter open-source large language model developed by Alibaba Cloud, designed to be a smaller, efficient foundation model that can be fine-tuned for specific tasks.
+
+**Q: How does fine-tuning improve web scraping?**
+A: Fine-tuning adapts a general-purpose LLM like Qwen3-1.7B to better understand HTML structure, ignore irrelevant page elements, and consistently output data in specified schemas, making extraction more accurate and robust.
+
+**Q: What kind of data is in the 100k dataset?**
+A: The dataset used for fine-tuning likely consists of hundreds of thousands of webpage HTML samples paired with corresponding structured data targets, teaching the model to map complex markup to clean JSON or other formats.
+
+**Q: Is this model free to use?**
+A: As part of the ScrapeGraphAI project, the fine-tuned Qwen3-1.7B model is expected to be open-source, but users should always check its specific license for commercial use and be aware of potential computational costs.

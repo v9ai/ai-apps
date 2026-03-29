@@ -233,12 +233,11 @@
         "githubUrl": "https://github.com/nicolad/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "Multi-agent RAG, LLM gating.",
           "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
-          "DeepSeek-as-judge evaluation scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported clinical claims.",
-          "Prompt versioning with runtime registry, no-deploy updates, distributed tracing, per-model cost tracking, A/B evaluation across LangChain/LangGraph Python workers.",
-          "Serverless TTS microservice: RAG-based content chunking, streaming audio to Cloudflare R2 via durable background tasks.",
-          "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents, standardized task/grader format mapped to ResearchTask definitions."
+          "DeepSeek-as-judge scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported claims.",
+          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
+          "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2 via durable background tasks.",
+          "Harbor eval harness: containerized trials across 6-20 non-deterministic agents with standardized task/grader format."
         ]
       },
       {
@@ -248,13 +247,11 @@
         "githubUrl": "https://github.com/nicolad/law-adversarial",
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
-          "Adversarial debate, citation check.",
           "6-agent pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
           "Citation verification and fabrication detection with chain-of-thought audit trails.",
           "Jurisdiction-specific precedent hierarchy mapping, multi-jurisdiction comparison.",
           "Real-time SSE streaming with per-agent audit logging.",
-          "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics across all 6 agents.",
-          "DeepTeam red-teaming: 5 legal vulnerabilities via 7 attack methods."
+          "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics; DeepTeam red-teaming via 7 attack methods."
         ]
       }
     ]
