@@ -383,7 +383,8 @@ apps/knowledge/
 │   ├── aws/page.tsx        # AWS hub page (/aws)
 │   ├── aws/[slug]/page.tsx # AWS deep-dive pages (/aws/lambda-serverless, etc.)
 │   ├── api/chat/           # Streaming chat endpoint
-│   └── api/research/       # Research endpoints
+│   ├── api/research/       # Research endpoints
+│   └── api/course-review/[id]/  # GET fetch review · POST upsert AI review
 ├── components/             # React components
 │   ├── search.tsx          # Cmd+K full-text search
 │   ├── audio-player.tsx    # TTS audio playback
