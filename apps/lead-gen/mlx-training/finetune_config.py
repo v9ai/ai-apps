@@ -75,8 +75,8 @@ CONFIGS = {
         data_dir="mlx-training/data/role-tag",
         adapter_path="mlx-training/models/role-tag",
     ),
-    "remote-eu": TrainConfig(
-        data_dir="mlx-training/data/remote-eu",
-        adapter_path="mlx-training/models/remote-eu",
+    "remote-worldwide": TrainConfig(
+        data_dir="mlx-training/data/remote-worldwide",
+        adapter_path="mlx-training/models/remote-worldwide",
     ),
 }

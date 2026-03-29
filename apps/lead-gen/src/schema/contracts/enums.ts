@@ -21,8 +21,8 @@ export const JobStatus = z.enum([
   "enhanced",
   "role_match",
   "role_nomatch",
-  "eu_remote",
-  "non_eu",
+  "remote_match",
+  "remote_nomatch",
   "error",
   "reported",
 ]);
@@ -34,8 +34,8 @@ export const JOB_STATUS_PYTHON_MAP: Record<JobStatus, string> = {
   enhanced: "enhanced",
   role_match: "role-match",
   role_nomatch: "role-nomatch",
-  eu_remote: "eu-remote",
-  non_eu: "non-eu",
+  remote_match: "remote-match",
+  remote_nomatch: "remote-nomatch",
   error: "error",
   reported: "reported",
 };

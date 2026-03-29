@@ -117,7 +117,6 @@ async function importFromSqlite(dbPath: string, dryRun: boolean) {
       service_taxonomy: JSON.stringify(["AI Consulting"]),
       tags: JSON.stringify([
         "ai-consultancy",
-        "europe",
         "leadgen-import",
         ...(rc.tech_stack ? JSON.parse(rc.tech_stack) : []),
       ]),

@@ -7,13 +7,13 @@ use serde_json;
 use super::ml_eval::LabeledSample;
 
 // ---------------------------------------------------------------------------
-// EU Remote classification structs
+// Remote classification structs
 // ---------------------------------------------------------------------------
 
 /// A single fine-tune training example in chat-message format.
 /// Serialised as one JSON line per example (JSONL).
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EuRemoteSample {
+pub struct RemoteSample {
     pub messages: Vec<Message>,
 }
 
@@ -224,7 +224,7 @@ const MAX_POSITIVES: usize = 200;
 /// and non-AI remote postings.
 ///
 /// Total: up to `MAX_POSITIVES` positives + ~130 hard negatives.
-pub fn generate_remote_worldwide_labels() -> Vec<EuRemoteSample> {
+pub fn generate_remote_worldwide_labels() -> Vec<RemoteSample> {
     let mut samples = Vec::new();
 
     // --- Positive examples ------------------------------------------------
@@ -345,8 +345,8 @@ pub fn generate_remote_worldwide_labels() -> Vec<EuRemoteSample> {
 // Private helpers
 // ---------------------------------------------------------------------------
 
-fn build_chat_sample(system: &str, user: &str, assistant: &str) -> EuRemoteSample {
-    EuRemoteSample {
+fn build_chat_sample(system: &str, user: &str, assistant: &str) -> RemoteSample {
+    RemoteSample {
         messages: vec![
             Message { role: "system".to_string(), content: system.to_string() },
             Message { role: "user".to_string(), content: user.to_string() },
@@ -398,7 +398,7 @@ pub fn write_labels(samples: &[LabeledSample], path: &Path) -> io::Result<()> {
 
 /// Write Remote Worldwide classification samples to a JSONL file (for finetune.py).
 /// Creates parent directories if they do not already exist.
-pub fn write_remote_worldwide_labels(samples: &[EuRemoteSample], path: &Path) -> io::Result<()> {
+pub fn write_remote_worldwide_labels(samples: &[RemoteSample], path: &Path) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
             std::fs::create_dir_all(parent)?;
