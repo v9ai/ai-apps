@@ -384,7 +384,7 @@ SEED_COMPANIES = [
     ("Merantix", "https://www.merantix.com/", "Germany"),
     ("Aleph Alpha", "https://aleph-alpha.com/", "Germany"),
     ("MHP", "https://www.mhp.com/", "Germany"),
-    ("Comma Soft", "https://www.2000soft.de/", "Germany"),
+    ("Comma Soft", "https://www.commasoft.de/", "Germany"),
     ("Datarevenue", "https://datarevenue.com/", "Germany"),
     # France
     ("Artefact", "https://artefact.com/", "France"),
@@ -584,7 +584,7 @@ def store_in_lancedb(companies: list[Company]):
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     db = lancedb.connect(str(DB_PATH))
 
-    if "companies" in db.table_names():
+    if "companies" in db.list_tables():
         tbl = db.open_table("companies")
         tbl.add(records)
         log.info(f"Appended {len(records)} records to existing table")
