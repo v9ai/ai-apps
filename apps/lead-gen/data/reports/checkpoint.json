@@ -5,7 +5,11 @@
     {
       "name": "discover",
       "status": "Partial"
+    },
+    {
+      "name": "enrich",
+      "status": "Partial"
     }
   ],
-  "current_stage": "enrich"
+  "current_stage": "contacts+qa"
 }
