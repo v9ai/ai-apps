@@ -199,6 +199,8 @@ This is the production reality of specialized models: not a monolithic LLM call,
 
 ## Decision Framework: When to Use Which Tool
 
+<Flow nodes={decisionNodes} edges={decisionEdges} height={520} />
+
 **Use `sgai-qwen3-1.7b` (local GGUF) when:**
 - **Volume is high** (>10k extractions/month) — API savings amortize setup quickly.
 - **Data sensitivity is high** (PII, competitive intelligence) — on-prem inference is required.
