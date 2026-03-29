@@ -87,7 +87,7 @@ export function buildBatchPrompt(input: GenerateBatchEmailRequest): string {
     "- Backend: Node.js, GraphQL, REST APIs, PostgreSQL, SQLite",
     "- Systems: Rust, WebAssembly, Cloudflare Workers",
     "- Infrastructure: Docker, CI/CD, Vercel, Cloudflare",
-    "- Seeking: fully remote EU engineering roles",
+    "- Seeking: fully remote engineering roles worldwide",
     "",
   );
 

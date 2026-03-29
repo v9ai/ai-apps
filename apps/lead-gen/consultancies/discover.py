@@ -729,7 +729,7 @@ def query_db(query: str, top_k: int = 20, where: str = ""):
     Supports hybrid search: semantic + SQL filters.
 
     Examples:
-        query_db("NLP consulting remote Europe")
+        query_db("NLP consulting remote worldwide")
         query_db("computer vision", where="remote_policy = 'remote'")
         query_db("GenAI MLOps", where="employee_range = '11-50'")
     """

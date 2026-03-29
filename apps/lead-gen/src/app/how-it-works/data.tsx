@@ -57,7 +57,7 @@ export const papers: Paper[] = [
     finding:
       "Serverless PostgreSQL that separates compute from storage, enabling instant branching, scale-to-zero cold starts, and connection pooling via the @neondatabase/serverless driver optimised for HTTP/WebSocket transport in edge and serverless runtimes where persistent TCP connections are unavailable.",
     relevance:
-      "Stores the entire lead-gen dataset — companies, contacts, contact_emails, email_campaigns, email_templates, company_facts, company_snapshots, and received_emails. All queries run through Drizzle ORM over the Neon HTTP driver; indexes on is_remote_eu, ai_tier, and company_id columns keep paginated filtering fast.",
+      "Stores the entire lead-gen dataset — companies, contacts, contact_emails, email_campaigns, email_templates, company_facts, company_snapshots, and received_emails. All queries run through Drizzle ORM over the Neon HTTP driver; indexes on ai_tier and company_id columns keep paginated filtering fast.",
     url: "https://neon.tech",
     categoryColor: "var(--green-9)",
   },

@@ -3,7 +3,7 @@ Extract domains from LanceDB consultancies table → domains.txt for Rust pipeli
 
 Usage:
     python extract_domains.py                          # default output
-    python extract_domains.py -o data/eu-ai-consultancies.txt  # custom output
+    python extract_domains.py -o data/ai-consultancies.txt     # custom output
     python extract_domains.py --min-confidence 0.7     # filter by confidence
 """
 

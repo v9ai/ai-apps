@@ -317,7 +317,7 @@ import { eq, and, or, like, inArray, desc, count, sql } from "drizzle-orm";
 import { jobs, jobSkillTags } from "@/db/schema";
 
 // Paginate with hasMore trick (avoids extra COUNT on first page)
-const rows = await db.select().from(jobs).where(eq(jobs.is_remote_eu, true))
+const rows = await db.select().from(jobs).where(eq(jobs.status, "remote_match"))
   .orderBy(desc(jobs.posted_at)).limit(limit + 1).offset(offset);
 const hasMore = rows.length > limit;
 

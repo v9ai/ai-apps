@@ -2,7 +2,7 @@
 
 Usage:
   python3 mlx-training/finetune.py --task role-tag
-  python3 mlx-training/finetune.py --task remote-eu
+  python3 mlx-training/finetune.py --task remote-worldwide
   python3 mlx-training/finetune.py --task role-tag --dry-run   # print config only
   python3 mlx-training/finetune.py --task role-tag --epochs 3  # override epochs
 
