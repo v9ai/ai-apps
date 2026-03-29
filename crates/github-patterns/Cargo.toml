@@ -16,7 +16,7 @@ neon     = ["patterns", "dep:sqlx", "dep:dotenvy", "dep:tracing-subscriber",
             "tokio/macros", "tokio/rt-multi-thread"]
 # LanceDB contributor store + scrape_contributors binary
 lance    = ["client", "dep:lancedb", "dep:arrow-array", "dep:arrow-schema",
-            "dep:dotenvy", "dep:tracing-subscriber",
+            "dep:futures", "dep:dotenvy", "dep:tracing-subscriber",
             "tokio/macros", "tokio/rt-multi-thread"]
 
 [dependencies]
