@@ -341,6 +341,39 @@ graph TD
     style generate fill:#bbf,stroke:#333
 ```
 
+### Course Review Pipeline
+
+Ten expert nodes run in parallel (pedagogy, technical accuracy, content depth, practical application, instructor clarity, curriculum fit, prerequisites, AI domain relevance, community health, value proposition), then an aggregator computes a weighted score and verdict.
+
+```mermaid
+graph TD
+    START((Start)) --> fan_out
+    fan_out --> pedagogy_node
+    fan_out --> technical_accuracy_node
+    fan_out --> content_depth_node
+    fan_out --> practical_application_node
+    fan_out --> instructor_clarity_node
+    fan_out --> curriculum_fit_node
+    fan_out --> prerequisites_node
+    fan_out --> ai_domain_relevance_node
+    fan_out --> community_health_node
+    fan_out --> value_proposition_node
+    pedagogy_node --> aggregator_node
+    technical_accuracy_node --> aggregator_node
+    content_depth_node --> aggregator_node
+    practical_application_node --> aggregator_node
+    instructor_clarity_node --> aggregator_node
+    curriculum_fit_node --> aggregator_node
+    prerequisites_node --> aggregator_node
+    ai_domain_relevance_node --> aggregator_node
+    community_health_node --> aggregator_node
+    value_proposition_node --> aggregator_node
+    aggregator_node --> END((End))
+
+    style fan_out fill:#f9f,stroke:#333
+    style aggregator_node fill:#bfb,stroke:#333
+```
+
 ## Directory Structure
 
 ```
@@ -359,7 +392,7 @@ apps/knowledge/
 ├── content/                # 88 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
-│   └── schema.ts           # Drizzle schema (19 tables, incl. external_courses + lesson_courses for Class Central)
+│   └── schema.ts           # Drizzle schema (20 tables, incl. external_courses, lesson_courses, course_reviews for Class Central)
 ├── lib/
 │   ├── articles.ts         # Lesson data layer — Lesson interface includes url field;
 │   │                       # exports AWS_DEEP_DIVE_SLUGS and getUrlPath()
@@ -370,6 +403,8 @@ apps/knowledge/
 │   ├── graph/              # research → outline → draft → review → quality_check [→ revise] → save
 │   └── tests/              # 33 pytest tests
 ├── evals/                  # Python eval suite (DeepEval)
+│   ├── editorial/          # LangGraph journalism pipeline (build_journalism_graph)
+│   └── course_review/      # LangGraph 10-expert course review pipeline (build_course_review_graph)
 ├── scripts/seed.ts         # DB seeder (lessons from markdown)
 ├── scripts/seed-courses.ts # Class Central course catalog seeder
 └── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
