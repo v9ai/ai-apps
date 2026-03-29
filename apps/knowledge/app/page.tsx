@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getGroupedLessons } from "@/lib/data";
 import { Topbar } from "@/components/topbar";
 import { Hero } from "@/components/hero";
@@ -19,6 +20,20 @@ export default async function HomePage() {
       <Hero lessonCount={total} domainCount={catCount} wordCount={wordCount} readingHours={readingHours} />
 
       <LearningPath groups={groups} />
+
+      {/* Research Collections */}
+      <section className="research-collections">
+        <h2 className="research-collections-title">RESEARCH COLLECTIONS</h2>
+        <div className="research-collections-grid">
+          <Link href="/kv-quant" className="cat-card" style={{ "--cat-from": "#f59e0b", "--cat-to": "#ef4444" } as React.CSSProperties}>
+            <div className="cat-card-header">
+              <span className="cat-card-icon">🗜️</span>
+              <span className="cat-card-name">KV-Cache Quantization</span>
+            </div>
+            <p className="cat-card-desc">Research papers on quantizing key-value caches for efficient LLM inference — compression, pruning, and long-context methods.</p>
+          </Link>
+        </div>
+      </section>
 
       {/* Search + Bento Grid */}
       <div id="lessons">

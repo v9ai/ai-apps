@@ -515,6 +515,37 @@ body {
 }
 
 /* ================================================================
+   RESEARCH COLLECTIONS
+   ================================================================ */
+.research-collections {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 32px;
+}
+.research-collections-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gray-8);
+  margin-bottom: 16px;
+}
+.research-collections-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.research-collections-grid .cat-card {
+  text-decoration: none;
+  cursor: pointer;
+}
+.research-collections-grid .cat-card-desc {
+  font-size: 13px;
+  color: var(--gray-9);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+/* ================================================================
    SEARCH INPUT (glass)
    ================================================================ */
 .yc-search {
