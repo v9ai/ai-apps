@@ -1,0 +1,25 @@
+[package]
+name = "paper-graph"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Research paper storage and co-authorship graph backed by Neon PostgreSQL"
+
+[[bin]]
+name = "paper-graph"
+path = "src/main.rs"
+
+[dependencies]
+research = { path = "../../../../crates/research" }
+tokio = { version = "1", features = ["full"] }
+tokio-postgres = "0.7"
+tokio-postgres-rustls = "0.13"
+rustls = { version = "0.23", features = ["ring"] }
+webpki-roots = "1"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+unicode-normalization = "0.1"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
