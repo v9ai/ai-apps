@@ -1,22 +1,28 @@
 {
   "duplicates": {
     "company_dupes": [],
-    "contact_dupes": []
+    "contact_dupes": [
+      {
+        "a": "hello@netguru.com",
+        "b": "hello@netguru.com",
+        "similarity": 1.0,
+        "action": "dedup"
+      },
+      {
+        "a": "contact@explosion.ai",
+        "b": "contact@explosion.ai",
+        "similarity": 1.0,
+        "action": "dedup"
+      }
+    ]
   },
   "completeness": {
     "companies_audited": 29,
-    "contacts_audited": 0,
+    "contacts_audited": 97,
     "companies_complete": 29,
-    "contacts_complete": 0,
+    "contacts_complete": 97,
     "missing_fields": []
   },
-  "quality_score": 1.0,
-  "recommendations": [
-    {
-      "priority": "HIGH",
-      "issue": "Email verification rate 0.0% — only 0 of 0 verified via SMTP",
-      "affected_count": 0,
-      "action": "Try additional email patterns or use catch-all detection."
-    }
-  ]
+  "quality_score": 0.9,
+  "recommendations": []
 }

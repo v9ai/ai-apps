@@ -3,12 +3,12 @@
   "phase": "Flowing",
   "counts": {
     "discovered": 181,
-    "enriched": 149,
+    "enriched": 178,
     "contacts_found": 49,
     "outreach_drafted": 0,
     "outreach_sent": 0
   },
-  "quality_score": 1.0,
+  "quality_score": 0.9,
   "bounce_rate": 0.0,
   "phase_history": null
 }
