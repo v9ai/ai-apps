@@ -1,24 +1,24 @@
-## Reference Quality  —  score 1.00
+## Reference Quality  —  score 0.55
 
 | Total | Broken | Weak anchors | Authoritative | Credible+ | Bare URLs |
 |-------|--------|--------------|---------------|-----------|-----------|
-| 4 | 0 | 0 | 2 | 2 | 1 |
+| 2 | 1 | 0 | 1 | 1 | 1 |
 
 ### Issues
 
-- ❌ bare_urls(1): these URLs are not wrapped in [anchor text](url) format — rewrite as inline citations: ['https://example-news-site.com']
+- ❌ few_refs: only 2 inline citation(s) — target ≥3 for a credible article
+- ❌ broken_links(1): ['https://github.com/ScrapeGraphAI/ScrapeGraphAI']
+- ❌ bare_urls(1): these URLs are not wrapped in [anchor text](url) format — rewrite as inline citations: ['http://localhost:11434']
 
 ### Inline Citations
 
 | Q | Domain | Status | Anchor | URL |
 |---|--------|--------|--------|-----|
-| ✓ | 🌐 | ✅ | Source: MarkTechPost: Google-Agent vs Googlebot | https://www.marktechpost.com/2026/03/28/google-agent-vs… |
-| ✓ | 🌐 | ✅ | Source: MarkTechPost: Coding Implementation for … | https://www.marktechpost.com/2026/03/26/a-coding-implem… |
-| ✓ | 🔬 | ✅ | Source: ScrapeGraphAI GitHub Repository | https://github.com/VinciGit00/ScrapeGraphAI |
-| ✓ | 🔬 | ✅ | Source: Qwen GitHub Repository - Qwen3 Models | https://github.com/QwenLM/Qwen3 |
+| ✓ | 🔬 | ❌ 404 | ScrapeGraphAI GitHub repository | https://github.com/ScrapeGraphAI/ScrapeGraphAI |
+| ✓ | 🌐 | ✅ | Hugging Face model hub | https://huggingface.co/models |
 
 ### Bare URLs (wrap in [anchor text](url))
 
-- https://example-news-site.com
+- http://localhost:11434
 
-**4/4 links reachable**
+**1/2 links reachable**

@@ -1,19 +1,24 @@
-DECISION: REVISE
+**DECISION: REVISE**
 
 ## Critical Issues (must fix)
-- [ ] **Fact-Check & Verification:** The draft presents the fine-tuned "ScrapeGraphAI Qwen3-1.7B" model and its "100k dataset" as verified facts. The research brief states these specifics **need primary source verification** (e.g., model card, official release notes). Several claims about the model's capabilities, release, and integration are presented definitively but are hypothetical or extrapolated from the library's design. This must be corrected to reflect the unverified status.
-    - **Paragraph 1 (Draft Intro):** "ScrapeGraphAI Qwen3-1.7B is a fine-tuned version..." presents as fact. Change to reflect it is a *reported* or *hypothetical* development.
-    - **Section: "The 100k Dataset: Fueling Specialized Web Extraction":** The entire section discusses the dataset's likely composition and value. This must be reframed as speculative, explicitly noting the dataset is "reportedly" 100k and its details are unknown without a primary source.
-    - **Section: "Getting Started with the Fine-Tuned Model":** The code example and integration steps imply the model is released and available. This must be clearly framed as a *conceptual* example of how one *would* use it *if* released, based on the ScrapeGraphAI library's patterns.
-- [ ] **SEO Structure - Featured Snippet:** The SEO strategy mandates a ≤50-word direct answer at the very top for a Featured Snippet. The current first paragraph is 58 words and blends introduction with context. It needs to be tightened into a clearer, more concise definition.
-- [ ] **Editorial Standards - Citations & Context:** The draft has only four citations for 1553 words, below the target density. The bare URL (`https://example-news-site.com`) must be formatted or removed. Context must be added for the "100k" figure throughout (e.g., "a reported 100k-example dataset").
+- [ ] **Missing Featured Snippet:** The SEO strategy explicitly targets a Featured Snippet and requires a **≤50-word direct answer at the very top**. The current introduction is longer and does not provide a concise definition. Please add a brief, direct answer paragraph immediately after the H1.
+- [ ] **Factual Presentation:** The draft's H1 and some phrasing (e.g., "The Search for a Fine-Tuned Web Extraction Model") lean into the investigative angle, which is valid. However, the SEO Blueprint's suggested H1 ("ScrapeGraphAI Qwen3-1.7B: A Fine-Tuned LLM for Web Data Extraction") presents the model as a real entity. To align with the research brief's finding of "no primary source evidence," the article's framing must be consistent. The title and H1 should clearly reflect the unverified/investigative nature (as the current draft's title does), not present the model as an existing product. Ensure the tone throughout matches this reality-check angle.
+- [ ] **Reference Quality:**
+    - [ ] **Broken Link:** The link to the ScrapeGraphAI GitHub repository (`https://github.com/ScrapeGraphAI/ScrapeGraphAI`) is flagged as broken (404). You must verify and correct this URL. The correct repository appears to be active.
+    - [ ] **Bare URL:** The local endpoint URL (`http://localhost:11434`) in the code configuration is a bare URL. Format it as an inline citation (e.g., `a local LLM server like Ollama`).
+    - [ ] **Insufficient Citations:** Only two inline citations are present. To meet credibility standards, incorporate at least one more authoritative source. For example, cite the official Qwen3-1.7B model card on Hugging Face when mentioning its public availability.
 
 ## Suggestions (should fix)
-- [ ] **Tone & Hedging:** Strengthen language by reducing hedging. For example, in "The result *should be* a model..." (under "How Fine-Tuning Transforms..."), change to "The intended result is a model..." or rephrase to be more authoritative about the *goal* of fine-tuning.
-- [ ] **Clarity - Sentence & Paragraph Length:** Break up some long sentences and paragraphs. For example, the second paragraph of the draft is 71 words and contains multiple ideas. The paragraph beginning "The reported innovation is the marriage..." is four long sentences and could be split.
-- [ ] **FAQ Alignment:** The FAQ questions are good, but they should be reordered or slightly adjusted to better match the "People Also Ask" questions listed in the SEO Strategy (e.g., "How does Qwen3-1.7B compare to larger models for this task?" is a recommended PAA question not currently addressed).
+- [ ] **Clarity & Readability:** Apply line edits per the CLARITY pass:
+    - Break several long sentences (e.g., in the "What is the Claimed..." and "The Hunt for the 100k..." paragraphs).
+    - Convert passive constructions to active voice (e.g., "A claim has circulated" could be "A claim is circulating").
+    - Remove or strengthen hedging language (e.g., "could offer", "would likely pair", "can lead to").
+- [ ] **H2 Structure:** The current H2s are good but could better align with the SEO Blueprint's suggested H2s to cover semantic clusters like "Practical Applications" or "Key Features." Consider adjusting or adding an H2 to cover "Practical Applications and Use Cases" or "Key Features and Capabilities."
+- [ ] **Word Count:** The draft is likely within the 1200-1500 word target, but verify the final count post-edits.
 
 ## Minor Notes (nice to have)
-- [ ] **Active Voice:** Convert passive constructions. E.g., "The web is no longer a passive database to be crawled at will" could be "Websites are no longer passive databases for indiscriminate crawling."
-- [ ] **Weasel Words:** Remove words like "very" (e.g., "the most significant unknown variable" is stronger than "the most *very* significant").
-- [ ] **Numerals:** Apply the style guide: Spell out "one," use digits for "10+". Check instances like "100k" – since it's a rounded, large number, "100,000" or "100k" is acceptable, but be consistent.
+- [ ] **Editorial Standards:** Ensure numbers are formatted correctly (e.g., "1.7-billion-parameter" is fine as a compound adjective, but elsewhere, spell out "one" through "nine").
+- [ ] **Flow Diagram Context:** The text immediately preceding the `<Flow />` diagram component is cut off mid-sentence: "How Fine-Tuning Could Improve Web Scraping Accuracy". Ensure this section has a proper introduction.
+- [ ] **FAQ Section:** The FAQ is present and matches the SEO Blueprint's questions. Good.
+
+**Please return the revised draft with these issues addressed.** Focus on the Critical Issues first, particularly the factual framing, featured snippet, and reference corrections.

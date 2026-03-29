@@ -466,6 +466,54 @@ export const resumes = pgTable("resumes", {
 export type Resume = typeof resumes.$inferSelect;
 export type NewResume = typeof resumes.$inferInsert;
 
+// ── External Courses (Class Central) ─────────────────────────────
+
+export const externalCourses = pgTable(
+  "external_courses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    classcentralId: integer("classcentral_id").unique(),
+    title: text("title").notNull(),
+    url: text("url").notNull().unique(),
+    provider: text("provider").notNull(),
+    description: text("description"),
+    level: text("level"), // "Beginner" | "Intermediate" | "Advanced"
+    rating: real("rating"),
+    reviewCount: integer("review_count"),
+    durationHours: real("duration_hours"),
+    isFree: boolean("is_free").notNull().default(true),
+    enrolled: integer("enrolled"),
+    imageUrl: text("image_url"),
+    language: text("language").notNull().default("English"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("external_courses_provider_idx").on(table.provider),
+  ],
+);
+
+export const lessonCourses = pgTable(
+  "lesson_courses",
+  {
+    lessonSlug: text("lesson_slug").notNull(),
+    courseId: uuid("course_id")
+      .references(() => externalCourses.id, { onDelete: "cascade" })
+      .notNull(),
+    relevance: real("relevance").notNull().default(1.0),
+  },
+  (table) => [
+    primaryKey({ columns: [table.lessonSlug, table.courseId] }),
+    index("lesson_courses_slug_idx").on(table.lessonSlug),
+  ],
+);
+
+export type ExternalCourse = typeof externalCourses.$inferSelect;
+
 // ── Relations ──────────────────────────────────────────────────────
 
 export const categoriesRelations = relations(categories, ({ many }) => ({

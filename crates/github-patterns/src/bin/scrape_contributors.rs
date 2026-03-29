@@ -167,7 +167,7 @@ async fn scrape_single_repo(
     let to_fetch: Vec<_> = contributors
         .into_iter()
         .take(max_per_repo)
-        .filter(|c| !db.is_known(&c.login))
+        .filter(|c| !db.is_known(&c.login) && !is_bot(&c.login))
         .collect();
 
     info!(
@@ -206,6 +206,13 @@ async fn scrape_single_repo(
     }
 
     Ok(())
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+fn is_bot(login: &str) -> bool {
+    let l = login.to_ascii_lowercase();
+    l.ends_with("[bot]") || l.contains("dependabot") || l.contains("renovate")
 }
 
 // ── Top rising stars ──────────────────────────────────────────────────────────
