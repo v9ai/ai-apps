@@ -19,6 +19,9 @@ export function Topbar({ lessonCount }: { lessonCount?: number }) {
           {lessonCount} lessons
         </span>
       )}
+      <Link href="/kv-quant" className="yc-topbar-signin">
+        KV-Quant
+      </Link>
       {session?.user ? (
         <div className="yc-topbar-user">
           <Link href="/applications" className="yc-topbar-signin">
