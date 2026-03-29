@@ -57,9 +57,11 @@ pub fn compute_rising_score(record: &ContributorRecord) -> RisingScore {
         (now - record.user.created_at).num_days().max(1) as f32
     };
 
-    // High contributions relative to current fame
-    let contribution_density = (total_contributions / (followers + 1.0)).tanh() * 50.0_f32.recip();
-    let contribution_density = contribution_density.min(1.0);
+    // High contributions relative to current fame.
+    // Normalise the raw ratio by 50 before tanh so the result lives in 0..1
+    // across realistic ranges (50 commits / 0 followers → ~0.76).
+    let contribution_density =
+        ((total_contributions / (followers + 1.0)) * 50.0_f32.recip()).tanh();
 
     // Newer = more "rising" potential (linear decay over 5 years)
     let novelty = (1.0 - account_age_days / (365.0 * 5.0)).max(0.0);
@@ -422,4 +424,266 @@ async fn load_known_logins(conn: &Connection) -> Result<HashSet<String>> {
         }
     }
     Ok(logins)
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Duration, Utc};
+
+    // ── helpers ───────────────────────────────────────────────────────────────
+
+    fn make_user(followers: u32, public_repos: u32, age_days: i64) -> GhUser {
+        let created_at = Utc::now() - Duration::days(age_days);
+        GhUser {
+            login: "testuser".into(),
+            id: 1,
+            html_url: "https://github.com/testuser".into(),
+            avatar_url: "https://avatars.githubusercontent.com/u/1".into(),
+            name: None,
+            email: None,
+            bio: None,
+            company: None,
+            location: None,
+            blog: None,
+            twitter_username: None,
+            public_repos,
+            public_gists: 0,
+            followers,
+            following: 0,
+            hireable: None,
+            created_at,
+            updated_at: Utc::now(),
+        }
+    }
+
+    fn make_record(
+        followers: u32,
+        public_repos: u32,
+        age_days: i64,
+        contributions: u32,
+        repo_count: usize,
+    ) -> ContributorRecord {
+        let repos = (0..repo_count)
+            .map(|i| RepoContrib {
+                repo: format!("org/repo{i}"),
+                contributions: contributions / repo_count.max(1) as u32,
+            })
+            .collect();
+        ContributorRecord {
+            user: make_user(followers, public_repos, age_days),
+            repos,
+            total_contributions: contributions,
+        }
+    }
+
+    // ── score range ───────────────────────────────────────────────────────────
+
+    #[test]
+    fn score_in_unit_range() {
+        for (followers, public_repos, age_days, contributions, repos) in [
+            (0, 0, 1, 1, 1),
+            (0, 100, 30, 500, 5),
+            (100_000, 5, 3650, 10, 1),
+            (50, 25, 400, 200, 3),
+        ] {
+            let s = compute_rising_score(&make_record(followers, public_repos, age_days, contributions, repos));
+            assert!(
+                (0.0..=1.0).contains(&s.score),
+                "score={} out of range for followers={followers} age_days={age_days}",
+                s.score
+            );
+            assert!((0.0..=1.0).contains(&s.contribution_density));
+            assert!((0.0..=1.0).contains(&s.novelty));
+            assert!((0.0..=1.0).contains(&s.breadth));
+            assert!((0.0..=1.0).contains(&s.activity));
+            assert!((0.0..=1.0).contains(&s.obscurity));
+        }
+    }
+
+    // ── component invariants ──────────────────────────────────────────────────
+
+    #[test]
+    fn contribution_density_increases_with_commits() {
+        // Same followers, more contributions → higher density
+        let low = compute_rising_score(&make_record(10, 5, 365, 10, 1));
+        let high = compute_rising_score(&make_record(10, 5, 365, 500, 1));
+        assert!(
+            high.contribution_density > low.contribution_density,
+            "expected density to rise with contributions: {} vs {}",
+            low.contribution_density,
+            high.contribution_density,
+        );
+    }
+
+    #[test]
+    fn contribution_density_decreases_with_followers() {
+        // Same contributions, more followers → lower density
+        let obscure = compute_rising_score(&make_record(5, 10, 365, 100, 1));
+        let famous = compute_rising_score(&make_record(10_000, 10, 365, 100, 1));
+        assert!(
+            obscure.contribution_density > famous.contribution_density,
+            "obscure={} should beat famous={}",
+            obscure.contribution_density,
+            famous.contribution_density,
+        );
+    }
+
+    #[test]
+    fn novelty_decreases_with_age() {
+        let new_acc = compute_rising_score(&make_record(0, 0, 100, 1, 1));
+        let old_acc = compute_rising_score(&make_record(0, 0, 2000, 1, 1));
+        assert!(
+            new_acc.novelty > old_acc.novelty,
+            "newer account should have higher novelty: {} vs {}",
+            new_acc.novelty,
+            old_acc.novelty,
+        );
+    }
+
+    #[test]
+    fn novelty_zero_for_very_old_accounts() {
+        // Account created 10 years ago → novelty should be 0
+        let old = compute_rising_score(&make_record(0, 0, 365 * 10, 1, 1));
+        assert_eq!(old.novelty, 0.0, "novelty should be 0 after 5+ years");
+    }
+
+    #[test]
+    fn breadth_increases_with_repo_count() {
+        let single = compute_rising_score(&make_record(0, 5, 365, 100, 1));
+        let multi = compute_rising_score(&make_record(0, 5, 365, 100, 5));
+        assert!(
+            multi.breadth > single.breadth,
+            "multi-repo should have higher breadth: {} vs {}",
+            single.breadth,
+            multi.breadth,
+        );
+    }
+
+    #[test]
+    fn breadth_caps_at_five_repos() {
+        let five = compute_rising_score(&make_record(0, 5, 365, 100, 5));
+        let ten = compute_rising_score(&make_record(0, 5, 365, 100, 10));
+        assert_eq!(five.breadth, ten.breadth, "breadth should cap at 5 repos");
+        assert_eq!(five.breadth, 1.0);
+    }
+
+    #[test]
+    fn obscurity_decreases_with_followers() {
+        let nobody = compute_rising_score(&make_record(0, 5, 365, 10, 1));
+        let celebrity = compute_rising_score(&make_record(50_000, 5, 365, 10, 1));
+        assert!(
+            nobody.obscurity > celebrity.obscurity,
+            "unknown person should score higher obscurity: {} vs {}",
+            nobody.obscurity,
+            celebrity.obscurity,
+        );
+    }
+
+    // ── ranking invariants ────────────────────────────────────────────────────
+
+    #[test]
+    fn undiscovered_talent_beats_famous_contributor() {
+        // High commits, low followers, new account
+        let rising = make_record(10, 30, 300, 400, 3);
+        // Same commits but huge follower count and old account
+        let famous = make_record(50_000, 30, 2000, 400, 3);
+
+        let s_rising = compute_rising_score(&rising).score;
+        let s_famous = compute_rising_score(&famous).score;
+
+        assert!(
+            s_rising > s_famous,
+            "rising star (score={s_rising:.3}) should beat famous (score={s_famous:.3})"
+        );
+    }
+
+    #[test]
+    fn prolific_multi_repo_beats_one_repo_same_followers() {
+        let broad = make_record(20, 40, 500, 300, 5);
+        let narrow = make_record(20, 40, 500, 300, 1);
+
+        let s_broad = compute_rising_score(&broad).score;
+        let s_narrow = compute_rising_score(&narrow).score;
+
+        assert!(
+            s_broad > s_narrow,
+            "broad contributor (score={s_broad:.3}) should beat narrow (score={s_narrow:.3})"
+        );
+    }
+
+    // ── LanceDB round-trip ────────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn insert_and_top_rising_roundtrip() {
+        let dir = std::env::temp_dir().join(format!(
+            "gh_contributors_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .subsec_nanos()
+        ));
+
+        let mut db = ContributorsDb::open(dir.to_str().unwrap())
+            .await
+            .expect("open DB");
+
+        // Insert two records with different rising potential
+        let rising = {
+            let mut r = make_record(5, 20, 200, 300, 4);
+            r.user.login = "rising_star".into();
+            r
+        };
+        let veteran = {
+            let mut r = make_record(30_000, 50, 2500, 300, 1);
+            r.user.login = "veteran".into();
+            r
+        };
+
+        let inserted = db.insert(&[rising, veteran]).await.expect("insert");
+        assert_eq!(inserted, 2);
+
+        // Dedup: re-inserting the same logins should be a no-op
+        let dup = {
+            let mut r = make_record(5, 20, 200, 300, 4);
+            r.user.login = "rising_star".into();
+            r
+        };
+        let reinserted = db.insert(&[dup]).await.expect("insert dup");
+        assert_eq!(reinserted, 0, "duplicate should be skipped");
+
+        // Top rising: rising_star should rank above veteran
+        let top = db.top_rising(10).await.expect("top_rising");
+        assert_eq!(top.len(), 2);
+        assert_eq!(
+            top[0].login, "rising_star",
+            "rising_star should be ranked first, got {} (score={:.3})",
+            top[0].login,
+            top[0].rising_score,
+        );
+
+        // Clean up
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn empty_db_returns_empty_top() {
+        let dir = std::env::temp_dir().join(format!(
+            "gh_contributors_empty_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .subsec_nanos()
+        ));
+
+        let db = ContributorsDb::open(dir.to_str().unwrap())
+            .await
+            .expect("open DB");
+        let top = db.top_rising(10).await.expect("top_rising on empty DB");
+        assert!(top.is_empty());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
