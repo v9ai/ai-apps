@@ -167,6 +167,7 @@ export const CATEGORIES: [number, number, string][] = [
   [72, 76, "Cloud Platforms"],
   [77, 85, "AWS Deep Dives"],
   [86, 90, "Software Engineering"],
+  [91, 93, "Rust & Systems ML"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
@@ -267,6 +268,13 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     description: "Timeless engineering principles — SOLID design, ACID guarantees, and production architecture",
     gradient: ["#475569", "#94a3b8"],
     outcomes: ["Apply SOLID principles to real codebases", "Understand ACID transaction guarantees", "Design microservices and CI/CD pipelines"],
+  },
+  "Rust & Systems ML": {
+    slug: "rust-systems-ml",
+    icon: "⚙",
+    description: "High-performance ML inference and data pipelines in Rust — Candle, Lance, and systems-level AI engineering",
+    gradient: ["#b45309", "#f59e0b"],
+    outcomes: ["Run inference with HuggingFace Candle in Rust", "Store and query ML datasets with the Lance format", "Build zero-overhead AI pipelines without Python"],
   },
 };
 
