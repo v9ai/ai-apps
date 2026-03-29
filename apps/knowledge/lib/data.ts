@@ -90,6 +90,16 @@ export async function getRelatedLessons(
     .slice(0, 4);
 }
 
+export async function getCoursesForLesson(
+  slug: string,
+): Promise<import("./db/queries").ExternalCourse[]> {
+  if (USE_DB) {
+    const { getCoursesForLessonFromDb } = await import("./db/queries");
+    return getCoursesForLessonFromDb(slug);
+  }
+  return [];
+}
+
 // Audio metadata
 export { getAudioMeta } from "./audio";
 export type { AudioMeta, AudioChapter } from "./audio";
