@@ -280,7 +280,6 @@ Canonical list of skills, technologies, and domain expertise recognized by the p
 - Prometheus
 - Grafana
 - Sentry
-- Langfuse
 - OpenTelemetry
 
 ## API Technologies
