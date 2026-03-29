@@ -191,12 +191,12 @@
         "githubUrl": "https://github.com/nicolad/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "5-agent dependency-graph pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with mandatory plan-approval gate.",
-          "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, end-to-end TypeScript codegen).",
-          "LLM enrichment: AI tier classification, tech stack detection, ATS board discovery via smart multi-model routing.",
-          "3 parallel competing-hypotheses research agents with active debate — cross-reading and challenging findings — producing GO/NO-GO verdicts.",
-          "On-device MLX scoring at 4,618 embeddings/sec on M1 Metal; local email gen via Qwen2.5-3B; eval enforcer with LangSmith distributed tracing.",
-          "Candle-based Rust ML inference for contact scoring with INT8 quantization and Metal GPU acceleration."
+          "5-agent pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
+          "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
+          "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
+          "3 parallel competing-hypotheses agents — cross-reading and challenging findings — producing GO/NO-GO verdicts.",
+          "MLX scoring at 4,618 embeddings/sec on M1 Metal; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing.",
+          "Candle-based Rust ML inference for contact scoring with INT8 quantization and Metal acceleration."
         ]
       },
       {
@@ -206,8 +206,8 @@
         "githubUrl": "https://github.com/nicolad/agentic-healthcare",
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
-          "Longitudinal biomarker trajectory analysis across 7 clinical metrics with abnormal flag detection and velocity computation.",
-          "AI-driven risk classification via cosine similarity (threshold 0.3) against 1024-dim Qwen embeddings across 7 tables.",
+          "Biomarker trajectory analysis across 7 clinical metrics with abnormal flag detection and velocity computation.",
+          "Risk classification via cosine similarity (threshold 0.3) against 1024-dim Qwen embeddings across 7 tables.",
           "7 protected server actions with 15 test cases covering diverse metabolic profiles.",
           "Braintrust autoevals: Factuality and Relevance scorers, model version experiment tracking.",
           "Supabase + pgvector with Row Level Security, Drizzle ORM, medication and diagnosis management."
@@ -237,8 +237,8 @@
           "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source clinical ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
           "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
           "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
-          "Serverless TTS microservice: RAG-based content chunking, streaming audio to Cloudflare R2 via durable background tasks.",
-          "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents with standardized grader format."
+          "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2 via background tasks.",
+          "Harbor eval harness: containerized trials across 6-20 non-deterministic agents with standardized grader format."
         ]
       },
       {
