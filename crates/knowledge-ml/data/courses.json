@@ -1,0 +1,36 @@
+[
+  {
+    "course_id": "master-vector-databases",
+    "title": "www.udemy.com",
+    "url": "https://www.udemy.com/course/master-vector-databases/",
+    "description": "",
+    "instructor": "",
+    "level": "All Levels",
+    "rating": 0,
+    "review_count": 0,
+    "num_students": 0,
+    "duration_hours": 0,
+    "price": "",
+    "language": "English",
+    "category": "",
+    "image_url": "",
+    "topics_json": "[]"
+  },
+  {
+    "course_id": "langchain",
+    "title": "www.udemy.com",
+    "url": "https://www.udemy.com/course/langchain/",
+    "description": "",
+    "instructor": "",
+    "level": "All Levels",
+    "rating": 0,
+    "review_count": 0,
+    "num_students": 0,
+    "duration_hours": 0,
+    "price": "",
+    "language": "English",
+    "category": "",
+    "image_url": "",
+    "topics_json": "[]"
+  }
+]
