@@ -1,11 +1,17 @@
 //! Udemy course page parser.
 //!
 //! Udemy is behind Cloudflare bot protection, so we can't fetch pages with
-//! reqwest directly. Instead, a Playwright script (`scripts/scrape-udemy.ts`)
-//! fetches the HTML and this module parses the already-fetched content.
+//! reqwest directly. Instead, `scripts/scrape-udemy.ts` (a Playwright script)
+//! navigates topic and course pages in a real browser and writes a Course[]
+//! JSON file.  Run it first, then feed the output to `scrape-udemy` binary:
 //!
-//! Also provides `load_courses_json` for importing courses from a JSON file
-//! (the output of the Playwright scraper).
+//! ```sh
+//! cd scripts && pnpm install && tsx scrape-udemy.ts --output ../data/courses.json
+//! cargo run --bin scrape-udemy -- --json ./data/courses.json
+//! ```
+//!
+//! This module's `load_courses_json` reads that JSON file; `parse_course_html`
+//! is kept for ad-hoc HTML debugging.
 
 use std::path::Path;
 
