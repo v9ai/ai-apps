@@ -191,7 +191,7 @@
         "githubUrl": "https://github.com/nicolad/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "5-agent pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
+          "5-agent dependency-graph pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
           "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
           "LLM enrichment: tier classification, tech stack detection, ATS board discovery via multi-model routing.",
           "3 parallel competing-hypotheses research agents with active debate — cross-reading findings — producing GO/NO-GO verdicts.",
@@ -207,8 +207,8 @@
         "highlights": [
           "Longitudinal biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
           "AI-driven risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
-          "7 server actions with 15 test cases covering diverse metabolic profiles.",
-          "Braintrust autoevals: Factuality and Relevance scorers, experiment tracking.",
+          "7 protected server actions with 15 test cases covering diverse metabolic profiles.",
+          "Braintrust autoevals: Factuality and Relevance scorers, model version experiment tracking.",
           "Supabase + pgvector with Row Level Security, Drizzle ORM, medication management."
         ]
       },
@@ -222,7 +222,7 @@
           "Semantic knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
           "Per-user Bayesian knowledge tracing (mastery, transit, slip, guess per concept), novice → expert classification.",
           "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
-          "LangGraph 6-agent fan-out/fan-in editorial pipeline with revision loops, DeepSeek R1 + OpenAI.",
+          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI.",
           "Real-time streaming chat with thread-scoped persistence, 17-table Drizzle schema, pgvector embeddings."
         ]
       },
@@ -235,7 +235,7 @@
         "highlights": [
           "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
           "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
-          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval.",
+          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
           "Serverless TTS microservice: RAG-based chunking, streaming audio to Cloudflare R2.",
           "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents."
         ]
@@ -248,10 +248,10 @@
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
           "6-agent adversarial pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
-          "Automated citation verification and fabrication detection with audit trails.",
+          "Automated citation verification and fabrication detection with chain-of-thought audit trails.",
           "Jurisdiction-specific legal precedent mapping, multi-jurisdiction comparison.",
           "Real-time SSE streaming with structured per-agent logging.",
-          "Promptfoo: 8 eval suites, LLM-as-judge rubrics; DeepTeam red-teaming."
+          "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics; DeepTeam red-teaming."
         ]
       }
     ]
