@@ -32,7 +32,7 @@ from press.graphs.nodes import (
     save_final_node,
     should_revise_simple,
 )
-from press.graphs.state import CounterArticleState
+from press.graphs.state import CounterArticleInputState, CounterArticleState
 from press.models import ModelPool, TeamRole
 from press import prompts
 from press.research import deduplicate_and_rank, format_paper_digest, search_papers
@@ -51,7 +51,7 @@ def _counter_queries(topic: str) -> list[str]:
 
 def build_counter_article_graph(pool: ModelPool):
     """Build the Counter-Article pipeline StateGraph."""
-    graph = StateGraph(CounterArticleState)
+    graph = StateGraph(CounterArticleState, input_schema=CounterArticleInputState)
 
     async def fetch_source(state: CounterArticleState) -> dict:
         if state.get("source_content"):

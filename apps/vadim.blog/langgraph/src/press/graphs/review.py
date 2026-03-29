@@ -22,7 +22,7 @@ from langgraph.graph import END, START, StateGraph
 from press import slugify
 from press.agents import Agent
 from press.graphs.nodes import check_references_node
-from press.graphs.state import ReviewState
+from press.graphs.state import ReviewInputState, ReviewState
 from press.models import ModelPool, TeamRole
 from press import prompts
 
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 def build_review_graph(pool: ModelPool):
     """Build the Review pipeline StateGraph."""
-    graph = StateGraph(ReviewState)
+    graph = StateGraph(ReviewState, input_schema=ReviewInputState)
 
     async def read_files(state: ReviewState) -> dict:
         """Read draft and optional research/SEO files."""

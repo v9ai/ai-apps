@@ -14,7 +14,7 @@ from press.graphs.article import build_article_graph
 from press.graphs.blog import build_blog_graph
 from press.graphs.counter_article import build_counter_article_graph
 from press.graphs.review import build_review_graph
-from press.graphs.state import PressState
+from press.graphs.state import PressInputState, PressState
 from press.models import ModelPool
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ def build_main_graph(pool: ModelPool):
         "review": build_review_graph(pool),
     }
 
-    graph = StateGraph(PressState)
+    graph = StateGraph(PressState, input_schema=PressInputState)
 
     async def run_blog(state: PressState) -> dict:
         return await sub_graphs["blog"].ainvoke(dict(state))
