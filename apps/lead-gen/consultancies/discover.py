@@ -584,13 +584,8 @@ def store_in_lancedb(companies: list[Company]):
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     db = lancedb.connect(str(DB_PATH))
 
-    if "companies" in db.list_tables():
-        tbl = db.open_table("companies")
-        tbl.add(records)
-        log.info(f"Appended {len(records)} records to existing table")
-    else:
-        tbl = db.create_table("companies", records)
-        log.info(f"Created new table with {len(records)} records")
+    tbl = db.create_table("companies", records, mode="overwrite")
+    log.info(f"Stored {len(records)} records in table")
 
     try:
         tbl.create_fts_index("description", replace=True)
