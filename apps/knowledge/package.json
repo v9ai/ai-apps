@@ -34,7 +34,8 @@
     "generate:dry": "cd backend && uv run python -m graph.cli --dry-run",
     "generate:missing": "cd backend && uv run python -m graph.cli --list-missing",
     "generate:batch": "cd backend && uv run python -m graph.cli --batch",
-    "generate:test": "cd backend && uv run pytest tests/ -v"
+    "generate:test": "cd backend && uv run pytest tests/ -v",
+    "seed:courses": "tsx --env-file=.env.local scripts/seed-courses.ts"
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",

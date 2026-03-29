@@ -191,11 +191,11 @@
         "githubUrl": "https://github.com/nicolad/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "5-agent dependency-graph pipeline: Discovery Scout → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with mandatory plan-approval gate.",
-          "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, end-to-end TypeScript codegen).",
-          "Multi-model LLM enrichment: AI tier classification, tech stack detection, ATS discovery via smart routing (cheap-first, escalate on low confidence).",
-          "3 parallel competing-hypotheses research agents with active debate — cross-reading and challenging findings — producing GO/NO-GO confidence verdicts.",
-          "On-device MLX scoring at 4,618 embeddings/sec on M1 Metal; local email gen via Qwen2.5-3B; eval-driven strategy enforcer at 80% accuracy bar with LangSmith tracing."
+          "5-agent pipeline: Discovery Scout → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
+          "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
+          "LLM enrichment: AI tier classification, tech stack detection, ATS discovery via multi-model routing (cheap-first, escalate on low confidence).",
+          "3 parallel research agents with active debate — cross-reading and challenging findings — producing GO/NO-GO verdicts.",
+          "MLX scoring at 4,618 embeddings/sec on M1 Metal; local email gen via Qwen2.5-3B; eval enforcer at 80% bar with LangSmith tracing."
         ]
       },
       {
@@ -205,11 +205,11 @@
         "githubUrl": "https://github.com/nicolad/agentic-healthcare",
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
-          "Longitudinal biomarker trajectory analysis across 7 clinical metrics with abnormal flag detection and velocity computation.",
-          "AI risk classification via cosine similarity (threshold 0.3) against 1024-dim Qwen embeddings across 7 tables.",
-          "7 protected server actions with 15 trajectory test cases covering diverse metabolic profiles.",
-          "Braintrust automated autoevals: Factuality and Relevance scorers, experiment tracking for model version comparison.",
-          "Supabase + pgvector with Row Level Security, Drizzle ORM, full medication and diagnosis management."
+          "Biomarker trajectory analysis across 7 clinical metrics with abnormal flag detection and velocity computation.",
+          "Risk classification via cosine similarity (threshold 0.3) against 1024-dim Qwen embeddings across 7 tables.",
+          "7 server actions with 15 trajectory test cases covering diverse metabolic profiles.",
+          "Braintrust autoevals: Factuality and Relevance scorers, experiment tracking for model comparison.",
+          "Supabase + pgvector with Row Level Security, Drizzle ORM, medication and diagnosis management."
         ]
       },
       {
@@ -219,11 +219,11 @@
         "githubUrl": "https://github.com/nicolad/knowledge",
         "websiteUrl": "https://agentic-knowledge.vercel.app/",
         "highlights": [
-          "Semantic knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
-          "Per-user Bayesian knowledge tracing (mastery, transit, slip, guess per concept), novice → expert classification.",
-          "DeepEval quality suite: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation; red-team harness.",
-          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI models.",
-          "Real-time streaming chat with thread-scoped persistence, 17-table Drizzle schema, pgvector embeddings, R2 audio storage."
+          "Knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
+          "Bayesian knowledge tracing (mastery, transit, slip, guess per concept per user), novice → expert classification.",
+          "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation; red-team harness.",
+          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI.",
+          "Streaming chat with thread-scoped persistence, 17-table Drizzle schema, pgvector embeddings, R2 audio storage."
         ]
       },
       {
@@ -233,11 +233,11 @@
         "githubUrl": "https://github.com/nicolad/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source clinical ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
-          "DeepSeek-as-judge evaluation scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported claims.",
-          "Runtime prompt versioning with live registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
-          "Serverless TTS microservice: RAG-based chunking, streaming audio to Cloudflare R2 via durable background tasks.",
-          "Harbor containerized eval harness: trials across 6-20 non-deterministic agents with standardized task/grader format."
+          "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
+          "DeepSeek-as-judge scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported claims.",
+          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
+          "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2 via durable background tasks.",
+          "Harbor eval harness: containerized trials across 6-20 non-deterministic agents with standardized task/grader format."
         ]
       },
       {
@@ -247,11 +247,11 @@
         "githubUrl": "https://github.com/nicolad/law-adversarial",
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
-          "6-agent adversarial debate pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
-          "Automated citation verification and fabrication detection with chain-of-thought audit trails.",
-          "Jurisdiction-specific legal precedent hierarchy mapping, multi-jurisdiction comparison.",
-          "Real-time SSE streaming with per-agent structured audit logging.",
-          "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics; DeepTeam safety red-teaming via 7 attack methods."
+          "6-agent pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
+          "Citation verification and fabrication detection with chain-of-thought audit trails.",
+          "Jurisdiction-specific precedent hierarchy mapping, multi-jurisdiction comparison.",
+          "Real-time SSE streaming with per-agent audit logging.",
+          "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics; DeepTeam red-teaming via 7 attack methods."
         ]
       }
     ]

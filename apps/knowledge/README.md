@@ -370,7 +370,8 @@ apps/knowledge/
 │   ├── graph/              # research → outline → draft → review → quality_check [→ revise] → save
 │   └── tests/              # 33 pytest tests
 ├── evals/                  # Python eval suite (DeepEval)
-├── scripts/seed.ts         # DB seeder
+├── scripts/seed.ts         # DB seeder (lessons from markdown)
+├── scripts/seed-courses.ts # Class Central course catalog seeder
 └── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
 ```
 
@@ -381,6 +382,7 @@ pnpm dev          # start on :3006
 pnpm db:push      # sync schema to Neon
 pnpm db:studio    # open Drizzle Studio
 pnpm seed         # seed DB from markdown files
+pnpm seed:courses # seed Class Central course catalog
 pnpm generate -- prompt-caching            # generate article via LangGraph
 pnpm generate:dry -- prompt-caching        # preview without saving
 pnpm generate -- prompt-caching --model deepseek-reasoner  # use specific model
