@@ -24,7 +24,7 @@ use std::time::Duration;
 use tracing::{error, info, warn};
 
 use github_patterns::{
-    contributors::{ContributorRecord, ContributorsDb, RepoContrib},
+    contributors::{is_bot, ContributorRecord, ContributorsDb, RepoContrib},
     GhClient,
 };
 
@@ -208,13 +208,6 @@ async fn scrape_single_repo(
     Ok(())
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-fn is_bot(login: &str) -> bool {
-    let l = login.to_ascii_lowercase();
-    l.ends_with("[bot]") || l.contains("dependabot") || l.contains("renovate")
-}
-
 // ── Top rising stars ──────────────────────────────────────────────────────────
 
 async fn print_top_rising(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
@@ -256,8 +249,8 @@ async fn print_top_rising(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
             s.followers, s.public_repos, s.ai_repos_count, s.total_contributions,
         );
         println!(
-            "      account_age={:.1}y  density={:.3}  novelty={:.3}  breadth={:.3}",
-            age_years, s.contribution_density, s.novelty, s.breadth,
+            "      account_age={:.1}y  density={:.3}  novelty={:.3}  breadth={:.3}  realness={:.3}",
+            age_years, s.contribution_density, s.novelty, s.breadth, s.realness,
         );
         if let Some(bio) = &s.bio {
             let truncated: String = bio.chars().take(100).collect();
