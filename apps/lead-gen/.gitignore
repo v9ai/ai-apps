@@ -65,8 +65,6 @@ src/workspace/skills/*
 !src/workspace/skills/*.md
 results/*.json
 
-.trigger
-
 # MCP / Playwright MCP
 .mcp.json
 .playwright-mcp/

@@ -18,7 +18,6 @@ chrome-extension/
 
 # Build artifacts
 **/target/
-.trigger
 .next/
 
 # Dependencies (Vercel installs its own)
