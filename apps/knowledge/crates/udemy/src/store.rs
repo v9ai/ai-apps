@@ -182,6 +182,32 @@ impl CourseStore {
         Ok(results)
     }
 
+    /// Returns the set of `course_id` values already in the store.
+    pub async fn existing_ids(&self) -> Result<std::collections::HashSet<String>> {
+        let tables = self.conn.table_names().execute().await?;
+        if !tables.contains(&TABLE.to_string()) {
+            return Ok(Default::default());
+        }
+        let table = self.conn.open_table(TABLE).execute().await?;
+        let stream = table
+            .query()
+            .select(lancedb::query::Select::columns(&["course_id"]))
+            .execute()
+            .await?;
+        let batches: Vec<RecordBatch> = stream.try_collect().await?;
+        let mut ids = std::collections::HashSet::new();
+        for batch in &batches {
+            if let Some(col) = batch.column_by_name("course_id") {
+                if let Some(arr) = col.as_any().downcast_ref::<StringArray>() {
+                    for i in 0..arr.len() {
+                        ids.insert(arr.value(i).to_string());
+                    }
+                }
+            }
+        }
+        Ok(ids)
+    }
+
     /// Total rows in the courses table (0 if table doesn't exist yet).
     pub async fn count(&self) -> Result<usize> {
         let tables = self.conn.table_names().execute().await?;
