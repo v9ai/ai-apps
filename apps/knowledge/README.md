@@ -429,6 +429,12 @@ pnpm generate:batch                        # generate all missing articles
 pnpm generate:test                         # run backend pytest suite (33 tests)
 pnpm eval         # run all evals
 pnpm eval:agent   # test agent behavior only
+
+# Batch-review unreviewed courses (run from apps/knowledge):
+uv run --project evals scripts/review_courses.py            # review up to 5 courses
+uv run --project evals scripts/review_courses.py --limit 10
+uv run --project evals scripts/review_courses.py --provider "DeepLearning.AI"
+uv run --project evals scripts/review_courses.py --dry-run
 ```
 
 ### Environment
