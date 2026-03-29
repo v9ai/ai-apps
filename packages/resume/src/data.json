@@ -196,7 +196,8 @@
           "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
           "3 competing-hypotheses agents — cross-reading findings — producing GO/NO-GO verdicts.",
           "MLX scoring at 4,618 embeddings/sec on M1; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing.",
-          "Candle Rust ML inference for contact scoring with INT8 quantization."
+          "Candle Rust ML inference for contact scoring with INT8 quantization.",
+          "Eval-driven strategy enforcer validates every prompt/model change against 80% accuracy bar."
         ]
       },
       {
