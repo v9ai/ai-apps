@@ -407,7 +407,8 @@ apps/knowledge/
 │   └── course_review/      # LangGraph 10-expert course review pipeline (build_course_review_graph)
 ├── scripts/seed.ts         # DB seeder (lessons from markdown)
 ├── scripts/seed-courses.ts # Class Central course catalog seeder
-└── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
+├── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
+└── sql/add_course_reviews.sql  # course_reviews table (10-expert scores, verdict, aggregate)
 ```
 
 ## Dev
