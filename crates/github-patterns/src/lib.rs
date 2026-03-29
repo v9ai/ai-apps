@@ -22,6 +22,10 @@ pub mod embed;
 #[cfg(feature = "neon")]
 pub mod store;
 
+/// LanceDB contributor store — persists full GitHub user profiles.
+#[cfg(feature = "lance")]
+pub mod contributors;
+
 // Re-exports
 pub use error::{GhError, Result};
 pub use types::*;

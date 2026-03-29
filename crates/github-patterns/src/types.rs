@@ -45,6 +45,29 @@ pub struct GhContributor {
     pub contributions: u32,
 }
 
+/// Full GitHub user profile from `/users/{login}`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GhUser {
+    pub login: String,
+    pub id: u64,
+    pub html_url: String,
+    pub avatar_url: String,
+    pub name: Option<String>,
+    pub email: Option<String>,
+    pub bio: Option<String>,
+    pub company: Option<String>,
+    pub location: Option<String>,
+    pub blog: Option<String>,
+    pub twitter_username: Option<String>,
+    pub public_repos: u32,
+    pub public_gists: u32,
+    pub followers: u32,
+    pub following: u32,
+    pub hireable: Option<bool>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct GhRelease {
     pub tag_name: String,
