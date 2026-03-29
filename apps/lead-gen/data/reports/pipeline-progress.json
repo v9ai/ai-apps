@@ -22,7 +22,30 @@
         "errors": 50
       },
       "exit_status": "success"
+    },
+    {
+      "run_id": 2,
+      "started_at": "2026-03-29T19:45:23Z",
+      "finished_at": "2026-03-29T19:52:31Z",
+      "duration_ms": 427338,
+      "phase": "Flowing",
+      "stages_completed": [
+        "discover",
+        "enrich",
+        "contacts",
+        "qa",
+        "outreach"
+      ],
+      "stages_failed": [],
+      "counts": {
+        "discovered": 29,
+        "enriched": 29,
+        "contacts_found": 13,
+        "outreach_drafted": 0,
+        "errors": 50
+      },
+      "exit_status": "success"
     }
   ],
-  "last_updated": "2026-03-29T19:42:09Z"
+  "last_updated": "2026-03-29T19:52:31Z"
 }
