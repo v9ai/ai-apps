@@ -237,7 +237,7 @@
           "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
           "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
           "Serverless TTS microservice: RAG-based content chunking, streaming audio to Cloudflare R2.",
-          "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents."
+          "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents with standardized grader format."
         ]
       },
       {
@@ -249,7 +249,7 @@
         "highlights": [
           "6-agent adversarial pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
           "Automated citation verification and fabrication detection with chain-of-thought audit trails.",
-          "Jurisdiction-specific legal precedent mapping, multi-jurisdiction comparison.",
+          "Jurisdiction-specific legal precedent hierarchy mapping, multi-jurisdiction comparison.",
           "Real-time SSE streaming with structured per-agent logging.",
           "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics; DeepTeam safety red-teaming."
         ]
