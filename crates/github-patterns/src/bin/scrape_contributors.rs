@@ -256,6 +256,9 @@ async fn print_top_rising(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
             let truncated: String = bio.chars().take(100).collect();
             println!("      bio={truncated}");
         }
+        if !s.skills.is_empty() {
+            println!("      skills={}", s.skills.join(", "));
+        }
         println!();
     }
     println!("╚══════════════════════════════════════════════════════════════════════╝");
