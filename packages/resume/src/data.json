@@ -206,7 +206,7 @@
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
           "Longitudinal biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
-          "Risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
+          "AI-driven risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
           "7 server actions with 15 test cases covering diverse metabolic profiles.",
           "Braintrust autoevals: Factuality and Relevance scorers, experiment tracking.",
           "Supabase + pgvector with Row Level Security, Drizzle ORM, medication management."
@@ -234,7 +234,7 @@
         "websiteUrl": "https://researchthera.com",
         "highlights": [
           "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
-          "DeepSeek-as-judge scorer; 3-threshold gating filtering unsupported claims.",
+          "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
           "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval.",
           "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2.",
           "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents."
@@ -247,7 +247,7 @@
         "githubUrl": "https://github.com/nicolad/law-adversarial",
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
-          "6-agent pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
+          "6-agent adversarial pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
           "Automated citation verification and fabrication detection with audit trails.",
           "Jurisdiction-specific legal precedent mapping, multi-jurisdiction comparison.",
           "Real-time SSE streaming with per-agent logging.",
