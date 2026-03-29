@@ -1,14 +1,33 @@
-//! Phi-3.5-mini chat prompts for the 10 expert course reviewers.
+//! Qwen2.5-Instruct chat prompts for the 10 expert course reviewers.
 
 use crate::types::ExpertType;
 
-/// Build a full Phi-3.5 chat prompt for the given expert.
+/// Format a Qwen2.5-Instruct chat prompt.
+///
+/// Template:
+/// ```text
+/// <|im_start|>system
+/// {system}
+/// <|im_end|>
+/// <|im_start|>user
+/// {user}
+/// <|im_end|>
+/// <|im_start|>assistant
+/// ```
+/// EOS token: `<|im_end|>`
+pub fn qwen_chat(system: &str, user: &str) -> String {
+    format!(
+        "<|im_start|>system\n{system}\n<|im_end|>\n<|im_start|>user\n{user}\n<|im_end|>\n<|im_start|>assistant\n"
+    )
+}
+
+/// Build a full Qwen2.5 chat prompt for the given expert.
 pub fn expert_prompt(expert: ExpertType, course_info: &str) -> String {
     let system = expert_system(expert);
     let user = format!(
         "Review this course and output ONLY a JSON object with keys: score (integer 0-10), reasoning (string), strengths (array of strings), weaknesses (array of strings).\n\nCourse:\n{course_info}"
     );
-    phi35_chat(&system, &user)
+    qwen_chat(&system, &user)
 }
 
 /// Build the aggregation summary (pure Rust — no LLM needed).
@@ -26,10 +45,6 @@ pub fn scores_display(review: &crate::types::CourseReview) -> String {
         ));
     }
     lines.join("\n")
-}
-
-fn phi35_chat(system: &str, user: &str) -> String {
-    format!("<|system|>\n{system}\n<|end|>\n<|user|>\n{user}\n<|end|>\n<|assistant|>\n")
 }
 
 fn expert_system(expert: ExpertType) -> String {
