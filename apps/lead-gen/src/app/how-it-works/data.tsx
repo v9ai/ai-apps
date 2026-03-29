@@ -173,22 +173,6 @@ export const papers: Paper[] = [
     url: "https://www.apollographql.com/docs/apollo-server",
     categoryColor: "var(--orange-9)",
   },
-  {
-    slug: "langsmith",
-    number: 11,
-    title: "LangSmith",
-    category: "Observability",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "LangChain",
-    year: 2024,
-    finding:
-      "LLM observability platform that captures full trace trees — inputs, outputs, latency, token counts, and cost — for every LLM call, chain step, and tool invocation. Supports run tagging, feedback collection, dataset curation from production traces, and prompt regression testing against stored eval datasets.",
-    relevance:
-      "Wraps all LLM calls made through the Vercel AI SDK and Anthropic client in src/anthropic/. Each enrichment run, classification call, and email draft is traced with company ID and stage tags, making it possible to identify which model/prompt versions produce miscategorised AI tiers and to build eval datasets directly from production failures.",
-    url: "https://smith.langchain.com",
-    categoryColor: "var(--cyan-9)",
-  },
 ];
 
 // ── Key Metrics ───────────────────────────────────────────────────
