@@ -22,6 +22,13 @@
       "when": 1774714923129,
       "tag": "0002_ordinary_molten_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774815961782,
+      "tag": "0003_wealthy_ghost_rider",
+      "breakpoints": true
     }
   ]
 }

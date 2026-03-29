@@ -79,6 +79,7 @@ fragment CompanyFields on Company {
   industries
   score
   score_reasons
+  blocked
   deep_analysis
 
   # Common Crawl metadata

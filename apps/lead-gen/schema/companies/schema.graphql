@@ -50,6 +50,8 @@ extend type Mutation {
 
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
+  blockCompany(id: Int!): Company!
+  unblockCompany(id: Int!): Company!
 }
 
 enum CompanyCategory {
@@ -157,6 +159,9 @@ type Company {
   ai_tier: Int!
   ai_classification_reason: String
   ai_classification_confidence: Float!
+
+  # Pipeline blocklist
+  blocked: Boolean!
 
   # Deep company analysis (Markdown narrative)
   deep_analysis: String

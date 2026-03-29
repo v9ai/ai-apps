@@ -19,13 +19,17 @@ import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import {
   AlertDialog,
+  Avatar,
   Badge,
+  Blockquote,
   Box,
   Button,
   Callout,
   Card,
+  Code,
   Container,
   Dialog,
+  Em,
   Flex,
   Heading,
   Link as RadixLink,
@@ -103,9 +107,10 @@ function SectionCard({
           <Text
             size="2"
             color="gray"
-            style={{ fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}
+            weight="medium"
+            style={{ letterSpacing: '0.1em' }}
           >
-            {title}
+            {title.toUpperCase()}
           </Text>
           {right}
         </Flex>
@@ -127,19 +132,8 @@ function Chip({
   variant?: React.ComponentProps<typeof Badge>["variant"];
 }) {
   return (
-    <Badge
-      color={color}
-      variant={variant}
-      size="1"
-      title={title}
-      style={{
-        maxWidth: "100%",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
+    <Badge color={color} variant={variant} size="1" title={title}>
+      <Text truncate>{children}</Text>
     </Badge>
   );
 }
@@ -173,22 +167,15 @@ function CollapsibleChips({
 
       {canCollapse && (
         <Box mt="3">
-          <button
+          <Button
             type="button"
-            className={button({ variant: "ghost", size: "md" })}
+            variant="ghost"
+            color="gray"
             onClick={() => setExpanded((v) => !v)}
           >
-            <Box
-              style={{
-                display: "inline-flex",
-                transition: "transform 0.15s ease",
-                transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-              }}
-            >
-              <ChevronDownIcon />
-            </Box>
+            {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
             {expanded ? "Show less" : `Show more (${normalized.length - visibleCount})`}
-          </button>
+          </Button>
         </Box>
       )}
     </Box>
@@ -217,16 +204,7 @@ function CollapsibleList({
       <Flex direction="column" gap="2">
         {shown.map((item) => (
           <Flex key={item} align="start" gap="2">
-            <Box
-              style={{
-                width: 4,
-                height: 4,
-                borderRadius: "50%",
-                background: "var(--gray-8)",
-                flexShrink: 0,
-                marginTop: 6,
-              }}
-            />
+            <Text color="gray" size="1" style={{ flexShrink: 0, marginTop: 2 }}>•</Text>
             <Text size="2" color="gray">
               {item}
             </Text>
@@ -236,9 +214,10 @@ function CollapsibleList({
 
       {canCollapse && (
         <Box mt="3">
-          <button
+          <Button
             type="button"
-            className={button({ variant: "ghost", size: "md" })}
+            variant="ghost"
+            color="gray"
             onClick={() => setExpanded((v) => !v)}
           >
             {expanded ? (
@@ -250,7 +229,7 @@ function CollapsibleList({
                 <ChevronDownIcon /> Show more ({normalized.length - visibleCount})
               </>
             )}
-          </button>
+          </Button>
         </Box>
       )}
     </Box>
@@ -260,14 +239,12 @@ function CollapsibleList({
 function CompanyAvatar({
   name,
   logoUrl,
-  size = 52,
+  size = "5",
 }: {
   name: string;
   logoUrl?: string | null;
-  size?: number;
+  size?: React.ComponentProps<typeof Avatar>["size"];
 }) {
-  const [imgError, setImgError] = useState(false);
-
   const initials = name
     .split(/\s+/)
     .slice(0, 2)
@@ -275,46 +252,15 @@ function CompanyAvatar({
     .join("")
     .toUpperCase();
 
-  if (logoUrl && !imgError) {
-    return (
-      <Box
-        style={{
-          width: size,
-          height: size,
-          borderRadius: "50%",
-          overflow: "hidden",
-          border: "1px solid var(--gray-4)",
-          flexShrink: 0,
-        }}
-      >
-        <img
-          src={logoUrl}
-          alt={name}
-          loading="lazy"
-          onError={() => setImgError(true)}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
-      </Box>
-    );
-  }
-
   return (
-    <Flex
-      align="center"
-      justify="center"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        background: "var(--accent-4)",
-        border: "1px solid var(--accent-7)",
-        flexShrink: 0,
-      }}
-    >
-      <Text size="3" weight="bold" style={{ color: "var(--accent-11)" }}>
-        {initials}
-      </Text>
-    </Flex>
+    <Avatar
+      size={size}
+      src={logoUrl ?? undefined}
+      fallback={initials}
+      radius="full"
+      color="indigo"
+      style={{ flexShrink: 0 }}
+    />
   );
 }
 
@@ -364,25 +310,18 @@ function KeyFactsCard({
     {
       label: "LinkedIn",
       value: linkedinHref ? (
-        <RadixLink
-          href={linkedinHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          color="gray"
-          title={linkedinHref}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            maxWidth: "100%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          linkedin.com
-          <ExternalLinkIcon />
-        </RadixLink>
+        <Flex display="inline-flex" align="center" gap="1" maxWidth="100%" overflow="hidden" asChild>
+          <RadixLink
+            href={linkedinHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            color="gray"
+            title={linkedinHref}
+          >
+            <Text truncate>linkedin.com</Text>
+            <ExternalLinkIcon />
+          </RadixLink>
+        </Flex>
       ) : (
         <Text size="2">—</Text>
       ),
@@ -390,25 +329,18 @@ function KeyFactsCard({
     {
       label: "Job board",
       value: jobBoardHref ? (
-        <RadixLink
-          href={jobBoardHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          color="gray"
-          title={jobBoardHref}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            maxWidth: "100%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          Jobs
-          <ExternalLinkIcon />
-        </RadixLink>
+        <Flex display="inline-flex" align="center" gap="1" maxWidth="100%" overflow="hidden" asChild>
+          <RadixLink
+            href={jobBoardHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            color="gray"
+            title={jobBoardHref}
+          >
+            <Text truncate>Jobs</Text>
+            <ExternalLinkIcon />
+          </RadixLink>
+        </Flex>
       ) : (
         <Text size="2">—</Text>
       ),
@@ -418,7 +350,7 @@ function KeyFactsCard({
           {
             label: "Crawl confidence",
             value: (
-              <Text size="2" style={{ fontVariantNumeric: "tabular-nums" }}>
+              <Text size="2">
                 {formatScore(score)}
               </Text>
             ),
@@ -430,7 +362,7 @@ function KeyFactsCard({
           {
             label: "Updated",
             value: (
-              <Text size="2" style={{ fontVariantNumeric: "tabular-nums" }}>
+              <Text size="2">
                 {new Date(updatedAt).toLocaleDateString("en-GB", {
                   day: "numeric",
                   month: "short",
@@ -450,13 +382,10 @@ function KeyFactsCard({
         <Text
           size="1"
           color="gray"
-          style={{
-            fontWeight: 600,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-          }}
+          weight="medium"
+          style={{ letterSpacing: "0.12em" }}
         >
-          Key facts
+          KEY FACTS
         </Text>
 
         <Box mt="3">
@@ -467,7 +396,8 @@ function KeyFactsCard({
                 align={{ initial: "start", sm: "center" }}
                 justify="between"
                 gap="1"
-                style={{ minWidth: 0, padding: "6px 0" }}
+                minWidth="0"
+                py="1"
               >
                 <Text size="1" color="gray">
                   {row.label}
@@ -475,11 +405,9 @@ function KeyFactsCard({
 
                 {/* right-aligned value, ellipsis-safe */}
                 <Box
-                  style={{
-                    minWidth: 0,
-                    maxWidth: "100%",
-                    textAlign: "right",
-                  }}
+                  minWidth="0"
+                  maxWidth="100%"
+                  style={{ textAlign: "right" }}
                 >
                   {row.value}
                 </Box>
@@ -619,10 +547,10 @@ function LinkedInLeadDialog({
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger>
-        <button className={button({ variant: "ghost", size: "md" })}>
+        <Button variant="ghost" color="gray">
           <Link2Icon />
           Import Lead
-        </button>
+        </Button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="520px">
@@ -641,9 +569,9 @@ function LinkedInLeadDialog({
             </Callout.Root>
             <Flex justify="end">
               <Dialog.Close>
-                <button className={button({ variant: "ghost" })}>
+                <Button variant="ghost" color="gray">
                   Close
-                </button>
+                </Button>
               </Dialog.Close>
             </Flex>
           </Flex>
@@ -683,17 +611,18 @@ function LinkedInLeadDialog({
 
             <Flex justify="end" gap="2">
               <Dialog.Close>
-                <button className={button({ variant: "ghost" })}>
+                <Button variant="ghost" color="gray">
                   Cancel
-                </button>
+                </Button>
               </Dialog.Close>
-              <button
-                className={button({ variant: "ghost" })}
+              <Button
+                variant="ghost"
+                color="gray"
                 onClick={handleExtract}
                 disabled={!rawText.trim()}
               >
                 Extract email
-              </button>
+              </Button>
             </Flex>
           </Flex>
         ) : (
@@ -708,7 +637,7 @@ function LinkedInLeadDialog({
             )}
 
             <Flex gap="3">
-              <Flex direction="column" gap="1" style={{ flex: 1 }}>
+              <Flex direction="column" gap="1" flexGrow="1">
                 <Text size="2" weight="medium">
                   First name
                 </Text>
@@ -717,7 +646,7 @@ function LinkedInLeadDialog({
                   onChange={(e) => setFirstName(e.target.value)}
                 />
               </Flex>
-              <Flex direction="column" gap="1" style={{ flex: 1 }}>
+              <Flex direction="column" gap="1" flexGrow="1">
                 <Text size="2" weight="medium">
                   Last name
                 </Text>
@@ -1106,8 +1035,8 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
       <Container size="3" p={{ initial: "4", md: "6" }}>
         <Flex direction="column" gap="4">
           <Flex gap="4" align="center">
-            <Skeleton width="52px" height="52px" style={{ borderRadius: "50%" }} />
-            <Flex direction="column" gap="2" style={{ flex: 1 }}>
+            <Skeleton width="52px" height="52px" />
+            <Flex direction="column" gap="2" flexGrow="1">
               <Skeleton height="28px" width="60%" />
               <Skeleton height="16px" width="40%" />
             </Flex>
@@ -1192,12 +1121,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
         )}
 
         {/* Header */}
-        <Card
-          style={{
-            background: "var(--gray-1)",
-            border: "1px solid var(--gray-3)",
-          }}
-        >
+        <Card variant="surface">
           <Box p="5">
             <Flex
               direction={{ initial: "column", sm: "row" }}
@@ -1205,52 +1129,46 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               align={{ initial: "start", sm: "center" }}
               justify="between"
             >
-              <Flex gap="4" align="start" style={{ flex: 1, minWidth: 0 }}>
-                <CompanyAvatar name={company.name} logoUrl={company.logo_url} size={72} />
-                <Box style={{ flex: 1, minWidth: 0 }}>
-                  <Heading size="6" style={{ lineHeight: 1.2, wordBreak: 'break-word' }}>
+              <Flex gap="4" align="start" flexGrow="1" minWidth="0">
+                <CompanyAvatar name={company.name} logoUrl={company.logo_url} size="6" />
+                <Box flexGrow="1" minWidth="0">
+                  <Heading size="6" style={{ lineHeight: 1.2, overflowWrap: 'break-word' }}>
                     {company.name}
                   </Heading>
 
                   <Flex align="center" gap="3" mt="2" wrap="wrap">
                     {websiteHref && (
-                      <Flex align="center" gap="2" style={{ minWidth: 0 }}>
+                      <Flex align="center" gap="2" minWidth="0">
                         <GlobeIcon />
-                        <RadixLink
-                          href={websiteHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          color="gray"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 6,
-                            minWidth: 0,
-                            maxWidth: "100%",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                          title={websiteHref}
-                        >
-                          {websiteLabel || websiteHref}
+                        <Flex display="inline-flex" align="center" gap="1" minWidth="0" maxWidth="100%" overflow="hidden">
+                          <RadixLink
+                            href={websiteHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            color="gray"
+                            truncate
+                            title={websiteHref}
+                          >
+                            {websiteLabel || websiteHref}
+                          </RadixLink>
                           <ExternalLinkIcon />
-                        </RadixLink>
+                        </Flex>
                       </Flex>
                     )}
 
                     {company.linkedin_url && (
                       <Flex align="center" gap="2">
-                        <RadixLink
-                          href={coerceExternalUrl(company.linkedin_url) ?? ""}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          color="gray"
-                          style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-                        >
-                          <Text size="2">LinkedIn</Text>
+                        <Flex display="inline-flex" align="center" gap="1">
+                          <RadixLink
+                            href={coerceExternalUrl(company.linkedin_url) ?? ""}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            color="gray"
+                          >
+                            <Text size="2">LinkedIn</Text>
+                          </RadixLink>
                           <ExternalLinkIcon />
-                        </RadixLink>
+                        </Flex>
                       </Flex>
                     )}
                   </Flex>
@@ -1267,13 +1185,11 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                     ) : null}
                     {company.size ? <Chip color="blue" variant="surface">{company.size}</Chip> : null}
                     {company.location ? <Chip color="gray" variant="surface">{company.location}</Chip> : null}
-                    {company.industry ? <Chip color="teal" variant="surface">{company.industry}</Chip> : null}
                     {company.score != null && (
                       <Badge
                         color={scoreColor(company.score)}
                         variant="soft"
                         radius="full"
-                        style={{ fontVariantNumeric: "tabular-nums" }}
                       >
                         ★ {company.score.toFixed(2)}
                       </Badge>
@@ -1355,14 +1271,14 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           <Tabs.List>
             <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
             {isAdmin && (
-              <Link href={`/companies/${effectiveKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "var(--space-2)", padding: "0 var(--space-3)", height: "var(--tabs-trigger-height, 36px)" }}>
-                Contacts
-              </Link>
+              <Tabs.Trigger value="contacts" asChild>
+                <Link href={`/companies/${effectiveKey}/contacts`}>Contacts</Link>
+              </Tabs.Trigger>
             )}
             {isAdmin && (
-              <Link href={`/companies/${effectiveKey}/emails`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "var(--space-2)", padding: "0 var(--space-3)", height: "var(--tabs-trigger-height, 36px)" }}>
-                Emails
-              </Link>
+              <Tabs.Trigger value="emails" asChild>
+                <Link href={`/companies/${effectiveKey}/emails`}>Emails</Link>
+              </Tabs.Trigger>
             )}
           </Tabs.List>
 
@@ -1455,7 +1371,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                     </Flex>
                   </Box>
 
-                  <Box style={{ flex: 1, minWidth: 0 }}>
+                  <Box flexGrow="1" minWidth="0">
                     <Flex direction="column" gap="4">
                       <KeyFactsCard
                         linkedinUrl={company.linkedin_url}
@@ -1475,11 +1391,14 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                         </SectionCard>
                       ) : null}
 
-                      {company.tags?.length ? (
-                        <SectionCard title="Tags">
-                          <CollapsibleChips items={company.tags} visibleCount={10} />
-                        </SectionCard>
-                      ) : null}
+                      {(() => {
+                        const displayTags = (company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-'));
+                        return displayTags.length ? (
+                          <SectionCard title="Tags">
+                            <CollapsibleChips items={displayTags} visibleCount={10} />
+                          </SectionCard>
+                        ) : null;
+                      })()}
                     </Flex>
                   </Box>
                 </Flex>

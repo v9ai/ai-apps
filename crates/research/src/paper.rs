@@ -361,14 +361,25 @@ pub fn dedup_by_embedding(
                 &embeddings[j],
             );
             if sim >= threshold {
-                // Drop the paper with fewer citations.
-                let ci = papers[i].citation_count.unwrap_or(0);
-                let cj = papers[j].citation_count.unwrap_or(0);
-                if ci >= cj {
-                    keep[j] = false;
-                } else {
-                    keep[i] = false;
-                    break; // i is dropped, no need to compare further
+                // Drop the paper with fewer citations. When both lack
+                // citation data (e.g. Zenodo), prefer the earlier paper.
+                match (papers[i].citation_count, papers[j].citation_count) {
+                    (Some(ci), Some(cj)) => {
+                        if ci >= cj {
+                            keep[j] = false;
+                        } else {
+                            keep[i] = false;
+                            break;
+                        }
+                    }
+                    // Keep the paper that has citation data.
+                    (Some(_), None) => keep[j] = false,
+                    (None, Some(_)) => {
+                        keep[i] = false;
+                        break;
+                    }
+                    // Neither has citations — keep the earlier one.
+                    (None, None) => keep[j] = false,
                 }
             }
         }
