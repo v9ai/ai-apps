@@ -248,7 +248,7 @@ DOMAINS_FILE := $(CONSULT_DIR)/data/eu-ai-consultancies.txt
 leads: start-build ## Discover → domains → Rust pipeline → import to Neon
 	$(CONSULT_PY) $(CONSULT_DIR)/discover.py
 	$(CONSULT_PY) $(CONSULT_DIR)/extract_domains.py -o $(DOMAINS_FILE)
-	$(METAL_BIN) pipeline --domains $(DOMAINS_FILE) --yes
+	$(METAL_BIN) pipeline --domains $(DOMAINS_FILE) --yes --all
 	pnpm tsx scripts/import-rust-leads.ts $(METAL_DIR)/data/pipeline
 
 # ── All ────────────────────────────────────────────────────────

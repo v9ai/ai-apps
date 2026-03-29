@@ -66,6 +66,7 @@ pub struct TeamContext {
     pub icp_vertical: String,
     pub batch: BatchSizes,
     pub auto_confirm: bool,
+    pub run_all: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -125,6 +126,7 @@ impl TeamContext {
             icp_vertical,
             batch: BatchSizes::default(),
             auto_confirm: false,
+            run_all: false,
         }
     }
 
@@ -143,7 +145,11 @@ pub async fn run_pipeline(
     let mut reports = Vec::new();
 
     // Phase 1: Meta — assess pipeline state, produce action plan
-    let plan = state::assess(&ctx)?;
+    let plan = if ctx.run_all {
+        state::all_stages(&ctx)?
+    } else {
+        state::assess(&ctx)?
+    };
     eprintln!("{plan}");
 
     if !ctx.auto_confirm {

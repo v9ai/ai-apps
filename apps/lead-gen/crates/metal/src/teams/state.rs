@@ -242,6 +242,21 @@ impl fmt::Display for ActionPlan {
     }
 }
 
+/// Produce an action plan that runs ALL stages (ignores phase).
+pub fn all_stages(ctx: &TeamContext) -> Result<ActionPlan> {
+    let state = PipelineState::load(&ctx.data_dir);
+    let phase = state.detect_phase();
+    Ok(ActionPlan {
+        phase,
+        state,
+        run_discover: true,
+        run_enrich: true,
+        run_contacts: true,
+        run_qa: true,
+        run_outreach: true,
+    })
+}
+
 /// Assess pipeline state and produce an action plan.
 pub fn assess(ctx: &TeamContext) -> Result<ActionPlan> {
     let state = PipelineState::load(&ctx.data_dir);

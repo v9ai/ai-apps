@@ -30,6 +30,10 @@ enum Command {
         /// Skip confirmation prompt
         #[arg(short, long)]
         yes: bool,
+
+        /// Run ALL stages regardless of pipeline state/phase
+        #[arg(short, long)]
+        all: bool,
     },
 
     /// Show pipeline status and phase detection
@@ -99,10 +103,11 @@ async fn main() -> Result<()> {
     std::fs::create_dir_all(data_dir)?;
 
     match cli.command {
-        Command::Pipeline { domains, yes } => {
+        Command::Pipeline { domains, yes, all } => {
             let pipeline = Pipeline::open(&data_dir.join("pipeline"))?;
             let mut ctx = teams::TeamContext::new(pipeline, data_dir.clone());
             ctx.auto_confirm = yes;
+            ctx.run_all = all;
             let ctx = Arc::new(ctx);
             teams::run_pipeline(ctx, domains.as_deref()).await?;
         }
