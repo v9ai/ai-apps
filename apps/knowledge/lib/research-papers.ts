@@ -1,5 +1,4 @@
-import fs from "fs";
-import path from "path";
+import data from "../data/harness-design-papers.json";
 
 export interface ResearchPaper {
   title: string;
@@ -28,18 +27,6 @@ export interface ResearchData {
   topics: ResearchTopic[];
 }
 
-const DATA_PATH = path.join(process.cwd(), "data", "harness-design-papers.json");
-
 export function getResearchPapers(): ResearchData {
-  try {
-    const raw = fs.readFileSync(DATA_PATH, "utf-8");
-    return JSON.parse(raw) as ResearchData;
-  } catch {
-    return {
-      generated_at: new Date().toISOString(),
-      blog_post_url: "https://www.anthropic.com/engineering/harness-design",
-      total_papers: 0,
-      topics: [],
-    };
-  }
+  return data as ResearchData;
 }
