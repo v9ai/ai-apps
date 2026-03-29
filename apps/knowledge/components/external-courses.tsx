@@ -1,7 +1,14 @@
 import type { ExternalCourse } from "@/lib/db/queries";
 
+type CourseWithReview = ExternalCourse & {
+  review?: {
+    aggregateScore: number | null;
+    verdict: string | null;
+  } | null;
+};
+
 interface Props {
-  courses: ExternalCourse[];
+  courses: CourseWithReview[];
 }
 
 function StarRating({ rating }: { rating: number }) {
