@@ -2,6 +2,7 @@ mod db;
 mod graph;
 mod import;
 mod migrate;
+mod seed;
 mod store;
 mod types;
 
@@ -33,6 +34,8 @@ enum Command {
     Authors,
     /// List all papers
     Papers,
+    /// Seed the first paper (arXiv 2602.15189) directly
+    Seed,
 }
 
 #[derive(Subcommand)]
@@ -104,6 +107,14 @@ async fn main() -> Result<()> {
                     );
                 }
             }
+        }
+        Command::Seed => {
+            let client = db::connect().await?;
+            let result = seed::seed_scrapegraphai(&client).await?;
+            println!(
+                "Seeded: \"{}\" (paper_id={}, authors_linked={})",
+                result.title, result.paper_id, result.authors_linked
+            );
         }
         Command::Papers => {
             let client = db::connect().await?;
