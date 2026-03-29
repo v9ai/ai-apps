@@ -1,14 +1,15 @@
-//! Semantic search over a Lance course store using a local Candle embedding.
+//! Semantic search over a Lance course store.
 //!
 //! Usage:
 //!   cargo run --bin search-courses -- "docker kubernetes deployment"
 //!   cargo run --bin search-courses -- --db ./lance-db --top 5 "machine learning AWS"
+//!
+//! Requires the Candle embed server running on localhost:9999.
 
-use candle::{best_device, EmbeddingModel};
+use anyhow::{Context, Result};
 use clap::Parser;
 use knowledge_ml::CourseStore;
-
-const MODEL: &str = "BAAI/bge-large-en-v1.5";
+use serde::Deserialize;
 
 #[derive(Parser)]
 #[command(about = "Semantic search over embedded Udemy courses")]
@@ -24,19 +25,44 @@ struct Args {
     #[arg(long, short, default_value_t = 5)]
     top: usize,
 
-    /// Embedding model — must match the one used during indexing
-    #[arg(long, default_value = MODEL)]
-    model: String,
+    /// Candle embed server URL
+    #[arg(long, default_value = "http://localhost:9999")]
+    embed_url: String,
+}
+
+#[derive(Deserialize)]
+struct EmbedResponse {
+    data: Vec<EmbedData>,
+}
+
+#[derive(Deserialize)]
+struct EmbedData {
+    embedding: Vec<f32>,
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     let args = Args::parse();
 
     // ── Embed the query ───────────────────────────────────────────────────────
-    let device = best_device()?;
-    let model = EmbeddingModel::from_hf(&args.model, &device)?;
-    let vec = model.embed_one(&args.query)?;
+    let client = reqwest::Client::new();
+    let resp: EmbedResponse = client
+        .post(format!("{}/embed", args.embed_url))
+        .json(&serde_json::json!({ "input": args.query }))
+        .send()
+        .await
+        .context("embed server not reachable — start it with: cargo run -p candle --bin embed-server --features server")?
+        .json()
+        .await
+        .context("parsing embed response")?;
+
+    let vec = resp
+        .data
+        .into_iter()
+        .next()
+        .context("empty embed response")?
+        .embedding;
+    // Dimension matches whatever the embed server provides
 
     // ── Search ────────────────────────────────────────────────────────────────
     let store = CourseStore::connect(&args.db).await?;
@@ -65,10 +91,7 @@ async fn main() -> anyhow::Result<()> {
             truncate(&c.instructor, 25),
         );
         println!("     {} | {} | {}", c.level, c.price, c.url);
-        println!(
-            "     {}",
-            truncate(&c.description, 85)
-        );
+        println!("     {}", truncate(&c.description, 85));
         println!();
     }
 

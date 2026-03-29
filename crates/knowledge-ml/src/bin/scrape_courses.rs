@@ -1,24 +1,21 @@
 //! Ingest Udemy courses into a Lance vector store.
 //!
-//! Two modes:
-//!   1. From JSON (output of scripts/scrape-udemy.ts):
-//!        cargo run --bin scrape-courses -- --json ./data/courses.json
+//! Usage:
+//!   cargo run --bin scrape-courses -- --json ./data/courses.json [--db ./lance-db]
 //!
-//!   2. From pre-fetched HTML directory (one .html file per course):
-//!        cargo run --bin scrape-courses -- --html-dir ./data/pages/
+//! Requires the Candle embed server running on localhost:9999:
+//!   cargo run -p candle --bin embed-server --features server
 //!
-//! The Playwright scraper (`scripts/scrape-udemy.ts`) handles the actual
-//! HTTP fetching because Udemy is behind Cloudflare bot protection.
+//! The JSON file is produced by scripts/scrape-udemy.ts (Playwright).
 
 use std::path::PathBuf;
 
-use candle::{best_device, EmbeddingModel};
+use anyhow::{Context, Result};
 use clap::Parser;
 use knowledge_ml::scraper::load_courses_json;
 use knowledge_ml::{Course, CourseStore};
+use serde::Deserialize;
 use tracing::info;
-
-const MODEL: &str = "BAAI/bge-large-en-v1.5";
 
 #[derive(Parser)]
 #[command(about = "Embed Udemy courses into a Lance vector store")]
@@ -31,17 +28,44 @@ struct Args {
     #[arg(long, default_value = "./lance-db")]
     db: String,
 
-    /// Embedding model (BERT-compatible on HF Hub)
-    #[arg(long, default_value = MODEL)]
-    model: String,
+    /// Candle embed server URL
+    #[arg(long, default_value = "http://localhost:9999")]
+    embed_url: String,
 
     /// How many courses to embed per batch
     #[arg(long, default_value_t = 8)]
     batch: usize,
 }
 
+#[derive(Deserialize)]
+struct EmbedResponse {
+    data: Vec<EmbedData>,
+}
+
+#[derive(Deserialize)]
+struct EmbedData {
+    embedding: Vec<f32>,
+}
+
+/// Call the Candle embed server to get embeddings for a batch of texts.
+async fn embed_batch(client: &reqwest::Client, url: &str, texts: &[String]) -> Result<Vec<Vec<f32>>> {
+    let resp: EmbedResponse = client
+        .post(format!("{url}/embed"))
+        .json(&serde_json::json!({ "input": texts }))
+        .send()
+        .await
+        .context("calling embed server")?
+        .json()
+        .await
+        .context("parsing embed response")?;
+
+    let vecs: Vec<Vec<f32>> = resp.data.into_iter().map(|d| d.embedding).collect();
+    assert_eq!(vecs.len(), texts.len(), "embed server returned wrong number of vectors");
+    Ok(vecs)
+}
+
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
@@ -50,21 +74,23 @@ async fn main() -> anyhow::Result<()> {
 
     // ── Load courses ─────────────────────────────────────────────────────────
     let courses: Vec<Course> = load_courses_json(&args.json)?;
-
     if courses.is_empty() {
         eprintln!("No courses found in {}", args.json.display());
         return Ok(());
     }
     eprintln!("Loaded {} courses from {}", courses.len(), args.json.display());
 
-    // ── Load model ───────────────────────────────────────────────────────────
-    let device = best_device()?;
-    eprintln!("Loading {MODEL} on {device:?}…");
-    let model = EmbeddingModel::from_hf(&args.model, &device)?;
-    eprintln!("Model ready.");
+    // ── Check embed server ───────────────────────────────────────────────────
+    let client = reqwest::Client::new();
+    client
+        .get(format!("{}/health", args.embed_url))
+        .send()
+        .await
+        .context("embed server not reachable — start it with: cargo run -p candle --bin embed-server --features server")?;
+    eprintln!("Embed server OK at {}", args.embed_url);
 
     // ── Open store ───────────────────────────────────────────────────────────
-    let store = CourseStore::connect(&args.db).await?;
+    let mut store = CourseStore::connect(&args.db).await?;
     let already = store.count().await?;
     info!("{already} courses already in store");
 
@@ -74,15 +100,7 @@ async fn main() -> anyhow::Result<()> {
 
     for chunk in courses.chunks(args.batch) {
         let texts: Vec<String> = chunk.iter().map(|c| c.embed_text()).collect();
-        let refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
-
-        let vecs: Vec<Vec<f32>> = {
-            let tensor = model.embed(&refs)?;
-            let (batch_size, _) = tensor.dims2()?;
-            (0..batch_size)
-                .map(|i| tensor.get(i)?.to_vec1::<f32>().map_err(candle::Error::from))
-                .collect::<Result<Vec<_>, _>>()?
-        };
+        let vecs = embed_batch(&client, &args.embed_url, &texts).await?;
 
         store.add(chunk, &vecs).await?;
 
