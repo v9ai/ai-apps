@@ -18,7 +18,7 @@ The core thesis is that for capital- and talent-constrained AI startups, enforci
 | Average annual cost savings per remote employee for companies | $11,000 (on real estate, utilities, supplies) | Global Workplace Analytics | 2023 (Estimate) |
 
 ## Sources
-1. **Stanford AI Index Report 2024** — [URL](https://aiindex.stanhattan.edu/wp-content/uploads/2024/05/HAI_AI-Index-Report-2024.pdf) — Provides data on the concentration and global race for AI talent.
+1. **Stanford AI Index Report 2024** — [URL](https://aiindex.stanford.edu/wp-content/uploads/2024/05/HAI_AI-Index-Report-2024.pdf) — Provides data on the concentration and global race for AI talent.
 2. **Nature: "How remote work is changing research culture"** — [URL](https://www.nature.com/articles/d41586-023-00969-3) — Quotes from AI researchers on the benefits of remote work for focused, creative problem-solving.
 3. **Owl Labs "State of Remote Work 2023"** — [URL](https://owllabs.com/state-of-remote-work/2023) — Provides survey data on employee preferences and perceived productivity.
 4. **GitLab Remote Work Report** — [URL](https://about.gitlab.com/company/culture/all-remote/) — A canonical playbook from a fully remote, dev-focused company, relevant for operational practices.
