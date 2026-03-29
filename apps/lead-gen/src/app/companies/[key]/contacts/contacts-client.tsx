@@ -33,6 +33,7 @@ import {
   Flex,
   Link as RadixLink,
   Spinner,
+  TabNav,
   Text,
   TextArea,
   TextField,
@@ -308,7 +309,7 @@ function FindEmailButton({
         Find email
       </button>
       {result && (
-        <Text size="1" color="gray" style={{ maxWidth: 180, textAlign: "right" }}>
+        <Text size="1" color="gray" maxWidth="180px" align="right">
           {result}
         </Text>
       )}
@@ -935,11 +936,11 @@ export function CompanyContactsClient({
                 )}
 
                 <TextArea
+                  size="1"
                   placeholder="Paste LinkedIn page HTML here…"
                   value={linkedinHtml}
                   onChange={(e) => setLinkedinHtml(e.target.value)}
                   rows={12}
-                  style={{ fontFamily: "monospace", fontSize: 12 }}
                 />
 
                 <Flex gap="3" mt="4" justify="end">
@@ -992,7 +993,7 @@ export function CompanyContactsClient({
               >
                 <Box p="3">
                   <Flex align="start" justify="between" gap="3" wrap="wrap">
-                    <Box style={{ minWidth: 0 }}>
+                    <Box minWidth="0">
                       <Flex align="center" gap="2" wrap="wrap">
                         <Text size="3" weight="medium">
                           {contact.firstName} {contact.lastName}
