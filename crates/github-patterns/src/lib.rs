@@ -26,6 +26,18 @@ pub mod store;
 #[cfg(feature = "lance")]
 pub mod contributors;
 
+/// Keyword-based AI/ML skill extraction from contributor bios and repos.
+#[cfg(feature = "lance")]
+pub mod skills;
+
+/// ICP feature bridge — maps `RisingStar` to `Vec<f32>` for ML scorers.
+#[cfg(feature = "icp")]
+pub mod icp_bridge;
+
+/// Neon PostgreSQL writer — saves `RisingStar` entries to the contacts table.
+#[cfg(all(feature = "lance", feature = "neon"))]
+pub mod contrib_store;
+
 // Re-exports
 pub use error::{GhError, Result};
 pub use types::*;

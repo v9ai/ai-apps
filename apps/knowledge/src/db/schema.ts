@@ -600,3 +600,15 @@ export const lessonConceptsRelations = relations(lessonConcepts, ({ one }) => ({
     references: [concepts.id],
   }),
 }));
+
+export const externalCoursesRelations = relations(externalCourses, ({ many }) => ({
+  lessonCourses: many(lessonCourses),
+  reviews: many(courseReviews),
+}));
+
+export const courseReviewsRelations = relations(courseReviews, ({ one }) => ({
+  course: one(externalCourses, {
+    fields: [courseReviews.courseId],
+    references: [externalCourses.id],
+  }),
+}));
