@@ -1,0 +1,247 @@
+---
+slug: turboquant-3-bit-kv-cache-zero-loss
+title: "TurboQuant: 3-Bit KV Caches with Zero Accuracy Loss"
+description: "TurboQuant (Zandieh et al., Google Research, ICLR 2026) compresses KV caches to 3 bits per value without retraining and without measurable accuracy loss. It bundles PolarQuant, QJL, and Lloyd-Max quantization to achieve 6x memory reduction and up to 8x attention speedup on H100 GPUs."
+date: 2026-03-29
+authors: [nicolad]
+tags:
+  - kv-cache
+  - quantization
+  - inference
+  - google-research
+  - llm-efficiency
+---
+
+export const trilogyNodes = [
+  { id: "qjl", position: { x: 0, y: 0 }, data: { label: "QJL\nAAI 2025" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '10px 16px', fontSize: 12, fontWeight: 600 } },
+  { id: "polar", position: { x: 0, y: 160 }, data: { label: "PolarQuant\nAISTATS 2026" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '10px 16px', fontSize: 12, fontWeight: 600 } },
+  { id: "turbo", position: { x: 320, y: 80 }, data: { label: "TurboQuant\nICLR 2026" }, style: { background: '#1c1008', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, padding: '12px 20px', fontSize: 14, fontWeight: 700 } },
+  { id: "qjl_desc", position: { x: -280, y: 0 }, data: { label: "1-bit quantized JL transform\nUnbiased inner-product estimation" }, type: "input", style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 12px', fontSize: 11 } },
+  { id: "polar_desc", position: { x: -280, y: 160 }, data: { label: "Polar-coordinate decomposition\nEliminates per-block normalization" }, type: "input", style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 12px', fontSize: 11 } },
+  { id: "result", position: { x: 620, y: 80 }, data: { label: "6x memory reduction\n8x attention speedup\nZero accuracy loss" }, type: "output", style: { background: '#0c1a2e', color: '#93c5fd', border: '2px solid #3b82f6', borderRadius: 8, padding: '10px 16px', fontSize: 12, fontWeight: 600 } },
+];
+export const trilogyEdges = [
+  { id: "e_qjl_d", source: "qjl_desc", target: "qjl", style: { stroke: '#475569', strokeWidth: 1.5 } },
+  { id: "e_polar_d", source: "polar_desc", target: "polar", style: { stroke: '#475569', strokeWidth: 1.5 } },
+  { id: "e_qjl", source: "qjl", target: "turbo", animated: true, label: "residual correction", style: { stroke: '#22c55e', strokeWidth: 2 }, labelStyle: { fill: '#86efac', fontSize: 10 }, labelBgStyle: { fill: '#052e16' } },
+  { id: "e_polar", source: "polar", target: "turbo", animated: true, label: "scalar quantization", style: { stroke: '#22c55e', strokeWidth: 2 }, labelStyle: { fill: '#86efac', fontSize: 10 }, labelBgStyle: { fill: '#052e16' } },
+  { id: "e_result", source: "turbo", target: "result", animated: true, style: { stroke: '#f59e0b', strokeWidth: 2 } },
+];
+
+export const pipelineNodes = [
+  { id: "kv", position: { x: 0, y: 120 }, data: { label: "KV Cache Vector\n(FP16, d dimensions)" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 600 } },
+  { id: "rotate", position: { x: 280, y: 120 }, data: { label: "Random Orthogonal\nRotation" }, style: { background: '#1e1030', color: '#c4b5fd', border: '2px solid #8b5cf6', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 600 } },
+  { id: "beta", position: { x: 540, y: 30 }, data: { label: "Beta Distribution\n(data-independent)" }, style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 12px', fontSize: 11 } },
+  { id: "lloyd", position: { x: 540, y: 200 }, data: { label: "Lloyd-Max Scalar\nQuantization (b-1 bits)" }, style: { background: '#1c1008', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 700 } },
+  { id: "residual", position: { x: 820, y: 30 }, data: { label: "Compute Residual\nr = x - x_hat" }, style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 12px', fontSize: 11 } },
+  { id: "qjl", position: { x: 820, y: 200 }, data: { label: "QJL 1-bit\nBias Correction" }, style: { background: '#1e1030', color: '#c4b5fd', border: '2px solid #8b5cf6', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 600 } },
+  { id: "out", position: { x: 1100, y: 120 }, data: { label: "b-bit Quantized\nKV Cache\n(unbiased dot product)" }, type: "output", style: { background: '#0c1a2e', color: '#93c5fd', border: '2px solid #3b82f6', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 600 } },
+];
+export const pipelineEdges = [
+  { id: "pe1", source: "kv", target: "rotate", animated: true, style: { stroke: '#22c55e', strokeWidth: 2 } },
+  { id: "pe2", source: "rotate", target: "beta", style: { stroke: '#8b5cf6', strokeWidth: 1.5 }, label: "each coord", labelStyle: { fill: '#c4b5fd', fontSize: 10 }, labelBgStyle: { fill: '#1e1030' } },
+  { id: "pe3", source: "beta", target: "lloyd", style: { stroke: '#475569', strokeWidth: 1.5 }, label: "known dist", labelStyle: { fill: '#94a3b8', fontSize: 10 }, labelBgStyle: { fill: '#1e293b' } },
+  { id: "pe4", source: "rotate", target: "lloyd", animated: true, style: { stroke: '#8b5cf6', strokeWidth: 2 } },
+  { id: "pe5", source: "lloyd", target: "residual", style: { stroke: '#f59e0b', strokeWidth: 1.5 } },
+  { id: "pe6", source: "residual", target: "qjl", style: { stroke: '#475569', strokeWidth: 1.5 } },
+  { id: "pe7", source: "lloyd", target: "qjl", animated: true, label: "Stage 1 + Stage 2", style: { stroke: '#f59e0b', strokeWidth: 2 }, labelStyle: { fill: '#fcd34d', fontSize: 10 }, labelBgStyle: { fill: '#1c1008' } },
+  { id: "pe8", source: "qjl", target: "out", animated: true, style: { stroke: '#3b82f6', strokeWidth: 2 } },
+];
+
+export const benchNodes = [
+  { id: "fp16", position: { x: 0, y: 0 }, data: { label: "Full Cache (16-bit)\n50.06 avg" }, type: "input", style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '10px 14px', fontSize: 12 } },
+  { id: "tq35", position: { x: 0, y: 120 }, data: { label: "TurboQuant 3.5-bit\n50.06 avg" }, type: "input", style: { background: '#052e16', color: '#4ade80', border: '2px solid #16a34a', borderRadius: 8, padding: '10px 14px', fontSize: 13, fontWeight: 700 } },
+  { id: "tq25", position: { x: 0, y: 240 }, data: { label: "TurboQuant 2.5-bit\n49.44 avg" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 600 } },
+  { id: "pq", position: { x: 0, y: 360 }, data: { label: "PolarQuant 3.9-bit\n49.78 avg" }, type: "input", style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '10px 14px', fontSize: 12 } },
+  { id: "kivi", position: { x: 0, y: 480 }, data: { label: "KIVI 3-bit\n48.50 avg" }, type: "input", style: { background: '#1f0a0a', color: '#fca5a5', border: '1px solid #b91c1c', borderRadius: 8, padding: '10px 14px', fontSize: 12 } },
+  { id: "match", position: { x: 360, y: 60 }, data: { label: "Exact Match\n50.06 = 50.06" }, style: { background: '#052e16', color: '#4ade80', border: '2px solid #16a34a', borderRadius: 8, padding: '12px 18px', fontSize: 13, fontWeight: 700 } },
+  { id: "gap", position: { x: 360, y: 420 }, data: { label: "MultiQA: -7.17 pts\nvs full precision" }, style: { background: '#1f0a0a', color: '#fca5a5', border: '1px solid #b91c1c', borderRadius: 8, padding: '10px 14px', fontSize: 12 } },
+  { id: "verdict", position: { x: 640, y: 240 }, data: { label: "Zero Loss at 3.5 bits\n6x memory reduction\nNo retraining needed" }, type: "output", style: { background: '#1c1008', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, padding: '12px 18px', fontSize: 13, fontWeight: 700 } },
+];
+export const benchEdges = [
+  { id: "be1", source: "fp16", target: "match", animated: true, style: { stroke: '#475569', strokeWidth: 1.5 } },
+  { id: "be2", source: "tq35", target: "match", animated: true, label: "identical", style: { stroke: '#16a34a', strokeWidth: 2 }, labelStyle: { fill: '#4ade80', fontSize: 11, fontWeight: 700 }, labelBgStyle: { fill: '#052e16' } },
+  { id: "be3", source: "kivi", target: "gap", style: { stroke: '#b91c1c', strokeWidth: 1.5 } },
+  { id: "be4", source: "match", target: "verdict", animated: true, style: { stroke: '#f59e0b', strokeWidth: 2 } },
+  { id: "be5", source: "gap", target: "verdict", style: { stroke: '#b91c1c', strokeWidth: 1, strokeDasharray: '5,5' } },
+  { id: "be6", source: "tq25", target: "verdict", style: { stroke: '#22c55e', strokeWidth: 1.5 }, label: "-0.62 pts", labelStyle: { fill: '#86efac', fontSize: 10 }, labelBgStyle: { fill: '#052e16' } },
+  { id: "be7", source: "pq", target: "verdict", style: { stroke: '#475569', strokeWidth: 1 } },
+];
+
+export const needleNodes = [
+  { id: "n_fp16", position: { x: 0, y: 0 }, data: { label: "Full precision\n0.997" }, type: "input", style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 14px', fontSize: 12 } },
+  { id: "n_tq", position: { x: 0, y: 100 }, data: { label: "TurboQuant\n0.997" }, type: "input", style: { background: '#052e16', color: '#4ade80', border: '2px solid #16a34a', borderRadius: 8, padding: '10px 14px', fontSize: 13, fontWeight: 700 } },
+  { id: "n_pq", position: { x: 0, y: 200 }, data: { label: "PolarQuant\n0.995" }, type: "input", style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 14px', fontSize: 12 } },
+  { id: "n_kivi", position: { x: 0, y: 300 }, data: { label: "KIVI\n0.981" }, type: "input", style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 14px', fontSize: 12 } },
+  { id: "n_pyramid", position: { x: 0, y: 400 }, data: { label: "PyramidKV\n0.895" }, type: "input", style: { background: '#1f0a0a', color: '#fca5a5', border: '1px solid #b91c1c', borderRadius: 8, padding: '8px 14px', fontSize: 12 } },
+  { id: "n_snap", position: { x: 0, y: 500 }, data: { label: "SnapKV\n0.858" }, type: "input", style: { background: '#1f0a0a', color: '#fca5a5', border: '1px solid #b91c1c', borderRadius: 8, padding: '8px 14px', fontSize: 12 } },
+  { id: "n_quant", position: { x: 340, y: 130 }, data: { label: "Quantization\n(keep all tokens)" }, style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '10px 16px', fontSize: 12, fontWeight: 600 } },
+  { id: "n_evict", position: { x: 340, y: 420 }, data: { label: "Eviction\n(drop tokens)" }, style: { background: '#1f0a0a', color: '#fca5a5', border: '1px solid #b91c1c', borderRadius: 8, padding: '10px 16px', fontSize: 12, fontWeight: 600 } },
+  { id: "n_result", position: { x: 620, y: 280 }, data: { label: "104K context\nperfect retrieval\nvs catastrophic drops" }, type: "output", style: { background: '#1c1008', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, padding: '10px 16px', fontSize: 12, fontWeight: 600 } },
+];
+export const needleEdges = [
+  { id: "ne1", source: "n_fp16", target: "n_quant", style: { stroke: '#475569', strokeWidth: 1 } },
+  { id: "ne2", source: "n_tq", target: "n_quant", animated: true, style: { stroke: '#16a34a', strokeWidth: 2 } },
+  { id: "ne3", source: "n_pq", target: "n_quant", style: { stroke: '#475569', strokeWidth: 1 } },
+  { id: "ne4", source: "n_kivi", target: "n_quant", style: { stroke: '#475569', strokeWidth: 1 } },
+  { id: "ne5", source: "n_pyramid", target: "n_evict", style: { stroke: '#b91c1c', strokeWidth: 1.5 } },
+  { id: "ne6", source: "n_snap", target: "n_evict", style: { stroke: '#b91c1c', strokeWidth: 1.5 } },
+  { id: "ne7", source: "n_quant", target: "n_result", animated: true, label: "preserves all tokens", style: { stroke: '#22c55e', strokeWidth: 2 }, labelStyle: { fill: '#86efac', fontSize: 10 }, labelBgStyle: { fill: '#052e16' } },
+  { id: "ne8", source: "n_evict", target: "n_result", label: "may evict needle", style: { stroke: '#b91c1c', strokeWidth: 1.5, strokeDasharray: '5,5' }, labelStyle: { fill: '#fca5a5', fontSize: 10 }, labelBgStyle: { fill: '#1f0a0a' } },
+];
+
+export const deployNodes = [
+  { id: "d_model", position: { x: 0, y: 80 }, data: { label: "70B Model\n4-bit weights (GPTQ/AWQ)" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 600 } },
+  { id: "d_kv", position: { x: 0, y: 240 }, data: { label: "KV Cache\n3-bit TurboQuant" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 600 } },
+  { id: "d_stack", position: { x: 300, y: 160 }, data: { label: "Serving Stack\nvLLM / TensorRT-LLM / llama.cpp" }, style: { background: '#1e1030', color: '#c4b5fd', border: '2px solid #8b5cf6', borderRadius: 8, padding: '12px 18px', fontSize: 12, fontWeight: 700 } },
+  { id: "d_fp16", position: { x: 620, y: 40 }, data: { label: "FP16 baseline\n~109K tokens" }, style: { background: '#1f0a0a', color: '#fca5a5', border: '1px solid #b91c1c', borderRadius: 8, padding: '8px 14px', fontSize: 12 } },
+  { id: "d_tq", position: { x: 620, y: 160 }, data: { label: "TQ3 compressed\n~536K tokens" }, style: { background: '#052e16', color: '#4ade80', border: '2px solid #16a34a', borderRadius: 8, padding: '10px 14px', fontSize: 13, fontWeight: 700 } },
+  { id: "d_hw", position: { x: 620, y: 300 }, data: { label: "Single A100 / Mac Studio\n34 GB VRAM" }, style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 14px', fontSize: 12 } },
+  { id: "d_gain", position: { x: 900, y: 100 }, data: { label: "5x capacity gain\n500K+ tokens" }, type: "output", style: { background: '#1c1008', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, padding: '12px 18px', fontSize: 13, fontWeight: 700 } },
+];
+export const deployEdges = [
+  { id: "de1", source: "d_model", target: "d_stack", animated: true, style: { stroke: '#22c55e', strokeWidth: 2 } },
+  { id: "de2", source: "d_kv", target: "d_stack", animated: true, style: { stroke: '#22c55e', strokeWidth: 2 } },
+  { id: "de3", source: "d_stack", target: "d_fp16", style: { stroke: '#b91c1c', strokeWidth: 1, strokeDasharray: '5,5' }, label: "without TQ", labelStyle: { fill: '#fca5a5', fontSize: 10 }, labelBgStyle: { fill: '#1f0a0a' } },
+  { id: "de4", source: "d_stack", target: "d_tq", animated: true, label: "with TQ", style: { stroke: '#16a34a', strokeWidth: 2 }, labelStyle: { fill: '#4ade80', fontSize: 10 }, labelBgStyle: { fill: '#052e16' } },
+  { id: "de5", source: "d_tq", target: "d_gain", animated: true, style: { stroke: '#f59e0b', strokeWidth: 2 } },
+  { id: "de6", source: "d_fp16", target: "d_gain", style: { stroke: '#475569', strokeWidth: 1 } },
+  { id: "de7", source: "d_tq", target: "d_hw", style: { stroke: '#475569', strokeWidth: 1.5 } },
+];
+
+Every token your LLM generates forces it to reread its entire conversational history. That history -- the Key-Value cache -- is the single largest memory bottleneck during inference. A Llama-3.1-70B serving a 128K-token context in FP16 burns through **~40 GB of VRAM on KV cache alone**, leaving almost nothing for weights on a single 80 GB H100. The standard remedies -- eviction (SnapKV, PyramidKV) and sparse attention -- trade accuracy for memory. They throw tokens away.
+
+TurboQuant, published at ICLR 2026 by Zandieh, Daliri, Hadian, and Mirrokni from Google Research, takes the opposite approach: **keep every token, compress every value**. At 3 bits per coordinate it delivers 6x memory reduction. At 4 bits it delivers up to 8x speedup in computing attention logits on H100 GPUs. The headline result: on LongBench with Llama-3.1-8B-Instruct, the 3.5-bit configuration scores **50.06 -- identical to the 16-bit baseline**. No retraining. No fine-tuning. No calibration data.
+
+{/* truncate */}
+
+## The Research Trilogy
+
+TurboQuant is the capstone of three papers by overlapping author groups at Google Research:
+
+<Flow nodes={trilogyNodes} edges={trilogyEdges} height={260} showControls={false} showBackground={false} />
+
+Each paper solves a distinct failure mode of naive quantization. QJL provides unbiased inner-product estimation via a 1-bit Johnson-Lindenstrauss transform. PolarQuant eliminates per-block normalization overhead through polar-coordinate decomposition. TurboQuant unifies both into a two-stage pipeline with formal distortion-rate guarantees.
+
+## How It Works: The Two-Stage Pipeline
+
+<Flow nodes={pipelineNodes} edges={pipelineEdges} height={380} showControls={false} />
+
+### Stage 1: Random Rotation + Lloyd-Max Scalar Quantization (b-1 bits)
+
+The foundational insight is that applying a random orthogonal rotation to any vector causes each coordinate to follow a **known, data-independent Beta distribution**:
+
+$$f_X(x) = \frac{\Gamma(d/2)}{\sqrt{\pi}\,\Gamma((d{-}1)/2)}\,(1 - x^2)^{(d-3)/2}$$
+
+In high dimensions this converges to $\mathcal{N}(0, 1/d)$. Crucially, distinct coordinates become nearly independent after rotation. This collapses the intractable $d$-dimensional vector quantization problem into $d$ independent **scalar** quantization problems -- each with a known, universal distribution.
+
+Because the distribution is known analytically and is the same regardless of input data, optimal Lloyd-Max codebooks can be precomputed once offline:
+
+| Bits | Centroids | MSE Distortion |
+|------|-----------|---------------|
+| 1 | $\pm\sqrt{2/(\pi d)}$ | 0.36 |
+| 2 | $\pm 0.453/\sqrt{d},\ \pm 1.51/\sqrt{d}$ | 0.117 |
+| 3 | 8 precomputed centroids | 0.03 |
+| 4 | 16 precomputed centroids | 0.009 |
+
+This is the PolarQuant contribution: by working in polar coordinates after random preconditioning, it eliminates the per-block zero-point and scale factors that other methods must store in full precision -- saving 1-2 bits of overhead per coordinate.
+
+### Stage 2: QJL Residual Correction (1 bit)
+
+MSE-optimal scalar quantizers introduce **bias** in inner-product estimation. Attention scores are inner products ($q \cdot k$), so biased quantization means biased softmax weights -- which compounds across layers.
+
+QJL corrects this with a 1-bit residual:
+
+1. Compute residual: $r = x - \hat{x}_{\text{MSE}}$
+2. Apply random projection: $S \sim \mathcal{N}(0,1)^{m \times d}$
+3. Store: $\text{sign}(S \cdot r)$ and $\gamma = \|r\|_2$
+
+The reconstruction combines both stages:
+
+$$\tilde{x} = \hat{x}_{\text{MSE}} + \gamma \cdot \frac{\sqrt{\pi/2}}{d} \cdot S^\top \cdot \text{sign}(S \cdot r)$$
+
+The critical property: $\mathbb{E}[\langle y, \tilde{x}\rangle] = \langle y, x\rangle$ -- the inner-product estimator is **unbiased**. Combined budget: $(b{-}1)$ bits for MSE quantizer + 1 bit for QJL = $b$ total bits per coordinate.
+
+## Benchmark Results
+
+### LongBench (Llama-3.1-8B-Instruct)
+
+<Flow nodes={benchNodes} edges={benchEdges} height={520} showControls={false} />
+
+| Method | Bits | SingleQA | MultiQA | Summarization | FewShot | Synthetic | Code | **Average** |
+|--------|------|----------|---------|---------------|---------|-----------|------|---------|
+| Full Cache | 16 | 45.29 | 45.16 | 26.55 | 68.38 | 59.54 | 46.28 | **50.06** |
+| **TurboQuant** | **3.5** | **45.01** | **45.31** | **26.00** | **68.63** | **59.95** | **46.17** | **50.06** |
+| TurboQuant | 2.5 | 44.16 | 44.96 | 24.80 | 68.01 | 59.65 | 45.76 | 49.44 |
+| PolarQuant | 3.9 | 45.18 | 44.48 | 26.23 | 68.25 | 60.07 | 45.24 | 49.78 |
+| KIVI | 3 | 43.38 | 37.99 | 27.16 | 68.38 | 59.50 | 44.68 | 48.50 |
+
+At 3.5 bits TurboQuant exactly matches full precision. At 2.5 bits the degradation is marginal (0.62 points). KIVI at 3 bits loses 1.56 points, with MultiQA dropping sharply (-7.17).
+
+### Needle-in-a-Haystack: Quantization vs Eviction
+
+<Flow nodes={needleNodes} edges={needleEdges} height={580} showControls={false} />
+
+TurboQuant achieves perfect retrieval across all test lengths up to 104K context. The eviction-based methods (PyramidKV, SnapKV) drop catastrophically because they may evict exactly the token containing the needle.
+
+### Quantization Speed (Vector Search Application)
+
+| Method | d=200 | d=1536 | d=3072 |
+|--------|-------|--------|--------|
+| Product Quantization | 37.04s | 239.75s | 494.42s |
+| RaBitQ | 597.25s | 2267.59s | 3957.19s |
+| **TurboQuant** | **0.0007s** | **0.0013s** | **0.0021s** |
+
+Five orders of magnitude faster. Because the codebooks are data-oblivious and precomputed, quantization reduces to a single matrix multiply + nearest-centroid lookup.
+
+## Theoretical Guarantees
+
+TurboQuant's MSE distortion is within a factor of $\sqrt{3}\pi/2 \approx 2.7\times$ of the information-theoretic lower bound. No algorithm operating at the same bit budget can fundamentally do more than ~2.7x better. At 1 bit, the gap tightens to ~1.45x.
+
+The inner-product distortion bound:
+
+$$D_{\text{prod}} \leq \frac{\sqrt{3}\,\pi^2\,\|y\|^2}{d} \cdot \frac{1}{4^b}$$
+
+This exponential decay in $b$ is why jumping from 2 to 3 bits cuts distortion by 4x, making the 3-bit regime viable.
+
+## Caveats and Critical Analysis
+
+The "zero loss" claim is strong but scoped:
+
+- **GSM8K at 3-bit shows 1.4-point degradation** (84.3% vs 85.7%), suggesting math/reasoning tasks are more sensitive to quantization noise in attention scores
+- **Prefill runs in full BF16** -- only the decode phase uses quantized cache, which favors generation-light benchmarks
+- The "8x speedup" is measured against FP32 baselines, not production FP16
+- Evaluation is limited to models up to ~8B parameters
+- The ArXiv-to-camera-ready version changed some LongBench scores without explanation
+
+The community implementation effort in llama.cpp (discussion #20969, 32+ contributors) has also surfaced practical findings:
+
+- **Keys need more bits than values.** Modern LLMs display 4-182x norm disparities between K and V. Optimal strategy: q8_0 for keys + turbo3 for values
+- **MSE-only often outperforms QJL in practice.** Multiple implementations report the QJL bias-correction stage actually degrades softmax ranking quality
+- On 70B models with 34 GB VRAM, FP16 supports ~109K tokens; TQ3 supports **~536K tokens** -- a 5x capacity gain
+
+## Practical Deployment
+
+<Flow nodes={deployNodes} edges={deployEdges} height={420} showControls={false} />
+
+**4-bit** is the sweet spot for 3B+ models -- indistinguishable from FP16. **3-bit** works for 8B+ but degrades on smaller architectures. Most production deployments keep the most recent 128-256 tokens in full FP16 and compress only older cache entries.
+
+The compression benefit scales with context length. At fewer than 1K tokens the overhead of rotation matrices dominates. At 8K+ tokens you save 2+ GB. At 128K tokens you save tens of gigabytes -- enough to move from multi-GPU to single-GPU serving.
+
+TurboQuant pairs cleanly with weight quantization (GPTQ, AWQ). A 70B model with 4-bit weights and 3-bit KV cache fits in 34 GB VRAM with 500K+ token capacity. That's a single A100 or a Mac Studio with 64 GB unified memory.
+
+## Industry Implications
+
+TrendForce and Morgan Stanley note that TurboQuant does **not** reduce absolute memory demand -- it enables 4-8x longer context windows or larger batch sizes on existing hardware. The commercial effect is utilization optimization, not HBM demand reduction. Memory supply constraints persist.
+
+The deeper impact is architectural. Data-oblivious quantization means the same CUDA kernel works across all models, all layers, without calibration. That makes it a systems-level primitive -- something that belongs in the serving stack (vLLM, TensorRT-LLM, llama.cpp) rather than requiring per-model tuning. The llama.cpp community already has working implementations across Metal, CUDA, and Vulkan backends.
+
+This is probably the strongest "zero loss" claim in the current KV cache compression landscape. The formal distortion bounds, the data-oblivious design, and the consistent benchmark results across QA, code, and summarization make TurboQuant the method to beat at the 3-4 bit operating point.
+
+## References
+
+- [TurboQuant paper (arXiv:2504.19874)](https://arxiv.org/abs/2504.19874) -- Zandieh, Daliri, Hadian, Mirrokni
+- [PolarQuant paper (arXiv:2502.02617)](https://arxiv.org/abs/2502.02617) -- Han, Kacham, Karbasi, Mirrokni, Zandieh
+- [QJL paper (arXiv:2406.03482)](https://arxiv.org/abs/2406.03482) -- Zandieh, Daliri, Han
+- [Google Research blog post](https://research.google/blog/turboquant-redefining-ai-efficiency-with-extreme-compression/)
+- [llama.cpp community implementation (Discussion #20969)](https://github.com/ggml-org/llama.cpp/discussions/20969)
