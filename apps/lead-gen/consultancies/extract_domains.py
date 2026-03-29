@@ -72,6 +72,15 @@ def extract_domains(min_confidence: float = 0.0, output: Path = DEFAULT_OUTPUT):
         "wikipedia.org", "crunchbase.com", "glassdoor.com", "indeed.com",
         "g2.com", "github.com", "medium.com", "substack.com",
     }
+
+    # Load user blocklist
+    blocklist_path = Path("./data/blocklist.txt")
+    if blocklist_path.exists():
+        for line in blocklist_path.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                skip_domains.add(line.lower())
+
     domains = {d for d in domains if not any(s in d for s in skip_domains)}
 
     # Sort and write

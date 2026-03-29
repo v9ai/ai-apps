@@ -35,10 +35,15 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
     let discovery: DiscoveryReport = state::load_report(&ctx.data_dir, "discovery")
         .ok_or_else(|| anyhow::anyhow!("no discovery report — run discover first"))?;
 
-    let limit = ctx.batch.enrich.min(discovery.companies.len());
     // Sort by ICP score descending, enrich top N
     let mut candidates = discovery.companies.clone();
     candidates.sort_by(|a, b| b.icp_score.partial_cmp(&a.icp_score).unwrap_or(std::cmp::Ordering::Equal));
+
+    // Remove blocked domains before limiting
+    let blocklist = state::Blocklist::load(&ctx.data_dir);
+    candidates.retain(|c| !blocklist.contains(&c.domain));
+
+    let limit = ctx.batch.enrich.min(candidates.len());
     let candidates = &candidates[..limit];
 
     let mut report = EnrichmentReport {

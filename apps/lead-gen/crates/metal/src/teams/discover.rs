@@ -15,6 +15,8 @@ use super::{StageReport, StageStatus, TeamContext};
 pub struct DiscoveryReport {
     pub companies: Vec<DiscoveredCompany>,
     pub duplicates_skipped: usize,
+    #[serde(default)]
+    pub blocked_skipped: usize,
     pub fetch_errors: Vec<String>,
 }
 
@@ -40,9 +42,12 @@ pub async fn run(ctx: &TeamContext, domains_file: Option<&Path>) -> Result<Stage
     let limit = ctx.batch.discover.min(domains.len());
     let domains = &domains[..limit];
 
+    let blocklist = state::Blocklist::load(&ctx.data_dir);
+
     let mut report = DiscoveryReport {
         companies: Vec::new(),
         duplicates_skipped: 0,
+        blocked_skipped: 0,
         fetch_errors: Vec::new(),
     };
 
@@ -55,6 +60,12 @@ pub async fn run(ctx: &TeamContext, domains_file: Option<&Path>) -> Result<Stage
         // Bloom-filter fast-path dedup
         if ctx.pipeline.domain_known(domain) {
             report.duplicates_skipped += 1;
+            continue;
+        }
+
+        // Blocklist check
+        if blocklist.contains(domain) {
+            report.blocked_skipped += 1;
             continue;
         }
 
