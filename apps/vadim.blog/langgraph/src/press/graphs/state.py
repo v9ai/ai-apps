@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, TypedDict
+from typing import Literal, Required, TypedDict
 
 
 class PressState(TypedDict, total=False):
@@ -12,7 +12,7 @@ class PressState(TypedDict, total=False):
     optional and passed through to the chosen pipeline.
     """
 
-    pipeline: Literal["blog", "article", "counter", "review"]
+    pipeline: Required[Literal["blog", "article", "counter", "review"]]
 
     # Shared across most pipelines
     output_dir: str
@@ -59,7 +59,7 @@ class PressState(TypedDict, total=False):
 
 
 class BlogState(TypedDict, total=False):
-    niche: str
+    niche: Required[str]
     count: int
     output_dir: str
     publish: bool
@@ -77,7 +77,7 @@ class ArticleState(TypedDict, total=False):
     runs a topic-only journalism flow (1200-1800 words).
     """
 
-    topic: str
+    topic: Required[str]
     title: str
     niche: str
     input_file: str
@@ -99,9 +99,9 @@ class ArticleState(TypedDict, total=False):
 
 
 class CounterArticleState(TypedDict, total=False):
-    source_url: str
+    source_url: Required[str]
     source_content: str
-    topic: str
+    topic: Required[str]
     output_dir: str
     publish: bool
     git_push: bool
@@ -118,7 +118,7 @@ class CounterArticleState(TypedDict, total=False):
 
 
 class ReviewState(TypedDict, total=False):
-    input_file: str
+    input_file: Required[str]
     research_file: str
     seo_file: str
     output_dir: str

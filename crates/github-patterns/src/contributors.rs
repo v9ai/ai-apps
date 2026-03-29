@@ -231,23 +231,27 @@ async fn load_known_logins(conn: &Connection) -> Result<HashSet<String>> {
         return Ok(HashSet::new());
     }
 
+    use arrow_array::Array;
+    use futures::TryStreamExt;
+    use lancedb::query::{ExecutableQuery, QueryBase};
+
     let table = conn.open_table("contributors").execute().await?;
-    let mut stream = table
+    let mut stream: std::pin::Pin<
+        Box<dyn futures::Stream<Item = std::result::Result<RecordBatch, lancedb::Error>> + Send>,
+    > = table
         .query()
         .select(lancedb::query::Select::Columns(vec!["login".into()]))
         .execute()
         .await?;
 
-    use futures::TryStreamExt;
     let mut logins = HashSet::new();
     while let Some(batch) = stream.try_next().await? {
-        let col = batch
-            .column_by_name("login")
-            .and_then(|c| c.as_any().downcast_ref::<arrow_array::StringArray>());
-        if let Some(arr) = col {
-            for i in 0..arr.len() {
-                if !arr.is_null(i) {
-                    logins.insert(arr.value(i).to_string());
+        if let Some(col) = batch.column_by_name("login") {
+            if let Some(arr) = col.as_any().downcast_ref::<arrow_array::StringArray>() {
+                for i in 0..arr.len() {
+                    if !arr.is_null(i) {
+                        logins.insert(arr.value(i).to_string());
+                    }
                 }
             }
         }
