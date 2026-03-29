@@ -10,11 +10,11 @@
     "start": "next start",
     "lint": "next lint",
     "demo:skills": "tsx scripts/demo-skills-in-production.ts",
-    "demo:bm25": "tsx scripts/demo-bm25-skills.ts",
+
     "try:skills": "tsx scripts/try-skills-production.ts",
     "deploy": "tsx scripts/deploy.ts",
     "codegen": "graphql-codegen",
-    "skills:seed": "tsx scripts/seed-skill-taxonomy.ts",
+
     "ccx:scrape": "tsx scripts/scrape-from-ccx.ts",
     "strategy:check": "tsx scripts/enforce-strategy.ts",
     "strategy:check:all": "tsx scripts/enforce-strategy.ts --all",
