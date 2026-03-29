@@ -21,6 +21,7 @@ import {
   AlertDialog,
   Badge,
   Box,
+  Button,
   Callout,
   Card,
   Container,
@@ -37,7 +38,6 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
-import { button } from "@/recipes/button";
 import {
   CheckCircledIcon,
   ExternalLinkIcon,
