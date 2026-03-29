@@ -224,10 +224,10 @@ function GenerateEmailDialog({
 
           {content && !isStreaming && (
             <Box
+              p="3"
               style={{
                 background: "var(--green-2)",
                 borderRadius: 0,
-                padding: "var(--space-3)",
               }}
             >
               <Flex justify="between" align="center" mb="2">
@@ -798,9 +798,11 @@ export function CompanyContactsClient({
                     : "Starting scheduler..."}
             </Callout.Text>
             {(completion || schedulerError) && (
-              <button className={button({ variant: "ghost", size: "sm" })} onClick={resetScheduler} style={{ marginLeft: "var(--space-2)" }}>
-                Dismiss
-              </button>
+              <Box ml="2" flexShrink="0">
+                <button className={button({ variant: "ghost", size: "sm" })} onClick={resetScheduler}>
+                  Dismiss
+                </button>
+              </Box>
             )}
           </Callout.Root>
         )}
@@ -1081,7 +1083,7 @@ export function CompanyContactsClient({
                       )}
                     </Box>
 
-                    <Flex direction="column" align="end" gap="2" style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                    <Flex direction="column" align="end" gap="2" flexShrink="0" onClick={(e) => e.stopPropagation()}>
                       {!contact.doNotContact && (
                         <GenerateEmailDialog
                           contact={contact}
