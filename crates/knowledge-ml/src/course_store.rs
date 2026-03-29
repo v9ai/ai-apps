@@ -18,11 +18,10 @@ use tracing::info;
 
 use crate::course::{Course, CourseSearchResult};
 use crate::error::Result;
-use crate::types::DIM;
 
 const TABLE: &str = "courses";
 
-fn schema() -> Arc<Schema> {
+fn schema(dim: i32) -> Arc<Schema> {
     Arc::new(Schema::new(vec![
         Field::new("course_id", DataType::Utf8, false),
         Field::new("title", DataType::Utf8, false),
@@ -44,7 +43,7 @@ fn schema() -> Arc<Schema> {
             "vector",
             DataType::FixedSizeList(
                 Arc::new(Field::new("item", DataType::Float32, true)),
-                DIM as i32,
+                dim,
             ),
             true,
         ),
@@ -60,29 +59,40 @@ fn now_secs() -> f64 {
 
 pub struct CourseStore {
     conn: Connection,
+    dim: usize,
 }
 
 impl CourseStore {
     /// Open (or create) a Lance store at `path`.
+    /// The dimension is detected from the first `add()` call.
     pub async fn connect(path: &str) -> Result<Self> {
         let conn = lancedb::connect(path).execute().await?;
+        Ok(Self { conn, dim: 0 })
+    }
 
-        let tables = conn.table_names().execute().await?;
-        if !tables.contains(&TABLE.to_string()) {
-            let batch = RecordBatch::new_empty(schema());
-            conn.create_table(TABLE, batch).execute().await?;
-            info!("Created '{TABLE}' table in {path}");
+    /// Ensure the table exists with the given vector dimension.
+    async fn ensure_table(&mut self, dim: usize) -> Result<()> {
+        if self.dim == 0 {
+            self.dim = dim;
         }
-
-        Ok(Self { conn })
+        let tables = self.conn.table_names().execute().await?;
+        if !tables.contains(&TABLE.to_string()) {
+            let batch = RecordBatch::new_empty(schema(dim as i32));
+            self.conn.create_table(TABLE, batch).execute().await?;
+            info!("Created '{TABLE}' table (dim={dim})");
+        }
+        Ok(())
     }
 
     /// Insert courses that already have embeddings computed.
-    pub async fn add(&self, courses: &[Course], vectors: &[Vec<f32>]) -> Result<usize> {
+    pub async fn add(&mut self, courses: &[Course], vectors: &[Vec<f32>]) -> Result<usize> {
         assert_eq!(courses.len(), vectors.len());
         if courses.is_empty() {
             return Ok(0);
         }
+
+        let dim = vectors[0].len();
+        self.ensure_table(dim).await?;
 
         let n = courses.len();
         let ts = now_secs();
@@ -105,16 +115,16 @@ impl CourseStore {
         let timestamps: Vec<f64> = vec![ts; n];
 
         // Flatten vectors into one contiguous buffer.
-        let mut flat: Vec<f32> = Vec::with_capacity(n * DIM);
+        let mut flat: Vec<f32> = Vec::with_capacity(n * dim);
         for v in vectors {
             flat.extend_from_slice(v);
         }
         let values = Float32Array::from(flat);
         let field = Arc::new(Field::new("item", DataType::Float32, true));
-        let vecs = FixedSizeListArray::try_new(field, DIM as i32, Arc::new(values), None)?;
+        let vecs = FixedSizeListArray::try_new(field, dim as i32, Arc::new(values), None)?;
 
         let batch = RecordBatch::try_new(
-            schema(),
+            schema(dim as i32),
             vec![
                 Arc::new(StringArray::from(course_ids)) as ArrayRef,
                 Arc::new(StringArray::from(titles)),
@@ -173,8 +183,12 @@ impl CourseStore {
         Ok(results)
     }
 
-    /// Total rows in the courses table.
+    /// Total rows in the courses table (0 if table doesn't exist yet).
     pub async fn count(&self) -> Result<usize> {
+        let tables = self.conn.table_names().execute().await?;
+        if !tables.contains(&TABLE.to_string()) {
+            return Ok(0);
+        }
         let table = self.conn.open_table(TABLE).execute().await?;
         Ok(table.count_rows(None).await?)
     }
