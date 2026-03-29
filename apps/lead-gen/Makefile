@@ -237,6 +237,39 @@ extract-serve: ## Start sgai-qwen3-1.7b extraction server on port 8081
 extract-stop: ## Stop extraction server
 	@pkill -f "mlx_lm.server.*$(EXTRACT_PORT)" 2>/dev/null && echo "Stopped extraction server" || echo "Not running"
 
+# ── Consultancy Leads ────────────────────────────────────────
+
+CONSULT_DIR  := consultancies
+CONSULT_VENV := $(CONSULT_DIR)/.venv
+CONSULT_PY   := $(CONSULT_VENV)/bin/python3
+DOMAINS_FILE := $(CONSULT_DIR)/data/eu-ai-consultancies.txt
+
+.PHONY: leads leads-discover leads-domains leads-pipeline leads-import leads-top leads-report leads-clean
+
+leads: leads-discover leads-domains start-build leads-pipeline leads-import ## Full consultancy pipeline
+
+leads-discover: ## Phase 1: scrape Clutch/GoodFirms/Wellfound + MLX classify
+	$(CONSULT_PY) $(CONSULT_DIR)/discover.py
+
+leads-domains: ## Phase 2: extract domains → domains.txt
+	$(CONSULT_PY) $(CONSULT_DIR)/extract_domains.py -o $(DOMAINS_FILE)
+
+leads-pipeline: start-build ## Phase 3: Rust 5-stage pipeline on discovered domains
+	$(METAL_BIN) pipeline --domains $(DOMAINS_FILE) --yes
+
+leads-import: ## Phase 4: Rust data → Neon PostgreSQL
+	pnpm tsx scripts/import-rust-leads.ts $(METAL_DIR)/data/pipeline
+
+leads-top: start-build ## Review top 50 consultancy leads
+	$(METAL_BIN) top 50
+
+leads-report: start-build ## Report for a prospect: make leads-report DOMAIN=faculty.ai
+	$(METAL_BIN) stage enrich --domains <(echo "$(DOMAIN)")
+
+leads-clean: ## Remove consultancy generated data
+	rm -rf $(CONSULT_DIR)/data/consultancies.lance $(CONSULT_DIR)/data/consultancies.json $(DOMAINS_FILE)
+	rm -rf $(METAL_DIR)/data/reports/ $(METAL_DIR)/data/pipeline/
+
 # ── All ────────────────────────────────────────────────────────
 
 .PHONY: install-all
