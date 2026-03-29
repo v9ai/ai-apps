@@ -1,24 +1,24 @@
-/// scrape_contributors — Scrape contributors of AI GitHub projects into LanceDB.
+/// scrape_contributors — Scrape contributors of AI GitHub projects into LanceDB,
+/// then rank them by rising-star score.
 ///
-/// Two modes (SCRAPE_MODE env var):
+/// Modes (SCRAPE_MODE env var):
 ///
 ///   discover (default) — search GitHub for AI repos by topic and scrape
 ///                         their top contributors.
-///
-///   repo               — scrape a single repo given by GH_REPO
-///                         (e.g. "huggingface/transformers").
+///   repo               — scrape a single repo given by GH_REPO.
+///   top                — print top N rising stars from existing DB (no scraping).
 ///
 /// Environment variables:
-///   GITHUB_TOKEN              GitHub PAT with public repo read access (required)
+///   GITHUB_TOKEN              GitHub PAT with public repo read access (required for scraping)
 ///   LANCE_DB_PATH             LanceDB directory path (default: ./contributors.lance)
-///   SCRAPE_MODE               "discover" | "repo"  (default: discover)
+///   SCRAPE_MODE               "discover" | "repo" | "top"  (default: discover)
 ///   GH_TOPICS                 Comma-separated topics for discover mode
 ///                             (default: "llm,machine-learning,generative-ai,deep-learning")
 ///   GH_MIN_STARS              Minimum stars for repo search (default: 200)
 ///   GH_REPO                   Specific "owner/repo" for repo mode
 ///   MAX_REPOS                 Max repos to scrape in discover mode (default: 20)
 ///   MAX_CONTRIBUTORS_PER_REPO Max contributors fetched per repo (default: 100)
-use std::collections::HashMap;
+///   TOP_N                     Rising stars to display (default: 25)
 use std::time::Duration;
 
 use tracing::{error, info, warn};
@@ -38,14 +38,26 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    let gh_token = std::env::var("GITHUB_TOKEN")
-        .or_else(|_| std::env::var("GH_TOKEN"))
-        .expect("GITHUB_TOKEN / GH_TOKEN env var is required");
-
     let db_path = std::env::var("LANCE_DB_PATH")
         .unwrap_or_else(|_| "./contributors.lance".into());
 
     let scrape_mode = std::env::var("SCRAPE_MODE").unwrap_or_else(|_| "discover".into());
+
+    // "top" mode doesn't need a GitHub token
+    if scrape_mode == "top" {
+        info!("opening LanceDB at {db_path}");
+        let db = ContributorsDb::open(&db_path).await?;
+        let n: usize = std::env::var("TOP_N")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(25);
+        print_top_rising(&db, n).await?;
+        return Ok(());
+    }
+
+    let gh_token = std::env::var("GITHUB_TOKEN")
+        .or_else(|_| std::env::var("GH_TOKEN"))
+        .expect("GITHUB_TOKEN / GH_TOKEN env var is required");
 
     let gh = GhClient::new(gh_token)?;
     info!("GitHub client ready");
@@ -64,7 +76,16 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    info!("done — {} total contributors in DB", db.count().await);
+    let total = db.count().await;
+    info!("scraping done — {total} total contributors in DB");
+
+    // Always print top stars after a scrape run
+    let top_n: usize = std::env::var("TOP_N")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(25);
+    print_top_rising(&db, top_n).await?;
+
     Ok(())
 }
 
@@ -143,7 +164,6 @@ async fn scrape_single_repo(
         }
     };
 
-    // Collect (login → contributions) for top contributors
     let to_fetch: Vec<_> = contributors
         .into_iter()
         .take(max_per_repo)
@@ -155,32 +175,24 @@ async fn scrape_single_repo(
         to_fetch.len()
     );
 
-    // Batch user profile fetches — but stay within rate limits
     let mut records: Vec<ContributorRecord> = Vec::new();
-    let mut contrib_map: HashMap<String, u32> = HashMap::new();
-    for c in &to_fetch {
-        contrib_map.insert(c.login.clone(), c.contributions);
-    }
 
     for chunk in to_fetch.chunks(10) {
         for c in chunk {
             match gh.get_user(&c.login).await {
                 Ok(user) => {
-                    let repo_contrib = RepoContrib {
-                        repo: full_name.to_string(),
-                        contributions: c.contributions,
-                    };
                     records.push(ContributorRecord {
                         total_contributions: c.contributions,
-                        repos: vec![repo_contrib],
+                        repos: vec![RepoContrib {
+                            repo: full_name.to_string(),
+                            contributions: c.contributions,
+                        }],
                         user,
                     });
                 }
-                Err(e) => {
-                    warn!("failed to fetch user {}: {e}", c.login);
-                }
+                Err(e) => warn!("failed to fetch user {}: {e}", c.login),
             }
-            // Avoid secondary rate limit — ~6 req/s
+            // ~6 req/s to stay within secondary rate limit
             tokio::time::sleep(Duration::from_millis(170)).await;
         }
 
@@ -192,6 +204,61 @@ async fn scrape_single_repo(
             records.clear();
         }
     }
+
+    Ok(())
+}
+
+// ── Top rising stars ──────────────────────────────────────────────────────────
+
+async fn print_top_rising(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
+    let stars = db.top_rising(n).await?;
+    if stars.is_empty() {
+        info!("no contributors in DB yet");
+        return Ok(());
+    }
+
+    println!("\n╔══ TOP {n} RISING AI STARS ══════════════════════════════════════════╗");
+    for (rank, s) in stars.iter().enumerate() {
+        let name = s.name.as_deref().unwrap_or(&s.login);
+        let company = s.company.as_deref().unwrap_or("-");
+        let location = s.location.as_deref().unwrap_or("-");
+        let email = s.email.as_deref().unwrap_or("-");
+
+        // Account age in years
+        let age_years = if let Ok(created) = chrono::DateTime::parse_from_rfc3339(&s.gh_created_at) {
+            let days = (chrono::Utc::now() - created.with_timezone(&chrono::Utc)).num_days();
+            days as f32 / 365.0
+        } else {
+            0.0
+        };
+
+        println!(
+            "#{:<3} {:>5.3}  {name} (@{})",
+            rank + 1,
+            s.rising_score,
+            s.login,
+        );
+        println!(
+            "      url={}", s.html_url,
+        );
+        println!(
+            "      email={email}  company={company}  location={location}"
+        );
+        println!(
+            "      followers={}  public_repos={}  ai_repos={}  contributions={}",
+            s.followers, s.public_repos, s.ai_repos_count, s.total_contributions,
+        );
+        println!(
+            "      account_age={:.1}y  density={:.3}  novelty={:.3}  breadth={:.3}",
+            age_years, s.contribution_density, s.novelty, s.breadth,
+        );
+        if let Some(bio) = &s.bio {
+            let truncated: String = bio.chars().take(100).collect();
+            println!("      bio={truncated}");
+        }
+        println!();
+    }
+    println!("╚══════════════════════════════════════════════════════════════════════╝");
 
     Ok(())
 }
