@@ -233,3 +233,14 @@ export async function getRelatedLessonsFromDb(
     url: getUrlPath(p.slug),
   }));
 }
+
+export async function getCourseReview(courseId: string) {
+  const result = await db
+    .select()
+    .from(courseReviews)
+    .where(eq(courseReviews.courseId, courseId))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export type CourseReviewData = Awaited<ReturnType<typeof getCourseReview>>;
