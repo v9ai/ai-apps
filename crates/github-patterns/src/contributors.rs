@@ -3,9 +3,10 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use arrow_array::{
-    BooleanArray, FixedSizeListArray, Float32Array, Int32Array, Int64Array, RecordBatch,
-    StringArray, UInt32Array,
+    BooleanArray, Float32Array, Int32Array, Int64Array, RecordBatch, StringArray, UInt32Array,
 };
+#[cfg(feature = "contrib-embed")]
+use arrow_array::FixedSizeListArray;
 use arrow_schema::{DataType, Field, Schema};
 use lancedb::{connect, Connection};
 
@@ -266,10 +267,10 @@ impl ContributorsDb {
             .collect();
 
         // Vector column: embed under contrib-embed feature, null otherwise.
-        let vec_item_field = Arc::new(Field::new("item", DataType::Float32, true));
         let vector_array: Arc<dyn arrow_array::Array> = {
             #[cfg(feature = "contrib-embed")]
             {
+                let vec_item_field = Arc::new(Field::new("item", DataType::Float32, true));
                 let texts: Vec<String> = new
                     .iter()
                     .zip(repos_jsons.iter())
@@ -308,18 +309,21 @@ impl ContributorsDb {
             }
             #[cfg(not(feature = "contrib-embed"))]
             {
-                // All-null vectors when embedding is disabled
-                let flat = vec![0.0f32; n * EMBED_DIM as usize];
-                let nulls = arrow_array::NullBuffer::new_null(n);
-                Arc::new(
-                    FixedSizeListArray::try_new(
-                        vec_item_field,
-                        EMBED_DIM,
-                        Arc::new(Float32Array::from(flat)),
-                        Some(nulls),
-                    )
-                    .context("build null vector array")?,
-                )
+                // All-null vectors when embedding is disabled.
+                // FixedSizeListBuilder requires child values to be present even
+                // for null entries (length check: child.len() == n * value_length).
+                use arrow_array::builder::{FixedSizeListBuilder, Float32Builder};
+                let mut builder = FixedSizeListBuilder::new(
+                    Float32Builder::with_capacity(EMBED_DIM as usize * n),
+                    EMBED_DIM,
+                );
+                for _ in 0..n {
+                    for _ in 0..EMBED_DIM {
+                        builder.values().append_value(0.0);
+                    }
+                    builder.append(false); // null outer entry
+                }
+                Arc::new(builder.finish())
             }
         };
 
