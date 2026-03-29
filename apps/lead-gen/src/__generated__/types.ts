@@ -74,6 +74,7 @@ export type Company = {
   ai_classification_confidence: Scalars['Float']['output'];
   ai_classification_reason: Maybe<Scalars['String']['output']>;
   ai_tier: Scalars['Int']['output'];
+  blocked: Scalars['Boolean']['output'];
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];
@@ -698,6 +699,7 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   applyEmailPattern: ApplyEmailPatternResult;
   archiveEmail: ArchiveEmailResult;
+  blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
   createCompany: Company;
@@ -733,6 +735,7 @@ export type Mutation = {
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
+  unblockCompany: Company;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateCampaign: EmailCampaign;
   updateCompany: Company;
@@ -761,6 +764,11 @@ export type MutationApplyEmailPatternArgs = {
 
 
 export type MutationArchiveEmailArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationBlockCompanyArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -944,6 +952,11 @@ export type MutationSyncResendEmailsArgs = {
 
 
 export type MutationUnarchiveEmailArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationUnblockCompanyArgs = {
   id: Scalars['Int']['input'];
 };
 

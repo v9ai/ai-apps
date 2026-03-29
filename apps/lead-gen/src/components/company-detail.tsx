@@ -679,19 +679,21 @@ function LinkedInLeadDialog({
             </Flex>
 
             <Flex justify="end" gap="2">
-              <button
-                className={button({ variant: "ghost" })}
+              <Button
+                variant="ghost"
+                color="gray"
                 onClick={() => setPhase("paste")}
               >
                 Back
-              </button>
-              <button
-                className={button({ variant: "ghost" })}
+              </Button>
+              <Button
+                variant="ghost"
+                color="gray"
                 onClick={handleSave}
                 disabled={saving}
               >
                 {saving ? "Saving..." : "Create contact"}
-              </button>
+              </Button>
             </Flex>
           </Flex>
         )}
@@ -786,10 +788,10 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger>
-        <button className={button({ variant: "ghost", size: "md" })} onClick={handleOpen}>
+        <Button variant="ghost" color="gray" onClick={handleOpen}>
           <Pencil1Icon />
           Edit
-        </button>
+        </Button>
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="560px">
@@ -924,17 +926,18 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
 
         <Flex gap="3" mt="5" justify="end">
           <Dialog.Close>
-            <button className={button({ variant: "ghost" })}>
+            <Button variant="ghost" color="gray">
               Cancel
-            </button>
+            </Button>
           </Dialog.Close>
-          <button
-            className={button({ variant: "ghost" })}
+          <Button
+            variant="ghost"
+            color="gray"
             onClick={handleSave}
             disabled={loading}
           >
             {loading ? "Saving…" : "Save"}
-          </button>
+          </Button>
         </Flex>
       </Dialog.Content>
     </Dialog.Root>
@@ -1215,32 +1218,32 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   <CompanyEditDialog company={company} onSaved={refetch} />
                 )}
                 {isAdmin && (
-                  <button
-                    className={button({ variant: "solid" })}
+                  <Button
+                    variant="soft"
                     onClick={handleEnhance}
                     disabled={isEnhancing}
                   >
                     <MagicWandIcon />
                     {isEnhancing ? "Enhancing…" : "Enhance"}
-                  </button>
+                  </Button>
                 )}
                 {isAdmin && company.website && (
-                  <button
-                    className={button({ variant: "solid" })}
+                  <Button
+                    variant="soft"
                     onClick={handleAnalyze}
                     disabled={isAnalyzing}
                   >
                     <MagicWandIcon />
                     {isAnalyzing ? "Analyzing…" : company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
-                  </button>
+                  </Button>
                 )}
                 {isAdmin && (
                   <AlertDialog.Root>
                     <AlertDialog.Trigger>
-                      <button className={button({ variant: "ghost" })} disabled={isDeleting}>
+                      <Button variant="ghost" color="gray" disabled={isDeleting}>
                         <TrashIcon />
                         {isDeleting ? "Deleting…" : "Delete"}
-                      </button>
+                      </Button>
                     </AlertDialog.Trigger>
                     <AlertDialog.Content maxWidth="400px">
                       <AlertDialog.Title>Delete company</AlertDialog.Title>
@@ -1249,10 +1252,10 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                       </AlertDialog.Description>
                       <Flex gap="3" mt="4" justify="end">
                         <AlertDialog.Cancel>
-                          <button className={button({ variant: "ghost" })}>Cancel</button>
+                          <Button variant="ghost" color="gray">Cancel</Button>
                         </AlertDialog.Cancel>
                         <AlertDialog.Action>
-                          <button className={button({ variant: "ghost" })} onClick={handleDelete}>Delete</button>
+                          <Button variant="ghost" color="gray" onClick={handleDelete}>Delete</Button>
                         </AlertDialog.Action>
                       </Flex>
                     </AlertDialog.Content>
@@ -1301,16 +1304,16 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                               remarkPlugins={[remarkGfm]}
                               components={{
                                 h1: ({ children }) => (
-                                  <h1 style={{ color: 'var(--gray-12)', fontWeight: 600, fontSize: '1.35em', marginTop: '1em', marginBottom: '0.4em' }}>{children}</h1>
+                                  <Heading as="h1" size="5" weight="bold" mt="4" mb="2">{children}</Heading>
                                 ),
                                 h2: ({ children }) => (
-                                  <h2 style={{ color: 'var(--gray-12)', fontWeight: 600, fontSize: '1.15em', marginTop: '0.9em', marginBottom: '0.35em' }}>{children}</h2>
+                                  <Heading as="h2" size="4" weight="bold" mt="3" mb="2">{children}</Heading>
                                 ),
                                 h3: ({ children }) => (
-                                  <h3 style={{ color: 'var(--gray-12)', fontWeight: 600, fontSize: '1em', marginTop: '0.75em', marginBottom: '0.3em' }}>{children}</h3>
+                                  <Heading as="h3" size="3" weight="bold" mt="3" mb="1">{children}</Heading>
                                 ),
                                 p: ({ children }) => (
-                                  <p style={{ color: 'var(--gray-11)', lineHeight: 1.7, marginBottom: '0.75em' }}>{children}</p>
+                                  <Text as="p" size="2" color="gray" mb="3">{children}</Text>
                                 ),
                                 ul: ({ children }) => (
                                   <ul style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ul>
@@ -1319,27 +1322,27 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                                   <ol style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ol>
                                 ),
                                 li: ({ children }) => (
-                                  <li style={{ color: 'var(--gray-11)', marginBottom: '0.25em', lineHeight: 1.6 }}>{children}</li>
+                                  <li style={{ marginBottom: '0.25em' }}>{children}</li>
                                 ),
                                 strong: ({ children }) => (
-                                  <strong style={{ color: 'var(--gray-12)', fontWeight: 600 }}>{children}</strong>
+                                  <Strong>{children}</Strong>
                                 ),
                                 em: ({ children }) => (
-                                  <em style={{ fontStyle: 'italic' }}>{children}</em>
+                                  <Em>{children}</Em>
                                 ),
                                 code: ({ children, className }) => {
                                   const isBlock = className?.includes('language-');
                                   return isBlock ? (
-                                    <code style={{ display: 'block', background: 'var(--gray-3)', borderRadius: 0, padding: '0.5em 0.75em', fontSize: '14px', fontFamily: 'monospace', overflowX: 'auto' }}>{children}</code>
+                                    <Code size="2" style={{ display: 'block', overflowX: 'auto', padding: '0.5em 0.75em' }}>{children}</Code>
                                   ) : (
-                                    <code style={{ background: 'var(--gray-3)', borderRadius: 0, padding: '2px 5px', fontSize: '14px', fontFamily: 'monospace' }}>{children}</code>
+                                    <Code size="2">{children}</Code>
                                   );
                                 },
                                 blockquote: ({ children }) => (
-                                  <blockquote style={{ borderLeft: '3px solid var(--accent-6)', paddingLeft: '0.75em', color: 'var(--gray-10)', margin: '0.5em 0' }}>{children}</blockquote>
+                                  <Blockquote>{children}</Blockquote>
                                 ),
                                 hr: () => (
-                                  <hr style={{ border: 'none', borderTop: '1px solid var(--gray-4)', margin: '1em 0' }} />
+                                  <Separator size="4" my="4" />
                                 ),
                               }}
                             >

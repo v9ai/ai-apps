@@ -55,6 +55,7 @@ type Company {
   ai_classification_confidence: Float!
   ai_classification_reason: String
   ai_tier: Int!
+  blocked: Boolean!
   category: CompanyCategory!
   contacts: [Contact!]!
   created_at: String!
@@ -640,6 +641,7 @@ type Mutation {
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   archiveEmail(id: Int!): ArchiveEmailResult!
+  blockCompany(id: Int!): Company!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
   createCompany(input: CreateCompanyInput!): Company!
@@ -675,6 +677,7 @@ type Mutation {
   sendScheduledEmailNow(resendId: String!): SendNowResult!
   syncResendEmails(companyId: Int): SyncResendResult!
   unarchiveEmail(id: Int!): ArchiveEmailResult!
+  unblockCompany(id: Int!): Company!
   unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
   updateCampaign(id: String!, input: UpdateCampaignInput!): EmailCampaign!
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
