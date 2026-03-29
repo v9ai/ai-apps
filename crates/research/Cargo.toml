@@ -153,3 +153,7 @@ path = "src/bin/last_week.rs"
 [[bin]]
 name = "harness-design-research"
 path = "src/bin/harness_design_research.rs"
+
+[[bin]]
+name = "kv-quant-research"
+path = "src/bin/kv_quant_research.rs"
