@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 
 DB_PATH = Path("./data/consultancies.lance")
-DEFAULT_OUTPUT = Path("./data/eu-ai-consultancies.txt")
+DEFAULT_OUTPUT = Path("./data/ai-consultancies.txt")
 
 
 def extract_domains(min_confidence: float = 0.0, output: Path = DEFAULT_OUTPUT):
