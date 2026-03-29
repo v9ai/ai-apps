@@ -314,7 +314,7 @@ impl ContributorsDb {
             "login", "html_url", "name", "email", "company", "location",
             "bio", "followers", "public_repos", "total_contributions",
             "repos_json", "rising_score", "contribution_density", "novelty",
-            "breadth", "gh_created_at",
+            "breadth", "realness", "gh_created_at",
         ];
         let mut stream: std::pin::Pin<
             Box<dyn futures::Stream<Item = std::result::Result<RecordBatch, lancedb::Error>> + Send>,
@@ -384,6 +384,7 @@ impl ContributorsDb {
                     contribution_density: get_f32("contribution_density"),
                     novelty: get_f32("novelty"),
                     breadth: get_f32("breadth"),
+                    realness: get_f32("realness"),
                     gh_created_at: get_str("gh_created_at").unwrap_or_default(),
                 });
             }
@@ -413,6 +414,7 @@ pub struct RisingStar {
     pub contribution_density: f32,
     pub novelty: f32,
     pub breadth: f32,
+    pub realness: f32,
     pub gh_created_at: String,
 }
 

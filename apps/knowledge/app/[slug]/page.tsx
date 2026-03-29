@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAllLessons, getLessonBySlug, getCategoryMeta, getRelatedLessons, getAudioMeta, AWS_DEEP_DIVE_SLUGS } from "@/lib/data";
+import { getAllLessons, getLessonBySlug, getCategoryMeta, getRelatedLessons, getCoursesForLesson, getAudioMeta, AWS_DEEP_DIVE_SLUGS } from "@/lib/data";
 import { Topbar } from "@/components/topbar";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { TableOfContents } from "@/components/toc";
@@ -9,6 +9,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { ArticleNav } from "@/components/article-nav";
 import { CategoryProgress } from "@/components/category-progress";
 import { RelatedLessons } from "@/components/related-lessons";
+import { ExternalCourses } from "@/components/external-courses";
 import { PageAnalytics } from "@/components/page-analytics";
 import { AudioPlayer } from "@/components/audio-player";
 import type { CategoryMeta } from "@/lib/data";
@@ -47,9 +48,10 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const catIdx = categoryLessons.findIndex((l) => l.slug === slug);
   const prerequisite = catIdx > 0 ? categoryLessons[catIdx - 1] : null;
 
-  const [meta, related, audioMeta, prevMeta, nextMeta] = await Promise.all([
+  const [meta, related, courses, audioMeta, prevMeta, nextMeta] = await Promise.all([
     getCategoryMeta(lesson.category),
     getRelatedLessons(slug),
+    getCoursesForLesson(slug),
     getAudioMeta(lesson.fileSlug),
     prev ? getCategoryMeta(prev.category) : Promise.resolve(null),
     next ? getCategoryMeta(next.category) : Promise.resolve(null),
@@ -113,6 +115,9 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
 
           {/* Continue Learning */}
           <RelatedLessons lessons={related} meta={meta} />
+
+          {/* Class Central courses */}
+          <ExternalCourses courses={courses} />
 
           {/* Prev/Next */}
           <ArticleNav

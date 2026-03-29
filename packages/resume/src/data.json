@@ -192,7 +192,7 @@
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
           "5-agent pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
-          "GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
+          "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
           "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
           "3 parallel research agents with active debate — cross-reading findings — producing GO/NO-GO verdicts.",
           "MLX scoring at 4,618 embeddings/sec on M1; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing."
@@ -205,7 +205,7 @@
         "githubUrl": "https://github.com/nicolad/agentic-healthcare",
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
-          "Biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
+          "Longitudinal biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
           "Risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
           "7 server actions with 15 test cases covering diverse metabolic profiles.",
           "Braintrust autoevals: Factuality and Relevance scorers, experiment tracking.",
@@ -233,7 +233,7 @@
         "githubUrl": "https://github.com/nicolad/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "Agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
+          "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
           "DeepSeek-as-judge scorer; 3-threshold gating filtering unsupported claims.",
           "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval.",
           "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2.",

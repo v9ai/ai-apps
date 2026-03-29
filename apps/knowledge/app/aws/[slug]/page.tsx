@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAllLessons, getLessonBySlug, getCategoryMeta, getRelatedLessons, getAudioMeta, AWS_DEEP_DIVE_SLUGS } from "@/lib/data";
+import { getAllLessons, getLessonBySlug, getCategoryMeta, getRelatedLessons, getCoursesForLesson, getAudioMeta, AWS_DEEP_DIVE_SLUGS } from "@/lib/data";
 import { Topbar } from "@/components/topbar";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { TableOfContents } from "@/components/toc";
@@ -9,6 +9,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { ArticleNav } from "@/components/article-nav";
 import { CategoryProgress } from "@/components/category-progress";
 import { RelatedLessons } from "@/components/related-lessons";
+import { ExternalCourses } from "@/components/external-courses";
 import { PageAnalytics } from "@/components/page-analytics";
 import { AudioPlayer } from "@/components/audio-player";
 
@@ -49,9 +50,10 @@ export default async function AwsDeepDivePage({ params }: { params: Promise<{ sl
   const catIdx = categoryLessons.findIndex((l) => l.slug === fileSlug);
   const prerequisite = catIdx > 0 ? categoryLessons[catIdx - 1] : null;
 
-  const [meta, related, audioMeta, prevMeta, nextMeta] = await Promise.all([
+  const [meta, related, courses, audioMeta, prevMeta, nextMeta] = await Promise.all([
     getCategoryMeta(lesson.category),
     getRelatedLessons(fileSlug),
+    getCoursesForLesson(fileSlug),
     getAudioMeta(lesson.fileSlug),
     prev ? getCategoryMeta(prev.category) : Promise.resolve(null),
     next ? getCategoryMeta(next.category) : Promise.resolve(null),
@@ -101,6 +103,7 @@ export default async function AwsDeepDivePage({ params }: { params: Promise<{ sl
         <div>
           <MarkdownProse content={lesson.content} />
           <RelatedLessons lessons={related} meta={meta} />
+          <ExternalCourses courses={courses} />
           <ArticleNav prev={prev} next={next} currentCategory={lesson.category} prevMeta={prevMeta} nextMeta={nextMeta} />
         </div>
         <TableOfContents markdown={lesson.content} />
