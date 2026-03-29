@@ -142,6 +142,10 @@ const LESSON_SLUGS = [
   "nodejs",
   "solid-principles",
   "acid-properties",
+  // Rust & Systems ML (91-93)
+  "rust-ml",
+  "candle",
+  "lance",
 ];
 
 export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
