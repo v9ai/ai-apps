@@ -191,11 +191,11 @@
         "githubUrl": "https://github.com/nicolad/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "5-agent pipeline: Discovery Scout → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
-          "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
-          "LLM enrichment: AI tier classification, tech stack detection, ATS discovery via multi-model routing (cheap-first, escalate on low confidence).",
-          "3 parallel research agents with active debate — cross-reading and challenging findings — producing GO/NO-GO verdicts.",
-          "MLX scoring at 4,618 embeddings/sec on M1 Metal; local email gen via Qwen2.5-3B; eval enforcer at 80% bar with LangSmith tracing."
+          "5-agent pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
+          "GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
+          "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
+          "3 parallel research agents with active debate — cross-reading findings — producing GO/NO-GO verdicts.",
+          "MLX scoring at 4,618 embeddings/sec on M1; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing."
         ]
       },
       {
@@ -205,11 +205,11 @@
         "githubUrl": "https://github.com/nicolad/agentic-healthcare",
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
-          "Biomarker trajectory analysis across 7 clinical metrics with abnormal flag detection and velocity computation.",
-          "Risk classification via cosine similarity (threshold 0.3) against 1024-dim Qwen embeddings across 7 tables.",
-          "7 server actions with 15 trajectory test cases covering diverse metabolic profiles.",
-          "Braintrust autoevals: Factuality and Relevance scorers, experiment tracking for model comparison.",
-          "Supabase + pgvector with Row Level Security, Drizzle ORM, medication and diagnosis management."
+          "Biomarker trajectory analysis across 7 clinical metrics with abnormal detection and velocity computation.",
+          "Risk classification via cosine similarity against 1024-dim Qwen embeddings across 7 tables.",
+          "7 server actions with 15 test cases covering diverse metabolic profiles.",
+          "Braintrust autoevals: Factuality and Relevance scorers, experiment tracking.",
+          "Supabase + pgvector with Row Level Security, Drizzle ORM, medication management."
         ]
       },
       {
@@ -220,10 +220,10 @@
         "websiteUrl": "https://agentic-knowledge.vercel.app/",
         "highlights": [
           "Knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
-          "Bayesian knowledge tracing (mastery, transit, slip, guess per concept per user), novice → expert classification.",
-          "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation; red-team harness.",
-          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI.",
-          "Streaming chat with thread-scoped persistence, 17-table Drizzle schema, pgvector embeddings, R2 audio storage."
+          "Bayesian knowledge tracing (mastery, transit, slip, guess per concept), novice → expert classification.",
+          "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
+          "LangGraph 6-agent fan-out/fan-in editorial pipeline with revision loops, DeepSeek R1 + OpenAI.",
+          "Streaming chat with thread-scoped persistence, 17-table Drizzle schema, pgvector embeddings."
         ]
       },
       {
@@ -233,11 +233,11 @@
         "githubUrl": "https://github.com/nicolad/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
-          "DeepSeek-as-judge scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported claims.",
-          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval across LangGraph workers.",
-          "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2 via durable background tasks.",
-          "Harbor eval harness: containerized trials across 6-20 non-deterministic agents with standardized task/grader format."
+          "Agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
+          "DeepSeek-as-judge scorer; 3-threshold gating filtering unsupported claims.",
+          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B eval.",
+          "Serverless TTS: RAG-based chunking, streaming audio to Cloudflare R2.",
+          "Harbor eval harness: containerized trials across 6-20 non-deterministic agents."
         ]
       },
       {
@@ -248,10 +248,10 @@
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
           "6-agent pipeline: Attacker, Defender, Judge, citation-verifier, jurisdiction-expert, brief-rewriter.",
-          "Citation verification and fabrication detection with chain-of-thought audit trails.",
-          "Jurisdiction-specific precedent hierarchy mapping, multi-jurisdiction comparison.",
-          "Real-time SSE streaming with per-agent audit logging.",
-          "Promptfoo: 8 YAML eval suites, LLM-as-judge rubrics; DeepTeam red-teaming via 7 attack methods."
+          "Citation verification and fabrication detection with audit trails.",
+          "Jurisdiction-specific precedent mapping, multi-jurisdiction comparison.",
+          "Real-time SSE streaming with per-agent logging.",
+          "Promptfoo: 8 eval suites, LLM-as-judge rubrics; DeepTeam red-teaming."
         ]
       }
     ]

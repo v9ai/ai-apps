@@ -26,6 +26,16 @@ pub struct ContributorRecord {
     pub total_contributions: u32,
 }
 
+/// Weights for each score component: (density, novelty, breadth, activity, obscurity).
+/// Must sum to 1.0.
+pub const SCORE_WEIGHTS: (f32, f32, f32, f32, f32) = (0.35, 0.25, 0.20, 0.10, 0.10);
+
+/// Returns true for bot logins (dependabot, renovate, GitHub Apps, etc.).
+pub fn is_bot(login: &str) -> bool {
+    let l = login.to_ascii_lowercase();
+    l.ends_with("[bot]") || l.contains("dependabot") || l.contains("renovate")
+}
+
 /// Breakdown of a contributor's rising-star score.
 #[derive(Debug, Clone)]
 pub struct RisingScore {
@@ -41,11 +51,15 @@ pub struct RisingScore {
     pub activity: f32,
     /// Inverse-fame penalty: 1 / (1 + followers / 500).
     pub obscurity: f32,
+    /// Ghost-account penalty: 0.0 when public_repos == 0 && followers == 0,
+    /// scaling to 1.0 as the account shows real activity.
+    pub realness: f32,
 }
 
 /// Compute rising-star score for a contributor.
 ///
 /// Formula rewards: low followers + high commits + new account + multi-repo breadth.
+/// Ghost accounts (0 public repos, 0 followers) are penalised via `realness`.
 pub fn compute_rising_score(record: &ContributorRecord) -> RisingScore {
     let followers = record.user.followers as f32;
     let total_contributions = record.total_contributions as f32;
@@ -75,19 +89,25 @@ pub fn compute_rising_score(record: &ContributorRecord) -> RisingScore {
     // Obscurity bonus: less famous = more "rising"
     let obscurity = 1.0 / (1.0 + followers / 500.0);
 
-    let score = 0.35 * contribution_density
-        + 0.25 * novelty
-        + 0.20 * breadth
-        + 0.10 * activity
-        + 0.10 * obscurity;
+    // Ghost-account guard: require at least some public presence.
+    // tanh(0) = 0, tanh(large) → 1; reaches 0.76 at public_repos+followers=1.
+    let realness = ((public_repos + followers) * 0.1_f32.recip().recip()).tanh();
+
+    let (w_d, w_n, w_b, w_a, w_o) = SCORE_WEIGHTS;
+    let raw = w_d * contribution_density
+        + w_n * novelty
+        + w_b * breadth
+        + w_a * activity
+        + w_o * obscurity;
 
     RisingScore {
-        score: score.clamp(0.0, 1.0),
+        score: (raw * realness).clamp(0.0, 1.0),
         contribution_density,
         novelty,
         breadth,
         activity,
         obscurity,
+        realness,
     }
 }
 
@@ -119,6 +139,7 @@ fn schema() -> Arc<Schema> {
         Field::new("contribution_density", DataType::Float32, false),
         Field::new("novelty", DataType::Float32, false),
         Field::new("breadth", DataType::Float32, false),
+        Field::new("realness", DataType::Float32, false),
         Field::new("scraped_at", DataType::Utf8, false),
     ]))
 }
@@ -254,6 +275,9 @@ impl ContributorsDb {
                 )),
                 Arc::new(Float32Array::from_iter_values(
                     scores.iter().map(|s| s.breadth),
+                )),
+                Arc::new(Float32Array::from_iter_values(
+                    scores.iter().map(|s| s.realness),
                 )),
                 Arc::new(StringArray::from_iter_values(
                     std::iter::repeat(now.as_str()).take(n),
