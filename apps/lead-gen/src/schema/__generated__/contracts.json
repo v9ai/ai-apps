@@ -10,8 +10,8 @@
         "enhanced",
         "role_match",
         "role_nomatch",
-        "eu_remote",
-        "non_eu",
+        "remote_match",
+        "remote_nomatch",
         "error",
         "reported"
       ]

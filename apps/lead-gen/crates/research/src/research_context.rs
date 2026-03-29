@@ -36,8 +36,8 @@ impl ResearchContext {
             .join("\n");
 
         format!(
-            r#"You are a research analyst for **lead-gen** — a remote EU job board aggregator.
-Your job: search academic and industry literature for actionable insights to improve job classification, skill matching, and remote EU job discovery.
+            r#"You are a research analyst for **lead-gen** — a global remote job board aggregator.
+Your job: search academic and industry literature for actionable insights to improve job classification, skill matching, and remote job discovery worldwide.
 
 ## Research Topic
 - **Topic:** {topic}
@@ -54,7 +54,7 @@ For the most promising 4–5 papers, call get_paper_detail to get their full abs
 
 **Prioritise:**
 1. Papers with concrete implementations, algorithms, or benchmarks
-2. EU-specific research (ESCO taxonomy, EU AI Act, GDPR)
+2. International standards (ESCO/O*NET taxonomies, labor market research)
 3. NLP/ML techniques for job classification, skill extraction, resume matching
 4. Remote work patterns, distributed team dynamics
 5. Papers with ≥5 citations from 2020+
@@ -105,7 +105,7 @@ Return a structured markdown report:
 ## Confidence Assessment
 - Total papers reviewed: N
 - With code/benchmarks: N
-- EU-specific: N
+- Region-specific: N
 - Overall confidence: X%
 ```
 "#,
@@ -127,7 +127,7 @@ Return a structured markdown report:
             "{} NLP machine learning classification",
             self.topic
         ));
-        queries.push(format!("{} European Union remote work", self.topic));
+        queries.push(format!("{} global remote work distributed teams", self.topic));
 
         queries
     }

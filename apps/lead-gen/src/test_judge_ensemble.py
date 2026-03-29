@@ -102,7 +102,7 @@ class TestOllamaJudge:
         result = await judge.evaluate(
             summary="Acme Corp is a fast-growing cybersecurity startup.",
             source_data="Founded 2022, $12M Series A, 50 employees.",
-            icp_profile="B2B SaaS, 50-200 headcount, EU-based",
+            icp_profile="B2B SaaS, 50-200 headcount, global",
             report_id="report_001",
         )
         assert isinstance(result, JudgmentScore)

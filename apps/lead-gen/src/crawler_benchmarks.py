@@ -658,7 +658,7 @@ def bench_embedding(config: BenchmarkConfig) -> List[BenchmarkResult]:
     sample_text = (
         "We are looking for a Senior Machine Learning Engineer to join our "
         "remote-first team building next-generation NLP pipelines for lead "
-        "generation and entity resolution across European markets."
+        "generation and entity resolution across global markets."
     )
     batch_texts = [sample_text] * config.batch_size
 
