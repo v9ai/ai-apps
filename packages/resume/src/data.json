@@ -189,14 +189,13 @@
         "name": "Agentic Lead Gen",
         "description": "Autonomous B2B lead generation platform with a 5-agent agentic pipeline (Discovery Scout → Enrichment Specialist → Contact Hunter + QA Auditor → Outreach Composer), GraphQL API backed by Neon PostgreSQL, LLM-powered company enrichment, MLX local contact scoring at 4,618 embeddings/sec, and LangSmith observability.",
         "githubUrl": "https://github.com/nicolad/agentic-lead-gen",
-        "websiteUrl": "",
+        "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "Agentic pipeline, B2B lead gen.",
-          "5-agent dependency-graph pipeline: Discovery Scout (no deps) → Enrichment Specialist → Contact Hunter + QA Auditor (parallel) → Outreach Composer with mandatory plan-approval gate before any email send.",
-          "GraphQL API with Apollo Server 5, DataLoader-based N+1 prevention, Drizzle ORM + Neon PostgreSQL, and GraphQL Codegen for end-to-end TypeScript type safety from DB schema through resolver signatures to Apollo Client hooks.",
-          "LLM company enrichment: AI tier classification, tech stack detection, ATS board discovery via DeepSeek and OpenRouter with multi-model routing (cheap model first, escalate on low confidence).",
-          "Competing Hypotheses Research Squad: 3 parallel specialist agents with active debate protocol — agents cross-read and challenge each other's findings — producing GO/NO-GO verdicts with confidence scores.",
-          "MLX contact scoring at 4,618 embeddings/sec on M1 Metal; local email generation via mlx_lm.server + Qwen2.5-3B; eval-driven strategy enforcer validates every prompt/model change against 80% accuracy bar with LangSmith distributed tracing."
+          "5-agent pipeline: Discovery Scout → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
+          "GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, end-to-end TypeScript codegen).",
+          "LLM enrichment: AI tier classification, tech stack detection, ATS discovery via multi-model routing (cheap-first, escalate on low confidence).",
+          "3 parallel research agents with active debate — cross-reading and challenging findings — producing GO/NO-GO verdicts.",
+          "MLX scoring at 4,618 embeddings/sec on M1 Metal; local email gen via Qwen2.5-3B; eval enforcer at 80% accuracy bar with LangSmith tracing."
         ]
       },
       {
@@ -206,12 +205,11 @@
         "githubUrl": "https://github.com/nicolad/agentic-healthcare",
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
-          "Clinical AI, vector search.",
-          "Biomarker trajectory analysis across 7 clinical metrics, abnormal flag detection, velocity computation.",
-          "Risk classification with cosine similarity scoring (threshold 0.3) against 1024-dim Qwen embeddings across 7 embedding tables.",
-          "7 protected server actions (blood tests, conditions, medications, symptoms, trajectory, search) with 15 trajectory test cases covering diverse metabolic profiles.",
-          "Braintrust autoevals: Factuality and Relevance scorers validating clinical accuracy, experiment tracking for model version comparison.",
-          "Supabase + pgvector backend with Row Level Security, Drizzle ORM, medication tracking, appointment scheduling, diagnosis management."
+          "Biomarker trajectory analysis across 7 clinical metrics with abnormal flag detection and velocity computation.",
+          "Risk classification via cosine similarity (threshold 0.3) against 1024-dim Qwen embeddings across 7 tables.",
+          "7 server actions with 15 trajectory test cases covering diverse metabolic profiles.",
+          "Braintrust autoevals: Factuality and Relevance scorers, experiment tracking for model comparison.",
+          "Supabase + pgvector with Row Level Security, Drizzle ORM, medication and diagnosis management."
         ]
       },
       {
@@ -221,12 +219,11 @@
         "githubUrl": "https://github.com/nicolad/knowledge",
         "websiteUrl": "https://agentic-knowledge.vercel.app/",
         "highlights": [
-          "Knowledge graph, Bayesian tracing.",
-          "Knowledge graph with 6 relationship types, pgvector cosine similarity search at 1024 dimensions.",
-          "Bayesian knowledge tracing (p_mastery, p_transit, p_slip, p_guess per concept per user), mastery classification (novice → expert), 9 interaction event types with time-on-page analytics.",
-          "DeepEval framework: Coherence, Factual Grounding, Completeness, Readability tests at 0.7 threshold; RAG triad evaluation (Faithfulness, Answer Relevancy, Contextual Relevancy); LLM-as-judge consistency; red-team adversarial harness.",
-          "LangGraph editorial pipeline: 6-agent fan-out/fan-in workflow (researcher, SEO, intro-strategist, writer, editor) with multi-round revision loops, DeepSeek R1 + OpenAI models.",
-          "Streaming DeepSeek chat with thread-scoped message persistence, context injection from lesson data, 17-table Drizzle ORM schema with pgvector embeddings, Cloudflare R2 audio storage."
+          "Knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
+          "Bayesian knowledge tracing (mastery, transit, slip, guess per concept per user), novice → expert classification.",
+          "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation; red-team harness.",
+          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI.",
+          "Streaming chat with thread-scoped persistence, 17-table Drizzle schema, pgvector embeddings, R2 audio storage."
         ]
       },
       {
