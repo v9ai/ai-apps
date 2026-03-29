@@ -71,6 +71,24 @@ export const pipelineEdges = [
   { id: "pe8-9", source: "p8", target: "p9", animated: true },
 ];
 
+export const finetuneNodes = [
+  { id: "ft1", position: { x: 250, y: 0 }, data: { label: "Base Qwen3-1.7B" }, type: "input" },
+  { id: "ft2", position: { x: 250, y: 140 }, data: { label: "SFT on 25.2k\nscraping trajectories" } },
+  { id: "ft3", position: { x: 50, y: 280 }, data: { label: "Ignore\nnavigation / ads" } },
+  { id: "ft4", position: { x: 250, y: 280 }, data: { label: "Recognize\nsemantic blocks" } },
+  { id: "ft5", position: { x: 450, y: 280 }, data: { label: "Output\nconsistent JSON" } },
+  { id: "ft6", position: { x: 250, y: 420 }, data: { label: "sgai-qwen3-1.7b\n(fine-tuned)" }, type: "output" },
+];
+export const finetuneEdges = [
+  { id: "fte1", source: "ft1", target: "ft2", animated: true },
+  { id: "fte2", source: "ft2", target: "ft3" },
+  { id: "fte3", source: "ft2", target: "ft4", animated: true },
+  { id: "fte4", source: "ft2", target: "ft5" },
+  { id: "fte5", source: "ft3", target: "ft6" },
+  { id: "fte6", source: "ft4", target: "ft6", animated: true },
+  { id: "fte7", source: "ft5", target: "ft6" },
+];
+
 export const benchmarkNodes = [
   { id: "bm0", position: { x: 0, y: 175 }, data: { label: "SWDE Benchmark\n(124k annotations)" }, type: "input" },
   { id: "bm1", position: { x: 280, y: 0 }, data: { label: "SLOT (7B+)\nTwo-stage pipeline" } },
@@ -153,6 +171,20 @@ The dataset's power isn't its size — 100k examples is modest by modern standar
 The SFT step is straightforward: standard next-token prediction loss on instruction-formatted pairs. No RLHF, no DPO. The base model already has language and structural capabilities; fine-tuning teaches it one specific input-output mapping. The `model_used` field allows filtering for examples solved by specific base models, enabling targeted knowledge distillation. The `schema_complexity_score` prevents the model from wasting capacity on trivial extractions.
 
 At 1.7B parameters the training runs in 4–8 hours on an A100. The BF16 model is the primary artifact — full precision, runs on a single RTX 3090 or M2 MacBook Pro. The GGUF export is the deployment artifact. Q4_K_M quantization drops it to ~1.1 GB while preserving most accuracy.
+
+## How Fine-Tuning Reshapes the Extraction Task
+
+The base Qwen3-1.7B model knows language. Fine-tuning teaches it one specific job.
+
+<Flow nodes={finetuneNodes} edges={finetuneEdges} height={500} />
+
+The key shift is from **in-context learning** to **in-weights learning**. A base model prompted to extract data must figure out what to ignore, what structure to follow, and what format to emit — every call, from a fresh context window. The fine-tuned model has internalized those rules:
+
+- **Noise suppression** — navigation bars, cookie banners, and ad markup are structurally similar across millions of pages in the training set. The model learns to treat them as irrelevant without being told.
+- **Semantic block recognition** — repeating elements like product cards or job listings share semantics even when HTML class names differ site to site. SFT on diverse trajectories builds this abstraction into weights.
+- **Format consistency** — the 25.2k training examples are all instruction-formatted pairs with valid JSON as the target. The model's output distribution shifts toward valid, schema-conforming JSON without explicit post-processing.
+
+The result is faster inference (shorter prompts), higher reliability on unseen layouts, and no per-call cost for system prompt tokens.
 
 ## The Benchmark: Specialization Beats Scale
 
