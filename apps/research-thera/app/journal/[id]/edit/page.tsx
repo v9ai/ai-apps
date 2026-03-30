@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import {
+  Badge,
   Box,
   Flex,
   Heading,
@@ -24,6 +25,7 @@ import {
   useUpdateJournalEntryMutation,
   useGetFamilyMembersQuery,
   useGetGoalsQuery,
+  useGetAllTagsQuery,
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
@@ -49,6 +51,9 @@ function JournalEditContent() {
 
   const { data: goalsData } = useGetGoalsQuery();
   const goals = goalsData?.goals ?? [];
+
+  const { data: allTagsData } = useGetAllTagsQuery();
+  const allTags = allTagsData?.allTags ?? [];
 
   const [form, setForm] = useState({
     title: "",
@@ -323,6 +328,20 @@ function JournalEditContent() {
                 }
                 disabled={saving}
               />
+              {(() => {
+                const currentTags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+                const suggestions = allTags.filter((t) => !currentTags.includes(t));
+                return suggestions.length > 0 ? (
+                  <Flex gap="1" wrap="wrap" mt="1">
+                    {suggestions.map((tag) => (
+                      <Badge key={tag} variant="outline" size="1" style={{ cursor: "pointer" }}
+                        onClick={() => setForm((f) => ({ ...f, tags: f.tags.trim() ? `${f.tags}, ${tag}` : tag }))}>
+                        + {tag}
+                      </Badge>
+                    ))}
+                  </Flex>
+                ) : null;
+              })()}
             </label>
 
             <Text as="label" size="2">

@@ -2671,6 +2671,21 @@ export async function getTodayLogForHabit(habitId: number, userId: string, today
 }
 
 // ============================================
+// Tags
+// ============================================
+
+export async function getAllTags(userId: string): Promise<string[]> {
+  const rows = await neonSql`
+    SELECT DISTINCT tag FROM (
+      SELECT jsonb_array_elements_text(tags::jsonb) AS tag FROM journal_entries WHERE user_id = ${userId} AND tags IS NOT NULL AND tags != '[]'
+      UNION
+      SELECT jsonb_array_elements_text(tags::jsonb) AS tag FROM goals WHERE user_id = ${userId} AND tags IS NOT NULL AND tags != '[]'
+    ) t ORDER BY tag
+  `;
+  return rows.map((r) => r.tag as string);
+}
+
+// ============================================
 // Namespace export
 // ============================================
 
@@ -2695,6 +2710,8 @@ export const db = {
   updateGoal,
   saveParentAdvice,
   deleteGoal,
+  // Tags
+  getAllTags,
   // Research
   upsertTherapyResearch,
   listTherapyResearch,

@@ -944,6 +944,7 @@ type PriorityRecommendation {
 type Query {
   allNotes: [Note!]!
   allStories: [Story!]!
+  allTags: [String!]!
   audioFromR2(key: String!): AudioFromR2Result
   behaviorObservation(id: Int!): BehaviorObservation
   behaviorObservations(familyMemberId: Int!, goalId: Int): [BehaviorObservation!]!

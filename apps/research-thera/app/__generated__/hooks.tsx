@@ -1420,6 +1420,7 @@ export type Query = {
   __typename?: 'Query';
   allNotes: Array<Note>;
   allStories: Array<Story>;
+  allTags: Array<Scalars['String']['output']>;
   audioFromR2?: Maybe<AudioFromR2Result>;
   behaviorObservation?: Maybe<BehaviorObservation>;
   behaviorObservations: Array<BehaviorObservation>;
@@ -2288,6 +2289,11 @@ export type GetAllStoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetAllStoriesQuery = { __typename?: 'Query', allStories: Array<{ __typename?: 'Story', id: number, goalId?: number | null, issueId?: number | null, feedbackId?: number | null, createdBy?: string | null, content: string, language?: string | null, minutes?: number | null, audioKey?: string | null, audioUrl?: string | null, audioGeneratedAt?: string | null, createdAt: string, updatedAt: string, goal?: { __typename?: 'Goal', id: number, title: string, slug?: string | null } | null }> };
+
+export type GetAllTagsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAllTagsQuery = { __typename?: 'Query', allTags: Array<string> };
 
 export type GetAudioFromR2QueryVariables = Exact<{
   key: Scalars['String']['input'];
@@ -4843,6 +4849,46 @@ export type GetAllStoriesQueryHookResult = ReturnType<typeof useGetAllStoriesQue
 export type GetAllStoriesLazyQueryHookResult = ReturnType<typeof useGetAllStoriesLazyQuery>;
 export type GetAllStoriesSuspenseQueryHookResult = ReturnType<typeof useGetAllStoriesSuspenseQuery>;
 export type GetAllStoriesQueryResult = Apollo.QueryResult<GetAllStoriesQuery, GetAllStoriesQueryVariables>;
+export const GetAllTagsDocument = gql`
+    query GetAllTags {
+  allTags
+}
+    `;
+
+/**
+ * __useGetAllTagsQuery__
+ *
+ * To run a query within a React component, call `useGetAllTagsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAllTagsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAllTagsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAllTagsQuery(baseOptions?: Apollo.QueryHookOptions<GetAllTagsQuery, GetAllTagsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAllTagsQuery, GetAllTagsQueryVariables>(GetAllTagsDocument, options);
+      }
+export function useGetAllTagsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAllTagsQuery, GetAllTagsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAllTagsQuery, GetAllTagsQueryVariables>(GetAllTagsDocument, options);
+        }
+// @ts-ignore
+export function useGetAllTagsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAllTagsQuery, GetAllTagsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllTagsQuery, GetAllTagsQueryVariables>;
+export function useGetAllTagsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllTagsQuery, GetAllTagsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllTagsQuery | undefined, GetAllTagsQueryVariables>;
+export function useGetAllTagsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllTagsQuery, GetAllTagsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAllTagsQuery, GetAllTagsQueryVariables>(GetAllTagsDocument, options);
+        }
+export type GetAllTagsQueryHookResult = ReturnType<typeof useGetAllTagsQuery>;
+export type GetAllTagsLazyQueryHookResult = ReturnType<typeof useGetAllTagsLazyQuery>;
+export type GetAllTagsSuspenseQueryHookResult = ReturnType<typeof useGetAllTagsSuspenseQuery>;
+export type GetAllTagsQueryResult = Apollo.QueryResult<GetAllTagsQuery, GetAllTagsQueryVariables>;
 export const GetAudioFromR2Document = gql`
     query GetAudioFromR2($key: String!) {
   audioFromR2(key: $key) {
