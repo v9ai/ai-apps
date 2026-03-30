@@ -16,7 +16,6 @@ use linkedin_posts::scoring::{title_has_ai_signal, title_has_engineering_signal}
 
 const AI_THRESHOLD: f32 = 0.35;
 const INTENT_THRESHOLD: f32 = 0.4;
-const MIN_POSTS_FOR_VERDICT: usize = 3;
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -24,7 +23,6 @@ const MIN_POSTS_FOR_VERDICT: usize = 3;
 enum Verdict {
     AiRelated,
     NotAi,
-    Insufficient,
 }
 
 #[derive(Debug)]
@@ -130,11 +128,6 @@ fn compute_ai_affinity(contact: &Contact, posts: &[StoredPost]) -> AffinityResul
         weighted_avg_ai: ai_ratio,
         verdict,
     }
-}
-
-#[inline]
-fn sigmoid(x: f32) -> f32 {
-    1.0 / (1.0 + (-x).exp())
 }
 
 // ── Neon tag update ─────────────────────────────────────────────────────────
