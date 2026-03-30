@@ -5,6 +5,7 @@ mutation UpdateGoal($id: Int!, $input: UpdateGoalInput!) {
     title
     description
     status
+    tags
     familyMemberId
     familyMember {
       id

@@ -304,6 +304,7 @@ export async function getGoal(goalId: number, createdBy: string) {
     parentAdviceGeneratedAt: (row.parent_advice_generated_at as string) || null,
     priority: (row.priority as string) || "medium",
     targetDate: (row.target_date as string) || null,
+    tags: row.tags ? JSON.parse(row.tags as string) : [],
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -336,6 +337,7 @@ export async function getGoalBySlug(slug: string, createdBy: string) {
     parentAdviceGeneratedAt: (row.parent_advice_generated_at as string) || null,
     priority: (row.priority as string) || "medium",
     targetDate: (row.target_date as string) || null,
+    tags: row.tags ? JSON.parse(row.tags as string) : [],
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -404,6 +406,7 @@ export async function updateGoal(
     status?: string;
     priority?: string;
     targetDate?: string | null;
+    tags?: string[];
     storyLanguage?: string | null;
   },
 ) {
@@ -417,6 +420,7 @@ export async function updateGoal(
   if (updates.status !== undefined) { fields.push("status = ?"); args.push(updates.status); }
   if (updates.priority !== undefined) { fields.push("priority = ?"); args.push(updates.priority); }
   if (updates.targetDate !== undefined) { fields.push("target_date = ?"); args.push(updates.targetDate); }
+  if (updates.tags !== undefined) { fields.push("tags = ?"); args.push(JSON.stringify(updates.tags)); }
   if (updates.storyLanguage !== undefined) { fields.push("story_language = ?"); args.push(updates.storyLanguage); }
 
   fields.push("updated_at = NOW()");
@@ -2372,6 +2376,7 @@ export async function getGoalById(goalId: number) {
     parentAdvice: (row.parent_advice as string) || null,
     parentAdviceLanguage: (row.parent_advice_language as string) || null,
     parentAdviceGeneratedAt: (row.parent_advice_generated_at as string) || null,
+    tags: row.tags ? JSON.parse(row.tags as string) : [],
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };

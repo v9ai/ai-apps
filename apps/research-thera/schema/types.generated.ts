@@ -665,6 +665,7 @@ export type Goal = {
   stories: Array<Story>;
   storyLanguage?: Maybe<Scalars['String']['output']>;
   subGoals: Array<Goal>;
+  tags?: Maybe<Array<Scalars['String']['output']>>;
   targetDate?: Maybe<Scalars['String']['output']>;
   therapeuticText?: Maybe<Scalars['String']['output']>;
   therapeuticTextGeneratedAt?: Maybe<Scalars['String']['output']>;
@@ -1834,6 +1835,7 @@ export type UpdateGoalInput = {
   priority?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
   storyLanguage?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
   targetDate?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2638,6 +2640,7 @@ export type GoalResolvers<ContextType = GraphQLContext, ParentType extends Resol
   stories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType>;
   storyLanguage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   subGoals?: Resolver<Array<ResolversTypes['Goal']>, ParentType, ContextType>;
+  tags?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   targetDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   therapeuticText?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   therapeuticTextGeneratedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

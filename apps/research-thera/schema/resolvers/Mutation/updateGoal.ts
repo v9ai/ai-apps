@@ -19,6 +19,7 @@ export const updateGoal: NonNullable<MutationResolvers['updateGoal']> = async (
     status: args.input.status ?? undefined,
     priority: args.input.priority ?? undefined,
     targetDate: args.input.targetDate ?? undefined,
+    tags: args.input.tags ?? undefined,
     storyLanguage: args.input.storyLanguage ?? undefined,
   });
 
@@ -34,6 +35,7 @@ export const updateGoal: NonNullable<MutationResolvers['updateGoal']> = async (
     status: goal.status,
     priority: goal.priority,
     targetDate: goal.targetDate,
+    tags: goal.tags,
     therapeuticText: goal.therapeuticText,
     therapeuticTextLanguage: goal.therapeuticTextLanguage,
     therapeuticTextGeneratedAt: goal.therapeuticTextGeneratedAt,
