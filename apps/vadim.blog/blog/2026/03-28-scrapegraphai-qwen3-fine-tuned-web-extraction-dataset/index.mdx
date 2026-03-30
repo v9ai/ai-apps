@@ -142,7 +142,7 @@ export const decisionEdges = [
   { id: "dce7", source: "dc5", target: "dc6", animated: true, label: "No", style: { stroke: '#16a34a', strokeWidth: 2 }, labelStyle: { fill: '#4ade80', fontSize: 11, fontWeight: 700 }, labelBgStyle: { fill: '#052e16' } },
 ];
 
-Leading cloud extraction APIs are orders of magnitude larger than the model that just beat them at structured web extraction. This isn't a marginal win — it's a 3.4 percentage point lead on the de facto standard SWDE benchmark. The secret isn't a novel architecture; it's domain-specific fine-tuning on a 100,000-example dataset of real scraping trajectories. The [ScrapeGraphAI team's release](https://arxiv.org/abs/2602.15189) of a fine-tuned [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) model flips the conventional scaling law on its head and delivers a complete open-source stack (model and dataset under Apache 2.0, library under MIT) for production. This is a blueprint for how narrow, expert models will outperform generalist giants — if you have the right data.
+Leading cloud extraction APIs are orders of magnitude larger than the model that just beat them at structured web extraction. This isn't a marginal win — it's a 3.4 percentage point lead on the de facto standard SWDE benchmark. The secret isn't a novel architecture; it's domain-specific fine-tuning on a 100,000-example dataset of real scraping trajectories. The [ScrapeGraphAI](https://scrapegraphai.com) team's [release](https://arxiv.org/abs/2602.15189) of a fine-tuned [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) model flips the conventional scaling law on its head and delivers a complete open-source stack (model and dataset under Apache 2.0, library under MIT) for production. This is a blueprint for how narrow, expert models will outperform generalist giants — if you have the right data.
 
 <!-- truncate -->
 
@@ -322,7 +322,7 @@ The sweet spot for `sgai-qwen3-1.7b` is the middle ground: tasks too variable fo
 
 ## Getting Started
 
-Install the [ScrapeGraphAI library](https://github.com/ScrapeGraphAI/Scrapegraph-ai) and point it at the local model server:
+Install the [ScrapeGraphAI](https://scrapegraphai.com) library ([GitHub](https://github.com/ScrapeGraphAI/Scrapegraph-ai)) and point it at the local model server:
 
 ```bash
 pip install scrapegraphai
@@ -486,7 +486,7 @@ That gap is where the methodological frontier lies. The distillation flywheel de
 ## FAQ
 
 **Q: What is ScrapeGraphAI?**
-A: An open-source Python library that uses LLMs to build web scraping pipelines via natural language prompts. The [`sgai-qwen3-1.7b`](https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b) model is fine-tuned specifically for its extraction tasks.
+A: An open-source Python library ([scrapegraphai.com](https://scrapegraphai.com)) that uses LLMs to build web scraping pipelines via natural language prompts. The [`sgai-qwen3-1.7b`](https://huggingface.co/scrapegraphai/sgai-qwen3-1.7b) model is fine-tuned specifically for its extraction tasks.
 
 **Q: How does the 1.7B model beat larger cloud APIs?**
 A: Fine-tuning on 25.2k real scraping trajectories teaches the model one constrained task — HTML in, JSON out — densely covering the problem space that larger generalists spread capacity across every task.

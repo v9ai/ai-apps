@@ -105,11 +105,18 @@ def export_role_tag(conn, out_dir: Path, stats_only: bool = False):
         print(f"role-tag: {len(rows)} total ({ai_true} AI, {ai_false} not AI)")
         return
 
+    # Stratified 90/10 split to preserve label balance in val set
     random.seed(42)
-    random.shuffle(rows)
-
-    split = int(len(rows) * 0.9)
-    train, valid = rows[:split], rows[split:]
+    positives = [r for r in rows if r[4]]
+    negatives = [r for r in rows if not r[4]]
+    random.shuffle(positives)
+    random.shuffle(negatives)
+    pos_split = int(len(positives) * 0.9)
+    neg_split = int(len(negatives) * 0.9)
+    train = positives[:pos_split] + negatives[:neg_split]
+    valid = positives[pos_split:] + negatives[neg_split:]
+    random.shuffle(train)
+    random.shuffle(valid)
 
     for name, subset in [("train", train), ("valid", valid)]:
         path = out_dir / "role-tag" / f"{name}.jsonl"
@@ -163,11 +170,18 @@ def export_remote_worldwide(conn, out_dir: Path, stats_only: bool = False):
         print(f"remote-worldwide: {len(rows)} total ({pos} remote, {neg} not remote)")
         return
 
+    # Stratified 90/10 split to preserve label balance in val set
     random.seed(42)
-    random.shuffle(rows)
-
-    split = int(len(rows) * 0.9)
-    train, valid = rows[:split], rows[split:]
+    positives = [r for r in rows if r[4]]
+    negatives = [r for r in rows if not r[4]]
+    random.shuffle(positives)
+    random.shuffle(negatives)
+    pos_split = int(len(positives) * 0.9)
+    neg_split = int(len(negatives) * 0.9)
+    train = positives[:pos_split] + negatives[:neg_split]
+    valid = positives[pos_split:] + negatives[neg_split:]
+    random.shuffle(train)
+    random.shuffle(valid)
 
     for name, subset in [("train", train), ("valid", valid)]:
         path = out_dir / "remote-worldwide" / f"{name}.jsonl"
