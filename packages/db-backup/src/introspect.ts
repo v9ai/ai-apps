@@ -46,10 +46,10 @@ export async function exportTableData(
 ): Promise<{ jsonl: string; rowCount: number }> {
   const sql = neon(databaseUrl);
 
-  // Use identifier quoting to handle reserved words
-  const rows = await sql(`SELECT * FROM "${tableName}"`);
+  // neon() only supports tagged templates; use sql.query() for dynamic table names
+  const rows = await sql.query(`SELECT * FROM "${tableName}"`);
 
-  const lines = rows.map((row) => JSON.stringify(row));
+  const lines = rows.map((row: Record<string, unknown>) => JSON.stringify(row));
   return {
     jsonl: lines.join("\n"),
     rowCount: rows.length,
