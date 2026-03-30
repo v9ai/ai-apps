@@ -1,8 +1,17 @@
 "use client";
 
-import { Button, Card, Flex, Heading, Text, TextField } from "@radix-ui/themes";
+import {
+  Button,
+  Card,
+  Flex,
+  Heading,
+  Spinner,
+  Text,
+  TextField,
+} from "@radix-ui/themes";
 import Link from "next/link";
 import { useState } from "react";
+import { css } from "styled-system/css";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -20,14 +29,27 @@ export function ForgotPasswordForm() {
 
   if (success) {
     return (
-      <Card size="3" style={{ width: "100%", maxWidth: 400 }}>
+      <Card
+        size="3"
+        className={css({ width: "100%", maxWidth: "420px" })}
+      >
         <Flex direction="column" gap="3">
           <Heading size="6">Password reset</Heading>
           <Text size="2" color="gray">
-            Password reset is not yet available. Please create a new account or contact support.
+            Password reset is not yet available. Please create a new account or
+            contact support.
           </Text>
           <Text size="2" asChild>
-            <Link href="/auth/login" style={{ color: "var(--accent-9)" }}>Back to sign in</Link>
+            <Link
+              href="/auth/login"
+              className={css({
+                color: "var(--accent-9)",
+                textDecoration: "none",
+                _hover: { textDecoration: "underline" },
+              })}
+            >
+              Back to sign in
+            </Link>
           </Text>
         </Flex>
       </Card>
@@ -35,17 +57,24 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <Card size="3" style={{ width: "100%", maxWidth: 400 }}>
-      <Flex direction="column" gap="5">
+    <Card
+      size="3"
+      className={css({ width: "100%", maxWidth: "420px" })}
+    >
+      <Flex direction="column" gap="6">
         <Flex direction="column" gap="1">
           <Heading size="6">Reset password</Heading>
-          <Text size="2" color="gray">Enter your email and we'll send you a reset link</Text>
+          <Text size="2" color="gray">
+            Enter your email and we'll send you a reset link
+          </Text>
         </Flex>
 
         <form onSubmit={handleForgotPassword}>
-          <Flex direction="column" gap="4">
+          <Flex direction="column" gap="5">
             <Flex direction="column" gap="1">
-              <Text as="label" size="2" weight="medium" htmlFor="email">Email</Text>
+              <Text as="label" size="2" weight="bold" htmlFor="email">
+                Email
+              </Text>
               <TextField.Root
                 id="email"
                 type="email"
@@ -56,14 +85,24 @@ export function ForgotPasswordForm() {
               />
             </Flex>
 
-            <Button type="submit" disabled={isLoading} style={{ width: "100%" }}>
+            <Button type="submit" disabled={isLoading} width="100%">
+              {isLoading && <Spinner />}
               {isLoading ? "Sending..." : "Send reset link"}
             </Button>
           </Flex>
         </form>
 
         <Text size="2" align="center" color="gray">
-          <Link href="/auth/login" style={{ color: "var(--accent-9)" }}>Back to sign in</Link>
+          <Link
+            href="/auth/login"
+            className={css({
+              color: "var(--accent-9)",
+              textDecoration: "none",
+              _hover: { textDecoration: "underline" },
+            })}
+          >
+            Back to sign in
+          </Link>
         </Text>
       </Flex>
     </Card>

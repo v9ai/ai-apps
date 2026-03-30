@@ -1,10 +1,20 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
-import { Button, Card, Flex, Heading, Text, TextField } from "@radix-ui/themes";
+import {
+  Button,
+  Callout,
+  Card,
+  Flex,
+  Heading,
+  Spinner,
+  Text,
+  TextField,
+} from "@radix-ui/themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { css } from "styled-system/css";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -29,17 +39,24 @@ export function LoginForm() {
   };
 
   return (
-    <Card size="3" style={{ width: "100%", maxWidth: 400 }}>
-      <Flex direction="column" gap="5">
+    <Card
+      size="3"
+      className={css({ width: "100%", maxWidth: "420px" })}
+    >
+      <Flex direction="column" gap="6">
         <Flex direction="column" gap="1">
           <Heading size="6">Sign in</Heading>
-          <Text size="2" color="gray">Enter your email to sign in to your account</Text>
+          <Text size="2" color="gray">
+            Enter your email to sign in to your account
+          </Text>
         </Flex>
 
         <form onSubmit={handleLogin}>
-          <Flex direction="column" gap="4">
+          <Flex direction="column" gap="5">
             <Flex direction="column" gap="1">
-              <Text as="label" size="2" weight="medium" htmlFor="email">Email</Text>
+              <Text as="label" size="2" weight="bold" htmlFor="email">
+                Email
+              </Text>
               <TextField.Root
                 id="email"
                 type="email"
@@ -52,9 +69,18 @@ export function LoginForm() {
 
             <Flex direction="column" gap="1">
               <Flex justify="between" align="center">
-                <Text as="label" size="2" weight="medium" htmlFor="password">Password</Text>
+                <Text as="label" size="2" weight="bold" htmlFor="password">
+                  Password
+                </Text>
                 <Text size="2" asChild>
-                  <Link href="/auth/forgot-password" style={{ color: "var(--accent-9)" }}>
+                  <Link
+                    href="/auth/forgot-password"
+                    className={css({
+                      color: "var(--accent-9)",
+                      textDecoration: "none",
+                      _hover: { textDecoration: "underline" },
+                    })}
+                  >
                     Forgot password?
                   </Link>
                 </Text>
@@ -68,9 +94,14 @@ export function LoginForm() {
               />
             </Flex>
 
-            {error && <Text size="2" color="red">{error}</Text>}
+            {error && (
+              <Callout.Root color="red" size="1">
+                <Callout.Text>{error}</Callout.Text>
+              </Callout.Root>
+            )}
 
-            <Button type="submit" disabled={isLoading} style={{ width: "100%" }}>
+            <Button type="submit" disabled={isLoading} width="100%">
+              {isLoading && <Spinner />}
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </Flex>
@@ -78,7 +109,16 @@ export function LoginForm() {
 
         <Text size="2" align="center" color="gray">
           No account?{" "}
-          <Link href="/auth/sign-up" style={{ color: "var(--accent-9)" }}>Sign up</Link>
+          <Link
+            href="/auth/sign-up"
+            className={css({
+              color: "var(--accent-9)",
+              textDecoration: "none",
+              _hover: { textDecoration: "underline" },
+            })}
+          >
+            Sign up
+          </Link>
         </Text>
       </Flex>
     </Card>
