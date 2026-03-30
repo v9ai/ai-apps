@@ -201,7 +201,7 @@ export const companyResolvers = {
       args: {
         filter?: {
           text?: string;
-          category_in?: string[];
+          category?: string;
           min_score?: number;
           service_taxonomy_any?: string[];
           ai_native_only?: boolean;
@@ -232,10 +232,8 @@ export const companyResolvers = {
             );
           }
 
-          if (args.filter.category_in && args.filter.category_in.length > 0) {
-            conditions.push(
-              inArray(companies.category, args.filter.category_in as any),
-            );
+          if (args.filter.category) {
+            conditions.push(eq(companies.category, args.filter.category as any));
           }
 
           if (args.filter.min_score !== undefined) {

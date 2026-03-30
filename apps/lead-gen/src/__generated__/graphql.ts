@@ -183,7 +183,7 @@ export type CompanyFactInput = {
 };
 
 export type CompanyFilterInput = {
-  category_in?: InputMaybe<Array<CompanyCategory>>;
+  category?: InputMaybe<CompanyCategory>;
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;

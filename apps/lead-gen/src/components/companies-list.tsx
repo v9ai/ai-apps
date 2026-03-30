@@ -210,7 +210,7 @@ export function CompaniesList() {
 
   const filter: CompanyFilterInput = {
     ...(searchTerm ? { text: searchTerm } : {}),
-    ...(category !== "ALL" ? { category_in: [category as CompanyCategory] } : {}),
+    ...(category !== "ALL" ? { category: category as CompanyCategory } : {}),
     ...(minTier !== "all" ? { min_ai_tier: parseInt(minTier, 10) } : {}),
   };
   const orderBy = (sortBy === "score" ? "SCORE_DESC" : "NAME_ASC") as CompanyOrderBy;
