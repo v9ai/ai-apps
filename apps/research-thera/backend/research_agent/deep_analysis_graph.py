@@ -149,9 +149,16 @@ async def collect_data(state: DeepAnalysisState) -> dict:
         ti_id, ti_title, ti_cat, ti_sev, ti_desc, ti_recs, ti_related, ti_created = trigger_issue
         sections.append(
             "You are a clinical psychologist and family systems analyst. "
-            "Your PRIMARY task is to provide an in-depth analysis of a SPECIFIC issue for this family member. "
+            "Your PRIMARY task is to provide an in-depth analysis of a SPECIFIC issue involving this family member. "
             "The other issues, observations, and feedback are provided as CONTEXT to help you understand "
             "how this issue fits into the broader picture — but your analysis must CENTER on the trigger issue.\n\n"
+            "CRITICAL — ATTRIBUTION RULES:\n"
+            "- For each issue, carefully read the description to identify WHO is the primary actor/aggressor, "
+            "WHO is the victim or recipient, and WHO are bystanders.\n"
+            "- The profiled family member may be the VICTIM, not the actor. Do NOT assume they caused the behavior described.\n"
+            "- People mentioned in descriptions who are NOT listed in ## Other Family Members are external individuals "
+            "(classmates, school colleagues, neighbors, etc.) — do NOT assume they are siblings or family members "
+            "unless the description explicitly states so.\n\n"
             f'## TRIGGER ISSUE (Primary Focus)\n'
             f'- [ID:{ti_id}] "{ti_title}" ({ti_cat}, {ti_sev} severity, {str(ti_created)[:10]})\n'
             f'  {(ti_desc or "")[:500]}'
@@ -203,7 +210,8 @@ async def collect_data(state: DeepAnalysisState) -> dict:
                 pass
         issue_lines.append(line)
     header = "## Other Issues (Context)" if trigger_issue else f"## All Issues ({len(issues)})"
-    sections.append(f"{header}\n" + ("\n".join(issue_lines) or "None"))
+    role_note = "\n(Note: The profiled family member may be the subject, victim, or bystander in these incidents. Determine their role from each description.)\n"
+    sections.append(f"{header}{role_note}" + ("\n".join(issue_lines) or "None"))
 
     # Behavior observations
     if observations:
@@ -326,6 +334,12 @@ Produce a structured JSON analysis with these fields:
 7. **parentAdvice** (array of objects): Practical, evidence-based parenting advice linked to the analysis above. Generate 3-7 items. The FIRST item MUST address the trigger issue directly. Each has: title (string), advice (string: 2-4 sentences explaining the recommendation with research context), targetIssueIds (array of ints from the issues above), targetIssueTitles (array of strings), relatedPatternCluster (optional string — MUST match a patternClusters[].name from section 2 if provided), relatedResearchIds (optional array of ints from ## Existing Research), relatedResearchTitles (optional array of strings — exact titles from research), ageAppropriate (bool: true if suitable for the child's age in ## Family Member Profile), developmentalContext (optional string: why this advice fits the child's developmental stage), priority (string: immediate|short_term|long_term), concreteSteps (array of strings: specific actionable steps the parent can implement at home — be specific, e.g. "Set a 20-minute homework timer after snack" not "Help with homework"). Every item MUST reference at least one issue ID from the data. If research is available, cite specific ResearchIDs — do NOT invent research references. Verify age-appropriateness against the child's age in ## Family Member Profile.
 
 IMPORTANT: Every field annotated as "array of" MUST be a JSON array, even when there is only one item. For example: coverageGaps must be ["single gap"], NOT "single gap".
+
+ATTRIBUTION CHECK — before writing the summary, verify for each issue:
+- Who is the actual aggressor/actor based on the description text?
+- Is the profiled family member the actor, victim, or bystander?
+- Are the other people mentioned family members (listed in ## Other Family Members) or external individuals (classmates, colleagues, etc.)?
+State the profiled member's role clearly in the summary. Do not attribute another person's actions to the profiled member.
 
 Write the analysis in the same language as the majority of the input data.""")
     else:
