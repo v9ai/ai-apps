@@ -3,6 +3,7 @@
 import { addAppointment } from "./actions";
 import { Box, Button, Flex, Select, TextField, TextArea, Text } from "@radix-ui/themes";
 import { useRef } from "react";
+import { css } from "styled-system/css";
 
 type Doctor = { id: string; name: string; specialty: string | null };
 type FamilyMember = { id: string; name: string; relationship: string | null };
@@ -29,7 +30,7 @@ export function AddAppointmentForm({
           <TextField.Root name="title" placeholder="e.g. Annual checkup" required />
         </Flex>
         <Flex gap="3">
-          <Flex direction="column" gap="1" style={{ flex: 1 }}>
+          <Flex direction="column" gap="1" className={css({ flex: "1" })}>
             <Text size="2" color="gray">Doctor</Text>
             {doctors.length > 0 ? (
               <Select.Root name="doctor_id">
@@ -47,7 +48,7 @@ export function AddAppointmentForm({
               <TextField.Root name="provider" placeholder="e.g. Dr. Smith" />
             )}
           </Flex>
-          <Flex direction="column" gap="1" style={{ flex: 1 }}>
+          <Flex direction="column" gap="1" className={css({ flex: "1" })}>
             <Text size="2" color="gray">Date</Text>
             <TextField.Root name="appointment_date" type="date" />
           </Flex>

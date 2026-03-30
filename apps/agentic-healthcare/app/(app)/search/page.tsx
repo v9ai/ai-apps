@@ -1,11 +1,16 @@
 import { Box, Flex, Heading, Separator, Text } from "@radix-ui/themes";
+import { css } from "styled-system/css";
 import { SearchForm } from "./search-form";
 import { QAForm } from "./qa-form";
 import { TrendsSection } from "./trends-section";
 
 export default function SearchPage() {
   return (
-    <Box py="8" style={{ maxWidth: 800, margin: "0 auto" }}>
+    <Box
+      px="6"
+      py="8"
+      className={css({ width: "100%" })}
+    >
       <Flex direction="column" gap="6">
         <Flex direction="column" gap="1">
           <Heading size="7" weight="bold">Search & Health Q&A</Heading>

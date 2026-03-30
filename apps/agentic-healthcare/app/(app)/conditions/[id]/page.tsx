@@ -13,6 +13,16 @@ import { EditConditionHeader } from "../edit-condition-header";
 import { RelatedMarkers } from "../related-markers";
 import { ConditionResearch } from "../condition-research";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
+import { css } from "styled-system/css";
+
+const twoColClass = css({
+  display: "grid",
+  gridTemplateColumns: "1fr",
+  gap: "5",
+  "@media (min-width: 900px)": {
+    gridTemplateColumns: "1fr 340px",
+  },
+});
 
 async function ConditionDetail({ id }: { id: string }) {
   const { userId } = await withAuth();
@@ -25,43 +35,49 @@ async function ConditionDetail({ id }: { id: string }) {
   if (!condition || condition.userId !== userId) notFound();
 
   return (
-    <>
-      <EditConditionHeader
-        conditionId={condition.id}
-        initialName={condition.name}
-        createdAt={condition.createdAt.toISOString()}
-        deleteAction={async () => {
-          "use server";
-          await deleteCondition(id);
-          redirect("/conditions");
-        }}
-      />
+    <div className={twoColClass}>
+      {/* Main column */}
+      <Flex direction="column" gap="5">
+        <EditConditionHeader
+          conditionId={condition.id}
+          initialName={condition.name}
+          createdAt={condition.createdAt.toISOString()}
+          deleteAction={async () => {
+            "use server";
+            await deleteCondition(id);
+            redirect("/conditions");
+          }}
+        />
 
-      <EditNotesForm conditionId={condition.id} initialNotes={condition.notes ?? null} />
+        <EditNotesForm conditionId={condition.id} initialNotes={condition.notes ?? null} />
 
-      <Suspense fallback={
-        <Card>
-          <Flex direction="column" gap="3">
-            <Skeleton height="20px" width="180px" />
-            <Skeleton height="60px" />
-            <Skeleton height="60px" />
-          </Flex>
-        </Card>
-      }>
-        <RelatedMarkers conditionId={condition.id} />
-      </Suspense>
+        <Suspense fallback={
+          <Card>
+            <Flex direction="column" gap="3">
+              <Skeleton height="20px" width="200px" />
+              <Skeleton height="120px" />
+            </Flex>
+          </Card>
+        }>
+          <ConditionResearch conditionId={condition.id} />
+        </Suspense>
+      </Flex>
 
-      <Suspense fallback={
-        <Card>
-          <Flex direction="column" gap="3">
-            <Skeleton height="20px" width="200px" />
-            <Skeleton height="120px" />
-          </Flex>
-        </Card>
-      }>
-        <ConditionResearch conditionId={condition.id} />
-      </Suspense>
-    </>
+      {/* Sidebar */}
+      <Flex direction="column" gap="4">
+        <Suspense fallback={
+          <Card>
+            <Flex direction="column" gap="3">
+              <Skeleton height="20px" width="180px" />
+              <Skeleton height="60px" />
+              <Skeleton height="60px" />
+            </Flex>
+          </Card>
+        }>
+          <RelatedMarkers conditionId={condition.id} />
+        </Suspense>
+      </Flex>
+    </div>
   );
 }
 
@@ -73,9 +89,9 @@ export default async function ConditionDetailPage({
   const { id } = await params;
 
   return (
-    <Box py="8" style={{ maxWidth: 700, margin: "0 auto" }}>
+    <Box py="6">
       <Flex direction="column" gap="5">
-        <Button variant="ghost" size="1" asChild style={{ alignSelf: "flex-start" }}>
+        <Button variant="ghost" size="1" asChild className={css({ alignSelf: "flex-start" })}>
           <Link href="/conditions">
             <ChevronLeftIcon /> Back to conditions
           </Link>

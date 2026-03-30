@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { conditions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { embedConditionViaPython } from "@/lib/python-api";
+import { embedCondition } from "@/lib/embed";
 
 export async function addCondition(formData: FormData) {
   const { userId } = await withAuth();
