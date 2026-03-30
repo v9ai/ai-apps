@@ -743,3 +743,211 @@ async function saveCompanyBatch(
     return 0;
   }
 }
+
+// ── LinkedIn Company People Scraper ──────────────────────────────────
+
+interface PersonCard {
+  name: string;
+  headline: string;
+  linkedinUrl: string;
+}
+
+function extractPeopleCards(tabId: number): Promise<PersonCard[]> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const results: { name: string; headline: string; linkedinUrl: string }[] = [];
+        const seen = new Set<string>();
+
+        document.querySelectorAll<HTMLElement>(
+          ".org-people-profile-card, .artdeco-entity-lockup"
+        ).forEach((card) => {
+          // Name — try multiple selectors LinkedIn has used
+          const nameEl =
+            card.querySelector(".org-people-profile-card__profile-title") ||
+            card.querySelector(".artdeco-entity-lockup__title") ||
+            card.querySelector("[data-anonymize='person-name']") ||
+            card.querySelector(".lt-line-clamp__line");
+          const name = nameEl?.textContent?.trim() || "";
+          if (!name || name === "LinkedIn Member") return;
+
+          // Headline / title
+          const headlineEl =
+            card.querySelector(".lit-lockup__subtitle") ||
+            card.querySelector(".artdeco-entity-lockup__caption") ||
+            card.querySelector(".org-people-profile-card__profile-position");
+          const headline = headlineEl?.textContent?.trim() || "";
+
+          // Profile URL
+          const linkEl = card.querySelector<HTMLAnchorElement>("a[href*='/in/']");
+          const raw = linkEl?.href || "";
+          const match = raw.match(/linkedin\.com\/in\/([^/?#]+)/);
+          if (!match) return;
+          const linkedinUrl = `https://www.linkedin.com/in/${match[1]}/`;
+
+          if (seen.has(linkedinUrl)) return;
+          seen.add(linkedinUrl);
+
+          results.push({ name, headline, linkedinUrl });
+        });
+
+        return results;
+      },
+    })
+    .then((res) => (res?.[0]?.result as PersonCard[]) ?? [])
+    .catch(() => []);
+}
+
+function scrollPeoplePage(tabId: number): Promise<void> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => window.scrollTo(0, document.body.scrollHeight),
+    })
+    .then(() => undefined)
+    .catch(() => undefined);
+}
+
+function clickShowMorePeople(tabId: number): Promise<boolean> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const btn = Array.from(
+          document.querySelectorAll<HTMLButtonElement>("button")
+        ).find((b) => {
+          const text = b.textContent?.trim().toLowerCase() || "";
+          return (
+            text.includes("show more results") ||
+            text.includes("show more") ||
+            text.includes("load more")
+          );
+        });
+        if (btn && !btn.disabled) {
+          btn.click();
+          return true;
+        }
+        return false;
+      },
+    })
+    .then((res) => (res?.[0]?.result as boolean) ?? false)
+    .catch(() => false);
+}
+
+async function notifyWebApp(action: string, data: Record<string, unknown>) {
+  try {
+    const tabs = await chrome.tabs.query({
+      url: ["http://localhost:3000/*", "http://localhost:3004/*"],
+    });
+    for (const tab of tabs) {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          source: "lead-gen-bg",
+          action,
+          ...data,
+        }).catch(() => { /* tab may not have content script */ });
+      }
+    }
+  } catch { /* ignore */ }
+}
+
+async function browsePeople(tabId: number, companyId: number) {
+  console.log(`[BrowsePeople] Starting for companyId=${companyId}, tab=${tabId}`);
+
+  await waitForTabLoad(tabId);
+  // Extra wait for LinkedIn SPA to hydrate
+  await new Promise((r) => setTimeout(r, 3000));
+
+  const allCards: PersonCard[] = [];
+  const seen = new Set<string>();
+  const MAX_ROUNDS = 15;
+
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    await scrollPeoplePage(tabId);
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const cards = await extractPeopleCards(tabId);
+    let newCount = 0;
+    for (const card of cards) {
+      if (!seen.has(card.linkedinUrl)) {
+        seen.add(card.linkedinUrl);
+        allCards.push(card);
+        newCount++;
+      }
+    }
+
+    console.log(`[BrowsePeople] Round ${round + 1}: +${newCount} new (total ${allCards.length})`);
+    await notifyWebApp("peopleScrapeProgress", {
+      message: `Collecting… ${allCards.length} found`,
+    });
+
+    const clickedMore = await clickShowMorePeople(tabId);
+    if (clickedMore) {
+      await new Promise((r) => setTimeout(r, 2000));
+    } else if (newCount === 0) {
+      // No new cards and no "show more" — we're done
+      break;
+    }
+  }
+
+  console.log(`[BrowsePeople] Collected ${allCards.length} people — importing...`);
+  await notifyWebApp("peopleScrapeProgress", {
+    message: `Importing ${allCards.length} contacts…`,
+  });
+
+  // Close the LinkedIn tab
+  chrome.tabs.remove(tabId).catch(() => {});
+
+  if (allCards.length === 0) {
+    await notifyWebApp("peopleScrapeError", {
+      error: "No people found on the LinkedIn page. Make sure you are logged in to LinkedIn.",
+    });
+    return;
+  }
+
+  // Build contact input list
+  const contacts = allCards.map((card) => {
+    const parts = card.name.trim().split(/\s+/);
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ") || "";
+    return {
+      firstName,
+      lastName,
+      linkedinUrl: card.linkedinUrl,
+      position: card.headline || undefined,
+      companyId,
+      email: null,
+      company: null,
+    };
+  });
+
+  try {
+    const result = await gqlRequest(
+      `mutation ImportContacts($contacts: [ContactInput!]!) {
+        importContacts(contacts: $contacts) { success imported failed errors }
+      }`,
+      { contacts },
+    );
+
+    const res = result.data?.importContacts;
+    if (res) {
+      console.log(`[BrowsePeople] Imported ${res.imported}, failed ${res.failed}`);
+      await notifyWebApp("peopleScrapeComplete", {
+        imported: res.imported,
+        failed: res.failed,
+      });
+    } else {
+      const errMsg = result.errors?.[0]?.message ?? "GraphQL error";
+      console.error("[BrowsePeople] GQL error:", errMsg);
+      await notifyWebApp("peopleScrapeError", { error: errMsg });
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[BrowsePeople] Import error:", errMsg);
+    await notifyWebApp("peopleScrapeError", { error: errMsg });
+  }
+}
