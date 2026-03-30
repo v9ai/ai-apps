@@ -10,12 +10,11 @@
     "start": "next start",
     "lint": "next lint",
     "demo:skills": "tsx scripts/demo-skills-in-production.ts",
-
     "try:skills": "tsx scripts/try-skills-production.ts",
     "deploy": "tsx scripts/deploy.ts",
     "codegen": "graphql-codegen",
-
     "ccx:scrape": "tsx scripts/scrape-from-ccx.ts",
+    "linkedin:people": "tsx scripts/scrape-linkedin-people.ts",
     "strategy:check": "tsx scripts/enforce-strategy.ts",
     "strategy:check:all": "tsx scripts/enforce-strategy.ts --all",
     "db:generate": "drizzle-kit generate",
@@ -28,7 +27,7 @@
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
     "@ai-apps/resume": "workspace:*",
-"@apollo/client": "^3.14.0",
+    "@apollo/client": "^3.14.0",
     "@apollo/server": "^5.3.0",
     "@as-integrations/next": "^4.1.0",
     "@graphql-tools/load-files": "^7.0.1",
@@ -87,6 +86,7 @@
     "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.37.0",
+    "playwright": "^1.58.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "ws": "^8.20.0"
