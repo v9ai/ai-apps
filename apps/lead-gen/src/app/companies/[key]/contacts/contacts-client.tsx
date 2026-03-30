@@ -1124,6 +1124,43 @@ export function CompanyContactsClient({
               </Dialog.Content>
             </Dialog.Root>
 
+            {/* One-click import via Chrome extension — scrapes company /people/ page */}
+            {company?.linkedin_url && (
+              <button
+                className={button({ variant: "ghost", size: "md" })}
+                disabled={linkedinPeopleStatus.type === "running"}
+                onClick={() => {
+                  const peopleUrl =
+                    company.linkedin_url!.replace(/\/?$/, "/") + "people/";
+                  setLinkedinPeopleStatus({
+                    type: "running",
+                    message: "Opening LinkedIn…",
+                  });
+                  window.postMessage(
+                    {
+                      source: "lead-gen-ext",
+                      action: "importLinkedInPeople",
+                      linkedinPeopleUrl: peopleUrl,
+                      companyId: company.id,
+                    },
+                    "*",
+                  );
+                }}
+              >
+                <LinkedInLogoIcon />
+                {linkedinPeopleStatus.type === "running"
+                  ? (linkedinPeopleStatus.message ?? "Importing…")
+                  : linkedinPeopleStatus.type === "done"
+                    ? linkedinPeopleStatus.message
+                    : "Import People"}
+              </button>
+            )}
+            {linkedinPeopleStatus.type === "error" && (
+              <Text size="1" color="red">
+                {linkedinPeopleStatus.message}
+              </Text>
+            )}
+
             <Box width="240px">
               <TextField.Root
                 size="2"
