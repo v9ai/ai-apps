@@ -13,7 +13,6 @@ const headerClass = css({
   background:
     "linear-gradient(180deg, color-mix(in srgb, var(--indigo-2) 60%, transparent) 0%, color-mix(in srgb, var(--color-background) 85%, transparent) 100%)",
   backdropFilter: "blur(14px)",
-  WebkitBackdropFilter: "blur(14px)",
   boxShadow:
     "0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)",
   width: "100%",
