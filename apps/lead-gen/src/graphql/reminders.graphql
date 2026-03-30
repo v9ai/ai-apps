@@ -1,0 +1,95 @@
+query DueReminders {
+  dueReminders {
+    reminder {
+      id
+      contactId
+      remindAt
+      recurrence
+      note
+      status
+      snoozedUntil
+      createdAt
+      updatedAt
+    }
+    contact {
+      id
+      firstName
+      lastName
+      position
+    }
+  }
+}
+
+query ContactReminders($contactId: Int!) {
+  contactReminders(contactId: $contactId) {
+    id
+    contactId
+    remindAt
+    recurrence
+    note
+    status
+    snoozedUntil
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CreateReminder($input: CreateReminderInput!) {
+  createReminder(input: $input) {
+    id
+    contactId
+    remindAt
+    recurrence
+    note
+    status
+    createdAt
+  }
+}
+
+mutation UpdateReminder($id: Int!, $input: UpdateReminderInput!) {
+  updateReminder(id: $id, input: $input) {
+    id
+    contactId
+    remindAt
+    recurrence
+    note
+    status
+    updatedAt
+  }
+}
+
+mutation SnoozeReminder($id: Int!, $days: Int!) {
+  snoozeReminder(id: $id, days: $days) {
+    id
+    contactId
+    remindAt
+    status
+    snoozedUntil
+    updatedAt
+  }
+}
+
+mutation DismissReminder($id: Int!) {
+  dismissReminder(id: $id) {
+    id
+    contactId
+    status
+    updatedAt
+  }
+}
+
+mutation ComputeNextTouchScores($companyId: Int!) {
+  computeNextTouchScores(companyId: $companyId) {
+    success
+    message
+    contactsUpdated
+    topContacts {
+      contactId
+      firstName
+      lastName
+      position
+      nextTouchScore
+      lastContactedAt
+    }
+  }
+}

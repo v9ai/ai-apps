@@ -2010,6 +2010,55 @@ export type DeleteEmailTemplateMutationVariables = Exact<{
 
 export type DeleteEmailTemplateMutation = { __typename?: 'Mutation', deleteEmailTemplate: { __typename?: 'DeleteEmailTemplateResult', success: boolean, message: string | null } };
 
+export type DueRemindersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DueRemindersQuery = { __typename?: 'Query', dueReminders: Array<{ __typename?: 'ContactReminderWithContact', reminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }, contact: { __typename?: 'Contact', id: number, firstName: string, lastName: string, position: string | null } }> };
+
+export type ContactRemindersQueryVariables = Exact<{
+  contactId: Scalars['Int']['input'];
+}>;
+
+
+export type ContactRemindersQuery = { __typename?: 'Query', contactReminders: Array<{ __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }> };
+
+export type CreateReminderMutationVariables = Exact<{
+  input: CreateReminderInput;
+}>;
+
+
+export type CreateReminderMutation = { __typename?: 'Mutation', createReminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, createdAt: string } };
+
+export type UpdateReminderMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  input: UpdateReminderInput;
+}>;
+
+
+export type UpdateReminderMutation = { __typename?: 'Mutation', updateReminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, updatedAt: string } };
+
+export type SnoozeReminderMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  days: Scalars['Int']['input'];
+}>;
+
+
+export type SnoozeReminderMutation = { __typename?: 'Mutation', snoozeReminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, status: string, snoozedUntil: string | null, updatedAt: string } };
+
+export type DismissReminderMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DismissReminderMutation = { __typename?: 'Mutation', dismissReminder: { __typename?: 'ContactReminder', id: number, contactId: number, status: string, updatedAt: string } };
+
+export type ComputeNextTouchScoresMutationVariables = Exact<{
+  companyId: Scalars['Int']['input'];
+}>;
+
+
+export type ComputeNextTouchScoresMutation = { __typename?: 'Mutation', computeNextTouchScores: { __typename?: 'ComputeNextTouchScoresResult', success: boolean, message: string, contactsUpdated: number, topContacts: Array<{ __typename?: 'ContactNextTouch', contactId: number, firstName: string, lastName: string, position: string | null, nextTouchScore: number, lastContactedAt: string | null }> } };
+
 export const EvidenceFieldsFragmentDoc = gql`
     fragment EvidenceFields on Evidence {
   source_type
@@ -4895,3 +4944,309 @@ export function useDeleteEmailTemplateMutation(baseOptions?: Apollo.MutationHook
 export type DeleteEmailTemplateMutationHookResult = ReturnType<typeof useDeleteEmailTemplateMutation>;
 export type DeleteEmailTemplateMutationResult = Apollo.MutationResult<DeleteEmailTemplateMutation>;
 export type DeleteEmailTemplateMutationOptions = Apollo.BaseMutationOptions<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>;
+export const DueRemindersDocument = gql`
+    query DueReminders {
+  dueReminders {
+    reminder {
+      id
+      contactId
+      remindAt
+      recurrence
+      note
+      status
+      snoozedUntil
+      createdAt
+      updatedAt
+    }
+    contact {
+      id
+      firstName
+      lastName
+      position
+    }
+  }
+}
+    `;
+
+/**
+ * __useDueRemindersQuery__
+ *
+ * To run a query within a React component, call `useDueRemindersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDueRemindersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDueRemindersQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useDueRemindersQuery(baseOptions?: Apollo.QueryHookOptions<DueRemindersQuery, DueRemindersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<DueRemindersQuery, DueRemindersQueryVariables>(DueRemindersDocument, options);
+      }
+export function useDueRemindersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<DueRemindersQuery, DueRemindersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<DueRemindersQuery, DueRemindersQueryVariables>(DueRemindersDocument, options);
+        }
+// @ts-ignore
+export function useDueRemindersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<DueRemindersQuery, DueRemindersQueryVariables>): Apollo.UseSuspenseQueryResult<DueRemindersQuery, DueRemindersQueryVariables>;
+export function useDueRemindersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DueRemindersQuery, DueRemindersQueryVariables>): Apollo.UseSuspenseQueryResult<DueRemindersQuery | undefined, DueRemindersQueryVariables>;
+export function useDueRemindersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DueRemindersQuery, DueRemindersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<DueRemindersQuery, DueRemindersQueryVariables>(DueRemindersDocument, options);
+        }
+export type DueRemindersQueryHookResult = ReturnType<typeof useDueRemindersQuery>;
+export type DueRemindersLazyQueryHookResult = ReturnType<typeof useDueRemindersLazyQuery>;
+export type DueRemindersSuspenseQueryHookResult = ReturnType<typeof useDueRemindersSuspenseQuery>;
+export type DueRemindersQueryResult = Apollo.QueryResult<DueRemindersQuery, DueRemindersQueryVariables>;
+export const ContactRemindersDocument = gql`
+    query ContactReminders($contactId: Int!) {
+  contactReminders(contactId: $contactId) {
+    id
+    contactId
+    remindAt
+    recurrence
+    note
+    status
+    snoozedUntil
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useContactRemindersQuery__
+ *
+ * To run a query within a React component, call `useContactRemindersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useContactRemindersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useContactRemindersQuery({
+ *   variables: {
+ *      contactId: // value for 'contactId'
+ *   },
+ * });
+ */
+export function useContactRemindersQuery(baseOptions: Apollo.QueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables> & ({ variables: ContactRemindersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ContactRemindersQuery, ContactRemindersQueryVariables>(ContactRemindersDocument, options);
+      }
+export function useContactRemindersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ContactRemindersQuery, ContactRemindersQueryVariables>(ContactRemindersDocument, options);
+        }
+// @ts-ignore
+export function useContactRemindersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables>): Apollo.UseSuspenseQueryResult<ContactRemindersQuery, ContactRemindersQueryVariables>;
+export function useContactRemindersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables>): Apollo.UseSuspenseQueryResult<ContactRemindersQuery | undefined, ContactRemindersQueryVariables>;
+export function useContactRemindersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ContactRemindersQuery, ContactRemindersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ContactRemindersQuery, ContactRemindersQueryVariables>(ContactRemindersDocument, options);
+        }
+export type ContactRemindersQueryHookResult = ReturnType<typeof useContactRemindersQuery>;
+export type ContactRemindersLazyQueryHookResult = ReturnType<typeof useContactRemindersLazyQuery>;
+export type ContactRemindersSuspenseQueryHookResult = ReturnType<typeof useContactRemindersSuspenseQuery>;
+export type ContactRemindersQueryResult = Apollo.QueryResult<ContactRemindersQuery, ContactRemindersQueryVariables>;
+export const CreateReminderDocument = gql`
+    mutation CreateReminder($input: CreateReminderInput!) {
+  createReminder(input: $input) {
+    id
+    contactId
+    remindAt
+    recurrence
+    note
+    status
+    createdAt
+  }
+}
+    `;
+export type CreateReminderMutationFn = Apollo.MutationFunction<CreateReminderMutation, CreateReminderMutationVariables>;
+
+/**
+ * __useCreateReminderMutation__
+ *
+ * To run a mutation, you first call `useCreateReminderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateReminderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createReminderMutation, { data, loading, error }] = useCreateReminderMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateReminderMutation(baseOptions?: Apollo.MutationHookOptions<CreateReminderMutation, CreateReminderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateReminderMutation, CreateReminderMutationVariables>(CreateReminderDocument, options);
+      }
+export type CreateReminderMutationHookResult = ReturnType<typeof useCreateReminderMutation>;
+export type CreateReminderMutationResult = Apollo.MutationResult<CreateReminderMutation>;
+export type CreateReminderMutationOptions = Apollo.BaseMutationOptions<CreateReminderMutation, CreateReminderMutationVariables>;
+export const UpdateReminderDocument = gql`
+    mutation UpdateReminder($id: Int!, $input: UpdateReminderInput!) {
+  updateReminder(id: $id, input: $input) {
+    id
+    contactId
+    remindAt
+    recurrence
+    note
+    status
+    updatedAt
+  }
+}
+    `;
+export type UpdateReminderMutationFn = Apollo.MutationFunction<UpdateReminderMutation, UpdateReminderMutationVariables>;
+
+/**
+ * __useUpdateReminderMutation__
+ *
+ * To run a mutation, you first call `useUpdateReminderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateReminderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateReminderMutation, { data, loading, error }] = useUpdateReminderMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateReminderMutation(baseOptions?: Apollo.MutationHookOptions<UpdateReminderMutation, UpdateReminderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateReminderMutation, UpdateReminderMutationVariables>(UpdateReminderDocument, options);
+      }
+export type UpdateReminderMutationHookResult = ReturnType<typeof useUpdateReminderMutation>;
+export type UpdateReminderMutationResult = Apollo.MutationResult<UpdateReminderMutation>;
+export type UpdateReminderMutationOptions = Apollo.BaseMutationOptions<UpdateReminderMutation, UpdateReminderMutationVariables>;
+export const SnoozeReminderDocument = gql`
+    mutation SnoozeReminder($id: Int!, $days: Int!) {
+  snoozeReminder(id: $id, days: $days) {
+    id
+    contactId
+    remindAt
+    status
+    snoozedUntil
+    updatedAt
+  }
+}
+    `;
+export type SnoozeReminderMutationFn = Apollo.MutationFunction<SnoozeReminderMutation, SnoozeReminderMutationVariables>;
+
+/**
+ * __useSnoozeReminderMutation__
+ *
+ * To run a mutation, you first call `useSnoozeReminderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSnoozeReminderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [snoozeReminderMutation, { data, loading, error }] = useSnoozeReminderMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      days: // value for 'days'
+ *   },
+ * });
+ */
+export function useSnoozeReminderMutation(baseOptions?: Apollo.MutationHookOptions<SnoozeReminderMutation, SnoozeReminderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SnoozeReminderMutation, SnoozeReminderMutationVariables>(SnoozeReminderDocument, options);
+      }
+export type SnoozeReminderMutationHookResult = ReturnType<typeof useSnoozeReminderMutation>;
+export type SnoozeReminderMutationResult = Apollo.MutationResult<SnoozeReminderMutation>;
+export type SnoozeReminderMutationOptions = Apollo.BaseMutationOptions<SnoozeReminderMutation, SnoozeReminderMutationVariables>;
+export const DismissReminderDocument = gql`
+    mutation DismissReminder($id: Int!) {
+  dismissReminder(id: $id) {
+    id
+    contactId
+    status
+    updatedAt
+  }
+}
+    `;
+export type DismissReminderMutationFn = Apollo.MutationFunction<DismissReminderMutation, DismissReminderMutationVariables>;
+
+/**
+ * __useDismissReminderMutation__
+ *
+ * To run a mutation, you first call `useDismissReminderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDismissReminderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [dismissReminderMutation, { data, loading, error }] = useDismissReminderMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDismissReminderMutation(baseOptions?: Apollo.MutationHookOptions<DismissReminderMutation, DismissReminderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DismissReminderMutation, DismissReminderMutationVariables>(DismissReminderDocument, options);
+      }
+export type DismissReminderMutationHookResult = ReturnType<typeof useDismissReminderMutation>;
+export type DismissReminderMutationResult = Apollo.MutationResult<DismissReminderMutation>;
+export type DismissReminderMutationOptions = Apollo.BaseMutationOptions<DismissReminderMutation, DismissReminderMutationVariables>;
+export const ComputeNextTouchScoresDocument = gql`
+    mutation ComputeNextTouchScores($companyId: Int!) {
+  computeNextTouchScores(companyId: $companyId) {
+    success
+    message
+    contactsUpdated
+    topContacts {
+      contactId
+      firstName
+      lastName
+      position
+      nextTouchScore
+      lastContactedAt
+    }
+  }
+}
+    `;
+export type ComputeNextTouchScoresMutationFn = Apollo.MutationFunction<ComputeNextTouchScoresMutation, ComputeNextTouchScoresMutationVariables>;
+
+/**
+ * __useComputeNextTouchScoresMutation__
+ *
+ * To run a mutation, you first call `useComputeNextTouchScoresMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useComputeNextTouchScoresMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [computeNextTouchScoresMutation, { data, loading, error }] = useComputeNextTouchScoresMutation({
+ *   variables: {
+ *      companyId: // value for 'companyId'
+ *   },
+ * });
+ */
+export function useComputeNextTouchScoresMutation(baseOptions?: Apollo.MutationHookOptions<ComputeNextTouchScoresMutation, ComputeNextTouchScoresMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ComputeNextTouchScoresMutation, ComputeNextTouchScoresMutationVariables>(ComputeNextTouchScoresDocument, options);
+      }
+export type ComputeNextTouchScoresMutationHookResult = ReturnType<typeof useComputeNextTouchScoresMutation>;
+export type ComputeNextTouchScoresMutationResult = Apollo.MutationResult<ComputeNextTouchScoresMutation>;
+export type ComputeNextTouchScoresMutationOptions = Apollo.BaseMutationOptions<ComputeNextTouchScoresMutation, ComputeNextTouchScoresMutationVariables>;
