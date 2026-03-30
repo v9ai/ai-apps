@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ── Mock @huggingface/transformers ────────────────────────────────────
-const mockEmbedder = vi.fn();
+// vi.mock is hoisted — use vi.hoisted so references are available inside factories
+const { mockEmbedder, mockOnConflictDoUpdate, mockValues, mockInsert } = vi.hoisted(() => {
+  const mockOnConflictDoUpdate = vi.fn().mockResolvedValue(undefined);
+  const mockValues = vi.fn().mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate });
+  const mockInsert = vi.fn().mockReturnValue({ values: mockValues });
+  return { mockEmbedder: vi.fn(), mockOnConflictDoUpdate, mockValues, mockInsert };
+});
+
 vi.mock("@huggingface/transformers", () => ({
   pipeline: vi.fn().mockResolvedValue(mockEmbedder),
 }));
-
-// ── Mock DB + schema ──────────────────────────────────────────────────
-const mockOnConflictDoUpdate = vi.fn().mockResolvedValue(undefined);
-const mockValues = vi.fn().mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate });
-const mockInsert = vi.fn().mockReturnValue({ values: mockValues });
 
 vi.mock("@/lib/db", () => ({ db: { insert: mockInsert } }));
 vi.mock("@/lib/db/schema", () => ({
@@ -43,8 +44,8 @@ describe("formatCondition", () => {
     );
   });
 
-  it("empty string notes treated as present", () => {
-    expect(formatCondition("Asthma", "")).toBe("Health condition: Asthma\nNotes: ");
+  it("empty string notes treated as absent (matches Python falsy behavior)", () => {
+    expect(formatCondition("Asthma", "")).toBe("Health condition: Asthma");
   });
 });
 
