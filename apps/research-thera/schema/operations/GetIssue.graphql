@@ -84,5 +84,15 @@ query GetIssue($id: Int!) {
         createdAt
       }
     }
+    screenshots {
+      id
+      issueId
+      url
+      filename
+      contentType
+      sizeBytes
+      caption
+      createdAt
+    }
   }
 }

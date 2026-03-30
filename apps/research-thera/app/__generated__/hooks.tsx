@@ -427,6 +427,11 @@ export type DeleteIssueResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteIssueScreenshotResult = {
+  __typename?: 'DeleteIssueScreenshotResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteJournalEntryResult = {
   __typename?: 'DeleteJournalEntryResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -764,6 +769,7 @@ export type Issue = {
   relatedFamilyMember?: Maybe<FamilyMember>;
   relatedFamilyMemberId?: Maybe<Scalars['Int']['output']>;
   relatedIssues: Array<IssueLink>;
+  screenshots: Array<IssueScreenshot>;
   severity: Scalars['String']['output'];
   stories: Array<Story>;
   title: Scalars['String']['output'];
@@ -781,6 +787,18 @@ export type IssueLink = {
   id: Scalars['Int']['output'];
   issue: Issue;
   linkType: Scalars['String']['output'];
+};
+
+export type IssueScreenshot = {
+  __typename?: 'IssueScreenshot';
+  caption?: Maybe<Scalars['String']['output']>;
+  contentType: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  filename: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  issueId: Scalars['Int']['output'];
+  sizeBytes: Scalars['Int']['output'];
+  url: Scalars['String']['output'];
 };
 
 export type JobError = {
@@ -868,6 +886,7 @@ export type Mutation = {
   deleteHabit: DeleteHabitResult;
   deleteHabitLog: Scalars['Boolean']['output'];
   deleteIssue: DeleteIssueResult;
+  deleteIssueScreenshot: DeleteIssueScreenshotResult;
   deleteJournalEntry: DeleteJournalEntryResult;
   deleteNote: DeleteNoteResult;
   deleteRelationship: DeleteRelationshipResult;
@@ -1062,6 +1081,11 @@ export type MutationDeleteHabitLogArgs = {
 
 
 export type MutationDeleteIssueArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteIssueScreenshotArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -2237,6 +2261,13 @@ export type DeleteIssueMutationVariables = Exact<{
 
 export type DeleteIssueMutation = { __typename?: 'Mutation', deleteIssue: { __typename?: 'DeleteIssueResult', success: boolean, message?: string | null } };
 
+export type DeleteIssueScreenshotMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteIssueScreenshotMutation = { __typename?: 'Mutation', deleteIssueScreenshot: { __typename?: 'DeleteIssueScreenshotResult', success: boolean } };
+
 export type DeleteJournalEntryMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -2537,7 +2568,7 @@ export type GetIssueQueryVariables = Exact<{
 }>;
 
 
-export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, journalEntryId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, journalEntry?: { __typename?: 'JournalEntry', id: number, title?: string | null, entryDate: string } | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, stories: Array<{ __typename?: 'Story', id: number, language?: string | null, minutes?: number | null, createdAt: string }>, contacts: Array<{ __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, role?: string | null, slug?: string | null }>, relatedIssues: Array<{ __typename?: 'IssueLink', id: number, linkType: string, issue: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMemberId: number, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } }> } | null };
+export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, journalEntryId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, journalEntry?: { __typename?: 'JournalEntry', id: number, title?: string | null, entryDate: string } | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, stories: Array<{ __typename?: 'Story', id: number, language?: string | null, minutes?: number | null, createdAt: string }>, contacts: Array<{ __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, role?: string | null, slug?: string | null }>, relatedIssues: Array<{ __typename?: 'IssueLink', id: number, linkType: string, issue: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMemberId: number, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } }>, screenshots: Array<{ __typename?: 'IssueScreenshot', id: number, issueId: number, url: string, filename: string, contentType: string, sizeBytes: number, caption?: string | null, createdAt: string }> } | null };
 
 export type GetIssuesQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -4243,6 +4274,39 @@ export function useDeleteIssueMutation(baseOptions?: Apollo.MutationHookOptions<
 export type DeleteIssueMutationHookResult = ReturnType<typeof useDeleteIssueMutation>;
 export type DeleteIssueMutationResult = Apollo.MutationResult<DeleteIssueMutation>;
 export type DeleteIssueMutationOptions = Apollo.BaseMutationOptions<DeleteIssueMutation, DeleteIssueMutationVariables>;
+export const DeleteIssueScreenshotDocument = gql`
+    mutation DeleteIssueScreenshot($id: Int!) {
+  deleteIssueScreenshot(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteIssueScreenshotMutationFn = Apollo.MutationFunction<DeleteIssueScreenshotMutation, DeleteIssueScreenshotMutationVariables>;
+
+/**
+ * __useDeleteIssueScreenshotMutation__
+ *
+ * To run a mutation, you first call `useDeleteIssueScreenshotMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteIssueScreenshotMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteIssueScreenshotMutation, { data, loading, error }] = useDeleteIssueScreenshotMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteIssueScreenshotMutation(baseOptions?: Apollo.MutationHookOptions<DeleteIssueScreenshotMutation, DeleteIssueScreenshotMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteIssueScreenshotMutation, DeleteIssueScreenshotMutationVariables>(DeleteIssueScreenshotDocument, options);
+      }
+export type DeleteIssueScreenshotMutationHookResult = ReturnType<typeof useDeleteIssueScreenshotMutation>;
+export type DeleteIssueScreenshotMutationResult = Apollo.MutationResult<DeleteIssueScreenshotMutation>;
+export type DeleteIssueScreenshotMutationOptions = Apollo.BaseMutationOptions<DeleteIssueScreenshotMutation, DeleteIssueScreenshotMutationVariables>;
 export const DeleteJournalEntryDocument = gql`
     mutation DeleteJournalEntry($id: Int!) {
   deleteJournalEntry(id: $id) {
@@ -6583,6 +6647,16 @@ export const GetIssueDocument = gql`
         }
         createdAt
       }
+    }
+    screenshots {
+      id
+      issueId
+      url
+      filename
+      contentType
+      sizeBytes
+      caption
+      createdAt
     }
   }
 }

@@ -1,5 +1,5 @@
 import type { IssueResolvers } from './../types.generated';
-import { getContactFeedback, getContactsForIssue, getFamilyMember, getJournalEntry, getLinkedIssues, listConversationsForIssue, listStoriesForIssue, listTherapeuticQuestions } from "@/src/db";
+import { getContactFeedback, getContactsForIssue, getFamilyMember, getJournalEntry, getLinkedIssues, getScreenshotsForIssue, listConversationsForIssue, listStoriesForIssue, listTherapeuticQuestions } from "@/src/db";
 
 export const Issue: IssueResolvers = {
   feedback: async (parent) => {
@@ -70,6 +70,19 @@ export const Issue: IssueResolvers = {
     if (!userEmail) return [];
     const rows = await listConversationsForIssue(parent.id, userEmail);
     return rows as any;
+  },
+  screenshots: async (parent) => {
+    const rows = await getScreenshotsForIssue(parent.id, parent.createdBy);
+    return rows.map((s) => ({
+      id: s.id,
+      issueId: s.issueId,
+      url: s.url,
+      filename: s.filename,
+      contentType: s.contentType,
+      sizeBytes: s.sizeBytes,
+      caption: s.caption,
+      createdAt: s.createdAt,
+    })) as any;
   },
   relatedIssues: async (parent) => {
     const links = await getLinkedIssues(parent.id, parent.createdBy);

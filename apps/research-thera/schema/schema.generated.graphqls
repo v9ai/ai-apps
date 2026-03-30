@@ -382,6 +382,10 @@ type DeleteIssueResult {
   success: Boolean!
 }
 
+type DeleteIssueScreenshotResult {
+  success: Boolean!
+}
+
 type DeleteJournalEntryResult {
   message: String
   success: Boolean!
@@ -688,6 +692,7 @@ type Issue {
   relatedFamilyMember: FamilyMember
   relatedFamilyMemberId: Int
   relatedIssues: [IssueLink!]!
+  screenshots: [IssueScreenshot!]!
   severity: String!
   stories: [Story!]!
   title: String!
@@ -703,6 +708,17 @@ type IssueLink {
   id: Int!
   issue: Issue!
   linkType: String!
+}
+
+type IssueScreenshot {
+  caption: String
+  contentType: String!
+  createdAt: String!
+  filename: String!
+  id: Int!
+  issueId: Int!
+  sizeBytes: Int!
+  url: String!
 }
 
 type JobError {
@@ -786,6 +802,7 @@ type Mutation {
   deleteHabit(id: Int!): DeleteHabitResult!
   deleteHabitLog(id: Int!): Boolean!
   deleteIssue(id: Int!): DeleteIssueResult!
+  deleteIssueScreenshot(id: Int!): DeleteIssueScreenshotResult!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!

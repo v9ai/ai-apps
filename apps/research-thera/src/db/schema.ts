@@ -356,6 +356,21 @@ export const issueContacts = pgTable("issue_contacts", {
     .default(sql`NOW()`),
 });
 
+export const issueScreenshots = pgTable("issue_screenshots", {
+  id: serial("id").primaryKey(),
+  issueId: integer("issue_id").notNull(),
+  userId: text("user_id").notNull(),
+  r2Key: text("r2_key").notNull(),
+  url: text("url").notNull(),
+  filename: text("filename").notNull(),
+  contentType: text("content_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  caption: text("caption"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const conversations = pgTable("conversations", {
   id: serial("id").primaryKey(),
   issueId: integer("issue_id")

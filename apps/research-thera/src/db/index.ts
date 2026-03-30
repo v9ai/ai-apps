@@ -2417,6 +2417,67 @@ export async function unlinkContactFromIssue(
     WHERE issue_id = ${issueId} AND contact_id = ${contactId} AND user_id = ${userId}`;
 }
 
+// ============================================
+// Issue Screenshots
+// ============================================
+
+export async function getScreenshotsForIssue(issueId: number, userId: string) {
+  const rows = await neonSql`
+    SELECT * FROM issue_screenshots
+    WHERE issue_id = ${issueId} AND user_id = ${userId}
+    ORDER BY created_at DESC`;
+  return rows.map((row) => ({
+    id: row.id as number,
+    issueId: row.issue_id as number,
+    userId: row.user_id as string,
+    r2Key: row.r2_key as string,
+    url: row.url as string,
+    filename: row.filename as string,
+    contentType: row.content_type as string,
+    sizeBytes: row.size_bytes as number,
+    caption: (row.caption as string) || null,
+    createdAt: row.created_at as string,
+  }));
+}
+
+export async function addIssueScreenshot(params: {
+  issueId: number;
+  userId: string;
+  r2Key: string;
+  url: string;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  caption?: string | null;
+}) {
+  const rows = await neonSql`
+    INSERT INTO issue_screenshots (issue_id, user_id, r2_key, url, filename, content_type, size_bytes, caption, created_at)
+    VALUES (${params.issueId}, ${params.userId}, ${params.r2Key}, ${params.url}, ${params.filename}, ${params.contentType}, ${params.sizeBytes}, ${params.caption ?? null}, NOW())
+    RETURNING *`;
+  const row = rows[0];
+  return {
+    id: row.id as number,
+    issueId: row.issue_id as number,
+    userId: row.user_id as string,
+    r2Key: row.r2_key as string,
+    url: row.url as string,
+    filename: row.filename as string,
+    contentType: row.content_type as string,
+    sizeBytes: row.size_bytes as number,
+    caption: (row.caption as string) || null,
+    createdAt: row.created_at as string,
+  };
+}
+
+export async function deleteIssueScreenshot(id: number, userId: string): Promise<string | null> {
+  const rows = await neonSql`
+    DELETE FROM issue_screenshots
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING r2_key`;
+  if (rows.length === 0) return null;
+  return rows[0].r2_key as string;
+}
+
 export async function getGoalById(goalId: number) {
   const rows = await neonSql`SELECT * FROM goals WHERE id = ${goalId}`;
   if (rows.length === 0) return null;
@@ -2967,6 +3028,10 @@ export const db = {
   linkIssues,
   unlinkIssues,
   getLinkedIssues,
+  // Issue Screenshots
+  getScreenshotsForIssue,
+  addIssueScreenshot,
+  deleteIssueScreenshot,
   // Deep Issue Analyses
   createDeepIssueAnalysis,
   getDeepIssueAnalysis,
