@@ -306,6 +306,7 @@ type Goal {
   status: String!
   priority: String!
   targetDate: String
+  tags: [String!]
   parentGoalId: Int
   parentGoal: Goal
   subGoals: [Goal!]!
@@ -516,6 +517,7 @@ input UpdateGoalInput {
   status: String
   priority: String
   targetDate: String
+  tags: [String!]
   storyLanguage: String
 }
 

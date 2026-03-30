@@ -52,6 +52,7 @@ export const goals = pgTable("goals", {
   parentAdvice: text("parent_advice"),
   parentAdviceLanguage: text("parent_advice_language"),
   parentAdviceGeneratedAt: text("parent_advice_generated_at"),
+  tags: text("tags"), // JSON array
   parentGoalId: integer("parent_goal_id"),
   createdAt: text("created_at")
     .notNull()

@@ -68,6 +68,10 @@ export default function GoalMainCard({ goal }: { goal: Goal }) {
   const [editingTargetDate, setEditingTargetDate] = useState(false);
   const [editedTargetDate, setEditedTargetDate] = useState("");
 
+  // Tags editing
+  const [editingTags, setEditingTags] = useState(false);
+  const [editedTags, setEditedTags] = useState("");
+
   const { data: familyData } = useGetFamilyMembersQuery();
   const familyMembers = familyData?.familyMembers ?? [];
 
@@ -116,6 +120,14 @@ export default function GoalMainCard({ goal }: { goal: Goal }) {
       variables: { id: goal.id, input: { description: editedDescription || null } },
     });
     setEditingDescription(false);
+  };
+
+  const handleTagsSave = async () => {
+    const parsedTags = editedTags.split(",").map((t) => t.trim()).filter(Boolean);
+    await updateGoal({
+      variables: { id: goal.id, input: { tags: parsedTags } },
+    });
+    setEditingTags(false);
   };
 
   const handleTargetDateSave = async () => {
@@ -329,6 +341,61 @@ export default function GoalMainCard({ goal }: { goal: Goal }) {
               {goal.description || "Add a description..."}
             </Text>
             <IconButton size="1" variant="ghost" color="gray" onClick={(e) => { e.stopPropagation(); setEditedDescription(goal.description ?? ""); setEditingDescription(true); }}>
+              <Pencil2Icon />
+            </IconButton>
+          </Flex>
+        )}
+
+        {/* Tags */}
+        {editingTags ? (
+          <Flex direction="column" gap="2">
+            <TextField.Root
+              size="2"
+              value={editedTags}
+              onChange={(e) => setEditedTags(e.target.value)}
+              placeholder="Comma-separated, e.g. therapy, milestone, concern"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleTagsSave();
+                if (e.key === "Escape") setEditingTags(false);
+              }}
+              autoFocus
+            />
+            <Flex gap="2">
+              <IconButton size="1" variant="soft" color="green" disabled={updating} onClick={handleTagsSave}>
+                <CheckIcon />
+              </IconButton>
+              <IconButton size="1" variant="soft" color="gray" disabled={updating} onClick={() => setEditingTags(false)}>
+                <Cross2Icon />
+              </IconButton>
+            </Flex>
+          </Flex>
+        ) : (
+          <Flex
+            gap="2"
+            align="center"
+            wrap="wrap"
+            style={{ cursor: "pointer" }}
+            onClick={() => { setEditedTags((goal.tags || []).join(", ")); setEditingTags(true); }}
+          >
+            {goal.tags && goal.tags.length > 0 ? (
+              goal.tags.map((tag, idx) => (
+                <Badge
+                  key={idx}
+                  variant="soft"
+                  size="1"
+                  style={{ cursor: "pointer" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/journal/tag/${encodeURIComponent(tag)}`);
+                  }}
+                >
+                  {tag}
+                </Badge>
+              ))
+            ) : (
+              <Text size="2" color="gray">Add tags...</Text>
+            )}
+            <IconButton size="1" variant="ghost" color="gray" onClick={(e) => { e.stopPropagation(); setEditedTags((goal.tags || []).join(", ")); setEditingTags(true); }}>
               <Pencil2Icon />
             </IconButton>
           </Flex>

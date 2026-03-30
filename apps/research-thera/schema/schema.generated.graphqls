@@ -600,6 +600,7 @@ type Goal {
   stories: [Story!]!
   storyLanguage: String
   subGoals: [Goal!]!
+  tags: [String!]
   targetDate: String
   therapeuticText: String
   therapeuticTextGeneratedAt: String
@@ -1179,6 +1180,7 @@ input UpdateGoalInput {
   priority: String
   status: String
   storyLanguage: String
+  tags: [String!]
   targetDate: String
   title: String
 }
