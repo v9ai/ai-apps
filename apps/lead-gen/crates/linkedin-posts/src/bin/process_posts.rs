@@ -72,14 +72,23 @@ fn compute_ai_affinity(contact: &Contact, posts: &[StoredPost]) -> AffinityResul
     let mut weight_total = 0.0f32;
 
     for p in posts {
-        let ai_score = p.intent_ai_ml;
+        // Guard against NaN/Inf from upstream ML pipeline
+        let ai_score = if p.intent_ai_ml.is_finite() { p.intent_ai_ml } else { 0.0 };
+        let hiring_score = if p.intent_hiring.is_finite() { p.intent_hiring } else { 0.0 };
+
         if ai_score > max_ai_score {
             max_ai_score = ai_score;
         }
 
         // Engagement weight (guard against negative counts producing NaN via ln)
         let engagement = (p.reactions_count.max(0) as f32) + (p.comments_count.max(0) as f32);
-        let w = (2.0 + engagement).ln();
+        let mut w = (2.0 + engagement).ln();
+
+        // Reposts carry less signal than original content
+        if p.is_repost {
+            w *= 0.5;
+        }
+
         weight_total += w;
 
         if ai_score > INTENT_THRESHOLD {
@@ -89,7 +98,7 @@ fn compute_ai_affinity(contact: &Contact, posts: &[StoredPost]) -> AffinityResul
         }
 
         // Hiring + AI combo: recruiter posting AI jobs
-        if p.intent_hiring > INTENT_THRESHOLD && ai_score > INTENT_THRESHOLD {
+        if hiring_score > INTENT_THRESHOLD && ai_score > INTENT_THRESHOLD {
             hiring_ai_count += 1;
         }
     }
@@ -113,7 +122,7 @@ fn compute_ai_affinity(contact: &Contact, posts: &[StoredPost]) -> AffinityResul
 
         // Post score: ratio-based + max score boost + hiring-AI recruiter boost
         let hiring_ai_ratio = hiring_ai_count as f32 / posts.len().max(1) as f32;
-        let post_score = ai_ratio + 0.15 * max_ai_score + 0.20 * hiring_ai_ratio;
+        let post_score = (ai_ratio + 0.15 * max_ai_score + 0.20 * hiring_ai_ratio).min(1.0);
 
         (title_weight * title_score + post_weight * post_score).clamp(0.0, 1.0)
     };
@@ -216,6 +225,65 @@ async fn batch_tag_for_deletion(
     Ok((updated as usize, already_tagged))
 }
 
+/// Remove "to-be-deleted" tag from contacts that have been reclassified as AI-Related.
+/// Returns (untagged_count, not_tagged_count).
+async fn batch_untag_deletion(
+    client: &tokio_postgres::Client,
+    contact_ids: &[i32],
+) -> Result<(usize, usize)> {
+    if contact_ids.is_empty() {
+        return Ok((0, 0));
+    }
+
+    let rows = client
+        .query(
+            "SELECT id, tags FROM contacts WHERE id = ANY($1)",
+            &[&contact_ids],
+        )
+        .await
+        .context("Failed to read contact tags for untag")?;
+
+    let mut needs_untag: Vec<i32> = Vec::new();
+    let mut not_tagged = 0usize;
+
+    for row in &rows {
+        let id: i32 = row.get(0);
+        let tags_raw: Option<String> = row.get(1);
+        let tags: Vec<String> = tags_raw
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok())
+            .unwrap_or_default();
+
+        if tags.iter().any(|t| t == "to-be-deleted") {
+            needs_untag.push(id);
+        } else {
+            not_tagged += 1;
+        }
+    }
+
+    if needs_untag.is_empty() {
+        return Ok((0, not_tagged));
+    }
+
+    // Remove "to-be-deleted" from the JSON array
+    let updated = client
+        .execute(
+            "UPDATE contacts
+             SET tags = (
+               SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)::text
+               FROM jsonb_array_elements(tags::jsonb) AS elem
+               WHERE elem::text != '\"to-be-deleted\"'
+             ),
+             updated_at = now()::text
+             WHERE id = ANY($1)",
+            &[&needs_untag],
+        )
+        .await
+        .context("Failed to batch remove to-be-deleted tag")?;
+
+    Ok((updated as usize, not_tagged))
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 #[tokio::main]
@@ -316,12 +384,35 @@ async fn main() -> Result<()> {
         }
     }
 
+    // 6. Remove stale "to-be-deleted" tags from AI-Related contacts
+    let ai_ids: Vec<i32> = results
+        .iter()
+        .filter(|r| matches!(r.verdict, Verdict::AiRelated))
+        .map(|r| r.contact_id)
+        .collect();
+
+    let mut untagged = 0usize;
+
+    for chunk in ai_ids.chunks(500) {
+        let (removed, _clean) = batch_untag_deletion(&client, chunk).await?;
+        untagged += removed;
+        if removed > 0 {
+            tracing::info!("Removed to-be-deleted from {} AI contacts (chunk of {})", removed, chunk.len());
+        }
+    }
+
     println!();
     println!("Tags Applied:");
     println!(
         "  to-be-deleted:   {:>4}  ({} new, {} already tagged)",
         not_ai_count, newly_tagged, already_tagged,
     );
+    if untagged > 0 {
+        println!(
+            "  untagged:        {:>4}  (reclassified as AI-Related)",
+            untagged,
+        );
+    }
 
     // 6. Top AI contacts
     let top_ai: Vec<&AffinityResult> = results
