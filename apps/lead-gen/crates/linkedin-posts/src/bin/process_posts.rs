@@ -42,28 +42,32 @@ struct AffinityResult {
     verdict: Verdict,
 }
 
-// ── Bayesian AI Affinity ────────────────────────────────────────────────────
+// ── AI Affinity Scoring ─────────────────────────────────────────────────────
+//
+// Two-signal model:
+//   Signal 1 — Title prior: AI keywords in position → strong AI prior.
+//   Signal 2 — Post ratio: fraction of posts with intent_ai_ml > threshold.
+//              Only AI posts contribute positive evidence; non-AI posts are
+//              neutral (absence of AI content ≠ evidence against AI affinity).
+//
+// Contacts WITHOUT posts: classified by title alone.
+//   AI title → AiRelated. Non-AI title → NotAi (tag for deletion).
 
 fn compute_ai_affinity(contact: &Contact, posts: &[StoredPost]) -> AffinityResult {
     let position = contact.position.as_deref().unwrap_or("");
     let company = contact.company.as_deref().unwrap_or("");
     let name = format!("{} {}", contact.first_name, contact.last_name);
 
-    // 1. Prior from title
-    let prior = if title_has_ai_signal(position) {
-        0.70
-    } else if title_has_engineering_signal(position) {
-        0.30
-    } else {
-        0.15
-    };
+    let has_ai_title = title_has_ai_signal(position);
+    let has_eng_title = title_has_engineering_signal(position);
 
-    let mut log_odds = (prior / (1.0f32 - prior)).ln();
+    // 1. Title prior
+    let title_score: f32 = if has_ai_title { 0.70 } else if has_eng_title { 0.30 } else { 0.10 };
 
-    // 2. Evidence from posts
+    // 2. Post evidence — only positive (AI posts boost, non-AI posts are neutral)
     let mut ai_post_count = 0usize;
     let mut max_ai_score = 0.0f32;
-    let mut weighted_sum = 0.0f32;
+    let mut weighted_ai_sum = 0.0f32;
     let mut weight_total = 0.0f32;
 
     for p in posts {
@@ -71,47 +75,46 @@ fn compute_ai_affinity(contact: &Contact, posts: &[StoredPost]) -> AffinityResul
         if ai_score > max_ai_score {
             max_ai_score = ai_score;
         }
+
+        // Engagement weight
+        let w = (1.0 + p.reactions_count as f32 + p.comments_count as f32).ln().max(1.0);
+        weight_total += w;
+
         if ai_score > INTENT_THRESHOLD {
             ai_post_count += 1;
+            // Only AI posts contribute positive evidence
+            weighted_ai_sum += ai_score * w;
         }
-
-        // Engagement weight: log(1 + reactions + comments), min 1.0
-        let engagement_weight = (1.0 + p.reactions_count as f32 + p.comments_count as f32).ln().max(1.0);
-        weighted_sum += ai_score * engagement_weight;
-        weight_total += engagement_weight;
-
-        // Log-likelihood ratio contribution (clamped to avoid extreme values)
-        let clamped = ai_score.clamp(0.05, 0.95);
-        let llr = (clamped / (1.0 - clamped)).ln();
-        let contribution = (engagement_weight / 3.0) * llr.clamp(-3.0, 3.0);
-        log_odds += contribution;
     }
 
-    let weighted_avg_ai = if weight_total > 0.0 {
-        weighted_sum / weight_total
+    // AI ratio: what fraction of posts (by engagement weight) are AI-related
+    let ai_ratio = if weight_total > 0.0 {
+        weighted_ai_sum / weight_total
     } else {
         0.0
     };
 
-    // 3. Posterior
-    let ai_probability = sigmoid(log_odds);
+    // 3. Combined score: blend title prior + post evidence
+    let ai_probability = if posts.is_empty() {
+        // No posts — title is the only signal
+        title_score
+    } else {
+        // Weighted blend: title contributes less as we get more post evidence
+        let post_confidence = (posts.len() as f32 / 10.0).min(1.0); // 10+ posts → full confidence in posts
+        let title_weight = 1.0 - post_confidence * 0.7; // title always keeps at least 30% influence
+        let post_weight = 1.0 - title_weight;
+
+        // Post score: ratio-based with boost for high max score
+        let post_score = ai_ratio + 0.15 * max_ai_score;
+
+        (title_weight * title_score + post_weight * post_score).clamp(0.0, 1.0)
+    };
 
     // 4. Verdict
     let verdict = if ai_probability >= AI_THRESHOLD {
         Verdict::AiRelated
-    } else if posts.len() >= MIN_POSTS_FOR_VERDICT {
-        Verdict::NotAi
-    } else if title_has_ai_signal(position) {
-        // Few posts but AI title — give benefit of the doubt
-        Verdict::AiRelated
-    } else if title_has_engineering_signal(position) && posts.is_empty() {
-        // Engineering title, no posts scraped yet — insufficient
-        Verdict::Insufficient
-    } else if posts.is_empty() {
-        Verdict::Insufficient
     } else {
-        // 1-2 posts, no AI title signal — not enough evidence
-        Verdict::Insufficient
+        Verdict::NotAi
     };
 
     AffinityResult {
@@ -120,11 +123,11 @@ fn compute_ai_affinity(contact: &Contact, posts: &[StoredPost]) -> AffinityResul
         position: position.to_string(),
         company: company.to_string(),
         ai_probability,
-        prior_from_title: prior,
+        prior_from_title: title_score,
         ai_post_count,
         total_posts: posts.len(),
         max_ai_score,
-        weighted_avg_ai,
+        weighted_avg_ai: ai_ratio,
         verdict,
     }
 }
@@ -224,7 +227,8 @@ async fn main() -> Result<()> {
 
     let ai_count = results.iter().filter(|r| matches!(r.verdict, Verdict::AiRelated)).count();
     let not_ai_count = results.iter().filter(|r| matches!(r.verdict, Verdict::NotAi)).count();
-    let insufficient_count = results.iter().filter(|r| matches!(r.verdict, Verdict::Insufficient)).count();
+    let with_posts = results.iter().filter(|r| r.total_posts > 0).count();
+    let without_posts = results.iter().filter(|r| r.total_posts == 0).count();
     let total = results.len();
 
     println!();
@@ -235,15 +239,13 @@ async fn main() -> Result<()> {
         if total > 0 { ai_count as f32 / total as f32 * 100.0 } else { 0.0 }
     );
     println!(
-        "  Not AI:          {:>4}  ({:.1}%)",
+        "  Not AI:          {:>4}  ({:.1}%)  → to-be-deleted",
         not_ai_count,
         if total > 0 { not_ai_count as f32 / total as f32 * 100.0 } else { 0.0 }
     );
     println!(
-        "  Insufficient:    {:>4}  ({:.1}%)  [skipped — < {} posts, no title signal]",
-        insufficient_count,
-        if total > 0 { insufficient_count as f32 / total as f32 * 100.0 } else { 0.0 },
-        MIN_POSTS_FOR_VERDICT,
+        "  With posts:      {:>4}  |  Without posts: {}  (title-only classification)",
+        with_posts, without_posts,
     );
 
     // 5. Connect to Neon and tag non-AI contacts
