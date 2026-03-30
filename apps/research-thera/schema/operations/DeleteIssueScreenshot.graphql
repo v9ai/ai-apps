@@ -1,0 +1,5 @@
+mutation DeleteIssueScreenshot($id: Int!) {
+  deleteIssueScreenshot(id: $id) {
+    success
+  }
+}

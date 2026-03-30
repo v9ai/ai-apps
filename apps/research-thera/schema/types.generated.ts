@@ -426,6 +426,11 @@ export type DeleteIssueResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteIssueScreenshotResult = {
+  __typename?: 'DeleteIssueScreenshotResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteJournalEntryResult = {
   __typename?: 'DeleteJournalEntryResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -757,6 +762,7 @@ export type Issue = {
   relatedFamilyMember?: Maybe<FamilyMember>;
   relatedFamilyMemberId?: Maybe<Scalars['Int']['output']>;
   relatedIssues: Array<IssueLink>;
+  screenshots: Array<IssueScreenshot>;
   severity: Scalars['String']['output'];
   stories: Array<Story>;
   title: Scalars['String']['output'];
@@ -774,6 +780,18 @@ export type IssueLink = {
   id: Scalars['Int']['output'];
   issue: Issue;
   linkType: Scalars['String']['output'];
+};
+
+export type IssueScreenshot = {
+  __typename?: 'IssueScreenshot';
+  caption?: Maybe<Scalars['String']['output']>;
+  contentType: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  filename: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  issueId: Scalars['Int']['output'];
+  sizeBytes: Scalars['Int']['output'];
+  url: Scalars['String']['output'];
 };
 
 export type JobError = {
@@ -859,6 +877,7 @@ export type Mutation = {
   deleteHabit: DeleteHabitResult;
   deleteHabitLog: Scalars['Boolean']['output'];
   deleteIssue: DeleteIssueResult;
+  deleteIssueScreenshot: DeleteIssueScreenshotResult;
   deleteJournalEntry: DeleteJournalEntryResult;
   deleteNote: DeleteNoteResult;
   deleteRelationship: DeleteRelationshipResult;
@@ -1053,6 +1072,11 @@ export type MutationdeleteHabitLogArgs = {
 
 
 export type MutationdeleteIssueArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationdeleteIssueScreenshotArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -2116,6 +2140,7 @@ export type ResolversTypes = {
   DeleteGoalResult: ResolverTypeWrapper<DeleteGoalResult>;
   DeleteHabitResult: ResolverTypeWrapper<DeleteHabitResult>;
   DeleteIssueResult: ResolverTypeWrapper<DeleteIssueResult>;
+  DeleteIssueScreenshotResult: ResolverTypeWrapper<DeleteIssueScreenshotResult>;
   DeleteJournalEntryResult: ResolverTypeWrapper<DeleteJournalEntryResult>;
   DeleteNoteResult: ResolverTypeWrapper<DeleteNoteResult>;
   DeleteQuestionsResult: ResolverTypeWrapper<DeleteQuestionsResult>;
@@ -2151,6 +2176,7 @@ export type ResolversTypes = {
   Issue: ResolverTypeWrapper<Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, feedback?: Maybe<ResolversTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversTypes['FamilyMember']>, relatedIssues: Array<ResolversTypes['IssueLink']>, stories: Array<ResolversTypes['Story']> }>;
   IssueContactLink: ResolverTypeWrapper<IssueContactLink>;
   IssueLink: ResolverTypeWrapper<Omit<IssueLink, 'issue'> & { issue: ResolversTypes['Issue'] }>;
+  IssueScreenshot: ResolverTypeWrapper<IssueScreenshot>;
   JobError: ResolverTypeWrapper<JobError>;
   JobResult: ResolverTypeWrapper<JobResult>;
   JobStatus: ResolverTypeWrapper<'RUNNING' | 'SUCCEEDED' | 'FAILED'>;
@@ -2251,6 +2277,7 @@ export type ResolversParentTypes = {
   DeleteGoalResult: DeleteGoalResult;
   DeleteHabitResult: DeleteHabitResult;
   DeleteIssueResult: DeleteIssueResult;
+  DeleteIssueScreenshotResult: DeleteIssueScreenshotResult;
   DeleteJournalEntryResult: DeleteJournalEntryResult;
   DeleteNoteResult: DeleteNoteResult;
   DeleteQuestionsResult: DeleteQuestionsResult;
@@ -2280,6 +2307,7 @@ export type ResolversParentTypes = {
   Issue: Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversParentTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']>, relatedIssues: Array<ResolversParentTypes['IssueLink']>, stories: Array<ResolversParentTypes['Story']> };
   IssueContactLink: IssueContactLink;
   IssueLink: Omit<IssueLink, 'issue'> & { issue: ResolversParentTypes['Issue'] };
+  IssueScreenshot: IssueScreenshot;
   JobError: JobError;
   JobResult: JobResult;
   JournalEntry: Omit<JournalEntry, 'familyMember' | 'goal' | 'issue'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, goal?: Maybe<ResolversParentTypes['Goal']>, issue?: Maybe<ResolversParentTypes['Issue']> };
@@ -2552,6 +2580,10 @@ export type DeleteIssueResultResolvers<ContextType = GraphQLContext, ParentType 
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type DeleteIssueScreenshotResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteIssueScreenshotResult'] = ResolversParentTypes['DeleteIssueScreenshotResult']> = {
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type DeleteJournalEntryResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteJournalEntryResult'] = ResolversParentTypes['DeleteJournalEntryResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2818,6 +2850,7 @@ export type IssueResolvers<ContextType = GraphQLContext, ParentType extends Reso
   relatedFamilyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
   relatedFamilyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   relatedIssues?: Resolver<Array<ResolversTypes['IssueLink']>, ParentType, ContextType>;
+  screenshots?: Resolver<Array<ResolversTypes['IssueScreenshot']>, ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   stories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2833,6 +2866,17 @@ export type IssueLinkResolvers<ContextType = GraphQLContext, ParentType extends 
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   issue?: Resolver<ResolversTypes['Issue'], ParentType, ContextType>;
   linkType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type IssueScreenshotResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IssueScreenshot'] = ResolversParentTypes['IssueScreenshot']> = {
+  caption?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  contentType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  filename?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  issueId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  sizeBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type JobErrorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['JobError'] = ResolversParentTypes['JobError']> = {
@@ -2907,6 +2951,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteHabit?: Resolver<ResolversTypes['DeleteHabitResult'], ParentType, ContextType, RequireFields<MutationdeleteHabitArgs, 'id'>>;
   deleteHabitLog?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationdeleteHabitLogArgs, 'id'>>;
   deleteIssue?: Resolver<ResolversTypes['DeleteIssueResult'], ParentType, ContextType, RequireFields<MutationdeleteIssueArgs, 'id'>>;
+  deleteIssueScreenshot?: Resolver<ResolversTypes['DeleteIssueScreenshotResult'], ParentType, ContextType, RequireFields<MutationdeleteIssueScreenshotArgs, 'id'>>;
   deleteJournalEntry?: Resolver<ResolversTypes['DeleteJournalEntryResult'], ParentType, ContextType, RequireFields<MutationdeleteJournalEntryArgs, 'id'>>;
   deleteNote?: Resolver<ResolversTypes['DeleteNoteResult'], ParentType, ContextType, RequireFields<MutationdeleteNoteArgs, 'id'>>;
   deleteRelationship?: Resolver<ResolversTypes['DeleteRelationshipResult'], ParentType, ContextType, RequireFields<MutationdeleteRelationshipArgs, 'id'>>;
@@ -3286,6 +3331,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteGoalResult?: DeleteGoalResultResolvers<ContextType>;
   DeleteHabitResult?: DeleteHabitResultResolvers<ContextType>;
   DeleteIssueResult?: DeleteIssueResultResolvers<ContextType>;
+  DeleteIssueScreenshotResult?: DeleteIssueScreenshotResultResolvers<ContextType>;
   DeleteJournalEntryResult?: DeleteJournalEntryResultResolvers<ContextType>;
   DeleteNoteResult?: DeleteNoteResultResolvers<ContextType>;
   DeleteQuestionsResult?: DeleteQuestionsResultResolvers<ContextType>;
@@ -3320,6 +3366,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Issue?: IssueResolvers<ContextType>;
   IssueContactLink?: IssueContactLinkResolvers<ContextType>;
   IssueLink?: IssueLinkResolvers<ContextType>;
+  IssueScreenshot?: IssueScreenshotResolvers<ContextType>;
   JobError?: JobErrorResolvers<ContextType>;
   JobResult?: JobResultResolvers<ContextType>;
   JobStatus?: JobStatusResolvers;

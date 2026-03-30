@@ -239,6 +239,7 @@ type Mutation {
   unlinkIssues(issueId: Int!, linkedIssueId: Int!): UnlinkIssuesResult!
   linkContactToIssue(issueId: Int!, contactId: Int!): IssueContactLink!
   unlinkContactFromIssue(issueId: Int!, contactId: Int!): UnlinkContactResult!
+  deleteIssueScreenshot(id: Int!): DeleteIssueScreenshotResult!
 
   # Deep Issue Analysis
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
@@ -1089,6 +1090,7 @@ type Issue {
   relatedIssues: [IssueLink!]!
   contacts: [Contact!]!
   conversations: [Conversation!]!
+  screenshots: [IssueScreenshot!]!
 }
 
 # ============================================
@@ -1129,6 +1131,21 @@ type IssueContactLink {
 }
 
 type UnlinkContactResult {
+  success: Boolean!
+}
+
+type IssueScreenshot {
+  id: Int!
+  issueId: Int!
+  url: String!
+  filename: String!
+  contentType: String!
+  sizeBytes: Int!
+  caption: String
+  createdAt: String!
+}
+
+type DeleteIssueScreenshotResult {
   success: Boolean!
 }
 

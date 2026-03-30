@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Flex,
@@ -59,6 +59,7 @@ import {
   useCreateContactMutation,
   useLinkContactToIssueMutation,
   useUnlinkContactFromIssueMutation,
+  useDeleteIssueScreenshotMutation,
 } from "@/app/__generated__/hooks";
 import { ConversationsSection } from "@/app/components/ConversationsSection";
 
@@ -115,7 +116,7 @@ function IssueDetailContent() {
   const familySlug = params.id as string;
   const issueId = parseInt(params.issueId as string, 10);
 
-  const { data, loading, error } = useGetIssueQuery({
+  const { data, loading, error, refetch: refetchIssue } = useGetIssueQuery({
     variables: { id: issueId },
     skip: isNaN(issueId),
   });
@@ -143,6 +144,15 @@ function IssueDetailContent() {
     });
 
   const [habitsMessage, setHabitsMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  // Screenshot state
+  const [deleteScreenshot] = useDeleteIssueScreenshotMutation({
+    refetchQueries: ["GetIssue"],
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
 
   const { data: familyMembersData } = useGetFamilyMembersQuery();
   const familyMembers = familyMembersData?.familyMembers ?? [];
@@ -630,6 +640,37 @@ function IssueDetailContent() {
     });
   };
 
+  const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !issue) return;
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please select an image file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("File size must be under 10 MB");
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("issueId", String(issue.id));
+      const res = await fetch("/api/screenshots", { method: "POST", body: formData });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(body.error || "Upload failed");
+      }
+      refetchIssue();
+    } catch (err: any) {
+      setUploadError(err.message);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   if (loading) {
     return (
       <Flex justify="center" align="center" style={{ minHeight: "200px" }}>
@@ -650,6 +691,7 @@ function IssueDetailContent() {
 
   const isGenerating = generatingStory || !!storyJobId;
   const relatedIssues = issue.relatedIssues ?? [];
+  const screenshots = issue.screenshots ?? [];
   const availableToLink = (siblingIssuesData?.issues ?? []).filter(
     (i) => i.id !== issue.id && !relatedIssues.some((r) => r.issue.id === i.id),
   );
@@ -840,6 +882,92 @@ function IssueDetailContent() {
           </Flex>
         </Flex>
       </Card>
+
+      {/* Screenshots */}
+      <Card>
+        <Flex direction="column" gap="4" p="4">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
+            <Box>
+              <Heading size="3" mb="1">Screenshots ({screenshots.length})</Heading>
+              <Text size="2" color="gray">
+                Attach images and screenshots to this issue.
+              </Text>
+            </Box>
+            <Button
+              size="2"
+              variant="soft"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <PlusIcon />
+              {uploading ? "Uploading..." : "Add Screenshot"}
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleScreenshotUpload}
+            />
+          </Flex>
+
+          {uploadError && (
+            <Callout.Root color="red" size="1">
+              <Callout.Text>{uploadError}</Callout.Text>
+            </Callout.Root>
+          )}
+
+          {screenshots.length > 0 && (
+            <>
+              <Separator size="4" />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
+                {screenshots.map((ss) => (
+                  <Card key={ss.id} variant="surface">
+                    <img
+                      src={ss.url}
+                      alt={ss.filename}
+                      style={{ width: "100%", borderRadius: 4, cursor: "pointer", display: "block" }}
+                      onClick={() => setScreenshotPreview(ss.url)}
+                    />
+                    <Flex direction="column" gap="1" p="2">
+                      <Text size="1" color="gray" truncate>{ss.filename}</Text>
+                      <Text size="1" color="gray">{(ss.sizeBytes / 1024).toFixed(0)} KB</Text>
+                    </Flex>
+                    <Flex gap="1" p="2" pt="0">
+                      <Button
+                        variant="ghost"
+                        color="red"
+                        size="1"
+                        onClick={() => deleteScreenshot({ variables: { id: ss.id } })}
+                      >
+                        <TrashIcon /> Delete
+                      </Button>
+                    </Flex>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+        </Flex>
+      </Card>
+
+      {/* Screenshot Preview Dialog */}
+      <Dialog.Root open={!!screenshotPreview} onOpenChange={(open) => { if (!open) setScreenshotPreview(null); }}>
+        <Dialog.Content style={{ maxWidth: "90vw", padding: 0 }}>
+          <Flex justify="end" p="2">
+            <Button variant="ghost" size="1" onClick={() => setScreenshotPreview(null)}>
+              <Cross2Icon />
+            </Button>
+          </Flex>
+          {screenshotPreview && (
+            <img
+              src={screenshotPreview}
+              alt="Screenshot preview"
+              style={{ width: "100%", display: "block", borderRadius: "0 0 var(--radius-3) var(--radius-3)" }}
+            />
+          )}
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Linked Contacts */}
       <Card>
