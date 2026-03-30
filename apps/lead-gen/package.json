@@ -15,6 +15,7 @@
     "codegen": "graphql-codegen",
     "ccx:scrape": "tsx scripts/scrape-from-ccx.ts",
     "linkedin:people": "tsx scripts/scrape-linkedin-people.ts",
+    "clean:contacts": "tsx scripts/clean-contacts.ts",
     "strategy:check": "tsx scripts/enforce-strategy.ts",
     "strategy:check:all": "tsx scripts/enforce-strategy.ts --all",
     "db:generate": "drizzle-kit generate",
