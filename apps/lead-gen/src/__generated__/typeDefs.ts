@@ -148,7 +148,7 @@ input CompanyFactInput {
 }
 
 input CompanyFilterInput {
-  category_in: [CompanyCategory!]
+  category: CompanyCategory
   min_ai_tier: Int
   min_score: Float
   service_taxonomy_any: [String!]
