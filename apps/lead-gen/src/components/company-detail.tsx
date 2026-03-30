@@ -277,7 +277,6 @@ type KeyFactsCardProps = {
   jobBoardUrl?: string | null;
   score?: number | null;
   isAdmin?: boolean;
-  industry?: string | null;
   updatedAt?: string | null;
 };
 
@@ -286,7 +285,6 @@ function KeyFactsCard({
   jobBoardUrl,
   score,
   isAdmin = false,
-  industry,
   updatedAt,
 }: KeyFactsCardProps) {
   const linkedinHref = useMemo(
@@ -302,14 +300,6 @@ function KeyFactsCard({
     label: string;
     value: React.ReactNode;
   }> = [
-    ...(industry
-      ? [
-          {
-            label: "Industry",
-            value: <Text size="2">{industry}</Text>,
-          },
-        ]
-      : []),
     {
       label: "LinkedIn",
       value: linkedinHref ? (
@@ -720,7 +710,6 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
     description: company?.description ?? "",
     logo_url: company?.logo_url ?? "",
     size: company?.size ?? "",
-    industry: company?.industry ?? "",
     linkedin_url: company?.linkedin_url ?? "",
     job_board_url: company?.job_board_url ?? "",
     category: (company?.category as CompanyCategory | null | undefined) ?? null,
@@ -746,7 +735,6 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
       description: company?.description ?? "",
       logo_url: company?.logo_url ?? "",
       size: company?.size ?? "",
-      industry: company?.industry ?? "",
       linkedin_url: company?.linkedin_url ?? "",
       job_board_url: company?.job_board_url ?? "",
       category: (company?.category as CompanyCategory | null | undefined) ?? null,
@@ -777,7 +765,6 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
           description: form.description || undefined,
           logo_url: form.logo_url || undefined,
           size: form.size || undefined,
-          industry: form.industry || undefined,
           linkedin_url: form.linkedin_url || undefined,
           job_board_url: form.job_board_url || undefined,
           category: form.category ?? undefined,
@@ -840,23 +827,13 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
             />
           </Flex>
 
-          <Flex gap="3">
-            <Flex direction="column" gap="1" flexGrow="1">
-              <Text size="2" weight="medium">Size</Text>
-              <TextField.Root
-                value={form.size}
-                onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))}
-                placeholder="e.g. 51-200"
-              />
-            </Flex>
-            <Flex direction="column" gap="1" flexGrow="1">
-              <Text size="2" weight="medium">Industry</Text>
-              <TextField.Root
-                value={form.industry}
-                onChange={(e) => setForm((f) => ({ ...f, industry: e.target.value }))}
-                placeholder="e.g. Software"
-              />
-            </Flex>
+          <Flex direction="column" gap="1">
+            <Text size="2" weight="medium">Size</Text>
+            <TextField.Root
+              value={form.size}
+              onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))}
+              placeholder="e.g. 51-200"
+            />
           </Flex>
 
           <Flex direction="column" gap="1">
@@ -1405,7 +1382,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                         jobBoardUrl={company.job_board_url}
                         score={company.score}
                         isAdmin={isAdmin}
-                        industry={company.industry}
                         updatedAt={company.updated_at}
                       />
 
