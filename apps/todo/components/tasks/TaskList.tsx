@@ -68,11 +68,7 @@ export function TaskList({
     const reordered = arrayMove(tasks, oldIndex, newIndex);
     setTasks(reordered);
 
-    const lo = Math.min(oldIndex, newIndex);
-    const hi = Math.max(oldIndex, newIndex);
-    const updates = reordered
-      .slice(lo, hi + 1)
-      .map((t, i) => ({ id: t.id, position: lo + i + 1 }));
+    const updates = reordered.map((t, i) => ({ id: t.id, position: i + 1 }));
     startTransition(async () => {
       await reorderTasksAction(updates);
     });
