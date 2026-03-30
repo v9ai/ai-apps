@@ -15,7 +15,10 @@ import { ArrowLeftIcon, LockClosedIcon } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
-import { useGetJournalEntriesQuery } from "@/app/__generated__/hooks";
+import {
+  useGetJournalEntriesQuery,
+  useGetGoalsQuery,
+} from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { AuthGate } from "@/app/components/AuthGate";
 
@@ -32,14 +35,35 @@ const moodColor = (mood: string) =>
     }) as Record<string, string>
   )[mood] ?? "gray";
 
-function TagEntriesContent() {
+function getStatusColor(status: string) {
+  switch (status.toLowerCase()) {
+    case "active": return "green" as const;
+    case "completed": return "blue" as const;
+    case "paused": return "orange" as const;
+    case "archived": return "gray" as const;
+    default: return "gray" as const;
+  }
+}
+
+function TagPageContent() {
   const router = useRouter();
   const params = useParams();
   const tag = decodeURIComponent(params.tag as string);
 
-  const { data, loading, error, refetch } = useGetJournalEntriesQuery({
-    variables: { tag },
-  });
+  const {
+    data: journalData,
+    loading: journalLoading,
+    error: journalError,
+  } = useGetJournalEntriesQuery({ variables: { tag } });
+
+  const {
+    data: goalsData,
+    loading: goalsLoading,
+    error: goalsError,
+  } = useGetGoalsQuery({ variables: { tag } });
+
+  const loading = journalLoading || goalsLoading;
+  const error = journalError || goalsError;
 
   if (loading) {
     return (
@@ -54,33 +78,98 @@ function TagEntriesContent() {
       <Card>
         <Flex direction="column" gap="3" p="4">
           <Text color="red">{error.message}</Text>
-          <Button onClick={() => refetch()}>Retry</Button>
         </Flex>
       </Card>
     );
   }
 
-  const entries = data?.journalEntries || [];
+  const entries = journalData?.journalEntries || [];
+  const goals = goalsData?.goals || [];
+  const totalCount = entries.length + goals.length;
 
   return (
-    <Flex direction="column" gap="4">
-      <Flex justify="between" align="center">
-        <Heading size="5">
-          {entries.length} {entries.length === 1 ? "entry" : "entries"} tagged{" "}
-          <Badge variant="soft" size="2">
-            {tag}
-          </Badge>
-        </Heading>
-      </Flex>
+    <Flex direction="column" gap="5">
+      <Heading size="5">
+        {totalCount} {totalCount === 1 ? "item" : "items"} tagged{" "}
+        <Badge variant="soft" size="2">
+          {tag}
+        </Badge>
+      </Heading>
 
-      {entries.length === 0 ? (
-        <Card>
-          <Flex direction="column" gap="2" p="4" align="center">
-            <Text color="gray">No entries found with this tag.</Text>
-          </Flex>
-        </Card>
-      ) : (
+      {/* Goals section */}
+      {goals.length > 0 && (
         <Flex direction="column" gap="3">
+          <Heading size="4" color="gray">
+            Goals ({goals.length})
+          </Heading>
+          {goals.map((goal) => (
+            <Card
+              key={goal.id}
+              style={{ cursor: "pointer" }}
+              onClick={() => router.push(`/goals/${goal.id}`)}
+            >
+              <Flex direction="column" gap="2" p="4">
+                <Flex justify="between" align="start" gap="3">
+                  <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                    <Heading size="4">{goal.title}</Heading>
+                    {goal.description && (
+                      <Text
+                        size="2"
+                        color="gray"
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
+                        {goal.description}
+                      </Text>
+                    )}
+                  </Flex>
+                  <Badge
+                    color={getStatusColor(goal.status)}
+                    variant="soft"
+                    size="1"
+                  >
+                    {goal.status}
+                  </Badge>
+                </Flex>
+                <Flex gap="2" wrap="wrap" align="center">
+                  {goal.tags &&
+                    goal.tags.map((t, idx) => (
+                      <Badge
+                        key={idx}
+                        variant={t === tag ? "solid" : "soft"}
+                        size="1"
+                        style={{ cursor: "pointer" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/tag/${encodeURIComponent(t)}`);
+                        }}
+                      >
+                        {t}
+                      </Badge>
+                    ))}
+                  {goal.familyMember && (
+                    <Badge color="cyan" size="1">
+                      {goal.familyMember.firstName ?? goal.familyMember.name}
+                    </Badge>
+                  )}
+                </Flex>
+              </Flex>
+            </Card>
+          ))}
+        </Flex>
+      )}
+
+      {/* Journal entries section */}
+      {entries.length > 0 && (
+        <Flex direction="column" gap="3">
+          <Heading size="4" color="gray">
+            Journal Entries ({entries.length})
+          </Heading>
           {entries.map((entry) => (
             <Card
               key={entry.id}
@@ -103,7 +192,8 @@ function TagEntriesContent() {
                         size="1"
                         style={{ width: "fit-content" }}
                       >
-                        {entry.familyMember.firstName ?? entry.familyMember.name}
+                        {entry.familyMember.firstName ??
+                          entry.familyMember.name}
                       </Badge>
                     )}
                     {entry.content && (
@@ -140,7 +230,6 @@ function TagEntriesContent() {
 
                 <Flex gap="4" align="center" wrap="wrap">
                   {entry.tags &&
-                    entry.tags.length > 0 &&
                     entry.tags.map((t, idx) => (
                       <Badge
                         key={idx}
@@ -149,9 +238,7 @@ function TagEntriesContent() {
                         style={{ cursor: "pointer" }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(
-                            `/journal/tag/${encodeURIComponent(t)}`,
-                          );
+                          router.push(`/tag/${encodeURIComponent(t)}`);
                         }}
                       >
                         {t}
@@ -179,23 +266,31 @@ function TagEntriesContent() {
           ))}
         </Flex>
       )}
+
+      {totalCount === 0 && (
+        <Card>
+          <Flex direction="column" gap="2" p="4" align="center">
+            <Text color="gray">Nothing found with this tag.</Text>
+          </Flex>
+        </Card>
+      )}
     </Flex>
   );
 }
 
-const DynamicTagEntriesContent = dynamic(
-  () => Promise.resolve(TagEntriesContent),
+const DynamicTagPageContent = dynamic(
+  () => Promise.resolve(TagPageContent),
   { ssr: false },
 );
 
-export default function JournalTagPage() {
+export default function TagPage() {
   const params = useParams();
   const tag = decodeURIComponent(params.tag as string);
 
   return (
     <AuthGate
-      pageName="Journal"
-      description="Sign in to view your journal entries."
+      pageName="Tag"
+      description="Sign in to view tagged items."
     >
       <Flex direction="column" gap="5">
         <Box
@@ -219,10 +314,10 @@ export default function JournalTagPage() {
             style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}
           >
             <Button variant="soft" size="2" radius="full" color="gray" asChild>
-              <NextLink href="/journal">
+              <NextLink href="/">
                 <ArrowLeftIcon />
                 <Box display={{ initial: "none", sm: "inline" }} asChild>
-                  <span>Journal</span>
+                  <span>Home</span>
                 </Box>
               </NextLink>
             </Button>
@@ -240,7 +335,7 @@ export default function JournalTagPage() {
         </Box>
 
         <Box style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
-          <DynamicTagEntriesContent />
+          <DynamicTagPageContent />
         </Box>
       </Flex>
     </AuthGate>

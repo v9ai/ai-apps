@@ -14,13 +14,11 @@ export const goals: NonNullable<QueryResolvers['goals']> = async (
   const goalsList = await db.listGoals(
     userEmail,
     args.familyMemberId ?? undefined,
+    args.status ?? undefined,
+    args.tag ?? undefined,
   );
 
-  // Filter by status if provided
-  let filtered = goalsList;
-  if (args.status) {
-    filtered = goalsList.filter((goal) => goal.status === args.status);
-  }
+  const filtered = goalsList;
 
   return filtered.map((goal) => ({
     ...goal,

@@ -203,7 +203,7 @@ function JournalListContent() {
                         style={{ cursor: "pointer" }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/journal/tag/${encodeURIComponent(tag)}`);
+                          router.push(`/tag/${encodeURIComponent(tag)}`);
                         }}
                       >
                         {tag}

@@ -72,7 +72,7 @@ type GenerateHabitsResult {
 }
 
 type Query {
-  goals(familyMemberId: Int, status: String): [Goal!]!
+  goals(familyMemberId: Int, status: String, tag: String): [Goal!]!
   goal(id: Int, slug: String): Goal
   allTags: [String!]!
   research(goalId: Int, issueId: Int, feedbackId: Int): [Research!]!

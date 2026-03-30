@@ -1539,6 +1539,7 @@ export type QueryGoalArgs = {
 export type QueryGoalsArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+  tag?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2391,10 +2392,11 @@ export type GetGoalQuery = { __typename?: 'Query', goal?: { __typename?: 'Goal',
 export type GetGoalsQueryVariables = Exact<{
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+  tag?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetGoalsQuery = { __typename?: 'Query', goals: Array<{ __typename?: 'Goal', id: number, title: string, description?: string | null, status: string, familyMemberId?: number | null, createdBy: string, parentGoalId?: number | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null } | null, notes: Array<{ __typename?: 'Note', id: number, slug?: string | null, noteType?: string | null, tags?: Array<string> | null, createdAt: string }> }> };
+export type GetGoalsQuery = { __typename?: 'Query', goals: Array<{ __typename?: 'Goal', id: number, title: string, description?: string | null, status: string, tags?: Array<string> | null, familyMemberId?: number | null, createdBy: string, parentGoalId?: number | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null } | null, notes: Array<{ __typename?: 'Note', id: number, slug?: string | null, noteType?: string | null, tags?: Array<string> | null, createdAt: string }> }> };
 
 export type GetHabitQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -5918,12 +5920,13 @@ export type GetGoalLazyQueryHookResult = ReturnType<typeof useGetGoalLazyQuery>;
 export type GetGoalSuspenseQueryHookResult = ReturnType<typeof useGetGoalSuspenseQuery>;
 export type GetGoalQueryResult = Apollo.QueryResult<GetGoalQuery, GetGoalQueryVariables>;
 export const GetGoalsDocument = gql`
-    query GetGoals($familyMemberId: Int, $status: String) {
-  goals(familyMemberId: $familyMemberId, status: $status) {
+    query GetGoals($familyMemberId: Int, $status: String, $tag: String) {
+  goals(familyMemberId: $familyMemberId, status: $status, tag: $tag) {
     id
     title
     description
     status
+    tags
     familyMemberId
     familyMember {
       id
@@ -5960,6 +5963,7 @@ export const GetGoalsDocument = gql`
  *   variables: {
  *      familyMemberId: // value for 'familyMemberId'
  *      status: // value for 'status'
+ *      tag: // value for 'tag'
  *   },
  * });
  */

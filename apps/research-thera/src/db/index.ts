@@ -347,6 +347,7 @@ export async function listGoals(
   createdBy: string,
   familyMemberId?: number,
   status?: string,
+  tag?: string,
 ) {
   let sqlStr = `SELECT * FROM goals WHERE user_id = ?`;
   const args: any[] = [createdBy];
@@ -361,6 +362,11 @@ export async function listGoals(
     args.push(status);
   }
 
+  if (tag) {
+    sqlStr += ` AND tags LIKE ?`;
+    args.push(`%"${tag}"%`);
+  }
+
   sqlStr += ` ORDER BY created_at DESC`;
 
   const [query, params] = p(sqlStr, args);
@@ -372,6 +378,7 @@ export async function listGoals(
     title: row.title as string,
     description: (row.description as string) || null,
     status: row.status as string,
+    tags: row.tags ? JSON.parse(row.tags as string) : [],
     parentGoalId: (row.parent_goal_id as number) || null,
     storyLanguage: (row.story_language as string) || null,
     createdAt: row.created_at as string,
