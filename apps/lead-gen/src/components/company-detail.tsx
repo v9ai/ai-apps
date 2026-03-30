@@ -1055,18 +1055,14 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
         return;
       }
       const input: Record<string, string> = {};
-      if (data.tagline && !company.description) input.description = data.tagline;
-      if (data.logoUrl && !company.logo_url) input.logo_url = data.logoUrl;
+      if (data.tagline) input.description = data.tagline;
+      if (data.logoUrl) input.logo_url = data.logoUrl;
       if (Object.keys(input).length > 0) {
         await updateCompanyDirect({ variables: { id: company.id, input } });
         await refetch();
         setLinkedInFetchSuccess(`Updated: ${Object.keys(input).join(", ")}`);
       } else {
-        setLinkedInFetchSuccess(
-          data.tagline || data.logoUrl
-            ? "LinkedIn metadata fetched — fields already populated."
-            : "LinkedIn returned no metadata (description/logo).",
-        );
+        setLinkedInFetchSuccess("LinkedIn returned no metadata (description/logo).");
       }
     } catch (err) {
       setLinkedInFetchError(err instanceof Error ? err.message : "Fetch failed");
