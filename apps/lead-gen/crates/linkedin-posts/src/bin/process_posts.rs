@@ -130,39 +130,79 @@ fn compute_ai_affinity(contact: &Contact, posts: &[StoredPost]) -> AffinityResul
     }
 }
 
-// ── Neon tag update ─────────────────────────────────────────────────────────
+// ── Neon batch tag update ────────────────────────────────────────────────────
 
-async fn tag_contact_for_deletion(
+/// Batch-tag contacts as "to-be-deleted". Uses two SQL statements:
+/// 1. Contacts with NULL/empty tags → set directly to '["to-be-deleted"]'
+/// 2. Contacts with existing tags that don't already have "to-be-deleted" →
+///    append via jsonb concat
+///
+/// Returns (newly_tagged, already_tagged).
+async fn batch_tag_for_deletion(
     client: &tokio_postgres::Client,
-    contact_id: i32,
-) -> Result<bool> {
-    let row = client
-        .query_one("SELECT tags FROM contacts WHERE id = $1", &[&contact_id])
+    contact_ids: &[i32],
+) -> Result<(usize, usize)> {
+    if contact_ids.is_empty() {
+        return Ok((0, 0));
+    }
+
+    // First: find which ones already have the tag
+    let rows = client
+        .query(
+            "SELECT id, tags FROM contacts WHERE id = ANY($1)",
+            &[&contact_ids],
+        )
         .await
         .context("Failed to read contact tags")?;
 
-    let tags_raw: Option<String> = row.get(0);
-    let mut tags: Vec<String> = tags_raw
-        .as_deref()
-        .and_then(|s| serde_json::from_str(s).ok())
-        .unwrap_or_default();
+    let mut needs_tag: Vec<i32> = Vec::new();
+    let mut already_tagged = 0usize;
 
-    if tags.iter().any(|t| t == "to-be-deleted") {
-        return Ok(false); // already tagged
+    for row in &rows {
+        let id: i32 = row.get(0);
+        let tags_raw: Option<String> = row.get(1);
+        let tags: Vec<String> = tags_raw
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok())
+            .unwrap_or_default();
+
+        if tags.iter().any(|t| t == "to-be-deleted") {
+            already_tagged += 1;
+        } else {
+            needs_tag.push(id);
+        }
     }
 
-    tags.push("to-be-deleted".to_string());
-    let tags_json = serde_json::to_string(&tags)?;
+    if needs_tag.is_empty() {
+        return Ok((0, already_tagged));
+    }
 
-    client
+    // Batch update: contacts with NULL/empty tags get fresh array,
+    // contacts with existing tags get "to-be-deleted" appended.
+    // Single UPDATE using CASE expression for both scenarios.
+    let updated = client
         .execute(
-            "UPDATE contacts SET tags = $1, updated_at = now()::text WHERE id = $2",
-            &[&tags_json, &contact_id],
+            "UPDATE contacts
+             SET tags = CASE
+               WHEN tags IS NULL OR tags = '' OR tags = '[]'
+               THEN '[\"to-be-deleted\"]'
+               ELSE (
+                 SELECT jsonb_agg(elem)::text
+                 FROM (
+                   SELECT elem FROM jsonb_array_elements(tags::jsonb) AS elem
+                   UNION ALL
+                   SELECT '\"to-be-deleted\"'::jsonb
+                 ) sub
+               )
+             END,
+             updated_at = now()::text
+             WHERE id = ANY($1)",
+            &[&needs_tag],
         )
         .await
-        .context("Failed to update contact tags")?;
+        .context("Failed to batch update tags")?;
 
-    Ok(true)
+    Ok((updated as usize, already_tagged))
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
@@ -241,37 +281,27 @@ async fn main() -> Result<()> {
         with_posts, without_posts,
     );
 
-    // 5. Connect to Neon and tag non-AI contacts
+    // 5. Connect to Neon and batch-tag non-AI contacts
     let client = neon::connect_neon().await?;
     println!();
     println!("Connected to Neon PostgreSQL");
 
+    let not_ai_ids: Vec<i32> = results
+        .iter()
+        .filter(|r| matches!(r.verdict, Verdict::NotAi))
+        .map(|r| r.contact_id)
+        .collect();
+
+    // Process in chunks of 500 to avoid query parameter limits
     let mut newly_tagged = 0usize;
     let mut already_tagged = 0usize;
 
-    for result in &results {
-        if matches!(result.verdict, Verdict::NotAi) {
-            match tag_contact_for_deletion(&client, result.contact_id).await {
-                Ok(true) => {
-                    newly_tagged += 1;
-                    tracing::info!(
-                        "Tagged contact {} ({}) as to-be-deleted (p={:.3})",
-                        result.contact_id,
-                        result.name,
-                        result.ai_probability,
-                    );
-                }
-                Ok(false) => {
-                    already_tagged += 1;
-                }
-                Err(e) => {
-                    tracing::warn!(
-                        "Failed to tag contact {}: {}",
-                        result.contact_id,
-                        e
-                    );
-                }
-            }
+    for chunk in not_ai_ids.chunks(500) {
+        let (new, existing) = batch_tag_for_deletion(&client, chunk).await?;
+        newly_tagged += new;
+        already_tagged += existing;
+        if new > 0 {
+            tracing::info!("Batch tagged {} contacts (chunk of {})", new, chunk.len());
         }
     }
 
