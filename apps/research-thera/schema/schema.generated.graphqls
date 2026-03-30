@@ -964,7 +964,7 @@ type Query {
   habits(familyMemberId: Int, status: String): [Habit!]!
   issue(id: Int!): Issue
   issues(familyMemberId: Int!, feedbackId: Int): [Issue!]!
-  journalEntries(familyMemberId: Int, fromDate: String, goalId: Int, mood: String, toDate: String): [JournalEntry!]!
+  journalEntries(familyMemberId: Int, fromDate: String, goalId: Int, mood: String, tag: String, toDate: String): [JournalEntry!]!
   journalEntry(id: Int!): JournalEntry
   mySharedFamilyMembers: [FamilyMember!]!
   mySharedNotes: [Note!]!

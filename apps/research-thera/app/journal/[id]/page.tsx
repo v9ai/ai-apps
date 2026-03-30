@@ -207,7 +207,13 @@ function JournalEntryContent() {
           {entry.tags && entry.tags.length > 0 && (
             <Flex gap="2" wrap="wrap">
               {entry.tags.map((tag, idx) => (
-                <Badge key={idx} variant="soft" size="1">
+                <Badge
+                  key={idx}
+                  variant="soft"
+                  size="1"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => router.push(`/journal/tag/${encodeURIComponent(tag)}`)}
+                >
                   {tag}
                 </Badge>
               ))}

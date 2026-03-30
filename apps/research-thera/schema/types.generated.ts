@@ -1551,6 +1551,7 @@ export type QueryjournalEntriesArgs = {
   fromDate?: InputMaybe<Scalars['String']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   mood?: InputMaybe<Scalars['String']['input']>;
+  tag?: InputMaybe<Scalars['String']['input']>;
   toDate?: InputMaybe<Scalars['String']['input']>;
 };
 

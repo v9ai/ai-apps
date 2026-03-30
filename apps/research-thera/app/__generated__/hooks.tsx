@@ -1567,6 +1567,7 @@ export type QueryJournalEntriesArgs = {
   fromDate?: InputMaybe<Scalars['String']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   mood?: InputMaybe<Scalars['String']['input']>;
+  tag?: InputMaybe<Scalars['String']['input']>;
   toDate?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2421,6 +2422,7 @@ export type GetJournalEntriesQueryVariables = Exact<{
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   mood?: InputMaybe<Scalars['String']['input']>;
+  tag?: InputMaybe<Scalars['String']['input']>;
   fromDate?: InputMaybe<Scalars['String']['input']>;
   toDate?: InputMaybe<Scalars['String']['input']>;
 }>;
@@ -6230,11 +6232,12 @@ export type GetIssuesLazyQueryHookResult = ReturnType<typeof useGetIssuesLazyQue
 export type GetIssuesSuspenseQueryHookResult = ReturnType<typeof useGetIssuesSuspenseQuery>;
 export type GetIssuesQueryResult = Apollo.QueryResult<GetIssuesQuery, GetIssuesQueryVariables>;
 export const GetJournalEntriesDocument = gql`
-    query GetJournalEntries($familyMemberId: Int, $goalId: Int, $mood: String, $fromDate: String, $toDate: String) {
+    query GetJournalEntries($familyMemberId: Int, $goalId: Int, $mood: String, $tag: String, $fromDate: String, $toDate: String) {
   journalEntries(
     familyMemberId: $familyMemberId
     goalId: $goalId
     mood: $mood
+    tag: $tag
     fromDate: $fromDate
     toDate: $toDate
   ) {
@@ -6279,6 +6282,7 @@ export const GetJournalEntriesDocument = gql`
  *      familyMemberId: // value for 'familyMemberId'
  *      goalId: // value for 'goalId'
  *      mood: // value for 'mood'
+ *      tag: // value for 'tag'
  *      fromDate: // value for 'fromDate'
  *      toDate: // value for 'toDate'
  *   },

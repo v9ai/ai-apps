@@ -15,6 +15,7 @@ export const journalEntries: NonNullable<QueryResolvers['journalEntries']> = asy
     familyMemberId: args.familyMemberId ?? undefined,
     goalId: args.goalId ?? undefined,
     mood: args.mood ?? undefined,
+    tag: args.tag ?? undefined,
     fromDate: args.fromDate ?? undefined,
     toDate: args.toDate ?? undefined,
   });
