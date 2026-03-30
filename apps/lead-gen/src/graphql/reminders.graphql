@@ -93,3 +93,20 @@ mutation ComputeNextTouchScores($companyId: Int!) {
     }
   }
 }
+
+mutation ScoreContactsML($companyId: Int!) {
+  scoreContactsML(companyId: $companyId) {
+    success
+    message
+    contactsScored
+    decisionMakersFound
+    results {
+      contactId
+      seniority
+      department
+      authorityScore
+      isDecisionMaker
+      dmReasons
+    }
+  }
+}

@@ -2059,6 +2059,13 @@ export type ComputeNextTouchScoresMutationVariables = Exact<{
 
 export type ComputeNextTouchScoresMutation = { __typename?: 'Mutation', computeNextTouchScores: { __typename?: 'ComputeNextTouchScoresResult', success: boolean, message: string, contactsUpdated: number, topContacts: Array<{ __typename?: 'ContactNextTouch', contactId: number, firstName: string, lastName: string, position: string | null, nextTouchScore: number, lastContactedAt: string | null }> } };
 
+export type ScoreContactsMlMutationVariables = Exact<{
+  companyId: Scalars['Int']['input'];
+}>;
+
+
+export type ScoreContactsMlMutation = { __typename?: 'Mutation', scoreContactsML: { __typename?: 'ScoreContactsMLResult', success: boolean, message: string, contactsScored: number, decisionMakersFound: number, results: Array<{ __typename?: 'ContactMLScore', contactId: number, seniority: string, department: string, authorityScore: number, isDecisionMaker: boolean, dmReasons: Array<string> }> } };
+
 export const EvidenceFieldsFragmentDoc = gql`
     fragment EvidenceFields on Evidence {
   source_type
@@ -5250,3 +5257,47 @@ export function useComputeNextTouchScoresMutation(baseOptions?: Apollo.MutationH
 export type ComputeNextTouchScoresMutationHookResult = ReturnType<typeof useComputeNextTouchScoresMutation>;
 export type ComputeNextTouchScoresMutationResult = Apollo.MutationResult<ComputeNextTouchScoresMutation>;
 export type ComputeNextTouchScoresMutationOptions = Apollo.BaseMutationOptions<ComputeNextTouchScoresMutation, ComputeNextTouchScoresMutationVariables>;
+export const ScoreContactsMlDocument = gql`
+    mutation ScoreContactsML($companyId: Int!) {
+  scoreContactsML(companyId: $companyId) {
+    success
+    message
+    contactsScored
+    decisionMakersFound
+    results {
+      contactId
+      seniority
+      department
+      authorityScore
+      isDecisionMaker
+      dmReasons
+    }
+  }
+}
+    `;
+export type ScoreContactsMlMutationFn = Apollo.MutationFunction<ScoreContactsMlMutation, ScoreContactsMlMutationVariables>;
+
+/**
+ * __useScoreContactsMlMutation__
+ *
+ * To run a mutation, you first call `useScoreContactsMlMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useScoreContactsMlMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [scoreContactsMlMutation, { data, loading, error }] = useScoreContactsMlMutation({
+ *   variables: {
+ *      companyId: // value for 'companyId'
+ *   },
+ * });
+ */
+export function useScoreContactsMlMutation(baseOptions?: Apollo.MutationHookOptions<ScoreContactsMlMutation, ScoreContactsMlMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ScoreContactsMlMutation, ScoreContactsMlMutationVariables>(ScoreContactsMlDocument, options);
+      }
+export type ScoreContactsMlMutationHookResult = ReturnType<typeof useScoreContactsMlMutation>;
+export type ScoreContactsMlMutationResult = Apollo.MutationResult<ScoreContactsMlMutation>;
+export type ScoreContactsMlMutationOptions = Apollo.BaseMutationOptions<ScoreContactsMlMutation, ScoreContactsMlMutationVariables>;
