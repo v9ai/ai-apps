@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { css } from "styled-system/css";
 
 const features = [
   {
@@ -92,14 +93,14 @@ const withAgentic = [
 
 export default function Home() {
   return (
-    <Box style={{ minHeight: "100vh" }}>
+    <Box className={css({ minHeight: "100vh" })}>
       {/* Scroll progress bar */}
       <Box className="scroll-progress" />
 
       {/* ── Header ── */}
       <Box
         asChild
-        style={{
+        className={css({
           position: "sticky",
           top: 0,
           zIndex: 10,
@@ -108,26 +109,26 @@ export default function Home() {
             "linear-gradient(180deg, color-mix(in srgb, var(--indigo-2) 60%, transparent) 0%, color-mix(in srgb, var(--color-background) 85%, transparent) 100%)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-        }}
+        })}
       >
         <header>
           <Container size="3">
             <Flex justify="between" align="center" py="3" px="4">
               <Flex align="center" gap="2">
                 <Logo size={20} />
-                <Heading size="4" style={{ letterSpacing: "-0.02em" }}>
+                <Heading
+                  size="4"
+                  className={css({ letterSpacing: "-0.02em" })}
+                >
                   Agentic Healthcare
                 </Heading>
               </Flex>
               <Flex align="center" gap="5">
-                <Flex
-                  gap="5"
-                  display={{ initial: "none", sm: "flex" }}
-                >
+                <Flex gap="5" display={{ initial: "none", sm: "flex" }}>
                   <Text asChild size="2" color="gray" weight="medium">
                     <Link
                       href="/how-it-works"
-                      style={{ textDecoration: "none", color: "inherit" }}
+                      className={css({ textDecoration: "none", color: "inherit" })}
                     >
                       How It Works
                     </Link>
@@ -135,7 +136,7 @@ export default function Home() {
                   <Text asChild size="2" color="gray" weight="medium">
                     <Link
                       href="#features"
-                      style={{ textDecoration: "none", color: "inherit" }}
+                      className={css({ textDecoration: "none", color: "inherit" })}
                     >
                       Features
                     </Link>
@@ -143,7 +144,7 @@ export default function Home() {
                   <Text asChild size="2" color="gray" weight="medium">
                     <Link
                       href="#research"
-                      style={{ textDecoration: "none", color: "inherit" }}
+                      className={css({ textDecoration: "none", color: "inherit" })}
                     >
                       Research
                     </Link>
@@ -153,7 +154,7 @@ export default function Home() {
                   href="https://github.com/nicolad/ai-apps"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: "var(--gray-a11)", display: "flex" }}
+                  className={css({ color: "var(--gray-a11)", display: "flex" })}
                 >
                   <Github size={20} />
                 </a>
@@ -166,34 +167,40 @@ export default function Home() {
         </header>
       </Box>
 
-      {/* ── Hero ── */}
-      <Box className="hero-bg" py="9">
-        <div className="pulse-rings">
-          <span />
-          <span />
-          <span />
-        </div>
-        <Container size="2" style={{ position: "relative", zIndex: 1 }}>
-          <Flex direction="column" align="center" gap="5" py="9">
+      {/* ── Hero (full-width, no Container) ── */}
+      <Box className={css({ position: "relative", width: "100%" })}>
+        <Box className="hero-bg" py="9">
+          <div className="pulse-rings">
+            <span />
+            <span />
+            <span />
+          </div>
+          <Flex
+            direction="column"
+            align="center"
+            gap="5"
+            py="9"
+            px="4"
+            className={css({ position: "relative", zIndex: 1 })}
+          >
             <Heading
               size="9"
               align="center"
-              style={{
+              className={css({
                 letterSpacing: "-0.04em",
                 lineHeight: 1.1,
-                maxWidth: 720,
-              }}
+                maxWidth: "720px",
+                fontSize: "clamp(2rem, 6vw, 4rem)",
+              })}
             >
               Your blood test is a snapshot.{" "}
-              <span className="gradient-text">
-                Your health is a story.
-              </span>
+              <span className="gradient-text">Your health is a story.</span>
             </Heading>
             <Text
               size="4"
               color="gray"
               align="center"
-              style={{ maxWidth: 520 }}
+              className={css({ maxWidth: "520px" })}
             >
               Upload your blood panels. Track 7 clinical ratios over time. See
               where your health is heading before your doctor does.
@@ -221,24 +228,20 @@ export default function Home() {
               <span className="floating-badge">De Ritis: 0.91 · optimal</span>
             </Flex>
           </Flex>
-        </Container>
+        </Box>
       </Box>
 
       {/* ── Contrast Strip ── */}
-      <Box py="8" style={{ background: "var(--gray-a2)" }}>
+      <Box py="8" className={css({ background: "var(--gray-a2)" })}>
         <Container size="3">
-          <Grid
-            columns={{ initial: "1", sm: "2" }}
-            gap="6"
-            px="4"
-          >
+          <Grid columns={{ initial: "1", sm: "2" }} gap="6" px="4">
             <Box
               p="5"
-              style={{
+              className={css({
                 borderRadius: "var(--radius-3)",
                 border: "1px solid var(--red-a4)",
                 background: "var(--color-surface)",
-              }}
+              })}
             >
               <Text size="2" weight="bold" color="red" mb="3" asChild>
                 <p>Without trajectory tracking</p>
@@ -248,11 +251,11 @@ export default function Home() {
                   <Flex key={item} align="start" gap="2">
                     <X
                       size={16}
-                      style={{
+                      className={css({
                         color: "var(--red-9)",
                         flexShrink: 0,
-                        marginTop: 2,
-                      }}
+                        marginTop: "2px",
+                      })}
                     />
                     <Text size="2" color="gray">
                       {item}
@@ -263,11 +266,11 @@ export default function Home() {
             </Box>
             <Box
               p="5"
-              style={{
+              className={css({
                 borderRadius: "var(--radius-3)",
                 border: "1px solid var(--green-a4)",
                 background: "var(--color-surface)",
-              }}
+              })}
             >
               <Text size="2" weight="bold" color="green" mb="3" asChild>
                 <p>With Agentic Healthcare</p>
@@ -277,11 +280,11 @@ export default function Home() {
                   <Flex key={item} align="start" gap="2">
                     <Check
                       size={16}
-                      style={{
+                      className={css({
                         color: "var(--green-9)",
                         flexShrink: 0,
-                        marginTop: 2,
-                      }}
+                        marginTop: "2px",
+                      })}
                     />
                     <Text size="2" color="gray">
                       {item}
@@ -295,14 +298,14 @@ export default function Home() {
       </Box>
 
       {/* ── Features Grid ── */}
-      <Box id="features" py="9" style={{ background: "var(--gray-a2)" }}>
+      <Box id="features" py="9" className={css({ background: "var(--gray-a2)" })}>
         <Container size="3">
           <Flex direction="column" align="center" gap="7" px="4">
             <ScrollReveal>
               <Heading
                 size="7"
                 align="center"
-                style={{ letterSpacing: "-0.03em" }}
+                className={css({ letterSpacing: "-0.03em" })}
               >
                 Everything your blood test should tell you
               </Heading>
@@ -323,13 +326,13 @@ export default function Home() {
                     <Flex
                       align="center"
                       justify="center"
-                      style={{
-                        width: 40,
-                        height: 40,
+                      className={css({
+                        width: "40px",
+                        height: "40px",
                         borderRadius: "var(--radius-2)",
                         background: feat.bg,
                         color: feat.color,
-                      }}
+                      })}
                     >
                       <feat.icon size={20} />
                     </Flex>
@@ -346,45 +349,50 @@ export default function Home() {
       </Box>
 
       {/* ── How It Works / Research ── */}
-      <Box id="how-it-works">
+      <Box id="how-it-works" py="9">
         <ResearchSection />
       </Box>
 
       {/* ── Final CTA ── */}
-      <Box className="cta-banner" py="9">
-        <Container size="2">
-          <Flex direction="column" align="center" gap="5">
-            <ScrollReveal>
-              <Heading
-                size="7"
-                align="center"
-                style={{ letterSpacing: "-0.03em" }}
-              >
-                Your next blood test deserves more than a glance
-              </Heading>
-            </ScrollReveal>
-            <Text size="3" color="gray" align="center">
-              Free to use. No credit card required.
-            </Text>
-            <Flex gap="3" wrap="wrap" justify="center">
-              <Button size="3" asChild className="cta-button">
-                <Link href="/auth/sign-up">Start Tracking — Free</Link>
-              </Button>
-              <Button
-                size="3"
-                variant="outline"
-                asChild
-                className="cta-button"
-              >
-                <Link href="/auth/sign-in">Sign In</Link>
-              </Button>
+      <Box className={css({ _before: { content: '""' } })}>
+        <Box className="cta-banner" py="9">
+          <Container size="2">
+            <Flex direction="column" align="center" gap="5">
+              <ScrollReveal>
+                <Heading
+                  size="7"
+                  align="center"
+                  className={css({ letterSpacing: "-0.03em" })}
+                >
+                  Your next blood test deserves more than a glance
+                </Heading>
+              </ScrollReveal>
+              <Text size="3" color="gray" align="center">
+                Free to use. No credit card required.
+              </Text>
+              <Flex gap="3" wrap="wrap" justify="center">
+                <Button size="3" asChild className="cta-button">
+                  <Link href="/auth/sign-up">Start Tracking — Free</Link>
+                </Button>
+                <Button
+                  size="3"
+                  variant="outline"
+                  asChild
+                  className="cta-button"
+                >
+                  <Link href="/auth/sign-in">Sign In</Link>
+                </Button>
+              </Flex>
             </Flex>
-          </Flex>
-        </Container>
+          </Container>
+        </Box>
       </Box>
 
       {/* ── Footer ── */}
-      <Box asChild style={{ borderTop: "1px solid var(--gray-a3)" }}>
+      <Box
+        asChild
+        className={css({ borderTop: "1px solid var(--gray-a3)" })}
+      >
         <footer>
           <Container size="3">
             <Grid
@@ -415,7 +423,7 @@ export default function Home() {
                 <Text asChild size="2" color="gray">
                   <Link
                     href="#how-it-works"
-                    style={{ textDecoration: "none", color: "inherit" }}
+                    className={css({ textDecoration: "none", color: "inherit" })}
                   >
                     How It Works
                   </Link>
@@ -423,7 +431,7 @@ export default function Home() {
                 <Text asChild size="2" color="gray">
                   <Link
                     href="#features"
-                    style={{ textDecoration: "none", color: "inherit" }}
+                    className={css({ textDecoration: "none", color: "inherit" })}
                   >
                     Features
                   </Link>
@@ -431,7 +439,7 @@ export default function Home() {
                 <Text asChild size="2" color="gray">
                   <Link
                     href="#research"
-                    style={{ textDecoration: "none", color: "inherit" }}
+                    className={css({ textDecoration: "none", color: "inherit" })}
                   >
                     Research
                   </Link>
@@ -439,7 +447,7 @@ export default function Home() {
                 <Text asChild size="2" color="gray">
                   <Link
                     href="/auth/sign-up"
-                    style={{ textDecoration: "none", color: "inherit" }}
+                    className={css({ textDecoration: "none", color: "inherit" })}
                   >
                     Get Started
                   </Link>
@@ -454,7 +462,11 @@ export default function Home() {
                 <Text size="2" color="gray">
                   7 ratios · 8 peer-reviewed papers
                 </Text>
-                <Text size="1" color="gray" style={{ opacity: 0.6 }}>
+                <Text
+                  size="1"
+                  color="gray"
+                  className={css({ opacity: 0.6 })}
+                >
                   Not medical advice. Consult your physician for clinical
                   decisions.
                 </Text>
@@ -467,7 +479,7 @@ export default function Home() {
               align="center"
               py="4"
               px="4"
-              style={{ borderTop: "1px solid var(--gray-a3)" }}
+              className={css({ borderTop: "1px solid var(--gray-a3)" })}
             >
               <Text size="1" color="gray">
                 © 2026 Agentic Healthcare

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Theme } from "@radix-ui/themes";
+import { css } from "styled-system/css";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -18,7 +19,9 @@ const geist = Geist({ subsets: ["latin"] });
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={geist.className}>
+      <body
+        className={`${geist.className} ${css({ margin: 0, padding: 0 })}`}
+      >
         <Theme appearance="dark" accentColor="indigo" radius="medium">
           {children}
         </Theme>
