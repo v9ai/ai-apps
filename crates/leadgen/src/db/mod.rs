@@ -1,3 +1,6 @@
+#[cfg(feature = "neon")]
+pub mod neon;
+
 use anyhow::Result;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 

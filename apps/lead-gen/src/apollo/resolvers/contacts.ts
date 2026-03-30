@@ -11,6 +11,152 @@ import {
   generateEmailFromPattern,
 } from "@/lib/neverbounce";
 
+// ─── ML Contact Classification ────────────────────────────────────────────────
+
+interface ContactClassification {
+  seniority: string;
+  department: string;
+  authorityScore: number;
+  isDecisionMaker: boolean;
+  dmReasons: string[];
+}
+
+/**
+ * Classify a contact's job title into seniority tier, department,
+ * authority score (0–1), and decision-maker flag.
+ *
+ * Mirrors the Rust `classify_contact()` in crates/leadgen/src/scoring/authority.rs.
+ * This TypeScript version is used for real-time scoring in the GraphQL resolver
+ * (Vercel serverless); the Rust version is used for offline batch scoring via
+ * `leadgen score-neon --company <key>`.
+ */
+function classifyContact(position: string | null | undefined): ContactClassification {
+  const raw = position?.trim() ?? "";
+  if (!raw) {
+    return { seniority: "IC", department: "Other", authorityScore: 0.10, isDecisionMaker: false, dmReasons: ["No title provided"] };
+  }
+
+  const t = raw.toLowerCase();
+
+  // ── Seniority ────────────────────────────────────────────────────────────
+  let seniority = "IC";
+  let authorityScore = 0.10;
+  let seniorityReason = `Title '${raw}' classified as IC`;
+
+  const C_LEVEL_PATTERNS = [
+    "chief executive", "chief technology", "chief technical", "chief product",
+    "chief operating", "chief financial", "chief revenue", "chief marketing",
+    "chief data", "chief ai", "chief machine learning", "chief science",
+    "chief information", "chief growth", "chief people", "chief legal",
+    "chief compliance", "chief architect",
+  ];
+  const isCLevel =
+    C_LEVEL_PATTERNS.some(p => t.includes(p)) ||
+    /\bceo\b/.test(t) || /\bcto\b/.test(t) || /\bcfo\b/.test(t) ||
+    /\bcoo\b/.test(t) || /\bcpo\b/.test(t) || /\bcro\b/.test(t) || /\bcmo\b/.test(t);
+
+  if (isCLevel) {
+    seniority = "C-level"; authorityScore = 1.0; seniorityReason = `Title matches C-level pattern`;
+  } else if (["founder", "co-founder", "cofounder", "president", "co founder"].some(p => t.includes(p))) {
+    seniority = "Founder"; authorityScore = 0.95; seniorityReason = "Title matches Founder pattern";
+  } else if (["managing partner", "general partner", " partner", "equity partner"].some(p => t.includes(p))) {
+    seniority = "Partner"; authorityScore = 0.90; seniorityReason = "Title matches Partner pattern";
+  } else if (
+    ["vice president", "vp of", "vp,", "vp engineering", "vp product", "vp sales",
+     "vp marketing", "vp business", "vp operations", "vp ai", "vp technology",
+     "vp research", "vp data", "vp partnerships", "vp finance", "vp strategy"].some(p => t.includes(p)) ||
+    t.startsWith("vp ") || t === "vp"
+  ) {
+    seniority = "VP"; authorityScore = 0.85; seniorityReason = "Title matches VP pattern";
+  } else if (
+    ["director of", "director,", "director ", "head of", "general manager",
+     "managing director", "regional director", "executive director",
+     "associate director", "group lead", "group manager"].some(p => t.includes(p)) ||
+    t === "director"
+  ) {
+    seniority = "Director"; authorityScore = 0.75; seniorityReason = "Title matches Director/Head-of pattern";
+  } else if (
+    ["engineering manager", "product manager", "project manager", "program manager",
+     "team lead", "tech lead", "technical lead", "team manager", "area manager",
+     "delivery manager", "account manager", "practice lead"].some(p => t.includes(p)) ||
+    (t.includes("manager") && !t.includes("general manager")) ||
+    t.endsWith(" lead")
+  ) {
+    seniority = "Manager"; authorityScore = 0.50; seniorityReason = "Title matches Manager/Lead pattern";
+  } else if (["senior ", "staff ", "principal ", "sr. ", "sr "].some(p => t.includes(p))) {
+    seniority = "Senior"; authorityScore = 0.25; seniorityReason = "Title matches Senior/Staff/Principal pattern";
+  }
+
+  // ── Department ───────────────────────────────────────────────────────────
+  let department = "Other";
+  let deptReason = "No department keyword found";
+
+  const AI_ML = [
+    "artificial intelligence", " ai ", "machine learning", "deep learning",
+    "natural language", " nlp", "computer vision", " cv ", "data science",
+    "data scientist", "mlops", "ml engineer", "llm", "large language",
+    "language model", "generative ai", "reinforcement learning", "neural network",
+    "foundation model", "ai research", "ai engineer", "ai architect", "ai lead",
+    "ai director", "head of ai", "vp ai", "chief ai",
+  ];
+  if (AI_ML.some(p => t.includes(p)) || t.startsWith("ai ") || t.endsWith(" ai")) {
+    department = "AI/ML"; deptReason = "Title contains AI/ML keywords";
+  } else if (["research scientist", "research engineer", "researcher", "r&d",
+              "research and development", "scientist", " lab ", "applied science"].some(p => t.includes(p))) {
+    department = "Research"; deptReason = "Title contains Research keywords";
+  } else if (["engineer", "developer", "software", "backend", "frontend", "full stack",
+              "fullstack", "platform", "infrastructure", "devops", "site reliability",
+              "sre", "cloud architect", "solutions architect", "architect", "cto",
+              "vp eng", "engineering manager", "head of engineering"].some(p => t.includes(p))) {
+    department = "Engineering"; deptReason = "Title contains Engineering keywords";
+  } else if (["product manager", "product owner", "product lead", "head of product",
+              "vp product", "cpo", "ux", "user experience", "product design",
+              "ui designer", "ux designer"].some(p => t.includes(p))) {
+    department = "Product"; deptReason = "Title contains Product keywords";
+  } else if (["sales", "business development", "account executive", "account manager",
+              "commercial", "revenue", "partnerships", "partner manager",
+              "strategic alliance", "cro", "pre-sales", "presales",
+              "solution selling", "enterprise", "channel"].some(p => t.includes(p))) {
+    department = "Sales/BD"; deptReason = "Title contains Sales/BD keywords";
+  } else if (["marketing", "growth", "cmo", "brand", "content", "demand generation",
+              "seo", "paid acquisition", "pr ", "public relations", "communications",
+              "product marketing"].some(p => t.includes(p))) {
+    department = "Marketing"; deptReason = "Title contains Marketing keywords";
+  } else if (["recruiter", "recruiting", "recruitment", "talent acquisition",
+              "talent partner", "head of talent", "head of people", "chief people",
+              "people operations", "hr manager", "hrbp", "human resources",
+              "people & culture", "people and culture", "people team"].some(p => t.includes(p))) {
+    department = "HR/Recruiting"; deptReason = "Title contains HR/Recruiting keywords (gatekeeper)";
+  } else if (["finance", "cfo", "controller", "accounting", "treasurer",
+              "financial", "fp&a", "investor relations"].some(p => t.includes(p))) {
+    department = "Finance"; deptReason = "Title contains Finance keywords";
+  } else if (["operations", "coo", "general manager", "chief of staff", "strategy",
+              "transformation", "process", "supply chain", "program operations"].some(p => t.includes(p))) {
+    department = "Operations"; deptReason = "Title contains Operations keywords";
+  }
+
+  // ── Gatekeeper penalty ───────────────────────────────────────────────────
+  const reasons: string[] = [seniorityReason, deptReason];
+  let effectiveScore = authorityScore;
+  if (department === "HR/Recruiting") {
+    effectiveScore = authorityScore * 0.4;
+    reasons.push("HR/Recruiting contacts are gatekeepers, not hiring DMs");
+  }
+
+  const isDecisionMaker = effectiveScore >= 0.70;
+  if (isDecisionMaker) reasons.push(`Authority score ${effectiveScore.toFixed(2)} ≥ 0.70 threshold`);
+
+  return {
+    seniority,
+    department,
+    authorityScore: Math.round(effectiveScore * 100) / 100,
+    isDecisionMaker,
+    dmReasons: reasons,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
  * Safely parse JSON arrays with proper error handling and logging
  * Prevents crashes from malformed JSON data in database
@@ -89,6 +235,23 @@ const Contact = {
   },
   updatedAt(parent: any) {
     return parent.updated_at;
+  },
+  // ML-derived decision-maker fields
+  seniority(parent: any) {
+    return parent.seniority ?? null;
+  },
+  department(parent: any) {
+    return parent.department ?? null;
+  },
+  isDecisionMaker(parent: any) {
+    return (parent.is_decision_maker as unknown) === true ||
+           (parent.is_decision_maker as unknown) === 1;
+  },
+  authorityScore(parent: any) {
+    return parent.authority_score ?? 0.0;
+  },
+  dmReasons(parent: any) {
+    return parseJsonArray(parent.dm_reasons);
   },
 };
 
@@ -242,6 +405,7 @@ export const contactResolvers = {
         throw new Error("Forbidden");
       }
       const { firstName, lastName, emails, tags, companyId, linkedinUrl, githubHandle, telegramHandle, position, email } = args.input;
+      const mlClassification = classifyContact(position);
       const rows = await context.db
         .insert(contacts)
         .values({
@@ -255,6 +419,11 @@ export const contactResolvers = {
           ...(telegramHandle !== undefined && { telegram_handle: telegramHandle }),
           ...(position !== undefined && { position }),
           ...(email !== undefined && { email }),
+          seniority: mlClassification.seniority,
+          department: mlClassification.department,
+          is_decision_maker: mlClassification.isDecisionMaker,
+          authority_score: mlClassification.authorityScore,
+          dm_reasons: JSON.stringify(mlClassification.dmReasons),
         })
         .returning();
       return rows[0];
@@ -275,6 +444,15 @@ export const contactResolvers = {
       if (emails !== undefined) patch.emails = JSON.stringify(emails);
       if (tags !== undefined) patch.tags = JSON.stringify(tags);
       if (doNotContact !== undefined) patch.do_not_contact = doNotContact;
+      // Re-classify whenever position changes
+      if (args.input.position !== undefined) {
+        const mlClassification = classifyContact(args.input.position);
+        patch.seniority = mlClassification.seniority;
+        patch.department = mlClassification.department;
+        patch.is_decision_maker = mlClassification.isDecisionMaker;
+        patch.authority_score = mlClassification.authorityScore;
+        patch.dm_reasons = JSON.stringify(mlClassification.dmReasons);
+      }
       patch.updated_at = new Date().toISOString();
 
       const rows = await context.db
@@ -998,6 +1176,74 @@ export const contactResolvers = {
           removedCount: 0,
         };
       }
+    },
+
+    async scoreContactsML(
+      _parent: unknown,
+      args: { companyId: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const rows = await context.db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.company_id, args.companyId));
+
+      if (rows.length === 0) {
+        return {
+          success: true,
+          message: "No contacts found for company",
+          contactsScored: 0,
+          decisionMakersFound: 0,
+          results: [],
+        };
+      }
+
+      const results: Array<{
+        contactId: number;
+        seniority: string;
+        department: string;
+        isDecisionMaker: boolean;
+        authorityScore: number;
+        dmReasons: string[];
+      }> = [];
+
+      for (const contact of rows) {
+        const cls = classifyContact(contact.position);
+        await context.db
+          .update(contacts)
+          .set({
+            seniority: cls.seniority,
+            department: cls.department,
+            is_decision_maker: cls.isDecisionMaker,
+            authority_score: cls.authorityScore,
+            dm_reasons: JSON.stringify(cls.dmReasons),
+            updated_at: new Date().toISOString(),
+          })
+          .where(eq(contacts.id, contact.id));
+
+        results.push({
+          contactId: contact.id,
+          seniority: cls.seniority,
+          department: cls.department,
+          isDecisionMaker: cls.isDecisionMaker,
+          authorityScore: cls.authorityScore,
+          dmReasons: cls.dmReasons,
+        });
+      }
+
+      const decisionMakersFound = results.filter(r => r.isDecisionMaker).length;
+
+      return {
+        success: true,
+        message: `Scored ${results.length} contact(s), found ${decisionMakersFound} decision maker(s)`,
+        contactsScored: results.length,
+        decisionMakersFound,
+        results,
+      };
     },
   },
 

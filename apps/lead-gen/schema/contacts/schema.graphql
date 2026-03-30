@@ -34,6 +34,7 @@ extend type Mutation {
   mergeDuplicateContacts(companyId: Int!): MergeDuplicateContactsResult!
   markContactEmailVerified(contactId: Int!, verified: Boolean!): Contact!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
+  scoreContactsML(companyId: Int!): ScoreContactsMLResult!
 }
 
 type MergeDuplicateContactsResult {
@@ -66,8 +67,31 @@ type Contact {
   telegramHandle: String
   doNotContact: Boolean!
   tags: [String!]!
+  # ML-derived decision-maker fields
+  seniority: String
+  department: String
+  isDecisionMaker: Boolean
+  authorityScore: Float
+  dmReasons: [String!]!
   createdAt: String!
   updatedAt: String!
+}
+
+type ScoreContactsMLResult {
+  success: Boolean!
+  message: String!
+  contactsScored: Int!
+  decisionMakersFound: Int!
+  results: [ContactMLScore!]!
+}
+
+type ContactMLScore {
+  contactId: Int!
+  seniority: String!
+  department: String!
+  isDecisionMaker: Boolean!
+  authorityScore: Float!
+  dmReasons: [String!]!
 }
 
 type ContactsResult {

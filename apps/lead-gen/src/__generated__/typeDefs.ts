@@ -189,10 +189,13 @@ type CompanySnapshot {
 }
 
 type Contact {
+  authorityScore: Float
   bouncedEmails: [String!]!
   company: String
   companyId: Int
   createdAt: String!
+  department: String
+  dmReasons: [String!]!
   doNotContact: Boolean!
   email: String
   emailVerified: Boolean
@@ -200,6 +203,7 @@ type Contact {
   firstName: String!
   githubHandle: String
   id: Int!
+  isDecisionMaker: Boolean
   lastName: String!
   linkedinUrl: String
   nbExecutionTimeMs: Int
@@ -209,6 +213,7 @@ type Contact {
   nbStatus: String
   nbSuggestedCorrection: String
   position: String
+  seniority: String
   tags: [String!]!
   telegramHandle: String
   updatedAt: String!
@@ -260,6 +265,15 @@ input ContactInput {
   position: String
   tags: [String!]
   telegramHandle: String
+}
+
+type ContactMLScore {
+  authorityScore: Float!
+  contactId: Int!
+  department: String!
+  dmReasons: [String!]!
+  isDecisionMaker: Boolean!
+  seniority: String!
 }
 
 type ContactsResult {
@@ -672,6 +686,7 @@ type Mutation {
   previewEmail(input: PreviewEmailInput!): EmailPreview!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
+  scoreContactsML(companyId: Int!): ScoreContactsMLResult!
   sendEmail(input: SendEmailInput!): SendEmailResult!
   sendOutreachEmail(input: SendOutreachEmailInput!): SendOutreachEmailResult!
   sendScheduledEmailNow(resendId: String!): SendNowResult!
@@ -771,6 +786,14 @@ type ScheduleBatchResult {
   message: String!
   scheduled: Int!
   schedulingPlan: String
+  success: Boolean!
+}
+
+type ScoreContactsMLResult {
+  contactsScored: Int!
+  decisionMakersFound: Int!
+  message: String!
+  results: [ContactMLScore!]!
   success: Boolean!
 }
 

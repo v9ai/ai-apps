@@ -230,6 +230,12 @@ export const contacts = pgTable(
     telegram_handle: text("telegram_handle"),
     do_not_contact: boolean("do_not_contact").default(false),
     tags: text("tags"), // JSON array
+    // ML-derived fields (populated by classifyContact / scoreContactsML)
+    seniority: text("seniority"),
+    department: text("department"),
+    is_decision_maker: boolean("is_decision_maker").default(false),
+    authority_score: real("authority_score").default(0.0),
+    dm_reasons: text("dm_reasons"), // JSON array
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),

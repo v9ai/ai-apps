@@ -1,5 +1,7 @@
+pub mod authority;
 pub mod online_learner;
 
+pub use authority::{classify_contact, ContactClassification};
 pub use online_learner::OnlineLearner;
 
 use serde::{Deserialize, Serialize};

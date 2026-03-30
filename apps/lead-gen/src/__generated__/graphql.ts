@@ -225,10 +225,13 @@ export type CompanySnapshot = {
 
 export type Contact = {
   __typename: 'Contact';
+  authorityScore: Maybe<Scalars['Float']['output']>;
   bouncedEmails: Array<Scalars['String']['output']>;
   company: Maybe<Scalars['String']['output']>;
   companyId: Maybe<Scalars['Int']['output']>;
   createdAt: Scalars['String']['output'];
+  department: Maybe<Scalars['String']['output']>;
+  dmReasons: Array<Scalars['String']['output']>;
   doNotContact: Scalars['Boolean']['output'];
   email: Maybe<Scalars['String']['output']>;
   emailVerified: Maybe<Scalars['Boolean']['output']>;
@@ -236,6 +239,7 @@ export type Contact = {
   firstName: Scalars['String']['output'];
   githubHandle: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  isDecisionMaker: Maybe<Scalars['Boolean']['output']>;
   lastName: Scalars['String']['output'];
   linkedinUrl: Maybe<Scalars['String']['output']>;
   nbExecutionTimeMs: Maybe<Scalars['Int']['output']>;
@@ -245,6 +249,7 @@ export type Contact = {
   nbStatus: Maybe<Scalars['String']['output']>;
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
+  seniority: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
   telegramHandle: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
@@ -297,6 +302,16 @@ export type ContactInput = {
   position?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   telegramHandle?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ContactMlScore = {
+  __typename: 'ContactMLScore';
+  authorityScore: Scalars['Float']['output'];
+  contactId: Scalars['Int']['output'];
+  department: Scalars['String']['output'];
+  dmReasons: Array<Scalars['String']['output']>;
+  isDecisionMaker: Scalars['Boolean']['output'];
+  seniority: Scalars['String']['output'];
 };
 
 export type ContactsResult = {
@@ -732,6 +747,7 @@ export type Mutation = {
   previewEmail: EmailPreview;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
+  scoreContactsML: ScoreContactsMlResult;
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
@@ -930,6 +946,11 @@ export type MutationScheduleBatchEmailsArgs = {
 
 export type MutationScheduleFollowUpBatchArgs = {
   input: FollowUpBatchInput;
+};
+
+
+export type MutationScoreContactsMlArgs = {
+  companyId: Scalars['Int']['input'];
 };
 
 
@@ -1206,6 +1227,15 @@ export type ScheduleBatchResult = {
   message: Scalars['String']['output'];
   scheduled: Scalars['Int']['output'];
   schedulingPlan: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type ScoreContactsMlResult = {
+  __typename: 'ScoreContactsMLResult';
+  contactsScored: Scalars['Int']['output'];
+  decisionMakersFound: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  results: Array<ContactMlScore>;
   success: Scalars['Boolean']['output'];
 };
 
