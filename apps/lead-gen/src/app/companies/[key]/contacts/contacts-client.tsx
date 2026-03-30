@@ -14,6 +14,7 @@ import {
   useDeleteContactMutation,
   useUnverifyCompanyContactsMutation,
   useMergeDuplicateContactsMutation,
+  useScoreContactsMlMutation,
 } from "@/__generated__/hooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -65,6 +66,26 @@ import { useStreamingEmailScheduler } from "@/hooks/useStreamingEmailScheduler";
 type Contact = NonNullable<
   GetContactsQuery["contacts"]["contacts"]
 >[number];
+
+/** Map seniority tier to a Radix badge color */
+function seniorityColor(
+  seniority: string | null | undefined,
+): "red" | "orange" | "yellow" | "blue" | "gray" {
+  switch (seniority) {
+    case "C-level":
+    case "Founder":
+      return "red";
+    case "Partner":
+    case "VP":
+      return "orange";
+    case "Director":
+      return "yellow";
+    case "Manager":
+      return "blue";
+    default:
+      return "gray";
+  }
+}
 
 function parseLinkedInHTML(html: string) {
   const parser = new DOMParser();
@@ -560,6 +581,8 @@ export function CompanyContactsClient({
   const [applyEmailPattern, { loading: applyingPattern }] = useApplyEmailPatternMutation();
   const [unverifyCompanyContacts, { loading: unverifying }] = useUnverifyCompanyContactsMutation();
   const [mergeDuplicateContacts, { loading: merging }] = useMergeDuplicateContactsMutation();
+  const [scoreContactsML, { loading: scoringML }] = useScoreContactsMlMutation();
+  const [mlScoreStatus, setMlScoreStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   // Fetch company emails for follow-up modal
   const { data: companyEmailsData, refetch: refetchEmails } = useGetCompanyContactEmailsQuery({
@@ -680,6 +703,24 @@ export function CompanyContactsClient({
     }
   }, [company, unverifyCompanyContacts, refetch]);
 
+  const handleScoreML = useCallback(async () => {
+    if (!company) return;
+    setMlScoreStatus(null);
+    try {
+      const { data: result } = await scoreContactsML({
+        variables: { companyId: company.id },
+      });
+      const res = result?.scoreContactsML;
+      setMlScoreStatus({
+        type: res?.success ? "success" : "error",
+        message: res?.message ?? "ML scoring failed",
+      });
+      if (res?.success) await refetch();
+    } catch (err: unknown) {
+      setMlScoreStatus({ type: "error", message: err instanceof Error ? err.message : "ML scoring failed" });
+    }
+  }, [scoreContactsML, company, refetch]);
+
   // Admin guard
   if (!isAdmin) {
     return (
@@ -717,7 +758,10 @@ export function CompanyContactsClient({
     );
   }
 
-  const contactsList = data?.contacts?.contacts ?? [];
+  // Sort by authority score DESC so decision makers appear first
+  const contactsList = [...(data?.contacts?.contacts ?? [])].sort(
+    (a, b) => (b.authorityScore ?? 0) - (a.authorityScore ?? 0),
+  );
   const totalCount = data?.contacts?.totalCount ?? 0;
   const batchEmailRecipients = contactsList
     .filter((c) => c.email && !c.doNotContact)
@@ -776,6 +820,19 @@ export function CompanyContactsClient({
               <InfoCircledIcon />
             </Callout.Icon>
             <Callout.Text>{emailDiscoveryStatus.message}</Callout.Text>
+          </Callout.Root>
+        )}
+
+        {/* ML scoring status */}
+        {mlScoreStatus && (
+          <Callout.Root
+            color={mlScoreStatus.type === "success" ? "blue" : "red"}
+            size="1"
+          >
+            <Callout.Icon>
+              <InfoCircledIcon />
+            </Callout.Icon>
+            <Callout.Text>{mlScoreStatus.message}</Callout.Text>
           </Callout.Root>
         )}
 
@@ -846,6 +903,16 @@ export function CompanyContactsClient({
             >
               {unverifying ? <Spinner size="1" /> : null}
               Unverify all
+            </button>
+
+            <button
+              className={button({ variant: "ghost", size: "md" })}
+              onClick={handleScoreML}
+              disabled={scoringML}
+              title="Classify each contact's seniority, department, and decision-maker status from their job title"
+            >
+              {scoringML ? <Spinner size="1" /> : <MagicWandIcon />}
+              Score ML
             </button>
 
             <button
@@ -1013,11 +1080,35 @@ export function CompanyContactsClient({
                             do not contact
                           </Badge>
                         )}
+                        {contact.isDecisionMaker && (
+                          <Badge color="green" variant="solid" size="1">
+                            DM
+                          </Badge>
+                        )}
+                        {contact.seniority && (
+                          <Badge
+                            color={seniorityColor(contact.seniority)}
+                            variant="soft"
+                            size="1"
+                          >
+                            {contact.seniority}
+                          </Badge>
+                        )}
+                        {contact.department && contact.department !== "Other" && (
+                          <Badge color="gray" variant="outline" size="1">
+                            {contact.department}
+                          </Badge>
+                        )}
                       </Flex>
 
                       {contact.position && (
                         <Text size="2" color="gray" mt="1" as="p">
                           {contact.position}
+                          {contact.authorityScore != null && contact.authorityScore > 0 && (
+                            <Text as="span" size="1" color="gray" ml="2">
+                              {(contact.authorityScore * 100).toFixed(0)}%
+                            </Text>
+                          )}
                         </Text>
                       )}
 

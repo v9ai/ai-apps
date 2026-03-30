@@ -226,10 +226,13 @@ export type CompanySnapshot = {
 
 export type Contact = {
   __typename?: 'Contact';
+  authorityScore: Maybe<Scalars['Float']['output']>;
   bouncedEmails: Array<Scalars['String']['output']>;
   company: Maybe<Scalars['String']['output']>;
   companyId: Maybe<Scalars['Int']['output']>;
   createdAt: Scalars['String']['output'];
+  department: Maybe<Scalars['String']['output']>;
+  dmReasons: Array<Scalars['String']['output']>;
   doNotContact: Scalars['Boolean']['output'];
   email: Maybe<Scalars['String']['output']>;
   emailVerified: Maybe<Scalars['Boolean']['output']>;
@@ -237,6 +240,7 @@ export type Contact = {
   firstName: Scalars['String']['output'];
   githubHandle: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  isDecisionMaker: Maybe<Scalars['Boolean']['output']>;
   lastName: Scalars['String']['output'];
   linkedinUrl: Maybe<Scalars['String']['output']>;
   nbExecutionTimeMs: Maybe<Scalars['Int']['output']>;
@@ -246,6 +250,7 @@ export type Contact = {
   nbStatus: Maybe<Scalars['String']['output']>;
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
+  seniority: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
   telegramHandle: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
@@ -298,6 +303,16 @@ export type ContactInput = {
   position?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   telegramHandle?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ContactMlScore = {
+  __typename?: 'ContactMLScore';
+  authorityScore: Scalars['Float']['output'];
+  contactId: Scalars['Int']['output'];
+  department: Scalars['String']['output'];
+  dmReasons: Array<Scalars['String']['output']>;
+  isDecisionMaker: Scalars['Boolean']['output'];
+  seniority: Scalars['String']['output'];
 };
 
 export type ContactsResult = {
@@ -733,6 +748,7 @@ export type Mutation = {
   previewEmail: EmailPreview;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
+  scoreContactsML: ScoreContactsMlResult;
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
@@ -931,6 +947,11 @@ export type MutationScheduleBatchEmailsArgs = {
 
 export type MutationScheduleFollowUpBatchArgs = {
   input: FollowUpBatchInput;
+};
+
+
+export type MutationScoreContactsMlArgs = {
+  companyId: Scalars['Int']['input'];
 };
 
 
@@ -1210,6 +1231,15 @@ export type ScheduleBatchResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ScoreContactsMlResult = {
+  __typename?: 'ScoreContactsMLResult';
+  contactsScored: Scalars['Int']['output'];
+  decisionMakersFound: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  results: Array<ContactMlScore>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type SendEmailInput = {
   from?: InputMaybe<Scalars['String']['input']>;
   html: Scalars['String']['input'];
@@ -1476,6 +1506,7 @@ export type ResolversTypes = {
   Contact: ResolverTypeWrapper<Partial<Contact>>;
   ContactEmail: ResolverTypeWrapper<Partial<ContactEmail>>;
   ContactInput: ResolverTypeWrapper<Partial<ContactInput>>;
+  ContactMLScore: ResolverTypeWrapper<Partial<ContactMlScore>>;
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
   CreateCampaignInput: ResolverTypeWrapper<Partial<CreateCampaignInput>>;
   CreateCompanyInput: ResolverTypeWrapper<Partial<CreateCompanyInput>>;
@@ -1529,6 +1560,7 @@ export type ResolversTypes = {
   ResendEmailDetail: ResolverTypeWrapper<Partial<ResendEmailDetail>>;
   ScheduleBatchEmailsInput: ResolverTypeWrapper<Partial<ScheduleBatchEmailsInput>>;
   ScheduleBatchResult: ResolverTypeWrapper<Partial<ScheduleBatchResult>>;
+  ScoreContactsMLResult: ResolverTypeWrapper<Partial<ScoreContactsMlResult>>;
   SendEmailInput: ResolverTypeWrapper<Partial<SendEmailInput>>;
   SendEmailResult: ResolverTypeWrapper<Partial<SendEmailResult>>;
   SendNowResult: ResolverTypeWrapper<Partial<SendNowResult>>;
@@ -1571,6 +1603,7 @@ export type ResolversParentTypes = {
   Contact: Partial<Contact>;
   ContactEmail: Partial<ContactEmail>;
   ContactInput: Partial<ContactInput>;
+  ContactMLScore: Partial<ContactMlScore>;
   ContactsResult: Partial<ContactsResult>;
   CreateCampaignInput: Partial<CreateCampaignInput>;
   CreateCompanyInput: Partial<CreateCompanyInput>;
@@ -1623,6 +1656,7 @@ export type ResolversParentTypes = {
   ResendEmailDetail: Partial<ResendEmailDetail>;
   ScheduleBatchEmailsInput: Partial<ScheduleBatchEmailsInput>;
   ScheduleBatchResult: Partial<ScheduleBatchResult>;
+  ScoreContactsMLResult: Partial<ScoreContactsMlResult>;
   SendEmailInput: Partial<SendEmailInput>;
   SendEmailResult: Partial<SendEmailResult>;
   SendNowResult: Partial<SendNowResult>;
@@ -1776,10 +1810,13 @@ export type CompanySnapshotResolvers<ContextType = GraphQLContext, ParentType ex
 };
 
 export type ContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Contact'] = ResolversParentTypes['Contact']> = {
+  authorityScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   bouncedEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  department?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dmReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   doNotContact?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   emailVerified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
@@ -1787,6 +1824,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   githubHandle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  isDecisionMaker?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   linkedinUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   nbExecutionTimeMs?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -1796,6 +1834,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   nbStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   nbSuggestedCorrection?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  seniority?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   telegramHandle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1833,6 +1872,15 @@ export type ContactEmailResolvers<ContextType = GraphQLContext, ParentType exten
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ContactMlScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactMLScore'] = ResolversParentTypes['ContactMLScore']> = {
+  authorityScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  department?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  dmReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  isDecisionMaker?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  seniority?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type ContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactsResult'] = ResolversParentTypes['ContactsResult']> = {
@@ -2127,6 +2175,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   previewEmail?: Resolver<ResolversTypes['EmailPreview'], ParentType, ContextType, RequireFields<MutationPreviewEmailArgs, 'input'>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
   scheduleFollowUpBatch?: Resolver<ResolversTypes['FollowUpBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleFollowUpBatchArgs, 'input'>>;
+  scoreContactsML?: Resolver<ResolversTypes['ScoreContactsMLResult'], ParentType, ContextType, RequireFields<MutationScoreContactsMlArgs, 'companyId'>>;
   sendEmail?: Resolver<ResolversTypes['SendEmailResult'], ParentType, ContextType, RequireFields<MutationSendEmailArgs, 'input'>>;
   sendOutreachEmail?: Resolver<ResolversTypes['SendOutreachEmailResult'], ParentType, ContextType, RequireFields<MutationSendOutreachEmailArgs, 'input'>>;
   sendScheduledEmailNow?: Resolver<ResolversTypes['SendNowResult'], ParentType, ContextType, RequireFields<MutationSendScheduledEmailNowArgs, 'resendId'>>;
@@ -2213,6 +2262,14 @@ export type ScheduleBatchResultResolvers<ContextType = GraphQLContext, ParentTyp
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type ScoreContactsMlResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScoreContactsMLResult'] = ResolversParentTypes['ScoreContactsMLResult']> = {
+  contactsScored?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  decisionMakersFound?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  results?: Resolver<Array<ResolversTypes['ContactMLScore']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type SendEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SendEmailResult'] = ResolversParentTypes['SendEmailResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2293,6 +2350,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CompanySnapshot?: CompanySnapshotResolvers<ContextType>;
   Contact?: ContactResolvers<ContextType>;
   ContactEmail?: ContactEmailResolvers<ContextType>;
+  ContactMLScore?: ContactMlScoreResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   DeleteCampaignResult?: DeleteCampaignResultResolvers<ContextType>;
@@ -2331,6 +2389,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ReceivedEmailsResult?: ReceivedEmailsResultResolvers<ContextType>;
   ResendEmailDetail?: ResendEmailDetailResolvers<ContextType>;
   ScheduleBatchResult?: ScheduleBatchResultResolvers<ContextType>;
+  ScoreContactsMLResult?: ScoreContactsMlResultResolvers<ContextType>;
   SendEmailResult?: SendEmailResultResolvers<ContextType>;
   SendNowResult?: SendNowResultResolvers<ContextType>;
   SendOutreachEmailResult?: SendOutreachEmailResultResolvers<ContextType>;

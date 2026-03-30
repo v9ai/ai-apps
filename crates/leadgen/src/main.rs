@@ -463,6 +463,25 @@ async fn main() -> Result<()> {
             println!("  Weight sparsity: {:.2}%", learner.sparsity() * 100.0);
         }
 
+        #[cfg(feature = "neon")]
+        "score-neon" => {
+            // Usage: leadgen score-neon --company <key> [--dry-run]
+            // Reads contacts from the Neon PostgreSQL database (NEON_DATABASE_URL env var),
+            // classifies each contact's position into seniority / department / authority_score
+            // / is_decision_maker, prints a ranked table, and writes back to Neon
+            // unless --dry-run is passed.
+            let company_key = {
+                let pos = args.iter().position(|a| a == "--company")
+                    .expect("usage: leadgen score-neon --company <key> [--dry-run]");
+                args.get(pos + 1).expect("--company requires a value").clone()
+            };
+            let dry_run = args.iter().any(|a| a == "--dry-run");
+            let db_url = std::env::var("NEON_DATABASE_URL")
+                .expect("NEON_DATABASE_URL env var must be set");
+
+            db::neon::score_company_contacts(&db_url, &company_key, dry_run).await?;
+        }
+
         _ => {
             eprintln!("Usage: leadgen <command> [args]");
             eprintln!();
@@ -479,6 +498,7 @@ async fn main() -> Result<()> {
             eprintln!("  export [file.csv]      Export leads to CSV");
             eprintln!("  match <domain>         Find top-5 similar companies via FTabR + AttentionScorer");
             eprintln!("  train                  Train OnlineLearner on top leads (pseudo-labels)");
+            eprintln!("  score-neon [neon feat] Score contacts in Neon PostgreSQL (--company <key> [--dry-run])");
         }
     }
 
