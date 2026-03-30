@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
+    "@ai-apps/db-backup": "workspace:*",
     "@ai-apps/resume": "workspace:*",
     "@apollo/client": "^3.14.0",
     "@apollo/server": "^5.3.0",

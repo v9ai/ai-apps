@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
+    "@ai-apps/db-backup": "workspace:*",
     "@ai-apps/ui": "workspace:*",
     "@aws-sdk/client-s3": "^3.1004.0",
     "@huggingface/transformers": "^3.8.1",
