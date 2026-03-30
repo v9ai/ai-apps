@@ -48,6 +48,7 @@ const defaultForm = () => ({
   familyMemberId: "",
   goalId: "",
   isPrivate: true,
+  tags: "",
 });
 
 export default function AddJournalEntryButton({
@@ -121,6 +122,8 @@ export default function AddJournalEntryButton({
       return;
     }
 
+    const parsedTags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+
     try {
       if (isEdit && editEntry) {
         await updateJournalEntry({
@@ -134,6 +137,7 @@ export default function AddJournalEntryButton({
               familyMemberId: form.familyMemberId ? parseInt(form.familyMemberId, 10) : undefined,
               goalId: form.goalId ? parseInt(form.goalId, 10) : undefined,
               isPrivate: form.isPrivate,
+              tags: parsedTags.length > 0 ? parsedTags : undefined,
             },
           },
         });
@@ -148,6 +152,7 @@ export default function AddJournalEntryButton({
               familyMemberId: form.familyMemberId ? parseInt(form.familyMemberId, 10) : undefined,
               goalId: form.goalId ? parseInt(form.goalId, 10) : undefined,
               isPrivate: form.isPrivate,
+              tags: parsedTags.length > 0 ? parsedTags : undefined,
             },
           },
         });
@@ -175,6 +180,7 @@ export default function AddJournalEntryButton({
             familyMemberId: editEntry.familyMemberId ? String(editEntry.familyMemberId) : "",
             goalId: editEntry.goalId ? String(editEntry.goalId) : "",
             isPrivate: editEntry.isPrivate,
+            tags: (editEntry.tags || []).join(", "),
           });
         }
         if (!isOpen) {
@@ -326,6 +332,18 @@ export default function AddJournalEntryButton({
                 </Select.Content>
               </Select.Root>
             </Flex>
+
+            <label>
+              <Text as="div" size="2" mb="1" weight="medium">
+                Tags
+              </Text>
+              <TextField.Root
+                placeholder="Comma-separated, e.g. therapy, milestone, concern"
+                value={form.tags}
+                onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
+                disabled={loading}
+              />
+            </label>
 
             <Text as="label" size="2">
               <Flex gap="2" align="center">
