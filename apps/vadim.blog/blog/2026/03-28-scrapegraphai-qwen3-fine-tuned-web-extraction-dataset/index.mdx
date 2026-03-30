@@ -142,7 +142,7 @@ export const decisionEdges = [
   { id: "dce7", source: "dc5", target: "dc6", animated: true, label: "No", style: { stroke: '#16a34a', strokeWidth: 2 }, labelStyle: { fill: '#4ade80', fontSize: 11, fontWeight: 700 }, labelBgStyle: { fill: '#052e16' } },
 ];
 
-Leading cloud extraction APIs are orders of magnitude larger than the model that just beat them at structured web extraction. This isn't a marginal win — it's a 3.4 percentage point lead on the gold-standard SWDE benchmark. The secret isn't a novel architecture; it's domain-specific fine-tuning on a 100,000-example dataset of real scraping trajectories. The [ScrapeGraphAI team's release](https://arxiv.org/abs/2505.15812) of a fine-tuned [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) model flips the conventional scaling law on its head and delivers a complete, Apache 2.0-licensed stack for production. This is a blueprint for how narrow, expert models will outperform generalist giants — if you have the right data.
+Leading cloud extraction APIs are orders of magnitude larger than the model that just beat them at structured web extraction. This isn't a marginal win — it's a 3.4 percentage point lead on the gold-standard SWDE benchmark. The secret isn't a novel architecture; it's domain-specific fine-tuning on a 100,000-example dataset of real scraping trajectories. The [ScrapeGraphAI team's release](https://arxiv.org/abs/2602.15189) of a fine-tuned [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) model flips the conventional scaling law on its head and delivers a complete, Apache 2.0-licensed stack for production. This is a blueprint for how narrow, expert models will outperform generalist giants — if you have the right data.
 
 <!-- truncate -->
 
@@ -339,7 +339,7 @@ Filter by `schema_complexity_score` to keep only the cleanest examples, or by `m
 
 ## The Broader Implication
 
-The [ScrapeGraphAI paper](https://arxiv.org/abs/2505.15812) is a case study in a repeating pattern: an open-source tool generates labeled trajectories at scale, those trajectories fine-tune a compact base model, the result outperforms general-purpose APIs on the narrow task and runs locally. The barrier to high-accuracy domain AI is no longer pre-training compute — it's the discipline to collect and curate task-specific data.
+The [ScrapeGraphAI paper](https://arxiv.org/abs/2602.15189) is a case study in a repeating pattern: an open-source tool generates labeled trajectories at scale, those trajectories fine-tune a compact base model, the result outperforms general-purpose APIs on the narrow task and runs locally. The barrier to high-accuracy domain AI is no longer pre-training compute — it's the discipline to collect and curate task-specific data.
 
 What this release doesn't resolve is the harder question: how much of the 94.6% SWDE score transfers to the messy, JavaScript-heavy, bot-defended pages that dominate production scraping workloads? The benchmark gap is real; the production gap is unmeasured. The honest answer is that you will need to run your own evaluation on a representative sample of your target sites before trusting the SWDE headline as a deployment signal.
 
