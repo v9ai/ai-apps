@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Stack, Group, Button, Text, Alert, Badge } from "@mantine/core";
+import { Stack, Group, Button, Text, Alert, Badge, Progress } from "@mantine/core";
+
+type Phase = "connections" | "import" | "posts" | null;
 
 export default function PostsSection() {
   const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<Phase>(null);
   const [status, setStatus] = useState("");
   const [serverUp, setServerUp] = useState<boolean | null>(null);
   const [stats, setStats] = useState<{ contacts: number; posts: number } | null>(null);
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Check server health on mount
   useEffect(() => {
@@ -32,17 +36,21 @@ export default function PostsSection() {
       if (message.error) {
         setStatus(`Error: ${message.error}`);
         setLoading(false);
+        setPhase(null);
+        setProgress(null);
         return;
       }
 
       if (message.done) {
         const filtered = message.totalFiltered
-          ? ` (${message.totalFiltered} noise filtered)`
+          ? ` (${message.totalFiltered.toLocaleString()} noise filtered)`
           : "";
         setStatus(
-          `Done! ${message.totalPosts} relevant posts from ${message.totalContacts} contacts${filtered}`,
+          `Done! ${message.totalPosts.toLocaleString()} relevant posts from ${message.totalContacts.toLocaleString()} contacts${filtered}`,
         );
         setLoading(false);
+        setPhase(null);
+        setProgress(null);
         // Refresh stats
         fetch("http://localhost:9876/stats")
           .then((r) => r.json())
@@ -51,15 +59,23 @@ export default function PostsSection() {
         return;
       }
 
+      // Phase tracking
+      if (message.phase) {
+        setPhase(message.phase);
+      }
+
+      // Post scraping progress (phase 3)
       if (message.current && message.total) {
+        setProgress({ current: message.current, total: message.total });
         const filtered = message.postsFiltered
-          ? ` | ${message.postsFiltered} filtered`
+          ? ` | ${message.postsFiltered.toLocaleString()} filtered`
           : "";
         setStatus(
-          `${message.current}/${message.total}: ${message.contactName} (${message.postsFound} kept${filtered})`,
+          `${message.current.toLocaleString()}/${message.total.toLocaleString()}: ${message.contactName} (${message.postsFound.toLocaleString()} kept${filtered})`,
         );
       }
 
+      // Generic status (phases 1 & 2)
       if (message.status) {
         setStatus(message.status);
       }
@@ -71,19 +87,23 @@ export default function PostsSection() {
 
   const handleStart = async () => {
     setLoading(true);
+    setPhase("connections");
     setStatus("Starting...");
+    setProgress(null);
 
     try {
       const response = await chrome.runtime.sendMessage({
-        action: "startPostScraping",
+        action: "startFullPipeline",
       });
       if (!response.success) {
         setStatus(response.error || "Failed to start");
         setLoading(false);
+        setPhase(null);
       }
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Error starting scraper");
+      setStatus(err instanceof Error ? err.message : "Error starting pipeline");
       setLoading(false);
+      setPhase(null);
     }
   };
 
@@ -91,7 +111,19 @@ export default function PostsSection() {
     await chrome.runtime.sendMessage({ action: "stopPostScraping" });
     setStatus("Stopped");
     setLoading(false);
+    setPhase(null);
+    setProgress(null);
   };
+
+  const phaseLabel =
+    phase === "connections" ? "1/3 Connections" :
+    phase === "import" ? "2/3 Import" :
+    phase === "posts" ? "3/3 Posts" : null;
+
+  const progressPct =
+    progress && progress.total > 0
+      ? Math.round((progress.current / progress.total) * 100)
+      : null;
 
   return (
     <Stack gap="xs">
@@ -106,10 +138,15 @@ export default function PostsSection() {
           </Badge>
           {stats && (
             <Text size="xs" c="dimmed">
-              {stats.contacts}C / {stats.posts}P
+              {stats.contacts.toLocaleString()}C / {stats.posts.toLocaleString()}P
             </Text>
           )}
         </Group>
+        {phaseLabel && (
+          <Badge size="xs" color="teal" variant="light">
+            {phaseLabel}
+          </Badge>
+        )}
       </Group>
 
       <Group grow gap="xs">
@@ -119,7 +156,7 @@ export default function PostsSection() {
           color="teal"
           size="sm"
         >
-          {loading ? "Scraping..." : "Scrape Posts"}
+          {loading ? "Scraping..." : "Scrape All Posts"}
         </Button>
         {loading && (
           <Button onClick={handleStop} color="red" size="sm">
@@ -127,6 +164,10 @@ export default function PostsSection() {
           </Button>
         )}
       </Group>
+
+      {phase === "posts" && progressPct !== null && (
+        <Progress value={progressPct} color="teal" size="xs" />
+      )}
 
       {status && (
         <Alert color="dark" radius="sm" p="xs">
