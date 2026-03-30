@@ -103,7 +103,13 @@ impl PostsDb {
             let schema = table.schema().await?;
             let has_relevance = schema.fields().iter().any(|f| f.name() == "relevance_score");
             if !has_relevance {
-                tracing::info!("Migrating posts table to v2 schema (adding ML columns)");
+                let row_count = table.count_rows(None).await.unwrap_or(0);
+                tracing::warn!(
+                    "Posts table has old schema (missing ML columns). \
+                     Dropping {} existing rows and recreating with v2 schema. \
+                     This is a DESTRUCTIVE migration — old posts will be lost.",
+                    row_count
+                );
                 self.conn
                     .drop_table("posts", &[])
                     .await
@@ -113,7 +119,7 @@ impl PostsDb {
                     .execute()
                     .await
                     .context("Failed to create posts table v2")?;
-                tracing::info!("Created posts table v2 with ML analysis columns");
+                tracing::warn!("Created posts table v2 with ML analysis columns ({} rows dropped)", row_count);
             }
         } else {
             self.conn
@@ -134,12 +140,18 @@ impl PostsDb {
 
         let table = match self.conn.open_table("posts").execute().await {
             Ok(t) => t,
-            Err(_) => return 0,
+            Err(e) => {
+                tracing::warn!("Could not open posts table for max ID query: {}", e);
+                return 0;
+            }
         };
 
         let mut stream = match table.query().execute().await {
             Ok(s) => s,
-            Err(_) => return 0,
+            Err(e) => {
+                tracing::warn!("Could not query posts table for max ID: {}", e);
+                return 0;
+            }
         };
 
         let mut max_id: i64 = 0;

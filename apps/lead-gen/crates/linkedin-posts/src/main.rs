@@ -296,9 +296,28 @@ async fn get_intent_distribution(State(state): State<AppState>) -> Json<IntentDi
 }
 
 /// POST /scorer/reload — hot-reload intent scorer weights from JSON file.
+/// Requires SCORER_AUTH_TOKEN env var to be set and passed as Bearer token.
 async fn reload_scorer(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    // Auth check: require bearer token matching SCORER_AUTH_TOKEN env var
+    let expected = std::env::var("SCORER_AUTH_TOKEN").unwrap_or_default();
+    if expected.is_empty() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            "SCORER_AUTH_TOKEN not configured — scorer reload disabled".to_string(),
+        ));
+    }
+    let provided = headers
+        .get("authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "))
+        .unwrap_or("");
+    if provided != expected {
+        return Err((StatusCode::UNAUTHORIZED, "Invalid or missing auth token".to_string()));
+    }
+
     let db_path = dirs_or_default();
     let weights_path = format!("{}/post_intent_weights.json", db_path);
     let path = std::path::Path::new(&weights_path);
