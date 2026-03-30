@@ -1,8 +1,8 @@
-/// Combined post analysis — orchestrates intent scoring + NER extraction.
-///
-/// Produces a `PostAnalysis` struct that captures the full ML-enriched
-/// view of a LinkedIn post: multi-label intents, extracted entities,
-/// relevance score, and keep/discard decision.
+//! Combined post analysis — orchestrates intent scoring + NER extraction.
+//!
+//! Produces a `PostAnalysis` struct that captures the full ML-enriched
+//! view of a LinkedIn post: multi-label intents, extracted entities,
+//! relevance score, and keep/discard decision.
 
 use serde::{Deserialize, Serialize};
 

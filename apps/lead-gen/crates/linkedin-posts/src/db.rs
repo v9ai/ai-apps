@@ -75,6 +75,13 @@ impl PostsDb {
 
         db.ensure_tables().await?;
 
+        // Query max existing post ID to avoid collisions across runs
+        let max_id = db.query_max_post_id().await;
+        *db.next_post_id.lock().await = max_id + 1;
+        if max_id > 0 {
+            tracing::info!("Resuming post IDs from {} (max existing: {})", max_id + 1, max_id);
+        }
+
         Ok(db)
     }
 
@@ -118,6 +125,37 @@ impl PostsDb {
         }
 
         Ok(())
+    }
+
+    /// Query the maximum post ID in LanceDB to avoid ID collisions across runs.
+    async fn query_max_post_id(&self) -> i64 {
+        use futures::TryStreamExt;
+        use lancedb::query::ExecutableQuery;
+
+        let table = match self.conn.open_table("posts").execute().await {
+            Ok(t) => t,
+            Err(_) => return 0,
+        };
+
+        let mut stream = match table.query().execute().await {
+            Ok(s) => s,
+            Err(_) => return 0,
+        };
+
+        let mut max_id: i64 = 0;
+        while let Ok(Some(batch)) = stream.try_next().await {
+            let ids = batch.column(0).as_any().downcast_ref::<Int64Array>();
+            if let Some(ids) = ids {
+                for i in 0..ids.len() {
+                    let id = ids.value(i);
+                    if id > max_id {
+                        max_id = id;
+                    }
+                }
+            }
+        }
+
+        max_id
     }
 
     pub async fn add_contacts(&self, contacts: &[Contact]) -> Result<usize> {
@@ -297,7 +335,7 @@ impl PostsDb {
                         .collect::<Vec<_>>(),
                 )),
                 Arc::new(StringArray::from_iter_values(
-                    std::iter::repeat(now.as_str()).take(n),
+                    std::iter::repeat_n(now.as_str(), n),
                 )),
                 // ML analysis fields
                 Arc::new(Float32Array::from_iter_values(

@@ -1,13 +1,13 @@
-/// Multi-label logistic scorer for LinkedIn post intent classification.
-///
-/// Follows the `LogisticScorer` pattern from `metal/src/kernel/scoring.rs`:
-/// weights × features + bias → sigmoid, producing independent probabilities
-/// for 7 intent labels.
-///
-/// Feature vector (12 elements):
-///   [hiring_kw_density, ai_kw_density, remote_kw_density, eng_kw_density,
-///    culture_kw_density, noise_kw_density, text_length_norm, reactions_norm,
-///    comments_norm, has_url, is_repost, media_type_enc]
+//! Multi-label logistic scorer for LinkedIn post intent classification.
+//!
+//! Follows the `LogisticScorer` pattern from `metal/src/kernel/scoring.rs`:
+//! weights × features + bias → sigmoid, producing independent probabilities
+//! for 7 intent labels.
+//!
+//! Feature vector (12 elements):
+//!   \[hiring_kw_density, ai_kw_density, remote_kw_density, eng_kw_density,
+//!    culture_kw_density, noise_kw_density, text_length_norm, reactions_norm,
+//!    comments_norm, has_url, is_repost, media_type_enc\]
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -154,12 +154,12 @@ impl PostIntentScorer {
     /// Score a post, returning per-label probabilities.
     pub fn score_intents(&self, features: &[f32; NUM_FEATURES]) -> PostIntents {
         let mut scores = [0.0f32; NUM_LABELS];
-        for label in 0..NUM_LABELS {
+        for (label, score) in scores.iter_mut().enumerate() {
             let mut z = self.biases[label];
-            for f in 0..NUM_FEATURES {
-                z += self.weights[label][f] * features[f];
+            for (w, feat) in self.weights[label].iter().zip(features.iter()) {
+                z += w * feat;
             }
-            scores[label] = sigmoid(z);
+            *score = sigmoid(z);
         }
         PostIntents::from_array(&scores)
     }
@@ -185,7 +185,8 @@ impl PostIntentScorer {
 pub fn extract_features(post: &Post) -> [f32; NUM_FEATURES] {
     let text = post.post_text.as_deref().unwrap_or("");
     let lower = text.to_lowercase();
-    let word_count = lower.split_whitespace().count().max(1) as f32;
+    // min 5 to prevent inflated keyword densities on 1-3 word posts
+    let word_count = lower.split_whitespace().count().max(5) as f32;
 
     let hiring_hits = HIRING_KEYWORDS
         .iter()
@@ -229,8 +230,8 @@ pub fn extract_features(post: &Post) -> [f32; NUM_FEATURES] {
         culture_hits / word_count,                          // 4: culture_kw_density
         noise_hits / word_count,                            // 5: noise_kw_density
         (text.len() as f32 / 500.0).min(1.0),              // 6: text_length_norm
-        (1.0 + post.reactions_count as f32).ln() / 10.0,   // 7: reactions_norm
-        (1.0 + post.comments_count as f32).ln() / 8.0,     // 8: comments_norm
+        (1.0 + post.reactions_count.max(0) as f32).ln() / 10.0, // 7: reactions_norm
+        (1.0 + post.comments_count.max(0) as f32).ln() / 8.0, // 8: comments_norm
         if post.post_url.is_some() { 1.0 } else { 0.0 },  // 9: has_url
         if post.is_repost { 1.0 } else { 0.0 },           // 10: is_repost
         media_enc,                                          // 11: media_type_enc
@@ -358,5 +359,77 @@ mod tests {
         let features = extract_features(&post);
         let intents = scorer.score_intents(&features);
         assert_eq!(intents.primary_intent(), "hiring_signal");
+    }
+
+    #[test]
+    fn short_post_density_dampened() {
+        // With word_count.max(5), a 2-word post gets density 2/5=0.4 instead of 2/2=1.0
+        let features_short = extract_features(&make_post("pytorch transformers"));
+        // Verify density is dampened: ai_kw_density = 2/5 = 0.4, not 2/2 = 1.0
+        assert!(features_short[1] < 0.5, "ai density should be dampened: {:.3}", features_short[1]);
+        // Compare with a normal post where the same keywords appear
+        let features_normal = extract_features(&make_post(
+            "Our team uses pytorch and transformers for all our production machine learning models"
+        ));
+        assert!(features_short[1] >= features_normal[1],
+            "short post density ({:.3}) should still be >= normal ({:.3})",
+            features_short[1], features_normal[1]);
+    }
+
+    #[test]
+    fn relevance_score_pure_noise() {
+        let intents = PostIntents {
+            hiring_signal: 0.0,
+            ai_ml_content: 0.0,
+            remote_signal: 0.0,
+            engineering_culture: 0.0,
+            company_growth: 0.0,
+            thought_leadership: 0.0,
+            noise: 1.0,
+        };
+        assert!(intents.relevance_score() < 0.0, "pure noise should be negative");
+    }
+
+    #[test]
+    fn relevance_score_pure_hiring() {
+        let intents = PostIntents {
+            hiring_signal: 1.0,
+            ai_ml_content: 0.0,
+            remote_signal: 0.0,
+            engineering_culture: 0.0,
+            company_growth: 0.0,
+            thought_leadership: 0.0,
+            noise: 0.0,
+        };
+        assert!((intents.relevance_score() - 0.30).abs() < 0.001);
+    }
+
+    #[test]
+    fn sigmoid_boundary_values() {
+        assert!((sigmoid(0.0) - 0.5).abs() < 0.001);
+        assert!(sigmoid(100.0) > 0.999);
+        assert!(sigmoid(-100.0) < 0.001);
+        // No NaN or panic
+        assert!(!sigmoid(f32::MAX).is_nan());
+        assert!(!sigmoid(f32::MIN).is_nan());
+    }
+
+    #[test]
+    fn negative_reactions_no_nan_in_features() {
+        let post = Post {
+            post_url: None,
+            post_text: Some("test text for feature extraction".to_string()),
+            posted_date: None,
+            reactions_count: -5,
+            comments_count: -3,
+            reposts_count: 0,
+            media_type: "none".to_string(),
+            is_repost: false,
+            original_author: None,
+        };
+        let features = extract_features(&post);
+        for (i, f) in features.iter().enumerate() {
+            assert!(!f.is_nan(), "feature[{}] is NaN with negative reactions", i);
+        }
     }
 }
