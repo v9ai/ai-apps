@@ -1,6 +1,7 @@
 import { contacts, companies, contactEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";
-import { eq, and, like, or, count, desc, sql } from "drizzle-orm";
+import { eq, and, like, or, count, desc, sql, max } from "drizzle-orm";
+import { computeNextTouchScore } from "./reminders";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import {
@@ -252,6 +253,12 @@ const Contact = {
   },
   dmReasons(parent: any) {
     return parseJsonArray(parent.dm_reasons);
+  },
+  nextTouchScore(parent: any) {
+    return parent.next_touch_score ?? 0.0;
+  },
+  lastContactedAt(parent: any) {
+    return parent.last_contacted_at ?? null;
   },
 };
 
@@ -1236,6 +1243,39 @@ export const contactResolvers = {
       }
 
       const decisionMakersFound = results.filter(r => r.isDecisionMaker).length;
+
+      // Also compute next_touch_score for all contacts in one batch
+      const contactIds = rows.map((c) => c.id);
+      if (contactIds.length > 0) {
+        type EmailSummary = { contact_id: number; last_sent_at: string | null; any_reply: boolean };
+        const emailSummaries = await context.db
+          .select({
+            contact_id: contactEmails.contact_id,
+            last_sent_at: max(contactEmails.sent_at).as("last_sent_at"),
+            any_reply: sql<boolean>`bool_or(${contactEmails.reply_received})`.as("any_reply"),
+          })
+          .from(contactEmails)
+          .where(sql`${contactEmails.contact_id} = ANY(ARRAY[${sql.join(contactIds.map(id => sql`${id}`), sql`, `)}]::int[])`)
+          .groupBy(contactEmails.contact_id) as EmailSummary[];
+
+        const summaryMap = new Map(emailSummaries.map((s) => [s.contact_id, s]));
+        const msPerDay = 86_400_000;
+
+        for (const contact of rows) {
+          const summary = summaryMap.get(contact.id);
+          const hasReply = summary?.any_reply ?? false;
+          const lastSent = summary?.last_sent_at ?? null;
+          const daysSince = lastSent
+            ? Math.floor((Date.now() - new Date(lastSent).getTime()) / msPerDay)
+            : null;
+          const touchScore = computeNextTouchScore(contact.authority_score ?? 0.1, daysSince, hasReply);
+
+          await context.db
+            .update(contacts)
+            .set({ next_touch_score: touchScore, last_contacted_at: lastSent, updated_at: new Date().toISOString() })
+            .where(eq(contacts.id, contact.id));
+        }
+      }
 
       return {
         success: true,

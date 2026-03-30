@@ -240,6 +240,39 @@ fn contains_any(haystack: &str, needles: &[&str]) -> bool {
     needles.iter().any(|n| haystack.contains(n))
 }
 
+/// ML-computed urgency score for re-engaging a contact.
+///
+/// Formula: `next_touch_score = authority_score × urgency`
+///
+/// Urgency is an inverse-sigmoid centred at 14 days with steepness k=0.2:
+///   `urgency = 1 / (1 + exp(-0.2 × (days − 14)))`
+///
+/// Special cases:
+/// - `has_reply = true` → 0.0 (conversation active, no follow-up needed)
+/// - `days_since_last_email = None` → urgency = 1.0 (never contacted)
+/// - `days >= 90` → urgency clamped to 1.0 (contact has gone cold)
+pub fn compute_next_touch_score(
+    authority_score: f64,
+    days_since_last_email: Option<i64>,
+    has_reply: bool,
+) -> f64 {
+    if has_reply {
+        return 0.0;
+    }
+
+    let urgency = match days_since_last_email {
+        None => 1.0,
+        Some(days) if days >= 90 => 1.0,
+        Some(days) => {
+            let x = days as f64 - 14.0;
+            1.0 / (1.0 + (-0.2 * x).exp())
+        }
+    };
+
+    let raw = authority_score * urgency;
+    (raw * 100.0).round() / 100.0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -299,5 +332,43 @@ mod tests {
         let c = classify_contact("Engineering Manager");
         assert_eq!(c.seniority, "Manager");
         assert!(!c.is_decision_maker);
+    }
+
+    // ── compute_next_touch_score tests ────────────────────────────────────────
+
+    #[test]
+    fn touch_score_zero_when_reply_received() {
+        let score = compute_next_touch_score(1.0, Some(30), true);
+        assert_eq!(score, 0.0, "Has reply → score must be 0");
+    }
+
+    #[test]
+    fn touch_score_equals_authority_when_never_contacted() {
+        let score = compute_next_touch_score(0.85, None, false);
+        // urgency = 1.0, so score = authority_score
+        assert!((score - 0.85).abs() < 0.01, "Never contacted → score ≈ authority_score");
+    }
+
+    #[test]
+    fn touch_score_near_zero_for_very_recent_email() {
+        // 0 days ago: urgency = 1/(1+exp(2.8)) ≈ 0.057
+        let score = compute_next_touch_score(1.0, Some(0), false);
+        assert!(score < 0.15, "Just sent → score must be low (got {score})");
+    }
+
+    #[test]
+    fn touch_score_high_for_stale_contact() {
+        // 30 days: urgency = 1/(1+exp(-3.2)) ≈ 0.96
+        let score = compute_next_touch_score(1.0, Some(30), false);
+        assert!(score > 0.90, "30 days no reply → score must be high (got {score})");
+    }
+
+    #[test]
+    fn touch_score_clamped_at_90_days() {
+        let score_90 = compute_next_touch_score(0.75, Some(90), false);
+        let score_365 = compute_next_touch_score(0.75, Some(365), false);
+        // Both should be the same (urgency clamped to 1.0)
+        assert!((score_90 - score_365).abs() < 0.01, "90+ days both clamped to authority_score");
+        assert!((score_90 - 0.75).abs() < 0.01);
     }
 }
