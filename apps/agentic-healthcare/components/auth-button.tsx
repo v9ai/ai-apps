@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { Avatar, Box, Button, Flex, Text } from "@radix-ui/themes";
 import Link from "next/link";
+import { css } from "styled-system/css";
 import { LogoutButton } from "./logout-button";
 
 function truncateEmail(email: string, max = 20): string {
@@ -21,14 +22,19 @@ export async function AuthButton() {
         <Box
           px="3"
           py="1"
-          style={{
+          className={css({
             display: "flex",
             alignItems: "center",
             gap: "var(--space-2)",
             borderRadius: "var(--radius-4)",
             border: "1px solid var(--gray-a5)",
             backgroundColor: "var(--gray-a2)",
-          }}
+            transition: "border-color 150ms ease, background-color 150ms ease",
+            _hover: {
+              borderColor: "var(--indigo-a6)",
+              backgroundColor: "var(--indigo-a2)",
+            },
+          })}
         >
           <Avatar
             size="1"

@@ -178,6 +178,14 @@ The key shift is from **in-context learning** to **in-weights learning**. A base
 
 The result is faster inference (shorter prompts), higher reliability on unseen layouts, and no per-call cost for system prompt tokens.
 
+### The Task Geometry Argument: Why 25,000 Examples Is Enough
+
+Dataset size requirements scale inversely with task entropy. Generative tasks — creative writing, open-domain QA — have enormous output spaces; millions of examples barely constrain the distribution. Structured extraction is nearly deterministic: given HTML and a target field, the correct answer is either present or absent, and its form is governed by the schema. The output space is a small, well-bounded region of token space. This means 25.2k trajectory pairs are sufficient to cover the structural variance in real web markup across the target domain verticals. Beyond this point, additional examples yield diminishing returns — you are adding redundancy, not new coverage of the problem space.
+
+Starting from the Qwen3-1.7B instruct checkpoint rather than a raw base model is the correct initialization for a related reason. The instruct checkpoint already encodes instruction-following behavior — format compliance, role separation — via Qwen's alignment training. SFT on top acts as a lightweight re-weighting of existing capabilities toward a specific input-output manifold, not a capability acquisition step from scratch. Fine-tuning from a raw base model would require the optimizer to simultaneously learn instruction semantics and task behavior, competing for gradient budget.
+
+The absence of RLHF or DPO is similarly justified. Both techniques address problems that arise when the reward function is expensive to evaluate or requires human preference signals. Here, the reward function is a JSON schema validator plus a field-level string match — cheap, deterministic, and verifiable. The extraction task has a ground truth oracle; leverage it directly through data filtering rather than preference optimization. The 70% discard rate is functioning as a data-side reward model: curating the loss landscape before training begins is substantially more effective than post-hoc preference optimization for tasks with verifiable outputs. Next-token prediction on noisy data does not average out errors — it memorizes them. One malformed JSON trajectory can corrupt the model's output grammar for structurally similar inputs. High-precision filtering at data construction time removes the need for alignment techniques applied to underspecified objectives.
+
 ## The Training Pipeline: From Raw Data to Deployed Artifact
 
 That conceptual shift only delivers results if the training data faithfully reflects the real-world distribution. Here the provenance of the dataset is critical.
@@ -191,6 +199,18 @@ The SFT step is straightforward: standard next-token prediction loss on instruct
 This approach creates a powerful feedback loop. The open-source library generates more data, which can be used to fine-tune better models, which improve the library, and so on. The dataset is the true moat, and it's designed to grow.
 
 At 1.7B parameters the training runs in 4–8 hours on an A100. The BF16 model is the primary artifact — full precision, runs on a single RTX 3090 or M2 MacBook Pro. The GGUF export is the deployment artifact. Q4_K_M quantization drops it to ~1.1 GB while preserving most accuracy.
+
+## Dataset Architecture: Why Execution Traces Beat Academic Corpora
+
+The ScrapeGraphAI-100k dataset is not a typical NLP dataset, and the distinction matters for understanding why the fine-tuned model generalizes well in production.
+
+Academic NLP datasets — SQuAD, SuperGLUE, CommonCrawl derivatives — are constructed from a curator's model of what the task looks like. ScrapeGraphAI-100k is different in kind: every row is a live execution record from a library solving a real developer request against a real website. The noise profile is production noise. The HTML is adversarial the way production HTML is adversarial — inconsistent nesting, CMS boilerplate, tracking pixels, locale-specific encoding artifacts, A/B testing variants. Models trained on this data encounter the same input distribution they will face in deployment. That alignment between training distribution and inference distribution is worth more than additional scale on a cleaner but synthetic corpus.
+
+The 17-field schema is an engineering asset. `tokens_in` and `latency_ms` together enable cost-stratified training subsets — train a small model on low-token, fast-solve examples first, reserve complex traces for harder cases. `schema_complexity_score` enables curriculum ordering: flat single-entity schemas before nested arrays and recursive references. The `url` and `raw_html` fields are replayable: re-run prompts with perturbations, build contrastive pairs, or audit specific site types. The `model_used` field enables targeted distillation — train only on trajectories solved by GPT-4, or exclude outputs from weaker teacher models.
+
+This also creates a compounding feedback loop. The open-source library generates trajectories → trajectories fine-tune a student model → the better model ships back into the library → improved library generates higher-quality future traces. The critical engineering requirement is versioning: every trace must record which library version and which teacher model produced it, or the training signal becomes confounded as the distribution shifts across releases.
+
+The 65,700 discarded failure rows represent a missed opportunity. Used as hard negatives in contrastive training, they directly teach the model the failure modes it needs to avoid. Used with partial-credit labels — a strong LLM scoring extraction completeness on 0–1 rather than binary success/failure — they enable curriculum learning through graded partial failures. The failure pile should be the first thing any follow-on fine-tuning effort audits; discarding 70% of generated data on a binary flag reflects a classification-era mindset applied to a generation task.
 
 ## The Benchmark: Specialization Beats Scale
 
@@ -213,6 +233,8 @@ The benchmark results are compelling. They also have gaps worth naming before de
 **The `schema_complexity_score` threshold is unpublished.** The fine-tuning split retains only examples that clear an undisclosed complexity threshold. This means the hardest extraction schemas — deeply nested objects, arrays of heterogeneous types, optional fields with fallback logic — were likely filtered out. The model's performance on complex enterprise schemas, the exact cases where fine-tuned accuracy matters most, is not benchmarked.
 
 **No adversarial or anti-bot evaluation.** SWDE and SyntheticWebExtract both test extraction from cooperating HTML. Production scraping must contend with Cloudflare Turnstile, device fingerprinting, rate limiting, DOM obfuscation (`data-testid` replacing semantic class names), and shadow DOM. None of these appear in either benchmark. The paper's reported scores have zero signal on the dimensions that cause the most real-world failures.
+
+**Train/test distribution overlap on SyntheticWebExtract.** The 2,808-example test split is drawn from the same crawl and generation pipeline as the 25.2k training set. When training and test data share website origin, schema structures, and HTML formatting quirks — unless explicit domain-level holdouts are enforced — the evaluation measures in-distribution generalization at best, and memorization at worst. The paper does not describe whether the split is randomized at the example level or stratified by website. If example-level random, the model may have seen near-identical HTML fragments during training. A credible evaluation would require a temporal split (training data capped at a cutoff, test sites crawled afterward with no URL overlap) and out-of-distribution domains not represented in training. The 89.3% SyntheticWebExtract schema accuracy should be read with this uncertainty.
 
 None of this invalidates the release. The artifacts are real, the code runs, and the benchmark improvement over prior approaches is genuine. But treating 94.6% SWDE F1 as a proxy for production reliability is the wrong conclusion to draw.
 

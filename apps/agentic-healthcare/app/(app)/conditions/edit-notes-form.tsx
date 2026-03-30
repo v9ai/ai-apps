@@ -4,6 +4,11 @@ import { updateConditionNotes } from "./update-action";
 import { Button, Card, Flex, TextArea, Text } from "@radix-ui/themes";
 import { useState, useTransition } from "react";
 import { CheckIcon, Pencil1Icon } from "@radix-ui/react-icons";
+import { css } from "styled-system/css";
+
+const textAreaClass = css({
+  background: "var(--gray-a2)",
+});
 
 export function EditNotesForm({
   conditionId,
@@ -41,7 +46,7 @@ export function EditNotesForm({
           }}
           placeholder="Add notes about this condition — symptoms, triggers, treatments tried..."
           rows={4}
-          style={{ background: "var(--gray-a2)" }}
+          className={textAreaClass}
         />
         <Flex align="center" justify="between">
           <Flex align="center" gap="2">

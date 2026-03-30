@@ -33,7 +33,7 @@ export async function addMedication(formData: FormData) {
     .returning();
 
   try {
-    await embedMedicationViaPython(medication.id, userId, name, {
+    await embedMedication(medication.id, userId, name, {
       dosage,
       frequency,
       notes,

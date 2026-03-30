@@ -21,7 +21,7 @@ export async function addCondition(formData: FormData) {
 
   if (condition) {
     try {
-      await embedConditionViaPython(condition.id, userId, name, notes);
+      await embedCondition(condition.id, userId, name, notes);
     } catch {
       // Embedding failure is non-blocking
     }

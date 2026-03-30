@@ -1,11 +1,16 @@
 import { Box, Callout, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
+import { css } from "styled-system/css";
 import { Suspense } from "react";
 import { TrajectoryTimeline } from "./trajectory-timeline";
 import { TrajectoryInsights } from "./trajectory-insights";
 
 export default function TrajectoryPage() {
   return (
-    <Box py="8" style={{ maxWidth: 700, margin: "0 auto" }}>
+    <Box
+      px="6"
+      py="8"
+      className={css({ width: "100%" })}
+    >
       <Flex direction="column" gap="6">
         <Flex direction="column" gap="2">
           <Heading size="7" weight="bold">Health Trajectory</Heading>

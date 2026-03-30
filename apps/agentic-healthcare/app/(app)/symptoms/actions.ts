@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { symptoms } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { embedSymptomViaPython } from "@/lib/python-api";
+import { embedSymptom } from "@/lib/embed";
 
 export async function addSymptom(formData: FormData) {
   const { userId } = await withAuth();
@@ -27,7 +27,7 @@ export async function addSymptom(formData: FormData) {
     .returning();
 
   try {
-    await embedSymptomViaPython(symptom.id, userId, description, {
+    await embedSymptom(symptom.id, userId, description, {
       severity,
       loggedAt: new Date(symptom.loggedAt).toLocaleDateString(),
     });

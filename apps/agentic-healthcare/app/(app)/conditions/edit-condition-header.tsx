@@ -6,6 +6,54 @@ import { useState, useTransition, useRef, useEffect } from "react";
 import { CheckIcon, Cross2Icon, Pencil1Icon } from "@radix-ui/react-icons";
 import { Heart } from "lucide-react";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
+import { css } from "styled-system/css";
+
+const headerCardClass = css({
+  background: "linear-gradient(135deg, var(--indigo-a2), var(--accent-a2))",
+});
+
+const iconWrapClass = css({
+  width: "48px",
+  height: "48px",
+  borderRadius: "var(--radius-3)",
+  background: "var(--indigo-a3)",
+  flexShrink: "0",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+const editSaveButtonClass = css({
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: "4px",
+  color: "var(--green-11)",
+});
+
+const editCancelButtonClass = css({
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: "4px",
+  color: "var(--gray-11)",
+});
+
+const editPencilButtonClass = css({
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: "4px",
+  color: "var(--gray-9)",
+});
+
+const editNameInputClass = css({
+  minWidth: "200px",
+});
+
+const clickableHeadingClass = css({
+  cursor: "pointer",
+});
 
 export function EditConditionHeader({
   conditionId,
@@ -50,27 +98,12 @@ export function EditConditionHeader({
   }
 
   return (
-    <Card
-      style={{
-        background:
-          "linear-gradient(135deg, var(--indigo-a2), var(--accent-a2))",
-      }}
-    >
+    <Card className={headerCardClass}>
       <Flex justify="between" align="start">
         <Flex align="start" gap="4">
-          <Flex
-            align="center"
-            justify="center"
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: "var(--radius-3)",
-              background: "var(--indigo-a3)",
-              flexShrink: 0,
-            }}
-          >
+          <span className={iconWrapClass}>
             <Heart size={24} style={{ color: "var(--indigo-11)" }} />
-          </Flex>
+          </span>
           <Flex direction="column" gap="1">
             <Flex align="center" gap="2">
               {editing ? (
@@ -85,18 +118,12 @@ export function EditConditionHeader({
                     }}
                     disabled={isPending}
                     size="3"
-                    style={{ minWidth: 200 }}
+                    className={editNameInputClass}
                   />
                   <button
                     onClick={handleSave}
                     disabled={isPending || !name.trim()}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 4,
-                      color: "var(--green-11)",
-                    }}
+                    className={editSaveButtonClass}
                     title="Save"
                   >
                     <CheckIcon width={18} height={18} />
@@ -104,13 +131,7 @@ export function EditConditionHeader({
                   <button
                     onClick={handleCancel}
                     disabled={isPending}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 4,
-                      color: "var(--gray-11)",
-                    }}
+                    className={editCancelButtonClass}
                     title="Cancel"
                   >
                     <Cross2Icon width={18} height={18} />
@@ -121,19 +142,13 @@ export function EditConditionHeader({
                   <Heading
                     size="6"
                     onClick={() => setEditing(true)}
-                    style={{ cursor: "pointer" }}
+                    className={clickableHeadingClass}
                   >
                     {initialName}
                   </Heading>
                   <button
                     onClick={() => setEditing(true)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 4,
-                      color: "var(--gray-9)",
-                    }}
+                    className={editPencilButtonClass}
                     title="Edit name"
                   >
                     <Pencil1Icon width={16} height={16} />

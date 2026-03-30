@@ -4,6 +4,10 @@ import { getRelatedMarkers } from "./update-action";
 import { MagicWandIcon } from "@radix-ui/react-icons";
 import { ExternalLink } from "lucide-react";
 import { SimilarityBadge } from "./similarity-badge";
+import { css } from "styled-system/css";
+
+const externalIconClass = css({ color: "var(--gray-8)" });
+const markerContentClass = css({ whiteSpace: "pre-wrap" });
 
 function barColor(pct: number): string {
   if (pct >= 70) return "var(--green-9)";
@@ -47,29 +51,31 @@ export async function RelatedMarkers({ conditionId }: { conditionId: string }) {
                           <Text size="2" weight="medium">
                             {m.marker_name}
                           </Text>
-                          <ExternalLink size={12} style={{ color: "var(--gray-8)" }} />
+                          <ExternalLink size={12} className={externalIconClass} />
                         </Flex>
                         <SimilarityBadge similarity={m.similarity} />
                       </Flex>
-                      <Text size="1" color="gray" style={{ whiteSpace: "pre-wrap" }}>
+                      <Text size="1" color="gray" className={markerContentClass}>
                         {m.content}
                       </Text>
                       <Box
                         mt="1"
-                        style={{
-                          height: 3,
-                          borderRadius: 2,
+                        className={css({
+                          height: "3px",
+                          borderRadius: "2px",
                           background: "var(--gray-a3)",
                           overflow: "hidden",
-                        }}
+                        })}
                       >
                         <Box
-                          style={{
+                          className={css({
                             height: "100%",
-                            width: `${pct}%`,
-                            borderRadius: 2,
-                            background: barColor(pct),
+                            borderRadius: "2px",
                             transition: "width 300ms ease",
+                          })}
+                          style={{
+                            width: `${pct}%`,
+                            background: barColor(pct),
                           }}
                         />
                       </Box>

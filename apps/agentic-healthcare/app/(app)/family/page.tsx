@@ -2,13 +2,14 @@ import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { familyMembers, familyMemberDoctors } from "@/lib/db/schema";
 import { eq, asc, count } from "drizzle-orm";
-import { Box, Badge, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
+import { Box, Badge, Button, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { AddFamilyMemberForm } from "./add-form";
 import { deleteFamilyMember } from "./actions";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 import { Users } from "lucide-react";
 import Link from "next/link";
+import { css } from "styled-system/css";
 
 const RELATIONSHIP_COLORS: Record<string, "blue" | "green" | "orange" | "purple" | "pink" | "gray"> = {
   Father: "blue",
@@ -20,6 +21,65 @@ const RELATIONSHIP_COLORS: Record<string, "blue" | "green" | "orange" | "purple"
   Spouse: "purple",
   Partner: "purple",
 };
+
+const AVATAR_COLORS: Record<string, string> = {
+  Father: "var(--blue-3)",
+  Mother: "var(--pink-3)",
+  Brother: "var(--blue-3)",
+  Sister: "var(--pink-3)",
+  Son: "var(--green-3)",
+  Daughter: "var(--green-3)",
+  Spouse: "var(--purple-3)",
+  Partner: "var(--purple-3)",
+};
+
+const AVATAR_TEXT_COLORS: Record<string, string> = {
+  Father: "var(--blue-11)",
+  Mother: "var(--pink-11)",
+  Brother: "var(--blue-11)",
+  Sister: "var(--pink-11)",
+  Son: "var(--green-11)",
+  Daughter: "var(--green-11)",
+  Spouse: "var(--purple-11)",
+  Partner: "var(--purple-11)",
+};
+
+function MemberAvatar({ name, relationship }: { name: string; relationship: string | null }) {
+  const parts = name.trim().split(/\s+/);
+  const initials = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+
+  const bg = relationship ? (AVATAR_COLORS[relationship] ?? "var(--gray-3)") : "var(--gray-3)";
+  const color = relationship ? (AVATAR_TEXT_COLORS[relationship] ?? "var(--gray-11)") : "var(--gray-11)";
+
+  return (
+    <Flex
+      align="center"
+      justify="center"
+      className={css({
+        width: "48px",
+        height: "48px",
+        borderRadius: "50%",
+        flexShrink: "0",
+      })}
+      style={{ background: bg }}
+    >
+      <Text size="3" weight="bold" style={{ color }}>
+        {initials}
+      </Text>
+    </Flex>
+  );
+}
+
+function calculateAge(dateOfBirth: string): number {
+  const dob = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
 
 async function FamilyList() {
   const { userId } = await withAuth();
@@ -40,88 +100,133 @@ async function FamilyList() {
 
   if (!rows.length) {
     return (
-      <Flex direction="column" align="center" gap="3" py="6">
+      <Flex direction="column" align="center" gap="4" py="9">
         <Users size={48} color="var(--gray-8)" />
-        <Heading size="4">No family members yet</Heading>
+        <Heading size="4" color="gray">No family members yet</Heading>
         <Text size="2" color="gray">Add family members to track hereditary health factors.</Text>
       </Flex>
     );
   }
 
   return (
-    <>
-      <Separator size="4" />
-      <Flex direction="column" gap="2">
+    <Flex direction="column" gap="4">
+      <Flex align="center" gap="2">
         <Heading size="4">Your family</Heading>
-        {rows.map((m) => (
-          <Card key={m.id} asChild className="card-hover">
-            <Link href={`/family/${m.id}`} style={{ textDecoration: "none" }}>
-              <Flex justify="between" align="start">
-                <Flex direction="column" gap="1">
-                  <Flex align="center" gap="2">
-                    <Text size="2" weight="medium">{m.name}</Text>
-                    {m.relationship && (
-                      <Badge
-                        color={RELATIONSHIP_COLORS[m.relationship] ?? "gray"}
-                        variant="soft"
-                        size="1"
-                      >
-                        {m.relationship}
-                      </Badge>
+        <Badge color="purple" variant="soft" size="1">{rows.length}</Badge>
+      </Flex>
+      <Box
+        className={css({
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: "3",
+        })}
+      >
+        {rows.map((m) => {
+          const docCount = doctorCountMap.get(m.id) ?? 0;
+          const age = m.dateOfBirth ? calculateAge(m.dateOfBirth) : null;
+
+          return (
+            <Card
+              key={m.id}
+              asChild
+              className={css({
+                _hover: {
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                },
+                transition: "all 150ms ease",
+              })}
+            >
+              <Link href={`/family/${m.id}`} style={{ textDecoration: "none" }}>
+                <Flex direction="column" gap="3">
+                  {/* Header row: avatar + name + delete */}
+                  <Flex justify="between" align="start" gap="2">
+                    <Flex align="center" gap="3">
+                      <MemberAvatar name={m.name} relationship={m.relationship} />
+                      <Flex direction="column" gap="1">
+                        <Text size="3" weight="bold">{m.name}</Text>
+                        {m.relationship && (
+                          <Badge
+                            color={RELATIONSHIP_COLORS[m.relationship] ?? "gray"}
+                            variant="soft"
+                            size="1"
+                          >
+                            {m.relationship}
+                          </Badge>
+                        )}
+                      </Flex>
+                    </Flex>
+                    <DeleteConfirmButton
+                      action={deleteFamilyMember.bind(null, m.id)}
+                      description="This family member will be permanently removed."
+                      stopPropagation
+                    />
+                  </Flex>
+
+                  {/* Health summary stats */}
+                  <Flex gap="3">
+                    {age !== null && (
+                      <Flex direction="column" gap="0">
+                        <Text size="4" weight="bold">{age}</Text>
+                        <Text size="1" color="gray">yrs old</Text>
+                      </Flex>
                     )}
-                    {(doctorCountMap.get(m.id) ?? 0) > 0 && (
-                      <Badge color="blue" variant="soft" size="1">
-                        {doctorCountMap.get(m.id)} {doctorCountMap.get(m.id) === 1 ? "doctor" : "doctors"}
-                      </Badge>
+                    {docCount > 0 && (
+                      <Flex direction="column" gap="0">
+                        <Text size="4" weight="bold">{docCount}</Text>
+                        <Text size="1" color="gray">{docCount === 1 ? "doctor" : "doctors"}</Text>
+                      </Flex>
                     )}
                   </Flex>
-                  {m.dateOfBirth && (
-                    <Text size="1" color="gray">
-                      Born {new Date(m.dateOfBirth).toLocaleDateString()}
-                    </Text>
-                  )}
+
+                  {/* Notes preview */}
                   {m.notes && (
                     <Text size="1" color="gray">
-                      {m.notes.slice(0, 80)}{m.notes.length > 80 ? "..." : ""}
+                      {m.notes.slice(0, 100)}{m.notes.length > 100 ? "…" : ""}
                     </Text>
                   )}
                 </Flex>
-                <DeleteConfirmButton
-                  action={deleteFamilyMember.bind(null, m.id)}
-                  description="This family member will be permanently removed."
-                  stopPropagation
-                />
-              </Flex>
-            </Link>
-          </Card>
-        ))}
-      </Flex>
-    </>
+              </Link>
+            </Card>
+          );
+        })}
+      </Box>
+    </Flex>
   );
 }
 
 export default function FamilyPage() {
   return (
-    <Box py="8" style={{ maxWidth: 600, margin: "0 auto" }}>
+    <Box py="8" px="4">
       <Flex direction="column" gap="6">
-        <Flex direction="column" gap="1">
-          <Heading size="7" weight="bold">Family</Heading>
-          <Text size="2" color="gray">Track family members and hereditary health context.</Text>
+        <Flex justify="between" align="center" wrap="wrap" gap="3">
+          <Flex direction="column" gap="1">
+            <Heading size="7" weight="bold">Family</Heading>
+            <Text size="2" color="gray">Track family members and hereditary health context.</Text>
+          </Flex>
         </Flex>
 
         <Separator size="4" />
 
-        <Flex direction="column" gap="3">
-          <Heading size="4">Add a family member</Heading>
-          <AddFamilyMemberForm />
-        </Flex>
+        <Card variant="surface">
+          <Flex direction="column" gap="3">
+            <Heading size="4">Add a family member</Heading>
+            <AddFamilyMemberForm />
+          </Flex>
+        </Card>
 
         <Suspense fallback={
-          <Flex direction="column" gap="2">
-            <Skeleton height="52px" />
-            <Skeleton height="52px" />
-            <Skeleton height="52px" />
-          </Flex>
+          <Box
+            className={css({
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: "3",
+            })}
+          >
+            <Skeleton height="140px" />
+            <Skeleton height="140px" />
+            <Skeleton height="140px" />
+          </Box>
         }>
           <FamilyList />
         </Suspense>

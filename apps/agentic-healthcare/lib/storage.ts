@@ -2,6 +2,7 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
@@ -37,4 +38,15 @@ export async function deleteFile(key: string) {
       Key: key,
     }),
   );
+}
+
+export async function getFileStream(key: string) {
+  const response = await s3.send(
+    new GetObjectCommand({ Bucket: bucket, Key: key }),
+  );
+  return {
+    body: response.Body,
+    contentType: response.ContentType,
+    contentLength: response.ContentLength,
+  };
 }
