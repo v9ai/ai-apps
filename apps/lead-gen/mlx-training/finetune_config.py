@@ -79,4 +79,11 @@ CONFIGS = {
         data_dir="mlx-training/data/remote-worldwide",
         adapter_path="mlx-training/models/remote-worldwide",
     ),
+    "post-intent": TrainConfig(
+        data_dir="mlx-training/data/post-intent",
+        adapter_path="mlx-training/models/post-intent",
+        max_seq_length=1024,  # LinkedIn posts are shorter than job descriptions
+        epochs=8,  # smaller dataset needs more epochs
+        learning_rate=3e-5,  # slightly higher for small dataset
+    ),
 }

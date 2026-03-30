@@ -10,10 +10,9 @@ pub struct Verdict {
 
 const THRESHOLD: i32 = 2;
 
-/// Score a post for job-search relevance.
-/// Positive signals: hiring, AI/ML, remote/global, engineering, company insight.
-/// Negative signals: empty text, pure social noise, very short.
-pub fn score(post: &Post) -> Verdict {
+/// Legacy keyword-based scorer — kept for backward compatibility and tests.
+/// Use `analysis::analyze()` for the ML-enhanced multi-label version.
+pub fn score_legacy(post: &Post) -> Verdict {
     let text = match &post.post_text {
         Some(t) if !t.is_empty() => t,
         _ => {
@@ -100,7 +99,7 @@ pub fn score(post: &Post) -> Verdict {
     Verdict { keep, score: s, reason }
 }
 
-static HIRING_KEYWORDS: &[&str] = &[
+pub(crate) static HIRING_KEYWORDS: &[&str] = &[
     "we're hiring",
     "we are hiring",
     "hiring for",
@@ -121,7 +120,7 @@ static HIRING_KEYWORDS: &[&str] = &[
     "new opening",
 ];
 
-static AI_KEYWORDS: &[&str] = &[
+pub(crate) static AI_KEYWORDS: &[&str] = &[
     "machine learning",
     "deep learning",
     "artificial intelligence",
@@ -153,7 +152,7 @@ static AI_KEYWORDS: &[&str] = &[
     "reinforcement learning",
 ];
 
-static REMOTE_KEYWORDS: &[&str] = &[
+pub(crate) static REMOTE_KEYWORDS: &[&str] = &[
     "fully remote",
     "remote-first",
     "remote first",
@@ -167,7 +166,7 @@ static REMOTE_KEYWORDS: &[&str] = &[
     "worldwide",
 ];
 
-static ENGINEERING_KEYWORDS: &[&str] = &[
+pub(crate) static ENGINEERING_KEYWORDS: &[&str] = &[
     "software engineer",
     "backend engineer",
     "frontend engineer",
@@ -193,7 +192,7 @@ static ENGINEERING_KEYWORDS: &[&str] = &[
     "engineering manager",
 ];
 
-static CULTURE_KEYWORDS: &[&str] = &[
+pub(crate) static CULTURE_KEYWORDS: &[&str] = &[
     "engineering culture",
     "tech stack",
     "engineering blog",
@@ -212,7 +211,7 @@ static CULTURE_KEYWORDS: &[&str] = &[
     "y combinator",
 ];
 
-static NOISE_KEYWORDS: &[&str] = &[
+pub(crate) static NOISE_KEYWORDS: &[&str] = &[
     "happy birthday",
     "work anniversary",
     "congratulations on",
@@ -253,7 +252,7 @@ mod tests {
 
     #[test]
     fn keeps_hiring_post() {
-        let v = score(&post(
+        let v = score_legacy(&post(
             "We're hiring a Senior ML Engineer to join our team in Berlin. Fully remote, working on LLMs and RAG pipelines.",
         ));
         assert!(v.keep, "score={} reason={}", v.score, v.reason);
@@ -262,7 +261,7 @@ mod tests {
 
     #[test]
     fn keeps_ai_content() {
-        let v = score(&post(
+        let v = score_legacy(&post(
             "Just published our engineering blog post about how we fine-tuned a large language model for code review. The results with PyTorch were impressive.",
         ));
         assert!(v.keep, "score={} reason={}", v.score, v.reason);
@@ -270,13 +269,13 @@ mod tests {
 
     #[test]
     fn filters_birthday() {
-        let v = score(&post("Happy birthday to my amazing colleague! Wishing you the best!"));
+        let v = score_legacy(&post("Happy birthday to my amazing colleague! Wishing you the best!"));
         assert!(!v.keep, "score={} reason={}", v.score, v.reason);
     }
 
     #[test]
     fn filters_empty() {
-        let v = score(&Post {
+        let v = score_legacy(&Post {
             post_text: None,
             ..post("")
         });
@@ -286,13 +285,13 @@ mod tests {
 
     #[test]
     fn filters_short_noise() {
-        let v = score(&post("Agree or disagree?"));
+        let v = score_legacy(&post("Agree or disagree?"));
         assert!(!v.keep, "score={} reason={}", v.score, v.reason);
     }
 
     #[test]
     fn keeps_remote_role() {
-        let v = score(&post(
+        let v = score_legacy(&post(
             "Open position: Platform Engineer. We're remote-first and looking for someone passionate about Kubernetes and distributed systems. Work from anywhere.",
         ));
         assert!(v.keep, "score={} reason={}", v.score, v.reason);
@@ -300,7 +299,7 @@ mod tests {
 
     #[test]
     fn filters_generic_motivation() {
-        let v = score(&post(
+        let v = score_legacy(&post(
             "Like if you agree: the best investment you can make is in yourself. #motivation #mondaymotivation Keep pushing forward!",
         ));
         assert!(!v.keep, "score={} reason={}", v.score, v.reason);
