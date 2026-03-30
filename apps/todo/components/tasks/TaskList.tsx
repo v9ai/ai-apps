@@ -76,14 +76,24 @@ export function TaskList({
 
   useEffect(() => {
     const incoming = new Set(initialTasks.map((t) => t.id));
+    const prev = knownIds.current;
+
     let firstNewId: string | null = null;
     for (const t of initialTasks) {
-      if (!knownIds.current.has(t.id)) {
-        if (firstNewId === null) firstNewId = t.id;
-      }
+      if (!prev.has(t.id) && firstNewId === null) firstNewId = t.id;
     }
+    const hasRemoved = [...prev].some((id) => !incoming.has(id));
     knownIds.current = incoming;
-    setTasks(initialTasks);
+
+    if (firstNewId !== null || hasRemoved) {
+      // Membership changed — reset to server order
+      setTasks(initialTasks);
+    } else {
+      // Same tasks, just update data in place (preserve local drag order)
+      const byId = new Map(initialTasks.map((t) => [t.id, t]));
+      setTasks((prev) => prev.map((t) => byId.get(t.id) ?? t));
+    }
+
     if (firstNewId !== null) setOpenTaskId(firstNewId);
   }, [initialTasks]);
 

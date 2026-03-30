@@ -1,13 +1,29 @@
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { doctors, appointments, familyMemberDoctors, familyMembers } from "@/lib/db/schema";
+import {
+  doctors,
+  appointments,
+  familyMemberDoctors,
+  familyMembers,
+  medicalLetters,
+} from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
-import { Box, Badge, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
+import {
+  Box,
+  Badge,
+  Card,
+  Flex,
+  Heading,
+  Separator,
+  Skeleton,
+  Text,
+} from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 import { deleteDoctor } from "../actions";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
+import { MedicalLettersSection } from "./medical-letters";
 import { Calendar, Users } from "lucide-react";
 
 function calcAge(dateOfBirth: string): number {
@@ -29,7 +45,7 @@ async function DoctorDetail({ id }: { id: string }) {
 
   if (!doctor || doctor.userId !== userId) notFound();
 
-  const [relatedAppointments, linkedFamilyMembers] = await Promise.all([
+  const [relatedAppointments, linkedFamilyMembers, letters] = await Promise.all([
     db
       .select()
       .from(appointments)
@@ -45,6 +61,11 @@ async function DoctorDetail({ id }: { id: string }) {
       .from(familyMemberDoctors)
       .innerJoin(familyMembers, eq(familyMemberDoctors.familyMemberId, familyMembers.id))
       .where(eq(familyMemberDoctors.doctorId, id)),
+    db
+      .select()
+      .from(medicalLetters)
+      .where(and(eq(medicalLetters.doctorId, id), eq(medicalLetters.userId, userId)))
+      .orderBy(desc(medicalLetters.uploadedAt)),
   ]);
 
   return (
@@ -52,7 +73,11 @@ async function DoctorDetail({ id }: { id: string }) {
       <Flex justify="between" align="start">
         <Flex direction="column" gap="1">
           <Heading size="6">{doctor.name}</Heading>
-          {doctor.specialty && <Badge color="blue" variant="soft">{doctor.specialty}</Badge>}
+          {doctor.specialty && (
+            <Badge color="blue" variant="soft">
+              {doctor.specialty}
+            </Badge>
+          )}
         </Flex>
         <DeleteConfirmButton
           action={async () => {
@@ -70,32 +95,48 @@ async function DoctorDetail({ id }: { id: string }) {
       <Flex direction="column" gap="3">
         {doctor.phone && (
           <Flex direction="column" gap="1">
-            <Text size="2" weight="medium" color="gray">Phone</Text>
+            <Text size="2" weight="medium" color="gray">
+              Phone
+            </Text>
             <Text size="3">{doctor.phone}</Text>
           </Flex>
         )}
         {doctor.email && (
           <Flex direction="column" gap="1">
-            <Text size="2" weight="medium" color="gray">Email</Text>
+            <Text size="2" weight="medium" color="gray">
+              Email
+            </Text>
             <Text size="3">{doctor.email}</Text>
           </Flex>
         )}
         {doctor.address && (
           <Flex direction="column" gap="1">
-            <Text size="2" weight="medium" color="gray">Address / Clinic</Text>
+            <Text size="2" weight="medium" color="gray">
+              Address / Clinic
+            </Text>
             <Text size="3">{doctor.address}</Text>
           </Flex>
         )}
         {doctor.notes && (
           <Flex direction="column" gap="1">
-            <Text size="2" weight="medium" color="gray">Notes</Text>
-            <Text size="3" style={{ whiteSpace: "pre-wrap" }}>{doctor.notes}</Text>
+            <Text size="2" weight="medium" color="gray">
+              Notes
+            </Text>
+            <Text size="3" style={{ whiteSpace: "pre-wrap" }}>
+              {doctor.notes}
+            </Text>
           </Flex>
         )}
         {!doctor.phone && !doctor.email && !doctor.address && !doctor.notes && (
-          <Text size="2" color="gray">No additional details.</Text>
+          <Text size="2" color="gray">
+            No additional details.
+          </Text>
         )}
       </Flex>
+
+      <Separator size="4" />
+
+      <MedicalLettersSection doctorId={id} initialLetters={letters} />
 
       {linkedFamilyMembers.length > 0 && (
         <>
@@ -107,9 +148,13 @@ async function DoctorDetail({ id }: { id: string }) {
                 <Link href={`/family/${fm.id}`} style={{ textDecoration: "none" }}>
                   <Flex align="center" gap="2">
                     <Users size={14} color="var(--gray-8)" />
-                    <Text size="2" weight="medium">{fm.name}</Text>
+                    <Text size="2" weight="medium">
+                      {fm.name}
+                    </Text>
                     {fm.relationship && (
-                      <Badge color="green" variant="soft" size="1">{fm.relationship}</Badge>
+                      <Badge color="green" variant="soft" size="1">
+                        {fm.relationship}
+                      </Badge>
                     )}
                     {fm.dateOfBirth && (
                       <Text size="1" color="gray">
@@ -134,7 +179,9 @@ async function DoctorDetail({ id }: { id: string }) {
                 <Link href={`/appointments/${a.id}`} style={{ textDecoration: "none" }}>
                   <Flex align="center" gap="2">
                     <Calendar size={14} color="var(--gray-8)" />
-                    <Text size="2" weight="medium">{a.title}</Text>
+                    <Text size="2" weight="medium">
+                      {a.title}
+                    </Text>
                     {a.appointmentDate && (
                       <Text size="1" color="gray">
                         {new Date(a.appointmentDate).toLocaleDateString()}
@@ -159,19 +206,21 @@ export default async function DoctorDetailPage({
   const { id } = await params;
 
   return (
-    <Box py="8" style={{ maxWidth: 600, margin: "0 auto" }}>
+    <Box py="8">
       <Flex direction="column" gap="6">
         <Text size="2" asChild>
           <Link href="/doctors" style={{ color: "var(--gray-9)" }}>
             ← Back
           </Link>
         </Text>
-        <Suspense fallback={
-          <Flex direction="column" gap="4">
-            <Skeleton height="32px" width="200px" />
-            <Skeleton height="120px" />
-          </Flex>
-        }>
+        <Suspense
+          fallback={
+            <Flex direction="column" gap="4">
+              <Skeleton height="32px" width="200px" />
+              <Skeleton height="120px" />
+            </Flex>
+          }
+        >
           <DoctorDetail id={id} />
         </Suspense>
       </Flex>

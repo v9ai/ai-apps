@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Badge, Button, Card, Flex, Text, Tooltip } from "@radix-ui/themes";
+import { css } from "styled-system/css";
 import { getTrajectoryInsights } from "./actions";
 import type { TrajectoryMetricDetail, TrajectoryVelocity } from "./utils";
 
@@ -111,7 +112,7 @@ export function TrajectoryInsights() {
           )}
 
           <Card>
-            <Text size="2" style={{ whiteSpace: "pre-wrap" }}>
+            <Text size="2" className={css({ whiteSpace: "pre-wrap" })}>
               {result.answer}
             </Text>
           </Card>

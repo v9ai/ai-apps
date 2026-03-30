@@ -28,11 +28,11 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
 // ── Text formatters (mirrors langgraph/embeddings.py) ────────────────
 
-function formatCondition(name: string, notes: string | null): string {
+export function formatCondition(name: string, notes: string | null): string {
   return notes ? `Health condition: ${name}\nNotes: ${notes}` : `Health condition: ${name}`;
 }
 
-function formatMedication(
+export function formatMedication(
   name: string,
   dosage: string | null,
   frequency: string | null,
@@ -45,7 +45,7 @@ function formatMedication(
   return lines.join("\n");
 }
 
-function formatSymptom(
+export function formatSymptom(
   description: string,
   severity: string | null,
   loggedAt: string | null,
@@ -56,7 +56,7 @@ function formatSymptom(
   return lines.join("\n");
 }
 
-function formatAppointment(
+export function formatAppointment(
   title: string,
   provider: string | null,
   notes: string | null,
