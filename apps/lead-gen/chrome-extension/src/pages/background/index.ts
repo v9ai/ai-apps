@@ -1,5 +1,6 @@
 // Background service worker
-import { browseContactPosts, cancelPostScraping } from "../../services/post-scraper";
+import { browseContactPosts, scrapeAllPosts, cancelPostScraping } from "../../services/post-scraper";
+import type { ScrapedConnection } from "../../services/connection-scraper";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -193,7 +194,77 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  // ── Start Post Scraping ──
+  // ── Start Full Pipeline (Connections + Import + Posts) ──
+  if (message.action === "startFullPipeline") {
+    chrome.tabs.query({ active: true, currentWindow: true }).then(async (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        sendResponse({ success: false, error: "No active tab" });
+        return;
+      }
+      sendResponse({ success: true });
+      try {
+        console.log("[FullPipeline] Starting scrapeAllPosts for tab", tabId);
+        await scrapeAllPosts(tabId);
+      } catch (err) {
+        console.error("[FullPipeline] Error:", err);
+        try {
+          chrome.runtime.sendMessage({
+            action: "postScrapingProgress",
+            error: err instanceof Error ? err.message : String(err),
+          });
+        } catch { /* popup may be closed */ }
+      }
+    });
+    return true;
+  }
+
+  // ── Import Connections as Contacts (called from post-scraper) ──
+  if (message.action === "importConnections") {
+    const { connections } = message as { connections: ScrapedConnection[] };
+    (async () => {
+      let imported = 0;
+      let failed = 0;
+      const CHUNK_SIZE = 100;
+
+      for (let i = 0; i < connections.length; i += CHUNK_SIZE) {
+        const chunk = connections.slice(i, i + CHUNK_SIZE);
+        try {
+          const result = await gqlRequest(
+            `mutation ImportContacts($contacts: [ContactInput!]!) {
+              importContacts(contacts: $contacts) { success imported failed errors }
+            }`,
+            {
+              contacts: chunk.map((c: ScrapedConnection) => ({
+                firstName: c.firstName,
+                lastName: c.lastName,
+                linkedinUrl: c.linkedinUrl,
+                position: c.position || undefined,
+                tags: ["linkedin-connection"],
+              })),
+            },
+          );
+
+          const res = result.data?.importContacts;
+          if (res) {
+            imported += res.imported;
+            failed += res.failed;
+          } else {
+            failed += chunk.length;
+            console.warn("[ImportConnections] GQL error:", result.errors?.[0]?.message);
+          }
+        } catch (err) {
+          failed += chunk.length;
+          console.error("[ImportConnections] Chunk error:", err);
+        }
+      }
+
+      sendResponse({ success: true, imported, failed });
+    })();
+    return true;
+  }
+
+  // ── Start Post Scraping (DB contacts only — legacy) ──
   if (message.action === "startPostScraping") {
     chrome.tabs.query({ active: true, currentWindow: true }).then(async (tabs) => {
       const tabId = tabs[0]?.id;

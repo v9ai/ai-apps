@@ -1,12 +1,18 @@
 /**
  * Post scraping orchestration service.
  * Navigates LinkedIn profiles, extracts posts, sends to local Rust/LanceDB server.
+ *
+ * Two entry points:
+ *   browseContactPosts(tabId) — scrape posts for DB contacts only (legacy)
+ *   scrapeAllPosts(tabId)     — fetch connections via API + import + scrape posts for all
  */
 
 // These functions run in page context via chrome.scripting.executeScript.
 // They MUST NOT be imported at module level because this file is bundled
 // into the service worker where window/document don't exist.
 // Instead, we inline them directly in the executeScript calls below.
+
+import { fetchAllConnections, type ScrapedConnection } from "./connection-scraper";
 
 const RUST_SERVER = "http://localhost:9876";
 
@@ -400,4 +406,226 @@ function sendProgress(data: Record<string, unknown>) {
   } catch {
     // Popup may not be open
   }
+}
+
+// ── Import connections via background script's gqlRequest ──
+
+async function importConnectionsBatch(
+  connections: ScrapedConnection[],
+): Promise<{ imported: number; failed: number }> {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      { action: "importConnections", connections },
+      (response) => {
+        if (response?.success) {
+          resolve({ imported: response.imported, failed: response.failed });
+        } else {
+          resolve({ imported: 0, failed: connections.length });
+        }
+      },
+    );
+  });
+}
+
+// ── Full pipeline: connections + import + posts ──
+
+export async function scrapeAllPosts(tabId: number): Promise<void> {
+  postsCancelled = false;
+
+  // Check server
+  const healthy = await checkServerHealth();
+  if (!healthy) {
+    sendProgress({ error: "Rust server not running on localhost:9876" });
+    return;
+  }
+
+  // ── Phase 1: Fetch all LinkedIn connections via Voyager API ──
+
+  sendProgress({ phase: "connections", status: "Fetching LinkedIn connections..." });
+
+  let connections: ScrapedConnection[];
+  try {
+    connections = await fetchAllConnections((fetched, total) => {
+      sendProgress({
+        phase: "connections",
+        status: `Fetching connections... ${fetched.toLocaleString()}${total ? ` / ${total.toLocaleString()}` : ""}`,
+      });
+    });
+  } catch (err) {
+    sendProgress({
+      error: `Connection fetch failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+    return;
+  }
+
+  if (postsCancelled) {
+    sendProgress({ done: true, totalContacts: 0, totalPosts: 0, totalFiltered: 0 });
+    return;
+  }
+
+  sendProgress({
+    phase: "connections",
+    status: `Fetched ${connections.length.toLocaleString()} connections`,
+  });
+
+  // ── Phase 2: Import new connections as contacts ──
+
+  sendProgress({ phase: "import", status: "Checking existing contacts..." });
+
+  // Get existing contacts from Rust server (which reads from Neon)
+  let existingUrls: Set<string>;
+  try {
+    const existing = await fetchContactsWithLinkedIn();
+    existingUrls = new Set(existing.map((c) => c.linkedinUrl.replace(/\/$/, "")));
+  } catch {
+    existingUrls = new Set();
+  }
+
+  // Filter to only new connections
+  const newConnections = connections.filter(
+    (c) => !existingUrls.has(c.linkedinUrl.replace(/\/$/, "")),
+  );
+
+  if (postsCancelled) {
+    sendProgress({ done: true, totalContacts: 0, totalPosts: 0, totalFiltered: 0 });
+    return;
+  }
+
+  if (newConnections.length > 0) {
+    sendProgress({
+      phase: "import",
+      status: `Importing ${newConnections.length.toLocaleString()} new contacts...`,
+    });
+
+    // Import in chunks of 100
+    const CHUNK_SIZE = 100;
+    let totalImported = 0;
+    let totalFailed = 0;
+
+    for (let i = 0; i < newConnections.length; i += CHUNK_SIZE) {
+      if (postsCancelled) break;
+      const chunk = newConnections.slice(i, i + CHUNK_SIZE);
+      const { imported, failed } = await importConnectionsBatch(chunk);
+      totalImported += imported;
+      totalFailed += failed;
+
+      sendProgress({
+        phase: "import",
+        status: `Imported ${totalImported.toLocaleString()} / ${newConnections.length.toLocaleString()} new contacts`,
+      });
+    }
+
+    sendProgress({
+      phase: "import",
+      status: `Done: ${totalImported.toLocaleString()} new, ${(connections.length - newConnections.length).toLocaleString()} already existed`,
+    });
+  } else {
+    sendProgress({
+      phase: "import",
+      status: `All ${connections.length.toLocaleString()} connections already in DB`,
+    });
+  }
+
+  if (postsCancelled) {
+    sendProgress({ done: true, totalContacts: 0, totalPosts: 0, totalFiltered: 0 });
+    return;
+  }
+
+  // Brief pause before switching to post scraping
+  await sleep(1000);
+
+  // ── Phase 3: Scrape posts for all contacts ──
+
+  sendProgress({ phase: "posts", status: "Fetching merged contact list..." });
+
+  const allContacts = await fetchContactsWithLinkedIn();
+  if (allContacts.length === 0) {
+    sendProgress({ error: "No contacts with LinkedIn URLs found" });
+    return;
+  }
+
+  let totalPosts = 0;
+  let totalFiltered = 0;
+
+  for (let i = 0; i < allContacts.length; i++) {
+    if (postsCancelled) break;
+
+    const contact = allContacts[i];
+    const name = `${contact.firstName} ${contact.lastName}`.trim();
+    console.log(
+      `[PostScraper] ${i + 1}/${allContacts.length}: ${name} — ${contact.linkedinUrl}`,
+    );
+
+    sendProgress({
+      phase: "posts",
+      current: i + 1,
+      total: allContacts.length,
+      contactName: name,
+      postsFound: totalPosts,
+      postsFiltered: totalFiltered,
+    });
+
+    // Navigate to activity page
+    const activityUrl = contact.linkedinUrl.replace(/\/$/, "") + "/recent-activity/all/";
+    try {
+      await chrome.tabs.update(tabId, { url: activityUrl });
+    } catch {
+      console.warn(`[PostScraper] Tab closed, aborting`);
+      break;
+    }
+    await waitForTabLoad(tabId);
+    await sleep(3000);
+
+    // Check if we landed on the right page
+    try {
+      const tabInfo = await chrome.tabs.get(tabId);
+      if (!tabInfo.url?.includes("linkedin.com/in/")) {
+        console.warn(`[PostScraper] Redirected away for ${name}, skipping`);
+        await randomDelay(5000, 8000);
+        continue;
+      }
+    } catch {
+      break;
+    }
+
+    // Scroll and extract posts
+    let posts: ScrapedPost[] = [];
+    try {
+      posts = await scrollAndExtract(tabId);
+    } catch (err) {
+      console.warn(`[PostScraper] Extraction failed for ${name}:`, err);
+    }
+
+    // Send posts to Rust server
+    if (posts.length > 0) {
+      try {
+        const { inserted, filtered } = await postPosts(contact.id, posts);
+        totalPosts += inserted;
+        totalFiltered += filtered;
+        console.log(
+          `[PostScraper] ${name}: ${inserted} kept, ${filtered} filtered (${posts.length} scraped)`,
+        );
+      } catch (err) {
+        console.error(`[PostScraper] Failed to save posts for ${name}:`, err);
+      }
+    } else {
+      console.log(`[PostScraper] ${name}: no posts found`);
+    }
+
+    // Rate limiting delay
+    if (i < allContacts.length - 1) {
+      await randomDelay(10000, 15000);
+    }
+  }
+
+  sendProgress({
+    done: true,
+    totalContacts: allContacts.length,
+    totalPosts,
+    totalFiltered,
+  });
+
+  console.log(
+    `[PostScraper] Complete. ${totalPosts} kept, ${totalFiltered} filtered from ${allContacts.length} contacts.`,
+  );
 }
