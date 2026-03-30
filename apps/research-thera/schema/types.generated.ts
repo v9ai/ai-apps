@@ -715,6 +715,7 @@ export type HabitStatus =
 export type Issue = {
   __typename?: 'Issue';
   category: Scalars['String']['output'];
+  contacts: Array<Contact>;
   createdAt: Scalars['String']['output'];
   createdBy: Scalars['String']['output'];
   description: Scalars['String']['output'];
@@ -734,6 +735,12 @@ export type Issue = {
   stories: Array<Story>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
+};
+
+export type IssueContactLink = {
+  __typename?: 'IssueContactLink';
+  contact: Contact;
+  id: Scalars['Int']['output'];
 };
 
 export type IssueLink = {
@@ -841,6 +848,7 @@ export type Mutation = {
   generateParentAdvice: GenerateParentAdviceResult;
   generateResearch: GenerateResearchResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
+  linkContactToIssue: IssueContactLink;
   linkIssues: IssueLink;
   logHabit: HabitLog;
   markTeacherFeedbackExtracted: TeacherFeedback;
@@ -848,6 +856,7 @@ export type Mutation = {
   setNoteVisibility: Note;
   shareFamilyMember: FamilyMemberShare;
   shareNote: NoteShare;
+  unlinkContactFromIssue: UnlinkContactResult;
   unlinkGoalFamilyMember: Goal;
   unlinkIssues: UnlinkIssuesResult;
   unshareFamilyMember: Scalars['Boolean']['output'];
@@ -1111,6 +1120,12 @@ export type MutationgenerateTherapeuticQuestionsArgs = {
 };
 
 
+export type MutationlinkContactToIssueArgs = {
+  contactId: Scalars['Int']['input'];
+  issueId: Scalars['Int']['input'];
+};
+
+
 export type MutationlinkIssuesArgs = {
   issueId: Scalars['Int']['input'];
   linkType?: InputMaybe<Scalars['String']['input']>;
@@ -1153,6 +1168,12 @@ export type MutationshareNoteArgs = {
   email: Scalars['String']['input'];
   noteId: Scalars['Int']['input'];
   role?: InputMaybe<NoteShareRole>;
+};
+
+
+export type MutationunlinkContactFromIssueArgs = {
+  contactId: Scalars['Int']['input'];
+  issueId: Scalars['Int']['input'];
 };
 
 
@@ -1788,6 +1809,11 @@ export type TimelinePhase = {
   period: Scalars['String']['output'];
 };
 
+export type UnlinkContactResult = {
+  __typename?: 'UnlinkContactResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type UnlinkIssuesResult = {
   __typename?: 'UnlinkIssuesResult';
   success: Scalars['Boolean']['output'];
@@ -2062,6 +2088,7 @@ export type ResolversTypes = {
   HabitLog: ResolverTypeWrapper<HabitLog>;
   HabitStatus: ResolverTypeWrapper<'ACTIVE' | 'PAUSED' | 'ARCHIVED'>;
   Issue: ResolverTypeWrapper<Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, feedback?: Maybe<ResolversTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversTypes['FamilyMember']>, relatedIssues: Array<ResolversTypes['IssueLink']>, stories: Array<ResolversTypes['Story']> }>;
+  IssueContactLink: ResolverTypeWrapper<IssueContactLink>;
   IssueLink: ResolverTypeWrapper<Omit<IssueLink, 'issue'> & { issue: ResolversTypes['Issue'] }>;
   JobError: ResolverTypeWrapper<JobError>;
   JobResult: ResolverTypeWrapper<JobResult>;
@@ -2098,6 +2125,7 @@ export type ResolversTypes = {
   TherapeuticQuestion: ResolverTypeWrapper<TherapeuticQuestion>;
   TimelineAnalysis: ResolverTypeWrapper<TimelineAnalysis>;
   TimelinePhase: ResolverTypeWrapper<TimelinePhase>;
+  UnlinkContactResult: ResolverTypeWrapper<UnlinkContactResult>;
   UnlinkIssuesResult: ResolverTypeWrapper<UnlinkIssuesResult>;
   UpdateBehaviorObservationInput: UpdateBehaviorObservationInput;
   UpdateContactFeedbackInput: UpdateContactFeedbackInput;
@@ -2186,6 +2214,7 @@ export type ResolversParentTypes = {
   Habit: Habit;
   HabitLog: HabitLog;
   Issue: Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversParentTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']>, relatedIssues: Array<ResolversParentTypes['IssueLink']>, stories: Array<ResolversParentTypes['Story']> };
+  IssueContactLink: IssueContactLink;
   IssueLink: Omit<IssueLink, 'issue'> & { issue: ResolversParentTypes['Issue'] };
   JobError: JobError;
   JobResult: JobResult;
@@ -2211,6 +2240,7 @@ export type ResolversParentTypes = {
   TherapeuticQuestion: TherapeuticQuestion;
   TimelineAnalysis: TimelineAnalysis;
   TimelinePhase: TimelinePhase;
+  UnlinkContactResult: UnlinkContactResult;
   UnlinkIssuesResult: UnlinkIssuesResult;
   UpdateBehaviorObservationInput: UpdateBehaviorObservationInput;
   UpdateContactFeedbackInput: UpdateContactFeedbackInput;
@@ -2685,6 +2715,7 @@ export type HabitStatusResolvers = EnumResolverSignature<{ ACTIVE?: any, ARCHIVE
 
 export type IssueResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Issue'] = ResolversParentTypes['Issue']> = {
   category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2704,6 +2735,11 @@ export type IssueResolvers<ContextType = GraphQLContext, ParentType extends Reso
   stories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type IssueContactLinkResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IssueContactLink'] = ResolversParentTypes['IssueContactLink']> = {
+  contact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type IssueLinkResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IssueLink'] = ResolversParentTypes['IssueLink']> = {
@@ -2799,6 +2835,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateParentAdvice?: Resolver<ResolversTypes['GenerateParentAdviceResult'], ParentType, ContextType, RequireFields<MutationgenerateParentAdviceArgs, 'goalId'>>;
   generateResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, Partial<MutationgenerateResearchArgs>>;
   generateTherapeuticQuestions?: Resolver<ResolversTypes['GenerateQuestionsResult'], ParentType, ContextType, Partial<MutationgenerateTherapeuticQuestionsArgs>>;
+  linkContactToIssue?: Resolver<ResolversTypes['IssueContactLink'], ParentType, ContextType, RequireFields<MutationlinkContactToIssueArgs, 'contactId' | 'issueId'>>;
   linkIssues?: Resolver<ResolversTypes['IssueLink'], ParentType, ContextType, RequireFields<MutationlinkIssuesArgs, 'issueId' | 'linkedIssueId'>>;
   logHabit?: Resolver<ResolversTypes['HabitLog'], ParentType, ContextType, RequireFields<MutationlogHabitArgs, 'habitId' | 'loggedDate'>>;
   markTeacherFeedbackExtracted?: Resolver<ResolversTypes['TeacherFeedback'], ParentType, ContextType, RequireFields<MutationmarkTeacherFeedbackExtractedArgs, 'id'>>;
@@ -2806,6 +2843,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   setNoteVisibility?: Resolver<ResolversTypes['Note'], ParentType, ContextType, RequireFields<MutationsetNoteVisibilityArgs, 'noteId' | 'visibility'>>;
   shareFamilyMember?: Resolver<ResolversTypes['FamilyMemberShare'], ParentType, ContextType, RequireFields<MutationshareFamilyMemberArgs, 'email' | 'familyMemberId'>>;
   shareNote?: Resolver<ResolversTypes['NoteShare'], ParentType, ContextType, RequireFields<MutationshareNoteArgs, 'email' | 'noteId'>>;
+  unlinkContactFromIssue?: Resolver<ResolversTypes['UnlinkContactResult'], ParentType, ContextType, RequireFields<MutationunlinkContactFromIssueArgs, 'contactId' | 'issueId'>>;
   unlinkGoalFamilyMember?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationunlinkGoalFamilyMemberArgs, 'id'>>;
   unlinkIssues?: Resolver<ResolversTypes['UnlinkIssuesResult'], ParentType, ContextType, RequireFields<MutationunlinkIssuesArgs, 'issueId' | 'linkedIssueId'>>;
   unshareFamilyMember?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationunshareFamilyMemberArgs, 'email' | 'familyMemberId'>>;
@@ -3112,6 +3150,10 @@ export type TimelinePhaseResolvers<ContextType = GraphQLContext, ParentType exte
   period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type UnlinkContactResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UnlinkContactResult'] = ResolversParentTypes['UnlinkContactResult']> = {
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type UnlinkIssuesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UnlinkIssuesResult'] = ResolversParentTypes['UnlinkIssuesResult']> = {
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
@@ -3181,6 +3223,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   HabitLog?: HabitLogResolvers<ContextType>;
   HabitStatus?: HabitStatusResolvers;
   Issue?: IssueResolvers<ContextType>;
+  IssueContactLink?: IssueContactLinkResolvers<ContextType>;
   IssueLink?: IssueLinkResolvers<ContextType>;
   JobError?: JobErrorResolvers<ContextType>;
   JobResult?: JobResultResolvers<ContextType>;
@@ -3217,6 +3260,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   TherapeuticQuestion?: TherapeuticQuestionResolvers<ContextType>;
   TimelineAnalysis?: TimelineAnalysisResolvers<ContextType>;
   TimelinePhase?: TimelinePhaseResolvers<ContextType>;
+  UnlinkContactResult?: UnlinkContactResultResolvers<ContextType>;
   UnlinkIssuesResult?: UnlinkIssuesResultResolvers<ContextType>;
   UserSettings?: UserSettingsResolvers<ContextType>;
 };

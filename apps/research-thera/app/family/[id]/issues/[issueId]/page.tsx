@@ -55,6 +55,10 @@ import {
   useUnlinkIssuesMutation,
   useGetIssuesQuery,
   useGenerateHabitsFromIssueMutation,
+  useGetContactsQuery,
+  useCreateContactMutation,
+  useLinkContactToIssueMutation,
+  useUnlinkContactFromIssueMutation,
 } from "@/app/__generated__/hooks";
 
 const CATEGORY_OPTIONS = [

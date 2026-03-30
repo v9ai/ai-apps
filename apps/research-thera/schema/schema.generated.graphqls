@@ -649,6 +649,7 @@ enum HabitStatus {
 
 type Issue {
   category: String!
+  contacts: [Contact!]!
   createdAt: String!
   createdBy: String!
   description: String!
@@ -668,6 +669,11 @@ type Issue {
   stories: [Story!]!
   title: String!
   updatedAt: String!
+}
+
+type IssueContactLink {
+  contact: Contact!
+  id: Int!
 }
 
 type IssueLink {
@@ -772,6 +778,7 @@ type Mutation {
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
   generateResearch(feedbackId: Int, goalId: Int, issueId: Int): GenerateResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int): GenerateQuestionsResult!
+  linkContactToIssue(contactId: Int!, issueId: Int!): IssueContactLink!
   linkIssues(issueId: Int!, linkType: String, linkedIssueId: Int!): IssueLink!
   logHabit(count: Int, habitId: Int!, loggedDate: String!, notes: String): HabitLog!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
@@ -779,6 +786,7 @@ type Mutation {
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
   shareFamilyMember(email: String!, familyMemberId: Int!, role: FamilyMemberShareRole): FamilyMemberShare!
   shareNote(email: String!, noteId: Int!, role: NoteShareRole): NoteShare!
+  unlinkContactFromIssue(contactId: Int!, issueId: Int!): UnlinkContactResult!
   unlinkGoalFamilyMember(id: Int!): Goal!
   unlinkIssues(issueId: Int!, linkedIssueId: Int!): UnlinkIssuesResult!
   unshareFamilyMember(email: String!, familyMemberId: Int!): Boolean!
@@ -1131,6 +1139,10 @@ type TimelinePhase {
   keyEvents: [String!]!
   moodTrend: String
   period: String!
+}
+
+type UnlinkContactResult {
+  success: Boolean!
 }
 
 type UnlinkIssuesResult {
