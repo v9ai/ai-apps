@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
+    "@ai-apps/db-backup": "workspace:*",
     "@ai-apps/resume": "workspace:*",
     "@neondatabase/serverless": "^0.10.4",
     "@posthog/next": "^0.1.0",

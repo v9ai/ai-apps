@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
+    "@ai-apps/db-backup": "workspace:*",
     "@ai-apps/ui": "workspace:*",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
