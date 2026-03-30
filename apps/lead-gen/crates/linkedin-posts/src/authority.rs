@@ -1,7 +1,7 @@
-/// Contact authority signal aggregation from LinkedIn post analysis.
-///
-/// Aggregates post-level ML signals into a per-contact authority delta,
-/// then pushes the update to Neon PostgreSQL's contacts.authority_score.
+//! Contact authority signal aggregation from LinkedIn post analysis.
+//!
+//! Aggregates post-level ML signals into a per-contact authority delta,
+//! then pushes the update to Neon PostgreSQL's contacts.authority_score.
 
 use serde::Serialize;
 
@@ -69,8 +69,8 @@ pub fn aggregate_signals(contact_id: i32, posts: &[StoredPost]) -> ContactPostSi
             thought_count += 1;
         }
 
-        // Engagement: log-normalized (reactions + comments)
-        let engagement = (1.0 + p.reactions_count as f32 + p.comments_count as f32).ln();
+        // Engagement: log-normalized (reactions + comments, guard negative)
+        let engagement = (2.0 + p.reactions_count.max(0) as f32 + p.comments_count.max(0) as f32).ln();
         sum_engagement += engagement;
     }
 
@@ -182,5 +182,52 @@ mod tests {
             signals.authority_delta
         );
         assert_eq!(signals.thought_leadership_count, 2);
+    }
+
+    #[test]
+    fn single_post_frequency_score() {
+        let posts = vec![make_stored_post(1, 0.5, 0.5, 0.5, 10, 5)];
+        let signals = aggregate_signals(1, &posts);
+        assert!((signals.post_frequency_score - 0.1).abs() < 0.01);
+    }
+
+    #[test]
+    fn ten_posts_max_frequency() {
+        let posts: Vec<StoredPost> = (0..10)
+            .map(|_| make_stored_post(1, 0.5, 0.5, 0.5, 10, 5))
+            .collect();
+        let signals = aggregate_signals(1, &posts);
+        assert!((signals.post_frequency_score - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn all_below_threshold_zero_counts() {
+        let posts = vec![
+            make_stored_post(1, 0.3, 0.3, 0.3, 10, 5),
+            make_stored_post(1, 0.2, 0.1, 0.2, 5, 2),
+        ];
+        let signals = aggregate_signals(1, &posts);
+        assert_eq!(signals.hiring_post_count, 0);
+        assert_eq!(signals.ai_content_count, 0);
+        assert_eq!(signals.thought_leadership_count, 0);
+    }
+
+    #[test]
+    fn negative_reactions_no_nan() {
+        let mut post = make_stored_post(1, 0.5, 0.5, 0.5, -5, -3);
+        post.reactions_count = -5;
+        post.comments_count = -3;
+        let signals = aggregate_signals(1, &[post]);
+        assert!(!signals.avg_engagement.is_nan(), "NaN from negative reactions");
+        assert!(!signals.authority_delta.is_nan(), "NaN in authority_delta");
+    }
+
+    #[test]
+    fn authority_delta_capped_at_one() {
+        let posts: Vec<StoredPost> = (0..20)
+            .map(|_| make_stored_post(1, 1.0, 1.0, 1.0, 10000, 5000))
+            .collect();
+        let signals = aggregate_signals(1, &posts);
+        assert!(signals.authority_delta <= 1.0, "delta={:.3}", signals.authority_delta);
     }
 }

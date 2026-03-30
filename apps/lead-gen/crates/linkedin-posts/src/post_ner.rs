@@ -1,10 +1,10 @@
-/// LinkedIn post NER — zero-alloc entity extraction.
-///
-/// Extracts structured signals from LinkedIn post text in a single pass:
-/// company names, role titles, tech skills, remote policy, seniority.
-///
-/// Follows the `JobExtraction` pattern from `metal/src/kernel/job_ner.rs`:
-/// writes into fixed-size `PostEntities` struct — no heap allocations.
+//! LinkedIn post NER — entity extraction.
+//!
+//! Extracts structured signals from LinkedIn post text in a single pass:
+//! company names, role titles, tech skills, remote policy, seniority.
+//!
+//! Follows the `JobExtraction` pattern from `metal/src/kernel/job_ner.rs`:
+//! writes into fixed-size `PostEntities` struct.
 
 use serde::{Deserialize, Serialize};
 
@@ -241,7 +241,7 @@ fn extract_roles(_original: &str, lower: &[u8], out: &mut PostEntities) {
         let mut pos = 0;
         while let Some(idx) = memmem(&lower[pos..], marker) {
             let start = pos + idx + marker.len();
-            if let Some(role) = extract_role_phrase(_original, start) {
+            if let Some(role) = extract_role_phrase(_original, lower, start) {
                 if role.len() >= 3 && out.role_count < 4 {
                     write_slot(&mut out.roles[out.role_count as usize], &role);
                     out.role_count += 1;
@@ -284,8 +284,8 @@ static TECH_KEYWORDS: &[&[u8]] = &[
     b"kafka",
     b"kotlin",
     b"kubernetes",
-    b"langchain",
     b"lancedb",
+    b"langchain",
     b"linux",
     b"llama",
     b"llm",
@@ -300,8 +300,8 @@ static TECH_KEYWORDS: &[&[u8]] = &[
     b"nodejs",
     b"nosql",
     b"ollama",
-    b"openai",
     b"onnx",
+    b"openai",
     b"postgres",
     b"postgresql",
     b"python",
@@ -342,7 +342,7 @@ fn extract_tech_skills(lower: &[u8], out: &mut PostEntities) {
             let already = (0..out.skill_count as usize).any(|i| {
                 let existing = &out.tech_skills[i];
                 let end = existing.iter().position(|&b| b == 0).unwrap_or(32);
-                &existing[..end] == &word[..]
+                existing[..end] == word[..]
             });
             if !already {
                 write_slot(&mut out.tech_skills[out.skill_count as usize], &word);
@@ -575,7 +575,8 @@ fn extract_preceding_phrase(text: &str, end_idx: usize) -> Option<Vec<u8>> {
 }
 
 /// Extract a role phrase: reads until punctuation, newline, or 6 words.
-fn extract_role_phrase(text: &str, start: usize) -> Option<Vec<u8>> {
+/// `lower` is the pre-lowercased text to avoid per-word Vec allocation.
+fn extract_role_phrase(text: &str, lower: &[u8], start: usize) -> Option<Vec<u8>> {
     let bytes = text.as_bytes();
     if start >= bytes.len() {
         return None;
@@ -608,8 +609,8 @@ fn extract_role_phrase(text: &str, start: usize) -> Option<Vec<u8>> {
             break;
         }
 
-        // Check for stop words
-        let remaining = &bytes[i + 1..].iter().map(|b| b.to_ascii_lowercase()).collect::<Vec<_>>();
+        // Check for stop words using pre-lowercased slice (zero-alloc)
+        let remaining = &lower[i + 1..];
         let should_stop = stop_words.iter().any(|sw| remaining.starts_with(sw));
         if should_stop {
             break;
@@ -723,5 +724,98 @@ mod tests {
         let deserialized: PostEntitiesSerde = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized.remote_policy, "full_remote");
         assert!(!deserialized.tech_skills.is_empty());
+    }
+
+    #[test]
+    fn tech_keywords_sorted() {
+        // Binary search requires sorted array — this catches mis-ordering
+        for i in 0..TECH_KEYWORDS.len() - 1 {
+            assert!(
+                TECH_KEYWORDS[i] <= TECH_KEYWORDS[i + 1],
+                "TECH_KEYWORDS[{}] ({:?}) > TECH_KEYWORDS[{}] ({:?})",
+                i,
+                std::str::from_utf8(TECH_KEYWORDS[i]).unwrap(),
+                i + 1,
+                std::str::from_utf8(TECH_KEYWORDS[i + 1]).unwrap(),
+            );
+        }
+    }
+
+    #[test]
+    fn finds_lancedb_keyword() {
+        // Regression: lancedb was previously mis-sorted and invisible to binary search
+        let mut e = PostEntities::new();
+        extract_post_entities("Our stack uses lancedb for vector storage.", &mut e);
+        let skills: Vec<_> = (0..e.skill_count as usize).map(|i| e.skill_str(i)).collect();
+        assert!(skills.contains(&"lancedb"), "skills={:?}", skills);
+    }
+
+    #[test]
+    fn finds_onnx_keyword() {
+        // Regression: onnx was previously mis-sorted and invisible to binary search
+        let mut e = PostEntities::new();
+        extract_post_entities("We export models to onnx format for inference.", &mut e);
+        let skills: Vec<_> = (0..e.skill_count as usize).map(|i| e.skill_str(i)).collect();
+        assert!(skills.contains(&"onnx"), "skills={:?}", skills);
+    }
+
+    #[test]
+    fn detects_hybrid_remote() {
+        let mut e = PostEntities::new();
+        extract_post_entities("This is a hybrid position with flexible location.", &mut e);
+        assert_eq!(e.remote_policy, 2);
+        assert_eq!(e.remote_label(), "hybrid");
+    }
+
+    #[test]
+    fn detects_onsite() {
+        let mut e = PostEntities::new();
+        extract_post_entities("This is an on-site role, must relocate.", &mut e);
+        assert_eq!(e.remote_policy, 3);
+        assert_eq!(e.remote_label(), "onsite");
+    }
+
+    #[test]
+    fn max_4_companies() {
+        let mut e = PostEntities::new();
+        extract_post_entities(
+            "I worked at Google, then at Meta, then at Apple, then at Amazon, then at Netflix, then at Microsoft.",
+            &mut e,
+        );
+        assert!(e.company_count <= 4, "company_count={}", e.company_count);
+    }
+
+    #[test]
+    fn max_16_skills() {
+        let mut e = PostEntities::new();
+        extract_post_entities(
+            "python pytorch tensorflow kubernetes docker redis react typescript rust golang java scala kafka spark sql css javascript nodejs",
+            &mut e,
+        );
+        assert!(e.skill_count <= 16, "skill_count={}", e.skill_count);
+    }
+
+    #[test]
+    fn skills_deduplication() {
+        let mut e = PostEntities::new();
+        extract_post_entities("python and python and python everywhere", &mut e);
+        assert_eq!(e.skill_count, 1, "python should appear once");
+    }
+
+    #[test]
+    fn unicode_text_does_not_panic() {
+        let mut e = PostEntities::new();
+        extract_post_entities("We're hiring at Göttingen 🚀 for AI roles!", &mut e);
+        // Should not panic — entities may or may not be found
+    }
+
+    #[test]
+    fn memmem_edge_cases() {
+        assert_eq!(memmem(b"", b"x"), None);
+        assert_eq!(memmem(b"x", b""), None);
+        assert_eq!(memmem(b"x", b"xy"), None);
+        assert_eq!(memmem(b"hello", b"hello"), Some(0));
+        assert_eq!(memmem(b"hello world", b"world"), Some(6));
+        assert_eq!(memmem(b"aaa", b"aa"), Some(0));
     }
 }

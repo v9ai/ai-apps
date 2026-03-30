@@ -233,15 +233,28 @@ pub static NOISE_KEYWORDS: &[&str] = &[
 ];
 
 /// Check if a position title contains AI/ML keywords.
+/// Check keyword match accounting for space-padded keywords at string boundaries.
+/// Keywords like " llm " won't match "LLM Engineer" via plain contains because
+/// there's no leading space at position 0. This checks both the original keyword
+/// and the trimmed variant.
+fn keyword_match(text: &str, keywords: &[&str]) -> bool {
+    keywords.iter().any(|kw| {
+        text.contains(kw) || {
+            let trimmed = kw.trim();
+            trimmed != *kw && (text.starts_with(trimmed) || text.contains(&format!(" {}", trimmed)) || text.contains(&format!("{} ", trimmed)))
+        }
+    })
+}
+
 pub fn title_has_ai_signal(position: &str) -> bool {
     let lower = position.to_lowercase();
-    AI_KEYWORDS.iter().any(|kw| lower.contains(kw))
+    keyword_match(&lower, AI_KEYWORDS)
 }
 
 /// Check if a position title contains any engineering keywords.
 pub fn title_has_engineering_signal(position: &str) -> bool {
     let lower = position.to_lowercase();
-    ENGINEERING_KEYWORDS.iter().any(|kw| lower.contains(kw))
+    keyword_match(&lower, ENGINEERING_KEYWORDS)
 }
 
 #[cfg(test)]
@@ -315,5 +328,90 @@ mod tests {
             "Like if you agree: the best investment you can make is in yourself. #motivation #mondaymotivation Keep pushing forward!",
         ));
         assert!(!v.keep, "score={} reason={}", v.score, v.reason);
+    }
+
+    // ── title_has_ai_signal tests ──
+
+    #[test]
+    fn title_ai_signal_ml_engineer() {
+        assert!(title_has_ai_signal("ML Engineer"));
+    }
+
+    #[test]
+    fn title_ai_signal_llm_at_position_zero() {
+        // " llm " has leading space — must still match at start of title
+        assert!(title_has_ai_signal("LLM Infrastructure Lead"));
+    }
+
+    #[test]
+    fn title_ai_signal_data_scientist() {
+        assert!(title_has_ai_signal("Senior Data Scientist"));
+    }
+
+    #[test]
+    fn title_ai_signal_case_insensitive() {
+        assert!(title_has_ai_signal("MACHINE LEARNING ENGINEER"));
+    }
+
+    #[test]
+    fn title_ai_signal_no_match() {
+        assert!(!title_has_ai_signal("Sales Manager"));
+    }
+
+    #[test]
+    fn title_ai_signal_empty() {
+        assert!(!title_has_ai_signal(""));
+    }
+
+    #[test]
+    fn title_ai_signal_nlp_at_start() {
+        assert!(title_has_ai_signal("NLP Researcher"));
+    }
+
+    // ── title_has_engineering_signal tests ──
+
+    #[test]
+    fn title_eng_signal_software_engineer() {
+        assert!(title_has_engineering_signal("Software Engineer"));
+    }
+
+    #[test]
+    fn title_eng_signal_rust_at_start() {
+        // " rust " has spaces — must match at start of title
+        assert!(title_has_engineering_signal("Rust Developer"));
+    }
+
+    #[test]
+    fn title_eng_signal_sre_at_start() {
+        assert!(title_has_engineering_signal("SRE Lead"));
+    }
+
+    #[test]
+    fn title_eng_signal_tech_lead() {
+        assert!(title_has_engineering_signal("Tech Lead"));
+    }
+
+    #[test]
+    fn title_eng_signal_no_match() {
+        assert!(!title_has_engineering_signal("Marketing Director"));
+    }
+
+    // ── score_legacy edge cases ──
+
+    #[test]
+    fn score_legacy_repost_penalty() {
+        let mut p = post("We're hiring a Senior ML Engineer for our fully remote team.");
+        p.is_repost = true;
+        let v_repost = score_legacy(&p);
+        p.is_repost = false;
+        let v_original = score_legacy(&p);
+        assert!(v_repost.score < v_original.score, "repost should score lower");
+    }
+
+    #[test]
+    fn score_legacy_empty_string_text() {
+        let v = score_legacy(&post(""));
+        assert!(!v.keep);
+        assert_eq!(v.reason, "no text");
     }
 }
