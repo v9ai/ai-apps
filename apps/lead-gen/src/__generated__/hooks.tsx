@@ -2013,7 +2013,7 @@ export type DeleteEmailTemplateMutation = { __typename?: 'Mutation', deleteEmail
 export type DueRemindersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type DueRemindersQuery = { __typename?: 'Query', dueReminders: Array<{ __typename?: 'ContactReminderWithContact', reminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }, contact: { __typename?: 'Contact', id: number, firstName: string, lastName: string, position: string | null } }> };
+export type DueRemindersQuery = { __typename?: 'Query', dueReminders: Array<{ __typename?: 'ContactReminderWithContact', reminder: { __typename?: 'ContactReminder', id: number, contactId: number, remindAt: string, recurrence: string, note: string | null, status: string, snoozedUntil: string | null, createdAt: string, updatedAt: string }, contact: { __typename?: 'Contact', id: number, firstName: string, lastName: string, position: string | null, tags: Array<string> } }> };
 
 export type ContactRemindersQueryVariables = Exact<{
   contactId: Scalars['Int']['input'];
@@ -4970,6 +4970,7 @@ export const DueRemindersDocument = gql`
       firstName
       lastName
       position
+      tags
     }
   }
 }

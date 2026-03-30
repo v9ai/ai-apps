@@ -18,6 +18,7 @@ import {
   useCreateReminderMutation,
   useComputeNextTouchScoresMutation,
   useDueRemindersQuery,
+  useUpdateContactMutation,
 } from "@/__generated__/hooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -358,6 +359,7 @@ function CreateContactDialog({
     email: "",
     position: "",
     linkedinUrl: "",
+    tags: "",
   });
   const [createContact, { loading }] = useCreateContactMutation();
   const [error, setError] = useState<string | null>(null);
@@ -365,7 +367,7 @@ function CreateContactDialog({
   const handleOpenChange = (val: boolean) => {
     setOpen(val);
     if (!val) {
-      setForm({ firstName: "", lastName: "", email: "", position: "", linkedinUrl: "" });
+      setForm({ firstName: "", lastName: "", email: "", position: "", linkedinUrl: "", tags: "" });
       setError(null);
     }
   };
@@ -385,6 +387,7 @@ function CreateContactDialog({
             email: form.email.trim() || undefined,
             position: form.position.trim() || undefined,
             linkedinUrl: form.linkedinUrl.trim() || undefined,
+            tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : undefined,
             companyId,
           },
         },
@@ -467,6 +470,15 @@ function CreateContactDialog({
               placeholder="https://linkedin.com/in/…"
               value={form.linkedinUrl}
               onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
+            />
+          </Box>
+
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">Tags (comma-separated)</Text>
+            <TextField.Root
+              placeholder="friend, vip, client"
+              value={form.tags}
+              onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
             />
           </Box>
         </Flex>
@@ -588,7 +600,13 @@ export function CompanyContactsClient({
   const [scoreContactsML, { loading: scoringML }] = useScoreContactsMlMutation();
   const [computeTouchScores, { loading: computingTouch }] = useComputeNextTouchScoresMutation();
   const [createReminder] = useCreateReminderMutation();
+  const [updateContact] = useUpdateContactMutation();
   const [mlScoreStatus, setMlScoreStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  // Inline tag editing state
+  const [editingTagContactId, setEditingTagContactId] = useState<number | null>(null);
+  const [newTagValue, setNewTagValue] = useState("");
+  // Local optimistic tag overrides: contactId → tags array
+  const [localTags, setLocalTags] = useState<Record<number, string[]>>({});
   // Remind dialog state
   const [remindContactId, setRemindContactId] = useState<number | null>(null);
   const [remindDate, setRemindDate] = useState("");
@@ -1228,20 +1246,65 @@ export function CompanyContactsClient({
                         )}
                       </Flex>
 
-                      {contact.tags && contact.tags.length > 0 && (
-                        <Flex gap="1" mt="2" wrap="wrap">
-                          {contact.tags.map((tag) => (
-                            <Badge
-                              key={tag}
-                              color="gray"
-                              variant="surface"
-                              size="1"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </Flex>
-                      )}
+                      <Flex gap="1" mt="2" wrap="wrap" align="center" onClick={(e) => e.stopPropagation()}>
+                        {(localTags[contact.id] ?? contact.tags ?? []).map((tag) => (
+                          <Badge
+                            key={tag}
+                            color="gray"
+                            variant="surface"
+                            size="1"
+                            style={{ cursor: "pointer" }}
+                            title="Click to remove"
+                            onClick={() => {
+                              const next = (localTags[contact.id] ?? contact.tags ?? []).filter((t) => t !== tag);
+                              setLocalTags((prev) => ({ ...prev, [contact.id]: next }));
+                              updateContact({ variables: { id: contact.id, input: { tags: next } } });
+                            }}
+                          >
+                            {tag} ×
+                          </Badge>
+                        ))}
+                        {editingTagContactId === contact.id ? (
+                          <TextField.Root
+                            size="1"
+                            style={{ width: 100 }}
+                            autoFocus
+                            placeholder="tag…"
+                            value={newTagValue}
+                            onChange={(e) => setNewTagValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && newTagValue.trim()) {
+                                const next = [...(localTags[contact.id] ?? contact.tags ?? []), newTagValue.trim()];
+                                setLocalTags((prev) => ({ ...prev, [contact.id]: next }));
+                                updateContact({ variables: { id: contact.id, input: { tags: next } } });
+                                setNewTagValue("");
+                                setEditingTagContactId(null);
+                              } else if (e.key === "Escape") {
+                                setNewTagValue("");
+                                setEditingTagContactId(null);
+                              }
+                            }}
+                            onBlur={() => {
+                              if (newTagValue.trim()) {
+                                const next = [...(localTags[contact.id] ?? contact.tags ?? []), newTagValue.trim()];
+                                setLocalTags((prev) => ({ ...prev, [contact.id]: next }));
+                                updateContact({ variables: { id: contact.id, input: { tags: next } } });
+                              }
+                              setNewTagValue("");
+                              setEditingTagContactId(null);
+                            }}
+                          />
+                        ) : (
+                          <button
+                            className={button({ variant: "ghost", size: "sm" })}
+                            style={{ padding: "0 4px", minWidth: 0 }}
+                            title="Add tag"
+                            onClick={() => { setEditingTagContactId(contact.id); setNewTagValue(""); }}
+                          >
+                            +
+                          </button>
+                        )}
+                      </Flex>
                     </Box>
 
                     <Flex direction="column" align="end" gap="2" flexShrink="0" onClick={(e) => e.stopPropagation()}>
