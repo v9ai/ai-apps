@@ -628,6 +628,26 @@ export function CompanyContactsClient({
     fetchPolicy: "cache-and-network",
   });
 
+  // Listen for progress/completion messages from the Chrome extension background script
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.source !== "lead-gen-bg") return;
+      if (e.data.action === "peopleScrapeProgress") {
+        setLinkedinPeopleStatus({ type: "running", message: e.data.message });
+      } else if (e.data.action === "peopleScrapeComplete") {
+        setLinkedinPeopleStatus({
+          type: "done",
+          message: `Imported ${e.data.imported} contact${e.data.imported !== 1 ? "s" : ""}${e.data.failed ? `, ${e.data.failed} failed` : ""}`,
+        });
+        void refetch();
+      } else if (e.data.action === "peopleScrapeError") {
+        setLinkedinPeopleStatus({ type: "error", message: e.data.error });
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [refetch]);
+
   const handleImportContacts = useCallback(async () => {
     if (!linkedinHtml || !company) return;
     setImportStatus(null);
