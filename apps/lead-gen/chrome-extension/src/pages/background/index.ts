@@ -1,6 +1,5 @@
 // Background service worker
 import { browseContactPosts, scrapeAllPosts, cancelPostScraping } from "../../services/post-scraper";
-import type { ScrapedConnection } from "../../services/connection-scraper";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -27,40 +26,27 @@ if (import.meta.env.DEV) {
   connect();
 }
 
-// ── GraphQL config ────────────────────────────────────────────────────
-const GRAPHQL_URL =
-  import.meta.env.VITE_GRAPHQL_URL || "http://localhost:3004/api/graphql";
+// ── GraphQL config (shared module) ───────────────────────────────────
+import { gqlRequest } from "../../services/graphql";
 
-async function getSessionCookie(): Promise<string | undefined> {
-  try {
-    const cookie = await chrome.cookies.get({
-      url: GRAPHQL_URL,
-      name: "better-auth.session_token",
-    });
-    return cookie?.value;
-  } catch {
-    return undefined;
-  }
+// ── Service worker keepAlive ─────────────────────────────────────────
+// MV3 service workers can be terminated after ~30s of inactivity.
+// Keep-alive prevents Chrome from killing the worker during long operations
+// (fetching 17K+ connections + importing takes several minutes).
+let keepAliveInterval: ReturnType<typeof setInterval> | null = null;
+
+export function startKeepAlive() {
+  if (keepAliveInterval) return;
+  keepAliveInterval = setInterval(() => {
+    chrome.runtime.getPlatformInfo(() => { /* no-op to reset idle timer */ });
+  }, 25_000);
 }
 
-async function gqlRequest(
-  query: string,
-  variables: Record<string, unknown>,
-) {
-  const sessionToken = await getSessionCookie();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (sessionToken) {
-    headers["Authorization"] = `Bearer ${sessionToken}`;
+export function stopKeepAlive() {
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+    keepAliveInterval = null;
   }
-
-  const res = await fetch(GRAPHQL_URL, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ query, variables }),
-  });
-  return res.json();
 }
 
 // Listen for messages from content scripts
@@ -203,6 +189,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
       sendResponse({ success: true });
+      startKeepAlive();
       try {
         console.log("[FullPipeline] Starting scrapeAllPosts for tab", tabId);
         await scrapeAllPosts(tabId);
@@ -214,53 +201,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             error: err instanceof Error ? err.message : String(err),
           });
         } catch { /* popup may be closed */ }
+      } finally {
+        stopKeepAlive();
       }
     });
-    return true;
-  }
-
-  // ── Import Connections as Contacts (called from post-scraper) ──
-  if (message.action === "importConnections") {
-    const { connections } = message as { connections: ScrapedConnection[] };
-    (async () => {
-      let imported = 0;
-      let failed = 0;
-      const CHUNK_SIZE = 100;
-
-      for (let i = 0; i < connections.length; i += CHUNK_SIZE) {
-        const chunk = connections.slice(i, i + CHUNK_SIZE);
-        try {
-          const result = await gqlRequest(
-            `mutation ImportContacts($contacts: [ContactInput!]!) {
-              importContacts(contacts: $contacts) { success imported failed errors }
-            }`,
-            {
-              contacts: chunk.map((c: ScrapedConnection) => ({
-                firstName: c.firstName,
-                lastName: c.lastName,
-                linkedinUrl: c.linkedinUrl,
-                position: c.position || undefined,
-                tags: ["linkedin-connection"],
-              })),
-            },
-          );
-
-          const res = result.data?.importContacts;
-          if (res) {
-            imported += res.imported;
-            failed += res.failed;
-          } else {
-            failed += chunk.length;
-            console.warn("[ImportConnections] GQL error:", result.errors?.[0]?.message);
-          }
-        } catch (err) {
-          failed += chunk.length;
-          console.error("[ImportConnections] Chunk error:", err);
-        }
-      }
-
-      sendResponse({ success: true, imported, failed });
-    })();
     return true;
   }
 

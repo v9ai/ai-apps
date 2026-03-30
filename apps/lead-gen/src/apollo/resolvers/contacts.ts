@@ -491,13 +491,14 @@ export const contactResolvers = {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
-      let imported = 0;
+
       const errors: string[] = [];
+      const valuesToInsert = [];
 
       for (const input of args.contacts) {
         try {
-          const { firstName, lastName, emails, tags, linkedinUrl, companyId, githubHandle, telegramHandle, ...rest } = input;
-          await context.db.insert(contacts).values({
+          const { firstName, lastName, emails, tags, linkedinUrl, companyId, githubHandle, telegramHandle, position, ...rest } = input;
+          valuesToInsert.push({
             first_name: firstName,
             last_name: lastName ?? "",
             emails: emails ? JSON.stringify(emails) : "[]",
@@ -507,11 +508,32 @@ export const contactResolvers = {
             ...(companyId != null && { company_id: companyId }),
             ...(githubHandle != null && { github_handle: githubHandle }),
             ...(telegramHandle != null && { telegram_handle: telegramHandle }),
+            ...(position != null && { position }),
             ...rest,
           });
-          imported++;
         } catch (err) {
           errors.push(err instanceof Error ? err.message : String(err));
+        }
+      }
+
+      let imported = 0;
+      if (valuesToInsert.length > 0) {
+        try {
+          const result = await context.db
+            .insert(contacts)
+            .values(valuesToInsert)
+            .returning({ id: contacts.id });
+          imported = result.length;
+        } catch (err) {
+          // If batch fails, fall back to individual inserts to identify bad rows
+          for (const row of valuesToInsert) {
+            try {
+              await context.db.insert(contacts).values(row);
+              imported++;
+            } catch (rowErr) {
+              errors.push(rowErr instanceof Error ? rowErr.message : String(rowErr));
+            }
+          }
         }
       }
 

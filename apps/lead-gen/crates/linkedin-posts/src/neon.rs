@@ -78,27 +78,29 @@ pub async fn count_contacts() -> Result<i64> {
     Ok(row.get::<_, i64>(0))
 }
 
-/// Update a contact's authority_score in Neon by adding a delta.
-/// Clamps at 1.0 (authority_score is 0.0-1.0 real).
-pub async fn update_contact_authority(contact_id: i32, delta: f32) -> Result<()> {
-    if delta <= 0.0 {
+/// Set a contact's authority_score in Neon to an absolute value.
+/// Uses SET (not additive delta) because `aggregate_signals` recomputes
+/// from all posts each run — additive would re-count old posts.
+pub async fn update_contact_authority(contact_id: i32, score: f32) -> Result<()> {
+    if score <= 0.0 {
         return Ok(());
     }
 
+    let clamped = score.clamp(0.0, 1.0);
     let client = connect_neon().await?;
 
     client
         .execute(
-            "UPDATE contacts SET authority_score = LEAST(COALESCE(authority_score, 0) + $1, 1.0) WHERE id = $2",
-            &[&delta, &contact_id],
+            "UPDATE contacts SET authority_score = $1 WHERE id = $2",
+            &[&clamped, &contact_id],
         )
         .await
         .context("Failed to update authority_score")?;
 
     tracing::info!(
-        "Updated contact {} authority_score += {:.3}",
+        "Updated contact {} authority_score = {:.3}",
         contact_id,
-        delta
+        clamped
     );
     Ok(())
 }

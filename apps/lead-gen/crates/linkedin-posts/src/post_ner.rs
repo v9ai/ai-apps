@@ -25,7 +25,17 @@ pub struct PostEntities {
 
 impl PostEntities {
     pub fn new() -> Self {
-        unsafe { std::mem::zeroed() }
+        Self {
+            companies: [[0u8; 64]; 4],
+            company_count: 0,
+            roles: [[0u8; 64]; 4],
+            role_count: 0,
+            tech_skills: [[0u8; 32]; 16],
+            skill_count: 0,
+            remote_policy: 0,
+            seniority: 0,
+            confidence: 0,
+        }
     }
 
     pub fn company_str(&self, idx: usize) -> &str {
@@ -197,8 +207,16 @@ fn extract_companies(original: &str, lower: &[u8], out: &mut PostEntities) {
             let start = pos + idx + pattern.len();
             if let Some(name) = extract_capitalized_phrase(original, start) {
                 if name.len() >= 2 && out.company_count < 4 {
-                    write_slot(&mut out.companies[out.company_count as usize], &name);
-                    out.company_count += 1;
+                    // Deduplicate
+                    let already = (0..out.company_count as usize).any(|i| {
+                        let existing = &out.companies[i];
+                        let end = existing.iter().position(|&b| b == 0).unwrap_or(64);
+                        existing[..end] == name[..]
+                    });
+                    if !already {
+                        write_slot(&mut out.companies[out.company_count as usize], &name);
+                        out.company_count += 1;
+                    }
                 }
             }
             pos = start;
@@ -207,13 +225,24 @@ fn extract_companies(original: &str, lower: &[u8], out: &mut PostEntities) {
 
     // "{Company} is hiring" pattern — extract word(s) before marker
     for pattern in suffix_patterns {
-        if let Some(idx) = memmem(lower, pattern) {
-            if let Some(name) = extract_preceding_phrase(original, idx) {
+        let mut pos = 0;
+        while let Some(idx) = memmem(&lower[pos..], pattern) {
+            let abs_idx = pos + idx;
+            if let Some(name) = extract_preceding_phrase(original, abs_idx) {
                 if name.len() >= 2 && out.company_count < 4 {
-                    write_slot(&mut out.companies[out.company_count as usize], &name);
-                    out.company_count += 1;
+                    // Deduplicate
+                    let already = (0..out.company_count as usize).any(|i| {
+                        let existing = &out.companies[i];
+                        let end = existing.iter().position(|&b| b == 0).unwrap_or(64);
+                        existing[..end] == name[..]
+                    });
+                    if !already {
+                        write_slot(&mut out.companies[out.company_count as usize], &name);
+                        out.company_count += 1;
+                    }
                 }
             }
+            pos = abs_idx + pattern.len();
         }
     }
 }
@@ -243,8 +272,16 @@ fn extract_roles(_original: &str, lower: &[u8], out: &mut PostEntities) {
             let start = pos + idx + marker.len();
             if let Some(role) = extract_role_phrase(_original, lower, start) {
                 if role.len() >= 3 && out.role_count < 4 {
-                    write_slot(&mut out.roles[out.role_count as usize], &role);
-                    out.role_count += 1;
+                    // Deduplicate
+                    let already = (0..out.role_count as usize).any(|i| {
+                        let existing = &out.roles[i];
+                        let end = existing.iter().position(|&b| b == 0).unwrap_or(64);
+                        existing[..end] == role[..]
+                    });
+                    if !already {
+                        write_slot(&mut out.roles[out.role_count as usize], &role);
+                        out.role_count += 1;
+                    }
                 }
             }
             pos = start;
@@ -272,7 +309,6 @@ static TECH_KEYWORDS: &[&[u8]] = &[
     b"express",
     b"fastapi",
     b"gcp",
-    b"go",
     b"golang",
     b"graphql",
     b"grpc",
@@ -367,6 +403,8 @@ fn detect_remote_policy(lower: &[u8]) -> u8 {
         b"remote opportunity",
         b"distributed team",
         b"async-first",
+        b"work from home",
+        b"wfh",
     ];
     let hybrid: &[&[u8]] = &[b"hybrid", b"remote-friendly", b"flexible location"];
     let onsite: &[&[u8]] = &[
@@ -423,7 +461,9 @@ fn detect_seniority(lower: &[u8]) -> u8 {
         (b"senior ", 3),
         (b"sr.", 3),
         (b"sr ", 3),
-        (b"lead ", 3),
+        (b"lead engineer", 3),
+        (b"lead developer", 3),
+        (b"team lead", 3),
         (b"tech lead", 3),
         (b"mid-level", 2),
         (b"mid level", 2),
@@ -432,7 +472,8 @@ fn detect_seniority(lower: &[u8]) -> u8 {
         (b"jr ", 1),
         (b"entry-level", 1),
         (b"entry level", 1),
-        (b"intern", 1),
+        (b"intern " as &[u8], 1),
+        (b"internship", 1),
     ];
 
     for &(pattern, level) in patterns {
@@ -565,6 +606,11 @@ fn extract_preceding_phrase(text: &str, end_idx: usize) -> Option<Vec<u8>> {
         } else {
             break;
         }
+    }
+
+    // Skip any residual leading space
+    if i < phrase_end && bytes[i] == b' ' {
+        i += 1;
     }
 
     if phrase_end > i && word_count > 0 {
@@ -817,5 +863,110 @@ mod tests {
         assert_eq!(memmem(b"hello", b"hello"), Some(0));
         assert_eq!(memmem(b"hello world", b"world"), Some(6));
         assert_eq!(memmem(b"aaa", b"aa"), Some(0));
+    }
+
+    // ── New regression tests (round 2) ──
+
+    #[test]
+    fn intern_no_false_positive_on_internal() {
+        // "intern" must not match inside "internal" or "international"
+        let mut e = PostEntities::new();
+        extract_post_entities("We use internal tools and international standards.", &mut e);
+        assert_eq!(e.seniority, 0, "seniority={} — should be 0 (unknown)", e.seniority);
+    }
+
+    #[test]
+    fn intern_matches_actual_intern() {
+        let mut e = PostEntities::new();
+        extract_post_entities("We're hiring an intern for our ML team.", &mut e);
+        assert_eq!(e.seniority, 1, "seniority={} — should be 1 (junior)", e.seniority);
+    }
+
+    #[test]
+    fn internship_detected() {
+        let mut e = PostEntities::new();
+        extract_post_entities("Summer internship available in AI research.", &mut e);
+        assert_eq!(e.seniority, 1, "seniority={} — should be 1 (junior)", e.seniority);
+    }
+
+    #[test]
+    fn lead_no_false_positive_on_lead_generation() {
+        // "lead " was removed; "lead engineer"/"team lead" remain
+        let mut e = PostEntities::new();
+        extract_post_entities("Our lead generation pipeline is fully automated.", &mut e);
+        assert_eq!(e.seniority, 0, "seniority={} — should be 0 for 'lead generation'", e.seniority);
+    }
+
+    #[test]
+    fn lead_engineer_detected() {
+        let mut e = PostEntities::new();
+        extract_post_entities("Looking for a lead engineer to join our platform team.", &mut e);
+        assert_eq!(e.seniority, 3, "seniority={} — should be 3 (senior)", e.seniority);
+    }
+
+    #[test]
+    fn go_keyword_no_false_positive() {
+        // Bare "go" removed from TECH_KEYWORDS — "golang" still works
+        let mut e = PostEntities::new();
+        extract_post_entities("Let's go ahead and plan the sprint.", &mut e);
+        assert_eq!(e.skill_count, 0, "skill_count={} — 'go' should not be a tech skill", e.skill_count);
+    }
+
+    #[test]
+    fn golang_still_detected() {
+        let mut e = PostEntities::new();
+        extract_post_entities("We use golang for our microservices.", &mut e);
+        let skills: Vec<_> = (0..e.skill_count as usize).map(|i| e.skill_str(i)).collect();
+        assert!(skills.contains(&"golang"), "skills={:?}", skills);
+    }
+
+    #[test]
+    fn company_deduplication() {
+        let mut e = PostEntities::new();
+        extract_post_entities("I work at Google. Working at Google on AI. Joined at Google last year.", &mut e);
+        assert_eq!(e.company_count, 1, "company_count={} — Google should appear once", e.company_count);
+    }
+
+    #[test]
+    fn suffix_multi_match_finds_both_companies() {
+        let mut e = PostEntities::new();
+        extract_post_entities("Google is hiring engineers. Meta is hiring designers.", &mut e);
+        assert!(e.company_count >= 2, "company_count={} — should find both Google and Meta", e.company_count);
+    }
+
+    #[test]
+    fn role_deduplication() {
+        let mut e = PostEntities::new();
+        // "hiring a Senior ML Engineer" and "hiring Senior ML Engineer" would both trigger
+        extract_post_entities("We're hiring a Senior ML Engineer. Also hiring Senior ML Engineer.", &mut e);
+        // Should not fill all 4 role slots with the same role
+        let roles: Vec<_> = (0..e.role_count as usize).map(|i| e.role_str(i)).collect();
+        let unique: std::collections::HashSet<_> = roles.iter().collect();
+        assert_eq!(roles.len(), unique.len(), "roles should be deduplicated: {:?}", roles);
+    }
+
+    #[test]
+    fn detects_work_from_home() {
+        let mut e = PostEntities::new();
+        extract_post_entities("This is a work from home position.", &mut e);
+        assert_eq!(e.remote_policy, 1, "should detect 'work from home' as full remote");
+    }
+
+    #[test]
+    fn detects_wfh() {
+        let mut e = PostEntities::new();
+        extract_post_entities("Permanent wfh policy for all engineers.", &mut e);
+        assert_eq!(e.remote_policy, 1, "should detect 'wfh' as full remote");
+    }
+
+    #[test]
+    fn preceding_phrase_no_leading_space() {
+        // Regression: extract_preceding_phrase was producing " Anthropic" with leading space
+        let mut e = PostEntities::new();
+        extract_post_entities("I hear Anthropic is hiring ML researchers.", &mut e);
+        let companies: Vec<_> = (0..e.company_count as usize).map(|i| e.company_str(i)).collect();
+        for c in &companies {
+            assert!(!c.starts_with(' '), "company name has leading space: {:?}", c);
+        }
     }
 }

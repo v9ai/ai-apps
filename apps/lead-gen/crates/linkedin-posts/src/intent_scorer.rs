@@ -14,8 +14,8 @@ use std::path::Path;
 
 use crate::models::Post;
 use crate::scoring::{
-    AI_KEYWORDS, CULTURE_KEYWORDS, ENGINEERING_KEYWORDS, HIRING_KEYWORDS, NOISE_KEYWORDS,
-    REMOTE_KEYWORDS,
+    has_word, AI_KEYWORDS, CULTURE_KEYWORDS, ENGINEERING_KEYWORDS, HIRING_KEYWORDS,
+    NOISE_KEYWORDS, REMOTE_KEYWORDS,
 };
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -188,30 +188,27 @@ pub fn extract_features(post: &Post) -> [f32; NUM_FEATURES] {
     // min 5 to prevent inflated keyword densities on 1-3 word posts
     let word_count = lower.split_whitespace().count().max(5) as f32;
 
-    let hiring_hits = HIRING_KEYWORDS
-        .iter()
-        .filter(|kw| lower.contains(*kw))
-        .count() as f32;
-    let ai_hits = AI_KEYWORDS
-        .iter()
-        .filter(|kw| lower.contains(*kw))
-        .count() as f32;
-    let remote_hits = REMOTE_KEYWORDS
-        .iter()
-        .filter(|kw| lower.contains(*kw))
-        .count() as f32;
-    let eng_hits = ENGINEERING_KEYWORDS
-        .iter()
-        .filter(|kw| lower.contains(*kw))
-        .count() as f32;
-    let culture_hits = CULTURE_KEYWORDS
-        .iter()
-        .filter(|kw| lower.contains(*kw))
-        .count() as f32;
-    let noise_hits = NOISE_KEYWORDS
-        .iter()
-        .filter(|kw| lower.contains(*kw))
-        .count() as f32;
+    // Use boundary-aware matching for space-padded keywords (e.g. " llm ", " rust ")
+    let kw_hits = |keywords: &[&str]| -> f32 {
+        keywords
+            .iter()
+            .filter(|kw| {
+                let trimmed = kw.trim();
+                if trimmed == **kw {
+                    lower.contains(**kw)
+                } else {
+                    has_word(&lower, trimmed)
+                }
+            })
+            .count() as f32
+    };
+
+    let hiring_hits = kw_hits(HIRING_KEYWORDS);
+    let ai_hits = kw_hits(AI_KEYWORDS);
+    let remote_hits = kw_hits(REMOTE_KEYWORDS);
+    let eng_hits = kw_hits(ENGINEERING_KEYWORDS);
+    let culture_hits = kw_hits(CULTURE_KEYWORDS);
+    let noise_hits = kw_hits(NOISE_KEYWORDS);
 
     let media_enc = match post.media_type.as_str() {
         "image" => 0.2,
@@ -431,5 +428,66 @@ mod tests {
         for (i, f) in features.iter().enumerate() {
             assert!(!f.is_nan(), "feature[{}] is NaN with negative reactions", i);
         }
+    }
+
+    // ── New regression tests (round 2) ──
+
+    #[test]
+    fn extract_features_llm_at_start() {
+        // " llm " should match "LLM infrastructure" at position 0 via has_word
+        let post = make_post("LLM infrastructure and deployment at scale");
+        let features = extract_features(&post);
+        assert!(features[1] > 0.0, "ai_kw_density should be > 0 for LLM post: {:.3}", features[1]);
+    }
+
+    #[test]
+    fn extract_features_rust_at_start() {
+        // " rust " should match "Rust microservices" at position 0 via has_word
+        let post = make_post("Rust microservices in production with kubernetes and docker");
+        let features = extract_features(&post);
+        assert!(features[3] > 0.0, "eng_kw_density should be > 0 for Rust post: {:.3}", features[3]);
+    }
+
+    #[test]
+    fn extract_features_no_false_positive_entrust() {
+        // " rust " should NOT match inside "entrust"
+        let post = make_post("We entrust our data security to the best enterprise solutions available today");
+        let features = extract_features(&post);
+        // eng_kw_density should be 0 (no actual engineering keywords)
+        assert!(features[3] < 0.01, "eng_kw_density should be ~0 for 'entrust': {:.3}", features[3]);
+    }
+
+    #[test]
+    fn extract_features_none_text() {
+        // post_text: None should not panic, noise label should win
+        let post = Post {
+            post_url: None,
+            post_text: None,
+            posted_date: None,
+            reactions_count: 0,
+            comments_count: 0,
+            reposts_count: 0,
+            media_type: "none".to_string(),
+            is_repost: false,
+            original_author: None,
+        };
+        let features = extract_features(&post);
+        for (i, f) in features.iter().enumerate() {
+            assert!(!f.is_nan(), "feature[{}] is NaN with None text", i);
+        }
+        let scorer = PostIntentScorer::default_pretrained();
+        let intents = scorer.score_intents(&features);
+        // With no text, noise should dominate or all should be low
+        assert!(!intents.noise.is_nan());
+    }
+
+    #[test]
+    fn from_json_validates_scorer() {
+        // Roundtrip through JSON preserves all weights
+        let scorer = PostIntentScorer::default_pretrained();
+        let json = serde_json::to_string(&scorer).unwrap();
+        let restored: PostIntentScorer = serde_json::from_str(&json).unwrap();
+        assert_eq!(scorer.weights, restored.weights);
+        assert_eq!(scorer.biases, restored.biases);
     }
 }

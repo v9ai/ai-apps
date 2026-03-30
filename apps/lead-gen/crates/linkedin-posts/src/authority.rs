@@ -86,13 +86,18 @@ pub fn aggregate_signals(contact_id: i32, posts: &[StoredPost]) -> ContactPostSi
     let ai_ratio = ai_count as f32 / n as f32;
     let engagement_norm = (avg_engagement / 5.0).min(1.0); // normalize to ~0-1
 
-    // Authority delta formula
-    let authority_delta = (0.30 * thought_ratio
-        + 0.25 * max_hiring
+    // Hiring ratio (fraction of posts with hiring signal, not just max)
+    let hiring_ratio = hiring_count as f32 / n as f32;
+
+    // Authority score formula — avg_relevance gates the result so noisy contacts
+    // don't get authority from a single stray hiring post.
+    let raw = 0.30 * thought_ratio
+        + 0.25 * (0.5 * max_hiring + 0.5 * hiring_ratio)
         + 0.20 * ai_ratio
         + 0.15 * engagement_norm
-        + 0.10 * post_frequency_score)
-        .min(1.0);
+        + 0.10 * post_frequency_score;
+    let relevance_gate = avg_relevance.clamp(0.0, 1.0);
+    let authority_delta = (raw * (0.3 + 0.7 * relevance_gate)).clamp(0.0, 1.0);
 
     ContactPostSignals {
         contact_id,
@@ -229,5 +234,49 @@ mod tests {
             .collect();
         let signals = aggregate_signals(1, &posts);
         assert!(signals.authority_delta <= 1.0, "delta={:.3}", signals.authority_delta);
+    }
+
+    // ── New regression tests (round 2) ──
+
+    #[test]
+    fn relevance_gates_authority() {
+        // Low relevance posts should produce lower authority than high relevance posts
+        let low_rel = make_stored_post(1, 0.8, 0.5, 0.5, 100, 20);
+        let mut high_rel = make_stored_post(1, 0.8, 0.5, 0.5, 100, 20);
+        high_rel.relevance_score = 0.8;
+
+        let mut low_post = low_rel;
+        low_post.relevance_score = 0.05; // near-noise
+
+        let signals_low = aggregate_signals(1, &[low_post]);
+        let signals_high = aggregate_signals(1, &[high_rel]);
+
+        assert!(
+            signals_high.authority_delta > signals_low.authority_delta,
+            "high relevance ({:.3}) should produce higher authority than low relevance ({:.3})",
+            signals_high.authority_delta,
+            signals_low.authority_delta,
+        );
+    }
+
+    #[test]
+    fn authority_delta_non_negative() {
+        // Even with zero signals, authority_delta should be >= 0
+        let post = make_stored_post(1, 0.0, 0.0, 0.0, 0, 0);
+        let signals = aggregate_signals(1, &[post]);
+        assert!(signals.authority_delta >= 0.0, "delta={:.3}", signals.authority_delta);
+    }
+
+    #[test]
+    fn hiring_ratio_blended_with_max() {
+        // Two posts: one with max hiring, one without — hiring_ratio = 0.5
+        let posts = vec![
+            make_stored_post(1, 0.9, 0.5, 0.2, 50, 10),
+            make_stored_post(1, 0.1, 0.5, 0.2, 50, 10),
+        ];
+        let signals = aggregate_signals(1, &posts);
+        assert_eq!(signals.hiring_post_count, 1);
+        // Should still have some authority from the hiring signal
+        assert!(signals.authority_delta > 0.0, "delta={:.3}", signals.authority_delta);
     }
 }
