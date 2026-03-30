@@ -25,6 +25,7 @@
     "@aws-sdk/s3-request-presigner": "^3.988.0",
     "@graphql-tools/schema": "^10.0.31",
     "@graphql-typed-document-node/core": "^3.2.0",
+    "@huggingface/transformers": "^3.8.1",
     "@neondatabase/auth": "latest",
     "@neondatabase/serverless": "^0.10.4",
     "@radix-ui/react-accordion": "^1.2.12",
