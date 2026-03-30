@@ -16,6 +16,7 @@ import {
   ArrowLeftIcon,
   TrashIcon,
   LockClosedIcon,
+  Pencil1Icon,
 } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
@@ -26,7 +27,6 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
-import AddJournalEntryButton from "@/app/components/AddJournalEntryButton";
 import ConvertJournalToIssueButton from "@/app/components/ConvertJournalToIssueButton";
 
 const moodColor = (mood: string) =>
@@ -139,7 +139,7 @@ function JournalEntryContent() {
                 )}
               </Flex>
             </Flex>
-            <Flex align="center" gap="2">
+            <Flex align="center" gap="4">
               {!entry.issue && (
                 <ConvertJournalToIssueButton
                   journalEntryId={entry.id}
@@ -148,7 +148,14 @@ function JournalEntryContent() {
                   defaultFamilyMemberId={entry.familyMemberId}
                 />
               )}
-              <AddJournalEntryButton editEntry={entry} />
+              <Button
+                variant="ghost"
+                size="3"
+                style={{ cursor: "pointer" }}
+                onClick={() => router.push(`/journal/${entry.id}/edit`)}
+              >
+                <Pencil1Icon width="20" height="20" />
+              </Button>
               <AlertDialog.Root>
                 <AlertDialog.Trigger>
                   <Button
