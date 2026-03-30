@@ -1,4 +1,4 @@
-import { contacts, companies, contactEmails } from "@/db/schema";
+import { contacts, companies, contactEmails, type NewContact } from "@/db/schema";
 import { resend } from "@/lib/resend";
 import { eq, and, like, or, count, desc, sql, max } from "drizzle-orm";
 import { computeNextTouchScore } from "./reminders";
@@ -493,11 +493,12 @@ export const contactResolvers = {
       }
 
       const errors: string[] = [];
-      const valuesToInsert = [];
+      const valuesToInsert: NewContact[] = [];
 
       for (const input of args.contacts) {
         try {
-          const { firstName, lastName, emails, tags, linkedinUrl, companyId, githubHandle, telegramHandle, position, ...rest } = input;
+          const { firstName, lastName, emails, tags, linkedinUrl, companyId, githubHandle, telegramHandle, position, email, company } = input;
+          const mlClassification = classifyContact(position);
           valuesToInsert.push({
             first_name: firstName,
             last_name: lastName ?? "",
@@ -509,7 +510,13 @@ export const contactResolvers = {
             ...(githubHandle != null && { github_handle: githubHandle }),
             ...(telegramHandle != null && { telegram_handle: telegramHandle }),
             ...(position != null && { position }),
-            ...rest,
+            ...(email != null && { email }),
+            ...(company != null && { company }),
+            seniority: mlClassification.seniority,
+            department: mlClassification.department,
+            is_decision_maker: mlClassification.isDecisionMaker,
+            authority_score: mlClassification.authorityScore,
+            dm_reasons: JSON.stringify(mlClassification.dmReasons),
           });
         } catch (err) {
           errors.push(err instanceof Error ? err.message : String(err));

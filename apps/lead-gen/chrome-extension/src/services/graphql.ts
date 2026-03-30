@@ -18,10 +18,16 @@ export async function getSessionCookie(): Promise<string | undefined> {
   }
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export interface GqlResponse {
+  data?: any;
+  errors?: Array<{ message: string; locations?: unknown[]; path?: string[] }>;
+}
+
 export async function gqlRequest(
   query: string,
   variables: Record<string, unknown>,
-) {
+): Promise<GqlResponse> {
   const sessionToken = await getSessionCookie();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -35,5 +41,10 @@ export async function gqlRequest(
     headers,
     body: JSON.stringify({ query, variables }),
   });
+
+  if (!res.ok) {
+    throw new Error(`GraphQL HTTP error: ${res.status} ${res.statusText}`);
+  }
+
   return res.json();
 }
