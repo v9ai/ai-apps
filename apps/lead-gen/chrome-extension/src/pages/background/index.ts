@@ -225,6 +225,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Import LinkedIn Company People ──
+  if (message.action === "importLinkedInPeople") {
+    const { linkedinPeopleUrl, companyId } = message as {
+      linkedinPeopleUrl: string;
+      companyId: number;
+    };
+    chrome.tabs.create({ url: linkedinPeopleUrl, active: false }).then((tab) => {
+      sendResponse({ success: true });
+      if (tab.id) browsePeople(tab.id, companyId);
+    });
+    return true;
+  }
+
   return false;
 });
 
