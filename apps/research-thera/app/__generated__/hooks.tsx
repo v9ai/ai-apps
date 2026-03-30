@@ -1418,6 +1418,7 @@ export type PriorityRecommendation = {
 
 export type Query = {
   __typename?: 'Query';
+  allIssues: Array<Issue>;
   allNotes: Array<Note>;
   allStories: Array<Story>;
   allTags: Array<Scalars['String']['output']>;
@@ -2280,6 +2281,11 @@ export type GenerateTherapeuticQuestionsMutationVariables = Exact<{
 
 
 export type GenerateTherapeuticQuestionsMutation = { __typename?: 'Mutation', generateTherapeuticQuestions: { __typename?: 'GenerateQuestionsResult', success: boolean, message?: string | null, jobId?: string | null, questions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> } };
+
+export type GetAllIssuesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAllIssuesQuery = { __typename?: 'Query', allIssues: Array<{ __typename?: 'Issue', id: number, familyMemberId: number, title: string, description: string, category: string, severity: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null }> };
 
 export type GetAllNotesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4733,6 +4739,60 @@ export function useGenerateTherapeuticQuestionsMutation(baseOptions?: Apollo.Mut
 export type GenerateTherapeuticQuestionsMutationHookResult = ReturnType<typeof useGenerateTherapeuticQuestionsMutation>;
 export type GenerateTherapeuticQuestionsMutationResult = Apollo.MutationResult<GenerateTherapeuticQuestionsMutation>;
 export type GenerateTherapeuticQuestionsMutationOptions = Apollo.BaseMutationOptions<GenerateTherapeuticQuestionsMutation, GenerateTherapeuticQuestionsMutationVariables>;
+export const GetAllIssuesDocument = gql`
+    query GetAllIssues {
+  allIssues {
+    id
+    familyMemberId
+    title
+    description
+    category
+    severity
+    createdAt
+    updatedAt
+    familyMember {
+      id
+      firstName
+      name
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetAllIssuesQuery__
+ *
+ * To run a query within a React component, call `useGetAllIssuesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAllIssuesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAllIssuesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAllIssuesQuery(baseOptions?: Apollo.QueryHookOptions<GetAllIssuesQuery, GetAllIssuesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAllIssuesQuery, GetAllIssuesQueryVariables>(GetAllIssuesDocument, options);
+      }
+export function useGetAllIssuesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAllIssuesQuery, GetAllIssuesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAllIssuesQuery, GetAllIssuesQueryVariables>(GetAllIssuesDocument, options);
+        }
+// @ts-ignore
+export function useGetAllIssuesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAllIssuesQuery, GetAllIssuesQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllIssuesQuery, GetAllIssuesQueryVariables>;
+export function useGetAllIssuesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllIssuesQuery, GetAllIssuesQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllIssuesQuery | undefined, GetAllIssuesQueryVariables>;
+export function useGetAllIssuesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllIssuesQuery, GetAllIssuesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAllIssuesQuery, GetAllIssuesQueryVariables>(GetAllIssuesDocument, options);
+        }
+export type GetAllIssuesQueryHookResult = ReturnType<typeof useGetAllIssuesQuery>;
+export type GetAllIssuesLazyQueryHookResult = ReturnType<typeof useGetAllIssuesLazyQuery>;
+export type GetAllIssuesSuspenseQueryHookResult = ReturnType<typeof useGetAllIssuesSuspenseQuery>;
+export type GetAllIssuesQueryResult = Apollo.QueryResult<GetAllIssuesQuery, GetAllIssuesQueryVariables>;
 export const GetAllNotesDocument = gql`
     query GetAllNotes {
   allNotes {

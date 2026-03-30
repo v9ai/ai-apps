@@ -2169,6 +2169,11 @@ function mapIssueRow(row: IssueRow): Issue {
   };
 }
 
+export async function getAllIssues(userId: string) {
+  const rows = await neonSql`SELECT * FROM issues WHERE user_id = ${userId} ORDER BY updated_at DESC`;
+  return rows.map((r) => mapIssueRow(r as IssueRow));
+}
+
 export async function getIssuesForFamilyMember(
   familyMemberId: number,
   feedbackId?: number,
@@ -2797,6 +2802,7 @@ export const db = {
   deleteContactFeedback,
   saveExtractedIssues,
   // Issues
+  getAllIssues,
   getIssuesForFamilyMember,
   getIssue,
   getIssueByJournalEntryId,

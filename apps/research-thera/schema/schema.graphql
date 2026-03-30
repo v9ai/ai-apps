@@ -110,6 +110,7 @@ type Query {
   contactFeedback(id: Int!): ContactFeedback
 
   # Issues
+  allIssues: [Issue!]!
   issues(familyMemberId: Int!, feedbackId: Int): [Issue!]!
   issue(id: Int!): Issue
 

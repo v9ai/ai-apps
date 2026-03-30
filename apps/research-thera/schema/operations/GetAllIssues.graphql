@@ -1,0 +1,17 @@
+query GetAllIssues {
+  allIssues {
+    id
+    familyMemberId
+    title
+    description
+    category
+    severity
+    createdAt
+    updatedAt
+    familyMember {
+      id
+      firstName
+      name
+    }
+  }
+}

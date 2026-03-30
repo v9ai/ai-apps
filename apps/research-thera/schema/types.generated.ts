@@ -1402,6 +1402,7 @@ export type PriorityRecommendation = {
 
 export type Query = {
   __typename?: 'Query';
+  allIssues: Array<Issue>;
   allNotes: Array<Note>;
   allStories: Array<Story>;
   allTags: Array<Scalars['String']['output']>;
@@ -2931,6 +2932,7 @@ export type PriorityRecommendationResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
+  allIssues?: Resolver<Array<ResolversTypes['Issue']>, ParentType, ContextType>;
   allNotes?: Resolver<Array<ResolversTypes['Note']>, ParentType, ContextType>;
   allStories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType>;
   allTags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
