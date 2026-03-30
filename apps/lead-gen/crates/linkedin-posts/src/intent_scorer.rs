@@ -164,11 +164,30 @@ impl PostIntentScorer {
         PostIntents::from_array(&scores)
     }
 
-    /// Load weights from a JSON file.
+    /// Load weights from a JSON file. Validates all values are finite.
     pub fn from_json(path: &Path) -> Result<Self, String> {
         let content = std::fs::read_to_string(path)
             .map_err(|e| format!("Failed to read weights file: {}", e))?;
-        serde_json::from_str(&content).map_err(|e| format!("Failed to parse weights: {}", e))
+        let scorer: Self =
+            serde_json::from_str(&content).map_err(|e| format!("Failed to parse weights: {}", e))?;
+
+        // Validate no NaN/Inf in weights or biases
+        for (label, row) in scorer.weights.iter().enumerate() {
+            for (feat, &w) in row.iter().enumerate() {
+                if !w.is_finite() {
+                    return Err(format!(
+                        "Non-finite weight at [{label}][{feat}]: {w}"
+                    ));
+                }
+            }
+        }
+        for (label, &b) in scorer.biases.iter().enumerate() {
+            if !b.is_finite() {
+                return Err(format!("Non-finite bias at [{label}]: {b}"));
+            }
+        }
+
+        Ok(scorer)
     }
 
     /// Save weights to a JSON file.
