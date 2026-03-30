@@ -356,6 +356,33 @@ export const issueContacts = pgTable("issue_contacts", {
     .default(sql`NOW()`),
 });
 
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  issueId: integer("issue_id")
+    .notNull()
+    .references(() => issues.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  title: text("title"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
+export const conversationMessages = pgTable("conversation_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id")
+    .notNull()
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // 'user' | 'assistant'
+  content: text("content").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const deepIssueAnalyses = pgTable("deep_issue_analyses", {
   id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id").notNull(),

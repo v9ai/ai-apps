@@ -114,6 +114,10 @@ type Query {
   issues(familyMemberId: Int!, feedbackId: Int): [Issue!]!
   issue(id: Int!): Issue
 
+  # Conversations
+  conversation(id: Int!): Conversation
+  conversationsForIssue(issueId: Int!): [Conversation!]!
+
   # Contacts
   contacts: [Contact!]!
   contact(id: Int, slug: String): Contact
@@ -239,6 +243,11 @@ type Mutation {
   # Deep Issue Analysis
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
   deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
+
+  # Conversations
+  createConversation(issueId: Int!, message: String!): Conversation!
+  sendConversationMessage(conversationId: Int!, message: String!): Conversation!
+  deleteConversation(id: Int!): DeleteConversationResult!
 
   # Journal → Issue conversion
   convertJournalEntryToIssue(id: Int!, input: ConvertJournalEntryToIssueInput!): Issue!
@@ -1079,6 +1088,33 @@ type Issue {
   questions: [TherapeuticQuestion!]!
   relatedIssues: [IssueLink!]!
   contacts: [Contact!]!
+  conversations: [Conversation!]!
+}
+
+# ============================================
+# Conversations
+# ============================================
+
+type ConversationMessage {
+  id: Int!
+  conversationId: Int!
+  role: String!
+  content: String!
+  createdAt: String!
+}
+
+type Conversation {
+  id: Int!
+  issueId: Int!
+  userId: String!
+  title: String
+  messages: [ConversationMessage!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type DeleteConversationResult {
+  id: Int!
 }
 
 type IssueLink {

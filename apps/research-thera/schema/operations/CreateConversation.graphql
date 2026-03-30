@@ -1,0 +1,17 @@
+mutation CreateConversation($issueId: Int!, $message: String!) {
+  createConversation(issueId: $issueId, message: $message) {
+    id
+    issueId
+    userId
+    title
+    createdAt
+    updatedAt
+    messages {
+      id
+      conversationId
+      role
+      content
+      createdAt
+    }
+  }
+}

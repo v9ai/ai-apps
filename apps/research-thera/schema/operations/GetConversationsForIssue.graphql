@@ -1,0 +1,17 @@
+query GetConversationsForIssue($issueId: Int!) {
+  conversationsForIssue(issueId: $issueId) {
+    id
+    issueId
+    userId
+    title
+    createdAt
+    updatedAt
+    messages {
+      id
+      conversationId
+      role
+      content
+      createdAt
+    }
+  }
+}
