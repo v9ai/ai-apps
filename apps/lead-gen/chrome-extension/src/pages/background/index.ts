@@ -147,7 +147,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     }
     sendResponse({ success: true });
-    browseProfiles(tabId, profiles, returnUrl);
+    startKeepAlive();
+    browseProfiles(tabId, profiles, returnUrl).finally(stopKeepAlive);
     return true;
   }
 
