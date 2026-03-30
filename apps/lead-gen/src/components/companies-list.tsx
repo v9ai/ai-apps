@@ -420,11 +420,6 @@ export function CompaniesList() {
           <Select.Content>
             <Select.Item value="ALL">All categories</Select.Item>
             <Select.Item value="CONSULTANCY">Consultancy</Select.Item>
-            <Select.Item value="PRODUCT">Product</Select.Item>
-            <Select.Item value="AGENCY">Agency</Select.Item>
-            <Select.Item value="STAFFING">Staffing</Select.Item>
-            <Select.Item value="OTHER">Other</Select.Item>
-            <Select.Item value="UNKNOWN">Unknown</Select.Item>
           </Select.Content>
         </Select.Root>
 
