@@ -178,8 +178,15 @@ async def collect_data(state: DeepAnalysisState) -> dict:
     else:
         sections.append(
             "You are a clinical psychologist and family systems analyst. Analyze the complete history "
-            "of issues, observations, journal entries, and feedback for a family member to identify "
+            "of issues, observations, journal entries, and feedback involving a family member to identify "
             "patterns, systemic dynamics, and priorities.\n\n"
+            "CRITICAL — ATTRIBUTION RULES:\n"
+            "- For each issue, carefully read the description to identify WHO is the primary actor/aggressor, "
+            "WHO is the victim or recipient, and WHO are bystanders.\n"
+            "- The profiled family member may be the VICTIM, not the actor. Do NOT assume they caused the behavior described.\n"
+            "- People mentioned in descriptions who are NOT listed in ## Other Family Members are external individuals "
+            "(classmates, school colleagues, neighbors, etc.) — do NOT assume they are siblings or family members "
+            "unless the description explicitly states so.\n\n"
             "IMPORTANT: Only reference issue IDs, research IDs, and family member IDs that appear in the data below."
         )
 
@@ -344,6 +351,12 @@ State the profiled member's role clearly in the summary. Do not attribute anothe
 Write the analysis in the same language as the majority of the input data.""")
     else:
         sections.append("""## Instructions
+
+CRITICAL — ATTRIBUTION RULES:
+- For each issue, carefully read the description to identify WHO is the primary actor/aggressor, WHO is the victim or recipient, and WHO are bystanders.
+- The profiled family member may be the VICTIM, not the actor. Do NOT assume they caused the behavior described.
+- People mentioned in descriptions who are NOT listed in ## Other Family Members are external individuals (classmates, school colleagues, neighbors, etc.) — do NOT assume they are siblings or family members unless explicitly stated.
+
 Analyze all the data above and produce a structured JSON analysis with these fields:
 
 1. **summary** (string): 2-3 paragraph executive summary for a parent/caregiver.
@@ -355,6 +368,12 @@ Analyze all the data above and produce a structured JSON analysis with these fie
 7. **parentAdvice** (array of objects): Practical, evidence-based parenting advice linked to the analysis above. Generate 3-7 items, prioritized by urgency. Each has: title (string), advice (string: 2-4 sentences explaining the recommendation with research context), targetIssueIds (array of ints from the issues above), targetIssueTitles (array of strings), relatedPatternCluster (optional string — MUST match a patternClusters[].name from section 2 if provided), relatedResearchIds (optional array of ints from ## Existing Research), relatedResearchTitles (optional array of strings — exact titles from research), ageAppropriate (bool: true if suitable for the child's age in ## Family Member Profile), developmentalContext (optional string: why this advice fits the child's developmental stage), priority (string: immediate|short_term|long_term), concreteSteps (array of strings: specific actionable steps the parent can implement at home — be specific, e.g. "Set a 20-minute homework timer after snack" not "Help with homework"). Every item MUST reference at least one issue ID from the data. If research is available, cite specific ResearchIDs — do NOT invent research references. Verify age-appropriateness against the child's age in ## Family Member Profile.
 
 IMPORTANT: Every field annotated as "array of" MUST be a JSON array, even when there is only one item. For example: coverageGaps must be ["single gap"], NOT "single gap".
+
+ATTRIBUTION CHECK — before writing the summary, verify for each issue:
+- Who is the actual aggressor/actor based on the description text?
+- Is the profiled family member the actor, victim, or bystander?
+- Are the other people mentioned family members (listed in ## Other Family Members) or external individuals (classmates, colleagues, etc.)?
+State the profiled member's role clearly in the summary. Do not attribute another person's actions to the profiled member.
 
 Write the analysis in the same language as the majority of the input data.""")
 
