@@ -224,6 +224,14 @@ export type CompanySnapshot = {
   text_sample: Maybe<Scalars['String']['output']>;
 };
 
+export type ComputeNextTouchScoresResult = {
+  __typename?: 'ComputeNextTouchScoresResult';
+  contactsUpdated: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+  topContacts: Array<ContactNextTouch>;
+};
+
 export type Contact = {
   __typename?: 'Contact';
   authorityScore: Maybe<Scalars['Float']['output']>;
@@ -241,6 +249,7 @@ export type Contact = {
   githubHandle: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   isDecisionMaker: Maybe<Scalars['Boolean']['output']>;
+  lastContactedAt: Maybe<Scalars['String']['output']>;
   lastName: Scalars['String']['output'];
   linkedinUrl: Maybe<Scalars['String']['output']>;
   nbExecutionTimeMs: Maybe<Scalars['Int']['output']>;
@@ -249,6 +258,7 @@ export type Contact = {
   nbRetryToken: Maybe<Scalars['String']['output']>;
   nbStatus: Maybe<Scalars['String']['output']>;
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
+  nextTouchScore: Maybe<Scalars['Float']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
@@ -313,6 +323,35 @@ export type ContactMlScore = {
   dmReasons: Array<Scalars['String']['output']>;
   isDecisionMaker: Scalars['Boolean']['output'];
   seniority: Scalars['String']['output'];
+};
+
+export type ContactNextTouch = {
+  __typename?: 'ContactNextTouch';
+  contactId: Scalars['Int']['output'];
+  firstName: Scalars['String']['output'];
+  lastContactedAt: Maybe<Scalars['String']['output']>;
+  lastName: Scalars['String']['output'];
+  nextTouchScore: Scalars['Float']['output'];
+  position: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactReminder = {
+  __typename?: 'ContactReminder';
+  contactId: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  note: Maybe<Scalars['String']['output']>;
+  recurrence: Scalars['String']['output'];
+  remindAt: Scalars['String']['output'];
+  snoozedUntil: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ContactReminderWithContact = {
+  __typename?: 'ContactReminderWithContact';
+  contact: Contact;
+  reminder: ContactReminder;
 };
 
 export type ContactsResult = {
@@ -382,6 +421,13 @@ export type CreateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type CreateReminderInput = {
+  contactId: Scalars['Int']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
+  recurrence?: InputMaybe<Scalars['String']['input']>;
+  remindAt: Scalars['String']['input'];
 };
 
 export type DeleteCampaignResult = {
@@ -720,15 +766,18 @@ export type Mutation = {
   blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
+  computeNextTouchScores: ComputeNextTouchScoresResult;
   createCompany: Company;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
+  createReminder: ContactReminder;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
+  dismissReminder: ContactReminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
   findCompanyEmails: EnhanceAllContactsResult;
@@ -752,6 +801,7 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
+  snoozeReminder: ContactReminder;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
   unblockCompany: Company;
@@ -760,6 +810,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
+  updateReminder: ContactReminder;
   updateUserSettings: UserSettings;
   verifyContactEmail: VerifyEmailResult;
 };
@@ -802,6 +853,11 @@ export type MutationCancelScheduledEmailArgs = {
 };
 
 
+export type MutationComputeNextTouchScoresArgs = {
+  companyId: Scalars['Int']['input'];
+};
+
+
 export type MutationCreateCompanyArgs = {
   input: CreateCompanyInput;
 };
@@ -819,6 +875,11 @@ export type MutationCreateDraftCampaignArgs = {
 
 export type MutationCreateEmailTemplateArgs = {
   input: CreateEmailTemplateInput;
+};
+
+
+export type MutationCreateReminderArgs = {
+  input: CreateReminderInput;
 };
 
 
@@ -843,6 +904,11 @@ export type MutationDeleteContactArgs = {
 
 
 export type MutationDeleteEmailTemplateArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDismissReminderArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -970,6 +1036,12 @@ export type MutationSendScheduledEmailNowArgs = {
 };
 
 
+export type MutationSnoozeReminderArgs = {
+  days: Scalars['Int']['input'];
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationSyncResendEmailsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1014,6 +1086,12 @@ export type MutationUpdateEmailTemplateArgs = {
 };
 
 
+export type MutationUpdateReminderArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateReminderInput;
+};
+
+
 export type MutationUpdateUserSettingsArgs = {
   settings: UserSettingsInput;
   userId: Scalars['String']['input'];
@@ -1042,7 +1120,9 @@ export type Query = {
   contact: Maybe<Contact>;
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
+  contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
+  dueReminders: Array<ContactReminderWithContact>;
   emailCampaign: Maybe<EmailCampaign>;
   emailCampaigns: EmailCampaignsResult;
   emailStats: EmailStats;
@@ -1102,6 +1182,11 @@ export type QueryContactByEmailArgs = {
 
 
 export type QueryContactEmailsArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactRemindersArgs = {
   contactId: Scalars['Int']['input'];
 };
 
@@ -1369,6 +1454,13 @@ export type UpdateEmailTemplateInput = {
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+export type UpdateReminderInput = {
+  note?: InputMaybe<Scalars['String']['input']>;
+  recurrence?: InputMaybe<Scalars['String']['input']>;
+  remindAt?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UserSettings = {
   __typename?: 'UserSettings';
   created_at: Scalars['String']['output'];
@@ -1503,15 +1595,20 @@ export type ResolversTypes = {
   CompanyImportInput: ResolverTypeWrapper<Partial<CompanyImportInput>>;
   CompanyOrderBy: ResolverTypeWrapper<Partial<CompanyOrderBy>>;
   CompanySnapshot: ResolverTypeWrapper<Partial<CompanySnapshot>>;
+  ComputeNextTouchScoresResult: ResolverTypeWrapper<Partial<ComputeNextTouchScoresResult>>;
   Contact: ResolverTypeWrapper<Partial<Contact>>;
   ContactEmail: ResolverTypeWrapper<Partial<ContactEmail>>;
   ContactInput: ResolverTypeWrapper<Partial<ContactInput>>;
   ContactMLScore: ResolverTypeWrapper<Partial<ContactMlScore>>;
+  ContactNextTouch: ResolverTypeWrapper<Partial<ContactNextTouch>>;
+  ContactReminder: ResolverTypeWrapper<Partial<ContactReminder>>;
+  ContactReminderWithContact: ResolverTypeWrapper<Partial<ContactReminderWithContact>>;
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
   CreateCampaignInput: ResolverTypeWrapper<Partial<CreateCampaignInput>>;
   CreateCompanyInput: ResolverTypeWrapper<Partial<CreateCompanyInput>>;
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
   CreateEmailTemplateInput: ResolverTypeWrapper<Partial<CreateEmailTemplateInput>>;
+  CreateReminderInput: ResolverTypeWrapper<Partial<CreateReminderInput>>;
   DateTime: ResolverTypeWrapper<Partial<Scalars['DateTime']['output']>>;
   DeleteCampaignResult: ResolverTypeWrapper<Partial<DeleteCampaignResult>>;
   DeleteCompaniesResult: ResolverTypeWrapper<Partial<DeleteCompaniesResult>>;
@@ -1575,6 +1672,7 @@ export type ResolversTypes = {
   UpdateCompanyInput: ResolverTypeWrapper<Partial<UpdateCompanyInput>>;
   UpdateContactInput: ResolverTypeWrapper<Partial<UpdateContactInput>>;
   UpdateEmailTemplateInput: ResolverTypeWrapper<Partial<UpdateEmailTemplateInput>>;
+  UpdateReminderInput: ResolverTypeWrapper<Partial<UpdateReminderInput>>;
   Upload: ResolverTypeWrapper<Partial<Scalars['Upload']['output']>>;
   UserSettings: ResolverTypeWrapper<Partial<UserSettings>>;
   UserSettingsInput: ResolverTypeWrapper<Partial<UserSettingsInput>>;
@@ -1600,15 +1698,20 @@ export type ResolversParentTypes = {
   CompanyFilterInput: Partial<CompanyFilterInput>;
   CompanyImportInput: Partial<CompanyImportInput>;
   CompanySnapshot: Partial<CompanySnapshot>;
+  ComputeNextTouchScoresResult: Partial<ComputeNextTouchScoresResult>;
   Contact: Partial<Contact>;
   ContactEmail: Partial<ContactEmail>;
   ContactInput: Partial<ContactInput>;
   ContactMLScore: Partial<ContactMlScore>;
+  ContactNextTouch: Partial<ContactNextTouch>;
+  ContactReminder: Partial<ContactReminder>;
+  ContactReminderWithContact: Partial<ContactReminderWithContact>;
   ContactsResult: Partial<ContactsResult>;
   CreateCampaignInput: Partial<CreateCampaignInput>;
   CreateCompanyInput: Partial<CreateCompanyInput>;
   CreateContactInput: Partial<CreateContactInput>;
   CreateEmailTemplateInput: Partial<CreateEmailTemplateInput>;
+  CreateReminderInput: Partial<CreateReminderInput>;
   DateTime: Partial<Scalars['DateTime']['output']>;
   DeleteCampaignResult: Partial<DeleteCampaignResult>;
   DeleteCompaniesResult: Partial<DeleteCompaniesResult>;
@@ -1670,6 +1773,7 @@ export type ResolversParentTypes = {
   UpdateCompanyInput: Partial<UpdateCompanyInput>;
   UpdateContactInput: Partial<UpdateContactInput>;
   UpdateEmailTemplateInput: Partial<UpdateEmailTemplateInput>;
+  UpdateReminderInput: Partial<UpdateReminderInput>;
   Upload: Partial<Scalars['Upload']['output']>;
   UserSettings: Partial<UserSettings>;
   UserSettingsInput: Partial<UserSettingsInput>;
@@ -1809,6 +1913,13 @@ export type CompanySnapshotResolvers<ContextType = GraphQLContext, ParentType ex
   text_sample?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
+export type ComputeNextTouchScoresResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ComputeNextTouchScoresResult'] = ResolversParentTypes['ComputeNextTouchScoresResult']> = {
+  contactsUpdated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  topContacts?: Resolver<Array<ResolversTypes['ContactNextTouch']>, ParentType, ContextType>;
+};
+
 export type ContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Contact'] = ResolversParentTypes['Contact']> = {
   authorityScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   bouncedEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -1825,6 +1936,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   githubHandle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   isDecisionMaker?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  lastContactedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   linkedinUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   nbExecutionTimeMs?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -1833,6 +1945,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   nbRetryToken?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   nbStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   nbSuggestedCorrection?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  nextTouchScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seniority?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -1881,6 +1994,32 @@ export type ContactMlScoreResolvers<ContextType = GraphQLContext, ParentType ext
   dmReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   isDecisionMaker?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   seniority?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ContactNextTouchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactNextTouch'] = ResolversParentTypes['ContactNextTouch']> = {
+  contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastContactedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  nextTouchScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type ContactReminderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactReminder'] = ResolversParentTypes['ContactReminder']> = {
+  contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  note?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  recurrence?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  remindAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  snoozedUntil?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ContactReminderWithContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactReminderWithContact'] = ResolversParentTypes['ContactReminderWithContact']> = {
+  contact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType>;
+  reminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType>;
 };
 
 export type ContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactsResult'] = ResolversParentTypes['ContactsResult']> = {
@@ -2147,15 +2286,18 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   blockCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationBlockCompanyArgs, 'id'>>;
   cancelCompanyEmails?: Resolver<ResolversTypes['CancelCompanyEmailsResult'], ParentType, ContextType, RequireFields<MutationCancelCompanyEmailsArgs, 'companyId'>>;
   cancelScheduledEmail?: Resolver<ResolversTypes['CancelEmailResult'], ParentType, ContextType, RequireFields<MutationCancelScheduledEmailArgs, 'resendId'>>;
+  computeNextTouchScores?: Resolver<ResolversTypes['ComputeNextTouchScoresResult'], ParentType, ContextType, RequireFields<MutationComputeNextTouchScoresArgs, 'companyId'>>;
   createCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationCreateCompanyArgs, 'input'>>;
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationCreateContactArgs, 'input'>>;
   createDraftCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationCreateDraftCampaignArgs, 'input'>>;
   createEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationCreateEmailTemplateArgs, 'input'>>;
+  createReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationCreateReminderArgs, 'input'>>;
   deleteCampaign?: Resolver<ResolversTypes['DeleteCampaignResult'], ParentType, ContextType, RequireFields<MutationDeleteCampaignArgs, 'id'>>;
   deleteCompanies?: Resolver<ResolversTypes['DeleteCompaniesResult'], ParentType, ContextType, RequireFields<MutationDeleteCompaniesArgs, 'companyIds'>>;
   deleteCompany?: Resolver<ResolversTypes['DeleteCompanyResponse'], ParentType, ContextType, RequireFields<MutationDeleteCompanyArgs, 'id'>>;
   deleteContact?: Resolver<ResolversTypes['DeleteContactResult'], ParentType, ContextType, RequireFields<MutationDeleteContactArgs, 'id'>>;
   deleteEmailTemplate?: Resolver<ResolversTypes['DeleteEmailTemplateResult'], ParentType, ContextType, RequireFields<MutationDeleteEmailTemplateArgs, 'id'>>;
+  dismissReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationDismissReminderArgs, 'id'>>;
   enhanceAllContacts?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType>;
   enhanceCompany?: Resolver<ResolversTypes['EnhanceCompanyResponse'], ParentType, ContextType, Partial<MutationEnhanceCompanyArgs>>;
   findCompanyEmails?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType, RequireFields<MutationFindCompanyEmailsArgs, 'companyId'>>;
@@ -2179,6 +2321,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   sendEmail?: Resolver<ResolversTypes['SendEmailResult'], ParentType, ContextType, RequireFields<MutationSendEmailArgs, 'input'>>;
   sendOutreachEmail?: Resolver<ResolversTypes['SendOutreachEmailResult'], ParentType, ContextType, RequireFields<MutationSendOutreachEmailArgs, 'input'>>;
   sendScheduledEmailNow?: Resolver<ResolversTypes['SendNowResult'], ParentType, ContextType, RequireFields<MutationSendScheduledEmailNowArgs, 'resendId'>>;
+  snoozeReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationSnoozeReminderArgs, 'days' | 'id'>>;
   syncResendEmails?: Resolver<ResolversTypes['SyncResendResult'], ParentType, ContextType, Partial<MutationSyncResendEmailsArgs>>;
   unarchiveEmail?: Resolver<ResolversTypes['ArchiveEmailResult'], ParentType, ContextType, RequireFields<MutationUnarchiveEmailArgs, 'id'>>;
   unblockCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUnblockCompanyArgs, 'id'>>;
@@ -2187,6 +2330,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUpdateCompanyArgs, 'id' | 'input'>>;
   updateContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationUpdateContactArgs, 'id' | 'input'>>;
   updateEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationUpdateEmailTemplateArgs, 'id' | 'input'>>;
+  updateReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationUpdateReminderArgs, 'id' | 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
 };
@@ -2201,7 +2345,9 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactArgs, 'id'>>;
   contactByEmail?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, RequireFields<QueryContactByEmailArgs, 'email'>>;
   contactEmails?: Resolver<Array<ResolversTypes['ContactEmail']>, ParentType, ContextType, RequireFields<QueryContactEmailsArgs, 'contactId'>>;
+  contactReminders?: Resolver<Array<ResolversTypes['ContactReminder']>, ParentType, ContextType, RequireFields<QueryContactRemindersArgs, 'contactId'>>;
   contacts?: Resolver<ResolversTypes['ContactsResult'], ParentType, ContextType, Partial<QueryContactsArgs>>;
+  dueReminders?: Resolver<Array<ResolversTypes['ContactReminderWithContact']>, ParentType, ContextType>;
   emailCampaign?: Resolver<Maybe<ResolversTypes['EmailCampaign']>, ParentType, ContextType, RequireFields<QueryEmailCampaignArgs, 'id'>>;
   emailCampaigns?: Resolver<ResolversTypes['EmailCampaignsResult'], ParentType, ContextType, Partial<QueryEmailCampaignsArgs>>;
   emailStats?: Resolver<ResolversTypes['EmailStats'], ParentType, ContextType>;
@@ -2348,9 +2494,13 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CompanyContactEmail?: CompanyContactEmailResolvers<ContextType>;
   CompanyFact?: CompanyFactResolvers<ContextType>;
   CompanySnapshot?: CompanySnapshotResolvers<ContextType>;
+  ComputeNextTouchScoresResult?: ComputeNextTouchScoresResultResolvers<ContextType>;
   Contact?: ContactResolvers<ContextType>;
   ContactEmail?: ContactEmailResolvers<ContextType>;
   ContactMLScore?: ContactMlScoreResolvers<ContextType>;
+  ContactNextTouch?: ContactNextTouchResolvers<ContextType>;
+  ContactReminder?: ContactReminderResolvers<ContextType>;
+  ContactReminderWithContact?: ContactReminderWithContactResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   DeleteCampaignResult?: DeleteCampaignResultResolvers<ContextType>;

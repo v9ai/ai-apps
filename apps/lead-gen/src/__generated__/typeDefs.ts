@@ -188,6 +188,13 @@ type CompanySnapshot {
   text_sample: String
 }
 
+type ComputeNextTouchScoresResult {
+  contactsUpdated: Int!
+  message: String!
+  success: Boolean!
+  topContacts: [ContactNextTouch!]!
+}
+
 type Contact {
   authorityScore: Float
   bouncedEmails: [String!]!
@@ -204,6 +211,7 @@ type Contact {
   githubHandle: String
   id: Int!
   isDecisionMaker: Boolean
+  lastContactedAt: String
   lastName: String!
   linkedinUrl: String
   nbExecutionTimeMs: Int
@@ -212,6 +220,7 @@ type Contact {
   nbRetryToken: String
   nbStatus: String
   nbSuggestedCorrection: String
+  nextTouchScore: Float
   position: String
   seniority: String
   tags: [String!]!
@@ -274,6 +283,32 @@ type ContactMLScore {
   dmReasons: [String!]!
   isDecisionMaker: Boolean!
   seniority: String!
+}
+
+type ContactNextTouch {
+  contactId: Int!
+  firstName: String!
+  lastContactedAt: String
+  lastName: String!
+  nextTouchScore: Float!
+  position: String
+}
+
+type ContactReminder {
+  contactId: Int!
+  createdAt: String!
+  id: Int!
+  note: String
+  recurrence: String!
+  remindAt: String!
+  snoozedUntil: String
+  status: String!
+  updatedAt: String!
+}
+
+type ContactReminderWithContact {
+  contact: Contact!
+  reminder: ContactReminder!
 }
 
 type ContactsResult {
@@ -342,6 +377,13 @@ input CreateEmailTemplateInput {
   tags: [String!]
   textContent: String
   variables: [String!]
+}
+
+input CreateReminderInput {
+  contactId: Int!
+  note: String
+  recurrence: String
+  remindAt: String!
 }
 
 scalar DateTime
@@ -658,15 +700,18 @@ type Mutation {
   blockCompany(id: Int!): Company!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
+  computeNextTouchScores(companyId: Int!): ComputeNextTouchScoresResult!
   createCompany(input: CreateCompanyInput!): Company!
   createContact(input: CreateContactInput!): Contact!
   createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
+  createReminder(input: CreateReminderInput!): ContactReminder!
   deleteCampaign(id: String!): DeleteCampaignResult!
   deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
   deleteCompany(id: Int!): DeleteCompanyResponse!
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
+  dismissReminder(id: Int!): ContactReminder!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
@@ -690,6 +735,7 @@ type Mutation {
   sendEmail(input: SendEmailInput!): SendEmailResult!
   sendOutreachEmail(input: SendOutreachEmailInput!): SendOutreachEmailResult!
   sendScheduledEmailNow(resendId: String!): SendNowResult!
+  snoozeReminder(days: Int!, id: Int!): ContactReminder!
   syncResendEmails(companyId: Int): SyncResendResult!
   unarchiveEmail(id: Int!): ArchiveEmailResult!
   unblockCompany(id: Int!): Company!
@@ -698,6 +744,7 @@ type Mutation {
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
+  updateReminder(id: Int!, input: UpdateReminderInput!): ContactReminder!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
 }
@@ -719,7 +766,9 @@ type Query {
   contact(id: Int!): Contact
   contactByEmail(email: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
+  contactReminders(contactId: Int!): [ContactReminder!]!
   contacts(companyId: Int, limit: Int, offset: Int, search: String): ContactsResult!
+  dueReminders: [ContactReminderWithContact!]!
   emailCampaign(id: String!): EmailCampaign
   emailCampaigns(limit: Int, offset: Int, status: String): EmailCampaignsResult!
   emailStats: EmailStats!
@@ -922,6 +971,13 @@ input UpdateEmailTemplateInput {
   tags: [String!]
   textContent: String
   variables: [String!]
+}
+
+input UpdateReminderInput {
+  note: String
+  recurrence: String
+  remindAt: String
+  status: String
 }
 
 scalar Upload

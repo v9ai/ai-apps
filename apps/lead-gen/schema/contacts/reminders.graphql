@@ -1,0 +1,59 @@
+type ContactReminder {
+  id: Int!
+  contactId: Int!
+  remindAt: String!
+  recurrence: String!
+  note: String
+  status: String!
+  snoozedUntil: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ContactReminderWithContact {
+  reminder: ContactReminder!
+  contact: Contact!
+}
+
+type ComputeNextTouchScoresResult {
+  success: Boolean!
+  message: String!
+  contactsUpdated: Int!
+  topContacts: [ContactNextTouch!]!
+}
+
+type ContactNextTouch {
+  contactId: Int!
+  firstName: String!
+  lastName: String!
+  position: String
+  nextTouchScore: Float!
+  lastContactedAt: String
+}
+
+input CreateReminderInput {
+  contactId: Int!
+  remindAt: String!
+  recurrence: String
+  note: String
+}
+
+input UpdateReminderInput {
+  remindAt: String
+  recurrence: String
+  note: String
+  status: String
+}
+
+extend type Query {
+  contactReminders(contactId: Int!): [ContactReminder!]!
+  dueReminders: [ContactReminderWithContact!]!
+}
+
+extend type Mutation {
+  createReminder(input: CreateReminderInput!): ContactReminder!
+  updateReminder(id: Int!, input: UpdateReminderInput!): ContactReminder!
+  snoozeReminder(id: Int!, days: Int!): ContactReminder!
+  dismissReminder(id: Int!): ContactReminder!
+  computeNextTouchScores(companyId: Int!): ComputeNextTouchScoresResult!
+}

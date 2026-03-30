@@ -15,6 +15,9 @@ import {
   useUnverifyCompanyContactsMutation,
   useMergeDuplicateContactsMutation,
   useScoreContactsMlMutation,
+  useCreateReminderMutation,
+  useComputeNextTouchScoresMutation,
+  useDueRemindersQuery,
 } from "@/__generated__/hooks";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -42,6 +45,7 @@ import {
 import { button } from "@/recipes/button";
 import {
   ArrowLeftIcon,
+  CalendarIcon,
   CheckIcon,
   CopyIcon,
   EnvelopeClosedIcon,
@@ -582,7 +586,18 @@ export function CompanyContactsClient({
   const [unverifyCompanyContacts, { loading: unverifying }] = useUnverifyCompanyContactsMutation();
   const [mergeDuplicateContacts, { loading: merging }] = useMergeDuplicateContactsMutation();
   const [scoreContactsML, { loading: scoringML }] = useScoreContactsMlMutation();
+  const [computeTouchScores, { loading: computingTouch }] = useComputeNextTouchScoresMutation();
+  const [createReminder] = useCreateReminderMutation();
   const [mlScoreStatus, setMlScoreStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  // Remind dialog state
+  const [remindContactId, setRemindContactId] = useState<number | null>(null);
+  const [remindDate, setRemindDate] = useState("");
+  const [remindNote, setRemindNote] = useState("");
+  const [remindRecurrence, setRemindRecurrence] = useState("none");
+  const [remindStatus, setRemindStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  // Due reminders — loaded for overdue badges
+  const { data: dueRemindersData } = useDueRemindersQuery({ skip: !isAdmin, fetchPolicy: "cache-and-network" });
+  const dueContactIds = new Set(dueRemindersData?.dueReminders?.map((r) => r.contact.id) ?? []);
 
   // Fetch company emails for follow-up modal
   const { data: companyEmailsData, refetch: refetchEmails } = useGetCompanyContactEmailsQuery({
@@ -703,6 +718,36 @@ export function CompanyContactsClient({
     }
   }, [company, unverifyCompanyContacts, refetch]);
 
+  const handleComputeTouch = useCallback(async () => {
+    if (!company) return;
+    setMlScoreStatus(null);
+    try {
+      const { data: result } = await computeTouchScores({ variables: { companyId: company.id } });
+      const res = result?.computeNextTouchScores;
+      setMlScoreStatus({ type: res?.success ? "success" : "error", message: res?.message ?? "Touch score computation failed" });
+      if (res?.success) await refetch();
+    } catch (err: unknown) {
+      setMlScoreStatus({ type: "error", message: err instanceof Error ? err.message : "Touch score computation failed" });
+    }
+  }, [computeTouchScores, company, refetch]);
+
+  const handleCreateReminder = useCallback(async () => {
+    if (!remindContactId || !remindDate) return;
+    setRemindStatus(null);
+    try {
+      await createReminder({
+        variables: { input: { contactId: remindContactId, remindAt: remindDate, recurrence: remindRecurrence, note: remindNote || null } },
+      });
+      setRemindStatus({ type: "success", message: "Reminder set" });
+      setRemindContactId(null);
+      setRemindDate("");
+      setRemindNote("");
+      setRemindRecurrence("none");
+    } catch (err: unknown) {
+      setRemindStatus({ type: "error", message: err instanceof Error ? err.message : "Failed to set reminder" });
+    }
+  }, [createReminder, remindContactId, remindDate, remindNote, remindRecurrence]);
+
   const handleScoreML = useCallback(async () => {
     if (!company) return;
     setMlScoreStatus(null);
@@ -758,9 +803,9 @@ export function CompanyContactsClient({
     );
   }
 
-  // Sort by authority score DESC so decision makers appear first
+  // Sort by next_touch_score DESC (urgency-weighted authority score) so highest-priority contacts appear first
   const contactsList = [...(data?.contacts?.contacts ?? [])].sort(
-    (a, b) => (b.authorityScore ?? 0) - (a.authorityScore ?? 0),
+    (a, b) => (b.nextTouchScore ?? 0) - (a.nextTouchScore ?? 0),
   );
   const totalCount = data?.contacts?.totalCount ?? 0;
   const batchEmailRecipients = contactsList
@@ -913,6 +958,16 @@ export function CompanyContactsClient({
             >
               {scoringML ? <Spinner size="1" /> : <MagicWandIcon />}
               Score ML
+            </button>
+
+            <button
+              className={button({ variant: "ghost", size: "md" })}
+              onClick={handleComputeTouch}
+              disabled={computingTouch}
+              title="Compute next-touch urgency scores based on days since last email and authority score"
+            >
+              {computingTouch ? <Spinner size="1" /> : <ClockIcon />}
+              Touch scores
             </button>
 
             <button
@@ -1085,6 +1140,16 @@ export function CompanyContactsClient({
                             DM
                           </Badge>
                         )}
+                        {dueContactIds.has(contact.id) && (
+                          <Badge color="red" variant="solid" size="1">
+                            reminder due
+                          </Badge>
+                        )}
+                        {!dueContactIds.has(contact.id) && (contact.nextTouchScore ?? 0) > 0.7 && (
+                          <Badge color="orange" variant="soft" size="1">
+                            follow up
+                          </Badge>
+                        )}
                         {contact.seniority && (
                           <Badge
                             color={seniorityColor(contact.seniority)}
@@ -1107,6 +1172,11 @@ export function CompanyContactsClient({
                           {contact.authorityScore != null && contact.authorityScore > 0 && (
                             <Text as="span" size="1" color="gray" ml="2">
                               {(contact.authorityScore * 100).toFixed(0)}%
+                            </Text>
+                          )}
+                          {contact.lastContactedAt && (
+                            <Text as="span" size="1" color="gray" ml="2">
+                              · last: {Math.floor((Date.now() - new Date(contact.lastContactedAt).getTime()) / 86_400_000)}d ago
                             </Text>
                           )}
                         </Text>
@@ -1187,6 +1257,14 @@ export function CompanyContactsClient({
                           onFound={refetch}
                         />
                       )}
+                      <button
+                        className={button({ variant: "ghost", size: "sm" })}
+                        onClick={(e) => { e.stopPropagation(); setRemindContactId(contact.id); setRemindDate(""); setRemindNote(""); setRemindRecurrence("none"); setRemindStatus(null); }}
+                        title="Set a reminder for this contact"
+                      >
+                        <CalendarIcon />
+                        Remind
+                      </button>
                       <DeleteContactButton
                         contact={contact}
                         onDeleted={refetch}
@@ -1199,6 +1277,74 @@ export function CompanyContactsClient({
           </Flex>
         )}
       </Flex>
+      {/* Set Reminder dialog */}
+      <Dialog.Root open={remindContactId !== null} onOpenChange={(open) => { if (!open) setRemindContactId(null); }}>
+        <Dialog.Content maxWidth="400px">
+          <Dialog.Title>Set reminder</Dialog.Title>
+          <Dialog.Description size="2" color="gray" mb="4">
+            Choose when to follow up with this contact.
+          </Dialog.Description>
+
+          {remindStatus && (
+            <Callout.Root color={remindStatus.type === "success" ? "green" : "red"} mb="3" size="1">
+              <Callout.Icon><InfoCircledIcon /></Callout.Icon>
+              <Callout.Text>{remindStatus.message}</Callout.Text>
+            </Callout.Root>
+          )}
+
+          <Flex direction="column" gap="3">
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="p">Date</Text>
+              <input
+                type="date"
+                value={remindDate}
+                onChange={(e) => setRemindDate(e.target.value)}
+                style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--gray-6)", background: "var(--color-background)", color: "var(--gray-12)", fontSize: 14 }}
+              />
+            </Box>
+
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="p">Recurrence</Text>
+              <select
+                value={remindRecurrence}
+                onChange={(e) => setRemindRecurrence(e.target.value)}
+                style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--gray-6)", background: "var(--color-background)", color: "var(--gray-12)", fontSize: 14 }}
+              >
+                <option value="none">One-time</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Every 2 weeks</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </Box>
+
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="p">Note (optional)</Text>
+              <TextArea
+                size="1"
+                placeholder="e.g. Follow up on proposal…"
+                value={remindNote}
+                onChange={(e) => setRemindNote(e.target.value)}
+                rows={3}
+              />
+            </Box>
+          </Flex>
+
+          <Flex gap="3" mt="4" justify="end">
+            <Dialog.Close>
+              <button className={button({ variant: "ghost" })}>Cancel</button>
+            </Dialog.Close>
+            <button
+              className={button({ variant: "solid" })}
+              onClick={handleCreateReminder}
+              disabled={!remindDate}
+            >
+              <CalendarIcon />
+              Set reminder
+            </button>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
+
       <BatchEmailModal
         open={batchEmailOpen}
         onOpenChange={setBatchEmailOpen}

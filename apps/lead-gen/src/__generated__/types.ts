@@ -221,6 +221,14 @@ export type CompanySnapshot = {
   text_sample: Maybe<Scalars['String']['output']>;
 };
 
+export type ComputeNextTouchScoresResult = {
+  __typename: 'ComputeNextTouchScoresResult';
+  contactsUpdated: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+  topContacts: Array<ContactNextTouch>;
+};
+
 export type Contact = {
   __typename: 'Contact';
   authorityScore: Maybe<Scalars['Float']['output']>;
@@ -238,6 +246,7 @@ export type Contact = {
   githubHandle: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   isDecisionMaker: Maybe<Scalars['Boolean']['output']>;
+  lastContactedAt: Maybe<Scalars['String']['output']>;
   lastName: Scalars['String']['output'];
   linkedinUrl: Maybe<Scalars['String']['output']>;
   nbExecutionTimeMs: Maybe<Scalars['Int']['output']>;
@@ -246,6 +255,7 @@ export type Contact = {
   nbRetryToken: Maybe<Scalars['String']['output']>;
   nbStatus: Maybe<Scalars['String']['output']>;
   nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
+  nextTouchScore: Maybe<Scalars['Float']['output']>;
   position: Maybe<Scalars['String']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
@@ -310,6 +320,35 @@ export type ContactMlScore = {
   dmReasons: Array<Scalars['String']['output']>;
   isDecisionMaker: Scalars['Boolean']['output'];
   seniority: Scalars['String']['output'];
+};
+
+export type ContactNextTouch = {
+  __typename: 'ContactNextTouch';
+  contactId: Scalars['Int']['output'];
+  firstName: Scalars['String']['output'];
+  lastContactedAt: Maybe<Scalars['String']['output']>;
+  lastName: Scalars['String']['output'];
+  nextTouchScore: Scalars['Float']['output'];
+  position: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactReminder = {
+  __typename: 'ContactReminder';
+  contactId: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  note: Maybe<Scalars['String']['output']>;
+  recurrence: Scalars['String']['output'];
+  remindAt: Scalars['String']['output'];
+  snoozedUntil: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ContactReminderWithContact = {
+  __typename: 'ContactReminderWithContact';
+  contact: Contact;
+  reminder: ContactReminder;
 };
 
 export type ContactsResult = {
@@ -379,6 +418,13 @@ export type CreateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type CreateReminderInput = {
+  contactId: Scalars['Int']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
+  recurrence?: InputMaybe<Scalars['String']['input']>;
+  remindAt: Scalars['String']['input'];
 };
 
 export type DeleteCampaignResult = {
@@ -717,15 +763,18 @@ export type Mutation = {
   blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
+  computeNextTouchScores: ComputeNextTouchScoresResult;
   createCompany: Company;
   createContact: Contact;
   createDraftCampaign: EmailCampaign;
   createEmailTemplate: EmailTemplate;
+  createReminder: ContactReminder;
   deleteCampaign: DeleteCampaignResult;
   deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
+  dismissReminder: ContactReminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
   findCompanyEmails: EnhanceAllContactsResult;
@@ -749,6 +798,7 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
+  snoozeReminder: ContactReminder;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
   unblockCompany: Company;
@@ -757,6 +807,7 @@ export type Mutation = {
   updateCompany: Company;
   updateContact: Contact;
   updateEmailTemplate: EmailTemplate;
+  updateReminder: ContactReminder;
   updateUserSettings: UserSettings;
   verifyContactEmail: VerifyEmailResult;
 };
@@ -799,6 +850,11 @@ export type MutationCancelScheduledEmailArgs = {
 };
 
 
+export type MutationComputeNextTouchScoresArgs = {
+  companyId: Scalars['Int']['input'];
+};
+
+
 export type MutationCreateCompanyArgs = {
   input: CreateCompanyInput;
 };
@@ -816,6 +872,11 @@ export type MutationCreateDraftCampaignArgs = {
 
 export type MutationCreateEmailTemplateArgs = {
   input: CreateEmailTemplateInput;
+};
+
+
+export type MutationCreateReminderArgs = {
+  input: CreateReminderInput;
 };
 
 
@@ -840,6 +901,11 @@ export type MutationDeleteContactArgs = {
 
 
 export type MutationDeleteEmailTemplateArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDismissReminderArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -967,6 +1033,12 @@ export type MutationSendScheduledEmailNowArgs = {
 };
 
 
+export type MutationSnoozeReminderArgs = {
+  days: Scalars['Int']['input'];
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationSyncResendEmailsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1011,6 +1083,12 @@ export type MutationUpdateEmailTemplateArgs = {
 };
 
 
+export type MutationUpdateReminderArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateReminderInput;
+};
+
+
 export type MutationUpdateUserSettingsArgs = {
   settings: UserSettingsInput;
   userId: Scalars['String']['input'];
@@ -1039,7 +1117,9 @@ export type Query = {
   contact: Maybe<Contact>;
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
+  contactReminders: Array<ContactReminder>;
   contacts: ContactsResult;
+  dueReminders: Array<ContactReminderWithContact>;
   emailCampaign: Maybe<EmailCampaign>;
   emailCampaigns: EmailCampaignsResult;
   emailStats: EmailStats;
@@ -1099,6 +1179,11 @@ export type QueryContactByEmailArgs = {
 
 
 export type QueryContactEmailsArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactRemindersArgs = {
   contactId: Scalars['Int']['input'];
 };
 
@@ -1364,6 +1449,13 @@ export type UpdateEmailTemplateInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   textContent?: InputMaybe<Scalars['String']['input']>;
   variables?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type UpdateReminderInput = {
+  note?: InputMaybe<Scalars['String']['input']>;
+  recurrence?: InputMaybe<Scalars['String']['input']>;
+  remindAt?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UserSettings = {

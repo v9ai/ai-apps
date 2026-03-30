@@ -73,6 +73,9 @@ type Contact {
   isDecisionMaker: Boolean
   authorityScore: Float
   dmReasons: [String!]!
+  # ML touch score (urgency to re-engage)
+  nextTouchScore: Float
+  lastContactedAt: String
   createdAt: String!
   updatedAt: String!
 }

@@ -236,6 +236,9 @@ export const contacts = pgTable(
     is_decision_maker: boolean("is_decision_maker").default(false),
     authority_score: real("authority_score").default(0.0),
     dm_reasons: text("dm_reasons"), // JSON array
+    // ML touch score (computed by computeNextTouchScores / scoreContactsML)
+    next_touch_score: real("next_touch_score").default(0.0),
+    last_contacted_at: text("last_contacted_at"),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
@@ -252,6 +255,36 @@ export const contacts = pgTable(
 
 export type Contact = typeof contacts.$inferSelect;
 export type NewContact = typeof contacts.$inferInsert;
+
+// Contact Reminders (explicit dated reminders per contact)
+export const contactReminders = pgTable(
+  "contact_reminders",
+  {
+    id: serial("id").primaryKey(),
+    contact_id: integer("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    remind_at: text("remind_at").notNull(),
+    recurrence: text("recurrence").notNull().default("none"), // none | weekly | biweekly | monthly
+    note: text("note"),
+    status: text("status").notNull().default("pending"), // pending | snoozed | done
+    snoozed_until: text("snoozed_until"),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+    updated_at: text("updated_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => ({
+    contactIdIdx: index("idx_contact_reminders_contact_id").on(table.contact_id),
+    remindAtIdx: index("idx_contact_reminders_remind_at").on(table.remind_at),
+    statusIdx: index("idx_contact_reminders_status").on(table.status),
+  }),
+);
+
+export type ContactReminder = typeof contactReminders.$inferSelect;
+export type NewContactReminder = typeof contactReminders.$inferInsert;
 
 // Contact Emails (outbound emails sent to a contact)
 export const contactEmails = pgTable(
