@@ -188,7 +188,7 @@ fn quantize_to_int8(values: &[f32]) -> (Vec<i8>, f32, f32) {
     }
 
     // Map [min, max] → [-127, 127]
-    let scale = range / 254.0;
+    let scale = range / 255.0;
     let bias = min_val + 127.0 * scale;
 
     let quantized: Vec<i8> = values.iter().map(|&v| {

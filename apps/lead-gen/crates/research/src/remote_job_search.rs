@@ -372,10 +372,12 @@ async fn run_topics(
                     }
                     ResearchTask::Write(topic) => {
                         info!(worker = %ctx.worker_id, topic = topic.slug, "Write phase starting");
-                        let env = ctx
-                            .mailbox
-                            .recv_wait(&format!("findings:{}", topic.slug))
-                            .await;
+                        let env = tokio::time::timeout(
+                            std::time::Duration::from_secs(30),
+                            ctx.mailbox.recv_wait(&format!("findings:{}", topic.slug)),
+                        )
+                        .await
+                        .with_context(|| format!("Search phase timed out for topic '{}'", topic.slug))?;
                         let row = write_strategy_report(topic, &env.body, &api_key).await?;
                         d1.insert_study_topic(&row)
                             .await

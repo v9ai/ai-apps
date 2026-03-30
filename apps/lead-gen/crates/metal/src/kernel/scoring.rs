@@ -175,7 +175,7 @@ impl ContactBatch {
             score += self.employee_in_range[i] as f32 * icp.employee_weight;
             score += self.seniority_match[i] as f32 * icp.seniority_weight;
             score += self.department_match[i] as f32 * icp.department_weight;
-            score += self.tech_overlap[i] as f32; // already 0-10, maps to tech_weight range
+            score += (self.tech_overlap[i] as f32 / 10.0) * icp.tech_weight;
             score += match self.email_verified[i] {
                 2 => icp.email_weight,
                 1 => icp.email_weight * 0.4,
@@ -381,14 +381,15 @@ impl LogisticScorer {
             }
         }
 
-        for _epoch in 0..epochs {
+        for epoch in 0..epochs {
+            let lr = learning_rate * 0.995f32.powi(epoch as i32);
             for (x, &y) in features.iter().zip(labels.iter()) {
                 let pred = self.score(x);
                 let error = pred - y;
                 for j in 0..7 {
-                    self.weights[j] -= learning_rate * error * x[j];
+                    self.weights[j] -= lr * error * x[j];
                 }
-                self.bias -= learning_rate * error;
+                self.bias -= lr * error;
             }
         }
 

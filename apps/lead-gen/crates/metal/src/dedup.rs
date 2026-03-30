@@ -12,7 +12,9 @@ pub fn blocking_keys_contact(first: &str, last: &str, email: &str) -> Vec<String
     let last_lower = last.to_lowercase();
     let fi = first_lower.chars().next().unwrap_or('_');
     let soundex = soundex_code(&last_lower);
-    keys.push(format!("s:{}:{}", soundex, fi));
+    if soundex != "0000" {
+        keys.push(format!("s:{}:{}", soundex, fi));
+    }
 
     let prefix = if last_lower.len() >= 3 { &last_lower[..3] } else { &last_lower };
     keys.push(format!("p:{}:{}", prefix, fi));
