@@ -20,7 +20,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "styled-system/*": ["./styled-system/*"]
     }
   },
   "include": [
