@@ -346,6 +346,16 @@ export const issueLinks = pgTable("issue_links", {
     .default(sql`NOW()`),
 });
 
+export const issueContacts = pgTable("issue_contacts", {
+  id: serial("id").primaryKey(),
+  issueId: integer("issue_id").notNull(),
+  contactId: integer("contact_id").notNull(),
+  userId: text("user_id").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const deepIssueAnalyses = pgTable("deep_issue_analyses", {
   id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id").notNull(),

@@ -49,6 +49,7 @@ import {
   ExternalLinkIcon,
   GlobeIcon,
   InfoCircledIcon,
+  LinkedInLogoIcon,
   MagicWandIcon,
   ChevronDownIcon,
   ChevronUpIcon,
@@ -973,6 +974,11 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     },
   });
 
+  const [updateCompanyDirect] = useUpdateCompanyMutation();
+  const [linkedInFetchError, setLinkedInFetchError] = useState<string | null>(null);
+  const [linkedInFetchSuccess, setLinkedInFetchSuccess] = useState<string | null>(null);
+  const [isLinkedInFetching, setIsLinkedInFetching] = useState(false);
+
   const company = data?.company ?? null;
   // When a numeric ID is passed, derive the slug from the loaded company record
   const effectiveKey = companyKey ?? company?.key;
@@ -1019,6 +1025,51 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
       console.error("Analysis error:", e);
     }
   }, [company, analyzeCompany]);
+
+  const handleFetchLinkedIn = useCallback(async () => {
+    if (!company?.linkedin_url) return;
+    setIsLinkedInFetching(true);
+    setLinkedInFetchError(null);
+    setLinkedInFetchSuccess(null);
+    try {
+      const res = await fetch("/api/linkedin/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: company.linkedin_url }),
+      });
+      const data = await res.json() as {
+        urlType?: string;
+        companyName?: string | null;
+        tagline?: string | null;
+        logoUrl?: string | null;
+        extractionQuality?: string;
+        reason?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        setLinkedInFetchError(data.error ?? "LinkedIn fetch failed");
+        return;
+      }
+      if (data.extractionQuality === "failed") {
+        setLinkedInFetchError(data.reason ?? "LinkedIn requires authentication");
+        return;
+      }
+      const input: Record<string, string> = {};
+      if (data.tagline && !company.description) input.description = data.tagline;
+      if (data.logoUrl && !company.logo_url) input.logo_url = data.logoUrl;
+      if (Object.keys(input).length > 0) {
+        await updateCompanyDirect({ variables: { id: company.id, input } });
+        await refetch();
+        setLinkedInFetchSuccess(`Updated: ${Object.keys(input).join(", ")}`);
+      } else {
+        setLinkedInFetchSuccess("LinkedIn metadata fetched — no new fields to update.");
+      }
+    } catch (err) {
+      setLinkedInFetchError(err instanceof Error ? err.message : "Fetch failed");
+    } finally {
+      setIsLinkedInFetching(false);
+    }
+  }, [company, updateCompanyDirect, refetch]);
 
   const handleToggleBlock = useCallback(async () => {
     if (!company) return;
@@ -1116,6 +1167,26 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               <InfoCircledIcon />
             </Callout.Icon>
             <Callout.Text>{analyzeSuccess}</Callout.Text>
+          </Callout.Root>
+        )}
+
+        {linkedInFetchError && (
+          <Callout.Root color="red">
+            <Callout.Icon>
+              <InfoCircledIcon />
+            </Callout.Icon>
+            <Callout.Text>
+              <Strong>LinkedIn fetch error:</Strong> {linkedInFetchError}
+            </Callout.Text>
+          </Callout.Root>
+        )}
+
+        {linkedInFetchSuccess && (
+          <Callout.Root color="green">
+            <Callout.Icon>
+              <LinkedInLogoIcon />
+            </Callout.Icon>
+            <Callout.Text>{linkedInFetchSuccess}</Callout.Text>
           </Callout.Root>
         )}
 
@@ -1221,6 +1292,16 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                   >
                     <MagicWandIcon />
                     {isEnhancing ? "Enhancing…" : "Enhance"}
+                  </Button>
+                )}
+                {isAdmin && company.linkedin_url && (
+                  <Button
+                    variant="soft"
+                    onClick={handleFetchLinkedIn}
+                    disabled={isLinkedInFetching}
+                  >
+                    <LinkedInLogoIcon />
+                    {isLinkedInFetching ? "Fetching…" : "Fetch LinkedIn"}
                   </Button>
                 )}
                 {isAdmin && company.website && (

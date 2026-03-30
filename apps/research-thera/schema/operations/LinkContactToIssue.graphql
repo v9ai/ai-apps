@@ -1,0 +1,12 @@
+mutation LinkContactToIssue($issueId: Int!, $contactId: Int!) {
+  linkContactToIssue(issueId: $issueId, contactId: $contactId) {
+    id
+    contact {
+      id
+      firstName
+      lastName
+      role
+      slug
+    }
+  }
+}
