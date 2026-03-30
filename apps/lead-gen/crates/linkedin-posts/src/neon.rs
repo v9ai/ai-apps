@@ -4,16 +4,14 @@ use anyhow::{Context, Result};
 
 use crate::models::Contact;
 
-/// Fetch all contacts with a linkedin_url from Neon PostgreSQL.
-pub async fn fetch_contacts_with_linkedin() -> Result<Vec<Contact>> {
+/// Open a reusable Neon PostgreSQL connection (SSL via rustls).
+pub async fn connect_neon() -> Result<tokio_postgres::Client> {
     let db_url = std::env::var("NEON_DATABASE_URL")
         .context("NEON_DATABASE_URL env var not set")?
-        // tokio-postgres + rustls doesn't support channel_binding — strip it
         .replace("channel_binding=require&", "")
         .replace("&channel_binding=require", "")
         .replace("?channel_binding=require", "?");
 
-    // Neon requires SSL — build a rustls connector
     let tls_config = rustls::ClientConfig::builder()
         .with_root_certificates(root_certs())
         .with_no_client_auth();
@@ -23,12 +21,18 @@ pub async fn fetch_contacts_with_linkedin() -> Result<Vec<Contact>> {
         .await
         .context("Failed to connect to Neon")?;
 
-    // Spawn the connection task
     tokio::spawn(async move {
         if let Err(e) = connection.await {
             tracing::error!("Neon connection error: {}", e);
         }
     });
+
+    Ok(client)
+}
+
+/// Fetch all contacts with a linkedin_url from Neon PostgreSQL.
+pub async fn fetch_contacts_with_linkedin() -> Result<Vec<Contact>> {
+    let client = connect_neon().await?;
 
     let rows = client
         .query(
@@ -61,26 +65,7 @@ pub async fn fetch_contacts_with_linkedin() -> Result<Vec<Contact>> {
 
 /// Count contacts with linkedin_url in Neon.
 pub async fn count_contacts() -> Result<i64> {
-    let db_url = std::env::var("NEON_DATABASE_URL")
-        .context("NEON_DATABASE_URL env var not set")?
-        .replace("channel_binding=require&", "")
-        .replace("&channel_binding=require", "")
-        .replace("?channel_binding=require", "?");
-
-    let tls_config = rustls::ClientConfig::builder()
-        .with_root_certificates(root_certs())
-        .with_no_client_auth();
-    let tls = tokio_postgres_rustls::MakeRustlsConnect::new(tls_config);
-
-    let (client, connection) = tokio_postgres::connect(&db_url, tls)
-        .await
-        .context("Failed to connect to Neon")?;
-
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            tracing::error!("Neon connection error: {}", e);
-        }
-    });
+    let client = connect_neon().await?;
 
     let row = client
         .query_one(
@@ -100,26 +85,7 @@ pub async fn update_contact_authority(contact_id: i32, delta: f32) -> Result<()>
         return Ok(());
     }
 
-    let db_url = std::env::var("NEON_DATABASE_URL")
-        .context("NEON_DATABASE_URL env var not set")?
-        .replace("channel_binding=require&", "")
-        .replace("&channel_binding=require", "")
-        .replace("?channel_binding=require", "?");
-
-    let tls_config = rustls::ClientConfig::builder()
-        .with_root_certificates(root_certs())
-        .with_no_client_auth();
-    let tls = tokio_postgres_rustls::MakeRustlsConnect::new(tls_config);
-
-    let (client, connection) = tokio_postgres::connect(&db_url, tls)
-        .await
-        .context("Failed to connect to Neon")?;
-
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            tracing::error!("Neon connection error: {}", e);
-        }
-    });
+    let client = connect_neon().await?;
 
     client
         .execute(

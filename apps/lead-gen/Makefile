@@ -56,6 +56,17 @@ db-migrate:
 db-studio:
 	pnpm db:studio
 
+# ── LinkedIn Post Processing ─────────────────────────────────
+
+POSTS_DIR := crates/linkedin-posts
+POSTS_BIN := $(POSTS_DIR)/target/release/process-posts
+
+.PHONY: process-posts
+
+process-posts: ## Classify contacts as AI-related from LinkedIn post signals, tag non-AI as to-be-deleted
+	cd $(POSTS_DIR) && cargo build --release --bin process-posts
+	dotenv -f .env.local run -- $(POSTS_BIN)
+
 # ── Pipeline ──────────────────────────────────────────────────
 
 METAL_DIR := crates/metal
