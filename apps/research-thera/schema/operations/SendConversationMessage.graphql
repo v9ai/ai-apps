@@ -1,0 +1,17 @@
+mutation SendConversationMessage($conversationId: Int!, $message: String!) {
+  sendConversationMessage(conversationId: $conversationId, message: $message) {
+    id
+    issueId
+    userId
+    title
+    createdAt
+    updatedAt
+    messages {
+      id
+      conversationId
+      role
+      content
+      createdAt
+    }
+  }
+}

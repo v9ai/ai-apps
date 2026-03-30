@@ -200,6 +200,26 @@ export type ContactFeedback = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type Conversation = {
+  __typename?: 'Conversation';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  issueId: Scalars['Int']['output'];
+  messages: Array<ConversationMessage>;
+  title?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
+export type ConversationMessage = {
+  __typename?: 'ConversationMessage';
+  content: Scalars['String']['output'];
+  conversationId: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  role: Scalars['String']['output'];
+};
+
 export type ConvertJournalEntryToIssueInput = {
   category: Scalars['String']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
@@ -369,6 +389,11 @@ export type DeleteContactResult = {
   __typename?: 'DeleteContactResult';
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type DeleteConversationResult = {
+  __typename?: 'DeleteConversationResult';
+  id: Scalars['Int']['output'];
 };
 
 export type DeleteDeepAnalysisResult = {
@@ -716,6 +741,7 @@ export type Issue = {
   __typename?: 'Issue';
   category: Scalars['String']['output'];
   contacts: Array<Contact>;
+  conversations: Array<Conversation>;
   createdAt: Scalars['String']['output'];
   createdBy: Scalars['String']['output'];
   description: Scalars['String']['output'];
@@ -810,6 +836,7 @@ export type Mutation = {
   convertJournalEntryToIssue: Issue;
   createContact: Contact;
   createContactFeedback: ContactFeedback;
+  createConversation: Conversation;
   createFamilyMember: FamilyMember;
   createGoal: Goal;
   createHabit: Habit;
@@ -825,6 +852,7 @@ export type Mutation = {
   deleteClaimCard: Scalars['Boolean']['output'];
   deleteContact: DeleteContactResult;
   deleteContactFeedback: DeleteContactFeedbackResult;
+  deleteConversation: DeleteConversationResult;
   deleteDeepIssueAnalysis: DeleteDeepAnalysisResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
   deleteGoal: DeleteGoalResult;
@@ -853,6 +881,7 @@ export type Mutation = {
   logHabit: HabitLog;
   markTeacherFeedbackExtracted: TeacherFeedback;
   refreshClaimCard: ClaimCard;
+  sendConversationMessage: Conversation;
   setNoteVisibility: Note;
   shareFamilyMember: FamilyMemberShare;
   shareNote: NoteShare;
@@ -906,6 +935,12 @@ export type MutationcreateContactArgs = {
 
 export type MutationcreateContactFeedbackArgs = {
   input: CreateContactFeedbackInput;
+};
+
+
+export type MutationcreateConversationArgs = {
+  issueId: Scalars['Int']['input'];
+  message: Scalars['String']['input'];
 };
 
 
@@ -983,6 +1018,11 @@ export type MutationdeleteContactArgs = {
 
 
 export type MutationdeleteContactFeedbackArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationdeleteConversationArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1148,6 +1188,12 @@ export type MutationmarkTeacherFeedbackExtractedArgs = {
 
 export type MutationrefreshClaimCardArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationsendConversationMessageArgs = {
+  conversationId: Scalars['Int']['input'];
+  message: Scalars['String']['input'];
 };
 
 
@@ -1436,6 +1482,8 @@ export type Query = {
   contactFeedback?: Maybe<ContactFeedback>;
   contactFeedbacks: Array<ContactFeedback>;
   contacts: Array<Contact>;
+  conversation?: Maybe<Conversation>;
+  conversationsForIssue: Array<Conversation>;
   deepIssueAnalyses: Array<DeepIssueAnalysis>;
   deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
   familyMember?: Maybe<FamilyMember>;
@@ -1506,6 +1554,16 @@ export type QuerycontactFeedbackArgs = {
 export type QuerycontactFeedbacksArgs = {
   contactId: Scalars['Int']['input'];
   familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type QueryconversationArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryconversationsForIssueArgs = {
+  issueId: Scalars['Int']['input'];
 };
 
 
@@ -2032,6 +2090,8 @@ export type ResolversTypes = {
   ClaimVerdict: ResolverTypeWrapper<'CONTRADICTED' | 'INSUFFICIENT' | 'MIXED' | 'SUPPORTED' | 'UNVERIFIED'>;
   Contact: ResolverTypeWrapper<Contact>;
   ContactFeedback: ResolverTypeWrapper<Omit<ContactFeedback, 'familyMember' | 'issues' | 'source' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, issues: Array<ResolversTypes['Issue']>, source?: Maybe<ResolversTypes['FeedbackSource']>, stories: Array<ResolversTypes['Story']> }>;
+  Conversation: ResolverTypeWrapper<Conversation>;
+  ConversationMessage: ResolverTypeWrapper<ConversationMessage>;
   ConvertJournalEntryToIssueInput: ConvertJournalEntryToIssueInput;
   CreateContactFeedbackInput: CreateContactFeedbackInput;
   CreateContactInput: CreateContactInput;
@@ -2050,6 +2110,7 @@ export type ResolversTypes = {
   DeleteBehaviorObservationResult: ResolverTypeWrapper<DeleteBehaviorObservationResult>;
   DeleteContactFeedbackResult: ResolverTypeWrapper<DeleteContactFeedbackResult>;
   DeleteContactResult: ResolverTypeWrapper<DeleteContactResult>;
+  DeleteConversationResult: ResolverTypeWrapper<DeleteConversationResult>;
   DeleteDeepAnalysisResult: ResolverTypeWrapper<DeleteDeepAnalysisResult>;
   DeleteFamilyMemberResult: ResolverTypeWrapper<DeleteFamilyMemberResult>;
   DeleteGoalResult: ResolverTypeWrapper<DeleteGoalResult>;
@@ -2164,6 +2225,8 @@ export type ResolversParentTypes = {
   ClaimScope: ClaimScope;
   Contact: Contact;
   ContactFeedback: Omit<ContactFeedback, 'familyMember' | 'issues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, issues: Array<ResolversParentTypes['Issue']>, stories: Array<ResolversParentTypes['Story']> };
+  Conversation: Conversation;
+  ConversationMessage: ConversationMessage;
   ConvertJournalEntryToIssueInput: ConvertJournalEntryToIssueInput;
   CreateContactFeedbackInput: CreateContactFeedbackInput;
   CreateContactInput: CreateContactInput;
@@ -2182,6 +2245,7 @@ export type ResolversParentTypes = {
   DeleteBehaviorObservationResult: DeleteBehaviorObservationResult;
   DeleteContactFeedbackResult: DeleteContactFeedbackResult;
   DeleteContactResult: DeleteContactResult;
+  DeleteConversationResult: DeleteConversationResult;
   DeleteDeepAnalysisResult: DeleteDeepAnalysisResult;
   DeleteFamilyMemberResult: DeleteFamilyMemberResult;
   DeleteGoalResult: DeleteGoalResult;
@@ -2395,6 +2459,24 @@ export type ContactFeedbackResolvers<ContextType = GraphQLContext, ParentType ex
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type ConversationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Conversation'] = ResolversParentTypes['Conversation']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  issueId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  messages?: Resolver<Array<ResolversTypes['ConversationMessage']>, ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ConversationMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConversationMessage'] = ResolversParentTypes['ConversationMessage']> = {
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  conversationId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type DataSnapshotResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DataSnapshot'] = ResolversParentTypes['DataSnapshot']> = {
   contactFeedbackCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   issueCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -2439,6 +2521,10 @@ export type DeleteContactFeedbackResultResolvers<ContextType = GraphQLContext, P
 export type DeleteContactResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteContactResult'] = ResolversParentTypes['DeleteContactResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type DeleteConversationResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteConversationResult'] = ResolversParentTypes['DeleteConversationResult']> = {
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type DeleteDeepAnalysisResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteDeepAnalysisResult'] = ResolversParentTypes['DeleteDeepAnalysisResult']> = {
@@ -2716,6 +2802,7 @@ export type HabitStatusResolvers = EnumResolverSignature<{ ACTIVE?: any, ARCHIVE
 export type IssueResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Issue'] = ResolversParentTypes['Issue']> = {
   category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
+  conversations?: Resolver<Array<ResolversTypes['Conversation']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2797,6 +2884,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   convertJournalEntryToIssue?: Resolver<ResolversTypes['Issue'], ParentType, ContextType, RequireFields<MutationconvertJournalEntryToIssueArgs, 'id' | 'input'>>;
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationcreateContactArgs, 'input'>>;
   createContactFeedback?: Resolver<ResolversTypes['ContactFeedback'], ParentType, ContextType, RequireFields<MutationcreateContactFeedbackArgs, 'input'>>;
+  createConversation?: Resolver<ResolversTypes['Conversation'], ParentType, ContextType, RequireFields<MutationcreateConversationArgs, 'issueId' | 'message'>>;
   createFamilyMember?: Resolver<ResolversTypes['FamilyMember'], ParentType, ContextType, RequireFields<MutationcreateFamilyMemberArgs, 'input'>>;
   createGoal?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationcreateGoalArgs, 'input'>>;
   createHabit?: Resolver<ResolversTypes['Habit'], ParentType, ContextType, RequireFields<MutationcreateHabitArgs, 'input'>>;
@@ -2812,6 +2900,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteClaimCard?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationdeleteClaimCardArgs, 'id'>>;
   deleteContact?: Resolver<ResolversTypes['DeleteContactResult'], ParentType, ContextType, RequireFields<MutationdeleteContactArgs, 'id'>>;
   deleteContactFeedback?: Resolver<ResolversTypes['DeleteContactFeedbackResult'], ParentType, ContextType, RequireFields<MutationdeleteContactFeedbackArgs, 'id'>>;
+  deleteConversation?: Resolver<ResolversTypes['DeleteConversationResult'], ParentType, ContextType, RequireFields<MutationdeleteConversationArgs, 'id'>>;
   deleteDeepIssueAnalysis?: Resolver<ResolversTypes['DeleteDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteDeepIssueAnalysisArgs, 'id'>>;
   deleteFamilyMember?: Resolver<ResolversTypes['DeleteFamilyMemberResult'], ParentType, ContextType, RequireFields<MutationdeleteFamilyMemberArgs, 'id'>>;
   deleteGoal?: Resolver<ResolversTypes['DeleteGoalResult'], ParentType, ContextType, RequireFields<MutationdeleteGoalArgs, 'id'>>;
@@ -2840,6 +2929,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   logHabit?: Resolver<ResolversTypes['HabitLog'], ParentType, ContextType, RequireFields<MutationlogHabitArgs, 'habitId' | 'loggedDate'>>;
   markTeacherFeedbackExtracted?: Resolver<ResolversTypes['TeacherFeedback'], ParentType, ContextType, RequireFields<MutationmarkTeacherFeedbackExtractedArgs, 'id'>>;
   refreshClaimCard?: Resolver<ResolversTypes['ClaimCard'], ParentType, ContextType, RequireFields<MutationrefreshClaimCardArgs, 'id'>>;
+  sendConversationMessage?: Resolver<ResolversTypes['Conversation'], ParentType, ContextType, RequireFields<MutationsendConversationMessageArgs, 'conversationId' | 'message'>>;
   setNoteVisibility?: Resolver<ResolversTypes['Note'], ParentType, ContextType, RequireFields<MutationsetNoteVisibilityArgs, 'noteId' | 'visibility'>>;
   shareFamilyMember?: Resolver<ResolversTypes['FamilyMemberShare'], ParentType, ContextType, RequireFields<MutationshareFamilyMemberArgs, 'email' | 'familyMemberId'>>;
   shareNote?: Resolver<ResolversTypes['NoteShare'], ParentType, ContextType, RequireFields<MutationshareNoteArgs, 'email' | 'noteId'>>;
@@ -2983,6 +3073,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   contactFeedback?: Resolver<Maybe<ResolversTypes['ContactFeedback']>, ParentType, ContextType, RequireFields<QuerycontactFeedbackArgs, 'id'>>;
   contactFeedbacks?: Resolver<Array<ResolversTypes['ContactFeedback']>, ParentType, ContextType, RequireFields<QuerycontactFeedbacksArgs, 'contactId' | 'familyMemberId'>>;
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
+  conversation?: Resolver<Maybe<ResolversTypes['Conversation']>, ParentType, ContextType, RequireFields<QueryconversationArgs, 'id'>>;
+  conversationsForIssue?: Resolver<Array<ResolversTypes['Conversation']>, ParentType, ContextType, RequireFields<QueryconversationsForIssueArgs, 'issueId'>>;
   deepIssueAnalyses?: Resolver<Array<ResolversTypes['DeepIssueAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepIssueAnalysesArgs, 'familyMemberId'>>;
   deepIssueAnalysis?: Resolver<Maybe<ResolversTypes['DeepIssueAnalysis']>, ParentType, ContextType, RequireFields<QuerydeepIssueAnalysisArgs, 'id'>>;
   familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType, Partial<QueryfamilyMemberArgs>>;
@@ -3181,11 +3273,14 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ClaimVerdict?: ClaimVerdictResolvers;
   Contact?: ContactResolvers<ContextType>;
   ContactFeedback?: ContactFeedbackResolvers<ContextType>;
+  Conversation?: ConversationResolvers<ContextType>;
+  ConversationMessage?: ConversationMessageResolvers<ContextType>;
   DataSnapshot?: DataSnapshotResolvers<ContextType>;
   DeepIssueAnalysis?: DeepIssueAnalysisResolvers<ContextType>;
   DeleteBehaviorObservationResult?: DeleteBehaviorObservationResultResolvers<ContextType>;
   DeleteContactFeedbackResult?: DeleteContactFeedbackResultResolvers<ContextType>;
   DeleteContactResult?: DeleteContactResultResolvers<ContextType>;
+  DeleteConversationResult?: DeleteConversationResultResolvers<ContextType>;
   DeleteDeepAnalysisResult?: DeleteDeepAnalysisResultResolvers<ContextType>;
   DeleteFamilyMemberResult?: DeleteFamilyMemberResultResolvers<ContextType>;
   DeleteGoalResult?: DeleteGoalResultResolvers<ContextType>;

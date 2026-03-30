@@ -2747,6 +2747,110 @@ export async function getAllTags(userId: string): Promise<string[]> {
 }
 
 // ============================================
+// ============================================
+// Conversations
+// ============================================
+
+export async function createConversation({
+  issueId,
+  userId,
+  title,
+}: {
+  issueId: number;
+  userId: string;
+  title?: string;
+}): Promise<number> {
+  const rows = await neonSql`
+    INSERT INTO conversations (issue_id, user_id, title)
+    VALUES (${issueId}, ${userId}, ${title ?? null})
+    RETURNING id
+  `;
+  return rows[0].id as number;
+}
+
+export async function getConversation(id: number, userId: string) {
+  const rows = await neonSql`
+    SELECT c.*, COALESCE(
+      json_agg(m ORDER BY m.created_at ASC) FILTER (WHERE m.id IS NOT NULL),
+      '[]'
+    ) AS messages
+    FROM conversations c
+    LEFT JOIN conversation_messages m ON m.conversation_id = c.id
+    WHERE c.id = ${id} AND c.user_id = ${userId}
+    GROUP BY c.id
+  `;
+  if (!rows[0]) return null;
+  const row = rows[0];
+  return {
+    id: row.id as number,
+    issueId: row.issue_id as number,
+    userId: row.user_id as string,
+    title: (row.title as string) || null,
+    messages: (row.messages as any[]).map((m) => ({
+      id: m.id as number,
+      conversationId: m.conversation_id as number,
+      role: m.role as string,
+      content: m.content as string,
+      createdAt: m.created_at as string,
+    })),
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function listConversationsForIssue(issueId: number, userId: string) {
+  const rows = await neonSql`
+    SELECT c.*, COALESCE(
+      json_agg(m ORDER BY m.created_at ASC) FILTER (WHERE m.id IS NOT NULL),
+      '[]'
+    ) AS messages
+    FROM conversations c
+    LEFT JOIN conversation_messages m ON m.conversation_id = c.id
+    WHERE c.issue_id = ${issueId} AND c.user_id = ${userId}
+    GROUP BY c.id
+    ORDER BY c.created_at DESC
+  `;
+  return rows.map((row) => ({
+    id: row.id as number,
+    issueId: row.issue_id as number,
+    userId: row.user_id as string,
+    title: (row.title as string) || null,
+    messages: (row.messages as any[]).map((m) => ({
+      id: m.id as number,
+      conversationId: m.conversation_id as number,
+      role: m.role as string,
+      content: m.content as string,
+      createdAt: m.created_at as string,
+    })),
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }));
+}
+
+export async function deleteConversation(id: number, userId: string): Promise<void> {
+  await neonSql`DELETE FROM conversations WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+export async function addConversationMessage({
+  conversationId,
+  role,
+  content,
+}: {
+  conversationId: number;
+  role: string;
+  content: string;
+}): Promise<number> {
+  const rows = await neonSql`
+    INSERT INTO conversation_messages (conversation_id, role, content)
+    VALUES (${conversationId}, ${role}, ${content})
+    RETURNING id
+  `;
+  // Touch updated_at on the conversation
+  await neonSql`UPDATE conversations SET updated_at = NOW() WHERE id = ${conversationId}`;
+  return rows[0].id as number;
+}
+
+// ============================================
 // Namespace export
 // ============================================
 
@@ -2881,5 +2985,11 @@ export const db = {
   deleteHabitLog,
   listHabitLogs,
   getTodayLogForHabit,
+  // Conversations
+  createConversation,
+  getConversation,
+  listConversationsForIssue,
+  deleteConversation,
+  addConversationMessage,
 };
 

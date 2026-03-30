@@ -60,6 +60,7 @@ import {
   useLinkContactToIssueMutation,
   useUnlinkContactFromIssueMutation,
 } from "@/app/__generated__/hooks";
+import { ConversationsSection } from "@/app/components/ConversationsSection";
 
 const CATEGORY_OPTIONS = [
   "academic",
@@ -1706,6 +1707,9 @@ function IssueDetailContent() {
           </Flex>
         </Card>
       )}
+
+      {/* Conversations */}
+      <ConversationsSection issueId={issueId} />
 
       {/* Edit Dialog */}
       <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>

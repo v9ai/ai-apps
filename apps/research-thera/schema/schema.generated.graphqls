@@ -169,6 +169,24 @@ type ContactFeedback {
   updatedAt: String!
 }
 
+type Conversation {
+  createdAt: String!
+  id: Int!
+  issueId: Int!
+  messages: [ConversationMessage!]!
+  title: String
+  updatedAt: String!
+  userId: String!
+}
+
+type ConversationMessage {
+  content: String!
+  conversationId: Int!
+  createdAt: String!
+  id: Int!
+  role: String!
+}
+
 input ConvertJournalEntryToIssueInput {
   category: String!
   description: String
@@ -333,6 +351,10 @@ type DeleteContactFeedbackResult {
 type DeleteContactResult {
   message: String
   success: Boolean!
+}
+
+type DeleteConversationResult {
+  id: Int!
 }
 
 type DeleteDeepAnalysisResult {
@@ -650,6 +672,7 @@ enum HabitStatus {
 type Issue {
   category: String!
   contacts: [Contact!]!
+  conversations: [Conversation!]!
   createdAt: String!
   createdBy: String!
   description: String!
@@ -740,6 +763,7 @@ type Mutation {
   convertJournalEntryToIssue(id: Int!, input: ConvertJournalEntryToIssueInput!): Issue!
   createContact(input: CreateContactInput!): Contact!
   createContactFeedback(input: CreateContactFeedbackInput!): ContactFeedback!
+  createConversation(issueId: Int!, message: String!): Conversation!
   createFamilyMember(input: CreateFamilyMemberInput!): FamilyMember!
   createGoal(input: CreateGoalInput!): Goal!
   createHabit(input: CreateHabitInput!): Habit!
@@ -755,6 +779,7 @@ type Mutation {
   deleteClaimCard(id: ID!): Boolean!
   deleteContact(id: Int!): DeleteContactResult!
   deleteContactFeedback(id: Int!): DeleteContactFeedbackResult!
+  deleteConversation(id: Int!): DeleteConversationResult!
   deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
   deleteGoal(id: Int!): DeleteGoalResult!
@@ -783,6 +808,7 @@ type Mutation {
   logHabit(count: Int, habitId: Int!, loggedDate: String!, notes: String): HabitLog!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
   refreshClaimCard(id: ID!): ClaimCard!
+  sendConversationMessage(conversationId: Int!, message: String!): Conversation!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
   shareFamilyMember(email: String!, familyMemberId: Int!, role: FamilyMemberShareRole): FamilyMemberShare!
   shareNote(email: String!, noteId: Int!, role: NoteShareRole): NoteShare!
@@ -963,6 +989,8 @@ type Query {
   contactFeedback(id: Int!): ContactFeedback
   contactFeedbacks(contactId: Int!, familyMemberId: Int!): [ContactFeedback!]!
   contacts: [Contact!]!
+  conversation(id: Int!): Conversation
+  conversationsForIssue(issueId: Int!): [Conversation!]!
   deepIssueAnalyses(familyMemberId: Int!): [DeepIssueAnalysis!]!
   deepIssueAnalysis(id: Int!): DeepIssueAnalysis
   familyMember(id: Int, slug: String): FamilyMember

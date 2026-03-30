@@ -1,5 +1,5 @@
 import type { IssueResolvers } from './../types.generated';
-import { getContactFeedback, getContactsForIssue, getFamilyMember, getJournalEntry, getLinkedIssues, listStoriesForIssue, listTherapeuticQuestions } from "@/src/db";
+import { getContactFeedback, getContactsForIssue, getFamilyMember, getJournalEntry, getLinkedIssues, listConversationsForIssue, listStoriesForIssue, listTherapeuticQuestions } from "@/src/db";
 
 export const Issue: IssueResolvers = {
   feedback: async (parent) => {
@@ -64,6 +64,12 @@ export const Issue: IssueResolvers = {
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     })) as any;
+  },
+  conversations: async (parent, _args, ctx) => {
+    const userEmail = ctx.userEmail;
+    if (!userEmail) return [];
+    const rows = await listConversationsForIssue(parent.id, userEmail);
+    return rows as any;
   },
   relatedIssues: async (parent) => {
     const links = await getLinkedIssues(parent.id, parent.createdBy);
