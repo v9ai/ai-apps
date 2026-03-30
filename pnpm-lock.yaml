@@ -95,6 +95,9 @@ importers:
         specifier: ^0.31.0
         version: 0.31.0
     devDependencies:
+      '@pandacss/dev':
+        specifier: ^1.9.0
+        version: 1.9.0(@cfworker/json-schema@4.1.1)(jsdom@28.1.0(@noble/hashes@2.0.1))(typescript@5.9.3)
       '@types/node':
         specifier: ^22
         version: 22.19.7

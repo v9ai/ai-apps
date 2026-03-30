@@ -1,10 +1,20 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
-import { Button, Card, Flex, Heading, Text, TextField } from "@radix-ui/themes";
+import {
+  Button,
+  Callout,
+  Card,
+  Flex,
+  Heading,
+  Spinner,
+  Text,
+  TextField,
+} from "@radix-ui/themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { css } from "styled-system/css";
 
 export function SignUpForm() {
   const [name, setName] = useState("");
@@ -39,17 +49,24 @@ export function SignUpForm() {
   };
 
   return (
-    <Card size="3" style={{ width: "100%", maxWidth: 400 }}>
-      <Flex direction="column" gap="5">
+    <Card
+      size="3"
+      className={css({ width: "100%", maxWidth: "420px" })}
+    >
+      <Flex direction="column" gap="6">
         <Flex direction="column" gap="1">
           <Heading size="6">Create account</Heading>
-          <Text size="2" color="gray">Sign up to get started</Text>
+          <Text size="2" color="gray">
+            Sign up to get started
+          </Text>
         </Flex>
 
         <form onSubmit={handleSignUp}>
-          <Flex direction="column" gap="4">
+          <Flex direction="column" gap="5">
             <Flex direction="column" gap="1">
-              <Text as="label" size="2" weight="medium" htmlFor="name">Name</Text>
+              <Text as="label" size="2" weight="bold" htmlFor="name">
+                Name
+              </Text>
               <TextField.Root
                 id="name"
                 type="text"
@@ -60,7 +77,9 @@ export function SignUpForm() {
             </Flex>
 
             <Flex direction="column" gap="1">
-              <Text as="label" size="2" weight="medium" htmlFor="email">Email</Text>
+              <Text as="label" size="2" weight="bold" htmlFor="email">
+                Email
+              </Text>
               <TextField.Root
                 id="email"
                 type="email"
@@ -72,7 +91,9 @@ export function SignUpForm() {
             </Flex>
 
             <Flex direction="column" gap="1">
-              <Text as="label" size="2" weight="medium" htmlFor="password">Password</Text>
+              <Text as="label" size="2" weight="bold" htmlFor="password">
+                Password
+              </Text>
               <TextField.Root
                 id="password"
                 type="password"
@@ -83,7 +104,9 @@ export function SignUpForm() {
             </Flex>
 
             <Flex direction="column" gap="1">
-              <Text as="label" size="2" weight="medium" htmlFor="repeat-password">Confirm password</Text>
+              <Text as="label" size="2" weight="bold" htmlFor="repeat-password">
+                Confirm password
+              </Text>
               <TextField.Root
                 id="repeat-password"
                 type="password"
@@ -93,9 +116,14 @@ export function SignUpForm() {
               />
             </Flex>
 
-            {error && <Text size="2" color="red">{error}</Text>}
+            {error && (
+              <Callout.Root color="red" size="1">
+                <Callout.Text>{error}</Callout.Text>
+              </Callout.Root>
+            )}
 
-            <Button type="submit" disabled={isLoading} style={{ width: "100%" }}>
+            <Button type="submit" disabled={isLoading} width="100%">
+              {isLoading && <Spinner />}
               {isLoading ? "Creating account..." : "Sign up"}
             </Button>
           </Flex>
@@ -103,7 +131,16 @@ export function SignUpForm() {
 
         <Text size="2" align="center" color="gray">
           Already have an account?{" "}
-          <Link href="/auth/login" style={{ color: "var(--accent-9)" }}>Sign in</Link>
+          <Link
+            href="/auth/login"
+            className={css({
+              color: "var(--accent-9)",
+              textDecoration: "none",
+              _hover: { textDecoration: "underline" },
+            })}
+          >
+            Sign in
+          </Link>
         </Text>
       </Flex>
     </Card>
