@@ -280,7 +280,7 @@ async def load_story(state: TTSState) -> dict:
     is_qwen = not is_romanian
 
     if is_qwen:
-        voice = state.get("voice") or "cherry"
+        voice = state.get("voice") or "ethan"
         instructions = state.get("instructions") or DEFAULT_TTS_INSTRUCTIONS
         model = "qwen3-tts-instruct-flash" if instructions else "qwen3-tts-flash"
     else:
@@ -307,7 +307,7 @@ async def synthesize(state: dict) -> dict:
         return {}
 
     chunks: list[str] = state.get("_chunks", [])
-    voice: str = state.get("_voice", "cherry")
+    voice: str = state.get("_voice", "ethan")
     model: str = state.get("_model", "qwen3-tts-instruct-flash")
     is_qwen: bool = state.get("_is_qwen", True)
     instructions: str | None = state.get("instructions")

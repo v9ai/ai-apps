@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   useGetCompanyQuery,
   useGetContactsQuery,
@@ -572,6 +572,10 @@ export function CompanyContactsClient({
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [linkedinPeopleStatus, setLinkedinPeopleStatus] = useState<{
+    type: "idle" | "running" | "done" | "error";
+    message?: string;
+  }>({ type: "idle" });
   const { isStreaming, progress, completion, error: schedulerError, scheduleEmails, reset: resetScheduler } = useStreamingEmailScheduler();
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
