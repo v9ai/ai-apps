@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "stack": "cd crates/agentic-search && cargo run --release -- --root ../.. discover --output ../../src/app/stack/discovery.json",
-    "dev": "concurrently -n next,ext,ws,posts -c blue,green,yellow,magenta \"next dev --webpack -p 3004\" \"pnpm --filter vite-web-extension dev\" \"tsx scripts/ext-reload-server.ts\" \"cargo run -p linkedin-posts\"",
+    "dev": "concurrently -n next,ext,ws,posts -c blue,green,yellow,magenta \"next dev --webpack -p 3004\" \"pnpm --filter vite-web-extension dev\" \"tsx scripts/ext-reload-server.ts\" \"cargo run --manifest-path crates/linkedin-posts/Cargo.toml\"",
     "dev:next": "next dev --webpack -p 3004",
     "dev:ext": "concurrently -n next,ext,ws -c blue,green,yellow \"next dev --webpack -p 3004\" \"pnpm --filter vite-web-extension dev\" \"tsx scripts/ext-reload-server.ts\"",
     "build": "next build --webpack",
