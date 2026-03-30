@@ -640,9 +640,8 @@ function IssueDetailContent() {
     });
   };
 
-  const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !issue) return;
+  const uploadFile = async (file: File) => {
+    if (!issue) return;
     if (!file.type.startsWith("image/")) {
       setUploadError("Please select an image file");
       return;
@@ -670,6 +669,28 @@ function IssueDetailContent() {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
+  const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+  };
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) uploadFile(file);
+          return;
+        }
+      }
+    };
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [issue]);
 
   if (loading) {
     return (
@@ -890,7 +911,7 @@ function IssueDetailContent() {
             <Box>
               <Heading size="3" mb="1">Screenshots ({screenshots.length})</Heading>
               <Text size="2" color="gray">
-                Attach images and screenshots to this issue.
+                Attach images and screenshots. You can also paste from clipboard (Ctrl+V).
               </Text>
             </Box>
             <Button
