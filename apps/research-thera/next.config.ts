@@ -39,6 +39,8 @@ const nextConfig: NextConfig = {
       config.externals.push({
         libsql: "commonjs libsql",
       });
+      // Transformers.js: native ONNX runtime must not be bundled
+      config.externals.push("sharp", "onnxruntime-node");
     }
 
     return config;

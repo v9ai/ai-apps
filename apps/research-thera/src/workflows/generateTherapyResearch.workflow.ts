@@ -5,6 +5,7 @@ import { ragTools } from "@/src/tools/rag.tools";
 import { sourceTools } from "@/src/tools/sources.tools";
 import { extractorTools } from "@/src/tools/extractor.tools";
 import { openAlexTools } from "@/src/tools/openalex.tools";
+import { rerankPassages } from "@/src/lib/transformers";
 
 /**
  * Deep Research Pipeline
@@ -487,6 +488,50 @@ async function extractOnePaper(params: {
   }
 }
 
+async function rerankCandidates<T extends {
+  candidates: any[];
+  clinicalRestatement?: string;
+  translatedGoalTitle?: string;
+  goal: { title: string };
+  [key: string]: any;
+}>(ctx: T): Promise<T> {
+  const query =
+    ctx.clinicalRestatement ?? ctx.translatedGoalTitle ?? ctx.goal.title;
+
+  if (ctx.candidates.length === 0) return ctx;
+
+  console.log(
+    `[rerank] Ranking ${ctx.candidates.length} candidates against: "${query}"`,
+  );
+
+  try {
+    const passages = ctx.candidates.map((c: any) =>
+      [c.title ?? "", c.abstract ?? c._enrichedAbstract ?? ""]
+        .filter(Boolean)
+        .join(" ")
+        .slice(0, 512),
+    );
+
+    const results = await rerankPassages(query, passages);
+
+    const ranked = results.map((r) => ({
+      ...ctx.candidates[r.index],
+      _rerankScore: r.score,
+    }));
+
+    console.log(
+      `[rerank] Top-3 scores: ${ranked.slice(0, 3).map((c: any) => c._rerankScore.toFixed(3)).join(", ")}`,
+    );
+
+    return { ...ctx, candidates: ranked };
+  } catch (err) {
+    console.warn(
+      `[rerank] Failed, using original order: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return ctx;
+  }
+}
+
 async function extractAll<T extends {
   jobId?: string;
   goalId?: number;
@@ -647,8 +692,9 @@ export async function generateTherapyResearch(inputData: Input): Promise<Output>
   const ctx3 = await planQuery({ ...ctx2, notes: ctx2.notes.map((n: any) => ({ content: n.content })) });
   const ctx4 = await search(ctx3);
   const ctx5 = await enrichAbstracts(ctx4);
+  const ctx5r = await rerankCandidates(ctx5);
   const ctx6 = await extractAll({
-    ...ctx5,
+    ...ctx5r,
     issueId: (inputData as any).issueId,
     feedbackId: (inputData as any).feedbackId,
   });
