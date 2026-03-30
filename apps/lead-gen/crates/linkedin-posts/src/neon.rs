@@ -31,9 +31,14 @@ pub async fn connect_neon() -> Result<tokio_postgres::Client> {
 }
 
 /// Fetch all contacts with a linkedin_url from Neon PostgreSQL.
+/// Opens its own connection. Use `fetch_contacts_with_client` to reuse an existing one.
 pub async fn fetch_contacts_with_linkedin() -> Result<Vec<Contact>> {
     let client = connect_neon().await?;
+    fetch_contacts_with_client(&client).await
+}
 
+/// Fetch all contacts with a linkedin_url using an existing Neon client.
+pub async fn fetch_contacts_with_client(client: &tokio_postgres::Client) -> Result<Vec<Contact>> {
     let rows = client
         .query(
             "SELECT id, first_name, last_name, linkedin_url, company, position

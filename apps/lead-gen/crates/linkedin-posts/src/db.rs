@@ -447,28 +447,55 @@ impl PostsDb {
 
         let mut posts = Vec::new();
         for batch in &batches {
-            let ids = batch.column(0).as_any().downcast_ref::<Int64Array>().unwrap();
-            let contact_ids = batch.column(1).as_any().downcast_ref::<Int32Array>().unwrap();
-            let post_urls = batch.column(2).as_any().downcast_ref::<StringArray>().unwrap();
-            let post_texts = batch.column(3).as_any().downcast_ref::<StringArray>().unwrap();
-            let posted_dates = batch.column(4).as_any().downcast_ref::<StringArray>().unwrap();
-            let reactions = batch.column(5).as_any().downcast_ref::<Int32Array>().unwrap();
-            let comments = batch.column(6).as_any().downcast_ref::<Int32Array>().unwrap();
-            let reposts = batch.column(7).as_any().downcast_ref::<Int32Array>().unwrap();
-            let media_types = batch.column(8).as_any().downcast_ref::<StringArray>().unwrap();
-            let is_reposts = batch.column(9).as_any().downcast_ref::<BooleanArray>().unwrap();
-            let original_authors = batch.column(10).as_any().downcast_ref::<StringArray>().unwrap();
-            let scraped_ats = batch.column(11).as_any().downcast_ref::<StringArray>().unwrap();
-            let relevance_scores = batch.column(12).as_any().downcast_ref::<Float32Array>().unwrap();
-            let primary_intents = batch.column(13).as_any().downcast_ref::<StringArray>().unwrap();
-            let intent_hirings = batch.column(14).as_any().downcast_ref::<Float32Array>().unwrap();
-            let intent_ai_mls = batch.column(15).as_any().downcast_ref::<Float32Array>().unwrap();
-            let intent_remotes = batch.column(16).as_any().downcast_ref::<Float32Array>().unwrap();
-            let intent_eng_cultures = batch.column(17).as_any().downcast_ref::<Float32Array>().unwrap();
-            let intent_company_growths = batch.column(18).as_any().downcast_ref::<Float32Array>().unwrap();
-            let intent_thought_leaderships = batch.column(19).as_any().downcast_ref::<Float32Array>().unwrap();
-            let intent_noises = batch.column(20).as_any().downcast_ref::<Float32Array>().unwrap();
-            let entities_jsons = batch.column(21).as_any().downcast_ref::<StringArray>().unwrap();
+            let col = |name: &str| -> Result<&dyn Array> {
+                let idx = batch.schema().index_of(name)
+                    .context(format!("Column '{}' not found in posts schema", name))?;
+                Ok(batch.column(idx))
+            };
+            let ids = col("id")?.as_any().downcast_ref::<Int64Array>()
+                .context("Column 'id' is not Int64")?;
+            let contact_ids = col("contact_id")?.as_any().downcast_ref::<Int32Array>()
+                .context("Column 'contact_id' is not Int32")?;
+            let post_urls = col("post_url")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'post_url' is not Utf8")?;
+            let post_texts = col("post_text")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'post_text' is not Utf8")?;
+            let posted_dates = col("posted_date")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'posted_date' is not Utf8")?;
+            let reactions = col("reactions_count")?.as_any().downcast_ref::<Int32Array>()
+                .context("Column 'reactions_count' is not Int32")?;
+            let comments = col("comments_count")?.as_any().downcast_ref::<Int32Array>()
+                .context("Column 'comments_count' is not Int32")?;
+            let reposts = col("reposts_count")?.as_any().downcast_ref::<Int32Array>()
+                .context("Column 'reposts_count' is not Int32")?;
+            let media_types = col("media_type")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'media_type' is not Utf8")?;
+            let is_reposts = col("is_repost")?.as_any().downcast_ref::<BooleanArray>()
+                .context("Column 'is_repost' is not Boolean")?;
+            let original_authors = col("original_author")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'original_author' is not Utf8")?;
+            let scraped_ats = col("scraped_at")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'scraped_at' is not Utf8")?;
+            let relevance_scores = col("relevance_score")?.as_any().downcast_ref::<Float32Array>()
+                .context("Column 'relevance_score' is not Float32")?;
+            let primary_intents = col("primary_intent")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'primary_intent' is not Utf8")?;
+            let intent_hirings = col("intent_hiring")?.as_any().downcast_ref::<Float32Array>()
+                .context("Column 'intent_hiring' is not Float32")?;
+            let intent_ai_mls = col("intent_ai_ml")?.as_any().downcast_ref::<Float32Array>()
+                .context("Column 'intent_ai_ml' is not Float32")?;
+            let intent_remotes = col("intent_remote")?.as_any().downcast_ref::<Float32Array>()
+                .context("Column 'intent_remote' is not Float32")?;
+            let intent_eng_cultures = col("intent_eng_culture")?.as_any().downcast_ref::<Float32Array>()
+                .context("Column 'intent_eng_culture' is not Float32")?;
+            let intent_company_growths = col("intent_company_growth")?.as_any().downcast_ref::<Float32Array>()
+                .context("Column 'intent_company_growth' is not Float32")?;
+            let intent_thought_leaderships = col("intent_thought_leadership")?.as_any().downcast_ref::<Float32Array>()
+                .context("Column 'intent_thought_leadership' is not Float32")?;
+            let intent_noises = col("intent_noise")?.as_any().downcast_ref::<Float32Array>()
+                .context("Column 'intent_noise' is not Float32")?;
+            let entities_jsons = col("entities_json")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'entities_json' is not Utf8")?;
 
             for i in 0..batch.num_rows() {
                 posts.push(StoredPost {

@@ -169,7 +169,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
       sendResponse({ success: true });
-      browseCompanies(tabId);
+      startKeepAlive();
+      browseCompanies(tabId).finally(stopKeepAlive);
     });
     return true;
   }
@@ -218,6 +219,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
       sendResponse({ success: true });
+      startKeepAlive();
       try {
         console.log("[PostScraping] Starting browseContactPosts for tab", tabId);
         await browseContactPosts(tabId);
@@ -229,6 +231,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             error: err instanceof Error ? err.message : String(err),
           });
         } catch { /* popup may be closed */ }
+      } finally {
+        stopKeepAlive();
       }
     });
     return true;
@@ -249,7 +253,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     };
     chrome.tabs.create({ url: linkedinPeopleUrl, active: false }).then((tab) => {
       sendResponse({ success: true });
-      if (tab.id) browsePeople(tab.id, companyId);
+      if (tab.id) {
+        startKeepAlive();
+        browsePeople(tab.id, companyId).finally(stopKeepAlive);
+      }
     });
     return true;
   }

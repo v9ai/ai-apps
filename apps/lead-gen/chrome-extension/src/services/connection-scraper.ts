@@ -5,6 +5,19 @@
 
 import { postsCancelled } from "./post-scraper";
 
+/** Error subclass signalling the caller should retry with backoff. */
+class RetryableError extends Error {
+  readonly retryable = true as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "RetryableError";
+  }
+}
+
+function isRetryable(err: unknown): err is RetryableError {
+  return err instanceof RetryableError;
+}
+
 export interface ScrapedConnection {
   firstName: string;
   lastName: string;
@@ -70,10 +83,7 @@ async function fetchConnectionsPage(
     throw new Error("LinkedIn session expired — please log in again");
   }
   if (res.status === 429) {
-    // Signal caller to retry with backoff
-    const error = new Error("LinkedIn rate limit hit (429)");
-    (error as any).retryable = true;
-    throw error;
+    throw new RetryableError("LinkedIn rate limit hit (429)");
   }
   if (!res.ok) {
     throw new Error(`Voyager API error: ${res.status} ${res.statusText}`);
@@ -162,9 +172,9 @@ export async function fetchAllConnections(
         page = await fetchConnectionsPage(csrfToken, start);
         break;
       } catch (err) {
-        if ((err as any).retryable && retries < MAX_RETRIES) {
-          retries++;
+        if (isRetryable(err) && retries < MAX_RETRIES) {
           const backoff = Math.min(2000 * Math.pow(2, retries), 30000);
+          retries++;
           console.warn(`[Connections] 429 rate limit — retrying in ${backoff}ms (attempt ${retries}/${MAX_RETRIES})`);
           onProgress?.(connections.length, total, `Rate limited — retrying in ${Math.round(backoff / 1000)}s...`);
           await new Promise((r) => setTimeout(r, backoff));

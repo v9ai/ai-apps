@@ -120,9 +120,9 @@ fn compute_ai_affinity(contact: &Contact, posts: &[StoredPost]) -> AffinityResul
         let title_weight = 1.0 - post_confidence * 0.7; // title always keeps at least 30% influence
         let post_weight = 1.0 - title_weight;
 
-        // Post score: ratio-based + max score boost + hiring-AI recruiter boost
+        // Post score: ratio-based with multiplicative boosts (avoids additive saturation)
         let hiring_ai_ratio = hiring_ai_count as f32 / posts.len().max(1) as f32;
-        let post_score = (ai_ratio + 0.15 * max_ai_score + 0.20 * hiring_ai_ratio).min(1.0);
+        let post_score = (ai_ratio * (1.0 + 0.15 * max_ai_score + 0.20 * hiring_ai_ratio)).min(1.0);
 
         (title_weight * title_score + post_weight * post_score).clamp(0.0, 1.0)
     };
@@ -197,32 +197,33 @@ async fn batch_tag_for_deletion(
         return Ok((0, already_tagged));
     }
 
-    // Batch update: contacts with NULL/empty tags get fresh array,
-    // contacts with existing tags get "to-be-deleted" appended.
-    // Single UPDATE using CASE expression for both scenarios.
-    let updated = client
-        .execute(
-            "UPDATE contacts
-             SET tags = CASE
-               WHEN tags IS NULL OR tags = '' OR tags = '[]'
-               THEN '[\"to-be-deleted\"]'
-               ELSE (
-                 SELECT jsonb_agg(elem)::text
-                 FROM (
-                   SELECT elem FROM jsonb_array_elements(tags::jsonb) AS elem
-                   UNION ALL
-                   SELECT '\"to-be-deleted\"'::jsonb
-                 ) sub
-               )
-             END,
-             updated_at = now()::text
-             WHERE id = ANY($1)",
-            &[&needs_tag],
-        )
-        .await
-        .context("Failed to batch update tags")?;
+    // Build new tags in Rust (avoids tags::jsonb cast crash on corrupt data)
+    // and update each contact with its computed tag string.
+    let mut updated = 0usize;
+    for row in &rows {
+        let id: i32 = row.get(0);
+        if !needs_tag.contains(&id) {
+            continue;
+        }
+        let tags_raw: Option<String> = row.get(1);
+        let mut tags: Vec<String> = tags_raw
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok())
+            .unwrap_or_default();
+        tags.push("to-be-deleted".to_string());
+        let new_tags = serde_json::to_string(&tags).unwrap_or_else(|_| "[\"to-be-deleted\"]".to_string());
 
-    Ok((updated as usize, already_tagged))
+        client
+            .execute(
+                "UPDATE contacts SET tags = $1, updated_at = now()::text WHERE id = $2",
+                &[&new_tags, &id],
+            )
+            .await
+            .context("Failed to update contact tags")?;
+        updated += 1;
+    }
+
+    Ok((updated, already_tagged))
 }
 
 /// Remove "to-be-deleted" tag from contacts that have been reclassified as AI-Related.
@@ -265,23 +266,32 @@ async fn batch_untag_deletion(
         return Ok((0, not_tagged));
     }
 
-    // Remove "to-be-deleted" from the JSON array
-    let updated = client
-        .execute(
-            "UPDATE contacts
-             SET tags = (
-               SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)::text
-               FROM jsonb_array_elements(tags::jsonb) AS elem
-               WHERE elem::text != '\"to-be-deleted\"'
-             ),
-             updated_at = now()::text
-             WHERE id = ANY($1)",
-            &[&needs_untag],
-        )
-        .await
-        .context("Failed to batch remove to-be-deleted tag")?;
+    // Remove "to-be-deleted" in Rust (avoids tags::jsonb cast crash on corrupt data)
+    let mut updated = 0usize;
+    for row in &rows {
+        let id: i32 = row.get(0);
+        if !needs_untag.contains(&id) {
+            continue;
+        }
+        let tags_raw: Option<String> = row.get(1);
+        let tags: Vec<String> = tags_raw
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok())
+            .unwrap_or_default();
+        let new_tags: Vec<&String> = tags.iter().filter(|t| t.as_str() != "to-be-deleted").collect();
+        let new_tags_json = serde_json::to_string(&new_tags).unwrap_or_else(|_| "[]".to_string());
 
-    Ok((updated as usize, not_tagged))
+        client
+            .execute(
+                "UPDATE contacts SET tags = $1, updated_at = now()::text WHERE id = $2",
+                &[&new_tags_json, &id],
+            )
+            .await
+            .context("Failed to remove to-be-deleted tag")?;
+        updated += 1;
+    }
+
+    Ok((updated, not_tagged))
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
@@ -308,8 +318,9 @@ async fn main() -> Result<()> {
     let db = PostsDb::open(&db_path).await?;
     let all_posts = db.load_all_posts().await?;
 
-    // 2. Fetch contacts from Neon
-    let contacts = neon::fetch_contacts_with_linkedin().await?;
+    // 2. Connect to Neon (single connection reused for all operations)
+    let client = neon::connect_neon().await?;
+    let contacts = neon::fetch_contacts_with_client(&client).await?;
     println!(
         "Loaded {} posts for {} contacts from LanceDB",
         all_posts.len(),
@@ -360,10 +371,7 @@ async fn main() -> Result<()> {
         with_posts, without_posts,
     );
 
-    // 5. Connect to Neon and batch-tag non-AI contacts
-    let client = neon::connect_neon().await?;
-    println!();
-    println!("Connected to Neon PostgreSQL");
+    // 5. Batch-tag non-AI contacts (reusing the Neon connection from step 2)
 
     let not_ai_ids: Vec<i32> = results
         .iter()
