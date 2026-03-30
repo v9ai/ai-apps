@@ -58,6 +58,7 @@ function JournalEditContent() {
     familyMemberId: "",
     goalId: "",
     isPrivate: true,
+    tags: "",
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
@@ -72,6 +73,7 @@ function JournalEditContent() {
         familyMemberId: entry.familyMemberId ? String(entry.familyMemberId) : "",
         goalId: entry.goalId ? String(entry.goalId) : "",
         isPrivate: entry.isPrivate,
+        tags: (entry.tags || []).join(", "),
       });
       setInitialized(true);
     }
@@ -107,6 +109,8 @@ function JournalEditContent() {
       return;
     }
 
+    const parsedTags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+
     try {
       await updateJournalEntry({
         variables: {
@@ -121,6 +125,7 @@ function JournalEditContent() {
               : undefined,
             goalId: form.goalId ? parseInt(form.goalId, 10) : undefined,
             isPrivate: form.isPrivate,
+            tags: parsedTags.length > 0 ? parsedTags : undefined,
           },
         },
       });
@@ -305,6 +310,20 @@ function JournalEditContent() {
                 </Select.Content>
               </Select.Root>
             </Flex>
+
+            <label>
+              <Text as="div" size="2" mb="1" weight="medium">
+                Tags
+              </Text>
+              <TextField.Root
+                placeholder="Comma-separated, e.g. therapy, milestone, concern"
+                value={form.tags}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, tags: e.target.value }))
+                }
+                disabled={saving}
+              />
+            </label>
 
             <Text as="label" size="2">
               <Flex gap="2" align="center">
