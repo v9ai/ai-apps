@@ -230,7 +230,7 @@ def export_remote_worldwide(conn, out_dir: Path, stats_only: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(description="Export training data for MLX LoRA fine-tuning")
-    parser.add_argument("--task", choices=["role-tag", "remote-worldwide", "all"], default="all")
+    parser.add_argument("--task", choices=["role-tag", "remote-worldwide", "post-intent", "all"], default="all")
     parser.add_argument("--stats", action="store_true", help="Print counts only, don't export")
     parser.add_argument("--out-dir", type=Path, default=Path("mlx-training/data"))
     args = parser.parse_args()
@@ -243,6 +243,9 @@ def main():
         if args.task in ("remote-worldwide", "all"):
             print("Remote-Worldwide:")
             export_remote_worldwide(conn, args.out_dir, args.stats)
+        if args.task in ("post-intent", "all"):
+            print("Post-Intent:")
+            print("  → Use mlx-training/export_post_labels.py (reads from Rust server, not Neon)")
     finally:
         conn.close()
 
