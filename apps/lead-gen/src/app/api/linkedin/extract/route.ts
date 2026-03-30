@@ -55,15 +55,23 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const og = await extractOG(url);
     const urlType = detectUrlType(url);
+
+    // For company pages, canonicalize before fetching (strip /posts, /about, etc.)
+    // to avoid hitting LinkedIn's login redirect for subpages
+    const fetchUrl = urlType === "company"
+      ? url.replace(/\/(posts|about|jobs|people|videos)(\/.*)?$/, "") + "/"
+      : url;
+
+    const og = await extractOG(fetchUrl);
 
     const title = og.title ?? null;
     const description = og.description ?? null;
     const imageUrl = og.image ?? null;
 
-    // Detect auth wall via missing content
-    if (!title && !description) {
+    // Detect auth wall: missing content OR LinkedIn login page redirect
+    const isLoginPage = /linkedin login|sign in/i.test(title ?? "");
+    if ((!title && !description) || isLoginPage) {
       return NextResponse.json({
         urlType,
         authorName: null,
@@ -81,8 +89,7 @@ export async function POST(request: NextRequest) {
     if (urlType === "company") {
       // Strip "| LinkedIn" suffix from og:title (e.g. "AI Superior | LinkedIn" → "AI Superior")
       const companyName = title ? title.replace(/\s*\|\s*LinkedIn\s*$/i, "").trim() : null;
-      // Normalize URL to canonical company page (strip /posts, /about, etc.)
-      const canonicalUrl = url.replace(/\/(posts|about|jobs|people|videos)(\/.*)?$/, "") + "/";
+      const canonicalUrl = fetchUrl;
 
       return NextResponse.json({
         urlType: "company" as const,
