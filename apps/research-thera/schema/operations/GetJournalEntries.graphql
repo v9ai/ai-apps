@@ -1,8 +1,9 @@
-query GetJournalEntries($familyMemberId: Int, $goalId: Int, $mood: String, $fromDate: String, $toDate: String) {
+query GetJournalEntries($familyMemberId: Int, $goalId: Int, $mood: String, $tag: String, $fromDate: String, $toDate: String) {
   journalEntries(
     familyMemberId: $familyMemberId
     goalId: $goalId
     mood: $mood
+    tag: $tag
     fromDate: $fromDate
     toDate: $toDate
   ) {

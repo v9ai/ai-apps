@@ -1,25 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import {
+  Box,
   Flex,
   Heading,
   Text,
   Card,
-  Button,
   Badge,
   Spinner,
-  Select,
+  Separator,
+  Button,
 } from "@radix-ui/themes";
-import { LockClosedIcon } from "@radix-ui/react-icons";
-import { useRouter } from "next/navigation";
+import { ArrowLeftIcon, LockClosedIcon } from "@radix-ui/react-icons";
+import { useRouter, useParams } from "next/navigation";
+import NextLink from "next/link";
 import dynamic from "next/dynamic";
-import {
-  useGetJournalEntriesQuery,
-  useGetFamilyMembersQuery,
-} from "@/app/__generated__/hooks";
+import { useGetJournalEntriesQuery } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
-import AddJournalEntryButton from "@/app/components/AddJournalEntryButton";
 import { AuthGate } from "@/app/components/AuthGate";
 
 const moodColor = (mood: string) =>
@@ -35,25 +32,13 @@ const moodColor = (mood: string) =>
     }) as Record<string, string>
   )[mood] ?? "gray";
 
-function JournalListContent() {
+function TagEntriesContent() {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
-  const [moodFilter, setMoodFilter] = useState<string | undefined>(undefined);
-  const [familyMemberFilter, setFamilyMemberFilter] = useState<
-    string | undefined
-  >(undefined);
-
-  const { data: familyData } = useGetFamilyMembersQuery();
-  const familyMembers = familyData?.familyMembers ?? [];
+  const params = useParams();
+  const tag = decodeURIComponent(params.tag as string);
 
   const { data, loading, error, refetch } = useGetJournalEntriesQuery({
-    variables: {
-      mood: moodFilter,
-      familyMemberId: familyMemberFilter
-        ? parseInt(familyMemberFilter, 10)
-        : undefined,
-    },
+    variables: { tag },
   });
 
   if (loading) {
@@ -79,58 +64,19 @@ function JournalListContent() {
 
   return (
     <Flex direction="column" gap="4">
-      <Flex justify="between" align="center" wrap="wrap" gap="3">
-        <Heading size="5">My Journal ({entries.length})</Heading>
-        <Flex gap="3" align="center">
-          <Select.Root
-            value={moodFilter || "all"}
-            onValueChange={(value) =>
-              setMoodFilter(value === "all" ? undefined : value)
-            }
-          >
-            <Select.Trigger placeholder="Filter by mood" />
-            <Select.Content>
-              <Select.Item value="all">All Moods</Select.Item>
-              <Select.Item value="happy">Happy</Select.Item>
-              <Select.Item value="sad">Sad</Select.Item>
-              <Select.Item value="anxious">Anxious</Select.Item>
-              <Select.Item value="calm">Calm</Select.Item>
-              <Select.Item value="frustrated">Frustrated</Select.Item>
-              <Select.Item value="hopeful">Hopeful</Select.Item>
-              <Select.Item value="neutral">Neutral</Select.Item>
-            </Select.Content>
-          </Select.Root>
-          {familyMembers.length > 0 && (
-            <Select.Root
-              value={familyMemberFilter || "all"}
-              onValueChange={(value) =>
-                setFamilyMemberFilter(value === "all" ? undefined : value)
-              }
-            >
-              <Select.Trigger placeholder="Filter by family member" />
-              <Select.Content>
-                <Select.Item value="all">All Members</Select.Item>
-                {familyMembers.map((fm) => (
-                  <Select.Item key={fm.id} value={String(fm.id)}>
-                    {fm.firstName ?? fm.name}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select.Root>
-          )}
-          <AddJournalEntryButton />
-        </Flex>
+      <Flex justify="between" align="center">
+        <Heading size="5">
+          {entries.length} {entries.length === 1 ? "entry" : "entries"} tagged{" "}
+          <Badge variant="soft" size="2">
+            {tag}
+          </Badge>
+        </Heading>
       </Flex>
 
       {entries.length === 0 ? (
         <Card>
           <Flex direction="column" gap="2" p="4" align="center">
-            <Text color="gray">No entries yet.</Text>
-            <Text size="2" color="gray">
-              {moodFilter || familyMemberFilter
-                ? "No entries match the current filters."
-                : "Start writing to begin your journal."}
-            </Text>
+            <Text color="gray">No entries found with this tag.</Text>
           </Flex>
         </Card>
       ) : (
@@ -195,18 +141,20 @@ function JournalListContent() {
                 <Flex gap="4" align="center" wrap="wrap">
                   {entry.tags &&
                     entry.tags.length > 0 &&
-                    entry.tags.map((tag, idx) => (
+                    entry.tags.map((t, idx) => (
                       <Badge
                         key={idx}
-                        variant="soft"
+                        variant={t === tag ? "solid" : "soft"}
                         size="1"
                         style={{ cursor: "pointer" }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/journal/tag/${encodeURIComponent(tag)}`);
+                          router.push(
+                            `/journal/tag/${encodeURIComponent(t)}`,
+                          );
                         }}
                       >
-                        {tag}
+                        {t}
                       </Badge>
                     ))}
                   {entry.goal && (
@@ -235,20 +183,65 @@ function JournalListContent() {
   );
 }
 
-const DynamicJournalListContent = dynamic(
-  () => Promise.resolve(JournalListContent),
+const DynamicTagEntriesContent = dynamic(
+  () => Promise.resolve(TagEntriesContent),
   { ssr: false },
 );
 
-export default function JournalPage() {
+export default function JournalTagPage() {
+  const params = useParams();
+  const tag = decodeURIComponent(params.tag as string);
+
   return (
     <AuthGate
       pageName="Journal"
-      description="Your journal entries are private. Sign in to write and read your reflections."
+      description="Sign in to view your journal entries."
     >
-      <Flex direction="column" gap="4">
-        <Heading size={{ initial: "6", md: "8" }}>Journal</Heading>
-        <DynamicJournalListContent />
+      <Flex direction="column" gap="5">
+        <Box
+          position="sticky"
+          top="0"
+          style={{
+            zIndex: 20,
+            background: "var(--color-panel)",
+            borderBottom: "1px solid var(--gray-a6)",
+            backdropFilter: "blur(10px)",
+            marginLeft: "calc(-1 * var(--space-3))",
+            marginRight: "calc(-1 * var(--space-3))",
+            paddingLeft: "var(--space-3)",
+            paddingRight: "var(--space-3)",
+          }}
+        >
+          <Flex
+            py="3"
+            align="center"
+            gap={{ initial: "2", md: "4" }}
+            style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}
+          >
+            <Button variant="soft" size="2" radius="full" color="gray" asChild>
+              <NextLink href="/journal">
+                <ArrowLeftIcon />
+                <Box display={{ initial: "none", sm: "inline" }} asChild>
+                  <span>Journal</span>
+                </Box>
+              </NextLink>
+            </Button>
+
+            <Box display={{ initial: "none", sm: "block" }}>
+              <Separator orientation="vertical" style={{ height: 20 }} />
+            </Box>
+
+            <Box minWidth="0" style={{ flex: 1 }}>
+              <Heading size={{ initial: "5", md: "8" }} weight="bold" truncate>
+                Tag: {tag}
+              </Heading>
+            </Box>
+          </Flex>
+        </Box>
+
+        <Box style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
+          <DynamicTagEntriesContent />
+        </Box>
       </Flex>
     </AuthGate>
   );

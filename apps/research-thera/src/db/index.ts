@@ -1292,6 +1292,7 @@ export async function listJournalEntries(
     familyMemberId?: number;
     goalId?: number;
     mood?: string;
+    tag?: string;
     fromDate?: string;
     toDate?: string;
   },
@@ -1302,6 +1303,7 @@ export async function listJournalEntries(
   if (opts?.familyMemberId) { sqlStr += ` AND family_member_id = ?`; args.push(opts.familyMemberId); }
   if (opts?.goalId) { sqlStr += ` AND goal_id = ?`; args.push(opts.goalId); }
   if (opts?.mood) { sqlStr += ` AND mood = ?`; args.push(opts.mood); }
+  if (opts?.tag) { sqlStr += ` AND tags LIKE ?`; args.push(`%"${opts.tag}"%`); }
   if (opts?.fromDate) { sqlStr += ` AND entry_date >= ?`; args.push(opts.fromDate); }
   if (opts?.toDate) { sqlStr += ` AND entry_date <= ?`; args.push(opts.toDate); }
 

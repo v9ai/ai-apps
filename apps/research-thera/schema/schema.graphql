@@ -93,7 +93,7 @@ type Query {
   mySharedFamilyMembers: [FamilyMember!]!
 
   # Journal Entries
-  journalEntries(familyMemberId: Int, goalId: Int, mood: String, fromDate: String, toDate: String): [JournalEntry!]!
+  journalEntries(familyMemberId: Int, goalId: Int, mood: String, tag: String, fromDate: String, toDate: String): [JournalEntry!]!
   journalEntry(id: Int!): JournalEntry
 
   # Behavior Observations
