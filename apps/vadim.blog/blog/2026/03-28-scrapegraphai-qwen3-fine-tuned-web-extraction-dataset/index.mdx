@@ -33,7 +33,7 @@ export const datasetEdges = [
 
 export const trainingNodes = [
   { id: "t1", position: { x: 0, y: 80 }, data: { label: "Fine-tune Split (25.2k)" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600 } },
-  { id: "t2", position: { x: 0, y: 280 }, data: { label: "Qwen3-1.7B Base" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600 } },
+  { id: "t2", position: { x: 0, y: 280 }, data: { label: "Qwen3-1.7B (instruct)" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600 } },
   { id: "t3", position: { x: 280, y: 180 }, data: { label: "SFT Training" }, style: { background: '#1e1030', color: '#c4b5fd', border: '2px solid #8b5cf6', borderRadius: 8, padding: '12px 20px', fontSize: 13, fontWeight: 700 } },
   { id: "t4", position: { x: 560, y: 80 }, data: { label: "BF16 Safetensors (~2B)" }, style: { background: '#1c1008', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600 } },
   { id: "t5", position: { x: 560, y: 280 }, data: { label: "GGUF Q4_K_M (~1.1 GB)" }, style: { background: '#1c1008', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600 } },
@@ -72,7 +72,7 @@ export const pipelineEdges = [
 ];
 
 export const finetuneNodes = [
-  { id: "ft1", position: { x: 250, y: 0 }, data: { label: "Base Qwen3-1.7B" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600 } },
+  { id: "ft1", position: { x: 250, y: 0 }, data: { label: "Qwen3-1.7B (instruct)" }, type: "input", style: { background: '#052e16', color: '#86efac', border: '2px solid #22c55e', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600 } },
   { id: "ft2", position: { x: 250, y: 140 }, data: { label: "SFT on 25.2k\nscraping trajectories" }, style: { background: '#1e1030', color: '#c4b5fd', border: '2px solid #8b5cf6', borderRadius: 8, padding: '10px 14px', fontSize: 12, fontWeight: 700 } },
   { id: "ft3", position: { x: 50, y: 280 }, data: { label: "Ignore\nnavigation / ads" }, style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 12px', fontSize: 12 } },
   { id: "ft4", position: { x: 250, y: 280 }, data: { label: "Recognize\nsemantic blocks" }, style: { background: '#1e293b', color: '#94a3b8', border: '1px solid #475569', borderRadius: 8, padding: '8px 12px', fontSize: 12 } },
