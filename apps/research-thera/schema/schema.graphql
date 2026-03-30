@@ -74,6 +74,7 @@ type GenerateHabitsResult {
 type Query {
   goals(familyMemberId: Int, status: String): [Goal!]!
   goal(id: Int, slug: String): Goal
+  allTags: [String!]!
   research(goalId: Int, issueId: Int, feedbackId: Int): [Research!]!
   therapeuticQuestions(goalId: Int, issueId: Int): [TherapeuticQuestion!]!
   notes(entityId: Int!, entityType: String!): [Note!]!

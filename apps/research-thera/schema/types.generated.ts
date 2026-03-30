@@ -1404,6 +1404,7 @@ export type Query = {
   __typename?: 'Query';
   allNotes: Array<Note>;
   allStories: Array<Story>;
+  allTags: Array<Scalars['String']['output']>;
   audioFromR2?: Maybe<AudioFromR2Result>;
   behaviorObservation?: Maybe<BehaviorObservation>;
   behaviorObservations: Array<BehaviorObservation>;
@@ -2931,6 +2932,7 @@ export type PriorityRecommendationResolvers<ContextType = GraphQLContext, Parent
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   allNotes?: Resolver<Array<ResolversTypes['Note']>, ParentType, ContextType>;
   allStories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType>;
+  allTags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   audioFromR2?: Resolver<Maybe<ResolversTypes['AudioFromR2Result']>, ParentType, ContextType, RequireFields<QueryaudioFromR2Args, 'key'>>;
   behaviorObservation?: Resolver<Maybe<ResolversTypes['BehaviorObservation']>, ParentType, ContextType, RequireFields<QuerybehaviorObservationArgs, 'id'>>;
   behaviorObservations?: Resolver<Array<ResolversTypes['BehaviorObservation']>, ParentType, ContextType, RequireFields<QuerybehaviorObservationsArgs, 'familyMemberId'>>;

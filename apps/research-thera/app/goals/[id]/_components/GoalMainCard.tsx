@@ -27,6 +27,7 @@ import {
   useUnlinkGoalFamilyMemberMutation,
   useDeleteGoalMutation,
   useGetFamilyMembersQuery,
+  useGetAllTagsQuery,
   type GetGoalQuery,
 } from "@/app/__generated__/hooks";
 
@@ -74,6 +75,9 @@ export default function GoalMainCard({ goal }: { goal: Goal }) {
 
   const { data: familyData } = useGetFamilyMembersQuery();
   const familyMembers = familyData?.familyMembers ?? [];
+
+  const { data: allTagsData } = useGetAllTagsQuery();
+  const allTags = allTagsData?.allTags ?? [];
 
   const [updateGoal, { loading: updating }] = useUpdateGoalMutation({
     onCompleted: () => {
@@ -368,6 +372,20 @@ export default function GoalMainCard({ goal }: { goal: Goal }) {
                 <Cross2Icon />
               </IconButton>
             </Flex>
+            {(() => {
+              const currentTags = editedTags.split(",").map((t) => t.trim()).filter(Boolean);
+              const suggestions = allTags.filter((t) => !currentTags.includes(t));
+              return suggestions.length > 0 ? (
+                <Flex gap="1" wrap="wrap">
+                  {suggestions.map((tag) => (
+                    <Badge key={tag} variant="outline" size="1" style={{ cursor: "pointer" }}
+                      onClick={() => setEditedTags((prev) => prev.trim() ? `${prev}, ${tag}` : tag)}>
+                      + {tag}
+                    </Badge>
+                  ))}
+                </Flex>
+              ) : null;
+            })()}
           </Flex>
         ) : (
           <Flex
