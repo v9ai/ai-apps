@@ -529,6 +529,57 @@ function IssueDetailContent() {
     skip: !issue?.familyMemberId || !linkExistingOpen,
   });
 
+  // Linked contacts state
+  const [linkContactOpen, setLinkContactOpen] = useState(false);
+  const [linkContactId, setLinkContactId] = useState("");
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const [newContactFirstName, setNewContactFirstName] = useState("");
+  const [newContactLastName, setNewContactLastName] = useState("");
+  const [newContactRole, setNewContactRole] = useState("other");
+
+  const { data: allContactsData } = useGetContactsQuery({
+    skip: !linkContactOpen,
+  });
+
+  const [linkContactToIssue, { loading: linkingContact }] = useLinkContactToIssueMutation({
+    refetchQueries: ["GetIssue"],
+  });
+  const [unlinkContactFromIssue] = useUnlinkContactFromIssueMutation({
+    refetchQueries: ["GetIssue"],
+  });
+  const [createContact, { loading: creatingContact }] = useCreateContactMutation();
+
+  const handleLinkContact = async () => {
+    if (!issue || !linkContactId) return;
+    await linkContactToIssue({
+      variables: { issueId: issue.id, contactId: parseInt(linkContactId, 10) },
+    });
+    setLinkContactOpen(false);
+    setLinkContactId("");
+  };
+
+  const handleAddAndLinkContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!issue || !newContactFirstName.trim()) return;
+    const result = await createContact({
+      variables: {
+        input: {
+          firstName: newContactFirstName.trim(),
+          lastName: newContactLastName.trim() || undefined,
+          role: newContactRole,
+        },
+      },
+    });
+    const contactId = result.data?.createContact?.id;
+    if (contactId) {
+      await linkContactToIssue({ variables: { issueId: issue.id, contactId } });
+    }
+    setAddContactOpen(false);
+    setNewContactFirstName("");
+    setNewContactLastName("");
+    setNewContactRole("other");
+  };
+
   const handleCreateRelated = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!issue) return;
@@ -788,6 +839,132 @@ function IssueDetailContent() {
           </Flex>
         </Flex>
       </Card>
+
+      {/* Linked Contacts */}
+      <Card>
+        <Flex direction="column" gap="4" p="4">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
+            <Box>
+              <Heading size="3" mb="1">Linked Contacts ({issue.contacts?.length ?? 0})</Heading>
+              <Text size="2" color="gray">
+                Contacts involved with or relevant to this issue.
+              </Text>
+            </Box>
+            <Flex gap="2">
+              <Button variant="soft" size="2" onClick={() => setLinkContactOpen(true)}>
+                <Link2Icon />
+                Link Existing
+              </Button>
+              <Button size="2" onClick={() => setAddContactOpen(true)}>
+                <PlusIcon />
+                Add New
+              </Button>
+            </Flex>
+          </Flex>
+
+          {(issue.contacts?.length ?? 0) > 0 && (
+            <>
+              <Separator size="4" />
+              {issue.contacts!.map((contact) => (
+                <Card key={contact.id} variant="surface">
+                  <Flex align="center" gap="3" p="3">
+                    <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                      <NextLink
+                        href={`/contacts/${contact.slug ?? contact.id}`}
+                        style={{ textDecoration: "none" }}
+                      >
+                        <Text size="2" weight="medium" color="iris" style={{ textDecoration: "underline" }}>
+                          {contact.firstName}{contact.lastName ? ` ${contact.lastName}` : ""}
+                        </Text>
+                      </NextLink>
+                      {contact.role && (
+                        <Badge variant="soft" color="gray" size="1" style={{ width: "fit-content" }}>
+                          {contact.role}
+                        </Badge>
+                      )}
+                    </Flex>
+                    <Button
+                      variant="ghost"
+                      color="red"
+                      size="1"
+                      onClick={() => unlinkContactFromIssue({ variables: { issueId: issue.id, contactId: contact.id } })}
+                    >
+                      <Cross2Icon />
+                    </Button>
+                  </Flex>
+                </Card>
+              ))}
+            </>
+          )}
+        </Flex>
+      </Card>
+
+      {/* Link Existing Contact Dialog */}
+      <Dialog.Root open={linkContactOpen} onOpenChange={setLinkContactOpen}>
+        <Dialog.Content maxWidth="400px">
+          <Dialog.Title>Link Existing Contact</Dialog.Title>
+          <Flex direction="column" gap="3" mt="3">
+            <Select.Root value={linkContactId} onValueChange={setLinkContactId}>
+              <Select.Trigger placeholder="Select a contact..." style={{ width: "100%" }} />
+              <Select.Content>
+                {(allContactsData?.contacts ?? [])
+                  .filter((c) => !(issue.contacts ?? []).some((lc) => lc.id === c.id))
+                  .map((c) => (
+                    <Select.Item key={c.id} value={String(c.id)}>
+                      {c.firstName}{c.lastName ? ` ${c.lastName}` : ""}{c.role ? ` (${c.role})` : ""}
+                    </Select.Item>
+                  ))}
+              </Select.Content>
+            </Select.Root>
+            <Flex gap="2" justify="end">
+              <Dialog.Close>
+                <Button variant="soft" color="gray">Cancel</Button>
+              </Dialog.Close>
+              <Button onClick={handleLinkContact} disabled={!linkContactId || linkingContact}>
+                Link
+              </Button>
+            </Flex>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* Add New Contact Dialog */}
+      <Dialog.Root open={addContactOpen} onOpenChange={setAddContactOpen}>
+        <Dialog.Content maxWidth="400px">
+          <Dialog.Title>Add New Contact</Dialog.Title>
+          <form onSubmit={handleAddAndLinkContact}>
+            <Flex direction="column" gap="3" mt="3">
+              <TextField.Root
+                placeholder="First name *"
+                value={newContactFirstName}
+                onChange={(e) => setNewContactFirstName(e.target.value)}
+                required
+              />
+              <TextField.Root
+                placeholder="Last name"
+                value={newContactLastName}
+                onChange={(e) => setNewContactLastName(e.target.value)}
+              />
+              <Select.Root value={newContactRole} onValueChange={setNewContactRole}>
+                <Select.Trigger style={{ width: "100%" }} />
+                <Select.Content>
+                  {["teacher", "therapist", "doctor", "tutor", "coach", "counselor", "caregiver", "other"].map((r) => (
+                    <Select.Item key={r} value={r}>{r}</Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
+              <Flex gap="2" justify="end">
+                <Dialog.Close>
+                  <Button type="button" variant="soft" color="gray">Cancel</Button>
+                </Dialog.Close>
+                <Button type="submit" disabled={!newContactFirstName.trim() || creatingContact || linkingContact}>
+                  {creatingContact || linkingContact ? "Adding..." : "Add & Link"}
+                </Button>
+              </Flex>
+            </Flex>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Related Issues */}
       <Card>
