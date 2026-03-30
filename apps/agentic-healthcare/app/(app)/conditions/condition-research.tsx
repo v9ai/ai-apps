@@ -6,6 +6,11 @@ import { eq } from "drizzle-orm";
 import { BookOpen, ExternalLink } from "lucide-react";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { ResearchButton } from "./research-button";
+import { css } from "styled-system/css";
+
+const paperLinkClass = css({ textDecoration: "none" });
+const externalIconClass = css({ color: "var(--gray-8)", flexShrink: "0" });
+const abstractClass = css({ lineHeight: "1.5" });
 
 type Paper = {
   paper_id: string;
@@ -98,19 +103,13 @@ export async function ConditionResearch({ conditionId }: { conditionId: string }
                         href={paper.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ textDecoration: "none" }}
+                        className={paperLinkClass}
                       >
                         <Flex align="center" gap="1">
                           <Text size="2" weight="medium" color="indigo">
                             {paper.title}
                           </Text>
-                          <ExternalLink
-                            size={12}
-                            style={{
-                              color: "var(--gray-8)",
-                              flexShrink: 0,
-                            }}
-                          />
+                          <ExternalLink size={12} className={externalIconClass} />
                         </Flex>
                       </a>
                     </Flex>
@@ -149,12 +148,12 @@ export async function ConditionResearch({ conditionId }: { conditionId: string }
                       )}
                     </Flex>
                     {paper.tldr && (
-                      <Text size="1" color="gray" style={{ lineHeight: 1.5 }}>
+                      <Text size="1" color="gray" className={abstractClass}>
                         {paper.tldr}
                       </Text>
                     )}
                     {!paper.tldr && paper.abstract && (
-                      <Text size="1" color="gray" style={{ lineHeight: 1.5 }}>
+                      <Text size="1" color="gray" className={abstractClass}>
                         {paper.abstract.length > 300
                           ? paper.abstract.slice(0, 300) + "\u2026"
                           : paper.abstract}

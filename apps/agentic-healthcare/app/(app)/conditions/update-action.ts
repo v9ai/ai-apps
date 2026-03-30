@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { conditions, conditionEmbeddings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { embedConditionViaPython, embedViaPython } from "@/lib/python-api";
+import { embedCondition, generateEmbedding } from "@/lib/embed";
 import { sql } from "drizzle-orm";
 
 export async function updateConditionName(id: string, formData: FormData) {
@@ -24,7 +24,7 @@ export async function updateConditionName(id: string, formData: FormData) {
   await db.update(conditions).set({ name }).where(eq(conditions.id, id));
 
   try {
-    await embedConditionViaPython(id, userId, name, condition.notes);
+    await embedCondition(id, userId, name, condition.notes);
   } catch {
     // Re-embed failure is non-blocking
   }
@@ -51,7 +51,7 @@ export async function updateConditionNotes(id: string, formData: FormData) {
     .where(eq(conditions.id, id));
 
   try {
-    await embedConditionViaPython(id, userId, condition.name, notes);
+    await embedCondition(id, userId, condition.name, notes);
   } catch {
     // Re-embed failure is non-blocking
   }

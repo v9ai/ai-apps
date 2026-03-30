@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Badge, Box, Button, Flex, Table, Text, TextField } from "@radix-ui/themes";
+import { css } from "styled-system/css";
 import { getMarkerTrend } from "../blood-tests/search-actions";
 import Link from "next/link";
 
@@ -49,19 +50,21 @@ export function TrendsSection() {
         <Flex gap="2">
           <Box flexGrow="1">
             <TextField.Root
+              size="3"
               placeholder="Search query (e.g. cholesterol, iron)..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </Box>
-          <Box style={{ width: 200 }}>
+          <Box className={css({ width: "200px" })}>
             <TextField.Root
+              size="3"
               placeholder="Exact marker name (opt)"
               value={markerName}
               onChange={(e) => setMarkerName(e.target.value)}
             />
           </Box>
-          <Button type="submit" disabled={isPending || !query.trim()}>
+          <Button size="3" type="submit" disabled={isPending || !query.trim()}>
             {isPending ? "Loading..." : "Trends"}
           </Button>
         </Flex>

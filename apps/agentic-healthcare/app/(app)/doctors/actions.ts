@@ -2,9 +2,10 @@
 
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { doctors } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { doctors, medicalLetters } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { uploadFile, deleteFile } from "@/lib/storage";
 
 export async function addDoctor(formData: FormData) {
   const { userId } = await withAuth();
@@ -27,4 +28,47 @@ export async function deleteDoctor(id: string) {
   await withAuth();
   await db.delete(doctors).where(eq(doctors.id, id));
   revalidatePath("/doctors");
+}
+
+export async function uploadMedicalLetter(doctorId: string, formData: FormData) {
+  const { userId } = await withAuth();
+
+  const file = formData.get("file") as File;
+  if (!file || file.size === 0) return;
+
+  const description = (formData.get("description") as string)?.trim() || null;
+  const letterDate = (formData.get("letter_date") as string)?.trim() || null;
+
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+  const key = `medical-letters/${userId}/${doctorId}/${Date.now()}-${file.name}`;
+
+  await uploadFile(key, buffer, file.type || "application/octet-stream");
+
+  await db.insert(medicalLetters).values({
+    userId,
+    doctorId,
+    fileName: file.name,
+    filePath: key,
+    description,
+    letterDate: letterDate || null,
+  });
+
+  revalidatePath(`/doctors/${doctorId}`);
+}
+
+export async function deleteMedicalLetter(letterId: string, doctorId: string) {
+  const { userId } = await withAuth();
+
+  const [letter] = await db
+    .select()
+    .from(medicalLetters)
+    .where(and(eq(medicalLetters.id, letterId), eq(medicalLetters.userId, userId)));
+
+  if (!letter) return;
+
+  await deleteFile(letter.filePath);
+  await db.delete(medicalLetters).where(eq(medicalLetters.id, letterId));
+
+  revalidatePath(`/doctors/${doctorId}`);
 }

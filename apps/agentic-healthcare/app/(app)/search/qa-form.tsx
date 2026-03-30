@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Badge, Box, Button, Card, Flex, Text, TextField } from "@radix-ui/themes";
+import { css } from "styled-system/css";
 import { askHealthQuestion } from "../blood-tests/search-actions";
 import Link from "next/link";
 
@@ -59,12 +60,13 @@ export function QAForm() {
         <Flex gap="2">
           <Box flexGrow="1">
             <TextField.Root
+              size="3"
               placeholder="Ask a health question about your data..."
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
             />
           </Box>
-          <Button type="submit" disabled={isPending || !question.trim()}>
+          <Button size="3" type="submit" disabled={isPending || !question.trim()}>
             {isPending ? "Thinking..." : "Ask"}
           </Button>
         </Flex>
@@ -73,7 +75,7 @@ export function QAForm() {
       {result && (
         <Flex direction="column" gap="4">
           <Card>
-            <Text size="2" style={{ whiteSpace: "pre-wrap" }}>
+            <Text size="2" className={css({ whiteSpace: "pre-wrap" })}>
               {result.answer}
             </Text>
           </Card>

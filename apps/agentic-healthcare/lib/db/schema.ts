@@ -230,6 +230,28 @@ export const familyMemberDoctors = pgTable(
   ],
 );
 
+export const medicalLetters = pgTable(
+  "medical_letters",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    doctorId: uuid("doctor_id")
+      .notNull()
+      .references(() => doctors.id, { onDelete: "cascade" }),
+    fileName: text("file_name").notNull(),
+    filePath: text("file_path").notNull(),
+    description: text("description"),
+    letterDate: date("letter_date"),
+    uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("medical_letters_user_idx").on(table.userId),
+    index("medical_letters_doctor_idx").on(table.doctorId),
+  ],
+);
+
 // ── Embedding tables ───────────────────────────────────────────────
 
 export const bloodTestEmbeddings = pgTable(

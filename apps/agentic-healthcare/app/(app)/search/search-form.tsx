@@ -66,6 +66,7 @@ export function SearchForm() {
         <Flex gap="2">
           <Box flexGrow="1">
             <TextField.Root
+              size="3"
               placeholder={
                 mode === "tests"
                   ? "Search blood tests..."
@@ -75,7 +76,7 @@ export function SearchForm() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </Box>
-          <Button type="submit" disabled={isPending || !query.trim()}>
+          <Button size="3" type="submit" disabled={isPending || !query.trim()}>
             {isPending ? "Searching..." : "Search"}
           </Button>
         </Flex>
@@ -86,31 +87,43 @@ export function SearchForm() {
           <Text size="2" weight="bold">
             {testResults.length} test(s) found
           </Text>
-          {testResults.map((r) => (
-            <Card key={r.id}>
-              <Flex direction="column" gap="2">
-                <Flex justify="between" align="center">
-                  <Text size="2" weight="medium" asChild>
-                    <Link href={`/blood-tests/${r.test_id}`}>
-                      {r.file_name}
-                    </Link>
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gap: "12px",
+            })}
+          >
+            {testResults.map((r) => (
+              <Card key={r.id}>
+                <Flex direction="column" gap="2">
+                  <Flex justify="between" align="center">
+                    <Text size="2" weight="medium" asChild>
+                      <Link href={`/blood-tests/${r.test_id}`}>
+                        {r.file_name}
+                      </Link>
+                    </Text>
+                    <Badge color="blue" variant="soft">
+                      {(r.similarity * 100).toFixed(0)}% match
+                    </Badge>
+                  </Flex>
+                  {r.test_date && (
+                    <Text size="1" color="gray">
+                      {new Date(r.test_date).toLocaleDateString()}
+                    </Text>
+                  )}
+                  <Text
+                    size="1"
+                    color="gray"
+                    className={css({ whiteSpace: "pre-wrap" })}
+                  >
+                    {r.content.slice(0, 200)}
+                    {r.content.length > 200 ? "..." : ""}
                   </Text>
-                  <Badge color="blue" variant="soft">
-                    {(r.similarity * 100).toFixed(0)}% match
-                  </Badge>
                 </Flex>
-                {r.test_date && (
-                  <Text size="1" color="gray">
-                    {new Date(r.test_date).toLocaleDateString()}
-                  </Text>
-                )}
-                <Text size="1" color="gray" style={{ whiteSpace: "pre-wrap" }}>
-                  {r.content.slice(0, 200)}
-                  {r.content.length > 200 ? "..." : ""}
-                </Text>
-              </Flex>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </div>
         </Flex>
       )}
 
@@ -119,25 +132,37 @@ export function SearchForm() {
           <Text size="2" weight="bold">
             {markerResults.length} marker(s) found
           </Text>
-          {markerResults.map((r) => (
-            <Card key={r.marker_id}>
-              <Flex direction="column" gap="2">
-                <Flex justify="between" align="center">
-                  <Text size="2" weight="medium" asChild>
-                    <Link href={`/blood-tests/${r.test_id}`}>
-                      {r.marker_name}
-                    </Link>
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: "12px",
+            })}
+          >
+            {markerResults.map((r) => (
+              <Card key={r.marker_id}>
+                <Flex direction="column" gap="2">
+                  <Flex justify="between" align="center">
+                    <Text size="2" weight="medium" asChild>
+                      <Link href={`/blood-tests/${r.test_id}`}>
+                        {r.marker_name}
+                      </Link>
+                    </Text>
+                    <Badge color="blue" variant="soft">
+                      {(r.combined_score * 100).toFixed(0)}% match
+                    </Badge>
+                  </Flex>
+                  <Text
+                    size="1"
+                    color="gray"
+                    className={css({ whiteSpace: "pre-wrap" })}
+                  >
+                    {r.content}
                   </Text>
-                  <Badge color="blue" variant="soft">
-                    {(r.combined_score * 100).toFixed(0)}% match
-                  </Badge>
                 </Flex>
-                <Text size="1" color="gray" style={{ whiteSpace: "pre-wrap" }}>
-                  {r.content}
-                </Text>
-              </Flex>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </div>
         </Flex>
       )}
     </Flex>

@@ -3,6 +3,7 @@
 import { addFamilyMember } from "./actions";
 import { Box, Button, Flex, TextField, TextArea, Text } from "@radix-ui/themes";
 import { useRef } from "react";
+import { css } from "styled-system/css";
 
 export function AddFamilyMemberForm() {
   const formRef = useRef<HTMLFormElement>(null);
@@ -20,11 +21,11 @@ export function AddFamilyMemberForm() {
           <TextField.Root name="name" placeholder="e.g. Ion Nicolai" required />
         </Flex>
         <Flex gap="3">
-          <Flex direction="column" gap="1" style={{ flex: 1 }}>
+          <Flex direction="column" gap="1" className={css({ flex: "1" })}>
             <Text size="2" color="gray">Relationship</Text>
             <TextField.Root name="relationship" placeholder="e.g. Father, Mother, Sibling" />
           </Flex>
-          <Flex direction="column" gap="1" style={{ flex: 1 }}>
+          <Flex direction="column" gap="1" className={css({ flex: "1" })}>
             <Text size="2" color="gray">Date of birth</Text>
             <TextField.Root name="date_of_birth" type="date" />
           </Flex>
