@@ -122,6 +122,18 @@ async def collect_data(state: DeepAnalysisState) -> dict:
                     )
                     research = await cur.fetchall()
 
+                # Contacts linked to this member's issues (classmates, teachers, etc.)
+                issue_contacts = []
+                if issue_ids:
+                    ic_placeholders = ",".join(["%s"] * len(issue_ids))
+                    await cur.execute(
+                        f"SELECT DISTINCT ic.issue_id, c.id, c.first_name, c.last_name, c.role, c.age_years, c.notes "
+                        f"FROM issue_contacts ic JOIN contacts c ON c.id = ic.contact_id "
+                        f"WHERE ic.issue_id IN ({ic_placeholders}) AND ic.user_id = %s",
+                        [*issue_ids, user_email],
+                    )
+                    issue_contacts = await cur.fetchall()
+
                 # All family members for systemic context
                 await cur.execute(
                     "SELECT id, first_name, name, age_years, relationship FROM family_members WHERE user_id = %s",
@@ -326,6 +338,36 @@ async def collect_data(state: DeepAnalysisState) -> dict:
             o_lines.append(line)
         sections.append("## Other Family Members\n" + "\n".join(o_lines))
 
+    # Related contacts (classmates, teachers, etc.) linked to issues
+    if issue_contacts:
+        # Group contacts by issue for clarity, deduplicate by contact id
+        seen_contacts: dict[int, tuple] = {}
+        contact_issue_map: dict[int, list[int]] = {}
+        for row in issue_contacts:
+            ic_issue_id, c_id, c_first, c_last, c_role, c_age, c_notes = row
+            seen_contacts[c_id] = (c_first, c_last, c_role, c_age, c_notes)
+            contact_issue_map.setdefault(c_id, []).append(ic_issue_id)
+        c_lines = []
+        for c_id, (c_first, c_last, c_role, c_age, c_notes) in seen_contacts.items():
+            line = f"- {c_first}"
+            if c_last:
+                line += f" {c_last}"
+            if c_role:
+                line += f" ({c_role})"
+            if c_age:
+                line += f", age {c_age}"
+            issues_str = ", ".join(f"#{iid}" for iid in contact_issue_map[c_id])
+            line += f" — mentioned in issues: {issues_str}"
+            if c_notes:
+                line += f" | {c_notes[:200]}"
+            c_lines.append(line)
+        sections.append(
+            "## Related Contacts (Non-Family)\n"
+            "These are people mentioned in the issues above who are NOT family members. "
+            "Use their roles to understand the social context of each incident.\n"
+            + "\n".join(c_lines)
+        )
+
     # Instructions
     if trigger_issue:
         sections.append(f"""## Instructions
@@ -387,6 +429,7 @@ Write the analysis in the same language as the majority of the input data.""")
         "teacherFeedbackCount": len(teacher_fbs),
         "researchPaperCount": len(research),
         "relatedMemberIssueCount": len(related_issues),
+        "issueContactCount": len(issue_contacts),
     })
 
     return {
