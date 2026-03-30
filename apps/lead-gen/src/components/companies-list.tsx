@@ -38,14 +38,14 @@ export function CompaniesList() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") ?? "");
-  const [category, setCategory] = useState(searchParams.get("cat") ?? "ALL");
+  const [category, setCategory] = useState(searchParams.get("cat") ?? "CONSULTANCY");
   const [sortBy, setSortBy] = useState(searchParams.get("sort") ?? "name");
   const [minTier, setMinTier] = useState(searchParams.get("tier") ?? "all");
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchTerm) params.set("q", searchTerm);
-    if (category !== "ALL") params.set("cat", category);
+    if (category !== "CONSULTANCY") params.set("cat", category);
     if (sortBy !== "name") params.set("sort", sortBy);
     if (minTier !== "all") params.set("tier", minTier);
     const qs = params.toString();
@@ -445,11 +445,11 @@ export function CompaniesList() {
           </Select.Content>
         </Select.Root>
 
-        {(category !== "ALL" || minTier !== "all" || sortBy !== "name") && (
+        {(category !== "CONSULTANCY" || minTier !== "all" || sortBy !== "name") && (
           <button
             className={button({ variant: "ghost", size: "sm" })}
             onClick={() => {
-              setCategory("ALL");
+              setCategory("CONSULTANCY");
               setSortBy("name");
               setMinTier("all");
             }}

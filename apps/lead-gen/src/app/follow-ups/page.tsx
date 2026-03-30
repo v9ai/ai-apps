@@ -31,6 +31,7 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 
 export default function FollowUpsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const [tab, setTab] = useState<string>("emails");
 
   const { data: emailData, loading: emailLoading } = useGetEmailsNeedingFollowUpQuery({
