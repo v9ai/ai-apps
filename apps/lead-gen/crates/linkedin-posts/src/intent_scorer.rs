@@ -1,0 +1,359 @@
+/// Multi-label logistic scorer for LinkedIn post intent classification.
+///
+/// Follows the `LogisticScorer` pattern from `metal/src/kernel/scoring.rs`:
+/// weights × features + bias → sigmoid, producing independent probabilities
+/// for 7 intent labels.
+///
+/// Feature vector (12 elements):
+///   [hiring_kw_density, ai_kw_density, remote_kw_density, eng_kw_density,
+///    culture_kw_density, noise_kw_density, text_length_norm, reactions_norm,
+///    comments_norm, has_url, is_repost, media_type_enc]
+
+use serde::{Deserialize, Serialize};
+use std::path::Path;
+
+use crate::models::Post;
+use crate::scoring::{
+    AI_KEYWORDS, CULTURE_KEYWORDS, ENGINEERING_KEYWORDS, HIRING_KEYWORDS, NOISE_KEYWORDS,
+    REMOTE_KEYWORDS,
+};
+
+// ── Constants ────────────────────────────────────────────────────────────────
+
+pub const NUM_FEATURES: usize = 12;
+pub const NUM_LABELS: usize = 7;
+
+pub const LABEL_HIRING: usize = 0;
+pub const LABEL_AI_ML: usize = 1;
+pub const LABEL_REMOTE: usize = 2;
+pub const LABEL_ENG_CULTURE: usize = 3;
+pub const LABEL_COMPANY_GROWTH: usize = 4;
+pub const LABEL_THOUGHT_LEADERSHIP: usize = 5;
+pub const LABEL_NOISE: usize = 6;
+
+pub const LABEL_NAMES: [&str; NUM_LABELS] = [
+    "hiring_signal",
+    "ai_ml_content",
+    "remote_signal",
+    "engineering_culture",
+    "company_growth",
+    "thought_leadership",
+    "noise",
+];
+
+// ── Intent probabilities ─────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PostIntents {
+    pub hiring_signal: f32,
+    pub ai_ml_content: f32,
+    pub remote_signal: f32,
+    pub engineering_culture: f32,
+    pub company_growth: f32,
+    pub thought_leadership: f32,
+    pub noise: f32,
+}
+
+impl PostIntents {
+    pub fn from_array(scores: &[f32; NUM_LABELS]) -> Self {
+        Self {
+            hiring_signal: scores[LABEL_HIRING],
+            ai_ml_content: scores[LABEL_AI_ML],
+            remote_signal: scores[LABEL_REMOTE],
+            engineering_culture: scores[LABEL_ENG_CULTURE],
+            company_growth: scores[LABEL_COMPANY_GROWTH],
+            thought_leadership: scores[LABEL_THOUGHT_LEADERSHIP],
+            noise: scores[LABEL_NOISE],
+        }
+    }
+
+    /// Return the label name with the highest confidence.
+    pub fn primary_intent(&self) -> &'static str {
+        let scores = [
+            self.hiring_signal,
+            self.ai_ml_content,
+            self.remote_signal,
+            self.engineering_culture,
+            self.company_growth,
+            self.thought_leadership,
+            self.noise,
+        ];
+        let max_idx = scores
+            .iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(i, _)| i)
+            .unwrap_or(LABEL_NOISE);
+        LABEL_NAMES[max_idx]
+    }
+
+    /// Weighted relevance score combining intents.
+    pub fn relevance_score(&self) -> f32 {
+        0.30 * self.hiring_signal
+            + 0.25 * self.ai_ml_content
+            + 0.20 * self.remote_signal
+            + 0.10 * self.engineering_culture
+            + 0.10 * self.company_growth
+            + 0.05 * self.thought_leadership
+            - 0.30 * self.noise
+    }
+}
+
+// ── Scorer ────────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PostIntentScorer {
+    pub weights: [[f32; NUM_FEATURES]; NUM_LABELS],
+    pub biases: [f32; NUM_LABELS],
+    pub trained: bool,
+}
+
+impl PostIntentScorer {
+    /// Hand-tuned initial weights that approximate the existing keyword scorer.
+    /// Each row maps feature densities to an intent probability.
+    pub fn default_pretrained() -> Self {
+        // Rows: hiring, ai_ml, remote, eng_culture, company_growth, thought_leadership, noise
+        // Cols: hiring_d, ai_d, remote_d, eng_d, culture_d, noise_d, len_norm, react_n, comment_n, has_url, is_repost, media_enc
+        let weights = [
+            // hiring_signal — strongly driven by hiring keywords, moderate by role-related
+            [8.0, 1.0, 1.5, 1.0, 0.5, -2.0, 0.5, 0.3, 0.2, 0.5, -0.5, 0.0],
+            // ai_ml_content — strongly driven by AI keywords, moderate by engineering
+            [0.5, 8.0, 0.5, 2.0, 0.5, -1.5, 0.5, 0.2, 0.3, 0.3, -0.3, 0.2],
+            // remote_signal — strongly driven by remote keywords
+            [1.0, 0.5, 8.0, 0.5, 0.3, -1.5, 0.3, 0.1, 0.1, 0.2, -0.3, 0.0],
+            // engineering_culture — engineering + culture keywords
+            [0.5, 1.5, 0.3, 6.0, 3.0, -1.5, 0.5, 0.3, 0.4, 0.3, -0.2, 0.3],
+            // company_growth — culture keywords (funding, series, etc.)
+            [0.5, 0.5, 0.3, 0.5, 7.0, -1.5, 0.3, 0.4, 0.3, 0.3, -0.2, 0.1],
+            // thought_leadership — long text, high engagement, low noise
+            [0.3, 1.5, 0.3, 1.5, 0.5, -3.0, 2.0, 0.8, 1.0, 0.2, -0.5, 0.5],
+            // noise — strongly driven by noise keywords, penalize short text
+            [-2.0, -1.5, -1.0, -1.0, -0.5, 6.0, -2.0, -0.2, -0.3, -0.5, 1.0, -0.3],
+        ];
+
+        let biases = [
+            -2.5, // hiring — default low
+            -2.0, // ai_ml — default low
+            -2.5, // remote — default low
+            -2.0, // eng_culture — default low
+            -2.5, // company_growth — default low
+            -1.5, // thought_leadership — slightly easier
+            -1.0, // noise — slightly easier to trigger
+        ];
+
+        Self {
+            weights,
+            biases,
+            trained: false,
+        }
+    }
+
+    /// Score a post, returning per-label probabilities.
+    pub fn score_intents(&self, features: &[f32; NUM_FEATURES]) -> PostIntents {
+        let mut scores = [0.0f32; NUM_LABELS];
+        for label in 0..NUM_LABELS {
+            let mut z = self.biases[label];
+            for f in 0..NUM_FEATURES {
+                z += self.weights[label][f] * features[f];
+            }
+            scores[label] = sigmoid(z);
+        }
+        PostIntents::from_array(&scores)
+    }
+
+    /// Load weights from a JSON file.
+    pub fn from_json(path: &Path) -> Result<Self, String> {
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read weights file: {}", e))?;
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse weights: {}", e))
+    }
+
+    /// Save weights to a JSON file.
+    pub fn to_json(&self, path: &Path) -> Result<(), String> {
+        let content =
+            serde_json::to_string_pretty(self).map_err(|e| format!("Failed to serialize: {}", e))?;
+        std::fs::write(path, content).map_err(|e| format!("Failed to write: {}", e))
+    }
+}
+
+// ── Feature extraction ───────────────────────────────────────────────────────
+
+/// Extract 12-element feature vector from a post.
+pub fn extract_features(post: &Post) -> [f32; NUM_FEATURES] {
+    let text = post.post_text.as_deref().unwrap_or("");
+    let lower = text.to_lowercase();
+    let word_count = lower.split_whitespace().count().max(1) as f32;
+
+    let hiring_hits = HIRING_KEYWORDS
+        .iter()
+        .filter(|kw| lower.contains(*kw))
+        .count() as f32;
+    let ai_hits = AI_KEYWORDS
+        .iter()
+        .filter(|kw| lower.contains(*kw))
+        .count() as f32;
+    let remote_hits = REMOTE_KEYWORDS
+        .iter()
+        .filter(|kw| lower.contains(*kw))
+        .count() as f32;
+    let eng_hits = ENGINEERING_KEYWORDS
+        .iter()
+        .filter(|kw| lower.contains(*kw))
+        .count() as f32;
+    let culture_hits = CULTURE_KEYWORDS
+        .iter()
+        .filter(|kw| lower.contains(*kw))
+        .count() as f32;
+    let noise_hits = NOISE_KEYWORDS
+        .iter()
+        .filter(|kw| lower.contains(*kw))
+        .count() as f32;
+
+    let media_enc = match post.media_type.as_str() {
+        "image" => 0.2,
+        "article" => 0.4,
+        "document" => 0.6,
+        "video" => 0.8,
+        "poll" => 1.0,
+        _ => 0.0,
+    };
+
+    [
+        hiring_hits / word_count,                           // 0: hiring_kw_density
+        ai_hits / word_count,                               // 1: ai_kw_density
+        remote_hits / word_count,                           // 2: remote_kw_density
+        eng_hits / word_count,                              // 3: eng_kw_density
+        culture_hits / word_count,                          // 4: culture_kw_density
+        noise_hits / word_count,                            // 5: noise_kw_density
+        (text.len() as f32 / 500.0).min(1.0),              // 6: text_length_norm
+        (1.0 + post.reactions_count as f32).ln() / 10.0,   // 7: reactions_norm
+        (1.0 + post.comments_count as f32).ln() / 8.0,     // 8: comments_norm
+        if post.post_url.is_some() { 1.0 } else { 0.0 },  // 9: has_url
+        if post.is_repost { 1.0 } else { 0.0 },           // 10: is_repost
+        media_enc,                                          // 11: media_type_enc
+    ]
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+#[inline]
+fn sigmoid(x: f32) -> f32 {
+    1.0 / (1.0 + (-x).exp())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_post(text: &str) -> Post {
+        Post {
+            post_url: Some("https://linkedin.com/feed/update/123".to_string()),
+            post_text: Some(text.to_string()),
+            posted_date: None,
+            reactions_count: 50,
+            comments_count: 10,
+            reposts_count: 5,
+            media_type: "none".to_string(),
+            is_repost: false,
+            original_author: None,
+        }
+    }
+
+    #[test]
+    fn hiring_post_scores_high_on_hiring() {
+        let scorer = PostIntentScorer::default_pretrained();
+        let post = make_post(
+            "We're hiring a Senior ML Engineer to join our team in Berlin. Fully remote, working on LLMs and RAG pipelines. Apply now!",
+        );
+        let features = extract_features(&post);
+        let intents = scorer.score_intents(&features);
+
+        assert!(
+            intents.hiring_signal > 0.5,
+            "hiring_signal={:.3}",
+            intents.hiring_signal
+        );
+        assert!(
+            intents.hiring_signal > intents.noise,
+            "hiring={:.3} should beat noise={:.3}",
+            intents.hiring_signal,
+            intents.noise
+        );
+    }
+
+    #[test]
+    fn ai_post_scores_high_on_ai() {
+        let scorer = PostIntentScorer::default_pretrained();
+        let post = make_post(
+            "Just published our engineering blog about fine-tuning a large language model with PyTorch for code review. Impressive results with transformer architectures.",
+        );
+        let features = extract_features(&post);
+        let intents = scorer.score_intents(&features);
+
+        assert!(
+            intents.ai_ml_content > 0.5,
+            "ai_ml={:.3}",
+            intents.ai_ml_content
+        );
+    }
+
+    #[test]
+    fn noise_post_scores_high_on_noise() {
+        let scorer = PostIntentScorer::default_pretrained();
+        let post = make_post("Happy birthday to my amazing colleague! Congrats on your work anniversary! #blessed #grateful");
+        let features = extract_features(&post);
+        let intents = scorer.score_intents(&features);
+
+        assert!(
+            intents.noise > 0.5,
+            "noise={:.3}",
+            intents.noise
+        );
+        assert!(
+            intents.relevance_score() < 0.15,
+            "relevance={:.3} should be < 0.15",
+            intents.relevance_score()
+        );
+    }
+
+    #[test]
+    fn remote_post_scores_high_on_remote() {
+        let scorer = PostIntentScorer::default_pretrained();
+        let post = make_post(
+            "Open position: Platform Engineer. We're remote-first, work from anywhere. Distributed team across 15 countries.",
+        );
+        let features = extract_features(&post);
+        let intents = scorer.score_intents(&features);
+
+        assert!(
+            intents.remote_signal > 0.5,
+            "remote={:.3}",
+            intents.remote_signal
+        );
+    }
+
+    #[test]
+    fn feature_extraction_dimensions() {
+        let post = make_post("test");
+        let features = extract_features(&post);
+        assert_eq!(features.len(), NUM_FEATURES);
+    }
+
+    #[test]
+    fn json_roundtrip() {
+        let scorer = PostIntentScorer::default_pretrained();
+        let json = serde_json::to_string(&scorer).unwrap();
+        let restored: PostIntentScorer = serde_json::from_str(&json).unwrap();
+        assert_eq!(scorer.weights[0][0], restored.weights[0][0]);
+        assert_eq!(scorer.biases[0], restored.biases[0]);
+    }
+
+    #[test]
+    fn primary_intent_correct() {
+        let scorer = PostIntentScorer::default_pretrained();
+        let post = make_post("We're hiring ML engineers! Join our team, now hiring for open positions.");
+        let features = extract_features(&post);
+        let intents = scorer.score_intents(&features);
+        assert_eq!(intents.primary_intent(), "hiring_signal");
+    }
+}

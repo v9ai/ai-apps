@@ -450,7 +450,7 @@ if _HAS_TORCH:
 
             # Softmax per destination node (attention over incoming edges)
             # Use scatter-based softmax for efficiency
-            attn_scores = _scatter_softmax(attn_logits, src_idx, N)  # (E, H)
+            attn_scores = _scatter_softmax(attn_logits, dst_idx, N)  # (E, H)
             attn_scores = self.dropout(attn_scores)
 
             # Weighted message: alpha_ij * v_j

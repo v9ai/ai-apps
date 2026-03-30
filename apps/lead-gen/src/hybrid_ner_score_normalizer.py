@@ -28,7 +28,7 @@ class ScoreNormalizer:
                     calibrated = raw_conf
                 else:
                     calibrated = self.calibrator.scale_confidence(
-                        np.log(raw_conf + 1e-10), 
+                        raw_conf,
                         model_name
                     )
                 
@@ -43,6 +43,6 @@ class ScoreNormalizer:
             for entity in entities:
                 text = entity["text"]
                 length_norm = 1.0 - (0.02 * (len(text) - 1))  # Reduce by 2% per extra token
-                entity["length_normalized_conf"] = entity["calibrated_conf"] * max(0.5, length_norm)
+                entity["length_normalized_conf"] = entity["calibrated_conf"] * max(0.3, length_norm)
         
         return normalized
