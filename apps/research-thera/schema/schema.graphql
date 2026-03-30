@@ -233,6 +233,8 @@ type Mutation {
   createRelatedIssue(issueId: Int!, input: CreateIssueInput!, linkType: String): IssueLink!
   linkIssues(issueId: Int!, linkedIssueId: Int!, linkType: String): IssueLink!
   unlinkIssues(issueId: Int!, linkedIssueId: Int!): UnlinkIssuesResult!
+  linkContactToIssue(issueId: Int!, contactId: Int!): IssueContactLink!
+  unlinkContactFromIssue(issueId: Int!, contactId: Int!): UnlinkContactResult!
 
   # Deep Issue Analysis
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
@@ -1076,12 +1078,22 @@ type Issue {
   stories: [Story!]!
   questions: [TherapeuticQuestion!]!
   relatedIssues: [IssueLink!]!
+  contacts: [Contact!]!
 }
 
 type IssueLink {
   id: Int!
   linkType: String!
   issue: Issue!
+}
+
+type IssueContactLink {
+  id: Int!
+  contact: Contact!
+}
+
+type UnlinkContactResult {
+  success: Boolean!
 }
 
 type ExtractedIssue {

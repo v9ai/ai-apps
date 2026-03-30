@@ -59,6 +59,13 @@ query GetIssue($id: Int!) {
       minutes
       createdAt
     }
+    contacts {
+      id
+      firstName
+      lastName
+      role
+      slug
+    }
     relatedIssues {
       id
       linkType

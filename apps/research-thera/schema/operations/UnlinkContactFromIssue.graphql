@@ -1,0 +1,5 @@
+mutation UnlinkContactFromIssue($issueId: Int!, $contactId: Int!) {
+  unlinkContactFromIssue(issueId: $issueId, contactId: $contactId) {
+    success
+  }
+}

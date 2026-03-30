@@ -43,9 +43,9 @@ export const companyResolvers = {
     },
     // Validate and sanitize category enum
     category(parent: any) {
-      const validCategories = ["CONSULTANCY", "AGENCY", "STAFFING", "DIRECTORY", "PRODUCT", "OTHER", "UNKNOWN"];
+      const validCategories = ["CONSULTANCY", "UNKNOWN"];
       const category = parent.category?.toUpperCase() || "UNKNOWN";
-      return validCategories.includes(category) ? category : "OTHER";
+      return validCategories.includes(category) ? category : "UNKNOWN";
     },
     // Parse JSON fields with proper error handling
     tags(parent: any) {
@@ -473,9 +473,9 @@ export const companyResolvers = {
 
         // Validate category enum
         if (args.input.category) {
-          const validCategories = ["CONSULTANCY", "AGENCY", "STAFFING", "DIRECTORY", "PRODUCT", "OTHER", "UNKNOWN"];
+          const validCategories = ["CONSULTANCY", "UNKNOWN"];
           const category = args.input.category.toUpperCase();
-          insertData.category = validCategories.includes(category) ? category : "OTHER";
+          insertData.category = validCategories.includes(category) ? category : "UNKNOWN";
         }
 
         // Stringify JSON fields
@@ -545,9 +545,9 @@ export const companyResolvers = {
 
         // Validate category enum
         if (args.input.category) {
-          const validCategories = ["CONSULTANCY", "AGENCY", "STAFFING", "DIRECTORY", "PRODUCT", "OTHER", "UNKNOWN"];
+          const validCategories = ["CONSULTANCY", "UNKNOWN"];
           const category = args.input.category.toUpperCase();
-          updateData.category = validCategories.includes(category) ? category : "OTHER";
+          updateData.category = validCategories.includes(category) ? category : "UNKNOWN";
         }
 
         // Stringify JSON fields

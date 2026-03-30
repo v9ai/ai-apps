@@ -20,11 +20,6 @@ export const companies = pgTable("companies", {
   category: text("category", {
     enum: [
       "CONSULTANCY",
-      "AGENCY",
-      "STAFFING",
-      "DIRECTORY",
-      "PRODUCT",
-      "OTHER",
       "UNKNOWN",
     ],
   })

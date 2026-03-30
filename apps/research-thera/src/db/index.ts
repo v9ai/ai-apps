@@ -2368,6 +2368,55 @@ export async function getLinkedIssues(
   }));
 }
 
+export async function getContactsForIssue(issueId: number, userId: string) {
+  const rows = await neonSql`
+    SELECT c.*
+    FROM issue_contacts ic
+    JOIN contacts c ON ic.contact_id = c.id
+    WHERE ic.issue_id = ${issueId} AND ic.user_id = ${userId}
+    ORDER BY ic.created_at DESC`;
+  return rows.map((row: any) => ({
+    id: row.id as number,
+    userId: row.user_id as string,
+    slug: (row.slug as string) || null,
+    firstName: row.first_name as string,
+    lastName: (row.last_name as string) || null,
+    role: (row.role as string) || null,
+    ageYears: (row.age_years as number) || null,
+    notes: (row.notes as string) || null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }));
+}
+
+export async function linkContactToIssue(
+  issueId: number,
+  contactId: number,
+  userId: string,
+): Promise<number> {
+  const existing = await neonSql`
+    SELECT id FROM issue_contacts
+    WHERE issue_id = ${issueId} AND contact_id = ${contactId} AND user_id = ${userId}
+    LIMIT 1`;
+  if (existing.length > 0) return existing[0].id as number;
+
+  const rows = await neonSql`
+    INSERT INTO issue_contacts (issue_id, contact_id, user_id, created_at)
+    VALUES (${issueId}, ${contactId}, ${userId}, NOW())
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
+export async function unlinkContactFromIssue(
+  issueId: number,
+  contactId: number,
+  userId: string,
+): Promise<void> {
+  await neonSql`
+    DELETE FROM issue_contacts
+    WHERE issue_id = ${issueId} AND contact_id = ${contactId} AND user_id = ${userId}`;
+}
+
 export async function getGoalById(goalId: number) {
   const rows = await neonSql`SELECT * FROM goals WHERE id = ${goalId}`;
   if (rows.length === 0) return null;
