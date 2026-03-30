@@ -5,9 +5,17 @@ edition = "2021"
 license = "MIT"
 description = "Local LinkedIn posts storage — axum HTTP server backed by LanceDB"
 
+[lib]
+name = "linkedin_posts"
+path = "src/lib.rs"
+
 [[bin]]
 name = "linkedin-posts"
 path = "src/main.rs"
+
+[[bin]]
+name = "process-posts"
+path = "src/bin/process_posts.rs"
 
 [dependencies]
 lancedb = "0.27"

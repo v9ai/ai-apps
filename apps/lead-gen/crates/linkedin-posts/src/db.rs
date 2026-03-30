@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use arrow_array::{BooleanArray, Float32Array, Int32Array, Int64Array, RecordBatch, StringArray};
+use arrow_array::{Array, BooleanArray, Float32Array, Int32Array, Int64Array, RecordBatch, StringArray};
 use arrow_schema::{DataType, Field, Schema};
 use lancedb::{connect, Connection};
 use tokio::sync::Mutex;
@@ -382,6 +382,86 @@ impl PostsDb {
             n + filtered_count,
         );
         Ok((n, 0, filtered_count, Some(summary)))
+    }
+
+    /// Load all posts from LanceDB (full disk scan). Used by batch processing.
+    pub async fn load_all_posts(&self) -> Result<Vec<StoredPost>> {
+        use lancedb::query::ExecutableQuery;
+        use futures::TryStreamExt;
+
+        let table = self
+            .conn
+            .open_table("posts")
+            .execute()
+            .await
+            .context("Failed to open posts table")?;
+
+        let mut stream = table
+            .query()
+            .execute()
+            .await
+            .context("Failed to query posts table")?;
+
+        let mut batches = Vec::new();
+        while let Some(batch) = stream.try_next().await.context("Failed reading batch")? {
+            batches.push(batch);
+        }
+
+        let mut posts = Vec::new();
+        for batch in &batches {
+            let ids = batch.column(0).as_any().downcast_ref::<Int64Array>().unwrap();
+            let contact_ids = batch.column(1).as_any().downcast_ref::<Int32Array>().unwrap();
+            let post_urls = batch.column(2).as_any().downcast_ref::<StringArray>().unwrap();
+            let post_texts = batch.column(3).as_any().downcast_ref::<StringArray>().unwrap();
+            let posted_dates = batch.column(4).as_any().downcast_ref::<StringArray>().unwrap();
+            let reactions = batch.column(5).as_any().downcast_ref::<Int32Array>().unwrap();
+            let comments = batch.column(6).as_any().downcast_ref::<Int32Array>().unwrap();
+            let reposts = batch.column(7).as_any().downcast_ref::<Int32Array>().unwrap();
+            let media_types = batch.column(8).as_any().downcast_ref::<StringArray>().unwrap();
+            let is_reposts = batch.column(9).as_any().downcast_ref::<BooleanArray>().unwrap();
+            let original_authors = batch.column(10).as_any().downcast_ref::<StringArray>().unwrap();
+            let scraped_ats = batch.column(11).as_any().downcast_ref::<StringArray>().unwrap();
+            let relevance_scores = batch.column(12).as_any().downcast_ref::<Float32Array>().unwrap();
+            let primary_intents = batch.column(13).as_any().downcast_ref::<StringArray>().unwrap();
+            let intent_hirings = batch.column(14).as_any().downcast_ref::<Float32Array>().unwrap();
+            let intent_ai_mls = batch.column(15).as_any().downcast_ref::<Float32Array>().unwrap();
+            let intent_remotes = batch.column(16).as_any().downcast_ref::<Float32Array>().unwrap();
+            let intent_eng_cultures = batch.column(17).as_any().downcast_ref::<Float32Array>().unwrap();
+            let intent_company_growths = batch.column(18).as_any().downcast_ref::<Float32Array>().unwrap();
+            let intent_thought_leaderships = batch.column(19).as_any().downcast_ref::<Float32Array>().unwrap();
+            let intent_noises = batch.column(20).as_any().downcast_ref::<Float32Array>().unwrap();
+            let entities_jsons = batch.column(21).as_any().downcast_ref::<StringArray>().unwrap();
+
+            for i in 0..batch.num_rows() {
+                posts.push(StoredPost {
+                    id: ids.value(i),
+                    contact_id: contact_ids.value(i),
+                    post_url: if post_urls.is_null(i) { None } else { Some(post_urls.value(i).to_string()) },
+                    post_text: if post_texts.is_null(i) { None } else { Some(post_texts.value(i).to_string()) },
+                    posted_date: if posted_dates.is_null(i) { None } else { Some(posted_dates.value(i).to_string()) },
+                    reactions_count: reactions.value(i),
+                    comments_count: comments.value(i),
+                    reposts_count: reposts.value(i),
+                    media_type: media_types.value(i).to_string(),
+                    is_repost: is_reposts.value(i),
+                    original_author: if original_authors.is_null(i) { None } else { Some(original_authors.value(i).to_string()) },
+                    scraped_at: scraped_ats.value(i).to_string(),
+                    relevance_score: relevance_scores.value(i),
+                    primary_intent: primary_intents.value(i).to_string(),
+                    intent_hiring: intent_hirings.value(i),
+                    intent_ai_ml: intent_ai_mls.value(i),
+                    intent_remote: intent_remotes.value(i),
+                    intent_eng_culture: intent_eng_cultures.value(i),
+                    intent_company_growth: intent_company_growths.value(i),
+                    intent_thought_leadership: intent_thought_leaderships.value(i),
+                    intent_noise: intent_noises.value(i),
+                    entities_json: if entities_jsons.is_null(i) { None } else { Some(entities_jsons.value(i).to_string()) },
+                });
+            }
+        }
+
+        tracing::info!("Loaded {} posts from LanceDB", posts.len());
+        Ok(posts)
     }
 
     pub async fn posts_count(&self) -> usize {

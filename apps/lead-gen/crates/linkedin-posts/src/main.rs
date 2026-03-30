@@ -1,12 +1,3 @@
-mod analysis;
-mod authority;
-mod db;
-mod intent_scorer;
-mod models;
-mod neon;
-mod post_ner;
-mod scoring;
-
 use std::sync::Arc;
 
 use axum::{
@@ -17,9 +8,10 @@ use axum::{
 };
 use tower_http::cors::CorsLayer;
 
-use db::PostsDb;
-use intent_scorer::PostIntentScorer;
-use models::{
+use linkedin_posts::{authority, models, neon};
+use linkedin_posts::db::PostsDb;
+use linkedin_posts::intent_scorer::PostIntentScorer;
+use linkedin_posts::models::{
     AddContactsRequest, AddPostsRequest, ClassifiedPostsQuery, ExportResponse, InsertResult,
     IntentDistribution, StatsResponse,
 };
@@ -91,11 +83,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn dirs_or_default() -> String {
-    if let Ok(p) = std::env::var("LANCE_DB_PATH") {
-        return p;
-    }
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    format!("{}/.lance/linkedin", home)
+    linkedin_posts::lance_db_path()
 }
 
 // ── Original handlers ────────────────────────────────────────────────────────

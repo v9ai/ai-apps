@@ -99,7 +99,7 @@ pub fn score_legacy(post: &Post) -> Verdict {
     Verdict { keep, score: s, reason }
 }
 
-pub(crate) static HIRING_KEYWORDS: &[&str] = &[
+pub static HIRING_KEYWORDS: &[&str] = &[
     "we're hiring",
     "we are hiring",
     "hiring for",
@@ -120,7 +120,7 @@ pub(crate) static HIRING_KEYWORDS: &[&str] = &[
     "new opening",
 ];
 
-pub(crate) static AI_KEYWORDS: &[&str] = &[
+pub static AI_KEYWORDS: &[&str] = &[
     "machine learning",
     "deep learning",
     "artificial intelligence",
@@ -152,7 +152,7 @@ pub(crate) static AI_KEYWORDS: &[&str] = &[
     "reinforcement learning",
 ];
 
-pub(crate) static REMOTE_KEYWORDS: &[&str] = &[
+pub static REMOTE_KEYWORDS: &[&str] = &[
     "fully remote",
     "remote-first",
     "remote first",
@@ -166,7 +166,7 @@ pub(crate) static REMOTE_KEYWORDS: &[&str] = &[
     "worldwide",
 ];
 
-pub(crate) static ENGINEERING_KEYWORDS: &[&str] = &[
+pub static ENGINEERING_KEYWORDS: &[&str] = &[
     "software engineer",
     "backend engineer",
     "frontend engineer",
@@ -192,7 +192,7 @@ pub(crate) static ENGINEERING_KEYWORDS: &[&str] = &[
     "engineering manager",
 ];
 
-pub(crate) static CULTURE_KEYWORDS: &[&str] = &[
+pub static CULTURE_KEYWORDS: &[&str] = &[
     "engineering culture",
     "tech stack",
     "engineering blog",
@@ -211,7 +211,7 @@ pub(crate) static CULTURE_KEYWORDS: &[&str] = &[
     "y combinator",
 ];
 
-pub(crate) static NOISE_KEYWORDS: &[&str] = &[
+pub static NOISE_KEYWORDS: &[&str] = &[
     "happy birthday",
     "work anniversary",
     "congratulations on",
@@ -231,6 +231,18 @@ pub(crate) static NOISE_KEYWORDS: &[&str] = &[
     "#grateful",
     "personal news:",
 ];
+
+/// Check if a position title contains AI/ML keywords.
+pub fn title_has_ai_signal(position: &str) -> bool {
+    let lower = position.to_lowercase();
+    AI_KEYWORDS.iter().any(|kw| lower.contains(kw))
+}
+
+/// Check if a position title contains any engineering keywords.
+pub fn title_has_engineering_signal(position: &str) -> bool {
+    let lower = position.to_lowercase();
+    ENGINEERING_KEYWORDS.iter().any(|kw| lower.contains(kw))
+}
 
 #[cfg(test)]
 mod tests {
