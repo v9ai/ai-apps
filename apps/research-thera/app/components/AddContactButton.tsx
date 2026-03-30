@@ -31,6 +31,8 @@ const ROLE_OPTIONS = [
   "coach",
   "counselor",
   "caregiver",
+  "classmate",
+  "schoolmate",
   "other",
 ] as const;
 

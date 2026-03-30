@@ -948,7 +948,7 @@ function IssueDetailContent() {
               <Select.Root value={newContactRole} onValueChange={setNewContactRole}>
                 <Select.Trigger style={{ width: "100%" }} />
                 <Select.Content>
-                  {["teacher", "therapist", "doctor", "tutor", "coach", "counselor", "caregiver", "other"].map((r) => (
+                  {["teacher", "therapist", "doctor", "tutor", "coach", "counselor", "caregiver", "classmate", "schoolmate", "other"].map((r) => (
                     <Select.Item key={r} value={r}>{r}</Select.Item>
                   ))}
                 </Select.Content>
