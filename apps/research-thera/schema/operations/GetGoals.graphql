@@ -1,9 +1,10 @@
-query GetGoals($familyMemberId: Int, $status: String) {
-  goals(familyMemberId: $familyMemberId, status: $status) {
+query GetGoals($familyMemberId: Int, $status: String, $tag: String) {
+  goals(familyMemberId: $familyMemberId, status: $status, tag: $tag) {
     id
     title
     description
     status
+    tags
     familyMemberId
     familyMember {
       id

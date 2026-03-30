@@ -212,7 +212,7 @@ function JournalEntryContent() {
                   variant="soft"
                   size="1"
                   style={{ cursor: "pointer" }}
-                  onClick={() => router.push(`/journal/tag/${encodeURIComponent(tag)}`)}
+                  onClick={() => router.push(`/tag/${encodeURIComponent(tag)}`)}
                 >
                   {tag}
                 </Badge>

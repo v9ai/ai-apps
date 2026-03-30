@@ -961,7 +961,7 @@ type Query {
   generationJob(id: String!): GenerationJob
   generationJobs(goalId: Int, status: String): [GenerationJob!]!
   goal(id: Int, slug: String): Goal
-  goals(familyMemberId: Int, status: String): [Goal!]!
+  goals(familyMemberId: Int, status: String, tag: String): [Goal!]!
   habit(id: Int!): Habit
   habits(familyMemberId: Int, status: String): [Habit!]!
   issue(id: Int!): Issue
