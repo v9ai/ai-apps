@@ -115,7 +115,7 @@ async function AppointmentsList() {
             )}
 
             {/* Details */}
-            <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
+            <Flex direction="column" gap="1" className={css({ flex: "1", minWidth: "0" })}>
               <Text size="3" weight="bold" truncate>{a.title}</Text>
               {a.provider && (
                 <Text size="2" color="gray">{a.provider}</Text>

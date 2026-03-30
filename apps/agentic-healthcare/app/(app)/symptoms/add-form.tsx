@@ -20,7 +20,7 @@ export function AddSymptomForm() {
           <TextArea name="description" placeholder="e.g. Persistent fatigue and headache after meals" required rows={2} />
         </Flex>
         <Flex gap="3">
-          <Flex direction="column" gap="1" style={{ flex: 1 }}>
+          <Flex direction="column" gap="1" flexGrow="1">
             <Text size="2" color="gray">Severity</Text>
             <Select.Root name="severity" defaultValue="moderate">
               <Select.Trigger />
@@ -31,7 +31,7 @@ export function AddSymptomForm() {
               </Select.Content>
             </Select.Root>
           </Flex>
-          <Flex direction="column" gap="1" style={{ flex: 1 }}>
+          <Flex direction="column" gap="1" flexGrow="1">
             <Text size="2" color="gray">When</Text>
             <TextField.Root name="logged_at" type="datetime-local" />
           </Flex>

@@ -2,6 +2,7 @@ import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { Badge, Card, Flex, Text, Tooltip } from "@radix-ui/themes";
+import { css } from "styled-system/css";
 import { METRIC_REFERENCES, classifyMetricRisk } from "@/lib/embeddings";
 import type { TrajectoryState, MetricRisk } from "./utils";
 
@@ -67,7 +68,13 @@ export async function TrajectoryTimeline() {
   }
 
   return (
-    <Flex direction="column" gap="3">
+    <div
+      className={css({
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+        gap: "12px",
+      })}
+    >
       {trajectory.map((state, i) => {
         const date = state.test_date
           ? new Date(state.test_date).toLocaleDateString()
@@ -136,6 +143,6 @@ export async function TrajectoryTimeline() {
           </Card>
         );
       })}
-    </Flex>
+    </div>
   );
 }

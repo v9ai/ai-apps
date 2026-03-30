@@ -69,7 +69,7 @@ export async function getRelatedMarkers(conditionId: string) {
 
   if (!conditionEmb) return [];
 
-  const embedding = await embedViaPython(conditionEmb.content);
+  const embedding = await generateEmbedding(conditionEmb.content);
   const embStr = `[${embedding.join(",")}]`;
 
   const data = await db.execute(sql`
