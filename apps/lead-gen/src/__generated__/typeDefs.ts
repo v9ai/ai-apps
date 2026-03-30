@@ -91,12 +91,7 @@ type Company {
 }
 
 enum CompanyCategory {
-  AGENCY
   CONSULTANCY
-  DIRECTORY
-  OTHER
-  PRODUCT
-  STAFFING
   UNKNOWN
 }
 
