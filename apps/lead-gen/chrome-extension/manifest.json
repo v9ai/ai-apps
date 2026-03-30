@@ -24,7 +24,8 @@
     "scripting",
     "storage",
     "tabs",
-    "cookies"
+    "cookies",
+    "alarms"
   ],
   "host_permissions": [
     "http://localhost:3000/*",

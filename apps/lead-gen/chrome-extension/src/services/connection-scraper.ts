@@ -70,7 +70,10 @@ async function fetchConnectionsPage(
     throw new Error("LinkedIn session expired — please log in again");
   }
   if (res.status === 429) {
-    throw new Error("LinkedIn rate limit hit — try again in a few minutes");
+    // Signal caller to retry with backoff
+    const error = new Error("LinkedIn rate limit hit (429)");
+    (error as any).retryable = true;
+    throw error;
   }
   if (!res.ok) {
     throw new Error(`Voyager API error: ${res.status} ${res.statusText}`);
@@ -137,24 +140,56 @@ async function fetchConnectionsPage(
  * Reports progress via callback. Respects `postsCancelled` flag.
  */
 export async function fetchAllConnections(
-  onProgress?: (fetched: number, total: number | null) => void,
+  onProgress?: (fetched: number, total: number | null, warning?: string) => void,
 ): Promise<ScrapedConnection[]> {
   const csrfToken = await getCsrfToken();
   const seen = new Set<string>();
   const connections: ScrapedConnection[] = [];
   let start = 0;
   let total: number | null = null;
+  let consecutiveEmpty = 0;
+  const MAX_RETRIES = 3;
 
   while (true) {
     if (postsCancelled) break;
 
-    const page = await fetchConnectionsPage(csrfToken, start);
+    let page: Awaited<ReturnType<typeof fetchConnectionsPage>>;
+    let retries = 0;
+
+    // Retry with exponential backoff on 429 rate limit
+    while (true) {
+      try {
+        page = await fetchConnectionsPage(csrfToken, start);
+        break;
+      } catch (err) {
+        if ((err as any).retryable && retries < MAX_RETRIES) {
+          retries++;
+          const backoff = Math.min(2000 * Math.pow(2, retries), 30000);
+          console.warn(`[Connections] 429 rate limit — retrying in ${backoff}ms (attempt ${retries}/${MAX_RETRIES})`);
+          onProgress?.(connections.length, total, `Rate limited — retrying in ${Math.round(backoff / 1000)}s...`);
+          await new Promise((r) => setTimeout(r, backoff));
+          continue;
+        }
+        throw err;
+      }
+    }
 
     if (total === null && page.total > 0) {
       total = page.total;
     }
 
-    if (page.elements.length === 0) break;
+    if (page.elements.length === 0) {
+      consecutiveEmpty++;
+      // LinkedIn sometimes returns empty pages mid-stream — retry a few times
+      if (consecutiveEmpty <= 2 && total !== null && start < total) {
+        console.warn(`[Connections] Empty page at offset ${start} — retrying (${consecutiveEmpty}/2)`);
+        start += PAGE_SIZE;
+        await new Promise((r) => setTimeout(r, REQUEST_DELAY_MS * 3));
+        continue;
+      }
+      break;
+    }
+    consecutiveEmpty = 0;
 
     for (const el of page.elements) {
       const url = `https://www.linkedin.com/in/${el.publicIdentifier}/`;
@@ -176,6 +211,13 @@ export async function fetchAllConnections(
 
     // Rate limit
     await new Promise((r) => setTimeout(r, REQUEST_DELAY_MS));
+  }
+
+  // Warn if LinkedIn capped results
+  if (total !== null && connections.length < total * 0.95) {
+    const warning = `LinkedIn returned ${connections.length.toLocaleString()} of ${total.toLocaleString()} — API pagination cap hit`;
+    console.warn(`[Connections] ${warning}`);
+    onProgress?.(connections.length, total, warning);
   }
 
   return connections;

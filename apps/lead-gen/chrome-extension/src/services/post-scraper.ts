@@ -13,6 +13,7 @@
 // Instead, we inline them directly in the executeScript calls below.
 
 import { fetchAllConnections, type ScrapedConnection } from "./connection-scraper";
+import { gqlRequest } from "./graphql";
 
 const RUST_SERVER = "http://localhost:9876";
 
@@ -408,23 +409,40 @@ function sendProgress(data: Record<string, unknown>) {
   }
 }
 
-// ── Import connections via background script's gqlRequest ──
+// ── Import connections directly via GraphQL (no self-messaging) ──
 
 async function importConnectionsBatch(
   connections: ScrapedConnection[],
-): Promise<{ imported: number; failed: number }> {
-  return new Promise((resolve) => {
-    chrome.runtime.sendMessage(
-      { action: "importConnections", connections },
-      (response) => {
-        if (response?.success) {
-          resolve({ imported: response.imported, failed: response.failed });
-        } else {
-          resolve({ imported: 0, failed: connections.length });
-        }
+): Promise<{ imported: number; failed: number; errors: string[] }> {
+  try {
+    const result = await gqlRequest(
+      `mutation ImportContacts($contacts: [ContactInput!]!) {
+        importContacts(contacts: $contacts) { success imported failed errors }
+      }`,
+      {
+        contacts: connections.map((c) => ({
+          firstName: c.firstName,
+          lastName: c.lastName,
+          linkedinUrl: c.linkedinUrl,
+          position: c.position || undefined,
+          tags: ["linkedin-connection"],
+        })),
       },
     );
-  });
+
+    const res = result.data?.importContacts;
+    if (res) {
+      return { imported: res.imported, failed: res.failed, errors: res.errors || [] };
+    }
+
+    const errMsg = result.errors?.[0]?.message ?? "GraphQL error";
+    console.error("[ImportConnections] GQL error:", errMsg);
+    return { imported: 0, failed: connections.length, errors: [errMsg] };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[ImportConnections] Request error:", errMsg);
+    return { imported: 0, failed: connections.length, errors: [errMsg] };
+  }
 }
 
 // ── Full pipeline: connections + import + posts ──
@@ -445,10 +463,12 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
 
   let connections: ScrapedConnection[];
   try {
-    connections = await fetchAllConnections((fetched, total) => {
+    connections = await fetchAllConnections((fetched, total, warning) => {
       sendProgress({
         phase: "connections",
-        status: `Fetching connections... ${fetched.toLocaleString()}${total ? ` / ${total.toLocaleString()}` : ""}`,
+        status: warning
+          ? `⚠ ${warning}`
+          : `Fetching connections... ${fetched.toLocaleString()}${total ? ` / ${total.toLocaleString()}` : ""}`,
       });
     });
   } catch (err) {
@@ -501,23 +521,29 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
     const CHUNK_SIZE = 100;
     let totalImported = 0;
     let totalFailed = 0;
+    const allErrors: string[] = [];
 
     for (let i = 0; i < newConnections.length; i += CHUNK_SIZE) {
       if (postsCancelled) break;
       const chunk = newConnections.slice(i, i + CHUNK_SIZE);
-      const { imported, failed } = await importConnectionsBatch(chunk);
+      const { imported, failed, errors } = await importConnectionsBatch(chunk);
       totalImported += imported;
       totalFailed += failed;
+      if (errors.length > 0) allErrors.push(...errors.slice(0, 3));
 
+      const failedStr = totalFailed > 0 ? ` (${totalFailed.toLocaleString()} failed)` : "";
       sendProgress({
         phase: "import",
-        status: `Imported ${totalImported.toLocaleString()} / ${newConnections.length.toLocaleString()} new contacts`,
+        status: `Imported ${totalImported.toLocaleString()} / ${newConnections.length.toLocaleString()} new contacts${failedStr}`,
       });
     }
 
+    const summary = [`Done: ${totalImported.toLocaleString()} new, ${(connections.length - newConnections.length).toLocaleString()} already existed`];
+    if (totalFailed > 0) summary.push(`${totalFailed.toLocaleString()} failed`);
+    if (allErrors.length > 0) summary.push(`Errors: ${allErrors.slice(0, 3).join("; ")}`);
     sendProgress({
       phase: "import",
-      status: `Done: ${totalImported.toLocaleString()} new, ${(connections.length - newConnections.length).toLocaleString()} already existed`,
+      status: summary.join(" | "),
     });
   } else {
     sendProgress({

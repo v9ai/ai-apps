@@ -67,7 +67,7 @@ pub fn score_legacy(post: &Post) -> Verdict {
         .iter()
         .filter(|kw| lower.contains(*kw))
         .count() as i32;
-    s -= noise_hits * 2;
+    s -= (noise_hits * 2).min(8);
 
     // ── Negative: very short (<80 chars) ──
     if text.len() < 80 {
@@ -244,13 +244,42 @@ pub static NOISE_KEYWORDS: &[&str] = &[
 /// Keywords like " llm " won't match "LLM Engineer" via plain contains because
 /// there's no leading space at position 0. This checks both the original keyword
 /// and the trimmed variant.
-fn keyword_match(text: &str, keywords: &[&str]) -> bool {
+/// Check if `text` contains any keyword, respecting word boundaries for
+/// space-padded keywords. Uses `has_word` to avoid false positives like
+/// "rustproofing" matching " rust ".
+pub fn keyword_match(text: &str, keywords: &[&str]) -> bool {
     keywords.iter().any(|kw| {
-        text.contains(kw) || {
-            let trimmed = kw.trim();
-            trimmed != *kw && (text.starts_with(trimmed) || text.contains(&format!(" {}", trimmed)) || text.contains(&format!("{} ", trimmed)))
+        let trimmed = kw.trim();
+        if trimmed == *kw {
+            // No padding — plain contains is fine (multi-word phrases)
+            text.contains(kw)
+        } else {
+            // Space-padded keyword — use word boundary check
+            has_word(text, trimmed)
         }
     })
+}
+
+/// Check if `word` appears in `text` at a word boundary (not inside another word).
+pub fn has_word(text: &str, word: &str) -> bool {
+    let bytes = text.as_bytes();
+    let wb = word.as_bytes();
+    if wb.len() > bytes.len() {
+        return false;
+    }
+    let mut start = 0;
+    while let Some(pos) = text[start..].find(word) {
+        let abs = start + pos;
+        let before_ok = abs == 0 || !bytes[abs - 1].is_ascii_alphanumeric();
+        let after_pos = abs + wb.len();
+        let after_ok =
+            after_pos >= bytes.len() || !bytes[after_pos].is_ascii_alphanumeric();
+        if before_ok && after_ok {
+            return true;
+        }
+        start = abs + 1;
+    }
+    false
 }
 
 pub fn title_has_ai_signal(position: &str) -> bool {
@@ -420,5 +449,66 @@ mod tests {
         let v = score_legacy(&post(""));
         assert!(!v.keep);
         assert_eq!(v.reason, "no text");
+    }
+
+    // ── New regression tests (round 2) ──
+
+    #[test]
+    fn keyword_match_no_false_positive_rustproofing() {
+        // " rust " should NOT match "rustproofing"
+        assert!(!title_has_engineering_signal("Rustproofing Specialist"));
+    }
+
+    #[test]
+    fn keyword_match_no_false_positive_entrust() {
+        // " rust " should NOT match inside "Entrust"
+        assert!(!title_has_engineering_signal("Entrust Solutions Manager"));
+    }
+
+    #[test]
+    fn keyword_match_rust_at_end() {
+        // " rust " should match "Senior Rust" (word boundary at end of string)
+        assert!(title_has_engineering_signal("Senior Rust"));
+    }
+
+    #[test]
+    fn keyword_match_llm_standalone() {
+        // " llm " should match "LLM" alone
+        assert!(title_has_ai_signal("LLM"));
+    }
+
+    #[test]
+    fn keyword_match_no_false_positive_nyc() {
+        // "yc " should NOT match "nyc"
+        let v = score_legacy(&post(
+            "Living in NYC is great for networking. NYC tech scene is booming. The NYC subway is amazing.",
+        ));
+        // Should not get culture bonus from "yc "
+        assert!(v.score <= 3, "score={} — NYC should not match yc keyword", v.score);
+    }
+
+    #[test]
+    fn noise_penalty_capped() {
+        // Even with many noise keywords, penalty caps at -8
+        let v = score_legacy(&post(
+            "Happy birthday! Work anniversary! Congratulations on your promotion! Congrats on your new role! \
+             Thrilled to announce my departure. Blessed to be here. Grateful for this journey. \
+             Like if you agree. Share if you care. Agree or disagree? Hot take: unpopular opinion. \
+             Thoughts? #motivation #mondaymotivation #blessed #grateful Personal news: I quit.",
+        ));
+        // Without cap, 18 noise keywords × 2 = -36. With cap at -8, score should be >= -12
+        assert!(v.score >= -12, "score={} — noise should be capped", v.score);
+    }
+
+    #[test]
+    fn has_word_boundaries() {
+        assert!(has_word("rust developer", "rust"));
+        assert!(has_word("senior rust", "rust"));
+        assert!(has_word("rust", "rust"));
+        assert!(!has_word("rustproofing", "rust"));
+        assert!(!has_word("entrust", "rust"));
+        assert!(has_word("use rust, python", "rust"));
+        assert!(has_word("llm infrastructure", "llm"));
+        assert!(!has_word("llmengineer", "llm"));
     }
 }
