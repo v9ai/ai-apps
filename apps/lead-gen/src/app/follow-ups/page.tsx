@@ -47,6 +47,8 @@ export default function FollowUpsPage() {
   const totalCount = emailData?.emailsNeedingFollowUp?.totalCount ?? 0;
   const emails = statusFilter === "all" ? allEmails : allEmails.filter((e) => e.status === statusFilter);
   const dueReminders = remindersData?.dueReminders ?? [];
+  const allTags = Array.from(new Set(dueReminders.flatMap((r) => r.contact.tags ?? []))).sort();
+  const filteredReminders = tagFilter === "all" ? dueReminders : dueReminders.filter((r) => (r.contact.tags ?? []).includes(tagFilter));
 
   return (
     <Container size="4" p="6">
@@ -145,19 +147,33 @@ export default function FollowUpsPage() {
 
         {/* ── Due reminders tab ─────────────────────────────────────────── */}
         <Tabs.Content value="reminders">
-          <Text size="2" color="gray" mb="4" as="p">
-            {dueReminders.length === 0
-              ? "No reminders due."
-              : `${dueReminders.length} reminder(s) due or overdue.`}
-          </Text>
+          <Flex justify="between" align="center" mb="4">
+            <Text size="2" color="gray">
+              {dueReminders.length === 0
+                ? "No reminders due."
+                : `${filteredReminders.length} of ${dueReminders.length} reminder(s) due or overdue.`}
+            </Text>
+            {allTags.length > 0 && (
+              <Select.Root value={tagFilter} onValueChange={setTagFilter}>
+                <Select.Trigger placeholder="Filter by tag" />
+                <Select.Content>
+                  <Select.Item value="all">All tags</Select.Item>
+                  {allTags.map((tag) => (
+                    <Select.Item key={tag} value={tag}>{tag}</Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
+            )}
+          </Flex>
 
           {remindersLoading ? (
             <Flex justify="center" py="8"><Spinner size="3" /></Flex>
-          ) : dueReminders.length === 0 ? null : (
+          ) : filteredReminders.length === 0 ? null : (
             <Table.Root variant="surface">
               <Table.Header>
                 <Table.Row>
                   <Table.ColumnHeaderCell>Contact</Table.ColumnHeaderCell>
+                  <Table.ColumnHeaderCell>Tags</Table.ColumnHeaderCell>
                   <Table.ColumnHeaderCell>Note</Table.ColumnHeaderCell>
                   <Table.ColumnHeaderCell>Due</Table.ColumnHeaderCell>
                   <Table.ColumnHeaderCell>Recurrence</Table.ColumnHeaderCell>
@@ -165,7 +181,7 @@ export default function FollowUpsPage() {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {dueReminders.map(({ reminder, contact }) => {
+                {filteredReminders.map(({ reminder, contact }) => {
                   const overdueDays = daysSince(reminder.remindAt);
                   const daysLeft = daysUntil(reminder.remindAt);
                   return (
@@ -179,6 +195,15 @@ export default function FollowUpsPage() {
                         {contact.position && (
                           <Text size="1" color="gray" as="p">{contact.position}</Text>
                         )}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Flex gap="1" wrap="wrap">
+                          {(contact.tags ?? []).length > 0
+                            ? contact.tags!.map((tag) => (
+                                <Badge key={tag} color="gray" variant="surface" size="1">{tag}</Badge>
+                              ))
+                            : <Text size="1" color="gray">—</Text>}
+                        </Flex>
                       </Table.Cell>
                       <Table.Cell>
                         <Text size="2" color="gray">{reminder.note ?? "—"}</Text>

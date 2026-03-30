@@ -23,7 +23,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const LINKEDIN_URL_RE =
-  /^https?:\/\/(www\.)?linkedin\.com\/(posts|feed|pulse|in)\/.+/i;
+  /^https?:\/\/(www\.)?linkedin\.com\/(posts|feed|pulse|in|company)\/.+/i;
+
+function detectUrlType(url: string): "post" | "profile" | "company" {
+  if (/\/company\//.test(url)) return "company";
+  if (/\/in\//.test(url)) return "profile";
+  return "post";
+}
 
 const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
 
@@ -43,13 +49,14 @@ export async function POST(request: NextRequest) {
   const { url } = body;
   if (!url || !LINKEDIN_URL_RE.test(url)) {
     return NextResponse.json(
-      { error: "Invalid LinkedIn URL. Must be a linkedin.com post, feed, pulse, or profile URL." },
+      { error: "Invalid LinkedIn URL. Must be a linkedin.com post, feed, pulse, profile, or company URL." },
       { status: 400 },
     );
   }
 
   try {
     const og = await extractOG(url);
+    const urlType = detectUrlType(url);
 
     const title = og.title ?? null;
     const description = og.description ?? null;
@@ -58,6 +65,7 @@ export async function POST(request: NextRequest) {
     // Detect auth wall via missing content
     if (!title && !description) {
       return NextResponse.json({
+        urlType,
         authorName: null,
         authorHeadline: null,
         postText: null,
@@ -66,6 +74,26 @@ export async function POST(request: NextRequest) {
         imageUrl: null,
         extractionQuality: "failed" as const,
         reason: "LinkedIn requires authentication. Please paste the post content manually.",
+      });
+    }
+
+    // Handle company page extraction
+    if (urlType === "company") {
+      // Strip "| LinkedIn" suffix from og:title (e.g. "AI Superior | LinkedIn" → "AI Superior")
+      const companyName = title ? title.replace(/\s*\|\s*LinkedIn\s*$/i, "").trim() : null;
+      // Normalize URL to canonical company page (strip /posts, /about, etc.)
+      const canonicalUrl = url.replace(/\/(posts|about|jobs|people|videos)(\/.*)?$/, "") + "/";
+
+      return NextResponse.json({
+        urlType: "company" as const,
+        companyName,
+        tagline: description,
+        logoUrl: imageUrl,
+        linkedinUrl: canonicalUrl,
+        postText: null,
+        emails: [],
+        extractionQuality: "partial" as const,
+        reason: "Company metadata only. Post list requires LinkedIn authentication.",
       });
     }
 
@@ -103,6 +131,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
+      urlType,
       authorName,
       authorHeadline: null,
       postText: description,
