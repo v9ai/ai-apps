@@ -114,31 +114,34 @@ impl PostIntentScorer {
     pub fn default_pretrained() -> Self {
         // Rows: hiring, ai_ml, remote, eng_culture, company_growth, thought_leadership, noise
         // Cols: hiring_d, ai_d, remote_d, eng_d, culture_d, noise_d, len_norm, react_n, comment_n, has_url, is_repost, media_enc
+        //
+        // Keyword densities are typically 0.02-0.15 (multi-word phrases in 15-50 word posts),
+        // so primary feature weights are high (20-30) to push through sigmoid.
         let weights = [
-            // hiring_signal — strongly driven by hiring keywords, moderate by role-related
-            [8.0, 1.0, 1.5, 1.0, 0.5, -2.0, 0.5, 0.3, 0.2, 0.5, -0.5, 0.0],
-            // ai_ml_content — strongly driven by AI keywords, moderate by engineering
-            [0.5, 8.0, 0.5, 2.0, 0.5, -1.5, 0.5, 0.2, 0.3, 0.3, -0.3, 0.2],
+            // hiring_signal — strongly driven by hiring keywords
+            [25.0, 3.0, 5.0, 3.0, 2.0, -5.0, 1.0, 0.5, 0.3, 0.5, -1.0, 0.0],
+            // ai_ml_content — strongly driven by AI keywords + engineering
+            [2.0, 25.0, 2.0, 6.0, 2.0, -4.0, 1.0, 0.3, 0.5, 0.3, -0.5, 0.3],
             // remote_signal — strongly driven by remote keywords
-            [1.0, 0.5, 8.0, 0.5, 0.3, -1.5, 0.3, 0.1, 0.1, 0.2, -0.3, 0.0],
+            [3.0, 2.0, 30.0, 2.0, 1.0, -4.0, 0.5, 0.2, 0.2, 0.3, -0.5, 0.0],
             // engineering_culture — engineering + culture keywords
-            [0.5, 1.5, 0.3, 6.0, 3.0, -1.5, 0.5, 0.3, 0.4, 0.3, -0.2, 0.3],
+            [2.0, 5.0, 1.0, 20.0, 10.0, -4.0, 1.0, 0.5, 0.6, 0.3, -0.3, 0.5],
             // company_growth — culture keywords (funding, series, etc.)
-            [0.5, 0.5, 0.3, 0.5, 7.0, -1.5, 0.3, 0.4, 0.3, 0.3, -0.2, 0.1],
+            [2.0, 2.0, 1.0, 2.0, 25.0, -4.0, 0.5, 0.6, 0.4, 0.3, -0.3, 0.2],
             // thought_leadership — long text, high engagement, low noise
-            [0.3, 1.5, 0.3, 1.5, 0.5, -3.0, 2.0, 0.8, 1.0, 0.2, -0.5, 0.5],
+            [1.0, 5.0, 1.0, 5.0, 2.0, -8.0, 3.0, 1.5, 2.0, 0.3, -1.0, 0.8],
             // noise — strongly driven by noise keywords, penalize short text
-            [-2.0, -1.5, -1.0, -1.0, -0.5, 6.0, -2.0, -0.2, -0.3, -0.5, 1.0, -0.3],
+            [-5.0, -4.0, -3.0, -3.0, -2.0, 20.0, -3.0, -0.3, -0.5, -0.5, 1.5, -0.5],
         ];
 
         let biases = [
-            -2.5, // hiring — default low
-            -2.0, // ai_ml — default low
-            -2.5, // remote — default low
-            -2.0, // eng_culture — default low
-            -2.5, // company_growth — default low
-            -1.5, // thought_leadership — slightly easier
-            -1.0, // noise — slightly easier to trigger
+            -1.5, // hiring — default low
+            -1.2, // ai_ml — default low
+            -1.5, // remote — default low
+            -1.2, // eng_culture — default low
+            -1.5, // company_growth — default low
+            -1.0, // thought_leadership — slightly easier
+            -0.8, // noise — slightly easier to trigger
         ];
 
         Self {
