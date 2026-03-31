@@ -1,5 +1,5 @@
 import { emailCampaigns, emailTemplates, contactEmails, contacts } from "@/db/schema";
-import { eq, and, or, count, desc, sql, gte, isNotNull, gt, inArray } from "drizzle-orm";
+import { eq, and, or, count, desc, sql, gte, isNotNull, isNull, gt, inArray } from "drizzle-orm";
 import { addMinutes, startOfDay, startOfWeek, startOfMonth } from "date-fns";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -109,7 +109,7 @@ export const emailCampaignResolvers = {
               eq(contactEmails.reply_received, false),
               or(
                 eq(contactEmails.followup_status, "pending"),
-                sql`${contactEmails.followup_status} IS NULL`,
+                isNull(contactEmails.followup_status),
               ),
             ),
           )
@@ -129,7 +129,7 @@ export const emailCampaignResolvers = {
               eq(contactEmails.reply_received, false),
               or(
                 eq(contactEmails.followup_status, "pending"),
-                sql`${contactEmails.followup_status} IS NULL`,
+                isNull(contactEmails.followup_status),
               ),
             ),
           ),

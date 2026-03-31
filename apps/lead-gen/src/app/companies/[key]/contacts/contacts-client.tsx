@@ -585,7 +585,7 @@ export function CompanyContactsClient({
     debounceRef.current = setTimeout(() => setDebouncedSearch(val), 300);
   }, []);
 
-  const { data, loading, refetch } = useGetContactsQuery({
+  const { data, loading, error: contactsError, refetch } = useGetContactsQuery({
     variables: {
       companyId: company?.id ?? 0,
       search: debouncedSearch || undefined,
@@ -840,6 +840,19 @@ export function CompanyContactsClient({
             <InfoCircledIcon />
           </Callout.Icon>
           <Callout.Text>Company not found.</Callout.Text>
+        </Callout.Root>
+      </Container>
+    );
+  }
+
+  if (contactsError) {
+    return (
+      <Container size="3" p="8">
+        <Callout.Root color="red">
+          <Callout.Icon>
+            <ExclamationTriangleIcon />
+          </Callout.Icon>
+          <Callout.Text>Failed to load contacts: {contactsError.message}</Callout.Text>
         </Callout.Root>
       </Container>
     );

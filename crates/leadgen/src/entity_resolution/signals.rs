@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::types::Contact;
+use crate::types::{Company, Contact};
 
 /// A single match signal between two entity records.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -12,6 +12,7 @@ pub struct MatchSignal {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SignalType {
+    // Contact-level signals
     NameSimilarity,
     ExactEmail,
     EmailLocalPart,
@@ -20,6 +21,11 @@ pub enum SignalType {
     LinkedInMatch,
     PhoneMatch,
     EmbeddingSimilarity,
+    // Company-level signals
+    CompanyNameSimilarity,
+    CompanyDomainExact,
+    CompanyDomainNormalized,
+    CompanyIndustryMatch,
 }
 
 /// Weighted composite of multiple match signals.

@@ -507,7 +507,7 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
-        const updateData: any = { ...args.input };
+        const updateData: Record<string, unknown> = { ...args.input };
 
         // Validate category enum
         if (args.input.category) {
@@ -555,8 +555,8 @@ export const companyResolvers = {
     },
 
     async deleteCompany(
-      _parent: any,
-      args: { id: number },
+      _parent: unknown,
+      args: MutationDeleteCompanyArgs,
       context: GraphQLContext,
     ) {
       try {
@@ -583,18 +583,8 @@ export const companyResolvers = {
     },
 
     async add_company_facts(
-      _parent: any,
-      args: {
-        company_id: number;
-        facts: Array<{
-          field: string;
-          value_json?: any;
-          value_text?: string;
-          normalized_value?: any;
-          confidence: number;
-          evidence: any;
-        }>;
-      },
+      _parent: unknown,
+      args: MutationAdd_Company_FactsArgs,
       context: GraphQLContext,
     ) {
       try {
@@ -609,7 +599,7 @@ export const companyResolvers = {
         const insertedFacts = [];
 
         for (const fact of args.facts) {
-          const insertData: any = {
+          const insertData: Record<string, unknown> = {
             company_id: args.company_id,
             field: fact.field,
             value_text: fact.value_text,
@@ -653,21 +643,8 @@ export const companyResolvers = {
     },
 
     async ingest_company_snapshot(
-      _parent: any,
-      args: {
-        company_id: number;
-        source_url: string;
-        crawl_id?: string;
-        capture_timestamp?: string;
-        fetched_at: string;
-        http_status?: number;
-        mime?: string;
-        content_hash?: string;
-        text_sample?: string;
-        jsonld?: any;
-        extracted?: any;
-        evidence: any;
-      },
+      _parent: unknown,
+      args: MutationIngest_Company_SnapshotArgs,
       context: GraphQLContext,
     ) {
       try {
@@ -679,7 +656,7 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
-        const insertData: any = {
+        const insertData: Record<string, unknown> = {
           company_id: args.company_id,
           source_url: args.source_url,
           crawl_id: args.crawl_id,
@@ -719,8 +696,8 @@ export const companyResolvers = {
     },
 
     async mergeDuplicateCompanies(
-      _parent: any,
-      args: { companyIds: number[] },
+      _parent: unknown,
+      args: MutationMergeDuplicateCompaniesArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
@@ -834,8 +811,8 @@ export const companyResolvers = {
     },
 
     async deleteCompanies(
-      _parent: any,
-      args: { companyIds: number[] },
+      _parent: unknown,
+      args: MutationDeleteCompaniesArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
@@ -875,14 +852,8 @@ export const companyResolvers = {
     },
 
     async importCompanyWithContacts(
-      _parent: any,
-      args: {
-        input: {
-          companyName: string;
-          website?: string;
-          contacts: Array<{ name: string; linkedinUrl?: string; workEmail?: string }>;
-        };
-      },
+      _parent: unknown,
+      args: MutationImportCompanyWithContactsArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
@@ -995,17 +966,8 @@ export const companyResolvers = {
     },
 
     async importCompanies(
-      _parent: any,
-      args: {
-        companies: Array<{
-          name: string;
-          website?: string;
-          email?: string;
-          linkedin_url?: string;
-          location?: string;
-          description?: string;
-        }>;
-      },
+      _parent: unknown,
+      args: MutationImportCompaniesArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {

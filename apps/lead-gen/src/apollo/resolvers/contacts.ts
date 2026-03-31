@@ -261,6 +261,35 @@ const Contact = {
   lastContactedAt(parent: any) {
     return parent.last_contacted_at ?? null;
   },
+  aiProfile(parent: any) {
+    if (!parent.ai_profile) return null;
+    try {
+      const raw = JSON.parse(parent.ai_profile);
+      return {
+        trigger: raw.trigger,
+        enrichedAt: raw.enriched_at,
+        linkedinHeadline: raw.linkedin_headline ?? null,
+        linkedinBio: raw.linkedin_bio ?? null,
+        githubBio: raw.github_bio ?? null,
+        githubTopLanguages: raw.github_top_languages ?? [],
+        githubAiRepos: (raw.github_ai_repos ?? []).map((r: any) => ({
+          name: r.name,
+          description: r.description ?? null,
+          stars: r.stars,
+          topics: r.topics ?? [],
+        })),
+        githubTotalStars: raw.github_total_stars ?? 0,
+        specialization: raw.specialization ?? null,
+        skills: raw.skills ?? [],
+        researchAreas: raw.research_areas ?? [],
+        experienceLevel: raw.experience_level ?? "unknown",
+        synthesisConfidence: raw.synthesis_confidence ?? 0,
+        synthesisRationale: raw.synthesis_rationale ?? null,
+      };
+    } catch {
+      return null;
+    }
+  },
 };
 
 export const contactResolvers = {
@@ -1316,6 +1345,120 @@ export const contactResolvers = {
         contactsScored: results.length,
         decisionMakersFound,
         results,
+      };
+    },
+
+    async enrichAIContactProfile(
+      _parent: unknown,
+      args: { contactId: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const rows = await context.db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.id, args.contactId))
+        .limit(1);
+      const contact = rows[0];
+
+      if (!contact) {
+        return { success: false, message: "Contact not found", contactId: args.contactId, aiProfile: null };
+      }
+
+      if (!isAIContact(contact)) {
+        return {
+          success: false,
+          message: "Contact is not AI-related (no AI/ML department or AI tag)",
+          contactId: args.contactId,
+          aiProfile: null,
+        };
+      }
+
+      const profile = await gatherAIContactProfile(contact);
+      await context.db
+        .update(contacts)
+        .set({ ai_profile: JSON.stringify(profile), updated_at: new Date().toISOString() })
+        .where(eq(contacts.id, contact.id));
+
+      const contactObj = { ...contact, ai_profile: JSON.stringify(profile) };
+      // Re-use the Contact.aiProfile field resolver logic inline
+      const aiProfileOut = {
+        trigger: profile.trigger,
+        enrichedAt: profile.enriched_at,
+        linkedinHeadline: profile.linkedin_headline,
+        linkedinBio: profile.linkedin_bio,
+        githubBio: profile.github_bio,
+        githubTopLanguages: profile.github_top_languages,
+        githubAiRepos: profile.github_ai_repos,
+        githubTotalStars: profile.github_total_stars,
+        specialization: profile.specialization,
+        skills: profile.skills,
+        researchAreas: profile.research_areas,
+        experienceLevel: profile.experience_level,
+        synthesisConfidence: profile.synthesis_confidence,
+        synthesisRationale: profile.synthesis_rationale,
+      };
+      void contactObj; // suppress unused warning
+
+      return {
+        success: true,
+        message: `AI profile enriched (trigger: ${profile.trigger}, confidence: ${profile.synthesis_confidence.toFixed(2)})`,
+        contactId: contact.id,
+        aiProfile: aiProfileOut,
+      };
+    },
+
+    async enrichAIContactsForCompany(
+      _parent: unknown,
+      args: { companyId: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const rows = await context.db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.company_id, args.companyId));
+
+      const aiContacts = rows.filter(isAIContact);
+
+      if (aiContacts.length === 0) {
+        return { success: true, message: "No AI-related contacts found", enriched: 0, skipped: rows.length, errors: [] };
+      }
+
+      let enriched = 0;
+      const errors: string[] = [];
+
+      // Process in batches of 3 to avoid overwhelming external APIs
+      for (let i = 0; i < aiContacts.length; i += 3) {
+        const batch = aiContacts.slice(i, i + 3);
+        await Promise.all(
+          batch.map(async (contact) => {
+            try {
+              const profile = await gatherAIContactProfile(contact);
+              await context.db
+                .update(contacts)
+                .set({ ai_profile: JSON.stringify(profile), updated_at: new Date().toISOString() })
+                .where(eq(contacts.id, contact.id));
+              enriched++;
+            } catch (err) {
+              errors.push(`Contact ${contact.id} (${contact.first_name} ${contact.last_name}): ${err instanceof Error ? err.message : String(err)}`);
+            }
+          }),
+        );
+      }
+
+      return {
+        success: true,
+        message: `Enriched ${enriched}/${aiContacts.length} AI contacts (${rows.length - aiContacts.length} skipped as non-AI)`,
+        enriched,
+        skipped: rows.length - aiContacts.length,
+        errors,
       };
     },
   },
