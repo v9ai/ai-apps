@@ -234,6 +234,7 @@ export const contacts = pgTable(
     // ML touch score (computed by computeNextTouchScores / scoreContactsML)
     next_touch_score: real("next_touch_score").default(0.0),
     last_contacted_at: text("last_contacted_at"),
+    ai_profile: text("ai_profile"), // JSON: ContactAIProfile blob (set by enrichAIContactProfile mutation)
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),

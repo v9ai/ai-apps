@@ -652,7 +652,8 @@ function extractCompaniesFromJobCards(): Array<{ name: string; linkedin_url: str
     const subtitleEl = card.querySelector(".artdeco-entity-lockup__subtitle");
     if (!subtitleEl) return;
 
-    const name = subtitleEl.textContent?.trim();
+    const raw = subtitleEl.textContent?.trim() ?? "";
+    const name = raw.split(/\s*·\s*/)[0].trim();
     if (!name) return;
 
     const companyLink = subtitleEl.querySelector('a[href*="/company/"]') as HTMLAnchorElement | null;
@@ -698,7 +699,10 @@ function extractCompaniesFromFeedPosts(): Array<{ name: string; linkedin_url: st
     if (!linkedin_url) return;
 
     const nameEl = actorLink.querySelector("span[aria-hidden='true']");
-    const name = nameEl?.textContent?.trim() || actorLink.textContent?.trim() || "";
+    const name =
+      nameEl?.textContent?.trim() ||
+      (actorLink.textContent?.trim() ?? "").replace(/\s*\(opens[^)]*\)/i, "").trim() ||
+      "";
     if (!name || companyMap.has(linkedin_url)) return;
 
     companyMap.set(linkedin_url, { name, linkedin_url });
