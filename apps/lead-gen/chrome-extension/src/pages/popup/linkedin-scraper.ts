@@ -1,5 +1,30 @@
 import { insertJobsBatch } from "../../services/job-inserter";
 import { isExcludedLocation } from "../../lib/location-filter";
+import { gqlRequest } from "../../services/graphql";
+
+const IMPORT_COMPANIES_MUTATION = `
+  mutation ImportCompanies($companies: [CompanyImportInput!]!) {
+    importCompanies(companies: $companies) { success imported failed errors }
+  }
+`;
+
+async function saveCompaniesToDatabase(
+  companies: Array<{ name: string; linkedin_url: string }>,
+  onProgress?: (status: string) => void,
+): Promise<void> {
+  if (companies.length === 0) return;
+  if (onProgress) onProgress(`Saving ${companies.length} companies...`);
+  try {
+    const result = await gqlRequest(IMPORT_COMPANIES_MUTATION, { companies });
+    const { imported = 0, failed = 0 } = result.data?.importCompanies ?? {};
+    if (failed > 0) {
+      console.warn(`[LinkedIn Scraper] ${failed} companies failed to import`);
+    }
+    console.log(`[LinkedIn Scraper] Imported ${imported} companies`);
+  } catch (err) {
+    console.warn("[LinkedIn Scraper] Company import failed:", err);
+  }
+}
 
 interface LinkedInScraperResult {
   success: boolean;
@@ -55,8 +80,12 @@ export async function scrapeLinkedInJobsWithPagination(
         };
       }
 
-      // Save single page jobs
-      const result = await saveJobsToDatabase(response.jobs, "linkedin");
+      // Save single page jobs + companies in parallel
+      const [result, companiesResponse] = await Promise.all([
+        saveJobsToDatabase(response.jobs, "linkedin"),
+        chrome.tabs.sendMessage(tabId, { action: "extractCompaniesFromJobs" }).catch(() => ({ companies: [] })),
+      ]);
+      await saveCompaniesToDatabase(companiesResponse?.companies ?? [], onProgress);
       return {
         success: result.success,
         message: result.message,
@@ -88,6 +117,7 @@ export async function scrapeLinkedInJobsWithPagination(
     }
 
     const allJobs = response.jobs || [];
+    const allCompanies = response.companies || [];
 
     if (allJobs.length === 0) {
       return {
@@ -102,8 +132,9 @@ export async function scrapeLinkedInJobsWithPagination(
       );
     }
 
-    // Save to database
+    // Save jobs + companies
     const result = await saveJobsToDatabase(allJobs, "linkedin");
+    await saveCompaniesToDatabase(allCompanies, onProgress);
 
     return {
       success: result.success,
