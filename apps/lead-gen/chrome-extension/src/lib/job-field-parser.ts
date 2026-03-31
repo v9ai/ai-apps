@@ -51,6 +51,9 @@ export function isJobRelatedPost(
   fields?: ParsedJobFields,
 ): boolean {
   const f = fields ?? parseJobFields(text);
+  // Must mention remote to qualify
+  if (!f.remoteType || f.remoteType === "onsite" || f.remoteType === "hybrid") return false;
+  // Has job signals beyond just "remote"
   if (f.rate || f.ir35Status || f.duration || f.contractType) return true;
   return JOB_KEYWORDS_RE.test(text);
 }
