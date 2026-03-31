@@ -785,6 +785,29 @@ export type ImportResendResult = {
   updatedCount: Scalars['Int']['output'];
 };
 
+export type LinkedInPost = {
+  __typename?: 'LinkedInPost';
+  authorName: Maybe<Scalars['String']['output']>;
+  authorUrl: Maybe<Scalars['String']['output']>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  contactId: Maybe<Scalars['Int']['output']>;
+  content: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  employmentType: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  location: Maybe<Scalars['String']['output']>;
+  postedAt: Maybe<Scalars['String']['output']>;
+  rawData: Maybe<Scalars['JSON']['output']>;
+  scrapedAt: Scalars['String']['output'];
+  title: Maybe<Scalars['String']['output']>;
+  type: LinkedInPostType;
+  url: Scalars['String']['output'];
+};
+
+export type LinkedInPostType =
+  | 'job'
+  | 'post';
+
 export type MarkRepliedResult = {
   __typename?: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -828,6 +851,7 @@ export type Mutation = {
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
+  deleteLinkedInPost: Scalars['Boolean']['output'];
   dismissReminder: ContactReminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
@@ -868,6 +892,7 @@ export type Mutation = {
   updateEmailTemplate: EmailTemplate;
   updateReminder: ContactReminder;
   updateUserSettings: UserSettings;
+  upsertLinkedInPost: LinkedInPost;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -965,6 +990,11 @@ export type MutationDeleteContactArgs = {
 
 
 export type MutationDeleteEmailTemplateArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteLinkedInPostArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1184,6 +1214,11 @@ export type MutationUpdateUserSettingsArgs = {
 };
 
 
+export type MutationUpsertLinkedInPostArgs = {
+  input: UpsertLinkedInPostInput;
+};
+
+
 export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
@@ -1216,6 +1251,8 @@ export type Query = {
   emailTemplates: EmailTemplatesResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
   findCompany: FindCompanyResult;
+  linkedinPost: Maybe<LinkedInPost>;
+  linkedinPosts: Array<LinkedInPost>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
@@ -1318,6 +1355,19 @@ export type QueryEmailsNeedingFollowUpArgs = {
 export type QueryFindCompanyArgs = {
   name?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryLinkedinPostArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryLinkedinPostsArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  type?: InputMaybe<LinkedInPostType>;
 };
 
 
@@ -1545,6 +1595,21 @@ export type UpdateReminderInput = {
   recurrence?: InputMaybe<Scalars['String']['input']>;
   remindAt?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpsertLinkedInPostInput = {
+  authorName?: InputMaybe<Scalars['String']['input']>;
+  authorUrl?: InputMaybe<Scalars['String']['input']>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  contactId?: InputMaybe<Scalars['Int']['input']>;
+  content?: InputMaybe<Scalars['String']['input']>;
+  employmentType?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<Scalars['String']['input']>;
+  postedAt?: InputMaybe<Scalars['String']['input']>;
+  rawData?: InputMaybe<Scalars['JSON']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  type: LinkedInPostType;
+  url: Scalars['String']['input'];
 };
 
 export type UserSettings = {

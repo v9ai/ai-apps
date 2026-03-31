@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Stack, Group, Button, Text, Alert, Badge, Progress } from "@mantine/core";
 
-type Phase = "connections" | "import" | "posts" | null;
+type Phase = "connections" | "import" | "posts" | "companies" | null;
 
 export default function PostsSection() {
   const [loading, setLoading] = useState(false);

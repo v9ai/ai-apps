@@ -718,6 +718,29 @@ type ImportResendResult {
 
 scalar JSON
 
+type LinkedInPost {
+  authorName: String
+  authorUrl: String
+  companyId: Int
+  contactId: Int
+  content: String
+  createdAt: String!
+  employmentType: String
+  id: Int!
+  location: String
+  postedAt: String
+  rawData: JSON
+  scrapedAt: String!
+  title: String
+  type: LinkedInPostType!
+  url: String!
+}
+
+enum LinkedInPostType {
+  job
+  post
+}
+
 type MarkRepliedResult {
   message: String
   success: Boolean!
@@ -757,6 +780,7 @@ type Mutation {
   deleteCompany(id: Int!): DeleteCompanyResponse!
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
+  deleteLinkedInPost(id: Int!): Boolean!
   dismissReminder(id: Int!): ContactReminder!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
@@ -797,6 +821,7 @@ type Mutation {
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
   updateReminder(id: Int!, input: UpdateReminderInput!): ContactReminder!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
+  upsertLinkedInPost(input: UpsertLinkedInPostInput!): LinkedInPost!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
 }
 
@@ -827,6 +852,8 @@ type Query {
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
   findCompany(name: String, website: String): FindCompanyResult!
+  linkedinPost(id: Int!): LinkedInPost
+  linkedinPosts(companyId: Int, limit: Int, offset: Int, type: LinkedInPostType): [LinkedInPost!]!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, limit: Int, offset: Int): ReceivedEmailsResult!
   resendEmail(resendId: String!): ResendEmailDetail
@@ -1032,6 +1059,21 @@ input UpdateReminderInput {
 }
 
 scalar Upload
+
+input UpsertLinkedInPostInput {
+  authorName: String
+  authorUrl: String
+  companyId: Int
+  contactId: Int
+  content: String
+  employmentType: String
+  location: String
+  postedAt: String
+  rawData: JSON
+  title: String
+  type: LinkedInPostType!
+  url: String!
+}
 
 type UserSettings {
   created_at: String!

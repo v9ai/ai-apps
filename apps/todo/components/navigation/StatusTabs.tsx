@@ -28,7 +28,7 @@ export function StatusTabs({
             onClick={() => {
               const params = new URLSearchParams();
               if (tab.key !== "inbox") params.set("status", tab.key);
-              router.push(`/app${params.size ? `?${params}` : ""}`);
+              router.push(`/${params.size ? `?${params}` : ""}`);
             }}
             style={{
               display: "flex",

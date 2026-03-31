@@ -1,0 +1,47 @@
+extend type Query {
+  linkedinPost(id: Int!): LinkedInPost
+  linkedinPosts(type: LinkedInPostType, companyId: Int, limit: Int, offset: Int): [LinkedInPost!]!
+}
+
+extend type Mutation {
+  upsertLinkedInPost(input: UpsertLinkedInPostInput!): LinkedInPost!
+  deleteLinkedInPost(id: Int!): Boolean!
+}
+
+enum LinkedInPostType {
+  post
+  job
+}
+
+type LinkedInPost {
+  id: Int!
+  type: LinkedInPostType!
+  url: String!
+  companyId: Int
+  contactId: Int
+  title: String
+  content: String
+  authorName: String
+  authorUrl: String
+  location: String
+  employmentType: String
+  postedAt: String
+  scrapedAt: String!
+  rawData: JSON
+  createdAt: String!
+}
+
+input UpsertLinkedInPostInput {
+  url: String!
+  type: LinkedInPostType!
+  companyId: Int
+  contactId: Int
+  title: String
+  content: String
+  authorName: String
+  authorUrl: String
+  location: String
+  employmentType: String
+  postedAt: String
+  rawData: JSON
+}

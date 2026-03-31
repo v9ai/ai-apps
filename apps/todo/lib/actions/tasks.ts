@@ -30,7 +30,7 @@ export async function createTaskAction(formData: FormData) {
   });
 
   const task = await taskQueries.createTask(session.user.id, parsed);
-  revalidatePath("/app");
+  revalidatePath("/");
   return task;
 }
 
@@ -39,7 +39,7 @@ export async function createTaskQuickAction(title: string, description?: string)
 
   const parsed = createTaskSchema.parse({ title, description });
   const task = await taskQueries.createTask(session.user.id, parsed);
-  revalidatePath("/app");
+  revalidatePath("/");
   return task;
 }
 
@@ -66,14 +66,14 @@ export async function updateTaskAction(data: {
   }
 
   const task = await taskQueries.updateTask(session.user.id, id, updateData);
-  revalidatePath("/app");
+  revalidatePath("/");
   return task;
 }
 
 export async function deleteTaskAction(taskId: string) {
   const session = await getSessionOrThrow();
   await taskQueries.deleteTask(session.user.id, taskId);
-  revalidatePath("/app");
+  revalidatePath("/");
 }
 
 export async function reorderTasksAction(
@@ -85,7 +85,7 @@ export async function reorderTasksAction(
       taskQueries.updateTask(session.user.id, id, { position })
     )
   );
-  revalidatePath("/app");
+  revalidatePath("/");
 }
 
 export async function loadMoreTasks(
