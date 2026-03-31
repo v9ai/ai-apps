@@ -7,7 +7,15 @@ function buildSearchUrl(keywords: string): string {
   return `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(keywords)}&origin=SWITCH_SEARCH_VERTICAL`;
 }
 
-type Phase = "connections" | "import" | "posts" | "companies" | null;
+type Phase = "jobs" | "connections" | "import" | "posts" | "companies" | null;
+
+const PHASE_LABELS: Record<string, string> = {
+  jobs: "1/5 Jobs",
+  connections: "2/5 Connections",
+  import: "3/5 Import",
+  posts: "4/5 Posts",
+  companies: "5/5 Companies",
+};
 
 export default function PostsSection() {
   const [loading, setLoading] = useState(false);
@@ -16,8 +24,6 @@ export default function PostsSection() {
   const [serverUp, setServerUp] = useState<boolean | null>(null);
   const [stats, setStats] = useState<{ contacts: number; posts: number } | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
-  const [jobLoading, setJobLoading] = useState(false);
-  const [jobStatus, setJobStatus] = useState("");
   const [keywords, setKeywords] = useState(DEFAULT_KEYWORDS);
 
   // Check server health on mount
@@ -37,7 +43,7 @@ export default function PostsSection() {
       .catch(() => setServerUp(false));
   }, []);
 
-  // Listen for progress messages from background
+  // Listen for progress
   useEffect(() => {
     const listener = (message: any) => {
       if (message.action !== "postScrapingProgress") return;
@@ -51,19 +57,15 @@ export default function PostsSection() {
       }
 
       if (message.done) {
-        const filtered = message.totalFiltered
-          ? ` (${message.totalFiltered.toLocaleString()} noise filtered)`
-          : "";
-        const companies = message.totalCompanies
-          ? `, ${message.totalCompanies.toLocaleString()} companies`
-          : "";
-        setStatus(
-          `Done! ${message.totalPosts.toLocaleString()} posts from ${message.totalContacts.toLocaleString()} contacts${filtered}${companies}`,
-        );
+        const parts: string[] = [];
+        if (message.totalPosts) parts.push(`${message.totalPosts.toLocaleString()} posts`);
+        if (message.totalContacts) parts.push(`from ${message.totalContacts.toLocaleString()} contacts`);
+        if (message.totalFiltered) parts.push(`${message.totalFiltered.toLocaleString()} filtered`);
+        if (message.totalCompanies) parts.push(`${message.totalCompanies.toLocaleString()} companies`);
+        setStatus(parts.length > 0 ? `Done! ${parts.join(", ")}` : "Done!");
         setLoading(false);
         setPhase(null);
         setProgress(null);
-        // Refresh stats
         fetch("http://localhost:9876/stats")
           .then((r) => r.json())
           .then(setStats)
@@ -71,12 +73,8 @@ export default function PostsSection() {
         return;
       }
 
-      // Phase tracking
-      if (message.phase) {
-        setPhase(message.phase);
-      }
+      if (message.phase) setPhase(message.phase);
 
-      // Post scraping progress (phase 3)
       if (message.current && message.total) {
         setProgress({ current: message.current, total: message.total });
         const filtered = message.postsFiltered
@@ -87,65 +85,23 @@ export default function PostsSection() {
         );
       }
 
-      // Generic status (phases 1 & 2)
-      if (message.status) {
-        setStatus(message.status);
-      }
+      if (message.status) setStatus(message.status);
     };
 
     chrome.runtime.onMessage.addListener(listener);
     return () => chrome.runtime.onMessage.removeListener(listener);
   }, []);
-
-  // Listen for job scraping progress
-  useEffect(() => {
-    const listener = (message: any) => {
-      if (message.action !== "jobScrapingProgress") return;
-      if (message.error) {
-        setJobStatus(`Error: ${message.error}`);
-        setJobLoading(false);
-        return;
-      }
-      if (message.done) {
-        const filtered = message.filtered ? ` (${message.filtered} filtered)` : "";
-        setJobStatus(`Done! ${message.inserted} saved from ${message.total} scraped${filtered}`);
-        setJobLoading(false);
-        fetch("http://localhost:9876/stats").then((r) => r.json()).then(setStats).catch(() => {});
-        return;
-      }
-      if (message.status) setJobStatus(message.status);
-    };
-    chrome.runtime.onMessage.addListener(listener);
-    return () => chrome.runtime.onMessage.removeListener(listener);
-  }, []);
-
-  const handleScrapeJobs = async () => {
-    setJobLoading(true);
-    setJobStatus("Starting...");
-    try {
-      const response = await chrome.runtime.sendMessage({
-        action: "scrapeJobPosts",
-        searchUrl: buildSearchUrl(keywords),
-      });
-      if (!response.success) {
-        setJobStatus(response.error || "Failed to start");
-        setJobLoading(false);
-      }
-    } catch (err) {
-      setJobStatus(err instanceof Error ? err.message : "Error");
-      setJobLoading(false);
-    }
-  };
 
   const handleStart = async () => {
     setLoading(true);
-    setPhase("connections");
+    setPhase("jobs");
     setStatus("Starting...");
     setProgress(null);
 
     try {
       const response = await chrome.runtime.sendMessage({
-        action: "startFullPipeline",
+        action: "startUnifiedPipeline",
+        searchUrl: buildSearchUrl(keywords),
       });
       if (!response.success) {
         setStatus(response.error || "Failed to start");
@@ -153,7 +109,7 @@ export default function PostsSection() {
         setPhase(null);
       }
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Error starting pipeline");
+      setStatus(err instanceof Error ? err.message : "Error");
       setLoading(false);
       setPhase(null);
     }
@@ -167,11 +123,7 @@ export default function PostsSection() {
     setProgress(null);
   };
 
-  const phaseLabel =
-    phase === "connections" ? "1/4 Connections" :
-    phase === "import" ? "2/4 Import" :
-    phase === "posts" ? "3/4 Posts" :
-    phase === "companies" ? "4/4 Companies" : null;
+  const phaseLabel = phase ? PHASE_LABELS[phase] ?? null : null;
 
   const progressPct =
     progress && progress.total > 0
@@ -187,7 +139,7 @@ export default function PostsSection() {
             color={serverUp === true ? "green" : serverUp === false ? "red" : "gray"}
             variant="dot"
           >
-            {serverUp === true ? "Server OK" : serverUp === false ? "Server Down" : "Checking..."}
+            {serverUp === true ? "Server OK" : serverUp === false ? "Offline" : "..."}
           </Badge>
           {stats && (
             <Text size="xs" c="dimmed">
@@ -202,14 +154,22 @@ export default function PostsSection() {
         )}
       </Group>
 
+      <TextInput
+        size="xs"
+        placeholder="Search keywords..."
+        value={keywords}
+        onChange={(e) => setKeywords(e.currentTarget.value)}
+        disabled={loading}
+      />
+
       <Group grow gap="xs">
         <Button
           onClick={handleStart}
-          disabled={loading || jobLoading || serverUp !== true}
+          disabled={loading}
           color="teal"
           size="sm"
         >
-          {loading ? "Scraping..." : "Scrape Posts"}
+          {loading ? "Scraping..." : "Scrape"}
         </Button>
         {loading && (
           <Button onClick={handleStop} color="red" size="sm">
@@ -217,32 +177,6 @@ export default function PostsSection() {
           </Button>
         )}
       </Group>
-
-      <TextInput
-        size="xs"
-        placeholder="Search keywords..."
-        value={keywords}
-        onChange={(e) => setKeywords(e.currentTarget.value)}
-        disabled={jobLoading}
-      />
-
-      <Button
-        onClick={handleScrapeJobs}
-        disabled={jobLoading || loading}
-        color="blue"
-        size="sm"
-        fullWidth
-      >
-        {jobLoading ? "Scraping Jobs..." : "Scrape Jobs"}
-      </Button>
-
-      {jobStatus && (
-        <Alert color="dark" radius="sm" p="xs">
-          <Text size="xs" ta="center" c="white">
-            {jobStatus}
-          </Text>
-        </Alert>
-      )}
 
       {phase === "posts" && progressPct !== null && (
         <Progress value={progressPct} color="teal" size="xs" />
