@@ -51,7 +51,7 @@ const SKIP_CONTENT: &[&str] = &[
 
 const FREE_EMAIL_DOMAINS: &[&str] = &["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"];
 
-const MAX_PER_SUBJECT: usize = 3;
+const MAX_PER_SUBJECT: usize = 5;
 
 // ── Resend API types ────────────────────────────────────────────────────────
 
