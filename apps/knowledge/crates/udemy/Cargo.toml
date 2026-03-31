@@ -10,6 +10,10 @@ metal = ["candle/metal"]
 cuda  = ["candle/cuda"]
 
 [[bin]]
+name = "crawl-udemy"
+path = "src/bin/crawl.rs"
+
+[[bin]]
 name = "scrape-udemy"
 path = "src/bin/scrape.rs"
 
