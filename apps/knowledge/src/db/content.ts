@@ -7,11 +7,15 @@ import fs from "fs";
 function resolveDbPath(): string {
   if (process.env.CONTENT_DB_PATH) return process.env.CONTENT_DB_PATH;
 
-  // Local dev: data/knowledge.db relative to cwd
+  // Local dev: data/knowledge.db relative to cwd (cwd = apps/knowledge)
   const cwdPath = path.join(process.cwd(), "data", "knowledge.db");
   if (fs.existsSync(cwdPath)) return cwdPath;
 
-  // Vercel serverless: bundled via outputFileTracingIncludes next to __dirname
+  // Vercel monorepo: outputFileTracingRoot is monorepo root, so cwd = monorepo root
+  const monoPath = path.join(process.cwd(), "apps", "knowledge", "data", "knowledge.db");
+  if (fs.existsSync(monoPath)) return monoPath;
+
+  // Vercel serverless: next to compiled output
   const dirPath = path.join(__dirname, "data", "knowledge.db");
   if (fs.existsSync(dirPath)) return dirPath;
 
