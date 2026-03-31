@@ -24,19 +24,25 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const inserted = await db
-    .insert(companies)
-    .values(
-      items.map((c: any) => ({
-        key: c.key,
-        name: c.name,
-        logo_url: c.logo_url ?? null,
-        website: c.website ?? null,
-        description: c.description ?? null,
-      })),
-    )
-    .onConflictDoNothing({ target: companies.key })
-    .returning({ id: companies.id, key: companies.key });
+  let inserted: { id: number; key: string }[];
+  try {
+    inserted = await db
+      .insert(companies)
+      .values(
+        items.map((c: any) => ({
+          key: c.key,
+          name: c.name,
+          logo_url: c.logo_url ?? null,
+          website: c.website ?? null,
+          description: c.description ?? null,
+        })),
+      )
+      .onConflictDoNothing({ target: companies.key })
+      .returning({ id: companies.id, key: companies.key });
+  } catch (err) {
+    console.error("[bulk-import] DB insert failed:", err);
+    return NextResponse.json({ error: "Import failed" }, { status: 500 });
+  }
 
   return NextResponse.json({
     imported: inserted.length,
