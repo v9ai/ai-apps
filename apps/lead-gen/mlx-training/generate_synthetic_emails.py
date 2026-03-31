@@ -135,6 +135,8 @@ COMPANIES = [
     {"name": "DataMesh", "industry": "Data Infrastructure", "description": "Data mesh architecture platform. Federated data governance and self-serve analytics.", "ai_tier": 0, "services": ["Data Mesh", "Data Governance", "Self-serve Analytics"]},
     {"name": "CodePilotAI", "industry": "AI Developer Tools", "description": "AI code generation and refactoring tools. Context-aware code completion engine.", "ai_tier": 2, "services": ["Code Generation", "Refactoring AI", "Code Completion"]},
     {"name": "SafeHarbor", "industry": "Privacy Tech", "description": "Privacy-preserving ML with differential privacy and federated learning. GDPR compliance tools.", "ai_tier": 2, "services": ["Differential Privacy", "Federated Learning", "GDPR Compliance"]},
+    {"name": "DroneOps", "industry": "Drone Analytics", "description": "Drone fleet management and aerial imagery analysis. Automated inspection for infrastructure.", "ai_tier": 1, "services": ["Drone Management", "Aerial Analysis", "Automated Inspection"]},
+    {"name": "SynthBio", "industry": "Synthetic Biology", "description": "ML-guided protein design and metabolic pathway optimization. Lab automation platform.", "ai_tier": 2, "services": ["Protein Design", "Pathway Optimization", "Lab Automation"]},
 ]
 
 # ── Recipient personas ───────────────────────────────────────────────────────

@@ -23,7 +23,7 @@ import {
   generateEmailCandidates,
   inferEmailPattern,
   generateEmailFromPattern,
-} from "@/lib/neverbounce";
+} from "@/lib/email/verification";
 import { isAIContact, gatherAIContactProfile } from "@/lib/ai-contact-enrichment";
 
 // ─── ML Contact Classification ────────────────────────────────────────────────

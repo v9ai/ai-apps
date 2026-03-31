@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { emailSchema, type EmailContent } from "@/lib/email-schema";
+import { emailSchema, type EmailContent } from "@/lib/email/schema";
 
 interface GenerateEmailInput {
   recipientName: string;
