@@ -20,7 +20,12 @@ const diagramHint: React.CSSProperties = {
 export function HowItWorksClient() {
   return (
     <div style={prose}>
-      <h2 style={{ fontSize: "1.75rem", fontWeight: 700, margin: "2rem 0 0" }}>How It Works</h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "2rem 0 0", flexWrap: "wrap", gap: "0.5rem" }}>
+        <h2 style={{ fontSize: "1.75rem", fontWeight: 700 }}>How It Works</h2>
+        <a href="/login" style={{ fontSize: "0.875rem", color: "var(--cyan-9)", textDecoration: "none", border: "1px solid var(--cyan-a6)", borderRadius: 6, padding: "4px 12px" }}>
+          Sign in →
+        </a>
+      </div>
       <p style={{ color: "var(--gray-a8, rgba(0,0,0,0.5))", margin: "0.5rem 0 0" }}>
         An AI-powered task manager built with Next.js, PostgreSQL via Drizzle ORM, and Better Auth for secure authentication
       </p>

@@ -190,6 +190,13 @@ function parseJsonArray(val: string | null | undefined): string[] {
   }
 }
 
+// Joined row type returned by companyContactEmails query
+type DbCompanyContactEmailRow = DbContactEmail & {
+  contact_first_name: string;
+  contact_last_name: string;
+  contact_position: string | null;
+};
+
 const Contact = {
   emails(parent: DbContact) {
     return parseJsonArray(parent.emails);
@@ -1478,63 +1485,63 @@ export const contactResolvers = {
 
   // Company.contacts field resolver
   Company: {
-    async contacts(parent: DbContact, _args: any, context: GraphQLContext) {
+    async contacts(parent: DbCompany, _args: unknown, context: GraphQLContext) {
       return context.loaders.contactsByCompany.load(parent.id);
     },
   },
 
   ContactEmail: {
-    contactId: (parent: DbContact) => parent.contact_id,
-    resendId: (parent: DbContact) => parent.resend_id,
-    fromEmail: (parent: DbContact) => parent.from_email,
-    toEmails: (parent: DbContact) => parseJsonArray(parent.to_emails),
-    textContent: (parent: DbContact) => parent.text_content ?? null,
-    sentAt: (parent: DbContact) => parent.sent_at ?? null,
-    scheduledAt: (parent: DbContact) => parent.scheduled_at ?? null,
-    deliveredAt: (parent: DbContact) => parent.delivered_at ?? null,
-    openedAt: (parent: DbContact) => parent.opened_at ?? null,
-    recipientName: (parent: DbContact) => parent.recipient_name ?? null,
-    errorMessage: (parent: DbContact) => parent.error_message ?? null,
-    parentEmailId: (parent: DbContact) => parent.parent_email_id ?? null,
-    sequenceType: (parent: DbContact) => parent.sequence_type ?? null,
-    sequenceNumber: (parent: DbContact) => parent.sequence_number ?? null,
-    replyReceived: (parent: DbContact) =>
+    contactId: (parent: DbContactEmail) => parent.contact_id,
+    resendId: (parent: DbContactEmail) => parent.resend_id,
+    fromEmail: (parent: DbContactEmail) => parent.from_email,
+    toEmails: (parent: DbContactEmail) => parseJsonArray(parent.to_emails),
+    textContent: (parent: DbContactEmail) => parent.text_content ?? null,
+    sentAt: (parent: DbContactEmail) => parent.sent_at ?? null,
+    scheduledAt: (parent: DbContactEmail) => parent.scheduled_at ?? null,
+    deliveredAt: (parent: DbContactEmail) => parent.delivered_at ?? null,
+    openedAt: (parent: DbContactEmail) => parent.opened_at ?? null,
+    recipientName: (parent: DbContactEmail) => parent.recipient_name ?? null,
+    errorMessage: (parent: DbContactEmail) => parent.error_message ?? null,
+    parentEmailId: (parent: DbContactEmail) => parent.parent_email_id ?? null,
+    sequenceType: (parent: DbContactEmail) => parent.sequence_type ?? null,
+    sequenceNumber: (parent: DbContactEmail) => parent.sequence_number ?? null,
+    replyReceived: (parent: DbContactEmail) =>
       (parent.reply_received as unknown) === 1 || parent.reply_received === true,
-    replyReceivedAt: (parent: DbContact) => parent.reply_received_at ?? null,
-    followupStatus: (parent: DbContact) => parent.followup_status ?? null,
-    companyId: (parent: DbContact) => parent.company_id ?? null,
-    ccEmails: (parent: DbContact) => parseJsonArray(parent.cc_emails),
-    replyToEmails: (parent: DbContact) => parseJsonArray(parent.reply_to_emails),
-    htmlContent: (parent: DbContact) => parent.html_content ?? null,
-    attachments: (parent: DbContact) => parent.attachments ? JSON.parse(parent.attachments) : [],
-    tags: (parent: DbContact) => parseJsonArray(parent.tags),
-    headers: (parent: DbContact) => parent.headers ? JSON.parse(parent.headers) : [],
-    idempotencyKey: (parent: DbContact) => parent.idempotency_key ?? null,
-    createdAt: (parent: DbContact) => parent.created_at,
-    updatedAt: (parent: DbContact) => parent.updated_at,
+    replyReceivedAt: (parent: DbContactEmail) => parent.reply_received_at ?? null,
+    followupStatus: (parent: DbContactEmail) => parent.followup_status ?? null,
+    companyId: (parent: DbContactEmail) => parent.company_id ?? null,
+    ccEmails: (parent: DbContactEmail) => parseJsonArray(parent.cc_emails),
+    replyToEmails: (parent: DbContactEmail) => parseJsonArray(parent.reply_to_emails),
+    htmlContent: (parent: DbContactEmail) => parent.html_content ?? null,
+    attachments: (parent: DbContactEmail) => parent.attachments ? JSON.parse(parent.attachments) : [],
+    tags: (parent: DbContactEmail) => parseJsonArray(parent.tags),
+    headers: (parent: DbContactEmail) => parent.headers ? JSON.parse(parent.headers) : [],
+    idempotencyKey: (parent: DbContactEmail) => parent.idempotency_key ?? null,
+    createdAt: (parent: DbContactEmail) => parent.created_at,
+    updatedAt: (parent: DbContactEmail) => parent.updated_at,
   },
 
   CompanyContactEmail: {
-    contactId: (parent: DbContact) => parent.contact_id,
-    resendId: (parent: DbContact) => parent.resend_id,
-    fromEmail: (parent: DbContact) => parent.from_email,
-    toEmails: (parent: DbContact) => parseJsonArray(parent.to_emails),
-    textContent: (parent: DbContact) => parent.text_content ?? null,
-    sentAt: (parent: DbContact) => parent.sent_at ?? null,
-    scheduledAt: (parent: DbContact) => parent.scheduled_at ?? null,
-    deliveredAt: (parent: DbContact) => parent.delivered_at ?? null,
-    openedAt: (parent: DbContact) => parent.opened_at ?? null,
-    recipientName: (parent: DbContact) => parent.recipient_name ?? null,
-    errorMessage: (parent: DbContact) => parent.error_message ?? null,
-    sequenceType: (parent: DbContact) => parent.sequence_type ?? null,
-    sequenceNumber: (parent: DbContact) => parent.sequence_number ?? null,
-    replyReceived: (parent: DbContact) =>
+    contactId: (parent: DbCompanyContactEmailRow) => parent.contact_id,
+    resendId: (parent: DbCompanyContactEmailRow) => parent.resend_id,
+    fromEmail: (parent: DbCompanyContactEmailRow) => parent.from_email,
+    toEmails: (parent: DbCompanyContactEmailRow) => parseJsonArray(parent.to_emails),
+    textContent: (parent: DbCompanyContactEmailRow) => parent.text_content ?? null,
+    sentAt: (parent: DbCompanyContactEmailRow) => parent.sent_at ?? null,
+    scheduledAt: (parent: DbCompanyContactEmailRow) => parent.scheduled_at ?? null,
+    deliveredAt: (parent: DbCompanyContactEmailRow) => parent.delivered_at ?? null,
+    openedAt: (parent: DbCompanyContactEmailRow) => parent.opened_at ?? null,
+    recipientName: (parent: DbCompanyContactEmailRow) => parent.recipient_name ?? null,
+    errorMessage: (parent: DbCompanyContactEmailRow) => parent.error_message ?? null,
+    sequenceType: (parent: DbCompanyContactEmailRow) => parent.sequence_type ?? null,
+    sequenceNumber: (parent: DbCompanyContactEmailRow) => parent.sequence_number ?? null,
+    replyReceived: (parent: DbCompanyContactEmailRow) =>
       (parent.reply_received as unknown) === 1 || parent.reply_received === true,
-    followupStatus: (parent: DbContact) => parent.followup_status ?? null,
-    createdAt: (parent: DbContact) => parent.created_at,
-    updatedAt: (parent: DbContact) => parent.updated_at,
-    contactFirstName: (parent: DbContact) => parent.contact_first_name,
-    contactLastName: (parent: DbContact) => parent.contact_last_name,
-    contactPosition: (parent: DbContact) => parent.contact_position ?? null,
+    followupStatus: (parent: DbCompanyContactEmailRow) => parent.followup_status ?? null,
+    createdAt: (parent: DbCompanyContactEmailRow) => parent.created_at,
+    updatedAt: (parent: DbCompanyContactEmailRow) => parent.updated_at,
+    contactFirstName: (parent: DbCompanyContactEmailRow) => parent.contact_first_name,
+    contactLastName: (parent: DbCompanyContactEmailRow) => parent.contact_last_name,
+    contactPosition: (parent: DbCompanyContactEmailRow) => parent.contact_position ?? null,
   },
 };

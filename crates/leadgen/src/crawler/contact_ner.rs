@@ -832,6 +832,261 @@ fn lowercase_stack<const N: usize>(s: &[u8]) -> [u8; N] {
     buf
 }
 
+// ─── Company-name / role-company extraction (heap-allocating, String-based) ───
+
+/// Legal suffixes that indicate a string is likely a company name.
+static LEGAL_SUFFIXES: &[&str] = &[
+    "Inc", "Ltd", "LLC", "Corp", "GmbH", "AG", "SAS", "B.V.", "S.A.", "PLC",
+];
+
+/// Prepositions whose following capitalised phrase is treated as a company name.
+static COMPANY_PREPOSITIONS: &[&str] = &["at", "for", "with", "from"];
+
+/// Returns `true` if `word` ends one of the legal suffixes (exact, case-sensitive).
+#[inline]
+fn is_legal_suffix(word: &str) -> bool {
+    LEGAL_SUFFIXES.iter().any(|&s| s == word || word.ends_with(s))
+}
+
+/// Returns `true` if the first char of `s` is ASCII uppercase.
+#[inline]
+fn starts_uppercase(s: &str) -> bool {
+    s.chars().next().map(|c| c.is_ascii_uppercase()).unwrap_or(false)
+}
+
+/// Extract company names from free text.
+///
+/// Two heuristics:
+///
+/// 1. Capitalised multi-word phrase (2–4 words) immediately followed by a
+///    legal suffix ("Inc", "Ltd", …) within the same phrase, where the phrase
+///    does **not** begin a sentence (i.e. it is preceded by at least one word).
+///
+/// 2. A preposition ("at", "for", "with", "from") followed by a capitalised
+///    multi-word phrase (1–4 words, optionally ending with a legal suffix).
+///
+/// Results are deduplicated and capped at 10.
+pub fn extract_company_names(text: &str) -> Vec<String> {
+    let mut results: Vec<String> = Vec::new();
+
+    // Collect all words with their sentence-start flag.
+    // A word is "sentence-start" when it follows '.', '!', '?' or is the very
+    // first word in the text.
+    let mut words: Vec<(&str, bool)> = Vec::new();
+    let mut sentence_start = true;
+    for raw in text.split_ascii_whitespace() {
+        // Strip leading/trailing punctuation for the actual word value but keep
+        // the stripped form for matching.
+        let clean: &str = raw.trim_matches(|c: char| !c.is_alphanumeric() && c != '.' && c != ',');
+        if clean.is_empty() {
+            continue;
+        }
+        words.push((clean, sentence_start));
+        // Update sentence_start for the NEXT word.
+        sentence_start = raw.ends_with('.') || raw.ends_with('!') || raw.ends_with('?');
+    }
+
+    let n = words.len();
+
+    // Heuristic 1: phrase ending in a legal suffix, not at sentence start.
+    // We search for any word that is a legal suffix and walk backwards 1–3
+    // words to collect the full company name.
+    let mut i = 0;
+    while i < n {
+        let (word, _at_sentence_start) = words[i];
+        // Strip trailing punctuation before checking suffix
+        let bare = word.trim_end_matches(|c: char| matches!(c, '.' | ',' | ';' | ':'));
+        if is_legal_suffix(bare) {
+            // Walk back up to 3 more words to build the full phrase.
+            // All words in the phrase must start with an uppercase letter.
+            // The first word must NOT be a sentence-start word (to avoid
+            // matching "Inc." when it starts a sentence, which is rare but
+            // possible).
+            let mut phrase_words: Vec<&str> = vec![bare];
+            let mut j = i;
+            while j > 0 && phrase_words.len() < 4 {
+                j -= 1;
+                let (prev_word, at_ss) = words[j];
+                let prev_bare = prev_word
+                    .trim_end_matches(|c: char| matches!(c, '.' | ',' | ';' | ':'));
+                if !starts_uppercase(prev_bare) {
+                    break;
+                }
+                if *at_ss && phrase_words.len() >= 1 {
+                    // This word starts a sentence; include it only if we
+                    // haven't yet collected enough words (phrase needs >= 2).
+                    phrase_words.insert(0, prev_bare);
+                    if phrase_words.len() >= 2 {
+                        break;
+                    }
+                } else {
+                    phrase_words.insert(0, prev_bare);
+                }
+            }
+            if phrase_words.len() >= 2 {
+                // Verify the first word is not itself a sentence-start unless
+                // preceded by a preposition.
+                let candidate = phrase_words.join(" ");
+                if !results.iter().any(|r| r == &candidate) {
+                    results.push(candidate);
+                }
+            }
+        }
+        i += 1;
+    }
+
+    // Heuristic 2: preposition + capitalised phrase (1–4 words).
+    let mut i = 0;
+    while i + 1 < n {
+        let (word, _) = words[i];
+        let lower = word.to_ascii_lowercase();
+        let lower = lower.trim_end_matches(|c: char| matches!(c, '.' | ',' | ';' | ':'));
+        if COMPANY_PREPOSITIONS.contains(&lower) {
+            // Collect following capitalised words (up to 4).
+            let mut phrase_words: Vec<&str> = Vec::new();
+            let mut j = i + 1;
+            while j < n && phrase_words.len() < 4 {
+                let (next_word, _) = words[j];
+                let bare =
+                    next_word.trim_end_matches(|c: char| matches!(c, '.' | ',' | ';' | ':'));
+                if starts_uppercase(bare) {
+                    phrase_words.push(bare);
+                    j += 1;
+                } else {
+                    break;
+                }
+            }
+            if phrase_words.len() >= 1 {
+                let candidate = phrase_words.join(" ");
+                if !results.iter().any(|r| r == &candidate) {
+                    results.push(candidate);
+                }
+            }
+        }
+        i += 1;
+    }
+
+    results.truncate(10);
+    results
+}
+
+/// Extract `(role, company)` pairs from patterns like:
+///   - "Job Title at Company Name"
+///   - "Job Title at Company Inc"
+///   - "Job Title, Company Name"  (comma-separated, company starts with uppercase)
+///
+/// Returns up to 5 highest-confidence pairs.  Confidence is higher when the
+/// company portion ends in a legal suffix or follows "at".
+pub fn extract_role_company_pairs(text: &str) -> Vec<(String, String)> {
+    let mut pairs: Vec<(String, String, u8)> = Vec::new(); // (role, company, confidence)
+
+    for line in text.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+
+        // Pattern A: "… at <Company…>"
+        // Find the last occurrence of " at " to handle "Head of AI at Acme Corp".
+        if let Some(at_pos) = rfind_word_boundary(line, " at ") {
+            let role_raw = line[..at_pos].trim();
+            let company_raw = line[at_pos + 4..].trim();
+            if !role_raw.is_empty() && !company_raw.is_empty() && starts_uppercase(company_raw) {
+                let conf: u8 = if LEGAL_SUFFIXES.iter().any(|&s| company_raw.ends_with(s)) {
+                    90
+                } else {
+                    70
+                };
+                let role = clean_role(role_raw);
+                if !role.is_empty() {
+                    pairs.push((role, company_raw.to_string(), conf));
+                }
+            }
+        }
+
+        // Pattern B: "Role, Company"  where Company starts with uppercase.
+        // Only trigger when no "at" pattern was found on this line (avoid
+        // double-counting lines like "VP of Sales at Acme, Inc").
+        let already_matched = pairs.last().map(|(_, c, _)| {
+            line.contains(c.as_str())
+        }).unwrap_or(false);
+
+        if !already_matched {
+            if let Some(comma_pos) = line.find(',') {
+                let role_raw = line[..comma_pos].trim();
+                let company_raw = line[comma_pos + 1..].trim();
+                if !role_raw.is_empty()
+                    && !company_raw.is_empty()
+                    && starts_uppercase(company_raw)
+                    && looks_like_role(role_raw)
+                {
+                    let conf: u8 = if LEGAL_SUFFIXES.iter().any(|&s| company_raw.ends_with(s)) {
+                        80
+                    } else {
+                        55
+                    };
+                    let role = clean_role(role_raw);
+                    if !role.is_empty() {
+                        pairs.push((role, company_raw.to_string(), conf));
+                    }
+                }
+            }
+        }
+    }
+
+    // Sort by descending confidence, deduplicate, take top 5.
+    pairs.sort_by(|a, b| b.2.cmp(&a.2));
+    let mut seen: Vec<(String, String)> = Vec::new();
+    for (role, company, _) in pairs {
+        if !seen.iter().any(|(r, c)| r == &role && c == &company) {
+            seen.push((role, company));
+        }
+        if seen.len() >= 5 {
+            break;
+        }
+    }
+    seen
+}
+
+/// Find the last occurrence of `needle` in `haystack` where both boundaries
+/// align with word/punctuation boundaries (simple substring match).
+fn rfind_word_boundary(haystack: &str, needle: &str) -> Option<usize> {
+    // Walk backwards: find the rightmost occurrence so that "VP at Acme at Google"
+    // produces ("VP at Acme", "Google") — role is everything before last "at".
+    let bytes = haystack.as_bytes();
+    let nlen = needle.len();
+    if nlen > bytes.len() {
+        return None;
+    }
+    let mut i = bytes.len() - nlen;
+    loop {
+        if &haystack[i..i + nlen] == needle {
+            return Some(i);
+        }
+        if i == 0 {
+            break;
+        }
+        i -= 1;
+    }
+    None
+}
+
+/// Strip leading title-like words (CEO, CTO, …) that sometimes prefix role text.
+/// Returns a trimmed copy of `s`.
+fn clean_role(s: &str) -> String {
+    s.trim().to_string()
+}
+
+/// Very lightweight check: does `s` look like a job-role string?
+/// Accepts anything 2–80 chars that contains at least one alphabetic char and
+/// no obvious URL / HTML markers.
+fn looks_like_role(s: &str) -> bool {
+    let len = s.len();
+    len >= 2 && len <= 80 && s.chars().any(|c| c.is_alphabetic())
+        && !s.contains("://")
+        && !s.contains('<')
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -1121,5 +1376,98 @@ mod tests {
         assert!(jane.is_some(), "Jane Doe not found");
         assert_eq!(john.unwrap().department_str(), "Engineering");
         assert_eq!(jane.unwrap().department_str(), "Marketing");
+    }
+
+    // ── extract_company_names ─────────────────────────────────────────────────
+
+    #[test]
+    fn test_extract_company_names_legal_suffix() {
+        let text = "We work with Acme Corp and Widget LLC on our platform.";
+        let names = extract_company_names(text);
+        assert!(
+            names.iter().any(|n| n.contains("Acme") || n.contains("Corp")),
+            "expected Acme Corp; got {:?}",
+            names
+        );
+        assert!(
+            names.iter().any(|n| n.contains("Widget") || n.contains("LLC")),
+            "expected Widget LLC; got {:?}",
+            names
+        );
+    }
+
+    #[test]
+    fn test_extract_company_names_preposition() {
+        let text = "She works at Stripe and previously worked for Coinbase Global.";
+        let names = extract_company_names(text);
+        assert!(
+            names.iter().any(|n| n.contains("Stripe")),
+            "expected Stripe; got {:?}",
+            names
+        );
+        assert!(
+            names.iter().any(|n| n.contains("Coinbase")),
+            "expected Coinbase; got {:?}",
+            names
+        );
+    }
+
+    #[test]
+    fn test_extract_company_names_max_10() {
+        // Feed text with many potential company names; result must not exceed 10.
+        let text = "at Alpha Inc, at Beta Ltd, at Gamma LLC, at Delta Corp, \
+                    at Epsilon GmbH, at Zeta AG, at Eta SAS, at Theta B.V., \
+                    at Iota S.A., at Kappa PLC, at Lambda Inc";
+        let names = extract_company_names(text);
+        assert!(names.len() <= 10, "expected <= 10; got {}", names.len());
+    }
+
+    #[test]
+    fn test_extract_company_names_empty() {
+        assert!(extract_company_names("").is_empty());
+        assert!(extract_company_names("hello world foo bar").is_empty());
+    }
+
+    // ── extract_role_company_pairs ────────────────────────────────────────────
+
+    #[test]
+    fn test_role_company_pairs_at_pattern() {
+        let text = "VP of Engineering at Acme Corp\nHead of AI at Widget Inc";
+        let pairs = extract_role_company_pairs(text);
+        assert!(
+            pairs.iter().any(|(r, c)| r.contains("VP") && c.contains("Acme")),
+            "expected VP/Acme pair; got {:?}",
+            pairs
+        );
+        assert!(
+            pairs.iter().any(|(r, c)| r.contains("Head") && c.contains("Widget")),
+            "expected Head/Widget pair; got {:?}",
+            pairs
+        );
+    }
+
+    #[test]
+    fn test_role_company_pairs_comma_pattern() {
+        let text = "Director of Sales, Stripe\nSenior Engineer, GitHub";
+        let pairs = extract_role_company_pairs(text);
+        assert!(
+            pairs.iter().any(|(r, c)| r.contains("Director") && c.contains("Stripe")),
+            "expected Director/Stripe pair; got {:?}",
+            pairs
+        );
+    }
+
+    #[test]
+    fn test_role_company_pairs_max_5() {
+        let text = "CEO at Alpha Inc\nCTO at Beta Ltd\nCOO at Gamma LLC\n\
+                    CFO at Delta Corp\nVP at Epsilon GmbH\nDirector at Zeta AG";
+        let pairs = extract_role_company_pairs(text);
+        assert!(pairs.len() <= 5, "expected <= 5; got {}", pairs.len());
+    }
+
+    #[test]
+    fn test_role_company_pairs_empty() {
+        assert!(extract_role_company_pairs("").is_empty());
+        assert!(extract_role_company_pairs("hello world").is_empty());
     }
 }
