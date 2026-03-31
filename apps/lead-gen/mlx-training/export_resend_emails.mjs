@@ -305,17 +305,21 @@ async function main() {
 
   console.error(`\nBefore dedup: ${records.length} valid, ${skipped} skipped, ${fetchErrors} fetch errors`);
 
-  // Dedup by subject — keep one per unique subject (same template sent to many recipients)
-  const seenSubjects = new Set();
+  // Dedup by subject + body content hash (keeps body diversity per subject)
+  const seen = new Set();
   const deduped = [];
   for (const rec of records) {
     const subj = rec._meta.subject;
-    if (!seenSubjects.has(subj)) {
-      seenSubjects.add(subj);
+    // Use first 100 chars of body as content fingerprint
+    const assistantMsg = rec.messages[2]?.content || "";
+    const bodyStart = assistantMsg.slice(0, 150);
+    const key = `${subj}|||${bodyStart}`;
+    if (!seen.has(key)) {
+      seen.add(key);
       deduped.push(rec);
     }
   }
-  console.error(`After dedup by subject: ${deduped.length} unique (from ${records.length})`);
+  console.error(`After dedup: ${deduped.length} unique (from ${records.length})`);
   const finalRecords = deduped;
 
   // Write JSONL
