@@ -41,7 +41,7 @@ export default function NexttechJobPage() {
               {jobData.company}
             </Badge>
             <Badge size="1" color="gray" variant="soft">
-              {jobData.location}
+              {jobData.location ?? "Remote"}
             </Badge>
           </Flex>
 
@@ -52,7 +52,7 @@ export default function NexttechJobPage() {
           <Flex align="center" gap="2">
             <Text size="2" asChild>
               <a
-                href={jobData.url}
+                href={jobData.url ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -82,7 +82,7 @@ export default function NexttechJobPage() {
       <Flex justify="center">
         <Text size="2" asChild>
           <a
-            href={jobData.url}
+            href={jobData.url ?? "#"}
             target="_blank"
             rel="noopener noreferrer"
             style={{
