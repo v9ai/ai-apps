@@ -61,6 +61,7 @@ export default function SignUpPage() {
                 placeholder="Your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
                 required
               />
             </Flex>

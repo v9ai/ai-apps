@@ -27,7 +27,7 @@ if (import.meta.env.DEV) {
 }
 
 // ── GraphQL config (shared module) ───────────────────────────────────
-import { gqlRequest } from "../../services/graphql";
+import { gqlRequest, GRAPHQL_URL } from "../../services/graphql";
 
 // ── Service worker keepAlive ─────────────────────────────────────────
 // MV3 service workers can be terminated after ~30s of inactivity.
@@ -399,7 +399,12 @@ async function browseProfiles(
     );
 
     // Navigate to profile
-    await chrome.tabs.update(tabId, { url: profileUrl });
+    try {
+      await chrome.tabs.update(tabId, { url: profileUrl });
+    } catch {
+      console.warn("[BrowseProfiles] Tab closed during navigation, aborting");
+      break;
+    }
     await waitForTabLoad(tabId);
 
     // Wait for LinkedIn SPA content to render
@@ -870,8 +875,11 @@ function clickShowMorePeople(tabId: number): Promise<boolean> {
 
 async function notifyWebApp(action: string, data: Record<string, unknown>) {
   try {
+    // Derive the app origin from GRAPHQL_URL so this works in any environment
+    // (dev, staging, prod) without hardcoding a port.
+    const appOrigin = new URL(GRAPHQL_URL).origin;
     const tabs = await chrome.tabs.query({
-      url: ["http://localhost:3000/*", "http://localhost:3004/*"],
+      url: [`${appOrigin}/*`],
     });
     for (const tab of tabs) {
       if (tab.id) {

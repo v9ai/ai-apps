@@ -11,6 +11,7 @@ import {
   inferEmailPattern,
   generateEmailFromPattern,
 } from "@/lib/neverbounce";
+import { isAIContact, gatherAIContactProfile } from "@/lib/ai-contact-enrichment";
 
 // ─── ML Contact Classification ────────────────────────────────────────────────
 
@@ -826,6 +827,7 @@ export const contactResolvers = {
         if (!domain) continue;
 
         try {
+          // TODO: use DataLoader — this issues one SELECT per company (N+1); fetch all contacts upfront and group by company_id
           const companyContacts = await context.db
             .select()
             .from(contacts)
@@ -1300,6 +1302,7 @@ export const contactResolvers = {
             : null;
           const touchScore = computeNextTouchScore(contact.authority_score ?? 0.1, daysSince, hasReply);
 
+          // TODO: use DataLoader — this issues one UPDATE per contact (N+1); batch with a single UPDATE ... WHERE id IN (...)
           await context.db
             .update(contacts)
             .set({ next_touch_score: touchScore, last_contacted_at: lastSent, updated_at: new Date().toISOString() })
