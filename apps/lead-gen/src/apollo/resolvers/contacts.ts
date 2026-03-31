@@ -1601,6 +1601,155 @@ export const contactResolvers = {
         errors,
       };
     },
+
+    // ── ML Deletion Scoring ────────────────────────────────────────────────
+
+    async computeContactDeletionScores(
+      _parent: unknown,
+      args: { companyId?: number | null },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const rows = await context.db
+        .select()
+        .from(contacts)
+        .where(args.companyId != null ? eq(contacts.company_id, args.companyId) : undefined);
+
+      if (rows.length === 0) {
+        return { success: true, affected: 0, message: "No contacts found" };
+      }
+
+      // Batch-load outbound email counts + reply signal per contact
+      interface EmailSummary { contact_id: number; total: number; any_reply: boolean }
+      const contactIds = rows.map((c) => c.id);
+      const emailSummaries = await context.db
+        .select({
+          contact_id: contactEmails.contact_id,
+          total: count(contactEmails.id),
+          any_reply: sql<boolean>`bool_or(${contactEmails.reply_received})`,
+        })
+        .from(contactEmails)
+        .where(inArray(contactEmails.contact_id, contactIds))
+        .groupBy(contactEmails.contact_id) as EmailSummary[];
+
+      const summaryMap = new Map(emailSummaries.map((s) => [s.contact_id, s]));
+      const now = new Date().toISOString();
+
+      await Promise.all(
+        rows.map(async (contact) => {
+          const summary = summaryMap.get(contact.id);
+          const { score, reasons } = computeDeletionScore(
+            contact,
+            summary?.total ?? 0,
+            summary?.any_reply ?? false,
+          );
+          await context.db
+            .update(contacts)
+            .set({
+              deletion_score: score,
+              deletion_reasons: JSON.stringify(reasons),
+              updated_at: now,
+            })
+            .where(eq(contacts.id, contact.id));
+        }),
+      );
+
+      return { success: true, affected: rows.length, message: `Scored ${rows.length} contact(s)` };
+    },
+
+    async flagContactsForDeletion(
+      _parent: unknown,
+      args: { threshold?: number | null },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const threshold = args.threshold ?? 0.50;
+      const now = new Date().toISOString();
+
+      const rows = await context.db
+        .select({ id: contacts.id })
+        .from(contacts)
+        .where(
+          and(
+            sql`${contacts.deletion_score} >= ${threshold}`,
+            eq(contacts.to_be_deleted, false),
+          ),
+        );
+
+      if (rows.length === 0) {
+        return { success: true, affected: 0, message: `No contacts above threshold ${threshold}` };
+      }
+
+      const ids = rows.map((r) => r.id);
+      await context.db
+        .update(contacts)
+        .set({ to_be_deleted: true, deletion_flagged_at: now, updated_at: now })
+        .where(inArray(contacts.id, ids));
+
+      return {
+        success: true,
+        affected: ids.length,
+        message: `Flagged ${ids.length} contact(s) for deletion (threshold: ${threshold})`,
+      };
+    },
+
+    async unflagContactForDeletion(
+      _parent: unknown,
+      args: { id: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const now = new Date().toISOString();
+      const rows = await context.db
+        .update(contacts)
+        .set({ to_be_deleted: false, deletion_flagged_at: null, updated_at: now })
+        .where(eq(contacts.id, args.id))
+        .returning();
+
+      if (!rows[0]) throw new Error(`Contact ${args.id} not found`);
+      return rows[0];
+    },
+
+    async purgeDeletedContacts(
+      _parent: unknown,
+      args: { companyId?: number | null },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const condition = args.companyId != null
+        ? and(eq(contacts.to_be_deleted, true), eq(contacts.company_id, args.companyId))
+        : eq(contacts.to_be_deleted, true);
+
+      const toDelete = await context.db
+        .select({ id: contacts.id })
+        .from(contacts)
+        .where(condition);
+
+      if (toDelete.length === 0) {
+        return { success: true, affected: 0, message: "No contacts flagged for deletion" };
+      }
+
+      const ids = toDelete.map((r) => r.id);
+      await context.db.delete(contacts).where(inArray(contacts.id, ids));
+
+      return {
+        success: true,
+        affected: ids.length,
+        message: `Purged ${ids.length} contact(s)`,
+      };
+    },
   },
 
   // Company.contacts field resolver
