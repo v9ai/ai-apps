@@ -282,6 +282,12 @@ function seed() {
   console.log(`│ lessons              │ ${String(insertedLessons.length).padStart(5)} │`);
   console.log(`│ lesson_sections      │ ${String(allSections.length).padStart(5)} │`);
   console.log("└──────────────────────┴───────┘");
+  // Convert from WAL to DELETE mode so the .db file is self-contained
+  // (Vercel's read-only filesystem can't create WAL/SHM files)
+  sqlite.pragma("wal_checkpoint(TRUNCATE)");
+  sqlite.pragma("journal_mode = DELETE");
+  sqlite.close();
+
   console.log(`\nDatabase: ${DB_PATH}`);
   console.log("Done!");
 }
