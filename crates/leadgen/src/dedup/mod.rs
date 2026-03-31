@@ -1,6 +1,8 @@
 use strsim::jaro_winkler;
 use std::collections::HashMap;
 
+use crate::entity_resolution::signals::{normalize_company_name, normalize_domain, registrable_domain};
+
 pub struct ContactFp { pub idx: usize, pub name: String, pub domain: String, pub email_local: String }
 
 impl ContactFp {

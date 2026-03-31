@@ -149,7 +149,7 @@ pub fn explain_score(
             email_status: None,
             ..contact.clone()
         };
-        let loo = score_lead(&contact_no_email, company, icp);
+        let loo = score_lead(&contact_no_email, company, icp, 0.0);
         importances.push(FeatureImportance {
             feature_name: "email_quality".into(),
             contribution: baseline - loo.composite_score,
@@ -249,7 +249,7 @@ mod tests {
         let icp = make_icp();
         let contact = make_contact("VP", "Engineering");
         let company = make_company("SaaS", 150);
-        let score = score_lead(&contact, &company, &icp);
+        let score = score_lead(&contact, &company, &icp, 0.0);
 
         let importances = explain_score(&contact, &company, &icp, &score);
 
@@ -270,7 +270,7 @@ mod tests {
         let icp = make_icp();
         let contact = make_contact("VP", "Engineering");
         let company = make_company("SaaS", 150);
-        let score = score_lead(&contact, &company, &icp);
+        let score = score_lead(&contact, &company, &icp, 0.0);
 
         let importances = explain_score(&contact, &company, &icp, &score);
         assert_eq!(
@@ -286,7 +286,7 @@ mod tests {
         let icp = make_icp();
         let contact = make_contact("VP", "Engineering");
         let company = make_company("SaaS", 150);
-        let score = score_lead(&contact, &company, &icp);
+        let score = score_lead(&contact, &company, &icp, 0.0);
 
         let importances = explain_score(&contact, &company, &icp, &score);
 
@@ -306,7 +306,7 @@ mod tests {
         let icp = make_icp(); // targets VP
         let contact = make_contact("Individual Contributor", "Engineering");
         let company = make_company("SaaS", 150);
-        let score = score_lead(&contact, &company, &icp);
+        let score = score_lead(&contact, &company, &icp, 0.0);
 
         let importances = explain_score(&contact, &company, &icp, &score);
         let seniority_imp = importances
@@ -329,7 +329,7 @@ mod tests {
         let icp = make_icp(); // targets SaaS
         let contact = make_contact("VP", "Engineering");
         let company = make_company("Manufacturing", 150);
-        let score = score_lead(&contact, &company, &icp);
+        let score = score_lead(&contact, &company, &icp, 0.0);
 
         let importances = explain_score(&contact, &company, &icp, &score);
         let industry_imp = importances
@@ -350,7 +350,7 @@ mod tests {
         let icp = make_icp();
         let contact = make_contact("VP", "Engineering");
         let company = make_company("SaaS", 150);
-        let score = score_lead(&contact, &company, &icp);
+        let score = score_lead(&contact, &company, &icp, 0.0);
 
         let importances = explain_score(&contact, &company, &icp, &score);
 

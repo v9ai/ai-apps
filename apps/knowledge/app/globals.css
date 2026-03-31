@@ -2463,6 +2463,62 @@ body {
   .course-card-desc { -webkit-line-clamp: 2; }
 }
 
+/* ── /courses page ──────────────────────────────────────────── */
+.courses-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+.courses-page-header {
+  margin-bottom: 2.5rem;
+}
+.courses-page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--gray-12);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+.courses-page-subtitle {
+  font-size: 0.875rem;
+  color: var(--gray-9);
+}
+.courses-group {
+  margin-bottom: 3rem;
+}
+.courses-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--gray-4);
+}
+.courses-group-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-12);
+  letter-spacing: -0.01em;
+}
+.courses-group-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--gray-4);
+  color: var(--gray-9);
+  letter-spacing: 0.02em;
+}
+.courses-group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+@media (max-width: 640px) {
+  .courses-page { padding: 1.25rem 1rem 3rem; }
+  .courses-group-grid { grid-template-columns: 1fr; }
+}
+
 /* ================================================================
    SELF-EVALUATION PAGE
    ================================================================ */
