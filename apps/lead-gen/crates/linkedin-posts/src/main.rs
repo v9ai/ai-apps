@@ -12,8 +12,8 @@ use linkedin_posts::{authority, models, neon};
 use linkedin_posts::db::PostsDb;
 use linkedin_posts::intent_scorer::PostIntentScorer;
 use linkedin_posts::models::{
-    AddContactsRequest, AddLikesRequest, AddPostsRequest, ClassifiedPostsQuery, ExportResponse,
-    InsertResult, IntentDistribution, LikesQuery, StatsResponse, StoredPostLike,
+    AddContactsRequest, AddJobPostsRequest, AddLikesRequest, AddPostsRequest, ClassifiedPostsQuery,
+    ExportResponse, InsertResult, IntentDistribution, LikesQuery, StatsResponse, StoredPostLike,
 };
 
 struct AppStateInner {
@@ -63,6 +63,7 @@ async fn main() -> anyhow::Result<()> {
         // Original routes
         .route("/contacts", get(get_contacts).post(add_contacts))
         .route("/posts", post(add_posts))
+        .route("/jobs", post(add_job_posts))
         .route("/stats", get(stats))
         .route("/export", get(export))
         // New ML routes
@@ -129,7 +130,7 @@ async fn add_posts(
     let scorer = state.scorer.read().await;
     let (inserted, duplicates, filtered, intent_summary) = state
         .db
-        .add_posts(req.contact_id, &req.posts, &scorer)
+        .add_posts(req.contact_id, &req.posts, &scorer, None)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
@@ -153,6 +154,26 @@ async fn add_posts(
             }
         });
     }
+
+    Ok(Json(InsertResult {
+        inserted,
+        duplicates: Some(duplicates),
+        filtered: if filtered > 0 { Some(filtered) } else { None },
+        intent_summary,
+    }))
+}
+
+/// POST /jobs — ingest LinkedIn job search posts; stored with post_type="jobs", contact_id=0.
+async fn add_job_posts(
+    State(state): State<AppState>,
+    Json(req): Json<AddJobPostsRequest>,
+) -> Result<Json<InsertResult>, (StatusCode, String)> {
+    let scorer = state.scorer.read().await;
+    let (inserted, duplicates, filtered, intent_summary) = state
+        .db
+        .add_posts(0, &req.posts, &scorer, Some("jobs"))
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(InsertResult {
         inserted,

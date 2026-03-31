@@ -33,10 +33,16 @@ pub struct Post {
     pub is_repost: bool,
     #[serde(default)]
     pub original_author: Option<String>,
+    #[serde(default = "default_post_type")]
+    pub post_type: String,
 }
 
 fn default_media_type() -> String {
     "none".to_string()
+}
+
+fn default_post_type() -> String {
+    "post".to_string()
 }
 
 /// Post with storage metadata (id, contact_id, scraped_at) + ML analysis.
@@ -54,6 +60,8 @@ pub struct StoredPost {
     pub is_repost: bool,
     pub original_author: Option<String>,
     pub scraped_at: String,
+    /// "post" for contact activity posts, "jobs" for LinkedIn job search results
+    pub post_type: String,
     // ML analysis fields
     pub relevance_score: f32,
     pub primary_intent: String,
@@ -78,6 +86,11 @@ pub struct AddContactsRequest {
 #[derive(Debug, Deserialize)]
 pub struct AddPostsRequest {
     pub contact_id: i32,
+    pub posts: Vec<Post>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AddJobPostsRequest {
     pub posts: Vec<Post>,
 }
 

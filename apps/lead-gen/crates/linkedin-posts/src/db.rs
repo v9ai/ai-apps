@@ -47,6 +47,8 @@ fn posts_schema() -> Arc<Schema> {
         Field::new("is_repost", DataType::Boolean, false),
         Field::new("original_author", DataType::Utf8, true),
         Field::new("scraped_at", DataType::Utf8, false),
+        // Type discriminator: "post" | "jobs"
+        Field::new("post_type", DataType::Utf8, false),
         // ML analysis fields
         Field::new("relevance_score", DataType::Float32, false),
         Field::new("primary_intent", DataType::Utf8, false),
@@ -122,11 +124,12 @@ impl PostsDb {
         }
 
         if tables.contains(&"posts".to_string()) {
-            // Check if we need to migrate (old schema lacks relevance_score)
+            // Check if we need to migrate (old schema lacks relevance_score or post_type)
             let table = self.conn.open_table("posts").execute().await?;
             let schema = table.schema().await?;
             let has_relevance = schema.fields().iter().any(|f| f.name() == "relevance_score");
-            if !has_relevance {
+            let has_post_type = schema.fields().iter().any(|f| f.name() == "post_type");
+            if !has_relevance || !has_post_type {
                 let row_count = table.count_rows(None).await.unwrap_or(0);
                 tracing::warn!(
                     "Posts table has old schema (missing ML columns). \
@@ -252,11 +255,13 @@ impl PostsDb {
     }
 
     /// Add posts with ML analysis. Returns (inserted, duplicates, filtered, intent_summary).
+    /// `post_type_override`: if `Some`, overrides the `post_type` field on every post (e.g. `"jobs"`).
     pub async fn add_posts(
         &self,
         contact_id: i32,
         posts: &[Post],
         scorer: &PostIntentScorer,
+        post_type_override: Option<&str>,
     ) -> Result<(usize, usize, usize, Option<IntentSummary>)> {
         if posts.is_empty() {
             return Ok((0, 0, 0, None));
@@ -382,6 +387,12 @@ impl PostsDb {
                 Arc::new(StringArray::from_iter_values(
                     std::iter::repeat_n(now.as_str(), n),
                 )),
+                // Type discriminator
+                Arc::new(StringArray::from_iter_values(
+                    kept.iter().map(|(p, _)| {
+                        post_type_override.unwrap_or(p.post_type.as_str())
+                    }),
+                )),
                 // ML analysis fields
                 Arc::new(Float32Array::from_iter_values(
                     kept.iter().map(|(_, a)| a.relevance_score),
@@ -443,6 +454,7 @@ impl PostsDb {
                     is_repost: post.is_repost,
                     original_author: post.original_author.clone(),
                     scraped_at: now.clone(),
+                    post_type: post_type_override.unwrap_or(post.post_type.as_str()).to_string(),
                     relevance_score: a.relevance_score,
                     primary_intent: a.primary_intent.clone(),
                     intent_hiring: a.intents.hiring_signal,
@@ -521,6 +533,8 @@ impl PostsDb {
                 .context("Column 'original_author' is not Utf8")?;
             let scraped_ats = col("scraped_at")?.as_any().downcast_ref::<StringArray>()
                 .context("Column 'scraped_at' is not Utf8")?;
+            let post_types = col("post_type")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'post_type' is not Utf8")?;
             let relevance_scores = col("relevance_score")?.as_any().downcast_ref::<Float32Array>()
                 .context("Column 'relevance_score' is not Float32")?;
             let primary_intents = col("primary_intent")?.as_any().downcast_ref::<StringArray>()
@@ -556,6 +570,7 @@ impl PostsDb {
                     is_repost: is_reposts.value(i),
                     original_author: if original_authors.is_null(i) { None } else { Some(original_authors.value(i).to_string()) },
                     scraped_at: scraped_ats.value(i).to_string(),
+                    post_type: post_types.value(i).to_string(),
                     relevance_score: relevance_scores.value(i),
                     primary_intent: primary_intents.value(i).to_string(),
                     intent_hiring: intent_hirings.value(i),

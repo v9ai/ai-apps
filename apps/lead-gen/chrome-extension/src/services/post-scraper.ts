@@ -621,6 +621,70 @@ function sendProgress(data: Record<string, unknown>) {
   }
 }
 
+function sendJobProgress(data: Record<string, unknown>) {
+  try {
+    chrome.runtime.sendMessage({ action: "jobScrapingProgress", ...data });
+  } catch {
+    // Popup may not be open
+  }
+}
+
+// ── Job search scraping ──
+
+async function postJobPosts(posts: ScrapedPost[]): Promise<PostResult> {
+  const res = await fetch(`${RUST_SERVER}/jobs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ posts }),
+  });
+  if (!res.ok) throw new Error(`Server error: ${res.status}`);
+  const data = await res.json();
+  return { inserted: data.inserted, filtered: data.filtered || 0 };
+}
+
+export async function scrapeJobSearchPosts(tabId: number, searchUrl: string): Promise<void> {
+  const healthy = await checkServerHealth();
+  if (!healthy) {
+    sendJobProgress({ error: "Rust server not running on localhost:9876" });
+    return;
+  }
+
+  sendJobProgress({ status: "Navigating to LinkedIn job search..." });
+
+  try {
+    await chrome.tabs.update(tabId, { url: searchUrl });
+  } catch {
+    sendJobProgress({ error: "Tab closed during navigation" });
+    return;
+  }
+  await waitForTabLoad(tabId);
+  await sleep(3000);
+
+  sendJobProgress({ status: "Extracting job posts..." });
+
+  let posts: ScrapedPost[] = [];
+  try {
+    posts = await scrollAndExtract(tabId);
+  } catch (err) {
+    sendJobProgress({ error: `Extraction failed: ${err}` });
+    return;
+  }
+
+  if (posts.length === 0) {
+    sendJobProgress({ done: true, inserted: 0, filtered: 0, total: 0 });
+    return;
+  }
+
+  sendJobProgress({ status: `Saving ${posts.length} posts...` });
+
+  try {
+    const { inserted, filtered } = await postJobPosts(posts);
+    sendJobProgress({ done: true, inserted, filtered, total: posts.length });
+  } catch (err) {
+    sendJobProgress({ error: `Failed to save: ${err}` });
+  }
+}
+
 // ── Import connections directly via GraphQL (no self-messaging) ──
 
 async function importConnectionsBatch(

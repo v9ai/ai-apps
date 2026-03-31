@@ -1,5 +1,5 @@
 // Background service worker
-import { browseContactPosts, scrapeAllPosts, cancelPostScraping } from "../../services/post-scraper";
+import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts } from "../../services/post-scraper";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -242,6 +242,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "stopPostScraping") {
     cancelPostScraping();
     sendResponse({ success: true });
+    return true;
+  }
+
+  // ── Scrape Job Search Posts ──
+  if (message.action === "scrapeJobPosts") {
+    const { searchUrl } = message as { searchUrl: string };
+    chrome.tabs.query({ active: true, currentWindow: true }).then(async (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        sendResponse({ success: false, error: "No active tab" });
+        return;
+      }
+      sendResponse({ success: true });
+      startKeepAlive();
+      try {
+        await scrapeJobSearchPosts(tabId, searchUrl);
+      } catch (err) {
+        try {
+          chrome.runtime.sendMessage({
+            action: "jobScrapingProgress",
+            error: err instanceof Error ? err.message : String(err),
+          });
+        } catch { /* popup may be closed */ }
+      } finally {
+        stopKeepAlive();
+      }
+    });
     return true;
   }
 
