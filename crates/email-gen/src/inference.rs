@@ -63,8 +63,7 @@ impl EmailGenerator {
                 // Try common shard patterns
                 let mut paths = Vec::new();
                 for i in 1..=10 {
-                    let name = format!("model-{i:05}-of-*.safetensors");
-                    // Use the index file approach
+                    // Try common shard count (2 shards)
                     if let Ok(p) = repo.get(&format!("model-{i:05}-of-00002.safetensors")) {
                         paths.push(p);
                     } else {
