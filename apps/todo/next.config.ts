@@ -8,21 +8,8 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: "/app/active",
-        destination: "/app?status=active",
-        permanent: true,
-      },
-      {
-        source: "/app/completed",
-        destination: "/app?status=completed",
-        permanent: true,
-      },
-      {
-        source: "/app/settings",
-        destination: "/app",
-        permanent: true,
-      },
+      { source: "/app", destination: "/", permanent: true },
+      { source: "/app/:path*", destination: "/:path*", permanent: true },
     ];
   },
 };
