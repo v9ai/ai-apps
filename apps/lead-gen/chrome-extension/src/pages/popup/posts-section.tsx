@@ -45,8 +45,11 @@ export default function PostsSection() {
         const filtered = message.totalFiltered
           ? ` (${message.totalFiltered.toLocaleString()} noise filtered)`
           : "";
+        const companies = message.totalCompanies
+          ? `, ${message.totalCompanies.toLocaleString()} companies`
+          : "";
         setStatus(
-          `Done! ${message.totalPosts.toLocaleString()} relevant posts from ${message.totalContacts.toLocaleString()} contacts${filtered}`,
+          `Done! ${message.totalPosts.toLocaleString()} posts from ${message.totalContacts.toLocaleString()} contacts${filtered}${companies}`,
         );
         setLoading(false);
         setPhase(null);
@@ -116,9 +119,10 @@ export default function PostsSection() {
   };
 
   const phaseLabel =
-    phase === "connections" ? "1/3 Connections" :
-    phase === "import" ? "2/3 Import" :
-    phase === "posts" ? "3/3 Posts" : null;
+    phase === "connections" ? "1/4 Connections" :
+    phase === "import" ? "2/4 Import" :
+    phase === "posts" ? "3/4 Posts" :
+    phase === "companies" ? "4/4 Companies" : null;
 
   const progressPct =
     progress && progress.total > 0
@@ -156,7 +160,7 @@ export default function PostsSection() {
           color="teal"
           size="sm"
         >
-          {loading ? "Scraping..." : "Scrape All Posts"}
+          {loading ? "Scraping..." : "Scrape Posts"}
         </Button>
         {loading && (
           <Button onClick={handleStop} color="red" size="sm">

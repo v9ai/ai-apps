@@ -348,49 +348,10 @@ function extractCourseUrls(rawUrls: string[]): string[] {
 
 async function crawlTopicPage(topic: string): Promise<{ courses: string[]; relatedTopics: string[] }> {
   const { context, close } = await freshContext();
-
-  // Intercept Udemy's discovery API responses to extract course slugs
-  const interceptedCourseUrls = new Set<string>();
-
   try {
     const page = await context.newPage();
-
-    page.on("response", async (response) => {
-      const url = response.url();
-      if (
-        !url.includes("udemy.com") ||
-        !url.includes("/api-2.0/") ||
-        response.status() !== 200
-      ) return;
-      const ct = response.headers()["content-type"] ?? "";
-      if (!ct.includes("application/json")) return;
-      try {
-        const json = await response.json() as Record<string, unknown>;
-        // discovery-units and course-recommendations return results[] with course_url or url fields
-        const extract = (obj: unknown) => {
-          if (!obj || typeof obj !== "object") return;
-          const o = obj as Record<string, unknown>;
-          // direct course URL fields
-          for (const key of ["url", "course_url", "learn_url"]) {
-            if (typeof o[key] === "string" && (o[key] as string).includes("/course/")) {
-              const m = (o[key] as string).match(/\/course\/([^/?#]+)/);
-              if (m) interceptedCourseUrls.add(`https://www.udemy.com/course/${m[1]}/`);
-            }
-          }
-          // recurse into arrays and nested objects
-          for (const val of Object.values(o)) {
-            if (Array.isArray(val)) val.forEach(extract);
-            else if (val && typeof val === "object") extract(val);
-          }
-        };
-        extract(json);
-      } catch { /* ignore parse errors */ }
-    });
-
-    await page.goto(`https://www.udemy.com/topic/${topic}/`, {
-      waitUntil: "domcontentloaded",
-      timeout: 20000,
-    });
+    const url = `https://www.udemy.com/topic/${topic}/`;
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
     await page.waitForTimeout(6000);
 
     const title = await page.title();
@@ -400,31 +361,50 @@ async function crawlTopicPage(topic: string): Promise<{ courses: string[]; relat
 
     await page.click('[id*="onetrust-accept"], button:has-text("Accept")').catch(() => {});
 
-    // Scroll to trigger lazy-loaded API calls
     for (let i = 0; i < 5; i++) {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await page.waitForTimeout(1500);
     }
 
-    // Also harvest any anchor hrefs already in the DOM (catches featured / bestseller rows)
-    const courseHrefs = await page.evaluate(() =>
-      [...document.querySelectorAll("a")].map((a) => a.href).filter((h) => h.includes("/course/")),
-    );
+    const { courseHrefs, topicHrefs } = await page.evaluate(() => {
+      // 1. Anchor tags in the DOM
+      const anchorCourses = [...document.querySelectorAll("a")]
+        .map((a) => (a as HTMLAnchorElement).href)
+        .filter((h) => h.includes("/course/"));
 
-    const topicHrefs = await page.evaluate(() =>
-      [...document.querySelectorAll("a")]
-        .map((a) => a.href)
+      // 2. Mine __NEXT_DATA__ for every /course/<slug> mention (SSR payload)
+      const nextDataEl = document.getElementById("__NEXT_DATA__");
+      const nextDataCourses: string[] = [];
+      if (nextDataEl?.textContent) {
+        const matches = nextDataEl.textContent.match(/\/course\/([a-z0-9][a-z0-9-]{2,80})/g) ?? [];
+        for (const m of matches) {
+          nextDataCourses.push(`https://www.udemy.com${m}/`);
+        }
+      }
+
+      // 3. Mine the full raw HTML for any remaining /course/<slug> patterns
+      const htmlMatches = document.documentElement.innerHTML
+        .match(/\/course\/([a-z0-9][a-z0-9-]{2,80})(?:\/|")/g) ?? [];
+      const htmlCourses = htmlMatches.map(
+        (m) => `https://www.udemy.com${m.replace(/["\/]$/, "")}/`,
+      );
+
+      const topicHrefs = [...document.querySelectorAll("a")]
+        .map((a) => (a as HTMLAnchorElement).href)
         .filter((h) => h.match(/^https:\/\/www\.udemy\.com\/topic\/[a-z0-9-]+\/?$/))
-        .filter((v, i, arr) => arr.indexOf(v) === i),
-    );
+        .filter((v, i, arr) => arr.indexOf(v) === i);
+
+      return {
+        courseHrefs: [...anchorCourses, ...nextDataCourses, ...htmlCourses],
+        topicHrefs,
+      };
+    });
 
     const relatedTopics = topicHrefs
-      .map((h) => h.match(/\/topic\/([a-z0-9-]+)/)?.[1])
+      .map((h: string) => h.match(/\/topic\/([a-z0-9-]+)/)?.[1])
       .filter((t): t is string => !!t);
 
-    // Merge DOM-harvested URLs with API-intercepted URLs
-    const allCourseUrls = [...courseHrefs, ...[...interceptedCourseUrls]];
-    return { courses: extractCourseUrls(allCourseUrls), relatedTopics };
+    return { courses: extractCourseUrls(courseHrefs), relatedTopics };
   } finally {
     await close();
   }
