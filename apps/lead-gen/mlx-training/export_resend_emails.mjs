@@ -27,6 +27,7 @@ const resend = new Resend(RESEND_API_KEY);
 const SYSTEM_PROMPT =
   'You write B2B outreach emails for Vadim Nicolai, Senior Software Engineer ' +
   '(10+ years: React, TypeScript, AI/ML, Rust, Node.js, GraphQL). ' +
+  'Never reference crypto, blockchain, trading, or Web3. ' +
   'Output ONLY valid JSON: {"subject": "...", "body": "..."}';
 
 const OUT_DIR = "mlx-training/data/outreach-email";
@@ -74,7 +75,7 @@ function sleep(ms) {
 
 // ── Rate-limited API call with retry ────────────────────────────────────────
 
-async function withRetry(fn, maxRetries = 3) {
+async function withRetry(fn, maxRetries = 5) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const result = await Promise.race([
@@ -84,8 +85,10 @@ async function withRetry(fn, maxRetries = 3) {
       return result;
     } catch (err) {
       if (attempt === maxRetries) throw err;
-      const backoff = 2000 * (attempt + 1); // 2s, 4s, 6s
-      console.error(`  Retry (attempt ${attempt + 1}/${maxRetries}): ${err.message?.slice(0, 60)}`);
+      const backoff = Math.min(2000 * Math.pow(2, attempt), 30000); // 2s, 4s, 8s, 16s, 30s
+      if (attempt >= 2) {
+        console.error(`  Retry (attempt ${attempt + 1}/${maxRetries}): ${err.message?.slice(0, 60)}, waiting ${backoff/1000}s`);
+      }
       await sleep(backoff);
     }
   }
@@ -165,7 +168,7 @@ async function fetchEmailsBatch(emails, concurrency = 3) {
       if (completed % 200 === 0) {
         console.error(`  Fetched: ${completed}/${emails.length}`);
       }
-      await sleep(1000); // 1 req/sec per worker × 2 workers = ~2 req/sec total (avoids rate limits)
+      await sleep(500); // 2 req/sec per worker × 3 workers = ~6 req/sec total
     }
   }
 
@@ -300,8 +303,8 @@ async function main() {
   }
 
   // Fetch full content with concurrent workers
-  console.error(`\nFetching full content for ${emails.length} emails (2 concurrent workers)...`);
-  const fullEmails = await fetchEmailsBatch(emails, 2);
+  console.error(`\nFetching full content for ${emails.length} emails (3 concurrent workers)...`);
+  const fullEmails = await fetchEmailsBatch(emails, 3);
 
   const records = [];
   let skipped = 0;
