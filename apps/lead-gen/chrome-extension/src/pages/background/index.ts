@@ -270,18 +270,20 @@ let browseCancelled = false;
 
 function waitForTabLoad(tabId: number): Promise<void> {
   return new Promise((resolve) => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const listener = (
       updatedTabId: number,
       changeInfo: { status?: string },
     ) => {
       if (updatedTabId === tabId && changeInfo.status === "complete") {
         chrome.tabs.onUpdated.removeListener(listener);
+        if (timeoutId !== null) clearTimeout(timeoutId);
         resolve();
       }
     };
     chrome.tabs.onUpdated.addListener(listener);
     // Timeout after 15s in case page never fully loads
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(listener);
       resolve();
     }, 15000);

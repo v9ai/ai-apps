@@ -245,7 +245,7 @@ export const companyResolvers = {
           }
 
           if (args.filter.category) {
-            conditions.push(eq(companies.category, args.filter.category as any));
+            conditions.push(eq(companies.category, args.filter.category));
           }
 
           if (args.filter.min_score !== undefined) {

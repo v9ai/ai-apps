@@ -328,7 +328,7 @@ export function EditCampaignDialog({
               {emails.length > 0 && (
                 <Flex direction="column" gap="1" mt="2">
                   {emails.map((email, i) => (
-                    <Card key={i} size="1">
+                    <Card key={`${i}-${email.subject}`} size="1">
                       <Flex justify="between" align="start" gap="2">
                         <Box style={{ flex: 1 }}>
                           <Text size="2" weight="medium">

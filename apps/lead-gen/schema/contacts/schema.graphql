@@ -35,6 +35,8 @@ extend type Mutation {
   markContactEmailVerified(contactId: Int!, verified: Boolean!): Contact!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
   scoreContactsML(companyId: Int!): ScoreContactsMLResult!
+  enrichAIContactProfile(contactId: Int!): EnrichAIContactResult!
+  enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
 }
 
 type MergeDuplicateContactsResult {
