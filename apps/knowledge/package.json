@@ -1,12 +1,15 @@
 {
   "name": "knowledge",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev -p 3002",
     "build": "next build",
     "start": "next start",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
-    "seed:sqlite": "node --import tsx/esm scripts/seed-sqlite.ts",
+    "seed:sqlite": "tsx ./scripts/seed-sqlite.ts",
     "migrate:neon-to-sqlite": "tsx --env-file=.env.local scripts/migrate-from-neon.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
