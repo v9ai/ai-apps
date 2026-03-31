@@ -664,3 +664,6 @@ AS $$
   FROM weekly w
   ORDER BY w.week_start;
 $$;
+
+-- ── Topic grouping for external_courses ────────────────────────────
+ALTER TABLE external_courses ADD COLUMN IF NOT EXISTS topic_group text;

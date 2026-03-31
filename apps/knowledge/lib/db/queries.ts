@@ -1,4 +1,4 @@
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql, desc, asc } from "drizzle-orm";
 import { db } from "@/src/db";
 import { lessons, categories, applications, externalCourses, lessonCourses, courseReviews } from "@/src/db/schema";
 import type { InferSelectModel } from "drizzle-orm";

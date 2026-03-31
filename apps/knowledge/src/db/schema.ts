@@ -485,6 +485,7 @@ export const externalCourses = pgTable(
     enrolled: integer("enrolled"),
     imageUrl: text("image_url"),
     language: text("language").notNull().default("English"),
+    topicGroup: text("topic_group"),
     metadata: jsonb("metadata").default({}),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
