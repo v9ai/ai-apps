@@ -14,7 +14,7 @@
 
 import { fetchAllConnections, type ScrapedConnection } from "./connection-scraper";
 import { gqlRequest } from "./graphql";
-import { parseJobFields } from "../lib/job-field-parser";
+import { parseJobFields, isJobRelatedPost } from "../lib/job-field-parser";
 
 const RUST_SERVER = import.meta.env.VITE_RUST_SERVER_URL || "http://localhost:9876";
 
@@ -677,27 +677,38 @@ export async function scrapeJobSearchPosts(tabId: number, searchUrl: string): Pr
   await waitForTabLoad(tabId);
   await sleep(3000);
 
-  sendJobProgress({ status: "Extracting job posts..." });
+  sendJobProgress({ status: "Extracting posts..." });
 
-  let posts: ScrapedPost[] = [];
+  let allPosts: ScrapedPost[] = [];
   try {
-    posts = await scrollAndExtract(tabId);
+    allPosts = await scrollAndExtract(tabId);
   } catch (err) {
     sendJobProgress({ error: `Extraction failed: ${err}` });
     return;
   }
 
-  if (posts.length === 0) {
-    sendJobProgress({ done: true, inserted: 0, filtered: 0, total: 0 });
+  if (allPosts.length === 0) {
+    sendJobProgress({ done: true, inserted: 0, filtered: 0, total: 0, contacts: 0 });
     return;
   }
 
-  sendJobProgress({ status: `Saving ${posts.length} posts to Neon...` });
+  // Filter to job-related posts only
+  const jobPosts = allPosts.filter((p) => isJobRelatedPost(p.post_text || ""));
+  const filteredOut = allPosts.length - jobPosts.length;
+
+  console.log(`[JobScraper] ${jobPosts.length} job posts from ${allPosts.length} total (${filteredOut} non-job filtered)`);
+
+  if (jobPosts.length === 0) {
+    sendJobProgress({ done: true, inserted: 0, filtered: filteredOut, total: allPosts.length, contacts: 0 });
+    return;
+  }
+
+  sendJobProgress({ status: `Saving ${jobPosts.length} job posts to Neon...` });
 
   // Parse job fields and save to Neon via GraphQL
   let neonInserted = 0;
   try {
-    const inputs = posts
+    const inputs = jobPosts
       .filter((p) => p.post_url)
       .map((p) => {
         const fields = parseJobFields(p.post_text || "");
@@ -736,33 +747,100 @@ export async function scrapeJobSearchPosts(tabId: number, searchUrl: string): Pr
   }
 
   // Optionally send to Rust server for ML scoring (non-blocking)
-  let rustInserted = 0;
-  let rustFiltered = 0;
   try {
-    const healthy = await checkServerHealth();
-    if (healthy) {
-      const { inserted, filtered } = await postJobPosts(posts);
-      rustInserted = inserted;
-      rustFiltered = filtered;
-    }
-  } catch {
-    // Non-critical — Rust server is optional for job scraping
-  }
+    if (await checkServerHealth()) await postJobPosts(jobPosts);
+  } catch { /* non-critical */ }
 
   // Extract and save companies from post authors
   try {
     const companies = await extractCompanyMentions(tabId);
-    if (companies.length > 0) {
-      await saveCompaniesBatch(companies);
-    }
+    if (companies.length > 0) await saveCompaniesBatch(companies);
   } catch { /* non-critical */ }
+
+  // Extract and import contacts from job post authors
+  let contactsImported = 0;
+  try {
+    contactsImported = await importJobPostContacts(jobPosts);
+  } catch (err) {
+    console.error("[JobScraper] Contact import failed:", err);
+  }
 
   sendJobProgress({
     done: true,
     inserted: neonInserted,
-    filtered: rustFiltered,
-    total: posts.length,
+    filtered: filteredOut,
+    total: allPosts.length,
+    contacts: contactsImported,
   });
+}
+
+// ── Extract contacts from job post authors and import via GraphQL ──
+
+function parseAuthorName(name: string): { firstName: string; lastName: string } {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0) return { firstName: "Unknown", lastName: "" };
+  if (parts.length === 1) return { firstName: parts[0], lastName: "" };
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+}
+
+function parseAuthorPosition(subtitle: string | null): string | undefined {
+  if (!subtitle) return undefined;
+  for (const sep of [" at ", " @ ", " | "]) {
+    const idx = subtitle.toLowerCase().indexOf(sep);
+    if (idx > 0) return subtitle.slice(0, idx).trim();
+  }
+  return subtitle.trim() || undefined;
+}
+
+async function importJobPostContacts(posts: ScrapedPost[]): Promise<number> {
+  // Dedup by author_url, only personal profiles (/in/)
+  const seen = new Set<string>();
+  const contacts: Array<{
+    firstName: string;
+    lastName: string;
+    linkedinUrl: string;
+    position?: string;
+    tags: string[];
+  }> = [];
+
+  for (const p of posts) {
+    const url = p.author_url?.split("?")[0]?.replace(/\/$/, "");
+    if (!url || !url.includes("/in/") || seen.has(url)) continue;
+    if (!p.author_name) continue;
+    seen.add(url);
+
+    const { firstName, lastName } = parseAuthorName(p.author_name);
+    contacts.push({
+      firstName,
+      lastName,
+      linkedinUrl: url,
+      position: parseAuthorPosition(p.author_subtitle),
+      tags: ["linkedin-job-post"],
+    });
+  }
+
+  if (contacts.length === 0) return 0;
+
+  console.log(`[JobScraper] Importing ${contacts.length} contacts from job post authors`);
+
+  try {
+    const result = await gqlRequest(
+      `mutation ImportContacts($contacts: [ContactInput!]!) {
+        importContacts(contacts: $contacts) { success imported failed errors }
+      }`,
+      { contacts },
+    );
+    const res = result.data?.importContacts;
+    if (res) {
+      if (res.failed > 0) console.warn(`[JobScraper] ${res.failed} contact imports failed:`, res.errors);
+      return res.imported;
+    }
+    if (result.errors) console.error("[JobScraper] Contact GQL error:", result.errors[0].message);
+    return 0;
+  } catch (err) {
+    console.error("[JobScraper] Contact import request failed:", err);
+    return 0;
+  }
 }
 
 function extractJobTitle(text: string): string | null {
@@ -1092,14 +1170,21 @@ export async function runUnifiedPipeline(tabId: number, searchUrl: string): Prom
   await waitForTabLoad(tabId);
   await sleep(3000);
 
-  sendProgress({ phase: "jobs", status: "Scrolling & extracting job posts..." });
+  sendProgress({ phase: "jobs", status: "Scrolling & extracting posts..." });
 
-  let jobPosts: ScrapedPost[] = [];
+  let allPosts: ScrapedPost[] = [];
   try {
-    jobPosts = await scrollAndExtract(tabId);
+    allPosts = await scrollAndExtract(tabId);
   } catch (err) {
     console.error("[UnifiedPipeline] Job extraction failed:", err);
   }
+
+  // Filter to job-related posts only
+  const jobPosts = allPosts.filter((p) => isJobRelatedPost(p.post_text || ""));
+  const jobFilteredOut = allPosts.length - jobPosts.length;
+  let jobContactsImported = 0;
+
+  console.log(`[UnifiedPipeline] ${jobPosts.length} job posts from ${allPosts.length} total (${jobFilteredOut} non-job filtered)`);
 
   if (jobPosts.length > 0 && !postsCancelled) {
     sendProgress({ phase: "jobs", status: `Saving ${jobPosts.length} job posts to Neon...` });
@@ -1154,9 +1239,16 @@ export async function runUnifiedPipeline(tabId: number, searchUrl: string): Prom
       if (companies.length > 0) await saveCompaniesBatch(companies);
     } catch { /* non-critical */ }
 
-    sendProgress({ phase: "jobs", status: `${totalJobPosts} job posts saved` });
+    // Import contacts from job post authors
+    try {
+      jobContactsImported = await importJobPostContacts(jobPosts);
+    } catch (err) {
+      console.error("[UnifiedPipeline] Contact import failed:", err);
+    }
+
+    sendProgress({ phase: "jobs", status: `${totalJobPosts} job posts saved, ${jobContactsImported} contacts imported (${jobFilteredOut} non-job filtered)` });
   } else {
-    sendProgress({ phase: "jobs", status: "No job posts found on search page" });
+    sendProgress({ phase: "jobs", status: `No job posts found (${jobFilteredOut} non-job filtered from ${allPosts.length})` });
   }
 
   if (postsCancelled) {

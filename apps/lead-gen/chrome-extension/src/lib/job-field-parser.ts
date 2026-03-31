@@ -42,3 +42,15 @@ export function parseJobFields(text: string): ParsedJobFields {
 
   return { rate, ir35Status, duration, remoteType, contractType };
 }
+
+const JOB_KEYWORDS_RE =
+  /\b(hiring|we'?re looking for|we need|open role|job opportunity|vacancy|apply now|apply here|send your cv|send me your|dm me|join our team|contractor needed|developer needed|engineer needed|looking for a?\s?\w*\s?developer|looking for a?\s?\w*\s?engineer)\b/i;
+
+export function isJobRelatedPost(
+  text: string,
+  fields?: ParsedJobFields,
+): boolean {
+  const f = fields ?? parseJobFields(text);
+  if (f.rate || f.ir35Status || f.duration || f.contractType) return true;
+  return JOB_KEYWORDS_RE.test(text);
+}
