@@ -428,6 +428,49 @@ async function scrollAndExtract(
   }));
 }
 
+// ── Extract company links from post authors on the current page ──
+
+async function extractCompanyMentions(
+  tabId: number,
+): Promise<Array<{ name: string; linkedin_url: string }>> {
+  const results = await chrome.scripting.executeScript({
+    target: { tabId },
+    world: "MAIN",
+    func: () => {
+      const companies: Array<{ name: string; linkedin_url: string }> = [];
+      const seen = new Set<string>();
+      document.querySelectorAll<HTMLAnchorElement>(
+        '.update-components-actor__title a[href*="/company/"]',
+      ).forEach((a) => {
+        const href = a.href.split("?")[0].replace(/\/$/, "");
+        const name = a.textContent?.trim() || "";
+        if (href && name && !seen.has(href)) {
+          seen.add(href);
+          companies.push({ name, linkedin_url: href });
+        }
+      });
+      return companies;
+    },
+  });
+  return (results?.[0]?.result ?? []) as Array<{ name: string; linkedin_url: string }>;
+}
+
+async function saveCompaniesBatch(
+  companies: Array<{ name: string; linkedin_url: string }>,
+): Promise<number> {
+  try {
+    const result = await gqlRequest(
+      `mutation ImportCompanies($companies: [CompanyImportInput!]!) {
+        importCompanies(companies: $companies) { success imported failed errors }
+      }`,
+      { companies },
+    );
+    return result.data?.importCompanies?.imported ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 // ── Main scraping loop ──
 
 export async function browseContactPosts(tabId: number): Promise<void> {
@@ -743,6 +786,7 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
   let totalPosts = 0;
   let totalFiltered = 0;
   let totalLikes = 0;
+  const allCompanies = new Map<string, { name: string; linkedin_url: string }>();
 
   for (let i = 0; i < allContacts.length; i++) {
     if (postsCancelled) break;
@@ -808,6 +852,14 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
       console.log(`[PostScraper] ${name}: no posts found`);
     }
 
+    // ── Collect companies from post authors on this activity page ──
+    try {
+      const companies = await extractCompanyMentions(tabId);
+      for (const c of companies) {
+        if (!allCompanies.has(c.linkedin_url)) allCompanies.set(c.linkedin_url, c);
+      }
+    } catch { /* non-critical */ }
+
     // ── Scrape likes ──
     if (!postsCancelled) {
       await randomDelay(3000, 5000);
@@ -844,15 +896,28 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
     }
   }
 
+  // ── Phase 4: Save companies collected from activity pages ──
+  let totalCompanies = 0;
+  if (!postsCancelled && allCompanies.size > 0) {
+    sendProgress({ phase: "companies", status: `Saving ${allCompanies.size} companies...` });
+    const batch = [...allCompanies.values()];
+    const CHUNK = 50;
+    for (let i = 0; i < batch.length; i += CHUNK) {
+      totalCompanies += await saveCompaniesBatch(batch.slice(i, i + CHUNK));
+    }
+    console.log(`[PostScraper] Saved ${totalCompanies}/${allCompanies.size} companies`);
+  }
+
   sendProgress({
     done: true,
     totalContacts: allContacts.length,
     totalPosts,
     totalFiltered,
     totalLikes,
+    totalCompanies,
   });
 
   console.log(
-    `[PostScraper] Complete. ${totalPosts} posts kept, ${totalFiltered} filtered, ${totalLikes} likes from ${allContacts.length} contacts.`,
+    `[PostScraper] Complete. ${totalPosts} posts kept, ${totalFiltered} filtered, ${totalLikes} likes, ${totalCompanies} companies from ${allContacts.length} contacts.`,
   );
 }
