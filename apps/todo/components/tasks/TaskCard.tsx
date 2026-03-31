@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Card, Checkbox, Flex, Text, Badge } from "@radix-ui/themes";
 import { useSortable } from "@dnd-kit/sortable";
+import { useDndMonitor } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { PriorityBadge } from "./PriorityBadge";
 import { Linkify } from "./Linkify";
@@ -54,6 +55,9 @@ export function TaskCard({
   useEffect(() => {
     if (isDragging) wasDragging.current = true;
   }, [isDragging]);
+  useDndMonitor({
+    onDragCancel() { wasDragging.current = false; },
+  });
 
   const isCompleted = task.status === "completed";
 

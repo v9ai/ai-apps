@@ -74,6 +74,10 @@ export function TaskList({
     });
   }, [tasks, startTransition]);
 
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null);
+  }, []);
+
   useEffect(() => {
     const incoming = new Set(initialTasks.map((t) => t.id));
     const prev = knownIds.current;
@@ -138,6 +142,7 @@ export function TaskList({
         modifiers={[restrictToVerticalAxis]}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
       >
         <SortableContext
           items={tasks.map((t) => t.id)}
