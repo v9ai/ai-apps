@@ -203,21 +203,21 @@ pub fn normalize_domain(domain: &str) -> String {
 /// "api.acme.com" → "acme.com", "acme.com" → "acme.com", "localhost" → "localhost"
 pub fn registrable_domain(domain: &str) -> &str {
     let parts: Vec<&str> = domain.split('.').collect();
-    match parts.len() {
-        0 | 1 => domain,
-        2 => domain,
-        n => {
-            // Find byte offset of the start of the second-to-last dot
-            let dot_pos = domain
-                .char_indices()
-                .filter(|&(_, c)| c == '.')
-                .nth(n - 2)
-                .map(|(i, _)| i);
-            match dot_pos {
-                Some(i) => &domain[i + 1..],
-                None => domain,
-            }
-        }
+    let n = parts.len();
+    if n <= 2 {
+        return domain;
+    }
+    // There are n-1 dots. We want the second-to-last dot so we keep the last
+    // two labels. That dot is at zero-based index (n - 1) - 2 = n - 3 among
+    // the dots.
+    let dot_pos = domain
+        .char_indices()
+        .filter(|&(_, c)| c == '.')
+        .nth(n - 3)  // (n-1) dots total; we want index (n-1)-2 = n-3
+        .map(|(i, _)| i);
+    match dot_pos {
+        Some(i) => &domain[i + 1..],
+        None => domain,
     }
 }
 

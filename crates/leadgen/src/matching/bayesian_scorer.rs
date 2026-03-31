@@ -800,4 +800,181 @@ mod tests {
         let mut scorer = BayesianScorer::new();
         scorer.observe(999, 0.5); // should not panic
     }
+
+    // -----------------------------------------------------------------------
+    // CompanyBayesianScorer tests
+    // -----------------------------------------------------------------------
+
+    /// Build a minimal Company for testing.
+    fn make_company_for_bayesian(
+        industry: Option<&str>,
+        employee_count: Option<i32>,
+        funding_stage: Option<&str>,
+        tech_stack: Option<&str>,
+        updated_at: Option<&str>,
+    ) -> crate::Company {
+        crate::Company {
+            id: "co_test".into(),
+            name: "TestCo".into(),
+            domain: None,
+            industry: industry.map(str::to_owned),
+            employee_count,
+            funding_stage: funding_stage.map(str::to_owned),
+            tech_stack: tech_stack.map(str::to_owned),
+            location: None,
+            description: None,
+            source: None,
+            created_at: None,
+            updated_at: updated_at.map(str::to_owned),
+        }
+    }
+
+    fn default_icp() -> crate::scoring::IcpProfile {
+        crate::scoring::IcpProfile {
+            target_industries: vec!["SaaS".into(), "Technology".into()],
+            min_employees: Some(10),
+            max_employees: Some(500),
+            target_seniorities: vec![],
+            target_departments: vec![],
+            target_tech_stack: vec!["Rust".into(), "PostgreSQL".into()],
+            target_locations: vec![],
+            funding_stages: vec!["Series A".into(), "Series B".into()],
+        }
+    }
+
+    /// A new CompanyBayesianScorer must initialise exactly 6 dimensions.
+    #[test]
+    fn company_scorer_has_six_dimensions() {
+        let scorer = CompanyBayesianScorer::new();
+        assert_eq!(scorer.dimensions.len(), 6, "expected 6 company ICP dimensions");
+        let names: Vec<&str> = scorer.dimensions.iter().map(|d| d.name.as_str()).collect();
+        assert_eq!(
+            names,
+            &["industry_fit", "size_fit", "funding_fit", "tech_overlap", "recency", "intent_score"]
+        );
+    }
+
+    /// observe_company must update posteriors (reduce variance) after several calls.
+    #[test]
+    fn observe_company_updates_posteriors() {
+        let mut scorer = CompanyBayesianScorer::new();
+        let icp = default_icp();
+        let variance_before: Vec<f64> = scorer.dimensions.iter().map(|d| d.variance()).collect();
+
+        let now = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        let co = make_company_for_bayesian(
+            Some("SaaS"),
+            Some(100),
+            Some("Series A"),
+            Some(r#"["Rust","PostgreSQL"]"#),
+            Some(&now),
+        );
+        for _ in 0..20 {
+            scorer.observe_company(&co, &icp, 70.0);
+        }
+
+        for (i, (dim, v_before)) in scorer.dimensions.iter().zip(variance_before.iter()).enumerate() {
+            assert!(
+                dim.variance() < *v_before,
+                "dimension {i} ({}) variance should decrease after 20 observations: before={v_before:.4} after={:.4}",
+                dim.name,
+                dim.variance()
+            );
+        }
+        assert_eq!(scorer.n_observations, 20);
+    }
+
+    /// score_company must return a composite value in [0, 1].
+    #[test]
+    fn score_company_composite_in_unit_range() {
+        let scorer = CompanyBayesianScorer::new();
+        let icp = default_icp();
+        let co = make_company_for_bayesian(
+            Some("SaaS"),
+            Some(50),
+            Some("Series A"),
+            Some(r#"["Rust"]"#),
+            None,
+        );
+        let result = scorer.score_company(&co, &icp, 80.0);
+        assert!(
+            result.composite >= 0.0 && result.composite <= 1.0,
+            "composite score must be in [0,1], got {:.4}",
+            result.composite
+        );
+    }
+
+    /// All per-dimension scores must be in [0, 1].
+    #[test]
+    fn score_company_dimension_scores_in_unit_range() {
+        let scorer = CompanyBayesianScorer::new();
+        let icp = default_icp();
+        let co = make_company_for_bayesian(
+            Some("Technology"),
+            Some(200),
+            Some("Series B"),
+            Some(r#"["PostgreSQL","Go"]"#),
+            None,
+        );
+        let result = scorer.score_company(&co, &icp, 50.0);
+        assert_eq!(result.dimension_scores.len(), 6);
+        for (name, score) in &result.dimension_scores {
+            assert!(
+                *score >= 0.0 && *score <= 1.0,
+                "dimension {name} score must be in [0,1], got {score:.4}"
+            );
+        }
+    }
+
+    /// Credible intervals must satisfy lo <= mu <= hi and lo >= 0, hi <= 1.
+    #[test]
+    fn score_company_credible_intervals_are_valid() {
+        let mut scorer = CompanyBayesianScorer::new();
+        let icp = default_icp();
+        let now = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        let co = make_company_for_bayesian(
+            Some("SaaS"),
+            Some(100),
+            Some("Series A"),
+            Some(r#"["Rust","PostgreSQL"]"#),
+            Some(&now),
+        );
+        // Observe enough times for alpha > 1 everywhere (uninformative prior already satisfies this).
+        for _ in 0..10 {
+            scorer.observe_company(&co, &icp, 60.0);
+        }
+        let result = scorer.score_company(&co, &icp, 60.0);
+        for (name, (lo, hi)) in &result.credible_intervals {
+            assert!(
+                lo <= hi,
+                "credible interval for {name} must have lo <= hi: [{lo:.4}, {hi:.4}]"
+            );
+            assert!(*lo >= 0.0, "lower bound for {name} must be >= 0.0, got {lo:.4}");
+            assert!(*hi <= 1.0, "upper bound for {name} must be <= 1.0, got {hi:.4}");
+        }
+    }
+
+    /// uncertainty() must decrease as more observations are added.
+    #[test]
+    fn company_uncertainty_decreases_with_observations() {
+        let mut scorer = CompanyBayesianScorer::new();
+        let icp = default_icp();
+        let uncertainty_before = scorer.uncertainty();
+        let now = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        let co = make_company_for_bayesian(
+            Some("SaaS"),
+            Some(50),
+            Some("Series A"),
+            Some(r#"["Rust"]"#),
+            Some(&now),
+        );
+        for _ in 0..50 {
+            scorer.observe_company(&co, &icp, 75.0);
+        }
+        let uncertainty_after = scorer.uncertainty();
+        assert!(
+            uncertainty_after < uncertainty_before,
+            "uncertainty must decrease: before={uncertainty_before:.4} after={uncertainty_after:.4}"
+        );
+    }
 }
