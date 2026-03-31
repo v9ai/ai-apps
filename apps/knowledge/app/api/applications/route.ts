@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/src/db";
-import { applications } from "@/src/db/schema";
+import { contentDb as db } from "@/src/db/content";
+import { applications } from "@/src/db/content-schema";
 import { eq, desc } from "drizzle-orm";
 
 async function getSession() {

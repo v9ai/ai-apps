@@ -1,8 +1,7 @@
 "use server";
 
 import { sql } from "drizzle-orm";
-import { db } from "@/src/db";
-import { knowledgeStates } from "@/src/db/schema";
+import { contentDb } from "@/src/db/content";
 import { updateState, type KnowledgeState } from "@/lib/bkt";
 
 /**
@@ -18,24 +17,29 @@ export async function trackKnowledgeMastery(
 ): Promise<{ pMastery: number; masteryLevel: string } | null> {
   try {
     // Read current state from DB
-    const rows = await db.execute(
+    const row = contentDb.all<{
+      p_mastery: number;
+      p_transit: number;
+      p_slip: number;
+      p_guess: number;
+      total_interactions: number;
+      correct_interactions: number;
+    }>(
       sql`SELECT p_mastery, p_transit, p_slip, p_guess,
                  total_interactions, correct_interactions
           FROM knowledge_states
-          WHERE user_id = ${userId}::uuid AND concept_id = ${conceptId}::uuid
+          WHERE user_id = ${userId} AND concept_id = ${conceptId}
           LIMIT 1`,
-    );
-
-    const row = rows.rows?.[0] as Record<string, unknown> | undefined;
+    )[0];
 
     const current: KnowledgeState = row
       ? {
-          p_mastery: (row.p_mastery as number) || 0.1,
-          p_transit: (row.p_transit as number) || 0.1,
-          p_slip: (row.p_slip as number) || 0.1,
-          p_guess: (row.p_guess as number) || 0.2,
-          total_interactions: (row.total_interactions as number) || 0,
-          correct_interactions: (row.correct_interactions as number) || 0,
+          p_mastery: row.p_mastery || 0.1,
+          p_transit: row.p_transit || 0.1,
+          p_slip: row.p_slip || 0.1,
+          p_guess: row.p_guess || 0.2,
+          total_interactions: row.total_interactions || 0,
+          correct_interactions: row.correct_interactions || 0,
         }
       : {
           p_mastery: 0.1,
@@ -61,23 +65,25 @@ export async function trackKnowledgeMastery(
               ? "beginner"
               : "novice";
 
+    const now = Math.floor(Date.now() / 1000);
+
     // Upsert back to DB
-    await db.execute(
-      sql`INSERT INTO knowledge_states (user_id, concept_id, p_mastery, p_transit, p_slip, p_guess,
+    contentDb.run(
+      sql`INSERT INTO knowledge_states (id, user_id, concept_id, p_mastery, p_transit, p_slip, p_guess,
                                          total_interactions, correct_interactions, mastery_level,
                                          last_interaction_at, updated_at)
-          VALUES (${userId}::uuid, ${conceptId}::uuid,
+          VALUES (${crypto.randomUUID()}, ${userId}, ${conceptId},
                   ${updated.p_mastery}, ${updated.p_transit}, ${updated.p_slip}, ${updated.p_guess},
                   ${updated.total_interactions}, ${updated.correct_interactions},
-                  ${level}::mastery_level, now(), now())
+                  ${level}, ${now}, ${now})
           ON CONFLICT (user_id, concept_id)
           DO UPDATE SET
             p_mastery = ${updated.p_mastery},
             total_interactions = ${updated.total_interactions},
             correct_interactions = ${updated.correct_interactions},
-            mastery_level = ${level}::mastery_level,
-            last_interaction_at = now(),
-            updated_at = now()`,
+            mastery_level = ${level},
+            last_interaction_at = ${now},
+            updated_at = ${now}`,
     );
 
     return { pMastery: updated.p_mastery, masteryLevel: level };
@@ -96,17 +102,21 @@ export async function getUserKnowledgeMap(
   { conceptId: string; pMastery: number; masteryLevel: string }[]
 > {
   try {
-    const rows = await db.execute(
+    const rows = contentDb.all<{
+      concept_id: string;
+      p_mastery: number;
+      mastery_level: string;
+    }>(
       sql`SELECT concept_id, p_mastery, mastery_level
           FROM knowledge_states
-          WHERE user_id = ${userId}::uuid
+          WHERE user_id = ${userId}
           ORDER BY p_mastery DESC`,
     );
 
-    return (rows.rows ?? []).map((r: Record<string, unknown>) => ({
-      conceptId: r.concept_id as string,
-      pMastery: r.p_mastery as number,
-      masteryLevel: r.mastery_level as string,
+    return rows.map((r) => ({
+      conceptId: r.concept_id,
+      pMastery: r.p_mastery,
+      masteryLevel: r.mastery_level,
     }));
   } catch (error) {
     console.error("Knowledge map error:", error);

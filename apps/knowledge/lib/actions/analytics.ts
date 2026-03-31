@@ -1,8 +1,8 @@
 "use server";
 
 import { sql } from "drizzle-orm";
-import { db } from "@/src/db";
-import { analyticsEvents } from "@/src/db/schema";
+import { contentDb as db } from "@/src/db/content";
+import { analyticsEvents } from "@/src/db/content-schema";
 
 export async function trackAnalyticsEvent(
   eventName: string,

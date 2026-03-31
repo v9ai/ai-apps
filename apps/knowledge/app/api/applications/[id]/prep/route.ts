@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import { spawn } from "node:child_process";
 import * as path from "node:path";
 import { auth } from "@/lib/auth";
-import { db } from "@/src/db";
-import { applications } from "@/src/db/schema";
+import { contentDb as db } from "@/src/db/content";
+import { applications } from "@/src/db/content-schema";
 import { eq, and } from "drizzle-orm";
 
 const BACKEND_DIR = path.resolve(process.cwd(), "backend");

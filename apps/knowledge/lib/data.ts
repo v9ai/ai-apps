@@ -14,7 +14,8 @@ export interface SearchResult {
   lessonTitle: string | null;
 }
 
-const USE_DB = process.env.NEXT_PUBLIC_DATA_SOURCE === "neon";
+const dataSource = process.env.NEXT_PUBLIC_DATA_SOURCE;
+const USE_DB = dataSource === "neon" || dataSource === "sqlite";
 
 export async function getCategoryMeta(category: string): Promise<CategoryMeta> {
   if (USE_DB) {
