@@ -229,13 +229,16 @@ mod tests {
         crate::Company {
             id: "co1".into(),
             name: "TestCo".into(),
+            domain: None,
             industry: None,
             employee_count: None,
             funding_stage: funding_stage.map(str::to_owned),
-            location: location.map(str::to_owned),
             tech_stack: tech_stack.map(str::to_owned),
+            location: location.map(str::to_owned),
+            description: None,
+            source: None,
+            created_at: None,
             updated_at: updated_at.map(str::to_owned),
-            ..Default::default()
         }
     }
 

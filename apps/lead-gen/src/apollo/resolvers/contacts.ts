@@ -1,9 +1,14 @@
-import { contacts, companies, contactEmails, type NewContact } from "@/db/schema";
+import { contacts, companies, contactEmails, type NewContact, type Contact as DbContact } from "@/db/schema";
 import { resend } from "@/lib/resend";
 import { eq, and, like, or, count, desc, sql, max, inArray } from "drizzle-orm";
 import { computeNextTouchScore } from "./reminders";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import type {
+  MutationCreateContactArgs,
+  MutationUpdateContactArgs,
+  MutationImportContactsArgs,
+} from "@/__generated__/resolvers-types";
 import {
   NeverBounceClient,
   extractDomainFromWebsite,

@@ -39,7 +39,7 @@ export function CompanyPicker({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data, loading } = useGetCompaniesQuery({
+  const { data, loading, error: queryError } = useGetCompaniesQuery({
     variables: { text: search || undefined, limit: 20 },
     skip: !open,
   });
