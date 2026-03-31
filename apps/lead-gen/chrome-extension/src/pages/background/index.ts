@@ -1,5 +1,5 @@
 // Background service worker
-import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts } from "../../services/post-scraper";
+import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts, runUnifiedPipeline } from "../../services/post-scraper";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -197,6 +197,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await scrapeAllPosts(tabId);
       } catch (err) {
         console.error("[FullPipeline] Error:", err);
+        try {
+          chrome.runtime.sendMessage({
+            action: "postScrapingProgress",
+            error: err instanceof Error ? err.message : String(err),
+          });
+        } catch { /* popup may be closed */ }
+      } finally {
+        stopKeepAlive();
+      }
+    });
+    return true;
+  }
+
+  // ── Start Unified Pipeline (jobs + connections + import + posts + companies) ──
+  if (message.action === "startUnifiedPipeline") {
+    const { searchUrl } = message as { searchUrl: string };
+    chrome.tabs.query({ active: true, currentWindow: true }).then(async (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        sendResponse({ success: false, error: "No active tab" });
+        return;
+      }
+      sendResponse({ success: true });
+      startKeepAlive();
+      try {
+        await runUnifiedPipeline(tabId, searchUrl);
+      } catch (err) {
         try {
           chrome.runtime.sendMessage({
             action: "postScrapingProgress",

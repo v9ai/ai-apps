@@ -1072,3 +1072,325 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
     `[PostScraper] Complete. ${totalPosts} posts kept, ${totalFiltered} filtered, ${totalLikes} likes, ${totalCompanies} companies from ${allContacts.length} contacts.`,
   );
 }
+
+// ── Unified pipeline: jobs + connections + import + posts + companies ──
+
+export async function runUnifiedPipeline(tabId: number, searchUrl: string): Promise<void> {
+  postsCancelled = false;
+  let totalJobPosts = 0;
+
+  // ── Phase 1: Scrape job posts from content search ──
+
+  sendProgress({ phase: "jobs", status: "Navigating to job search..." });
+
+  try {
+    await chrome.tabs.update(tabId, { url: searchUrl });
+  } catch {
+    sendProgress({ error: "Tab closed during navigation" });
+    return;
+  }
+  await waitForTabLoad(tabId);
+  await sleep(3000);
+
+  sendProgress({ phase: "jobs", status: "Scrolling & extracting job posts..." });
+
+  let jobPosts: ScrapedPost[] = [];
+  try {
+    jobPosts = await scrollAndExtract(tabId);
+  } catch (err) {
+    console.error("[UnifiedPipeline] Job extraction failed:", err);
+  }
+
+  if (jobPosts.length > 0 && !postsCancelled) {
+    sendProgress({ phase: "jobs", status: `Saving ${jobPosts.length} job posts to Neon...` });
+
+    try {
+      const inputs = jobPosts
+        .filter((p) => p.post_url)
+        .map((p) => {
+          const fields = parseJobFields(p.post_text || "");
+          return {
+            url: p.post_url!,
+            type: "job" as const,
+            title: extractJobTitle(p.post_text || ""),
+            content: p.post_text || null,
+            authorName: p.author_name || null,
+            authorUrl: p.author_url || null,
+            location: fields.remoteType || null,
+            employmentType: fields.contractType || null,
+            postedAt: p.posted_date || null,
+            rawData: {
+              reactions: p.reactions_count,
+              comments: p.comments_count,
+              reposts: p.reposts_count,
+              mediaType: p.media_type,
+              authorSubtitle: p.author_subtitle,
+              parsedFields: fields,
+            },
+          };
+        });
+
+      if (inputs.length > 0) {
+        const result = await gqlRequest(
+          `mutation UpsertLinkedInPosts($inputs: [UpsertLinkedInPostInput!]!) {
+            upsertLinkedInPosts(inputs: $inputs) { success inserted updated errors }
+          }`,
+          { inputs },
+        );
+        totalJobPosts = result.data?.upsertLinkedInPosts?.inserted ?? 0;
+      }
+    } catch (err) {
+      console.error("[UnifiedPipeline] Neon save failed:", err);
+    }
+
+    // Optional: send to Rust server for ML scoring
+    try {
+      if (await checkServerHealth()) await postJobPosts(jobPosts);
+    } catch { /* non-critical */ }
+
+    // Extract companies from search results
+    try {
+      const companies = await extractCompanyMentions(tabId);
+      if (companies.length > 0) await saveCompaniesBatch(companies);
+    } catch { /* non-critical */ }
+
+    sendProgress({ phase: "jobs", status: `${totalJobPosts} job posts saved` });
+  } else {
+    sendProgress({ phase: "jobs", status: "No job posts found on search page" });
+  }
+
+  if (postsCancelled) {
+    sendProgress({ done: true, totalContacts: 0, totalPosts: totalJobPosts, totalFiltered: 0 });
+    return;
+  }
+
+  // ── Phase 2: Fetch LinkedIn connections via Voyager API ──
+
+  sendProgress({ phase: "connections", status: "Fetching LinkedIn connections..." });
+
+  let connections: ScrapedConnection[];
+  try {
+    connections = await fetchAllConnections((fetched, total, warning) => {
+      sendProgress({
+        phase: "connections",
+        status: warning
+          ? `Warning: ${warning}`
+          : `Fetching connections... ${fetched.toLocaleString()}${total ? ` / ${total.toLocaleString()}` : ""}`,
+      });
+    });
+  } catch (err) {
+    // Connections fetch failed — still report job results
+    sendProgress({
+      done: true,
+      totalContacts: 0,
+      totalPosts: totalJobPosts,
+      totalFiltered: 0,
+      status: `${totalJobPosts} jobs saved. Connection fetch failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+    return;
+  }
+
+  if (postsCancelled) {
+    sendProgress({ done: true, totalContacts: 0, totalPosts: totalJobPosts, totalFiltered: 0 });
+    return;
+  }
+
+  sendProgress({
+    phase: "connections",
+    status: `Fetched ${connections.length.toLocaleString()} connections`,
+  });
+
+  // ── Phase 3: Import new connections as contacts ──
+
+  sendProgress({ phase: "import", status: "Checking existing contacts..." });
+
+  let existingUrls: Set<string>;
+  try {
+    const existing = await fetchContactsWithLinkedIn();
+    existingUrls = new Set(existing.map((c) => c.linkedinUrl.replace(/\/$/, "")));
+  } catch {
+    existingUrls = new Set();
+  }
+
+  const newConnections = connections.filter(
+    (c) => !existingUrls.has(c.linkedinUrl.replace(/\/$/, "")),
+  );
+
+  if (postsCancelled) {
+    sendProgress({ done: true, totalContacts: 0, totalPosts: totalJobPosts, totalFiltered: 0 });
+    return;
+  }
+
+  if (newConnections.length > 0) {
+    sendProgress({
+      phase: "import",
+      status: `Importing ${newConnections.length.toLocaleString()} new contacts...`,
+    });
+
+    const CHUNK_SIZE = 100;
+    let totalImported = 0;
+    let totalFailed = 0;
+
+    for (let i = 0; i < newConnections.length; i += CHUNK_SIZE) {
+      if (postsCancelled) break;
+      const chunk = newConnections.slice(i, i + CHUNK_SIZE);
+      const { imported, failed } = await importConnectionsBatch(chunk);
+      totalImported += imported;
+      totalFailed += failed;
+
+      sendProgress({
+        phase: "import",
+        status: `Imported ${totalImported.toLocaleString()} / ${newConnections.length.toLocaleString()} new contacts${totalFailed > 0 ? ` (${totalFailed} failed)` : ""}`,
+      });
+    }
+  } else {
+    sendProgress({
+      phase: "import",
+      status: `All ${connections.length.toLocaleString()} connections already in DB`,
+    });
+  }
+
+  if (postsCancelled) {
+    sendProgress({ done: true, totalContacts: 0, totalPosts: totalJobPosts, totalFiltered: 0 });
+    return;
+  }
+
+  // ── Phase 4: Scrape posts for all contacts (requires Rust server) ──
+
+  const healthy = await checkServerHealth();
+  if (!healthy) {
+    sendProgress({
+      done: true,
+      totalContacts: 0,
+      totalPosts: totalJobPosts,
+      totalFiltered: 0,
+    });
+    return;
+  }
+
+  await sleep(1000);
+  sendProgress({ phase: "posts", status: "Fetching merged contact list..." });
+
+  const allContacts = await fetchContactsWithLinkedIn();
+  if (allContacts.length === 0) {
+    sendProgress({ done: true, totalContacts: 0, totalPosts: totalJobPosts, totalFiltered: 0 });
+    return;
+  }
+
+  let totalPosts = 0;
+  let totalFiltered = 0;
+  let totalLikes = 0;
+  const allCompanies = new Map<string, { name: string; linkedin_url: string }>();
+
+  for (let i = 0; i < allContacts.length; i++) {
+    if (postsCancelled) break;
+
+    const contact = allContacts[i];
+    const name = `${contact.firstName} ${contact.lastName}`.trim();
+    const baseUrl = contact.linkedinUrl.replace(/\/$/, "");
+
+    sendProgress({
+      phase: "posts",
+      current: i + 1,
+      total: allContacts.length,
+      contactName: name,
+      postsFound: totalPosts,
+      postsFiltered: totalFiltered,
+      likesFound: totalLikes,
+    });
+
+    // Scrape posts
+    const activityUrl = baseUrl + "/recent-activity/all/";
+    try {
+      await chrome.tabs.update(tabId, { url: activityUrl });
+    } catch {
+      break;
+    }
+    await waitForTabLoad(tabId);
+    await sleep(3000);
+
+    try {
+      const tabInfo = await chrome.tabs.get(tabId);
+      if (!tabInfo.url?.includes("linkedin.com/in/")) {
+        await randomDelay(5000, 8000);
+        continue;
+      }
+    } catch {
+      break;
+    }
+
+    let posts: ScrapedPost[] = [];
+    try {
+      posts = await scrollAndExtract(tabId);
+    } catch (err) {
+      console.warn(`[UnifiedPipeline] Extraction failed for ${name}:`, err);
+    }
+
+    if (posts.length > 0) {
+      try {
+        const { inserted, filtered } = await postPosts(contact.id, posts);
+        totalPosts += inserted;
+        totalFiltered += filtered;
+      } catch (err) {
+        console.error(`[UnifiedPipeline] Failed to save posts for ${name}:`, err);
+      }
+    }
+
+    // Collect companies
+    try {
+      const companies = await extractCompanyMentions(tabId);
+      for (const c of companies) {
+        if (!allCompanies.has(c.linkedin_url)) allCompanies.set(c.linkedin_url, c);
+      }
+    } catch { /* non-critical */ }
+
+    // Scrape likes
+    if (!postsCancelled) {
+      await randomDelay(3000, 5000);
+      const likesUrl = baseUrl + "/recent-activity/reactions/";
+      try {
+        await chrome.tabs.update(tabId, { url: likesUrl });
+      } catch {
+        break;
+      }
+      await waitForTabLoad(tabId);
+      await sleep(3000);
+
+      let likes: ScrapedLike[] = [];
+      try {
+        likes = await scrollAndExtractLikes(tabId);
+      } catch { /* non-critical */ }
+
+      if (likes.length > 0) {
+        try {
+          const { inserted } = await postLikes(contact.id, likes);
+          totalLikes += inserted;
+        } catch { /* non-critical */ }
+      }
+    }
+
+    if (i < allContacts.length - 1) {
+      await randomDelay(10000, 15000);
+    }
+  }
+
+  // ── Phase 5: Save companies ──
+  let totalCompanies = 0;
+  if (!postsCancelled && allCompanies.size > 0) {
+    sendProgress({ phase: "companies", status: `Saving ${allCompanies.size} companies...` });
+    const batch = [...allCompanies.values()];
+    const CHUNK = 50;
+    for (let i = 0; i < batch.length; i += CHUNK) {
+      totalCompanies += await saveCompaniesBatch(batch.slice(i, i + CHUNK));
+    }
+  }
+
+  sendProgress({
+    done: true,
+    totalContacts: allContacts.length,
+    totalPosts: totalJobPosts + totalPosts,
+    totalFiltered,
+    totalLikes,
+    totalCompanies,
+  });
+}
