@@ -509,9 +509,9 @@ body {
   .learning-path { padding: 16px 16px 24px; }
   .learning-path-track { gap: 0; }
   .learning-path-node { min-width: 80px; padding: 8px 4px; }
-  .learning-path-name { font-size: 9px; }
-  .learning-path-meta { font-size: 8px; }
-  .learning-path-icon { font-size: 16px; }
+  .learning-path-name { font-size: 11px; }
+  .learning-path-meta { font-size: 10px; }
+  .learning-path-icon { font-size: 18px; }
 }
 
 /* ================================================================
@@ -744,6 +744,7 @@ body {
   -webkit-backdrop-filter: blur(12px);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   animation: fade-up 0.5s ease both;
+  scroll-margin-top: 108px;
 }
 .cat-card::before {
   content: "";

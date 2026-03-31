@@ -950,6 +950,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         const { currentPage, totalPages } = paginationInfo;
         const startPage = currentPage;
+        let actualPagesScraped = 1; // current page is always scraped
 
         // Extract jobs + companies from current page
         const currentJobs = extractLinkedInJobData();
