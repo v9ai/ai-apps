@@ -86,4 +86,16 @@ CONFIGS = {
         epochs=8,  # smaller dataset needs more epochs
         learning_rate=3e-5,  # slightly higher for small dataset
     ),
+    "outreach-email": TrainConfig(
+        model="mlx-community/Qwen3-1.7B-4bit",
+        data_dir="mlx-training/data/outreach-email",
+        adapter_path="mlx-training/models/outreach-email",
+        max_seq_length=512,  # emails are short (~400 tokens)
+        batch_size=2,
+        grad_accumulation_steps=8,  # effective batch = 16
+        learning_rate=1e-5,  # gentler for QLoRA on small 1.7B model
+        epochs=5,
+        lora=LoRAConfig(rank=8, alpha=32.0, dropout=0.1),
+        warmup_steps=30,
+    ),
 }
