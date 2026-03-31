@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Button,
+  Callout,
   Card,
   Flex,
   Heading,
@@ -10,10 +11,11 @@ import {
   Text,
   TextField,
 } from "@radix-ui/themes";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import { signIn } from "@/lib/auth-client";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("nicolai.vadim@gmail.com");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,18 +25,26 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    await signIn.email(
-      { email, password },
-      {
-        onError: (ctx) => {
-          setError(ctx.error.message);
-          setLoading(false);
-        },
-        onSuccess: () => {
-          window.location.href = "/";
-        },
-      }
-    );
+    try {
+      await signIn.email(
+        { email, password },
+        {
+          onError: (ctx) => {
+            const status = ctx.error.status ?? "";
+            const msg = ctx.error.message || "Unknown error";
+            setError(status ? `${status}: ${msg}` : msg);
+            setLoading(false);
+          },
+          onSuccess: () => {
+            window.location.href = "/";
+          },
+        }
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Network error: ${msg}`);
+      setLoading(false);
+    }
   }
 
   return (
@@ -47,9 +57,12 @@ export default function LoginPage() {
             </Heading>
 
             {error && (
-              <Text color="red" size="2" align="center">
-                {error}
-              </Text>
+              <Callout.Root color="red" size="1">
+                <Callout.Icon>
+                  <ExclamationTriangleIcon />
+                </Callout.Icon>
+                <Callout.Text>{error}</Callout.Text>
+              </Callout.Root>
             )}
 
             <Flex direction="column" gap="1">
