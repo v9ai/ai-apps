@@ -14,3 +14,8 @@ backend/__pycache__/
 backend/graph/__pycache__/
 backend/tests/__pycache__/
 backend/.pytest_cache/
+
+# SQLite content DB
+data/knowledge.db
+data/knowledge.db-wal
+data/knowledge.db-shm

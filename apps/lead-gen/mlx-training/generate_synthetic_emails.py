@@ -59,6 +59,26 @@ WORD LIMITS by type:
 - followup_1: 80-120 words
 - followup_2: 70-100 words
 - followup_3: 50-80 words
+- re_engage: 60-90 words
+- referral: 80-120 words
+
+Respond with ONLY the JSON object, no markdown fences."""
+
+TEACHER_SYSTEM_NEGATIVE = """You are generating NEGATIVE training data for a small language model that writes B2B outreach emails.
+
+Given a scenario (company, recipient, email type), produce a DELIBERATELY BAD email as valid JSON:
+{"subject": "...", "body": "..."}
+
+Make it bad in one or more of these ways:
+- WAY too long (2-3x the word limit)
+- No clear CTA or buried CTA
+- Generic flattery ("I was impressed by your innovative approach")
+- No {{name}} placeholder — just use a generic greeting
+- Salesy, spammy tone
+- Irrelevant skill mentions
+- Multiple CTAs competing for attention
+
+Still produce valid JSON, but the EMAIL QUALITY should be poor.
 
 Respond with ONLY the JSON object, no markdown fences."""
 
@@ -85,6 +105,34 @@ COMPANIES = [
     {"name": "InsurTech AI", "industry": "Insurtech", "description": "Automated underwriting and claims processing using ML. Risk assessment models.", "ai_tier": 2, "services": ["Underwriting AI", "Claims Automation", "Risk Models"]},
     {"name": "GameForge", "industry": "Gaming", "description": "Game development studio building multiplayer infrastructure. Real-time networking.", "ai_tier": 0, "services": ["Multiplayer Infrastructure", "Game Backend", "Real-time Networking"]},
     {"name": "BioCompute", "industry": "Biotech", "description": "Computational biology platform. Protein structure prediction and drug discovery.", "ai_tier": 2, "services": ["Computational Biology", "Drug Discovery", "Protein Prediction"]},
+    {"name": "TalentAI", "industry": "HR Tech", "description": "AI-driven talent acquisition and workforce analytics. Automated screening and skills matching.", "ai_tier": 2, "services": ["Talent Acquisition", "Workforce Analytics", "Skills Matching"]},
+    {"name": "ChainMind", "industry": "Supply Chain AI", "description": "End-to-end supply chain visibility with ML-driven demand sensing. Inventory optimization at scale.", "ai_tier": 2, "services": ["Demand Sensing", "Inventory Optimization", "Supply Chain Visibility"]},
+    {"name": "RetainIQ", "industry": "Customer Success Platform", "description": "Predictive customer health scoring and churn prevention. Real-time engagement analytics.", "ai_tier": 1, "services": ["Customer Health Scoring", "Churn Prevention", "Engagement Analytics"]},
+    {"name": "SignalSell", "industry": "Sales Intelligence", "description": "Buyer intent signals from web activity and firmographic data. Pipeline prediction engine.", "ai_tier": 1, "services": ["Intent Signals", "Pipeline Prediction", "Firmographic Data"]},
+    {"name": "ShieldOps", "industry": "DevSecOps", "description": "Shift-left security platform for CI/CD. Automated vulnerability scanning and policy enforcement.", "ai_tier": 1, "services": ["Security Scanning", "Policy Enforcement", "CI/CD Security"]},
+    {"name": "SensorGrid", "industry": "IoT Platform", "description": "Enterprise IoT device management and edge computing. Real-time telemetry processing.", "ai_tier": 1, "services": ["Device Management", "Edge Computing", "Telemetry Processing"]},
+    {"name": "WaymakersAI", "industry": "Autonomous Vehicles", "description": "Self-driving perception and planning stack. LiDAR fusion and real-time decision systems.", "ai_tier": 2, "services": ["Perception Stack", "LiDAR Fusion", "Motion Planning"]},
+    {"name": "LingvoLab", "industry": "NLP Research", "description": "Large language model fine-tuning and evaluation platform. Multilingual NLP tooling.", "ai_tier": 2, "services": ["LLM Fine-tuning", "NLP Evaluation", "Multilingual Models"]},
+    {"name": "RiskLens AI", "industry": "Financial Risk AI", "description": "Real-time credit risk modeling and stress testing. Regulatory compliance automation.", "ai_tier": 2, "services": ["Credit Risk Models", "Stress Testing", "Regulatory Compliance"]},
+    {"name": "MedVault", "industry": "Healthcare Data", "description": "HIPAA-compliant health data lake and interoperability platform. Clinical NLP pipelines.", "ai_tier": 1, "services": ["Health Data Lake", "Interoperability", "Clinical NLP"]},
+    {"name": "CaseAI", "industry": "Legal AI", "description": "AI-powered litigation analytics and case outcome prediction. Document review automation.", "ai_tier": 2, "services": ["Litigation Analytics", "Case Prediction", "Document Review"]},
+    {"name": "BuildSight", "industry": "Construction Tech", "description": "Construction project management with computer vision for site monitoring. Progress tracking.", "ai_tier": 1, "services": ["Site Monitoring", "Progress Tracking", "Project Management"]},
+    {"name": "ShelfLogic", "industry": "Retail Analytics", "description": "In-store analytics and planogram optimization. Shopper behavior modeling using computer vision.", "ai_tier": 1, "services": ["Store Analytics", "Planogram Optimization", "Shopper Modeling"]},
+    {"name": "CarbonTrace", "industry": "Climate AI", "description": "Carbon footprint measurement and ESG reporting automation. Emissions forecasting.", "ai_tier": 1, "services": ["Carbon Measurement", "ESG Reporting", "Emissions Forecasting"]},
+    {"name": "PulseSocial", "industry": "Social Media Analytics", "description": "Brand sentiment analysis and trend detection across social platforms. Real-time dashboards.", "ai_tier": 1, "services": ["Sentiment Analysis", "Trend Detection", "Social Dashboards"]},
+    {"name": "ClickVerse", "industry": "Ad Tech", "description": "Programmatic ad bidding with ML-optimized creatives. Real-time attribution and fraud detection.", "ai_tier": 2, "services": ["Programmatic Bidding", "Creative Optimization", "Ad Fraud Detection"]},
+    {"name": "RouteFleet", "industry": "Fleet Management", "description": "Fleet tracking and route optimization for last-mile delivery. Predictive vehicle maintenance.", "ai_tier": 1, "services": ["Fleet Tracking", "Route Optimization", "Predictive Maintenance"]},
+    {"name": "FactoryMind", "industry": "Industrial IoT", "description": "Smart factory monitoring with anomaly detection. Digital twin simulation for manufacturing.", "ai_tier": 2, "services": ["Anomaly Detection", "Digital Twins", "Smart Factory"]},
+    {"name": "BabelSpeak", "industry": "Real-time Translation", "description": "Low-latency speech-to-speech translation for enterprise meetings. Custom domain vocabularies.", "ai_tier": 2, "services": ["Speech Translation", "Low-latency NLP", "Domain Vocabularies"]},
+    {"name": "TrustGuard", "industry": "Fraud Detection", "description": "Transaction fraud detection with graph neural networks. Real-time risk scoring API.", "ai_tier": 2, "services": ["Fraud Detection", "Graph Neural Networks", "Risk Scoring"]},
+    {"name": "NeuroSearch", "industry": "Enterprise Search", "description": "Semantic enterprise search powered by embeddings. Knowledge graph construction.", "ai_tier": 2, "services": ["Semantic Search", "Knowledge Graphs", "Embeddings"]},
+    {"name": "VoiceLayer", "industry": "Conversational AI", "description": "Voice assistant platform for customer service. ASR and dialog management.", "ai_tier": 2, "services": ["Voice Assistants", "ASR", "Dialog Management"]},
+    {"name": "PixelFlow", "industry": "Computer Vision", "description": "Visual inspection and quality control for manufacturing. Custom model training platform.", "ai_tier": 2, "services": ["Visual Inspection", "Quality Control", "Model Training"]},
+    {"name": "DocuBrain", "industry": "Document Intelligence", "description": "Intelligent document processing and extraction. Invoice, receipt, and form understanding.", "ai_tier": 1, "services": ["Document Processing", "Data Extraction", "Form Understanding"]},
+    {"name": "QuantumLeap", "industry": "Quantum Computing", "description": "Hybrid quantum-classical optimization platform. Quantum ML algorithm development.", "ai_tier": 2, "services": ["Quantum Optimization", "Quantum ML", "Hybrid Computing"]},
+    {"name": "DataMesh", "industry": "Data Infrastructure", "description": "Data mesh architecture platform. Federated data governance and self-serve analytics.", "ai_tier": 0, "services": ["Data Mesh", "Data Governance", "Self-serve Analytics"]},
+    {"name": "CodePilotAI", "industry": "AI Developer Tools", "description": "AI code generation and refactoring tools. Context-aware code completion engine.", "ai_tier": 2, "services": ["Code Generation", "Refactoring AI", "Code Completion"]},
+    {"name": "SafeHarbor", "industry": "Privacy Tech", "description": "Privacy-preserving ML with differential privacy and federated learning. GDPR compliance tools.", "ai_tier": 2, "services": ["Differential Privacy", "Federated Learning", "GDPR Compliance"]},
 ]
 
 # ── Recipient personas ───────────────────────────────────────────────────────
@@ -102,16 +150,33 @@ RECIPIENTS = [
     {"name": "Tom", "position": "Founder & CEO", "seniority": "C-suite", "department": "Executive"},
     {"name": "Rachel", "position": "Head of Platform Engineering", "seniority": "Director", "department": "Platform"},
     {"name": "Alex", "position": "Staff Engineer", "seniority": "Staff", "department": "Engineering"},
+    {"name": "Chris", "position": "Head of ML Engineering", "seniority": "Director", "department": "AI/ML"},
+    {"name": "Nina", "position": "Principal Engineer", "seniority": "Principal", "department": "Engineering"},
+    {"name": "Jordan", "position": "Engineering Lead", "seniority": "Lead", "department": "Engineering"},
+    {"name": "Priya", "position": "Director of Data Science", "seniority": "Director", "department": "Data Science"},
+    {"name": "Kevin", "position": "VP of Data", "seniority": "VP", "department": "Data"},
+    {"name": "Sandra", "position": "Chief AI Officer", "seniority": "C-suite", "department": "AI/ML"},
+    {"name": "Marcus", "position": "Co-founder & CTO", "seniority": "C-suite", "department": "Executive"},
+    {"name": "Diana", "position": "Head of Infrastructure", "seniority": "Director", "department": "Infrastructure"},
+    {"name": "Wei", "position": "Engineering Manager (ML)", "seniority": "Manager", "department": "AI/ML"},
+    {"name": "Carlos", "position": "Senior ML Engineer", "seniority": "Senior", "department": "AI/ML"},
+    {"name": "Fatima", "position": "Director of Product", "seniority": "Director", "department": "Product"},
+    {"name": "Derek", "position": "Head of Backend Engineering", "seniority": "Director", "department": "Engineering"},
+    {"name": "Yuki", "position": "Technical Program Manager", "seniority": "Senior", "department": "Program Management"},
 ]
 
-EMAIL_TYPES = ["initial", "followup_1", "followup_2", "followup_3"]
+EMAIL_TYPES = ["initial", "followup_1", "followup_2", "followup_3", "re_engage", "referral"]
 
 SEQUENCE_LABELS = {
     "initial": "initial outreach",
     "followup_1": "first follow-up",
     "followup_2": "second follow-up",
     "followup_3": "final follow-up",
+    "re_engage": "re-engagement after 3+ months",
+    "referral": "referral-based introduction",
 }
+
+STYLE_VARIANTS = ["concise", "formal", "casual"]
 
 # ── DeepSeek API ─────────────────────────────────────────────────────────────
 
@@ -146,7 +211,7 @@ def call_deepseek(client: httpx.Client, api_key: str, user_prompt: str) -> str |
 # ── Build scenario prompt ────────────────────────────────────────────────────
 
 
-def build_scenario_prompt(company: dict, recipient: dict, email_type: str) -> str:
+def build_scenario_prompt(company: dict, recipient: dict, email_type: str, style: str | None = None) -> str:
     seq_label = SEQUENCE_LABELS[email_type]
     parts = [f"Generate a {seq_label} email for this scenario:", ""]
 
@@ -185,6 +250,23 @@ def build_scenario_prompt(company: dict, recipient: dict, email_type: str) -> st
         parts.append("- Final follow-up, gracious close")
         parts.append("- Leave door open, no pressure")
         parts.append("- 50-80 words")
+    elif email_type == "re_engage":
+        parts.append("- Re-engagement after 3+ months of silence")
+        parts.append("- Acknowledge time has passed, offer a new angle or reason to reconnect")
+        parts.append("- 60-90 words")
+    elif email_type == "referral":
+        parts.append("- Email mentioning a mutual connection or referral")
+        parts.append("- Lead with the referral, explain relevance briefly")
+        parts.append("- 80-120 words")
+
+    if style:
+        style_instructions = {
+            "concise": "STYLE: Write in a concise, direct style. Short sentences, no filler.",
+            "formal": "STYLE: Write in a formal, professional style. Polished but not stiff.",
+            "casual": "STYLE: Write in a casual, conversational style. Friendly and approachable.",
+        }
+        parts.append("")
+        parts.append(style_instructions[style])
 
     return "\n".join(parts)
 
@@ -192,7 +274,7 @@ def build_scenario_prompt(company: dict, recipient: dict, email_type: str) -> st
 # ── Build training user message (student format) ────────────────────────────
 
 
-def build_training_user_message(company: dict, recipient: dict, email_type: str) -> str:
+def build_training_user_message(company: dict, recipient: dict, email_type: str, style: str | None = None) -> str:
     """Build the user message in the same format as export_email_data.py."""
     seq_label = SEQUENCE_LABELS[email_type]
     parts = [f"Write a {seq_label} email.", ""]
@@ -200,11 +282,20 @@ def build_training_user_message(company: dict, recipient: dict, email_type: str)
     parts.append("RECIPIENT:")
     parts.append(f"- Name: {recipient['name']}")
     parts.append(f"- Position: {recipient['position']}")
-    if recipient.get("seniority"):
-        parts.append(f"- Seniority: {recipient['seniority']}")
+    parts.append(f"- Seniority: {recipient['seniority']}")
     if recipient.get("department"):
         parts.append(f"- Department: {recipient['department']}")
     parts.append("")
+
+    # Sequence position context
+    sequence_positions = {
+        "initial": "1 of 4",
+        "followup_1": "2 of 4",
+        "followup_2": "3 of 4",
+        "followup_3": "4 of 4",
+        "re_engage": "re-engagement after 3 months",
+        "referral": "referral introduction",
+    }
 
     parts.append("COMPANY:")
     parts.append(f"- Name: {company['name']}")
@@ -215,6 +306,7 @@ def build_training_user_message(company: dict, recipient: dict, email_type: str)
         parts.append(f"- AI tier: {tier}")
     if company.get("services"):
         parts.append(f"- Services: {', '.join(company['services'][:5])}")
+    parts.append(f"- Email sequence position: {sequence_positions[email_type]}")
     parts.append("")
 
     parts.append("INSTRUCTIONS:")
@@ -234,7 +326,23 @@ def build_training_user_message(company: dict, recipient: dict, email_type: str)
         parts.append("- Final follow-up, gracious close")
         parts.append("- Leave door open for future")
         parts.append("- 50-80 words")
+    elif email_type == "re_engage":
+        parts.append("- Re-engagement after 3+ months of silence")
+        parts.append("- Acknowledge time has passed, provide a new angle")
+        parts.append("- 60-90 words")
+    elif email_type == "referral":
+        parts.append("- Referral-based introduction via mutual connection")
+        parts.append("- Lead with the referral, keep it brief")
+        parts.append("- 80-120 words")
     parts.append('- Use {{name}} placeholder for recipient name')
+
+    if style:
+        style_labels = {
+            "concise": "Write in a concise, direct style.",
+            "formal": "Write in a formal, professional style.",
+            "casual": "Write in a casual, conversational style.",
+        }
+        parts.append(f"- Style: {style_labels[style]}")
 
     return "\n".join(parts)
 

@@ -1,7 +1,8 @@
 import { eq, sql, desc, asc } from "drizzle-orm";
-import { db } from "@/src/db";
-import { lessons, categories, applications, externalCourses, lessonCourses, courseReviews } from "@/src/db/schema";
+import { contentDb as db } from "@/src/db/content";
+import { lessons, categories, applications, externalCourses, lessonCourses, courseReviews, lessonEmbeddings, deserializeEmbedding } from "@/src/db/content-schema";
 import type { InferSelectModel } from "drizzle-orm";
+import { cosineSimilarity } from "@/lib/vector-math";
 
 export type ExternalCourse = InferSelectModel<typeof externalCourses>;
 
@@ -10,7 +11,7 @@ import type { Lesson, LessonWithContent, GroupedLessons } from "../articles";
 import { getUrlPath } from "../articles";
 
 export async function getAllLessonsFromDb(): Promise<Lesson[]> {
-  const rows = await db
+  const rows = db
     .select({
       slug: lessons.slug,
       number: lessons.number,
@@ -21,7 +22,8 @@ export async function getAllLessonsFromDb(): Promise<Lesson[]> {
     })
     .from(lessons)
     .innerJoin(categories, eq(lessons.categoryId, categories.id))
-    .orderBy(lessons.number);
+    .orderBy(lessons.number)
+    .all();
 
   return rows.map((p) => ({
     slug: p.slug,
@@ -40,7 +42,7 @@ export async function getAllLessonsFromDb(): Promise<Lesson[]> {
 export async function getLessonBySlugFromDb(
   slug: string,
 ): Promise<LessonWithContent | null> {
-  const row = await db.query.lessons.findFirst({
+  const row = db.query.lessons.findFirst({
     where: eq(lessons.slug, slug),
     with: { category: true },
   });
@@ -63,7 +65,7 @@ export async function getLessonBySlugFromDb(
 }
 
 export async function getGroupedLessonsFromDb(): Promise<GroupedLessons[]> {
-  const rows = await db.query.categories.findMany({
+  const rows = db.query.categories.findMany({
     with: {
       lessons: {
         orderBy: lessons.number,
@@ -98,9 +100,10 @@ export async function getGroupedLessonsFromDb(): Promise<GroupedLessons[]> {
 }
 
 export async function getTotalWordCountFromDb(): Promise<number> {
-  const [result] = await db
+  const [result] = db
     .select({ total: sql<number>`coalesce(sum(${lessons.wordCount}), 0)` })
-    .from(lessons);
+    .from(lessons)
+    .all();
 
   return result.total;
 }
@@ -108,7 +111,7 @@ export async function getTotalWordCountFromDb(): Promise<number> {
 export async function getCategoryMetaFromDb(
   categoryName: string,
 ): Promise<{ slug: string; icon: string; description: string; gradient: [string, string] } | null> {
-  const row = await db.query.categories.findFirst({
+  const row = db.query.categories.findFirst({
     where: eq(categories.name, categoryName),
     columns: {
       slug: true,
@@ -130,9 +133,10 @@ export async function getCategoryMetaFromDb(
 }
 
 export async function getCategoryCountFromDb(): Promise<number> {
-  const [result] = await db
+  const [result] = db
     .select({ count: sql<number>`count(*)` })
-    .from(categories);
+    .from(categories)
+    .all();
   return result.count;
 }
 
@@ -141,20 +145,22 @@ export async function getJobApplicationsFromDb(userId: string): Promise<JobAppli
     .select()
     .from(applications)
     .where(eq(applications.userId, userId))
-    .orderBy(applications.createdAt);
+    .orderBy(applications.createdAt)
+    .all();
 }
 
 export async function getCoursesForLessonFromDb(
   slug: string,
   limit = 4,
 ): Promise<ExternalCourse[]> {
-  const rows = await db
+  const rows = db
     .select({ course: externalCourses })
     .from(lessonCourses)
     .innerJoin(externalCourses, eq(lessonCourses.courseId, externalCourses.id))
     .where(eq(lessonCourses.lessonSlug, slug))
     .orderBy(desc(lessonCourses.relevance), desc(externalCourses.rating))
-    .limit(limit);
+    .limit(limit)
+    .all();
 
   return rows.map((r) => r.course);
 }
@@ -165,44 +171,82 @@ export async function getRelatedLessonsFromDb(
 ): Promise<Lesson[]> {
   // Try vector similarity first — falls back to same-category if no embeddings
   try {
-    const vectorRows = await db.execute<{
-      slug: string;
-      number: number;
-      title: string;
-      category_name: string;
-      word_count: number;
-      reading_time_min: number;
-    }>(
-      sql`SELECT l.slug, l.number, l.title, cat.name AS category_name,
-                 l.word_count, l.reading_time_min
-          FROM lesson_embeddings le
-          JOIN lesson_embeddings target_le ON target_le.lesson_id = (SELECT id FROM lessons WHERE slug = ${slug})
-          JOIN lessons l ON l.id = le.lesson_id
-          JOIN categories cat ON cat.id = l.category_id
-          WHERE l.slug != ${slug}
-          ORDER BY le.embedding <=> target_le.embedding
-          LIMIT ${limit}`,
-    );
+    const allEmbeddings = db
+      .select({
+        lessonId: lessonEmbeddings.lessonId,
+        embedding: lessonEmbeddings.embedding,
+      })
+      .from(lessonEmbeddings)
+      .all();
 
-    if (vectorRows.rows && vectorRows.rows.length > 0) {
-      return vectorRows.rows.map((p) => ({
-        slug: p.slug,
-        fileSlug: p.slug,
-        number: p.number,
-        title: p.title,
-        category: p.category_name,
-        wordCount: p.word_count,
-        readingTimeMin: p.reading_time_min,
-        excerpt: "",
-        difficulty: "intermediate" as const,
-        url: getUrlPath(p.slug),
-      }));
+    if (allEmbeddings.length > 0) {
+      // Find the target lesson's embedding
+      const targetLesson = db.query.lessons.findFirst({
+        where: eq(lessons.slug, slug),
+        columns: { id: true },
+      });
+
+      if (targetLesson) {
+        const targetEmb = allEmbeddings.find(
+          (e) => e.lessonId === targetLesson.id,
+        );
+        if (targetEmb) {
+          const targetVec = deserializeEmbedding(targetEmb.embedding);
+          const scored = allEmbeddings
+            .filter((e) => e.lessonId !== targetLesson.id)
+            .map((e) => ({
+              lessonId: e.lessonId,
+              similarity: cosineSimilarity(
+                targetVec,
+                deserializeEmbedding(e.embedding),
+              ),
+            }))
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, limit);
+
+          const lessonIds = scored.map((s) => s.lessonId);
+          if (lessonIds.length > 0) {
+            const rows = db
+              .select({
+                id: lessons.id,
+                slug: lessons.slug,
+                number: lessons.number,
+                title: lessons.title,
+                categoryName: categories.name,
+                wordCount: lessons.wordCount,
+                readingTimeMin: lessons.readingTimeMin,
+              })
+              .from(lessons)
+              .innerJoin(categories, eq(lessons.categoryId, categories.id))
+              .where(sql`${lessons.id} IN (${sql.join(lessonIds.map((id) => sql`${id}`), sql`, `)})`)
+              .all();
+
+            // Preserve similarity order
+            const byId = new Map(rows.map((r) => [r.id, r]));
+            return lessonIds
+              .map((id) => byId.get(id))
+              .filter(Boolean)
+              .map((p) => ({
+                slug: p!.slug,
+                fileSlug: p!.slug,
+                number: p!.number,
+                title: p!.title,
+                category: p!.categoryName,
+                wordCount: p!.wordCount,
+                readingTimeMin: p!.readingTimeMin,
+                excerpt: "",
+                difficulty: "intermediate" as const,
+                url: getUrlPath(p!.slug),
+              }));
+          }
+        }
+      }
     }
   } catch {
     // No embeddings available — fall through to category-based
   }
 
-  const rows = await db
+  const rows = db
     .select({
       slug: lessons.slug,
       number: lessons.number,
@@ -218,7 +262,8 @@ export async function getRelatedLessonsFromDb(
           AND ${lessons.slug} != ${slug}`,
     )
     .orderBy(lessons.number)
-    .limit(limit);
+    .limit(limit)
+    .all();
 
   return rows.map((p) => ({
     slug: p.slug,
@@ -235,11 +280,12 @@ export async function getRelatedLessonsFromDb(
 }
 
 export async function getCourseReview(courseId: string) {
-  const result = await db
+  const result = db
     .select()
     .from(courseReviews)
     .where(eq(courseReviews.courseId, courseId))
-    .limit(1);
+    .limit(1)
+    .all();
   return result[0] ?? null;
 }
 
@@ -260,11 +306,12 @@ export const TOPIC_GROUP_ORDER = [
 ] as const;
 
 export async function getAllUdemyCoursesByGroup(): Promise<Record<string, ExternalCourse[]>> {
-  const rows = await db
+  const rows = db
     .select()
     .from(externalCourses)
     .where(eq(externalCourses.provider, "Udemy"))
-    .orderBy(desc(externalCourses.rating));
+    .orderBy(desc(externalCourses.rating))
+    .all();
 
   const grouped: Record<string, ExternalCourse[]> = {};
   for (const course of rows) {

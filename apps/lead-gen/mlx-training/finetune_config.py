@@ -8,7 +8,9 @@ Hardware target: M1 MacBook Pro, 16GB RAM, Metal GPU.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass
@@ -24,6 +26,7 @@ class LoRAConfig:
 
 @dataclass
 class TrainConfig:
+    name: str = ""
     model: str = "mlx-community/Qwen2.5-3B-Instruct-4bit"
     max_seq_length: int = 2048  # job descriptions fit in 2K tokens
     batch_size: int = 2
@@ -87,6 +90,7 @@ CONFIGS = {
         learning_rate=3e-5,  # slightly higher for small dataset
     ),
     "outreach-email": TrainConfig(
+        name="outreach-email",
         model="mlx-community/Qwen3-1.7B-4bit",
         data_dir="mlx-training/data/outreach-email",
         adapter_path="mlx-training/models/outreach-email",
@@ -99,3 +103,70 @@ CONFIGS = {
         warmup_steps=30,
     ),
 }
+
+# ---------------------------------------------------------------------------
+# Hyperparameter sweep: 3×3 grid over rank × learning rate for outreach-email
+# Short 2-epoch runs to conserve M1 compute.
+# ---------------------------------------------------------------------------
+
+SWEEP_CONFIGS: dict[str, TrainConfig] = {}
+for _rank in [4, 8, 16]:
+    for _lr in [5e-6, 1e-5, 2e-5]:
+        _key = f"outreach-email-sweep/r{_rank}_lr{_lr:.0e}"
+        SWEEP_CONFIGS[_key] = TrainConfig(
+            name=_key,
+            model="mlx-community/Qwen3-1.7B-4bit",
+            data_dir="mlx-training/data/outreach-email",
+            adapter_path=f"mlx-training/models/{_key}",
+            max_seq_length=512,
+            batch_size=2,
+            grad_accumulation_steps=8,
+            learning_rate=_lr,
+            epochs=2,  # short sweep
+            lora=LoRAConfig(rank=_rank, alpha=float(_rank * 4), dropout=0.1),
+            warmup_steps=10,
+        )
+
+
+def get_best_sweep_config() -> tuple[str, TrainConfig] | None:
+    """Read val loss from sweep adapter dirs, return (key, config) with lowest val loss."""
+    best_key: str | None = None
+    best_loss: float = float("inf")
+    best_config: TrainConfig | None = None
+
+    for key, config in SWEEP_CONFIGS.items():
+        log_path = Path(config.adapter_path) / "train_log.jsonl"
+        if not log_path.exists():
+            continue
+        # Parse last eval entry with val_loss from the JSONL log
+        last_val_loss: float | None = None
+        for line in log_path.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if "val_loss" in entry:
+                last_val_loss = float(entry["val_loss"])
+        if last_val_loss is not None and last_val_loss < best_loss:
+            best_loss = last_val_loss
+            best_key = key
+            best_config = config
+
+    if best_key is None or best_config is None:
+        return None
+    return (best_key, best_config)
+
+
+def run_sweep(finetune_py: str = "mlx-training/finetune.py") -> None:
+    """Print the commands needed to run all sweep configs."""
+    print("# Run these commands to execute the hyperparameter sweep:")
+    for key in SWEEP_CONFIGS:
+        print(f"python3 {finetune_py} --task-override {key}")
+    print("\nAfter all sweeps complete, run:")
+    print(
+        'python3 -c "from mlx_training.finetune_config import get_best_sweep_config;'
+        ' print(get_best_sweep_config())"'
+    )
