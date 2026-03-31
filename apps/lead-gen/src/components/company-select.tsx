@@ -52,7 +52,16 @@ export function CompanySelect({ value, onChange, placeholder = "Select company..
             <Flex direction="column" gap="1">
               {value && (
                 <Box
+                  role="button"
+                  tabIndex={0}
                   onClick={() => { onChange(null); setOpen(false); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onChange(null);
+                      setOpen(false);
+                    }
+                  }}
                   style={{ padding: "6px 8px", borderRadius: 0, cursor: "pointer" }}
                   className="hover:bg-gray-100"
                 >
@@ -66,7 +75,17 @@ export function CompanySelect({ value, onChange, placeholder = "Select company..
               {companies.map((company) => (
                 <Box
                   key={company.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => { onChange(company.id, company.name); setOpen(false); setSearch(""); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onChange(company.id, company.name);
+                      setOpen(false);
+                      setSearch("");
+                    }
+                  }}
                   style={{
                     padding: "6px 8px",
                     borderRadius: 0,

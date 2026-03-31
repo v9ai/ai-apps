@@ -21,7 +21,7 @@ graph TD
     end
 
     subgraph Next.js["Next.js App (Port 3006)"]
-        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]"]
+        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses"]
         API["API Routes\n/api/chat\n/api/research\n/api/course-review/[id]"]
         SA["Server Actions\nsearch · analytics"]
         MW["Middleware\nURL redirects"]
