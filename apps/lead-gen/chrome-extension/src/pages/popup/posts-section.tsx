@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Stack, Group, Button, Text, Alert, Badge, Progress } from "@mantine/core";
 
 const SEARCH_URL =
-  "https://www.linkedin.com/search/results/content/?keywords=react%20remote%20outside%20ir35&origin=FACETED_SEARCH&sortBy=%5B%22relevance%22%5D&datePosted=%5B%22past-week%22%5D";
+  "https://www.linkedin.com/search/results/content/?keywords=ML%20python%20rust%20remote%20contract&origin=FACETED_SEARCH&sortBy=%5B%22relevance%22%5D&datePosted=%5B%22past-week%22%5D";
 
 type Phase = "jobs" | "connections" | "import" | "posts" | "companies" | null;
 

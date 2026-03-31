@@ -40,10 +40,12 @@ def main():
     # Load sources
     real_train = load_jsonl(data_dir / "train.jsonl")
     real_valid = load_jsonl(data_dir / "valid.jsonl")
+    resend = load_jsonl(data_dir / "resend.jsonl")
     synthetic = load_jsonl(data_dir / "synthetic.jsonl")
 
-    real_all = real_train + real_valid
-    print(f"Real emails: {len(real_all)}")
+    real_all = real_train + real_valid + resend
+    print(f"Real emails (DB): {len(real_train) + len(real_valid)}")
+    print(f"Real emails (Resend): {len(resend)}")
     print(f"Synthetic emails: {len(synthetic)}")
 
     if not real_all and not synthetic:
