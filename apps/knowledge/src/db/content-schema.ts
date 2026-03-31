@@ -517,6 +517,29 @@ export const courseReviews = sqliteTable(
 export type CourseReview = typeof courseReviews.$inferSelect;
 export type NewCourseReview = typeof courseReviews.$inferInsert;
 
+// ── Public Job Listings ─────────────────────────────────────────────
+
+export const publicJobs = sqliteTable(
+  "public_jobs",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    slug: text("slug").unique().notNull(),
+    company: text("company").notNull(),
+    position: text("position").notNull(),
+    location: text("location"),
+    url: text("url"),
+    description: text("description").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("public_jobs_slug_idx").on(table.slug)],
+);
+
+export type PublicJob = typeof publicJobs.$inferSelect;
+
 // ── Relations ───────────────────────────────────────────────────────
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
