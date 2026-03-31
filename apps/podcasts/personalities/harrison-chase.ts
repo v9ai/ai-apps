@@ -7,7 +7,18 @@ const personality: Personality = {
   description:
     "Built LangChain into the dominant LLM orchestration framework. Coined 'context engineering' as the key discipline for agent builders. Publishes on data quality assertions for LLM pipelines.",
   slug: "harrison-chase",
-  podcasts: ["Sequoia Training Data", "VentureBeat", "This Week in Startups"],
+  podcasts: [
+    "Sequoia Training Data",
+    "This Week in Startups",
+    "TWIML AI Podcast",
+    "a16z Podcast",
+    "Latent Space",
+    "No Priors",
+    "Unsupervised Learning",
+    "The Generalist",
+    "Thursday Nights in AI",
+    "Gradient Dissent",
+  ],
   github: "hwchase17",
   papers: [
     {
