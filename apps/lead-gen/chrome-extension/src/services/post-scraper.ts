@@ -61,14 +61,16 @@ export function cancelPostScraping() {
 
 function waitForTabLoad(tabId: number): Promise<void> {
   return new Promise((resolve) => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const listener = (id: number, info: { status?: string }) => {
       if (id === tabId && info.status === "complete") {
         chrome.tabs.onUpdated.removeListener(listener);
+        if (timeoutId !== null) clearTimeout(timeoutId);
         resolve();
       }
     };
     chrome.tabs.onUpdated.addListener(listener);
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       chrome.tabs.onUpdated.removeListener(listener);
       resolve();
     }, 15000);
@@ -643,7 +645,8 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
   try {
     const existing = await fetchContactsWithLinkedIn();
     existingUrls = new Set(existing.map((c) => c.linkedinUrl.replace(/\/$/, "")));
-  } catch {
+  } catch (err) {
+    console.warn("[PostScraper] Could not fetch existing contacts, will re-check all connections:", err);
     existingUrls = new Set();
   }
 

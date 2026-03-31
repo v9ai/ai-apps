@@ -8,8 +8,16 @@
 import { adminChat } from "@/lib/langgraph-client";
 
 export const adminAssistantAgent = {
-  async generate(prompt: string) {
-    const result = await adminChat(prompt);
-    return { text: result.response };
+  async generate(
+    prompt: string,
+  ): Promise<{ text: string; error?: never } | { text: null; error: string }> {
+    try {
+      const result = await adminChat(prompt);
+      return { text: result.response };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error from admin agent";
+      console.error("[adminAssistantAgent] generate failed:", message);
+      return { text: null, error: message };
+    }
   },
 };

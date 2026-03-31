@@ -1173,7 +1173,7 @@ export const contactResolvers = {
           await context.db
             .update(contactEmails)
             .set({ contact_id: primary.id, updated_at: new Date().toISOString() })
-            .where(sql`${contactEmails.contact_id} IN (${sql.join(dupeIds.map((id) => sql`${id}`), sql`, `)})`);
+            .where(inArray(contactEmails.contact_id, dupeIds));
 
           // Update primary with merged data
           await context.db
@@ -1189,7 +1189,7 @@ export const contactResolvers = {
           // Delete duplicates
           await context.db
             .delete(contacts)
-            .where(sql`${contacts.id} IN (${sql.join(dupeIds.map((id) => sql`${id}`), sql`, `)})`);
+            .where(inArray(contacts.id, dupeIds));
 
           mergedCount++;
           removedCount += dupeIds.length;
@@ -1284,7 +1284,7 @@ export const contactResolvers = {
             any_reply: sql<boolean>`bool_or(${contactEmails.reply_received})`.as("any_reply"),
           })
           .from(contactEmails)
-          .where(sql`${contactEmails.contact_id} = ANY(ARRAY[${sql.join(contactIds.map(id => sql`${id}`), sql`, `)}]::int[])`)
+          .where(inArray(contactEmails.contact_id, contactIds))
           .groupBy(contactEmails.contact_id) as EmailSummary[];
 
         const summaryMap = new Map(emailSummaries.map((s) => [s.contact_id, s]));

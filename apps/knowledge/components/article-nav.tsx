@@ -23,6 +23,7 @@ export function ArticleNav({ prev, next, currentCategory, prevMeta, nextMeta }: 
         <Link
           href={prev.url}
           className={`article-nav-card cat-${pm.slug}`}
+          aria-label={prev ? `Previous lesson: ${prev.title}` : undefined}
         >
           <span className="article-nav-label">&larr; Previous</span>
           <span className="article-nav-title">{prev.title}</span>
@@ -39,6 +40,7 @@ export function ArticleNav({ prev, next, currentCategory, prevMeta, nextMeta }: 
         <Link
           href={next.url}
           className={`article-nav-card article-nav-card--next cat-${nm.slug}`}
+          aria-label={next ? `Next lesson: ${next.title}` : undefined}
         >
           <span className="article-nav-label">Next &rarr;</span>
           <span className="article-nav-title">{next.title}</span>

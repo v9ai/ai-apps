@@ -5,6 +5,7 @@ import { Popover, TextField, ScrollArea, Text, Flex, Box } from "@radix-ui/theme
 import { button } from "@/recipes/button";
 import { MagnifyingGlassIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 import { useGetCompaniesQuery } from "@/__generated__/hooks";
+import type { CompanyOrderBy } from "@/__generated__/graphql";
 
 interface CompanySelectProps {
   value?: number | null;
@@ -17,7 +18,7 @@ export function CompanySelect({ value, onChange, placeholder = "Select company..
   const [search, setSearch] = useState("");
 
   const { data, loading } = useGetCompaniesQuery({
-    variables: { text: search || undefined, limit: 50, order_by: "NAME_ASC" as any },
+    variables: { text: search || undefined, limit: 50, order_by: "NAME_ASC" as CompanyOrderBy },
   });
 
   const companies = data?.companies?.companies ?? [];

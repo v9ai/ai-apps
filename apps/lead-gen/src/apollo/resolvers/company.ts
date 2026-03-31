@@ -306,8 +306,8 @@ export const companyResolvers = {
     },
 
     async company(
-      _parent: any,
-      args: { id?: number; key?: string },
+      _parent: unknown,
+      args: QueryCompanyArgs,
       context: GraphQLContext,
     ) {
       try {
@@ -332,13 +332,8 @@ export const companyResolvers = {
     },
 
     async company_facts(
-      _parent: any,
-      args: {
-        company_id: number;
-        field?: string;
-        limit?: number;
-        offset?: number;
-      },
+      _parent: unknown,
+      args: QueryCompany_FactsArgs,
       context: GraphQLContext,
     ) {
       try {
@@ -364,12 +359,8 @@ export const companyResolvers = {
     },
 
     async company_snapshots(
-      _parent: any,
-      args: {
-        company_id: number;
-        limit?: number;
-        offset?: number;
-      },
+      _parent: unknown,
+      args: QueryCompany_SnapshotsArgs,
       context: GraphQLContext,
     ) {
       try {
@@ -390,8 +381,8 @@ export const companyResolvers = {
     },
 
     async allCompanyTags(
-      _parent: any,
-      _args: any,
+      _parent: unknown,
+      _args: unknown,
       context: GraphQLContext,
     ) {
       try {
