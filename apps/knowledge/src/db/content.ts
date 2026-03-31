@@ -2,16 +2,29 @@ import Database from "better-sqlite3";
 import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import * as contentSchema from "./content-schema";
 import path from "path";
+import fs from "fs";
 
-const DB_PATH =
-  process.env.CONTENT_DB_PATH ||
-  path.join(process.cwd(), "data", "knowledge.db");
+function resolveDbPath(): string {
+  if (process.env.CONTENT_DB_PATH) return process.env.CONTENT_DB_PATH;
+
+  // Local dev: data/knowledge.db relative to cwd
+  const cwdPath = path.join(process.cwd(), "data", "knowledge.db");
+  if (fs.existsSync(cwdPath)) return cwdPath;
+
+  // Vercel serverless: bundled via outputFileTracingIncludes next to __dirname
+  const dirPath = path.join(__dirname, "data", "knowledge.db");
+  if (fs.existsSync(dirPath)) return dirPath;
+
+  // Fallback
+  return cwdPath;
+}
 
 let _db: BetterSQLite3Database<typeof contentSchema> | null = null;
 
 export function getContentDb() {
   if (!_db) {
-    const sqlite = new Database(DB_PATH);
+    const dbPath = resolveDbPath();
+    const sqlite = new Database(dbPath, { readonly: !fs.existsSync(dbPath) ? false : undefined });
     sqlite.pragma("journal_mode = WAL");
     sqlite.pragma("synchronous = normal");
     sqlite.pragma("foreign_keys = ON");
