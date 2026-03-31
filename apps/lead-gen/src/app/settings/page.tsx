@@ -204,8 +204,8 @@ function SettingsPageContent() {
             <Flex direction="column" gap="2">
               {excludedCompaniesChips.length > 0 && (
                 <Flex gap="2" wrap="wrap">
-                  {excludedCompaniesChips.map((company, index) => (
-                    <Badge key={index} size="2" variant="soft" color="red" style={{ paddingRight: "4px" }}>
+                  {excludedCompaniesChips.map((company) => (
+                    <Badge key={company} size="2" variant="soft" color="red" style={{ paddingRight: "4px" }}>
                       <Flex align="center" gap="1">
                         {company}
                         <Cross2Icon

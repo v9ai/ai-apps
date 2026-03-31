@@ -76,8 +76,48 @@ type Contact {
   # ML touch score (urgency to re-engage)
   nextTouchScore: Float
   lastContactedAt: String
+  aiProfile: ContactAIProfile
   createdAt: String!
   updatedAt: String!
+}
+
+type ContactAIGitHubRepo {
+  name: String!
+  description: String
+  stars: Int!
+  topics: [String!]!
+}
+
+type ContactAIProfile {
+  trigger: String!
+  enrichedAt: String!
+  linkedinHeadline: String
+  linkedinBio: String
+  githubBio: String
+  githubTopLanguages: [String!]!
+  githubAiRepos: [ContactAIGitHubRepo!]!
+  githubTotalStars: Int!
+  specialization: String
+  skills: [String!]!
+  researchAreas: [String!]!
+  experienceLevel: String!
+  synthesisConfidence: Float!
+  synthesisRationale: String
+}
+
+type EnrichAIContactResult {
+  success: Boolean!
+  message: String!
+  contactId: Int!
+  aiProfile: ContactAIProfile
+}
+
+type EnrichAIContactsBulkResult {
+  success: Boolean!
+  message: String!
+  enriched: Int!
+  skipped: Int!
+  errors: [String!]!
 }
 
 type ScoreContactsMLResult {

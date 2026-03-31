@@ -129,7 +129,7 @@ export const companyResolvers = {
         return 0;
       }
     },
-    async snapshots(parent: any, args: { limit?: number; offset?: number }, context: GraphQLContext) {
+    async snapshots(parent: DbCompany, args: { limit?: number; offset?: number }, context: GraphQLContext) {
       try {
         const limit = args.limit ?? 50;
         const offset = args.offset ?? 0;
@@ -141,7 +141,7 @@ export const companyResolvers = {
         return [];
       }
     },
-    async snapshots_count(parent: any, _args: any, context: GraphQLContext) {
+    async snapshots_count(parent: DbCompany, _args: unknown, context: GraphQLContext) {
       try {
         const snapshots = await context.loaders.companySnapshots.load(parent.id);
         return snapshots.length;
@@ -153,7 +153,7 @@ export const companyResolvers = {
   },
 
   Evidence: {
-    warc(parent: any) {
+    warc(parent: DbCompanyFact) {
       if (!parent.warc_filename) return null;
       return {
         filename: parent.warc_filename,
@@ -165,15 +165,15 @@ export const companyResolvers = {
   },
 
   CompanyFact: {
-    value_json(parent: any) {
+    value_json(parent: DbCompanyFact) {
       return parent.value_json ? JSON.parse(parent.value_json) : null;
     },
-    normalized_value(parent: any) {
+    normalized_value(parent: DbCompanyFact) {
       return parent.normalized_value
         ? JSON.parse(parent.normalized_value)
         : null;
     },
-    evidence(parent: any) {
+    evidence(parent: DbCompanyFact) {
       return {
         source_type: parent.source_type,
         source_url: parent.source_url,
@@ -194,13 +194,13 @@ export const companyResolvers = {
   },
 
   CompanySnapshot: {
-    jsonld(parent: any) {
+    jsonld(parent: DbCompanySnapshot) {
       return parent.jsonld ? JSON.parse(parent.jsonld) : null;
     },
-    extracted(parent: any) {
+    extracted(parent: DbCompanySnapshot) {
       return parent.extracted ? JSON.parse(parent.extracted) : null;
     },
-    evidence(parent: any) {
+    evidence(parent: DbCompanySnapshot) {
       return {
         source_type: parent.source_type,
         source_url: parent.source_url,
@@ -222,21 +222,8 @@ export const companyResolvers = {
 
   Query: {
     async companies(
-      _parent: any,
-      args: {
-        filter?: {
-          text?: string;
-          category?: string;
-          min_score?: number;
-          service_taxonomy_any?: string[];
-          ai_native_only?: boolean;
-          ai_first_only?: boolean;
-          min_ai_tier?: number;
-        };
-        order_by?: string;
-        limit?: number;
-        offset?: number;
-      },
+      _parent: unknown,
+      args: QueryCompaniesArgs,
       context: GraphQLContext,
     ) {
       try {
