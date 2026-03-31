@@ -44,6 +44,11 @@ function depthLimitRule(context: ValidationContext) {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// KNOWN ISSUE: No CORS policy is configured on this route.
+// All origins can POST to /api/graphql. To fix, add an OPTIONS handler that
+// returns the appropriate Access-Control-Allow-* headers and restrict
+// Access-Control-Allow-Origin to your production domain(s).
+
 // Simple in-memory rate limiter
 // Production: Consider using Redis or Cloudflare KV for distributed rate limiting
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();

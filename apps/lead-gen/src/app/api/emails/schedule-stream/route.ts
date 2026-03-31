@@ -57,10 +57,24 @@ function createSSEStream() {
 }
 
 export async function POST(request: NextRequest) {
-  const { companyId } = await request.json();
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isAdminEmail(session.user.email)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  let body: { companyId?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const { companyId } = body;
 
   if (!companyId) {
-    return new Response("Missing companyId", { status: 400 });
+    return NextResponse.json({ error: "Missing companyId" }, { status: 400 });
   }
 
   const { stream, send, close } = createSSEStream();

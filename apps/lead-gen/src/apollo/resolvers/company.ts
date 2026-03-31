@@ -5,9 +5,34 @@ import {
   contacts,
   contactEmails,
 } from "@/db/schema";
+import type {
+  Company as DbCompany,
+  CompanyFact as DbCompanyFact,
+  CompanySnapshot as DbCompanySnapshot,
+} from "@/db/schema";
 import { eq, and, or, like, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import type {
+  QueryCompaniesArgs,
+  QueryCompanyArgs,
+  QueryCompany_FactsArgs,
+  QueryCompany_SnapshotsArgs,
+  QueryFindCompanyArgs,
+  MutationCreateCompanyArgs,
+  MutationUpdateCompanyArgs,
+  MutationDeleteCompanyArgs,
+  MutationAdd_Company_FactsArgs,
+  MutationIngest_Company_SnapshotArgs,
+  MutationMergeDuplicateCompaniesArgs,
+  MutationDeleteCompaniesArgs,
+  MutationImportCompanyWithContactsArgs,
+  MutationImportCompaniesArgs,
+  MutationEnhanceCompanyArgs,
+  MutationAnalyzeCompanyArgs,
+  MutationBlockCompanyArgs,
+  MutationUnblockCompanyArgs,
+} from "@/__generated__/resolvers-types";
 
 /**
  * Safely parse JSON strings with proper error handling and logging
