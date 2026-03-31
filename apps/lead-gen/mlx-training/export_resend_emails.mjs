@@ -77,12 +77,15 @@ function sleep(ms) {
 async function withRetry(fn, maxRetries = 3) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const result = await fn();
+      const result = await Promise.race([
+        fn(),
+        sleep(30000).then(() => { throw new Error("Timeout after 30s"); }),
+      ]);
       return result;
     } catch (err) {
       if (attempt === maxRetries) throw err;
       const backoff = 2000 * (attempt + 1); // 2s, 4s, 6s
-      console.error(`  Rate limited, waiting ${backoff}ms (attempt ${attempt + 1}/${maxRetries})...`);
+      console.error(`  Retry (attempt ${attempt + 1}/${maxRetries}): ${err.message?.slice(0, 60)}`);
       await sleep(backoff);
     }
   }
@@ -117,7 +120,7 @@ async function fetchAllEmails() {
 
     if (result.data.length > 0) {
       after = result.data[result.data.length - 1].id;
-      await sleep(300); // 3 req/sec for list to stay well under 10/sec limit
+      await sleep(1000); // 1 req/sec for list to stay well under 10/sec limit
     } else {
       break;
     }
