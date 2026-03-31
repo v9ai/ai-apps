@@ -987,6 +987,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (!companyMap.has(key)) companyMap.set(key, c);
           });
 
+          actualPagesScraped++;
+
           // Send progress update
           chrome.runtime.sendMessage({
             action: "paginationProgress",
@@ -1001,7 +1003,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           jobs: allJobs,
           companies: Array.from(companyMap.values()),
           totalPages,
-          pagesScraped: totalPages - startPage + 1,
+          pagesScraped: actualPagesScraped,
         });
       } catch (error) {
         sendResponse({

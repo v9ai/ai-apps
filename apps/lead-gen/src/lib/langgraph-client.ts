@@ -16,6 +16,7 @@ async function callLangGraph<T>(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -62,6 +63,9 @@ export function textToSql(
   question: string,
   databaseSchema?: string,
 ): Promise<TextToSqlResult> {
+  if (question.length > 4_000) {
+    return Promise.reject(new Error("textToSql: question exceeds 4000 character limit"));
+  }
   return callLangGraph<TextToSqlResult>("/text-to-sql", {
     question,
     database_schema: databaseSchema ?? "",

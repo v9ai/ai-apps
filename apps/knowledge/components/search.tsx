@@ -112,6 +112,7 @@ export function Search({ groups }: Props) {
         <input
           ref={inputRef}
           type="text"
+          aria-label="Search lessons"
           placeholder={isDeepSearch ? "Deep search with AI embeddings..." : "Search lessons, topics, concepts..."}
           value={query}
           onChange={handleChange}
@@ -134,7 +135,7 @@ export function Search({ groups }: Props) {
           <span className="yc-search-count">{results.length}</span>
         )}
         {query.length > 0 && (
-          <button className="yc-search-clear" onClick={handleClear}>
+          <button className="yc-search-clear" aria-label="Clear search" onClick={handleClear}>
             ✕
           </button>
         )}
@@ -146,6 +147,7 @@ export function Search({ groups }: Props) {
             <button
               key={f.value}
               className={`difficulty-filter-btn${f.value !== "all" ? ` difficulty-filter-btn--${f.value}` : ""}${diffFilter === f.value ? " difficulty-filter-btn--active" : ""}`}
+              aria-pressed={diffFilter === f.value}
               onClick={() => setDiffFilter(f.value)}
             >
               {f.label}
