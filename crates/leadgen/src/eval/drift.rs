@@ -276,7 +276,7 @@ fn ks_statistic(a: &[f64], b: &[f64]) -> f64 {
     // Collect all unique evaluation points.
     let mut points: Vec<f64> = a.iter().chain(b.iter()).copied().collect();
     points.sort_by(|x, y| x.partial_cmp(y).unwrap_or(std::cmp::Ordering::Equal));
-    points.dedup_by(|x, y| (x - *y).abs() < f64::EPSILON);
+    points.dedup_by(|x, y| (*x - *y).abs() < f64::EPSILON);
 
     let mut sorted_a = a.to_vec();
     let mut sorted_b = b.to_vec();
@@ -392,5 +392,115 @@ mod tests {
         }
         let alerts = d.check_all();
         assert!(alerts.is_empty(), "stable data should not alert");
+    }
+
+    // --- IcpScoreDriftDetector ---
+
+    #[test]
+    fn icp_detector_fills_window_and_sets_reference() {
+        let mut d = IcpScoreDriftDetector::new(5);
+        // First 4 observations: window not yet full → no alert, no reference.
+        for i in 0..4u32 {
+            let alert = d.observe(i as f64 * 10.0);
+            assert!(alert.is_none(), "window not full yet, no alert expected");
+        }
+        assert!(d.reference_stats.is_none());
+
+        // 5th observation fills the window → reference is set, still no alert.
+        let alert = d.observe(40.0);
+        assert!(alert.is_none(), "first full window should set reference, not alert");
+        assert!(d.reference_stats.is_some(), "reference should be set after first full window");
+    }
+
+    #[test]
+    fn icp_detector_alerts_on_significant_shift() {
+        let window = 20;
+        // Use a lower threshold so the test is not flaky.
+        let mut d = IcpScoreDriftDetector::new(window).with_drift_threshold(0.3);
+
+        // Fill reference window with scores centred around 50.
+        for i in 0..window {
+            d.observe(40.0 + (i % 21) as f64); // range 40–60
+        }
+        assert!(d.reference_stats.is_some());
+
+        // Now push scores centred around 85 — a large shift.
+        let mut alert_received: Option<IcpDriftAlert> = None;
+        for i in 0..window {
+            let alert = d.observe(80.0 + (i % 11) as f64); // range 80–90
+            if alert.is_some() {
+                alert_received = alert;
+            }
+        }
+        assert!(
+            alert_received.is_some(),
+            "large distribution shift should trigger an alert"
+        );
+        let a = alert_received.unwrap();
+        assert!(
+            a.ks_statistic > 0.3,
+            "KS statistic should exceed threshold: {}",
+            a.ks_statistic
+        );
+        assert!(
+            a.current_mean > a.reference_mean,
+            "current mean should be higher than reference mean"
+        );
+    }
+
+    #[test]
+    fn icp_detector_no_alert_on_similar_distribution() {
+        let window = 10;
+        let mut d = IcpScoreDriftDetector::new(window).with_drift_threshold(0.15);
+
+        // Reference: scores 50–59.
+        for i in 0..window {
+            d.observe(50.0 + i as f64);
+        }
+
+        // Similar scores: 51–60 — minor shift well below threshold.
+        let mut any_alert = false;
+        for i in 0..window {
+            if d.observe(51.0 + i as f64).is_some() {
+                any_alert = true;
+            }
+        }
+        assert!(!any_alert, "similar distributions should not alert");
+    }
+
+    #[test]
+    fn icp_detector_reset_reference() {
+        let window = 5;
+        let mut d = IcpScoreDriftDetector::new(window).with_drift_threshold(0.1);
+
+        // Fill with low values → reference set.
+        for i in 0..window {
+            d.observe(i as f64);
+        }
+        assert!(d.reference_stats.is_some());
+        let old_mean = d.reference_stats.as_ref().unwrap().mean;
+
+        // Push high values to make the current window diverge.
+        for i in 0..window {
+            d.observe(100.0 + i as f64);
+        }
+
+        // Reset reference to the current (high) window.
+        d.reset_reference();
+        let new_mean = d.reference_stats.as_ref().unwrap().mean;
+
+        assert!(
+            new_mean > old_mean + 50.0,
+            "reference mean should now reflect the high-value window"
+        );
+
+        // After reset, a subsequent window of similar high values should not alert.
+        let mut any_alert = false;
+        for i in 0..window {
+            if d.observe(100.0 + i as f64).is_some() {
+                any_alert = true;
+            }
+        }
+        assert!(!any_alert, "no alert expected after reference reset to current distribution");
     }
 }

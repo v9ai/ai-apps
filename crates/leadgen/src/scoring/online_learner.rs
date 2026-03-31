@@ -109,12 +109,12 @@ impl OnlineLearner {
         assert!(dimension > 0, "dimension must be > 0");
         features
             .iter()
-            .map(|(name, &value)| {
+            .map(|(name, value)| {
                 // Represent the value as its raw bits so the key remains unique
                 // even for continuous features (e.g. "employee_log=5.0").
                 let key = format!("{name}={value}");
                 let idx = fnv1a_hash(key.as_bytes()) % dimension;
-                (idx, value)
+                (idx, *value)
             })
             .collect()
     }

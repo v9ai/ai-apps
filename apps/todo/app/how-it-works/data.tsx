@@ -131,6 +131,20 @@ export const papers: Paper[] = [
     url: "https://turbo.build/pack",
     categoryColor: "var(--gray-9)",
   },
+  {
+    slug: "dnd-kit",
+    number: 8,
+    title: "dnd-kit",
+    category: "Frontend",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Claudéric Demers",
+    year: 2024,
+    finding: "Lightweight, accessible drag-and-drop toolkit for React with pointer, touch, and keyboard sensor support and a composable sortable preset",
+    relevance: "Powers task reordering in TaskList via DndContext, SortableContext, and useSortable. Drag handles use the PointerSensor (5px activation), TouchSensor (200ms delay), and KeyboardSensor. Position changes are optimistically applied and persisted to tasks.position via reorderTasksAction",
+    url: "https://dndkit.com",
+    categoryColor: "var(--cyan-9)",
+  },
 ];
 
 // ─── Key Metrics ───────────────────────────────────────────────────
@@ -183,8 +197,8 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Task Management UI",
-    description: "The StatusTabs component handles navigation between inbox, active, and completed views using query parameters (?status=active). TaskList renders tasks with pagination, and users can edit tasks via forms validated by updateTaskSchema, triggering server actions to update the tasks table.",
-    researchBasis: "React components with Radix UI for interactive, accessible interfaces",
+    description: "The StatusTabs component handles navigation between inbox, active, and completed views using query parameters (?status=active). TaskList renders tasks with pagination and supports drag-to-reorder via dnd-kit (PointerSensor, TouchSensor, KeyboardSensor). Drag order is optimistically applied and persisted to tasks.position via reorderTasksAction. Users can also edit tasks via forms validated by updateTaskSchema.",
+    researchBasis: "React components with Radix UI for interactive, accessible interfaces; dnd-kit for accessible drag-and-drop",
   },
   {
     name: "User Preferences Sync",
