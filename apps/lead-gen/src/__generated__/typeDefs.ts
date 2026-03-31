@@ -822,6 +822,7 @@ type Mutation {
   updateReminder(id: Int!, input: UpdateReminderInput!): ContactReminder!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   upsertLinkedInPost(input: UpsertLinkedInPostInput!): LinkedInPost!
+  upsertLinkedInPosts(inputs: [UpsertLinkedInPostInput!]!): UpsertLinkedInPostsResult!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
 }
 
@@ -1073,6 +1074,13 @@ input UpsertLinkedInPostInput {
   title: String
   type: LinkedInPostType!
   url: String!
+}
+
+type UpsertLinkedInPostsResult {
+  errors: [String!]!
+  inserted: Int!
+  success: Boolean!
+  updated: Int!
 }
 
 type UserSettings {

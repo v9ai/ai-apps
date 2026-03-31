@@ -14,6 +14,9 @@ export function extractLinkedInPosts(): Array<{
   mediaType: string;
   isRepost: boolean;
   originalAuthor: string | null;
+  authorName: string | null;
+  authorUrl: string | null;
+  authorSubtitle: string | null;
 }> {
   const posts: ReturnType<typeof extractLinkedInPosts> = [];
 
@@ -99,6 +102,18 @@ export function extractLinkedInPosts(): Array<{
           ?.textContent?.trim() || null)
       : null;
 
+    // ── Author info ──
+    const authorNameEl = postEl.querySelector(".update-components-actor__name");
+    const authorName = authorNameEl?.textContent?.trim() || null;
+    const authorLinkEl = postEl.querySelector<HTMLAnchorElement>(
+      ".update-components-actor__container-link, .update-components-actor__meta-link",
+    );
+    const authorUrl = authorLinkEl?.href?.split("?")[0] || null;
+    const authorSubEl = postEl.querySelector(
+      ".update-components-actor__description, .update-components-actor__subtitle",
+    );
+    const authorSubtitle = authorSubEl?.textContent?.trim() || null;
+
     // ── Post URL from data-urn ──
     const urn =
       postEl.getAttribute("data-urn") ||
@@ -118,6 +133,9 @@ export function extractLinkedInPosts(): Array<{
       mediaType,
       isRepost,
       originalAuthor,
+      authorName,
+      authorUrl,
+      authorSubtitle,
     });
   }
 
