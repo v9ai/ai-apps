@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkIsAdmin } from "@/lib/admin";
 import { composeEmail } from "@/lib/langgraph-client";
 
 export const runtime = "nodejs";
@@ -14,6 +15,14 @@ interface EmailGenerationRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const { isAdmin, userId } = await checkIsAdmin();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   try {
     const input: EmailGenerationRequest = await request.json();
 

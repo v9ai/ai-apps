@@ -244,3 +244,32 @@ export async function getCourseReview(courseId: string) {
 }
 
 export type CourseReviewData = Awaited<ReturnType<typeof getCourseReview>>;
+
+export const TOPIC_GROUP_ORDER = [
+  "Generative AI & LLMs",
+  "RAG & Vector Search",
+  "AI Agents & Frameworks",
+  "Fine-tuning & RLHF",
+  "Deep Learning",
+  "Computer Vision",
+  "NLP & Transformers",
+  "MLOps & Deployment",
+  "Reinforcement Learning",
+  "ML Foundations",
+  "Other",
+] as const;
+
+export async function getAllUdemyCoursesByGroup(): Promise<Record<string, ExternalCourse[]>> {
+  const rows = await db
+    .select()
+    .from(externalCourses)
+    .where(eq(externalCourses.provider, "Udemy"))
+    .orderBy(desc(externalCourses.rating));
+
+  const grouped: Record<string, ExternalCourse[]> = {};
+  for (const course of rows) {
+    const group = course.topicGroup ?? "Other";
+    (grouped[group] ??= []).push(course);
+  }
+  return grouped;
+}
