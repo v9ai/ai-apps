@@ -14,6 +14,7 @@
 
 import { fetchAllConnections, type ScrapedConnection } from "./connection-scraper";
 import { gqlRequest } from "./graphql";
+import { parseJobFields } from "../lib/job-field-parser";
 
 const RUST_SERVER = import.meta.env.VITE_RUST_SERVER_URL || "http://localhost:9876";
 
@@ -38,6 +39,9 @@ interface ScrapedPost {
   media_type: string;
   is_repost: boolean;
   original_author: string | null;
+  author_name: string | null;
+  author_url: string | null;
+  author_subtitle: string | null;
 }
 
 interface ScrapedLike {
@@ -60,6 +64,9 @@ interface ExtractedPost {
   mediaType: string;
   isRepost: boolean;
   originalAuthor: string | null;
+  authorName: string | null;
+  authorUrl: string | null;
+  authorSubtitle: string | null;
 }
 
 interface ExtractedLike {
@@ -364,6 +371,9 @@ async function scrollAndExtract(
         mediaType: string;
         isRepost: boolean;
         originalAuthor: string | null;
+        authorName: string | null;
+        authorUrl: string | null;
+        authorSubtitle: string | null;
       }> = [];
 
       document.querySelectorAll(".feed-shared-update-v2, .occludable-update").forEach((postEl) => {
@@ -403,11 +413,21 @@ async function scrollAndExtract(
         const isRepost = /reposted/i.test(headerEl?.textContent || "");
         const originalAuthor = isRepost ? (postEl.querySelector(".update-components-actor__name")?.textContent?.trim() || null) : null;
 
+        // Author info (recruiter/poster)
+        const authorNameEl = postEl.querySelector(".update-components-actor__name");
+        const authorName = authorNameEl?.textContent?.trim() || null;
+        const authorLinkEl = postEl.querySelector<HTMLAnchorElement>(
+          ".update-components-actor__container-link, .update-components-actor__meta-link",
+        );
+        const authorUrl = authorLinkEl?.href?.split("?")[0] || null;
+        const authorSubEl = postEl.querySelector(".update-components-actor__description, .update-components-actor__subtitle");
+        const authorSubtitle = authorSubEl?.textContent?.trim() || null;
+
         const urn = postEl.getAttribute("data-urn") || postEl.querySelector("[data-urn]")?.getAttribute("data-urn");
         let postUrl: string | null = null;
         if (urn) postUrl = `https://www.linkedin.com/feed/update/${urn}/`;
 
-        posts.push({ postUrl, postText, postedDate, reactionsCount, commentsCount, repostsCount, mediaType, isRepost, originalAuthor });
+        posts.push({ postUrl, postText, postedDate, reactionsCount, commentsCount, repostsCount, mediaType, isRepost, originalAuthor, authorName, authorUrl, authorSubtitle });
       });
 
       return posts;
@@ -425,6 +445,9 @@ async function scrollAndExtract(
     media_type: p.mediaType || "none",
     is_repost: p.isRepost || false,
     original_author: p.originalAuthor || null,
+    author_name: p.authorName || null,
+    author_url: p.authorUrl || null,
+    author_subtitle: p.authorSubtitle || null,
   }));
 }
 
@@ -643,12 +666,6 @@ async function postJobPosts(posts: ScrapedPost[]): Promise<PostResult> {
 }
 
 export async function scrapeJobSearchPosts(tabId: number, searchUrl: string): Promise<void> {
-  const healthy = await checkServerHealth();
-  if (!healthy) {
-    sendJobProgress({ error: "Rust server not running on localhost:9876" });
-    return;
-  }
-
   sendJobProgress({ status: "Navigating to LinkedIn job search..." });
 
   try {
@@ -675,14 +692,84 @@ export async function scrapeJobSearchPosts(tabId: number, searchUrl: string): Pr
     return;
   }
 
-  sendJobProgress({ status: `Saving ${posts.length} posts...` });
+  sendJobProgress({ status: `Saving ${posts.length} posts to Neon...` });
 
+  // Parse job fields and save to Neon via GraphQL
+  let neonInserted = 0;
   try {
-    const { inserted, filtered } = await postJobPosts(posts);
-    sendJobProgress({ done: true, inserted, filtered, total: posts.length });
+    const inputs = posts
+      .filter((p) => p.post_url)
+      .map((p) => {
+        const fields = parseJobFields(p.post_text || "");
+        return {
+          url: p.post_url!,
+          type: "job" as const,
+          title: extractJobTitle(p.post_text || ""),
+          content: p.post_text || null,
+          authorName: p.author_name || null,
+          authorUrl: p.author_url || null,
+          location: fields.remoteType || null,
+          employmentType: fields.contractType || null,
+          postedAt: p.posted_date || null,
+          rawData: {
+            reactions: p.reactions_count,
+            comments: p.comments_count,
+            reposts: p.reposts_count,
+            mediaType: p.media_type,
+            authorSubtitle: p.author_subtitle,
+            parsedFields: fields,
+          },
+        };
+      });
+
+    if (inputs.length > 0) {
+      const result = await gqlRequest(
+        `mutation UpsertLinkedInPosts($inputs: [UpsertLinkedInPostInput!]!) {
+          upsertLinkedInPosts(inputs: $inputs) { success inserted updated errors }
+        }`,
+        { inputs },
+      );
+      neonInserted = result.data?.upsertLinkedInPosts?.inserted ?? 0;
+    }
   } catch (err) {
-    sendJobProgress({ error: `Failed to save: ${err}` });
+    console.error("[JobScraper] Neon save failed:", err);
   }
+
+  // Optionally send to Rust server for ML scoring (non-blocking)
+  let rustInserted = 0;
+  let rustFiltered = 0;
+  try {
+    const healthy = await checkServerHealth();
+    if (healthy) {
+      const { inserted, filtered } = await postJobPosts(posts);
+      rustInserted = inserted;
+      rustFiltered = filtered;
+    }
+  } catch {
+    // Non-critical — Rust server is optional for job scraping
+  }
+
+  // Extract and save companies from post authors
+  try {
+    const companies = await extractCompanyMentions(tabId);
+    if (companies.length > 0) {
+      await saveCompaniesBatch(companies);
+    }
+  } catch { /* non-critical */ }
+
+  sendJobProgress({
+    done: true,
+    inserted: neonInserted,
+    filtered: rustFiltered,
+    total: posts.length,
+  });
+}
+
+function extractJobTitle(text: string): string | null {
+  // Take first non-empty line as a rough title, truncated
+  const firstLine = text.split("\n").find((l) => l.trim().length > 5)?.trim();
+  if (!firstLine) return null;
+  return firstLine.length > 200 ? firstLine.slice(0, 200) + "…" : firstLine;
 }
 
 // ── Import connections directly via GraphQL (no self-messaging) ──

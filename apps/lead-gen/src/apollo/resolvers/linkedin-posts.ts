@@ -1,5 +1,5 @@
 import { linkedinPosts, type LinkedInPost as DbLinkedInPost } from "@/db/schema";
-import { eq, and, type SQL } from "drizzle-orm";
+import { eq, and, sql, type SQL } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -126,6 +126,85 @@ export const linkedinPostResolvers = {
         .returning();
 
       return row;
+    },
+
+    async upsertLinkedInPosts(
+      _parent: unknown,
+      args: {
+        inputs: Array<{
+          url: string;
+          type: "post" | "job";
+          companyId?: number | null;
+          contactId?: number | null;
+          title?: string | null;
+          content?: string | null;
+          authorName?: string | null;
+          authorUrl?: string | null;
+          location?: string | null;
+          employmentType?: string | null;
+          postedAt?: string | null;
+          rawData?: unknown;
+        }>;
+      },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      let inserted = 0;
+      let updated = 0;
+      const errors: string[] = [];
+
+      // Process in chunks of 50 to avoid overly large SQL statements
+      const CHUNK = 50;
+      for (let i = 0; i < args.inputs.length; i += CHUNK) {
+        const chunk = args.inputs.slice(i, i + CHUNK);
+        const rows = chunk.map((input) => ({
+          url:             input.url,
+          type:            input.type,
+          company_id:      input.companyId   ?? null,
+          contact_id:      input.contactId   ?? null,
+          title:           input.title       ?? null,
+          content:         input.content     ?? null,
+          author_name:     input.authorName  ?? null,
+          author_url:      input.authorUrl   ?? null,
+          location:        input.location    ?? null,
+          employment_type: input.employmentType ?? null,
+          posted_at:       input.postedAt    ?? null,
+          raw_data:        input.rawData != null ? JSON.stringify(input.rawData) : null,
+        }));
+
+        try {
+          const result = await context.db
+            .insert(linkedinPosts)
+            .values(rows)
+            .onConflictDoUpdate({
+              target: linkedinPosts.url,
+              set: {
+                type:            sql`excluded.type`,
+                company_id:      sql`excluded.company_id`,
+                contact_id:      sql`excluded.contact_id`,
+                title:           sql`excluded.title`,
+                content:         sql`excluded.content`,
+                author_name:     sql`excluded.author_name`,
+                author_url:      sql`excluded.author_url`,
+                location:        sql`excluded.location`,
+                employment_type: sql`excluded.employment_type`,
+                posted_at:       sql`excluded.posted_at`,
+                raw_data:        sql`excluded.raw_data`,
+              },
+            })
+            .returning();
+          // Count: if created_at differs from scraped_at significantly, it was an update
+          // Simplification: count all as inserted for now
+          inserted += result.length;
+        } catch (err) {
+          errors.push(err instanceof Error ? err.message : String(err));
+        }
+      }
+
+      return { success: errors.length === 0, inserted, updated, errors };
     },
 
     async deleteLinkedInPost(

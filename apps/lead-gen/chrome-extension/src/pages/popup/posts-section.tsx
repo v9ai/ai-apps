@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Stack, Group, Button, Text, Alert, Badge, Progress } from "@mantine/core";
+import { Stack, Group, Button, Text, Alert, Badge, Progress, TextInput } from "@mantine/core";
 
-const JOB_SEARCH_URL =
-  "https://www.linkedin.com/search/results/content/?keywords=react%20remote%20outside%20ir35%20&origin=SWITCH_SEARCH_VERTICAL";
+const DEFAULT_KEYWORDS = "react remote outside ir35";
+
+function buildSearchUrl(keywords: string): string {
+  return `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(keywords)}&origin=SWITCH_SEARCH_VERTICAL`;
+}
 
 type Phase = "connections" | "import" | "posts" | "companies" | null;
 
@@ -15,6 +18,7 @@ export default function PostsSection() {
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [jobLoading, setJobLoading] = useState(false);
   const [jobStatus, setJobStatus] = useState("");
+  const [keywords, setKeywords] = useState(DEFAULT_KEYWORDS);
 
   // Check server health on mount
   useEffect(() => {
@@ -121,7 +125,7 @@ export default function PostsSection() {
     try {
       const response = await chrome.runtime.sendMessage({
         action: "scrapeJobPosts",
-        searchUrl: JOB_SEARCH_URL,
+        searchUrl: buildSearchUrl(keywords),
       });
       if (!response.success) {
         setJobStatus(response.error || "Failed to start");
@@ -214,14 +218,22 @@ export default function PostsSection() {
         )}
       </Group>
 
+      <TextInput
+        size="xs"
+        placeholder="Search keywords..."
+        value={keywords}
+        onChange={(e) => setKeywords(e.currentTarget.value)}
+        disabled={jobLoading}
+      />
+
       <Button
         onClick={handleScrapeJobs}
-        disabled={jobLoading || loading || serverUp !== true}
+        disabled={jobLoading || loading}
         color="blue"
         size="sm"
         fullWidth
       >
-        {jobLoading ? "Scraping Jobs..." : "Scrape Jobs (IR35)"}
+        {jobLoading ? "Scraping Jobs..." : "Scrape Jobs"}
       </Button>
 
       {jobStatus && (

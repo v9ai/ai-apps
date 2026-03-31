@@ -893,6 +893,7 @@ export type Mutation = {
   updateReminder: ContactReminder;
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
+  upsertLinkedInPosts: UpsertLinkedInPostsResult;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -1216,6 +1217,11 @@ export type MutationUpdateUserSettingsArgs = {
 
 export type MutationUpsertLinkedInPostArgs = {
   input: UpsertLinkedInPostInput;
+};
+
+
+export type MutationUpsertLinkedInPostsArgs = {
+  inputs: Array<UpsertLinkedInPostInput>;
 };
 
 
@@ -1612,6 +1618,14 @@ export type UpsertLinkedInPostInput = {
   url: Scalars['String']['input'];
 };
 
+export type UpsertLinkedInPostsResult = {
+  __typename?: 'UpsertLinkedInPostsResult';
+  errors: Array<Scalars['String']['output']>;
+  inserted: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  updated: Scalars['Int']['output'];
+};
+
 export type UserSettings = {
   __typename?: 'UserSettings';
   created_at: Scalars['String']['output'];
@@ -1833,6 +1847,7 @@ export type ResolversTypes = {
   UpdateReminderInput: ResolverTypeWrapper<Partial<UpdateReminderInput>>;
   Upload: ResolverTypeWrapper<Partial<Scalars['Upload']['output']>>;
   UpsertLinkedInPostInput: ResolverTypeWrapper<Partial<UpsertLinkedInPostInput>>;
+  UpsertLinkedInPostsResult: ResolverTypeWrapper<Partial<UpsertLinkedInPostsResult>>;
   UserSettings: ResolverTypeWrapper<Partial<UserSettings>>;
   UserSettingsInput: ResolverTypeWrapper<Partial<UserSettingsInput>>;
   VerifyEmailResult: ResolverTypeWrapper<Partial<VerifyEmailResult>>;
@@ -1941,6 +1956,7 @@ export type ResolversParentTypes = {
   UpdateReminderInput: Partial<UpdateReminderInput>;
   Upload: Partial<Scalars['Upload']['output']>;
   UpsertLinkedInPostInput: Partial<UpsertLinkedInPostInput>;
+  UpsertLinkedInPostsResult: Partial<UpsertLinkedInPostsResult>;
   UserSettings: Partial<UserSettings>;
   UserSettingsInput: Partial<UserSettingsInput>;
   VerifyEmailResult: Partial<VerifyEmailResult>;
@@ -2574,6 +2590,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationUpdateReminderArgs, 'id' | 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   upsertLinkedInPost?: Resolver<ResolversTypes['LinkedInPost'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostArgs, 'input'>>;
+  upsertLinkedInPosts?: Resolver<ResolversTypes['UpsertLinkedInPostsResult'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostsArgs, 'inputs'>>;
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
 };
 
@@ -2700,6 +2717,13 @@ export interface UploadScalarConfig extends GraphQLScalarTypeConfig<ResolversTyp
   name: 'Upload';
 }
 
+export type UpsertLinkedInPostsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UpsertLinkedInPostsResult'] = ResolversParentTypes['UpsertLinkedInPostsResult']> = {
+  errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  inserted?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  updated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type UserSettingsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserSettings'] = ResolversParentTypes['UserSettings']> = {
   created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   daily_digest?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2797,6 +2821,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   URL?: GraphQLScalarType;
   UnverifyContactsResult?: UnverifyContactsResultResolvers<ContextType>;
   Upload?: GraphQLScalarType;
+  UpsertLinkedInPostsResult?: UpsertLinkedInPostsResultResolvers<ContextType>;
   UserSettings?: UserSettingsResolvers<ContextType>;
   VerifyEmailResult?: VerifyEmailResultResolvers<ContextType>;
   WarcPointer?: WarcPointerResolvers<ContextType>;

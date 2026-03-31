@@ -892,6 +892,7 @@ export type Mutation = {
   updateReminder: ContactReminder;
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
+  upsertLinkedInPosts: UpsertLinkedInPostsResult;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -1215,6 +1216,11 @@ export type MutationUpdateUserSettingsArgs = {
 
 export type MutationUpsertLinkedInPostArgs = {
   input: UpsertLinkedInPostInput;
+};
+
+
+export type MutationUpsertLinkedInPostsArgs = {
+  inputs: Array<UpsertLinkedInPostInput>;
 };
 
 
@@ -1609,6 +1615,14 @@ export type UpsertLinkedInPostInput = {
   title?: InputMaybe<Scalars['String']['input']>;
   type: LinkedInPostType;
   url: Scalars['String']['input'];
+};
+
+export type UpsertLinkedInPostsResult = {
+  __typename: 'UpsertLinkedInPostsResult';
+  errors: Array<Scalars['String']['output']>;
+  inserted: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  updated: Scalars['Int']['output'];
 };
 
 export type UserSettings = {
