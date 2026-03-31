@@ -222,11 +222,12 @@ function emailToRecord(email, fullEmail) {
   if (!subject || !body) return null;
 
   const wc = wordCount(body);
-  if (wc < 30 || wc > 500) return null;
+  if (wc < 80 || wc > 500) return null;  // min 80 words for quality outreach
   if (subject.length < 5) return null;
 
   // Skip system/transactional emails
   const lowerSubject = subject.toLowerCase();
+  const lowerBody = body.toLowerCase();
   if (
     lowerSubject.includes("verify") ||
     lowerSubject.includes("password") ||
@@ -234,6 +235,25 @@ function emailToRecord(email, fullEmail) {
     lowerSubject.includes("confirm") ||
     lowerSubject.includes("notification") ||
     lowerSubject.includes("unsubscribe")
+  ) {
+    return null;
+  }
+
+  // Skip recruitment agency / contractor / crypto / trading emails
+  const textToCheck = lowerSubject + " " + lowerBody;
+  if (
+    textToCheck.includes("ir35") ||
+    textToCheck.includes("contract position") ||
+    textToCheck.includes("contract roles") ||
+    textToCheck.includes("contract availability") ||
+    textToCheck.includes("contract inquiry") ||
+    textToCheck.includes("contract opportunities") ||
+    textToCheck.includes("crypto") ||
+    textToCheck.includes("trading") ||
+    textToCheck.includes("blockchain") ||
+    textToCheck.includes("defi") ||
+    textToCheck.includes("web3") ||
+    textToCheck.includes("nft")
   ) {
     return null;
   }
@@ -305,21 +325,23 @@ async function main() {
 
   console.error(`\nBefore dedup: ${records.length} valid, ${skipped} skipped, ${fetchErrors} fetch errors`);
 
-  // Dedup by subject + body content hash (keeps body diversity per subject)
+  // Dedup: exact body match + max 3 per subject (prevents template over-representation)
   const seen = new Set();
+  const subjectCounts = {};
+  const MAX_PER_SUBJECT = 3;
   const deduped = [];
   for (const rec of records) {
     const subj = rec._meta.subject;
-    // Use first 100 chars of body as content fingerprint
     const assistantMsg = rec.messages[2]?.content || "";
-    const bodyStart = assistantMsg.slice(0, 150);
+    const bodyStart = assistantMsg.slice(0, 200);
     const key = `${subj}|||${bodyStart}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      deduped.push(rec);
-    }
+    if (seen.has(key)) continue;
+    seen.add(key);
+    subjectCounts[subj] = (subjectCounts[subj] || 0) + 1;
+    if (subjectCounts[subj] > MAX_PER_SUBJECT) continue;
+    deduped.push(rec);
   }
-  console.error(`After dedup: ${deduped.length} unique (from ${records.length})`);
+  console.error(`After dedup: ${deduped.length} unique (from ${records.length}, max ${MAX_PER_SUBJECT}/subject)`);
   const finalRecords = deduped;
 
   // Write JSONL
