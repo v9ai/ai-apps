@@ -1,31 +1,20 @@
 #!/usr/bin/env python3
 """
 Crawl all LangGraph courses on Udemy: metadata, curriculum, and reviews.
+Uses Playwright (headless Chromium) to bypass JS-rendering and anti-bot.
 Saves everything to a local SQLite database.
 """
 
 import json
 import sqlite3
 import time
-import sys
 import re
 from datetime import datetime
 from urllib.parse import quote_plus
 
-import requests
-from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright, Page
 
 DB_PATH = "data/udemy_langgraph.db"
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://www.udemy.com/",
-}
-
-SESSION = requests.Session()
-SESSION.headers.update(HEADERS)
 
 
 # ---------------------------------------------------------------------------
@@ -37,6 +26,7 @@ def init_db(conn: sqlite3.Connection):
         CREATE TABLE IF NOT EXISTS courses (
             id              INTEGER PRIMARY KEY,
             title           TEXT,
+            slug            TEXT,
             url             TEXT,
             headline        TEXT,
             description     TEXT,
@@ -55,6 +45,9 @@ def init_db(conn: sqlite3.Connection):
             created         TEXT,
             last_updated    TEXT,
             image_url       TEXT,
+            what_you_learn  TEXT,
+            requirements    TEXT,
+            target_audience TEXT,
             raw_json        TEXT,
             crawled_at      TEXT
         );
@@ -62,24 +55,24 @@ def init_db(conn: sqlite3.Connection):
         CREATE TABLE IF NOT EXISTS curriculum (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             course_id   INTEGER NOT NULL,
-            sort_order  INTEGER,
-            item_type   TEXT,          -- chapter / lecture
+            section_idx INTEGER,
+            section_title TEXT,
+            item_idx    INTEGER,
+            item_type   TEXT,          -- section / lecture
             title       TEXT,
-            description TEXT,
-            content_summary TEXT,
-            is_free     INTEGER DEFAULT 0,
             duration    TEXT,
+            is_free     INTEGER DEFAULT 0,
             FOREIGN KEY (course_id) REFERENCES courses(id)
         );
 
         CREATE TABLE IF NOT EXISTS reviews (
-            id          INTEGER PRIMARY KEY,
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
             course_id   INTEGER NOT NULL,
             rating      REAL,
             content     TEXT,
             author      TEXT,
             created     TEXT,
-            modified    TEXT,
+            helpful     INTEGER DEFAULT 0,
             FOREIGN KEY (course_id) REFERENCES courses(id)
         );
     """)
@@ -87,310 +80,503 @@ def init_db(conn: sqlite3.Connection):
 
 
 # ---------------------------------------------------------------------------
-# Udemy API helpers  (public endpoints the browser uses)
+# Intercept Udemy API calls made by the browser
 # ---------------------------------------------------------------------------
 
-API_BASE = "https://www.udemy.com/api-2.0"
+def intercept_api_search(page: Page, query: str):
+    """Navigate to Udemy search and collect course data from intercepted API calls."""
+    captured = []
 
-COURSE_FIELDS = (
-    "title,url,headline,description,price_text,num_subscribers,"
-    "avg_rating,num_reviews,num_published_lectures,content_info_short,"
-    "instructional_level,primary_category,primary_subcategory,"
-    "locale,visible_instructors,created,last_update_date,image_480x270"
-)
+    def on_response(response):
+        url = response.url
+        if "/api-2.0/search-courses/" in url or ("/api-2.0/courses/" in url and "search" in url):
+            try:
+                data = response.json()
+                if "results" in data:
+                    captured.extend(data["results"])
+                elif "courses" in data:
+                    captured.extend(data["courses"])
+            except Exception:
+                pass
 
-
-def search_courses(query: str = "langgraph"):
-    """Return list of course dicts from Udemy search."""
-    courses = []
-    page = 1
-    while True:
-        url = (
-            f"{API_BASE}/courses/"
-            f"?search={quote_plus(query)}"
-            f"&page={page}&page_size=60"
-            f"&fields[course]={COURSE_FIELDS}"
-        )
-        print(f"  [search] page {page} …")
-        resp = SESSION.get(url, timeout=30)
-        if resp.status_code != 200:
-            print(f"  [search] HTTP {resp.status_code}, trying page scrape fallback")
-            return None  # signal to use fallback
-        data = resp.json()
-        results = data.get("results", [])
-        if not results:
-            break
-        courses.extend(results)
-        if not data.get("next"):
-            break
-        page += 1
-        time.sleep(1.5)
-    return courses
-
-
-def fetch_curriculum(course_id: int):
-    """Fetch public curriculum items for a course."""
-    items = []
-    page = 1
-    while True:
-        url = (
-            f"{API_BASE}/courses/{course_id}/public-curriculum-items/"
-            f"?page={page}&page_size=200"
-        )
-        resp = SESSION.get(url, timeout=30)
-        if resp.status_code != 200:
-            print(f"    [curriculum] HTTP {resp.status_code}")
-            break
-        data = resp.json()
-        results = data.get("results", [])
-        if not results:
-            break
-        items.extend(results)
-        if not data.get("next"):
-            break
-        page += 1
-        time.sleep(1)
-    return items
-
-
-def fetch_reviews(course_id: int, max_pages: int = 50):
-    """Fetch all reviews for a course (paginated)."""
-    reviews = []
-    page = 1
-    while page <= max_pages:
-        url = (
-            f"{API_BASE}/courses/{course_id}/reviews/"
-            f"?page={page}&page_size=50"
-        )
-        resp = SESSION.get(url, timeout=30)
-        if resp.status_code != 200:
-            print(f"    [reviews] HTTP {resp.status_code}")
-            break
-        data = resp.json()
-        results = data.get("results", [])
-        if not results:
-            break
-        reviews.extend(results)
-        if not data.get("next"):
-            break
-        page += 1
-        time.sleep(1)
-    return reviews
-
-
-# ---------------------------------------------------------------------------
-# Fallback: scrape search results page when API is blocked
-# ---------------------------------------------------------------------------
-
-def scrape_search_page(query: str = "langgraph"):
-    """Scrape Udemy search results page for course URLs, then fetch each."""
+    page.on("response", on_response)
     search_url = f"https://www.udemy.com/courses/search/?q={quote_plus(query)}"
-    print(f"  [scrape] GET {search_url}")
-    resp = SESSION.get(search_url, timeout=30)
-    soup = BeautifulSoup(resp.text, "lxml")
+    print(f"  [browser] {search_url}")
+    page.goto(search_url, wait_until="networkidle", timeout=60000)
+    time.sleep(3)
 
-    # Udemy embeds JSON state in a script tag
-    courses = []
-
-    # Try to extract from UD.config or server-data
-    for script in soup.find_all("script", {"type": "application/json"}):
-        try:
-            blob = json.loads(script.string or "")
-            courses = _extract_courses_from_blob(blob)
-            if courses:
-                return courses
-        except (json.JSONDecodeError, TypeError):
-            continue
-
-    # Try data-component-args pattern
-    for div in soup.find_all(attrs={"data-component-props": True}):
-        try:
-            blob = json.loads(div["data-component-props"])
-            courses = _extract_courses_from_blob(blob)
-            if courses:
-                return courses
-        except (json.JSONDecodeError, TypeError, KeyError):
-            continue
-
-    # Fallback: grab course links
-    links = set()
-    for a in soup.find_all("a", href=True):
-        href = a["href"]
-        if "/course/" in href and href not in links:
-            links.add(href)
-
-    # For each course link, fetch individual course page
-    for link in sorted(links):
-        slug = link.rstrip("/").split("/")[-1]
-        course = scrape_course_page(slug)
-        if course:
-            courses.append(course)
+    # Scroll to load more results
+    for _ in range(5):
+        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         time.sleep(2)
 
-    return courses
+    page.remove_listener("response", on_response)
+    return captured
 
 
-def _extract_courses_from_blob(blob, depth=0):
-    """Recursively search JSON blob for course list."""
-    if depth > 8:
-        return []
-    if isinstance(blob, list):
-        # Check if this list contains course-like dicts
-        if blob and isinstance(blob[0], dict) and "title" in blob[0] and ("id" in blob[0] or "url" in blob[0]):
-            return blob
-        for item in blob:
-            result = _extract_courses_from_blob(item, depth + 1)
-            if result:
-                return result
-    elif isinstance(blob, dict):
-        # Look for keys that suggest course listings
-        for key in ("results", "courses", "unit_items", "items", "searchResults"):
-            if key in blob:
-                result = _extract_courses_from_blob(blob[key], depth + 1)
-                if result:
-                    return result
-        for v in blob.values():
-            result = _extract_courses_from_blob(v, depth + 1)
-            if result:
-                return result
-    return []
+def collect_course_links(page: Page, query: str):
+    """Scrape course links from search results page."""
+    search_url = f"https://www.udemy.com/courses/search/?q={quote_plus(query)}"
+    print(f"  [browser] {search_url}")
+    page.goto(search_url, wait_until="networkidle", timeout=60000)
+    time.sleep(3)
+
+    # Scroll to load everything
+    for _ in range(5):
+        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(1.5)
+
+    # Extract course links
+    links = page.eval_on_selector_all(
+        'a[href*="/course/"]',
+        """els => [...new Set(els
+            .map(e => e.getAttribute('href'))
+            .filter(h => h && h.includes('/course/'))
+            .map(h => {
+                const m = h.match(/\\/course\\/([^/?#]+)/);
+                return m ? m[1] : null;
+            })
+            .filter(Boolean)
+        )]"""
+    )
+    return links
 
 
-def scrape_course_page(slug: str):
-    """Scrape an individual course page for metadata."""
+def scrape_course_page(page: Page, slug: str, conn: sqlite3.Connection):
+    """Scrape a single course page for all details, curriculum, and reviews."""
     url = f"https://www.udemy.com/course/{slug}/"
-    print(f"  [course] GET {url}")
-    resp = SESSION.get(url, timeout=30)
-    soup = BeautifulSoup(resp.text, "lxml")
+    print(f"\n  [course] {url}")
 
-    # Try JSON-LD
-    for script in soup.find_all("script", {"type": "application/ld+json"}):
+    try:
+        page.goto(url, wait_until="networkidle", timeout=60000)
+    except Exception as e:
+        print(f"    SKIP (navigation failed): {e}")
+        return None
+    time.sleep(3)
+
+    # --- Extract JSON-LD structured data ---
+    ld_data = None
+    try:
+        ld_scripts = page.query_selector_all('script[type="application/ld+json"]')
+        for s in ld_scripts:
+            txt = s.inner_text()
+            try:
+                parsed = json.loads(txt)
+                if isinstance(parsed, dict) and parsed.get("@type") == "Course":
+                    ld_data = parsed
+                    break
+                if isinstance(parsed, list):
+                    for item in parsed:
+                        if isinstance(item, dict) and item.get("@type") == "Course":
+                            ld_data = item
+                            break
+            except json.JSONDecodeError:
+                continue
+    except Exception:
+        pass
+
+    # --- Extract from page directly ---
+    course_id = abs(hash(slug)) % (10**9)
+
+    title = ""
+    try:
+        title = page.inner_text('h1[data-purpose="lead-title"]')
+    except Exception:
         try:
-            ld = json.loads(script.string or "")
-            if isinstance(ld, dict) and ld.get("@type") == "Course":
-                return _ld_to_course(ld, slug, url)
-            if isinstance(ld, list):
-                for item in ld:
-                    if isinstance(item, dict) and item.get("@type") == "Course":
-                        return _ld_to_course(item, slug, url)
-        except (json.JSONDecodeError, TypeError):
-            continue
+            title = page.inner_text("h1")
+        except Exception:
+            if ld_data:
+                title = ld_data.get("name", slug)
 
-    return None
+    headline = ""
+    try:
+        headline = page.inner_text('[data-purpose="lead-headline"]')
+    except Exception:
+        if ld_data:
+            headline = ld_data.get("description", "")
 
+    # Rating & stats
+    avg_rating = 0.0
+    num_reviews = 0
+    num_subscribers = 0
+    num_lectures = 0
+    content_length = ""
+    level = ""
+    language = ""
 
-def _ld_to_course(ld: dict, slug: str, page_url: str):
-    """Convert JSON-LD Course schema to our course dict."""
-    provider = ld.get("provider", {})
-    agg = ld.get("aggregateRating", {})
-    instructor = ld.get("creator", [{}])
-    if isinstance(instructor, list):
-        instructor = instructor[0] if instructor else {}
-    return {
-        "id": abs(hash(slug)) % (10**9),  # synthetic ID
-        "title": ld.get("name", ""),
-        "url": f"/course/{slug}/",
-        "headline": ld.get("description", ""),
-        "description": ld.get("description", ""),
-        "price_text": "",
-        "num_subscribers": 0,
-        "avg_rating": float(agg.get("ratingValue", 0)),
-        "num_reviews": int(agg.get("reviewCount", 0)),
-        "num_published_lectures": 0,
-        "content_info_short": "",
-        "instructional_level": "",
-        "primary_category": {},
-        "primary_subcategory": {},
-        "locale": {},
-        "visible_instructors": [{"title": instructor.get("name", ""), "url": ""}],
-        "created": "",
-        "last_update_date": "",
-        "image_480x270": ld.get("image", ""),
-        "_slug": slug,
-    }
+    if ld_data:
+        agg = ld_data.get("aggregateRating", {})
+        avg_rating = float(agg.get("ratingValue", 0))
+        num_reviews = int(agg.get("reviewCount", 0))
 
+    # Try to get stats from visible text
+    try:
+        stats_text = page.inner_text('[data-purpose="course-stat"]') if page.query_selector('[data-purpose="course-stat"]') else ""
+    except Exception:
+        stats_text = ""
 
-# ---------------------------------------------------------------------------
-# Persistence
-# ---------------------------------------------------------------------------
+    try:
+        meta_text = page.content()
+        m = re.search(r'([\d,]+)\s*students', meta_text)
+        if m:
+            num_subscribers = int(m.group(1).replace(",", ""))
+        m = re.search(r'([\d.]+)\s*total hours', meta_text)
+        if m:
+            content_length = f"{m.group(1)} total hours"
+        m = re.search(r'(\d+)\s*lectures', meta_text)
+        if m:
+            num_lectures = int(m.group(1))
+    except Exception:
+        pass
 
-def save_course(conn: sqlite3.Connection, c: dict):
-    instructors = c.get("visible_instructors", [{}])
-    instr = instructors[0] if instructors else {}
-    cat = c.get("primary_category") or {}
-    subcat = c.get("primary_subcategory") or {}
-    locale = c.get("locale") or {}
+    # Price
+    price = ""
+    try:
+        price_el = page.query_selector('[data-purpose="course-price-text"] span span')
+        if price_el:
+            price = price_el.inner_text().strip()
+    except Exception:
+        pass
+
+    # Instructor
+    instructor_name = ""
+    instructor_url = ""
+    if ld_data:
+        creator = ld_data.get("creator", [])
+        if isinstance(creator, list) and creator:
+            instructor_name = creator[0].get("name", "")
+        elif isinstance(creator, dict):
+            instructor_name = creator.get("name", "")
+    try:
+        instr_el = page.query_selector('[data-purpose="instructor-name-top"] a')
+        if instr_el:
+            instructor_name = instr_el.inner_text().strip() or instructor_name
+            instructor_url = instr_el.get_attribute("href") or ""
+    except Exception:
+        pass
+
+    # Last updated
+    last_updated = ""
+    try:
+        upd_el = page.query_selector('[data-purpose="last-update-date"] span')
+        if upd_el:
+            last_updated = upd_el.inner_text().strip()
+    except Exception:
+        pass
+
+    # Image
+    image_url = ""
+    if ld_data:
+        image_url = ld_data.get("image", "")
+
+    # What you'll learn
+    what_you_learn = ""
+    try:
+        items = page.query_selector_all('[data-purpose="objective"] span')
+        if items:
+            what_you_learn = "\n".join(i.inner_text().strip() for i in items)
+    except Exception:
+        pass
+
+    # Description (full)
+    description = headline
+    try:
+        desc_el = page.query_selector('[data-purpose="safely-set-inner-html:description"]')
+        if desc_el:
+            description = desc_el.inner_text().strip()
+    except Exception:
+        pass
+
+    # Requirements
+    requirements = ""
+    try:
+        req_items = page.query_selector_all('[data-purpose="prerequisites"] li')
+        if req_items:
+            requirements = "\n".join(r.inner_text().strip() for r in req_items)
+    except Exception:
+        pass
+
+    # Target audience
+    target_audience = ""
+    try:
+        ta_items = page.query_selector_all('[data-purpose="target-audience"] li')
+        if ta_items:
+            target_audience = "\n".join(t.inner_text().strip() for t in ta_items)
+    except Exception:
+        pass
+
+    print(f"    Title: {title}")
+    print(f"    Rating: {avg_rating} ({num_reviews} reviews), {num_subscribers} students")
+
+    # Save course
     conn.execute("""
         INSERT OR REPLACE INTO courses
-        (id, title, url, headline, description, price, num_subscribers,
+        (id, title, slug, url, headline, description, price, num_subscribers,
          avg_rating, num_reviews, num_lectures, content_length, level,
          category, subcategory, language, instructor_name, instructor_url,
-         created, last_updated, image_url, raw_json, crawled_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         created, last_updated, image_url, what_you_learn, requirements,
+         target_audience, raw_json, crawled_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
-        c.get("id"),
-        c.get("title", ""),
-        "https://www.udemy.com" + c.get("url", ""),
-        c.get("headline", ""),
-        c.get("description", ""),
-        c.get("price_text", ""),
-        c.get("num_subscribers", 0),
-        c.get("avg_rating", 0),
-        c.get("num_reviews", 0),
-        c.get("num_published_lectures", 0),
-        c.get("content_info_short", ""),
-        c.get("instructional_level", ""),
-        cat.get("title", ""),
-        subcat.get("title", ""),
-        locale.get("title", "") if isinstance(locale, dict) else str(locale),
-        instr.get("title", instr.get("name", "")),
-        instr.get("url", ""),
-        c.get("created", ""),
-        c.get("last_update_date", ""),
-        c.get("image_480x270", ""),
-        json.dumps(c),
-        datetime.utcnow().isoformat(),
+        course_id, title, slug, url, headline, description, price, num_subscribers,
+        avg_rating, num_reviews, num_lectures, content_length, level,
+        "", "", language, instructor_name, instructor_url,
+        "", last_updated, image_url, what_you_learn, requirements,
+        target_audience, json.dumps(ld_data or {}), datetime.utcnow().isoformat(),
     ))
     conn.commit()
 
+    # --- Curriculum ---
+    print(f"    Fetching curriculum …")
+    scrape_curriculum(page, course_id, conn)
 
-def save_curriculum_items(conn: sqlite3.Connection, course_id: int, items: list):
-    for i, item in enumerate(items):
-        conn.execute("""
-            INSERT OR REPLACE INTO curriculum
-            (course_id, sort_order, item_type, title, description,
-             content_summary, is_free, duration)
-            VALUES (?,?,?,?,?,?,?,?)
-        """, (
-            course_id,
-            item.get("sort_order", i),
-            item.get("_class", ""),
-            item.get("title", ""),
-            item.get("description", ""),
-            item.get("content_summary", ""),
-            1 if item.get("is_free") else 0,
-            str(item.get("content_summary", "")),
-        ))
-    conn.commit()
+    # --- Reviews ---
+    print(f"    Fetching reviews …")
+    scrape_reviews(page, course_id, slug, conn)
+
+    return course_id
 
 
-def save_reviews_batch(conn: sqlite3.Connection, course_id: int, reviews: list):
-    for r in reviews:
+def scrape_curriculum(page: Page, course_id: int, conn: sqlite3.Connection):
+    """Extract curriculum sections and lectures from the course page."""
+    # First, try to expand all sections
+    try:
+        expand_btn = page.query_selector('button[data-purpose="expand-toggle"]')
+        if expand_btn:
+            expand_btn.click()
+            time.sleep(2)
+    except Exception:
+        pass
+
+    # Also try clicking "Show more" for sections
+    try:
+        show_more_btns = page.query_selector_all('[data-purpose="show-more"]')
+        for btn in show_more_btns:
+            try:
+                btn.click()
+                time.sleep(0.5)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    count = 0
+    try:
+        # Get all section panels
+        sections = page.query_selector_all('[data-purpose="course-curriculum"] [class*="section"]')
+        if not sections:
+            sections = page.query_selector_all('[class*="accordion-panel"]')
+
+        # Alternative: get the full curriculum text structure
+        curriculum_el = page.query_selector('[data-purpose="course-curriculum"]')
+        if curriculum_el:
+            # Parse the curriculum structure
+            inner_html = curriculum_el.inner_html()
+
+            # Try structured extraction with section headers and lecture items
+            section_headers = curriculum_el.query_selector_all('[class*="section--section-heading"]')
+            if not section_headers:
+                section_headers = curriculum_el.query_selector_all('button[class*="section"]')
+
+            section_idx = 0
+            all_rows = curriculum_el.query_selector_all('[class*="section--section-heading"], [class*="section--item"]')
+            if not all_rows:
+                all_rows = curriculum_el.query_selector_all('div[role="listitem"], button[aria-expanded]')
+
+            current_section = "Main"
+            item_idx = 0
+            for row in all_rows:
+                text = row.inner_text().strip()
+                classes = row.get_attribute("class") or ""
+
+                if "heading" in classes or row.evaluate("el => el.tagName") == "BUTTON":
+                    # This is a section header
+                    section_idx += 1
+                    item_idx = 0
+                    current_section = text.split("\n")[0].strip()
+                    conn.execute("""
+                        INSERT INTO curriculum
+                        (course_id, section_idx, section_title, item_idx, item_type, title, duration, is_free)
+                        VALUES (?,?,?,?,?,?,?,?)
+                    """, (course_id, section_idx, current_section, 0, "section", current_section, "", 0))
+                    count += 1
+                else:
+                    # This is a lecture item
+                    item_idx += 1
+                    lines = [l.strip() for l in text.split("\n") if l.strip()]
+                    lec_title = lines[0] if lines else text
+                    duration = ""
+                    is_free = 0
+                    for l in lines:
+                        if re.match(r'\d+:\d+', l):
+                            duration = l
+                        if "Preview" in l or "preview" in l:
+                            is_free = 1
+
+                    conn.execute("""
+                        INSERT INTO curriculum
+                        (course_id, section_idx, section_title, item_idx, item_type, title, duration, is_free)
+                        VALUES (?,?,?,?,?,?,?,?)
+                    """, (course_id, section_idx, current_section, item_idx, "lecture", lec_title, duration, is_free))
+                    count += 1
+
+            conn.commit()
+
+        if count == 0:
+            # Fallback: just grab all text from curriculum area
+            try:
+                full_text = curriculum_el.inner_text() if curriculum_el else ""
+                if full_text:
+                    conn.execute("""
+                        INSERT INTO curriculum
+                        (course_id, section_idx, section_title, item_idx, item_type, title, duration, is_free)
+                        VALUES (?,?,?,?,?,?,?,?)
+                    """, (course_id, 0, "Full Curriculum", 0, "raw_text", full_text, "", 0))
+                    conn.commit()
+                    count = 1
+            except Exception:
+                pass
+
+    except Exception as e:
+        print(f"      curriculum error: {e}")
+
+    print(f"      → {count} curriculum items")
+
+
+def scrape_reviews(page: Page, course_id: int, slug: str, conn: sqlite3.Connection):
+    """Scrape reviews, loading more pages via button clicks."""
+    total = 0
+
+    # Navigate to reviews section or use API intercept
+    try:
+        # First try scrolling to reviews on course page
+        page.evaluate("""() => {
+            const el = document.querySelector('[data-purpose="reviews"]') ||
+                       document.querySelector('#reviews');
+            if (el) el.scrollIntoView({behavior: 'instant'});
+        }""")
+        time.sleep(2)
+    except Exception:
+        pass
+
+    # Try intercepting the reviews API endpoint
+    review_data = []
+
+    def capture_reviews(response):
+        if "/reviews/" in response.url and "api" in response.url:
+            try:
+                data = response.json()
+                if "results" in data:
+                    review_data.extend(data["results"])
+            except Exception:
+                pass
+
+    page.on("response", capture_reviews)
+
+    # Try to trigger reviews loading by navigating to review-specific URL or clicking
+    try:
+        # Click "See more reviews" or pagination buttons
+        for _ in range(20):  # Up to 20 pages of reviews
+            next_btn = page.query_selector('[data-purpose="pagination-button-next"]') or \
+                       page.query_selector('button:has-text("Show more reviews")') or \
+                       page.query_selector('[class*="show-more-review"]')
+            if not next_btn:
+                break
+            next_btn.click()
+            time.sleep(2)
+    except Exception:
+        pass
+
+    # Also try to load reviews via the reviews page URL pattern
+    try:
+        reviews_url = f"https://www.udemy.com/course/{slug}/reviews/"
+        page.goto(reviews_url, wait_until="networkidle", timeout=30000)
+        time.sleep(3)
+
+        # Keep clicking "Show more" for reviews
+        for _ in range(30):
+            try:
+                more_btn = page.query_selector('button:has-text("Show more")') or \
+                           page.query_selector('[data-purpose="show-more-review-button"]')
+                if not more_btn or not more_btn.is_visible():
+                    break
+                more_btn.click()
+                time.sleep(1.5)
+            except Exception:
+                break
+    except Exception:
+        pass
+
+    page.remove_listener("response", capture_reviews)
+
+    # Save any API-intercepted reviews
+    for r in review_data:
         user = r.get("user", {})
         conn.execute("""
-            INSERT OR REPLACE INTO reviews
-            (id, course_id, rating, content, author, created, modified)
-            VALUES (?,?,?,?,?,?,?)
+            INSERT OR IGNORE INTO reviews
+            (course_id, rating, content, author, created, helpful)
+            VALUES (?,?,?,?,?,?)
         """, (
-            r.get("id", abs(hash(r.get("content", ""))) % (10**9)),
             course_id,
             r.get("rating", 0),
             r.get("content", ""),
             user.get("title", user.get("display_name", "")),
             r.get("created", ""),
-            r.get("modified", ""),
+            r.get("num_helpful", 0),
         ))
+        total += 1
+
+    # Also scrape visible reviews from the page DOM
+    try:
+        review_cards = page.query_selector_all('[class*="review-"] [class*="individual-review"]') or \
+                       page.query_selector_all('[data-purpose="review-comment-content"]')
+
+        if not review_cards:
+            # Broader selector
+            review_cards = page.query_selector_all('[class*="reviews--review"]')
+
+        for card in review_cards:
+            try:
+                content = ""
+                author = ""
+                rating = 0.0
+                created = ""
+
+                # Try different selectors for review content
+                content_el = card.query_selector('[data-purpose="review-comment-content"]') or \
+                             card.query_selector('[class*="review-content"]')
+                if content_el:
+                    content = content_el.inner_text().strip()
+
+                author_el = card.query_selector('[class*="review-author"]') or \
+                            card.query_selector('[data-purpose="review-detail-user-name"]')
+                if author_el:
+                    author = author_el.inner_text().strip()
+
+                # Rating from star icons
+                stars = card.query_selector_all('[class*="star-rating"] [class*="star"]')
+                if stars:
+                    rating = len([s for s in stars if "filled" in (s.get_attribute("class") or "")])
+
+                date_el = card.query_selector('[class*="review-date"]') or \
+                          card.query_selector('time')
+                if date_el:
+                    created = date_el.inner_text().strip()
+
+                if content:
+                    conn.execute("""
+                        INSERT OR IGNORE INTO reviews
+                        (course_id, rating, content, author, created, helpful)
+                        VALUES (?,?,?,?,?,?)
+                    """, (course_id, rating, content, author, created, 0))
+                    total += 1
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"      review scrape error: {e}")
+
     conn.commit()
+    print(f"      → {total} reviews saved")
 
 
 # ---------------------------------------------------------------------------
@@ -398,75 +584,65 @@ def save_reviews_batch(conn: sqlite3.Connection, course_id: int, reviews: list):
 # ---------------------------------------------------------------------------
 
 def main():
-    print(f"=== Udemy LangGraph Crawler ===")
+    print("=== Udemy LangGraph Crawler (Playwright) ===")
     print(f"DB: {DB_PATH}\n")
 
     conn = sqlite3.connect(DB_PATH)
     init_db(conn)
 
-    # --- Search for courses ---
-    print("[1/3] Searching for LangGraph courses …")
-    courses = search_courses("langgraph")
+    # Clear old data for fresh crawl
+    conn.executescript("DELETE FROM reviews; DELETE FROM curriculum; DELETE FROM courses;")
 
-    if courses is None:
-        # API blocked, use scrape fallback
-        print("  API blocked — falling back to page scraping …")
-        courses = scrape_search_page("langgraph")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            viewport={"width": 1440, "height": 900},
+            locale="en-US",
+        )
+        page = context.new_page()
 
-    if not courses:
-        print("  No courses found. Trying broader search …")
-        courses = search_courses("lang graph ai")
-        if courses is None:
-            courses = scrape_search_page("lang graph ai")
+        # --- Step 1: Find all LangGraph course slugs ---
+        all_slugs = set()
+        for query in ["langgraph", "langgraph langchain", "langgraph agent", "langgraph python"]:
+            print(f"[1] Searching: '{query}' …")
+            slugs = collect_course_links(page, query)
+            print(f"    → {len(slugs)} course links")
+            all_slugs.update(slugs)
+            time.sleep(2)
 
-    # Also search related terms to be thorough
-    for extra_query in ["langgraph langchain agent", "langgraph python"]:
-        print(f"\n  Also searching: '{extra_query}' …")
-        extra = search_courses(extra_query)
-        if extra is None:
-            extra = scrape_search_page(extra_query)
-        if extra:
-            existing_ids = {c.get("id") for c in courses}
-            for c in extra:
-                if c.get("id") not in existing_ids:
-                    courses.append(c)
-                    existing_ids.add(c.get("id"))
-        time.sleep(2)
+        # Filter: only keep slugs likely about LangGraph
+        lang_slugs = [s for s in all_slugs if "langgraph" in s.lower() or "lang-graph" in s.lower()]
+        other_slugs = [s for s in all_slugs if s not in lang_slugs]
 
-    print(f"\n  Found {len(courses)} unique courses total.\n")
+        # Always include langgraph slugs; include others only if they look relevant
+        final_slugs = lang_slugs + other_slugs
+        print(f"\n  Total unique course slugs: {len(final_slugs)}")
+        print(f"  LangGraph-specific: {len(lang_slugs)}")
+        print(f"  Related: {len(other_slugs)}")
 
-    # --- Process each course ---
-    for i, course in enumerate(courses, 1):
-        cid = course.get("id")
-        title = course.get("title", "???")
-        print(f"[2/3] Course {i}/{len(courses)}: {title}")
+        # --- Step 2: Scrape each course ---
+        for i, slug in enumerate(final_slugs, 1):
+            print(f"\n[2] Course {i}/{len(final_slugs)}: {slug}")
+            try:
+                scrape_course_page(page, slug, conn)
+            except Exception as e:
+                print(f"    ERROR: {e}")
+            time.sleep(3)
 
-        # Save course metadata
-        save_course(conn, course)
-
-        # Fetch & save curriculum
-        print(f"  Fetching curriculum …")
-        curriculum = fetch_curriculum(cid)
-        print(f"    → {len(curriculum)} items")
-        if curriculum:
-            save_curriculum_items(conn, cid, curriculum)
-        time.sleep(1)
-
-        # Fetch & save reviews
-        print(f"  Fetching reviews …")
-        reviews = fetch_reviews(cid)
-        print(f"    → {len(reviews)} reviews")
-        if reviews:
-            save_reviews_batch(conn, cid, reviews)
-
-        print()
-        time.sleep(2)
+        browser.close()
 
     # --- Summary ---
-    print("[3/3] Summary")
+    print("\n" + "=" * 50)
+    print("[3] Final Summary")
     for table in ("courses", "curriculum", "reviews"):
         count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         print(f"  {table}: {count} rows")
+
+    # Show course titles
+    print("\nCourses crawled:")
+    for row in conn.execute("SELECT title, avg_rating, num_reviews, slug FROM courses ORDER BY avg_rating DESC"):
+        print(f"  ★ {row[1]:.1f} ({row[2]} reviews) — {row[0]}")
 
     conn.close()
     print(f"\nDone! Database saved to {DB_PATH}")
