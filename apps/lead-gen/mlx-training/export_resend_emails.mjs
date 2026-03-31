@@ -112,7 +112,7 @@ async function fetchAllEmails() {
   return allEmails.slice(0, limit);
 }
 
-// ── Fetch full email content ────────────────────────────────────────────────
+// ── Fetch full email content (with concurrency) ────────────────────────────
 
 async function fetchEmailContent(emailId) {
   try {
@@ -122,6 +122,29 @@ async function fetchEmailContent(emailId) {
   } catch {
     return null;
   }
+}
+
+/**
+ * Fetch emails in concurrent batches to speed up the export.
+ * Resend rate limit is 10 req/sec; we use 5 concurrent to stay safe.
+ */
+async function fetchEmailsBatch(emails, concurrency = 5) {
+  const results = new Array(emails.length).fill(null);
+  let cursor = 0;
+
+  async function worker() {
+    while (true) {
+      const idx = cursor++;
+      if (idx >= emails.length) break;
+      results[idx] = await fetchEmailContent(emails[idx].id);
+      // Small delay per request within each worker
+      await sleep(100);
+    }
+  }
+
+  const workers = Array.from({ length: concurrency }, () => worker());
+  await Promise.all(workers);
+  return results;
 }
 
 // ── Build training record ───────────────────────────────────────────────────
@@ -229,33 +252,30 @@ async function main() {
     return;
   }
 
-  // Fetch full content for each email
-  console.error("\nFetching full content for each email...");
+  // Fetch full content with concurrent workers
+  console.error(`\nFetching full content for ${emails.length} emails (5 concurrent workers)...`);
+  const fullEmails = await fetchEmailsBatch(emails, 5);
+
   const records = [];
   let skipped = 0;
   let fetchErrors = 0;
 
   for (let i = 0; i < emails.length; i++) {
-    const email = emails[i];
-
-    // Rate limit: ~5 req/sec
-    if (i > 0) await sleep(200);
-
-    const full = await fetchEmailContent(email.id);
+    const full = fullEmails[i];
     if (!full) {
       fetchErrors++;
       continue;
     }
 
-    const record = emailToRecord(email, full);
+    const record = emailToRecord(emails[i], full);
     if (record) {
       records.push(record);
     } else {
       skipped++;
     }
 
-    if ((i + 1) % 50 === 0) {
-      console.error(`  Progress: ${i + 1}/${emails.length} (${records.length} valid, ${skipped} skipped, ${fetchErrors} errors)`);
+    if ((i + 1) % 500 === 0) {
+      console.error(`  Processed: ${i + 1}/${emails.length} (${records.length} valid, ${skipped} skipped, ${fetchErrors} errors)`);
     }
   }
 
