@@ -214,7 +214,7 @@ function SettingsPageContent() {
                         <Cross2Icon
                           style={{ cursor: "pointer", width: "14px", height: "14px" }}
                           onClick={() =>
-                            setExcludedCompaniesChips(excludedCompaniesChips.filter((_, i) => i !== index))
+                            setExcludedCompaniesChips(excludedCompaniesChips.filter((c) => c !== company))
                           }
                         />
                       </Flex>
