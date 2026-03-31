@@ -644,6 +644,69 @@ function clickSalaryMetadata() {
   });
 }
 
+// Extract company data from job cards on the current page
+function extractCompaniesFromJobCards(): Array<{ name: string; linkedin_url: string }> {
+  const companyMap = new Map<string, { name: string; linkedin_url: string }>();
+
+  document.querySelectorAll(".job-card-container").forEach((card) => {
+    const subtitleEl = card.querySelector(".artdeco-entity-lockup__subtitle");
+    if (!subtitleEl) return;
+
+    const name = subtitleEl.textContent?.trim();
+    if (!name) return;
+
+    const companyLink = subtitleEl.querySelector('a[href*="/company/"]') as HTMLAnchorElement | null;
+    let linkedin_url = "";
+
+    if (companyLink) {
+      try {
+        const url = new URL(companyLink.href);
+        const match = url.pathname.match(/^\/company\/([^/]+)/);
+        if (match) {
+          linkedin_url = `https://www.linkedin.com/company/${match[1]}/`;
+        }
+      } catch { /* skip malformed */ }
+    }
+
+    const key = linkedin_url || name.toLowerCase();
+    if (!companyMap.has(key)) {
+      companyMap.set(key, { name, linkedin_url });
+    }
+  });
+
+  return Array.from(companyMap.values());
+}
+
+// Extract company authors from feed posts on the current page
+function extractCompaniesFromFeedPosts(): Array<{ name: string; linkedin_url: string }> {
+  const companyMap = new Map<string, { name: string; linkedin_url: string }>();
+
+  document.querySelectorAll(".feed-shared-update-v2, .occludable-update").forEach((post) => {
+    const actorLink = post.querySelector<HTMLAnchorElement>(
+      '.update-components-actor__title a[href*="/company/"], .feed-shared-actor__title a[href*="/company/"]',
+    );
+    if (!actorLink) return;
+
+    let linkedin_url = "";
+    try {
+      const url = new URL(actorLink.href);
+      const match = url.pathname.match(/^\/company\/([^/]+)/);
+      if (match) {
+        linkedin_url = `https://www.linkedin.com/company/${match[1]}/`;
+      }
+    } catch { /* skip malformed */ }
+    if (!linkedin_url) return;
+
+    const nameEl = actorLink.querySelector("span[aria-hidden='true']");
+    const name = nameEl?.textContent?.trim() || actorLink.textContent?.trim() || "";
+    if (!name || companyMap.has(linkedin_url)) return;
+
+    companyMap.set(linkedin_url, { name, linkedin_url });
+  });
+
+  return Array.from(companyMap.values());
+}
+
 // Function to extract job data including salary
 function extractJobData() {
   // Detect the page type
