@@ -27,6 +27,12 @@ type ArchiveEmailResult {
   success: Boolean!
 }
 
+type BatchOperationResult {
+  affected: Int!
+  message: String
+  success: Boolean!
+}
+
 input BatchRecipientInput {
   companyId: Int
   contactId: Int
@@ -197,6 +203,9 @@ type Contact {
   company: String
   companyId: Int
   createdAt: String!
+  deletionFlaggedAt: String
+  deletionReasons: [String!]!
+  deletionScore: Float
   department: String
   dmReasons: [String!]!
   doNotContact: Boolean!
@@ -221,6 +230,7 @@ type Contact {
   seniority: String
   tags: [String!]!
   telegramHandle: String
+  toBeDeleted: Boolean!
   updatedAt: String!
   userId: String
 }
@@ -735,6 +745,7 @@ type Mutation {
   blockCompany(id: Int!): Company!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
+  computeContactDeletionScores(companyId: Int): BatchOperationResult!
   computeNextTouchScores(companyId: Int!): ComputeNextTouchScoresResult!
   createCompany(input: CreateCompanyInput!): Company!
   createContact(input: CreateContactInput!): Contact!
@@ -753,6 +764,7 @@ type Mutation {
   enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!
+  flagContactsForDeletion(threshold: Float): BatchOperationResult!
   generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
   generateReply(input: GenerateReplyInput!): GenerateReplyResult!
   importCompanies(companies: [CompanyImportInput!]!): ImportCompaniesResult!
@@ -766,6 +778,7 @@ type Mutation {
   mergeDuplicateCompanies(companyIds: [Int!]!): MergeCompaniesResult!
   mergeDuplicateContacts(companyId: Int!): MergeDuplicateContactsResult!
   previewEmail(input: PreviewEmailInput!): EmailPreview!
+  purgeDeletedContacts(companyId: Int): BatchOperationResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
   scoreContactsML(companyId: Int!): ScoreContactsMLResult!
@@ -776,6 +789,7 @@ type Mutation {
   syncResendEmails(companyId: Int): SyncResendResult!
   unarchiveEmail(id: Int!): ArchiveEmailResult!
   unblockCompany(id: Int!): Company!
+  unflagContactForDeletion(id: Int!): Contact!
   unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
   updateCampaign(id: String!, input: UpdateCampaignInput!): EmailCampaign!
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!

@@ -45,6 +45,13 @@ export type ArchiveEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type BatchOperationResult = {
+  __typename?: 'BatchOperationResult';
+  affected: Scalars['Int']['output'];
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type BatchRecipientInput = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   contactId?: InputMaybe<Scalars['Int']['input']>;
@@ -235,6 +242,9 @@ export type Contact = {
   company: Maybe<Scalars['String']['output']>;
   companyId: Maybe<Scalars['Int']['output']>;
   createdAt: Scalars['String']['output'];
+  deletionFlaggedAt: Maybe<Scalars['String']['output']>;
+  deletionReasons: Array<Scalars['String']['output']>;
+  deletionScore: Maybe<Scalars['Float']['output']>;
   department: Maybe<Scalars['String']['output']>;
   dmReasons: Array<Scalars['String']['output']>;
   doNotContact: Scalars['Boolean']['output'];
@@ -259,6 +269,7 @@ export type Contact = {
   seniority: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
   telegramHandle: Maybe<Scalars['String']['output']>;
+  toBeDeleted: Scalars['Boolean']['output'];
   updatedAt: Scalars['String']['output'];
   userId: Maybe<Scalars['String']['output']>;
 };
@@ -805,6 +816,7 @@ export type Mutation = {
   blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
+  computeContactDeletionScores: BatchOperationResult;
   computeNextTouchScores: ComputeNextTouchScoresResult;
   createCompany: Company;
   createContact: Contact;
@@ -823,6 +835,7 @@ export type Mutation = {
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
+  flagContactsForDeletion: BatchOperationResult;
   generateEmail: GenerateEmailResult;
   generateReply: GenerateReplyResult;
   importCompanies: ImportCompaniesResult;
@@ -836,6 +849,7 @@ export type Mutation = {
   mergeDuplicateCompanies: MergeCompaniesResult;
   mergeDuplicateContacts: MergeDuplicateContactsResult;
   previewEmail: EmailPreview;
+  purgeDeletedContacts: BatchOperationResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   scoreContactsML: ScoreContactsMlResult;
@@ -846,6 +860,7 @@ export type Mutation = {
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
   unblockCompany: Company;
+  unflagContactForDeletion: Contact;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateCampaign: EmailCampaign;
   updateCompany: Company;
@@ -891,6 +906,11 @@ export type MutationCancelCompanyEmailsArgs = {
 
 export type MutationCancelScheduledEmailArgs = {
   resendId: Scalars['String']['input'];
+};
+
+
+export type MutationComputeContactDeletionScoresArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -980,6 +1000,11 @@ export type MutationFindContactEmailArgs = {
 };
 
 
+export type MutationFlagContactsForDeletionArgs = {
+  threshold?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
 export type MutationGenerateEmailArgs = {
   input: GenerateEmailInput;
 };
@@ -1057,6 +1082,11 @@ export type MutationPreviewEmailArgs = {
 };
 
 
+export type MutationPurgeDeletedContactsArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type MutationScheduleBatchEmailsArgs = {
   input: ScheduleBatchEmailsInput;
 };
@@ -1104,6 +1134,11 @@ export type MutationUnarchiveEmailArgs = {
 
 
 export type MutationUnblockCompanyArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationUnflagContactForDeletionArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1632,6 +1667,7 @@ export type ResolversTypes = {
   AnalyzeCompanyResponse: ResolverTypeWrapper<Partial<AnalyzeCompanyResponse>>;
   ApplyEmailPatternResult: ResolverTypeWrapper<Partial<ApplyEmailPatternResult>>;
   ArchiveEmailResult: ResolverTypeWrapper<Partial<ArchiveEmailResult>>;
+  BatchOperationResult: ResolverTypeWrapper<Partial<BatchOperationResult>>;
   BatchRecipientInput: ResolverTypeWrapper<Partial<BatchRecipientInput>>;
   Boolean: ResolverTypeWrapper<Partial<Scalars['Boolean']['output']>>;
   CancelCompanyEmailsResult: ResolverTypeWrapper<Partial<CancelCompanyEmailsResult>>;
@@ -1741,6 +1777,7 @@ export type ResolversParentTypes = {
   AnalyzeCompanyResponse: Partial<AnalyzeCompanyResponse>;
   ApplyEmailPatternResult: Partial<ApplyEmailPatternResult>;
   ArchiveEmailResult: Partial<ArchiveEmailResult>;
+  BatchOperationResult: Partial<BatchOperationResult>;
   BatchRecipientInput: Partial<BatchRecipientInput>;
   Boolean: Partial<Scalars['Boolean']['output']>;
   CancelCompanyEmailsResult: Partial<CancelCompanyEmailsResult>;
@@ -1858,6 +1895,12 @@ export type ApplyEmailPatternResultResolvers<ContextType = GraphQLContext, Paren
 
 export type ArchiveEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ArchiveEmailResult'] = ResolversParentTypes['ArchiveEmailResult']> = {
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type BatchOperationResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BatchOperationResult'] = ResolversParentTypes['BatchOperationResult']> = {
+  affected?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
@@ -1986,6 +2029,9 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  deletionFlaggedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  deletionReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  deletionScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   department?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dmReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   doNotContact?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2010,6 +2056,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   seniority?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   telegramHandle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  toBeDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   userId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
@@ -2385,6 +2432,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   blockCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationBlockCompanyArgs, 'id'>>;
   cancelCompanyEmails?: Resolver<ResolversTypes['CancelCompanyEmailsResult'], ParentType, ContextType, RequireFields<MutationCancelCompanyEmailsArgs, 'companyId'>>;
   cancelScheduledEmail?: Resolver<ResolversTypes['CancelEmailResult'], ParentType, ContextType, RequireFields<MutationCancelScheduledEmailArgs, 'resendId'>>;
+  computeContactDeletionScores?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationComputeContactDeletionScoresArgs>>;
   computeNextTouchScores?: Resolver<ResolversTypes['ComputeNextTouchScoresResult'], ParentType, ContextType, RequireFields<MutationComputeNextTouchScoresArgs, 'companyId'>>;
   createCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationCreateCompanyArgs, 'input'>>;
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationCreateContactArgs, 'input'>>;
@@ -2403,6 +2451,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   enrichAIContactsForCompany?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichAiContactsForCompanyArgs, 'companyId'>>;
   findCompanyEmails?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType, RequireFields<MutationFindCompanyEmailsArgs, 'companyId'>>;
   findContactEmail?: Resolver<ResolversTypes['FindContactEmailResult'], ParentType, ContextType, RequireFields<MutationFindContactEmailArgs, 'contactId'>>;
+  flagContactsForDeletion?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationFlagContactsForDeletionArgs>>;
   generateEmail?: Resolver<ResolversTypes['GenerateEmailResult'], ParentType, ContextType, RequireFields<MutationGenerateEmailArgs, 'input'>>;
   generateReply?: Resolver<ResolversTypes['GenerateReplyResult'], ParentType, ContextType, RequireFields<MutationGenerateReplyArgs, 'input'>>;
   importCompanies?: Resolver<ResolversTypes['ImportCompaniesResult'], ParentType, ContextType, RequireFields<MutationImportCompaniesArgs, 'companies'>>;
@@ -2416,6 +2465,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   mergeDuplicateCompanies?: Resolver<ResolversTypes['MergeCompaniesResult'], ParentType, ContextType, RequireFields<MutationMergeDuplicateCompaniesArgs, 'companyIds'>>;
   mergeDuplicateContacts?: Resolver<ResolversTypes['MergeDuplicateContactsResult'], ParentType, ContextType, RequireFields<MutationMergeDuplicateContactsArgs, 'companyId'>>;
   previewEmail?: Resolver<ResolversTypes['EmailPreview'], ParentType, ContextType, RequireFields<MutationPreviewEmailArgs, 'input'>>;
+  purgeDeletedContacts?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationPurgeDeletedContactsArgs>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
   scheduleFollowUpBatch?: Resolver<ResolversTypes['FollowUpBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleFollowUpBatchArgs, 'input'>>;
   scoreContactsML?: Resolver<ResolversTypes['ScoreContactsMLResult'], ParentType, ContextType, RequireFields<MutationScoreContactsMlArgs, 'companyId'>>;
@@ -2426,6 +2476,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   syncResendEmails?: Resolver<ResolversTypes['SyncResendResult'], ParentType, ContextType, Partial<MutationSyncResendEmailsArgs>>;
   unarchiveEmail?: Resolver<ResolversTypes['ArchiveEmailResult'], ParentType, ContextType, RequireFields<MutationUnarchiveEmailArgs, 'id'>>;
   unblockCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUnblockCompanyArgs, 'id'>>;
+  unflagContactForDeletion?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationUnflagContactForDeletionArgs, 'id'>>;
   unverifyCompanyContacts?: Resolver<ResolversTypes['UnverifyContactsResult'], ParentType, ContextType, RequireFields<MutationUnverifyCompanyContactsArgs, 'companyId'>>;
   updateCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationUpdateCampaignArgs, 'id' | 'input'>>;
   updateCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUpdateCompanyArgs, 'id' | 'input'>>;
@@ -2588,6 +2639,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AnalyzeCompanyResponse?: AnalyzeCompanyResponseResolvers<ContextType>;
   ApplyEmailPatternResult?: ApplyEmailPatternResultResolvers<ContextType>;
   ArchiveEmailResult?: ArchiveEmailResultResolvers<ContextType>;
+  BatchOperationResult?: BatchOperationResultResolvers<ContextType>;
   CancelCompanyEmailsResult?: CancelCompanyEmailsResultResolvers<ContextType>;
   CancelEmailResult?: CancelEmailResultResolvers<ContextType>;
   CompaniesResponse?: CompaniesResponseResolvers<ContextType>;

@@ -430,6 +430,18 @@ const Contact = {
       return null;
     }
   },
+  toBeDeleted(parent: DbContact) {
+    return (parent.to_be_deleted as unknown) === true || (parent.to_be_deleted as unknown) === 1;
+  },
+  deletionScore(parent: DbContact) {
+    return parent.deletion_score ?? null;
+  },
+  deletionReasons(parent: DbContact) {
+    return parseJsonArray(parent.deletion_reasons);
+  },
+  deletionFlaggedAt(parent: DbContact) {
+    return parent.deletion_flagged_at ?? null;
+  },
 };
 
 export const contactResolvers = {
