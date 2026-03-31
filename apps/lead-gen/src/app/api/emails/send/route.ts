@@ -77,14 +77,21 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const result = await resend.instance.send({
-    from: FROM,
-    to,
-    subject: subject.trim(),
-    html,
-    text: personalized,
-    ...(attachments.length > 0 && { attachments }),
-  });
+  let result: Awaited<ReturnType<typeof resend.instance.send>>;
+  try {
+    result = await resend.instance.send({
+      from: FROM,
+      to,
+      subject: subject.trim(),
+      html,
+      text: personalized,
+      ...(attachments.length > 0 && { attachments }),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to send email";
+    console.error("[send] resend.send threw:", message);
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
 
   if (result.error) {
     return NextResponse.json({ success: false, error: result.error }, { status: 500 });

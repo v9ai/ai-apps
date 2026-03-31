@@ -404,8 +404,8 @@ export const companyResolvers = {
     },
 
     async findCompany(
-      _parent: any,
-      args: { name?: string; website?: string },
+      _parent: unknown,
+      args: QueryFindCompanyArgs,
       context: GraphQLContext,
     ) {
       try {

@@ -11,7 +11,7 @@ export function Footer() {
           const meta = CATEGORY_META[name];
           if (!meta) return null;
           return (
-            <Link key={name} href={`/#cat-${meta.slug}`} className="footer-cat-link">
+            <Link key={name} href={`/#cat-${meta.slug}`} className="footer-cat-link" aria-label={name}>
               <span>{meta.icon}</span> {name}
             </Link>
           );

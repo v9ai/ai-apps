@@ -123,14 +123,16 @@ export function TableOfContents({ markdown }: { markdown: string }) {
   return (
     <>
       {/* Desktop TOC */}
-      <div className="toc-sidebar">
+      <div className="toc-sidebar" aria-label="Table of contents">
         <div className="toc-sidebar-title">On this page</div>
         <TocNav headings={headings} activeId={activeId} onSelect={handleSelect} />
       </div>
 
       {/* Mobile TOC trigger + drawer */}
       <button
+        type="button"
         className="toc-mobile-trigger"
+        aria-label="Toggle table of contents"
         onClick={() => setDrawerOpen(true)}
       >
         Contents

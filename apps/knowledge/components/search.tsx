@@ -162,7 +162,7 @@ export function Search({ groups }: Props) {
       )}
 
       {hasQuery ? (
-        <div className="search-results">
+        <div className="search-results" aria-live="polite">
           {searching && results.length === 0 && (
             <div className="search-loading">
               <div className="search-loading-bar" />
@@ -171,7 +171,7 @@ export function Search({ groups }: Props) {
             </div>
           )}
           {!searching && results.length === 0 && (
-            <div className="no-results">
+            <div className="no-results" role="status">
               <div className="no-results-icon">🔍</div>
               <div className="no-results-title">No results found</div>
               <div className="no-results-hint">

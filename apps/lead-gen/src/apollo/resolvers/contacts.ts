@@ -1247,6 +1247,7 @@ export const contactResolvers = {
         dmReasons: string[];
       }> = [];
 
+      // TODO: use DataLoader — this issues one UPDATE per contact (N+1); batch with a single UPDATE ... WHERE id IN (...)
       for (const contact of rows) {
         const cls = classifyContact(contact.position);
         await context.db
