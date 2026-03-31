@@ -51,7 +51,7 @@ The result is not a toy. On a single M1 MacBook Pro, the pipeline generates 200+
 
 Imagine you're writing a personalized sales email for each of 500 leads. Every email needs the contact's name, their company, what they do, and why your product fits. Now imagine paying a small fee every time you write one of those emails, waiting half a second for each response, and handing all of that data — your entire sales pipeline — to a company whose servers you don't control. That's what happens when you call GPT-4 or Claude for every email draft.
 
-Cloud APIs charge per token (roughly per word). At $0.01-0.03 per email, a 500-contact batch costs $5-$15. Do that daily and you're paying hundreds of dollars a month for text generation alone. Latency stacks up too: 400-800ms per request means a 500-email batch takes 3-7 minutes just waiting for the network.
+Cloud APIs charge per token (roughly per word). At $0.01–0.03 per email, a 500-contact batch costs $5–15. Do that daily and you're paying hundreds of dollars a month for text generation alone. Latency stacks up too: 400-800ms per request means a 500-email batch takes 3-7 minutes just waiting for the network.
 
 Local inference cuts all three costs simultaneously. The model runs on your hardware — an M1 Mac, a rented GPU, a VPS. Requests never leave the machine, so latency drops to ~50ms (memory bandwidth, not network round-trips). Cost per inference is zero after the hardware is amortized. And your leads list stays private.
 
