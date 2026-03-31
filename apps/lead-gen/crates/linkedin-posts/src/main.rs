@@ -12,8 +12,8 @@ use linkedin_posts::{authority, models, neon};
 use linkedin_posts::db::PostsDb;
 use linkedin_posts::intent_scorer::PostIntentScorer;
 use linkedin_posts::models::{
-    AddContactsRequest, AddPostsRequest, ClassifiedPostsQuery, ExportResponse, InsertResult,
-    IntentDistribution, StatsResponse,
+    AddContactsRequest, AddLikesRequest, AddPostsRequest, ClassifiedPostsQuery, ExportResponse,
+    InsertResult, IntentDistribution, LikesQuery, StatsResponse, StoredPostLike,
 };
 
 struct AppStateInner {
@@ -69,6 +69,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/posts/classified", get(get_classified_posts))
         .route("/posts/signals/{contact_id}", get(get_post_signals))
         .route("/posts/intents/distribution", get(get_intent_distribution))
+        .route("/likes", post(add_likes).get(get_likes))
         .route("/scorer/reload", post(reload_scorer))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -164,7 +165,8 @@ async fn add_posts(
 async fn stats(State(state): State<AppState>) -> Json<StatsResponse> {
     let contacts = neon::count_contacts().await.unwrap_or(0) as usize;
     let posts = state.db.posts_count().await;
-    Json(StatsResponse { contacts, posts })
+    let likes = state.db.likes_count().await;
+    Json(StatsResponse { contacts, posts, likes })
 }
 
 async fn export(State(state): State<AppState>) -> Json<ExportResponse> {
@@ -293,6 +295,50 @@ async fn get_intent_distribution(State(state): State<AppState>) -> Json<IntentDi
         noise,
         avg_relevance: sum_relevance / total as f32,
     })
+}
+
+// ── Likes endpoints ─────────────────────────────────────────────────────────
+
+/// POST /likes — add post likes for a contact
+async fn add_likes(
+    State(state): State<AppState>,
+    Json(req): Json<AddLikesRequest>,
+) -> Result<Json<InsertResult>, (StatusCode, String)> {
+    let inserted = state
+        .db
+        .add_likes(req.contact_id, &req.likes)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(InsertResult {
+        inserted,
+        duplicates: None,
+        filtered: None,
+        intent_summary: None,
+    }))
+}
+
+/// GET /likes?contact_id=123&limit=100
+async fn get_likes(
+    State(state): State<AppState>,
+    Query(query): Query<LikesQuery>,
+) -> Json<Vec<StoredPostLike>> {
+    let likes = state.db.get_likes().await;
+    let limit = query.limit.unwrap_or(100);
+
+    let filtered: Vec<_> = likes
+        .into_iter()
+        .filter(|l| {
+            if let Some(cid) = query.contact_id {
+                l.contact_id == cid
+            } else {
+                true
+            }
+        })
+        .take(limit)
+        .collect();
+
+    Json(filtered)
 }
 
 /// POST /scorer/reload — hot-reload intent scorer weights from JSON file.
