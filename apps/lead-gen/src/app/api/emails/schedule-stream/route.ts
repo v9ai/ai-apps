@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { eq, and, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, companies } from "@/db/schema";
@@ -6,6 +6,8 @@ import { sendAndSaveEmail } from "@/lib/email/utils";
 import { personalizeEmailBody, textToHtml } from "@/lib/email/utils";
 import { getVadimSignature } from "@/lib/email/signature";
 import { getRandomEmailSubject } from "@/lib/email/subjects";
+import { isAdminEmail } from "@/lib/admin";
+import { auth } from "@/lib/auth/server";
 import {
   addBusinessDays,
   setHours,
