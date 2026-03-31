@@ -327,6 +327,281 @@ fn erfc(x: f64) -> f64 {
 }
 
 // ---------------------------------------------------------------------------
+// CompanyScore
+// ---------------------------------------------------------------------------
+
+/// Output of [`CompanyBayesianScorer::score_company`].
+///
+/// Holds the composite Bayesian score, per-dimension posterior predictive means,
+/// 95 % credible intervals, and the total number of company observations incorporated
+/// into the posteriors so far.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct CompanyScore {
+    /// Weighted composite score in [0, 1].
+    pub composite: f64,
+    /// Posterior predictive mean for each ICP dimension, keyed by dimension name.
+    pub dimension_scores: std::collections::HashMap<String, f64>,
+    /// Approximate 95 % credible interval for each dimension: [μ − 2σ, μ + 2σ].
+    /// Falls back to [0.0, 1.0] when α ≤ 1 (variance undefined).
+    pub credible_intervals: std::collections::HashMap<String, (f64, f64)>,
+    /// Total number of [`CompanyBayesianScorer::observe_company`] calls that have
+    /// updated the posteriors (incremented once per call, not once per dimension).
+    pub n_observations: u32,
+}
+
+// ---------------------------------------------------------------------------
+// CompanyBayesianScorer
+// ---------------------------------------------------------------------------
+
+/// Dimension weights for the company-level composite score.
+const COMPANY_WEIGHTS: &[(&str, f64)] = &[
+    ("industry_fit",   0.25),
+    ("size_fit",       0.15),
+    ("funding_fit",    0.10),
+    ("tech_overlap",   0.15),
+    ("recency",        0.15),
+    ("intent_score",   0.20),
+];
+
+/// Exponential recency decay constant — mirrors `scoring::mod.rs`.
+///
+/// Half-life = 28 days → k = ln(2) / 28 ≈ 0.02475.
+const COMPANY_RECENCY_K: f64 = std::f64::consts::LN_2 / 28.0;
+
+/// Online Bayesian scorer operating at the *company* level.
+///
+/// Maintains one [`DimensionPosterior`] for each of the six ICP company
+/// dimensions.  Posteriors are updated in closed form as company observations
+/// arrive via [`observe_company`](CompanyBayesianScorer::observe_company).
+///
+/// # Dimensions
+///
+/// | Name            | Weight | Description                                      |
+/// |-----------------|--------|--------------------------------------------------|
+/// | `industry_fit`  | 0.25   | 1.0 if company industry matches any ICP industry |
+/// | `size_fit`      | 0.15   | 1.0 fully in range, 0.5 one-sided, 0.0 outside   |
+/// | `funding_fit`   | 0.10   | 1.0 if funding stage in ICP list (or list empty) |
+/// | `tech_overlap`  | 0.15   | Jaccard(company_stack, icp_stack)                |
+/// | `recency`       | 0.15   | Exponential decay normalised to [0, 1]           |
+/// | `intent_score`  | 0.20   | External intent signal normalised to [0, 1]      |
+pub struct CompanyBayesianScorer {
+    dimensions: Vec<DimensionPosterior>,
+    /// Total number of companies observed so far.
+    n_observations: u32,
+}
+
+impl CompanyBayesianScorer {
+    /// Create a new scorer with all six company ICP dimensions initialised to
+    /// uninformative priors.
+    pub fn new() -> Self {
+        let dimensions = COMPANY_WEIGHTS
+            .iter()
+            .map(|&(name, _)| DimensionPosterior::uninformative(name))
+            .collect();
+        Self { dimensions, n_observations: 0 }
+    }
+
+    /// Incorporate a single company observation into the posteriors.
+    ///
+    /// Raw 0–1 values are computed for each dimension from `company`, `icp`, and
+    /// `intent_score`, then each corresponding [`DimensionPosterior`] is updated
+    /// with that value.
+    ///
+    /// # Parameters
+    /// - `company`      — the company to observe
+    /// - `icp`          — the ICP profile used to evaluate dimension fit
+    /// - `intent_score` — external intent signal in \[0, 100\]; normalised to [0, 1]
+    pub fn observe_company(
+        &mut self,
+        company: &crate::Company,
+        icp: &crate::scoring::IcpProfile,
+        intent_score: f64,
+    ) {
+        let values = Self::compute_raw_values(company, icp, intent_score);
+        for (dim, &value) in self.dimensions.iter_mut().zip(values.iter()) {
+            dim.update(&[value]);
+        }
+        self.n_observations += 1;
+    }
+
+    /// Compute the posterior predictive mean for each dimension, blend them with
+    /// the provided company's raw values using the fixed dimension weights, and
+    /// return a [`CompanyScore`].
+    ///
+    /// # Parameters
+    /// - `company`      — the company to score
+    /// - `icp`          — the ICP profile
+    /// - `intent_score` — external intent signal in \[0, 100\]; normalised to [0, 1]
+    pub fn score_company(
+        &self,
+        company: &crate::Company,
+        icp: &crate::scoring::IcpProfile,
+        intent_score: f64,
+    ) -> CompanyScore {
+        let raw = Self::compute_raw_values(company, icp, intent_score);
+
+        let mut dimension_scores = std::collections::HashMap::new();
+        let mut credible_intervals = std::collections::HashMap::new();
+        let mut composite = 0.0f64;
+
+        for ((dim, &(_, weight)), &raw_val) in
+            self.dimensions.iter().zip(COMPANY_WEIGHTS.iter()).zip(raw.iter())
+        {
+            // Confidence-weighted score: blend raw feature with posterior mean.
+            let confidence = dim.kappa / (dim.kappa + 1.0);
+            let score = (confidence * dim.mu + (1.0 - confidence) * raw_val).clamp(0.0, 1.0);
+
+            // 95 % credible interval using 2σ approximation as specified.
+            let ci = if dim.alpha > 1.0 {
+                let std = (dim.beta / (dim.alpha - 1.0) / dim.kappa).sqrt();
+                if std.is_finite() {
+                    ((dim.mu - 2.0 * std).clamp(0.0, 1.0), (dim.mu + 2.0 * std).clamp(0.0, 1.0))
+                } else {
+                    (0.0, 1.0)
+                }
+            } else {
+                (0.0, 1.0)
+            };
+
+            composite += weight * score;
+            dimension_scores.insert(dim.name.clone(), score);
+            credible_intervals.insert(dim.name.clone(), ci);
+        }
+
+        CompanyScore {
+            composite: composite.clamp(0.0, 1.0),
+            dimension_scores,
+            credible_intervals,
+            n_observations: self.n_observations,
+        }
+    }
+
+    /// Mean posterior variance across all company ICP dimensions, normalised to
+    /// [0, 1] via `.min(1.0)`.
+    ///
+    /// High uncertainty signals that more company observations are needed before
+    /// the posteriors are reliable — useful as an exploration trigger in active
+    /// learning or Thompson sampling loops.
+    pub fn uncertainty(&self) -> f64 {
+        let n = self.dimensions.len();
+        if n == 0 {
+            return 0.0;
+        }
+        let total: f64 = self.dimensions.iter().map(|d| d.variance().min(1.0)).sum();
+        (total / n as f64).min(1.0)
+    }
+
+    // -----------------------------------------------------------------------
+    // Private helpers
+    // -----------------------------------------------------------------------
+
+    /// Compute normalised [0, 1] raw feature values for all six dimensions.
+    ///
+    /// Order matches `COMPANY_WEIGHTS`:
+    /// `[industry_fit, size_fit, funding_fit, tech_overlap, recency, intent_score]`
+    fn compute_raw_values(
+        company: &crate::Company,
+        icp: &crate::scoring::IcpProfile,
+        intent_score: f64,
+    ) -> [f64; 6] {
+        let industry_fit = Self::raw_industry_fit(company, icp);
+        let size_fit = Self::raw_size_fit(company, icp);
+        let funding_fit = Self::raw_funding_fit(company, icp);
+        let tech_overlap = Self::raw_tech_overlap(company, icp);
+        let recency = Self::raw_recency(company);
+        let intent = (intent_score / 100.0).clamp(0.0, 1.0);
+        [industry_fit, size_fit, funding_fit, tech_overlap, recency, intent]
+    }
+
+    /// 1.0 if any ICP industry matches company.industry (case-insensitive substring),
+    /// 0.0 otherwise.
+    fn raw_industry_fit(company: &crate::Company, icp: &crate::scoring::IcpProfile) -> f64 {
+        match company.industry.as_deref() {
+            Some(ind) => {
+                let ind_lc = ind.to_lowercase();
+                if icp.target_industries.iter().any(|t| ind_lc.contains(&t.to_lowercase())) {
+                    1.0
+                } else {
+                    0.0
+                }
+            }
+            None => 0.0,
+        }
+    }
+
+    /// 1.0 if employee count is fully within [min, max], 0.5 if one bound matches,
+    /// 0.0 otherwise.
+    fn raw_size_fit(company: &crate::Company, icp: &crate::scoring::IcpProfile) -> f64 {
+        match company.employee_count {
+            Some(count) => {
+                let ok_min = icp.min_employees.map_or(true, |m| count >= m);
+                let ok_max = icp.max_employees.map_or(true, |m| count <= m);
+                if ok_min && ok_max { 1.0 } else if ok_min || ok_max { 0.5 } else { 0.0 }
+            }
+            None => 0.0,
+        }
+    }
+
+    /// 1.0 if funding stage is in ICP list (or ICP list is empty = accept all),
+    /// 0.0 otherwise.
+    fn raw_funding_fit(company: &crate::Company, icp: &crate::scoring::IcpProfile) -> f64 {
+        if icp.funding_stages.is_empty() {
+            // No filter configured → treat as a match for any stage.
+            return 1.0;
+        }
+        match company.funding_stage.as_deref() {
+            Some(s) => {
+                let s_lc = s.to_lowercase();
+                if icp.funding_stages.iter().any(|f| f.to_lowercase() == s_lc) { 1.0 } else { 0.0 }
+            }
+            None => 0.0,
+        }
+    }
+
+    /// Jaccard similarity between company tech stack and ICP target stack.
+    /// Returns 0.0 when either set is empty or company.tech_stack is unparseable.
+    fn raw_tech_overlap(company: &crate::Company, icp: &crate::scoring::IcpProfile) -> f64 {
+        if icp.target_tech_stack.is_empty() {
+            return 0.0;
+        }
+        let stack = match company.tech_stack.as_deref() {
+            Some(json) => match serde_json::from_str::<Vec<String>>(json) {
+                Ok(v) => v,
+                Err(_) => return 0.0,
+            },
+            None => return 0.0,
+        };
+        if stack.is_empty() {
+            return 0.0;
+        }
+        let icp_set: std::collections::HashSet<String> =
+            icp.target_tech_stack.iter().map(|s| s.to_lowercase()).collect();
+        let co_set: std::collections::HashSet<String> =
+            stack.iter().map(|s| s.to_lowercase()).collect();
+        let intersection = icp_set.intersection(&co_set).count();
+        let union = icp_set.union(&co_set).count();
+        if union == 0 { 0.0 } else { intersection as f64 / union as f64 }
+    }
+
+    /// Exponential recency decay normalised to [0, 1] (divides scoring::recency_score by 100).
+    fn raw_recency(company: &crate::Company) -> f64 {
+        let days = company
+            .updated_at
+            .as_deref()
+            .and_then(|s| chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok())
+            .map(|dt| (chrono::Utc::now() - dt.and_utc()).num_days())
+            .unwrap_or(365) as f64;
+        ((-COMPANY_RECENCY_K * days).exp()).clamp(0.0, 1.0)
+    }
+}
+
+impl Default for CompanyBayesianScorer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-import { contacts, contactReminders, contactEmails } from "@/db/schema";
+import { contacts, contactReminders, contactEmails, type ContactReminder as DbContactReminder } from "@/db/schema";
 import { eq, and, lte, sql, max, desc, inArray } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -58,11 +58,11 @@ function advanceDate(isoDate: string, days: number): string {
 // ─── ContactReminder field resolver ─────────────────────────────────────────
 
 const ContactReminder = {
-  contactId: (p: any) => p.contact_id,
-  remindAt:  (p: any) => p.remind_at,
-  snoozedUntil: (p: any) => p.snoozed_until ?? null,
-  createdAt: (p: any) => p.created_at,
-  updatedAt: (p: any) => p.updated_at,
+  contactId: (p: DbContactReminder) => p.contact_id,
+  remindAt:  (p: DbContactReminder) => p.remind_at,
+  snoozedUntil: (p: DbContactReminder) => p.snoozed_until ?? null,
+  createdAt: (p: DbContactReminder) => p.created_at,
+  updatedAt: (p: DbContactReminder) => p.updated_at,
 };
 
 // ─── Resolver map ────────────────────────────────────────────────────────────
