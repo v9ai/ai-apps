@@ -394,7 +394,7 @@ fn process_email(
     }
 
     let wc = word_count(&body);
-    if wc < 80 || wc > 500 {
+    if wc < 40 || wc > 500 {
         return None;
     }
     if subject.len() < 5 {
