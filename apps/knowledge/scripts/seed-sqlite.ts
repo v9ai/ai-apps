@@ -248,6 +248,32 @@ function seed() {
   `);
   console.log("  FTS5 indexes created");
 
+  // ── 5. Seed public jobs from JSON files ───────────────────────
+  console.log("Seeding public jobs...");
+  const JOBS_DIR = path.join(process.cwd(), "data", "jobs");
+  let jobCount = 0;
+  if (fs.existsSync(JOBS_DIR)) {
+    const jobFiles = fs.readdirSync(JOBS_DIR).filter((f) => f.endsWith(".json"));
+    for (const file of jobFiles) {
+      const job = JSON.parse(fs.readFileSync(path.join(JOBS_DIR, file), "utf-8"));
+      sqlite.prepare(
+        `INSERT OR REPLACE INTO public_jobs (id, slug, company, position, location, url, description, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        crypto.randomUUID(),
+        job.slug,
+        job.company,
+        job.position,
+        job.location ?? null,
+        job.url ?? null,
+        job.description,
+        Math.floor(Date.now() / 1000),
+      );
+      jobCount++;
+    }
+  }
+  console.log(`  ${jobCount} jobs`);
+
   // ── Summary ──────────────────────────────────────────────────
   console.log("\n┌──────────────────────┬───────┐");
   console.log("│ Table                │ Count │");
@@ -526,6 +552,18 @@ function createTables() {
     );
     CREATE INDEX IF NOT EXISTS course_reviews_course_idx ON course_reviews(course_id);
     CREATE UNIQUE INDEX IF NOT EXISTS course_reviews_course_unique ON course_reviews(course_id);
+
+    CREATE TABLE IF NOT EXISTS public_jobs (
+      id TEXT PRIMARY KEY,
+      slug TEXT NOT NULL UNIQUE,
+      company TEXT NOT NULL,
+      position TEXT NOT NULL,
+      location TEXT,
+      url TEXT,
+      description TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS public_jobs_slug_idx ON public_jobs(slug);
   `);
 }
 
