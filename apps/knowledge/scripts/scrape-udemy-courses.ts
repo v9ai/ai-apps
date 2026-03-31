@@ -542,11 +542,20 @@ async function deepScrapeWithTopics(
 // ── DB upsert ────────────────────────────────────────────────────────
 
 async function upsertCourse(course: ScrapedCourse, topicGroup: string) {
+  // Strip large unused arrays to keep row size small (Neon free-tier transfer quota)
+  const { requirements: _req, targetAudience: _ta, ...slimMeta } = course.metadata;
+  // Truncate description and whatYoullLearn to reduce payload further
+  const slimMetaFinal = {
+    ...slimMeta,
+    whatYoullLearn: slimMeta.whatYoullLearn.slice(0, 8),
+    curriculum: slimMeta.curriculum.slice(0, 20),
+  };
+
   const values = {
     title: course.title,
     url: course.url,
     provider: "Udemy" as const,
-    description: course.description,
+    description: course.description ? course.description.slice(0, 1500) : null,
     level: course.level,
     rating: course.rating,
     reviewCount: course.reviewCount,
@@ -556,7 +565,7 @@ async function upsertCourse(course: ScrapedCourse, topicGroup: string) {
     imageUrl: course.imageUrl,
     language: course.language,
     topicGroup,
-    metadata: course.metadata,
+    metadata: slimMetaFinal,
   };
 
   const [row] = await db
