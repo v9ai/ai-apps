@@ -14,8 +14,10 @@ use crate::models::{Contact, ExportResponse, IntentSummary, Post, PostLike, Stor
 pub struct PostsDb {
     conn: Connection,
     next_post_id: Mutex<i64>,
+    next_like_id: Mutex<i64>,
     contacts: Mutex<Vec<Contact>>,
     posts: Mutex<Vec<StoredPost>>,
+    likes: Mutex<Vec<StoredPostLike>>,
 }
 
 fn contacts_schema() -> Arc<Schema> {
@@ -59,6 +61,19 @@ fn posts_schema() -> Arc<Schema> {
     ]))
 }
 
+fn likes_schema() -> Arc<Schema> {
+    Arc::new(Schema::new(vec![
+        Field::new("id", DataType::Int64, false),
+        Field::new("contact_id", DataType::Int32, false),
+        Field::new("post_url", DataType::Utf8, true),
+        Field::new("post_text", DataType::Utf8, true),
+        Field::new("post_author_name", DataType::Utf8, true),
+        Field::new("post_author_url", DataType::Utf8, true),
+        Field::new("liked_date", DataType::Utf8, true),
+        Field::new("scraped_at", DataType::Utf8, false),
+    ]))
+}
+
 impl PostsDb {
     pub async fn open(path: &str) -> Result<Self> {
         let conn = connect(path)
@@ -69,8 +84,10 @@ impl PostsDb {
         let db = Self {
             conn,
             next_post_id: Mutex::new(1),
+            next_like_id: Mutex::new(1),
             contacts: Mutex::new(Vec::new()),
             posts: Mutex::new(Vec::new()),
+            likes: Mutex::new(Vec::new()),
         };
 
         db.ensure_tables().await?;
@@ -80,6 +97,13 @@ impl PostsDb {
         *db.next_post_id.lock().await = max_id + 1;
         if max_id > 0 {
             tracing::info!("Resuming post IDs from {} (max existing: {})", max_id + 1, max_id);
+        }
+
+        // Query max existing like ID
+        let max_like_id = db.query_max_id("likes").await;
+        *db.next_like_id.lock().await = max_like_id + 1;
+        if max_like_id > 0 {
+            tracing::info!("Resuming like IDs from {} (max existing: {})", max_like_id + 1, max_like_id);
         }
 
         Ok(db)
@@ -128,6 +152,15 @@ impl PostsDb {
                 .await
                 .context("Failed to create posts table")?;
             tracing::info!("Created posts table with ML analysis columns");
+        }
+
+        if !tables.contains(&"likes".to_string()) {
+            self.conn
+                .create_empty_table("likes", likes_schema())
+                .execute()
+                .await
+                .context("Failed to create likes table")?;
+            tracing::info!("Created likes table");
         }
 
         Ok(())
