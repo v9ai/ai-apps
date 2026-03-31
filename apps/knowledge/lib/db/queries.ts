@@ -45,7 +45,7 @@ export async function getLessonBySlugFromDb(
   const row = db.query.lessons.findFirst({
     where: eq(lessons.slug, slug),
     with: { category: true },
-  });
+  }).sync();
 
   if (!row) return null;
 
@@ -72,7 +72,7 @@ export async function getGroupedLessonsFromDb(): Promise<GroupedLessons[]> {
       },
     },
     orderBy: categories.sortOrder,
-  });
+  }).sync();
 
   return rows
     .map((cat) => ({
@@ -120,7 +120,7 @@ export async function getCategoryMetaFromDb(
       gradientFrom: true,
       gradientTo: true,
     },
-  });
+  }).sync();
 
   if (!row) return null;
 
@@ -184,7 +184,7 @@ export async function getRelatedLessonsFromDb(
       const targetLesson = db.query.lessons.findFirst({
         where: eq(lessons.slug, slug),
         columns: { id: true },
-      });
+      }).sync();
 
       if (targetLesson) {
         const targetEmb = allEmbeddings.find(

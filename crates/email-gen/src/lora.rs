@@ -8,6 +8,7 @@ use crate::error::Result;
 pub struct LoraAdapter {
     /// Maps layer name prefix -> (lora_a, lora_b) weight pairs
     pub weights: HashMap<String, (Tensor, Tensor)>,
+    #[allow(dead_code)]
     pub scale: f32,
 }
 
@@ -60,6 +61,7 @@ impl LoraAdapter {
     /// `base_output` is the output from the base linear layer (Wx).
     /// `input` is the input to the linear layer (x).
     /// `lora_a` has shape (rank, in_features), `lora_b` has shape (out_features, rank).
+    #[allow(dead_code)]
     pub fn apply_delta(
         input: &Tensor,
         lora_a: &Tensor,
@@ -82,6 +84,7 @@ impl LoraAdapter {
 /// Merge LoRA weights directly into a base weight matrix: W' = W + scale * B @ A
 ///
 /// This is used at load time to avoid runtime overhead.
+#[allow(dead_code)]
 pub fn merge_lora_into_weight(
     base_weight: &Tensor,
     lora_a: &Tensor,
