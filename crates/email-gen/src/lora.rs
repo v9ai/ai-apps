@@ -2,7 +2,7 @@ use candle_core::{safetensors, DType, Device, Tensor};
 use std::collections::HashMap;
 use std::path::Path;
 
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 /// LoRA adapter weights loaded from a safetensors file.
 pub struct LoraAdapter {

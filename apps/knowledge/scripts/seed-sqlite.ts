@@ -151,7 +151,7 @@ function seed() {
   console.log("Seeding lessons...");
   const files = fs
     .readdirSync(CONTENT_DIR)
-    .filter((f) => f.endsWith(".md"))
+    .filter((f) => f.endsWith(".md") && f.replace(/\.md$/, "") in LESSON_NUMBER)
     .sort();
 
   const fileContents = new Map<string, string>();

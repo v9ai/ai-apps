@@ -4,7 +4,7 @@ import { composeEmail } from "@/lib/langgraph-client";
 import type {
   GenerateBatchEmailRequest,
   GenerateBatchEmailResponse,
-} from "@/lib/email-prompt-builder";
+} from "@/lib/email/prompt-builder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
