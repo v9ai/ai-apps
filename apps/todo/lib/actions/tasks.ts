@@ -88,6 +88,11 @@ export async function reorderTasksAction(
   revalidatePath("/");
 }
 
+export async function getSubtasksAction(parentTaskId: string) {
+  const session = await getSessionOrThrow();
+  return taskQueries.getSubtasks(session.user.id, parentTaskId);
+}
+
 export async function loadMoreTasks(
   status: "inbox" | "active" | "completed" | "archived",
   offset: number,
