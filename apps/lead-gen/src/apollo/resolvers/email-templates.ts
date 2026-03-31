@@ -2,6 +2,10 @@ import { emailTemplates } from "@/db/schema";
 import { eq, and, count, desc } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import type {
+  MutationCreateEmailTemplateArgs,
+  MutationUpdateEmailTemplateArgs,
+} from "@/__generated__/resolvers-types";
 
 function parseJsonArray(val: string | null | undefined): string[] {
   if (!val) return [];
@@ -66,7 +70,7 @@ export const emailTemplateResolvers = {
   Mutation: {
     async createEmailTemplate(
       _parent: unknown,
-      args: { input: any },
+      args: MutationCreateEmailTemplateArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
@@ -88,7 +92,7 @@ export const emailTemplateResolvers = {
 
     async updateEmailTemplate(
       _parent: unknown,
-      args: { id: number; input: any },
+      args: MutationUpdateEmailTemplateArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
