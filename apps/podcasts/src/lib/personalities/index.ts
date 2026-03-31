@@ -22,6 +22,7 @@ import thomasWolf from "../../../personalities/thomas-wolf";
 import arthurMensch from "../../../personalities/arthur-mensch";
 import aidanGomez from "../../../personalities/aidan-gomez";
 import danielaAmodei from "../../../personalities/daniela-amodei";
+import linJunyang from "../../../personalities/lin-junyang";
 
 // Builders & Technical Leaders
 import andrejKarpathy from "../../../personalities/andrej-karpathy";
@@ -134,7 +135,7 @@ export const categories: Category[] = [
   {
     title: "Lab Leaders & Founders",
     slug: "lab-leaders",
-    personalities: [darioAmodei, liangWenfeng, yangZhilin, clementDelangue, julienChaumond, thomasWolf, arthurMensch, aidanGomez, danielaAmodei],
+    personalities: [darioAmodei, liangWenfeng, yangZhilin, linJunyang, clementDelangue, julienChaumond, thomasWolf, arthurMensch, aidanGomez, danielaAmodei],
   },
   {
     title: "Builders & Technical Leaders",
