@@ -192,17 +192,17 @@ impl RateState {
 
     fn on_rate_limited(&self) {
         self.rate_limited_count.fetch_add(1, Ordering::Relaxed);
-        // Double the delay, cap at 5000ms
+        // Add 50% to the delay, cap at 2000ms
         let current = self.delay_ms.load(Ordering::Relaxed);
-        let new = (current * 2).min(5000);
+        let new = (current + current / 2).min(2000);
         self.delay_ms.store(new, Ordering::Relaxed);
     }
 
     fn on_success(&self) {
-        // Slowly decrease delay, floor at 50ms
+        // Decrease delay by 2ms per success, floor at 50ms
         let current = self.delay_ms.load(Ordering::Relaxed);
         if current > 50 {
-            let new = current.saturating_sub(5).max(50);
+            let new = current.saturating_sub(2).max(50);
             self.delay_ms.store(new, Ordering::Relaxed);
         }
     }

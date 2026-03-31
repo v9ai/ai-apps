@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "ls -la scripts/ && node -v && pnpm run seed:sqlite && pnpm run build",
+  "buildCommand": "pnpm run seed:sqlite && pnpm run build",
   "devCommand": "pnpm run dev",
   "installCommand": "cd ../.. && pnpm install --no-frozen-lockfile",
   "framework": "nextjs",

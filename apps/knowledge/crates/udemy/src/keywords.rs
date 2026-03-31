@@ -578,7 +578,7 @@ mod tests {
 
     #[test]
     fn classify_fine_tuning() {
-        assert_eq!(classify_topic_group("Fine-tuning LLMs with LoRA and PEFT"), "Fine-tuning & RLHF");
+        assert_eq!(classify_topic_group("Fine-tuning models with LoRA and PEFT"), "Fine-tuning & RLHF");
     }
 
     #[test]
