@@ -280,7 +280,7 @@ export const emailCampaignResolvers = {
   Mutation: {
     async createDraftCampaign(
       _parent: unknown,
-      args: { input: any },
+      args: MutationCreateDraftCampaignArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
@@ -314,7 +314,7 @@ export const emailCampaignResolvers = {
 
     async updateCampaign(
       _parent: unknown,
-      args: { id: string; input: any },
+      args: MutationUpdateCampaignArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {

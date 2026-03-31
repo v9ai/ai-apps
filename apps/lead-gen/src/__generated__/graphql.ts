@@ -228,6 +228,7 @@ export type ComputeNextTouchScoresResult = {
 
 export type Contact = {
   __typename: 'Contact';
+  aiProfile: Maybe<ContactAiProfile>;
   authorityScore: Maybe<Scalars['Float']['output']>;
   bouncedEmails: Array<Scalars['String']['output']>;
   company: Maybe<Scalars['String']['output']>;
@@ -259,6 +260,32 @@ export type Contact = {
   telegramHandle: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
   userId: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactAiGitHubRepo = {
+  __typename: 'ContactAIGitHubRepo';
+  description: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  stars: Scalars['Int']['output'];
+  topics: Array<Scalars['String']['output']>;
+};
+
+export type ContactAiProfile = {
+  __typename: 'ContactAIProfile';
+  enrichedAt: Scalars['String']['output'];
+  experienceLevel: Scalars['String']['output'];
+  githubAiRepos: Array<ContactAiGitHubRepo>;
+  githubBio: Maybe<Scalars['String']['output']>;
+  githubTopLanguages: Array<Scalars['String']['output']>;
+  githubTotalStars: Scalars['Int']['output'];
+  linkedinBio: Maybe<Scalars['String']['output']>;
+  linkedinHeadline: Maybe<Scalars['String']['output']>;
+  researchAreas: Array<Scalars['String']['output']>;
+  skills: Array<Scalars['String']['output']>;
+  specialization: Maybe<Scalars['String']['output']>;
+  synthesisConfidence: Scalars['Float']['output'];
+  synthesisRationale: Maybe<Scalars['String']['output']>;
+  trigger: Scalars['String']['output'];
 };
 
 export type ContactEmail = {
@@ -554,6 +581,23 @@ export type EnhanceCompanyResponse = {
   success: Scalars['Boolean']['output'];
 };
 
+export type EnrichAiContactResult = {
+  __typename: 'EnrichAIContactResult';
+  aiProfile: Maybe<ContactAiProfile>;
+  contactId: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type EnrichAiContactsBulkResult = {
+  __typename: 'EnrichAIContactsBulkResult';
+  enriched: Scalars['Int']['output'];
+  errors: Array<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  skipped: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type Evidence = {
   __typename: 'Evidence';
   capture_timestamp: Maybe<Scalars['String']['output']>;
@@ -774,6 +818,8 @@ export type Mutation = {
   dismissReminder: ContactReminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
+  enrichAIContactProfile: EnrichAiContactResult;
+  enrichAIContactsForCompany: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   generateEmail: GenerateEmailResult;
@@ -910,6 +956,16 @@ export type MutationDismissReminderArgs = {
 export type MutationEnhanceCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationEnrichAiContactProfileArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type MutationEnrichAiContactsForCompanyArgs = {
+  companyId: Scalars['Int']['input'];
 };
 
 

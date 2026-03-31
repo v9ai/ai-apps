@@ -1,14 +1,26 @@
 /// Intent signal detection from company data.
 ///
 /// Identifies buying-intent indicators — recent funding, hiring sprees, tech-stack
-/// changes, new job postings, and headcount growth — and maps them to a normalised
-/// 0–100 intent score.  All inputs come from the in-memory `Company` record so no
-/// additional I/O is required.
+/// changes, new job postings, headcount growth, AI adoption, and remote-first
+/// culture — and maps them to a normalised 0–100 intent score.  All inputs come
+/// from the in-memory `Company` record so no additional I/O is required.
+use chrono::Datelike;
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
 // Signal types
 // ---------------------------------------------------------------------------
+
+/// Company's level of AI/ML tooling adoption.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum AiAdoptionLevel {
+    /// 1–2 AI/ML tools detected.
+    Early,
+    /// 3–5 AI/ML tools detected.
+    Scaling,
+    /// 6+ AI/ML tools detected.
+    Advanced,
+}
 
 /// A discrete, typed buying-intent signal detected from company data.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -17,6 +29,9 @@ pub enum IntentSignal {
     RecentFunding {
         amount: Option<f64>,
         date: String,
+        /// How many months ago the funding was announced. `None` when the date
+        /// field is `"unknown"` or could not be parsed.
+        months_ago: Option<u32>,
     },
     /// Unusually high number of open roles, optionally broken down by department.
     HiringSpree {
@@ -38,6 +53,15 @@ pub enum IntentSignal {
         employee_delta: i32,
         period_months: u32,
     },
+    /// Company is actively using AI/ML tooling in their stack.
+    AiAdoption {
+        tools: Vec<String>,
+        adoption_level: AiAdoptionLevel,
+    },
+    /// Company signals a remote-first or fully-distributed culture.
+    RemoteFirst {
+        evidence: String,
+    },
 }
 
 impl IntentSignal {
@@ -49,6 +73,8 @@ impl IntentSignal {
             Self::TechStackChange { .. } => "tech_stack_change",
             Self::NewJobPosting { .. } => "new_job_posting",
             Self::CompanyGrowth { .. } => "company_growth",
+            Self::AiAdoption { .. } => "ai_adoption",
+            Self::RemoteFirst { .. } => "remote_first",
         }
     }
 }
@@ -64,10 +90,17 @@ mod weights {
     pub const TECH_STACK_CHANGE: f64 = 20.0;
     pub const NEW_JOB_POSTING: f64 = 15.0;
     pub const COMPANY_GROWTH: f64 = 10.0;
+    pub const AI_ADOPTION: f64 = 20.0;
+    pub const REMOTE_FIRST: f64 = 8.0;
 
     /// Sum of all weight ceilings — used for normalisation.
-    pub const TOTAL: f64 =
-        RECENT_FUNDING + HIRING_SPREE + TECH_STACK_CHANGE + NEW_JOB_POSTING + COMPANY_GROWTH;
+    pub const TOTAL: f64 = RECENT_FUNDING
+        + HIRING_SPREE
+        + TECH_STACK_CHANGE
+        + NEW_JOB_POSTING
+        + COMPANY_GROWTH
+        + AI_ADOPTION
+        + REMOTE_FIRST;
 }
 
 // ---------------------------------------------------------------------------
@@ -86,6 +119,8 @@ impl IntentDetector {
     /// - `tech_stack` JSON arrays compared against a hard-coded baseline heuristic
     /// - `employee_count` relative to the `source` field encoding growth hints
     /// - `description` keyword scan for job-posting language
+    /// - `tech_stack` JSON for known AI/ML tools
+    /// - `description` / `location` for remote-first indicators
     pub fn detect(company: &crate::Company) -> Vec<IntentSignal> {
         let mut signals = Vec::new();
 
@@ -116,6 +151,15 @@ impl IntentDetector {
             }
         }
 
+        // --- AiAdoption -----------------------------------------------------
+        if let Some(ref stack_json) = company.tech_stack {
+            if let Ok(entries) = serde_json::from_str::<Vec<String>>(stack_json) {
+                if let Some(sig) = detect_ai_adoption(&entries) {
+                    signals.push(sig);
+                }
+            }
+        }
+
         // --- CompanyGrowth --------------------------------------------------
         if let Some(employees) = company.employee_count {
             if let Some(ref src) = company.source {
@@ -130,6 +174,13 @@ impl IntentDetector {
             signals.extend(detect_job_postings_from_description(desc));
         }
 
+        // --- RemoteFirst ----------------------------------------------------
+        let desc_text = company.description.as_deref().unwrap_or("");
+        let loc_text = company.location.as_deref().unwrap_or("");
+        if let Some(sig) = detect_remote_first(desc_text, loc_text) {
+            signals.push(sig);
+        }
+
         signals
     }
 
@@ -137,26 +188,44 @@ impl IntentDetector {
     ///
     /// Each signal type contributes up to its weight ceiling; multiple signals
     /// of the same type are capped at their ceiling to avoid gaming.
+    ///
+    /// Multi-signal bonus: when both `RecentFunding` and `HiringSpree` are
+    /// present, a 10 % multiplicative boost is applied (still capped at 100).
     pub fn intent_score(signals: &[IntentSignal]) -> f64 {
         let mut funding_pts = 0.0f64;
         let mut hiring_pts = 0.0f64;
         let mut stack_pts = 0.0f64;
         let mut posting_pts = 0.0f64;
         let mut growth_pts = 0.0f64;
+        let mut ai_pts = 0.0f64;
+        let mut remote_pts = 0.0f64;
+
+        let mut has_funding = false;
+        let mut has_hiring = false;
 
         for signal in signals {
             match signal {
-                IntentSignal::RecentFunding { amount, .. } => {
+                IntentSignal::RecentFunding {
+                    amount,
+                    months_ago,
+                    ..
+                } => {
+                    has_funding = true;
                     // Scale by funding size if known (capped at ceiling).
                     let size_bonus = amount
                         .map(|a| (a / 100_000_000.0).min(1.0) * 10.0)
                         .unwrap_or(0.0);
-                    funding_pts = (funding_pts + weights::RECENT_FUNDING * 0.7 + size_bonus)
-                        .min(weights::RECENT_FUNDING);
+                    let base = weights::RECENT_FUNDING * 0.7 + size_bonus;
+                    // Apply recency decay.
+                    let decay = recency_decay(*months_ago);
+                    funding_pts =
+                        (funding_pts + base * decay).min(weights::RECENT_FUNDING);
                 }
                 IntentSignal::HiringSpree { open_roles, .. } => {
+                    has_hiring = true;
                     // More roles = stronger signal, capped at ceiling.
-                    let role_bonus = (*open_roles as f64 / 10.0).min(1.0) * weights::HIRING_SPREE;
+                    let role_bonus =
+                        (*open_roles as f64 / 10.0).min(1.0) * weights::HIRING_SPREE;
                     hiring_pts = hiring_pts.max(role_bonus);
                 }
                 IntentSignal::TechStackChange { added, .. } => {
@@ -164,21 +233,45 @@ impl IntentDetector {
                         (added.len() as f64 / 3.0).min(1.0) * weights::TECH_STACK_CHANGE;
                     stack_pts = stack_pts.max(change_bonus);
                 }
-                IntentSignal::NewJobPosting { .. } => {
-                    // Each posting adds a small increment; cap at ceiling.
-                    posting_pts =
-                        (posting_pts + weights::NEW_JOB_POSTING * 0.4).min(weights::NEW_JOB_POSTING);
+                IntentSignal::NewJobPosting { department, .. } => {
+                    // AI/ML-domain postings carry a higher per-posting value.
+                    let ai_dept = is_ai_department(department);
+                    let increment = if ai_dept {
+                        weights::NEW_JOB_POSTING * 0.7
+                    } else {
+                        weights::NEW_JOB_POSTING * 0.4
+                    };
+                    posting_pts = (posting_pts + increment).min(weights::NEW_JOB_POSTING);
                 }
                 IntentSignal::CompanyGrowth { employee_delta, .. } => {
-                    let growth =
-                        (*employee_delta as f64 / 50.0).clamp(0.0, 1.0) * weights::COMPANY_GROWTH;
+                    let growth = (*employee_delta as f64 / 50.0).clamp(0.0, 1.0)
+                        * weights::COMPANY_GROWTH;
                     growth_pts = growth_pts.max(growth);
+                }
+                IntentSignal::AiAdoption { adoption_level, .. } => {
+                    let level_frac = match adoption_level {
+                        AiAdoptionLevel::Early => 0.4,
+                        AiAdoptionLevel::Scaling => 0.7,
+                        AiAdoptionLevel::Advanced => 1.0,
+                    };
+                    ai_pts = ai_pts.max(level_frac * weights::AI_ADOPTION);
+                }
+                IntentSignal::RemoteFirst { .. } => {
+                    remote_pts = weights::REMOTE_FIRST;
                 }
             }
         }
 
-        let raw = funding_pts + hiring_pts + stack_pts + posting_pts + growth_pts;
-        (raw / weights::TOTAL * 100.0).min(100.0)
+        let raw = funding_pts + hiring_pts + stack_pts + posting_pts + growth_pts + ai_pts + remote_pts;
+
+        // Multi-signal interaction: funding + active hiring = 10 % bonus.
+        let boosted = if has_funding && has_hiring {
+            raw * 1.10
+        } else {
+            raw
+        };
+
+        (boosted / weights::TOTAL * 100.0).min(100.0)
     }
 }
 
@@ -212,7 +305,51 @@ fn detect_funding(stage: &str) -> Option<IntentSignal> {
         .map(|s| s.to_string())
         .unwrap_or_else(|| "unknown".to_string());
 
-    Some(IntentSignal::RecentFunding { amount, date })
+    let months_ago = parse_months_ago(&date);
+
+    Some(IntentSignal::RecentFunding {
+        amount,
+        date,
+        months_ago,
+    })
+}
+
+/// Parse a `"YYYY-MM"` date string and return how many whole months have
+/// elapsed since that date relative to today (`chrono::Utc::now()`).
+/// Returns `None` when the string cannot be parsed.
+fn parse_months_ago(date_str: &str) -> Option<u32> {
+    let parts: Vec<&str> = date_str.splitn(2, '-').collect();
+    let year: i32 = parts.first()?.parse().ok()?;
+    let month: u32 = parts.get(1)?.parse().ok()?;
+    if month == 0 || month > 12 {
+        return None;
+    }
+
+    let now = chrono::Utc::now();
+    let now_year = now.year();
+    let now_month = now.month();
+
+    let months = ((now_year - year) * 12 + now_month as i32 - month as i32).max(0) as u32;
+    Some(months)
+}
+
+/// Convert an `Option<u32>` months-ago value to a [0.0, 1.0] decay multiplier.
+///
+/// | Age          | Multiplier |
+/// |--------------|------------|
+/// | <= 6 months  | 1.00       |
+/// | 7–12 months  | 0.70       |
+/// | 13–24 months | 0.40       |
+/// | > 24 months  | 0.10       |
+/// | unknown      | 0.50       |
+fn recency_decay(months_ago: Option<u32>) -> f64 {
+    match months_ago {
+        None => 0.50,
+        Some(m) if m <= 6 => 1.00,
+        Some(m) if m <= 12 => 0.70,
+        Some(m) if m <= 24 => 0.40,
+        Some(_) => 0.10,
+    }
 }
 
 /// Scan a tech-stack JSON array for synthetic hiring/job-posting entries.
@@ -220,6 +357,10 @@ fn detect_funding(stage: &str) -> Option<IntentSignal> {
 /// The crawler may inject entries in the form:
 /// - `"hiring:<Department>:<count>"` — indicates open roles in a department
 /// - `"job:<Title>:<Department>"` — a specific job posting
+///
+/// For departments that map to AI/ML roles, a `NewJobPosting` with the
+/// `AI/ML` department label is emitted so the scorer can apply the higher
+/// per-posting weight.
 fn detect_hiring_from_stack(
     entries: &[String],
 ) -> (Vec<IntentSignal>, Vec<IntentSignal>) {
@@ -229,9 +370,19 @@ fn detect_hiring_from_stack(
     for entry in entries {
         if let Some(rest) = entry.strip_prefix("hiring:") {
             let parts: Vec<&str> = rest.splitn(2, ':').collect();
-            let dept = parts.first().unwrap_or(&"Unknown").to_string();
+            let raw_dept = parts.first().unwrap_or(&"Unknown").to_string();
             let count: u32 = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(1);
-            *hiring_map.entry(dept).or_insert(0) += count;
+
+            // Emit an extra NewJobPosting for AI/ML departments so the scorer
+            // gives them the higher per-posting increment.
+            if is_ai_department(&raw_dept) {
+                job_signals.push(IntentSignal::NewJobPosting {
+                    title: format!("{} Hire", raw_dept),
+                    department: "AI/ML".to_string(),
+                });
+            }
+
+            *hiring_map.entry(raw_dept).or_insert(0) += count;
         } else if let Some(rest) = entry.strip_prefix("job:") {
             let parts: Vec<&str> = rest.splitn(2, ':').collect();
             let title = parts.first().unwrap_or(&"Unknown").to_string();
@@ -276,6 +427,59 @@ fn detect_stack_change(entries: &[String]) -> Option<IntentSignal> {
     }
 }
 
+/// Known AI/ML tools used for adoption detection.
+const AI_TOOLS: &[&str] = &[
+    "openai", "anthropic", "huggingface", "langchain", "llamaindex",
+    "pinecone", "weaviate", "qdrant", "mlflow", "vertex", "bedrock",
+    "sagemaker", "torch", "tensorflow", "jax", "triton", "vllm", "ray",
+    "dask", "spark",
+];
+
+/// Scan a tech-stack array for recognised AI/ML tools and emit an
+/// `AiAdoption` signal when at least one is found.
+fn detect_ai_adoption(entries: &[String]) -> Option<IntentSignal> {
+    let mut matched: Vec<String> = entries
+        .iter()
+        .filter(|e| {
+            let lower = e.to_lowercase();
+            // Strip synthetic prefixes before matching.
+            let stripped = lower
+                .trim_start_matches('+')
+                .trim_start_matches('-');
+            // Also skip hiring/job synthetic entries.
+            if stripped.starts_with("hiring:") || stripped.starts_with("job:") {
+                return false;
+            }
+            AI_TOOLS.iter().any(|&tool| stripped.contains(tool))
+        })
+        .map(|e| {
+            // Normalise: strip change markers and lower-case.
+            e.trim_start_matches('+')
+                .trim_start_matches('-')
+                .to_lowercase()
+        })
+        .collect();
+
+    // Deduplicate (same tool may appear with +/- markers).
+    matched.sort();
+    matched.dedup();
+
+    if matched.is_empty() {
+        return None;
+    }
+
+    let adoption_level = match matched.len() {
+        1..=2 => AiAdoptionLevel::Early,
+        3..=5 => AiAdoptionLevel::Scaling,
+        _ => AiAdoptionLevel::Advanced,
+    };
+
+    Some(IntentSignal::AiAdoption {
+        tools: matched,
+        adoption_level,
+    })
+}
+
 /// Detect `CompanyGrowth` from an encoded `source` field.
 ///
 /// The enrichment pipeline may store growth snapshots in the source field as
@@ -307,19 +511,25 @@ fn detect_growth_from_source(current_employees: i32, source: &str) -> Option<Int
 
 /// Scan the company description for job-posting language and emit
 /// `NewJobPosting` signals for each match.
+///
+/// AI/ML-specific roles are mapped to the `"AI/ML"` department so the scorer
+/// can apply the higher per-posting weight.
 fn detect_job_postings_from_description(desc: &str) -> Vec<IntentSignal> {
     // Titles that, when mentioned alongside hiring keywords, indicate an open role.
     let role_patterns: &[(&str, &str)] = &[
         ("software engineer", "Engineering"),
         ("backend engineer", "Engineering"),
         ("frontend engineer", "Engineering"),
-        ("data scientist", "Data"),
+        ("devops engineer", "Engineering"),
+        ("data scientist", "AI/ML"),
         ("machine learning engineer", "AI/ML"),
+        ("ml engineer", "AI/ML"),
+        ("ai engineer", "AI/ML"),
+        ("llm engineer", "AI/ML"),
         ("product manager", "Product"),
         ("sales representative", "Sales"),
         ("account executive", "Sales"),
         ("customer success", "Customer Success"),
-        ("devops engineer", "Engineering"),
     ];
 
     let lower = desc.to_lowercase();
@@ -341,6 +551,37 @@ fn detect_job_postings_from_description(desc: &str) -> Vec<IntentSignal> {
             department: dept.to_string(),
         })
         .collect()
+}
+
+/// Detect a `RemoteFirst` signal from company description and location text.
+fn detect_remote_first(desc: &str, location: &str) -> Option<IntentSignal> {
+    let combined = format!("{} {}", desc, location).to_lowercase();
+
+    let indicators = [
+        "remote-first",
+        "fully remote",
+        "distributed team",
+        "async-first",
+        "remote only",
+    ];
+
+    for indicator in &indicators {
+        if combined.contains(indicator) {
+            return Some(IntentSignal::RemoteFirst {
+                evidence: indicator.to_string(),
+            });
+        }
+    }
+    None
+}
+
+/// Return `true` when the department string belongs to an AI/ML/Data/Research
+/// hiring cluster.
+fn is_ai_department(dept: &str) -> bool {
+    let lower = dept.to_lowercase();
+    ["ai", "ml", "data", "research"]
+        .iter()
+        .any(|&kw| lower.contains(kw))
 }
 
 // ---------------------------------------------------------------------------
@@ -407,6 +648,48 @@ mod tests {
         assert_eq!(funding, Some(Some(50_000_000.0)));
     }
 
+    // --- Funding recency decay -----------------------------------------------
+
+    #[test]
+    fn test_funding_decay_old_funding_lower_score() {
+        // Funding announced > 24 months ago should produce a much lower score
+        // than funding from last month.
+        let recent_signals = vec![IntentSignal::RecentFunding {
+            amount: None,
+            date: "2025-11".into(),
+            months_ago: Some(1),
+        }];
+        let old_signals = vec![IntentSignal::RecentFunding {
+            amount: None,
+            date: "2022-01".into(),
+            months_ago: Some(48),
+        }];
+
+        let recent_score = IntentDetector::intent_score(&recent_signals);
+        let old_score = IntentDetector::intent_score(&old_signals);
+
+        assert!(
+            recent_score > old_score,
+            "recent funding (score {recent_score:.2}) should outscore old funding (score {old_score:.2})"
+        );
+    }
+
+    #[test]
+    fn test_funding_months_ago_populated() {
+        let mut company = bare_company();
+        // Use a date guaranteed to be in the past (well over 24 months ago).
+        company.funding_stage = Some("Seed|500000|2020-01".into());
+
+        let signals = IntentDetector::detect(&company);
+        let months = signals.iter().find_map(|s| match s {
+            IntentSignal::RecentFunding { months_ago, .. } => Some(*months_ago),
+            _ => None,
+        });
+        // Should be Some(> 24).
+        let months = months.expect("months_ago should be Some");
+        assert!(months.unwrap_or(0) > 24, "2020-01 is more than 24 months ago");
+    }
+
     // --- HiringSpree ---------------------------------------------------------
 
     #[test]
@@ -421,6 +704,43 @@ mod tests {
             _ => None,
         });
         assert_eq!(spree, Some(11), "should detect 11 open roles total");
+    }
+
+    // --- AI hiring boost -----------------------------------------------------
+
+    #[test]
+    fn test_ai_hiring_boost_from_stack_department() {
+        let mut company = bare_company();
+        // "hiring:ML:5" should emit a NewJobPosting with department "AI/ML".
+        company.tech_stack = Some(r#"["hiring:ML:5"]"#.into());
+
+        let signals = IntentDetector::detect(&company);
+        let ai_posting = signals.iter().any(|s| match s {
+            IntentSignal::NewJobPosting { department, .. } => department == "AI/ML",
+            _ => false,
+        });
+        assert!(ai_posting, "expected an AI/ML NewJobPosting from ML hiring entry");
+    }
+
+    #[test]
+    fn test_ai_hiring_boost_from_description() {
+        let mut company = bare_company();
+        company.description = Some(
+            "We're hiring an llm engineer and a data scientist to join our team.".into(),
+        );
+
+        let signals = IntentDetector::detect(&company);
+        let ai_postings: Vec<_> = signals
+            .iter()
+            .filter(|s| match s {
+                IntentSignal::NewJobPosting { department, .. } => department == "AI/ML",
+                _ => false,
+            })
+            .collect();
+        assert!(
+            !ai_postings.is_empty(),
+            "expected AI/ML NewJobPosting signals from description"
+        );
     }
 
     // --- NewJobPosting -------------------------------------------------------
@@ -495,6 +815,142 @@ mod tests {
         assert_eq!(growth, Some((30, 6)));
     }
 
+    // --- AiAdoption ----------------------------------------------------------
+
+    #[test]
+    fn test_ai_adoption_scaling_for_three_tools() {
+        let mut company = bare_company();
+        // openai, langchain, pinecone → 3 tools → Scaling
+        company.tech_stack =
+            Some(r#"["openai","langchain","pinecone","React","Postgres"]"#.into());
+
+        let signals = IntentDetector::detect(&company);
+        let adoption = signals.iter().find_map(|s| match s {
+            IntentSignal::AiAdoption {
+                tools,
+                adoption_level,
+            } => Some((tools.clone(), adoption_level.clone())),
+            _ => None,
+        });
+        let (tools, level) = adoption.expect("expected AiAdoption signal");
+        assert_eq!(level, AiAdoptionLevel::Scaling, "3 AI tools should be Scaling");
+        assert_eq!(tools.len(), 3);
+    }
+
+    #[test]
+    fn test_ai_adoption_early_for_one_tool() {
+        let mut company = bare_company();
+        company.tech_stack = Some(r#"["openai","React","Postgres"]"#.into());
+
+        let signals = IntentDetector::detect(&company);
+        let level = signals.iter().find_map(|s| match s {
+            IntentSignal::AiAdoption { adoption_level, .. } => Some(adoption_level.clone()),
+            _ => None,
+        });
+        assert_eq!(level, Some(AiAdoptionLevel::Early));
+    }
+
+    #[test]
+    fn test_ai_adoption_advanced_for_six_tools() {
+        let mut company = bare_company();
+        company.tech_stack = Some(
+            r#"["openai","anthropic","langchain","pinecone","mlflow","torch","ray"]"#.into(),
+        );
+
+        let signals = IntentDetector::detect(&company);
+        let level = signals.iter().find_map(|s| match s {
+            IntentSignal::AiAdoption { adoption_level, .. } => Some(adoption_level.clone()),
+            _ => None,
+        });
+        assert_eq!(level, Some(AiAdoptionLevel::Advanced));
+    }
+
+    #[test]
+    fn test_no_ai_adoption_for_empty_stack() {
+        let mut company = bare_company();
+        company.tech_stack = Some(r#"["React","Postgres","Redis"]"#.into());
+
+        let signals = IntentDetector::detect(&company);
+        assert!(
+            !signals.iter().any(|s| matches!(s, IntentSignal::AiAdoption { .. })),
+            "no AI tools should produce no AiAdoption signal"
+        );
+    }
+
+    // --- RemoteFirst ---------------------------------------------------------
+
+    #[test]
+    fn test_remote_first_detected_in_description() {
+        let mut company = bare_company();
+        company.description = Some("We are a fully remote company building the future.".into());
+
+        let signals = IntentDetector::detect(&company);
+        assert!(
+            signals.iter().any(|s| matches!(s, IntentSignal::RemoteFirst { .. })),
+            "expected RemoteFirst signal from description"
+        );
+    }
+
+    #[test]
+    fn test_remote_first_detected_in_location() {
+        let mut company = bare_company();
+        company.location = Some("Remote-first, US/EU".into());
+
+        let signals = IntentDetector::detect(&company);
+        assert!(
+            signals.iter().any(|s| matches!(s, IntentSignal::RemoteFirst { .. })),
+            "expected RemoteFirst signal from location"
+        );
+    }
+
+    #[test]
+    fn test_no_remote_first_for_office_only() {
+        let mut company = bare_company();
+        company.description = Some("We have offices in New York and San Francisco.".into());
+        company.location = Some("New York, NY".into());
+
+        let signals = IntentDetector::detect(&company);
+        assert!(
+            !signals.iter().any(|s| matches!(s, IntentSignal::RemoteFirst { .. })),
+            "office-only company should not produce RemoteFirst signal"
+        );
+    }
+
+    // --- Multi-signal interaction --------------------------------------------
+
+    #[test]
+    fn test_funding_plus_hiring_gives_bonus_over_sum() {
+        let combined = vec![
+            IntentSignal::RecentFunding {
+                amount: None,
+                date: "2025-10".into(),
+                months_ago: Some(3),
+            },
+            IntentSignal::HiringSpree {
+                open_roles: 5,
+                departments: vec!["Engineering".into()],
+            },
+        ];
+        let funding_only = vec![IntentSignal::RecentFunding {
+            amount: None,
+            date: "2025-10".into(),
+            months_ago: Some(3),
+        }];
+        let hiring_only = vec![IntentSignal::HiringSpree {
+            open_roles: 5,
+            departments: vec!["Engineering".into()],
+        }];
+
+        let score_combined = IntentDetector::intent_score(&combined);
+        let score_sum = IntentDetector::intent_score(&funding_only)
+            + IntentDetector::intent_score(&hiring_only);
+
+        assert!(
+            score_combined > score_sum * 0.95,
+            "combined funding+hiring score ({score_combined:.2}) should exceed ~95% of naive sum ({score_sum:.2}) due to interaction bonus"
+        );
+    }
+
     // --- intent_score --------------------------------------------------------
 
     #[test]
@@ -508,7 +964,8 @@ mod tests {
         let signals = vec![
             IntentSignal::RecentFunding {
                 amount: Some(1_000_000_000.0),
-                date: "2024-01".into(),
+                date: "2025-01".into(),
+                months_ago: Some(2),
             },
             IntentSignal::HiringSpree {
                 open_roles: 100,
@@ -526,6 +983,13 @@ mod tests {
                 employee_delta: 200,
                 period_months: 6,
             },
+            IntentSignal::AiAdoption {
+                tools: vec!["openai".into(), "langchain".into(), "pinecone".into()],
+                adoption_level: AiAdoptionLevel::Scaling,
+            },
+            IntentSignal::RemoteFirst {
+                evidence: "fully remote".into(),
+            },
         ];
         let score = IntentDetector::intent_score(&signals);
         assert!(
@@ -538,7 +1002,8 @@ mod tests {
     fn test_funding_signal_raises_score() {
         let with_funding = vec![IntentSignal::RecentFunding {
             amount: Some(20_000_000.0),
-            date: "2024-03".into(),
+            date: "2025-10".into(),
+            months_ago: Some(3),
         }];
         assert!(
             IntentDetector::intent_score(&with_funding) > 0.0,

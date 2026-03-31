@@ -297,10 +297,19 @@ export function GenerateAndSendBatchEmailModal({
                       <Flex
                         justify="between"
                         align="center"
+                        role="button"
+                        tabIndex={0}
                         style={{ cursor: "pointer" }}
                         onClick={() =>
                           setExpandedContact(isExpanded ? null : email.contactId)
                         }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setExpandedContact(isExpanded ? null : email.contactId);
+                          }
+                        }}
+                        aria-expanded={isExpanded}
                       >
                         <Flex gap="2" align="center">
                           <Text size="2" weight="medium">

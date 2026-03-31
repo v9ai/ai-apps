@@ -191,6 +191,7 @@ type ComputeNextTouchScoresResult {
 }
 
 type Contact {
+  aiProfile: ContactAIProfile
   authorityScore: Float
   bouncedEmails: [String!]!
   company: String
@@ -222,6 +223,30 @@ type Contact {
   telegramHandle: String
   updatedAt: String!
   userId: String
+}
+
+type ContactAIGitHubRepo {
+  description: String
+  name: String!
+  stars: Int!
+  topics: [String!]!
+}
+
+type ContactAIProfile {
+  enrichedAt: String!
+  experienceLevel: String!
+  githubAiRepos: [ContactAIGitHubRepo!]!
+  githubBio: String
+  githubTopLanguages: [String!]!
+  githubTotalStars: Int!
+  linkedinBio: String
+  linkedinHeadline: String
+  researchAreas: [String!]!
+  skills: [String!]!
+  specialization: String
+  synthesisConfidence: Float!
+  synthesisRationale: String
+  trigger: String!
 }
 
 type ContactEmail {
@@ -502,6 +527,21 @@ type EnhanceCompanyResponse {
   success: Boolean!
 }
 
+type EnrichAIContactResult {
+  aiProfile: ContactAIProfile
+  contactId: Int!
+  message: String!
+  success: Boolean!
+}
+
+type EnrichAIContactsBulkResult {
+  enriched: Int!
+  errors: [String!]!
+  message: String!
+  skipped: Int!
+  success: Boolean!
+}
+
 type Evidence {
   capture_timestamp: String
   content_hash: String
@@ -709,6 +749,8 @@ type Mutation {
   dismissReminder(id: Int!): ContactReminder!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
+  enrichAIContactProfile(contactId: Int!): EnrichAIContactResult!
+  enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!
   generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
