@@ -46,6 +46,22 @@ The dataset is the most critical component of your engine. The model will learn 
 **Clean and Anonymize:** Remove any personally identifiable information (PII) from the dataset. Replace specific names, companies, and unique details with generic placeholders like `[Prospect Name]` or `[Their Company]`. This protects privacy and teaches the model to use variables, making it easier to personalize later.
 
 ### Step-by-Step: Fine-Tuning Qwen with LoRA
+
+<Flow
+  height={500}
+  nodes={[
+    { id: "n1", position: { x: 250, y: 0 }, data: { label: "Load Base Model" }, type: "input" },
+    { id: "n2", position: { x: 250, y: 150 }, data: { label: "Configure LoRA" } },
+    { id: "n3", position: { x: 250, y: 300 }, data: { label: "Prepare Training Arguments" } },
+    { id: "n4", position: { x: 250, y: 450 }, data: { label: "Train with SFTTrainer" }, type: "output" }
+  ]}
+  edges={[
+    { id: "e1-2", source: "n1", target: "n2" },
+    { id: "e2-3", source: "n2", target: "n3" },
+    { id: "e3-4", source: "n3", target: "n4" }
+  ]}
+/>
+
 With your dataset prepared, you can implement the fine-tuning pipeline. We'll use the Hugging Face `transformers`, `peft`, and `trl` libraries, which provide standardized tools for this workflow.
 
 First, load the base model and tokenizer. We'll use `Qwen2.5-7B-Instruct` as it's tuned for following instructions.
