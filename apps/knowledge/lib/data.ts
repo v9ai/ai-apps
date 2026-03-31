@@ -35,7 +35,7 @@ export async function getCategoryCount(): Promise<number> {
   if (USE_DB) {
     try {
       const { getCategoryCountFromDb } = await import("./db/queries");
-      return getCategoryCountFromDb();
+      return await getCategoryCountFromDb();
     } catch {
       // DB unavailable — fall through
     }
@@ -48,7 +48,7 @@ export async function getAllLessons(): Promise<Lesson[]> {
   if (USE_DB) {
     try {
       const { getAllLessonsFromDb } = await import("./db/queries");
-      return getAllLessonsFromDb();
+      return await getAllLessonsFromDb();
     } catch {
       // DB unavailable — fall through
     }
@@ -63,7 +63,7 @@ export async function getLessonBySlug(
   if (USE_DB) {
     try {
       const { getLessonBySlugFromDb } = await import("./db/queries");
-      return getLessonBySlugFromDb(slug);
+      return await getLessonBySlugFromDb(slug);
     } catch {
       // DB unavailable — fall through
     }
@@ -76,7 +76,7 @@ export async function getGroupedLessons(): Promise<GroupedLessons[]> {
   if (USE_DB) {
     try {
       const { getGroupedLessonsFromDb } = await import("./db/queries");
-      return getGroupedLessonsFromDb();
+      return await getGroupedLessonsFromDb();
     } catch {
       // DB unavailable — fall through
     }
@@ -89,7 +89,7 @@ export async function getTotalWordCount(): Promise<number> {
   if (USE_DB) {
     try {
       const { getTotalWordCountFromDb } = await import("./db/queries");
-      return getTotalWordCountFromDb();
+      return await getTotalWordCountFromDb();
     } catch {
       // DB unavailable — fall through
     }
@@ -104,7 +104,7 @@ export async function getRelatedLessons(
   if (USE_DB) {
     try {
       const { getRelatedLessonsFromDb } = await import("./db/queries");
-      return getRelatedLessonsFromDb(slug);
+      return await getRelatedLessonsFromDb(slug);
     } catch {
       // DB unavailable — fall through
     }
@@ -124,7 +124,7 @@ export async function getCoursesForLesson(
   if (USE_DB) {
     try {
       const { getCoursesForLessonFromDb } = await import("./db/queries");
-      return getCoursesForLessonFromDb(slug);
+      return await getCoursesForLessonFromDb(slug);
     } catch {
       // DB unavailable — fall through
     }

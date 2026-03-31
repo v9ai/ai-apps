@@ -161,7 +161,7 @@ def main():
         # Generate
         output = mlx_lm.generate(
             model, tokenizer, prompt=prompt,
-            max_tokens=args.max_tokens, temp=args.temperature,
+            max_tokens=args.max_tokens,
         )
 
         # Score
