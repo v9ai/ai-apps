@@ -4,8 +4,8 @@ import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import fs from "fs";
 import path from "path";
-import { CATEGORIES, CATEGORY_META, LESSON_NUMBER } from "../lib/articles";
-import * as schema from "../src/db/content-schema";
+import { CATEGORIES, CATEGORY_META, LESSON_NUMBER } from "../../lib/articles";
+import * as schema from "../db/content-schema";
 
 const DB_PATH =
   process.env.CONTENT_DB_PATH ||
