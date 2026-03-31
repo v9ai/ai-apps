@@ -153,6 +153,130 @@ pub fn compute_signals(a: &Contact, b: &Contact) -> Vec<MatchSignal> {
     signals
 }
 
+/// Normalize a company name: lowercase, strip common legal suffixes, strip
+/// punctuation, collapse whitespace.
+pub fn normalize_company_name(name: &str) -> String {
+    // Legal suffixes to strip (order matters: longer forms first)
+    const SUFFIXES: &[&str] = &[
+        " incorporated",
+        " corporation",
+        " limited",
+        " inc.",
+        " inc",
+        " ltd.",
+        " ltd",
+        " llc.",
+        " llc",
+        " corp.",
+        " corp",
+        " gmbh",
+        " s.a.s.",
+        " sas",
+        " b.v.",
+        " bv",
+    ];
+
+    let mut s = name.to_lowercase();
+
+    for suffix in SUFFIXES {
+        if s.ends_with(suffix) {
+            s.truncate(s.len() - suffix.len());
+        }
+    }
+
+    // Strip punctuation (keep alphanumeric and spaces)
+    let s: String = s.chars().filter(|c| c.is_alphanumeric() || c.is_whitespace()).collect();
+
+    // Collapse whitespace
+    s.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// Normalize a domain string: strip "www.", lowercase, strip trailing "/".
+pub fn normalize_domain(domain: &str) -> String {
+    let s = domain.to_lowercase();
+    let s = s.trim_end_matches('/');
+    let s = s.strip_prefix("www.").unwrap_or(s);
+    s.to_string()
+}
+
+/// Extract the registrable domain (last two dot-separated labels).
+/// "api.acme.com" → "acme.com", "acme.com" → "acme.com", "localhost" → "localhost"
+pub fn registrable_domain(domain: &str) -> &str {
+    let parts: Vec<&str> = domain.split('.').collect();
+    match parts.len() {
+        0 | 1 => domain,
+        2 => domain,
+        n => {
+            // Find byte offset of the start of the second-to-last dot
+            let dot_pos = domain
+                .char_indices()
+                .filter(|&(_, c)| c == '.')
+                .nth(n - 2)
+                .map(|(i, _)| i);
+            match dot_pos {
+                Some(i) => &domain[i + 1..],
+                None => domain,
+            }
+        }
+    }
+}
+
+/// Compute all applicable match signals between two companies.
+pub fn compute_company_signals(a: &Company, b: &Company) -> Vec<MatchSignal> {
+    let mut signals = Vec::new();
+
+    // Domain signals
+    if let (Some(raw_a), Some(raw_b)) = (&a.domain, &b.domain) {
+        let da = normalize_domain(raw_a);
+        let db = normalize_domain(raw_b);
+
+        if !da.is_empty() && da == db {
+            signals.push(MatchSignal {
+                signal_type: SignalType::CompanyDomainExact,
+                score: 1.0,
+                weight: 10.0,
+            });
+        } else if !da.is_empty() && !db.is_empty() {
+            let root_a = registrable_domain(&da);
+            let root_b = registrable_domain(&db);
+            if root_a == root_b {
+                signals.push(MatchSignal {
+                    signal_type: SignalType::CompanyDomainNormalized,
+                    score: 1.0,
+                    weight: 7.0,
+                });
+            }
+        }
+    }
+
+    // Company name similarity (Jaro-Winkler on normalized names)
+    let name_a = normalize_company_name(&a.name);
+    let name_b = normalize_company_name(&b.name);
+    if !name_a.is_empty() && !name_b.is_empty() {
+        let sim = strsim::jaro_winkler(&name_a, &name_b);
+        if sim > 0.85 {
+            signals.push(MatchSignal {
+                signal_type: SignalType::CompanyNameSimilarity,
+                score: sim,
+                weight: 5.0,
+            });
+        }
+    }
+
+    // Industry match
+    if let (Some(ia), Some(ib)) = (&a.industry, &b.industry) {
+        if !ia.is_empty() && ia.to_lowercase() == ib.to_lowercase() {
+            signals.push(MatchSignal {
+                signal_type: SignalType::CompanyIndustryMatch,
+                score: 1.0,
+                weight: 2.0,
+            });
+        }
+    }
+
+    signals
+}
+
 fn normalize_linkedin(url: &str) -> String {
     url.to_lowercase()
         .trim_end_matches('/')
@@ -208,5 +332,79 @@ mod tests {
     #[test]
     fn empty_signals_score_zero() {
         assert_eq!(composite_match_score(&[]), 0.0);
+    }
+
+    fn make_company(id: &str, name: &str, domain: Option<&str>, industry: Option<&str>) -> Company {
+        Company {
+            id: id.into(),
+            name: name.into(),
+            domain: domain.map(Into::into),
+            industry: industry.map(Into::into),
+            employee_count: None,
+            funding_stage: None,
+            tech_stack: None,
+            location: None,
+            description: None,
+            source: None,
+            created_at: None,
+            updated_at: None,
+        }
+    }
+
+    #[test]
+    fn company_exact_domain_match() {
+        let a = make_company("1", "Acme Inc.", Some("acme.com"), None);
+        let b = make_company("2", "Acme Corp.", Some("acme.com"), None);
+        let sigs = compute_company_signals(&a, &b);
+        assert!(sigs.iter().any(|s| s.signal_type == SignalType::CompanyDomainExact));
+    }
+
+    #[test]
+    fn company_www_stripped_domain_match() {
+        let a = make_company("1", "Acme", Some("www.acme.com"), None);
+        let b = make_company("2", "Acme", Some("acme.com"), None);
+        let sigs = compute_company_signals(&a, &b);
+        assert!(sigs.iter().any(|s| s.signal_type == SignalType::CompanyDomainExact));
+    }
+
+    #[test]
+    fn company_subdomain_normalized_match() {
+        let a = make_company("1", "Acme", Some("api.acme.com"), None);
+        let b = make_company("2", "Acme", Some("acme.com"), None);
+        let sigs = compute_company_signals(&a, &b);
+        // no exact match, but registrable domain match
+        assert!(!sigs.iter().any(|s| s.signal_type == SignalType::CompanyDomainExact));
+        assert!(sigs.iter().any(|s| s.signal_type == SignalType::CompanyDomainNormalized));
+    }
+
+    #[test]
+    fn company_name_similarity_strips_legal_suffix() {
+        let a = make_company("1", "Acme Inc.", None, None);
+        let b = make_company("2", "Acme LLC", None, None);
+        let sigs = compute_company_signals(&a, &b);
+        assert!(sigs.iter().any(|s| s.signal_type == SignalType::CompanyNameSimilarity));
+    }
+
+    #[test]
+    fn company_industry_match() {
+        let a = make_company("1", "Alpha", None, Some("SaaS"));
+        let b = make_company("2", "Beta", None, Some("saas"));
+        let sigs = compute_company_signals(&a, &b);
+        assert!(sigs.iter().any(|s| s.signal_type == SignalType::CompanyIndustryMatch));
+    }
+
+    #[test]
+    fn normalize_company_name_strips_suffixes_and_punct() {
+        assert_eq!(normalize_company_name("Acme, Inc."), "acme");
+        assert_eq!(normalize_company_name("Widget Corp."), "widget");
+        assert_eq!(normalize_company_name("Deep Systems GmbH"), "deep systems");
+    }
+
+    #[test]
+    fn registrable_domain_extracts_correctly() {
+        assert_eq!(registrable_domain("api.acme.com"), "acme.com");
+        assert_eq!(registrable_domain("acme.com"), "acme.com");
+        assert_eq!(registrable_domain("localhost"), "localhost");
+        assert_eq!(registrable_domain("a.b.c.acme.com"), "acme.com");
     }
 }

@@ -10,6 +10,7 @@ import {
 } from "@/__generated__/hooks";
 import Link from "next/link";
 import { button } from "@/recipes/button";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 
 const statusColors: Record<string, "green" | "yellow" | "blue" | "orange" | "gray"> = {
   sent: "blue",
@@ -34,10 +35,10 @@ export default function FollowUpsPage() {
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [tab, setTab] = useState<string>("emails");
 
-  const { data: emailData, loading: emailLoading } = useGetEmailsNeedingFollowUpQuery({
+  const { data: emailData, loading: emailLoading, error: emailError } = useGetEmailsNeedingFollowUpQuery({
     variables: { limit: 100 },
   });
-  const { data: remindersData, loading: remindersLoading, refetch: refetchReminders } = useDueRemindersQuery({
+  const { data: remindersData, loading: remindersLoading, error: remindersError, refetch: refetchReminders } = useDueRemindersQuery({
     fetchPolicy: "cache-and-network",
   });
   const [dismissReminder] = useDismissReminderMutation();
@@ -49,6 +50,20 @@ export default function FollowUpsPage() {
   const dueReminders = remindersData?.dueReminders ?? [];
   const allTags = Array.from(new Set(dueReminders.flatMap((r) => r.contact.tags ?? []))).sort();
   const filteredReminders = tagFilter === "all" ? dueReminders : dueReminders.filter((r) => (r.contact.tags ?? []).includes(tagFilter));
+
+  if (emailError || remindersError) {
+    const message = emailError?.message ?? remindersError?.message ?? "Unknown error";
+    return (
+      <Container size="4" p="6">
+        <Callout.Root color="red">
+          <Callout.Icon>
+            <ExclamationTriangleIcon />
+          </Callout.Icon>
+          <Callout.Text>Failed to load follow-ups: {message}</Callout.Text>
+        </Callout.Root>
+      </Container>
+    );
+  }
 
   return (
     <Container size="4" p="6">

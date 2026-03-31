@@ -1003,7 +1003,7 @@ export const companyResolvers = {
       };
     },
 
-    async enhanceCompany(_parent: any, args: { id?: number; key?: string }) {
+    async enhanceCompany(_parent: unknown, args: MutationEnhanceCompanyArgs) {
       return {
         success: false,
         message: "Enhancement is currently unavailable.",
@@ -1012,7 +1012,7 @@ export const companyResolvers = {
       };
     },
 
-    async analyzeCompany(_parent: any, args: { id?: number; key?: string }) {
+    async analyzeCompany(_parent: unknown, args: MutationAnalyzeCompanyArgs) {
       return {
         success: false,
         message: "Deep analysis is currently unavailable.",
@@ -1022,8 +1022,8 @@ export const companyResolvers = {
     },
 
     async blockCompany(
-      _parent: any,
-      args: { id: number },
+      _parent: unknown,
+      args: MutationBlockCompanyArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
@@ -1039,8 +1039,8 @@ export const companyResolvers = {
     },
 
     async unblockCompany(
-      _parent: any,
-      args: { id: number },
+      _parent: unknown,
+      args: MutationUnblockCompanyArgs,
       context: GraphQLContext,
     ) {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
