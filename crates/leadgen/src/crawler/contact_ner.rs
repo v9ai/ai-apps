@@ -912,7 +912,7 @@ pub fn extract_company_names(text: &str) -> Vec<String> {
                 if !starts_uppercase(prev_bare) {
                     break;
                 }
-                if *at_ss && phrase_words.len() >= 1 {
+                if at_ss && phrase_words.len() >= 1 {
                     // This word starts a sentence; include it only if we
                     // haven't yet collected enough words (phrase needs >= 2).
                     phrase_words.insert(0, prev_bare);
