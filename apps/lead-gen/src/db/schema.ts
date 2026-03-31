@@ -451,6 +451,43 @@ export const receivedEmails = pgTable(
 export type ReceivedEmail = typeof receivedEmails.$inferSelect;
 export type NewReceivedEmail = typeof receivedEmails.$inferInsert;
 
+// LinkedIn Posts (unified table for posts and job listings — jobs have type='job')
+export const linkedinPosts = pgTable(
+  "linkedin_posts",
+  {
+    id: serial("id").primaryKey(),
+    type: text("type", { enum: ["post", "job"] }).notNull().default("post"),
+    url: text("url").notNull(),           // LinkedIn canonical URL (unique)
+
+    company_id: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+    contact_id: integer("contact_id").references(() => contacts.id, { onDelete: "set null" }),
+
+    title: text("title"),                 // job title or post headline
+    content: text("content"),            // full post text or job description
+    author_name: text("author_name"),    // display name
+    author_url: text("author_url"),      // author LinkedIn profile URL
+
+    location: text("location"),          // job: location string
+    employment_type: text("employment_type"), // job: full-time / contract / etc.
+
+    posted_at: text("posted_at"),        // when posted on LinkedIn (ISO)
+    scraped_at: text("scraped_at").notNull().default(sql`now()::text`),
+
+    raw_data: text("raw_data"),          // JSON blob for anything extra
+
+    created_at: text("created_at").notNull().default(sql`now()::text`),
+  },
+  (table) => [
+    uniqueIndex("idx_linkedin_posts_url").on(table.url),
+    index("idx_linkedin_posts_type").on(table.type),
+    index("idx_linkedin_posts_company_id").on(table.company_id),
+    index("idx_linkedin_posts_contact_id").on(table.contact_id),
+  ],
+);
+
+export type LinkedInPost = typeof linkedinPosts.$inferSelect;
+export type NewLinkedInPost = typeof linkedinPosts.$inferInsert;
+
 // ---------------------------------------------------------------------------
 // Drizzle relations() declarations
 // ---------------------------------------------------------------------------
@@ -460,6 +497,7 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   companySnapshots: many(companySnapshots),
   contacts: many(contacts),
   emailCampaigns: many(emailCampaigns),
+  linkedinPosts: many(linkedinPosts),
 }));
 
 export const companyFactsRelations = relations(companyFacts, ({ one }) => ({
@@ -482,6 +520,7 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
     references: [companies.id],
   }),
   emails: many(contactEmails),
+  linkedinPosts: many(linkedinPosts),
 }));
 
 export const contactEmailsRelations = relations(contactEmails, ({ one }) => ({
@@ -495,5 +534,16 @@ export const emailCampaignsRelations = relations(emailCampaigns, ({ one }) => ({
   company: one(companies, {
     fields: [emailCampaigns.company_id],
     references: [companies.id],
+  }),
+}));
+
+export const linkedinPostsRelations = relations(linkedinPosts, ({ one }) => ({
+  company: one(companies, {
+    fields: [linkedinPosts.company_id],
+    references: [companies.id],
+  }),
+  contact: one(contacts, {
+    fields: [linkedinPosts.contact_id],
+    references: [contacts.id],
   }),
 }));

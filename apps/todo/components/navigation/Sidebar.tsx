@@ -7,7 +7,7 @@ import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
 const navItems = [
-  { label: "Tasks", href: "/app", icon: "☰" },
+  { label: "Tasks", href: "/", icon: "☰" },
   { label: "How It Works", href: "/how-it-works", icon: "?" },
 ];
 
@@ -41,7 +41,7 @@ export function Sidebar({ userName }: { userName: string }) {
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
-            (item.href !== "/app" && pathname.startsWith(item.href));
+            (item.href !== "/" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}

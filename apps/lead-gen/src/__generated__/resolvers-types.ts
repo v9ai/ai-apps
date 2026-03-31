@@ -785,6 +785,29 @@ export type ImportResendResult = {
   updatedCount: Scalars['Int']['output'];
 };
 
+export type LinkedInPost = {
+  __typename?: 'LinkedInPost';
+  authorName: Maybe<Scalars['String']['output']>;
+  authorUrl: Maybe<Scalars['String']['output']>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  contactId: Maybe<Scalars['Int']['output']>;
+  content: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  employmentType: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  location: Maybe<Scalars['String']['output']>;
+  postedAt: Maybe<Scalars['String']['output']>;
+  rawData: Maybe<Scalars['JSON']['output']>;
+  scrapedAt: Scalars['String']['output'];
+  title: Maybe<Scalars['String']['output']>;
+  type: LinkedInPostType;
+  url: Scalars['String']['output'];
+};
+
+export type LinkedInPostType =
+  | 'job'
+  | 'post';
+
 export type MarkRepliedResult = {
   __typename?: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -828,6 +851,7 @@ export type Mutation = {
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
+  deleteLinkedInPost: Scalars['Boolean']['output'];
   dismissReminder: ContactReminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
@@ -868,6 +892,7 @@ export type Mutation = {
   updateEmailTemplate: EmailTemplate;
   updateReminder: ContactReminder;
   updateUserSettings: UserSettings;
+  upsertLinkedInPost: LinkedInPost;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -965,6 +990,11 @@ export type MutationDeleteContactArgs = {
 
 
 export type MutationDeleteEmailTemplateArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteLinkedInPostArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1184,6 +1214,11 @@ export type MutationUpdateUserSettingsArgs = {
 };
 
 
+export type MutationUpsertLinkedInPostArgs = {
+  input: UpsertLinkedInPostInput;
+};
+
+
 export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
@@ -1216,6 +1251,8 @@ export type Query = {
   emailTemplates: EmailTemplatesResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
   findCompany: FindCompanyResult;
+  linkedinPost: Maybe<LinkedInPost>;
+  linkedinPosts: Array<LinkedInPost>;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
@@ -1318,6 +1355,19 @@ export type QueryEmailsNeedingFollowUpArgs = {
 export type QueryFindCompanyArgs = {
   name?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryLinkedinPostArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryLinkedinPostsArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  type?: InputMaybe<LinkedInPostType>;
 };
 
 
@@ -1547,6 +1597,21 @@ export type UpdateReminderInput = {
   status?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpsertLinkedInPostInput = {
+  authorName?: InputMaybe<Scalars['String']['input']>;
+  authorUrl?: InputMaybe<Scalars['String']['input']>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  contactId?: InputMaybe<Scalars['Int']['input']>;
+  content?: InputMaybe<Scalars['String']['input']>;
+  employmentType?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<Scalars['String']['input']>;
+  postedAt?: InputMaybe<Scalars['String']['input']>;
+  rawData?: InputMaybe<Scalars['JSON']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  type: LinkedInPostType;
+  url: Scalars['String']['input'];
+};
+
 export type UserSettings = {
   __typename?: 'UserSettings';
   created_at: Scalars['String']['output'];
@@ -1737,6 +1802,8 @@ export type ResolversTypes = {
   ImportResendResult: ResolverTypeWrapper<Partial<ImportResendResult>>;
   Int: ResolverTypeWrapper<Partial<Scalars['Int']['output']>>;
   JSON: ResolverTypeWrapper<Partial<Scalars['JSON']['output']>>;
+  LinkedInPost: ResolverTypeWrapper<Partial<LinkedInPost>>;
+  LinkedInPostType: ResolverTypeWrapper<Partial<LinkedInPostType>>;
   MarkRepliedResult: ResolverTypeWrapper<Partial<MarkRepliedResult>>;
   MergeCompaniesResult: ResolverTypeWrapper<Partial<MergeCompaniesResult>>;
   MergeDuplicateContactsResult: ResolverTypeWrapper<Partial<MergeDuplicateContactsResult>>;
@@ -1765,6 +1832,7 @@ export type ResolversTypes = {
   UpdateEmailTemplateInput: ResolverTypeWrapper<Partial<UpdateEmailTemplateInput>>;
   UpdateReminderInput: ResolverTypeWrapper<Partial<UpdateReminderInput>>;
   Upload: ResolverTypeWrapper<Partial<Scalars['Upload']['output']>>;
+  UpsertLinkedInPostInput: ResolverTypeWrapper<Partial<UpsertLinkedInPostInput>>;
   UserSettings: ResolverTypeWrapper<Partial<UserSettings>>;
   UserSettingsInput: ResolverTypeWrapper<Partial<UserSettingsInput>>;
   VerifyEmailResult: ResolverTypeWrapper<Partial<VerifyEmailResult>>;
@@ -1844,6 +1912,7 @@ export type ResolversParentTypes = {
   ImportResendResult: Partial<ImportResendResult>;
   Int: Partial<Scalars['Int']['output']>;
   JSON: Partial<Scalars['JSON']['output']>;
+  LinkedInPost: Partial<LinkedInPost>;
   MarkRepliedResult: Partial<MarkRepliedResult>;
   MergeCompaniesResult: Partial<MergeCompaniesResult>;
   MergeDuplicateContactsResult: Partial<MergeDuplicateContactsResult>;
@@ -1871,6 +1940,7 @@ export type ResolversParentTypes = {
   UpdateEmailTemplateInput: Partial<UpdateEmailTemplateInput>;
   UpdateReminderInput: Partial<UpdateReminderInput>;
   Upload: Partial<Scalars['Upload']['output']>;
+  UpsertLinkedInPostInput: Partial<UpsertLinkedInPostInput>;
   UserSettings: Partial<UserSettings>;
   UserSettingsInput: Partial<UserSettingsInput>;
   VerifyEmailResult: Partial<VerifyEmailResult>;
@@ -2405,6 +2475,24 @@ export interface JsonScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes
   name: 'JSON';
 }
 
+export type LinkedInPostResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LinkedInPost'] = ResolversParentTypes['LinkedInPost']> = {
+  authorName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  authorUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  contactId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  content?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  employmentType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  location?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  postedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  rawData?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  scrapedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['LinkedInPostType'], ParentType, ContextType>;
+  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type MarkRepliedResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MarkRepliedResult'] = ResolversParentTypes['MarkRepliedResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2444,6 +2532,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteCompany?: Resolver<ResolversTypes['DeleteCompanyResponse'], ParentType, ContextType, RequireFields<MutationDeleteCompanyArgs, 'id'>>;
   deleteContact?: Resolver<ResolversTypes['DeleteContactResult'], ParentType, ContextType, RequireFields<MutationDeleteContactArgs, 'id'>>;
   deleteEmailTemplate?: Resolver<ResolversTypes['DeleteEmailTemplateResult'], ParentType, ContextType, RequireFields<MutationDeleteEmailTemplateArgs, 'id'>>;
+  deleteLinkedInPost?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationDeleteLinkedInPostArgs, 'id'>>;
   dismissReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationDismissReminderArgs, 'id'>>;
   enhanceAllContacts?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType>;
   enhanceCompany?: Resolver<ResolversTypes['EnhanceCompanyResponse'], ParentType, ContextType, Partial<MutationEnhanceCompanyArgs>>;
@@ -2484,6 +2573,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateEmailTemplate?: Resolver<ResolversTypes['EmailTemplate'], ParentType, ContextType, RequireFields<MutationUpdateEmailTemplateArgs, 'id' | 'input'>>;
   updateReminder?: Resolver<ResolversTypes['ContactReminder'], ParentType, ContextType, RequireFields<MutationUpdateReminderArgs, 'id' | 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
+  upsertLinkedInPost?: Resolver<ResolversTypes['LinkedInPost'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostArgs, 'input'>>;
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
 };
 
@@ -2507,6 +2597,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   emailTemplates?: Resolver<ResolversTypes['EmailTemplatesResult'], ParentType, ContextType, Partial<QueryEmailTemplatesArgs>>;
   emailsNeedingFollowUp?: Resolver<ResolversTypes['FollowUpEmailsResult'], ParentType, ContextType, Partial<QueryEmailsNeedingFollowUpArgs>>;
   findCompany?: Resolver<ResolversTypes['FindCompanyResult'], ParentType, ContextType, Partial<QueryFindCompanyArgs>>;
+  linkedinPost?: Resolver<Maybe<ResolversTypes['LinkedInPost']>, ParentType, ContextType, RequireFields<QueryLinkedinPostArgs, 'id'>>;
+  linkedinPosts?: Resolver<Array<ResolversTypes['LinkedInPost']>, ParentType, ContextType, Partial<QueryLinkedinPostsArgs>>;
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
   resendEmail?: Resolver<Maybe<ResolversTypes['ResendEmailDetail']>, ParentType, ContextType, RequireFields<QueryResendEmailArgs, 'resendId'>>;
@@ -2687,6 +2779,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ImportContactsResult?: ImportContactsResultResolvers<ContextType>;
   ImportResendResult?: ImportResendResultResolvers<ContextType>;
   JSON?: GraphQLScalarType;
+  LinkedInPost?: LinkedInPostResolvers<ContextType>;
   MarkRepliedResult?: MarkRepliedResultResolvers<ContextType>;
   MergeCompaniesResult?: MergeCompaniesResultResolvers<ContextType>;
   MergeDuplicateContactsResult?: MergeDuplicateContactsResultResolvers<ContextType>;

@@ -43,7 +43,7 @@ export const papers: Paper[] = [
     authors: "Vercel",
     year: 2024,
     finding: "Server-side rendering and static generation with React components, enabling efficient data fetching and SEO",
-    relevance: "Used in app/app/page.tsx for server-first data fetching of tasks and userPreferences via Drizzle ORM, and in auth routes for client interactivity",
+    relevance: "Used in app/page.tsx for server-first data fetching of tasks and userPreferences via Drizzle ORM, and in auth routes for client interactivity",
     url: "https://nextjs.org/docs/app",
     categoryColor: "var(--blue-9)",
   },
@@ -153,7 +153,7 @@ export const researchStats: Stat[] = [
   {
     number: "3",
     label: "Core task statuses (inbox, active, completed) managed via StatusTabs",
-    source: "app/app/page.tsx emptyMessages object",
+    source: "app/page.tsx emptyMessages object",
   },
   {
     number: "4",
@@ -187,7 +187,7 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Task Data Fetching",
-    description: "The server component app/app/page.tsx calls getTasksByStatus(userId, status, limit, offset) and getAllTaskCounts(userId) to retrieve tasks and counts from the tasks table. It uses Drizzle ORM queries filtered by userId and status, with pagination based on userPreferences.chunkSize.",
+    description: "The server component app/page.tsx calls getTasksByStatus(userId, status, limit, offset) and getAllTaskCounts(userId) to retrieve tasks and counts from the tasks table. It uses Drizzle ORM queries filtered by userId and status, with pagination based on userPreferences.chunkSize.",
     researchBasis: "Next.js App Router for server-side data fetching with direct database access",
   },
   {
@@ -207,7 +207,7 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Session Validation",
-    description: "Protected routes like app/app/page.tsx call auth.api.getSession({ headers }) to validate the session token from cookies. Better Auth checks the session table and returns the session object or null, ensuring only authenticated users access the main app.",
+    description: "Protected routes like app/page.tsx call auth.api.getSession({ headers }) to validate the session token from cookies. Better Auth checks the session table and returns the session object or null, ensuring only authenticated users access the main app.",
     researchBasis: "Better Auth server API for secure session verification",
   },
 ];
@@ -215,14 +215,14 @@ export const pipelineAgents: PipelineAgent[] = [
 // ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "Users sign up via the signup page, where Better Auth creates a session and stores credentials in PostgreSQL. Once logged in, the app dashboard (app/app/page.tsx) fetches tasks using getTasksByStatus and user preferences via direct Drizzle queries. Tasks are prioritized with an AI scoring engine that calculates priorityScore based on deadlineUrgency and userValue weights from userPreferences. Users can manage tasks through StatusTabs and TaskList components, with updates validated by Zod schemas and persisted to the tasks table.";
+  "Users sign up via the signup page, where Better Auth creates a session and stores credentials in PostgreSQL. Once logged in, the app dashboard (app/page.tsx) fetches tasks using getTasksByStatus and user preferences via direct Drizzle queries. Tasks are prioritized with an AI scoring engine that calculates priorityScore based on deadlineUrgency and userValue weights from userPreferences. Users can manage tasks through StatusTabs and TaskList components, with updates validated by Zod schemas and persisted to the tasks table.";
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
 export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "System Architecture",
-    content: "The app uses a Next.js App Router with server components like app/app/page.tsx for data fetching and client components for interactive auth pages. It follows a monorepo structure with Turbopack configuration pointing two levels up. Database access is via Drizzle ORM with a Proxy pattern in src/db/index.ts for lazy initialization, connecting to PostgreSQL on Neon. Key components include StatusTabs for navigation and TaskList for rendering, with server actions handling task mutations.",
+    content: "The app uses a Next.js App Router with server components like app/page.tsx for data fetching and client components for interactive auth pages. It follows a monorepo structure with Turbopack configuration pointing two levels up. Database access is via Drizzle ORM with a Proxy pattern in src/db/index.ts for lazy initialization, connecting to PostgreSQL on Neon. Key components include StatusTabs for navigation and TaskList for rendering, with server actions handling task mutations.",
   },
   {
     heading: "Database Design",

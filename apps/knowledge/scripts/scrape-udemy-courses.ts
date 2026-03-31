@@ -8,7 +8,7 @@
  *  3. Classify each course into one of 10 topic groups
  *  4. Upsert into external_courses with topic_group; map to lesson slugs
  */
-import { webkit, type Page, type BrowserContext } from "playwright";
+import { webkit, type BrowserContext } from "playwright";
 import { db } from "@/src/db";
 import { externalCourses, lessonCourses } from "@/src/db/schema";
 
@@ -348,10 +348,49 @@ function extractCourseUrls(rawUrls: string[]): string[] {
 
 async function crawlTopicPage(topic: string): Promise<{ courses: string[]; relatedTopics: string[] }> {
   const { context, close } = await freshContext();
+
+  // Intercept Udemy's discovery API responses to extract course slugs
+  const interceptedCourseUrls = new Set<string>();
+
   try {
     const page = await context.newPage();
-    const url = `https://www.udemy.com/topic/${topic}/`;
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+
+    page.on("response", async (response) => {
+      const url = response.url();
+      if (
+        !url.includes("udemy.com") ||
+        !url.includes("/api-2.0/") ||
+        response.status() !== 200
+      ) return;
+      const ct = response.headers()["content-type"] ?? "";
+      if (!ct.includes("application/json")) return;
+      try {
+        const json = await response.json() as Record<string, unknown>;
+        // discovery-units and course-recommendations return results[] with course_url or url fields
+        const extract = (obj: unknown) => {
+          if (!obj || typeof obj !== "object") return;
+          const o = obj as Record<string, unknown>;
+          // direct course URL fields
+          for (const key of ["url", "course_url", "learn_url"]) {
+            if (typeof o[key] === "string" && (o[key] as string).includes("/course/")) {
+              const m = (o[key] as string).match(/\/course\/([^/?#]+)/);
+              if (m) interceptedCourseUrls.add(`https://www.udemy.com/course/${m[1]}/`);
+            }
+          }
+          // recurse into arrays and nested objects
+          for (const val of Object.values(o)) {
+            if (Array.isArray(val)) val.forEach(extract);
+            else if (val && typeof val === "object") extract(val);
+          }
+        };
+        extract(json);
+      } catch { /* ignore parse errors */ }
+    });
+
+    await page.goto(`https://www.udemy.com/topic/${topic}/`, {
+      waitUntil: "domcontentloaded",
+      timeout: 20000,
+    });
     await page.waitForTimeout(6000);
 
     const title = await page.title();
@@ -361,11 +400,13 @@ async function crawlTopicPage(topic: string): Promise<{ courses: string[]; relat
 
     await page.click('[id*="onetrust-accept"], button:has-text("Accept")').catch(() => {});
 
+    // Scroll to trigger lazy-loaded API calls
     for (let i = 0; i < 5; i++) {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await page.waitForTimeout(1500);
     }
 
+    // Also harvest any anchor hrefs already in the DOM (catches featured / bestseller rows)
     const courseHrefs = await page.evaluate(() =>
       [...document.querySelectorAll("a")].map((a) => a.href).filter((h) => h.includes("/course/")),
     );
@@ -381,7 +422,9 @@ async function crawlTopicPage(topic: string): Promise<{ courses: string[]; relat
       .map((h) => h.match(/\/topic\/([a-z0-9-]+)/)?.[1])
       .filter((t): t is string => !!t);
 
-    return { courses: extractCourseUrls(courseHrefs), relatedTopics };
+    // Merge DOM-harvested URLs with API-intercepted URLs
+    const allCourseUrls = [...courseHrefs, ...[...interceptedCourseUrls]];
+    return { courses: extractCourseUrls(allCourseUrls), relatedTopics };
   } finally {
     await close();
   }

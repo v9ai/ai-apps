@@ -303,7 +303,7 @@ const fetchNodes: Node[] = [
     id: "server-comp",
     type: "agent",
     position: { x: 0, y: 50 },
-    data: { label: "Server Component", sublabel: "app/app/page.tsx", icon: Cpu, color: "var(--gray-11)" },
+    data: { label: "Server Component", sublabel: "app/page.tsx", icon: Cpu, color: "var(--gray-11)" },
   },
   {
     id: "session-check",

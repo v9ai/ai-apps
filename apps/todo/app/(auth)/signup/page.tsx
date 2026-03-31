@@ -35,7 +35,7 @@ export default function SignUpPage() {
           setLoading(false);
         },
         onSuccess: () => {
-          window.location.href = "/app";
+          window.location.href = "/";
         },
       }
     );

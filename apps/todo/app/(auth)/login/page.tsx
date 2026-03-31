@@ -34,7 +34,7 @@ export default function LoginPage() {
           setLoading(false);
         },
         onSuccess: () => {
-          window.location.href = "/app";
+          window.location.href = "/";
         },
       }
     );
