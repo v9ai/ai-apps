@@ -93,13 +93,17 @@ def import_course(conn: sqlite3.Connection, c: dict) -> int:
     if isinstance(instructor, str):
         instructor = {"name": instructor}
 
-    what_you_learn = c.get("what_you_will_learn", c.get("what_you_learn", []))
+    what_you_learn = c.get("what_you_will_learn", c.get("what_youll_learn", c.get("what_you_learn", [])))
     if isinstance(what_you_learn, list):
         what_you_learn = "\n".join(what_you_learn)
 
     requirements = c.get("prerequisites", c.get("requirements", []))
     if isinstance(requirements, list):
         requirements = "\n".join(requirements)
+
+    price = c.get("price", "")
+    if isinstance(price, dict):
+        price = price.get("note", price.get("current", ""))
 
     target_audience = c.get("target_audience", c.get("who_is_this_for", []))
     if isinstance(target_audience, list):
@@ -121,7 +125,7 @@ def import_course(conn: sqlite3.Connection, c: dict) -> int:
         c.get("url", ""),
         c.get("headline", ""),
         c.get("description", ""),
-        c.get("price", ""),
+        price,
         c.get("num_students", c.get("num_subscribers", 0)),
         c.get("rating", c.get("avg_rating", 0)),
         c.get("num_reviews", 0),
@@ -132,7 +136,7 @@ def import_course(conn: sqlite3.Connection, c: dict) -> int:
         c.get("category", ""),
         c.get("language", "English"),
         instructor.get("name", "") if isinstance(instructor, dict) else str(instructor),
-        instructor.get("title", "") if isinstance(instructor, dict) else "",
+        (instructor.get("title", "") or instructor.get("role", "") or instructor.get("tagline", "")) if isinstance(instructor, dict) else "",
         instructor.get("bio", "") if isinstance(instructor, dict) else "",
         c.get("last_updated", ""),
         c.get("image_url", ""),

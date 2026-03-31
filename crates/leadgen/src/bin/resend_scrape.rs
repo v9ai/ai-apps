@@ -302,97 +302,108 @@ async fn render_email_in_tab(
     serde_json::from_str::<EmailDetail>(&json_str).context("parse email detail JSON")
 }
 
-/// Process emails through a pool of Chrome tabs.
-/// Uses a channel-based pool so each tab is used exclusively by one task at a time.
-async fn fetch_with_chrome_pool(
+/// Process emails through dedicated worker tasks — one per Chrome tab.
+/// Each worker owns its tab exclusively and pulls work from a shared queue.
+async fn fetch_with_chrome_workers(
     browser: &Browser,
     api_key: &str,
     emails: &[EmailListItem],
     num_tabs: usize,
 ) -> Vec<Option<EmailDetail>> {
     let total = emails.len();
+
+    // Work queue: (index, email_id)
+    let (work_tx, work_rx) = async_channel::bounded::<(usize, String)>(num_tabs * 2);
+
+    // Results collected via channel
+    let (result_tx, mut result_rx) =
+        tokio::sync::mpsc::channel::<(usize, Option<EmailDetail>)>(num_tabs * 2);
+
     let completed = Arc::new(AtomicUsize::new(0));
     let rate_limited = Arc::new(AtomicUsize::new(0));
 
-    // Channel-based page pool: tasks checkout a page, use it, return it
-    let (pool_tx, pool_rx) = async_channel::bounded::<Page>(num_tabs);
-
-    // Create tabs and seed the pool
-    let mut created = 0;
-    for _ in 0..num_tabs {
-        match browser.new_page("about:blank").await {
-            Ok(page) => {
-                pool_tx.send(page).await.ok();
-                created += 1;
+    // Spawn one worker per tab — each owns its page exclusively
+    let mut workers = Vec::new();
+    for tab_id in 0..num_tabs {
+        let page = match browser.new_page("about:blank").await {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("  Tab {} failed to create: {}", tab_id, e);
+                continue;
             }
-            Err(e) => eprintln!("  Failed to create tab: {}", e),
-        }
-    }
-    eprintln!("  Created {} browser tabs", created);
-
-    let mut handles = Vec::with_capacity(total);
-
-    for email in emails.iter() {
-        let id = email.id.clone();
+        };
+        let work_rx = work_rx.clone();
+        let result_tx = result_tx.clone();
         let api_key = api_key.to_string();
         let completed = Arc::clone(&completed);
         let rate_limited = Arc::clone(&rate_limited);
-        let pool_rx = pool_rx.clone();
-        let pool_tx = pool_tx.clone();
 
-        let handle = tokio::spawn(async move {
-            // Checkout a page from the pool (blocks until one is available)
-            let page = match pool_rx.recv().await {
-                Ok(p) => p,
-                Err(_) => return None,
-            };
-
-            let mut retries = 0u64;
-            let result = loop {
-                match render_email_in_tab(&page, &api_key, &id).await {
-                    Ok(detail) => break Some(detail),
-                    Err(e) => {
-                        let msg = format!("{}", e);
-                        if msg.contains("RATE_LIMITED") {
-                            retries += 1;
-                            rate_limited.fetch_add(1, Ordering::Relaxed);
-                            if retries > 4 {
-                                eprintln!("  {} rate limited {} times, skipping", id, retries);
-                                break None;
+        workers.push(tokio::spawn(async move {
+            while let Ok((idx, email_id)) = work_rx.recv().await {
+                let mut retries = 0u64;
+                let detail = loop {
+                    match render_email_in_tab(&page, &api_key, &email_id).await {
+                        Ok(d) => break Some(d),
+                        Err(e) => {
+                            let msg = format!("{}", e);
+                            if msg.contains("RATE_LIMITED") {
+                                retries += 1;
+                                rate_limited.fetch_add(1, Ordering::Relaxed);
+                                if retries > 4 {
+                                    break None;
+                                }
+                                tokio::time::sleep(
+                                    std::time::Duration::from_millis(1500 * retries),
+                                )
+                                .await;
+                            } else {
+                                retries += 1;
+                                if retries > 2 {
+                                    eprintln!("  [tab {}] {} failed: {}", tab_id, email_id, e);
+                                    break None;
+                                }
+                                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
                             }
-                            let backoff = 1500 * retries;
-                            tokio::time::sleep(std::time::Duration::from_millis(backoff)).await;
-                        } else {
-                            retries += 1;
-                            if retries > 2 {
-                                eprintln!("  {} failed: {}", id, e);
-                                break None;
-                            }
-                            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
                         }
                     }
+                };
+
+                result_tx.send((idx, detail)).await.ok();
+
+                let done = completed.fetch_add(1, Ordering::Relaxed) + 1;
+                if done % 200 == 0 || done == total {
+                    let rl = rate_limited.load(Ordering::Relaxed);
+                    eprintln!("  Fetched: {}/{} (rate_limited: {})", done, total, rl);
                 }
-            };
 
-            // Return page to pool
-            pool_tx.send(page).await.ok();
-
-            let done = completed.fetch_add(1, Ordering::Relaxed) + 1;
-            if done % 200 == 0 || done == total {
-                let rl = rate_limited.load(Ordering::Relaxed);
-                eprintln!("  Fetched: {}/{} (rate_limited: {})", done, total, rl);
+                // Small delay between requests per worker
+                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
             }
+        }));
+    }
+    eprintln!("  Started {} worker tabs", workers.len());
+    drop(result_tx); // Drop sender so result_rx closes when all workers finish
 
-            result
-        });
+    // Feed work queue
+    let feeder = tokio::spawn(async move {
+        for (idx, email) in emails.iter().enumerate() {
+            if work_tx.send((idx, email.id.clone())).await.is_err() {
+                break;
+            }
+        }
+    });
 
-        handles.push(handle);
+    // Collect results
+    let mut results: Vec<Option<EmailDetail>> = (0..total).map(|_| None).collect();
+    while let Some((idx, detail)) = result_rx.recv().await {
+        results[idx] = detail;
     }
 
-    let mut results = Vec::with_capacity(total);
-    for handle in handles {
-        results.push(handle.await.unwrap_or(None));
+    feeder.await.ok();
+    for w in workers {
+        w.await.ok();
     }
+
     results
 }
 
@@ -559,7 +570,7 @@ async fn main() -> Result<()> {
         emails.len(),
         num_tabs
     );
-    let details = fetch_with_chrome_pool(&browser, &api_key, &emails, num_tabs).await;
+    let details = fetch_with_chrome_workers(&browser, &api_key, &emails, num_tabs).await;
 
     // Step 4: Process, filter, dedup
     let mut records = Vec::new();
