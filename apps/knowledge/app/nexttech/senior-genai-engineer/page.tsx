@@ -1,11 +1,8 @@
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import { eq } from "drizzle-orm";
 import { Container, Heading, Text, Box, Flex, Card, Badge, Separator } from "@radix-ui/themes";
 import { ExternalLinkIcon, ArrowLeftIcon } from "@radix-ui/react-icons";
-import { contentDb } from "@/src/db/content";
-import { publicJobs } from "@/src/db/content-schema";
 import { MarkdownProse } from "@/components/markdown-prose";
+import jobData from "@/data/jobs/nexttech-senior-genai-engineer.json";
 
 export const metadata = {
   title: "Senior GenAI Engineer / LLM Developer — Nexttech",
@@ -13,17 +10,7 @@ export const metadata = {
     "Production-grade AI agent platform for enterprise engineering tools in the energy industry. Remote, Cluj-Napoca.",
 };
 
-export default async function NexttechJobPage() {
-  const job = contentDb.query.publicJobs
-    ? contentDb
-        .select()
-        .from(publicJobs)
-        .where(eq(publicJobs.slug, "senior-genai-engineer"))
-        .get()
-    : null;
-
-  if (!job) notFound();
-
+export default function NexttechJobPage() {
   return (
     <Container size="3" p={{ initial: "4", md: "8" }}>
       {/* Back link */}
@@ -41,37 +28,35 @@ export default async function NexttechJobPage() {
         <Flex direction="column" gap="3" p="2">
           <Flex align="center" gap="3" wrap="wrap">
             <Badge size="2" color="teal" variant="solid">
-              {job.company}
+              {jobData.company}
             </Badge>
             <Badge size="1" color="gray" variant="soft">
-              {job.location}
+              {jobData.location}
             </Badge>
           </Flex>
 
           <Heading size="7" style={{ lineHeight: 1.2 }}>
-            {job.position}
+            {jobData.position}
           </Heading>
 
-          {job.url && (
-            <Flex align="center" gap="2">
-              <Text size="2" asChild>
-                <a
-                  href={job.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    color: "var(--teal-11)",
-                    textDecoration: "none",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
-                >
-                  Apply on TalentLyft <ExternalLinkIcon />
-                </a>
-              </Text>
-            </Flex>
-          )}
+          <Flex align="center" gap="2">
+            <Text size="2" asChild>
+              <a
+                href={jobData.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "var(--teal-11)",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                Apply on TalentLyft <ExternalLinkIcon />
+              </a>
+            </Text>
+          </Flex>
         </Flex>
       </Card>
 
@@ -79,30 +64,28 @@ export default async function NexttechJobPage() {
 
       {/* Job description rendered as markdown */}
       <Box className="deep-dive-content" style={{ lineHeight: 1.8 }}>
-        <MarkdownProse content={job.description} />
+        <MarkdownProse content={jobData.description} />
       </Box>
 
       {/* Footer */}
       <Separator size="4" mt="8" mb="4" />
       <Flex justify="center">
-        {job.url && (
-          <Text size="2" asChild>
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: "var(--teal-11)",
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              Apply for this position <ExternalLinkIcon />
-            </a>
-          </Text>
-        )}
+        <Text size="2" asChild>
+          <a
+            href={jobData.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: "var(--teal-11)",
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            Apply for this position <ExternalLinkIcon />
+          </a>
+        </Text>
       </Flex>
     </Container>
   );
