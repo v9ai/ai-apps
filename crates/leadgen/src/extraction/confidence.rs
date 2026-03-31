@@ -137,11 +137,17 @@ impl IsotonicBins {
     /// Pool adjacent violators: merge consecutive bins where bin[i].accuracy
     /// exceeds bin[i+1].accuracy by combining their counts.
     ///
-    /// One pass over the 10 bins is sufficient for the common case and keeps
-    /// the operation O(n).
+    /// Empty bins (total == 0) are skipped — they carry no ordering information
+    /// and should never trigger a merge. One forward pass with backward
+    /// back-tracking is sufficient for the common case.
     pub fn enforce_monotonicity(&mut self) {
         let mut i = 0usize;
         while i < 9 {
+            // Skip empty bins on either side — nothing to enforce against.
+            if self.bins[i].1 == 0 || self.bins[i + 1].1 == 0 {
+                i += 1;
+                continue;
+            }
             let acc_i = bin_accuracy(self.bins[i]);
             let acc_next = bin_accuracy(self.bins[i + 1]);
             if acc_i > acc_next {

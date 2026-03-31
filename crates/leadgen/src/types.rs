@@ -222,3 +222,200 @@ pub struct ScoredLead {
     pub icp_fit_score: f64,
     pub composite_score: f64,
 }
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── CompanyTier::from_score — boundary tests ──────────────────────────────
+
+    #[test]
+    fn test_tier_cold_below_30() {
+        assert_eq!(CompanyTier::from_score(0.0), CompanyTier::Cold);
+        assert_eq!(CompanyTier::from_score(29.9), CompanyTier::Cold);
+    }
+
+    #[test]
+    fn test_tier_warm_30_to_59() {
+        assert_eq!(CompanyTier::from_score(30.0), CompanyTier::Warm);
+        assert_eq!(CompanyTier::from_score(45.0), CompanyTier::Warm);
+        assert_eq!(CompanyTier::from_score(59.9), CompanyTier::Warm);
+    }
+
+    #[test]
+    fn test_tier_hot_60_to_79() {
+        assert_eq!(CompanyTier::from_score(60.0), CompanyTier::Hot);
+        assert_eq!(CompanyTier::from_score(70.0), CompanyTier::Hot);
+        assert_eq!(CompanyTier::from_score(79.9), CompanyTier::Hot);
+    }
+
+    #[test]
+    fn test_tier_priority_80_and_above() {
+        assert_eq!(CompanyTier::from_score(80.0), CompanyTier::Priority);
+        assert_eq!(CompanyTier::from_score(100.0), CompanyTier::Priority);
+    }
+
+    #[test]
+    fn test_tier_ordering() {
+        // Unknown is lowest because it has the lowest discriminant in the Ord
+        // derive order: Unknown < Cold < Warm < Hot < Priority.
+        assert!(CompanyTier::Unknown < CompanyTier::Cold);
+        assert!(CompanyTier::Cold < CompanyTier::Warm);
+        assert!(CompanyTier::Warm < CompanyTier::Hot);
+        assert!(CompanyTier::Hot < CompanyTier::Priority);
+    }
+
+    // ── FundingStage::from_str — all variants ─────────────────────────────────
+
+    #[test]
+    fn test_funding_stage_from_str_all_variants() {
+        assert_eq!(FundingStage::from_str("pre-seed"), FundingStage::PreSeed);
+        assert_eq!(FundingStage::from_str("PreSeed"), FundingStage::PreSeed);
+        assert_eq!(FundingStage::from_str("pre seed"), FundingStage::PreSeed);
+        assert_eq!(FundingStage::from_str("seed"), FundingStage::Seed);
+        assert_eq!(FundingStage::from_str("Series A"), FundingStage::SeriesA);
+        assert_eq!(FundingStage::from_str("series-a"), FundingStage::SeriesA);
+        assert_eq!(FundingStage::from_str("Series B"), FundingStage::SeriesB);
+        assert_eq!(FundingStage::from_str("SERIES_C"), FundingStage::SeriesC);
+        assert_eq!(FundingStage::from_str("series d"), FundingStage::SeriesD);
+        assert_eq!(FundingStage::from_str("Series E"), FundingStage::SeriesE);
+        assert_eq!(FundingStage::from_str("growth"), FundingStage::Growth);
+        assert_eq!(FundingStage::from_str("Growth Stage"), FundingStage::Growth);
+        assert_eq!(FundingStage::from_str("ipo"), FundingStage::IPO);
+        assert_eq!(FundingStage::from_str("public"), FundingStage::IPO);
+        assert_eq!(FundingStage::from_str("bootstrapped"), FundingStage::Bootstrapped);
+        assert_eq!(FundingStage::from_str("self-funded"), FundingStage::Bootstrapped);
+        assert_eq!(FundingStage::from_str("acquired"), FundingStage::Acquired);
+        assert_eq!(FundingStage::from_str("unknown_xyz"), FundingStage::Unknown);
+        assert_eq!(FundingStage::from_str(""), FundingStage::Unknown);
+    }
+
+    #[test]
+    fn test_funding_stage_is_actively_funded() {
+        assert!(FundingStage::PreSeed.is_actively_funded());
+        assert!(FundingStage::Seed.is_actively_funded());
+        assert!(FundingStage::SeriesA.is_actively_funded());
+        assert!(FundingStage::SeriesB.is_actively_funded());
+        assert!(FundingStage::SeriesC.is_actively_funded());
+        assert!(FundingStage::SeriesD.is_actively_funded());
+        assert!(FundingStage::SeriesE.is_actively_funded());
+        assert!(FundingStage::Growth.is_actively_funded());
+        assert!(FundingStage::IPO.is_actively_funded());
+
+        assert!(!FundingStage::Bootstrapped.is_actively_funded());
+        assert!(!FundingStage::Acquired.is_actively_funded());
+        assert!(!FundingStage::Unknown.is_actively_funded());
+    }
+
+    #[test]
+    fn test_funding_stage_growth_score() {
+        assert_eq!(FundingStage::Unknown.growth_score(), 0.0);
+        assert_eq!(FundingStage::Acquired.growth_score(), 0.3);
+        assert_eq!(FundingStage::Bootstrapped.growth_score(), 0.5);
+        assert_eq!(FundingStage::PreSeed.growth_score(), 0.6);
+        assert_eq!(FundingStage::Seed.growth_score(), 0.7);
+        assert_eq!(FundingStage::SeriesA.growth_score(), 0.8);
+        assert_eq!(FundingStage::SeriesB.growth_score(), 0.85);
+        assert_eq!(FundingStage::SeriesC.growth_score(), 0.9);
+        assert_eq!(FundingStage::Growth.growth_score(), 0.95);
+        assert_eq!(FundingStage::IPO.growth_score(), 1.0);
+    }
+
+    // ── CompanyEnrichmentScore::data_completeness ─────────────────────────────
+
+    fn bare_company() -> Company {
+        Company {
+            id: "c1".to_string(),
+            name: "Acme".to_string(),
+            domain: None,
+            industry: None,
+            employee_count: None,
+            funding_stage: None,
+            tech_stack: None,
+            location: None,
+            description: None,
+            source: None,
+            created_at: None,
+            updated_at: None,
+        }
+    }
+
+    #[test]
+    fn test_data_completeness_zero_fields() {
+        let c = bare_company();
+        assert_eq!(CompanyEnrichmentScore::data_completeness(&c), 0.0);
+    }
+
+    #[test]
+    fn test_data_completeness_all_fields() {
+        let c = Company {
+            domain: Some("acme.com".to_string()),
+            industry: Some("SaaS".to_string()),
+            employee_count: Some(100),
+            funding_stage: Some("Series A".to_string()),
+            tech_stack: Some("Rust".to_string()),
+            location: Some("San Francisco".to_string()),
+            description: Some("Leading SaaS company".to_string()),
+            source: Some("web".to_string()),
+            ..bare_company()
+        };
+        assert_eq!(CompanyEnrichmentScore::data_completeness(&c), 100.0);
+    }
+
+    #[test]
+    fn test_data_completeness_partial_fields() {
+        let c = Company {
+            domain: Some("acme.com".to_string()),
+            industry: Some("SaaS".to_string()),
+            employee_count: Some(50),
+            funding_stage: Some("Seed".to_string()),
+            ..bare_company()
+        };
+        // 4 out of 8 = 50.0
+        assert_eq!(CompanyEnrichmentScore::data_completeness(&c), 50.0);
+    }
+
+    // ── CompanyEnrichmentScore construction ───────────────────────────────────
+
+    #[test]
+    fn test_enrichment_score_construction_and_tier() {
+        let c = Company {
+            domain: Some("widget.io".to_string()),
+            industry: Some("AI".to_string()),
+            employee_count: Some(250),
+            funding_stage: Some("Series B".to_string()),
+            tech_stack: Some("Rust,Python".to_string()),
+            location: Some("Remote".to_string()),
+            ..bare_company()
+        };
+
+        let completeness = CompanyEnrichmentScore::data_completeness(&c);
+        // 6/8 = 75.0
+        assert_eq!(completeness, 75.0);
+
+        let composite = (50.0_f64 * 0.4) + (40.0_f64 * 0.3) + (completeness * 0.3);
+        let score = CompanyEnrichmentScore {
+            company_id: c.id.clone(),
+            icp_fit_score: 50.0,
+            intent_score: 40.0,
+            data_completeness: completeness,
+            composite_score: composite,
+            tier: CompanyTier::from_score(composite),
+            scored_at: Some("2026-03-31T00:00:00Z".to_string()),
+        };
+
+        assert_eq!(score.company_id, "c1");
+        assert!(score.composite_score > 0.0);
+        assert_ne!(score.tier, CompanyTier::Unknown);
+    }
+
+    #[test]
+    fn test_enrichment_score_default() {
+        let score = CompanyEnrichmentScore::default();
+        assert_eq!(score.icp_fit_score, 0.0);
+        assert_eq!(score.tier, CompanyTier::Unknown);
+        assert!(score.scored_at.is_none());
+    }
+}

@@ -1,4 +1,12 @@
-import { contacts, companies, contactEmails, type NewContact, type Contact as DbContact } from "@/db/schema";
+import {
+  contacts,
+  companies,
+  contactEmails,
+  type NewContact,
+  type Contact as DbContact,
+  type Company as DbCompany,
+  type ContactEmail as DbContactEmail,
+} from "@/db/schema";
 import { resend } from "@/lib/resend";
 import { eq, and, like, or, count, desc, sql, max, inArray } from "drizzle-orm";
 import { computeNextTouchScore } from "./reminders";

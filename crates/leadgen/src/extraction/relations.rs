@@ -15,10 +15,20 @@ pub enum RelationType {
     ReportsTo,
     AcquiredBy,
     InvestedIn,
+    /// Company uses a specific technology.
+    HasTechStack { tool: String },
+    /// Company raised a funding round.
+    RaisedFunding { round: String, amount: Option<f64> },
+    /// Company X partners with company Y.
+    PartnersWith,
+    /// Company X competes with company Y.
+    CompetesWith,
 }
 
 impl RelationType {
     /// Canonical string used in LLM prompts and JSON serialisation.
+    /// For parameterised variants the base name is returned; use the full
+    /// [`Relation`] struct to access the structured fields.
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::WorksAt => "WorksAt",
@@ -27,6 +37,10 @@ impl RelationType {
             Self::ReportsTo => "ReportsTo",
             Self::AcquiredBy => "AcquiredBy",
             Self::InvestedIn => "InvestedIn",
+            Self::HasTechStack { .. } => "HasTechStack",
+            Self::RaisedFunding { .. } => "RaisedFunding",
+            Self::PartnersWith => "PartnersWith",
+            Self::CompetesWith => "CompetesWith",
         }
     }
 
@@ -38,6 +52,17 @@ impl RelationType {
             "ReportsTo" => Some(Self::ReportsTo),
             "AcquiredBy" => Some(Self::AcquiredBy),
             "InvestedIn" => Some(Self::InvestedIn),
+            // Parameterised variants: return with empty/default fields when
+            // reconstructed from a plain string (e.g. LLM output).
+            "HasTechStack" => Some(Self::HasTechStack {
+                tool: String::new(),
+            }),
+            "RaisedFunding" => Some(Self::RaisedFunding {
+                round: String::new(),
+                amount: None,
+            }),
+            "PartnersWith" => Some(Self::PartnersWith),
+            "CompetesWith" => Some(Self::CompetesWith),
             _ => None,
         }
     }
@@ -58,12 +83,38 @@ pub struct Relation {
 // Compiled regex bank — initialised once at first use.
 // ---------------------------------------------------------------------------
 
+/// Known technology / tool names used in HasTechStack detection.
+const KNOWN_TOOLS: &[&str] = &[
+    "React",
+    "Vue",
+    "Angular",
+    "Node\\.js",
+    "Python",
+    "Go",
+    "Rust",
+    "Kubernetes",
+    "Docker",
+    "AWS",
+    "GCP",
+    "Azure",
+    "PostgreSQL",
+    "MongoDB",
+    "Redis",
+    "Elasticsearch",
+    "Kafka",
+    "Spark",
+    "TensorFlow",
+    "PyTorch",
+    "OpenAI",
+    "Anthropic",
+    "LangChain",
+];
+
 struct Patterns {
-    /// "Jane Smith, CEO of Acme Corp"  →  WorksAt(Jane Smith, Acme Corp)
-    /// "Jane Smith, CEO at Acme Corp"
+    /// "Jane Smith, Head of Engineering at Acme Corp"  →  WorksAt
     title_at_of: Regex,
 
-    /// "Acme was founded by Jane Smith"  →  FoundedBy(Acme, Jane Smith)
+    /// "Acme was founded by Jane Smith" / "co-founded by" / "started by"
     founded_by_passive: Regex,
 
     /// "Jane Smith founded Acme Corp"    →  FoundedBy(Acme Corp, Jane Smith)
@@ -71,6 +122,9 @@ struct Patterns {
 
     /// "headquartered in Berlin" / "based in Berlin" / "offices in Berlin"
     headquartered_in: Regex,
+
+    /// "remote-first" / "fully remote" / "100% remote"  →  LocatedIn(Remote)
+    remote_first: Regex,
 
     /// "Jane Smith reports to John Doe"  →  ReportsTo(Jane Smith, John Doe)
     reports_to: Regex,
@@ -80,28 +134,43 @@ struct Patterns {
 
     /// "BigCo invested in Acme"          →  InvestedIn(BigCo, Acme)
     invested_in: Regex,
+
+    /// "built with React" / "powered by Docker" / "running on Kubernetes" …
+    has_tech_stack: Regex,
+
+    /// "raised $5M in Series A" / "closed a $20M Series B round"
+    raised_funding: Regex,
+
+    /// "X partners with Y" / "X announced partnership with Y" / "X and Y partner to"
+    partners_with: Regex,
+
+    /// "X competes with Y" / "X competitor Y" / "alternatives to X include Y"
+    competes_with: Regex,
 }
 
 impl Patterns {
     fn build() -> Self {
         // Person names: one or more capitalised words (allows "van", "de", etc.)
-        // We keep the pattern deliberately broad; false positives are filtered by
-        // the confidence score returned at the call site.
         let name = r"([A-Z][a-zA-Z\-']+(?:\s+(?:van|de|der|von|la|le)?\s*[A-Z][a-zA-Z\-']+)+)";
         let company = r"([A-Z][A-Za-z0-9 ,.\-&']+?)";
 
+        // Build the tool alternation once, escaping dots that are already
+        // escaped in KNOWN_TOOLS (kept as-is — they're valid regex fragments).
+        let tools_alt = KNOWN_TOOLS.join("|");
+
         Self {
-            // "Jane Smith, CEO of Acme" / "Jane Smith, CEO at Acme"
+            // Multi-word titles such as "Head of Engineering at Acme" or
+            // "VP of Sales at Acme".  The title segment allows letters, spaces,
+            // "&", "/" and "-", length 2–50.
             title_at_of: Regex::new(&format!(
-                r"(?i){},\s+[A-Za-z &/\-]{{2,40}}\s+(?:of|at)\s+{}",
+                r"(?i){},\s+[A-Za-z][A-Za-z &/\-]{{1,49}}\s+(?:of|at)\s+{}",
                 name, company
             ))
             .unwrap(),
 
-            // "founded by Jane Smith" (company resolved from context — we use the
-            // sentence subject when available, otherwise leave it as "[unknown]")
+            // "was founded by" / "co-founded by" / "started by"
             founded_by_passive: Regex::new(&format!(
-                r"(?i)(?:{}|(?:the\s+)?company)\s+(?:was\s+)?founded\s+by\s+{}",
+                r"(?i)(?:{}|(?:the\s+)?company)\s+(?:was\s+)?(?:co-?founded|founded|started)\s+by\s+{}",
                 company, name
             ))
             .unwrap(),
@@ -116,6 +185,12 @@ impl Patterns {
             // "headquartered in Berlin" / "based in Berlin" / "offices in Berlin"
             headquartered_in: Regex::new(
                 r"(?i)(?:headquartered|based|offices?|located)\s+in\s+([A-Z][A-Za-z\s,]+?)(?:\.|,|\s{2}|$)",
+            )
+            .unwrap(),
+
+            // "remote-first", "fully remote", "100% remote", "entirely remote"
+            remote_first: Regex::new(
+                r"(?i)\b(?:remote-first|fully\s+remote|100%\s+remote|entirely\s+remote|all-remote)\b",
             )
             .unwrap(),
 
@@ -137,6 +212,49 @@ impl Patterns {
             invested_in: Regex::new(&format!(
                 r"(?i){}\s+(?:has\s+)?invested\s+in\s+{}",
                 company, company
+            ))
+            .unwrap(),
+
+            // "built with React", "powered by Docker", "runs on Kubernetes",
+            // "using Python", "React-based"
+            has_tech_stack: Regex::new(&format!(
+                r"(?i)(?:(?:built|made)\s+with|powered\s+by|runs?\s+on|running\s+on|using)\s+({tools})|({tools})-based",
+                tools = tools_alt,
+            ))
+            .unwrap(),
+
+            // "raised $5M in Series A"
+            // "closed a $20M Series B round"
+            // "announced $100M Series C"
+            // Amount: $NM or $N million or $N billion
+            raised_funding: Regex::new(
+                r"(?i)(?:raised|closed|announced)\s+(?:a\s+)?\$(\d+(?:\.\d+)?)\s*(M|B|million|billion)?\s+(?:in\s+)?(?:a\s+)?(Seed|Series\s+[A-E])\b(?:\s+round)?",
+            )
+            .unwrap(),
+
+            // "X partners with Y"
+            // "X announced partnership with Y"
+            // "X and Y partner to"
+            partners_with: Regex::new(&format!(
+                r"(?i)(?:{co}\s+(?:partners?\s+with|announced\s+(?:a\s+)?partnership\s+with)\s+{co2}|{co3}\s+and\s+{co4}\s+partner\s+to\b)",
+                co = company,
+                co2 = company,
+                co3 = company,
+                co4 = company,
+            ))
+            .unwrap(),
+
+            // "X competes with Y"
+            // "X competitor Y" (e.g. "Acme competitor BigCo")
+            // "alternatives to X include Y"
+            competes_with: Regex::new(&format!(
+                r"(?i)(?:{co}\s+competes\s+with\s+{co2}|{co3}\s+competitor\s+{co4}|alternatives\s+to\s+{co5}\s+include\s+{co6})",
+                co = company,
+                co2 = company,
+                co3 = company,
+                co4 = company,
+                co5 = company,
+                co6 = company,
             ))
             .unwrap(),
         }
@@ -183,9 +301,6 @@ impl RelationExtractor {
         // --- Pattern 1: "Name, Title at/of Company" → WorksAt ---------------
         for cap in p.title_at_of.captures_iter(text) {
             let full = cap.get(0).map_or("", |m| m.as_str());
-            // Group 1 = name (two subgroups inside the name alternation collapse
-            // to group indices 1 and 2 due to the nested structure; we use the
-            // overall first named capture which is group 1 in practice).
             let subject = trim_capture(&cap, 1);
             let object = trim_capture(&cap, 2);
             if !subject.is_empty() && !object.is_empty() {
@@ -199,7 +314,7 @@ impl RelationExtractor {
             }
         }
 
-        // --- Pattern 2: passive "founded by" → FoundedBy --------------------
+        // --- Pattern 2: passive "founded by" / "co-founded by" / "started by" → FoundedBy
         for cap in p.founded_by_passive.captures_iter(text) {
             let full = cap.get(0).map_or("", |m| m.as_str());
             // Group 1 = company (may be empty if "the company" matched)
@@ -252,6 +367,17 @@ impl RelationExtractor {
             }
         }
 
+        // --- Pattern 4b: "remote-first" / "fully remote" → LocatedIn(Remote)
+        for mat in p.remote_first.find_iter(text) {
+            relations.push(Relation {
+                subject: "[company]".to_string(),
+                relation: RelationType::LocatedIn,
+                object: "Remote".to_string(),
+                confidence: 0.90,
+                source_text: mat.as_str().to_string(),
+            });
+        }
+
         // --- Pattern 5: "Name reports to Name" → ReportsTo ------------------
         for cap in p.reports_to.captures_iter(text) {
             let full = cap.get(0).map_or("", |m| m.as_str());
@@ -300,7 +426,117 @@ impl RelationExtractor {
             }
         }
 
+        // --- Pattern 8: tech stack phrases → HasTechStack -------------------
+        // The regex has two alternating capture groups: group 1 catches the
+        // phrase-prefix form ("built with React") and group 2 catches the
+        // suffix form ("React-based").  Exactly one of the two is populated
+        // per match.
+        for cap in p.has_tech_stack.captures_iter(text) {
+            let full = cap.get(0).map_or("", |m| m.as_str());
+            // Try group 1 first (phrase prefix), then group 2 (suffix "-based").
+            let tool = cap
+                .get(1)
+                .or_else(|| cap.get(2))
+                .map(|m| normalise_tool(m.as_str()))
+                .unwrap_or_default();
+            if !tool.is_empty() {
+                relations.push(Relation {
+                    subject: "[company]".to_string(),
+                    relation: RelationType::HasTechStack { tool },
+                    object: String::new(),
+                    confidence: 0.70,
+                    source_text: full.to_string(),
+                });
+            }
+        }
+
+        // --- Pattern 9: funding round → RaisedFunding -----------------------
+        // Captures: 1=amount_digits, 2=unit(M/B/million/billion, optional),
+        // 3=round(Seed/Series X)
+        for cap in p.raised_funding.captures_iter(text) {
+            let full = cap.get(0).map_or("", |m| m.as_str());
+            let amount_str = trim_capture(&cap, 1);
+            let unit = trim_capture(&cap, 2);
+            let round_raw = trim_capture(&cap, 3);
+            let round = normalise_round(&round_raw);
+
+            let amount: Option<f64> = amount_str.parse::<f64>().ok().map(|n| {
+                let multiplier = match unit.to_lowercase().as_str() {
+                    "b" | "billion" => 1_000.0, // store in millions for consistency
+                    _ => 1.0,                   // M / million / empty → already millions
+                };
+                n * multiplier
+            });
+
+            if !round.is_empty() {
+                relations.push(Relation {
+                    subject: "[company]".to_string(),
+                    relation: RelationType::RaisedFunding { round, amount },
+                    object: String::new(),
+                    confidence: 0.85,
+                    source_text: full.to_string(),
+                });
+            }
+        }
+
+        // --- Pattern 10: "X partners with Y" → PartnersWith -----------------
+        // The regex has 4 capture groups from the two alternation branches.
+        // Branch A ("X partners with Y"):  groups 1, 2
+        // Branch B ("X and Y partner to"): groups 3, 4
+        for cap in p.partners_with.captures_iter(text) {
+            let full = cap.get(0).map_or("", |m| m.as_str());
+            let (subj, obj) = extract_two_companies(&cap, &[(1, 2), (3, 4)]);
+            if !subj.is_empty() && !obj.is_empty() {
+                relations.push(Relation {
+                    subject: subj,
+                    relation: RelationType::PartnersWith,
+                    object: obj,
+                    confidence: 0.65,
+                    source_text: full.to_string(),
+                });
+            }
+        }
+
+        // --- Pattern 11: "X competes with Y" → CompetesWith -----------------
+        // Three alternation branches → groups (1,2), (3,4), (5,6).
+        for cap in p.competes_with.captures_iter(text) {
+            let full = cap.get(0).map_or("", |m| m.as_str());
+            let (subj, obj) =
+                extract_two_companies(&cap, &[(1, 2), (3, 4), (5, 6)]);
+            if !subj.is_empty() && !obj.is_empty() {
+                relations.push(Relation {
+                    subject: subj,
+                    relation: RelationType::CompetesWith,
+                    object: obj,
+                    confidence: 0.55,
+                    source_text: full.to_string(),
+                });
+            }
+        }
+
         relations
+    }
+
+    /// Extract relations relevant to company-level text (about page, homepage).
+    ///
+    /// Runs the full extractor but keeps only relations that describe a
+    /// company's identity: [`RelationType::LocatedIn`], [`RelationType::FoundedBy`],
+    /// [`RelationType::RaisedFunding`], [`RelationType::HasTechStack`],
+    /// and [`RelationType::PartnersWith`].
+    pub fn extract_company_relations(&self, text: &str) -> Vec<Relation> {
+        self.extract(text)
+            .into_iter()
+            .filter(|r| {
+                matches!(
+                    r.relation,
+                    RelationType::LocatedIn
+                        | RelationType::FoundedBy
+                        | RelationType::RaisedFunding { .. }
+                        | RelationType::HasTechStack { .. }
+                        | RelationType::PartnersWith
+                )
+            })
+            .collect()
     }
 
     /// Extract relations using LLM for complex or ambiguous cases.
@@ -322,6 +558,15 @@ impl RelationExtractor {
             RelationType::ReportsTo,
             RelationType::AcquiredBy,
             RelationType::InvestedIn,
+            RelationType::HasTechStack {
+                tool: String::new(),
+            },
+            RelationType::RaisedFunding {
+                round: String::new(),
+                amount: None,
+            },
+            RelationType::PartnersWith,
+            RelationType::CompetesWith,
         ]
         .iter()
         .map(|r| r.as_str())
@@ -349,18 +594,6 @@ JSON:"#,
             text = truncated,
         );
 
-        // Re-use the private `chat` method via `extract_entities` — the LLM
-        // client exposes only high-level methods publicly, so we call
-        // `extract_entities` and discard its parsed output, using the raw
-        // content indirectly.  To avoid that indirection we call the public
-        // `generate_lead_summary` with a dummy invocation that returns our
-        // JSON by embedding the prompt as the entire "company" field — that
-        // would be fragile.  Instead, we duplicate the minimal HTTP call here
-        // using `reqwest` directly, mirroring what `LlmClient::chat` does
-        // internally, so we stay consistent with the existing client design.
-        //
-        // A cleaner long-term solution is to expose `LlmClient::chat` as pub,
-        // but that is outside the scope of this module.
         let raw = llm_raw_chat(llm, &prompt).await?;
         Ok(parse_llm_relations(&raw))
     }
@@ -378,6 +611,46 @@ fn trim_capture(cap: &regex::Captures<'_>, idx: usize) -> String {
         .unwrap_or_default()
 }
 
+/// Given a list of (subject_group, object_group) index pairs, return the
+/// first populated pair as (subject, object).  Used to handle regex
+/// alternations where multiple branch groups exist.
+fn extract_two_companies(
+    cap: &regex::Captures<'_>,
+    pairs: &[(usize, usize)],
+) -> (String, String) {
+    for &(si, oi) in pairs {
+        let s = trim_capture(cap, si);
+        let o = trim_capture(cap, oi);
+        if !s.is_empty() && !o.is_empty() {
+            return (s, o);
+        }
+    }
+    (String::new(), String::new())
+}
+
+/// Normalise a matched tool name: strip any trailing punctuation that leaked
+/// in and convert "Node.js" regex fragment back to canonical display form.
+fn normalise_tool(raw: &str) -> String {
+    // The regex stores "Node\\.js" as a literal pattern; what actually matches
+    // is "Node.js" — no extra normalisation needed beyond trimming.
+    raw.trim().to_string()
+}
+
+/// Normalise a matched funding round string ("Series A", "Seed", etc.).
+fn normalise_round(raw: &str) -> String {
+    // Collapse any internal whitespace and title-case.
+    raw.split_whitespace()
+        .map(|w| {
+            let mut c = w.chars();
+            match c.next() {
+                None => String::new(),
+                Some(f) => f.to_uppercase().to_string() + c.as_str(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 /// Minimal OpenAI-compatible chat call that mirrors `LlmClient::chat`.
 /// We need access to the raw text response to parse it as a JSON array of
 /// relations rather than the fixed `CompanyExtraction` shape.
@@ -391,13 +664,6 @@ async fn llm_raw_chat(llm: &crate::llm::LlmClient, prompt: &str) -> Result<Strin
         "stream": false,
     });
 
-    // Build the request using the public model name; we cannot access the
-    // private `client` / `base_url` fields directly.  We therefore construct
-    // an independent reqwest client pointing at the same endpoint convention
-    // used by `LlmClient::local`.
-    //
-    // If the project later exposes a `raw_chat` method on `LlmClient` this
-    // call should be migrated to use it.
     let endpoint = std::env::var("LLM_BASE_URL")
         .unwrap_or_else(|_| "http://localhost:11434/v1/chat/completions".to_string());
 
@@ -513,10 +779,43 @@ mod tests {
             RelationType::ReportsTo,
             RelationType::AcquiredBy,
             RelationType::InvestedIn,
+            RelationType::PartnersWith,
+            RelationType::CompetesWith,
         ];
         for v in &variants {
             assert_eq!(RelationType::from_str(v.as_str()), Some(v.clone()));
         }
+    }
+
+    #[test]
+    fn relation_type_parameterised_as_str() {
+        assert_eq!(
+            RelationType::HasTechStack {
+                tool: "React".into()
+            }
+            .as_str(),
+            "HasTechStack"
+        );
+        assert_eq!(
+            RelationType::RaisedFunding {
+                round: "Series A".into(),
+                amount: Some(5.0)
+            }
+            .as_str(),
+            "RaisedFunding"
+        );
+    }
+
+    #[test]
+    fn relation_type_from_str_parameterised() {
+        assert!(matches!(
+            RelationType::from_str("HasTechStack"),
+            Some(RelationType::HasTechStack { .. })
+        ));
+        assert!(matches!(
+            RelationType::from_str("RaisedFunding"),
+            Some(RelationType::RaisedFunding { .. })
+        ));
     }
 
     #[test]
@@ -556,6 +855,32 @@ mod tests {
         assert!(works_at[0].subject.contains("John Doe"));
     }
 
+    #[test]
+    fn extracts_works_at_multi_word_title() {
+        let text = "Alice Brown, Head of Engineering at DataCo, joined the panel.";
+        let rels = extractor().extract(text);
+        let works_at: Vec<_> = rels
+            .iter()
+            .filter(|r| r.relation == RelationType::WorksAt)
+            .collect();
+        assert!(
+            !works_at.is_empty(),
+            "expected WorksAt for multi-word title"
+        );
+        assert!(works_at[0].subject.contains("Alice Brown"));
+    }
+
+    #[test]
+    fn extracts_works_at_vp_title() {
+        let text = "Bob Singh, VP of Sales at CloudCo, closed the deal.";
+        let rels = extractor().extract(text);
+        let works_at: Vec<_> = rels
+            .iter()
+            .filter(|r| r.relation == RelationType::WorksAt)
+            .collect();
+        assert!(!works_at.is_empty(), "expected WorksAt for VP of Sales at");
+    }
+
     // --- Pattern 2: FoundedBy (passive) -------------------------------------
 
     #[test]
@@ -573,6 +898,40 @@ mod tests {
         );
     }
 
+    #[test]
+    fn extracts_co_founded_by() {
+        let text = "Stripe was co-founded by Patrick Collison in 2010.";
+        let rels = extractor().extract(text);
+        let founded: Vec<_> = rels
+            .iter()
+            .filter(|r| r.relation == RelationType::FoundedBy)
+            .collect();
+        assert!(
+            !founded.is_empty(),
+            "expected FoundedBy for co-founded by pattern"
+        );
+        assert!(
+            founded[0].object.contains("Patrick Collison"),
+            "object should be Patrick Collison, got: {}",
+            founded[0].object
+        );
+    }
+
+    #[test]
+    fn extracts_started_by() {
+        let text = "The company was started by Maria Garcia back in 2015.";
+        let rels = extractor().extract(text);
+        let founded: Vec<_> = rels
+            .iter()
+            .filter(|r| r.relation == RelationType::FoundedBy)
+            .collect();
+        assert!(
+            !founded.is_empty(),
+            "expected FoundedBy for started by pattern"
+        );
+        assert!(founded[0].object.contains("Maria Garcia"));
+    }
+
     // --- Pattern 3: FoundedBy (active) --------------------------------------
 
     #[test]
@@ -584,7 +943,6 @@ mod tests {
             .filter(|r| r.relation == RelationType::FoundedBy)
             .collect();
         assert!(!founded.is_empty(), "expected FoundedBy relation");
-        // The founder is the object of the FoundedBy relation.
         assert!(
             founded[0].object.contains("Elon Musk"),
             "object should be Elon Musk, got: {}",
@@ -622,6 +980,42 @@ mod tests {
         assert!(located[0].object.contains("Amsterdam"));
     }
 
+    #[test]
+    fn extracts_remote_first_as_located_in_remote() {
+        let text = "We are a remote-first company building the future of work.";
+        let rels = extractor().extract(text);
+        let located: Vec<_> = rels
+            .iter()
+            .filter(|r| r.relation == RelationType::LocatedIn)
+            .collect();
+        assert!(!located.is_empty(), "expected LocatedIn(Remote) for remote-first");
+        assert!(
+            located.iter().any(|r| r.object == "Remote"),
+            "expected object == Remote, got: {:?}",
+            located.iter().map(|r| &r.object).collect::<Vec<_>>()
+        );
+        let conf = located
+            .iter()
+            .find(|r| r.object == "Remote")
+            .unwrap()
+            .confidence;
+        assert!(
+            (conf - 0.90).abs() < f64::EPSILON,
+            "expected confidence 0.90, got {conf}"
+        );
+    }
+
+    #[test]
+    fn extracts_fully_remote_as_located_in_remote() {
+        let text = "Our team is fully remote and distributed across 30 countries.";
+        let rels = extractor().extract(text);
+        assert!(
+            rels.iter()
+                .any(|r| r.relation == RelationType::LocatedIn && r.object == "Remote"),
+            "expected LocatedIn(Remote) for fully remote"
+        );
+    }
+
     // --- Pattern 5: ReportsTo -----------------------------------------------
 
     #[test]
@@ -645,13 +1039,11 @@ mod tests {
 
     #[test]
     fn reports_to_does_not_match_same_person() {
-        // Sanity check: the extractor filters subject == object.
         let rels = extractor().extract("Alice Smith reports to Alice Smith.");
         let reports: Vec<_> = rels
             .iter()
             .filter(|r| r.relation == RelationType::ReportsTo)
             .collect();
-        // Either no match at all, or the reporter and manager differ.
         for r in reports {
             assert_ne!(r.subject, r.object);
         }
@@ -683,6 +1075,181 @@ mod tests {
         assert!(!invested.is_empty(), "expected InvestedIn relation");
     }
 
+    // --- Pattern 8: HasTechStack --------------------------------------------
+
+    #[test]
+    fn extracts_has_tech_stack_built_with() {
+        let text = "Our platform is built with React and powers millions of users.";
+        let rels = extractor().extract(text);
+        let tech: Vec<_> = rels
+            .iter()
+            .filter(|r| matches!(r.relation, RelationType::HasTechStack { .. }))
+            .collect();
+        assert!(!tech.is_empty(), "expected HasTechStack for built with React");
+        let tool = match &tech[0].relation {
+            RelationType::HasTechStack { tool } => tool.as_str(),
+            _ => "",
+        };
+        assert_eq!(tool, "React", "tool should be React, got: {tool}");
+        assert!(
+            (tech[0].confidence - 0.70).abs() < f64::EPSILON,
+            "expected confidence 0.70"
+        );
+    }
+
+    #[test]
+    fn extracts_has_tech_stack_powered_by() {
+        let text = "The service is powered by Kubernetes under the hood.";
+        let rels = extractor().extract(text);
+        assert!(
+            rels.iter().any(|r| matches!(
+                &r.relation,
+                RelationType::HasTechStack { tool } if tool == "Kubernetes"
+            )),
+            "expected HasTechStack(Kubernetes)"
+        );
+    }
+
+    #[test]
+    fn extracts_has_tech_stack_based_suffix() {
+        let text = "We ship a Docker-based deployment pipeline.";
+        let rels = extractor().extract(text);
+        assert!(
+            rels.iter().any(|r| matches!(
+                &r.relation,
+                RelationType::HasTechStack { tool } if tool == "Docker"
+            )),
+            "expected HasTechStack(Docker) from Docker-based"
+        );
+    }
+
+    // --- Pattern 9: RaisedFunding -------------------------------------------
+
+    #[test]
+    fn extracts_raised_funding_series_a() {
+        let text = "The startup raised $5M in Series A led by Sequoia.";
+        let rels = extractor().extract(text);
+        let funding: Vec<_> = rels
+            .iter()
+            .filter(|r| matches!(r.relation, RelationType::RaisedFunding { .. }))
+            .collect();
+        assert!(!funding.is_empty(), "expected RaisedFunding for $5M Series A");
+        match &funding[0].relation {
+            RelationType::RaisedFunding { round, amount } => {
+                assert_eq!(round, "Series A", "round should be Series A, got: {round}");
+                assert_eq!(*amount, Some(5.0), "amount should be 5.0M");
+            }
+            _ => panic!("expected RaisedFunding"),
+        }
+        assert!(
+            (funding[0].confidence - 0.85).abs() < f64::EPSILON,
+            "expected confidence 0.85"
+        );
+    }
+
+    #[test]
+    fn extracts_raised_funding_seed() {
+        let text = "Acme closed a $2M Seed round last month.";
+        let rels = extractor().extract(text);
+        assert!(
+            rels.iter().any(|r| matches!(
+                &r.relation,
+                RelationType::RaisedFunding { round, .. } if round == "Seed"
+            )),
+            "expected RaisedFunding(Seed)"
+        );
+    }
+
+    #[test]
+    fn extracts_raised_funding_billion() {
+        let text = "The firm announced $1B in Series C.";
+        let rels = extractor().extract(text);
+        let funding: Vec<_> = rels
+            .iter()
+            .filter(|r| matches!(r.relation, RelationType::RaisedFunding { .. }))
+            .collect();
+        assert!(!funding.is_empty(), "expected RaisedFunding for $1B Series C");
+        match &funding[0].relation {
+            RelationType::RaisedFunding { amount, .. } => {
+                // 1 billion stored as 1000 millions
+                assert_eq!(*amount, Some(1000.0));
+            }
+            _ => panic!("expected RaisedFunding"),
+        }
+    }
+
+    // --- Pattern 10: PartnersWith -------------------------------------------
+
+    #[test]
+    fn extracts_partners_with() {
+        let text = "Salesforce partners with ServiceNow on enterprise automation.";
+        let rels = extractor().extract(text);
+        assert!(
+            rels.iter().any(|r| r.relation == RelationType::PartnersWith),
+            "expected PartnersWith"
+        );
+    }
+
+    #[test]
+    fn extracts_partnership_announced() {
+        let text = "Stripe announced partnership with Shopify to streamline payments.";
+        let rels = extractor().extract(text);
+        assert!(
+            rels.iter().any(|r| r.relation == RelationType::PartnersWith),
+            "expected PartnersWith from announced partnership"
+        );
+    }
+
+    // --- Pattern 11: CompetesWith -------------------------------------------
+
+    #[test]
+    fn extracts_competes_with() {
+        let text = "Notion competes with Confluence in the knowledge management space.";
+        let rels = extractor().extract(text);
+        assert!(
+            rels.iter().any(|r| r.relation == RelationType::CompetesWith),
+            "expected CompetesWith"
+        );
+    }
+
+    // --- extract_company_relations ------------------------------------------
+
+    #[test]
+    fn extract_company_relations_filters_correctly() {
+        let text = concat!(
+            "Acme Corp was founded by Jane Smith. ",
+            "The company is fully remote. ",
+            "It raised $10M in Series A. ",
+            "The platform is built with React. ",
+            "Alice Brown reports to Bob Green.",
+        );
+        let rels = extractor().extract_company_relations(text);
+        // ReportsTo should be filtered out.
+        assert!(
+            !rels.iter().any(|r| r.relation == RelationType::ReportsTo),
+            "ReportsTo should be filtered out of company relations"
+        );
+        // FoundedBy, LocatedIn, RaisedFunding, HasTechStack should be present.
+        assert!(
+            rels.iter().any(|r| r.relation == RelationType::FoundedBy),
+            "expected FoundedBy"
+        );
+        assert!(
+            rels.iter().any(|r| r.relation == RelationType::LocatedIn),
+            "expected LocatedIn"
+        );
+        assert!(
+            rels.iter()
+                .any(|r| matches!(r.relation, RelationType::RaisedFunding { .. })),
+            "expected RaisedFunding"
+        );
+        assert!(
+            rels.iter()
+                .any(|r| matches!(r.relation, RelationType::HasTechStack { .. })),
+            "expected HasTechStack"
+        );
+    }
+
     // --- Multi-relation text ------------------------------------------------
 
     #[test]
@@ -694,10 +1261,7 @@ mod tests {
         );
         let rels = extractor().extract(text);
         let types: Vec<&RelationType> = rels.iter().map(|r| &r.relation).collect();
-        assert!(
-            types.contains(&&RelationType::WorksAt),
-            "expected WorksAt"
-        );
+        assert!(types.contains(&&RelationType::WorksAt), "expected WorksAt");
         assert!(
             types.contains(&&RelationType::LocatedIn),
             "expected LocatedIn"
@@ -793,5 +1357,21 @@ mod tests {
         let rels = parse_llm_relations(raw);
         assert_eq!(rels.len(), 1);
         assert!(rels[0].confidence >= 0.0);
+    }
+
+    #[test]
+    fn parse_llm_relations_new_types_parsed() {
+        let raw = r#"[
+            {"subject":"Acme","relation_type":"HasTechStack","object":"React","confidence":0.7},
+            {"subject":"Acme","relation_type":"RaisedFunding","object":"Series A","confidence":0.85},
+            {"subject":"Acme","relation_type":"PartnersWith","object":"BigCo","confidence":0.65},
+            {"subject":"Acme","relation_type":"CompetesWith","object":"RivalCo","confidence":0.55}
+        ]"#;
+        let rels = parse_llm_relations(raw);
+        assert_eq!(rels.len(), 4);
+        assert!(matches!(rels[0].relation, RelationType::HasTechStack { .. }));
+        assert!(matches!(rels[1].relation, RelationType::RaisedFunding { .. }));
+        assert_eq!(rels[2].relation, RelationType::PartnersWith);
+        assert_eq!(rels[3].relation, RelationType::CompetesWith);
     }
 }
