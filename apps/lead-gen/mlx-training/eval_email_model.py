@@ -1,11 +1,13 @@
 """Evaluate fine-tuned email model on held-out test set.
 
 Loads the LoRA adapter, runs inference on test.jsonl, and scores
-each output for JSON validity, format compliance, and quality.
+each output for JSON validity, format compliance, quality, semantic
+similarity, diversity, and structured rubric scoring.
 
 Usage:
   python3 mlx-training/eval_email_model.py
   python3 mlx-training/eval_email_model.py --model mlx-community/Qwen3-0.6B-8bit --adapter mlx-training/models/outreach-email-0.6b
+  python3 mlx-training/eval_email_model.py --report   # writes eval_report.json
 """
 
 from __future__ import annotations
@@ -18,10 +20,24 @@ from pathlib import Path
 
 import mlx_lm
 
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+    HAS_SKLEARN = True
+except ImportError:
+    HAS_SKLEARN = False
+
 # ── Constants ────────────────────────────────────────────────────────────────
 
 SPAM_WORDS = {"free", "urgent", "act now", "limited time", "guaranteed",
               "no obligation", "click here", "buy now", "discount", "winner"}
+
+TECH_KEYWORDS = {
+    "react", "typescript", "javascript", "python", "rust", "go", "java",
+    "ai", "ml", "machine learning", "deep learning", "llm", "nlp",
+    "kubernetes", "docker", "aws", "gcp", "azure", "terraform",
+    "node", "next.js", "graphql", "postgresql", "redis",
+}
 
 
 # ── Scoring functions ────────────────────────────────────────────────────────

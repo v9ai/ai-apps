@@ -385,6 +385,8 @@ def validate_email(raw: str, email_type: str) -> dict | None:
         "followup_1": (60, 150),
         "followup_2": (50, 130),
         "followup_3": (35, 100),
+        "re_engage": (40, 120),
+        "referral": (60, 150),
     }
     lo, hi = limits.get(email_type, (50, 250))
     if wc < lo or wc > hi:
