@@ -393,7 +393,7 @@ apps/knowledge/
 ├── content/                # 88 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
-│   └── schema.ts           # Drizzle schema (20 tables, incl. external_courses, lesson_courses, course_reviews for Class Central)
+│   └── schema.ts           # Drizzle schema (20 tables, incl. external_courses[+topic_group], lesson_courses, course_reviews)
 ├── lib/
 │   ├── articles.ts         # Lesson data layer — Lesson interface includes url field;
 │   │                       # exports AWS_DEEP_DIVE_SLUGS and getUrlPath()
@@ -422,7 +422,7 @@ pnpm db:push      # sync schema to Neon
 pnpm db:studio    # open Drizzle Studio
 pnpm seed         # seed DB from markdown files
 pnpm seed:courses # seed Class Central course catalog
-pnpm scrape:udemy # scrape Udemy vector-databases topic → external_courses
+pnpm scrape:udemy # scrape 20+ AI/ML Udemy topics → external_courses (with topic_group classification)
 pnpm generate -- prompt-caching            # generate article via LangGraph
 pnpm generate:dry -- prompt-caching        # preview without saving
 pnpm generate -- prompt-caching --model deepseek-reasoner  # use specific model

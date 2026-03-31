@@ -718,12 +718,14 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
 
   let totalPosts = 0;
   let totalFiltered = 0;
+  let totalLikes = 0;
 
   for (let i = 0; i < allContacts.length; i++) {
     if (postsCancelled) break;
 
     const contact = allContacts[i];
     const name = `${contact.firstName} ${contact.lastName}`.trim();
+    const baseUrl = contact.linkedinUrl.replace(/\/$/, "");
     console.log(
       `[PostScraper] ${i + 1}/${allContacts.length}: ${name} — ${contact.linkedinUrl}`,
     );
@@ -735,10 +737,11 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
       contactName: name,
       postsFound: totalPosts,
       postsFiltered: totalFiltered,
+      likesFound: totalLikes,
     });
 
-    // Navigate to activity page
-    const activityUrl = contact.linkedinUrl.replace(/\/$/, "") + "/recent-activity/all/";
+    // ── Scrape posts ──
+    const activityUrl = baseUrl + "/recent-activity/all/";
     try {
       await chrome.tabs.update(tabId, { url: activityUrl });
     } catch {
@@ -748,7 +751,6 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
     await waitForTabLoad(tabId);
     await sleep(3000);
 
-    // Check if we landed on the right page
     try {
       const tabInfo = await chrome.tabs.get(tabId);
       if (!tabInfo.url?.includes("linkedin.com/in/")) {
@@ -760,7 +762,6 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
       break;
     }
 
-    // Scroll and extract posts
     let posts: ScrapedPost[] = [];
     try {
       posts = await scrollAndExtract(tabId);
@@ -768,7 +769,6 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
       console.warn(`[PostScraper] Extraction failed for ${name}:`, err);
     }
 
-    // Send posts to Rust server
     if (posts.length > 0) {
       try {
         const { inserted, filtered } = await postPosts(contact.id, posts);
@@ -784,6 +784,36 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
       console.log(`[PostScraper] ${name}: no posts found`);
     }
 
+    // ── Scrape likes ──
+    if (!postsCancelled) {
+      await randomDelay(3000, 5000);
+      const likesUrl = baseUrl + "/recent-activity/reactions/";
+      try {
+        await chrome.tabs.update(tabId, { url: likesUrl });
+      } catch {
+        break;
+      }
+      await waitForTabLoad(tabId);
+      await sleep(3000);
+
+      let likes: ScrapedLike[] = [];
+      try {
+        likes = await scrollAndExtractLikes(tabId);
+      } catch (err) {
+        console.warn(`[PostScraper] Likes extraction failed for ${name}:`, err);
+      }
+
+      if (likes.length > 0) {
+        try {
+          const { inserted } = await postLikes(contact.id, likes);
+          totalLikes += inserted;
+          console.log(`[PostScraper] ${name}: ${inserted} likes stored`);
+        } catch (err) {
+          console.error(`[PostScraper] Failed to save likes for ${name}:`, err);
+        }
+      }
+    }
+
     // Rate limiting delay
     if (i < allContacts.length - 1) {
       await randomDelay(10000, 15000);
@@ -795,9 +825,10 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
     totalContacts: allContacts.length,
     totalPosts,
     totalFiltered,
+    totalLikes,
   });
 
   console.log(
-    `[PostScraper] Complete. ${totalPosts} kept, ${totalFiltered} filtered from ${allContacts.length} contacts.`,
+    `[PostScraper] Complete. ${totalPosts} posts kept, ${totalFiltered} filtered, ${totalLikes} likes from ${allContacts.length} contacts.`,
   );
 }
