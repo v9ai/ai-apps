@@ -15,6 +15,7 @@ import {
 import logo from "@assets/img/logo.svg";
 import { deepseekService } from "../../services/deepseek";
 import { insertJobsBatch } from "../../services/job-inserter";
+import { gqlRequest } from "../../services/graphql";
 import { scrapeLinkedInJobsWithPagination } from "./linkedin-scraper";
 import { scrapeAshbyJobsWithPagination } from "./ashby-scraper";
 import { detectSourceFromUrl, isGoogleSearchUrl } from "../../lib/source-detector";
@@ -207,6 +208,51 @@ export default function Popup() {
         );
 
         setFetchJobsStatus(result.message);
+        setFetchJobsLoading(false);
+        return;
+      }
+
+      // LinkedIn feed / company posts — extract company post authors
+      const isLinkedInFeedOrPosts =
+        url.includes("linkedin.com/feed") ||
+        /linkedin\.com\/company\/[^/]+\/posts/.test(url) ||
+        url.includes("linkedin.com/search/results/content");
+
+      if (isLinkedInFeedOrPosts) {
+        setFetchJobsStatus("Extracting companies from posts...");
+        let feedResponse;
+        try {
+          feedResponse = await chrome.tabs.sendMessage(tab.id, {
+            action: "extractCompaniesFromFeed",
+          });
+        } catch {
+          setFetchJobsStatus("Error: Content script not loaded. Please reload the page and try again.");
+          setFetchJobsLoading(false);
+          return;
+        }
+        const companies: Array<{ name: string; linkedin_url: string }> = feedResponse?.companies ?? [];
+        if (companies.length === 0) {
+          setFetchJobsStatus("No company posts found on this page.");
+          setFetchJobsLoading(false);
+          return;
+        }
+        setFetchJobsStatus(`Found ${companies.length} companies. Saving...`);
+        try {
+          const result = await gqlRequest(
+            `mutation ImportCompanies($companies: [CompanyImportInput!]!) {
+              importCompanies(companies: $companies) { success imported failed errors }
+            }`,
+            { companies },
+          );
+          const { imported = 0, failed = 0 } = result.data?.importCompanies ?? {};
+          setFetchJobsStatus(
+            `Saved ${imported} companies from posts${failed > 0 ? ` (${failed} failed)` : ""}`,
+          );
+        } catch (err) {
+          setFetchJobsStatus(
+            `Error saving companies: ${err instanceof Error ? err.message : "Unknown error"}`,
+          );
+        }
         setFetchJobsLoading(false);
         return;
       }

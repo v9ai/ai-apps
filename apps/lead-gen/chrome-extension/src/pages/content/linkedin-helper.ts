@@ -932,6 +932,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         // LinkedIn pagination handling
         const allJobs: any[] = [];
+        const companyMap = new Map<string, { name: string; linkedin_url: string }>();
         const paginationInfo = getLinkedInPaginationInfo();
 
         if (!paginationInfo) {
@@ -946,9 +947,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const { currentPage, totalPages } = paginationInfo;
         const startPage = currentPage;
 
-        // Extract jobs from current page
+        // Extract jobs + companies from current page
         const currentJobs = extractLinkedInJobData();
         allJobs.push(...currentJobs);
+        extractCompaniesFromJobCards().forEach((c) => {
+          const key = c.linkedin_url || c.name.toLowerCase();
+          if (!companyMap.has(key)) companyMap.set(key, c);
+        });
 
         // Send progress update
         chrome.runtime.sendMessage({
@@ -969,9 +974,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Wait a bit for content to fully render
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          // Extract jobs from new page
+          // Extract jobs + companies from new page
           const pageJobs = extractLinkedInJobData();
           allJobs.push(...pageJobs);
+          extractCompaniesFromJobCards().forEach((c) => {
+            const key = c.linkedin_url || c.name.toLowerCase();
+            if (!companyMap.has(key)) companyMap.set(key, c);
+          });
 
           // Send progress update
           chrome.runtime.sendMessage({
@@ -985,6 +994,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({
           success: true,
           jobs: allJobs,
+          companies: Array.from(companyMap.values()),
           totalPages,
           pagesScraped: totalPages - startPage + 1,
         });
@@ -1029,6 +1039,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "clickSecondJob") {
     const result = clickSecondJobPost();
     sendResponse(result);
+    return true;
+  }
+
+  if (message.action === "extractCompaniesFromJobs") {
+    const companies = extractCompaniesFromJobCards();
+    sendResponse({ companies });
+    return true;
+  }
+
+  if (message.action === "extractCompaniesFromFeed") {
+    const companies = extractCompaniesFromFeedPosts();
+    sendResponse({ companies });
     return true;
   }
 
