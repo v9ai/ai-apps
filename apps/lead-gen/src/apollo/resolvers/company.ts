@@ -443,24 +443,8 @@ export const companyResolvers = {
 
   Mutation: {
     async createCompany(
-      _parent: any,
-      args: {
-        input: {
-          key: string;
-          name: string;
-          logo_url?: string;
-          website?: string;
-          description?: string;
-          industry?: string;
-          size?: string;
-          location?: string;
-          category?: string;
-          tags?: string[];
-          services?: string[];
-          service_taxonomy?: string[];
-          industries?: string[];
-        };
-      },
+      _parent: unknown,
+      args: MutationCreateCompanyArgs,
       context: GraphQLContext,
     ) {
       try {
@@ -472,7 +456,7 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
-        const insertData: any = { ...args.input };
+        const insertData: Record<string, unknown> = { ...args.input };
 
         // Validate category enum
         if (args.input.category) {
@@ -510,29 +494,8 @@ export const companyResolvers = {
     },
 
     async updateCompany(
-      _parent: any,
-      args: {
-        id: number;
-        input: {
-          key?: string;
-          name?: string;
-          logo_url?: string;
-          website?: string;
-          description?: string;
-          industry?: string;
-          size?: string;
-          location?: string;
-          linkedin_url?: string;
-          job_board_url?: string;
-          category?: string;
-          tags?: string[];
-          services?: string[];
-          service_taxonomy?: string[];
-          industries?: string[];
-          score?: number;
-          score_reasons?: string[];
-        };
-      },
+      _parent: unknown,
+      args: MutationUpdateCompanyArgs,
       context: GraphQLContext,
     ) {
       try {

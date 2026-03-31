@@ -17,6 +17,8 @@ export {
   SourceType,
   ExtractMethod,
   ApplicationStatus,
+  ClassificationConfidence,
+  DeepPlannerStatus,
   SkillLevel,
   JOB_STATUS_PYTHON_MAP,
 } from "./enums";

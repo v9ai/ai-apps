@@ -74,9 +74,12 @@ function SettingsPageContent() {
     }
   }, [data]);
 
-  const hasUnsavedChanges = () =>
-    JSON.stringify(sortBy(excludedCompaniesChips)) !==
-    JSON.stringify(sortBy(initialExcludedCompanies));
+  const hasUnsavedChanges = useCallback(
+    () =>
+      JSON.stringify(sortBy(excludedCompaniesChips)) !==
+      JSON.stringify(sortBy(initialExcludedCompanies)),
+    [excludedCompaniesChips, initialExcludedCompanies],
+  );
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ show: true, message, type });

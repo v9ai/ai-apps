@@ -141,6 +141,7 @@ export function TableOfContents({ markdown }: { markdown: string }) {
       {drawerOpen && (
         <div
           className="toc-mobile-backdrop toc-mobile-backdrop--open"
+          aria-hidden="true"
           onClick={() => setDrawerOpen(false)}
         />
       )}

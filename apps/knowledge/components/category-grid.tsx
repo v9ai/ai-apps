@@ -87,6 +87,7 @@ export function CategoryGrid({ groups }: Props) {
             <button
               key={g.category}
               className={`cat-nav-pill cat-${g.meta.slug}${isActive ? " cat-nav-pill--active" : ""}`}
+              aria-pressed={isActive}
               onClick={() => {
                 document.getElementById(`cat-${g.meta.slug}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}

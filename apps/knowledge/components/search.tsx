@@ -181,8 +181,7 @@ export function Search({ groups }: Props) {
               </div>
               {!isDeepSearch && (
                 <button
-                  className="yc-search-mode"
-                  style={{ position: "static", transform: "none", marginTop: 12 }}
+                  className="yc-search-mode yc-search-mode--inline"
                   onClick={() => {
                     setIsDeepSearch(true);
                     clearTimeout(timerRef.current);
