@@ -3,6 +3,10 @@ import { eq, and, or, count, desc, sql, gte, isNotNull, isNull, gt, inArray } fr
 import { addMinutes, startOfDay, startOfWeek, startOfMonth } from "date-fns";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import type {
+  MutationCreateDraftCampaignArgs,
+  MutationUpdateCampaignArgs,
+} from "@/__generated__/resolvers-types";
 import { resend } from "@/lib/resend";
 import { composeEmail } from "@/lib/langgraph-client";
 import {

@@ -149,7 +149,12 @@ export function CompanyPicker({
                 <Text size="2" color="gray">Searching…</Text>
               </Box>
             )}
-            {!loading && companies.length === 0 && (
+            {queryError && (
+              <Box p="3">
+                <Text size="2" color="red">Failed to load companies</Text>
+              </Box>
+            )}
+            {!loading && !queryError && companies.length === 0 && (
               <Box p="3">
                 <Text size="2" color="gray">No companies found</Text>
               </Box>
@@ -157,7 +162,15 @@ export function CompanyPicker({
             {companies.map((c) => (
               <Box
                 key={c.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSelect(c.key, c.name)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSelect(c.key, c.name);
+                  }
+                }}
                 style={{
                   padding: "6px 10px",
                   borderRadius: 0,
