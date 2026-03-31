@@ -109,7 +109,14 @@ async function fetchAllEmails() {
     }
   }
 
-  return allEmails.slice(0, limit);
+  const raw = allEmails.slice(0, limit);
+
+  // Filter to delivered/clicked only (skip bounced, suppressed, canceled, failed)
+  const USEFUL_EVENTS = new Set(["delivered", "clicked", "opened", "sent"]);
+  const filtered = raw.filter((e) => USEFUL_EVENTS.has(e.last_event));
+  console.error(`  Filtered: ${raw.length} → ${filtered.length} (kept delivered/clicked/opened/sent, skipped ${raw.length - filtered.length} bounced/suppressed/canceled/failed)`);
+
+  return filtered;
 }
 
 // ── Fetch full email content (with concurrency) ────────────────────────────
