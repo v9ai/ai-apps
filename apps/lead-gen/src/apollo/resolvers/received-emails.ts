@@ -1,4 +1,4 @@
-import { receivedEmails } from "@/db/schema";
+import { receivedEmails, type ReceivedEmail as DbReceivedEmail } from "@/db/schema";
 import { eq, and, count, desc, isNull, isNotNull } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -17,19 +17,19 @@ function parseJsonOrNull(val: string | null | undefined): unknown {
 
 export const receivedEmailResolvers = {
   ReceivedEmail: {
-    resendId: (parent: any) => parent.resend_id,
-    fromEmail: (parent: any) => parent.from_email ?? null,
-    toEmails: (parent: any) => parseJsonArray(parent.to_emails),
-    ccEmails: (parent: any) => parseJsonArray(parent.cc_emails),
-    replyToEmails: (parent: any) => parseJsonArray(parent.reply_to_emails),
-    messageId: (parent: any) => parent.message_id ?? null,
-    htmlContent: (parent: any) => parent.html_content ?? null,
-    textContent: (parent: any) => parent.text_content ?? null,
-    attachments: (parent: any) => parseJsonOrNull(parent.attachments),
-    receivedAt: (parent: any) => parent.received_at,
-    archivedAt: (parent: any) => parent.archived_at ?? null,
-    createdAt: (parent: any) => parent.created_at,
-    updatedAt: (parent: any) => parent.updated_at,
+    resendId: (parent: DbReceivedEmail) => parent.resend_id,
+    fromEmail: (parent: DbReceivedEmail) => parent.from_email ?? null,
+    toEmails: (parent: DbReceivedEmail) => parseJsonArray(parent.to_emails),
+    ccEmails: (parent: DbReceivedEmail) => parseJsonArray(parent.cc_emails),
+    replyToEmails: (parent: DbReceivedEmail) => parseJsonArray(parent.reply_to_emails),
+    messageId: (parent: DbReceivedEmail) => parent.message_id ?? null,
+    htmlContent: (parent: DbReceivedEmail) => parent.html_content ?? null,
+    textContent: (parent: DbReceivedEmail) => parent.text_content ?? null,
+    attachments: (parent: DbReceivedEmail) => parseJsonOrNull(parent.attachments),
+    receivedAt: (parent: DbReceivedEmail) => parent.received_at,
+    archivedAt: (parent: DbReceivedEmail) => parent.archived_at ?? null,
+    createdAt: (parent: DbReceivedEmail) => parent.created_at,
+    updatedAt: (parent: DbReceivedEmail) => parent.updated_at,
   },
 
   Query: {
