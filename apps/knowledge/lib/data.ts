@@ -18,9 +18,13 @@ const USE_DB = process.env.NEXT_PUBLIC_DATA_SOURCE === "neon";
 
 export async function getCategoryMeta(category: string): Promise<CategoryMeta> {
   if (USE_DB) {
-    const { getCategoryMetaFromDb } = await import("./db/queries");
-    const meta = await getCategoryMetaFromDb(category);
-    if (meta) return meta;
+    try {
+      const { getCategoryMetaFromDb } = await import("./db/queries");
+      const meta = await getCategoryMetaFromDb(category);
+      if (meta) return meta;
+    } catch {
+      // DB unavailable — fall through to static lookup
+    }
   }
   // Fallback to static lookup
   const { getCategoryMeta: staticMeta } = await import("./articles");
@@ -29,8 +33,12 @@ export async function getCategoryMeta(category: string): Promise<CategoryMeta> {
 
 export async function getCategoryCount(): Promise<number> {
   if (USE_DB) {
-    const { getCategoryCountFromDb } = await import("./db/queries");
-    return getCategoryCountFromDb();
+    try {
+      const { getCategoryCountFromDb } = await import("./db/queries");
+      return getCategoryCountFromDb();
+    } catch {
+      // DB unavailable — fall through
+    }
   }
   const { CATEGORIES } = await import("./articles");
   return CATEGORIES.length;
@@ -38,8 +46,12 @@ export async function getCategoryCount(): Promise<number> {
 
 export async function getAllLessons(): Promise<Lesson[]> {
   if (USE_DB) {
-    const { getAllLessonsFromDb } = await import("./db/queries");
-    return getAllLessonsFromDb();
+    try {
+      const { getAllLessonsFromDb } = await import("./db/queries");
+      return getAllLessonsFromDb();
+    } catch {
+      // DB unavailable — fall through
+    }
   }
   const { getAllLessons: fs } = await import("./articles");
   return fs();
@@ -49,8 +61,12 @@ export async function getLessonBySlug(
   slug: string,
 ): Promise<LessonWithContent | null> {
   if (USE_DB) {
-    const { getLessonBySlugFromDb } = await import("./db/queries");
-    return getLessonBySlugFromDb(slug);
+    try {
+      const { getLessonBySlugFromDb } = await import("./db/queries");
+      return getLessonBySlugFromDb(slug);
+    } catch {
+      // DB unavailable — fall through
+    }
   }
   const { getLessonBySlug: fs } = await import("./articles");
   return fs(slug);
@@ -58,8 +74,12 @@ export async function getLessonBySlug(
 
 export async function getGroupedLessons(): Promise<GroupedLessons[]> {
   if (USE_DB) {
-    const { getGroupedLessonsFromDb } = await import("./db/queries");
-    return getGroupedLessonsFromDb();
+    try {
+      const { getGroupedLessonsFromDb } = await import("./db/queries");
+      return getGroupedLessonsFromDb();
+    } catch {
+      // DB unavailable — fall through
+    }
   }
   const { getGroupedLessons: fs } = await import("./articles");
   return fs();
@@ -67,8 +87,12 @@ export async function getGroupedLessons(): Promise<GroupedLessons[]> {
 
 export async function getTotalWordCount(): Promise<number> {
   if (USE_DB) {
-    const { getTotalWordCountFromDb } = await import("./db/queries");
-    return getTotalWordCountFromDb();
+    try {
+      const { getTotalWordCountFromDb } = await import("./db/queries");
+      return getTotalWordCountFromDb();
+    } catch {
+      // DB unavailable — fall through
+    }
   }
   const { getTotalWordCount: fs } = await import("./articles");
   return fs();
@@ -78,8 +102,12 @@ export async function getRelatedLessons(
   slug: string,
 ): Promise<Lesson[]> {
   if (USE_DB) {
-    const { getRelatedLessonsFromDb } = await import("./db/queries");
-    return getRelatedLessonsFromDb(slug);
+    try {
+      const { getRelatedLessonsFromDb } = await import("./db/queries");
+      return getRelatedLessonsFromDb(slug);
+    } catch {
+      // DB unavailable — fall through
+    }
   }
   // FS fallback: filter by same category
   const all = await getAllLessons();
@@ -94,8 +122,12 @@ export async function getCoursesForLesson(
   slug: string,
 ): Promise<import("./db/queries").ExternalCourse[]> {
   if (USE_DB) {
-    const { getCoursesForLessonFromDb } = await import("./db/queries");
-    return getCoursesForLessonFromDb(slug);
+    try {
+      const { getCoursesForLessonFromDb } = await import("./db/queries");
+      return getCoursesForLessonFromDb(slug);
+    } catch {
+      // DB unavailable — fall through
+    }
   }
   return [];
 }
