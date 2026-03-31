@@ -106,6 +106,52 @@ pub struct IntentSummary {
     pub noise: usize,
 }
 
+// ── Post likes (engagement signal: contact liked someone's post) ──
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PostLike {
+    /// URL of the liked post
+    #[serde(default)]
+    pub post_url: Option<String>,
+    /// Text snippet of the liked post
+    #[serde(default)]
+    pub post_text: Option<String>,
+    /// Name of the post author
+    #[serde(default)]
+    pub post_author_name: Option<String>,
+    /// LinkedIn profile URL of the post author
+    #[serde(default)]
+    pub post_author_url: Option<String>,
+    /// When the like was observed on the page (relative text like "2d")
+    #[serde(default)]
+    pub liked_date: Option<String>,
+}
+
+/// PostLike with storage metadata (id, contact_id, scraped_at).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StoredPostLike {
+    pub id: i64,
+    pub contact_id: i32,
+    pub post_url: Option<String>,
+    pub post_text: Option<String>,
+    pub post_author_name: Option<String>,
+    pub post_author_url: Option<String>,
+    pub liked_date: Option<String>,
+    pub scraped_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AddLikesRequest {
+    pub contact_id: i32,
+    pub likes: Vec<PostLike>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LikesQuery {
+    pub contact_id: Option<i32>,
+    pub limit: Option<usize>,
+}
+
 /// Query parameters for filtered post retrieval.
 #[derive(Debug, Deserialize)]
 pub struct ClassifiedPostsQuery {
@@ -133,10 +179,12 @@ pub struct IntentDistribution {
 pub struct StatsResponse {
     pub contacts: usize,
     pub posts: usize,
+    pub likes: usize,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ExportResponse {
     pub contacts: Vec<Contact>,
     pub posts: Vec<StoredPost>,
+    pub likes: Vec<StoredPostLike>,
 }

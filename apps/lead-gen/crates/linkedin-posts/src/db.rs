@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 
 use crate::analysis::{self, PostAnalysis};
 use crate::intent_scorer::PostIntentScorer;
-use crate::models::{Contact, ExportResponse, IntentSummary, Post, StoredPost};
+use crate::models::{Contact, ExportResponse, IntentSummary, Post, PostLike, StoredPost, StoredPostLike};
 
 /// PostsDb persists data to LanceDB and mirrors it in memory for reads.
 pub struct PostsDb {
