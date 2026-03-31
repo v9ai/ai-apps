@@ -131,7 +131,7 @@ def call_deepseek(client: httpx.Client, api_key: str, user_prompt: str) -> str |
                 "temperature": 0.8,
                 "max_tokens": 1024,
             },
-            timeout=30.0,
+            timeout=60.0,
         )
         resp.raise_for_status()
         data = resp.json()
