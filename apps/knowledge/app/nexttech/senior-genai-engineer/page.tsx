@@ -2,7 +2,10 @@ import Link from "next/link";
 import { Container, Heading, Text, Box, Flex, Card, Badge, Separator } from "@radix-ui/themes";
 import { ExternalLinkIcon, ArrowLeftIcon } from "@radix-ui/react-icons";
 import { MarkdownProse } from "@/components/markdown-prose";
-import jobData from "@/data/jobs/nexttech-senior-genai-engineer.json";
+import { contentDb } from "@/src/db/content";
+import { publicJobs } from "@/src/db/content-schema";
+import { eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 
 export const metadata = {
   title: "Senior GenAI Engineer / LLM Developer — Nexttech",
@@ -11,6 +14,13 @@ export const metadata = {
 };
 
 export default function NexttechJobPage() {
+  const jobData = contentDb
+    .select()
+    .from(publicJobs)
+    .where(eq(publicJobs.slug, "senior-genai-engineer"))
+    .get();
+
+  if (!jobData) notFound();
   return (
     <Container size="3" p={{ initial: "4", md: "8" }}>
       {/* Back link */}
