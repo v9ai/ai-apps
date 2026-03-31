@@ -38,13 +38,10 @@ def main():
     data_dir = args.data_dir
 
     # Load sources
-    real_train = load_jsonl(data_dir / "train.jsonl")
-    real_valid = load_jsonl(data_dir / "valid.jsonl")
     resend = load_jsonl(data_dir / "resend.jsonl")
     synthetic = load_jsonl(data_dir / "synthetic.jsonl")
 
-    real_all = real_train + real_valid + resend
-    print(f"Real emails (DB): {len(real_train) + len(real_valid)}")
+    real_all = resend  # Only use Resend data (DB is empty, old splits may be stale)
     print(f"Real emails (Resend): {len(resend)}")
     print(f"Synthetic emails: {len(synthetic)}")
 

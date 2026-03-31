@@ -10,6 +10,10 @@ candle-cuda = ["candle/cuda"]
 # Enable Neon PostgreSQL batch scoring (sqlx postgres driver)
 neon = ["sqlx/postgres"]
 
+[[bin]]
+name = "resend_export"
+path = "src/bin/resend_export.rs"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.7", features = ["json", "query"] }
