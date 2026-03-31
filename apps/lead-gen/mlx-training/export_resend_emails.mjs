@@ -72,6 +72,22 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// ── Rate-limited API call with retry ────────────────────────────────────────
+
+async function withRetry(fn, maxRetries = 3) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await fn();
+      return result;
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      const backoff = 2000 * (attempt + 1); // 2s, 4s, 6s
+      console.error(`  Rate limited, waiting ${backoff}ms (attempt ${attempt + 1}/${maxRetries})...`);
+      await sleep(backoff);
+    }
+  }
+}
+
 // ── Fetch all sent emails ───────────────────────────────────────────────────
 
 async function fetchAllEmails() {
@@ -84,68 +100,69 @@ async function fetchAllEmails() {
     const params = { limit: 100 };
     if (after) params.after = after;
 
-    console.error(`  Fetching page ${page}...`);
-    const { data, error } = await resend.emails.list(params);
+    if (page % 10 === 1) console.error(`  Fetching page ${page}...`);
 
-    if (error) {
-      console.error(`  API error: ${error.message}`);
-      break;
-    }
+    const result = await withRetry(async () => {
+      const { data, error } = await resend.emails.list(params);
+      if (error) throw new Error(error.message);
+      return data;
+    });
 
-    if (!data?.data?.length) break;
+    if (!result?.data?.length) break;
 
-    allEmails.push(...data.data);
-    console.error(`  Got ${data.data.length} emails (total: ${allEmails.length})`);
+    allEmails.push(...result.data);
+    if (page % 10 === 0) console.error(`  Page ${page}: ${allEmails.length} total`);
 
-    if (allEmails.length >= limit) {
-      break;
-    }
+    if (allEmails.length >= limit) break;
 
-    if (data.has_more && data.data.length > 0) {
-      after = data.data[data.data.length - 1].id;
-      await sleep(150); // rate limit
+    if (result.data.length > 0) {
+      after = result.data[result.data.length - 1].id;
+      await sleep(300); // 3 req/sec for list to stay well under 10/sec limit
     } else {
       break;
     }
   }
 
   const raw = allEmails.slice(0, limit);
+  console.error(`  Listed: ${raw.length} emails`);
 
   // Filter to delivered/clicked only (skip bounced, suppressed, canceled, failed)
   const USEFUL_EVENTS = new Set(["delivered", "clicked", "opened", "sent"]);
   const filtered = raw.filter((e) => USEFUL_EVENTS.has(e.last_event));
-  console.error(`  Filtered: ${raw.length} → ${filtered.length} (kept delivered/clicked/opened/sent, skipped ${raw.length - filtered.length} bounced/suppressed/canceled/failed)`);
+  console.error(`  Filtered: ${raw.length} → ${filtered.length} (kept delivered/clicked/opened/sent)`);
 
   return filtered;
 }
 
-// ── Fetch full email content (with concurrency) ────────────────────────────
+// ── Fetch full email content (with retry) ───────────────────────────────────
 
 async function fetchEmailContent(emailId) {
-  try {
+  return withRetry(async () => {
     const { data, error } = await resend.emails.get(emailId);
-    if (error) return null;
+    if (error) throw new Error(error.message);
     return data;
-  } catch {
-    return null;
-  }
+  }).catch(() => null);
 }
 
 /**
- * Fetch emails in concurrent batches to speed up the export.
- * Resend rate limit is 10 req/sec; we use 5 concurrent to stay safe.
+ * Fetch emails in concurrent batches.
+ * Resend rate limit is 10 req/sec; we use 3 concurrent with 500ms delay = ~6 req/sec.
  */
-async function fetchEmailsBatch(emails, concurrency = 5) {
+async function fetchEmailsBatch(emails, concurrency = 3) {
   const results = new Array(emails.length).fill(null);
   let cursor = 0;
+  let completed = 0;
 
   async function worker() {
     while (true) {
       const idx = cursor++;
       if (idx >= emails.length) break;
       results[idx] = await fetchEmailContent(emails[idx].id);
-      // Small delay per request within each worker
-      await sleep(100);
+      completed++;
+      if (completed % 200 === 0) {
+        console.error(`  Fetched: ${completed}/${emails.length}`);
+      }
+      await sleep(500); // 2 req/sec per worker × 3 workers = ~6 req/sec total
     }
   }
 
@@ -286,22 +303,35 @@ async function main() {
     }
   }
 
-  console.error(`\nResults: ${records.length} valid, ${skipped} skipped, ${fetchErrors} fetch errors`);
+  console.error(`\nBefore dedup: ${records.length} valid, ${skipped} skipped, ${fetchErrors} fetch errors`);
+
+  // Dedup by subject — keep one per unique subject (same template sent to many recipients)
+  const seenSubjects = new Set();
+  const deduped = [];
+  for (const rec of records) {
+    const subj = rec._meta.subject;
+    if (!seenSubjects.has(subj)) {
+      seenSubjects.add(subj);
+      deduped.push(rec);
+    }
+  }
+  console.error(`After dedup by subject: ${deduped.length} unique (from ${records.length})`);
+  const finalRecords = deduped;
 
   // Write JSONL
   mkdirSync(OUT_DIR, { recursive: true });
   const outPath = join(OUT_DIR, "resend.jsonl");
-  const lines = records.map((r) => {
+  const lines = finalRecords.map((r) => {
     // Remove _meta before writing training data
     const { _meta, ...training } = r;
     return JSON.stringify(training);
   });
   writeFileSync(outPath, lines.join("\n") + "\n");
-  console.log(`Written ${records.length} records to ${outPath}`);
+  console.log(`Written ${finalRecords.length} records to ${outPath}`);
 
   // Also write a metadata file for debugging
   const metaPath = join(OUT_DIR, "resend_meta.jsonl");
-  const metaLines = records.map((r) => JSON.stringify(r._meta));
+  const metaLines = finalRecords.map((r) => JSON.stringify(r._meta));
   writeFileSync(metaPath, metaLines.join("\n") + "\n");
   console.log(`Metadata written to ${metaPath}`);
 }
