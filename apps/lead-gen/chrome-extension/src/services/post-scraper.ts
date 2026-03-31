@@ -40,6 +40,14 @@ interface ScrapedPost {
   original_author: string | null;
 }
 
+interface ScrapedLike {
+  post_url: string | null;
+  post_text: string | null;
+  post_author_name: string | null;
+  post_author_url: string | null;
+  liked_date: string | null;
+}
+
 
 // ── State ──
 
@@ -147,6 +155,112 @@ async function postPosts(
   if (!res.ok) throw new Error(`Server error: ${res.status}`);
   const data = await res.json();
   return { inserted: data.inserted, filtered: data.filtered || 0 };
+}
+
+// ── Post likes to Rust server ──
+
+async function postLikes(
+  contactId: number,
+  likes: ScrapedLike[],
+): Promise<{ inserted: number }> {
+  const res = await fetch(`${RUST_SERVER}/likes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contact_id: contactId, likes }),
+  });
+
+  if (!res.ok) throw new Error(`Server error: ${res.status}`);
+  const data = await res.json();
+  return { inserted: data.inserted };
+}
+
+// ── Extract likes from a reactions activity page ──
+
+async function scrollAndExtractLikes(
+  tabId: number,
+): Promise<ScrapedLike[]> {
+  // Scroll until no new content loads
+  let previousHeight = 0;
+  let staleCount = 0;
+
+  while (staleCount < 3) {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        window.scrollTo(0, document.body.scrollHeight);
+        return document.body.scrollHeight;
+      },
+    });
+    const currentHeight = results?.[0]?.result ?? 0;
+    await sleep(2000);
+
+    if (currentHeight === previousHeight) {
+      staleCount++;
+    } else {
+      staleCount = 0;
+    }
+    previousHeight = currentHeight;
+  }
+
+  // Extract liked posts
+  const results = await chrome.scripting.executeScript({
+    target: { tabId },
+    world: "MAIN",
+    func: () => {
+      const likes: Array<{
+        postUrl: string | null;
+        postText: string | null;
+        postAuthorName: string | null;
+        postAuthorUrl: string | null;
+        likedDate: string | null;
+      }> = [];
+
+      document.querySelectorAll(".feed-shared-update-v2, .occludable-update").forEach((postEl) => {
+        // Skip ads
+        if (postEl.querySelector(".feed-shared-update-v2__ad-badge")) return;
+        if (postEl.querySelector('[data-test-id="feed-shared-update-v2__sponsored"]')) return;
+
+        // Post text
+        const textEl = postEl.querySelector(
+          ".feed-shared-update-v2__description, .update-components-text, .feed-shared-text__text-view, .feed-shared-inline-show-more-text",
+        );
+        const postText = textEl?.textContent?.trim() || null;
+
+        // Post author
+        const authorEl = postEl.querySelector(".update-components-actor__name");
+        const postAuthorName = authorEl?.textContent?.trim() || null;
+
+        const authorLink = postEl.querySelector<HTMLAnchorElement>(
+          ".update-components-actor__container-link, .update-components-actor__meta-link",
+        );
+        const postAuthorUrl = authorLink?.href || null;
+
+        // Date
+        const timeEl = postEl.querySelector("time");
+        const likedDate = timeEl?.getAttribute("datetime") ||
+          postEl.querySelector(".update-components-actor__sub-description")?.textContent?.trim() || null;
+
+        // Post URL
+        const urn = postEl.getAttribute("data-urn") || postEl.querySelector("[data-urn]")?.getAttribute("data-urn");
+        let postUrl: string | null = null;
+        if (urn) postUrl = `https://www.linkedin.com/feed/update/${urn}/`;
+
+        likes.push({ postUrl, postText, postAuthorName, postAuthorUrl, likedDate });
+      });
+
+      return likes;
+    },
+  });
+
+  const likes = results?.[0]?.result || [];
+  return likes.map((l: any) => ({
+    post_url: l.postUrl || null,
+    post_text: l.postText || null,
+    post_author_name: l.postAuthorName || null,
+    post_author_url: l.postAuthorUrl || null,
+    liked_date: l.likedDate || null,
+  }));
 }
 
 // ── Scroll and extract posts from an activity page ──

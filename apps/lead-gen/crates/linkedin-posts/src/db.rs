@@ -589,6 +589,176 @@ impl PostsDb {
     pub async fn export(&self) -> ExportResponse {
         let contacts = self.contacts.lock().await.clone();
         let posts = self.posts.lock().await.clone();
-        ExportResponse { contacts, posts }
+        let likes = self.likes.lock().await.clone();
+        ExportResponse { contacts, posts, likes }
+    }
+
+    // ── Likes ────────────────────────────────────────────────────────────────
+
+    /// Generic max-ID query for any table with an Int64 "id" column.
+    async fn query_max_id(&self, table_name: &str) -> i64 {
+        use futures::TryStreamExt;
+        use lancedb::query::ExecutableQuery;
+
+        let table = match self.conn.open_table(table_name).execute().await {
+            Ok(t) => t,
+            Err(_) => return 0,
+        };
+
+        let mut stream = match table.query().execute().await {
+            Ok(s) => s,
+            Err(_) => return 0,
+        };
+
+        let mut max_id: i64 = 0;
+        while let Ok(Some(batch)) = stream.try_next().await {
+            if let Some(ids) = batch.column(0).as_any().downcast_ref::<Int64Array>() {
+                for i in 0..ids.len() {
+                    let id = ids.value(i);
+                    if id > max_id {
+                        max_id = id;
+                    }
+                }
+            }
+        }
+        max_id
+    }
+
+    /// Add post likes for a contact. Returns count inserted.
+    pub async fn add_likes(&self, contact_id: i32, likes: &[PostLike]) -> Result<usize> {
+        if likes.is_empty() {
+            return Ok(0);
+        }
+
+        let schema = likes_schema();
+        let now = chrono::Utc::now().to_rfc3339();
+        let n = likes.len();
+
+        let mut next_id = self.next_like_id.lock().await;
+        let start_id = *next_id;
+        let ids: Vec<i64> = (start_id..start_id + n as i64).collect();
+        *next_id = start_id + n as i64;
+        drop(next_id);
+
+        let batch = RecordBatch::try_new(
+            schema,
+            vec![
+                Arc::new(Int64Array::from(ids.clone())),
+                Arc::new(Int32Array::from(vec![contact_id; n])),
+                Arc::new(StringArray::from(
+                    likes.iter().map(|l| l.post_url.as_deref()).collect::<Vec<_>>(),
+                )),
+                Arc::new(StringArray::from(
+                    likes.iter().map(|l| l.post_text.as_deref()).collect::<Vec<_>>(),
+                )),
+                Arc::new(StringArray::from(
+                    likes.iter().map(|l| l.post_author_name.as_deref()).collect::<Vec<_>>(),
+                )),
+                Arc::new(StringArray::from(
+                    likes.iter().map(|l| l.post_author_url.as_deref()).collect::<Vec<_>>(),
+                )),
+                Arc::new(StringArray::from(
+                    likes.iter().map(|l| l.liked_date.as_deref()).collect::<Vec<_>>(),
+                )),
+                Arc::new(StringArray::from_iter_values(
+                    std::iter::repeat_n(now.as_str(), n),
+                )),
+            ],
+        )?;
+
+        let table = self.conn.open_table("likes").execute().await?;
+        table.add(vec![batch]).execute().await?;
+
+        // Mirror to in-memory
+        {
+            let mut mem_likes = self.likes.lock().await;
+            for (i, like) in likes.iter().enumerate() {
+                mem_likes.push(StoredPostLike {
+                    id: ids[i],
+                    contact_id,
+                    post_url: like.post_url.clone(),
+                    post_text: like.post_text.clone(),
+                    post_author_name: like.post_author_name.clone(),
+                    post_author_url: like.post_author_url.clone(),
+                    liked_date: like.liked_date.clone(),
+                    scraped_at: now.clone(),
+                });
+            }
+        }
+
+        tracing::info!("Inserted {} likes for contact {}", n, contact_id);
+        Ok(n)
+    }
+
+    pub async fn likes_count(&self) -> usize {
+        match self.conn.open_table("likes").execute().await {
+            Ok(table) => table.count_rows(None).await.unwrap_or(0) as usize,
+            Err(_) => 0,
+        }
+    }
+
+    /// Get all in-memory likes (for querying/filtering).
+    pub async fn get_likes(&self) -> Vec<StoredPostLike> {
+        self.likes.lock().await.clone()
+    }
+
+    /// Load all likes from LanceDB (full disk scan).
+    pub async fn load_all_likes(&self) -> Result<Vec<StoredPostLike>> {
+        use futures::TryStreamExt;
+        use lancedb::query::ExecutableQuery;
+
+        let table = self
+            .conn
+            .open_table("likes")
+            .execute()
+            .await
+            .context("Failed to open likes table")?;
+
+        let mut stream = table
+            .query()
+            .execute()
+            .await
+            .context("Failed to query likes table")?;
+
+        let mut likes = Vec::new();
+        while let Some(batch) = stream.try_next().await.context("Failed reading likes batch")? {
+            let col = |name: &str| -> Result<&dyn Array> {
+                let idx = batch.schema().index_of(name)
+                    .context(format!("Column '{}' not found in likes schema", name))?;
+                Ok(batch.column(idx))
+            };
+            let ids = col("id")?.as_any().downcast_ref::<Int64Array>()
+                .context("Column 'id' is not Int64")?;
+            let contact_ids = col("contact_id")?.as_any().downcast_ref::<Int32Array>()
+                .context("Column 'contact_id' is not Int32")?;
+            let post_urls = col("post_url")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'post_url' is not Utf8")?;
+            let post_texts = col("post_text")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'post_text' is not Utf8")?;
+            let author_names = col("post_author_name")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'post_author_name' is not Utf8")?;
+            let author_urls = col("post_author_url")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'post_author_url' is not Utf8")?;
+            let liked_dates = col("liked_date")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'liked_date' is not Utf8")?;
+            let scraped_ats = col("scraped_at")?.as_any().downcast_ref::<StringArray>()
+                .context("Column 'scraped_at' is not Utf8")?;
+
+            for i in 0..batch.num_rows() {
+                likes.push(StoredPostLike {
+                    id: ids.value(i),
+                    contact_id: contact_ids.value(i),
+                    post_url: if post_urls.is_null(i) { None } else { Some(post_urls.value(i).to_string()) },
+                    post_text: if post_texts.is_null(i) { None } else { Some(post_texts.value(i).to_string()) },
+                    post_author_name: if author_names.is_null(i) { None } else { Some(author_names.value(i).to_string()) },
+                    post_author_url: if author_urls.is_null(i) { None } else { Some(author_urls.value(i).to_string()) },
+                    liked_date: if liked_dates.is_null(i) { None } else { Some(liked_dates.value(i).to_string()) },
+                    scraped_at: scraped_ats.value(i).to_string(),
+                });
+            }
+        }
+
+        tracing::info!("Loaded {} likes from LanceDB", likes.len());
+        Ok(likes)
     }
 }
