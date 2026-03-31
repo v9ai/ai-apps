@@ -44,6 +44,13 @@ export type ArchiveEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type BatchOperationResult = {
+  __typename: 'BatchOperationResult';
+  affected: Scalars['Int']['output'];
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type BatchRecipientInput = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   contactId?: InputMaybe<Scalars['Int']['input']>;
@@ -234,6 +241,9 @@ export type Contact = {
   company: Maybe<Scalars['String']['output']>;
   companyId: Maybe<Scalars['Int']['output']>;
   createdAt: Scalars['String']['output'];
+  deletionFlaggedAt: Maybe<Scalars['String']['output']>;
+  deletionReasons: Array<Scalars['String']['output']>;
+  deletionScore: Maybe<Scalars['Float']['output']>;
   department: Maybe<Scalars['String']['output']>;
   dmReasons: Array<Scalars['String']['output']>;
   doNotContact: Scalars['Boolean']['output'];
@@ -258,6 +268,7 @@ export type Contact = {
   seniority: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
   telegramHandle: Maybe<Scalars['String']['output']>;
+  toBeDeleted: Scalars['Boolean']['output'];
   updatedAt: Scalars['String']['output'];
   userId: Maybe<Scalars['String']['output']>;
 };
@@ -804,6 +815,7 @@ export type Mutation = {
   blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
+  computeContactDeletionScores: BatchOperationResult;
   computeNextTouchScores: ComputeNextTouchScoresResult;
   createCompany: Company;
   createContact: Contact;
@@ -822,6 +834,7 @@ export type Mutation = {
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
+  flagContactsForDeletion: BatchOperationResult;
   generateEmail: GenerateEmailResult;
   generateReply: GenerateReplyResult;
   importCompanies: ImportCompaniesResult;
@@ -835,6 +848,7 @@ export type Mutation = {
   mergeDuplicateCompanies: MergeCompaniesResult;
   mergeDuplicateContacts: MergeDuplicateContactsResult;
   previewEmail: EmailPreview;
+  purgeDeletedContacts: BatchOperationResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   scoreContactsML: ScoreContactsMlResult;
@@ -845,6 +859,7 @@ export type Mutation = {
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
   unblockCompany: Company;
+  unflagContactForDeletion: Contact;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateCampaign: EmailCampaign;
   updateCompany: Company;
@@ -890,6 +905,11 @@ export type MutationCancelCompanyEmailsArgs = {
 
 export type MutationCancelScheduledEmailArgs = {
   resendId: Scalars['String']['input'];
+};
+
+
+export type MutationComputeContactDeletionScoresArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -979,6 +999,11 @@ export type MutationFindContactEmailArgs = {
 };
 
 
+export type MutationFlagContactsForDeletionArgs = {
+  threshold?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
 export type MutationGenerateEmailArgs = {
   input: GenerateEmailInput;
 };
@@ -1056,6 +1081,11 @@ export type MutationPreviewEmailArgs = {
 };
 
 
+export type MutationPurgeDeletedContactsArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type MutationScheduleBatchEmailsArgs = {
   input: ScheduleBatchEmailsInput;
 };
@@ -1103,6 +1133,11 @@ export type MutationUnarchiveEmailArgs = {
 
 
 export type MutationUnblockCompanyArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationUnflagContactForDeletionArgs = {
   id: Scalars['Int']['input'];
 };
 
