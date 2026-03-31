@@ -37,6 +37,10 @@ extend type Mutation {
   scoreContactsML(companyId: Int!): ScoreContactsMLResult!
   enrichAIContactProfile(contactId: Int!): EnrichAIContactResult!
   enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
+  computeContactDeletionScores(companyId: Int): BatchOperationResult!
+  flagContactsForDeletion(threshold: Float): BatchOperationResult!
+  unflagContactForDeletion(id: Int!): Contact!
+  purgeDeletedContacts(companyId: Int): BatchOperationResult!
 }
 
 type MergeDuplicateContactsResult {
@@ -79,6 +83,11 @@ type Contact {
   nextTouchScore: Float
   lastContactedAt: String
   aiProfile: ContactAIProfile
+  # ML deletion scoring
+  toBeDeleted: Boolean!
+  deletionScore: Float
+  deletionReasons: [String!]!
+  deletionFlaggedAt: String
   createdAt: String!
   updatedAt: String!
 }

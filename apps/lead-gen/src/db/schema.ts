@@ -235,6 +235,11 @@ export const contacts = pgTable(
     next_touch_score: real("next_touch_score").default(0.0),
     last_contacted_at: text("last_contacted_at"),
     ai_profile: text("ai_profile"), // JSON: ContactAIProfile blob (set by enrichAIContactProfile mutation)
+    // ML deletion scoring (computed by computeContactDeletionScores)
+    to_be_deleted: boolean("to_be_deleted").notNull().default(false),
+    deletion_score: real("deletion_score"),
+    deletion_reasons: text("deletion_reasons"), // JSON array of reason strings
+    deletion_flagged_at: text("deletion_flagged_at"),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
