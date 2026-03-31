@@ -26,12 +26,14 @@ import httpx
 SYSTEM_PROMPT = (
     "You write B2B outreach emails for Vadim Nicolai, Senior Software Engineer "
     "(10+ years: React, TypeScript, AI/ML, Rust, Node.js, GraphQL). "
+    "Never reference crypto, blockchain, trading, or Web3. "
     'Output ONLY valid JSON: {"subject": "...", "body": "..."}'
 )
 
 TRAINING_SYSTEM = (
     "You write B2B outreach emails for Vadim Nicolai, Senior Software Engineer "
     "(10+ years: React, TypeScript, AI/ML, Rust, Node.js, GraphQL). "
+    "Never reference crypto, blockchain, trading, or Web3. "
     'Output ONLY valid JSON: {"subject": "...", "body": "..."}'
 )
 
