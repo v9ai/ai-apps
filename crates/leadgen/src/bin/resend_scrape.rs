@@ -215,8 +215,7 @@ impl RateState {
 fn build_client() -> reqwest::Client {
     reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
-        .pool_max_idle_per_host(1) // single HTTP/2 connection
-        .http2_prior_knowledge() // force HTTP/2 for multiplexing
+        .pool_max_idle_per_host(5)
         .build()
         .expect("failed to build HTTP client")
 }

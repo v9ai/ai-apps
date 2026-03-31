@@ -1,10 +1,18 @@
-# Local-First AI Email Generation: Running Qwen3-1.7B on Apple Silicon for B2B Outreach
+# Building an AI Cold Email Engine: Fine-Tuning Qwen3 with LoRA for Automated B2B Outreach
+
+## Business Results
+
+This system generates 200+ personalized cold emails per batch in under 10 seconds on a single M1 MacBook Pro. No API keys, no per-token billing, no data leaving the machine. After fine-tuning with LoRA on real outreach data from Resend, JSON parse rate hit 100%, subject line compliance 95%+, and generation speed dropped to ~50ms per email — compared to 400-800ms round-trips to cloud APIs at $0.01-0.03 per email.
+
+## Why Not Instantly, Smartlead, or Apollo?
+
+SaaS cold email tools charge $30-200/month, send your prospect list to their servers, and give you zero control over the AI model generating your copy. You can't fine-tune their model on your winning emails. You can't add custom quality gates. You can't run offline. This system is for engineers and technical founders who want full ownership of their outreach pipeline — from model weights to deliverability scoring.
 
 ## The Problem with Cloud APIs for Outreach
 
 Every time you send a contact's name, company, and tech stack to GPT-4 or Claude to draft an email, you're paying per token, adding 200-800ms of latency, and leaking your sales pipeline to a third party. For a B2B lead generation system that processes hundreds of contacts per batch, this adds up fast.
 
-I built a fully local email generation pipeline that runs on an M1 MacBook Pro using Apple's MLX framework and Qwen3-1.7B. Zero cloud API calls for inference. Sub-100ms generation. Complete data privacy.
+I built a fully local cold email engine that runs on an M1 MacBook Pro using Apple's MLX framework and Qwen3-1.7B. Zero cloud API calls for inference. Sub-100ms generation. Complete data privacy.
 
 ## Architecture Overview
 
