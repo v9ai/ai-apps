@@ -22,7 +22,6 @@ use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
-use tokio::sync::Semaphore;
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
@@ -304,6 +303,7 @@ async fn render_email_in_tab(
 }
 
 /// Process emails through a pool of Chrome tabs.
+/// Uses a channel-based pool so each tab is used exclusively by one task at a time.
 async fn fetch_with_chrome_pool(
     browser: &Browser,
     api_key: &str,
@@ -311,41 +311,45 @@ async fn fetch_with_chrome_pool(
     num_tabs: usize,
 ) -> Vec<Option<EmailDetail>> {
     let total = emails.len();
-    let sem = Arc::new(Semaphore::new(num_tabs));
     let completed = Arc::new(AtomicUsize::new(0));
     let rate_limited = Arc::new(AtomicUsize::new(0));
 
-    // Pre-create tab pool
-    let mut pages = Vec::new();
+    // Channel-based page pool: tasks checkout a page, use it, return it
+    let (pool_tx, pool_rx) = async_channel::bounded::<Page>(num_tabs);
+
+    // Create tabs and seed the pool
+    let mut created = 0;
     for _ in 0..num_tabs {
         match browser.new_page("about:blank").await {
-            Ok(page) => pages.push(Arc::new(page)),
+            Ok(page) => {
+                pool_tx.send(page).await.ok();
+                created += 1;
+            }
             Err(e) => eprintln!("  Failed to create tab: {}", e),
         }
     }
-    let pages = Arc::new(pages);
-    eprintln!("  Created {} browser tabs", pages.len());
+    eprintln!("  Created {} browser tabs", created);
 
     let mut handles = Vec::with_capacity(total);
 
-    for (idx, email) in emails.iter().enumerate() {
+    for email in emails.iter() {
         let id = email.id.clone();
         let api_key = api_key.to_string();
-        let sem = Arc::clone(&sem);
         let completed = Arc::clone(&completed);
         let rate_limited = Arc::clone(&rate_limited);
-        let pages = Arc::clone(&pages);
+        let pool_rx = pool_rx.clone();
+        let pool_tx = pool_tx.clone();
 
         let handle = tokio::spawn(async move {
-            let _permit = sem.acquire().await.unwrap();
-
-            // Round-robin tab assignment
-            let tab_idx = idx % pages.len();
-            let page = &pages[tab_idx];
+            // Checkout a page from the pool (blocks until one is available)
+            let page = match pool_rx.recv().await {
+                Ok(p) => p,
+                Err(_) => return None,
+            };
 
             let mut retries = 0u64;
             let result = loop {
-                match render_email_in_tab(page, &api_key, &id).await {
+                match render_email_in_tab(&page, &api_key, &id).await {
                     Ok(detail) => break Some(detail),
                     Err(e) => {
                         let msg = format!("{}", e);
@@ -370,14 +374,14 @@ async fn fetch_with_chrome_pool(
                 }
             };
 
+            // Return page to pool
+            pool_tx.send(page).await.ok();
+
             let done = completed.fetch_add(1, Ordering::Relaxed) + 1;
             if done % 200 == 0 || done == total {
                 let rl = rate_limited.load(Ordering::Relaxed);
                 eprintln!("  Fetched: {}/{} (rate_limited: {})", done, total, rl);
             }
-
-            // Minimal delay — Chrome's HTTP/2 multiplexing handles backpressure
-            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
 
             result
         });

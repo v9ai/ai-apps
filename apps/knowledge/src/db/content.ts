@@ -24,7 +24,7 @@ let _db: BetterSQLite3Database<typeof contentSchema> | null = null;
 export function getContentDb() {
   if (!_db) {
     const dbPath = resolveDbPath();
-    const sqlite = new Database(dbPath, { readonly: !fs.existsSync(dbPath) ? false : undefined });
+    const sqlite = new Database(dbPath);
     sqlite.pragma("journal_mode = WAL");
     sqlite.pragma("synchronous = normal");
     sqlite.pragma("foreign_keys = ON");
