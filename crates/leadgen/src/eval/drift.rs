@@ -283,8 +283,8 @@ fn ks_statistic(a: &[f64], b: &[f64]) -> f64 {
     sorted_a.sort_by(|x, y| x.partial_cmp(y).unwrap_or(std::cmp::Ordering::Equal));
     sorted_b.sort_by(|x, y| x.partial_cmp(y).unwrap_or(std::cmp::Ordering::Equal));
 
-    let n_a = sorted_a.len() as f64;
-    let n_b = sorted_b.len() as f64;
+    let _n_a = sorted_a.len() as f64;
+    let _n_b = sorted_b.len() as f64;
 
     let cdf = |sorted: &[f64], x: f64| -> f64 {
         let pos = sorted.partition_point(|&v| v <= x);

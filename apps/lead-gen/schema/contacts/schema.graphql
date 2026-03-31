@@ -158,6 +158,12 @@ type DeleteContactResult {
   message: String!
 }
 
+type BatchOperationResult {
+  success: Boolean!
+  affected: Int!
+  message: String
+}
+
 type ImportContactsResult {
   success: Boolean!
   imported: Int!

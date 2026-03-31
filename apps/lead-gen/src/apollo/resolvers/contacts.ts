@@ -170,6 +170,126 @@ function classifyContact(position: string | null | undefined): ContactClassifica
   };
 }
 
+// ─── ML Deletion Scoring ─────────────────────────────────────────────────────
+
+interface DeletionScore {
+  score: number;
+  reasons: string[];
+}
+
+/**
+ * Compute a 0–1 deletion score for a contact using a 10-factor weighted model.
+ * Higher score = stronger signal the contact should be purged.
+ *
+ * Factors (weight):
+ *  1. Email invalidity     0.25 — nb_status invalid/disposable/unknown or email null
+ *  2. Email bounce         0.20 — email in bounced_emails or nb_result fail
+ *  3. Staleness            0.15 — last_contacted_at > 180 days with no reply, or created > 365 days untouched
+ *  4. Data incompleteness  0.10 — no email + no linkedin + no github
+ *  5. Low relevance        0.10 — HR/Recruiting or Other AND authority_score < 0.30
+ *  6. DNC flag             0.08 — do_not_contact = true
+ *  7. Outreach exhaustion  0.07 — > 3 outbound emails, no reply
+ *  8. Low authority        0.03 — authority_score < 0.15
+ *  9. No position          0.01 — position null or empty
+ * 10. Tag signals          0.01 — tags contain stale/archived/left-company/wrong-person
+ */
+function computeDeletionScore(
+  contact: DbContact,
+  outboundEmailCount: number = 0,
+  anyReply: boolean = false,
+): DeletionScore {
+  const reasons: string[] = [];
+  let score = 0;
+
+  const msPerDay = 86_400_000;
+  const now = Date.now();
+
+  // Factor 1 — email invalidity (0.25)
+  const INVALID_NB_STATUSES = new Set(["invalid", "disposable", "unknown", "catchall"]);
+  if (!contact.email) {
+    score += 0.25;
+    reasons.push("No email address");
+  } else if (contact.nb_status && INVALID_NB_STATUSES.has(contact.nb_status)) {
+    score += 0.25;
+    reasons.push(`NeverBounce status: ${contact.nb_status}`);
+  } else if (contact.email_verified === false && contact.nb_status) {
+    score += 0.15;
+    reasons.push("Email not verified");
+  }
+
+  // Factor 2 — email bounce (0.20)
+  const bouncedList: string[] = parseJsonArray(contact.bounced_emails);
+  const emailBounced = contact.email && bouncedList.includes(contact.email);
+  const nbFail = contact.nb_result === "failed" || contact.nb_result === "fail";
+  if (emailBounced || nbFail) {
+    score += 0.20;
+    reasons.push(emailBounced ? "Primary email is in bounced list" : `NeverBounce result: ${contact.nb_result}`);
+  }
+
+  // Factor 3 — staleness (0.15)
+  const createdMs = contact.created_at ? new Date(contact.created_at).getTime() : 0;
+  const lastContactedMs = contact.last_contacted_at ? new Date(contact.last_contacted_at).getTime() : 0;
+  const daysSinceCreated = createdMs ? Math.floor((now - createdMs) / msPerDay) : 0;
+  const daysSinceContacted = lastContactedMs ? Math.floor((now - lastContactedMs) / msPerDay) : 0;
+  if (lastContactedMs && daysSinceContacted > 180 && !anyReply) {
+    score += 0.15;
+    reasons.push(`Last contacted ${daysSinceContacted} days ago with no reply`);
+  } else if (!lastContactedMs && daysSinceCreated > 365) {
+    score += 0.10;
+    reasons.push(`Never contacted, created ${daysSinceCreated} days ago`);
+  }
+
+  // Factor 4 — data incompleteness (0.10)
+  if (!contact.email && !contact.linkedin_url && !contact.github_handle) {
+    score += 0.10;
+    reasons.push("No email, LinkedIn URL, or GitHub handle — no reachability vector");
+  }
+
+  // Factor 5 — low relevance (0.10)
+  const LOW_RELEVANCE_DEPTS = new Set(["HR/Recruiting", "Other"]);
+  const authorityScore = contact.authority_score ?? 0;
+  if (LOW_RELEVANCE_DEPTS.has(contact.department ?? "") && authorityScore < 0.30) {
+    score += 0.10;
+    reasons.push(`Low-relevance dept '${contact.department}' with authority score ${authorityScore.toFixed(2)}`);
+  }
+
+  // Factor 6 — DNC flag (0.08)
+  const isDnc = (contact.do_not_contact as unknown) === true || (contact.do_not_contact as unknown) === 1;
+  if (isDnc) {
+    score += 0.08;
+    reasons.push("Marked do-not-contact");
+  }
+
+  // Factor 7 — outreach exhaustion (0.07)
+  if (outboundEmailCount > 3 && !anyReply) {
+    score += 0.07;
+    reasons.push(`${outboundEmailCount} outbound emails sent with no reply`);
+  }
+
+  // Factor 8 — low authority (0.03)
+  if (authorityScore < 0.15) {
+    score += 0.03;
+    reasons.push(`Very low authority score (${authorityScore.toFixed(2)})`);
+  }
+
+  // Factor 9 — no position (0.01)
+  if (!contact.position?.trim()) {
+    score += 0.01;
+    reasons.push("No job title");
+  }
+
+  // Factor 10 — tag signals (0.01)
+  const STALE_TAGS = new Set(["archived", "stale", "left-company", "wrong-person"]);
+  const tags: string[] = parseJsonArray(contact.tags);
+  const staleTag = tags.find((t) => STALE_TAGS.has(t.toLowerCase()));
+  if (staleTag) {
+    score += 0.01;
+    reasons.push(`Tag '${staleTag}' signals stale contact`);
+  }
+
+  return { score: Math.min(Math.round(score * 100) / 100, 1.0), reasons };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
