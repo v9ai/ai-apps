@@ -1,11 +1,13 @@
 """Generate synthetic B2B outreach email training data via DeepSeek API.
 
 Produces diverse email examples by combining company profiles, recipient
-personas, and email types. Validates outputs against quality rules.
+personas, email types, and style variants. Validates outputs against quality
+rules. Supports negative example generation for contrastive/DPO training.
 
 Usage:
-  python3 mlx-training/generate_synthetic_emails.py --count 800
+  python3 mlx-training/generate_synthetic_emails.py --count 1000
   python3 mlx-training/generate_synthetic_emails.py --count 100 --dry-run
+  python3 mlx-training/generate_synthetic_emails.py --count 500 --neg-ratio 0.15
 """
 
 from __future__ import annotations
@@ -185,6 +187,11 @@ DEEPSEEK_URL = os.environ.get("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/c
 
 def call_deepseek(client: httpx.Client, api_key: str, user_prompt: str) -> str | None:
     """Call DeepSeek API and return the assistant content."""
+    return call_deepseek_with_system(client, api_key, TEACHER_SYSTEM, user_prompt)
+
+
+def call_deepseek_with_system(client: httpx.Client, api_key: str, system_prompt: str, user_prompt: str) -> str | None:
+    """Call DeepSeek API with a custom system prompt and return the assistant content."""
     try:
         resp = client.post(
             DEEPSEEK_URL,
@@ -192,7 +199,7 @@ def call_deepseek(client: httpx.Client, api_key: str, user_prompt: str) -> str |
             json={
                 "model": "deepseek-chat",
                 "messages": [
-                    {"role": "system", "content": TEACHER_SYSTEM},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 "temperature": 0.8,
@@ -403,11 +410,14 @@ def validate_email(raw: str, email_type: str) -> dict | None:
 # ── Main generation loop ────────────────────────────────────────────────────
 
 
-def generate(count: int, out_dir: Path, dry_run: bool = False):
+def generate(count: int, out_dir: Path, dry_run: bool = False, neg_ratio: float = 0.1):
     api_key = os.environ.get("DEEPSEEK_API_KEY")
     if not api_key and not dry_run:
         print("ERROR: Set DEEPSEEK_API_KEY", file=sys.stderr)
         sys.exit(1)
+
+    neg_count = int(count * neg_ratio)
+    pos_count = count - neg_count
 
     # Build all scenarios
     random.seed(42)
@@ -415,60 +425,107 @@ def generate(count: int, out_dir: Path, dry_run: bool = False):
     for company in COMPANIES:
         for recipient in RECIPIENTS:
             for email_type in EMAIL_TYPES:
-                scenarios.append((company, recipient, email_type))
+                style = random.choice(STYLE_VARIANTS)
+                scenarios.append((company, recipient, email_type, style, False))
 
     random.shuffle(scenarios)
 
-    # Limit to requested count (with headroom for validation failures)
-    target = int(count * 1.3)  # 30% headroom
-    scenarios = scenarios[:target]
+    # Split into positive and negative pools
+    pos_scenarios = scenarios[:]
+    neg_scenarios = [(c, r, t, s, True) for c, r, t, s, _ in scenarios[:]]
+    random.shuffle(neg_scenarios)
 
-    print(f"Generating {count} synthetic emails ({len(scenarios)} attempts with headroom)...")
+    # Limit to requested counts (with headroom for validation failures)
+    pos_target = int(pos_count * 1.3)
+    neg_target = int(neg_count * 1.5)  # more headroom for negatives (harder to validate)
+    pos_scenarios = pos_scenarios[:pos_target]
+    neg_scenarios = neg_scenarios[:neg_target]
+
+    all_scenarios = pos_scenarios + neg_scenarios
+    random.shuffle(all_scenarios)
+
+    print(f"Generating {count} synthetic emails ({pos_count} positive + {neg_count} negative)")
+    print(f"  {len(all_scenarios)} attempts with headroom...")
     if dry_run:
         print("DRY RUN — showing first 3 scenario prompts:")
-        for i, (c, r, t) in enumerate(scenarios[:3]):
-            print(f"\n--- Scenario {i+1} ---")
-            print(build_scenario_prompt(c, r, t))
+        for i, (c, r, t, s, neg) in enumerate(all_scenarios[:3]):
+            label = " [NEGATIVE]" if neg else ""
+            print(f"\n--- Scenario {i+1}{label} (style: {s}) ---")
+            print(build_scenario_prompt(c, r, t, style=s))
         return
 
     records = []
+    pos_generated = 0
+    neg_generated = 0
     failures = 0
     client = httpx.Client()
 
     try:
-        for i, (company, recipient, email_type) in enumerate(scenarios):
-            if len(records) >= count:
+        for i, (company, recipient, email_type, style, is_negative) in enumerate(all_scenarios):
+            if pos_generated >= pos_count and neg_generated >= neg_count:
                 break
+            if is_negative and neg_generated >= neg_count:
+                continue
+            if not is_negative and pos_generated >= pos_count:
+                continue
 
             # Build teacher prompt
-            teacher_prompt = build_scenario_prompt(company, recipient, email_type)
-            raw = call_deepseek(client, api_key, teacher_prompt)
+            teacher_prompt = build_scenario_prompt(company, recipient, email_type, style=style)
+
+            # For negative examples, use the negative teacher system prompt
+            if is_negative:
+                raw = call_deepseek_with_system(client, api_key, TEACHER_SYSTEM_NEGATIVE, teacher_prompt)
+            else:
+                raw = call_deepseek(client, api_key, teacher_prompt)
             if not raw:
                 failures += 1
                 continue
 
-            # Validate
-            email = validate_email(raw, email_type)
-            if not email:
-                failures += 1
-                if failures <= 5:
-                    print(f"  validation failed (#{failures}): {raw[:100]}...", file=sys.stderr)
-                continue
+            # Validate (negatives skip validation — they're intentionally bad)
+            if is_negative:
+                text = raw.strip()
+                text = re.sub(r"^```(?:json)?\s*", "", text)
+                text = re.sub(r"\s*```$", "", text)
+                try:
+                    email = json.loads(text.strip())
+                    if not isinstance(email, dict) or not email.get("subject") or not email.get("body"):
+                        failures += 1
+                        continue
+                except json.JSONDecodeError:
+                    failures += 1
+                    continue
+            else:
+                email = validate_email(raw, email_type)
+                if not email:
+                    failures += 1
+                    if failures <= 5:
+                        print(f"  validation failed (#{failures}): {raw[:100]}...", file=sys.stderr)
+                    continue
 
             # Build training record (student format)
-            user_msg = build_training_user_message(company, recipient, email_type)
+            user_msg = build_training_user_message(company, recipient, email_type, style=style)
             assistant_msg = f"<think>\n</think>\n{json.dumps(email, ensure_ascii=False)}"
 
-            records.append({
+            record = {
                 "messages": [
                     {"role": "system", "content": TRAINING_SYSTEM},
                     {"role": "user", "content": user_msg},
                     {"role": "assistant", "content": assistant_msg},
                 ]
-            })
+            }
+            if is_negative:
+                record["_negative"] = True
+
+            records.append(record)
+
+            if is_negative:
+                neg_generated += 1
+            else:
+                pos_generated += 1
 
             if (i + 1) % 50 == 0:
-                print(f"  progress: {len(records)}/{count} generated ({failures} failures)")
+                total = pos_generated + neg_generated
+                print(f"  progress: {total}/{count} generated ({pos_generated} pos, {neg_generated} neg, {failures} failures)")
 
             # Rate limit: ~2 req/sec
             time.sleep(0.5)
@@ -476,7 +533,8 @@ def generate(count: int, out_dir: Path, dry_run: bool = False):
     finally:
         client.close()
 
-    print(f"\nGenerated: {len(records)} valid emails ({failures} failures)")
+    total = pos_generated + neg_generated
+    print(f"\nGenerated: {total} valid emails ({pos_generated} positive, {neg_generated} negative, {failures} failures)")
 
     # Write to file
     path = out_dir / "outreach-email" / "synthetic.jsonl"
@@ -489,12 +547,13 @@ def generate(count: int, out_dir: Path, dry_run: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate synthetic email training data")
-    parser.add_argument("--count", type=int, default=800, help="Number of emails to generate")
+    parser.add_argument("--count", type=int, default=1000, help="Number of emails to generate")
     parser.add_argument("--out-dir", type=Path, default=Path("mlx-training/data"))
     parser.add_argument("--dry-run", action="store_true", help="Show prompts only, don't call API")
+    parser.add_argument("--neg-ratio", type=float, default=0.1, help="Fraction of negative examples (default 0.1)")
     args = parser.parse_args()
 
-    generate(args.count, args.out_dir, args.dry_run)
+    generate(args.count, args.out_dir, args.dry_run, args.neg_ratio)
 
 
 if __name__ == "__main__":
