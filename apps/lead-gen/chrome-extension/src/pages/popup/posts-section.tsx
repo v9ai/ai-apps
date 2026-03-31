@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Stack, Group, Button, Text, Alert, Badge, Progress, TextInput } from "@mantine/core";
+import { Stack, Group, Button, Text, Alert, Badge, Progress } from "@mantine/core";
 
-const DEFAULT_KEYWORDS = "react remote outside ir35";
-
-function buildSearchUrl(keywords: string): string {
-  return `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(keywords)}&origin=SWITCH_SEARCH_VERTICAL`;
-}
+const SEARCH_URL =
+  "https://www.linkedin.com/search/results/content/?keywords=react%20remote%20outside%20ir35&origin=FACETED_SEARCH&sortBy=%5B%22relevance%22%5D&datePosted=%5B%22past-week%22%5D";
 
 type Phase = "jobs" | "connections" | "import" | "posts" | "companies" | null;
 
@@ -24,7 +21,6 @@ export default function PostsSection() {
   const [serverUp, setServerUp] = useState<boolean | null>(null);
   const [stats, setStats] = useState<{ contacts: number; posts: number } | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
-  const [keywords, setKeywords] = useState(DEFAULT_KEYWORDS);
 
   // Check server health on mount
   useEffect(() => {
@@ -101,7 +97,7 @@ export default function PostsSection() {
     try {
       const response = await chrome.runtime.sendMessage({
         action: "startUnifiedPipeline",
-        searchUrl: buildSearchUrl(keywords),
+        searchUrl: SEARCH_URL,
       });
       if (!response.success) {
         setStatus(response.error || "Failed to start");
@@ -153,14 +149,6 @@ export default function PostsSection() {
           </Badge>
         )}
       </Group>
-
-      <TextInput
-        size="xs"
-        placeholder="Search keywords..."
-        value={keywords}
-        onChange={(e) => setKeywords(e.currentTarget.value)}
-        disabled={loading}
-      />
 
       <Group grow gap="xs">
         <Button
