@@ -56,6 +56,13 @@ db-migrate:
 db-studio:
 	pnpm db:studio
 
+# ── Contact Cleanup ──────────────────────────────────────────
+
+.PHONY: clean-contacts
+
+clean-contacts: ## ML deletion pipeline: score → flag → purge (alias: pnpm clean:contacts --ml)
+	dotenv -f .env.local run -- pnpm clean:contacts --ml
+
 # ── LinkedIn Post Processing ─────────────────────────────────
 
 POSTS_DIR := crates/linkedin-posts
