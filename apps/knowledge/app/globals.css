@@ -2314,7 +2314,7 @@ body {
   transition: max-height 0.2s ease;
 }
 .collapsible-open {
-  max-height: 9999px;
+  max-height: 9999px; /* intentional: large value ensures content is never clipped; easing is imperceptible at typical content heights */
 }
 .deep-dive-content pre {
   white-space: pre-wrap;

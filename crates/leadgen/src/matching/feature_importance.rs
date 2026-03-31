@@ -48,7 +48,7 @@ pub fn explain_score(
 
     // Helper: re-score with a modified ICP and return composite delta.
     let delta = |modified_icp: IcpProfile| -> f64 {
-        let loo_score = score_lead(contact, company, &modified_icp);
+        let loo_score = score_lead(contact, company, &modified_icp, 0.0);
         baseline - loo_score.composite_score
     };
 
