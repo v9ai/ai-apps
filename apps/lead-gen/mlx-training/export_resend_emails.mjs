@@ -162,7 +162,7 @@ async function fetchEmailsBatch(emails, concurrency = 3) {
       if (completed % 200 === 0) {
         console.error(`  Fetched: ${completed}/${emails.length}`);
       }
-      await sleep(500); // 2 req/sec per worker × 3 workers = ~6 req/sec total
+      await sleep(1000); // 1 req/sec per worker × 2 workers = ~2 req/sec total (avoids rate limits)
     }
   }
 
@@ -297,8 +297,8 @@ async function main() {
   }
 
   // Fetch full content with concurrent workers
-  console.error(`\nFetching full content for ${emails.length} emails (5 concurrent workers)...`);
-  const fullEmails = await fetchEmailsBatch(emails, 5);
+  console.error(`\nFetching full content for ${emails.length} emails (2 concurrent workers)...`);
+  const fullEmails = await fetchEmailsBatch(emails, 2);
 
   const records = [];
   let skipped = 0;
