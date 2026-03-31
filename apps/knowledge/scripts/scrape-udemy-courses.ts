@@ -1,13 +1,12 @@
 /**
- * Scrape Udemy courses related to vector databases via topic navigation.
+ * Scrape AI/ML courses from Udemy topic pages.
  * Run: pnpm scrape:udemy
  *
  * Strategy:
- *  1. Crawl the primary topic page + related topic pages to discover courses
- *  2. From each course, collect "Explore related topics" → crawl those too
- *  3. Deep-scrape every discovered course in a fresh browser (bypasses Cloudflare)
- *  4. Only save courses whose content matches vector-DB keywords
- *  5. Map to lesson slugs based on keyword relevance
+ *  1. Crawl 20+ AI/ML seed topic pages + discovered related topics
+ *  2. Deep-scrape each course page (bypasses Cloudflare with fresh contexts)
+ *  3. Classify each course into one of 10 topic groups
+ *  4. Upsert into external_courses with topic_group; map to lesson slugs
  */
 import { webkit, type Page, type BrowserContext } from "playwright";
 import { db } from "@/src/db";
@@ -22,15 +21,39 @@ const BROWSER_OPTS = {
   locale: "en-US" as const,
 };
 
-// Topics to crawl for course discovery. Starts with the primary topic,
-// then follows related topics found on course pages.
 const SEED_TOPICS = [
-  "vector-databases",
-  "langchain",
-  "openai-api",
-  "retrieval-augmented-generation",
-  "ai-agents",
+  // Generative AI & LLMs
   "generative-ai",
+  "chatgpt",
+  "large-language-models",
+  "prompt-engineering",
+  "openai-api",
+  // RAG & Vector Search
+  "vector-databases",
+  "retrieval-augmented-generation",
+  // Agents & Frameworks
+  "langchain",
+  "ai-agents",
+  // Deep Learning
+  "deep-learning",
+  "neural-networks",
+  "pytorch",
+  "tensorflow",
+  "keras",
+  // NLP & Transformers
+  "natural-language-processing",
+  "transformers",
+  // Computer Vision
+  "computer-vision",
+  "object-detection",
+  // ML Foundations
+  "machine-learning",
+  // MLOps
+  "mlops",
+  // Fine-tuning
+  "fine-tuning",
+  // Reinforcement Learning
+  "reinforcement-learning",
 ];
 
 // Promotional courses Udemy shows on every topic page — skip these.
@@ -44,18 +67,132 @@ const PROMO_SLUGS = new Set([
   "google-ai-for-workflow-automation",
 ]);
 
-// Keywords that must appear in a course's full text for it to be relevant.
-// At least one must match for us to save the course.
+// Any course matching at least one of these is relevant.
 const RELEVANCE_KEYWORDS = [
+  // Generative AI
+  "generative ai", "chatgpt", "gpt-4", "gpt-3", "llm", "large language model",
+  "prompt engineering", "openai", "anthropic", "claude", "gemini",
+  // RAG & embeddings
+  "rag", "retrieval augmented", "retrieval-augmented",
   "vector database", "vector db", "vectorstore", "vector store",
   "pinecone", "weaviate", "qdrant", "milvus", "chroma", "chromadb",
-  "pgvector", "faiss", "similarity search",
-  "embedding", "vector search", "nearest neighbor",
-  "rag", "retrieval augmented", "retrieval-augmented",
-  "langchain", "llamaindex", "langgraph",
+  "pgvector", "faiss", "similarity search", "embedding",
+  // Agents & frameworks
+  "langchain", "langgraph", "llamaindex", "llama-index", "ai agent",
+  "autogen", "crewai", "function calling", "tool calling",
+  // Deep learning
+  "deep learning", "neural network", "pytorch", "tensorflow", "keras",
+  // NLP
+  "natural language processing", "nlp", "transformers", "bert", "hugging face",
+  "text classification", "named entity", "sentiment analysis",
+  // Computer vision
+  "computer vision", "image recognition", "object detection", "yolo",
+  "image segmentation", "convolutional",
+  // ML
+  "machine learning", "scikit-learn", "sklearn", "xgboost", "gradient boosting",
+  // MLOps
+  "mlops", "model deployment", "mlflow", "kubeflow", "model serving",
+  // Fine-tuning
+  "fine-tun", "lora", "peft", "rlhf", "instruction tuning",
+  // RL
+  "reinforcement learning",
 ];
 
-// ── Types ────────────────────────────────────────────────────────────
+// Keywords used when following related topics from course/topic pages.
+const FOLLOW_TOPIC_KEYWORDS = [
+  "ai", "ml", "machine-learning", "deep-learning", "neural",
+  "llm", "gpt", "openai", "generative", "langchain", "llama",
+  "vector", "embed", "rag", "retriev",
+  "nlp", "natural-language", "transformers", "bert",
+  "computer-vision", "image", "object-detect",
+  "pytorch", "tensorflow", "keras",
+  "mlops", "deploy", "model-serv",
+  "fine-tun", "reinforcement", "agent",
+];
+
+// ── Topic group classifier ───────────────────────────────────────────
+
+const TOPIC_GROUPS: Array<{ name: string; signals: string[] }> = [
+  {
+    name: "Generative AI & LLMs",
+    signals: [
+      "generative ai", "chatgpt", "gpt-4", "gpt-3", "gpt4", "gpt3",
+      "large language model", "llm", "prompt engineering", "openai api",
+      "anthropic", "claude", "gemini", "mistral", "llama 2", "llama2",
+    ],
+  },
+  {
+    name: "RAG & Vector Search",
+    signals: [
+      "rag", "retrieval augmented", "retrieval-augmented",
+      "vector database", "vector db", "vectorstore", "vector store",
+      "pinecone", "weaviate", "qdrant", "milvus", "chroma", "chromadb",
+      "pgvector", "faiss", "similarity search", "embedding model",
+      "semantic search", "vector search",
+    ],
+  },
+  {
+    name: "AI Agents & Frameworks",
+    signals: [
+      "ai agent", "langchain", "langgraph", "llamaindex", "llama-index",
+      "autogen", "crewai", "function calling", "tool calling", "tool use",
+      "agentic", "multi-agent",
+    ],
+  },
+  {
+    name: "Fine-tuning & RLHF",
+    signals: [
+      "fine-tun", "fine tune", "lora", "qlora", "peft",
+      "rlhf", "instruction tuning", "dpo", "sft", "adapter",
+    ],
+  },
+  {
+    name: "Deep Learning",
+    signals: [
+      "deep learning", "neural network", "pytorch", "tensorflow", "keras",
+      "backpropagation", "cnn", "rnn", "lstm", "gru", "attention mechanism",
+    ],
+  },
+  {
+    name: "Computer Vision",
+    signals: [
+      "computer vision", "image recognition", "object detection",
+      "yolo", "image segmentation", "convolutional neural", "cv2", "opencv",
+    ],
+  },
+  {
+    name: "NLP & Transformers",
+    signals: [
+      "natural language processing", "nlp", "transformers", "hugging face",
+      "bert", "text classification", "named entity", "sentiment analysis",
+      "text generation", "tokenization",
+    ],
+  },
+  {
+    name: "MLOps & Deployment",
+    signals: [
+      "mlops", "model deployment", "model serving", "mlflow", "kubeflow",
+      "bentoml", "triton", "docker for ml", "kubernetes for ml",
+      "ci/cd for ml", "model monitoring",
+    ],
+  },
+  {
+    name: "Reinforcement Learning",
+    signals: [
+      "reinforcement learning", "rl agent", "openai gym", "ppo", "dqn",
+      "policy gradient", "q-learning", "actor-critic",
+    ],
+  },
+  {
+    name: "ML Foundations",
+    signals: [
+      "machine learning", "scikit-learn", "sklearn", "xgboost",
+      "gradient boosting", "random forest", "decision tree",
+      "logistic regression", "linear regression", "statistics for data",
+      "data science",
+    ],
+  },
+];
 
 interface CourseMetadata {
   instructors: string[];
@@ -68,7 +205,7 @@ interface CourseMetadata {
   lastUpdated: string | null;
   totalLectures: number | null;
   totalDuration: string | null;
-  discoveredFrom: string; // topic or course URL that led us here
+  discoveredFrom: string;
 }
 
 interface ScrapedCourse {
@@ -84,6 +221,23 @@ interface ScrapedCourse {
   imageUrl: string | null;
   language: string;
   metadata: CourseMetadata;
+}
+
+function classifyTopicGroup(course: ScrapedCourse): string {
+  const fullText = [
+    course.title,
+    course.description ?? "",
+    course.metadata.subtitle ?? "",
+    ...course.metadata.whatYoullLearn,
+    ...course.metadata.curriculum.map((s) => s.section),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  for (const { name, signals } of TOPIC_GROUPS) {
+    if (signals.some((s) => fullText.includes(s))) return name;
+  }
+  return "Other";
 }
 
 // ── Slug keyword mapping ─────────────────────────────────────────────
@@ -150,11 +304,6 @@ function matchSlugs(course: ScrapedCourse): { slug: string; relevance: number }[
     }
   }
 
-  // Ensure at least vector-databases slug
-  if (!matches.find((m) => m.slug === "vector-databases")) {
-    matches.push({ slug: "vector-databases", relevance: 0.3 });
-  }
-
   return matches;
 }
 
@@ -210,10 +359,8 @@ async function crawlTopicPage(topic: string): Promise<{ courses: string[]; relat
       return { courses: [], relatedTopics: [] };
     }
 
-    // Dismiss cookies
     await page.click('[id*="onetrust-accept"], button:has-text("Accept")').catch(() => {});
 
-    // Scroll to load
     for (let i = 0; i < 5; i++) {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await page.waitForTimeout(1500);
@@ -242,234 +389,6 @@ async function crawlTopicPage(topic: string): Promise<{ courses: string[]; relat
 
 // ── Phase 2: Deep scrape a course page ───────────────────────────────
 
-async function scrapeCoursePage(page: Page, url: string): Promise<ScrapedCourse | null> {
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForSelector("h1", { timeout: 15000 });
-  await page.waitForTimeout(5000);
-
-  // Scroll to load lazy sections
-  for (let i = 0; i < 8; i++) {
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await page.waitForTimeout(1000);
-  }
-
-  // Expand "Show more" / "Expand all sections"
-  const expandBtns = page.locator('button:has-text("Show more"), button:has-text("Expand all sections")');
-  const btnCount = await expandBtns.count();
-  for (let i = 0; i < Math.min(btnCount, 10); i++) {
-    await expandBtns.nth(i).click().catch(() => {});
-    await page.waitForTimeout(500);
-  }
-
-  const data = await page.evaluate((courseUrl: string) => {
-    const lines = document.body.innerText.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
-
-    const h1 = document.querySelector("h1");
-    const title = h1?.textContent?.trim() ?? "Unknown";
-
-    // Subtitle
-    let subtitle: string | null = null;
-    const titleIdx = lines.findIndex((l) => l === title);
-    if (titleIdx >= 0) {
-      const secondIdx = lines.indexOf(title, titleIdx + 1);
-      const searchStart = secondIdx >= 0 ? secondIdx + 1 : titleIdx + 1;
-      const nextLine = lines[searchStart];
-      if (nextLine && !/^(Rating|Highest|Bestseller|Role Play|Hot & New|New)/.test(nextLine)) {
-        subtitle = nextLine;
-      }
-    }
-
-    // Rating
-    let rating: number | null = null;
-    const ratingLine = lines.find((l) => /^Rating:\s*[\d.]+\s*out\s*of/.test(l));
-    if (ratingLine) {
-      const m = ratingLine.match(/([\d.]+)\s*out/);
-      if (m) rating = parseFloat(m[1]);
-    } else {
-      const ratingIdx = lines.findIndex((l) => /^\d\.\d$/.test(l));
-      if (ratingIdx >= 0) rating = parseFloat(lines[ratingIdx]);
-    }
-
-    // Review count
-    let reviewCount: number | null = null;
-    const reviewLine = lines.find((l) => /\([\d,]+\s*rating/.test(l));
-    if (reviewLine) {
-      const m = reviewLine.match(/([\d,]+)\s*rating/);
-      if (m) reviewCount = parseInt(m[1].replace(/,/g, ""), 10);
-    }
-
-    // Enrolled
-    let enrolled: number | null = null;
-    const enrolledLine = lines.find((l) => /^[\d,]+\s*student/i.test(l));
-    if (enrolledLine) {
-      const m = enrolledLine.match(/([\d,]+)\s*student/i);
-      if (m) enrolled = parseInt(m[1].replace(/,/g, ""), 10);
-    }
-
-    // Instructors
-    const createdIdx = lines.findIndex((l) => l === "Created by");
-    const instructors: string[] = [];
-    if (createdIdx >= 0 && lines[createdIdx + 1]) {
-      instructors.push(...lines[createdIdx + 1].split(",").map((s) => s.trim()).filter(Boolean));
-    }
-
-    // Last updated
-    const updatedLine = lines.find((l) => /^Last updated/.test(l));
-    const lastUpdated = updatedLine ?? null;
-
-    // Language
-    let language = "English";
-    if (updatedLine) {
-      const updIdx = lines.indexOf(updatedLine);
-      const langLine = lines[updIdx + 1];
-      if (langLine && /^[A-Z][a-z]+$/.test(langLine)) language = langLine;
-    }
-
-    // Price
-    const priceLine = lines.find((l) => /^(Free|(\$|€|£|₹|lei\s*)[\d,.]+)$/i.test(l));
-    const price = priceLine ?? null;
-    const isFree = price ? /free/i.test(price) : false;
-
-    // What you'll learn
-    const learnIdx = lines.findIndex((l) => l === "What you'll learn");
-    const whatYoullLearn: string[] = [];
-    if (learnIdx >= 0) {
-      for (let i = learnIdx + 1; i < lines.length; i++) {
-        const line = lines[i];
-        if (/^(Explore related|Show more|Show less|Course content|Coding Exercises)/.test(line)) break;
-        if (line.length > 10 && line.length < 300) whatYoullLearn.push(line);
-      }
-    }
-
-    // Curriculum
-    const contentIdx = lines.findIndex((l) => l === "Course content");
-    const curriculum: { section: string; lectures: number; duration: string }[] = [];
-    let totalLectures: number | null = null;
-    let totalDuration: string | null = null;
-    if (contentIdx >= 0) {
-      const summaryLine = lines[contentIdx + 1];
-      if (summaryLine) {
-        const lm = summaryLine.match(/(\d+)\s*lecture/);
-        if (lm) totalLectures = parseInt(lm[1], 10);
-        const dm = summaryLine.match(/([\dh\s]+\d+m)\s*total/);
-        if (dm) totalDuration = dm[1].trim();
-      }
-
-      for (let i = contentIdx + 2; i < lines.length; i++) {
-        const line = lines[i];
-        if (line === "Requirements" || line === "Description" || line === "Who this course is for:") break;
-        if (line === "Expand all sections" || /^\d+ more section/.test(line)) continue;
-        const statsLine = lines[i + 1];
-        if (statsLine && /^\d+\s*lecture/.test(statsLine)) {
-          const lm = statsLine.match(/(\d+)\s*lecture/);
-          const dm = statsLine.match(/•\s*(.+)/);
-          curriculum.push({
-            section: line,
-            lectures: lm ? parseInt(lm[1], 10) : 0,
-            duration: dm ? dm[1].trim() : "",
-          });
-          i++;
-        }
-      }
-    }
-
-    // Requirements
-    const reqIdx = lines.findIndex((l) => l === "Requirements");
-    const requirements: string[] = [];
-    if (reqIdx >= 0) {
-      for (let i = reqIdx + 1; i < lines.length; i++) {
-        const line = lines[i];
-        if (line === "Description" || line === "Who this course is for:" || line === "Show more") break;
-        if (line.length > 5 && line.length < 300) requirements.push(line);
-      }
-    }
-
-    // Description
-    const descIdx = lines.findIndex((l, idx) => l === "Description" && idx > (contentIdx || 0));
-    let description: string | null = null;
-    if (descIdx >= 0) {
-      const descLines: string[] = [];
-      for (let i = descIdx + 1; i < lines.length; i++) {
-        const line = lines[i];
-        if (line === "Who this course is for:" || line === "Show more" || line === "Show less") break;
-        descLines.push(line);
-      }
-      description = descLines.join("\n").slice(0, 5000) || null;
-    }
-    if (!description) description = subtitle;
-
-    // Target audience
-    const targetIdx = lines.findIndex((l) => l === "Who this course is for:");
-    const targetAudience: string[] = [];
-    if (targetIdx >= 0) {
-      for (let i = targetIdx + 1; i < lines.length; i++) {
-        const line = lines[i];
-        if (/^(Show more|Show less|Students also|Report abuse|Privacy|By clicking)/.test(line)) break;
-        if (line.length > 5 && line.length < 300) targetAudience.push(line);
-      }
-    }
-
-    // Level
-    let level: string | null = null;
-    const levelLine = lines.find((l) => /^(Beginner|Intermediate|Advanced|All Levels)/i.test(l));
-    if (levelLine) level = levelLine;
-
-    // Duration hours
-    let durationHours: number | null = null;
-    const durLine = lines.find((l) => /[\d.]+\s*total\s*hour/i.test(l));
-    if (durLine) {
-      const m = durLine.match(/([\d.]+)\s*total\s*hour/i);
-      if (m) durationHours = parseFloat(m[1]);
-    } else if (totalDuration) {
-      const hm = totalDuration.match(/(\d+)h\s*(\d+)?m?/);
-      if (hm) durationHours = parseInt(hm[1], 10) + (parseInt(hm[2] || "0", 10) / 60);
-    }
-
-    // Image
-    const ogImg = document.querySelector('meta[property="og:image"]') as HTMLMetaElement | null;
-    const imageUrl = ogImg?.content ?? null;
-
-    // Related topics (for further crawling)
-    const relatedTopicSlugs = [...document.querySelectorAll("a")]
-      .map((a) => a.href.match(/^https:\/\/www\.udemy\.com\/topic\/([a-z0-9-]+)/)?.[1])
-      .filter((t): t is string => !!t)
-      .filter((v, i, a) => a.indexOf(v) === i);
-
-    return {
-      course: {
-        title,
-        url: courseUrl,
-        description,
-        level,
-        rating,
-        reviewCount,
-        durationHours,
-        isFree,
-        enrolled,
-        imageUrl,
-        language,
-        metadata: {
-          instructors,
-          subtitle,
-          price,
-          whatYoullLearn,
-          requirements,
-          targetAudience,
-          curriculum,
-          lastUpdated,
-          totalLectures,
-          totalDuration,
-          discoveredFrom: "",
-        },
-      },
-      relatedTopicSlugs,
-    };
-  }, url);
-
-  if (!data || !data.course.title || data.course.title === "Unknown") return null;
-  return data.course as ScrapedCourse;
-}
-
 /** Scrape a course page and also return related topic slugs. */
 async function deepScrapeWithTopics(
   url: string,
@@ -483,13 +402,11 @@ async function deepScrapeWithTopics(
     await page.waitForSelector("h1", { timeout: 15000 });
     await page.waitForTimeout(5000);
 
-    // Scroll fully
     for (let i = 0; i < 8; i++) {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await page.waitForTimeout(1000);
     }
 
-    // Expand sections
     const expandBtns = page.locator('button:has-text("Show more"), button:has-text("Expand all sections")');
     const btnCount = await expandBtns.count();
     for (let i = 0; i < Math.min(btnCount, 10); i++) {
@@ -498,7 +415,6 @@ async function deepScrapeWithTopics(
     }
 
     const result = await page.evaluate((courseUrl: string) => {
-      // === Inline scraping (same as scrapeCoursePage but returns related topics too) ===
       const lines = document.body.innerText.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
       const h1 = document.querySelector("h1");
       const title = h1?.textContent?.trim() ?? "Unknown";
@@ -602,7 +518,7 @@ async function deepScrapeWithTopics(
 
 // ── DB upsert ────────────────────────────────────────────────────────
 
-async function upsertCourse(course: ScrapedCourse) {
+async function upsertCourse(course: ScrapedCourse, topicGroup: string) {
   const values = {
     title: course.title,
     url: course.url,
@@ -616,6 +532,7 @@ async function upsertCourse(course: ScrapedCourse) {
     enrolled: course.enrolled,
     imageUrl: course.imageUrl,
     language: course.language,
+    topicGroup,
     metadata: course.metadata,
   };
 
@@ -656,14 +573,8 @@ async function main() {
       }
     }
 
-    // Only follow related topics that seem relevant to vector DBs / RAG / embeddings
-    const relevantTopicKeywords = [
-      "vector", "embed", "rag", "retriev", "langchain", "llama", "pinecone",
-      "chroma", "weaviate", "qdrant", "faiss", "search", "database", "ai-agent",
-      "generative", "llm", "openai", "deep-learning", "nlp", "machine-learning",
-    ];
     for (const rt of relatedTopics) {
-      if (!crawledTopics.has(rt) && relevantTopicKeywords.some((kw) => rt.includes(kw))) {
+      if (!crawledTopics.has(rt) && FOLLOW_TOPIC_KEYWORDS.some((kw) => rt.includes(kw))) {
         topicQueue.push(rt);
       }
     }
@@ -691,13 +602,10 @@ async function main() {
 
     const { course, relatedTopics } = await deepScrapeWithTopics(url, fromTopic);
 
-    // Queue any new topics discovered from course pages
+    // Queue new topics discovered from course pages
     for (const rt of relatedTopics) {
-      if (!crawledTopics.has(rt)) {
-        const relevantTopicKeywords = ["vector", "embed", "rag", "retriev", "langchain", "pinecone", "chroma", "weaviate", "qdrant", "faiss", "llm"];
-        if (relevantTopicKeywords.some((kw) => rt.includes(kw))) {
-          topicQueue.push(rt);
-        }
+      if (!crawledTopics.has(rt) && FOLLOW_TOPIC_KEYWORDS.some((kw) => rt.includes(kw))) {
+        topicQueue.push(rt);
       }
     }
 
@@ -708,16 +616,18 @@ async function main() {
       console.log(`    ✗ Not relevant: "${course.title}"`);
       skippedIrrelevant++;
     } else {
-      const courseId = await upsertCourse(course);
+      const topicGroup = classifyTopicGroup(course);
+      const courseId = await upsertCourse(course, topicGroup);
       const slugs = matchSlugs(course);
       for (const { slug, relevance } of slugs) {
         await db.insert(lessonCourses).values({ lessonSlug: slug, courseId, relevance }).onConflictDoNothing();
       }
 
-      console.log(`    ✓ "${course.title}"`);
+      console.log(`    ✓ [${topicGroup}] "${course.title}"`);
       console.log(`      ${course.rating}★ (${course.reviewCount} reviews) · ${course.enrolled} students · ${course.durationHours}h`);
-      console.log(`      by ${course.metadata.instructors.join(", ")} · ${course.metadata.curriculum.length} sections · ${course.metadata.whatYoullLearn.length} objectives`);
-      console.log(`      → ${slugs.map((s) => `${s.slug}(${s.relevance})`).join(", ")}`);
+      if (slugs.length > 0) {
+        console.log(`      → ${slugs.map((s) => `${s.slug}(${s.relevance})`).join(", ")}`);
+      }
       saved++;
     }
 
@@ -747,48 +657,34 @@ async function main() {
     }
 
     if (newUrls.length > 0) {
-      console.log(`\n  Deep scraping ${newUrls.length} newly discovered courses...\n`);
-      for (const [j, [url, fromTopic]] of newUrls.entries()) {
+      console.log(`\nPhase 3b: Deep scraping ${newUrls.length} newly discovered courses...\n`);
+      for (const [i, [url, fromTopic]] of newUrls.entries()) {
         const shortUrl = url.replace("https://www.udemy.com/course/", "").replace(/\/$/, "");
-        console.log(`  [${j + 1}/${newUrls.length}] ${shortUrl}`);
+        console.log(`  [${i + 1}/${newUrls.length}] ${shortUrl}`);
 
         const { course } = await deepScrapeWithTopics(url, fromTopic);
-
         if (!course || course.title === "www.udemy.com") {
-          console.log("    ✗ Cloudflare blocked");
           blocked++;
         } else if (!isRelevant(course)) {
-          console.log(`    ✗ Not relevant: "${course.title}"`);
           skippedIrrelevant++;
         } else {
-          const courseId = await upsertCourse(course);
+          const topicGroup = classifyTopicGroup(course);
+          const courseId = await upsertCourse(course, topicGroup);
           const slugs = matchSlugs(course);
           for (const { slug, relevance } of slugs) {
             await db.insert(lessonCourses).values({ lessonSlug: slug, courseId, relevance }).onConflictDoNothing();
           }
-          console.log(`    ✓ "${course.title}"`);
-          console.log(`      ${course.rating}★ (${course.reviewCount} reviews) · ${course.enrolled} students · ${course.durationHours}h`);
-          console.log(`      → ${slugs.map((s) => `${s.slug}(${s.relevance})`).join(", ")}`);
+          console.log(`    ✓ [${topicGroup}] "${course.title}"`);
           saved++;
         }
-
         await new Promise((r) => setTimeout(r, DELAY_MS));
       }
     }
   }
 
-  console.log("\n" + "=".repeat(60));
-  console.log(`Topics crawled:    ${crawledTopics.size}`);
-  console.log(`Courses discovered: ${discoveredUrls.size}`);
-  console.log(`Saved:             ${saved}`);
-  console.log(`Skipped (irrelevant): ${skippedIrrelevant}`);
-  console.log(`Blocked:           ${blocked}`);
-  console.log("=".repeat(60));
-
-  process.exit(0);
+  console.log(`\n${"─".repeat(50)}`);
+  console.log(`Done. Saved: ${saved} | Skipped: ${skippedIrrelevant} | Blocked: ${blocked}`);
+  console.log(`Topics crawled: ${crawledTopics.size}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main().catch(console.error);

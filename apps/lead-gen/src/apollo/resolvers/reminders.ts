@@ -1,5 +1,5 @@
 import { contacts, contactReminders, contactEmails } from "@/db/schema";
-import { eq, and, lte, sql, max, desc } from "drizzle-orm";
+import { eq, and, lte, sql, max, desc, inArray } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -259,7 +259,7 @@ export const remindersResolvers = {
           any_reply: sql<boolean>`bool_or(${contactEmails.reply_received})`.as("any_reply"),
         })
         .from(contactEmails)
-        .where(sql`${contactEmails.contact_id} = ANY(ARRAY[${sql.join(contactIds.map(id => sql`${id}`), sql`, `)}]::int[])`)
+        .where(inArray(contactEmails.contact_id, contactIds))
         .groupBy(contactEmails.contact_id) as EmailSummary[];
 
       const summaryMap = new Map<number, EmailSummary>(
@@ -283,6 +283,7 @@ export const remindersResolvers = {
         const authorityScore = contact.authority_score ?? 0.1;
         const score = computeNextTouchScore(authorityScore, daysSince, hasReply);
 
+        // TODO: use DataLoader — this issues one UPDATE per contact (N+1); batch with a single UPDATE ... WHERE id IN (...)
         await context.db
           .update(contacts)
           .set({

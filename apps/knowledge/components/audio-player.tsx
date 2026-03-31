@@ -49,7 +49,6 @@ export function AudioPlayer({ meta }: { meta: AudioMeta }) {
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showChapters, setShowChapters] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Find current chapter via binary search
@@ -175,8 +174,6 @@ export function AudioPlayer({ meta }: { meta: AudioMeta }) {
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  if (!isVisible) return null;
-
   return (
     <>
       <audio ref={audioRef} src={meta.audio_url} preload="metadata" />
@@ -206,7 +203,7 @@ export function AudioPlayer({ meta }: { meta: AudioMeta }) {
       <div className="audio-player">
         <div className="audio-player-inner">
           {/* Play/Pause */}
-          <button className="audio-btn audio-btn--play" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+          <button className="audio-btn audio-btn--play" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"} aria-pressed={isPlaying}>
             {isPlaying ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="4" width="4" height="16" rx="1" />
@@ -254,11 +251,13 @@ export function AudioPlayer({ meta }: { meta: AudioMeta }) {
               value={currentTime}
               onChange={(e) => seek(Number(e.target.value))}
               style={{ "--progress": `${progress}%` } as React.CSSProperties}
+              aria-label="Seek"
+              role="slider"
             />
           </div>
 
           {/* Speed */}
-          <button className="audio-btn audio-btn--speed" onClick={cycleSpeed}>
+          <button className="audio-btn audio-btn--speed" onClick={cycleSpeed} aria-label={`Playback speed: ${playbackRate}x`}>
             {playbackRate}x
           </button>
 
@@ -266,7 +265,7 @@ export function AudioPlayer({ meta }: { meta: AudioMeta }) {
           <button
             className="audio-btn"
             onClick={() => setShowChapters(!showChapters)}
-            aria-label="Chapters"
+            aria-label="Show chapters"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="8" y1="6" x2="21" y2="6" />
@@ -278,13 +277,6 @@ export function AudioPlayer({ meta }: { meta: AudioMeta }) {
             </svg>
           </button>
 
-          {/* Close */}
-          <button className="audio-btn" onClick={() => setIsVisible(false)} aria-label="Close player">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
         </div>
       </div>
     </>

@@ -241,13 +241,13 @@ function SentList() {
   const [syncResend, { loading: syncing }] = useSyncResendEmailsMutation();
   const [importResend, { loading: importing }] = useImportResendEmailsMutation();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const result = await getSentEmails(100);
     setEmails(result.emails as SentEmail[]);
     setError(result.error);
     setLoading(false);
-  };
+  }, []);
 
   const handleSync = async () => {
     await syncResend();
@@ -272,7 +272,7 @@ function SentList() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   if (loading) {
     return (

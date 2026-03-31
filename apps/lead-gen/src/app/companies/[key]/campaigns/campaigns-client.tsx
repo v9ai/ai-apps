@@ -1,8 +1,8 @@
 "use client";
 
-import { Container, Heading, Text, Table, Badge, Flex, Spinner } from "@radix-ui/themes";
+import { Callout, Container, Heading, Text, Table, Badge, Flex, Spinner } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
-import { PlusIcon } from "@radix-ui/react-icons";
+import { ExclamationTriangleIcon, PlusIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { useGetCompanyQuery, useGetEmailCampaignsQuery, useCreateDraftCampaignMutation } from "@/__generated__/hooks";
 
@@ -16,13 +16,13 @@ const statusColors: Record<string, "green" | "yellow" | "blue" | "red" | "gray">
 };
 
 export function CampaignsClient({ companyKey }: { companyKey: string }) {
-  const { data: companyData, loading: companyLoading } = useGetCompanyQuery({
+  const { data: companyData, loading: companyLoading, error: companyError } = useGetCompanyQuery({
     variables: { key: companyKey },
   });
 
   const company = companyData?.company;
 
-  const { data, loading, refetch } = useGetEmailCampaignsQuery({
+  const { data, loading, error: campaignsError, refetch } = useGetEmailCampaignsQuery({
     variables: { limit: 50 },
   });
 
@@ -39,6 +39,20 @@ export function CampaignsClient({ companyKey }: { companyKey: string }) {
         <Flex justify="center" align="center" style={{ minHeight: "400px" }}>
           <Spinner size="3" />
         </Flex>
+      </Container>
+    );
+  }
+
+  if (companyError || campaignsError) {
+    const message = companyError?.message ?? campaignsError?.message ?? "Unknown error";
+    return (
+      <Container size="4" p="8">
+        <Callout.Root color="red">
+          <Callout.Icon>
+            <ExclamationTriangleIcon />
+          </Callout.Icon>
+          <Callout.Text>Failed to load campaigns: {message}</Callout.Text>
+        </Callout.Root>
       </Container>
     );
   }

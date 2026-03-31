@@ -15,7 +15,7 @@
 import { fetchAllConnections, type ScrapedConnection } from "./connection-scraper";
 import { gqlRequest } from "./graphql";
 
-const RUST_SERVER = "http://localhost:9876";
+const RUST_SERVER = import.meta.env.VITE_RUST_SERVER_URL || "http://localhost:9876";
 
 // ── Types ──
 
@@ -48,6 +48,27 @@ interface ScrapedLike {
   liked_date: string | null;
 }
 
+// Raw camelCase shapes returned from chrome.scripting.executeScript page functions,
+// before they are mapped to the snake_case server types above.
+interface ExtractedPost {
+  postUrl: string | null;
+  postText: string | null;
+  postedDate: string | null;
+  reactionsCount: number;
+  commentsCount: number;
+  repostsCount: number;
+  mediaType: string;
+  isRepost: boolean;
+  originalAuthor: string | null;
+}
+
+interface ExtractedLike {
+  postUrl: string | null;
+  postText: string | null;
+  postAuthorName: string | null;
+  postAuthorUrl: string | null;
+  likedDate: string | null;
+}
 
 // ── State ──
 
@@ -255,8 +276,8 @@ async function scrollAndExtractLikes(
     },
   });
 
-  const likes = results?.[0]?.result || [];
-  return likes.map((l: any) => ({
+  const likes = (results?.[0]?.result ?? []) as ExtractedLike[];
+  return likes.map((l) => ({
     post_url: l.postUrl || null,
     post_text: l.postText || null,
     post_author_name: l.postAuthorName || null,
@@ -393,8 +414,8 @@ async function scrollAndExtract(
     },
   });
 
-  const posts = results?.[0]?.result || [];
-  return posts.map((p: any) => ({
+  const posts = (results?.[0]?.result ?? []) as ExtractedPost[];
+  return posts.map((p) => ({
     post_url: p.postUrl || null,
     post_text: p.postText || null,
     posted_date: p.postedDate || null,

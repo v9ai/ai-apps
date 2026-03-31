@@ -30,5 +30,12 @@
       "tag": "0003_wealthy_ghost_rider",
       "breakpoints": true
     },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774943507800,
+      "tag": "0004_vengeful_vermin",
+      "breakpoints": true
+    }
   ]
 }

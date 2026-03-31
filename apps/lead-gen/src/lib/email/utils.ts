@@ -16,6 +16,8 @@ export async function isEmailBounced(
   email: string,
 ): Promise<{ isBounced: boolean; contactId?: number }> {
   try {
+    // TODO: N+1 — loads ALL contacts to scan bounced_emails; replace with a direct
+    // WHERE bounced_emails LIKE '%email%' or a dedicated bounced_emails lookup table.
     const allContacts = await db.select().from(contacts);
 
     for (const contact of allContacts) {

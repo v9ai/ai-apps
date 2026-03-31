@@ -173,9 +173,44 @@ export async function clearApiSecret(): Promise<void> {
 }
 
 /**
+ * Raw job shape accepted from content scripts / scrapers.
+ * Looser than JobInput — allows legacy field names and optional fields
+ * that are normalised before being sent to the API.
+ */
+export interface RawJobInput {
+  title: string;
+  company?: string;
+  url?: string;
+  location?: string;
+  description?: string;
+  sourceType?: string;
+  publishedDate?: string;
+  postedAt?: string;
+  guid?: string;
+  id?: string;
+  status?: string;
+  archived?: boolean;
+}
+
+/**
+ * Normalised output shape returned by normalizeJobInput.
+ */
+export interface NormalizedJobInput {
+  externalId: string;
+  sourceKind: string;
+  companyKey: string;
+  title: string;
+  url: string;
+  location?: string;
+  description?: string;
+  postedAt?: string;
+  status: string;
+}
+
+/**
  * Helper to convert legacy job format to API format
  */
-export function normalizeJobInput(job: any): any {
+export function normalizeJobInput(job: RawJobInput): NormalizedJobInput {
   // Extract company key from URL or use company name
   let companyKey = job.company || "unknown";
 
@@ -236,7 +271,7 @@ export function normalizeJobInput(job: any): any {
  * Batch insert with deduplication and validation
  */
 export async function insertJobsBatch(
-  jobs: any[],
+  jobs: RawJobInput[],
   sourceType: string = "manual",
 ): Promise<{ success: boolean; message: string; jobsCollected: number }> {
   if (jobs.length === 0) {
@@ -248,7 +283,7 @@ export async function insertJobsBatch(
   }
 
   // Deduplicate by URL
-  const uniqueJobsMap = new Map<string, any>();
+  const uniqueJobsMap = new Map<string, RawJobInput>();
   for (const job of jobs) {
     if (job?.url && !uniqueJobsMap.has(job.url)) {
       uniqueJobsMap.set(job.url, job);
