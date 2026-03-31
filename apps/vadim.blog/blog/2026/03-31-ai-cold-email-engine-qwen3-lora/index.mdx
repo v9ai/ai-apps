@@ -49,7 +49,7 @@ The result is not a toy. On a single M1 MacBook Pro, the pipeline generates 200+
 
 ## Why Local Inference for Cold Email Outreach
 
-Imagine you're writing a personalized sales email for each of 500 leads. Every email needs the contact's name, their company, what they do, and why your product fits. Now imagine paying a small fee every time you write one of those emails, waiting half a second for each response, and handing all of that data — your entire sales pipeline — to a company whose servers you don't control. That's what happens when you call GPT-4 or Claude for every email draft.
+Imagine you're writing a personalized sales email for each of 500 leads. Every email needs the contact's name, their company, what they do, and why your product fits. Now imagine paying a small fee every time you write one of those emails, waiting half a second for each response, and handing all of that data — your entire sales pipeline — to a company whose servers you don't control. That's what happens when you call GPT-5.4 or Claude for every email draft.
 
 Cloud APIs charge per token (roughly per word). At $0.01–0.03 per email, a 500-contact batch costs $5–15. Do that daily and you're paying hundreds of dollars a month for text generation alone. Latency stacks up too: 400-800ms per request means a 500-email batch takes 3-7 minutes just waiting for the network.
 
@@ -57,7 +57,7 @@ Local inference cuts all three costs simultaneously. The model runs on your hard
 
 The fourth advantage is customization. Cloud APIs are fixed. A locally-hosted model can be fine-tuned with LoRA on your actual sent emails, learning your tone, your ICP framing, your offer language — something prompt engineering alone cannot replicate.
 
-| Metric | Cloud API (GPT-4) | Local (Qwen3 + LoRA) |
+| Metric | Cloud API (GPT-5.4) | Local (Qwen3 + LoRA) |
 |---|---|---|
 | Latency per email | 400-800ms | ~50ms |
 | Cost per email | $0.01-0.03 | $0 (hardware amortized) |
@@ -69,7 +69,7 @@ The trade-off is upfront engineering time. If you're sending a handful of emails
 
 ## Architecture: Three Models, Three Jobs
 
-The obvious question: why not just call GPT-4 for everything?
+The obvious question: why not just call GPT-5.4 for everything?
 
 Three reasons. Latency — a cloud round-trip per company adds seconds to a pipeline that processes thousands of records. Cost — at scale, API fees compound fast. Privacy — company data and contact details stay local, never leave the machine.
 
