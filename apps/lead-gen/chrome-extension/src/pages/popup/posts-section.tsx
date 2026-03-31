@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Stack, Group, Button, Text, Alert, Badge, Progress } from "@mantine/core";
 
+const JOB_SEARCH_URL =
+  "https://www.linkedin.com/search/results/content/?keywords=react%20remote%20outside%20ir35%20&origin=SWITCH_SEARCH_VERTICAL";
+
 type Phase = "connections" | "import" | "posts" | "companies" | null;
 
 export default function PostsSection() {
@@ -10,6 +13,8 @@ export default function PostsSection() {
   const [serverUp, setServerUp] = useState<boolean | null>(null);
   const [stats, setStats] = useState<{ contacts: number; posts: number } | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+  const [jobLoading, setJobLoading] = useState(false);
+  const [jobStatus, setJobStatus] = useState("");
 
   // Check server health on mount
   useEffect(() => {
@@ -88,6 +93,46 @@ export default function PostsSection() {
     return () => chrome.runtime.onMessage.removeListener(listener);
   }, []);
 
+  // Listen for job scraping progress
+  useEffect(() => {
+    const listener = (message: any) => {
+      if (message.action !== "jobScrapingProgress") return;
+      if (message.error) {
+        setJobStatus(`Error: ${message.error}`);
+        setJobLoading(false);
+        return;
+      }
+      if (message.done) {
+        const filtered = message.filtered ? ` (${message.filtered} filtered)` : "";
+        setJobStatus(`Done! ${message.inserted} saved from ${message.total} scraped${filtered}`);
+        setJobLoading(false);
+        fetch("http://localhost:9876/stats").then((r) => r.json()).then(setStats).catch(() => {});
+        return;
+      }
+      if (message.status) setJobStatus(message.status);
+    };
+    chrome.runtime.onMessage.addListener(listener);
+    return () => chrome.runtime.onMessage.removeListener(listener);
+  }, []);
+
+  const handleScrapeJobs = async () => {
+    setJobLoading(true);
+    setJobStatus("Starting...");
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: "scrapeJobPosts",
+        searchUrl: JOB_SEARCH_URL,
+      });
+      if (!response.success) {
+        setJobStatus(response.error || "Failed to start");
+        setJobLoading(false);
+      }
+    } catch (err) {
+      setJobStatus(err instanceof Error ? err.message : "Error");
+      setJobLoading(false);
+    }
+  };
+
   const handleStart = async () => {
     setLoading(true);
     setPhase("connections");
@@ -156,7 +201,7 @@ export default function PostsSection() {
       <Group grow gap="xs">
         <Button
           onClick={handleStart}
-          disabled={loading || serverUp !== true}
+          disabled={loading || jobLoading || serverUp !== true}
           color="teal"
           size="sm"
         >
@@ -168,6 +213,24 @@ export default function PostsSection() {
           </Button>
         )}
       </Group>
+
+      <Button
+        onClick={handleScrapeJobs}
+        disabled={jobLoading || loading || serverUp !== true}
+        color="blue"
+        size="sm"
+        fullWidth
+      >
+        {jobLoading ? "Scraping Jobs..." : "Scrape Jobs (IR35)"}
+      </Button>
+
+      {jobStatus && (
+        <Alert color="dark" radius="sm" p="xs">
+          <Text size="xs" ta="center" c="white">
+            {jobStatus}
+          </Text>
+        </Alert>
+      )}
 
       {phase === "posts" && progressPct !== null && (
         <Progress value={progressPct} color="teal" size="xs" />
