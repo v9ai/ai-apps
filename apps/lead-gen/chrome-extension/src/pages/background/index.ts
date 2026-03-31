@@ -683,7 +683,12 @@ async function browseCompanies(tabId: number) {
 
     // Navigate to company "about" page for richer data
     const aboutUrl = companyUrl.replace(/\/$/, "") + "/about/";
-    await chrome.tabs.update(tabId, { url: aboutUrl });
+    try {
+      await chrome.tabs.update(tabId, { url: aboutUrl });
+    } catch {
+      console.warn("[BrowseCompanies] Tab closed during navigation, aborting");
+      break;
+    }
     await waitForTabLoad(tabId);
     await new Promise((r) => setTimeout(r, 2500));
 

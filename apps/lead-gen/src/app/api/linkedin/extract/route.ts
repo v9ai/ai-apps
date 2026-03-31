@@ -8,7 +8,7 @@ const DEFAULT_UA =
 async function extractOG(url: string) {
   const { result } = await ogs({
     url,
-    fetchOptions: { headers: { "User-Agent": DEFAULT_UA } },
+    fetchOptions: { headers: { "User-Agent": DEFAULT_UA }, timeout: 10_000 },
   });
   return {
     title: result.ogTitle,

@@ -88,8 +88,8 @@ export function ReplyForm({ originalEmail, onSuccess }: ReplyFormProps) {
       if (data?.generateReply) {
         setMessage(data.generateReply.body);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to generate reply");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to generate reply");
     }
   };
 
@@ -142,8 +142,8 @@ export function ReplyForm({ originalEmail, onSuccess }: ReplyFormProps) {
       setOpen(false);
       onSuccess?.();
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Failed to send reply");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to send reply");
     }
   };
 

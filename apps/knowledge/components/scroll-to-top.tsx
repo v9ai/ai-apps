@@ -13,6 +13,7 @@ export function ScrollToTop() {
 
   return (
     <button
+      type="button"
       className={`scroll-to-top ${visible ? "scroll-to-top--visible" : ""}`}
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Scroll to top"

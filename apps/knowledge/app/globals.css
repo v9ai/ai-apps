@@ -89,18 +89,23 @@ body {
   50% { box-shadow: 0 0 14px var(--accent-9), 0 0 28px var(--accent-7); }
 }
 .yc-topbar-count {
-  margin-left: auto;
+  margin-left: 16px;
   font-weight: 400;
   font-size: 11px;
   color: var(--gray-9);
   font-variant-numeric: tabular-nums;
 }
 
+.yc-topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
 .yc-topbar-user {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-left: 16px;
 }
 
 .yc-topbar-username {
