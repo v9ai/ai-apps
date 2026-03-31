@@ -1,25 +1,22 @@
-//! Headless Chrome Resend email scraper.
+//! High-throughput Resend email scraper.
 //!
-//! Launches headless Chrome, lists email IDs via Resend API, then opens
-//! parallel browser tabs to render each email's HTML and extract clean
-//! body text via `innerText`. This gives far better text extraction than
-//! regex HTML stripping, and leverages Chrome's HTTP/2 connection pool
-//! for parallel fetches.
+//! Uses reqwest HTTP/2 multiplexing with adaptive rate limiting:
+//! - Single persistent HTTP/2 connection to api.resend.com
+//! - Worker pool with shared work queue (no idle tabs)
+//! - Adaptive backoff: speeds up when OK, slows when rate-limited
+//! - Zero crypto/trading content in output
 //!
 //! Usage:
 //!   RESEND_API_KEY=re_xxx cargo run --bin resend_scrape
-//!   RESEND_API_KEY=re_xxx cargo run --bin resend_scrape -- --tabs 10 --limit 500
+//!   RESEND_API_KEY=re_xxx cargo run --bin resend_scrape -- --workers 10 --limit 500
 
 use anyhow::{bail, Context, Result};
-use chromiumoxide::browser::{Browser, BrowserConfig};
-use chromiumoxide::Page;
-use futures::StreamExt;
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::io::Write;
 use std::path::Path;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -92,6 +89,14 @@ struct Meta {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+fn strip_html(html: &str) -> String {
+    let no_tags = regex::Regex::new(r"<[^>]+>").unwrap().replace_all(html, " ");
+    let no_entities = regex::Regex::new(r"&(?:#\d+|#x[\da-fA-F]+|\w+);")
+        .unwrap()
+        .replace_all(&no_tags, " ");
+    no_entities.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
 fn word_count(text: &str) -> usize {
     text.split_whitespace().count()
 }
@@ -163,13 +168,66 @@ fn build_assistant_message(subject: &str, body: &str) -> String {
     format!("<think>\n</think>\n{}", content)
 }
 
-// ── API listing (reuse from resend_export) ──────────────────────────────────
+// ── Adaptive rate state ─────────────────────────────────────────────────────
 
-async fn list_all_emails(api_key: &str, limit: usize) -> Result<Vec<EmailListItem>> {
-    let client = reqwest::Client::builder()
+/// Shared state for adaptive rate limiting.
+/// Workers read delay_ms before each request. On 429, they increase it.
+/// On success streaks, they decrease it.
+struct RateState {
+    delay_ms: AtomicU64,
+    rate_limited_count: AtomicUsize,
+}
+
+impl RateState {
+    fn new(initial_ms: u64) -> Self {
+        Self {
+            delay_ms: AtomicU64::new(initial_ms),
+            rate_limited_count: AtomicUsize::new(0),
+        }
+    }
+
+    fn current_delay(&self) -> u64 {
+        self.delay_ms.load(Ordering::Relaxed)
+    }
+
+    fn on_rate_limited(&self) {
+        self.rate_limited_count.fetch_add(1, Ordering::Relaxed);
+        // Double the delay, cap at 5000ms
+        let current = self.delay_ms.load(Ordering::Relaxed);
+        let new = (current * 2).min(5000);
+        self.delay_ms.store(new, Ordering::Relaxed);
+    }
+
+    fn on_success(&self) {
+        // Slowly decrease delay, floor at 50ms
+        let current = self.delay_ms.load(Ordering::Relaxed);
+        if current > 50 {
+            let new = current.saturating_sub(5).max(50);
+            self.delay_ms.store(new, Ordering::Relaxed);
+        }
+    }
+}
+
+// ── API client ──────────────────────────────────────────────────────────────
+
+/// Single reqwest client with HTTP/2 + connection pooling.
+/// All workers share this client → single TCP connection with multiplexed streams.
+fn build_client() -> reqwest::Client {
+    reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
-        .build()?;
+        .pool_max_idle_per_host(1) // single HTTP/2 connection
+        .http2_prior_knowledge() // force HTTP/2 for multiplexing
+        .build()
+        .expect("failed to build HTTP client")
+}
 
+// ── List all emails ─────────────────────────────────────────────────────────
+
+async fn list_all_emails(
+    client: &reqwest::Client,
+    api_key: &str,
+    limit: usize,
+) -> Result<Vec<EmailListItem>> {
     let mut all = Vec::new();
     let mut after: Option<String> = None;
     let mut page = 0u32;
@@ -251,143 +309,108 @@ async fn list_all_emails(api_key: &str, limit: usize) -> Result<Vec<EmailListIte
     Ok(all)
 }
 
-// ── Headless Chrome rendering ───────────────────────────────────────────────
+// ── Worker pool for detail fetching ─────────────────────────────────────────
 
-/// Render an email's HTML in a headless Chrome tab and extract innerText.
-/// Falls back to the plain text field if available.
-async fn render_email_in_tab(
-    page: &Page,
+async fn fetch_email_detail(
+    client: &reqwest::Client,
     api_key: &str,
     email_id: &str,
-) -> Result<EmailDetail> {
-    // Use page.evaluate to fetch the email via the Resend API from within Chrome.
-    // This leverages Chrome's HTTP/2 connection pooling and avoids external rate limits
-    // being applied per-connection (browser shares a single connection).
-    let js = format!(
-        r#"
-        async function() {{
-            const resp = await fetch("https://api.resend.com/emails/{email_id}", {{
-                headers: {{
-                    "Authorization": "Bearer {api_key}",
-                    "Content-Type": "application/json"
-                }}
-            }});
-            if (!resp.ok) {{
-                if (resp.status === 429) throw new Error("RATE_LIMITED");
-                throw new Error("HTTP " + resp.status);
-            }}
-            const data = await resp.json();
+    rate: &RateState,
+) -> Option<EmailDetail> {
+    let url = format!("https://api.resend.com/emails/{}", email_id);
 
-            // If we have HTML but no text, render it and extract innerText
-            if (data.html && !data.text) {{
-                const div = document.createElement('div');
-                div.innerHTML = data.html;
-                data.rendered_text = div.innerText || div.textContent || '';
-            }}
+    let mut retries = 0u64;
+    loop {
+        // Adaptive delay
+        let delay = rate.current_delay();
+        tokio::time::sleep(std::time::Duration::from_millis(delay)).await;
 
-            return JSON.stringify({{
-                subject: data.subject || null,
-                text: data.text || data.rendered_text || null,
-                html: data.html || null
-            }});
-        }}
-        "#,
-    );
+        let resp = client
+            .get(&url)
+            .header(AUTHORIZATION, format!("Bearer {}", api_key))
+            .header(CONTENT_TYPE, "application/json")
+            .send()
+            .await;
 
-    let result = page.evaluate(js).await?;
-    let json_str = result
-        .into_value::<String>()
-        .context("evaluate returned non-string")?;
-
-    serde_json::from_str::<EmailDetail>(&json_str).context("parse email detail JSON")
+        match resp {
+            Ok(r) if r.status().is_success() => {
+                rate.on_success();
+                return r.json::<EmailDetail>().await.ok();
+            }
+            Ok(r) if r.status() == 429 => {
+                retries += 1;
+                rate.on_rate_limited();
+                if retries > 4 {
+                    return None;
+                }
+                // Extra backoff on top of adaptive delay
+                tokio::time::sleep(std::time::Duration::from_millis(1000 * retries)).await;
+            }
+            Ok(_) | Err(_) => {
+                retries += 1;
+                if retries > 3 {
+                    return None;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+            }
+        }
+    }
 }
 
-/// Process emails through dedicated worker tasks — one per Chrome tab.
-/// Each worker owns its tab exclusively and pulls work from a shared queue.
-async fn fetch_with_chrome_workers(
-    browser: &Browser,
+async fn fetch_all_details(
+    client: Arc<reqwest::Client>,
     api_key: &str,
     emails: &[EmailListItem],
-    num_tabs: usize,
+    num_workers: usize,
 ) -> Vec<Option<EmailDetail>> {
     let total = emails.len();
-
-    // Work queue: (index, email_id)
-    let (work_tx, work_rx) = async_channel::bounded::<(usize, String)>(num_tabs * 2);
-
-    // Results collected via channel
-    let (result_tx, mut result_rx) =
-        tokio::sync::mpsc::channel::<(usize, Option<EmailDetail>)>(num_tabs * 2);
-
     let completed = Arc::new(AtomicUsize::new(0));
-    let rate_limited = Arc::new(AtomicUsize::new(0));
+    let rate = Arc::new(RateState::new(100)); // start at 100ms
 
-    // Spawn one worker per tab — each owns its page exclusively
+    // Work queue
+    let (work_tx, work_rx) = async_channel::bounded::<(usize, String)>(num_workers * 2);
+    let (result_tx, mut result_rx) =
+        tokio::sync::mpsc::channel::<(usize, Option<EmailDetail>)>(num_workers * 4);
+
+    // Spawn workers
     let mut workers = Vec::new();
-    for tab_id in 0..num_tabs {
-        let page = match browser.new_page("about:blank").await {
-            Ok(p) => p,
-            Err(e) => {
-                eprintln!("  Tab {} failed to create: {}", tab_id, e);
-                continue;
-            }
-        };
+    for _w in 0..num_workers {
+        let client = Arc::clone(&client);
+        let api_key = api_key.to_string();
         let work_rx = work_rx.clone();
         let result_tx = result_tx.clone();
-        let api_key = api_key.to_string();
         let completed = Arc::clone(&completed);
-        let rate_limited = Arc::clone(&rate_limited);
+        let rate = Arc::clone(&rate);
 
         workers.push(tokio::spawn(async move {
             while let Ok((idx, email_id)) = work_rx.recv().await {
-                let mut retries = 0u64;
-                let detail = loop {
-                    match render_email_in_tab(&page, &api_key, &email_id).await {
-                        Ok(d) => break Some(d),
-                        Err(e) => {
-                            let msg = format!("{}", e);
-                            if msg.contains("RATE_LIMITED") {
-                                retries += 1;
-                                rate_limited.fetch_add(1, Ordering::Relaxed);
-                                if retries > 4 {
-                                    break None;
-                                }
-                                tokio::time::sleep(
-                                    std::time::Duration::from_millis(1500 * retries),
-                                )
-                                .await;
-                            } else {
-                                retries += 1;
-                                if retries > 2 {
-                                    eprintln!("  [tab {}] {} failed: {}", tab_id, email_id, e);
-                                    break None;
-                                }
-                                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-                            }
-                        }
-                    }
-                };
-
+                let detail =
+                    fetch_email_detail(&client, &api_key, &email_id, &rate).await;
                 result_tx.send((idx, detail)).await.ok();
 
                 let done = completed.fetch_add(1, Ordering::Relaxed) + 1;
                 if done % 200 == 0 || done == total {
-                    let rl = rate_limited.load(Ordering::Relaxed);
-                    eprintln!("  Fetched: {}/{} (rate_limited: {})", done, total, rl);
+                    let rl = rate.rate_limited_count.load(Ordering::Relaxed);
+                    let delay = rate.current_delay();
+                    eprintln!(
+                        "  Fetched: {}/{} (429s: {}, delay: {}ms)",
+                        done, total, rl, delay
+                    );
                 }
-
-                // Small delay between requests per worker
-                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
             }
         }));
     }
-    eprintln!("  Started {} worker tabs", workers.len());
-    drop(result_tx); // Drop sender so result_rx closes when all workers finish
+    drop(result_tx); // close when all workers done
 
-    // Feed work queue
+    // Feed work
+    let work_items: Vec<(usize, String)> = emails
+        .iter()
+        .enumerate()
+        .map(|(i, e)| (i, e.id.clone()))
+        .collect();
     let feeder = tokio::spawn(async move {
-        for (idx, email) in emails.iter().enumerate() {
-            if work_tx.send((idx, email.id.clone())).await.is_err() {
+        for item in work_items {
+            if work_tx.send(item).await.is_err() {
                 break;
             }
         }
@@ -421,11 +444,12 @@ fn process_email(
         .trim()
         .to_string();
 
-    // Prefer text, then rendered HTML text
     let body = if let Some(ref text) = detail.text {
         text.trim().to_string()
+    } else if let Some(ref html) = detail.html {
+        strip_html(html)
     } else {
-        return None; // HTML-only emails should have rendered_text set by Chrome
+        return None;
     };
 
     if subject.is_empty() || body.is_empty() {
@@ -456,18 +480,9 @@ fn process_email(
 
     let record = TrainingRecord {
         messages: vec![
-            Message {
-                role: "system",
-                content: SYSTEM_PROMPT.to_string(),
-            },
-            Message {
-                role: "user",
-                content: user_msg,
-            },
-            Message {
-                role: "assistant",
-                content: assistant_msg,
-            },
+            Message { role: "system", content: SYSTEM_PROMPT.to_string() },
+            Message { role: "user", content: user_msg },
+            Message { role: "assistant", content: assistant_msg },
         ],
     };
 
@@ -522,57 +537,28 @@ async fn main() -> Result<()> {
         .and_then(|s| s.parse::<usize>().ok())
         .unwrap_or(usize::MAX);
 
-    let num_tabs = args
+    let num_workers = args
         .iter()
-        .position(|a| a == "--tabs")
+        .position(|a| a == "--workers")
         .and_then(|i| args.get(i + 1))
         .and_then(|s| s.parse::<usize>().ok())
-        .unwrap_or(8);
+        .unwrap_or(10);
 
-    // Step 1: List emails via API
-    eprintln!("Step 1: Listing emails via Resend API...");
-    let emails = list_all_emails(&api_key, limit).await?;
-    eprintln!("Total to fetch: {}", emails.len());
+    let client = Arc::new(build_client());
 
-    // Step 2: Launch headless Chrome
-    eprintln!("\nStep 2: Launching headless Chrome ({} tabs)...", num_tabs);
+    // Step 1: List
+    eprintln!("Listing emails from Resend API...");
+    let emails = list_all_emails(&client, &api_key, limit).await?;
+    eprintln!("Total to fetch: {}\n", emails.len());
 
-    let (browser, mut handler) = Browser::launch(
-        BrowserConfig::builder()
-            .chrome_executable(
-                std::path::PathBuf::from("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
-            )
-            .arg("--disable-gpu")
-            .arg("--no-sandbox")
-            .arg("--disable-dev-shm-usage")
-            .arg("--disable-extensions")
-            .arg("--disable-background-networking")
-            .build()
-            .map_err(|e| anyhow::anyhow!("{}", e))?,
-    )
-    .await
-    .context("failed to launch Chrome")?;
-
-    // Drive the CDP event loop in background
-    let event_handle = tokio::spawn(async move {
-        while let Some(h) = handler.next().await {
-            if h.is_err() {
-                break;
-            }
-        }
-    });
-
-    eprintln!("  Chrome launched");
-
-    // Step 3: Fetch email details through Chrome tabs
+    // Step 2: Fetch details with worker pool + adaptive rate
     eprintln!(
-        "\nStep 3: Fetching {} email details via {} Chrome tabs...",
-        emails.len(),
-        num_tabs
+        "Fetching details ({} workers, HTTP/2 multiplexed, adaptive rate)...",
+        num_workers
     );
-    let details = fetch_with_chrome_workers(&browser, &api_key, &emails, num_tabs).await;
+    let details = fetch_all_details(Arc::clone(&client), &api_key, &emails, num_workers).await;
 
-    // Step 4: Process, filter, dedup
+    // Step 3: Process, filter, dedup
     let mut records = Vec::new();
     let mut skipped = 0usize;
     let mut fetch_errors = 0usize;
@@ -589,19 +575,16 @@ async fn main() -> Result<()> {
 
     eprintln!(
         "\nBefore dedup: {} valid, {} skipped, {} fetch errors",
-        records.len(),
-        skipped,
-        fetch_errors
+        records.len(), skipped, fetch_errors
     );
 
     let deduped = dedup(records);
     eprintln!(
         "After dedup: {} unique (max {}/subject)",
-        deduped.len(),
-        MAX_PER_SUBJECT
+        deduped.len(), MAX_PER_SUBJECT
     );
 
-    // Step 5: Write output
+    // Step 4: Write
     std::fs::create_dir_all(OUT_DIR)?;
 
     let out_path = Path::new(OUT_DIR).join("resend.jsonl");
@@ -618,17 +601,10 @@ async fn main() -> Result<()> {
         meta_file.write_all(b"\n")?;
     }
 
-    // Cleanup
-    drop(browser);
-    event_handle.abort();
-
     let elapsed = start.elapsed();
     println!(
-        "Written {} records to {} ({:.1}s, {} tabs)",
-        deduped.len(),
-        out_path.display(),
-        elapsed.as_secs_f64(),
-        num_tabs,
+        "Written {} records to {} ({:.1}s, {} workers)",
+        deduped.len(), out_path.display(), elapsed.as_secs_f64(), num_workers,
     );
     println!("Metadata written to {}", meta_path.display());
 
