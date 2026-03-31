@@ -34,7 +34,10 @@ function detectUrlType(url: string): "post" | "profile" | "company" {
 const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
 
 export async function POST(request: NextRequest) {
-  const { isAdmin } = await checkIsAdmin();
+  const { isAdmin, userId } = await checkIsAdmin();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   if (!isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

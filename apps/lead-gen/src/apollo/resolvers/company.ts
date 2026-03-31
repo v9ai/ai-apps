@@ -54,55 +54,55 @@ function safeJsonParse<T>(value: string | null | undefined, defaultValue: T): T 
 
 export const companyResolvers = {
   Company: {
-    ai_tier(parent: any) {
+    ai_tier(parent: DbCompany) {
       return parent.ai_tier ?? 0;
     },
-    ai_classification_confidence(parent: any) {
+    ai_classification_confidence(parent: DbCompany) {
       return parent.ai_classification_confidence ?? 0.5;
     },
-    ai_classification_reason(parent: any) {
+    ai_classification_reason(parent: DbCompany) {
       return parent.ai_classification_reason ?? null;
     },
-    blocked(parent: any) {
+    blocked(parent: DbCompany) {
       return parent.blocked ?? false;
     },
     // Validate and sanitize category enum
-    category(parent: any) {
+    category(parent: DbCompany) {
       const validCategories = ["CONSULTANCY", "UNKNOWN"];
       const category = parent.category?.toUpperCase() || "UNKNOWN";
       return validCategories.includes(category) ? category : "UNKNOWN";
     },
     // Parse JSON fields with proper error handling
-    tags(parent: any) {
+    tags(parent: DbCompany) {
       return safeJsonParse(parent.tags, []);
     },
-    services(parent: any) {
+    services(parent: DbCompany) {
       if (!parent.services) return [];
       const parsed = safeJsonParse<string[] | null>(parent.services, null);
       if (parsed !== null) return parsed;
       // Fallback: plain comma-separated string
       return parent.services.split(',').map((s: string) => s.trim()).filter(Boolean);
     },
-    service_taxonomy(parent: any) {
+    service_taxonomy(parent: DbCompany) {
       return safeJsonParse(parent.service_taxonomy, []);
     },
-    industries(parent: any) {
+    industries(parent: DbCompany) {
       return safeJsonParse(parent.industries, []);
     },
-    score_reasons(parent: any) {
+    score_reasons(parent: DbCompany) {
       return safeJsonParse(parent.score_reasons, []);
     },
-    email(parent: any) {
+    email(parent: DbCompany) {
       return parent.email ?? null;
     },
-    emailsList(parent: any) {
+    emailsList(parent: DbCompany) {
       return safeJsonParse(parent.emails, []);
     },
-    githubUrl(parent: any) {
+    githubUrl(parent: DbCompany) {
       return parent.github_url ?? null;
     },
     async facts(
-      parent: any,
+      parent: DbCompany,
       args: { limit?: number; offset?: number; field?: string },
       context: GraphQLContext,
     ) {
@@ -120,7 +120,7 @@ export const companyResolvers = {
         return [];
       }
     },
-    async facts_count(parent: any, _args: any, context: GraphQLContext) {
+    async facts_count(parent: DbCompany, _args: unknown, context: GraphQLContext) {
       try {
         const facts = await context.loaders.companyFacts.load(parent.id);
         return facts.length;
