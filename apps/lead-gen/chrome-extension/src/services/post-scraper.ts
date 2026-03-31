@@ -427,6 +427,7 @@ export async function browseContactPosts(tabId: number): Promise<void> {
 
   let totalPosts = 0;
   let totalFiltered = 0;
+  let totalLikes = 0;
 
   for (let i = 0; i < contacts.length; i++) {
     if (postsCancelled) break;
@@ -443,10 +444,13 @@ export async function browseContactPosts(tabId: number): Promise<void> {
       contactName: name,
       postsFound: totalPosts,
       postsFiltered: totalFiltered,
+      likesFound: totalLikes,
     });
 
-    // Navigate to activity page
-    const activityUrl = contact.linkedinUrl.replace(/\/$/, "") + "/recent-activity/all/";
+    const baseUrl = contact.linkedinUrl.replace(/\/$/, "");
+
+    // ── Scrape posts ──
+    const activityUrl = baseUrl + "/recent-activity/all/";
     try {
       await chrome.tabs.update(tabId, { url: activityUrl });
     } catch {
@@ -454,9 +458,8 @@ export async function browseContactPosts(tabId: number): Promise<void> {
       break;
     }
     await waitForTabLoad(tabId);
-    await sleep(3000); // Wait for SPA render
+    await sleep(3000);
 
-    // Check if we landed on the right page (not a login wall or 404)
     try {
       const tabInfo = await chrome.tabs.get(tabId);
       if (!tabInfo.url?.includes("linkedin.com/in/")) {
@@ -465,10 +468,9 @@ export async function browseContactPosts(tabId: number): Promise<void> {
         continue;
       }
     } catch {
-      break; // Tab gone
+      break;
     }
 
-    // Scroll and extract posts
     let posts: ScrapedPost[] = [];
     try {
       posts = await scrollAndExtract(tabId);
@@ -476,7 +478,6 @@ export async function browseContactPosts(tabId: number): Promise<void> {
       console.warn(`[PostScraper] Extraction failed for ${name}:`, err);
     }
 
-    // Send posts to Rust server (scoring filters irrelevant ones)
     if (posts.length > 0) {
       try {
         const { inserted, filtered } = await postPosts(contact.id, posts);
@@ -492,6 +493,36 @@ export async function browseContactPosts(tabId: number): Promise<void> {
       console.log(`[PostScraper] ${name}: no posts found`);
     }
 
+    // ── Scrape likes ──
+    if (!postsCancelled) {
+      await randomDelay(3000, 5000);
+      const likesUrl = baseUrl + "/recent-activity/reactions/";
+      try {
+        await chrome.tabs.update(tabId, { url: likesUrl });
+      } catch {
+        break;
+      }
+      await waitForTabLoad(tabId);
+      await sleep(3000);
+
+      let likes: ScrapedLike[] = [];
+      try {
+        likes = await scrollAndExtractLikes(tabId);
+      } catch (err) {
+        console.warn(`[PostScraper] Likes extraction failed for ${name}:`, err);
+      }
+
+      if (likes.length > 0) {
+        try {
+          const { inserted } = await postLikes(contact.id, likes);
+          totalLikes += inserted;
+          console.log(`[PostScraper] ${name}: ${inserted} likes stored`);
+        } catch (err) {
+          console.error(`[PostScraper] Failed to save likes for ${name}:`, err);
+        }
+      }
+    }
+
     // Rate limiting delay
     if (i < contacts.length - 1) {
       await randomDelay(10000, 15000);
@@ -503,10 +534,11 @@ export async function browseContactPosts(tabId: number): Promise<void> {
     totalContacts: contacts.length,
     totalPosts,
     totalFiltered,
+    totalLikes,
   });
 
   console.log(
-    `[PostScraper] Complete. ${totalPosts} kept, ${totalFiltered} filtered from ${contacts.length} contacts.`,
+    `[PostScraper] Complete. ${totalPosts} posts kept, ${totalFiltered} filtered, ${totalLikes} likes from ${contacts.length} contacts.`,
   );
 }
 
