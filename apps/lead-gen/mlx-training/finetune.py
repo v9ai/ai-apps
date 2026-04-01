@@ -58,6 +58,9 @@ def main():
     print(f"Model: {config.model}")
     print(f"Training examples: {train_count}")
     print(f"Validation examples: {valid_count}")
+    val_batches = config.val_batches
+    val_examples = valid_count if val_batches == -1 else min(val_batches * config.batch_size, valid_count)
+    print(f"Eval examples per pass: {val_examples}/{valid_count} (val_batches={val_batches})")
 
     # Calculate iterations from epochs
     effective_batch = config.batch_size * config.grad_accumulation_steps
