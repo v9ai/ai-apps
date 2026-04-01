@@ -1,0 +1,251 @@
+---
+slug: build-a-zoominfo-alternative-with-qwen-mlx-for-buyer-intent
+title: "Building a ZoomInfo Alternative with Qwen and MLX: Local Buyer Intent Detection"
+description: "How to build a fully local buyer intent detection system using Qwen2.5-3B fine-tuned with LoRA on Apple MLX, distilled to 66 floating-point numbers in Rust — a $0 alternative to ZoomInfo's $36K/year intent data."
+date: 2026-04-01
+authors: [nicolad]
+tags:
+  - machine learning
+  - llm
+  - sales intelligence
+  - open source
+  - apple silicon
+  - rust
+  - mlx
+  - lora
+---
+
+import { PipelineDiagram, SignalsDiagram, DistillDiagram, ScoringDiagram } from './diagrams';
+
+ZoomInfo charges $300+ per user per month for intent data — buying signals that tell sales teams which companies are actively in-market. It is the platform's number one feature and the reason enterprises pay six figures annually for access. But the underlying technology — classifying company content into intent categories — is a text classification problem. One that a 3-billion-parameter open-source model can solve on a single laptop.
+
+<!-- truncate -->
+
+This article documents a fully open-source buyer intent detection system built on **Qwen2.5-3B**, Apple's **MLX** framework, and a **Rust** inference kernel. The entire pipeline — from scraping public job postings to fine-tuning with LoRA, then distilling the model into six logistic regressions that run in pure Rust — executes on a single M1 MacBook Pro with 16GB of RAM. No API calls. No cloud vendor. No per-seat licensing.
+
+## The Pipeline: From Job Postings to Intent Scores
+
+The system operates in four phases: data collection, fine-tuning, distillation, and production inference. Each phase feeds the next, and the entire loop can be triggered with a single `make intent-loop` command.
+
+<PipelineDiagram />
+
+The key architectural insight: use the LLM for **labeling and training**, then distill its knowledge into a lightweight classifier for **production inference**. The LLM sees nuance and context. The distilled model captures the decision boundary at machine speed.
+
+## The Six Buyer Intent Signals
+
+Not all buying signals are equal. A company posting 50 engineering jobs is a stronger indicator than a blog post mentioning "cloud migration." The system classifies company content into six distinct signal types, each with a different weight in the final score and a different decay half-life reflecting how quickly the signal becomes stale:
+
+<SignalsDiagram />
+
+**Hiring intent** carries the most weight (30%) because active hiring is the strongest predictor that a company is spending money and growing — exactly the moment when they are open to new vendor relationships. **Budget cycle** has the longest half-life (90 days) because procurement cycles are slow: a company evaluating vendors in Q1 is likely still evaluating in Q2.
+
+The freshness function uses exponential decay: `confidence × exp(-0.693 / half_life × days_since_detection)`. A hiring signal detected today at 0.9 confidence scores 0.9. After 30 days (its half-life), it scores 0.45. After 60 days, 0.225. This prevents stale signals from inflating scores and ensures the intent ranking reflects current market reality, not historical noise.
+
+## Training: 460 Examples, 15 Million Parameters
+
+The training data comes from two sources: **Greenhouse ATS** public job postings and enriched company data stored in a **Neon PostgreSQL** database.
+
+### Data Collection
+
+The pipeline ingests 435 job postings from companies like Anthropic via the Greenhouse public API. Each posting includes structured fields — department, job title, full HTML description, office location — that map naturally to intent signals. An Engineering department posting maps to both `hiring_intent` and `tech_adoption`. A Marketing role maps to `hiring_intent` and `growth_signal`. Synthetic negatives (80) and hard negatives (60) balance the training set.
+
+### Label Generation
+
+Each text snippet is scanned against curated keyword lists per signal type:
+
+```python
+HIRING_KW = [
+    "we're hiring", "we are hiring", "hiring for", "looking for",
+    "open role", "open position", "join our team", "join us",
+    "now hiring", "apply now", "expanding team", "new hires",
+    "headcount", "growing our team", "building our team",
+]
+
+TECH_KW = [
+    "migrating to", "adopting", "deployed", "switched to",
+    "new stack", "infrastructure upgrade", "implementing",
+    "rolling out", "upgrading to", "moving to",
+]
+
+GROWTH_KW = [
+    "raised", "series a", "series b", "series c", "funding",
+    "revenue growth", "ipo", "acquisition", "acquired",
+    "new office", "expanding to", "growth stage",
+]
+```
+
+The keyword hit generates a confidence score based on keyword density and source reliability. These labels are formatted as chat-completion JSONL — system prompt + user message producing an assistant JSON response — the format Qwen2.5-Instruct expects.
+
+### MLX LoRA Fine-Tuning
+
+The adapter trains only **14.97M parameters** — 0.48% of the 3.09B total — using rank-8 LoRA with gradient checkpointing to stay within 7.56 GB peak Metal memory:
+
+```yaml
+model: mlx-community/Qwen2.5-3B-Instruct-4bit
+fine_tune_type: lora
+lora_parameters:
+  rank: 8
+  scale: 2.0
+  dropout: 0.1
+batch_size: 4
+grad_accumulation_steps: 4   # effective batch: 16
+learning_rate: 5.0e-05
+lr_schedule:
+  name: cosine_decay
+  warmup: 9
+  arguments: [5.0e-05, 224, 5.0e-06]
+iters: 224                    # 8 epochs × 28 iters/epoch
+max_seq_length: 1536
+grad_checkpoint: true         # required for M1 16GB
+mask_prompt: true             # only learn the assistant response
+```
+
+Training runs at **10.75 tokens/sec** on the M1's Metal GPU, completing 224 iterations in under 2 hours. The cosine decay schedule drops the learning rate from 5e-5 to 5e-6, with a 9-step warmup (~1/3 of the first epoch) to prevent the adapter from overshooting on the small dataset.
+
+## Distillation: 3 Billion Parameters to 66 Floating-Point Numbers
+
+This is the technical core of the system. The fine-tuned Qwen model is powerful but slow — it runs at 10 tokens/sec, far too slow to score thousands of companies. The distillation step compresses it into six independent logistic regressions that run in pure Rust with zero external dependencies.
+
+<DistillDiagram />
+
+### Feature Extraction
+
+Each text snippet is converted into a **10-element feature vector**:
+
+| Feature | Description |
+|---------|-------------|
+| `kw_hiring` | Keyword density for hiring signals |
+| `kw_tech` | Keyword density for tech adoption signals |
+| `kw_growth` | Keyword density for growth signals |
+| `kw_budget` | Keyword density for budget cycle signals |
+| `kw_leadership` | Keyword density for leadership change signals |
+| `kw_product` | Keyword density for product launch signals |
+| `text_length` | Normalized text length |
+| `has_urls` | URL presence indicator (0 or 1) |
+| `source_type` | Encoding: company_snapshot=0, linkedin_post=1, company_fact=2 |
+| `entity_density` | Ratio of capitalized words (proper nouns) |
+
+### Logistic Regression Training
+
+Using numpy with L2 regularization, each of the 6 classifiers learns 10 weights + 1 bias from the LoRA-labeled training data. The full distilled model is **66 floating-point numbers** exported as a JSON file. That is a **45-million-to-one compression ratio** that preserves the decision boundary.
+
+```python
+# 6 independent logistic regressions — one per signal type
+for label_idx, label_name in enumerate(LABEL_NAMES):
+    y = labels[:, label_idx]
+    lr = LogisticRegression(C=1.0, max_iter=1000)
+    lr.fit(features, y)
+    weights[label_name] = lr.coef_[0].tolist()   # 10 floats
+    biases[label_name] = lr.intercept_[0]          # 1 float
+```
+
+## The Rust Scoring Kernel
+
+The distilled weights are loaded by a Rust `IntentClassifier` that mirrors the Python feature extraction exactly. But the real performance comes from the **SIMD-optimized batch scorer**.
+
+<ScoringDiagram />
+
+### Cache-Line Aligned Batches
+
+The `IntentBatch` struct uses a Structure-of-Arrays (SoA) layout with `#[repr(C, align(64))]` for cache-line alignment on Apple Silicon:
+
+```rust
+#[repr(C, align(64))]
+pub struct IntentBatch {
+    pub hiring_score:     [f32; 256],
+    pub tech_score:       [f32; 256],
+    pub growth_score:     [f32; 256],
+    pub budget_score:     [f32; 256],
+    pub leadership_score: [f32; 256],
+    pub product_score:    [f32; 256],
+    pub signal_count:     [u16; 256],
+    pub intent_scores:    [f32; 256],  // 0..100
+    pub count: usize,
+}
+```
+
+The parallel arrays enable **NEON auto-vectorization** on the M1. The `compute_scores` inner loop is a dot product across 6 categories — exactly the kind of operation that SIMD units handle at peak throughput. On the M1's 68.25 GB/s memory bandwidth with 8MB SLC cache, a full 256-company batch fits entirely in L2 and scores in microseconds.
+
+### Exponential Decay in Rust
+
+```rust
+pub fn signal_freshness(days_since: u16, half_life: u16) -> f32 {
+    if half_life == 0 { return 0.0; }
+    let k = 0.693_f32 / half_life as f32;  // ln(2)
+    (-k * days_since as f32).exp()
+}
+```
+
+The `aggregate_signals` method takes the **maximum** decayed score per category per company. If a company has three separate hiring signals at different ages, only the freshest (highest effective score) counts. This prevents double-counting while ensuring that the best available evidence drives the score.
+
+## Cost Comparison
+
+| | ZoomInfo Enterprise | Qwen + MLX + Rust |
+|---|---|---|
+| **Annual cost (10-seat team)** | $36,000+ | $0 |
+| **Per-seat licensing** | $300+/month | None |
+| **Intent data coverage** | Proprietary web crawl | Greenhouse ATS + web scraping |
+| **Data freshness** | Continuous (vendor-managed) | On-demand (user-controlled) |
+| **Privacy** | Data shared with vendor | Fully local — nothing leaves machine |
+| **Customization** | None (black box) | Full control over signal types & weights |
+| **Hardware required** | Browser | M1 MacBook (already owned) |
+| **Vendor lock-in** | High (annual contracts) | None |
+| **Setup time** | Days (procurement + onboarding) | Hours (clone + train) |
+
+The trade-off is clear: ZoomInfo offers breadth (100M+ contacts, org charts, conversation intelligence). This system offers depth on the specific problem of intent signal detection — and it does so with full transparency into how scores are computed and the ability to add custom signal types by editing a keyword list and retraining a LoRA adapter in under an hour.
+
+## Privacy as a Competitive Advantage
+
+Every company text snippet — job postings, LinkedIn posts, company snapshots — stays on the local machine. The Qwen model runs on MLX via a local HTTP server. The distilled classifier runs in Rust with no network calls.
+
+This is not a minor point. Enterprise sales teams handle sensitive competitive intelligence. Feeding prospect data into a third-party API means that data is processed, stored, and potentially used to train models that benefit competitors. With a local pipeline, intent analysis is a pure function: text in, score out, nothing leaves the building.
+
+For companies subject to GDPR, CCPA, or industry-specific compliance requirements, local inference is not just a cost savings — it is a compliance advantage.
+
+## Running the Pipeline
+
+The entire system is orchestrated via Makefile:
+
+```bash
+make intent-export    # Export training data from Neon + Greenhouse
+make intent-train     # Train LoRA adapter (8 epochs, ~2 hours)
+make intent-distill   # Distill to 66 logistic regression weights
+make intent-detect    # Run detection on all companies
+make intent-loop      # Full cycle: export → train → distill
+```
+
+The detection step queries company data from Neon, sends each text through the local Qwen model with the fine-tuned adapter (running on `localhost:8080`), and stores detected signals in the `intent_signals` table with confidence scores and timestamps for decay computation.
+
+## What This System Does Not Do
+
+ZoomInfo is a billion-dollar platform. This system is not a replacement — it is an alternative for the specific capability of intent signal detection:
+
+- **No contact database.** You bring your own company list via web scraping and CRM integrations.
+- **No org charts.** Company hierarchy data requires proprietary datasets.
+- **No conversation intelligence.** Call recording and analysis is a separate product category.
+- **Limited data sources.** Coverage depends on which Greenhouse boards, RSS feeds, and web pages you scrape. ZoomInfo aggregates thousands of sources continuously.
+
+The system excels at one thing: detecting buying signals in text you already have, running entirely on hardware you already own, with zero recurring cost.
+
+## FAQ
+
+**Q: What is buyer intent data?**
+A: Signals that indicate a company is actively researching or purchasing a product/service — derived from hiring patterns, technology adoptions, funding events, and other public signals.
+
+**Q: Can Qwen2.5-3B really run on a laptop?**
+A: Yes. The 4-bit quantized model uses ~2.5GB of memory. With LoRA fine-tuning and gradient checkpointing, peak GPU memory is 7.56GB on the M1 — well within the 16GB unified memory budget.
+
+**Q: Why distill instead of running the LLM directly?**
+A: Speed. The LLM processes ~10 tokens/sec. The distilled logistic regressors score 256 companies in a single SIMD batch in microseconds. For production ranking of thousands of companies, distillation is a 1000x+ speedup.
+
+**Q: How does this compare to Apollo.io or Lusha?**
+A: Apollo and Lusha focus on contact data enrichment with some intent features. This system focuses exclusively on intent signal detection — complementary rather than competitive. You could feed this system's scores into Apollo's engagement workflows.
+
+**Q: What if I need more than 6 signal types?**
+A: Add a keyword list to `export_intent_signals.py`, retrain the LoRA adapter (~2 hours), re-distill (~30 seconds), and update the Rust `SignalType` enum. The pipeline is designed for rapid iteration.
+
+## Conclusion
+
+The combination of [Qwen's open-source LLMs](https://github.com/QwenLM/Qwen), [Apple's MLX framework](https://github.com/ml-explore/mlx), and Rust's zero-cost abstractions puts enterprise-grade intent detection on a laptop. The path from 3 billion parameters to 66 floating-point numbers — through LoRA fine-tuning and logistic regression distillation — is the kind of compression that makes local AI practical, not just possible.
+
+Start with a list of target companies, scrape their Greenhouse boards, train a LoRA adapter overnight, and wake up with a private, customizable, fully local buyer intent engine. ZoomInfo's $36K/year feature, running on your $1,600 MacBook.
