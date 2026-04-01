@@ -6,6 +6,7 @@
 pub mod contacts;
 pub mod discover;
 pub mod enrich;
+pub mod intent;
 pub mod llm;
 pub mod outreach;
 pub mod qa;
@@ -210,6 +211,16 @@ pub async fn run_pipeline(
         }
     }
 
+    // Phase 3.5: Intent signal detection
+    if plan.run_intent {
+        if let Some(r) = run_checked_stage(
+            &ctx, &mut checkpoint, &mut run_record, "intent",
+            intent::run(&ctx),
+        ).await? {
+            reports.push(r);
+        }
+    }
+
     // Phase 4: Contacts + QA (parallel via tokio::join)
     {
         let do_contacts = plan.run_contacts
@@ -382,6 +393,7 @@ fn update_run_record(record: &mut state::RunRecord, report: &StageReport) {
     match report.stage.as_str() {
         "discover" => record.counts.discovered += report.created,
         "enrich" => record.counts.enriched += report.created,
+        "intent" => record.counts.intent_detected += report.created,
         "contacts" => record.counts.contacts_found += report.created,
         "outreach" => record.counts.outreach_drafted += report.created,
         _ => {}

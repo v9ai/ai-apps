@@ -27,6 +27,13 @@ type ArchiveEmailResult {
   success: Boolean!
 }
 
+type BatchDetectIntentResult {
+  errors: [String!]!
+  processed: Int!
+  signalsDetected: Int!
+  success: Boolean!
+}
+
 type BatchOperationResult {
   affected: Int!
   message: String
@@ -75,6 +82,10 @@ type Company {
   id: Int!
   industries: [String!]!
   industry: String
+  intentScore: Float!
+  intentScoreDetails: IntentScore
+  intentScoreUpdatedAt: String
+  intentSignalsCount: Int!
   job_board_url: String
   key: String!
   last_seen_capture_timestamp: String
@@ -444,6 +455,13 @@ type DeleteEmailTemplateResult {
   success: Boolean!
 }
 
+type DetectIntentResult {
+  intentScore: Float
+  message: String
+  signalsDetected: Int!
+  success: Boolean!
+}
+
 scalar EmailAddress
 
 type EmailCampaign {
@@ -716,6 +734,58 @@ type ImportResendResult {
   updatedCount: Int!
 }
 
+type IntentDashboard {
+  companiesWithIntent: Int!
+  recentSignals: [IntentSignal!]!
+  signalsByType: [SignalTypeCount!]!
+  topIntentCompanies: [Company!]!
+  totalSignals: Int!
+}
+
+type IntentScore {
+  budget: Float!
+  growth: Float!
+  hiring: Float!
+  leadership: Float!
+  overall: Float!
+  product: Float!
+  signalCount: Int!
+  tech: Float!
+  updatedAt: String
+}
+
+type IntentSignal {
+  companyId: Int!
+  confidence: Float!
+  createdAt: String!
+  decayDays: Int!
+  decaysAt: String!
+  detectedAt: String!
+  evidence: [String!]!
+  freshness: Float!
+  id: Int!
+  metadata: JSON
+  modelVersion: String
+  rawText: String!
+  signalType: IntentSignalType!
+  sourceType: String!
+  sourceUrl: String
+}
+
+enum IntentSignalType {
+  BUDGET_CYCLE
+  GROWTH_SIGNAL
+  HIRING_INTENT
+  LEADERSHIP_CHANGE
+  PRODUCT_LAUNCH
+  TECH_ADOPTION
+}
+
+type IntentSignalsResponse {
+  signals: [IntentSignal!]!
+  totalCount: Int!
+}
+
 scalar JSON
 
 type LinkedInPost {
@@ -765,6 +835,7 @@ type Mutation {
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   archiveEmail(id: Int!): ArchiveEmailResult!
+  batchDetectIntent(companyIds: [Int!]!): BatchDetectIntentResult!
   blockCompany(id: Int!): Company!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
@@ -781,6 +852,7 @@ type Mutation {
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
   deleteLinkedInPost(id: Int!): Boolean!
+  detectIntentSignals(companyId: Int!): DetectIntentResult!
   dismissReminder(id: Int!): ContactReminder!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
@@ -803,6 +875,7 @@ type Mutation {
   mergeDuplicateContacts(companyId: Int!): MergeDuplicateContactsResult!
   previewEmail(input: PreviewEmailInput!): EmailPreview!
   purgeDeletedContacts(companyId: Int): BatchOperationResult!
+  refreshIntentScores: RefreshIntentResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
   scoreContactsML(companyId: Int!): ScoreContactsMLResult!
@@ -836,6 +909,7 @@ input PreviewEmailInput {
 type Query {
   allCompanyTags: [String!]!
   companies(filter: CompanyFilterInput, limit: Int, offset: Int, order_by: CompanyOrderBy): CompaniesResponse!
+  companiesByIntent(limit: Int, offset: Int, signalType: IntentSignalType, threshold: Float!): CompaniesResponse!
   company(id: Int, key: String): Company
   companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
   company_facts(company_id: Int!, field: String, limit: Int, offset: Int): [CompanyFact!]!
@@ -853,6 +927,8 @@ type Query {
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
   findCompany(name: String, website: String): FindCompanyResult!
+  intentDashboard: IntentDashboard!
+  intentSignals(companyId: Int!, limit: Int, offset: Int, signalType: IntentSignalType): IntentSignalsResponse!
   linkedinPost(id: Int!): LinkedInPost
   linkedinPosts(companyId: Int, limit: Int, offset: Int, type: LinkedInPostType): [LinkedInPost!]!
   receivedEmail(id: Int!): ReceivedEmail
@@ -882,6 +958,11 @@ type ReceivedEmail {
 type ReceivedEmailsResult {
   emails: [ReceivedEmail!]!
   totalCount: Int!
+}
+
+type RefreshIntentResult {
+  companiesUpdated: Int!
+  success: Boolean!
 }
 
 type ResendEmailDetail {
@@ -961,6 +1042,11 @@ type SendOutreachEmailResult {
   error: String
   subject: String
   success: Boolean!
+}
+
+type SignalTypeCount {
+  count: Int!
+  signalType: IntentSignalType!
 }
 
 enum SourceType {

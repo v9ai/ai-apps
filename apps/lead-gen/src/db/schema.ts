@@ -60,6 +60,12 @@ export const companies = pgTable("companies", {
   github_patterns: text("github_patterns"),               // full OrgPatterns JSON
   github_analyzed_at: text("github_analyzed_at"),         // ISO timestamp of last scan
 
+  // Intent signal scoring (aggregated from intentSignals table)
+  intent_score: real("intent_score").notNull().default(0), // 0..100
+  intent_score_updated_at: text("intent_score_updated_at"),
+  intent_signals_count: integer("intent_signals_count").notNull().default(0),
+  intent_top_signal: text("intent_top_signal"), // JSON of strongest current signal
+
   // Common Crawl / last-seen metadata
   last_seen_crawl_id: text("last_seen_crawl_id"),
   last_seen_capture_timestamp: text("last_seen_capture_timestamp"),
@@ -488,6 +494,58 @@ export const linkedinPosts = pgTable(
 export type LinkedInPost = typeof linkedinPosts.$inferSelect;
 export type NewLinkedInPost = typeof linkedinPosts.$inferInsert;
 
+// Intent Signals (company-level buying/hiring signals detected by finetuned Qwen)
+export const intentSignals = pgTable(
+  "intent_signals",
+  {
+    id: serial("id").primaryKey(),
+    company_id: integer("company_id")
+      .notNull()
+      .references(() => companies.id, { onDelete: "cascade" }),
+    signal_type: text("signal_type", {
+      enum: [
+        "hiring_intent",
+        "tech_adoption",
+        "growth_signal",
+        "budget_cycle",
+        "leadership_change",
+        "product_launch",
+      ],
+    }).notNull(),
+    source_type: text("source_type", {
+      enum: [
+        "job_posting",
+        "web_content",
+        "github_activity",
+        "linkedin_post",
+        "funding_event",
+        "press_release",
+        "company_snapshot",
+      ],
+    }).notNull(),
+    source_url: text("source_url"),
+    raw_text: text("raw_text").notNull(), // snippet that triggered detection
+    evidence: text("evidence"), // JSON array of extracted evidence phrases
+    confidence: real("confidence").notNull(), // 0..1
+    detected_at: text("detected_at").notNull(), // ISO timestamp
+    decays_at: text("decays_at").notNull(), // ISO timestamp = detected_at + decay_days
+    decay_days: integer("decay_days").notNull(), // half-life for exponential decay
+    metadata: text("metadata"), // JSON blob for signal-specific data
+    model_version: text("model_version"), // adapter version or "logistic-v1"
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    index("idx_intent_signals_company_type").on(table.company_id, table.signal_type),
+    index("idx_intent_signals_company_detected").on(table.company_id, table.detected_at),
+    index("idx_intent_signals_decays_at").on(table.decays_at),
+  ],
+);
+
+export type IntentSignal = typeof intentSignals.$inferSelect;
+export type NewIntentSignal = typeof intentSignals.$inferInsert;
+
 // ---------------------------------------------------------------------------
 // Drizzle relations() declarations
 // ---------------------------------------------------------------------------
@@ -498,6 +556,7 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   contacts: many(contacts),
   emailCampaigns: many(emailCampaigns),
   linkedinPosts: many(linkedinPosts),
+  intentSignals: many(intentSignals),
 }));
 
 export const companyFactsRelations = relations(companyFacts, ({ one }) => ({
@@ -533,6 +592,13 @@ export const contactEmailsRelations = relations(contactEmails, ({ one }) => ({
 export const emailCampaignsRelations = relations(emailCampaigns, ({ one }) => ({
   company: one(companies, {
     fields: [emailCampaigns.company_id],
+    references: [companies.id],
+  }),
+}));
+
+export const intentSignalsRelations = relations(intentSignals, ({ one }) => ({
+  company: one(companies, {
+    fields: [intentSignals.company_id],
     references: [companies.id],
   }),
 }));

@@ -234,6 +234,47 @@ ft-loop: ## Full cycle: export → train (TASK=role-tag|remote-worldwide)
 	@echo "Start serving: make ft-serve TASK=$(TASK)"
 	@echo "Rust pipeline will connect to localhost:$(FT_PORT)"
 
+# ── Intent Signal Detection ─────────────────────────────────
+# Finetuned Qwen2.5-3B for company buying/hiring signal classification.
+# ZoomInfo's #1 feature — fully local, open source, MLX.
+#
+# Usage:
+#   make intent-export                Export training data from Neon
+#   make intent-train                 Train LoRA adapter
+#   make intent-serve                 Start mlx_lm.server with adapter
+#   make intent-loop                  Full cycle: export → train → distill
+#   make intent-detect                Run detection on all companies (TS)
+#   make intent-refresh               Refresh scores with decay only
+
+.PHONY: intent-export intent-train intent-serve intent-loop intent-detect intent-refresh
+
+intent-export: ## Export intent signal training data from Neon
+	python3 mlx-training/export_intent_signals.py --task all
+
+intent-train: ## Train LoRA adapter for intent-signal classification
+	python3 mlx-training/finetune.py --task intent-signal
+
+intent-serve: ## Start mlx_lm.server with intent-signal adapter
+	python3 -m mlx_lm.server \
+		--model mlx-community/Qwen2.5-3B-Instruct-4bit \
+		--adapter-path mlx-training/models/intent-signal \
+		--port $(FT_PORT)
+
+intent-loop: ## Full cycle: export → train → distill
+	$(MAKE) intent-export
+	$(MAKE) intent-train
+	python3 mlx-training/distill_intent_signals.py
+	@echo ""
+	@echo "═══ Intent Signal training complete ═══"
+	@echo "Start serving: make intent-serve"
+	@echo "Distilled weights: crates/metal/data/models/intent_signal_weights.json"
+
+intent-detect: ## Run intent signal detection on all companies (TypeScript)
+	dotenv -f .env.local run -- pnpm tsx scripts/detect-intent-signals.ts
+
+intent-refresh: ## Refresh intent scores with decay (no re-detection)
+	dotenv -f .env.local run -- pnpm tsx scripts/detect-intent-signals.ts --refresh-only
+
 # ── Structured Extraction (sgai-qwen3-1.7b) ──────────────────
 # Separate mlx_lm.server on port 8081 for HTML→structured JSON extraction.
 # Works alongside the Qwen2.5-3B classification server on port 8080.
