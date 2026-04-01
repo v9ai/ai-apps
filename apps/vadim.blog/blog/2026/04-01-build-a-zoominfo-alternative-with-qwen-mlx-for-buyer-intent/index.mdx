@@ -1,7 +1,7 @@
 ---
 slug: build-a-zoominfo-alternative-with-qwen-mlx-for-buyer-intent
 title: "Building a ZoomInfo Alternative with Qwen and MLX: Local Buyer Intent Detection"
-description: "How to build a fully local buyer intent detection system using Qwen2.5-3B fine-tuned with LoRA on Apple MLX, distilled to 66 floating-point numbers in Rust — a $0 alternative to ZoomInfo's $36K/year intent data."
+description: "How to build a fully local buyer intent detection system using Qwen2.5-3B fine-tuned with LoRA on Apple MLX, distilled to 66 floating-point numbers in Rust — a zero-cost alternative to ZoomInfo intent data."
 date: 2026-04-01
 authors: [nicolad]
 tags:
@@ -17,7 +17,7 @@ tags:
 
 import { PipelineDiagram, SignalsDiagram, DistillDiagram, ScoringDiagram } from './diagrams';
 
-ZoomInfo charges $300+ per user per month for intent data — buying signals that tell sales teams which companies are actively in-market. It is the platform's number one feature and the reason enterprises pay six figures annually for access. But the underlying technology — classifying company content into intent categories — is a text classification problem. One that a 3-billion-parameter open-source model can solve on a single laptop.
+ZoomInfo charges \$300+ per user per month for intent data — buying signals that tell sales teams which companies are actively in-market. It is the platform's number one feature and the reason enterprises pay six figures annually for access. But the underlying technology — classifying company content into intent categories — is a text classification problem. One that a 3-billion-parameter open-source model can solve on a single laptop.
 
 <!-- truncate -->
 
@@ -182,8 +182,8 @@ The `aggregate_signals` method takes the **maximum** decayed score per category 
 
 | | ZoomInfo Enterprise | Qwen + MLX + Rust |
 |---|---|---|
-| **Annual cost (10-seat team)** | $36,000+ | $0 |
-| **Per-seat licensing** | $300+/month | None |
+| **Annual cost (10-seat team)** | \$36,000+ | \$0 |
+| **Per-seat licensing** | \$300+/month | None |
 | **Intent data coverage** | Proprietary web crawl | Greenhouse ATS + web scraping |
 | **Data freshness** | Continuous (vendor-managed) | On-demand (user-controlled) |
 | **Privacy** | Data shared with vendor | Fully local — nothing leaves machine |
@@ -248,4 +248,4 @@ A: Add a keyword list to `export_intent_signals.py`, retrain the LoRA adapter (~
 
 The combination of [Qwen's open-source LLMs](https://github.com/QwenLM/Qwen), [Apple's MLX framework](https://github.com/ml-explore/mlx), and Rust's zero-cost abstractions puts enterprise-grade intent detection on a laptop. The path from 3 billion parameters to 66 floating-point numbers — through LoRA fine-tuning and logistic regression distillation — is the kind of compression that makes local AI practical, not just possible.
 
-Start with a list of target companies, scrape their Greenhouse boards, train a LoRA adapter overnight, and wake up with a private, customizable, fully local buyer intent engine. ZoomInfo's $36K/year feature, running on your $1,600 MacBook.
+Start with a list of target companies, scrape their Greenhouse boards, train a LoRA adapter overnight, and wake up with a private, customizable, fully local buyer intent engine. ZoomInfo's \$36K/year feature, running on your \$1,600 MacBook.
