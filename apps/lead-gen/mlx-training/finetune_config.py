@@ -134,19 +134,23 @@ CONFIGS = {
         # grad_accum 8→4: half the accumulation steps per optimizer update, less Python/Metal
         # dispatch overhead. Effective batch stays at 4×4 = 16.
         grad_accumulation_steps=4,
-        # grad_checkpoint=False: with batch_size=4 we use ~8-8.5 GB (2.5 GB headroom remains).
-        # Disabling saves the recompute of all intermediate activations on backward — ~15% fewer
-        # FLOPS per iter. Revert to True if peak memory exceeds ~10 GB (check Activity Monitor).
-        grad_checkpoint=False,
-        # lr: 2e-5 is appropriate for 184 iters; 5e-5 risks instability with rank-16 LoRA
-        # and the cosine schedule will decay it safely. Keep at 2e-5.
-        learning_rate=2e-5,
+        # grad_checkpoint=True: batch_size=4 + no checkpoint OOM'd on M1 16GB (3B model keeps
+        # activations for all 36 transformer layers). With checkpoint, only 1 layer's activations
+        # are stored at a time — trades ~15% compute for staying within memory budget.
+        grad_checkpoint=True,
+        # lr: 5e-5 with rank-8 LoRA. Old config had 2e-5 + warmup=50/115 which meant LR
+        # never exceeded 5.2e-6 (26% of peak). With warmup=9 and halved rank, 5e-5 gives
+        # the adapter a strong enough signal to converge in 184 iters.
+        learning_rate=5e-5,
         # epochs: train loss was still dropping fast at iter 90 (0.697), no val overfitting
         # detected. 8 epochs (184 iters) gives ~4x the original budget with room to stop early.
         # Avoid 10 epochs: with only 380 examples each seen 10x, memorization risk increases
         # significantly beyond epoch 8 for a structured-output task with repetitive patterns.
         epochs=8,
-        lora=LoRAConfig(rank=16, alpha=32.0, dropout=0.1),  # dropout 0.05→0.1: regularize small dataset
+        # rank 16→8: halves trainable params (30M→15M). 380 examples with rank-16 had
+        # ~79K examples/parameter — underdetermined. Rank-8 is standard for structured
+        # extraction tasks (not creative generation). alpha=16 keeps scale=2.0.
+        lora=LoRAConfig(rank=8, alpha=16.0, dropout=0.1),
         # warmup: 9 steps = ~5% of 184 total iters, canonical warmup ratio for fine-tuning.
         warmup_steps=9,
         # steps_per_eval=46: eval every 2 epochs → 4 eval passes instead of 8.

@@ -770,17 +770,30 @@ def export_data(items: list[dict], out_dir: Path, stats_only: bool = False):
     companies = list(real_by_company.keys())
     random.shuffle(companies)
     n_co = len(companies)
-    train_cos = set(companies[:int(n_co * 0.8)])
-    valid_cos = set(companies[int(n_co * 0.8):int(n_co * 0.9)])
 
     train, valid, test = [], [], []
-    for co, exs in real_by_company.items():
-        if co in train_cos:
-            train.extend(exs)
-        elif co in valid_cos:
-            valid.extend(exs)
-        else:
-            test.extend(exs)
+
+    if n_co >= 5:
+        # Enough companies for meaningful company-level stratification
+        train_cos = set(companies[:int(n_co * 0.8)])
+        valid_cos = set(companies[int(n_co * 0.8):int(n_co * 0.9)])
+        for co, exs in real_by_company.items():
+            if co in train_cos:
+                train.extend(exs)
+            elif co in valid_cos:
+                valid.extend(exs)
+            else:
+                test.extend(exs)
+    else:
+        # Too few companies (e.g., single Greenhouse source) — split examples randomly
+        all_real = []
+        for exs in real_by_company.values():
+            all_real.extend(exs)
+        random.shuffle(all_real)
+        n = len(all_real)
+        train.extend(all_real[:int(n * 0.8)])
+        valid.extend(all_real[int(n * 0.8):int(n * 0.9)])
+        test.extend(all_real[int(n * 0.9):])
 
     # Split synthetic examples 80/10/10
     random.shuffle(synthetic_examples)
