@@ -167,6 +167,12 @@ type Company {
   snapshots(limit: Int, offset: Int): [CompanySnapshot!]!
   snapshots_count: Int!
   contacts: [Contact!]!
+
+  # Intent signal scoring
+  intentScore: Float!
+  intentScoreUpdatedAt: String
+  intentSignalsCount: Int!
+  intentScoreDetails: IntentScore
 }
 
 type CompaniesResponse {

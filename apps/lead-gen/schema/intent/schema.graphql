@@ -1,0 +1,99 @@
+enum IntentSignalType {
+  HIRING_INTENT
+  TECH_ADOPTION
+  GROWTH_SIGNAL
+  BUDGET_CYCLE
+  LEADERSHIP_CHANGE
+  PRODUCT_LAUNCH
+}
+
+type IntentSignal {
+  id: Int!
+  companyId: Int!
+  signalType: IntentSignalType!
+  sourceType: String!
+  sourceUrl: String
+  rawText: String!
+  evidence: [String!]!
+  confidence: Float!
+  detectedAt: String!
+  decaysAt: String!
+  decayDays: Int!
+  freshness: Float!
+  metadata: JSON
+  modelVersion: String
+  createdAt: String!
+}
+
+type IntentScore {
+  overall: Float!
+  hiring: Float!
+  tech: Float!
+  growth: Float!
+  budget: Float!
+  leadership: Float!
+  product: Float!
+  signalCount: Int!
+  updatedAt: String
+}
+
+type IntentSignalsResponse {
+  signals: [IntentSignal!]!
+  totalCount: Int!
+}
+
+type DetectIntentResult {
+  success: Boolean!
+  message: String
+  signalsDetected: Int!
+  intentScore: Float
+}
+
+type BatchDetectIntentResult {
+  success: Boolean!
+  processed: Int!
+  signalsDetected: Int!
+  errors: [String!]!
+}
+
+type RefreshIntentResult {
+  success: Boolean!
+  companiesUpdated: Int!
+}
+
+type SignalTypeCount {
+  signalType: IntentSignalType!
+  count: Int!
+}
+
+type IntentDashboard {
+  totalSignals: Int!
+  companiesWithIntent: Int!
+  topIntentCompanies: [Company!]!
+  signalsByType: [SignalTypeCount!]!
+  recentSignals: [IntentSignal!]!
+}
+
+extend type Query {
+  intentSignals(
+    companyId: Int!
+    signalType: IntentSignalType
+    limit: Int
+    offset: Int
+  ): IntentSignalsResponse!
+
+  companiesByIntent(
+    threshold: Float!
+    signalType: IntentSignalType
+    limit: Int
+    offset: Int
+  ): CompaniesResponse!
+
+  intentDashboard: IntentDashboard!
+}
+
+extend type Mutation {
+  detectIntentSignals(companyId: Int!): DetectIntentResult!
+  batchDetectIntent(companyIds: [Int!]!): BatchDetectIntentResult!
+  refreshIntentScores: RefreshIntentResult!
+}

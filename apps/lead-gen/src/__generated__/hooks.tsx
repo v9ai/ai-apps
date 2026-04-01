@@ -45,6 +45,14 @@ export type ArchiveEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type BatchDetectIntentResult = {
+  __typename?: 'BatchDetectIntentResult';
+  errors: Array<Scalars['String']['output']>;
+  processed: Scalars['Int']['output'];
+  signalsDetected: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type BatchOperationResult = {
   __typename?: 'BatchOperationResult';
   affected: Scalars['Int']['output'];
@@ -98,6 +106,10 @@ export type Company = {
   id: Scalars['Int']['output'];
   industries: Array<Scalars['String']['output']>;
   industry: Maybe<Scalars['String']['output']>;
+  intentScore: Scalars['Float']['output'];
+  intentScoreDetails: Maybe<IntentScore>;
+  intentScoreUpdatedAt: Maybe<Scalars['String']['output']>;
+  intentSignalsCount: Scalars['Int']['output'];
   job_board_url: Maybe<Scalars['String']['output']>;
   key: Scalars['String']['output'];
   last_seen_capture_timestamp: Maybe<Scalars['String']['output']>;
@@ -494,6 +506,14 @@ export type DeleteEmailTemplateResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DetectIntentResult = {
+  __typename?: 'DetectIntentResult';
+  intentScore: Maybe<Scalars['Float']['output']>;
+  message: Maybe<Scalars['String']['output']>;
+  signalsDetected: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type EmailCampaign = {
   __typename?: 'EmailCampaign';
   addAntiThreadHeader: Scalars['Boolean']['output'];
@@ -785,6 +805,61 @@ export type ImportResendResult = {
   updatedCount: Scalars['Int']['output'];
 };
 
+export type IntentDashboard = {
+  __typename?: 'IntentDashboard';
+  companiesWithIntent: Scalars['Int']['output'];
+  recentSignals: Array<IntentSignal>;
+  signalsByType: Array<SignalTypeCount>;
+  topIntentCompanies: Array<Company>;
+  totalSignals: Scalars['Int']['output'];
+};
+
+export type IntentScore = {
+  __typename?: 'IntentScore';
+  budget: Scalars['Float']['output'];
+  growth: Scalars['Float']['output'];
+  hiring: Scalars['Float']['output'];
+  leadership: Scalars['Float']['output'];
+  overall: Scalars['Float']['output'];
+  product: Scalars['Float']['output'];
+  signalCount: Scalars['Int']['output'];
+  tech: Scalars['Float']['output'];
+  updatedAt: Maybe<Scalars['String']['output']>;
+};
+
+export type IntentSignal = {
+  __typename?: 'IntentSignal';
+  companyId: Scalars['Int']['output'];
+  confidence: Scalars['Float']['output'];
+  createdAt: Scalars['String']['output'];
+  decayDays: Scalars['Int']['output'];
+  decaysAt: Scalars['String']['output'];
+  detectedAt: Scalars['String']['output'];
+  evidence: Array<Scalars['String']['output']>;
+  freshness: Scalars['Float']['output'];
+  id: Scalars['Int']['output'];
+  metadata: Maybe<Scalars['JSON']['output']>;
+  modelVersion: Maybe<Scalars['String']['output']>;
+  rawText: Scalars['String']['output'];
+  signalType: IntentSignalType;
+  sourceType: Scalars['String']['output'];
+  sourceUrl: Maybe<Scalars['String']['output']>;
+};
+
+export type IntentSignalType =
+  | 'BUDGET_CYCLE'
+  | 'GROWTH_SIGNAL'
+  | 'HIRING_INTENT'
+  | 'LEADERSHIP_CHANGE'
+  | 'PRODUCT_LAUNCH'
+  | 'TECH_ADOPTION';
+
+export type IntentSignalsResponse = {
+  __typename?: 'IntentSignalsResponse';
+  signals: Array<IntentSignal>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type LinkedInPost = {
   __typename?: 'LinkedInPost';
   authorName: Maybe<Scalars['String']['output']>;
@@ -836,6 +911,7 @@ export type Mutation = {
   analyzeCompany: AnalyzeCompanyResponse;
   applyEmailPattern: ApplyEmailPatternResult;
   archiveEmail: ArchiveEmailResult;
+  batchDetectIntent: BatchDetectIntentResult;
   blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
@@ -852,6 +928,7 @@ export type Mutation = {
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteLinkedInPost: Scalars['Boolean']['output'];
+  detectIntentSignals: DetectIntentResult;
   dismissReminder: ContactReminder;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
@@ -874,6 +951,7 @@ export type Mutation = {
   mergeDuplicateContacts: MergeDuplicateContactsResult;
   previewEmail: EmailPreview;
   purgeDeletedContacts: BatchOperationResult;
+  refreshIntentScores: RefreshIntentResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   scoreContactsML: ScoreContactsMlResult;
@@ -917,6 +995,11 @@ export type MutationApplyEmailPatternArgs = {
 
 export type MutationArchiveEmailArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationBatchDetectIntentArgs = {
+  companyIds: Array<Scalars['Int']['input']>;
 };
 
 
@@ -997,6 +1080,11 @@ export type MutationDeleteEmailTemplateArgs = {
 
 export type MutationDeleteLinkedInPostArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationDetectIntentSignalsArgs = {
+  companyId: Scalars['Int']['input'];
 };
 
 
@@ -1240,6 +1328,7 @@ export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
   companies: CompaniesResponse;
+  companiesByIntent: CompaniesResponse;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
   company_facts: Array<CompanyFact>;
@@ -1257,6 +1346,8 @@ export type Query = {
   emailTemplates: EmailTemplatesResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
   findCompany: FindCompanyResult;
+  intentDashboard: IntentDashboard;
+  intentSignals: IntentSignalsResponse;
   linkedinPost: Maybe<LinkedInPost>;
   linkedinPosts: Array<LinkedInPost>;
   receivedEmail: Maybe<ReceivedEmail>;
@@ -1271,6 +1362,14 @@ export type QueryCompaniesArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   order_by?: InputMaybe<CompanyOrderBy>;
+};
+
+
+export type QueryCompaniesByIntentArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  signalType?: InputMaybe<IntentSignalType>;
+  threshold: Scalars['Float']['input'];
 };
 
 
@@ -1364,6 +1463,14 @@ export type QueryFindCompanyArgs = {
 };
 
 
+export type QueryIntentSignalsArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  signalType?: InputMaybe<IntentSignalType>;
+};
+
+
 export type QueryLinkedinPostArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1421,6 +1528,12 @@ export type ReceivedEmailsResult = {
   __typename?: 'ReceivedEmailsResult';
   emails: Array<ReceivedEmail>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type RefreshIntentResult = {
+  __typename?: 'RefreshIntentResult';
+  companiesUpdated: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
 };
 
 export type ResendEmailDetail = {
@@ -1506,6 +1619,12 @@ export type SendOutreachEmailResult = {
   error: Maybe<Scalars['String']['output']>;
   subject: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type SignalTypeCount = {
+  __typename?: 'SignalTypeCount';
+  count: Scalars['Int']['output'];
+  signalType: IntentSignalType;
 };
 
 export type SourceType =

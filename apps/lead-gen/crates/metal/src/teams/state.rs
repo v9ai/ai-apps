@@ -212,6 +212,7 @@ pub struct ActionPlan {
     pub state: PipelineState,
     pub run_discover: bool,
     pub run_enrich: bool,
+    pub run_intent: bool,
     pub run_contacts: bool,
     pub run_qa: bool,
     pub run_outreach: bool,
@@ -234,6 +235,7 @@ impl fmt::Display for ActionPlan {
         writeln!(f, "  Stages to run:")?;
         if self.run_discover  { writeln!(f, "    [x] discover")?; }
         if self.run_enrich    { writeln!(f, "    [x] enrich")?; }
+        if self.run_intent    { writeln!(f, "    [x] intent")?; }
         if self.run_contacts  { writeln!(f, "    [x] contacts")?; }
         if self.run_qa        { writeln!(f, "    [x] qa")?; }
         if self.run_outreach  { writeln!(f, "    [x] outreach (approval required)")?; }
@@ -251,6 +253,7 @@ pub fn all_stages(ctx: &TeamContext) -> Result<ActionPlan> {
         state,
         run_discover: true,
         run_enrich: true,
+        run_intent: true,
         run_contacts: true,
         run_qa: true,
         run_outreach: true,
@@ -262,9 +265,9 @@ pub fn assess(ctx: &TeamContext) -> Result<ActionPlan> {
     let state = PipelineState::load(&ctx.data_dir);
     let phase = state.detect_phase();
 
-    let (run_discover, run_enrich, run_contacts, run_qa, run_outreach) = match phase {
-        Phase::Building => (true, true, true, true, false),
-        Phase::Flowing => (true, true, true, true, true),
+    let (run_discover, run_enrich, run_intent, run_contacts, run_qa, run_outreach) = match phase {
+        Phase::Building => (true, true, true, true, true, false),
+        Phase::Flowing => (true, true, true, true, true, true),
         Phase::Bottleneck => {
             let enrich_rate = if state.counts.discovered > 0 {
                 state.counts.enriched as f64 / state.counts.discovered as f64
@@ -273,14 +276,14 @@ pub fn assess(ctx: &TeamContext) -> Result<ActionPlan> {
             };
             if enrich_rate < 0.3 {
                 // Enrichment is lagging
-                (false, true, false, true, false)
+                (false, true, true, false, true, false)
             } else {
                 // Contacts lagging
-                (false, false, true, true, false)
+                (false, false, false, true, true, false)
             }
         }
-        Phase::Saturated => (false, false, false, true, true),
-        Phase::Degraded => (false, true, true, true, false),
+        Phase::Saturated => (false, false, false, false, true, true),
+        Phase::Degraded => (false, true, true, true, true, false),
     };
 
     Ok(ActionPlan {
@@ -288,6 +291,7 @@ pub fn assess(ctx: &TeamContext) -> Result<ActionPlan> {
         state,
         run_discover,
         run_enrich,
+        run_intent,
         run_contacts,
         run_qa,
         run_outreach,
@@ -413,6 +417,8 @@ pub struct RunRecord {
 pub struct RunCounts {
     pub discovered: usize,
     pub enriched: usize,
+    #[serde(default)]
+    pub intent_detected: usize,
     pub contacts_found: usize,
     pub outreach_drafted: usize,
     pub errors: usize,
@@ -444,6 +450,7 @@ impl PipelineProgress {
         for r in &self.runs {
             t.discovered += r.counts.discovered;
             t.enriched += r.counts.enriched;
+            t.intent_detected += r.counts.intent_detected;
             t.contacts_found += r.counts.contacts_found;
             t.outreach_drafted += r.counts.outreach_drafted;
             t.errors += r.counts.errors;

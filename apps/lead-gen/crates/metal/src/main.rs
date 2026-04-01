@@ -93,6 +93,17 @@ enum Command {
         output: PathBuf,
     },
 
+    /// Detect intent signals for companies
+    IntentDetect {
+        /// Only process this domain
+        #[arg(short, long)]
+        domain: Option<String>,
+
+        /// Use distilled classifier (fast) vs LLM (accurate)
+        #[arg(long)]
+        fast: bool,
+    },
+
     /// Manage domain blocklist (block/unblock domains from pipeline processing)
     Block {
         #[command(subcommand)]
@@ -227,6 +238,34 @@ async fn main() -> Result<()> {
             eprintln!("  Calibrated:     {}", result.calibrated);
         }
 
+        Command::IntentDetect { domain: _, fast } => {
+            let pipeline = Pipeline::open(&data_dir.join("pipeline"))?;
+            let ctx = Arc::new(teams::TeamContext::new(pipeline, data_dir.clone()));
+            std::fs::create_dir_all(ctx.reports_dir())?;
+
+            if fast {
+                // Use distilled classifier
+                let weights_path = data_dir.join("models/intent_signal_weights.json");
+                let classifier = leadgen_metal::kernel::intent_scoring::IntentClassifier::from_json(&weights_path);
+                if !classifier.trained {
+                    eprintln!("  No trained intent classifier found at {}", weights_path.display());
+                    eprintln!("  Run `make intent-loop` to train and distill weights first.");
+                    return Ok(());
+                }
+                eprintln!("  Using distilled intent classifier (fast mode)");
+                // Would score companies using classifier.classify_text() here
+                eprintln!("  Fast intent detection not yet implemented for batch mode.");
+            } else {
+                let report = teams::intent::run(&ctx).await?;
+                ctx.pipeline.flush()?;
+                eprintln!(
+                    "  [{:>7}] {:<10} processed={} created={} errors={}",
+                    report.status, report.stage, report.processed, report.created,
+                    report.errors.len(),
+                );
+            }
+        }
+
         Command::Block { action } => {
             let mut blocklist = teams::state::Blocklist::load(data_dir);
             match action {
@@ -265,10 +304,11 @@ async fn main() -> Result<()> {
             let report = match name.as_str() {
                 "discover" => teams::discover::run(&ctx, domains.as_deref()).await?,
                 "enrich" => teams::enrich::run(&ctx).await?,
+                "intent" => teams::intent::run(&ctx).await?,
                 "contacts" => teams::contacts::run(&ctx).await?,
                 "qa" => teams::qa::run(&ctx).await?,
                 "outreach" => teams::outreach::run(&ctx).await?,
-                other => anyhow::bail!("unknown stage: {other} (valid: discover, enrich, contacts, qa, outreach)"),
+                other => anyhow::bail!("unknown stage: {other} (valid: discover, enrich, intent, contacts, qa, outreach)"),
             };
 
             ctx.pipeline.flush()?;

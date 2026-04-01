@@ -33,3 +33,6 @@ pub mod weight_optimizer;
 
 #[cfg(feature = "kernel-extract")]
 pub mod html_extractor;
+
+#[cfg(feature = "kernel-intent")]
+pub mod intent_scoring;

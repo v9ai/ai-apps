@@ -102,6 +102,17 @@ CONFIGS = {
         lora=LoRAConfig(rank=8, alpha=32.0, dropout=0.1),
         warmup_steps=30,
     ),
+    "intent-signal": TrainConfig(
+        data_dir="mlx-training/data/intent-signal",
+        adapter_path="mlx-training/models/intent-signal",
+        max_seq_length=2048,
+        batch_size=2,
+        grad_accumulation_steps=8,
+        learning_rate=2e-5,
+        epochs=5,
+        lora=LoRAConfig(rank=16, alpha=32.0, dropout=0.05),
+        warmup_steps=50,
+    ),
 }
 
 # ---------------------------------------------------------------------------
