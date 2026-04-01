@@ -31,12 +31,16 @@ target
 # App-specific large dirs
 apps/lead-gen/consultancies
 apps/lead-gen/leadgen-metal
+apps/lead-gen/mlx-training
 
 # Common exclusions (use specific paths, not 'dist' to preserve packages/ui/dist)
 node_modules
 .turbo
 *.log
 apps/agentic-healthcare/.next
+apps/knowledge/.next
+apps/knowledge/evals
+apps/knowledge/backend
 __pycache__
 *.egg-info
 .langgraph_api
