@@ -198,7 +198,7 @@
           "MLX scoring at 4,618 embeddings/sec on M1; local email gen via Qwen2.5-3B; eval enforcer with LangSmith tracing.",
           "Candle Rust ML inference for contact scoring with INT8 quantization.",
           "Eval-driven strategy enforcer validates every prompt/model change against 80% accuracy bar.",
-          "LoRA fine-tuned Qwen3-1.7B (rank-8, DPO on synthetic data) for personalized outreach emails; sgai-qwen3-1.7b for schema-constrained HTML→JSON company extraction on dual MLX servers (ports 8080/8081)."
+          "LoRA fine-tuned Qwen3-1.7B (rank-8, DPO on synthetic data) for personalized outreach emails; sgai-qwen3-1.7b for schema-constrained HTML→JSON company extraction on dual MLX servers."
         ]
       },
       {
