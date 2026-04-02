@@ -2387,6 +2387,7 @@ export async function getContactsForIssue(issueId: number, userId: string) {
     slug: (row.slug as string) || null,
     firstName: row.first_name as string,
     lastName: (row.last_name as string) || null,
+    description: (row.description as string) || null,
     role: (row.role as string) || null,
     ageYears: (row.age_years as number) || null,
     notes: (row.notes as string) || null,
