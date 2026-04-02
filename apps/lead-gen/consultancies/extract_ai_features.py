@@ -349,7 +349,7 @@ def classify_ai_features(companies: list[CompanyRecord]) -> list[CompanyRecord]:
         prompt_text = tokenizer.apply_chat_template(messages, add_generation_prompt=True)
 
         try:
-            response = generate(model, tokenizer, prompt=prompt_text, max_tokens=500, verbose=False)
+            response = generate(model, tokenizer, prompt=prompt_text, max_tokens=1000, verbose=False)
             json_match = re.search(r"\{[\s\S]*\}", response)
             if json_match:
                 raw = json.loads(json_match.group())
