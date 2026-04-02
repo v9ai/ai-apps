@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { css } from "styled-system/css";
-import { data } from "@/lib/data";
+import { data, scrapedReviews } from "@/lib/data";
 import { CATEGORY_META, type Category } from "@/lib/categories";
 import type { Place } from "@/lib/types";
 import { MapOverview } from "@/components/MapOverview";
@@ -292,6 +292,99 @@ export function TravelPageContent({ category }: Props) {
                   <path d="M12 5l7 7-7 7" />
                 </svg>
               </Link>
+            </div>
+          </section>
+        )}
+
+        {/* ── Reviews Section ───────────────────────────────── */}
+        {curatedHotels.length > 0 && (
+          <section
+            className={css({
+              maxW: "5xl",
+              mx: "auto",
+              mb: { base: "16", md: "20" },
+              animation: "fadeUp 0.6s ease-out 0.12s both",
+            })}
+          >
+            <div
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                gap: "3",
+                mb: "6",
+              })}
+            >
+              <span className={css({ flex: "1", h: "1px", bg: "steel.border" })} />
+              <span
+                className={css({
+                  fontSize: "label",
+                  fontWeight: "600",
+                  fontFamily: "display",
+                  color: "amber.warm",
+                  letterSpacing: "label",
+                  textTransform: "uppercase",
+                })}
+              >
+                {lang === "ro" ? "Ce spun oaspetii" : "What guests say"}
+              </span>
+              <span className={css({ flex: "1", h: "1px", bg: "steel.border" })} />
+            </div>
+
+            <div
+              className={css({
+                display: "grid",
+                gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+                gap: { base: "4", md: "5" },
+              })}
+            >
+              {curatedHotels.slice(0, 3).map((hotel) => {
+                const hotelReviews = scrapedReviews[hotel.property_id]?.review_texts || [];
+                return hotelReviews.slice(0, 3).map((review: string, idx: number) => (
+                  <div
+                    key={`${hotel.property_id}-review-${idx}`}
+                    className={css({
+                      bg: "steel.surface",
+                      rounded: "card",
+                      border: "1px solid",
+                      borderColor: "steel.border",
+                      p: "4",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2",
+                    })}
+                  >
+                    <div
+                      className={css({
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "2",
+                        mb: "1",
+                      })}
+                    >
+                      <span
+                        className={css({
+                          fontSize: "2xs",
+                          color: "text.muted",
+                          fontWeight: "600",
+                          fontFamily: "display",
+                        })}
+                      >
+                        {hotel.name}
+                      </span>
+                    </div>
+                    <p
+                      className={css({
+                        fontSize: "xs",
+                        color: "text.secondary",
+                        lineHeight: "1.6",
+                        fontStyle: "italic",
+                      })}
+                    >
+                      "{review}"
+                    </p>
+                  </div>
+                ));
+              })}
             </div>
           </section>
         )}
