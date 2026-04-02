@@ -5,6 +5,7 @@ query GetContact($id: Int, $slug: String) {
     slug
     firstName
     lastName
+    description
     role
     ageYears
     notes

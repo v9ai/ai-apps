@@ -70,6 +70,7 @@ function ContactDetailContent() {
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [editSlug, setEditSlug] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [editRole, setEditRole] = useState("");
   const [editAgeYears, setEditAgeYears] = useState("");
   const [editNotes, setEditNotes] = useState("");
@@ -146,6 +147,7 @@ function ContactDetailContent() {
     setEditFirstName(contact.firstName);
     setEditLastName(contact.lastName ?? "");
     setEditSlug(contact.slug ?? "");
+    setEditDescription(contact.description ?? "");
     setEditRole(contact.role ?? "");
     setEditAgeYears(contact.ageYears ? String(contact.ageYears) : "");
     setEditNotes(contact.notes ?? "");
@@ -168,6 +170,7 @@ function ContactDetailContent() {
           firstName: editFirstName.trim(),
           lastName: editLastName.trim() || undefined,
           slug: slugValue || undefined,
+          description: editDescription.trim() || undefined,
           role: editRole || undefined,
           ageYears: editAgeYears ? parseInt(editAgeYears, 10) : undefined,
           notes: editNotes.trim() || undefined,
@@ -293,6 +296,16 @@ function ContactDetailContent() {
                 </Badge>
               </Flex>
             )}
+            {contact.description && (
+              <Flex gap="2">
+                <Text size="2" weight="medium" style={{ minWidth: 100 }}>
+                  Description
+                </Text>
+                <Text size="2" color="gray">
+                  {contact.description}
+                </Text>
+              </Flex>
+            )}
             {contact.ageYears && (
               <Flex gap="2">
                 <Text size="2" weight="medium" style={{ minWidth: 100 }}>
@@ -407,6 +420,18 @@ function ContactDetailContent() {
                 <Text as="div" size="1" color="gray" mt="1">
                   URL path segment, e.g. /family/bogdan/contacts/{editSlug || "lizi"}
                 </Text>
+              </label>
+              <label>
+                <Text as="div" size="2" mb="1" weight="medium">
+                  Description
+                </Text>
+                <TextArea
+                  placeholder="Brief description of this contact..."
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={2}
+                  disabled={updating}
+                />
               </label>
               <Flex direction="column" gap="1">
                 <Text as="div" size="2" weight="medium">

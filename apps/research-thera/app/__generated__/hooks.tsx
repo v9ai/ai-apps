@@ -171,6 +171,7 @@ export type Contact = {
   ageYears?: Maybe<Scalars['Int']['output']>;
   createdAt: Scalars['String']['output'];
   createdBy: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
   firstName: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
@@ -242,6 +243,7 @@ export type CreateContactFeedbackInput = {
 
 export type CreateContactInput = {
   ageYears?: InputMaybe<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   firstName: Scalars['String']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -1938,6 +1940,7 @@ export type UpdateContactFeedbackInput = {
 
 export type UpdateContactInput = {
   ageYears?: InputMaybe<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -2460,7 +2463,7 @@ export type GetContactQueryVariables = Exact<{
 }>;
 
 
-export type GetContactQuery = { __typename?: 'Query', contact?: { __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } | null };
+export type GetContactQuery = { __typename?: 'Query', contact?: { __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, description?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } | null };
 
 export type GetContactFeedbackQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2760,7 +2763,7 @@ export type UpdateContactMutationVariables = Exact<{
 }>;
 
 
-export type UpdateContactMutation = { __typename?: 'Mutation', updateContact: { __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } };
+export type UpdateContactMutation = { __typename?: 'Mutation', updateContact: { __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, description?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } };
 
 export type UpdateContactFeedbackMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -5421,6 +5424,7 @@ export const GetContactDocument = gql`
     slug
     firstName
     lastName
+    description
     role
     ageYears
     notes
@@ -7969,6 +7973,7 @@ export const UpdateContactDocument = gql`
     slug
     firstName
     lastName
+    description
     role
     ageYears
     notes

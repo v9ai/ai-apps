@@ -1629,6 +1629,7 @@ export async function getContactsForUser(userId: string) {
     slug: (row.slug as string) || null,
     firstName: row.first_name as string,
     lastName: (row.last_name as string) || null,
+    description: (row.description as string) || null,
     role: (row.role as string) || null,
     ageYears: (row.age_years as number) || null,
     notes: (row.notes as string) || null,
@@ -1647,6 +1648,7 @@ export async function getContact(id: number, userId: string) {
     slug: (row.slug as string) || null,
     firstName: row.first_name as string,
     lastName: (row.last_name as string) || null,
+    description: (row.description as string) || null,
     role: (row.role as string) || null,
     ageYears: (row.age_years as number) || null,
     notes: (row.notes as string) || null,
@@ -1665,6 +1667,7 @@ export async function getContactBySlug(slug: string, userId: string) {
     slug: (row.slug as string) || null,
     firstName: row.first_name as string,
     lastName: (row.last_name as string) || null,
+    description: (row.description as string) || null,
     role: (row.role as string) || null,
     ageYears: (row.age_years as number) || null,
     notes: (row.notes as string) || null,
@@ -1692,6 +1695,7 @@ export async function createContact(params: {
   userId: string;
   firstName: string;
   lastName?: string | null;
+  description?: string | null;
   role?: string | null;
   ageYears?: number | null;
   notes?: string | null;
@@ -1706,8 +1710,8 @@ export async function createContact(params: {
 
   const slug = await generateContactSlug(params.firstName, params.userId);
   const rows = await neonSql`
-    INSERT INTO contacts (user_id, slug, first_name, last_name, role, age_years, notes, created_at, updated_at)
-    VALUES (${params.userId}, ${slug}, ${params.firstName}, ${params.lastName ?? null}, ${params.role ?? null}, ${safeAge}, ${params.notes ?? null}, NOW(), NOW())
+    INSERT INTO contacts (user_id, slug, first_name, last_name, description, role, age_years, notes, created_at, updated_at)
+    VALUES (${params.userId}, ${slug}, ${params.firstName}, ${params.lastName ?? null}, ${params.description ?? null}, ${params.role ?? null}, ${safeAge}, ${params.notes ?? null}, NOW(), NOW())
     RETURNING id`;
   return rows[0].id as number;
 }
@@ -1719,6 +1723,7 @@ export async function updateContact(
     firstName?: string;
     lastName?: string | null;
     slug?: string | null;
+    description?: string | null;
     role?: string | null;
     ageYears?: number | null;
     notes?: string | null;
@@ -1730,6 +1735,7 @@ export async function updateContact(
   if (updates.firstName !== undefined) { fields.push("first_name = ?"); args.push(updates.firstName); }
   if (updates.slug !== undefined && updates.slug !== null) { fields.push("slug = ?"); args.push(updates.slug); }
   if (updates.lastName !== undefined) { fields.push("last_name = ?"); args.push(updates.lastName); }
+  if (updates.description !== undefined) { fields.push("description = ?"); args.push(updates.description); }
   if (updates.role !== undefined) { fields.push("role = ?"); args.push(updates.role); }
   if (updates.ageYears !== undefined) {
     const safeAge =
