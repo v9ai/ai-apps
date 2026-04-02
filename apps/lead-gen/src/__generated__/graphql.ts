@@ -1655,6 +1655,7 @@ export type SignalTypeCount = {
 };
 
 export type SourceType =
+  | 'BRAVE_SEARCH'
   | 'COMMONCRAWL'
   | 'LIVE_FETCH'
   | 'MANUAL'

@@ -12,6 +12,7 @@ enum SourceType {
   LIVE_FETCH
   MANUAL
   PARTNER
+  BRAVE_SEARCH
 }
 
 enum ExtractMethod {

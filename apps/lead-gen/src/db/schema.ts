@@ -122,7 +122,7 @@ export const companyFacts = pgTable(
 
     // Evidence/Provenance
     source_type: text("source_type", {
-      enum: ["COMMONCRAWL", "LIVE_FETCH", "MANUAL", "PARTNER"],
+      enum: ["COMMONCRAWL", "LIVE_FETCH", "MANUAL", "PARTNER", "BRAVE_SEARCH"],
     }).notNull(),
     source_url: text("source_url").notNull(),
     crawl_id: text("crawl_id"),
@@ -178,7 +178,7 @@ export const companySnapshots = pgTable(
 
     // Evidence
     source_type: text("source_type", {
-      enum: ["COMMONCRAWL", "LIVE_FETCH", "MANUAL", "PARTNER"],
+      enum: ["COMMONCRAWL", "LIVE_FETCH", "MANUAL", "PARTNER", "BRAVE_SEARCH"],
     }).notNull(),
     method: text("method", {
       enum: ["JSONLD", "META", "DOM", "HEURISTIC", "LLM"],

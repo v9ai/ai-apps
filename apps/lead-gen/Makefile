@@ -331,6 +331,12 @@ leads: leads-preflight ## Full leads pipeline with pre-flight + resume
 		echo "  SKIP: Neon import (set NEON_DATABASE_URL to enable)"; \
 	fi
 
+leads-brave: ## Discover AI lead-gen platforms via Brave Search (LangChain)
+	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; echo "  Fix: cd $(CONSULT_DIR) && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"; exit 1; }
+	@$(CONSULT_PY) -c "from langchain_community.utilities import BraveSearchWrapper" 2>/dev/null || \
+		{ echo "Installing langchain-community..."; $(CONSULT_PY) -m pip install langchain-community; }
+	$(CONSULT_PY) $(CONSULT_DIR)/discover_brave.py
+
 leads-status: start-build ## Show pipeline progress history
 	$(METAL_BIN) status
 
