@@ -1,4 +1,5 @@
 pub mod bloom;
+pub mod browser_render;
 pub mod dedup;
 pub mod dns;
 pub mod email_metal;
