@@ -24,6 +24,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
+from dotenv import load_dotenv
+
+# Load .env.local from project root (same as TS scripts)
+load_dotenv(Path(__file__).resolve().parent.parent / ".env.local")
+
 LOG_FMT = "%(asctime)s [%(levelname)s] %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOG_FMT)
 log = logging.getLogger("discover-brave")
