@@ -161,6 +161,32 @@ pub const MAX_KID_PLACES_PER_DAY: u8 = 3;
 /// Maximum comfortable walking hours per day with a young child.
 pub const MAX_DAILY_WALKING_HOURS: f32 = 7.0;
 
+// ═══════════════════════════════════════════════════════════════════════════
+// LONG-STAY RENTAL CONSTANTS
+// Mirror: apps/travel/src/lib/constants.ts
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Minimum stay duration in nights to qualify as a "long stay".
+/// Mirror: `LONG_STAY_MIN_NIGHTS` in `apps/travel/src/lib/constants.ts`.
+pub const LONG_STAY_MIN_NIGHTS: u16 = 28;
+
+/// Hard upper budget cap (euros per month).
+/// Rentals above this are dropped before scoring.
+/// Mirror: `LONG_STAY_MAX_MONTHLY_EUR` in `apps/travel/src/lib/constants.ts`.
+pub const LONG_STAY_MAX_MONTHLY_EUR: u16 = 1_500;
+
+/// Maximum beach distance (km) to qualify as "near beach".
+/// Rentals with a known distance exceeding this are dropped.
+/// Mirror: `LONG_STAY_MAX_BEACH_KM` in `apps/travel/src/lib/constants.ts`.
+pub const LONG_STAY_MAX_BEACH_KM: f32 = 2.0;
+
+/// Walking speed used to convert "N-minute walk to beach" to km.
+pub const WALKING_KM_PER_MIN: f32 = 0.083; // ~5 km/h
+
+/// Score applied when beach distance is unknown (0.0–1.0).
+/// Penalises but does not discard rentals with no distance data.
+pub const BEACH_UNKNOWN_SCORE: f32 = 0.3;
+
 #[cfg(test)]
 mod tests {
     use super::*;

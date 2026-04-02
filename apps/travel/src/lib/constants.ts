@@ -91,3 +91,17 @@ export const ISLAND_REGIONS = [
  * Rust mirror: `MAX_REVIEWS_NEW_HOTEL` in `crates/travel-ml/src/constants.rs`
  */
 export const MAX_REVIEWS_NEW_HOTEL = 50;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LONG-STAY RENTAL CONSTANTS
+// Rust mirror: crates/travel-ml/src/constants.rs
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Minimum nights for a long-stay rental. Rust mirror: LONG_STAY_MIN_NIGHTS */
+export const LONG_STAY_MIN_NIGHTS = 28;
+
+/** Hard budget cap in EUR/month. Rust mirror: LONG_STAY_MAX_MONTHLY_EUR */
+export const LONG_STAY_MAX_MONTHLY_EUR = 1_500;
+
+/** Maximum beach distance in km. Rust mirror: LONG_STAY_MAX_BEACH_KM */
+export const LONG_STAY_MAX_BEACH_KM = 2.0;

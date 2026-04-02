@@ -146,3 +146,45 @@ export interface HotelSearchResult {
   hotel: HotelResult;
   score: number;
 }
+
+// ── Long-stay rental search results ──
+
+export type PropertyType = "house" | "apartment" | "villa" | "studio";
+export type SourcePlatform = "airbnb" | "booking_com" | "spitogatos" | "curated";
+
+export interface LongStayRental {
+  rental_id: string;
+  name: string;
+  description: string;
+  property_type: PropertyType;
+  monthly_price_eur: number;
+  bedrooms: number | null;
+  max_guests: number | null;
+  location: string;
+  region: string;
+  lat: number;
+  lng: number;
+  source_url: string;
+  amenities: string[];
+  has_parking: boolean;
+  beach_distance_km: number | null; // null = unknown
+  image_url: string | null;
+  gallery?: string[];
+  min_nights: number;
+  source_platform: SourcePlatform;
+}
+
+export interface LongStayScore {
+  rental_id: string;
+  total_score: number;       // 0–100
+  price_score: number;       // 0–1
+  beach_score: number;       // 0–1
+  parking_score: number;     // 0 or 1
+  amenity_score: number;     // 0–1
+  embedding_score: number;   // 0–1
+}
+
+// Flattened output (matches Rust #[serde(flatten)])
+export interface LongStayResult extends LongStayRental {
+  score: LongStayScore;
+}

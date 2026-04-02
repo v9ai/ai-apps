@@ -6,6 +6,7 @@ pub mod embeddings;
 pub mod family_score;
 pub mod hotel;
 pub mod itinerary;
+pub mod long_stay;
 pub mod napoli_scorer;
 pub mod price_check;
 pub mod reviews;
