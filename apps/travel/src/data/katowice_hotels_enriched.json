@@ -1,0 +1,109 @@
+[
+  {
+    "hotel": {
+      "hotel_id": "kima-apartamenty-atal-szybowcowa-33",
+      "name": "KIMA Apartamenty Atal Szybowcowa 33",
+      "description": "Modern apartment in Katowice's Szybowcowa district. KIMA Apartamenty Atal offers contemporary accommodations with full kitchen facilities, balcony, and excellent connectivity to the city center. Ideal for both business and leisure travelers seeking a home-away-from-home experience.",
+      "star_rating": 4,
+      "board_type": "Self-catering",
+      "price_eur": 65.0,
+      "location": "Katowice, Silesia, Poland",
+      "region": "Silesia",
+      "lat": 50.2649,
+      "lng": 19.0238,
+      "source_url": "https://www.booking.com/hotel/pl/kima-apartamenty-atal-szybowcowa-33.html",
+      "amenities": [
+        "Wi-Fi",
+        "Parking",
+        "Kitchen",
+        "Balcony",
+        "Washing machine"
+      ],
+      "image_url": null,
+      "opened_year": 2024,
+      "reviews": [
+        {
+          "text": "This hotel offers Balcony.",
+          "source": "ml-analysis",
+          "sentiment": 0.6603837,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "This hotel offers Wi-Fi.",
+          "source": "ml-analysis",
+          "sentiment": 0.57989925,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Kitchen.",
+          "source": "ml-analysis",
+          "sentiment": 0.503141,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "Brand new hotel opened in 2024.",
+          "source": "ml-analysis",
+          "sentiment": 0.4535754,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "Ideal for both business and leisure travelers seeking a home-away-from-home experience",
+          "source": "description",
+          "sentiment": 0.4258025,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "This hotel offers Parking.",
+          "source": "ml-analysis",
+          "sentiment": 0.41198903,
+          "aspects": [],
+          "is_representative": true
+        },
+        {
+          "text": "4-star Self-catering in Katowice, Silesia, Poland.",
+          "source": "ml-analysis",
+          "sentiment": 0.34537077,
+          "aspects": [],
+          "is_representative": false
+        },
+        {
+          "text": "KIMA Apartamenty Atal offers contemporary accommodations with full kitchen facilities, balcony, and excellent connectivity to the city center",
+          "source": "description",
+          "sentiment": 0.30644712,
+          "aspects": [],
+          "is_representative": false
+        }
+      ],
+      "sentiment_score": 0.64946544,
+      "aspect_scores": {
+        "Location": 0.22052549,
+        "Food": 0.24842532,
+        "Service": 0.19063859,
+        "Cleanliness": 0.20176925,
+        "Value": 0.23249762,
+        "Family": 0.1918509
+      },
+      "review_summary": "This hotel offers Kitchen. This hotel offers Balcony. This hotel offers Parking.",
+      "pros": [
+        "This hotel offers Balcony.",
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Kitchen.",
+        "Brand new hotel opened in 2024.",
+        "Ideal for both business and leisure travelers seeking a home-away-from-home experience"
+      ],
+      "cons": [
+        "Modern apartment in Katowice's Szybowcowa district"
+      ],
+      "review_count": 126,
+      "review_rating": 9.5,
+      "value_score": 76.41064,
+      "discovery_score": 43.575077
+    },
+    "score": 0.95
+  }
+]

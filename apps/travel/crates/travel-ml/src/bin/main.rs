@@ -1,11 +1,13 @@
 //! travel-ml: unified CLI for the hotel discovery pipeline.
 //!
 //! Subcommands:
-//!   discover     — scrape → Candle filter → extract → dedup → reviews → JSON
-//!   sanitize     — drop non-seaside entries from JSON
-//!   ingest       — scrape hotel pages → embed → store in LanceDB
-//!   search       — semantic hotel search via LanceDB
-//!   price-check  — validate current prices against the €1,000 family budget
+//!   discover        — scrape → Candle filter → extract → dedup → reviews → JSON
+//!   sanitize        — drop non-seaside entries from JSON
+//!   ingest          — scrape hotel pages → embed → store in LanceDB
+//!   search          — semantic hotel search via LanceDB
+//!   reviews-store   — store hotel reviews in LanceDB with embeddings
+//!   reviews-search  — semantic search across hotel reviews
+//!   price-check     — validate current prices against the €1,000 family budget
 
 use anyhow::{Context, Result};
 use candle_core::Device;
@@ -20,6 +22,7 @@ use travel_ml::discover::{
 use travel_ml::embeddings::EmbeddingEngine;
 use travel_ml::hotel::{seed_hotels, Hotel, HotelSearchResult};
 use travel_ml::reviews::{self, EnrichedSearchResult};
+use travel_ml::review_store::ReviewStore;
 use travel_ml::scraper::scrape_or_seed;
 use travel_ml::store::HotelStore;
 
@@ -104,6 +107,51 @@ enum Cmd {
     NapoliBudget,
     /// Check current prices against the family trip budget
     PriceCheck,
+    /// Store hotel reviews in LanceDB with embeddings
+    ReviewsStore {
+        /// Path to hotels JSON file with reviews
+        #[arg(long, default_value = "../../src/data/hotels_2026.json")]
+        input: String,
+        /// Path to LanceDB database directory
+        #[arg(long, default_value = "data/reviews.lance")]
+        db: String,
+    },
+    /// Semantic search across hotel reviews
+    ReviewsSearch {
+        /// Search query
+        #[arg(long)]
+        query: String,
+        /// Filter by hotel ID (optional)
+        #[arg(long)]
+        hotel_id: Option<String>,
+        /// Path to LanceDB database directory
+        #[arg(long, default_value = "data/reviews.lance")]
+        db: String,
+        /// Number of results to return
+        #[arg(long, default_value_t = 10)]
+        top_k: usize,
+    },
+    /// List review counts by hotel
+    ReviewsStats {
+        /// Path to LanceDB database directory
+        #[arg(long, default_value = "data/reviews.lance")]
+        db: String,
+    },
+    /// List all reviews (optionally filtered by hotel)
+    ReviewsList {
+        /// Filter by hotel ID (optional)
+        #[arg(long)]
+        hotel_id: Option<String>,
+        /// Path to LanceDB database directory
+        #[arg(long, default_value = "data/reviews.lance")]
+        db: String,
+        /// Maximum reviews to show (0 = all)
+        #[arg(long, default_value_t = 50)]
+        limit: usize,
+        /// Show full review text (not truncated)
+        #[arg(long)]
+        full: bool,
+    },
 }
 
 #[tokio::main]
@@ -168,6 +216,18 @@ async fn main() -> Result<()> {
             print_price_report(&report);
             // Also print JSON for frontend consumption
             println!("{}", serde_json::to_string_pretty(&report).unwrap());
+        }
+        Cmd::ReviewsStore { input, db } => {
+            run_reviews_store(&input, &db).await?;
+        }
+        Cmd::ReviewsSearch { query, hotel_id, db, top_k } => {
+            run_reviews_search(&query, hotel_id.as_deref(), &db, top_k).await?;
+        }
+        Cmd::ReviewsStats { db } => {
+            run_reviews_stats(&db).await?;
+        }
+        Cmd::ReviewsList { hotel_id, db, limit, full } => {
+            run_reviews_list(hotel_id.as_deref(), &db, limit, full).await?;
         }
     }
 
@@ -712,6 +772,205 @@ fn curated_2026_hotels() -> Vec<Hotel> {
             image_url: None, gallery: vec![], opened_year: Some(DISCOVERY_YEAR),
         },
     ]
+}
+
+// ── Reviews Store ──────────────────────────────────────────────────────────
+
+async fn run_reviews_store(input: &str, db: &str) -> Result<()> {
+    info!("Loading hotels from {input}...");
+    let raw = std::fs::read_to_string(input).with_context(|| format!("reading {input}"))?;
+    let results: Vec<serde_json::Value> =
+        serde_json::from_str(&raw).with_context(|| format!("parsing {input}"))?;
+
+    info!("Loading Candle embedding model...");
+    let engine = EmbeddingEngine::new(Device::Cpu).context("loading embedding model")?;
+
+    info!("Connecting to ReviewStore at {db}...");
+    let store = ReviewStore::connect(db, engine)
+        .await
+        .context("connecting to ReviewStore")?;
+
+    let mut total_reviews = 0;
+    for (idx, entry) in results.iter().enumerate() {
+        let hotel = entry
+            .get("hotel")
+            .or(entry.get("hotel_id").and_then(|_| entry.get("hotel")))
+            .unwrap_or(entry);
+
+        let hotel_id_val = hotel
+            .get("hotel_id")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("hotel-{}", idx));
+
+        let reviews = hotel
+            .get("reviews")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|r| serde_json::from_value::<travel_ml::reviews::Review>(r.clone()).ok())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
+        if reviews.is_empty() {
+            continue;
+        }
+
+        let stored_reviews: Vec<travel_ml::review_store::StoredReview> = reviews
+            .iter()
+            .enumerate()
+            .map(|(i, r)| travel_ml::review_store::ReviewStore::review_to_stored(r, &hotel_id_val, i))
+            .collect();
+
+        let count = store.add_reviews(&stored_reviews).await?;
+        total_reviews += count;
+        info!("  {} — {} reviews stored", hotel_id_val, count);
+    }
+
+    info!("✅ Stored {} total reviews in {db}", total_reviews);
+    Ok(())
+}
+
+async fn run_reviews_search(query: &str, hotel_id: Option<&str>, db: &str, top_k: usize) -> Result<()> {
+    info!("Loading Candle embedding model...");
+    let engine = EmbeddingEngine::new(Device::Cpu).context("loading embedding model")?;
+
+    info!("Connecting to ReviewStore at {db}...");
+    let store = ReviewStore::connect(db, engine)
+        .await
+        .context("connecting to ReviewStore")?;
+
+    let results = if let Some(hid) = hotel_id {
+        info!("Searching reviews for hotel '{}' matching: {}", hid, query);
+        store.search_reviews_for_hotel(hid, query, top_k).await?
+    } else {
+        info!("Searching all reviews matching: {}", query);
+        store.search_reviews(query, top_k).await?
+    };
+
+    if results.is_empty() {
+        info!("No reviews found");
+        return Ok(());
+    }
+
+    println!("\n=== Top {} Reviews ===\n", results.len());
+    for (i, (review, score)) in results.iter().enumerate() {
+        println!(
+            "#{}, Hotel: {}, Score: {:.3}, Sentiment: {:.2}, Source: {}",
+            i + 1, review.hotel_id, score, review.sentiment, review.source
+        );
+        println!("   \"{}\"", review.text);
+        if let Ok(aspects) = serde_json::from_str::<Vec<String>>(&review.aspects_json) {
+            if !aspects.is_empty() {
+                println!("   Aspects: {}", aspects.join(", "));
+            }
+        }
+        println!();
+    }
+
+    Ok(())
+}
+
+async fn run_reviews_stats(db: &str) -> Result<()> {
+    info!("Loading Candle embedding model...");
+    let engine = EmbeddingEngine::new(Device::Cpu).context("loading embedding model")?;
+
+    info!("Connecting to ReviewStore at {db}...");
+    let store = ReviewStore::connect(db, engine)
+        .await
+        .context("connecting to ReviewStore")?;
+
+    let total = store.count().await?;
+    info!("Total reviews in store: {}", total);
+
+    let by_hotel = store.count_by_hotel().await?;
+    if !by_hotel.is_empty() {
+        println!("\n=== Reviews by Hotel ===\n");
+        for (hotel_id, count) in &by_hotel {
+            println!("  {}: {} reviews", hotel_id, count);
+        }
+    }
+
+    Ok(())
+}
+
+async fn run_reviews_list(hotel_id: Option<&str>, db: &str, limit: usize, full: bool) -> Result<()> {
+    info!("Loading Candle embedding model...");
+    let engine = EmbeddingEngine::new(Device::Cpu).context("loading embedding model")?;
+
+    info!("Connecting to ReviewStore at {db}...");
+    let store = ReviewStore::connect(db, engine)
+        .await
+        .context("connecting to ReviewStore")?;
+
+    let reviews = if let Some(hid) = hotel_id {
+        info!("Loading reviews for hotel: {}", hid);
+        store.get_reviews_for_hotel(hid).await?
+    } else {
+        info!("Loading all reviews...");
+        // Get all reviews by querying with empty search
+        let results = store.search_reviews("", limit).await?;
+        results.into_iter().map(|(r, _)| r).collect()
+    };
+
+    if reviews.is_empty() {
+        info!("No reviews found");
+        return Ok(());
+    }
+
+    println!("\n╔══════════════════════════════════════════════════════════════════════════════╗");
+    println!("║  REVIEWS{}", if let Some(hid) = hotel_id { format!(" for: {}", hid) } else { " (ALL)".to_string() });
+    println!("╚══════════════════════════════════════════════════════════════════════════════╝\n");
+
+    let mut current_hotel = String::new();
+    for (i, review) in reviews.iter().enumerate() {
+        if limit > 0 && i >= limit {
+            println!("\n  ... and {} more reviews", reviews.len() - limit);
+            break;
+        }
+
+        // Print hotel header when hotel changes
+        if review.hotel_id != current_hotel {
+            current_hotel = review.hotel_id.clone();
+            println!("\n┌────────────────────────────────────────────────────────────────────────────────┐");
+            println!("│ 🏨  {}\n│    {} reviews total", current_hotel, reviews.iter().filter(|r| r.hotel_id == current_hotel).count());
+            println!("└────────────────────────────────────────────────────────────────────────────────┘\n");
+        }
+
+        // Sentiment emoji
+        let sentiment_emoji = if review.sentiment >= 0.6 { "😊" } 
+            else if review.sentiment >= 0.4 { "😐" } 
+            else { "😞" };
+
+        // Representative badge
+        let rep_badge = if review.is_representative { "⭐ " } else { "" };
+
+        // Truncate text if needed
+        let text_display = if full || review.text.len() <= 120 {
+            review.text.clone()
+        } else {
+            format!("{}...", &review.text[..117])
+        };
+
+        // Parse aspects
+        let aspects_display = serde_json::from_str::<Vec<String>>(&review.aspects_json)
+            .ok()
+            .map(|a| a.join(", "))
+            .unwrap_or_default();
+
+        println!("  {}{} {} [{}] ({:.2})", rep_badge, sentiment_emoji, text_display, review.source, review.sentiment);
+        if !aspects_display.is_empty() {
+            println!("     ↳ Aspects: {}", aspects_display);
+        }
+        println!();
+    }
+
+    println!("─────────────────────────────────────────────────────────────────────────────────────");
+    println!("  Total: {} reviews shown", reviews.len().min(limit));
+    println!("─────────────────────────────────────────────────────────────────────────────────────\n");
+
+    Ok(())
 }
 
 #[cfg(test)]

@@ -10,6 +10,7 @@ pub mod long_stay;
 pub mod napoli_scorer;
 pub mod price_check;
 pub mod reviews;
+pub mod review_store;
 pub mod scraper;
 pub mod store;
 pub mod verify;
