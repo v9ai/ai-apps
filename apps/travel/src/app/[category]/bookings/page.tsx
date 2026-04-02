@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BookingsPage() {
-  return <BookingsPageContent />;
+export default async function BookingsPage({
+  params,
+}: {
+  params: Promise<{ category: string }>;
+}) {
+  const { category } = await params;
+  return <BookingsPageContent category={category} />;
 }
