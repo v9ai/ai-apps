@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Box,
   Flex,
@@ -10,10 +9,6 @@ import {
   Badge,
   Spinner,
   Button,
-  TextField,
-  TextArea,
-  Select,
-  Dialog,
   AlertDialog,
   Separator,
 } from "@radix-ui/themes";
@@ -23,7 +18,6 @@ import NextLink from "next/link";
 import dynamic from "next/dynamic";
 import {
   useGetContactQuery,
-  useUpdateContactMutation,
   useDeleteContactMutation,
   useDeleteRelationshipMutation,
   useGetRelationshipsQuery,
@@ -35,17 +29,6 @@ import {
 import { authClient } from "@/app/lib/auth/client";
 import ContactFeedbackList from "@/app/components/ContactFeedbackList";
 import AddContactFeedbackButton from "@/app/components/AddContactFeedbackButton";
-
-const ROLE_OPTIONS = [
-  "teacher",
-  "therapist",
-  "doctor",
-  "tutor",
-  "coach",
-  "counselor",
-  "caregiver",
-  "other",
-] as const;
 
 function ContactDetailContent() {
   const router = useRouter();
@@ -64,31 +47,6 @@ function ContactDetailContent() {
   });
 
   const contact = data?.contact;
-
-  // Edit form state
-  const [editOpen, setEditOpen] = useState(false);
-  const [editFirstName, setEditFirstName] = useState("");
-  const [editLastName, setEditLastName] = useState("");
-  const [editSlug, setEditSlug] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editRole, setEditRole] = useState("");
-  const [editAgeYears, setEditAgeYears] = useState("");
-  const [editNotes, setEditNotes] = useState("");
-  const [editError, setEditError] = useState<string | null>(null);
-
-  const [updateContact, { loading: updating }] = useUpdateContactMutation({
-    onCompleted: (data) => {
-      setEditOpen(false);
-      setEditError(null);
-      // Navigate to the new slug URL if slug changed
-      const newSlug = data?.updateContact?.slug;
-      if (newSlug && newSlug !== contactRaw) {
-        router.replace(`/family/${familySlug}/contacts/${newSlug}`);
-      }
-    },
-    onError: (err) => setEditError(err.message),
-    refetchQueries: ["GetContact"],
-  });
 
   const [deleteContact, { loading: deleting }] = useDeleteContactMutation({
     onCompleted: () => {
@@ -142,46 +100,8 @@ function ContactDetailContent() {
     deleteContactFeedback({ variables: { id: fbId } });
   };
 
-  function openEditDialog() {
-    if (!contact) return;
-    setEditFirstName(contact.firstName);
-    setEditLastName(contact.lastName ?? "");
-    setEditSlug(contact.slug ?? "");
-    setEditDescription(contact.description ?? "");
-    setEditRole(contact.role ?? "");
-    setEditAgeYears(contact.ageYears ? String(contact.ageYears) : "");
-    setEditNotes(contact.notes ?? "");
-    setEditError(null);
-    setEditOpen(true);
-  }
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!contact) return;
-    if (!editFirstName.trim()) {
-      setEditError("First name is required");
-      return;
-    }
-    const slugValue = editSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
-    await updateContact({
-      variables: {
-        id: contact.id,
-        input: {
-          firstName: editFirstName.trim(),
-          lastName: editLastName.trim() || undefined,
-          slug: slugValue || undefined,
-          description: editDescription.trim() || undefined,
-          role: editRole || undefined,
-          ageYears: editAgeYears ? parseInt(editAgeYears, 10) : undefined,
-          notes: editNotes.trim() || undefined,
-        },
-      },
-    });
-  };
-
   const handleDelete = async () => {
     if (!contact) return;
-    // Delete the relationship first if we can find it
     const relationships = relsData?.relationships ?? [];
     const rel = relationships.find(
       (r) =>
@@ -228,9 +148,11 @@ function ContactDetailContent() {
             <Heading size="4">Details</Heading>
             {isOwner && (
               <Flex gap="2">
-                <Button variant="soft" size="2" onClick={openEditDialog}>
-                  <Pencil1Icon />
-                  Edit
+                <Button variant="soft" size="2" asChild>
+                  <NextLink href={`/family/${familySlug}/contacts/${contactRaw}/edit`}>
+                    <Pencil1Icon />
+                    Edit
+                  </NextLink>
                 </Button>
                 <AlertDialog.Root>
                   <AlertDialog.Trigger>
@@ -377,130 +299,6 @@ function ContactDetailContent() {
           />
         </Flex>
       </Card>
-
-      {/* Edit Dialog */}
-      <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>
-        <Dialog.Content style={{ maxWidth: 500 }}>
-          <Dialog.Title>Edit Contact</Dialog.Title>
-          <form onSubmit={handleUpdate}>
-            <Flex direction="column" gap="3">
-              <label>
-                <Text as="div" size="2" mb="1" weight="medium">
-                  First Name *
-                </Text>
-                <TextField.Root
-                  placeholder="First name"
-                  value={editFirstName}
-                  onChange={(e) => setEditFirstName(e.target.value)}
-                  required
-                  disabled={updating}
-                />
-              </label>
-              <label>
-                <Text as="div" size="2" mb="1" weight="medium">
-                  Last Name
-                </Text>
-                <TextField.Root
-                  placeholder="Last name"
-                  value={editLastName}
-                  onChange={(e) => setEditLastName(e.target.value)}
-                  disabled={updating}
-                />
-              </label>
-              <label>
-                <Text as="div" size="2" mb="1" weight="medium">
-                  Slug
-                </Text>
-                <TextField.Root
-                  placeholder="url-friendly-name"
-                  value={editSlug}
-                  onChange={(e) => setEditSlug(e.target.value)}
-                  disabled={updating}
-                />
-                <Text as="div" size="1" color="gray" mt="1">
-                  URL path segment, e.g. /family/bogdan/contacts/{editSlug || "lizi"}
-                </Text>
-              </label>
-              <label>
-                <Text as="div" size="2" mb="1" weight="medium">
-                  Description
-                </Text>
-                <TextArea
-                  placeholder="Brief description of this contact..."
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  rows={2}
-                  disabled={updating}
-                />
-              </label>
-              <Flex direction="column" gap="1">
-                <Text as="div" size="2" weight="medium">
-                  Role
-                </Text>
-                <Select.Root
-                  value={editRole || "none"}
-                  onValueChange={(v) => setEditRole(v === "none" ? "" : v)}
-                  disabled={updating}
-                >
-                  <Select.Trigger
-                    placeholder="Select role..."
-                    style={{ width: "100%" }}
-                  />
-                  <Select.Content>
-                    <Select.Item value="none">Select role...</Select.Item>
-                    {ROLE_OPTIONS.map((role) => (
-                      <Select.Item key={role} value={role}>
-                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Root>
-              </Flex>
-              <label>
-                <Text as="div" size="2" mb="1" weight="medium">
-                  Age
-                </Text>
-                <TextField.Root
-                  type="number"
-                  placeholder="Age in years"
-                  value={editAgeYears}
-                  onChange={(e) => setEditAgeYears(e.target.value)}
-                  disabled={updating}
-                />
-              </label>
-              <label>
-                <Text as="div" size="2" mb="1" weight="medium">
-                  Notes
-                </Text>
-                <TextArea
-                  placeholder="Notes about this contact..."
-                  value={editNotes}
-                  onChange={(e) => setEditNotes(e.target.value)}
-                  rows={3}
-                  disabled={updating}
-                />
-              </label>
-
-              {editError && (
-                <Text color="red" size="2">
-                  {editError}
-                </Text>
-              )}
-
-              <Flex gap="3" justify="end" mt="2">
-                <Dialog.Close>
-                  <Button variant="soft" color="gray" disabled={updating}>
-                    Cancel
-                  </Button>
-                </Dialog.Close>
-                <Button type="submit" disabled={updating}>
-                  {updating ? "Saving..." : "Save Changes"}
-                </Button>
-              </Flex>
-            </Flex>
-          </form>
-        </Dialog.Content>
-      </Dialog.Root>
     </Flex>
   );
 }
