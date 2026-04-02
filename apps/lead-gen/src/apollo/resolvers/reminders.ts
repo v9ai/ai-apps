@@ -8,13 +8,21 @@ import { isAdminEmail } from "@/lib/admin";
 /**
  * Compute the urgency score for re-engaging a contact.
  *
- * Formula: next_touch_score = authority_score × urgency
+ * Formula: next_touch_score = authority_score × urgency × reply_modifier
  *
  * Urgency is an inverse-sigmoid centred at 14 days:
  *   urgency = 1 / (1 + exp(-0.2 × (days − 14)))
  *
+ * Reply classification modifiers:
+ *   interested     → 1.5 (MAX priority — they want to talk)
+ *   info_request   → 1.3 (HIGH priority — needs response)
+ *   auto_reply     → 1.0 (ignore for scoring — retry later)
+ *   no reply       → 1.0 (default urgency)
+ *   not_interested → 0.0 (stop follow-ups)
+ *   unsubscribe    → 0.0 (do not contact)
+ *   bounced        → 0.0 (email invalid)
+ *
  * Special cases:
- *   hasReply = true  → 0.0 (conversation active)
  *   daysSince = null → urgency = 1.0 (never contacted)
  *   days >= 90       → urgency clamped to 1.0 (gone cold)
  */
@@ -22,8 +30,27 @@ export function computeNextTouchScore(
   authorityScore: number,
   daysSinceLastEmail: number | null,
   hasReply: boolean,
+  replyClassification?: string | null,
 ): number {
-  if (hasReply) return 0.0;
+  // Reply classification overrides
+  if (replyClassification) {
+    switch (replyClassification) {
+      case "not_interested":
+      case "unsubscribe":
+      case "bounced":
+        return 0.0;
+      case "interested":
+        return Math.round(authorityScore * 1.5 * 100) / 100;
+      case "info_request":
+        return Math.round(authorityScore * 1.3 * 100) / 100;
+      case "auto_reply":
+        // Fall through to normal urgency calculation
+        break;
+    }
+  }
+
+  // Legacy: hasReply without classification → 0.0 (conversation active)
+  if (hasReply && !replyClassification) return 0.0;
 
   let urgency: number;
   if (daysSinceLastEmail === null) {
@@ -250,13 +277,20 @@ export const remindersResolvers = {
 
       const contactIds = companyContacts.map((c) => c.id);
 
-      // 2. Get last sent_at and reply status per contact in a single query
-      type EmailSummary = { contact_id: number; last_sent_at: string | null; any_reply: boolean };
+      // 2. Get last sent_at, reply status, and reply classification per contact
+      type EmailSummary = { contact_id: number; last_sent_at: string | null; any_reply: boolean; latest_reply_classification: string | null };
       const emailSummaries: EmailSummary[] = await context.db
         .select({
           contact_id: contactEmails.contact_id,
           last_sent_at: max(contactEmails.sent_at).as("last_sent_at"),
           any_reply: sql<boolean>`bool_or(${contactEmails.reply_received})`.as("any_reply"),
+          latest_reply_classification: sql<string | null>`(
+            SELECT reply_classification FROM contact_emails ce2
+            WHERE ce2.contact_id = ${contactEmails.contact_id}
+              AND ce2.reply_classification IS NOT NULL
+            ORDER BY ce2.reply_received_at DESC NULLS LAST
+            LIMIT 1
+          )`.as("latest_reply_classification"),
         })
         .from(contactEmails)
         .where(inArray(contactEmails.contact_id, contactIds))
@@ -273,6 +307,7 @@ export const remindersResolvers = {
         const summary = summaryMap.get(contact.id);
         const hasReply = summary?.any_reply ?? false;
         const lastSent = summary?.last_sent_at ?? null;
+        const replyClassification = summary?.latest_reply_classification ?? null;
 
         let daysSince: number | null = null;
         if (lastSent) {
@@ -281,7 +316,7 @@ export const remindersResolvers = {
         }
 
         const authorityScore = contact.authority_score ?? 0.1;
-        const score = computeNextTouchScore(authorityScore, daysSince, hasReply);
+        const score = computeNextTouchScore(authorityScore, daysSince, hasReply, replyClassification);
 
         // TODO: use DataLoader — this issues one UPDATE per contact (N+1); batch with a single UPDATE ... WHERE id IN (...)
         await context.db

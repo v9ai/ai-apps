@@ -81,6 +81,21 @@ export type CancelEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ClassifyBatchResult = {
+  __typename?: 'ClassifyBatchResult';
+  classified: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type ClassifyEmailResult = {
+  __typename?: 'ClassifyEmailResult';
+  classification: Maybe<Scalars['String']['output']>;
+  confidence: Maybe<Scalars['Float']['output']>;
+  matchedContactId: Maybe<Scalars['Int']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type CompaniesResponse = {
   __typename?: 'CompaniesResponse';
   companies: Array<Company>;
@@ -915,6 +930,8 @@ export type Mutation = {
   blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
+  classifyAllPending: ClassifyBatchResult;
+  classifyReceivedEmail: ClassifyEmailResult;
   computeContactDeletionScores: BatchOperationResult;
   computeNextTouchScores: ComputeNextTouchScoresResult;
   createCompany: Company;
@@ -1015,6 +1032,11 @@ export type MutationCancelCompanyEmailsArgs = {
 
 export type MutationCancelScheduledEmailArgs = {
   resendId: Scalars['String']['input'];
+};
+
+
+export type MutationClassifyReceivedEmailArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -1491,6 +1513,7 @@ export type QueryReceivedEmailArgs = {
 
 export type QueryReceivedEmailsArgs = {
   archived?: InputMaybe<Scalars['Boolean']['input']>;
+  classification?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1510,10 +1533,15 @@ export type ReceivedEmail = {
   archivedAt: Maybe<Scalars['String']['output']>;
   attachments: Maybe<Scalars['JSON']['output']>;
   ccEmails: Array<Scalars['String']['output']>;
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  classifiedAt: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   fromEmail: Maybe<Scalars['String']['output']>;
   htmlContent: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  matchedContactId: Maybe<Scalars['Int']['output']>;
+  matchedOutboundId: Maybe<Scalars['Int']['output']>;
   messageId: Maybe<Scalars['String']['output']>;
   receivedAt: Scalars['String']['output'];
   replyToEmails: Array<Scalars['String']['output']>;
@@ -1871,6 +1899,8 @@ export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Partial<Scalars['Boolean']['output']>>;
   CancelCompanyEmailsResult: ResolverTypeWrapper<Partial<CancelCompanyEmailsResult>>;
   CancelEmailResult: ResolverTypeWrapper<Partial<CancelEmailResult>>;
+  ClassifyBatchResult: ResolverTypeWrapper<Partial<ClassifyBatchResult>>;
+  ClassifyEmailResult: ResolverTypeWrapper<Partial<ClassifyEmailResult>>;
   CompaniesResponse: ResolverTypeWrapper<Partial<CompaniesResponse>>;
   Company: ResolverTypeWrapper<Partial<Company>>;
   CompanyCategory: ResolverTypeWrapper<Partial<CompanyCategory>>;
@@ -1994,6 +2024,8 @@ export type ResolversParentTypes = {
   Boolean: Partial<Scalars['Boolean']['output']>;
   CancelCompanyEmailsResult: Partial<CancelCompanyEmailsResult>;
   CancelEmailResult: Partial<CancelEmailResult>;
+  ClassifyBatchResult: Partial<ClassifyBatchResult>;
+  ClassifyEmailResult: Partial<ClassifyEmailResult>;
   CompaniesResponse: Partial<CompaniesResponse>;
   Company: Partial<Company>;
   CompanyContactEmail: Partial<CompanyContactEmail>;
@@ -2142,6 +2174,19 @@ export type CancelCompanyEmailsResultResolvers<ContextType = GraphQLContext, Par
 
 export type CancelEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CancelEmailResult'] = ResolversParentTypes['CancelEmailResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type ClassifyBatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ClassifyBatchResult'] = ResolversParentTypes['ClassifyBatchResult']> = {
+  classified?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type ClassifyEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ClassifyEmailResult'] = ResolversParentTypes['ClassifyEmailResult']> = {
+  classification?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  confidence?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  matchedContactId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
@@ -2734,6 +2779,8 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   blockCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationBlockCompanyArgs, 'id'>>;
   cancelCompanyEmails?: Resolver<ResolversTypes['CancelCompanyEmailsResult'], ParentType, ContextType, RequireFields<MutationCancelCompanyEmailsArgs, 'companyId'>>;
   cancelScheduledEmail?: Resolver<ResolversTypes['CancelEmailResult'], ParentType, ContextType, RequireFields<MutationCancelScheduledEmailArgs, 'resendId'>>;
+  classifyAllPending?: Resolver<ResolversTypes['ClassifyBatchResult'], ParentType, ContextType>;
+  classifyReceivedEmail?: Resolver<ResolversTypes['ClassifyEmailResult'], ParentType, ContextType, RequireFields<MutationClassifyReceivedEmailArgs, 'id'>>;
   computeContactDeletionScores?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationComputeContactDeletionScoresArgs>>;
   computeNextTouchScores?: Resolver<ResolversTypes['ComputeNextTouchScoresResult'], ParentType, ContextType, RequireFields<MutationComputeNextTouchScoresArgs, 'companyId'>>;
   createCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationCreateCompanyArgs, 'input'>>;
@@ -2829,10 +2876,15 @@ export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType exte
   archivedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   attachments?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   ccEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  classification?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  classificationConfidence?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  classifiedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   fromEmail?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   htmlContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  matchedContactId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  matchedOutboundId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   messageId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   receivedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   replyToEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2972,6 +3024,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   BatchOperationResult?: BatchOperationResultResolvers<ContextType>;
   CancelCompanyEmailsResult?: CancelCompanyEmailsResultResolvers<ContextType>;
   CancelEmailResult?: CancelEmailResultResolvers<ContextType>;
+  ClassifyBatchResult?: ClassifyBatchResultResolvers<ContextType>;
+  ClassifyEmailResult?: ClassifyEmailResultResolvers<ContextType>;
   CompaniesResponse?: CompaniesResponseResolvers<ContextType>;
   Company?: CompanyResolvers<ContextType>;
   CompanyContactEmail?: CompanyContactEmailResolvers<ContextType>;

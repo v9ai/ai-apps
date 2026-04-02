@@ -4,7 +4,7 @@ extend type Query {
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
   emailTemplate(id: Int!): EmailTemplate
   emailStats: EmailStats!
-  receivedEmails(limit: Int, offset: Int, archived: Boolean): ReceivedEmailsResult!
+  receivedEmails(limit: Int, offset: Int, archived: Boolean, classification: String): ReceivedEmailsResult!
   receivedEmail(id: Int!): ReceivedEmail
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
 }
@@ -50,6 +50,8 @@ extend type Mutation {
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   generateReply(input: GenerateReplyInput!): GenerateReplyResult!
+  classifyReceivedEmail(id: Int!): ClassifyEmailResult!
+  classifyAllPending: ClassifyBatchResult!
   archiveEmail(id: Int!): ArchiveEmailResult!
   unarchiveEmail(id: Int!): ArchiveEmailResult!
   previewEmail(input: PreviewEmailInput!): EmailPreview!
@@ -343,6 +345,11 @@ type ReceivedEmail {
   attachments: JSON
   receivedAt: String!
   archivedAt: String
+  classification: String
+  classificationConfidence: Float
+  classifiedAt: String
+  matchedContactId: Int
+  matchedOutboundId: Int
   createdAt: String!
   updatedAt: String!
 }
@@ -350,6 +357,19 @@ type ReceivedEmail {
 type ReceivedEmailsResult {
   emails: [ReceivedEmail!]!
   totalCount: Int!
+}
+
+type ClassifyEmailResult {
+  success: Boolean!
+  classification: String
+  confidence: Float
+  matchedContactId: Int
+}
+
+type ClassifyBatchResult {
+  success: Boolean!
+  classified: Int!
+  message: String!
 }
 
 type ArchiveEmailResult {

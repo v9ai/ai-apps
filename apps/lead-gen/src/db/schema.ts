@@ -330,6 +330,8 @@ export const contactEmails = pgTable(
     tags: text("tags").default("[]"), // JSON array
     headers: text("headers").default("[]"), // JSON array
     idempotency_key: text("idempotency_key"),
+    // Reply classification (populated when a received email is matched to this outbound)
+    reply_classification: text("reply_classification"), // interested | not_interested | auto_reply | bounced | info_request | unsubscribe
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
@@ -439,6 +441,13 @@ export const receivedEmails = pgTable(
     attachments: text("attachments").default("[]"), // JSON array
     received_at: text("received_at").notNull(),
     archived_at: text("archived_at"),
+    // Reply classification (ML — logistic regression)
+    classification: text("classification"), // interested | not_interested | auto_reply | bounced | info_request | unsubscribe
+    classification_confidence: real("classification_confidence"),
+    classified_at: text("classified_at"),
+    // Contact matching
+    matched_contact_id: integer("matched_contact_id").references(() => contacts.id, { onDelete: "set null" }),
+    matched_outbound_id: integer("matched_outbound_id").references(() => contactEmails.id, { onDelete: "set null" }),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
@@ -451,6 +460,7 @@ export const receivedEmails = pgTable(
     messageIdIdx: index("idx_received_emails_message_id").on(table.message_id),
     receivedAtIdx: index("idx_received_emails_received_at").on(table.received_at),
     resendIdIdx: index("idx_received_emails_resend_id").on(table.resend_id),
+    classificationIdx: index("idx_received_emails_classification").on(table.classification),
   }),
 );
 
