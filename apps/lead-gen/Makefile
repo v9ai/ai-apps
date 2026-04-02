@@ -341,6 +341,10 @@ enrich-brave: ## Enrich Brave Search companies via website scraping + MLX
 	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; exit 1; }
 	$(CONSULT_PY) $(CONSULT_DIR)/enrich_brave.py
 
+extract-ai-features: ## Deep-extract AI features from enriched companies (MLX)
+	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; exit 1; }
+	$(CONSULT_PY) $(CONSULT_DIR)/extract_ai_features.py $(ARGS)
+
 leads-status: start-build ## Show pipeline progress history
 	$(METAL_BIN) status
 
