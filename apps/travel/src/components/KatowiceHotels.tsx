@@ -801,12 +801,12 @@ export function KatowiceHotels({ hotels, lang }: KatowiceHotelsProps) {
         <div
           className={css({
             display: "grid",
-            gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
-            gap: { base: "4", md: "5" },
+            gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(4, 1fr)" },
+            gap: { base: "3", md: "4" },
           })}
         >
           {sortedHotels.map((hotel) =>
-            hotel.review_texts && hotel.review_texts.slice(0, 4).map((review, idx) => (
+            hotel.review_texts && hotel.review_texts.map((review, idx) => (
               <div
                 key={`${hotel.hotel_id}-review-${idx}`}
                 className={css({
@@ -814,7 +814,7 @@ export function KatowiceHotels({ hotels, lang }: KatowiceHotelsProps) {
                   rounded: "card",
                   border: "1px solid",
                   borderColor: "steel.border",
-                  p: "4",
+                  p: "3",
                   display: "flex",
                   flexDirection: "column",
                   gap: "2",
@@ -851,6 +851,10 @@ export function KatowiceHotels({ hotels, lang }: KatowiceHotelsProps) {
                       color: "text.muted",
                       fontWeight: "600",
                       fontFamily: "display",
+                      maxW: "120px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     })}
                   >
                     {hotel.name}
@@ -858,9 +862,9 @@ export function KatowiceHotels({ hotels, lang }: KatowiceHotelsProps) {
                 </div>
                 <p
                   className={css({
-                    fontSize: "xs",
+                    fontSize: "2xs",
                     color: "text.secondary",
-                    lineHeight: "1.6",
+                    lineHeight: "1.5",
                     fontStyle: "italic",
                   })}
                 >
