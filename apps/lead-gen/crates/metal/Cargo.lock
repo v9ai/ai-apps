@@ -937,6 +937,7 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "anyhow",
+ "base64",
  "bytemuck",
  "chrono",
  "clap",
