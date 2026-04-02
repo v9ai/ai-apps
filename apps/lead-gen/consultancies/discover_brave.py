@@ -1,10 +1,10 @@
 """
 AI-Native Lead Gen Platform Discovery (Brave Search)
 =====================================================
-LangChain BraveSearchWrapper → Company extraction → LanceDB storage
+LangChain BraveSearchWrapper → Company extraction → LanceDB + Neon PostgreSQL
 
 Discovers AI-native lead generation and sales platforms via Brave Search API,
-deduplicates against existing LanceDB data, and stores new companies.
+deduplicates against existing data, and stores in both LanceDB and Neon.
 
 Usage:
     python discover_brave.py                  # Full discovery
@@ -20,6 +20,7 @@ import os
 import re
 import time
 from dataclasses import dataclass, asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -112,6 +113,11 @@ def extract_name_from_title(title: str) -> str:
 def should_skip(domain: str) -> bool:
     """Check if domain is a known aggregator/noise site."""
     return any(skip in domain for skip in SKIP_DOMAINS)
+
+
+def domain_to_key(domain: str) -> str:
+    """Convert domain to a unique key (same logic as import-pipeline.ts)."""
+    return re.sub(r"[^a-z0-9-]", "", domain.replace(".", "-")).lower()
 
 
 # ---------------------------------------------------------------------------
@@ -279,6 +285,114 @@ def _save_json_fallback(companies: list[Company]):
 
 
 # ---------------------------------------------------------------------------
+# Neon PostgreSQL storage
+# ---------------------------------------------------------------------------
+
+def _get_neon_conn():
+    """Connect to Neon PostgreSQL via NEON_DATABASE_URL."""
+    import psycopg2
+    url = os.environ.get("NEON_DATABASE_URL", "")
+    if not url:
+        return None
+    return psycopg2.connect(url, sslmode="require")
+
+
+def dedup_against_neon(companies: list[Company]) -> list[Company]:
+    """Remove companies whose keys already exist in Neon."""
+    try:
+        conn = _get_neon_conn()
+        if not conn:
+            log.info("NEON_DATABASE_URL not set — skipping Neon dedup")
+            return companies
+
+        with conn.cursor() as cur:
+            keys = [domain_to_key(normalize_domain(c.website)) for c in companies]
+            cur.execute(
+                "SELECT key FROM companies WHERE key = ANY(%s)",
+                (keys,),
+            )
+            existing_keys = {row[0] for row in cur.fetchall()}
+
+        conn.close()
+
+        before = len(companies)
+        companies = [
+            c for c in companies
+            if domain_to_key(normalize_domain(c.website)) not in existing_keys
+        ]
+        log.info(f"Neon dedup: {before} → {len(companies)} new companies")
+        return companies
+
+    except Exception as e:
+        log.warning(f"Neon dedup failed ({e}) — proceeding without")
+        return companies
+
+
+def store_in_neon(companies: list[Company]):
+    """Insert companies + provenance facts into Neon PostgreSQL."""
+    try:
+        conn = _get_neon_conn()
+        if not conn:
+            log.warning("NEON_DATABASE_URL not set — skipping Neon storage")
+            return
+    except Exception as e:
+        log.warning(f"Neon connection failed: {e}")
+        return
+
+    now = datetime.now(timezone.utc).isoformat()
+    imported = 0
+    skipped = 0
+
+    with conn.cursor() as cur:
+        for c in companies:
+            domain = normalize_domain(c.website)
+            key = domain_to_key(domain)
+
+            try:
+                # Insert company (skip on conflict)
+                cur.execute(
+                    """
+                    INSERT INTO companies (key, name, website, canonical_domain, description,
+                                          category, ai_tier, score, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (key) DO NOTHING
+                    RETURNING id
+                    """,
+                    (key, c.name, c.website, domain, c.description,
+                     "UNKNOWN", 0, 0.5, now, now),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    skipped += 1
+                    continue
+
+                company_id = row[0]
+                imported += 1
+
+                # Insert provenance fact
+                cur.execute(
+                    """
+                    INSERT INTO company_facts
+                        (company_id, field, value_text, confidence,
+                         source_type, source_url, observed_at, method)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (company_id, "discovery_source", f"brave_search: {c.name}",
+                     0.7, "BRAVE_SEARCH", c.website, now, "HEURISTIC"),
+                )
+
+            except Exception as e:
+                log.warning(f"Neon insert error for {c.name}: {e}")
+                conn.rollback()
+                continue
+
+        conn.commit()
+
+    conn.close()
+    log.info(f"Neon: {imported} imported, {skipped} skipped (already exist)")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -292,6 +406,8 @@ def main():
                         help="Add custom query (can be repeated)")
     parser.add_argument("--count", type=int, default=10,
                         help="Results per query (max 20)")
+    parser.add_argument("--no-neon", action="store_true",
+                        help="Skip Neon PostgreSQL storage (LanceDB only)")
     args = parser.parse_args()
 
     queries = QUERIES + args.query
@@ -305,6 +421,7 @@ def main():
 
     companies = extract_companies(results)
     companies = dedup_against_lancedb(companies)
+    companies = dedup_against_neon(companies)
 
     if not companies:
         log.info("No new companies found (all duplicates).")
@@ -327,6 +444,8 @@ def main():
         return
 
     store_companies(companies)
+    if not args.no_neon:
+        store_in_neon(companies)
     log.info("Done.")
 
 

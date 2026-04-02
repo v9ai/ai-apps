@@ -7,3 +7,4 @@ sentence-transformers>=3.0
 mlx-lm>=0.20
 tqdm
 langchain-community>=0.3
+psycopg2-binary>=2.9
