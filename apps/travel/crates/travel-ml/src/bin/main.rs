@@ -89,6 +89,15 @@ enum Cmd {
         #[arg(long)]
         out: Option<String>,
     },
+    /// Discover Greece long-stay rentals (houses/villas/apartments near beach with parking)
+    DiscoverLongStay {
+        /// Output JSON file path
+        #[arg(long, default_value = "../../src/data/long_stay_2026.json")]
+        out: String,
+        /// Skip Candle embeddings (faster, no embedding_score)
+        #[arg(long)]
+        skip_embeddings: bool,
+    },
     /// Score Napoli places for family/kid-friendliness using Candle embeddings
     FamilyScore,
     /// Generate Napoli family budget plan and 7-day itinerary (no ML model needed)
@@ -117,6 +126,9 @@ async fn main() -> Result<()> {
                 info!("Running sanitize pass on {out}...");
                 run_sanitize(&out)?;
             }
+        }
+        Cmd::DiscoverLongStay { out, skip_embeddings } => {
+            travel_ml::long_stay::run_long_stay_pipeline(&out, skip_embeddings).await?
         }
         Cmd::Sanitize { file } => run_sanitize(&file)?,
         Cmd::Ingest { urls, db, seed_only } => run_ingest(&urls, &db, seed_only).await?,

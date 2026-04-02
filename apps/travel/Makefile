@@ -1,6 +1,6 @@
 CRATE = ../../crates/travel-ml
 
-.PHONY: start ischia ischia-fast
+.PHONY: start ischia ischia-fast long-stay
 
 start:
 	cd $(CRATE) && cargo test --lib
@@ -17,4 +17,10 @@ ischia:
 ischia-fast:
 	cd $(CRATE) && cargo test --lib
 	cd $(CRATE) && RUST_LOG=info cargo run --bin travel-ischia -- --skip-reviews
+	vercel --prod --yes
+
+# Long-stay rental discovery: scrape → ML score → export → deploy
+long-stay:
+	cd $(CRATE) && cargo test --lib
+	cd $(CRATE) && RUST_LOG=info cargo run --bin travel-ml -- discover-long-stay
 	vercel --prod --yes
