@@ -19,6 +19,7 @@ export const contacts: NonNullable<QueryResolvers['contacts']> = async (
     slug: item.slug,
     firstName: item.firstName,
     lastName: item.lastName,
+    description: item.description,
     role: item.role,
     ageYears: item.ageYears,
     notes: item.notes,

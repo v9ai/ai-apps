@@ -140,6 +140,7 @@ type Contact {
   ageYears: Int
   createdAt: String!
   createdBy: String!
+  description: String
   firstName: String!
   id: Int!
   lastName: String
@@ -208,6 +209,7 @@ input CreateContactFeedbackInput {
 
 input CreateContactInput {
   ageYears: Int
+  description: String
   firstName: String!
   lastName: String
   notes: String
@@ -1213,6 +1215,7 @@ input UpdateContactFeedbackInput {
 
 input UpdateContactInput {
   ageYears: Int
+  description: String
   firstName: String
   lastName: String
   notes: String

@@ -170,6 +170,7 @@ export type Contact = {
   ageYears?: Maybe<Scalars['Int']['output']>;
   createdAt: Scalars['String']['output'];
   createdBy: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
   firstName: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
@@ -241,6 +242,7 @@ export type CreateContactFeedbackInput = {
 
 export type CreateContactInput = {
   ageYears?: InputMaybe<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   firstName: Scalars['String']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -1920,6 +1922,7 @@ export type UpdateContactFeedbackInput = {
 
 export type UpdateContactInput = {
   ageYears?: InputMaybe<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -2458,6 +2461,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   ageYears?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdBy?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   lastName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

@@ -5,6 +5,7 @@ mutation UpdateContact($id: Int!, $input: UpdateContactInput!) {
     slug
     firstName
     lastName
+    description
     role
     ageYears
     notes

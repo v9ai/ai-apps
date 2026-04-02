@@ -1220,6 +1220,7 @@ type Contact {
   slug: String
   firstName: String!
   lastName: String
+  description: String
   role: String
   ageYears: Int
   notes: String
@@ -1255,6 +1256,7 @@ type RelationshipPerson {
 input CreateContactInput {
   firstName: String!
   lastName: String
+  description: String
   role: String
   ageYears: Int
   notes: String
@@ -1264,6 +1266,7 @@ input UpdateContactInput {
   firstName: String
   lastName: String
   slug: String
+  description: String
   role: String
   ageYears: Int
   notes: String

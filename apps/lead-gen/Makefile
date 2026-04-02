@@ -337,6 +337,10 @@ leads-brave: ## Discover AI lead-gen platforms via Brave Search (LangChain)
 		{ echo "Installing langchain-community..."; $(CONSULT_PY) -m pip install langchain-community; }
 	$(CONSULT_PY) $(CONSULT_DIR)/discover_brave.py
 
+enrich-brave: ## Enrich Brave Search companies via website scraping + MLX
+	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; exit 1; }
+	$(CONSULT_PY) $(CONSULT_DIR)/enrich_brave.py
+
 leads-status: start-build ## Show pipeline progress history
 	$(METAL_BIN) status
 

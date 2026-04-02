@@ -427,6 +427,7 @@ export const contacts = pgTable("contacts", {
   slug: text("slug").unique(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name"),
+  description: text("description"),
   role: text("role"),
   ageYears: integer("age_years"),
   notes: text("notes"),
