@@ -10,6 +10,7 @@ import { CategoryFilter } from "@/components/CategoryFilter";
 import { Footer } from "@/components/Footer";
 import { HotelPicks } from "@/components/HotelPicks";
 import { useLang } from "@/components/LanguageSwitcher";
+import { getKatowiceHotelsWithReviews } from "@/lib/data";
 
 const T = {
   ro: {
@@ -337,11 +338,10 @@ export function TravelPageContent({ category }: Props) {
                 gap: { base: "4", md: "5" },
               })}
             >
-              {curatedHotels.slice(0, 3).map((hotel) => {
-                const hotelReviews = scrapedReviews[hotel.property_id]?.review_texts || [];
-                return hotelReviews.slice(0, 3).map((review: string, idx: number) => (
+              {getKatowiceHotelsWithReviews().slice(0, 3).map((hotel) =>
+                hotel.review_texts && hotel.review_texts.slice(0, 3).map((review: string, idx: number) => (
                   <div
-                    key={`${hotel.property_id}-review-${idx}`}
+                    key={`${hotel.hotel_id}-review-${idx}`}
                     className={css({
                       bg: "steel.surface",
                       rounded: "card",
@@ -383,8 +383,8 @@ export function TravelPageContent({ category }: Props) {
                       "{review}"
                     </p>
                   </div>
-                ));
-              })}
+                ))
+              )}
             </div>
           </section>
         )}
