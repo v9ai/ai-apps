@@ -1,0 +1,1995 @@
+[
+  {
+    "id": 39070,
+    "key": "clari-com",
+    "name": "Revenue Intelligence",
+    "domain": "clari.com",
+    "website": "https://www.clari.com/revenue-intelligence/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "RAG"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "pipeline-forecasting",
+      "signal-detection"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven insights from sales data to enhance forecasting and performance."
+  },
+  {
+    "id": 39052,
+    "key": "aisdr-com",
+    "name": "Your AI SDR that books meetings",
+    "domain": "aisdr.com",
+    "website": "https://aisdr.com/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "intent-detection",
+      "meeting-summary",
+      "pipeline-forecasting",
+      "auto-research",
+      "objection-handling",
+      "sequence-automation",
+      "data-enrichment"
+    ],
+    "automation_level": "semi-auto",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven sales outreach with personalized strategies and automation."
+  },
+  {
+    "id": 39072,
+    "key": "gong-io",
+    "name": "What is Revenue Intelligence",
+    "domain": "gong.io",
+    "website": "https://www.gong.io/revenue-intelligence",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows",
+      "RAG"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "pipeline-forecasting",
+      "signal-detection",
+      "auto-research",
+      "objection-handling"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven insights and automation to optimize revenue outcomes across all sales touchpoints."
+  },
+  {
+    "id": 39046,
+    "key": "bland-ai",
+    "name": "Bland AI",
+    "domain": "bland.ai",
+    "website": "https://www.bland.ai/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "voice-AI"
+    ],
+    "ai_sales_capabilities": [
+      "voice-outreach",
+      "intent-detection",
+      "conversation-intelligence",
+      "objection-handling"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "custom",
+    "ai_differentiator": "Proprietary voice AI for enterprise sales automation with real-time interaction."
+  },
+  {
+    "id": 39042,
+    "key": "wildix-com",
+    "name": "Sales Intelligence Software: AI Conversation Analytics",
+    "domain": "wildix.com",
+    "website": "https://www.wildix.com/product/sales-intelligence-software/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "RAG"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "intent-detection",
+      "meeting-summary",
+      "pipeline-forecasting",
+      "signal-detection"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI converts conversations into actionable intelligence for sales teams."
+  },
+  {
+    "id": 39036,
+    "key": "dealcode-ai",
+    "name": "Lead Generation in SaaS Companies: 5 Strategies for Success",
+    "domain": "dealcode.ai",
+    "website": "https://www.dealcode.ai/blog/lead-generation-in-saas-companies-5-strategies-for-success",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "lookalike-search",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven lead enrichment and lookalike search for sales teams."
+  },
+  {
+    "id": 39065,
+    "key": "amplemarket-com",
+    "name": "15 Best AI Lead Generation Tools for B2B Sales (2026 Guide)",
+    "domain": "amplemarket.com",
+    "website": "https://www.amplemarket.com/blog/best-ai-lead-generation-tools",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "signal-detection",
+      "data-enrichment",
+      "pipeline-forecasting",
+      "auto-research",
+      "email-personalization",
+      "lead-scoring"
+    ],
+    "automation_level": "semi-auto",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "custom",
+    "ai_differentiator": "AI-driven sales platform with proprietary models for lead generation and pipeline optimization."
+  },
+  {
+    "id": 39089,
+    "key": "sprinklr-com",
+    "name": "Sprinklr: The Definitive AI-Native Customer Experience Platform",
+    "domain": "sprinklr.com",
+    "website": "https://www.sprinklr.com/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": ""
+  },
+  {
+    "id": 39016,
+    "key": "monday-com",
+    "name": "Sales automation AI: 7 game-changing tools to grow your revenue faster",
+    "domain": "monday.com",
+    "website": "https://monday.com/blog/crm-and-sales/sales-automation-ai/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Integrates AI for enhanced sales automation and data-driven insights."
+  },
+  {
+    "id": 39043,
+    "key": "cognism-com",
+    "name": "A Comparison of the Top 27 Sales Intelligence Tools for 2026",
+    "domain": "cognism.com",
+    "website": "https://www.cognism.com/blog/sales-intelligence-tools",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "signal-detection",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Offers fresh, accurate company and contact data for lead generation and sales engagement."
+  },
+  {
+    "id": 39021,
+    "key": "pipedrive-com",
+    "name": "AI Automation",
+    "domain": "pipedrive.com",
+    "website": "https://www.pipedrive.com/en/products/ai-crm/ai-automation",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "RAG"
+    ],
+    "ai_sales_capabilities": [
+      "pipeline-forecasting",
+      "data-enrichment",
+      "intent-detection",
+      "auto-research",
+      "objection-handling"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven CRM with predictive analytics and automation for sales efficiency."
+  },
+  {
+    "id": 39053,
+    "key": "pipeline-zoominfo-com",
+    "name": "Best AI SDR Tools for Outbound Sales in 2026",
+    "domain": "pipeline.zoominfo.com",
+    "website": "https://pipeline.zoominfo.com/sales/ai-sdr-for-outbound-sales",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "auto-research",
+      "lookalike-search",
+      "data-enrichment",
+      "sequence-automation"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Proprietary AI for advanced lead research and outreach automation."
+  },
+  {
+    "id": 39074,
+    "key": "topstartups-io",
+    "name": "Top 33 Sales Startups 2026",
+    "domain": "topstartups.io",
+    "website": "https://topstartups.io/?industries=Sales",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": ""
+  },
+  {
+    "id": 39061,
+    "key": "scopicstudios-com",
+    "name": "8 Best AI SDR Tools for B2B Pipeline Generation in 2026: Automation Without Spam",
+    "domain": "scopicstudios.com",
+    "website": "https://scopicstudios.com/blog/best-ai-sdr-tools-for-b2b-pipeline-generation/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "pipeline-forecasting",
+      "intent-detection",
+      "auto-research",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Focuses on automation without spam for efficient B2B pipeline generation."
+  },
+  {
+    "id": 39038,
+    "key": "genesy-ai",
+    "name": "10 best tools for SaaS lead generation in 2025",
+    "domain": "genesy.ai",
+    "website": "https://www.genesy.ai/blog/lead-generation-saas",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "data-enrichment",
+      "intent-detection",
+      "conversation-intelligence",
+      "auto-research",
+      "sequence-automation"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven data enrichment and intent detection for personalized sales outreach."
+  },
+  {
+    "id": 39091,
+    "key": "ocean-io",
+    "name": "Best B2B Lookalikes with millions of data points",
+    "domain": "ocean.io",
+    "website": "https://www.ocean.io",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "RAG"
+    ],
+    "ai_sales_capabilities": [
+      "lookalike-search",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Proprietary AI for advanced lookalike search and data enrichment."
+  },
+  {
+    "id": 39033,
+    "key": "ibm-com",
+    "name": "AI for Lead Generation",
+    "domain": "ibm.com",
+    "website": "https://www.ibm.com/think/topics/ai-lead-generation",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "intent-detection",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Leverages IBM's AI to enhance lead generation through advanced data analysis and automation."
+  },
+  {
+    "id": 39037,
+    "key": "callboxinc-com",
+    "name": "Callbox",
+    "domain": "callboxinc.com",
+    "website": "https://www.callboxinc.com/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "pipeline-forecasting",
+      "data-enrichment",
+      "auto-research",
+      "sequence-automation"
+    ],
+    "automation_level": "semi-auto",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Combines 20 years of lead gen expertise with AI to boost sales pipelines globally."
+  },
+  {
+    "id": 39075,
+    "key": "aifundingtracker-com",
+    "name": "Top AI Agent Startups 2026 (Funding & Valuation)",
+    "domain": "aifundingtracker.com",
+    "website": "https://aifundingtracker.com/top-ai-agent-startups/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "conversation-intelligence",
+      "intent-detection",
+      "meeting-summary",
+      "pipeline-forecasting",
+      "auto-research",
+      "objection-handling",
+      "sequence-automation",
+      "data-enrichment"
+    ],
+    "automation_level": "agentic",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "cutting-edge",
+    "ai_differentiator": "Proprietary AI agents for autonomous sales execution with advanced automation and real-time insights."
+  },
+  {
+    "id": 39034,
+    "key": "clay-com",
+    "name": "Clay",
+    "domain": "clay.com",
+    "website": "https://www.clay.com/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows",
+      "RAG"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "data-enrichment",
+      "pipeline-forecasting",
+      "auto-research"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Unifies AI agents, intent data, and enrichment for targeted sales strategies."
+  },
+  {
+    "id": 39079,
+    "key": "saleshandy-com",
+    "name": "Top AI Outreach Tools to Automate Outreach Campaigns in 2026",
+    "domain": "saleshandy.com",
+    "website": "https://www.saleshandy.com/blog/ai-outreach-tools/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "sequence-automation",
+      "data-enrichment"
+    ],
+    "automation_level": "semi-auto",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven outreach with personalized sequences and data enrichment for efficient lead generation."
+  },
+  {
+    "id": 39071,
+    "key": "revenue-io",
+    "name": "What is Revenue Intelligence? What is Revenue Intelligence?",
+    "domain": "revenue.io",
+    "website": "https://www.revenue.io/inside-sales-glossary/what-is-revenue-intelligence",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "pipeline-forecasting",
+      "signal-detection",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven insights and orchestration across the entire revenue process."
+  },
+  {
+    "id": 39058,
+    "key": "signalfire-com",
+    "name": "We put AI SDR tools to the test: Here's what we learned",
+    "domain": "signalfire.com",
+    "website": "https://www.signalfire.com/blog/expert-picks-ai-sdr-tools",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "data-enrichment",
+      "conversation-intelligence",
+      "auto-research",
+      "sequence-automation"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Leverages AI to enhance SDR efficiency with intent detection and data enrichment."
+  },
+  {
+    "id": 39060,
+    "key": "qualified-com",
+    "name": "Welcome to the era of agentic marketing",
+    "domain": "qualified.com",
+    "website": "https://www.qualified.com",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "data-enrichment",
+      "meeting-summary",
+      "pipeline-forecasting",
+      "intent-detection",
+      "objection-handling",
+      "sequence-automation"
+    ],
+    "automation_level": "autonomous",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "custom",
+    "ai_differentiator": "Proprietary agentic AI platform for 24/7 sales automation and pipeline generation."
+  },
+  {
+    "id": 39019,
+    "key": "instantly-ai",
+    "name": "Sales Engagement and Lead Intelligence",
+    "domain": "instantly.ai",
+    "website": "https://instantly.ai/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "sequence-automation",
+      "auto-research",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven outreach and lead generation with proprietary models and automation."
+  },
+  {
+    "id": 39055,
+    "key": "luru-app",
+    "name": "Meet Luru",
+    "domain": "luru.app",
+    "website": "https://www.luru.app/ai-sdr-agent",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "auto-research",
+      "sequence-automation",
+      "data-enrichment",
+      "pipeline-forecasting"
+    ],
+    "automation_level": "agentic",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "custom",
+    "ai_differentiator": "AI agents trained for specific tasks to drive pipeline with precision and personalization."
+  },
+  {
+    "id": 39073,
+    "key": "secondtalent-com",
+    "name": "Top 20 AI Startups That Raised Funding in November 2025",
+    "domain": "secondtalent.com",
+    "website": "https://www.secondtalent.com/resources/top-ai-startups-that-raised-funding-in-november-2025/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": ""
+  },
+  {
+    "id": 39057,
+    "key": "getbreakout-ai",
+    "name": "10 Best AI SDR Agents in 2025 [with real user reviews]",
+    "domain": "getbreakout.ai",
+    "website": "https://getbreakout.ai/blog/10-best-ai-sdr-agents-2025",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "intent-detection",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Proprietary AI for advanced lead scoring and personalized outreach."
+  },
+  {
+    "id": 39093,
+    "key": "spotio-com",
+    "name": "Best AI Sales Tools for Field Teams [2026 Adoption Data]",
+    "domain": "spotio.com",
+    "website": "https://spotio.com/blog/ai-sales-tools/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "pipeline-forecasting",
+      "data-enrichment",
+      "signal-detection",
+      "lookalike-search"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Optimized for field sales with real-time visibility and productivity boost."
+  },
+  {
+    "id": 39018,
+    "key": "zapier-com",
+    "name": "The best AI sales assistant software",
+    "domain": "zapier.com",
+    "website": "https://zapier.com/blog/ai-sales-assistant/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": ""
+  },
+  {
+    "id": 39082,
+    "key": "persana-ai",
+    "name": "7 Best AI Outreach Tools Sales Teams Actually Use in 2025",
+    "domain": "persana.ai",
+    "website": "https://persana.ai/blogs/ai-outreach-tools",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "RAG"
+    ],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "auto-research",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Proprietary AI with RAG for personalized outreach and research."
+  },
+  {
+    "id": 39032,
+    "key": "b2brocket-ai",
+    "name": "B2B Rocket AI Agents to Automate Outreach & Lead Generation",
+    "domain": "b2brocket.ai",
+    "website": "https://www.b2brocket.ai/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "intent-detection",
+      "data-enrichment",
+      "sequence-automation",
+      "auto-research"
+    ],
+    "automation_level": "semi-auto",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI agents automate outreach, lead generation, and sales processes with proprietary models and agentic workflows."
+  },
+  {
+    "id": 39085,
+    "key": "trellus-ai",
+    "name": "10 Top AI Powered Platforms for Sales Engagement",
+    "domain": "trellus.ai",
+    "website": "https://www.trellus.ai/post/ai-powered-sales-engagement-platforms",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "conversation-intelligence",
+      "intent-detection",
+      "pipeline-forecasting",
+      "auto-research",
+      "objection-handling",
+      "sequence-automation"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Proprietary AI for coaching SDRs and managers with advanced sales automation features."
+  },
+  {
+    "id": 39026,
+    "key": "seamless-ai",
+    "name": "Best AI Prospecting Tool - Sales Prospecting Software",
+    "domain": "seamless.ai",
+    "website": "https://seamless.ai/products/platform-overview",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "RAG"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "data-enrichment",
+      "lookalike-search",
+      "pipeline-forecasting"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Unifies data, outreach, and automation for real-time, verified sales insights."
+  },
+  {
+    "id": 39023,
+    "key": "crono-one",
+    "name": "9 Best AI Tools for Sales Prospecting: In-depth Review",
+    "domain": "crono.one",
+    "website": "https://www.crono.one/academy/ai-tools-for-sales-prospecting/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "sequence-automation",
+      "data-enrichment",
+      "signal-detection",
+      "auto-research"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Unifies sales process with AI-native engine for faster, predictable outbound."
+  },
+  {
+    "id": 39056,
+    "key": "knock-ai-com",
+    "name": "How to Build an AI SDR for Inbound and Outbound Sales",
+    "domain": "knock-ai.com",
+    "website": "https://www.knock-ai.com/blog/build-ai-sdr-for-inbound-and-outbound-sales",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "data-enrichment",
+      "chat-outreach",
+      "pipeline-forecasting",
+      "lead-scoring"
+    ],
+    "automation_level": "semi-auto",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "custom",
+    "ai_differentiator": "Proprietary AI for intent detection, data enrichment, and automated outreach in B2B sales."
+  },
+  {
+    "id": 39048,
+    "key": "landbase-com",
+    "name": "Top Conversational Targeting AI for Sales and Marketing Teams",
+    "domain": "landbase.com",
+    "website": "https://www.landbase.com/blog/top-conversational-targeting-ai-for-sales-and-marketing-teams",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [
+      "OpenAI",
+      "Anthropic",
+      "Google",
+      "Meta",
+      "Mistral",
+      "Cohere",
+      "Bedrock",
+      "Azure-OpenAI"
+    ],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "intent-detection",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": true,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Agentic AI transforms plain language into targeted audiences for sales and marketing."
+  },
+  {
+    "id": 39063,
+    "key": "outreach-io",
+    "name": "11 best AI sales pipeline tools to scale revenue in 2025",
+    "domain": "outreach.io",
+    "website": "https://www.outreach.io/resources/blog/best-ai-sales-pipeline-tools",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "pipeline-forecasting",
+      "data-enrichment",
+      "intent-detection",
+      "auto-research",
+      "sequence-automation"
+    ],
+    "automation_level": "semi-auto",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "custom",
+    "ai_differentiator": "Unifies prospect engagement, retention, and revenue intelligence with integrated AI agents."
+  },
+  {
+    "id": 39081,
+    "key": "tuesday-so",
+    "name": "Tuesday",
+    "domain": "tuesday.so",
+    "website": "https://tuesday.so/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Triple-verified leads with AI-driven personalized outreach for higher response rates."
+  },
+  {
+    "id": 39095,
+    "key": "topo-io",
+    "name": "What Are the Best AI Sales Tools to Boost Your Revenue in 2025?",
+    "domain": "topo.io",
+    "website": "https://www.topo.io/blog/what-are-the-best-ai-sales-tools-to-boost-your-revenue-in-2025",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "data-enrichment",
+      "sequence-automation",
+      "signal-detection",
+      "email-personalization"
+    ],
+    "automation_level": "autonomous",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "custom",
+    "ai_differentiator": "AI agents handle prospecting and outreach autonomously with real-time intent detection and data enrichment."
+  },
+  {
+    "id": 39025,
+    "key": "regie-ai",
+    "name": "Regie.ai: Generate more pipeline with the world's only AI SEP",
+    "domain": "regie.ai",
+    "website": "https://www.regie.ai/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "sequence-automation",
+      "signal-detection",
+      "auto-research",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "custom",
+    "ai_differentiator": "AI-driven prospecting and engagement with personalized sequences and intent detection."
+  },
+  {
+    "id": 39094,
+    "key": "heysam-ai",
+    "name": "The 10 Best AI Tools for Sales in 2025",
+    "domain": "heysam.ai",
+    "website": "https://www.heysam.ai/blog/best-ai-tools-for-sales",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "meeting-summary",
+      "pipeline-forecasting",
+      "auto-research",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Proprietary AI agents for seamless sales automation and intelligence."
+  },
+  {
+    "id": 39039,
+    "key": "salesforge-ai",
+    "name": "12 AI Sales Intelligence Tools for Smart Prospecting in 2026",
+    "domain": "salesforge.ai",
+    "website": "https://www.salesforge.ai/blog/sales-intelligence-tools",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "lookalike-search",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "AI-powered search engine for lead generation with free credits."
+  },
+  {
+    "id": 39084,
+    "key": "nooks-ai",
+    "name": "Nooks",
+    "domain": "nooks.ai",
+    "website": "https://www.nooks.ai",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "sequence-automation",
+      "voice-outreach",
+      "email-personalization",
+      "intent-detection",
+      "conversation-intelligence"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "AI-driven sequencing and outreach across multiple channels for sales automation."
+  },
+  {
+    "id": 39064,
+    "key": "42dm-net",
+    "name": "Top AI Lead Generation Tools to Boost Your B2B Sales Pipeline",
+    "domain": "42dm.net",
+    "website": "https://42dm.net/top-ai-lead-generation-tools-to-boost-your-b2b-sales-pipeline/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Leverages AI to enhance lead scoring, email personalization, and pipeline forecasting."
+  },
+  {
+    "id": 39041,
+    "key": "guideflow-com",
+    "name": "12 best AI sales tools for 2026",
+    "domain": "guideflow.com",
+    "website": "https://www.guideflow.com/blog/best-ai-sales-tools",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "auto-research",
+      "email-personalization",
+      "intent-detection",
+      "pipeline-forecasting",
+      "lead-scoring",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Automates repetitive sales tasks to free up time for deal-closing conversations."
+  },
+  {
+    "id": 39076,
+    "key": "renewator-com",
+    "name": "The Fastest\u2011Growing AI Companies and Projects in 2025",
+    "domain": "renewator.com",
+    "website": "https://renewator.com/the-fastest-growing-ai-companies-and-projects-in-2025/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "email-personalization",
+      "conversation-intelligence",
+      "pipeline-forecasting",
+      "auto-research"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-powered framework optimizes healthcare ad copywriting with tailored messaging and CTAs."
+  },
+  {
+    "id": 39040,
+    "key": "goconsensus-com",
+    "name": "24 Best AI Sales Tools To Beat Your Sales Goals in 2026",
+    "domain": "goconsensus.com",
+    "website": "https://goconsensus.com/blog/best-ai-sales-tools",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "multi-modal"
+    ],
+    "ai_sales_capabilities": [
+      "meeting-summary",
+      "pipeline-forecasting",
+      "auto-research",
+      "data-enrichment",
+      "intent-detection"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven demos and personalized buyer journeys enhance sales efficiency and lead conversion."
+  },
+  {
+    "id": 39015,
+    "key": "coldiq-com",
+    "name": "Best AI Sales Tools 2026",
+    "domain": "coldiq.com",
+    "website": "https://coldiq.com/ai-sales-tools",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "conversation-intelligence",
+      "intent-detection",
+      "meeting-summary",
+      "pipeline-forecasting",
+      "auto-research",
+      "objection-handling",
+      "sequence-automation",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Comprehensive AI sales directory with integrated GTM strategies."
+  },
+  {
+    "id": 39092,
+    "key": "copilotai-com",
+    "name": "AI-Powered LinkedIn Outbound for Sales Teams",
+    "domain": "copilotai.com",
+    "website": "https://www.copilotai.com/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "auto-research",
+      "sequence-automation",
+      "lookalike-search",
+      "data-enrichment"
+    ],
+    "automation_level": "semi-auto",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "custom",
+    "ai_differentiator": "Self-trained AI agents for high-intent outreach and meeting scheduling."
+  },
+  {
+    "id": 39014,
+    "key": "heyreach-io",
+    "name": "Best AI sales tools to crush outreach in 2026 (without crushing your sales team)",
+    "domain": "heyreach.io",
+    "website": "https://www.heyreach.io/blog/best-ai-sales-tools",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "intent-detection",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "AI-driven LinkedIn outreach with personalization and intent detection."
+  },
+  {
+    "id": 39090,
+    "key": "apollo-io",
+    "name": "AI Sales Platform",
+    "domain": "apollo.io",
+    "website": "https://www.apollo.io/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "RAG"
+    ],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "intent-detection",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Leverages proprietary data and AI for advanced sales intelligence and automation."
+  },
+  {
+    "id": 39067,
+    "key": "assemblyai-com",
+    "name": "8 best revenue intelligence platforms using AI in 2026",
+    "domain": "assemblyai.com",
+    "website": "https://www.assemblyai.com/blog/revenue-intelligence-platforms",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "voice-AI"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "meeting-summary",
+      "intent-detection"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Advanced speech AI with medical mode for accurate revenue intelligence."
+  },
+  {
+    "id": 39047,
+    "key": "gupshup-ai",
+    "name": "Gupshup.ai",
+    "domain": "gupshup.ai",
+    "website": "https://www.gupshup.ai/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "intent-detection",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "autonomous",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "custom",
+    "ai_differentiator": "Proprietary AI agents for personalized customer interactions across sales, marketing, and support."
+  },
+  {
+    "id": 39045,
+    "key": "salesloft-com",
+    "name": "Drift Platform: Transform Conversations to Long-term Customer Relationship",
+    "domain": "salesloft.com",
+    "website": "https://www.salesloft.com/platform/drift",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "pipeline-forecasting",
+      "auto-research",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven sales orchestration with real-time engagement and predictive analytics."
+  },
+  {
+    "id": 39068,
+    "key": "aviso-com",
+    "name": "Aviso",
+    "domain": "aviso.com",
+    "website": "https://www.aviso.com/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "pipeline-forecasting",
+      "signal-detection",
+      "meeting-summary",
+      "objection-handling"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "custom",
+    "ai_differentiator": "AI-driven sales coaching with high forecast accuracy and real-time interaction."
+  },
+  {
+    "id": 39050,
+    "key": "sierra-ai",
+    "name": "Better customer experiences",
+    "domain": "sierra.ai",
+    "website": "https://sierra.ai",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "conversation-intelligence",
+      "pipeline-forecasting"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI agents that mirror human communication nuances for empathetic, personalized customer support."
+  },
+  {
+    "id": 39030,
+    "key": "prospectory-ai",
+    "name": "AI Prospecting Tool for B2B Sales Teams",
+    "domain": "prospectory.ai",
+    "website": "https://prospectory.ai/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "data-enrichment",
+      "signal-detection",
+      "auto-research",
+      "objection-handling",
+      "sequence-automation"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "custom",
+    "ai_differentiator": "AI-driven research and scoring to identify high-potential leads efficiently."
+  },
+  {
+    "id": 39029,
+    "key": "smartlead-ai",
+    "name": "The Definitive Guide to AI-Powered B2B Prospecting in 2026",
+    "domain": "smartlead.ai",
+    "website": "https://www.smartlead.ai/blog/the-definitive-guide-to-b2b-ai-prospecting-in-2026",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "intent-detection",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Leverages AI for advanced lead scoring, personalization, and data enrichment in B2B sales."
+  },
+  {
+    "id": 39022,
+    "key": "artisan-co",
+    "name": "Top 10 AI Prospecting Tools for Sales in 2026",
+    "domain": "artisan.co",
+    "website": "https://www.artisan.co/blog/ai-prospecting-tools",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "intent-detection",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "custom",
+    "ai_differentiator": "AI collaborators handle repetitive tasks, allowing teams to focus on high-value work."
+  },
+  {
+    "id": 39024,
+    "key": "salesmotion-io",
+    "name": "Best AI Prospecting Tools for B2B Sales Teams (2026)",
+    "domain": "salesmotion.io",
+    "website": "https://salesmotion.io/blog/best-ai-prospecting-tools",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "signal-detection",
+      "auto-research",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI agents monitor accounts 24/7 and detect buying signals with business context."
+  },
+  {
+    "id": 39059,
+    "key": "bdr-ai",
+    "name": "AI for Sales Pipeline",
+    "domain": "bdr.ai",
+    "website": "https://www.bdr.ai/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "data-enrichment",
+      "lookalike-search",
+      "sequence-automation"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven lead generation with intent detection and data enrichment for high-quality prospects."
+  },
+  {
+    "id": 39054,
+    "key": "usergems-com",
+    "name": "AI SDR for Outbound (That Actually Works)",
+    "domain": "usergems.com",
+    "website": "https://www.usergems.com/product/ai-sdr",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "signal-detection",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Combines user and UserGems signals for targeted outbound sales."
+  },
+  {
+    "id": 39096,
+    "key": "skaled-com",
+    "name": "AI Sales Tools: The 2025 List to Eliminate Guesswork",
+    "domain": "skaled.com",
+    "website": "https://skaled.com/insights/best-ai-sales-tools/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "conversation-intelligence",
+      "intent-detection",
+      "pipeline-forecasting",
+      "auto-research",
+      "objection-handling"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Combines AI with strategic GTM roadmap for accelerated sales adoption."
+  },
+  {
+    "id": 39086,
+    "key": "insiderone-com",
+    "name": "Insider One",
+    "domain": "insiderone.com",
+    "website": "https://insiderone.com/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "intent-detection",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Unifies data, personalization, AI, and channels into one platform for customer engagement."
+  },
+  {
+    "id": 39083,
+    "key": "11x-ai",
+    "name": "The 11 Best AI Email Outreach Tools for 2026",
+    "domain": "11x.ai",
+    "website": "https://www.11x.ai/tips/ai-email-outreach-tools",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "signal-detection",
+      "auto-research"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Leverages AI to personalize and optimize email outreach campaigns for higher engagement."
+  },
+  {
+    "id": 39078,
+    "key": "cloudeagle-ai",
+    "name": "AI Outreach Tools: 10 Best Platforms to Automate Outreach",
+    "domain": "cloudeagle.ai",
+    "website": "https://www.cloudeagle.ai/blogs/top-ai-outreach-tools",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": ""
+  },
+  {
+    "id": 39098,
+    "key": "quotapath-com",
+    "name": "Best AI Sales Tools 2025: Complete Guide to Sales Intelligence",
+    "domain": "quotapath.com",
+    "website": "https://www.quotapath.com/blog/ai-sales-tools/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Combines AI with sales compensation management for aligned team performance."
+  },
+  {
+    "id": 39066,
+    "key": "unifygtm-com",
+    "name": "Best Pipeline Generation Tools for B2B SaaS in 2026",
+    "domain": "unifygtm.com",
+    "website": "https://www.unifygtm.com/explore/best-pipeline-generation-tools",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "auto-research",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Unify's AI agents provide deep prospect research and context for informed sales engagement."
+  },
+  {
+    "id": 39087,
+    "key": "mixmax-com",
+    "name": "The AI Sales Execution Platform",
+    "domain": "mixmax.com",
+    "website": "https://www.mixmax.com/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "signal-detection",
+      "sequence-automation",
+      "email-personalization",
+      "pipeline-forecasting"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "AI-driven signals and sequences to optimize sales execution and customer engagement."
+  },
+  {
+    "id": 39020,
+    "key": "warmly-ai",
+    "name": "AI-Powered Sales Automation: Use Cases, Examples & Software",
+    "domain": "warmly.ai",
+    "website": "https://www.warmly.ai/p/blog/ai-sales-automation",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows",
+      "multi-agent"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "signal-detection",
+      "data-enrichment",
+      "pipeline-forecasting",
+      "auto-research",
+      "sequence-automation"
+    ],
+    "automation_level": "agentic",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "custom",
+    "ai_differentiator": "Real-time AI agents for dynamic sales intelligence and orchestration."
+  },
+  {
+    "id": 39049,
+    "key": "decagon-ai",
+    "name": "Decagon",
+    "domain": "decagon.ai",
+    "website": "https://decagon.ai/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows",
+      "voice-AI"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "conversation-intelligence",
+      "pipeline-forecasting",
+      "objection-handling",
+      "data-enrichment"
+    ],
+    "automation_level": "agentic",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "custom",
+    "ai_differentiator": "Proprietary AI for personalized, proactive customer experiences with voice and agentic workflows."
+  },
+  {
+    "id": 39080,
+    "key": "ringcentral-com",
+    "name": "AI outreach: How artificial intelligence can help you close more deals",
+    "domain": "ringcentral.com",
+    "website": "https://www.ringcentral.com/us/en/blog/ai-outreach/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "intent-detection",
+      "meeting-summary",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI enhances customer interactions and sales workflows with real-time insights and automation."
+  },
+  {
+    "id": 39088,
+    "key": "crmswitch-com",
+    "name": "AI-Native CRM Platforms: A Guide for Today's Teams",
+    "domain": "crmswitch.com",
+    "website": "https://crmswitch.com/buying-crm/ai-native-crm/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": ""
+  },
+  {
+    "id": 39069,
+    "key": "sybill-ai",
+    "name": "6 Best Revenue Intelligence Platforms in 2026: Top Tools Compared for Sales Teams",
+    "domain": "sybill.ai",
+    "website": "https://www.sybill.ai/blogs/best-revenue-intelligence-platforms",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "RAG",
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "meeting-summary",
+      "pipeline-forecasting",
+      "data-enrichment",
+      "objection-handling",
+      "email-personalization"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI learns from calls, emails, and CRM to answer sales questions and automate tasks."
+  },
+  {
+    "id": 39077,
+    "key": "lindy-ai",
+    "name": "Top 5 AI Outreach Tools for 2026",
+    "domain": "lindy.ai",
+    "website": "https://www.lindy.ai/blog/ai-outreach-tools",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "email-personalization",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Lindy integrates AI for personalized outreach and sales automation with a focus on data-driven insights."
+  },
+  {
+    "id": 39035,
+    "key": "podium-com",
+    "name": "Podium: AI Lead Generation & Lead Management Platform",
+    "domain": "podium.com",
+    "website": "https://www.podium.com/",
+    "ai_models": [
+      "proprietary"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "pipeline-forecasting",
+      "sequence-automation",
+      "objection-handling",
+      "data-enrichment"
+    ],
+    "automation_level": "autonomous",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "custom",
+    "ai_differentiator": "AI employee handles leads 24/7 with business context and human-like interaction."
+  },
+  {
+    "id": 39062,
+    "key": "foundersgtm-com",
+    "name": "The AI Pipeline System: How B2B Founders Generate Consistent Sales Without a Sales Team",
+    "domain": "foundersgtm.com",
+    "website": "https://www.foundersgtm.com/p/the-ai-pipeline-system-how-b2b-founders",
+    "ai_models": [
+      "Claude"
+    ],
+    "llm_providers": [
+      "Anthropic"
+    ],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "lead-scoring",
+      "email-personalization",
+      "intent-detection",
+      "pipeline-forecasting",
+      "auto-research",
+      "sequence-automation",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": true,
+    "realtime_ai": false,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "AI-driven GTM systems for B2B founders with no sales team."
+  },
+  {
+    "id": 39031,
+    "key": "retreva-com",
+    "name": "The Ultimate Guide to AI B2B Prospecting: Tools & Workflows (2026)",
+    "domain": "retreva.com",
+    "website": "https://www.retreva.com/ultimate-guide-to-ai-for-b2b-prospecting/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": ""
+  },
+  {
+    "id": 39051,
+    "key": "research-aimultiple-com",
+    "name": "Conversational AI for Sales: Applications & Real-Life Examples",
+    "domain": "research.aimultiple.com",
+    "website": "https://research.aimultiple.com/conversational-ai-for-sales/",
+    "ai_models": [],
+    "llm_providers": [],
+    "ai_architecture": [],
+    "ai_sales_capabilities": [
+      "conversation-intelligence",
+      "intent-detection",
+      "pipeline-forecasting",
+      "data-enrichment"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": false,
+    "uses_public_llms": false,
+    "realtime_ai": false,
+    "ai_maturity": "wrapper",
+    "ai_differentiator": "Leverages AI to enhance sales processes with real-life examples and use cases."
+  },
+  {
+    "id": 39044,
+    "key": "nextiva-com",
+    "name": "What Is Conversational AI for Sales? Benefits, Use Cases & Tools",
+    "domain": "nextiva.com",
+    "website": "https://www.nextiva.com/blog/conversational-ai-for-sales.html",
+    "ai_models": [
+      "XBert AI"
+    ],
+    "llm_providers": [],
+    "ai_architecture": [
+      "agentic-workflows"
+    ],
+    "ai_sales_capabilities": [
+      "intent-detection",
+      "conversation-intelligence",
+      "meeting-summary",
+      "objection-handling"
+    ],
+    "automation_level": "assisted",
+    "is_proprietary_model": true,
+    "uses_public_llms": false,
+    "realtime_ai": true,
+    "ai_maturity": "enhanced",
+    "ai_differentiator": "Nextiva's XBert AI enhances sales through real-time intent detection and conversation intelligence."
+  }
+]
