@@ -2097,7 +2097,7 @@ export type CreateContactMutationVariables = Exact<{
 }>;
 
 
-export type CreateContactMutation = { __typename?: 'Mutation', createContact: { __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } };
+export type CreateContactMutation = { __typename?: 'Mutation', createContact: { __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, description?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } };
 
 export type CreateContactFeedbackMutationVariables = Exact<{
   input: CreateContactFeedbackInput;
@@ -2483,7 +2483,7 @@ export type GetContactFeedbacksQuery = { __typename?: 'Query', contactFeedbacks:
 export type GetContactsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetContactsQuery = { __typename?: 'Query', contacts: Array<{ __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string }> };
+export type GetContactsQuery = { __typename?: 'Query', contacts: Array<{ __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, description?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string }> };
 
 export type GetConversationQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3345,6 +3345,7 @@ export const CreateContactDocument = gql`
     slug
     firstName
     lastName
+    description
     role
     ageYears
     notes
@@ -5636,6 +5637,7 @@ export const GetContactsDocument = gql`
     slug
     firstName
     lastName
+    description
     role
     ageYears
     notes

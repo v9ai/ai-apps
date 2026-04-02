@@ -5,6 +5,7 @@ mutation CreateContact($input: CreateContactInput!) {
     slug
     firstName
     lastName
+    description
     role
     ageYears
     notes
