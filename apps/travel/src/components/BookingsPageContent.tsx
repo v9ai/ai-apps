@@ -54,7 +54,7 @@ const T = {
   },
 };
 
-export function BookingsPageContent({ category }: { category: string }) {
+export function BookingsPageContent() {
   const { lang } = useLang();
   const t = T[lang];
   const { city, places, booking_summary } = data;
@@ -85,7 +85,7 @@ export function BookingsPageContent({ category }: { category: string }) {
         >
           {/* Back link */}
           <Link
-            href={`/${category}`}
+            href="/"
             className={css({
               display: "inline-flex",
               alignItems: "center",
