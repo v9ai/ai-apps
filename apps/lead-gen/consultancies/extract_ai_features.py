@@ -75,29 +75,13 @@ SKIP_EMAIL_DOMAINS = {
     "twitter.com", "google.com", "apple.com",
 }
 
-# ---------------------------------------------------------------------------
-# Enum sets for normalisation (constrained output → reliable SQL filtering)
-# ---------------------------------------------------------------------------
-
-VALID_AUTOMATION = {"assisted", "semi-auto", "autonomous", "agentic"}
-VALID_MATURITY = {"wrapper", "enhanced", "custom", "cutting-edge"}
-VALID_ARCHITECTURE = {
-    "RAG", "agentic-workflows", "fine-tuned", "embeddings",
-    "multi-modal", "voice-AI", "multi-agent",
-}
-VALID_CAPABILITIES = {
-    "lead-scoring", "email-personalization", "conversation-intelligence",
-    "intent-detection", "meeting-summary", "pipeline-forecasting",
-    "lookalike-search", "signal-detection", "auto-research",
-    "objection-handling", "voice-outreach", "chat-outreach",
-    "sequence-automation", "data-enrichment",
+VALID_FEATURE_CATEGORIES = {
+    "intent", "enrichment", "outreach", "engagement", "analytics", "automation",
 }
 
 # Fields written to company_facts (used for idempotent DELETE on re-runs)
 AI_FACT_FIELDS = {
-    "ai_features", "ai_models", "llm_providers", "ai_architecture",
-    "ai_sales_capabilities", "automation_level", "ai_maturity",
-    "ai_differentiator", "is_proprietary_model", "uses_public_llms", "realtime_ai",
+    "ai_features", "feature", "core_differentiator", "automation_level",
 }
 
 
@@ -260,7 +244,7 @@ async def scrape_all(companies: list[CompanyRecord]) -> list[CompanyRecord]:
 # AI Features prompt
 # ---------------------------------------------------------------------------
 
-AI_FEATURES_PROMPT = """You are analyzing an AI-powered sales or lead generation software company.
+AI_FEATURES_PROMPT = """You are a product analyst reviewing an AI-powered sales or lead generation software company.
 Respond ONLY with valid JSON. No explanations, no markdown, no text outside the JSON object.
 
 Company: {name}
@@ -268,31 +252,36 @@ Domain: {domain}
 Website content:
 {text}
 
-Extract AI capabilities and return this exact JSON structure:
+Extract every specific product feature and how it is implemented. Return this exact JSON:
 {{
-  "ai_models": [],
-  "llm_providers": [],
-  "ai_architecture": [],
-  "ai_sales_capabilities": [],
-  "automation_level": "assisted",
-  "is_proprietary_model": false,
-  "uses_public_llms": false,
-  "realtime_ai": false,
-  "ai_maturity": "wrapper",
-  "ai_differentiator": ""
+  "features": [
+    {{
+      "name": "feature name (e.g. Buyer Intent Detection, AI Email Writer, Meeting Intelligence)",
+      "category": "intent or enrichment or outreach or engagement or analytics or automation",
+      "description": "what this feature does for the user in 1 sentence",
+      "ai_implementation": "exactly how AI/ML powers it (e.g. 'trains ML model on web visit signals and job postings to score purchase likelihood'; 'LLM generates personalised email using LinkedIn profile + company news'; 'real-time speech-to-text + sentiment classifier on live calls')",
+      "data_sources": ["list data inputs: web signals, CRM data, LinkedIn, email threads, call recordings, job postings, technographic data, etc."],
+      "is_realtime": false
+    }}
+  ],
+  "core_differentiator": "what makes this company's AI uniquely better than competitors in max 20 words",
+  "automation_level": "assisted or semi-auto or autonomous or agentic"
 }}
 
-Field instructions:
-- ai_models: specific model names detected (e.g. "GPT-4o", "Claude 3.5 Sonnet", "Gemini 1.5", "Llama 3", "proprietary")
-- llm_providers: API providers used (e.g. "OpenAI", "Anthropic", "Google", "Meta", "Mistral", "Cohere", "Bedrock", "Azure-OpenAI")
-- ai_architecture: architectural patterns used — choose from: "RAG", "agentic-workflows", "fine-tuned", "embeddings", "multi-modal", "voice-AI", "multi-agent"
-- ai_sales_capabilities: sales automation features — choose from: "lead-scoring", "email-personalization", "conversation-intelligence", "intent-detection", "meeting-summary", "pipeline-forecasting", "lookalike-search", "signal-detection", "auto-research", "objection-handling", "voice-outreach", "chat-outreach", "sequence-automation", "data-enrichment"
-- automation_level: "assisted" (human in loop), "semi-auto" (AI drafts, human approves), "autonomous" (AI acts independently), "agentic" (multi-step AI agent)
-- is_proprietary_model: true only if they train or fine-tune their own model on proprietary data
-- uses_public_llms: true if they use OpenAI, Anthropic, Google, or other public LLM APIs
-- realtime_ai: true if AI operates in real-time during live sales calls or live website interactions
-- ai_maturity: "wrapper" (thin API wrapper only), "enhanced" (prompt engineering + RAG), "custom" (fine-tuned or custom embeddings), "cutting-edge" (novel AI architecture or research-level)
-- ai_differentiator: one sentence max 20 words describing their unique AI advantage; empty string if not clear
+Category definitions:
+- intent: buyer intent signals, purchase likelihood scoring, behavioural tracking
+- enrichment: lead research, company/contact data enrichment, prospect profiling
+- outreach: email writing, sequence building, personalisation at scale
+- engagement: live chat AI, voice call AI, conversation handling
+- analytics: call analytics, pipeline forecasting, revenue intelligence, win/loss
+- automation: workflow automation, AI SDR, meeting scheduling, follow-up automation
+
+Rules:
+- Extract every distinct named feature you can find in the content (aim for 3-10 features)
+- ai_implementation must be specific — describe the actual AI/ML technique, not marketing language
+- If buyer intent is a feature, describe exactly what signals feed the model and how scoring works
+- is_realtime = true only if the feature acts during a live interaction (call, chat, website visit)
+- automation_level: assisted=human approves all, semi-auto=AI drafts human approves, autonomous=AI acts alone, agentic=multi-step AI agent
 /no_think"""
 
 
@@ -300,27 +289,33 @@ Field instructions:
 # Normalisation
 # ---------------------------------------------------------------------------
 
-def normalise_ai_features(raw: dict) -> dict:
-    """Clamp enum values to known sets; coerce types; strip unknowns."""
+def normalise_features(raw: dict) -> dict:
+    """Validate and clean extracted features."""
+    features = []
+    for item in raw.get("features", []):
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name", "")).strip()
+        if not name:
+            continue
+        cat = item.get("category", "")
+        features.append({
+            "name": name,
+            "category": cat if cat in VALID_FEATURE_CATEGORIES else "automation",
+            "description": str(item.get("description", ""))[:300],
+            "ai_implementation": str(item.get("ai_implementation", ""))[:500],
+            "data_sources": [str(s) for s in item.get("data_sources", []) if s][:10],
+            "is_realtime": bool(item.get("is_realtime", False)),
+        })
+
+    automation = raw.get("automation_level", "assisted")
+    if automation not in {"assisted", "semi-auto", "autonomous", "agentic"}:
+        automation = "assisted"
+
     return {
-        "ai_models": [str(x) for x in raw.get("ai_models", []) if x][:10],
-        "llm_providers": [str(x) for x in raw.get("llm_providers", []) if x][:10],
-        "ai_architecture": [x for x in raw.get("ai_architecture", []) if x in VALID_ARCHITECTURE],
-        "ai_sales_capabilities": [x for x in raw.get("ai_sales_capabilities", []) if x in VALID_CAPABILITIES],
-        "automation_level": (
-            raw.get("automation_level", "assisted")
-            if raw.get("automation_level") in VALID_AUTOMATION
-            else "assisted"
-        ),
-        "is_proprietary_model": bool(raw.get("is_proprietary_model", False)),
-        "uses_public_llms": bool(raw.get("uses_public_llms", False)),
-        "realtime_ai": bool(raw.get("realtime_ai", False)),
-        "ai_maturity": (
-            raw.get("ai_maturity", "wrapper")
-            if raw.get("ai_maturity") in VALID_MATURITY
-            else "wrapper"
-        ),
-        "ai_differentiator": str(raw.get("ai_differentiator", ""))[:200],
+        "features": features[:12],
+        "core_differentiator": str(raw.get("core_differentiator", ""))[:300],
+        "automation_level": automation,
     }
 
 
@@ -358,14 +353,14 @@ def classify_ai_features(companies: list[CompanyRecord]) -> list[CompanyRecord]:
             json_match = re.search(r"\{[\s\S]*\}", response)
             if json_match:
                 raw = json.loads(json_match.group())
-                c.ai_features = normalise_ai_features(raw)
+                c.ai_features = normalise_features(raw)
                 f = c.ai_features
+                feature_names = [ft["name"] for ft in f.get("features", [])][:4]
                 log.info(
                     f"  [{i+1}/{len(companies)}] {c.name} → "
-                    f"maturity={f.get('ai_maturity')} | "
+                    f"{len(f.get('features', []))} features | "
                     f"automation={f.get('automation_level')} | "
-                    f"caps={len(f.get('ai_sales_capabilities', []))} | "
-                    f"providers={','.join(f.get('llm_providers', [])[:3])}"
+                    f"{', '.join(feature_names)}"
                 )
             else:
                 log.warning(f"  [{i+1}/{len(companies)}] {c.name} — no JSON in response")
@@ -387,7 +382,6 @@ def update_neon(companies: list[CompanyRecord]):
     companies_updated = 0
     facts_deleted = 0
     facts_inserted = 0
-    tags_merged = 0
 
     with conn.cursor() as cur:
         for c in companies:
@@ -396,21 +390,16 @@ def update_neon(companies: list[CompanyRecord]):
                 continue
 
             try:
-                # 1. Delete old AI facts (re-run safety)
+                # 1. Delete old AI facts (idempotent re-run)
                 cur.execute(
-                    """
-                    DELETE FROM company_facts
-                    WHERE company_id = %s
-                      AND field = ANY(%s)
-                      AND method = 'LLM'
-                    """,
+                    "DELETE FROM company_facts WHERE company_id = %s AND field = ANY(%s) AND method = 'LLM'",
                     (c.id, list(AI_FACT_FIELDS)),
                 )
                 facts_deleted += cur.rowcount
 
                 source_url = c.website or f"https://{c.canonical_domain}"
 
-                # 2. Aggregate row — full JSON blob for easy retrieval
+                # 2. Full blob — easy retrieval of everything
                 cur.execute(
                     """
                     INSERT INTO company_facts
@@ -418,46 +407,13 @@ def update_neon(companies: list[CompanyRecord]):
                          source_type, source_url, observed_at, method)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """,
-                    (c.id, "ai_features", json.dumps(f), 0.8,
+                    (c.id, "ai_features", json.dumps(f), 0.85,
                      "BRAVE_SEARCH", source_url, now, "LLM"),
                 )
                 facts_inserted += 1
 
-                # 3. Individual rows per list item (SQL-filterable)
-                list_fields = [
-                    ("ai_models", f.get("ai_models", [])),
-                    ("llm_providers", f.get("llm_providers", [])),
-                    ("ai_architecture", f.get("ai_architecture", [])),
-                    ("ai_sales_capabilities", f.get("ai_sales_capabilities", [])),
-                ]
-                for field_name, values in list_fields:
-                    for v in values:
-                        if not v:
-                            continue
-                        cur.execute(
-                            """
-                            INSERT INTO company_facts
-                                (company_id, field, value_text, confidence,
-                                 source_type, source_url, observed_at, method)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                            """,
-                            (c.id, field_name, str(v), 0.8,
-                             "BRAVE_SEARCH", source_url, now, "LLM"),
-                        )
-                        facts_inserted += 1
-
-                # Scalar fields
-                scalar_fields = [
-                    ("automation_level", f.get("automation_level", "")),
-                    ("ai_maturity", f.get("ai_maturity", "")),
-                    ("ai_differentiator", f.get("ai_differentiator", "")),
-                    ("is_proprietary_model", str(f.get("is_proprietary_model", False)).lower()),
-                    ("uses_public_llms", str(f.get("uses_public_llms", False)).lower()),
-                    ("realtime_ai", str(f.get("realtime_ai", False)).lower()),
-                ]
-                for field_name, value in scalar_fields:
-                    if not value or value in ("", "false"):
-                        continue
+                # 3. One row per feature — SQL-filterable by feature name/category
+                for feat in f.get("features", []):
                     cur.execute(
                         """
                         INSERT INTO company_facts
@@ -465,33 +421,44 @@ def update_neon(companies: list[CompanyRecord]):
                              source_type, source_url, observed_at, method)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                         """,
-                        (c.id, field_name, value, 0.8,
+                        (c.id, "feature", json.dumps(feat), 0.85,
                          "BRAVE_SEARCH", source_url, now, "LLM"),
                     )
                     facts_inserted += 1
 
-                # 4. Merge ai: tags into companies.tags
-                new_ai_tags = (
-                    [f"ai:{p}" for p in f.get("llm_providers", [])]
-                    + [f"ai:{a}" for a in f.get("ai_architecture", [])]
-                    + ([f"ai:proprietary"] if f.get("is_proprietary_model") else [])
-                    + ([f"ai:realtime"] if f.get("realtime_ai") else [])
-                )
-                # Only tag enhanced/custom/cutting-edge maturity (not "wrapper" — too noisy)
-                maturity = f.get("ai_maturity", "wrapper")
-                if maturity and maturity != "wrapper":
-                    new_ai_tags.append(f"ai:maturity:{maturity}")
+                # 4. Scalar fields
+                for field_name, value in [
+                    ("core_differentiator", f.get("core_differentiator", "")),
+                    ("automation_level", f.get("automation_level", "")),
+                ]:
+                    if value:
+                        cur.execute(
+                            """
+                            INSERT INTO company_facts
+                                (company_id, field, value_text, confidence,
+                                 source_type, source_url, observed_at, method)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            """,
+                            (c.id, field_name, value, 0.85,
+                             "BRAVE_SEARCH", source_url, now, "LLM"),
+                        )
+                        facts_inserted += 1
 
-                new_ai_tags = [t for t in new_ai_tags if t]
-                merged = list(dict.fromkeys(c.existing_tags + new_ai_tags))
+                # 5. Merge feature: tags into companies.tags
+                feature_tags = list(dict.fromkeys(
+                    f"feature:{feat['name'].lower().replace(' ', '-')}"
+                    for feat in f.get("features", [])
+                ))
+                realtime_features = [ft for ft in f.get("features", []) if ft.get("is_realtime")]
+                if realtime_features:
+                    feature_tags.append("feature:realtime")
+                merged = list(dict.fromkeys(c.existing_tags + feature_tags))
 
                 cur.execute(
                     "UPDATE companies SET tags = %s, updated_at = %s WHERE id = %s",
                     (json.dumps(merged), now, c.id),
                 )
-                tags_merged += 1
                 companies_updated += 1
-
                 conn.commit()
 
             except Exception as ex:
@@ -502,9 +469,7 @@ def update_neon(companies: list[CompanyRecord]):
     conn.close()
     log.info(
         f"Neon: {companies_updated} companies updated, "
-        f"{facts_inserted} facts inserted "
-        f"({facts_deleted} old facts replaced), "
-        f"{tags_merged} tags merged"
+        f"{facts_inserted} facts inserted ({facts_deleted} old facts replaced)"
     )
 
 
@@ -513,7 +478,7 @@ def update_neon(companies: list[CompanyRecord]):
 # ---------------------------------------------------------------------------
 
 def save_to_file(companies: list[CompanyRecord]):
-    """Save all extracted AI features to consultancies/data/ai-features.json."""
+    """Save all extracted features to consultancies/data/ai-features.json."""
     out = Path(__file__).parent / "data" / "ai-features.json"
     out.parent.mkdir(parents=True, exist_ok=True)
 
@@ -527,7 +492,9 @@ def save_to_file(companies: list[CompanyRecord]):
             "name": c.name,
             "domain": c.canonical_domain,
             "website": c.website,
-            **c.ai_features,
+            "core_differentiator": c.ai_features.get("core_differentiator", ""),
+            "automation_level": c.ai_features.get("automation_level", ""),
+            "features": c.ai_features.get("features", []),
         })
 
     with open(out, "w") as fh:
@@ -542,49 +509,44 @@ def save_to_file(companies: list[CompanyRecord]):
 def print_summary(companies: list[CompanyRecord]):
     enriched = [c for c in companies if c.ai_features]
     print(f"\n{'='*70}")
-    print(f"  AI Features Extraction: {len(enriched)}/{len(companies)} classified")
+    print(f"  Product Feature Extraction: {len(enriched)}/{len(companies)} classified")
     print(f"{'='*70}\n")
 
     for i, c in enumerate(enriched, 1):
         f = c.ai_features
+        features = f.get("features", [])
         print(f"  {i:3d}. {c.name} ({c.canonical_domain})")
-        print(f"       Maturity: {f.get('ai_maturity')} | Automation: {f.get('automation_level')} | Realtime: {'yes' if f.get('realtime_ai') else 'no'}")
-        if f.get("llm_providers"):
-            print(f"       LLM Providers: {', '.join(f['llm_providers'])}")
-        if f.get("ai_models"):
-            print(f"       Models: {', '.join(f['ai_models'][:5])}")
-        if f.get("ai_architecture"):
-            print(f"       Architecture: {', '.join(f['ai_architecture'])}")
-        caps = f.get("ai_sales_capabilities", [])
-        if caps:
-            print(f"       Sales Caps ({len(caps)}): {', '.join(caps[:7])}")
-        if f.get("ai_differentiator"):
-            print(f"       Differentiator: {f['ai_differentiator']}")
+        print(f"       Automation: {f.get('automation_level')} | {len(features)} features")
+        if f.get("core_differentiator"):
+            print(f"       Differentiator: {f['core_differentiator']}")
+        for feat in features:
+            realtime_tag = " [realtime]" if feat.get("is_realtime") else ""
+            print(f"       • [{feat.get('category','?')}] {feat['name']}{realtime_tag}")
+            if feat.get("ai_implementation"):
+                print(f"         → {feat['ai_implementation'][:120]}")
         print()
 
     # Aggregate stats
     if enriched:
         print(f"{'─'*70}")
-        provider_counts = Counter(
-            p for c in enriched for p in c.ai_features.get("llm_providers", [])
-        )
-        arch_counts = Counter(
-            a for c in enriched for a in c.ai_features.get("ai_architecture", [])
-        )
-        maturity_counts = Counter(c.ai_features.get("ai_maturity", "wrapper") for c in enriched)
+        all_features = [
+            ft for c in enriched for ft in c.ai_features.get("features", [])
+        ]
+        feature_name_counts = Counter(ft["name"] for ft in all_features)
+        category_counts = Counter(ft.get("category", "?") for ft in all_features)
         automation_counts = Counter(c.ai_features.get("automation_level", "assisted") for c in enriched)
+        realtime_count = sum(1 for ft in all_features if ft.get("is_realtime"))
 
-        if provider_counts:
-            top = ", ".join(f"{p} ({n})" for p, n in provider_counts.most_common(5))
-            print(f"  Top LLM Providers:  {top}")
-        if arch_counts:
-            top = ", ".join(f"{a} ({n})" for a, n in arch_counts.most_common(5))
-            print(f"  Top Architectures:  {top}")
-        print(f"  Maturity:           {dict(maturity_counts)}")
-        print(f"  Automation levels:  {dict(automation_counts)}")
-        realtime = sum(1 for c in enriched if c.ai_features.get("realtime_ai"))
-        proprietary = sum(1 for c in enriched if c.ai_features.get("is_proprietary_model"))
-        print(f"  Realtime AI: {realtime}  |  Proprietary model: {proprietary}")
+        print(f"  Total features extracted: {len(all_features)} across {len(enriched)} companies")
+        print(f"  Avg features/company:     {len(all_features)/len(enriched):.1f}")
+        top_features = feature_name_counts.most_common(10)
+        if top_features:
+            print(f"  Most common features:")
+            for name, cnt in top_features:
+                print(f"    {cnt:3d}×  {name}")
+        print(f"  By category: {dict(category_counts)}")
+        print(f"  Automation:  {dict(automation_counts)}")
+        print(f"  Realtime features: {realtime_count}")
         print()
 
 
