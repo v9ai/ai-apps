@@ -1070,6 +1070,7 @@ type SignalTypeCount {
 }
 
 enum SourceType {
+  BRAVE_SEARCH
   COMMONCRAWL
   LIVE_FETCH
   MANUAL
