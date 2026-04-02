@@ -78,6 +78,21 @@ export type CancelEmailResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ClassifyBatchResult = {
+  __typename: 'ClassifyBatchResult';
+  classified: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type ClassifyEmailResult = {
+  __typename: 'ClassifyEmailResult';
+  classification: Maybe<Scalars['String']['output']>;
+  confidence: Maybe<Scalars['Float']['output']>;
+  matchedContactId: Maybe<Scalars['Int']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type CompaniesResponse = {
   __typename: 'CompaniesResponse';
   companies: Array<Company>;
@@ -912,6 +927,8 @@ export type Mutation = {
   blockCompany: Company;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
+  classifyAllPending: ClassifyBatchResult;
+  classifyReceivedEmail: ClassifyEmailResult;
   computeContactDeletionScores: BatchOperationResult;
   computeNextTouchScores: ComputeNextTouchScoresResult;
   createCompany: Company;
@@ -1012,6 +1029,11 @@ export type MutationCancelCompanyEmailsArgs = {
 
 export type MutationCancelScheduledEmailArgs = {
   resendId: Scalars['String']['input'];
+};
+
+
+export type MutationClassifyReceivedEmailArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -1488,6 +1510,7 @@ export type QueryReceivedEmailArgs = {
 
 export type QueryReceivedEmailsArgs = {
   archived?: InputMaybe<Scalars['Boolean']['input']>;
+  classification?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1507,10 +1530,15 @@ export type ReceivedEmail = {
   archivedAt: Maybe<Scalars['String']['output']>;
   attachments: Maybe<Scalars['JSON']['output']>;
   ccEmails: Array<Scalars['String']['output']>;
+  classification: Maybe<Scalars['String']['output']>;
+  classificationConfidence: Maybe<Scalars['Float']['output']>;
+  classifiedAt: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   fromEmail: Maybe<Scalars['String']['output']>;
   htmlContent: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  matchedContactId: Maybe<Scalars['Int']['output']>;
+  matchedOutboundId: Maybe<Scalars['Int']['output']>;
   messageId: Maybe<Scalars['String']['output']>;
   receivedAt: Scalars['String']['output'];
   replyToEmails: Array<Scalars['String']['output']>;

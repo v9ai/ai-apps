@@ -1,9 +1,11 @@
-import { receivedEmails, type ReceivedEmail as DbReceivedEmail } from "@/db/schema";
+import { receivedEmails, contacts, contactEmails, type ReceivedEmail as DbReceivedEmail } from "@/db/schema";
 import { eq, and, count, desc, isNull, isNotNull } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import { textToHtml } from "@/lib/email";
 import { resend } from "@/lib/resend";
+import { classifyReply } from "@/lib/email/reply-classifier";
+import { matchContact } from "@/lib/email/contact-matcher";
 
 function parseJsonArray(val: string | null | undefined): string[] {
   if (!val) return [];
@@ -28,6 +30,11 @@ export const receivedEmailResolvers = {
     attachments: (parent: DbReceivedEmail) => parseJsonOrNull(parent.attachments),
     receivedAt: (parent: DbReceivedEmail) => parent.received_at,
     archivedAt: (parent: DbReceivedEmail) => parent.archived_at ?? null,
+    classification: (parent: DbReceivedEmail) => parent.classification ?? null,
+    classificationConfidence: (parent: DbReceivedEmail) => parent.classification_confidence ?? null,
+    classifiedAt: (parent: DbReceivedEmail) => parent.classified_at ?? null,
+    matchedContactId: (parent: DbReceivedEmail) => parent.matched_contact_id ?? null,
+    matchedOutboundId: (parent: DbReceivedEmail) => parent.matched_outbound_id ?? null,
     createdAt: (parent: DbReceivedEmail) => parent.created_at,
     updatedAt: (parent: DbReceivedEmail) => parent.updated_at,
   },
@@ -35,7 +42,7 @@ export const receivedEmailResolvers = {
   Query: {
     async receivedEmails(
       _parent: unknown,
-      args: { limit?: number; offset?: number; archived?: boolean },
+      args: { limit?: number; offset?: number; archived?: boolean; classification?: string },
       context: GraphQLContext,
     ) {
       const limit = Math.min(args.limit ?? 50, 200);
@@ -46,6 +53,10 @@ export const receivedEmailResolvers = {
         conditions.push(isNotNull(receivedEmails.archived_at));
       } else if (args.archived === false || args.archived === undefined) {
         conditions.push(isNull(receivedEmails.archived_at));
+      }
+
+      if (args.classification) {
+        conditions.push(eq(receivedEmails.classification, args.classification));
       }
 
       const where = conditions.length > 0 ? and(...conditions) : undefined;
@@ -130,6 +141,134 @@ export const receivedEmailResolvers = {
       }
 
       return { success: true, message: "Email unarchived" };
+    },
+
+    async classifyReceivedEmail(
+      _parent: unknown,
+      args: { id: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const rows = await context.db
+        .select()
+        .from(receivedEmails)
+        .where(eq(receivedEmails.id, args.id))
+        .limit(1);
+
+      const email = rows[0];
+      if (!email) {
+        return { success: false, classification: null, confidence: null, matchedContactId: null };
+      }
+
+      const result = classifyReply(email.subject || "", email.text_content || "");
+      const contactMatch = email.from_email
+        ? await matchContact(email.from_email)
+        : null;
+
+      await context.db
+        .update(receivedEmails)
+        .set({
+          classification: result.label,
+          classification_confidence: result.confidence,
+          classified_at: new Date().toISOString(),
+          ...(contactMatch?.contactId ? { matched_contact_id: contactMatch.contactId } : {}),
+          ...(contactMatch?.outboundEmailId ? { matched_outbound_id: contactMatch.outboundEmailId } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .where(eq(receivedEmails.id, args.id));
+
+      // Side effect: unsubscribe → do_not_contact
+      if (result.label === "unsubscribe" && contactMatch?.contactId) {
+        await context.db
+          .update(contacts)
+          .set({ do_not_contact: true, updated_at: new Date().toISOString() })
+          .where(eq(contacts.id, contactMatch.contactId));
+      }
+
+      // Side effect: update outbound email reply_classification
+      if (contactMatch?.outboundEmailId) {
+        await context.db
+          .update(contactEmails)
+          .set({
+            reply_received: true,
+            reply_received_at: new Date().toISOString(),
+            reply_classification: result.label,
+            updated_at: new Date().toISOString(),
+          })
+          .where(eq(contactEmails.id, contactMatch.outboundEmailId));
+      }
+
+      return {
+        success: true,
+        classification: result.label,
+        confidence: result.confidence,
+        matchedContactId: contactMatch?.contactId ?? null,
+      };
+    },
+
+    async classifyAllPending(
+      _parent: unknown,
+      _args: unknown,
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const pending = await context.db
+        .select()
+        .from(receivedEmails)
+        .where(isNull(receivedEmails.classification));
+
+      let classified = 0;
+      for (const email of pending) {
+        const result = classifyReply(email.subject || "", email.text_content || "");
+        const contactMatch = email.from_email
+          ? await matchContact(email.from_email)
+          : null;
+
+        await context.db
+          .update(receivedEmails)
+          .set({
+            classification: result.label,
+            classification_confidence: result.confidence,
+            classified_at: new Date().toISOString(),
+            ...(contactMatch?.contactId ? { matched_contact_id: contactMatch.contactId } : {}),
+            ...(contactMatch?.outboundEmailId ? { matched_outbound_id: contactMatch.outboundEmailId } : {}),
+            updated_at: new Date().toISOString(),
+          })
+          .where(eq(receivedEmails.id, email.id));
+
+        if (result.label === "unsubscribe" && contactMatch?.contactId) {
+          await context.db
+            .update(contacts)
+            .set({ do_not_contact: true, updated_at: new Date().toISOString() })
+            .where(eq(contacts.id, contactMatch.contactId));
+        }
+
+        if (contactMatch?.outboundEmailId) {
+          await context.db
+            .update(contactEmails)
+            .set({
+              reply_received: true,
+              reply_received_at: new Date().toISOString(),
+              reply_classification: result.label,
+              updated_at: new Date().toISOString(),
+            })
+            .where(eq(contactEmails.id, contactMatch.outboundEmailId));
+        }
+
+        classified++;
+      }
+
+      return {
+        success: true,
+        classified,
+        message: `Classified ${classified} email(s)`,
+      };
     },
 
     async previewEmail(

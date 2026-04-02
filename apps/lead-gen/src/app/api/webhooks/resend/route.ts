@@ -3,6 +3,8 @@ import { createHmac } from "crypto";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { contactEmails, contacts, receivedEmails } from "@/db/schema";
+import { classifyReply } from "@/lib/email/reply-classifier";
+import { matchContact } from "@/lib/email/contact-matcher";
 
 /**
  * Resend Webhook Handler
@@ -349,7 +351,65 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
     console.log(`[RESEND_WEBHOOK] email.received persisted: ${emailId}`);
   });
 
-  // 2. Forward to personal inbox
+  // 2. Classify reply and match to contact
+  await withRetry(`handleReceived/classify(${emailId})`, async () => {
+    const textBody = text || "";
+    const emailSubject = subject || "";
+
+    // Classify the reply
+    const result = classifyReply(emailSubject, textBody);
+
+    // Match to a contact
+    const contactMatch = await matchContact(
+      from || "",
+      (event.data as any).in_reply_to ?? null,
+    );
+
+    // Update the received email with classification + contact match
+    await db
+      .update(receivedEmails)
+      .set({
+        classification: result.label,
+        classification_confidence: result.confidence,
+        classified_at: new Date().toISOString(),
+        ...(contactMatch?.contactId ? { matched_contact_id: contactMatch.contactId } : {}),
+        ...(contactMatch?.outboundEmailId ? { matched_outbound_id: contactMatch.outboundEmailId } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(receivedEmails.resend_id, emailId));
+
+    console.log(
+      `[RESEND_WEBHOOK] classified: ${result.label} (${result.confidence.toFixed(2)})` +
+        (contactMatch ? ` → contact ${contactMatch.contactId}` : ""),
+    );
+
+    // Side effects based on classification
+    if (contactMatch?.contactId) {
+      if (result.label === "unsubscribe") {
+        // Mark contact as do_not_contact
+        await db
+          .update(contacts)
+          .set({ do_not_contact: true, updated_at: new Date().toISOString() })
+          .where(eq(contacts.id, contactMatch.contactId));
+        console.log(`[RESEND_WEBHOOK] contact ${contactMatch.contactId} marked do_not_contact (unsubscribe)`);
+      }
+
+      if (contactMatch.outboundEmailId) {
+        // Update outbound email with reply classification
+        await db
+          .update(contactEmails)
+          .set({
+            reply_received: true,
+            reply_received_at: new Date().toISOString(),
+            reply_classification: result.label,
+            updated_at: new Date().toISOString(),
+          })
+          .where(eq(contactEmails.id, contactMatch.outboundEmailId));
+      }
+    }
+  });
+
+  // 3. Forward to personal inbox
   if (!RESEND_API_KEY) {
     console.warn("[RESEND_WEBHOOK] RESEND_API_KEY not set — cannot forward received email");
     return;

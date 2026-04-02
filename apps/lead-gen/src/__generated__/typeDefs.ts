@@ -59,6 +59,19 @@ type CancelEmailResult {
   success: Boolean!
 }
 
+type ClassifyBatchResult {
+  classified: Int!
+  message: String!
+  success: Boolean!
+}
+
+type ClassifyEmailResult {
+  classification: String
+  confidence: Float
+  matchedContactId: Int
+  success: Boolean!
+}
+
 type CompaniesResponse {
   companies: [Company!]!
   totalCount: Int!
@@ -839,6 +852,8 @@ type Mutation {
   blockCompany(id: Int!): Company!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
+  classifyAllPending: ClassifyBatchResult!
+  classifyReceivedEmail(id: Int!): ClassifyEmailResult!
   computeContactDeletionScores(companyId: Int): BatchOperationResult!
   computeNextTouchScores(companyId: Int!): ComputeNextTouchScoresResult!
   createCompany(input: CreateCompanyInput!): Company!
@@ -932,7 +947,7 @@ type Query {
   linkedinPost(id: Int!): LinkedInPost
   linkedinPosts(companyId: Int, limit: Int, offset: Int, type: LinkedInPostType): [LinkedInPost!]!
   receivedEmail(id: Int!): ReceivedEmail
-  receivedEmails(archived: Boolean, limit: Int, offset: Int): ReceivedEmailsResult!
+  receivedEmails(archived: Boolean, classification: String, limit: Int, offset: Int): ReceivedEmailsResult!
   resendEmail(resendId: String!): ResendEmailDetail
   userSettings(userId: String!): UserSettings
 }
@@ -941,10 +956,15 @@ type ReceivedEmail {
   archivedAt: String
   attachments: JSON
   ccEmails: [String!]!
+  classification: String
+  classificationConfidence: Float
+  classifiedAt: String
   createdAt: String!
   fromEmail: String
   htmlContent: String
   id: Int!
+  matchedContactId: Int
+  matchedOutboundId: Int
   messageId: String
   receivedAt: String!
   replyToEmails: [String!]!
