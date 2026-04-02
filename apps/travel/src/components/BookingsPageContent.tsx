@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { css } from "styled-system/css";
-import { data } from "@/lib/data";
+import { data, getKatowiceHotelsWithReviews } from "@/lib/data";
 import { HotelPicks } from "@/components/HotelPicks";
+import { KatowiceHotels } from "@/components/KatowiceHotels";
 import { Footer } from "@/components/Footer";
 import { useLang } from "@/components/LanguageSwitcher";
+import type { KatowiceHotel } from "@/lib/types";
 
 const T = {
   ro: {
@@ -15,7 +17,7 @@ const T = {
     back: "Inapoi la ghid",
     hotelsHeading: "Cazare recomandata",
     placesHeading: "Informatii de vizitare",
-    summaryHeading: "Rezumat costuri",
+    viewReviews: "Vezi toate recenziile",
     totalCost: "Cost total estimat",
     needsReservation: "Rezervare recomandata",
     freeEntry: "Intrare gratuita",
@@ -36,7 +38,7 @@ const T = {
     back: "Back to guide",
     hotelsHeading: "Recommended Stays",
     placesHeading: "Visit Planning",
-    summaryHeading: "Cost Summary",
+    viewReviews: "View all reviews",
     totalCost: "Total estimated cost",
     needsReservation: "Reservation recommended",
     freeEntry: "Free entry",
@@ -52,11 +54,11 @@ const T = {
   },
 };
 
-export function BookingsPageContent() {
+export function BookingsPageContent({ category }: { category: string }) {
   const { lang } = useLang();
   const t = T[lang];
   const { city, places, booking_summary } = data;
-  const curatedHotels = booking_summary?.curated_hotels ?? [];
+  const katowiceHotels = getKatowiceHotelsWithReviews();
   const placesWithBooking = places.filter((p) => p.booking);
 
   return (
@@ -83,7 +85,7 @@ export function BookingsPageContent() {
         >
           {/* Back link */}
           <Link
-            href="/"
+            href={`/${category}`}
             className={css({
               display: "inline-flex",
               alignItems: "center",
@@ -158,118 +160,8 @@ export function BookingsPageContent() {
           </p>
         </header>
 
-        {/* ── Cost Summary ── */}
-        {booking_summary && (
-          <section
-            className={css({
-              maxW: "5xl",
-              mx: "auto",
-              mb: { base: "12", md: "16" },
-              animation: "fadeUp 0.6s ease-out 0.05s both",
-            })}
-          >
-            <SectionDivider label={t.summaryHeading} />
-            <div
-              className={css({
-                display: "grid",
-                gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
-                gap: { base: "4", sm: "6" },
-              })}
-            >
-              {/* Total cost card */}
-              <div className={summaryCardStyle}>
-                <span className={summaryLabelStyle}>{t.totalCost}</span>
-                <span
-                  className={css({
-                    fontSize: "h2",
-                    fontWeight: "800",
-                    fontFamily: "display",
-                    color: "amber.warm",
-                    letterSpacing: "h2",
-                  })}
-                >
-                  {booking_summary.total_estimated_cost.eur}&nbsp;EUR
-                </span>
-                <span className={css({ fontSize: "meta", color: "text.faint" })}>
-                  ~{booking_summary.total_estimated_cost.pln} PLN
-                </span>
-              </div>
-
-              {/* Places needing reservation */}
-              <div className={summaryCardStyle}>
-                <span className={summaryLabelStyle}>{t.needsReservation}</span>
-                <span
-                  className={css({
-                    fontSize: "h3",
-                    fontWeight: "700",
-                    fontFamily: "display",
-                    color: "copper.main",
-                  })}
-                >
-                  {booking_summary.places_needing_reservation.length} / {places.length}
-                </span>
-                <div className={css({ display: "flex", flexWrap: "wrap", gap: "1.5", mt: "1" })}>
-                  {booking_summary.places_needing_reservation.map((name) => (
-                    <span
-                      key={name}
-                      className={css({
-                        fontSize: "2xs",
-                        fontFamily: "display",
-                        fontWeight: "600",
-                        color: "copper.main",
-                        bg: "rgba(160, 94, 50, 0.12)",
-                        border: "1px solid rgba(160, 94, 50, 0.25)",
-                        rounded: "pill",
-                        px: "2",
-                        py: "0.5",
-                        letterSpacing: "0.03em",
-                      })}
-                    >
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Hotel search */}
-              <div className={summaryCardStyle}>
-                <span className={summaryLabelStyle}>{t.nearbyHotels}</span>
-                <a
-                  href={booking_summary.hotel_search_url}
-                  target="_blank"
-                  rel="noopener noreferrer sponsored"
-                  className={css({
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "2",
-                    mt: "2",
-                    px: "4",
-                    py: "2",
-                    rounded: "pill",
-                    fontSize: "meta",
-                    fontWeight: "600",
-                    fontFamily: "display",
-                    letterSpacing: "0.03em",
-                    color: "steel.dark",
-                    bg: "amber.warm",
-                    textDecoration: "none",
-                    transition: "all 0.15s ease",
-                    _hover: { bg: "amber.bright", transform: "scale(1.03)" },
-                  })}
-                >
-                  {t.searchHotels}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M7 17L17 7" />
-                    <path d="M7 7h10v10" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* ── Curated Hotels ── */}
-        {curatedHotels.length > 0 && (
+        {katowiceHotels.length > 0 && (
           <section
             className={css({
               maxW: "5xl",
@@ -278,7 +170,43 @@ export function BookingsPageContent() {
               animation: "fadeUp 0.6s ease-out 0.1s both",
             })}
           >
-            <HotelPicks hotels={curatedHotels} lang={lang} />
+            <KatowiceHotels hotels={katowiceHotels} lang={lang} />
+            
+            {/* Reviews link */}
+            <div
+              className={css({
+                textAlign: "center",
+                mt: "6",
+              })}
+            >
+              <Link
+                href="/reviews"
+                className={css({
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "2",
+                  px: "5",
+                  py: "2.5",
+                  rounded: "pill",
+                  fontSize: "meta",
+                  fontWeight: "700",
+                  fontFamily: "display",
+                  color: "steel.dark",
+                  bg: "amber.warm",
+                  textDecoration: "none",
+                  transition: "all 0.15s ease",
+                  _hover: {
+                    bg: "amber.bright",
+                    transform: "scale(1.03)",
+                  },
+                })}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                {t.viewReviews}
+              </Link>
+            </div>
           </section>
         )}
 
