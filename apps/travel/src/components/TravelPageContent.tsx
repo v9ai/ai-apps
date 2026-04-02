@@ -270,30 +270,28 @@ export function TravelPageContent({ category }: Props) {
           >
             <HotelPicks hotels={curatedHotels} lang={lang} />
             <div className={css({ textAlign: "center", mt: "6" })}>
-              {category && (
-                <Link
-                  href={`/${category}/bookings`}
-                  className={css({
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "2",
-                    fontSize: "meta",
-                    fontWeight: "600",
-                    fontFamily: "display",
-                    color: "text.muted",
-                    letterSpacing: "0.04em",
-                    textDecoration: "none",
-                    transition: "color 0.15s ease",
-                    _hover: { color: "amber.warm" },
-                  })}
-                >
-                  {lang === "ro" ? "Vezi toate rezervarile" : "View all bookings"}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <Link
+                href="/katowice/bookings"
+                className={css({
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "2",
+                  fontSize: "meta",
+                  fontWeight: "600",
+                  fontFamily: "display",
+                  color: "text.muted",
+                  letterSpacing: "0.04em",
+                  textDecoration: "none",
+                  transition: "color 0.15s ease",
+                  _hover: { color: "amber.warm" },
+                })}
+              >
+                {lang === "ro" ? "Vezi toate rezervarile" : "View all bookings"}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" />
                   <path d="M12 5l7 7-7 7" />
                 </svg>
-                </Link>
-              )}
+              </Link>
             </div>
           </section>
         )}
