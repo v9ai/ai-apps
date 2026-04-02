@@ -301,7 +301,7 @@ export function TravelPageContent({ category }: Props) {
         {curatedHotels.length > 0 && (
           <section
             className={css({
-              maxW: "5xl",
+              maxW: "6xl",
               mx: "auto",
               mb: { base: "16", md: "20" },
               animation: "fadeUp 0.6s ease-out 0.12s both",
@@ -334,12 +334,12 @@ export function TravelPageContent({ category }: Props) {
             <div
               className={css({
                 display: "grid",
-                gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
-                gap: { base: "4", md: "5" },
+                gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(4, 1fr)" },
+                gap: { base: "3", md: "4" },
               })}
             >
-              {getKatowiceHotelsWithReviews().slice(0, 3).map((hotel) =>
-                hotel.review_texts && hotel.review_texts.slice(0, 3).map((review: string, idx: number) => (
+              {getKatowiceHotelsWithReviews().map((hotel) =>
+                hotel.review_texts && hotel.review_texts.map((review: string, idx: number) => (
                   <div
                     key={`${hotel.hotel_id}-review-${idx}`}
                     className={css({
@@ -347,7 +347,7 @@ export function TravelPageContent({ category }: Props) {
                       rounded: "card",
                       border: "1px solid",
                       borderColor: "steel.border",
-                      p: "4",
+                      p: "3",
                       display: "flex",
                       flexDirection: "column",
                       gap: "2",
@@ -361,12 +361,33 @@ export function TravelPageContent({ category }: Props) {
                         mb: "1",
                       })}
                     >
+                      <div
+                        className={css({
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.5",
+                          px: "1.5",
+                          py: "0.5",
+                          rounded: "pill",
+                          fontSize: "2xs",
+                          fontWeight: "700",
+                          bg: "rgba(139, 196, 138, 0.15)",
+                          color: "#8BC48A",
+                          border: "1px solid rgba(139, 196, 138, 0.3)",
+                        })}
+                      >
+                        {hotel.rating}/10
+                      </div>
                       <span
                         className={css({
                           fontSize: "2xs",
                           color: "text.muted",
                           fontWeight: "600",
                           fontFamily: "display",
+                          maxW: "120px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
                         })}
                       >
                         {hotel.name}
@@ -374,9 +395,9 @@ export function TravelPageContent({ category }: Props) {
                     </div>
                     <p
                       className={css({
-                        fontSize: "xs",
+                        fontSize: "2xs",
                         color: "text.secondary",
-                        lineHeight: "1.6",
+                        lineHeight: "1.5",
                         fontStyle: "italic",
                       })}
                     >
