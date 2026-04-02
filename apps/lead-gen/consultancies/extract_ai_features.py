@@ -509,6 +509,33 @@ def update_neon(companies: list[CompanyRecord]):
 
 
 # ---------------------------------------------------------------------------
+# Save to file
+# ---------------------------------------------------------------------------
+
+def save_to_file(companies: list[CompanyRecord]):
+    """Save all extracted AI features to consultancies/data/ai-features.json."""
+    out = Path(__file__).parent / "data" / "ai-features.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    records = []
+    for c in companies:
+        if not c.ai_features:
+            continue
+        records.append({
+            "id": c.id,
+            "key": c.key,
+            "name": c.name,
+            "domain": c.canonical_domain,
+            "website": c.website,
+            **c.ai_features,
+        })
+
+    with open(out, "w") as fh:
+        json.dump(records, fh, indent=2)
+    log.info(f"Saved {len(records)} records to {out}")
+
+
+# ---------------------------------------------------------------------------
 # Print summary
 # ---------------------------------------------------------------------------
 
@@ -569,8 +596,6 @@ def main():
     parser = argparse.ArgumentParser(
         description="Deep-extract AI features from enriched lead-gen companies"
     )
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Print results without writing to Neon")
     parser.add_argument("--limit", type=int, default=0,
                         help="Max companies to process (0 = all)")
     parser.add_argument("--company-id", type=int, default=0,
@@ -602,16 +627,15 @@ def main():
     elapsed = time.time() - t0
     log.info(f"Completed in {elapsed:.0f}s")
 
-    # Phase 4: Store to Neon
-    if args.dry_run:
-        log.info("Dry run — skipping Neon writes.")
-        return
-
     classified = [c for c in companies if c.ai_features]
     if not classified:
         log.info("No AI features extracted.")
         return
 
+    # Phase 4: Save to file
+    save_to_file(classified)
+
+    # Phase 5: Update Neon
     update_neon(classified)
     log.info("Done.")
 
