@@ -1,0 +1,243 @@
+[
+  {
+    "hotel": {
+      "amenities": [
+        "Swimming pool",
+        "Yoga",
+        "Restaurant",
+        "Bar",
+        "Spa",
+        "Wi-Fi"
+      ],
+      "board_type": "Bed & Breakfast",
+      "description": "Design-led lifestyle hotel in Rethymno's old harbour district, Crete. 95 rooms with bohemian-minimalist interiors, communal yoga deck, farm-to-fork restaurant, natural wine bar, and a lap pool in a restored Venetian-era courtyard. Adults-only.",
+      "hotel_id": "casa-cook-rethymno",
+      "image_url": null,
+      "lat": 35.372,
+      "lng": 24.47,
+      "location": "Rethymno, Crete, Greece",
+      "name": "Casa Cook Rethymno",
+      "opened_year": 2026,
+      "price_eur": 195.0,
+      "region": "Crete",
+      "source_url": "https://www.casacook.com",
+      "star_rating": 4
+    },
+    "score": 0.50870293
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Lagoon pool",
+        "Spa",
+        "Kids club",
+        "Multiple restaurants",
+        "Beach access",
+        "Fitness center",
+        "Cinema"
+      ],
+      "board_type": "Half Board",
+      "description": "Domes Resorts' new-build property west of Chania town. 150 rooms wrapped around a lagoon-style pool, Haute Living suites with private chef service, open-air cinema, and a Cretan-Japanese fusion restaurant. Family-friendly with kids' village.",
+      "hotel_id": "domes-zeen-chania",
+      "image_url": null,
+      "lat": 35.48,
+      "lng": 23.92,
+      "location": "Chania, Crete, Greece",
+      "name": "Domes Zeen Chania",
+      "opened_year": 2019,
+      "price_eur": 340.0,
+      "region": "Crete",
+      "source_url": "https://www.domesresorts.com",
+      "star_rating": 5
+    },
+    "score": 0.45390385
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Private pools",
+        "Spa",
+        "Beach access",
+        "Multiple restaurants",
+        "Fitness center",
+        "Kids club",
+        "Water sports"
+      ],
+      "board_type": "All-Inclusive",
+      "description": "Ultra-luxury beachfront resort on Crete's southeastern coast. 280 suites with private pools, a 2,000 sqm spa, five restaurants, and direct access to a 400-metre sandy beach. Minimalist Cretan-contemporary design by MKV Design.",
+      "hotel_id": "numo-ierapetra",
+      "image_url": null,
+      "lat": 35.0075,
+      "lng": 25.7374,
+      "location": "Ierapetra, Crete, Greece",
+      "name": "Numo Ierapetra Beach Resort",
+      "opened_year": 2021,
+      "price_eur": 380.0,
+      "region": "Crete",
+      "source_url": "https://numohotels.com",
+      "star_rating": 5
+    },
+    "score": 0.55143595
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Infinity pool",
+        "Spa",
+        "Beach access",
+        "Multiple restaurants",
+        "Bar",
+        "Fitness center",
+        "Rooftop terrace"
+      ],
+      "board_type": "Standard",
+      "description": "W Hotels' first property in Crete, bringing Marriott's lifestyle brand to the island's north coast. 200 rooms with signature W design, WET Deck infinity pool, Away Spa, and multiple dining concepts overlooking the Sea of Crete.",
+      "hotel_id": "w-hotel-crete",
+      "image_url": null,
+      "lat": 35.5138,
+      "lng": 24.018,
+      "location": "Chania, Crete, Greece",
+      "name": "W Crete",
+      "opened_year": 2026,
+      "price_eur": 420.0,
+      "region": "Crete",
+      "source_url": "https://www.marriott.com/w-hotels",
+      "star_rating": 5
+    },
+    "score": 0.49461663
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Private pools",
+        "Spa",
+        "Restaurant",
+        "Bar",
+        "Concierge",
+        "Butler service"
+      ],
+      "board_type": "Bed & Breakfast",
+      "description": "New adults-only extension of the iconic Canaves Oia brand in Santorini. 24 cave-style suites carved into the caldera cliff with private infinity plunge pools, a subterranean spa, and a sunset champagne terrace. Peak Cycladic luxury.",
+      "hotel_id": "santorini-canaves-oia-epitome",
+      "image_url": null,
+      "lat": 36.461,
+      "lng": 25.372,
+      "location": "Santorini, Cyclades, Greece",
+      "name": "Canaves Oia Epitome",
+      "opened_year": 2018,
+      "price_eur": 480.0,
+      "region": "Cyclades",
+      "source_url": "https://www.canaves.com",
+      "star_rating": 5
+    },
+    "score": 0.4109803
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Private beach",
+        "Golf course",
+        "Spa",
+        "Kids club",
+        "Multiple restaurants",
+        "Fitness center",
+        "Tennis court"
+      ],
+      "board_type": "Bed & Breakfast",
+      "description": "Mandarin Oriental's Greek debut on the Peloponnese coast. 99 villas with private gardens, two signature golf courses, MO Spa, kids' academy, and four restaurants. Set within the Costa Navarino eco-resort complex with access to Voidokilia beach, one of the Mediterranean's most beautiful.",
+      "hotel_id": "costa-navarino-mandarin",
+      "image_url": null,
+      "lat": 36.96,
+      "lng": 21.65,
+      "location": "Costa Navarino, Peloponnese, Greece",
+      "name": "Mandarin Oriental Costa Navarino",
+      "opened_year": 2023,
+      "price_eur": 490.0,
+      "region": "Peloponnese",
+      "source_url": "https://www.mandarinoriental.com",
+      "star_rating": 5
+    },
+    "score": 0.49108043
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Plunge pools",
+        "Spa",
+        "Organic garden",
+        "Restaurant",
+        "Yoga",
+        "Hammam",
+        "Beach access"
+      ],
+      "board_type": "Bed & Breakfast",
+      "description": "IHG's Six Senses brand on the Akrotiri peninsula, Crete. 60 earth-toned villas with plunge pools, organic garden, Six Senses Spa with hammam and cryotherapy, and a working Cretan farm. Net-zero carbon targets.",
+      "hotel_id": "six-senses-crete",
+      "image_url": null,
+      "lat": 35.56,
+      "lng": 24.11,
+      "location": "Chania, Crete, Greece",
+      "name": "Six Senses Crete",
+      "opened_year": 2026,
+      "price_eur": 650.0,
+      "region": "Crete",
+      "source_url": "https://www.sixsenses.com",
+      "star_rating": 5
+    },
+    "score": 0.39751643
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Private pools",
+        "Spa",
+        "Private beach",
+        "Multiple restaurants",
+        "Marina",
+        "Butler service",
+        "Yoga"
+      ],
+      "board_type": "Standard",
+      "description": "One&Only's Greek debut on the unspoilt island of Kea in the western Cyclades. 75 clifftop villas with private pools and Aegean panoramas, holistic wellness centre, three restaurants, and a private marina for yacht arrivals.",
+      "hotel_id": "one-and-only-kea",
+      "image_url": null,
+      "lat": 37.63,
+      "lng": 24.32,
+      "location": "Kea, Cyclades, Greece",
+      "name": "One&Only Kea Island",
+      "opened_year": 2023,
+      "price_eur": 890.0,
+      "region": "Cyclades",
+      "source_url": "https://www.oneandonlyresorts.com",
+      "star_rating": 5
+    },
+    "score": 0.41296536
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Private beach",
+        "Spa",
+        "Infinity pool",
+        "Restaurant",
+        "Boat excursions",
+        "Yoga",
+        "Butler service"
+      ],
+      "board_type": "Standard",
+      "description": "Aman Resorts' first Cretan property overlooking the Gulf of Mirabello. 75 pavilions cascading to a private cove. Stone-and-wood construction, cliff-edge Aman Spa, organic farm-to-table dining, and private boat excursions.",
+      "hotel_id": "aman-elounda",
+      "image_url": null,
+      "lat": 35.2543,
+      "lng": 25.7284,
+      "location": "Elounda, Crete, Greece",
+      "name": "Aman Elounda",
+      "opened_year": 2026,
+      "price_eur": 950.0,
+      "region": "Crete",
+      "source_url": "https://www.aman.com",
+      "star_rating": 5
+    },
+    "score": 0.53371114
+  }
+]

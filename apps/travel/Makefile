@@ -1,26 +1,41 @@
-CRATE = ../../crates/travel-ml
+CRATE = crates/travel-ml
+BIN = $(CRATE)/target/debug/travel-ml
 
-.PHONY: start ischia ischia-fast long-stay
+.PHONY: start ischia ischia-fast long-stay reviews-store reviews-search reviews-stats build
 
-start:
+build:
+	cd $(CRATE) && cargo build --bin travel-ml
+
+start: build
 	cd $(CRATE) && cargo test --lib
-	cd $(CRATE) && RUST_LOG=info cargo run --bin travel-discover
+	RUST_LOG=info $(BIN) discover
 	vercel --prod --yes
 
-# Full pipeline: scrape → Candle ML → review analysis → export → deploy
-ischia:
+ischia: build
 	cd $(CRATE) && cargo test --lib
-	cd $(CRATE) && RUST_LOG=info cargo run --bin travel-ischia
+	RUST_LOG=info $(BIN) discover
 	vercel --prod --yes
 
-# Fast variant: skip review analysis (no sentiment/aspect scores)
-ischia-fast:
+ischia-fast: build
 	cd $(CRATE) && cargo test --lib
-	cd $(CRATE) && RUST_LOG=info cargo run --bin travel-ischia -- --skip-reviews
+	RUST_LOG=info $(BIN) discover -- --skip-reviews
 	vercel --prod --yes
 
-# Long-stay rental discovery: scrape → ML score → export → deploy
-long-stay:
+long-stay: build
 	cd $(CRATE) && cargo test --lib
-	cd $(CRATE) && RUST_LOG=info cargo run --bin travel-ml -- discover-long-stay
+	RUST_LOG=info $(BIN) discover-long-stay
 	vercel --prod --yes
+
+reviews-store: build
+	RUST_LOG=info $(BIN) reviews-store --input src/data/hotels_2026.json --db data/reviews.lance
+	cp -r $(CRATE)/data/reviews.lance data/reviews.lance
+	@echo "✅ Reviews stored in data/reviews.lance"
+
+reviews-search: build
+	$(BIN) reviews-search --query "$(QUERY)" --db data/reviews.lance --top-k $(or $(TOP_K),10)
+
+reviews-stats: build
+	$(BIN) reviews-stats --db data/reviews.lance
+
+reviews-list: build
+	$(BIN) reviews-list --db data/reviews.lance --limit $(or $(LIMIT),50) $(if $(HOTEL),--hotel-id $(HOTEL),) $(if $(FULL),--full,)

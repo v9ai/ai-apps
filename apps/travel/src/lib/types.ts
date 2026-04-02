@@ -49,6 +49,19 @@ export interface CuratedHotel {
   url: string;
 }
 
+export interface KatowiceHotel extends CuratedHotel {
+  hotel_id: string;
+  rating: number;
+  review_count: number;
+  price_eur: number;
+  amenities: string[];
+  recommendation_reason: string;
+  is_recommended?: boolean;
+  gallery?: string[];
+  review_texts?: string[];
+  sources?: string[];
+}
+
 export interface BookingSummary {
   total_estimated_cost: { pln: number; eur: number };
   places_needing_reservation: string[];

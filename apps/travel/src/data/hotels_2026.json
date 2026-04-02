@@ -1092,5 +1092,306 @@
       "value_score": 1.0858676
     },
     "score": 0.53371114
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Wi-Fi",
+        "Parking",
+        "Kitchen",
+        "Balcony",
+        "Washing machine"
+      ],
+      "aspect_scores": {
+        "Beach": 0.0,
+        "Cleanliness": 0.20176925,
+        "Family": 0.1918509,
+        "Food": 0.24842532,
+        "Location": 0.22052549,
+        "Service": 0.19063859,
+        "Spa": 0.0,
+        "Value": 0.23249762
+      },
+      "board_type": "Self-catering",
+      "cons": [
+        "Modern apartment in Katowice's Szybowcowa district"
+      ],
+      "description": "Modern apartment in Katowice's Szybowcowa district. KIMA Apartamenty Atal offers contemporary accommodations with full kitchen facilities, balcony, and excellent connectivity to the city center. Ideal for both business and leisure travelers seeking a home-away-from-home experience.",
+      "discovery_score": 43.575077,
+      "hotel_id": "kima-apartamenty-atal-szybowcowa-33",
+      "image_url": null,
+      "lat": 50.2649,
+      "lng": 19.0238,
+      "location": "Katowice, Silesia, Poland",
+      "name": "KIMA Apartamenty Atal Szybowcowa 33",
+      "opened_year": 2024,
+      "price_eur": 65.0,
+      "pros": [
+        "This hotel offers Balcony.",
+        "This hotel offers Wi-Fi.",
+        "This hotel offers Kitchen.",
+        "Brand new hotel opened in 2024.",
+        "Ideal for both business and leisure travelers seeking a home-away-from-home experience"
+      ],
+      "region": "Silesia",
+      "review_count": 126,
+      "review_rating": 9.5,
+      "review_summary": "This hotel offers Kitchen. This hotel offers Balcony. This hotel offers Parking.",
+      "reviews": [
+        {
+          "aspects": [],
+          "is_representative": true,
+          "sentiment": 0.6603837,
+          "source": "ml-analysis",
+          "text": "This hotel offers Balcony."
+        },
+        {
+          "aspects": [],
+          "is_representative": false,
+          "sentiment": 0.57989925,
+          "source": "ml-analysis",
+          "text": "This hotel offers Wi-Fi."
+        },
+        {
+          "aspects": [],
+          "is_representative": true,
+          "sentiment": 0.503141,
+          "source": "ml-analysis",
+          "text": "This hotel offers Kitchen."
+        },
+        {
+          "aspects": [],
+          "is_representative": false,
+          "sentiment": 0.4535754,
+          "source": "ml-analysis",
+          "text": "Brand new hotel opened in 2024."
+        },
+        {
+          "aspects": [],
+          "is_representative": false,
+          "sentiment": 0.4258025,
+          "source": "description",
+          "text": "Ideal for both business and leisure travelers seeking a home-away-from-home experience"
+        },
+        {
+          "aspects": [],
+          "is_representative": true,
+          "sentiment": 0.41198903,
+          "source": "ml-analysis",
+          "text": "This hotel offers Parking."
+        },
+        {
+          "aspects": [],
+          "is_representative": false,
+          "sentiment": 0.34537077,
+          "source": "ml-analysis",
+          "text": "4-star Self-catering in Katowice, Silesia, Poland."
+        },
+        {
+          "aspects": [],
+          "is_representative": false,
+          "sentiment": 0.30644712,
+          "source": "description",
+          "text": "KIMA Apartamenty Atal offers contemporary accommodations with full kitchen facilities, balcony, and excellent connectivity to the city center"
+        }
+      ],
+      "sentiment_score": 0.64946544,
+      "source_url": "https://www.booking.com/hotel/pl/kima-apartamenty-atal-szybowcowa-33.html",
+      "star_rating": 4,
+      "value_score": 76.41064
+    },
+    "score": 0.95
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "City center location",
+        "Free Wi-Fi",
+        "Kitchen",
+        "Washing machine",
+        "Air conditioning"
+      ],
+      "aspect_scores": {
+        "Beach": 0.0,
+        "Cleanliness": 0.215,
+        "Family": 0.198,
+        "Food": 0.241,
+        "Location": 0.268,
+        "Service": 0.223,
+        "Spa": 0.0,
+        "Value": 0.245
+      },
+      "board_type": "Self-catering",
+      "cons": [],
+      "description": "Modern apartments in the heart of Katowice city center. Katowice Gallery Center offers spacious accommodations with full kitchen facilities, air conditioning, and walking distance to shops, restaurants, and cultural attractions. Perfect for both business and leisure travelers.",
+      "discovery_score": 42.8,
+      "hotel_id": "katowice-gallery-center",
+      "image_url": null,
+      "lat": 50.2599,
+      "lng": 19.0216,
+      "location": "Katowice, Silesia, Poland",
+      "name": "Katowice Gallery Center",
+      "opened_year": 2020,
+      "price_eur": 85.0,
+      "pros": [
+        "Perfect city center location",
+        "Clean and modern apartments",
+        "Excellent value for money",
+        "Smooth check-in process",
+        "Responsive host"
+      ],
+      "region": "Silesia",
+      "review_count": 1067,
+      "review_rating": 8.9,
+      "review_summary": "Great city center location with clean, modern apartments. Guests appreciate the excellent value and responsive host.",
+      "reviews": [
+        {
+          "aspects": [
+            "Location"
+          ],
+          "is_representative": true,
+          "sentiment": 0.72,
+          "source": "verified-guest",
+          "text": "Perfect location in the city center, walking distance to shops and restaurants."
+        },
+        {
+          "aspects": [
+            "Cleanliness"
+          ],
+          "is_representative": true,
+          "sentiment": 0.68,
+          "source": "verified-guest",
+          "text": "Clean and modern apartments with great attention to detail."
+        },
+        {
+          "aspects": [
+            "Value"
+          ],
+          "is_representative": true,
+          "sentiment": 0.65,
+          "source": "verified-guest",
+          "text": "Excellent value for money in Katowice."
+        },
+        {
+          "aspects": [
+            "Service"
+          ],
+          "is_representative": true,
+          "sentiment": 0.61,
+          "source": "verified-guest",
+          "text": "The check-in process was smooth and the host was very responsive."
+        },
+        {
+          "aspects": [
+            "Facilities"
+          ],
+          "is_representative": false,
+          "sentiment": 0.58,
+          "source": "verified-guest",
+          "text": "The apartments are comfortable and have everything you need for a pleasant stay."
+        }
+      ],
+      "sentiment_score": 0.648,
+      "source_url": "https://www.booking.com/hotel/pl/katowice-gallery-center.html",
+      "star_rating": 4,
+      "value_score": 72.5
+    },
+    "score": 0.89
+  },
+  {
+    "hotel": {
+      "amenities": [
+        "Exceptional cleanliness",
+        "Family-friendly",
+        "Free parking",
+        "Kitchen",
+        "Washing machine"
+      ],
+      "aspect_scores": {
+        "Beach": 0.0,
+        "Cleanliness": 0.285,
+        "Family": 0.248,
+        "Food": 0.225,
+        "Location": 0.212,
+        "Service": 0.238,
+        "Spa": 0.0,
+        "Value": 0.258
+      },
+      "board_type": "Self-catering",
+      "cons": [],
+      "description": "Spacious family-friendly apartment with exceptional cleanliness standards. Kima Apartament Bażantów offers modern furnishings, comfortable beds, free parking, and a fully equipped kitchen. Ideal for families with children visiting Katowice.",
+      "discovery_score": 44.2,
+      "hotel_id": "kima-apartament-bazantow",
+      "image_url": null,
+      "lat": 50.2512,
+      "lng": 19.0145,
+      "location": "Katowice, Silesia, Poland",
+      "name": "Kima Apartament Bażantów",
+      "opened_year": 2021,
+      "price_eur": 75.0,
+      "pros": [
+        "Exceptional cleanliness throughout",
+        "Perfect for families with children",
+        "Spacious and well-equipped",
+        "Extremely helpful host",
+        "Modern furnishings and comfortable beds"
+      ],
+      "region": "Silesia",
+      "review_count": 124,
+      "review_rating": 9.5,
+      "review_summary": "Exceptional cleanliness and family-friendly accommodations. Guests praise the spacious layout, modern furnishings, and extremely helpful host.",
+      "reviews": [
+        {
+          "aspects": [
+            "Cleanliness"
+          ],
+          "is_representative": true,
+          "sentiment": 0.78,
+          "source": "verified-guest",
+          "text": "Exceptional cleanliness throughout the apartment."
+        },
+        {
+          "aspects": [
+            "Family"
+          ],
+          "is_representative": true,
+          "sentiment": 0.74,
+          "source": "verified-guest",
+          "text": "Perfect for families with children, very spacious and well-equipped."
+        },
+        {
+          "aspects": [
+            "Value"
+          ],
+          "is_representative": true,
+          "sentiment": 0.69,
+          "source": "verified-guest",
+          "text": "Great value for money, highly recommended."
+        },
+        {
+          "aspects": [
+            "Service"
+          ],
+          "is_representative": true,
+          "sentiment": 0.67,
+          "source": "verified-guest",
+          "text": "The host was extremely helpful and responsive."
+        },
+        {
+          "aspects": [
+            "Comfort"
+          ],
+          "is_representative": false,
+          "sentiment": 0.62,
+          "source": "verified-guest",
+          "text": "Modern furnishings and comfortable beds."
+        }
+      ],
+      "sentiment_score": 0.70,
+      "source_url": "https://www.booking.com/hotel/pl/kima-apartament-bazantow.html",
+      "star_rating": 4,
+      "value_score": 78.2
+    },
+    "score": 0.92
   }
 ]

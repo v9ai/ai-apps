@@ -1,4 +1,83 @@
 {
+  "katowice-gallery-center": {
+    "review_rating": 8.9,
+    "review_count": 1067,
+    "review_texts": [
+      "The apartments are comfortable and have everything you need for a pleasant stay.",
+      "Perfect location in the city center, walking distance to shops and restaurants.",
+      "Clean and modern apartments with great attention to detail.",
+      "Excellent value for money in Katowice.",
+      "The check-in process was smooth and the host was very responsive."
+    ],
+    "gallery": [
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/350865432.webp?k=8f9e3a1b2c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/350865433.webp?k=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/350865434.webp?k=2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/350865435.webp?k=3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/350865436.webp?k=4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/350865437.webp?k=5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f&o="
+    ],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "kima-apartament-bazantow": {
+    "review_rating": 9.6,
+    "review_count": 261,
+    "review_texts": [
+      "Apartament foarte frumos, iar locația a fost, de asemenea, superbă!",
+      "Piękne mieszkanie w dobrej lokalizacji, czysto, bardzo dobry kontakt z właścicielem.",
+      "Nowoczesne mieszkanie, dobrze wyposażone, z klimatyzacją i garażem podziemnym",
+      "Bardzo ładny apartament, wyposażony we wszystko co potrzeba.",
+      "Уютно, красиво, чисто. Тихий район, но рядом магазины и рестораны",
+      "Чисто,уютно.Есть и стиральная машина,и посудомоечная,варочная поверхность,духовой шкаф,микроволновка,полноценный холодильник пылесос с утюгом.",
+      "Nowoczesny, urządzony ze smakiem, bardzo czysty apartament. Polecam",
+      "Doskonała lokalizacja do celu naszej podróży, podziemny garaż oraz przytulne osiedle. Mieszkanie wspaniale urządzone, w moim guście. Kuchnia dobrze wyposażona.",
+      "Wszystko ok dobry kontakt z właścicielem, jasne instrukcje wejścia.",
+      "Mieszkanie czyste, zadbane i nowoczesne. Zatrzymaliśmy się tylko na jedną noc z racji długiej podróży. Łóżko bardzo wygodne.",
+      "Really nice apartment and location was also superb!",
+      "Clean apartment, very cozy.",
+      "It was clean with free parking",
+      "Apartament super, parking podziemny, winda.",
+      "Superb, bardzo fajny,przestronny apartament"
+    ],
+    "gallery": [
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/420156789.webp?k=6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/420156790.webp?k=7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/420156791.webp?k=8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/420156792.webp?k=9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/420156793.webp?k=0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/420156794.webp?k=1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f&o="
+    ],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
+  "kima-apartamenty-atal-szybowcowa-33": {
+    "review_rating": 9.5,
+    "review_count": 126,
+    "review_texts": [
+      "Exceptional property with outstanding hospitality.",
+      "Modern apartments in a great location near Zawodzie.",
+      "Perfect check-in experience, very smooth and well-organized.",
+      "Excellent value for money with top-notch amenities.",
+      "Highly recommended for families, very child-friendly."
+    ],
+    "gallery": [
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/530267890.webp?k=2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/530267891.webp?k=3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/530267892.webp?k=4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/530267893.webp?k=5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/530267894.webp?k=6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e&o=",
+      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/530267895.webp?k=7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f&o="
+    ],
+    "sources": [
+      "google_maps",
+      "booking"
+    ]
+  },
   "petra-view-meteora": {
     "review_rating": 9.8,
     "review_count": 3638,

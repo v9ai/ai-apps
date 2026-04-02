@@ -584,22 +584,43 @@
     "hotel_search_url": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
     "curated_hotels": [
       {
-        "name": "Flow Świętego Pawła 10",
-        "property_id": "13562120",
-        "address": "ul. Świętego Pawła 10, Katowice",
-        "url": "https://www.booking.com/hotel/pl/flow-swietego-pawla-10.ro.html?aid=2428369&checkin=2026-04-04&checkout=2026-04-07&group_adults=2&group_children=1&age=7&no_rooms=1"
+        "name": "Katowice Gallery Center",
+        "hotel_id": "katowice-gallery-center",
+        "property_id": "8787416",
+        "address": "ul. Sobieskiego 24/6, 40-082 Katowice",
+        "rating": 8.9,
+        "review_count": 1067,
+        "price_eur": 85,
+        "amenities": ["City center location", "Free Wi-Fi", "Kitchen", "Washing machine", "Air conditioning"],
+        "url": "https://www.booking.com/hotel/pl/katowice-gallery-center.ro.html?aid=2428369&checkin=2026-04-04&checkout=2026-04-07&group_adults=2&group_children=1&age=7&no_rooms=1",
+        "recommendation_reason": "Best for city center location with proven track record (1,000+ reviews)",
+        "is_recommended": false
       },
       {
-        "name": "Flow Apartments - przy Mariackiej",
-        "property_id": "13562397",
-        "address": "ul. Mariacka, Katowice",
-        "url": "https://www.booking.com/hotel/pl/flow-stanislawa-7.ro.html?aid=2428369&checkin=2026-04-04&checkout=2026-04-07&group_adults=2&group_children=1&age=7&no_rooms=1"
+        "name": "Kima Apartament Bażantów",
+        "hotel_id": "kima-apartament-bazantow",
+        "property_id": "8468097",
+        "address": "ul. Bażantów, Katowice",
+        "rating": 9.5,
+        "review_count": 124,
+        "price_eur": 75,
+        "amenities": ["Exceptional cleanliness", "Family-friendly", "Free parking", "Kitchen", "Washing machine"],
+        "url": "https://www.booking.com/hotel/pl/kima-apartament-bazantow.ro.html?aid=2428369&checkin=2026-04-04&checkout=2026-04-07&group_adults=2&group_children=1&age=7&no_rooms=1",
+        "recommendation_reason": "🏆 TOP PICK: Highest rating (9.5), exceptional cleanliness, perfect for families with children",
+        "is_recommended": true
       },
       {
-        "name": "Parkcity Centrum",
-        "property_id": "9573635",
-        "address": "Katowice Centrum",
-        "url": "https://www.booking.com/hotel/pl/parkcity-centrum.ro.html?aid=2428369&checkin=2026-04-04&checkout=2026-04-07&group_adults=2&group_children=1&age=7&no_rooms=1"
+        "name": "KIMA Apartamenty Atal Szybowcowa 33",
+        "hotel_id": "kima-apartamenty-atal-szybowcowa-33",
+        "property_id": "12277771",
+        "address": "ul. Szybowcowa 33, Katowice (Zawodzie)",
+        "rating": 9.5,
+        "review_count": 126,
+        "price_eur": 70,
+        "amenities": ["Modern apartments", "Free parking", "Kitchen", "Washing machine", "Superhost hospitality"],
+        "url": "https://www.booking.com/hotel/pl/kima-apartamenty-atal-szybowcowa-33.ro.html?aid=2428369&checkin=2026-04-04&checkout=2026-04-07&group_adults=2&group_children=1&age=7&no_rooms=1",
+        "recommendation_reason": "Excellent value with outstanding hospitality (9.5 rating)",
+        "is_recommended": false
       }
     ]
   }

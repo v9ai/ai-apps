@@ -43,3 +43,11 @@ deepseek-fallback = ["deepseek"]
 [[bin]]
 name = "travel-ml"
 path = "src/bin/main.rs"
+
+[[bin]]
+name = "scrape-all-reviews"
+path = "src/bin/scrape-all-reviews.rs"
+
+[[bin]]
+name = "katowice-deepen"
+path = "src/bin/katowice-deepen.rs"
