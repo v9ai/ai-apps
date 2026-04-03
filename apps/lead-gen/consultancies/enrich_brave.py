@@ -282,8 +282,71 @@ Rules:
 /no_think"""
 
 
+def _parse_llm_json(response_text: str) -> "dict | None":
+    """Extract JSON object from LLM response text."""
+    json_match = re.search(r"\{[\s\S]*\}", response_text)
+    if json_match:
+        try:
+            return json.loads(json_match.group())
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
+def classify_via_http(companies: list[CompanyRecord], server_url: str) -> list[CompanyRecord]:
+    """Classify companies via OpenAI-compatible HTTP server (e.g. mlx_lm.server on :8080).
+
+    Sends one request per company. Falls back silently if the server returns an error.
+    """
+    import urllib.request
+    import urllib.error
+
+    chat_url = server_url.rstrip("/") + "/chat/completions"
+    headers = {"Content-Type": "application/json"}
+
+    for i, c in enumerate(companies):
+        if not c.page_text or len(c.page_text) < 100:
+            log.info(f"  [{i+1}/{len(companies)}] {c.name} — skipped (no text)")
+            continue
+
+        prompt = CLASSIFY_PROMPT.format(
+            name=c.name,
+            domain=c.canonical_domain,
+            text=c.page_text[:3000],
+        )
+        payload = json.dumps({
+            "model": "default",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 500,
+            "temperature": 0.1,
+        }).encode()
+
+        try:
+            req = urllib.request.Request(chat_url, data=payload, headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                body = json.loads(resp.read())
+            content = body["choices"][0]["message"]["content"]
+            data = _parse_llm_json(content)
+            if data:
+                c.enrichment = data
+                log.info(
+                    f"  [{i+1}/{len(companies)}] {c.name} → "
+                    f"{data.get('category', '?')} | "
+                    f"ai_tier={data.get('ai_tier', '?')} | "
+                    f"{data.get('one_line_summary', '')[:50]}"
+                )
+            else:
+                log.warning(f"  [{i+1}/{len(companies)}] {c.name} — no JSON in response")
+        except Exception as e:
+            log.warning(f"  [{i+1}/{len(companies)}] {c.name} — HTTP error: {e}")
+
+    enriched = [c for c in companies if c.enrichment]
+    log.info(f"Classified {len(enriched)}/{len(companies)} companies via HTTP server")
+    return companies
+
+
 def classify_with_mlx(companies: list[CompanyRecord]) -> list[CompanyRecord]:
-    """Classify companies using Qwen3-8B on Metal GPU."""
+    """Classify companies using Qwen3-8B loaded directly on Metal GPU (fallback)."""
     try:
         from mlx_lm import load, generate
     except ImportError:
@@ -304,20 +367,13 @@ def classify_with_mlx(companies: list[CompanyRecord]) -> list[CompanyRecord]:
             domain=c.canonical_domain,
             text=c.page_text[:3000],
         )
-
         messages = [{"role": "user", "content": prompt}]
-        prompt_text = tokenizer.apply_chat_template(
-            messages, add_generation_prompt=True
-        )
+        prompt_text = tokenizer.apply_chat_template(messages, add_generation_prompt=True)
 
         try:
-            response = generate(
-                model, tokenizer, prompt=prompt_text, max_tokens=500, verbose=False
-            )
-            # Extract JSON from response
-            json_match = re.search(r"\{[\s\S]*\}", response)
-            if json_match:
-                data = json.loads(json_match.group())
+            response = generate(model, tokenizer, prompt=prompt_text, max_tokens=500, verbose=False)
+            data = _parse_llm_json(response)
+            if data:
                 c.enrichment = data
                 log.info(
                     f"  [{i+1}/{len(companies)}] {c.name} → "
@@ -331,8 +387,27 @@ def classify_with_mlx(companies: list[CompanyRecord]) -> list[CompanyRecord]:
             log.warning(f"  [{i+1}/{len(companies)}] {c.name} — LLM error: {e}")
 
     enriched = [c for c in companies if c.enrichment]
-    log.info(f"Classified {len(enriched)}/{len(companies)} companies")
+    log.info(f"Classified {len(enriched)}/{len(companies)} companies via MLX")
     return companies
+
+
+def classify_companies(
+    companies: list[CompanyRecord],
+    server_url: "str | None" = None,
+) -> list[CompanyRecord]:
+    """Classify companies: prefer HTTP server, fall back to direct MLX load."""
+    url = server_url or os.environ.get("QWEN_SERVER_URL", "http://localhost:8080/v1")
+
+    # Probe server health
+    import urllib.request
+    import urllib.error
+    try:
+        urllib.request.urlopen(url.rstrip("/") + "/models", timeout=2)
+        log.info(f"Using Qwen HTTP server at {url}")
+        return classify_via_http(companies, url)
+    except Exception:
+        log.info(f"Qwen server not available at {url} — falling back to direct MLX load")
+        return classify_with_mlx(companies)
 
 
 # ---------------------------------------------------------------------------
@@ -577,10 +652,10 @@ def main():
     log.info(f"Phase 2: Scraping {len(companies)} company websites...")
     companies = asyncio.run(scrape_all(companies))
 
-    # Phase 3: MLX classification
+    # Phase 3: Classification (HTTP server preferred, direct MLX fallback)
     if not args.no_llm:
-        log.info("Phase 3: MLX classification...")
-        companies = classify_with_mlx(companies)
+        log.info("Phase 3: Classification...")
+        companies = classify_companies(companies)
 
     # Print summary
     print_summary(companies)
