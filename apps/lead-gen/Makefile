@@ -345,6 +345,10 @@ extract-ai-features: ## Deep-extract AI features from enriched companies (MLX)
 	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; exit 1; }
 	$(CONSULT_PY) $(CONSULT_DIR)/extract_ai_features.py $(ARGS)
 
+pipeline-forecast: ## Generate pipeline forecasting analysis from ai-features.json
+	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; exit 1; }
+	$(CONSULT_PY) $(CONSULT_DIR)/generate_pipeline_forecasting.py $(ARGS)
+
 leads-status: start-build ## Show pipeline progress history
 	$(METAL_BIN) status
 

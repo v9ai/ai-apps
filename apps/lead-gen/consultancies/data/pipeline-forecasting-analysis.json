@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-02",
-  "total_companies": 17,
+  "generated_at": "2026-04-03",
+  "total_companies": 28,
   "companies": [
     {
       "name": "Revenue Intelligence",
@@ -22,7 +22,28 @@
       }
     },
     {
-      "name": "Sales automation AI: 7 game-changing tools to grow your revenue faster",
+      "name": "gong.io",
+      "domain": "gong.io",
+      "website": "https://www.gong.io/revenue-intelligence",
+      "automation_level": "autonomous",
+      "feature": {
+        "name": "Revenue Intelligence Platform",
+        "category": "analytics",
+        "description": "Offers insights into buyer relationships and engagement activity to improve sales cycles and pipeline visibility.",
+        "ai_implementation": "Machine learning models analyze engagement data to predict revenue outcomes and provide actionable insights.",
+        "data_sources": [
+          "call recordings",
+          "email threads",
+          "web signals",
+          "CRM data",
+          "job postings",
+          "technographic data"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "monday.com",
       "domain": "monday.com",
       "website": "https://monday.com/blog/crm-and-sales/sales-automation-ai/",
       "automation_level": "semi-auto",
@@ -41,8 +62,8 @@
     },
     {
       "name": "AI Automation",
-      "domain": "webdme.co",
-      "website": "https://www.webdme.co/industries/ai-automation",
+      "domain": "pipedrive.com",
+      "website": "https://www.pipedrive.com/en/products/ai-crm/ai-automation",
       "automation_level": "semi-auto",
       "feature": {
         "name": "Pipeline Forecasting",
@@ -58,7 +79,7 @@
       }
     },
     {
-      "name": "Top 33 Sales Startups 2026",
+      "name": "topstartups.io",
       "domain": "topstartups.io",
       "website": "https://topstartups.io/?industries=Sales",
       "automation_level": "semi-auto",
@@ -76,7 +97,7 @@
       }
     },
     {
-      "name": "8 Best AI SDR Tools for B2B Pipeline Generation in 2026: Automation Without Spam",
+      "name": "scopicstudios.com",
       "domain": "scopicstudios.com",
       "website": "https://scopicstudios.com/blog/best-ai-sdr-tools-for-b2b-pipeline-generation/",
       "automation_level": "semi-auto",
@@ -94,9 +115,9 @@
       }
     },
     {
-      "name": "Welcome to the era of agentic marketing",
-      "domain": "warmly.ai",
-      "website": "https://www.warmly.ai/",
+      "name": "Callbox",
+      "domain": "callboxinc.com",
+      "website": "https://www.callboxinc.com/",
       "automation_level": "semi-auto",
       "feature": {
         "name": "Pipeline Forecasting and Analytics",
@@ -130,10 +151,29 @@
       }
     },
     {
-      "name": "10 Best AI SDR Agents in 2025 [with real user reviews]",
-      "domain": "blog.hubspot.com",
-      "website": "https://blog.hubspot.com/sales/ai-sdr-agents",
+      "name": "revenue.io",
+      "domain": "revenue.io",
+      "website": "https://www.revenue.io/inside-sales-glossary/what-is-revenue-intelligence",
       "automation_level": "semi-auto",
+      "feature": {
+        "name": "Revenue Forecasting",
+        "category": "analytics",
+        "description": "Predicts revenue by analyzing historical data and current deal trends.",
+        "ai_implementation": "Trains ML model on historical sales data, deal stages, and market trends to forecast revenue.",
+        "data_sources": [
+          "CRM data",
+          "deal pipeline",
+          "market trends",
+          "historical sales data"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "qualified.com",
+      "domain": "qualified.com",
+      "website": "https://www.qualified.com",
+      "automation_level": "agentic",
       "feature": {
         "name": "Pipeline Forecasting",
         "category": "analytics",
@@ -148,9 +188,9 @@
       }
     },
     {
-      "name": "Best AI SDR Tools",
-      "domain": "scopicstudios.com",
-      "website": "https://scopicstudios.com/blog/best-ai-sdr-tools/",
+      "name": "trellus.ai",
+      "domain": "trellus.ai",
+      "website": "https://www.trellus.ai/post/ai-powered-sales-engagement-platforms",
       "automation_level": "semi-auto",
       "feature": {
         "name": "Pipeline Forecasting",
@@ -166,9 +206,28 @@
       }
     },
     {
-      "name": "Best AI Prospecting Tool - Sales Prospecting Software",
-      "domain": "seamless.ai",
-      "website": "https://seamless.ai/products/platform-overview",
+      "name": "crono.one",
+      "domain": "crono.one",
+      "website": "https://www.crono.one/academy/ai-tools-for-sales-prospecting/",
+      "automation_level": "autonomous",
+      "feature": {
+        "name": "Predictive Analytics",
+        "category": "analytics",
+        "description": "Provides predictive insights to forecast sales outcomes and pipeline performance.",
+        "ai_implementation": "Applies machine learning models to historical sales data and market trends for predictive analytics.",
+        "data_sources": [
+          "historical sales data",
+          "market trends",
+          "CRM data",
+          "pipeline metrics"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "knock-ai.com",
+      "domain": "knock-ai.com",
+      "website": "https://www.knock-ai.com/blog/build-ai-sdr-for-inbound-and-outbound-sales",
       "automation_level": "semi-auto",
       "feature": {
         "name": "Pipeline Forecasting",
@@ -184,9 +243,28 @@
       }
     },
     {
-      "name": "Top Conversational Targeting AI for Sales and Marketing Teams",
+      "name": "landbase.com",
       "domain": "landbase.com",
       "website": "https://www.landbase.com/blog/top-conversational-targeting-ai-for-sales-and-marketing-teams",
+      "automation_level": "agentic",
+      "feature": {
+        "name": "Pipeline Quality Boost",
+        "category": "analytics",
+        "description": "Improves pipeline quality by filtering out unqualified leads.",
+        "ai_implementation": "ML models trained on historical sales data to score leads based on purchase likelihood and fit.",
+        "data_sources": [
+          "CRM data",
+          "web signals",
+          "job postings",
+          "technographic data"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "outreach.io",
+      "domain": "outreach.io",
+      "website": "https://www.outreach.io/resources/blog/best-ai-sales-pipeline-tools",
       "automation_level": "agentic",
       "feature": {
         "name": "Pipeline Forecasting",
@@ -203,9 +281,9 @@
       }
     },
     {
-      "name": "10 best tools for SaaS lead generation in 2025",
-      "domain": "saasall.com",
-      "website": "https://www.saasall.com/post/best-tools-for-saas-lead-generation",
+      "name": "coldiq.com",
+      "domain": "coldiq.com",
+      "website": "https://coldiq.com/ai-sales-tools",
       "automation_level": "semi-auto",
       "feature": {
         "name": "Pipeline Forecasting",
@@ -221,9 +299,9 @@
       }
     },
     {
-      "name": "Best AI Sales Tools 2026",
-      "domain": "ai-crm.com",
-      "website": "https://ai-crm.com/best-ai-sales-tools/",
+      "name": "AI Sales Platform",
+      "domain": "apollo.io",
+      "website": "https://www.apollo.io/",
       "automation_level": "semi-auto",
       "feature": {
         "name": "Pipeline Forecasting",
@@ -239,9 +317,65 @@
       }
     },
     {
-      "name": "11 best AI sales pipeline tools to scale revenue in 2025",
-      "domain": "blog.hubspot.com",
-      "website": "https://blog.hubspot.com/sales/ai-sales-pipeline-tools",
+      "name": "assemblyai.com",
+      "domain": "assemblyai.com",
+      "website": "https://www.assemblyai.com/blog/revenue-intelligence-platforms",
+      "automation_level": "semi-auto",
+      "feature": {
+        "name": "Revenue Intelligence Platform",
+        "category": "analytics",
+        "description": "Analyzes conversation data to provide competitive insights and revenue predictions.",
+        "ai_implementation": "Uses NLP and predictive modeling on call transcripts, CRM data, and market signals to forecast revenue.",
+        "data_sources": [
+          "call recordings",
+          "CRM data",
+          "web signals",
+          "job postings",
+          "technographic data"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "salesloft.com",
+      "domain": "salesloft.com",
+      "website": "https://www.salesloft.com/platform/drift",
+      "automation_level": "semi-auto",
+      "feature": {
+        "name": "Revenue Forecasting",
+        "category": "analytics",
+        "description": "Predicts revenue based on historical data and current pipeline performance.",
+        "ai_implementation": "Time-series forecasting model using historical sales data and market trends",
+        "data_sources": [
+          "CRM data",
+          "sales history",
+          "market data"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "Aviso",
+      "domain": "aviso.com",
+      "website": "https://www.aviso.com/",
+      "automation_level": "agentic",
+      "feature": {
+        "name": "Revenue Forecasting",
+        "category": "analytics",
+        "description": "Predicts revenue with high accuracy by analyzing historical and current sales data.",
+        "ai_implementation": "Machine learning models trained on historical sales data, market trends, and CRM metrics to forecast revenue.",
+        "data_sources": [
+          "CRM data",
+          "sales pipelines",
+          "market trends"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "artisan.co",
+      "domain": "artisan.co",
+      "website": "https://www.artisan.co/blog/ai-prospecting-tools",
       "automation_level": "semi-auto",
       "feature": {
         "name": "Pipeline Forecasting",
@@ -257,9 +391,9 @@
       }
     },
     {
-      "name": "Pipedrive",
-      "domain": "pipedrive.com",
-      "website": "https://www.pipedrive.com/",
+      "name": "bdr.ai",
+      "domain": "bdr.ai",
+      "website": "https://www.bdr.ai/",
       "automation_level": "semi-auto",
       "feature": {
         "name": "AI-Powered Pipeline Forecasting",
@@ -275,9 +409,44 @@
       }
     },
     {
-      "name": "6 Best Revenue Intelligence Platforms in 2026: Top Tools Compared for Sales Teams",
+      "name": "AI SDR for Outbound (That Actually Works)",
+      "domain": "usergems.com",
+      "website": "https://www.usergems.com/product/ai-sdr",
+      "automation_level": "semi-auto",
+      "feature": {
+        "name": "Revenue Intelligence",
+        "category": "analytics",
+        "description": "Provides insights into pipeline performance and revenue forecasts.",
+        "ai_implementation": "Analyzes historical data and current pipeline metrics to predict revenue outcomes and identify bottlenecks.",
+        "data_sources": [
+          "CRM data",
+          "web signals",
+          "sales pipeline data"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "11x.ai",
+      "domain": "11x.ai",
+      "website": "https://www.11x.ai/tips/ai-email-outreach-tools",
+      "automation_level": "semi-auto",
+      "feature": {
+        "name": "Pipeline Forecasting",
+        "category": "analytics",
+        "description": "Predicts future sales based on historical data and current trends.",
+        "ai_implementation": "trains ML model on historical sales data and current pipeline metrics",
+        "data_sources": [
+          "historical sales data",
+          "pipeline metrics"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "sybill.ai",
       "domain": "sybill.ai",
-      "website": "https://www.sybill.ai/blog/best-revenue-intelligence-platforms",
+      "website": "https://www.sybill.ai/blogs/best-revenue-intelligence-platforms",
       "automation_level": "semi-auto",
       "feature": {
         "name": "Pipeline Forecasting",
@@ -292,9 +461,47 @@
       }
     },
     {
-      "name": "Top 5 AI Outreach Tools for 2026",
+      "name": "lindy.ai",
       "domain": "lindy.ai",
-      "website": "https://www.lindy.ai/blog/top-ai-outreach-tools",
+      "website": "https://www.lindy.ai/blog/ai-outreach-tools",
+      "automation_level": "semi-auto",
+      "feature": {
+        "name": "Pipeline Forecasting",
+        "category": "analytics",
+        "description": "Predicts sales pipeline outcomes and revenue forecasts.",
+        "ai_implementation": "predictive analytics using historical sales data and market trends",
+        "data_sources": [
+          "CRM data",
+          "historical sales data",
+          "market trends"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "Podium: AI Lead Generation & Lead Management Platform",
+      "domain": "podium.com",
+      "website": "https://www.podium.com/",
+      "automation_level": "autonomous",
+      "feature": {
+        "name": "Revenue Intelligence",
+        "category": "analytics",
+        "description": "Provides insights into revenue generation and lead conversion.",
+        "ai_implementation": "Analyzes historical sales data, lead behavior, and market trends to forecast revenue and identify conversion bottlenecks.",
+        "data_sources": [
+          "CRM data",
+          "web signals",
+          "email threads",
+          "job postings",
+          "technographic data"
+        ],
+        "is_realtime": false
+      }
+    },
+    {
+      "name": "foundersgtm.com",
+      "domain": "foundersgtm.com",
+      "website": "https://www.foundersgtm.com/p/the-ai-pipeline-system-how-b2b-founders",
       "automation_level": "semi-auto",
       "feature": {
         "name": "Pipeline Forecasting",
@@ -312,96 +519,94 @@
   ],
   "analysis": {
     "data_source_frequency": {
-      "CRM data": 15,
-      "historical sales data": 14,
-      "market trends": 9,
-      "pipeline data": 7,
-      "sales history": 4,
-      "web signals": 4,
-      "lead behavior": 3,
-      "lead scoring": 3,
+      "CRM data": 22,
+      "market trends": 12,
+      "historical sales data": 10,
+      "web signals": 7,
+      "job postings": 5,
+      "sales history": 5,
+      "email threads": 4,
+      "technographic data": 4,
+      "pipeline data": 3,
       "pipeline metrics": 3,
-      "email threads": 3,
+      "sales pipeline data": 3,
+      "call recordings": 2,
+      "pipeline stages": 1,
       "deal activity logs": 1,
       "sales call transcripts": 1,
-      "pipeline stages": 1,
-      "sales pipeline data": 3,
+      "lead behavior": 1,
+      "deal pipeline": 1,
       "historical performance": 1,
+      "market data": 1,
+      "sales pipelines": 1,
+      "lead scoring": 1,
       "engagement metrics": 1,
-      "job postings": 2,
+      "lead scoring data": 1,
       "historical deal data": 1,
-      "pipeline activity": 1,
-      "lead scoring data": 1
+      "historical sales": 1,
+      "pipeline activity": 1
     },
     "ai_implementation_types": {
-      "ML model / Machine Learning": 7,
-      "Time-series forecasting": 6,
-      "Predictive analytics": 4
+      "ML model / Machine Learning": 12,
+      "Predictive analytics": 10,
+      "Time-series forecasting": 6
     },
     "automation_level_breakdown": {
-      "semi-auto": 16,
-      "agentic": 1,
-      "autonomous": 0,
+      "semi-auto": 21,
+      "agentic": 4,
+      "autonomous": 3,
       "assisted": 0
     },
     "realtime_vs_batch": {
       "realtime": 0,
-      "batch": 17
+      "batch": 28
     },
     "key_insights": [
       {
-        "insight": "CRM Data is Universal",
-        "detail": "88% of companies (15/17) use CRM data as a primary source, making it the foundational data layer for pipeline forecasting."
+        "insight": "Crm Data is Universal",
+        "detail": "79% of companies (22/28) use CRM data as a primary source, making it the foundational data layer for pipeline forecasting."
       },
       {
         "insight": "Historical Data is Critical",
-        "detail": "82% of companies (14/17) rely on historical sales data, indicating that time-based pattern recognition is essential for accurate forecasting."
-      },
-      {
-        "insight": "Market Context Matters",
-        "detail": "53% of companies (9/17) incorporate market trends, showing that external factors are considered important for prediction accuracy."
+        "detail": "43% of companies (12/28) rely on market trends, indicating that time-based pattern recognition is essential for accurate forecasting."
       },
       {
         "insight": "No Realtime Forecasting",
-        "detail": "0% of pipeline forecasting features are realtime - all are batch processes. This contrasts with other features like Meeting Intelligence (100% realtime) and suggests forecasting prioritizes accuracy over immediacy."
+        "detail": "0% of pipeline forecasting features are realtime \u2014 all are batch processes. This suggests forecasting prioritizes accuracy over immediacy."
       },
       {
-        "insight": "ML Dominates Over Simple Analytics",
-        "detail": "41% use explicit ML models, 35% use time-series forecasting, and 24% use predictive analytics - all are sophisticated approaches rather than simple linear projections."
+        "insight": "ML model / Machine Learning Dominates",
+        "detail": "43% of implementations use ML model / Machine Learning. Average data sources per company: 3.4."
       },
       {
-        "insight": "Lead Behavior is Emerging",
-        "detail": "Only 18% (3/17) incorporate lead behavior or lead scoring data, suggesting an opportunity for differentiation through behavioral signal integration."
-      },
-      {
-        "insight": "Semi-Auto Dominates",
-        "detail": "94% of companies offer semi-auto forecasting - humans review and act on predictions. Only 1 agentic implementation exists (Landbase), indicating the space has not yet been disrupted by autonomous AI agents."
+        "insight": "Semi-Auto Standard",
+        "detail": "75% offer semi-auto forecasting (humans review predictions). Agentic: 4, autonomous: 3."
       },
       {
         "insight": "Data Source Sophistication Varies",
-        "detail": "Basic implementations use 2-3 data sources (CRM + historical), while advanced implementations use 5+ sources including web signals, job postings, email threads, and engagement metrics."
+        "detail": "Basic implementations use 2-3 data sources. Advanced implementations use 6+ sources including web signals, job postings, and engagement metrics."
       }
     ],
     "competitive_differentiators": [
       {
+        "company": "gong.io",
+        "differentiator": "Machine learning models analyze engagement data to predict revenue outcomes and provide actionable insights."
+      },
+      {
+        "company": "assemblyai.com",
+        "differentiator": "Uses NLP and predictive modeling on call transcripts, CRM data, and market signals to forecast revenue."
+      },
+      {
+        "company": "podium.com",
+        "differentiator": "Analyzes historical sales data, lead behavior, and market trends to forecast revenue and identify conversion bottlenecks."
+      },
+      {
         "company": "clari.com",
-        "differentiator": "Only company using deal activity logs and sales call transcripts - combines structured pipeline data with unstructured conversation intelligence."
+        "differentiator": "Trains ML model on historical pipeline data and deal activity to predict future performance."
       },
       {
-        "company": "landbase.com",
-        "differentiator": "Only agentic implementation; uses 4 diverse data sources including job postings and email threads for holistic forecasting."
-      },
-      {
-        "company": "blog.hubspot.com (11 best AI sales pipeline tools)",
-        "differentiator": "Only company explicitly using lead scoring and engagement metrics - focuses on buyer behavior signals rather than just sales activity."
-      },
-      {
-        "company": "pipedrive.com",
-        "differentiator": "Only company with lead scoring data as explicit input; branded as 'AI-Powered Pipeline Forecasting' rather than generic forecasting."
-      },
-      {
-        "company": "sybill.ai",
-        "differentiator": "Minimalist approach - uses only 2 data sources (CRM + historical deal data), suggesting streamlined, focused forecasting."
+        "company": "revenue.io",
+        "differentiator": "Trains ML model on historical sales data, deal stages, and market trends to forecast revenue."
       }
     ]
   }
