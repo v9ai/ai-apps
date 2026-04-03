@@ -349,6 +349,12 @@ pipeline-forecast: ## Generate pipeline forecasting analysis from ai-features.js
 	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; exit 1; }
 	$(CONSULT_PY) $(CONSULT_DIR)/generate_pipeline_forecasting.py $(ARGS)
 
+nl-search: ## Natural language company search via Qwen (QUERY="...")
+	@test -n "$(QUERY)" || { echo "Usage: make nl-search QUERY='AI companies in sales tech'"; exit 1; }
+	@test -x $(CONSULT_PY) || { echo "FAIL: Python venv not found at $(CONSULT_PY)"; exit 1; }
+	@curl -sf --max-time 2 http://localhost:8080/v1/models > /dev/null 2>&1 || { echo "FAIL: Qwen server not running on :8080"; echo "  Fix: make ft-serve TASK=role-tag"; exit 1; }
+	$(CONSULT_PY) $(CONSULT_DIR)/nl_search.py --query "$(QUERY)"
+
 leads-status: start-build ## Show pipeline progress history
 	$(METAL_BIN) status
 
