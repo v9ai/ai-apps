@@ -8,7 +8,6 @@ text_features), predicting when the event actually happened given how it's descr
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F  # noqa: F401
 import math
 
 EVENTS = [
