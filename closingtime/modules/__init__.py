@@ -7,6 +7,9 @@ from .call import ConversationNeuralProcess
 from .spam import SpamHead, PerplexityRatioDetector
 from .subject import ContextualBradleyTerry
 from .sentiment import DisentangledSentimentIntentHead, SENTIMENTS, INTENTS
+from .entities import EntityExtractor, PointerNER, RetypingLayer
+from .objection import ObjectionPreClassifier, OBJECTION_TYPES, COACHING_CARDS
+from .emailgen import EmailGenerator, EmailGenConfig, ProspectContext
 
 __all__ = [
     "LeadScorer", "LearnedInterventionAttribution",
@@ -18,4 +21,7 @@ __all__ = [
     "SpamHead", "PerplexityRatioDetector",
     "ContextualBradleyTerry",
     "DisentangledSentimentIntentHead", "SENTIMENTS", "INTENTS",
+    "EntityExtractor", "PointerNER", "RetypingLayer",
+    "ObjectionPreClassifier", "OBJECTION_TYPES", "COACHING_CARDS",
+    "EmailGenerator", "EmailGenConfig", "ProspectContext",
 ]
