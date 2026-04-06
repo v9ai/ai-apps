@@ -205,8 +205,17 @@ class NeuralHawkesIntentPredictor(nn.Module):
             log_intensity_sum += intensity.log().sum()
 
         # Monte Carlo approximation of the integral
+        # integral_0^T lambda(t) dt ≈ T/n * sum(lambda(t_i)) for uniform t_i
         n_mc = 100
-        mc_times = torch.rand(n_mc) * T  # noqa: F841 — placeholder for MC integration
+        mc_times = torch.rand(n_mc) * T
+        # Sum over sampled intensity history as proxy (true MC would
+        # require re-evaluating the CT-LSTM at each sampled time)
+        if intensity_history:
+            stacked = torch.stack(intensity_history)  # (n_events, 1, n_stages)
+            mean_intensity = stacked.mean(dim=0).sum()  # average intensity
+            integral_approx = mean_intensity * T
+        else:
+            integral_approx = torch.tensor(0.0)
 
-        nll = -log_intensity_sum  # + integral_term (requires MC evaluation)
+        nll = -log_intensity_sum + integral_approx
         return nll
