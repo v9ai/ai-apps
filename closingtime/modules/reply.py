@@ -8,7 +8,6 @@ random field* where the transition matrix encodes label co-occurrence rules.
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F  # noqa: F401
 
 LABELS = [
     "genuinely_interested", "politely_acknowledging", "objection",
