@@ -216,23 +216,22 @@ impl HfClient {
 
     // ── Listing / browsing ──────────────────────────────────────
 
-    /// List repos from the HF Hub API with pagination.
+    /// List repos from the HF Hub API with cursor-based pagination.
     pub async fn list_repos(&self, opts: &ListOptions) -> Result<Vec<RepoInfo>, Error> {
         let prefix = opts.repo_type.api_prefix();
         let limit = opts.limit.min(100);
         let mut all = Vec::new();
         let mut page = 0;
+        let mut next_url = Some(format!(
+            "{}/{}?sort={}&direction={}&limit={}",
+            HF_API_BASE, prefix, opts.sort, opts.direction, limit
+        ));
 
-        loop {
+        while let Some(url) = next_url.take() {
             if opts.max_pages > 0 && page >= opts.max_pages {
                 break;
             }
-            let offset = page * limit;
-            let url = format!(
-                "{}/{}?sort={}&direction={}&limit={}&offset={}",
-                HF_API_BASE, prefix, opts.sort, opts.direction, limit, offset
-            );
-            debug!(page, offset, %url, "listing repos");
+            debug!(page, %url, "listing repos");
 
             let resp = self.http.get(&url).send().await.map_err(|e| Error::Http {
                 repo: format!("list:{prefix}"),
@@ -258,6 +257,13 @@ impl HfClient {
                 });
             }
 
+            // Extract cursor from Link header: <URL>; rel="next"
+            next_url = resp
+                .headers()
+                .get("link")
+                .and_then(|v| v.to_str().ok())
+                .and_then(parse_next_link);
+
             let bytes = resp.bytes().await.map_err(|e| Error::Http {
                 repo: format!("list:{prefix}"),
                 source: e,
@@ -267,12 +273,10 @@ impl HfClient {
                 source: e,
             })?;
 
-            let done = batch.len() < limit;
-            all.extend(batch);
-
-            if done {
+            if batch.is_empty() {
                 break;
             }
+            all.extend(batch);
             page += 1;
         }
 
@@ -420,4 +424,16 @@ async fn fetch_text(
         repo: repo_id.to_owned(),
         source: e,
     })
+}
+
+/// Parse `Link: <URL>; rel="next"` header value.
+fn parse_next_link(header: &str) -> Option<String> {
+    for part in header.split(',') {
+        let part = part.trim();
+        if part.contains("rel=\"next\"") {
+            let url = part.split('>').next()?.trim_start_matches('<');
+            return Some(url.to_owned());
+        }
+    }
+    None
 }

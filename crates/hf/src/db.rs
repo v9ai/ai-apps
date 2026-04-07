@@ -121,6 +121,7 @@ impl HfDb {
             Ok(RepoInfo {
                 id: None,
                 repo_id: row.get(0)?,
+                model_id: None,
                 sha: row.get(1)?,
                 last_modified: row.get(2)?,
                 tags: tags_raw.and_then(|s| serde_json::from_str(&s).ok()),
@@ -128,6 +129,8 @@ impl HfDb {
                 likes: row.get::<_, Option<i64>>(5)?.map(|l| l as u64),
                 library: row.get(6)?,
                 pipeline_tag: row.get(7)?,
+                created_at: None,
+                private: None,
                 extra: extra_raw
                     .and_then(|s| serde_json::from_str(&s).ok())
                     .unwrap_or(serde_json::Value::Null),
@@ -173,10 +176,14 @@ mod tests {
                 library: Some("transformers".into()),
                 pipeline_tag: Some("text-generation".into()),
                 extra: serde_json::Value::Null,
+                model_id: None,
+                created_at: None,
+                private: None,
             },
             RepoInfo {
                 id: None,
                 repo_id: Some("openai/whisper-large-v3".into()),
+                model_id: None,
                 sha: None,
                 last_modified: None,
                 tags: Some(vec!["transformers".into(), "whisper".into()]),
@@ -184,6 +191,8 @@ mod tests {
                 likes: Some(8_000),
                 library: Some("transformers".into()),
                 pipeline_tag: Some("automatic-speech-recognition".into()),
+                created_at: None,
+                private: None,
                 extra: serde_json::Value::Null,
             },
         ];
@@ -202,6 +211,7 @@ mod tests {
         let updated = vec![RepoInfo {
             id: None,
             repo_id: Some("meta-llama/Llama-3-8B".into()),
+            model_id: None,
             sha: None,
             last_modified: None,
             tags: None,
@@ -209,6 +219,8 @@ mod tests {
             likes: Some(15_000),
             library: Some("transformers".into()),
             pipeline_tag: Some("text-generation".into()),
+            created_at: None,
+            private: None,
             extra: serde_json::Value::Null,
         }];
         db.upsert_repos(&updated, RepoType::Model).unwrap();

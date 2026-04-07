@@ -77,11 +77,16 @@ impl FetchRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RepoInfo {
     #[serde(rename = "_id")]
     pub id: Option<String>,
-    #[serde(rename = "modelId", alias = "id")]
+    /// The slug (`org/name`). `"id"` in listing responses.
+    #[serde(rename = "id")]
     pub repo_id: Option<String>,
+    /// Internal HF model identifier. Present in listing alongside `id`.
+    #[serde(rename = "modelId")]
+    pub model_id: Option<String>,
     pub sha: Option<String>,
     #[serde(rename = "lastModified")]
     pub last_modified: Option<String>,
@@ -92,6 +97,9 @@ pub struct RepoInfo {
     pub library: Option<String>,
     #[serde(rename = "pipeline_tag")]
     pub pipeline_tag: Option<String>,
+    #[serde(rename = "createdAt")]
+    pub created_at: Option<String>,
+    pub private: Option<bool>,
     #[serde(flatten)]
     pub extra: serde_json::Value,
 }
