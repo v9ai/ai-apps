@@ -2,14 +2,26 @@
 name = "airbnb"
 version = "0.1.0"
 edition = "2021"
-description = "Airbnb URL builder — no API, just parameterised search links with filters"
+description = "Airbnb URL builder + Spain coastal new-build discovery pipeline"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 url = "2"
 chrono = { version = "0.4", features = ["serde"] }
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json", "gzip"] }
+scraper = "0.22"
+regex = "1"
+futures = "0.3"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+anyhow = "1"
 
 [[bin]]
 name = "airbnb-search"
 path = "src/bin/search.rs"
+
+[[bin]]
+name = "spain-discover"
+path = "src/bin/discover.rs"
