@@ -60,6 +60,10 @@ export const companies = pgTable("companies", {
   github_patterns: text("github_patterns"),               // full OrgPatterns JSON
   github_analyzed_at: text("github_analyzed_at"),         // ISO timestamp of last scan
 
+  // HuggingFace Hub presence (populated by enrich_hf_hub.py)
+  hf_org_name: text("hf_org_name"),                        // resolved HF org
+  hf_presence_score: real("hf_presence_score").default(0),  // 0..100
+
   // Intent signal scoring (aggregated from intentSignals table)
   intent_score: real("intent_score").notNull().default(0), // 0..100
   intent_score_updated_at: text("intent_score_updated_at"),

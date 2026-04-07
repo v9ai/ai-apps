@@ -21,10 +21,12 @@
 mod client;
 mod error;
 mod types;
+pub mod org;
 
 #[cfg(feature = "sqlite")]
 pub mod db;
 
 pub use client::HfClient;
 pub use error::Error;
+pub use org::OrgScanner;
 pub use types::*;

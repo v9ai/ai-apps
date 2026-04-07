@@ -414,8 +414,19 @@ def classify_companies(
 # Scoring
 # ---------------------------------------------------------------------------
 
-def compute_score(enrichment: dict, has_careers: bool, has_pricing: bool) -> tuple[float, list[str]]:
-    """Compute enrichment score (0-1) with reasons."""
+def compute_score(
+    enrichment: dict,
+    has_careers: bool,
+    has_pricing: bool,
+    hf_presence_score: float = 0.0,
+) -> tuple[float, list[str]]:
+    """Compute enrichment score (0-1) with reasons.
+
+    Weights:
+        AI tier: 30%, Category: 15%, Services: 15%, Tech stack: 10%,
+        Pricing: 10%, Careers: 5%, HF presence: 5%, Pricing page: 5%,
+        Confidence: 5%
+    """
     score = 0.0
     reasons = []
 
@@ -462,14 +473,20 @@ def compute_score(enrichment: dict, has_careers: bool, has_pricing: bool) -> tup
         score += 0.05
         reasons.append("Has careers page")
 
+    # HF presence (5%) — from enrich_hf_hub.py
+    if hf_presence_score > 0:
+        hf_contrib = min(hf_presence_score / 100.0, 1.0) * 0.05
+        score += hf_contrib
+        reasons.append(f"HF presence: {hf_presence_score:.0f}/100")
+
     # Pricing page (5%)
     if has_pricing:
         score += 0.05
         reasons.append("Has pricing page")
 
-    # Confidence (10%)
+    # Confidence (5%) — reduced from 10% to make room for HF presence
     conf = enrichment.get("confidence", 0.5)
-    score += conf * 0.10
+    score += conf * 0.05
     reasons.append(f"Confidence: {conf:.0%}")
 
     return round(min(score, 1.0), 3), reasons

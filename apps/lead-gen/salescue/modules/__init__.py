@@ -2,7 +2,7 @@ from .score import LeadScorer, LearnedInterventionAttribution
 from .intent import NeuralHawkesIntentPredictor, STAGES
 from .reply import ReplyHead, ConstrainedMultiLabelCRF, LABELS as REPLY_LABELS
 from .triggers import TemporalDisplacementModel, EVENTS
-from .icp import WassersteinICPMatcher, DIMS as ICP_DIMS
+from .icp import WassersteinICPMatcher, ContrastiveProjectionHead, DIMS as ICP_DIMS
 from .call import ConversationNeuralProcess
 from .spam import (
     SpamHead,
@@ -20,6 +20,10 @@ from .sentiment import DisentangledSentimentIntentHead, SENTIMENTS, INTENTS
 from .entities import EntityExtractor, PointerNER, RetypingLayer
 from .objection import ObjectionPreClassifier, OBJECTION_TYPES, COACHING_CARDS
 from .emailgen import EmailGenerator, EmailGenConfig, ProspectContext
+from .survival import DeepSurvivalMachine, RISK_GROUPS
+from .anomaly import SignalAnomalyDetector, ANOMALY_TYPES, SIGNAL_CHANNELS
+from .bandit import OutreachBandit, TEMPLATES, TIMINGS, SUBJECT_STYLES
+from .graph import CompanyGraphScorer, EDGE_TYPES, GRAPH_LABELS
 
 MODULE_CLASSES = {
     "score": LeadScorer,
@@ -34,6 +38,10 @@ MODULE_CLASSES = {
     "entities": EntityExtractor,
     "objection": ObjectionPreClassifier,
     "emailgen": EmailGenerator,
+    "survival": DeepSurvivalMachine,
+    "anomaly": SignalAnomalyDetector,
+    "bandit": OutreachBandit,
+    "graph": CompanyGraphScorer,
 }
 
 __all__ = [
@@ -41,7 +49,7 @@ __all__ = [
     "NeuralHawkesIntentPredictor", "STAGES",
     "ReplyHead", "ConstrainedMultiLabelCRF", "REPLY_LABELS",
     "TemporalDisplacementModel", "EVENTS",
-    "WassersteinICPMatcher", "ICP_DIMS",
+    "WassersteinICPMatcher", "ContrastiveProjectionHead", "ICP_DIMS",
     "ConversationNeuralProcess",
     "SpamHead", "HierarchicalBayesianAttentionGate",
     "AdversarialStyleTransferDetector", "HeaderAnalyzer",
@@ -52,5 +60,9 @@ __all__ = [
     "EntityExtractor", "PointerNER", "RetypingLayer",
     "ObjectionPreClassifier", "OBJECTION_TYPES", "COACHING_CARDS",
     "EmailGenerator", "EmailGenConfig", "ProspectContext",
+    "DeepSurvivalMachine", "RISK_GROUPS",
+    "SignalAnomalyDetector", "ANOMALY_TYPES", "SIGNAL_CHANNELS",
+    "OutreachBandit", "TEMPLATES", "TIMINGS", "SUBJECT_STYLES",
+    "CompanyGraphScorer", "EDGE_TYPES", "GRAPH_LABELS",
     "MODULE_CLASSES",
 ]

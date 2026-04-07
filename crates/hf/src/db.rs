@@ -3,7 +3,7 @@ use std::path::Path;
 use rusqlite::{params, Connection};
 
 use crate::error::Error;
-use crate::types::{RepoInfo, RepoType};
+use crate::types::{OrgSummary, RepoInfo, RepoType};
 
 const SCHEMA: &str = "
 CREATE TABLE IF NOT EXISTS hf_repos (
@@ -214,6 +214,132 @@ impl HfDb {
     /// Direct access to the connection for custom queries.
     pub fn conn(&self) -> &Connection {
         &self.conn
+    }
+
+    // ── Organization-level queries ─────────────────────────────────
+
+    /// Find all repos by a specific author/org.
+    pub fn repos_by_author(&self, author: &str) -> Result<Vec<RepoInfo>, Error> {
+        let mut stmt = self.conn.prepare(
+            "SELECT repo_id, author, sha, last_modified, created_at, tags,
+                    downloads, likes, library, pipeline_tag, private, gated,
+                    disabled, description, sdk, siblings, card_data, extra
+             FROM hf_repos WHERE author = ?1
+             ORDER BY downloads DESC",
+        )?;
+        let rows = stmt.query_map(params![author], row_to_repo_info)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Error::from)
+    }
+
+    /// Search repos by text in repo_id or description.
+    pub fn search_repos(
+        &self,
+        query: &str,
+        repo_type: Option<RepoType>,
+    ) -> Result<Vec<RepoInfo>, Error> {
+        let like_pattern = format!("%{query}%");
+
+        if let Some(rt) = repo_type {
+            let mut stmt = self.conn.prepare(
+                "SELECT repo_id, author, sha, last_modified, created_at, tags,
+                        downloads, likes, library, pipeline_tag, private, gated,
+                        disabled, description, sdk, siblings, card_data, extra
+                 FROM hf_repos
+                 WHERE repo_type = ?1 AND (repo_id LIKE ?2 OR description LIKE ?2)
+                 ORDER BY downloads DESC
+                 LIMIT 100",
+            )?;
+            let rows = stmt.query_map(params![rt.as_str(), like_pattern], row_to_repo_info)?;
+            rows.collect::<Result<Vec<_>, _>>().map_err(Error::from)
+        } else {
+            let mut stmt = self.conn.prepare(
+                "SELECT repo_id, author, sha, last_modified, created_at, tags,
+                        downloads, likes, library, pipeline_tag, private, gated,
+                        disabled, description, sdk, siblings, card_data, extra
+                 FROM hf_repos
+                 WHERE repo_id LIKE ?1 OR description LIKE ?1
+                 ORDER BY downloads DESC
+                 LIMIT 100",
+            )?;
+            let rows = stmt.query_map(params![like_pattern], row_to_repo_info)?;
+            rows.collect::<Result<Vec<_>, _>>().map_err(Error::from)
+        }
+    }
+
+    /// Get aggregate stats for an org.
+    pub fn org_summary(&self, author: &str) -> Result<OrgSummary, Error> {
+        let model_count: i64 = self.conn.query_row(
+            "SELECT COUNT(*) FROM hf_repos WHERE author = ?1 AND repo_type = 'model'",
+            params![author],
+            |r| r.get(0),
+        )?;
+        let dataset_count: i64 = self.conn.query_row(
+            "SELECT COUNT(*) FROM hf_repos WHERE author = ?1 AND repo_type = 'dataset'",
+            params![author],
+            |r| r.get(0),
+        )?;
+        let space_count: i64 = self.conn.query_row(
+            "SELECT COUNT(*) FROM hf_repos WHERE author = ?1 AND repo_type = 'space'",
+            params![author],
+            |r| r.get(0),
+        )?;
+
+        let (total_downloads, total_likes): (i64, i64) = self.conn.query_row(
+            "SELECT COALESCE(SUM(downloads), 0), COALESCE(SUM(likes), 0) FROM hf_repos WHERE author = ?1",
+            params![author],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )?;
+
+        let mut stmt = self.conn.prepare(
+            "SELECT DISTINCT library FROM hf_repos WHERE author = ?1 AND library IS NOT NULL ORDER BY library",
+        )?;
+        let libraries: Vec<String> = stmt
+            .query_map(params![author], |r| r.get(0))?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        let mut stmt = self.conn.prepare(
+            "SELECT DISTINCT pipeline_tag FROM hf_repos WHERE author = ?1 AND pipeline_tag IS NOT NULL ORDER BY pipeline_tag",
+        )?;
+        let pipeline_tags: Vec<String> = stmt
+            .query_map(params![author], |r| r.get(0))?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(OrgSummary {
+            author: author.to_owned(),
+            model_count: model_count as usize,
+            dataset_count: dataset_count as usize,
+            space_count: space_count as usize,
+            total_downloads: total_downloads as u64,
+            total_likes: total_likes as u64,
+            libraries,
+            pipeline_tags,
+        })
+    }
+
+    /// List distinct authors sorted by repo count, with download totals.
+    pub fn top_authors(
+        &self,
+        repo_type: RepoType,
+        limit: usize,
+    ) -> Result<Vec<(String, usize, u64)>, Error> {
+        let mut stmt = self.conn.prepare(
+            "SELECT author, COUNT(*) as cnt, COALESCE(SUM(downloads), 0) as dl
+             FROM hf_repos
+             WHERE repo_type = ?1 AND author IS NOT NULL
+             GROUP BY author
+             ORDER BY cnt DESC
+             LIMIT ?2",
+        )?;
+        let rows = stmt.query_map(params![repo_type.as_str(), limit as i64], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, i64>(1)? as usize,
+                r.get::<_, i64>(2)? as u64,
+            ))
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Error::from)
     }
 }
 

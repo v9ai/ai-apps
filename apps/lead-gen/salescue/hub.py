@@ -282,6 +282,42 @@ class SalesCueModel:
             "model can learn that \"Quick question\" beats \"Detailed analysis\" for cold outreach "
             "but loses for existing customers.",
         ),
+        "survival": (
+            "Deep Survival Machine for Time-to-Conversion",
+            "Traditional lead scoring produces a static label (hot/warm/cold). DeepSurvivalMachine "
+            "models the *time-to-event distribution* as a mixture of K Weibull distributions "
+            "conditioned on text + structured features (Nagpal et al., 2021). Outputs calibrated "
+            "conversion probabilities at any time horizon — P(convert within 30d) = 0.67 — plus "
+            "the full survival curve S(t) for visualization. Handles censored observations "
+            "(leads still in pipeline) via proper likelihood.",
+        ),
+        "anomaly": (
+            "DAGMM-Inspired Signal Anomaly Detection",
+            "Detects sudden changes in company behavior that signal outreach opportunities. "
+            "Inspired by DAGMM (Zong et al., 2018): an autoencoder learns 'normal' signal "
+            "patterns over 12-week windows of 8 channels (hiring, HF activity, GitHub commits, "
+            "etc.); reconstruction error flags anomalies; a GMM in the latent space clusters "
+            "anomaly types (hiring_spike, funding_event, model_release_burst). Text-conditioned "
+            "threshold adjustment prevents false positives for known high-growth companies.",
+        ),
+        "bandit": (
+            "Contextual Thompson Sampling for Outreach Optimization",
+            "Email outreach has a 125-arm combinatorial action space (template × timing × "
+            "subject style). A/B testing is too slow. OutreachBandit uses contextual Thompson "
+            "Sampling (Agrawal & Goyal, 2013) with Bayesian linear regression per arm — "
+            "posterior update is O(d²) with ~4MB of matrices. The DeBERTa-compressed prospect "
+            "embedding serves as context, enabling per-prospect-type preference learning "
+            "without explicit experimentation.",
+        ),
+        "graph": (
+            "GraphSAGE Company Relationship Scoring",
+            "Companies sharing investors, tech stacks, or employees are predictive signals "
+            "invisible to text-only models. CompanyGraphScorer implements 2-layer GraphSAGE "
+            "(Hamilton et al., 2017) with mean aggregation over typed edges (shared_tech, "
+            "hiring_flow, competitor, hf_similar_tasks). A lightweight GNN that does NOT "
+            "require torch_geometric — runs on M1 MPS. Produces graph-aware scores plus "
+            "company similarity rankings from the learned graph embedding space.",
+        ),
     }
 
     # Map modules to HF pipeline tags
@@ -298,6 +334,10 @@ class SalesCueModel:
         "subject": "text-classification",
         "icp": "feature-extraction",
         "emailgen": "text-generation",
+        "survival": "tabular-classification",
+        "anomaly": "time-series-classification",
+        "bandit": "reinforcement-learning",
+        "graph": "graph-ml",
     }
 
     def _generate_model_card(self, trained: bool = False) -> str:

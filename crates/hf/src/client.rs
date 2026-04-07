@@ -223,9 +223,30 @@ impl HfClient {
         let mut all = Vec::new();
         let mut page = 0;
         let full_param = if opts.full { "&full=true" } else { "" };
+
+        // Build optional filter query params
+        let mut extra_params = String::new();
+        if let Some(ref q) = opts.search {
+            extra_params.push_str(&format!("&search={}", url_encode(q)));
+        }
+        if let Some(ref author) = opts.author {
+            extra_params.push_str(&format!("&author={}", url_encode(author)));
+        }
+        if let Some(ref filters) = opts.filter {
+            for f in filters {
+                extra_params.push_str(&format!("&filter={}", url_encode(f)));
+            }
+        }
+        if let Some(ref tag) = opts.pipeline_tag_filter {
+            extra_params.push_str(&format!("&pipeline_tag={}", url_encode(tag)));
+        }
+        if let Some(ref lib) = opts.library_filter {
+            extra_params.push_str(&format!("&library={}", url_encode(lib)));
+        }
+
         let mut next_url = Some(format!(
-            "{}/{}?sort={}&direction={}&limit={}{}",
-            HF_API_BASE, prefix, opts.sort, opts.direction, limit, full_param
+            "{}/{}?sort={}&direction={}&limit={}{}{}",
+            HF_API_BASE, prefix, opts.sort, opts.direction, limit, full_param, extra_params
         ));
 
         while let Some(url) = next_url.take() {
@@ -293,6 +314,11 @@ impl HfClient {
             limit: 100,
             max_pages: (count + 99) / 100,
             full: true,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
         })
         .await
     }
@@ -306,6 +332,11 @@ impl HfClient {
             limit: 100,
             max_pages: (count + 99) / 100,
             full: true,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
         })
         .await
     }
@@ -319,6 +350,98 @@ impl HfClient {
             limit: 100,
             max_pages: (count + 99) / 100,
             full: true,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        })
+        .await
+    }
+
+    // ── Filtered search methods ────────────────────────────────────
+
+    /// Search models by text query, sorted by downloads.
+    pub async fn search_models(&self, query: &str, limit: usize) -> Result<Vec<RepoInfo>, Error> {
+        self.list_repos(&ListOptions {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: (limit + 99) / 100,
+            full: true,
+            search: Some(query.to_owned()),
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        })
+        .await
+    }
+
+    /// List all repos (of a given type) by a specific author/organization.
+    pub async fn list_by_author(
+        &self,
+        author: &str,
+        repo_type: RepoType,
+        limit: usize,
+    ) -> Result<Vec<RepoInfo>, Error> {
+        self.list_repos(&ListOptions {
+            repo_type,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: (limit + 99) / 100,
+            full: true,
+            search: None,
+            author: Some(author.to_owned()),
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        })
+        .await
+    }
+
+    /// List models that use a specific library (e.g. "transformers", "pytorch").
+    pub async fn list_by_library(
+        &self,
+        library: &str,
+        limit: usize,
+    ) -> Result<Vec<RepoInfo>, Error> {
+        self.list_repos(&ListOptions {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: (limit + 99) / 100,
+            full: true,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: Some(library.to_owned()),
+        })
+        .await
+    }
+
+    /// List models by pipeline tag (e.g. "text-generation", "image-classification").
+    pub async fn list_by_pipeline(
+        &self,
+        tag: &str,
+        limit: usize,
+    ) -> Result<Vec<RepoInfo>, Error> {
+        self.list_repos(&ListOptions {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: (limit + 99) / 100,
+            full: true,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: Some(tag.to_owned()),
+            library_filter: None,
         })
         .await
     }
@@ -441,3 +564,25 @@ fn parse_next_link(header: &str) -> Option<String> {
     }
     None
 }
+
+/// Simple percent-encoding for URL query parameter values.
+/// Encodes spaces, ampersands, equals, and other unsafe characters.
+fn url_encode(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() * 2);
+    for b in s.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(b as char);
+            }
+            b' ' => out.push('+'),
+            _ => {
+                out.push('%');
+                out.push(char::from(HEX[(b >> 4) as usize]));
+                out.push(char::from(HEX[(b & 0x0f) as usize]));
+            }
+        }
+    }
+    out
+}
+
+const HEX: [u8; 16] = *b"0123456789ABCDEF";

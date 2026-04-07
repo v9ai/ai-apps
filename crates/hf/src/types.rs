@@ -48,6 +48,16 @@ pub struct ListOptions {
     pub max_pages: usize,
     /// Request full metadata (siblings, cardData, etc.)
     pub full: bool,
+    /// Text search filter (matched against repo id, tags, etc.)
+    pub search: Option<String>,
+    /// Filter by author / organization
+    pub author: Option<String>,
+    /// Tag-based filters (e.g. `["task:text-generation", "language:en"]`)
+    pub filter: Option<Vec<String>>,
+    /// Filter by pipeline tag (e.g. "text-generation")
+    pub pipeline_tag_filter: Option<String>,
+    /// Filter by library (e.g. "transformers", "pytorch")
+    pub library_filter: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -133,4 +143,50 @@ impl<T> FetchResult<T> {
     pub fn is_ok(&self) -> bool {
         matches!(self, Self::Ok { .. })
     }
+}
+
+// ── Organization profiling types ──────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrgProfile {
+    pub org_name: String,
+    pub models: Vec<RepoInfo>,
+    pub datasets: Vec<RepoInfo>,
+    pub spaces: Vec<RepoInfo>,
+    pub total_downloads: u64,
+    pub libraries_used: Vec<(String, usize)>,
+    pub pipeline_tags: Vec<(String, usize)>,
+    pub training_signals: Vec<TrainingSignal>,
+    pub arxiv_links: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrainingSignal {
+    pub repo_id: String,
+    pub signal_type: TrainingSignalType,
+    pub evidence: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TrainingSignalType {
+    CustomArchitecture,
+    TrainingLogs,
+    TrainingArgs,
+    CustomDataset,
+    ArxivCitation,
+    LargeParamCount,
+    PreTraining,
+    FineTuning,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrgSummary {
+    pub author: String,
+    pub model_count: usize,
+    pub dataset_count: usize,
+    pub space_count: usize,
+    pub total_downloads: u64,
+    pub total_likes: u64,
+    pub libraries: Vec<String>,
+    pub pipeline_tags: Vec<String>,
 }
