@@ -1,8 +1,11 @@
 //! BIO tag decoder for token classification output.
 //!
 //! Labels: B (begin skill), I (inside skill), O (outside).
-//! Groups consecutive B+I* tokens into skill spans, mapping subword tokens
-//! back to original text using tokenizer offsets.
+//! Groups consecutive B+I* and adjacent B+B tokens into skill spans,
+//! mapping subword tokens back to original text using tokenizer offsets.
+//!
+//! The jobbert_knowledge_extraction model primarily uses B tags even for
+//! continuation tokens, so adjacent B tokens are merged into a single span.
 
 /// A skill span extracted from text via BIO tagging.
 #[derive(Debug, Clone)]
@@ -23,6 +26,9 @@ pub struct ExtractedSkill {
 /// `offsets` contains (start_char, end_char) pairs from the tokenizer.
 /// `probs` contains softmax probability of the predicted label per token.
 /// Special tokens (offset (0,0)) are skipped.
+///
+/// Adjacent B tokens are merged into a single span (handles models that
+/// don't properly use I tags for continuation).
 pub fn decode_bio(
     labels: &[usize],
     offsets: &[(usize, usize)],
@@ -37,7 +43,6 @@ pub fn decode_bio(
     for (i, (&label, &(off_start, off_end))) in labels.iter().zip(offsets).enumerate() {
         // Skip special tokens ([CLS], [SEP], [PAD]) which have offset (0, 0)
         if off_start == 0 && off_end == 0 {
-            // If we had an active span, flush it
             if let Some(start) = current_start.take() {
                 flush_span(&mut skills, start, current_end, &current_probs, original_text);
                 current_probs.clear();
@@ -47,22 +52,35 @@ pub fn decode_bio(
 
         match label {
             0 => {
-                // B — begin new skill. Flush any active span first.
-                if let Some(start) = current_start.take() {
-                    flush_span(&mut skills, start, current_end, &current_probs, original_text);
-                    current_probs.clear();
+                // B — begin skill or continue adjacent skill span.
+                // Merge adjacent B tokens: if this B immediately follows the previous token,
+                // extend the span instead of starting a new one.
+                if let Some(_start) = current_start {
+                    if off_start <= current_end + 1 {
+                        // Adjacent or overlapping — extend span
+                        current_end = off_end;
+                        current_probs.push(probs[i]);
+                    } else {
+                        // Gap — flush previous span, start new one
+                        flush_span(&mut skills, _start, current_end, &current_probs, original_text);
+                        current_probs.clear();
+                        current_start = Some(off_start);
+                        current_end = off_end;
+                        current_probs.push(probs[i]);
+                    }
+                } else {
+                    current_start = Some(off_start);
+                    current_end = off_end;
+                    current_probs.push(probs[i]);
                 }
-                current_start = Some(off_start);
-                current_end = off_end;
-                current_probs.push(probs[i]);
             }
             1 => {
-                // I — continue skill span (only valid after B)
+                // I — continue skill span (valid after B or another I)
                 if current_start.is_some() {
                     current_end = off_end;
                     current_probs.push(probs[i]);
                 }
-                // I without preceding B: skip (malformed prediction)
+                // I without preceding B: skip
             }
             _ => {
                 // O — outside. Flush any active span.
@@ -116,8 +134,6 @@ mod tests {
     #[test]
     fn basic_bio_decode() {
         let text = "Experience with Python and machine learning required";
-        //          0123456789...
-        // Simplified: "Python" starts at 16, "machine learning" starts at 27
         let labels = [2, 2, 2, 0, 2, 0, 1, 2]; // O O O B O B I O
         let offsets = [
             (0, 0),   // [CLS]
@@ -136,7 +152,46 @@ mod tests {
         assert_eq!(skills[0].text, "Python");
         assert!((skills[0].confidence - 0.95).abs() < 1e-6);
         assert_eq!(skills[1].text, "machine learning");
-        assert!((skills[1].confidence - 0.9).abs() < 1e-6); // mean of 0.92, 0.88
+        assert!((skills[1].confidence - 0.9).abs() < 1e-6);
+    }
+
+    #[test]
+    fn adjacent_b_tokens_merge() {
+        // Model outputs B-B for multi-word skills instead of B-I
+        let text = "machine learning experience";
+        let labels = [2, 0, 0, 2, 2]; // [CLS] B B O [SEP]
+        let offsets = [
+            (0, 0),   // [CLS]
+            (0, 7),   // machine
+            (8, 16),  // learning
+            (17, 27), // experience
+            (0, 0),   // [SEP]
+        ];
+        let probs = [0.9, 0.95, 0.93, 0.8, 0.9];
+
+        let skills = decode_bio(&labels, &offsets, &probs, text);
+        assert_eq!(skills.len(), 1);
+        assert_eq!(skills[0].text, "machine learning");
+    }
+
+    #[test]
+    fn separate_b_tokens_with_gap() {
+        let text = "Python and React skills";
+        let labels = [2, 0, 2, 0, 2, 2]; // [CLS] B O B O [SEP]
+        let offsets = [
+            (0, 0),   // [CLS]
+            (0, 6),   // Python
+            (7, 10),  // and
+            (11, 16), // React
+            (17, 23), // skills
+            (0, 0),   // [SEP]
+        ];
+        let probs = [0.9, 0.95, 0.8, 0.93, 0.7, 0.9];
+
+        let skills = decode_bio(&labels, &offsets, &probs, text);
+        assert_eq!(skills.len(), 2);
+        assert_eq!(skills[0].text, "Python");
+        assert_eq!(skills[1].text, "React");
     }
 
     #[test]
@@ -155,16 +210,25 @@ mod tests {
     }
 
     #[test]
-    fn consecutive_skills() {
-        let text = "Python React TypeScript";
-        let labels = [2, 0, 0, 0, 2];
-        let offsets = [(0, 0), (0, 6), (7, 12), (13, 23), (0, 0)];
-        let probs = [0.9, 0.95, 0.93, 0.91, 0.9];
+    fn subword_tokens_merge() {
+        // Subword tokens like "scikit-learn" → "s", "##ci", "##ki", "##t", "-", "learn"
+        let text = "use scikit-learn";
+        let labels = [2, 2, 0, 0, 0, 0, 0, 0, 2]; // [CLS] O B B B B B B [SEP]
+        let offsets = [
+            (0, 0),   // [CLS]
+            (0, 3),   // use
+            (4, 5),   // s
+            (5, 7),   // ##ci
+            (7, 9),   // ##ki
+            (9, 10),  // ##t
+            (10, 11), // -
+            (11, 16), // learn
+            (0, 0),   // [SEP]
+        ];
+        let probs = [0.9, 0.8, 0.95, 0.94, 0.93, 0.92, 0.91, 0.90, 0.9];
 
         let skills = decode_bio(&labels, &offsets, &probs, text);
-        assert_eq!(skills.len(), 3);
-        assert_eq!(skills[0].text, "Python");
-        assert_eq!(skills[1].text, "React");
-        assert_eq!(skills[2].text, "TypeScript");
+        assert_eq!(skills.len(), 1);
+        assert_eq!(skills[0].text, "scikit-learn");
     }
 }

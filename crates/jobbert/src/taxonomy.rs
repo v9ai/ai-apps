@@ -117,7 +117,7 @@ impl TaxonomyMapper {
             (&["llm", "large language model", "large language models"], "llm"),
             (&["nlp", "natural language processing", "nlu", "natural language understanding"], "nlp"),
             (&["computer vision", "cv", "image recognition"], "computer-vision"),
-            (&["rag", "retrieval augmented generation", "retrieval-augmented generation"], "rag"),
+            (&["rag", "retrieval augmented generation", "retrieval-augmented generation", "rag architectures", "rag architecture"], "rag"),
             (&["prompt engineering", "prompt-engineering", "prompting"], "prompt-engineering"),
             (&["fine-tuning", "finetuning", "fine tuning", "model fine-tuning"], "fine-tuning"),
             (&["tensorflow", "tf", "tensor flow"], "tensorflow"),
