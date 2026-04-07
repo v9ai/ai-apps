@@ -6,35 +6,80 @@ import { Suspense } from "react";
 import { Nav } from "./nav";
 import { css } from "styled-system/css";
 
-const headerClass = css({
-  position: "sticky",
-  top: "0",
-  zIndex: "10",
-  background:
-    "linear-gradient(180deg, color-mix(in srgb, var(--indigo-2) 60%, transparent) 0%, color-mix(in srgb, var(--color-background) 85%, transparent) 100%)",
-  backdropFilter: "blur(14px)",
-  boxShadow:
-    "0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)",
-  width: "100%",
+const shellClass = css({
+  minHeight: "100vh",
+  display: "flex",
+  flexDirection: "row",
 });
 
-const logoIconClass = css({
-  width: "32px",
-  height: "32px",
-  borderRadius: "8px",
-  background: "var(--indigo-a3)",
-  border: "1px solid var(--indigo-a5)",
+const sidebarClass = css({
+  width: "220px",
+  minHeight: "100vh",
+  position: "sticky",
+  top: 0,
   display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: "0",
+  flexDirection: "column",
+  borderRight: "1px solid var(--gray-a4)",
+  background:
+    "linear-gradient(180deg, color-mix(in srgb, var(--indigo-2) 60%, transparent) 0%, color-mix(in srgb, var(--color-background) 95%, transparent) 100%)",
+  padding: "var(--space-3)",
+  flexShrink: 0,
+  zIndex: 10,
+  overflowY: "auto",
+  scrollbarWidth: "none",
+  "&::-webkit-scrollbar": { display: "none" },
+  "@media (max-width: 768px)": {
+    width: "56px",
+    padding: "var(--space-2)",
+  },
 });
 
 const logoLinkClass = css({
   textDecoration: "none",
   display: "flex",
   alignItems: "center",
-  gap: "12px",
+  gap: "10px",
+  padding: "var(--space-2) var(--space-3)",
+  marginBottom: "var(--space-3)",
+  "@media (max-width: 768px)": {
+    justifyContent: "center",
+    padding: "var(--space-2)",
+  },
+});
+
+const logoIconClass = css({
+  width: "28px",
+  height: "28px",
+  borderRadius: "6px",
+  background: "var(--indigo-a3)",
+  border: "1px solid var(--indigo-a5)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+});
+
+const logoTextClass = css({
+  "@media (max-width: 768px)": {
+    display: "none",
+  },
+});
+
+const authWrapperClass = css({
+  marginTop: "auto",
+  padding: "var(--space-2) var(--space-3)",
+  "@media (max-width: 768px)": {
+    padding: "var(--space-2)",
+    justifyContent: "center",
+    display: "flex",
+  },
+});
+
+const mainClass = css({
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  minWidth: 0,
 });
 
 export default function ProtectedLayout({
@@ -43,39 +88,41 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Box
-      className={css({ minHeight: "100vh", display: "flex", flexDirection: "column" })}
-    >
-      <header className={headerClass}>
-        <Flex justify="between" align="center" px="6" py="2">
-          <Link href="/dashboard" className={logoLinkClass}>
-            <span className={logoIconClass}>
-              <Logo size={18} />
-            </span>
-            <Heading size="4">Agentic Healthcare</Heading>
-          </Link>
+    <div className={shellClass}>
+      {/* Sidebar */}
+      <aside className={sidebarClass}>
+        <Link href="/dashboard" className={logoLinkClass}>
+          <span className={logoIconClass}>
+            <Logo size={16} />
+          </span>
+          <Heading size="3" className={logoTextClass}>Healthcare</Heading>
+        </Link>
+
+        <Nav />
+
+        <div className={authWrapperClass}>
           <Suspense>
             <AuthButton />
           </Suspense>
-        </Flex>
-        <Box px="6">
-          <Nav />
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className={mainClass}>
+        <Box px="6" py="6" className={css({ flex: "1" })}>
+          {children}
         </Box>
-      </header>
 
-      <Box px="6" py="6" className={css({ flex: "1" })}>
-        {children}
-      </Box>
-
-      <Separator size="4" />
-      <Flex direction="column" align="center" gap="1" py="6">
-        <Text size="1" color="gray">
-          Agentic Healthcare
-        </Text>
-        <Text size="1" className={css({ color: "var(--gray-8)" })}>
-          Powered by AI
-        </Text>
-      </Flex>
-    </Box>
+        <Separator size="4" />
+        <Flex direction="column" align="center" gap="1" py="6">
+          <Text size="1" color="gray">
+            Agentic Healthcare
+          </Text>
+          <Text size="1" className={css({ color: "var(--gray-8)" })}>
+            Powered by AI
+          </Text>
+        </Flex>
+      </div>
+    </div>
   );
 }
