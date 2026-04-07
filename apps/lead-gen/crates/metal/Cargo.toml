@@ -25,6 +25,9 @@ tracing-subscriber = "0.3"
 uuid = { version = "1", features = ["v4"] }
 clap = { version = "4", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
+ort = { version = "2.0.0-rc.12", features = ["load-dynamic"], optional = true }
+tokenizers = { version = "0.21", optional = true }
+ndarray = { version = "0.16", optional = true }
 
 [features]
 default = ["safe", "kernel"]
@@ -41,7 +44,11 @@ kernel-eval = ["kernel-scoring"]
 kernel-extract = ["safe"]
 kernel-intent = ["kernel-scoring"]
 kernel-spam = ["kernel-scoring"]
+kernel-bge = ["ort", "tokenizers", "ndarray"]
+kernel-ner-transformer = ["ort", "tokenizers", "ndarray"]
+kernel-reranker = ["ort", "tokenizers", "ndarray"]
 kernel = ["kernel-btree", "kernel-scoring", "kernel-html", "kernel-arena", "kernel-timer", "kernel-crc", "kernel-ner", "kernel-ring", "kernel-eval", "kernel-extract", "kernel-intent", "kernel-spam"]
+kernel-ml = ["kernel", "kernel-bge", "kernel-ner-transformer", "kernel-reranker"]
 
 [dev-dependencies]
 tempfile = "3"

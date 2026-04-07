@@ -39,3 +39,6 @@ pub mod intent_scoring;
 
 #[cfg(feature = "kernel-spam")]
 pub mod spam_scoring;
+
+#[cfg(feature = "kernel-ner-transformer")]
+pub mod ner;
