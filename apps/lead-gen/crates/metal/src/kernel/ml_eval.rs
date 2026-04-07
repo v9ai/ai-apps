@@ -447,6 +447,7 @@ mod tests {
             bias: -10.5,
             feature_stats: std::array::from_fn(|_| super::super::scoring::WelfordStats::new()),
             trained: true,
+            semantic_weight: 0.0,
         }
     }
 
@@ -510,6 +511,7 @@ mod tests {
             bias: 0.0,
             feature_stats: std::array::from_fn(|_| super::super::scoring::WelfordStats::new()),
             trained: true,
+            semantic_weight: 0.0,
         };
         let samples = binary_samples(20);
         let eval = evaluate_scoring(&scorer, &samples, 0.5);

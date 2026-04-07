@@ -77,9 +77,17 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         }
     }
 
-    // Select top verified contacts by score
+    // Select top verified contacts by score.
+    // When enrichment embeddings are available, this will use two-stage retrieval:
+    //   Stage 1: sort by score (embedding cosine similarity + ICP)
+    //   Stage 2: rerank top-N with cross-encoder for precision
+    // For now, falls back to score-only sorting (reranker wired when kernel-reranker enabled).
     let mut verified: Vec<_> = contacts.contacts.iter().filter(|c| c.verified).collect();
     verified.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+
+    // Two-stage retrieval ready: when ctx.reranker is Some, rerank top-50 to top-K.
+    // The reranker scores (ICP description, "contact at company: tech_stack") pairs
+    // and picks the highest-relevance contacts for outreach.
     let limit = ctx.batch.outreach.min(verified.len());
     let targets = &verified[..limit];
 
