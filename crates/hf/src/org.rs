@@ -9,32 +9,51 @@ use crate::types::*;
 /// Well-known HF model types (standard architectures that indicate
 /// fine-tuning rather than custom training when used as `model_type`).
 const STANDARD_MODEL_TYPES: &[&str] = &[
+    // NLU / encoder models
     "bert",
     "roberta",
     "distilbert",
     "albert",
+    "electra",
+    "deberta",
+    "deberta-v2",
+    "xlnet",
+    "longformer",
+    "bigbird",
+    // Decoder / generation
     "gpt2",
     "gpt_neo",
     "gpt_neox",
     "llama",
     "mistral",
+    "mixtral",
     "gemma",
+    "gemma2",
     "phi",
+    "phi3",
     "qwen2",
+    "qwen2_moe",
     "falcon",
     "mpt",
+    "cohere",
+    "starcoder2",
+    "codellama",
+    // Seq2seq
     "t5",
     "bart",
     "pegasus",
     "marian",
+    // Speech
     "whisper",
     "wav2vec2",
+    // Vision
     "vit",
     "clip",
     "deit",
     "swin",
     "resnet",
     "convnext",
+    // Image generation
     "stable-diffusion",
     "sdxl",
 ];
@@ -324,7 +343,7 @@ impl<'a> OrgScanner<'a> {
         }
 
         // MoE architecture
-        let expert_keys = ["num_experts", "num_local_experts"];
+        let expert_keys = ["num_experts", "num_local_experts", "n_routed_experts"];
         for key in expert_keys {
             if let Some(n) = config.get(key).and_then(|v| v.as_u64()) {
                 if n > 1 {
@@ -371,6 +390,18 @@ impl<'a> OrgScanner<'a> {
                     repo_id: repo_id.to_owned(),
                     signal_type: TrainingSignalType::LargeContext,
                     evidence: format!("{ctx} tokens"),
+                });
+            }
+        }
+
+        // Base model fine-tune detection via _name_or_path
+        if let Some(base) = config.get("_name_or_path").and_then(|v| v.as_str()) {
+            // If _name_or_path contains a slash (org/model) and differs from repo_id, it's a fine-tune
+            if base.contains('/') && base != repo_id {
+                signals.push(TrainingSignal {
+                    repo_id: repo_id.to_owned(),
+                    signal_type: TrainingSignalType::FineTuning,
+                    evidence: format!("fine-tuned from {base}"),
                 });
             }
         }
@@ -796,6 +827,45 @@ mod tests {
             score_diverse > score_single,
             "diverse ({score_diverse}) should beat single ({score_single})"
         );
+    }
+
+    #[test]
+    fn parse_config_moe_n_routed_experts() {
+        // GLM4 (Coder-2602) uses n_routed_experts instead of num_experts
+        let config = serde_json::json!({
+            "model_type": "glm4_moe_lite",
+            "n_routed_experts": 64
+        });
+        let signals = OrgScanner::parse_config_signals("diffbot/Coder-2602", &config);
+        let types: Vec<_> = signals.iter().map(|s| s.signal_type).collect();
+        assert!(types.contains(&TrainingSignalType::MoEArchitecture));
+        let moe = signals.iter().find(|s| s.signal_type == TrainingSignalType::MoEArchitecture).unwrap();
+        assert!(moe.evidence.contains("64 experts"), "evidence: {}", moe.evidence);
+    }
+
+    #[test]
+    fn parse_config_finetune_detection() {
+        let config = serde_json::json!({
+            "model_type": "llama",
+            "_name_or_path": "meta-llama/Llama-3.1-8B-Instruct"
+        });
+        let signals = OrgScanner::parse_config_signals("diffbot/llama-ft", &config);
+        let types: Vec<_> = signals.iter().map(|s| s.signal_type).collect();
+        assert!(types.contains(&TrainingSignalType::FineTuning));
+        let ft = signals.iter().find(|s| s.signal_type == TrainingSignalType::FineTuning).unwrap();
+        assert!(ft.evidence.contains("meta-llama/Llama-3.1-8B-Instruct"), "evidence: {}", ft.evidence);
+    }
+
+    #[test]
+    fn parse_config_no_finetune_for_original() {
+        // _name_or_path matches repo_id — not a fine-tune
+        let config = serde_json::json!({
+            "model_type": "qwen3_next",
+            "_name_or_path": "diffbot/Coder-2603"
+        });
+        let signals = OrgScanner::parse_config_signals("diffbot/Coder-2603", &config);
+        let types: Vec<_> = signals.iter().map(|s| s.signal_type).collect();
+        assert!(!types.contains(&TrainingSignalType::FineTuning));
     }
 
     fn make_dummy_repo() -> RepoInfo {
