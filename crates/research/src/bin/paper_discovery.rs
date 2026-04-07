@@ -451,6 +451,8 @@ async fn main() -> Result<()> {
                         published_date: None,
                         primary_category: None,
                         categories: None,
+                        affiliations: None,
+                        venue: None,
                     });
                 }
             }
@@ -1042,6 +1044,8 @@ async fn ingest_paper_entries(
                     published_date: None,
                     primary_category: None,
                     categories: None,
+                    affiliations: None,
+                    venue: None,
                 });
             }
         }

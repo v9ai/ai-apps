@@ -412,6 +412,8 @@ fn to_research_paper(s: &PaperSummary, week_tag: &str) -> ResearchPaper {
         } else {
             Some(s.categories.clone())
         },
+        affiliations: None,
+        venue: None,
     }
 }
 

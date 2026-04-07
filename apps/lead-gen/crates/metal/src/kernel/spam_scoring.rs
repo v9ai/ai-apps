@@ -73,6 +73,7 @@ pub struct EmailHeaders {
 
 /// Extract 24 spam features from email text and optional headers.
 /// Uses zero-copy byte scanning where possible.
+#[inline]
 pub fn extract_spam_features(
     text: &str,
     headers: Option<&EmailHeaders>,
@@ -122,16 +123,7 @@ pub fn extract_spam_features(
     let excl_count = text.bytes().filter(|&b| b == b'!').count();
     features[5] = excl_count as f32 / char_count as f32;
 
-    // Feature 6: ALL CAPS ratio
-    let caps_words = words
-        .iter()
-        .filter(|w| {
-            w.len() > 1
-                && w.chars().all(|c| !c.is_alphabetic() || c.is_uppercase())
-                && w.chars().any(|c| c.is_alphabetic())
-        })
-        .count();
-    // Use the original text words for caps detection
+    // Feature 6: ALL CAPS ratio (computed from original text, not lowercased)
     let orig_words: Vec<&str> = text.split_whitespace().collect();
     let orig_caps = orig_words
         .iter()
@@ -142,8 +134,6 @@ pub fn extract_spam_features(
         })
         .count();
     features[6] = orig_caps as f32 / word_count.max(1) as f32;
-    // Suppress unused variable warning
-    let _ = caps_words;
 
     // Feature 7: Sentence length variance
     let sentences: Vec<&str> = text
@@ -266,6 +256,7 @@ pub fn extract_spam_features(
 
 // ── Classifier ──────────────────────────────────────────────────────────────
 
+#[inline]
 fn sigmoid(x: f32) -> f32 {
     1.0 / (1.0 + (-x).exp())
 }
@@ -455,6 +446,50 @@ impl SpamBatch {
                 2 // Block
             };
         }
+    }
+
+    /// Push a new email into the batch, returning its slot index.
+    /// Returns None if the batch is full.
+    pub fn push(&mut self, text: &str, headers: Option<&EmailHeaders>) -> Option<usize> {
+        if self.count >= SPAM_BATCH_SIZE {
+            return None;
+        }
+        let idx = self.count;
+        self.populate_slot(idx, text, headers);
+        self.count += 1;
+        Some(idx)
+    }
+
+    /// Mean spam score across all populated slots.
+    pub fn mean_score(&self) -> f32 {
+        if self.count == 0 {
+            return 0.0;
+        }
+        self.spam_scores[..self.count].iter().sum::<f32>() / self.count as f32
+    }
+
+    /// Fraction of emails that pass the spam gate at the given threshold.
+    pub fn pass_rate(&self, threshold: f32) -> f32 {
+        if self.count == 0 {
+            return 0.0;
+        }
+        let passed = self.spam_scores[..self.count]
+            .iter()
+            .filter(|&&s| s < threshold)
+            .count();
+        passed as f32 / self.count as f32
+    }
+
+    /// Count of emails in each spam category.
+    pub fn category_distribution(&self) -> [usize; NUM_SPAM_LABELS] {
+        let mut dist = [0usize; NUM_SPAM_LABELS];
+        for i in 0..self.count {
+            let cat = self.category_idx[i] as usize;
+            if cat < NUM_SPAM_LABELS {
+                dist[cat] += 1;
+            }
+        }
+        dist
     }
 
     /// Return indices of emails that passed the spam gate (score < threshold).
@@ -748,5 +783,61 @@ mod tests {
         let restored: SpamClassifier = serde_json::from_str(&json).unwrap();
         assert_eq!(cls.trained, restored.trained);
         assert_eq!(cls.biases, restored.biases);
+    }
+
+    #[test]
+    fn test_batch_push() {
+        let mut batch = SpamBatch::new();
+        let idx = batch.push("First email", None);
+        assert_eq!(idx, Some(0));
+        assert_eq!(batch.count, 1);
+
+        let idx2 = batch.push("Second email", None);
+        assert_eq!(idx2, Some(1));
+        assert_eq!(batch.count, 2);
+    }
+
+    #[test]
+    fn test_batch_push_full() {
+        let mut batch = SpamBatch::new();
+        batch.count = SPAM_BATCH_SIZE;
+        assert_eq!(batch.push("overflow", None), None);
+    }
+
+    #[test]
+    fn test_batch_mean_score() {
+        let mut batch = SpamBatch::new();
+        assert_eq!(batch.mean_score(), 0.0);
+        batch.count = 3;
+        batch.spam_scores[0] = 0.2;
+        batch.spam_scores[1] = 0.4;
+        batch.spam_scores[2] = 0.6;
+        assert!((batch.mean_score() - 0.4).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_batch_pass_rate() {
+        let mut batch = SpamBatch::new();
+        batch.count = 4;
+        batch.spam_scores[0] = 0.1;
+        batch.spam_scores[1] = 0.5;
+        batch.spam_scores[2] = 0.2;
+        batch.spam_scores[3] = 0.9;
+        assert!((batch.pass_rate(0.3) - 0.5).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_batch_category_distribution() {
+        let mut batch = SpamBatch::new();
+        batch.count = 5;
+        batch.category_idx[0] = 0; // clean
+        batch.category_idx[1] = 0; // clean
+        batch.category_idx[2] = 1; // template_spam
+        batch.category_idx[3] = 2; // ai_generated
+        batch.category_idx[4] = 0; // clean
+        let dist = batch.category_distribution();
+        assert_eq!(dist[0], 3); // clean
+        assert_eq!(dist[1], 1); // template_spam
+        assert_eq!(dist[2], 1); // ai_generated
     }
 }

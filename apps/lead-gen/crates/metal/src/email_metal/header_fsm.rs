@@ -21,6 +21,9 @@ pub struct ParsedHeaders<'a> {
     pub received_count: u8,
     pub has_list_unsubscribe: bool,
     pub x_mailer: Option<&'a str>,
+    pub dkim_domain: Option<&'a str>,
+    pub content_type: Option<&'a str>,
+    pub is_multipart: bool,
 }
 
 impl<'a> Default for ParsedHeaders<'a> {
@@ -35,6 +38,9 @@ impl<'a> Default for ParsedHeaders<'a> {
             received_count: 0,
             has_list_unsubscribe: false,
             x_mailer: None,
+            dkim_domain: None,
+            content_type: None,
+            is_multipart: false,
         }
     }
 }
@@ -50,6 +56,8 @@ enum CurrentField {
     Received,
     ListUnsubscribe,
     XMailer,
+    DkimSignature,
+    ContentType,
 }
 
 /// Case-insensitive byte comparison.
@@ -275,6 +283,60 @@ pub fn parse_headers(raw: &[u8]) -> ParsedHeaders<'_> {
                         std::str::from_utf8(&raw[value_start..trimmed_end]).ok();
                 }
             }
+            CurrentField::DkimSignature => {
+                if result.dkim_domain.is_none() {
+                    let value_bytes = &raw[value_start..trimmed_end];
+                    // Scan for "d=" and extract the domain value
+                    for i in 0..value_bytes.len().saturating_sub(1) {
+                        if value_bytes[i].to_ascii_lowercase() == b'd'
+                            && value_bytes[i + 1] == b'='
+                        {
+                            let domain_start = i + 2;
+                            if domain_start < value_bytes.len() {
+                                let domain_end = value_bytes[domain_start..]
+                                    .iter()
+                                    .position(|&b| {
+                                        b == b';' || b == b' ' || b == b'\t'
+                                            || b == b'\r' || b == b'\n'
+                                    })
+                                    .map(|p| domain_start + p)
+                                    .unwrap_or(value_bytes.len());
+                                if domain_end > domain_start {
+                                    result.dkim_domain = std::str::from_utf8(
+                                        &value_bytes[domain_start..domain_end],
+                                    )
+                                    .ok();
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            CurrentField::ContentType => {
+                if result.content_type.is_none() {
+                    let value_bytes = &raw[value_start..trimmed_end];
+                    // Extract MIME type (bytes until ';', whitespace, or end)
+                    let mime_end = value_bytes
+                        .iter()
+                        .position(|&b| {
+                            b == b';' || b == b' ' || b == b'\t'
+                                || b == b'\r' || b == b'\n'
+                        })
+                        .unwrap_or(value_bytes.len());
+                    if mime_end > 0 {
+                        if let Ok(mime) = std::str::from_utf8(&value_bytes[..mime_end]) {
+                            result.content_type = Some(mime);
+                            result.is_multipart = mime
+                                .as_bytes()
+                                .iter()
+                                .zip(b"multipart")
+                                .all(|(a, b)| a.to_ascii_lowercase() == *b)
+                                && mime.len() >= 9;
+                        }
+                    }
+                }
+            }
             CurrentField::Unknown => {}
         }
 
@@ -313,6 +375,18 @@ fn identify_field(raw: &[u8], start: usize, end: usize) -> CurrentField {
             // "Return-Path"
             if starts_with_icase(raw, start, b"Return-Path") {
                 return CurrentField::ReturnPath;
+            }
+        }
+        12 => {
+            // "Content-Type"
+            if starts_with_icase(raw, start, b"Content-Type") {
+                return CurrentField::ContentType;
+            }
+        }
+        14 => {
+            // "DKIM-Signature"
+            if starts_with_icase(raw, start, b"DKIM-Signature") {
+                return CurrentField::DkimSignature;
             }
         }
         16 => {
@@ -440,5 +514,28 @@ mod tests {
         let raw = b"Received: from a\nReceived: from b\nReceived: from c\nReceived: from d\n\n";
         let parsed = parse_headers(raw);
         assert_eq!(parsed.received_count, 4);
+    }
+
+    #[test]
+    fn test_dkim_signature_domain() {
+        let raw = b"From: sender@example.com\nDKIM-Signature: v=1; a=rsa-sha256; d=signing-domain.com; s=selector;\n\tbh=abc; b=xyz\n\n";
+        let parsed = parse_headers(raw);
+        assert_eq!(parsed.dkim_domain, Some("signing-domain.com"));
+    }
+
+    #[test]
+    fn test_content_type_multipart() {
+        let raw = b"From: user@example.com\nContent-Type: multipart/mixed; boundary=abc\n\n";
+        let parsed = parse_headers(raw);
+        assert_eq!(parsed.content_type, Some("multipart/mixed"));
+        assert!(parsed.is_multipart);
+    }
+
+    #[test]
+    fn test_content_type_text() {
+        let raw = b"From: user@example.com\nContent-Type: text/plain; charset=utf-8\n\n";
+        let parsed = parse_headers(raw);
+        assert_eq!(parsed.content_type, Some("text/plain"));
+        assert!(!parsed.is_multipart);
     }
 }

@@ -17,8 +17,10 @@ against paraphrased and rewritten LLM content.
 
 from __future__ import annotations
 
+import datetime
 import math
 import re
+from collections import Counter
 from typing import Optional
 
 import torch
@@ -70,7 +72,8 @@ ROLE_ACCOUNTS = [
     "notification@", "alerts@", "mailer-daemon@", "postmaster@",
 ]
 
-# Top-2000 frequency words (abbreviated for the formality/sophistication features)
+# Top-300 English frequency words for formality/sophistication/lexical features.
+# Larger set → more accurate vocabulary analysis for AI vs human detection.
 _COMMON_WORDS = {
     "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
     "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
@@ -84,6 +87,29 @@ _COMMON_WORDS = {
     "first", "well", "way", "even", "new", "want", "because", "any", "these",
     "give", "day", "most", "us", "is", "are", "was", "were", "been", "has",
     "had", "did", "does", "am", "being", "more", "very", "much", "should",
+    # Extended: 110→300
+    "here", "thing", "many", "still", "down", "own", "before", "long", "too",
+    "same", "tell", "need", "house", "try", "might", "while", "last", "right",
+    "old", "great", "where", "help", "through", "much", "big", "must", "home",
+    "under", "water", "call", "keep", "end", "point", "move", "start", "hand",
+    "high", "every", "never", "next", "begin", "life", "each", "play", "small",
+    "put", "number", "such", "why", "ask", "men", "read", "land", "different",
+    "between", "close", "own", "below", "country", "plant", "school", "few",
+    "run", "left", "while", "late", "real", "open", "seem", "together", "let",
+    "world", "head", "turn", "children", "city", "earth", "eyes", "light",
+    "name", "thought", "hard", "near", "build", "food", "both", "few",
+    "those", "always", "show", "large", "often", "around", "another", "write",
+    "set", "night", "live", "talk", "during", "always", "always", "part",
+    "place", "become", "since", "against", "change", "went", "enough", "group",
+    "until", "along", "got", "made", "side", "young", "face", "family", "done",
+    "off", "leave", "little", "bit", "sure", "man", "woman", "already", "find",
+    "ever", "again", "quite", "anything", "money", "lot", "able", "may",
+    "going", "without", "may", "kind", "actually", "mean", "keep", "really",
+    "something", "nothing", "yes", "around", "upon", "yet", "best", "away",
+    "though", "shall", "once", "least", "per", "far", "enough", "almost",
+    "whole", "among", "often", "though", "however", "rather", "whether",
+    "both", "itself", "themselves", "himself", "herself", "myself", "yourself",
+    "each", "either", "several", "whose", "whom", "whatever",
 }
 
 
@@ -112,20 +138,35 @@ class HierarchicalBayesianAttentionGate(nn.Module):
     3. Document-level: Attention-weighted sentence aggregation → 7-way category
     """
 
+    # Aspect names for multi-probe Bayesian attention
+    ASPECTS = ("content", "structure", "deception", "synthetic")
+
     def __init__(self, hidden=768, n_categories=7):
         super().__init__()
         h4 = hidden // 4
+        n_aspects = len(self.ASPECTS)
 
-        # Token-level: spam probe cross-attention
-        self.spam_probe = nn.Parameter(torch.randn(1, h4))
+        # Token-level: 4 aspect-specific probes (content, structure, deception, synthetic)
+        self.probes = nn.ParameterDict({
+            a: nn.Parameter(torch.randn(1, h4)) for a in self.ASPECTS
+        })
         self.token_key = nn.Linear(hidden, h4)
         self.token_value = nn.Linear(hidden, h4)
 
-        # Bayesian priors: per-token alpha/beta for Beta distribution
-        self.prior_alpha = nn.Sequential(nn.Linear(h4, 1), nn.Softplus())
-        self.prior_beta = nn.Sequential(nn.Linear(h4, 1), nn.Softplus())
+        # Per-aspect Bayesian priors: Beta(alpha, beta)
+        self.prior_alpha = nn.ModuleDict({
+            a: nn.Sequential(nn.Linear(h4, 1), nn.Softplus()) for a in self.ASPECTS
+        })
+        self.prior_beta = nn.ModuleDict({
+            a: nn.Sequential(nn.Linear(h4, 1), nn.Softplus()) for a in self.ASPECTS
+        })
 
-        # Sentence-level: structural features + token posterior aggregation
+        # Learned gating to blend 4 aspect signals → single token score
+        self.aspect_gate = nn.Sequential(
+            nn.Linear(n_aspects, n_aspects), nn.Softmax(dim=-1),
+        )
+
+        # Sentence-level: structural features + per-sentence token aggregation
         self.sentence_struct = nn.Linear(12, 32)
         self.sentence_combiner = nn.Sequential(
             nn.Linear(h4 + 32, 64), nn.GELU(), nn.Dropout(0.1),
@@ -196,66 +237,141 @@ class HierarchicalBayesianAttentionGate(nn.Module):
 
     @staticmethod
     def extract_doc_features(text: str) -> list[float]:
-        """8 document-level features."""
+        """8 document-level features with information-theoretic measures."""
         words = text.split()
         sentences = _split_sentences(text)
         links = re.findall(r'https?://\S+', text)
         n_words = max(len(words), 1)
+        n_chars = max(len(text), 1)
+
+        # Character Shannon entropy: -Σ(p·log2(p)), normalized.
+        # AI text has characteristic entropy profiles (more uniform char distribution).
+        char_freq = Counter(text)
+        char_entropy = 0.0
+        for count in char_freq.values():
+            p = count / n_chars
+            if p > 0:
+                char_entropy -= p * math.log2(p)
+        # Normalize by log2(alphabet_size)
+        alpha_size = max(len(char_freq), 2)
+        char_entropy /= math.log2(alpha_size)
+
+        # Compression ratio estimate: unique_chars / text_length.
+        # Low ratio = repetitive/templated content.
+        compression_ratio = len(char_freq) / n_chars
 
         return [
             min(n_words / 500.0, 1.0),                         # text length
             len(links) / max(n_words, 1) * 100,                # link density
             sum(1 for w in words if w.isupper() and len(w) > 1) / n_words,  # caps ratio
             len(sentences) / 20.0,                              # sentence count (norm)
-            text.count("!") / max(len(text), 1) * 100,         # exclamation density
+            char_entropy,                                       # character Shannon entropy
             sum(1 for w in URGENCY_WORDS if w in text.lower()), # urgency count
             float(bool(re.search(r'\{\{|\[\[|<NAME>|\[Company\]', text))),  # template markers
-            sum(1 for c in text if ord(c) > 127) / max(len(text), 1) * 100,  # non-ascii ratio
+            compression_ratio,                                  # compression ratio estimate
         ]
 
     def forward(self, encoder_output, text: str):
         """Hierarchical gating: token → sentence → document.
 
+        Multi-probe architecture: 4 aspect-specific probes (content, structure,
+        deception, synthetic) each compute independent Beta posteriors. A learned
+        gating mechanism blends aspect signals. Per-sentence token spans ensure
+        the hierarchical gate is truly hierarchical — each sentence gets its own
+        neural signal from the tokens within its span.
+
         Returns:
             Dict with category_logits, gate_score, token_contributions,
-            sentence_scores, gate_confidence.
+            sentence_scores, gate_confidence, aspect_scores, uncertainty.
         """
         tokens = encoder_output.last_hidden_state  # (1, seq, hidden)
         device = tokens.device
+        seq_len = tokens.shape[1]
 
-        # ── Token-level: Bayesian attention ──
+        # ── Token-level: multi-probe Bayesian attention ──
         keys = self.token_key(tokens)           # (1, seq, h/4)
         values = self.token_value(tokens)       # (1, seq, h/4)
-        probe = self.spam_probe.unsqueeze(0)    # (1, 1, h/4)
-
         scale = math.sqrt(keys.shape[-1])
-        attn = torch.bmm(probe, keys.transpose(1, 2)) / scale  # (1, 1, seq)
-        attn_weights = attn.softmax(dim=-1).squeeze(1)          # (1, seq)
 
-        # Per-token Beta priors
-        alpha = self.prior_alpha(values).squeeze(-1) + 1.0  # (1, seq), min 1
-        beta = self.prior_beta(values).squeeze(-1) + 1.0    # (1, seq), min 1
-        token_posteriors = alpha / (alpha + beta)             # (1, seq), E[Beta]
+        # Per-aspect attention, posteriors, and signals
+        aspect_attn = {}       # aspect → (1, seq) attention weights
+        aspect_posteriors = {} # aspect → (1, seq) E[Beta]
+        aspect_signals = {}   # aspect → scalar
+        all_alpha = []
+        all_beta = []
 
-        # Weighted token spam contribution
-        token_spam_signal = (attn_weights * token_posteriors).sum(dim=-1)  # (1,)
+        for aspect in self.ASPECTS:
+            probe = self.probes[aspect].unsqueeze(0)  # (1, 1, h/4)
+            attn = torch.bmm(probe, keys.transpose(1, 2)) / scale  # (1, 1, seq)
+            attn_w = attn.softmax(dim=-1).squeeze(1)  # (1, seq)
 
-        # Aggregate token representation
-        token_agg = torch.bmm(attn_weights.unsqueeze(1), values).squeeze(1)  # (1, h/4)
+            a = self.prior_alpha[aspect](values).squeeze(-1) + 1.0  # (1, seq)
+            b = self.prior_beta[aspect](values).squeeze(-1) + 1.0   # (1, seq)
+            posterior = a / (a + b)  # E[Beta]
 
-        # ── Sentence-level ──
+            aspect_attn[aspect] = attn_w
+            aspect_posteriors[aspect] = posterior
+            aspect_signals[aspect] = (attn_w * posterior).sum(dim=-1)  # (1,)
+            all_alpha.append(a)
+            all_beta.append(b)
+
+        # Blend aspect signals via learned gate
+        stacked_signals = torch.stack(
+            [aspect_signals[a] for a in self.ASPECTS], dim=-1)  # (1, 4)
+        gate_weights = self.aspect_gate(stacked_signals)        # (1, 4) softmax
+        token_spam_signal = (stacked_signals * gate_weights).sum(dim=-1)  # (1,)
+
+        # Blended attention weights for token aggregation
+        blended_attn = sum(
+            gate_weights[0, i] * aspect_attn[a]
+            for i, a in enumerate(self.ASPECTS)
+        )  # (1, seq)
+
+        # Stack alphas/betas for KL loss (across all aspects)
+        alpha = torch.stack(all_alpha, dim=0).mean(dim=0)  # (1, seq)
+        beta = torch.stack(all_beta, dim=0).mean(dim=0)    # (1, seq)
+
+        # ── Sentence-level with per-sentence token spans ──
         sentences = _split_sentences(text)
         if not sentences:
             sentences = [text]
 
+        # Approximate sentence→token span boundaries using character offsets.
+        # Each sentence gets its own neural signal from its token span.
+        char_offsets = []
+        pos = 0
+        for sent in sentences[:20]:
+            start = text.find(sent, pos)
+            if start == -1:
+                start = pos
+            char_offsets.append((start, start + len(sent)))
+            pos = start + len(sent)
+
+        # Map character offsets to approximate token indices (linear interpolation)
+        text_len = max(len(text), 1)
+
         sentence_scores_list = []
         sentence_embeds_list = []
-        for sent in sentences[:20]:  # cap at 20 sentences
+        for i, sent in enumerate(sentences[:20]):
             struct_feats = self.extract_sentence_features(sent)
             struct_tensor = torch.tensor(struct_feats, device=device).unsqueeze(0)
             struct_embed = self.sentence_struct(struct_tensor)  # (1, 32)
 
-            combined = torch.cat([token_agg, struct_embed], dim=-1)  # (1, h/4+32)
+            # Per-sentence token span aggregation
+            c_start, c_end = char_offsets[i]
+            t_start = max(1, int(c_start / text_len * (seq_len - 1)))  # skip [CLS]
+            t_end = min(seq_len, int(c_end / text_len * (seq_len - 1)) + 1)
+            if t_end <= t_start:
+                t_end = min(t_start + 1, seq_len)
+
+            # Extract attention-weighted value within this sentence's span
+            span_attn = blended_attn[:, t_start:t_end]  # (1, span_len)
+            span_attn = span_attn / (span_attn.sum(dim=-1, keepdim=True) + 1e-8)
+            span_values = values[:, t_start:t_end]       # (1, span_len, h/4)
+            sent_agg = torch.bmm(
+                span_attn.unsqueeze(1), span_values).squeeze(1)  # (1, h/4)
+
+            combined = torch.cat([sent_agg, struct_embed], dim=-1)  # (1, h/4+32)
             sent_score = self.sentence_combiner(combined)  # (1, 1)
             sent_embed = self.doc_proj(combined)           # (1, 64)
             sentence_scores_list.append(sent_score.item())
@@ -263,9 +379,9 @@ class HierarchicalBayesianAttentionGate(nn.Module):
 
         # Stack sentence embeddings for document attention
         if sentence_embeds_list:
-            sent_stack = torch.cat(sentence_embeds_list, dim=0).unsqueeze(0)  # (1, n_sent, 64)
-            sent_attn = self.doc_attention(sent_stack).softmax(dim=1)         # (1, n_sent, 1)
-            doc_embed = (sent_attn * sent_stack).sum(dim=1)                   # (1, 64)
+            sent_stack = torch.cat(sentence_embeds_list, dim=0).unsqueeze(0)
+            sent_attn = self.doc_attention(sent_stack).softmax(dim=1)
+            doc_embed = (sent_attn * sent_stack).sum(dim=1)  # (1, 64)
         else:
             doc_embed = torch.zeros(1, 64, device=device)
 
@@ -276,28 +392,45 @@ class HierarchicalBayesianAttentionGate(nn.Module):
 
         cat_input = torch.cat([doc_embed, doc_feat_embed], dim=-1)  # (1, 112)
         category_logits = self.category_head(cat_input)             # (1, n_categories)
+        category_probs = category_logits.softmax(dim=-1)
 
         gate_score = self.gate_head(doc_embed)  # (1, 1)
 
-        # Bayesian confidence: mean precision of token posteriors
-        precision = alpha + beta  # higher = more confident
-        mean_precision = precision.mean().item()
-        gate_confidence = min(mean_precision / 10.0, 1.0)
+        # ── Uncertainty decomposition ──
+        # Aleatoric: entropy of category distribution (inherent ambiguity)
+        cat_entropy = -(category_probs * (category_probs + 1e-8).log()).sum(dim=-1)
+        aleatoric = (cat_entropy / math.log(category_logits.shape[-1])).item()
+
+        # Epistemic: mean Beta variance (model uncertainty from Bayesian priors)
+        beta_var = (alpha * beta) / ((alpha + beta).pow(2) * (alpha + beta + 1))
+        epistemic = beta_var.mean().item()
+
+        gate_confidence = max(0.0, min(1.0, 1.0 - (aleatoric + epistemic) / 2))
 
         # Top-10 token contributions for interpretability
-        top_k = min(10, token_posteriors.shape[1])
-        top_vals, top_idxs = (attn_weights * token_posteriors).topk(top_k, dim=-1)
+        blended_contrib = blended_attn * (alpha / (alpha + beta))
+        top_k = min(10, blended_contrib.shape[1])
+        top_vals, top_idxs = blended_contrib.topk(top_k, dim=-1)
 
         return {
             "category_logits": category_logits,
             "gate_score": gate_score.item(),
             "token_spam_signal": token_spam_signal.item(),
+            "aspect_scores": {a: round(aspect_signals[a].item(), 4) for a in self.ASPECTS},
+            "aspect_weights": {
+                a: round(gate_weights[0, i].item(), 3)
+                for i, a in enumerate(self.ASPECTS)
+            },
             "token_contributions": {
                 "indices": top_idxs[0].tolist(),
                 "scores": [round(v, 4) for v in top_vals[0].tolist()],
             },
             "sentence_scores": [round(s, 3) for s in sentence_scores_list],
             "gate_confidence": round(gate_confidence, 3),
+            "uncertainty": {
+                "aleatoric": round(aleatoric, 4),
+                "epistemic": round(epistemic, 4),
+            },
             "alpha": alpha,
             "beta": beta,
         }
@@ -390,10 +523,19 @@ class AdversarialStyleTransferDetector(nn.Module):
         f8 = min(n_words / 200.0, 1.0)
 
         # ── 9-16: Vocabulary features ──
-        f9 = len(word_set) / n_words                           # type-token ratio
-        f10 = sum(1 for w, c in freq.items() if c == 1) / n_words  # hapax ratio
-        f11 = (float(torch.tensor(list(freq.values())).float().var().item())
-               if len(freq) > 1 else 0.0)                     # burstiness
+        V = len(word_set)         # vocabulary size
+        N = n_words               # total tokens
+        hapax = sum(1 for c in freq.values() if c == 1)  # words appearing once
+
+        f9 = V / N                                             # type-token ratio
+        f10 = hapax / N                                        # hapax ratio
+
+        # Yule's K: length-invariant vocabulary richness (replaces burstiness).
+        # K = 10^4 * (M2 - N) / N^2 where M2 = Σ(i² * Vi), Vi = words at freq i.
+        # AI text has characteristically lower K than human text.
+        freq_of_freq = Counter(freq.values())
+        m2 = sum(i * i * vi for i, vi in freq_of_freq.items())
+        f11 = 1e4 * (m2 - N) / max(N * N, 1) if N > 1 else 0.0  # Yule's K
         f12 = float(text.count(",") + text.count(";")) / n_sents  # clause nesting approx
         conj = ["and", "but", "however", "moreover", "furthermore", "although",
                 "nevertheless", "therefore", "consequently", "meanwhile"]
@@ -419,8 +561,14 @@ class AdversarialStyleTransferDetector(nn.Module):
         f21 = (float(torch.tensor(para_lengths).float().std().item())
                if len(para_lengths) > 1 else 0.0)               # paragraph length variance
         f22 = len(sentences[0].split()) / 20.0 if sentences else 0  # opening sentence length
-        avg_len = sum(lengths) / n_sents
-        f23 = abs(lengths[-1] - avg_len) / max(avg_len, 1) if lengths else 0  # closing distinctiveness
+
+        # Honoré's R: 100·log(N)/(1 - V1/V). Vocabulary diversity measure
+        # independent of text length. AI text has characteristically different R.
+        if V > 0 and hapax < V:
+            f23 = 100.0 * math.log(max(N, 1)) / max(1.0 - hapax / V, 0.01)
+        else:
+            f23 = 0.0
+        f23 = min(f23 / 1000.0, 1.0)  # normalize to ~[0,1]
         trans = ["therefore", "however", "furthermore", "additionally", "consequently",
                  "meanwhile", "moreover", "nevertheless", "in addition", "as a result"]
         f24 = sum(1 for t in trans if t in lower) / n_words     # transition density
@@ -430,24 +578,28 @@ class AdversarialStyleTransferDetector(nn.Module):
         named = sum(1 for w in words if w[0:1].isupper() and w.lower() not in _COMMON_WORDS)
         f25 = named / n_words                                    # specificity/NE density
 
-        # Sentiment uniformity: per-sentence positive/negative word count variance
-        pos_words = {"great", "good", "excellent", "love", "amazing", "wonderful", "fantastic"}
-        neg_words = {"bad", "terrible", "awful", "hate", "horrible", "poor", "worst"}
-        sent_sents = []
-        for s in sentences:
-            sw = s.lower().split()
-            sent_sents.append(
-                sum(1 for w in sw if w in pos_words) - sum(1 for w in sw if w in neg_words))
-        f26 = (float(torch.tensor(sent_sents).float().var().item())
-               if len(sent_sents) > 1 else 0.0)                 # sentiment uniformity
+        # Shannon word entropy: -Σ(p·log2(p)) over word frequency distribution.
+        # AI text has lower entropy (more uniform, predictable word distributions).
+        word_entropy = 0.0
+        if N > 1:
+            for count in freq.values():
+                p = count / N
+                if p > 0:
+                    word_entropy -= p * math.log2(p)
+            # Normalize by log2(V) to get [0, 1] range
+            word_entropy /= max(math.log2(max(V, 2)), 1.0)
+        f26 = word_entropy
 
         # Lexical sophistication: words NOT in common set
         f27 = sum(1 for w in words if w.lower() not in _COMMON_WORDS and w.isalpha()) / n_words
 
-        # N-gram repetition beyond chance
+        # N-gram repetition: combined bigram + trigram (catches longer template patterns)
         bigrams = [f"{words[i].lower()} {words[i+1].lower()}" for i in range(len(words)-1)]
-        unique_bigrams = len(set(bigrams))
-        f28 = 1.0 - (unique_bigrams / max(len(bigrams), 1))     # repetition score
+        trigrams = [f"{words[i].lower()} {words[i+1].lower()} {words[i+2].lower()}"
+                    for i in range(len(words)-2)]
+        bi_rep = 1.0 - (len(set(bigrams)) / max(len(bigrams), 1))
+        tri_rep = 1.0 - (len(set(trigrams)) / max(len(trigrams), 1)) if trigrams else 0.0
+        f28 = (bi_rep + tri_rep) / 2.0
 
         # Formality index
         formal = ["please", "kindly", "sincerely", "regards", "respectfully",
@@ -671,7 +823,6 @@ class TemporalBurstDetector(nn.Module):
         regularity = 1.0 / (1.0 + cv)
 
         # Time-of-day entropy (24 bins)
-        import datetime
         hour_counts = [0] * 24
         for ts in timestamps:
             try:
@@ -769,16 +920,31 @@ class CampaignSimilarityDetector(nn.Module):
         mean_sim = off_diag.mean().item()
         frac_above = (off_diag > 0.85).float().mean().item()
 
-        # Simple cluster count: threshold-based single-linkage
-        clusters = list(range(n))
+        # Union-find with path compression + union by rank for cluster counting
+        parent = list(range(n))
+        rank = [0] * n
+
+        def _find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]  # path halving
+                x = parent[x]
+            return x
+
+        def _union(a, b):
+            ra, rb = _find(a), _find(b)
+            if ra == rb:
+                return
+            if rank[ra] < rank[rb]:
+                ra, rb = rb, ra
+            parent[rb] = ra
+            if rank[ra] == rank[rb]:
+                rank[ra] += 1
+
         for i in range(n):
             for j in range(i + 1, n):
                 if sim_matrix[i, j].item() > 0.85:
-                    root_i = clusters[i]
-                    for k in range(n):
-                        if clusters[k] == root_i:
-                            clusters[k] = clusters[j]
-        cluster_count = len(set(clusters)) / max(n, 1)
+                    _union(i, j)
+        cluster_count = len(set(_find(i) for i in range(n))) / max(n, 1)
 
         return [max_sim, mean_sim, frac_above, cluster_count]
 
@@ -799,17 +965,25 @@ class CampaignSimilarityDetector(nn.Module):
 class ProviderCalibration(nn.Module):
     """6-provider deliverability calibration with adversarial loss.
 
-    Each provider gets a learned MLP that maps raw spam features to
+    Each provider gets a learned MLP that maps 10 spam signal features to
     provider-specific deliverability scores. The adversarial discriminator
     forces scores to be well-calibrated against empirical inbox placement.
+
+    Input features (10-dim):
+        spam_score, ai_risk, text_length_norm, link_density, urgency_count_norm,
+        header_auth_score, template_marker, caps_ratio, sentence_count_norm,
+        role_account
     """
+
+    N_FEATURES = 10
 
     def __init__(self):
         super().__init__()
-        # Per-provider scoring heads (input: spam_score + ai_risk + text_length_norm)
+        # Per-provider scoring heads (10-dim input → deeper MLP)
         self.providers = nn.ModuleDict({
             p: nn.Sequential(
-                nn.Linear(3, 16), nn.ReLU(), nn.Linear(16, 1), nn.Sigmoid(),
+                nn.Linear(self.N_FEATURES, 32), nn.GELU(), nn.Dropout(0.1),
+                nn.Linear(32, 16), nn.ReLU(), nn.Linear(16, 1), nn.Sigmoid(),
             )
             for p in PROVIDERS
         })
@@ -819,34 +993,48 @@ class ProviderCalibration(nn.Module):
             nn.Linear(2, 32), nn.LeakyReLU(0.2), nn.Linear(32, 1),
         )
 
-    def forward(self, spam_score: float, ai_risk: float, text: str,
-                provider: str = "gmail"):
+    def forward(self, feature_dict: dict, provider: str = "gmail"):
+        """Compute per-provider deliverability from 10 spam signal features.
+
+        Args:
+            feature_dict: keys = spam_score, ai_risk, text_length_norm,
+                link_density, urgency_count_norm, header_auth_score,
+                template_marker, caps_ratio, sentence_count_norm, role_account
+            provider: primary provider for deliverability scoring
+        """
         device = next(self.parameters()).device
-        n_words = len(text.split())
+        feat_vec = torch.tensor([[
+            feature_dict.get("spam_score", 0.0),
+            feature_dict.get("ai_risk", 0.0),
+            feature_dict.get("text_length_norm", 0.0),
+            feature_dict.get("link_density", 0.0),
+            feature_dict.get("urgency_count_norm", 0.0),
+            feature_dict.get("header_auth_score", 0.0),
+            feature_dict.get("template_marker", 0.0),
+            feature_dict.get("caps_ratio", 0.0),
+            feature_dict.get("sentence_count_norm", 0.0),
+            feature_dict.get("role_account", 0.0),
+        ]], device=device)
 
         provider_scores = {}
         for pname, phead in self.providers.items():
-            features = torch.tensor(
-                [[spam_score, ai_risk, min(n_words / 500.0, 1.0)]],
-                device=device,
-            )
-            p_score = phead(features).item()
+            p_score = phead(feat_vec).item()
 
-            # Apply rule-based adjustments
+            # Apply rule-based provider-specific adjustments
             thresholds = PROVIDER_THRESHOLDS.get(pname, PROVIDER_THRESHOLDS["gmail"])
             adjusted = p_score + thresholds["base"] - 0.45
 
-            link_count = len(re.findall(r'https?://\S+', text))
-            if link_count > 2:
-                adjusted += thresholds["link_penalty"] * (link_count - 2)
+            link_density = feature_dict.get("link_density", 0.0)
+            if link_density > 0.02:
+                adjusted += thresholds["link_penalty"] * link_density * 10
 
-            urgency_count = sum(1 for w in URGENCY_WORDS if w in text.lower())
-            if urgency_count > 0:
-                adjusted += thresholds["urgency_penalty"] * urgency_count
+            urgency = feature_dict.get("urgency_count_norm", 0.0)
+            if urgency > 0:
+                adjusted += thresholds["urgency_penalty"] * urgency * 5
 
             provider_scores[pname] = round(min(1.0, max(0.0, adjusted)), 3)
 
-        primary_score = provider_scores.get(provider, spam_score)
+        primary_score = provider_scores.get(provider, feature_dict.get("spam_score", 0.0))
         deliverability = max(0, min(10, round(10 * (1 - primary_score))))
 
         return {
@@ -897,10 +1085,14 @@ class SpamHead(BaseModule):
         self.campaign_detector = CampaignSimilarityDetector()
         self.provider_cal = ProviderCalibration()
 
-        # Final gating decision: 7 inputs → pass/quarantine/block
-        self.gate_decision = nn.Sequential(
-            nn.Linear(7, 32), nn.GELU(), nn.Linear(32, 1), nn.Sigmoid(),
+        # Final gating decision: residual MLP with layer norm (7 → 1)
+        self.gate_norm = nn.LayerNorm(7)
+        self.gate_trunk = nn.Sequential(
+            nn.Linear(7, 64), nn.GELU(), nn.Dropout(0.1),
+            nn.Linear(64, 32), nn.GELU(),
         )
+        self.gate_residual = nn.Linear(7, 32)  # skip connection
+        self.gate_out = nn.Sequential(nn.LayerNorm(32), nn.Linear(32, 1), nn.Sigmoid())
 
         # Uncertainty-weighted multi-task loss (Kendall et al., 2018)
         self.log_var_cat = nn.Parameter(torch.zeros(1))
@@ -1024,9 +1216,16 @@ class SpamHead(BaseModule):
         # F. Role account check
         role_account_score = self._detect_role_account(text, **kwargs)
 
-        # ── Composite spam score ──
+        # ── Composite spam score (residual gate network) ──
         base_spam = gate_result["gate_score"]
         device = category_logits.device
+        lower = text.lower()
+        n_words = max(len(text.split()), 1)
+        link_count = len(re.findall(r'https?://\S+', text))
+        urgency_count = sum(1 for w in URGENCY_WORDS if w in lower)
+        caps_words = sum(1 for w in text.split() if w.isupper() and len(w) > 1)
+        n_sents = max(len(_split_sentences(text)), 1)
+        template_marker = float(bool(re.search(r'\{\{|\[\[|<NAME>|\[Company\]', text)))
 
         gate_input = torch.tensor([[
             base_spam,
@@ -1035,13 +1234,28 @@ class SpamHead(BaseModule):
             temporal_anomaly,
             campaign_similarity,
             role_account_score,
-            sum(1 for w in URGENCY_WORDS if w in text.lower()) / 5.0,
+            urgency_count / 5.0,
         ]], device=device)
 
-        spam_score = self.gate_decision(gate_input).item()
+        normed = self.gate_norm(gate_input)
+        trunk = self.gate_trunk(normed)
+        residual = self.gate_residual(gate_input)
+        spam_score = self.gate_out(trunk + residual).item()
 
-        # G. Provider calibration
-        provider_result = self.provider_cal(spam_score, ai_risk, text, provider)
+        # G. Provider calibration (10-feature input)
+        provider_features = {
+            "spam_score": spam_score,
+            "ai_risk": ai_risk,
+            "text_length_norm": min(n_words / 500.0, 1.0),
+            "link_density": link_count / n_words,
+            "urgency_count_norm": urgency_count / 5.0,
+            "header_auth_score": header_verdict["header_score"],
+            "template_marker": template_marker,
+            "caps_ratio": caps_words / n_words,
+            "sentence_count_norm": min(n_sents / 20.0, 1.0),
+            "role_account": role_account_score,
+        }
+        provider_result = self.provider_cal(provider_features, provider)
 
         # Risk factors
         risk_factors = self._detect_risk_factors(text, ai_details, header_verdict)
@@ -1094,6 +1308,8 @@ class SpamHead(BaseModule):
             "sentence_scores": gate_result["sentence_scores"],
             "gate_decision": gate,
             "gate_confidence": gate_result["gate_confidence"],
+            "aspect_scores": gate_result.get("aspect_scores", {}),
+            "uncertainty": gate_result.get("uncertainty", {}),
         }
 
     def compute_loss(self, category_logits, gate_score, ai_risk,

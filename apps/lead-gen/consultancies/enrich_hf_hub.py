@@ -94,15 +94,22 @@ def _normalize_name(name: str) -> list[str]:
     kebab = re.sub(r"[^a-z0-9]+", "-", lower).strip("-")
     candidates.append(kebab)
 
-    # no separator
+    # no separator (always include — HF orgs often use this form)
     no_sep = re.sub(r"[^a-z0-9]", "", lower)
-    if no_sep != kebab.replace("-", ""):
-        candidates.append(no_sep)
+    candidates.append(no_sep)
 
     # with -ai suffix
     if not kebab.endswith("-ai"):
         candidates.append(f"{kebab}-ai")
         candidates.append(f"{no_sep}ai")
+
+    # Common HF org naming patterns
+    candidates.append(f"{no_sep}forai")     # CohereForAI
+    candidates.append(f"{kebab}-for-ai")
+    candidates.append(f"{no_sep}labs")      # CohereLabs
+    candidates.append(f"{kebab}-labs")
+    candidates.append(f"{no_sep}-hf")
+    candidates.append(f"{no_sep}research")  # GoogleResearch-style
 
     # Original casing (some orgs use PascalCase)
     pascal = re.sub(r"[^a-zA-Z0-9]", "", clean)
@@ -162,7 +169,7 @@ def resolve_hf_org(api: HfApi, company: CompanyRecord) -> str | None:
             unique.append(c)
 
     # Try each candidate — check if org exists by listing models
-    for candidate in unique[:8]:  # limit attempts
+    for candidate in unique[:12]:  # limit attempts
         try:
             models = list(api.list_models(author=candidate, limit=1))
             if models:
@@ -174,12 +181,15 @@ def resolve_hf_org(api: HfApi, company: CompanyRecord) -> str | None:
 
     # Fallback: search HF for company name
     try:
-        models = list(api.list_models(search=company.name, limit=5))
+        models = list(api.list_models(search=company.name, limit=10))
         if models:
             # Group by author, pick most common
+            # Extract author from model ID (e.g. "CohereLabs/model" → "CohereLabs")
             authors: dict[str, int] = {}
             for m in models:
                 author = m.author or ""
+                if not author and m.id and "/" in m.id:
+                    author = m.id.split("/")[0]
                 if author:
                     authors[author] = authors.get(author, 0) + 1
             if authors:
@@ -188,7 +198,7 @@ def resolve_hf_org(api: HfApi, company: CompanyRecord) -> str | None:
                 name_lower = company.name.lower().replace(" ", "")
                 best_lower = best.lower().replace("-", "").replace("_", "")
                 if (name_lower in best_lower or best_lower in name_lower
-                        or _jaccard_sim(name_lower, best_lower) > 0.5):
+                        or _jaccard_sim(name_lower, best_lower) > 0.4):
                     log.debug(f"  Resolved {company.name} → HF org '{best}' (search)")
                     return best
     except Exception:
