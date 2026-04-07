@@ -7,25 +7,87 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = HfClient::from_env(8)?;
     let scanner = OrgScanner::new(&client);
 
-    let orgs = ["AssemblyAI", "sumble"];
+    // All companies from ai-features.json that have features + key domain variants
+    // Plus potential HF orgs for all 63 companies
+    let orgs = [
+        // 9 companies with features (known)
+        "assemblyai",
+        "sumble",
+        "gong-io", "gong",
+        "landbase",
+        "aviso", "aviso-ai",
+        "sierra-ai", "sierraai",
+        "alembic", "alembic-ai",
+        "cresta", "cresta-ai",
+        "zapier",
+        // Other companies from the list — try common HF org patterns
+        "clari",
+        "bland-ai", "blandai",
+        "amplemarket",
+        "ocean-io", "ocean-ai",
+        "clay-com", "clay-ai", "clay-hq",
+        "revenue-io",
+        "qualified",
+        "outreach", "outreach-io",
+        "nooks-ai", "nooksai",
+        "apollo-io", "apolloio",
+        "salesloft",
+        "smartlead",
+        "artisan-ai", "artisanai",
+        "11x-ai",
+        "usergems",
+        "sybill-ai", "sybill",
+        "lindy-ai", "lindyai",
+        "decagon-ai", "decagon",
+        "warmly-ai",
+        // B2B sales AI companies NOT in list — discovered via research
+        "chorus-ai", "chorusai",     // conversation intelligence (acquired by ZoomInfo)
+        "people-ai", "peopleai",     // revenue intelligence
+        "clari-ai",
+        "6sense",                     // predictive analytics
+        "bombora",                    // intent data
+        "zoominfo",                   // data enrichment
+        "clearbit",                   // data enrichment
+        "lusha",                      // contact data
+        "cognism",                    // sales intelligence
+        "apollo",                     // sales engagement
+        "outplay",                    // sales engagement
+        "regie-ai", "regieai",       // AI content for sales
+        "copy-ai", "copyai",         // AI content
+        "lavender-ai", "lavenderai", // email AI
+        "drift",                      // conversational marketing
+        "intercom",                   // customer messaging
+        "conversica",                 // AI sales assistant
+        "exceed-ai", "exceedai",     // AI sales assistant
+        "orum",                       // AI dialer
+        "salience", "salience-ai",   // NLP
+    ];
 
     let mut all_profiles = Vec::new();
+    let mut found_orgs = Vec::new();
 
     for org in orgs {
-        eprintln!("\n{}", "=".repeat(70));
-        eprintln!("  SCANNING: {org}");
-        eprintln!("{}", "=".repeat(70));
-
         let profile = scanner.scan_org(org).await?;
         let score = OrgScanner::compute_hf_score(&profile);
+        let total = profile.models.len() + profile.datasets.len() + profile.spaces.len();
 
-        eprintln!("  Models:    {}", profile.models.len());
-        eprintln!("  Datasets:  {}", profile.datasets.len());
-        eprintln!("  Spaces:    {}", profile.spaces.len());
-        eprintln!("  Downloads: {}", profile.total_downloads);
-        eprintln!("  HF Score:  {score:.3}");
+        if total == 0 {
+            continue; // Skip empty orgs
+        }
 
-        // Fetch model cards (READMEs) for all models
+        eprintln!(
+            "{org:>25}  models={:<3} datasets={:<3} spaces={:<3} dl={:<10} score={:.3}  signals={}",
+            profile.models.len(),
+            profile.datasets.len(),
+            profile.spaces.len(),
+            profile.total_downloads,
+            score,
+            profile.training_signals.len(),
+        );
+
+        found_orgs.push(org.to_string());
+
+        // Fetch model cards
         let model_ids: Vec<String> = profile
             .models
             .iter()
@@ -33,7 +95,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .collect();
 
         let cards = if !model_ids.is_empty() {
-            eprintln!("  Fetching {} model cards...", model_ids.len());
             client
                 .fetch_model_cards(&model_ids)
                 .await
@@ -42,7 +103,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             std::collections::HashMap::new()
         };
 
-        // Build models JSON with card text included
         let models_json: Vec<serde_json::Value> = profile
             .models
             .iter()
@@ -135,7 +195,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             })
             .collect();
 
-        // Compute total likes
         let total_likes: u64 = profile
             .models
             .iter()
@@ -164,15 +223,65 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         all_profiles.push(profile_json);
     }
 
-    let output = serde_json::to_string_pretty(&all_profiles)?;
+    // Also search HF for sales/lead-gen related models
+    eprintln!("\n{}", "=".repeat(70));
+    eprintln!("  SEARCHING HF for sales/lead-gen ML models...");
+    eprintln!("{}", "=".repeat(70));
+
+    let searches = [
+        "sales lead scoring",
+        "sales conversation",
+        "revenue prediction",
+        "B2B intent",
+        "contact enrichment",
+        "sales email",
+        "lead generation NER",
+        "technographic",
+        "company classification",
+        "sales forecasting",
+    ];
+
+    let mut search_results = Vec::new();
+    for query in searches {
+        let results = client.search_models(query, 10).await.unwrap_or_default();
+        if !results.is_empty() {
+            eprintln!("  '{query}': {} results", results.len());
+            for m in &results {
+                let repo_id = m.repo_id.as_deref().unwrap_or("?");
+                let dl = m.downloads.unwrap_or(0);
+                let likes = m.likes.unwrap_or(0);
+                let lib = m.library.as_deref().unwrap_or("-");
+                let tag = m.pipeline_tag.as_deref().unwrap_or("-");
+                search_results.push(json!({
+                    "query": query,
+                    "repo_id": repo_id,
+                    "downloads": dl,
+                    "likes": likes,
+                    "library": lib,
+                    "pipeline_tag": tag,
+                    "tags": m.tags,
+                    "created_at": m.created_at,
+                    "author": m.author,
+                }));
+            }
+        }
+    }
+
+    let output = json!({
+        "org_profiles": all_profiles,
+        "found_orgs": found_orgs,
+        "search_results": search_results,
+    });
+
+    let output_str = serde_json::to_string_pretty(&output)?;
 
     let out_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../apps/lead-gen/consultancies/data");
     let out_path = out_dir.join("hf-profiles.json");
-    std::fs::write(&out_path, &output)?;
+    std::fs::write(&out_path, &output_str)?;
     eprintln!("\nSaved to {}", out_path.display());
-
-    println!("{output}");
+    eprintln!("Found {} orgs with HF presence", found_orgs.len());
+    eprintln!("Search results: {} models across {} queries", search_results.len(), searches.len());
 
     Ok(())
 }
