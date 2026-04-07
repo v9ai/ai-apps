@@ -32,6 +32,7 @@ PUBLISHABLE_MODULES = [
     "spam", "score", "intent", "reply", "triggers",
     "objection", "sentiment", "entities", "call",
     "icp", "subject",
+    "survival", "anomaly", "bandit", "graph",
 ]
 
 # Modules that require special input (not standard text prediction)
@@ -48,6 +49,8 @@ def _test_input(module_name: str) -> str:
         return json.dumps({"icp": "Mid-market B2B SaaS", "prospect": "300-person fintech"})
     if module_name == "subject":
         return json.dumps(["Quick question about Q3", "URGENT: Limited time offer!!!"])
+    if module_name in ("survival", "anomaly", "bandit", "graph"):
+        return "AI-native startup, Series B, 200 employees, hiring aggressively"
     return "test input for verification"
 
 

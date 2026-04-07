@@ -116,8 +116,8 @@ TRIGGERS_CONFIG = SalesCueConfig(
 
 ICP_CONFIG = SalesCueConfig(
     module_name="icp",
-    labels=["industry", "size", "tech", "role", "signal"],
-    architectures=["WassersteinICPMatcher"],
+    labels=["industry", "size", "tech", "role", "signal", "hf_sophistication"],
+    architectures=["WassersteinICPMatcher", "ContrastiveProjectionHead"],
 )
 
 OBJECTION_CONFIG = SalesCueConfig(
@@ -172,6 +172,35 @@ EMAILGEN_CONFIG = SalesCueConfig(
     backbone="Qwen/Qwen2.5-3B-Instruct",
 )
 
+SURVIVAL_CONFIG = SalesCueConfig(
+    module_name="survival",
+    labels=["fast_mover", "steady", "long_cycle", "stalled", "disqualified"],
+    architectures=["DeepSurvivalMachine", "WeibullMixture"],
+)
+
+ANOMALY_CONFIG = SalesCueConfig(
+    module_name="anomaly",
+    labels=[
+        "hiring_spike", "model_release_burst", "download_surge",
+        "website_overhaul", "social_activity_spike", "funding_event",
+        "press_coverage_spike", "dev_activity_surge", "multi_signal_anomaly", "normal",
+    ],
+    architectures=["SignalAnomalyDetector", "SignalAutoencoder", "GaussianMixture"],
+)
+
+BANDIT_CONFIG = SalesCueConfig(
+    module_name="bandit",
+    labels=[],  # no fixed labels — action space is combinatorial
+    architectures=["OutreachBandit", "BayesianLinearArm"],
+)
+
+GRAPH_CONFIG = SalesCueConfig(
+    module_name="graph",
+    labels=["high_value_cluster", "emerging_cluster", "isolated",
+            "competitive_dense", "complementary"],
+    architectures=["CompanyGraphScorer", "SAGEConv"],
+)
+
 ALL_CONFIGS = {
     "score": SCORE_CONFIG,
     "intent": INTENT_CONFIG,
@@ -185,4 +214,8 @@ ALL_CONFIGS = {
     "call": CALL_CONFIG,
     "subject": SUBJECT_CONFIG,
     "emailgen": EMAILGEN_CONFIG,
+    "survival": SURVIVAL_CONFIG,
+    "anomaly": ANOMALY_CONFIG,
+    "bandit": BANDIT_CONFIG,
+    "graph": GRAPH_CONFIG,
 }

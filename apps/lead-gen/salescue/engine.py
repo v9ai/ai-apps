@@ -51,6 +51,10 @@ def _ensure_registry() -> None:
     from .modules.entities import EntityExtractor
     from .modules.objection import ObjectionPreClassifier
     from .modules.emailgen import EmailGenerator
+    from .modules.survival import DeepSurvivalMachine
+    from .modules.anomaly import SignalAnomalyDetector
+    from .modules.bandit import OutreachBandit
+    from .modules.graph import CompanyGraphScorer
 
     register_module("score", LeadScorer)
     register_module("intent", NeuralHawkesIntentPredictor)
@@ -64,6 +68,10 @@ def _ensure_registry() -> None:
     register_module("entities", EntityExtractor)
     register_module("objection", ObjectionPreClassifier)
     register_module("emailgen", EmailGenerator)
+    register_module("survival", DeepSurvivalMachine)
+    register_module("anomaly", SignalAnomalyDetector)
+    register_module("bandit", OutreachBandit)
+    register_module("graph", CompanyGraphScorer)
 
 
 class Engine:

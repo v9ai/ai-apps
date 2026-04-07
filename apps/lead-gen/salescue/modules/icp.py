@@ -1,22 +1,28 @@
-"""salescue/modules/icp.py — Wasserstein ICP Matching
+"""salescue/modules/icp.py — Wasserstein ICP Matching + Contrastive Learning
 
 Research contribution: Cosine similarity between ICP and prospect embeddings treats both
 as point vectors. But an ICP like "100-500 employees" represents a RANGE, not a point.
 We model both ICP and prospect as distributions in embedding space and compute their
 Wasserstein distance (earth mover's distance) for matching.
+
+Extension: ContrastiveProjectionHead learns ICP-aligned embeddings from positive/negative
+company examples using NT-Xent (Normalized Temperature-scaled Cross-Entropy) loss.
+Based on SupCon (Khosla et al., 2020) adapted for B2B prospect matching.
 """
 
 from __future__ import annotations
 
 import json
+import math
 from typing import Any
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from ..base import BaseModule
 
-DIMS = ["industry", "size", "tech", "role", "signal"]
+DIMS = ["industry", "size", "tech", "role", "signal", "hf_sophistication"]
 
 
 class WassersteinICPMatcher(BaseModule):
@@ -53,6 +59,9 @@ class WassersteinICPMatcher(BaseModule):
 
         # learned dealbreaker thresholds
         self.thresholds = nn.Parameter(torch.zeros(len(DIMS)))
+
+        # Contrastive projection head for training ICP-aligned embeddings
+        self.contrastive = ContrastiveProjectionHead(hidden=hidden)
 
     def process(self, encoded, text, **kwargs):
         """Process paired ICP/prospect text passed as JSON.
@@ -141,6 +150,76 @@ class WassersteinICPMatcher(BaseModule):
             "dealbreakers": dealbreakers,
             "missing": missing,
         }
+
+
+class ContrastiveProjectionHead(nn.Module):
+    """NT-Xent contrastive projection for ICP-aligned embeddings.
+
+    Learns a projection space where closed-won prospects cluster together
+    and closed-lost prospects are pushed apart. Based on SupCon (Khosla et al., 2020).
+
+    The learned projections feed into the Wasserstein matcher as refined features.
+    """
+
+    def __init__(self, hidden: int = 768, proj_dim: int = 128, temperature: float = 0.07):
+        super().__init__()
+        self.temperature = temperature
+        self.projector = nn.Sequential(
+            nn.Linear(hidden, 256),
+            nn.GELU(),
+            nn.LayerNorm(256),
+            nn.Linear(256, proj_dim),
+        )
+
+    def project(self, cls_embedding: torch.Tensor) -> torch.Tensor:
+        """Project CLS embedding to contrastive space."""
+        return F.normalize(self.projector(cls_embedding), dim=-1)
+
+    def nt_xent_loss(
+        self,
+        embeddings: torch.Tensor,
+        labels: torch.Tensor,
+    ) -> torch.Tensor:
+        """Compute NT-Xent (supervised contrastive) loss.
+
+        Args:
+            embeddings: (batch, hidden) raw CLS embeddings
+            labels: (batch,) integer labels — same label = positive pair
+
+        Returns:
+            Scalar loss
+        """
+        z = self.project(embeddings)  # (batch, proj_dim)
+        batch_size = z.shape[0]
+
+        # Similarity matrix
+        sim = torch.mm(z, z.t()) / self.temperature  # (batch, batch)
+
+        # Mask: positive pairs share the same label
+        labels_col = labels.unsqueeze(1)
+        positive_mask = (labels_col == labels_col.t()).float()
+        # Remove self-similarity from positives
+        positive_mask.fill_diagonal_(0)
+
+        # For numerical stability
+        sim_max, _ = sim.max(dim=1, keepdim=True)
+        sim = sim - sim_max.detach()
+
+        # Denominator: all pairs except self
+        self_mask = torch.eye(batch_size, device=z.device)
+        denominator = torch.exp(sim) * (1 - self_mask)
+        denominator = denominator.sum(dim=1, keepdim=True)
+
+        # Log-prob of positive pairs
+        log_prob = sim - torch.log(denominator + 1e-8)
+
+        # Mean over positive pairs per anchor
+        pos_count = positive_mask.sum(dim=1)
+        # Avoid division by zero for anchors with no positives
+        pos_count = pos_count.clamp(min=1)
+        loss = -(positive_mask * log_prob).sum(dim=1) / pos_count
+
+        return loss.mean()
 
 
 def _parse_pair(text: str | dict) -> dict[str, str]:

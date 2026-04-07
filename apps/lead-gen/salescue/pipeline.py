@@ -41,6 +41,18 @@ PIPELINE_REGISTRY = {
     "subject-optimization": "subject",
     "sales-subject": "subject",
     "sales-sentiment": "sentiment",
+    "survival-analysis": "survival",
+    "time-to-conversion": "survival",
+    "sales-survival": "survival",
+    "anomaly-detection": "anomaly",
+    "signal-anomaly": "anomaly",
+    "sales-anomaly": "anomaly",
+    "outreach-bandit": "bandit",
+    "outreach-optimization": "bandit",
+    "sales-bandit": "bandit",
+    "graph-scoring": "graph",
+    "company-graph": "graph",
+    "sales-graph": "graph",
 }
 
 
