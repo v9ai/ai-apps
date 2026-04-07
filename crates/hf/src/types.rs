@@ -189,6 +189,9 @@ pub struct OrgProfile {
     /// Per-model maturity assessments. Populated by `scan_org` / `scan_org_deep`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub model_maturity: Vec<ModelMaturity>,
+    /// Sales-adjacent signals found across the org's repos.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sales_signals: Vec<SalesSignal>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -248,6 +251,35 @@ pub enum EffortLevel {
     Experiment,
     /// Minimal: auto-generated everything, zero downloads.
     Trivial,
+}
+
+/// Sales-adjacent signal detected from model card, tags, or repo name.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SalesSignal {
+    pub repo_id: String,
+    pub category: SalesCategory,
+    pub evidence: String,
+}
+
+/// Broad sales-adjacent categories for HF models.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SalesCategory {
+    /// Email generation, personalization, outreach drafting.
+    EmailOutreach,
+    /// Conversation coaching, call intelligence, objection handling.
+    SalesConversation,
+    /// Revenue prediction, pipeline forecasting.
+    Forecasting,
+    /// B2B intent scoring, lead scoring, qualification.
+    IntentScoring,
+    /// Contact or company enrichment, technographic data.
+    Enrichment,
+    /// Company or lead classification.
+    LeadClassification,
+    /// CRM intelligence, deal insights.
+    CrmIntelligence,
+    /// General sales mention without clear sub-category.
+    General,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

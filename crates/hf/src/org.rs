@@ -172,6 +172,26 @@ impl<'a> OrgScanner<'a> {
             })
             .collect();
 
+        // 7. Sales-adjacent signal detection
+        let mut sales_signals = Vec::new();
+        for (repo_id, card_text) in &cards {
+            let tags: Vec<String> = models
+                .iter()
+                .find(|m| m.repo_id.as_deref() == Some(repo_id.as_str()))
+                .and_then(|m| m.tags.clone())
+                .unwrap_or_default();
+            sales_signals.extend(Self::detect_sales_signals(repo_id, card_text, &tags));
+        }
+        // Also check repo names/tags for models without card text
+        for m in &models {
+            if let Some(repo_id) = &m.repo_id {
+                if !cards.contains_key(repo_id.as_str()) {
+                    let tags = m.tags.clone().unwrap_or_default();
+                    sales_signals.extend(Self::detect_sales_signals(repo_id, "", &tags));
+                }
+            }
+        }
+
         Ok(OrgProfile {
             org_name: org_name.to_owned(),
             models,
@@ -184,6 +204,7 @@ impl<'a> OrgScanner<'a> {
             arxiv_links,
             model_configs: HashMap::new(),
             model_maturity,
+            sales_signals,
         })
     }
 
@@ -517,6 +538,87 @@ impl<'a> OrgScanner<'a> {
         links.sort();
         links.dedup();
         links
+    }
+
+    // ── Sales signal detection ───────────────────────────────────
+
+    /// Detect sales-adjacent signals from README text, tags, and repo name.
+    pub fn detect_sales_signals(
+        repo_id: &str,
+        readme: &str,
+        tags: &[String],
+    ) -> Vec<SalesSignal> {
+        let mut signals = Vec::new();
+        let lower = readme.to_lowercase();
+        let repo_lower = repo_id.to_lowercase();
+        let tags_lower: Vec<String> = tags.iter().map(|t| t.to_lowercase()).collect();
+
+        // Combine all text sources for scanning
+        let all_text = format!("{lower} {repo_lower} {}", tags_lower.join(" "));
+
+        // (patterns, category, evidence_label)
+        let rules: &[(&[&str], SalesCategory, &str)] = &[
+            // Email outreach
+            (
+                &["sales email", "email_sales", "outreach email", "cold email", "email personali"],
+                SalesCategory::EmailOutreach,
+                "sales email / outreach",
+            ),
+            // Sales conversation
+            (
+                &["sales conversation", "sales-conversation", "call coaching", "objection handl", "sales call", "conversation intelligence"],
+                SalesCategory::SalesConversation,
+                "sales conversation / coaching",
+            ),
+            // Forecasting
+            (
+                &["sales forecast", "revenue predict", "pipeline forecast", "deal predict", "revenue intelligence"],
+                SalesCategory::Forecasting,
+                "sales/revenue forecasting",
+            ),
+            // Intent scoring
+            (
+                &["intent signal", "intent-signal", "intent scoring", "intent classif", "b2b intent", "buyer intent", "lead scor"],
+                SalesCategory::IntentScoring,
+                "intent / lead scoring",
+            ),
+            // Enrichment
+            (
+                &["contact enrichment", "company enrichment", "lead enrichment", "technographic", "firmographic"],
+                SalesCategory::Enrichment,
+                "data enrichment / technographic",
+            ),
+            // Lead classification
+            (
+                &["lead classif", "company classif", "prospect classif", "lead generation", "lead-gen", "lead gen"],
+                SalesCategory::LeadClassification,
+                "lead / company classification",
+            ),
+            // CRM
+            (
+                &["crm intellig", "deal insight", "pipeline analyt", "revenue analyt"],
+                SalesCategory::CrmIntelligence,
+                "CRM / revenue analytics",
+            ),
+            // General sales mention
+            (
+                &["salesloft", "salesforce", "hubspot", "gong.io", "outreach.io", "apollo.io"],
+                SalesCategory::General,
+                "sales platform brand",
+            ),
+        ];
+
+        for (patterns, category, label) in rules {
+            if patterns.iter().any(|p| all_text.contains(p)) {
+                signals.push(SalesSignal {
+                    repo_id: repo_id.to_owned(),
+                    category: *category,
+                    evidence: label.to_string(),
+                });
+            }
+        }
+
+        signals
     }
 
     // ── Model maturity assessment ─────────────────────────────────
@@ -1008,6 +1110,7 @@ mod tests {
             arxiv_links: vec![],
             model_configs: HashMap::new(),
             model_maturity: vec![],
+            sales_signals: vec![],
         };
         let score = OrgScanner::compute_hf_score(&profile);
         assert_eq!(score, 0.0);
