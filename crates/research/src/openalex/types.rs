@@ -44,12 +44,24 @@ impl Work {
 pub struct Authorship {
     pub author: Option<AuthorObj>,
     pub author_position: Option<String>,
+    pub institutions: Option<Vec<Institution>>,
+    pub raw_affiliation_strings: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthorObj {
     pub id: Option<String>,
     pub display_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Institution {
+    pub id: Option<String>,
+    pub display_name: Option<String>,
+    pub ror: Option<String>,
+    pub country_code: Option<String>,
+    #[serde(rename = "type")]
+    pub institution_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,6 +75,8 @@ pub struct PrimaryLocation {
 pub struct Source {
     pub id: Option<String>,
     pub display_name: Option<String>,
+    #[serde(rename = "type")]
+    pub source_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

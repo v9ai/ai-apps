@@ -98,4 +98,67 @@ impl OpenAlexClient {
         let val = self.get_json(&url, vec![]).await?;
         Ok(serde_json::from_value(val)?)
     }
+
+    /// Search for works affiliated with a specific institution/company.
+    ///
+    /// Uses `filter=authorships.institutions.display_name.search:{company_name}`
+    /// to find papers where at least one author lists the given institution.
+    pub async fn search_by_affiliation(
+        &self,
+        company_name: &str,
+        page: u32,
+        per_page: u32,
+    ) -> Result<SearchResponse, Error> {
+        let url = format!("{}/works", self.base_url);
+        let filter = format!(
+            "authorships.institutions.display_name.search:{}",
+            company_name
+        );
+        let params = vec![
+            ("filter".into(), filter),
+            ("page".into(), page.to_string()),
+            ("per_page".into(), per_page.to_string()),
+        ];
+        let val = self.get_json(&url, params).await?;
+        Ok(serde_json::from_value(val)?)
+    }
+
+    /// Search for works by author display name.
+    ///
+    /// Uses `filter=authorships.author.display_name.search:{author_name}`.
+    pub async fn search_by_author_name(
+        &self,
+        author_name: &str,
+        page: u32,
+        per_page: u32,
+    ) -> Result<SearchResponse, Error> {
+        let url = format!("{}/works", self.base_url);
+        let filter = format!(
+            "authorships.author.display_name.search:{}",
+            author_name
+        );
+        let params = vec![
+            ("filter".into(), filter),
+            ("page".into(), page.to_string()),
+            ("per_page".into(), per_page.to_string()),
+        ];
+        let val = self.get_json(&url, params).await?;
+        Ok(serde_json::from_value(val)?)
+    }
+
+    /// Search institutions by name.
+    ///
+    /// Returns raw JSON from the OpenAlex institutions endpoint.
+    pub async fn search_institutions(
+        &self,
+        query: &str,
+        per_page: u32,
+    ) -> Result<serde_json::Value, Error> {
+        let url = format!("{}/institutions", self.base_url);
+        let params = vec![
+            ("search".into(), query.to_string()),
+            ("per_page".into(), per_page.to_string()),
+        ];
+        self.get_json(&url, params).await
+    }
 }
