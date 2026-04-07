@@ -15,6 +15,37 @@ impl RepoType {
             Self::Space => "spaces",
         }
     }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Model => "model",
+            Self::Dataset => "dataset",
+            Self::Space => "space",
+        }
+    }
+
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "model" => Some(Self::Model),
+            "dataset" => Some(Self::Dataset),
+            "space" => Some(Self::Space),
+            _ => None,
+        }
+    }
+}
+
+/// Options for listing repos from the HF Hub API.
+#[derive(Debug, Clone)]
+pub struct ListOptions {
+    pub repo_type: RepoType,
+    /// Sort field: "downloads", "likes", "trending", "created"
+    pub sort: String,
+    /// "-1" for descending, "1" for ascending
+    pub direction: String,
+    /// Items per page (max 100)
+    pub limit: usize,
+    /// Max pages to fetch (0 = all until empty)
+    pub max_pages: usize,
 }
 
 #[derive(Debug, Clone)]
