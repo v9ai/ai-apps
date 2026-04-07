@@ -77,19 +77,69 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         }
     }
 
-    // Select top verified contacts by score.
-    // When enrichment embeddings are available, this will use two-stage retrieval:
-    //   Stage 1: sort by score (embedding cosine similarity + ICP)
-    //   Stage 2: rerank top-N with cross-encoder for precision
-    // For now, falls back to score-only sorting (reranker wired when kernel-reranker enabled).
+    // Build company lookup from enrichment (needed before reranking)
+    let company_map: std::collections::HashMap<&str, &super::enrich::EnrichedCompany> =
+        enrichment
+            .as_ref()
+            .map(|e| e.companies.iter().map(|c| (c.domain.as_str(), c)).collect())
+            .unwrap_or_default();
+
+    // Stage 1: sort verified contacts by score (fast recall)
     let mut verified: Vec<_> = contacts.contacts.iter().filter(|c| c.verified).collect();
     verified.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
 
-    // Two-stage retrieval ready: when ctx.reranker is Some, rerank top-50 to top-K.
-    // The reranker scores (ICP description, "contact at company: tech_stack") pairs
-    // and picks the highest-relevance contacts for outreach.
+    // Stage 2: when reranker is available, rerank top-50 by cross-encoder relevance.
+    // Scores (ICP query, "contact at company: tech_stack") pairs for precision.
+    #[cfg(feature = "kernel-reranker")]
+    let reranker: Option<crate::similarity::reranker::Reranker> = {
+        match crate::similarity::reranker::Reranker::load_default() {
+            Ok(r) => { eprintln!("  Reranker loaded (ms-marco-MiniLM-L6-v2)"); Some(r) }
+            Err(e) => { eprintln!("  Reranker unavailable: {e}"); None }
+        }
+    };
+
     let limit = ctx.batch.outreach.min(verified.len());
-    let targets = &verified[..limit];
+
+    // Rerank top-50 → top-K when cross-encoder is available
+    #[cfg(feature = "kernel-reranker")]
+    let reranked_indices: Option<Vec<usize>> = reranker.as_ref().and_then(|rr| {
+        let recall_n = 50.min(verified.len());
+        if recall_n == 0 { return None; }
+
+        let icp_query = format!(
+            "B2B {} company hiring AI/ML engineers, remote-friendly, strong tech stack",
+            ctx.icp_vertical
+        );
+
+        let docs: Vec<String> = verified[..recall_n].iter().map(|c| {
+            let tech = company_map.get(c.domain.as_str())
+                .map(|co| co.tech_stack.join(", "))
+                .unwrap_or_default();
+            format!("{} at {} ({}): {}", c.pattern_name, c.company_name, c.domain, tech)
+        }).collect();
+        let doc_refs: Vec<&str> = docs.iter().map(|d| d.as_str()).collect();
+
+        match rr.rerank_top_k(&icp_query, &doc_refs, limit) {
+            Ok(results) => {
+                eprintln!("  Reranked {} → {} targets", recall_n, results.len());
+                Some(results.iter().map(|r| r.index).collect())
+            }
+            Err(e) => {
+                eprintln!("  Rerank failed: {e}, falling back to score-sort");
+                None
+            }
+        }
+    });
+
+    // Build final target list: reranked order if available, else score-sorted
+    #[cfg(feature = "kernel-reranker")]
+    let targets: Vec<&super::contacts::FoundContact> = if let Some(ref indices) = reranked_indices {
+        indices.iter().map(|&i| verified[i]).collect()
+    } else {
+        verified[..limit].to_vec()
+    };
+    #[cfg(not(feature = "kernel-reranker"))]
+    let targets: Vec<&super::contacts::FoundContact> = verified[..limit].to_vec();
 
     let mut report = OutreachReport {
         status: OutreachStatus::DraftPending,
@@ -97,14 +147,7 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         errors: Vec::new(),
     };
 
-    // Build company lookup from enrichment
-    let company_map: std::collections::HashMap<&str, &super::enrich::EnrichedCompany> =
-        enrichment
-            .as_ref()
-            .map(|e| e.companies.iter().map(|c| (c.domain.as_str(), c)).collect())
-            .unwrap_or_default();
-
-    for contact in targets {
+    for contact in &targets {
         let company = company_map.get(contact.domain.as_str());
         let tech_stack = company
             .map(|c| c.tech_stack.join(", "))
@@ -193,7 +236,7 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
     Ok(StageReport {
         stage: "outreach".into(),
         status,
-        processed: limit,
+        processed: targets.len(),
         created,
         errors,
         duration_ms: 0,
