@@ -81,30 +81,32 @@ class ConstrainedMultiLabelCRF(nn.Module):
         """
         Find the top-k highest scoring label configurations.
         With 10 labels, 2^10 = 1024 configurations — exact enumeration is feasible.
+        Uses a pre-computed binary config buffer to avoid per-iteration tensor allocation.
         """
         n = unary_logits.shape[-1]
 
         if n <= 12:
-            # Build all 2^n configs as a tensor
-            configs = torch.zeros(2**n, n, device=unary_logits.device)
-            for mask_int in range(2**n):
-                for bit in range(n):
-                    if mask_int & (1 << bit):
-                        configs[mask_int, bit] = 1.0
+            n_configs = 2 ** n
+            # pre-compute all binary configurations as a single (n_configs, n) tensor
+            arange = torch.arange(n_configs, device=unary_logits.device)
+            bits = torch.arange(n, device=unary_logits.device)
+            all_configs = ((arange.unsqueeze(1) >> bits.unsqueeze(0)) & 1).float()  # (2^n, n)
 
-            # Vectorized scoring
-            unary_scores = (unary_logits.unsqueeze(1) * configs.unsqueeze(0)).sum(dim=-1)
-            pw = self.pairwise + self.hard_constraints
-            active = configs.unsqueeze(-1) * configs.unsqueeze(-2)
-            pw_scores = (pw.unsqueeze(0) * active).sum(dim=(-1, -2)) / 2
-            total = unary_scores + pw_scores.unsqueeze(0)
+            # vectorized scoring: unary component
+            unary_scores = (unary_logits * all_configs).sum(dim=-1)  # (2^n,)
 
-            # FIX: clamp top_k to number of configs
-            k = min(top_k, total.shape[-1])
-            top_indices = total[0].topk(k).indices
+            # pairwise component
+            effective_pairwise = self.pairwise + self.hard_constraints
+            active_masks = all_configs.unsqueeze(-1) * all_configs.unsqueeze(-2)  # (2^n, n, n)
+            pairwise_scores = (effective_pairwise.unsqueeze(0) * active_masks).sum(dim=(-1, -2)) / 2
+
+            total_scores = unary_scores + pairwise_scores  # (2^n,)
+
+            k = min(top_k, n_configs)
+            top_indices = total_scores.topk(k).indices
             return [
-                (total[0, idx].item(), configs[idx].unsqueeze(0))
-                for idx in top_indices
+                (total_scores[i].item(), all_configs[i].unsqueeze(0))
+                for i in top_indices
             ]
 
         else:

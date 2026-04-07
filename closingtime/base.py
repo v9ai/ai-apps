@@ -48,6 +48,10 @@ class BaseModule(nn.Module):
         else:
             return CardRenderer.render_terminal(self.name, result)
 
+    def predict(self, text: str, **kwargs: Any) -> dict[str, Any]:
+        """Public convenience API — alias for forward()."""
+        return self.forward(text, **kwargs)
+
     def encode(self, text: str, max_length: int = 512) -> dict:
         """Encode text using the shared backbone."""
         return SharedEncoder.encode(text, max_length=max_length)

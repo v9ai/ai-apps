@@ -186,7 +186,25 @@ class EntityExtractor(BaseModule):
                     "end_char": match.end(),
                     "source": "regex",
                 })
-        return entities
+        return self._deduplicate_entities(entities)
+
+    @staticmethod
+    def _deduplicate_entities(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Remove overlapping regex matches, keeping the longest span."""
+        if not entities:
+            return entities
+        # sort by start ascending, then by span length descending
+        entities.sort(key=lambda e: (e["start_char"], -(e["end_char"] - e["start_char"])))
+        deduped = [entities[0]]
+        for ent in entities[1:]:
+            prev = deduped[-1]
+            if ent["start_char"] < prev["end_char"]:
+                # overlapping — keep the longer span
+                if (ent["end_char"] - ent["start_char"]) > (prev["end_char"] - prev["start_char"]):
+                    deduped[-1] = ent
+            else:
+                deduped.append(ent)
+        return deduped
 
     def process(self, encoded, text, **kwargs):
         encoder_output = encoded["encoder_output"]
