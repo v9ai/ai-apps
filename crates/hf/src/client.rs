@@ -213,6 +213,145 @@ impl HfClient {
             .collect()
             .await
     }
+
+    // ── Listing / browsing ──────────────────────────────────────
+
+    /// List repos from the HF Hub API with pagination.
+    pub async fn list_repos(&self, opts: &ListOptions) -> Result<Vec<RepoInfo>, Error> {
+        let prefix = opts.repo_type.api_prefix();
+        let limit = opts.limit.min(100);
+        let mut all = Vec::new();
+        let mut page = 0;
+
+        loop {
+            if opts.max_pages > 0 && page >= opts.max_pages {
+                break;
+            }
+            let offset = page * limit;
+            let url = format!(
+                "{}/{}?sort={}&direction={}&limit={}&offset={}",
+                HF_API_BASE, prefix, opts.sort, opts.direction, limit, offset
+            );
+            debug!(page, offset, %url, "listing repos");
+
+            let resp = self.http.get(&url).send().await.map_err(|e| Error::Http {
+                repo: format!("list:{prefix}"),
+                source: e,
+            })?;
+
+            let status = resp.status();
+            if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+                let retry = resp
+                    .headers()
+                    .get("retry-after")
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(60);
+                return Err(Error::RateLimited { retry_after_secs: retry });
+            }
+            if !status.is_success() {
+                let body = resp.text().await.unwrap_or_default();
+                return Err(Error::Api {
+                    repo: format!("list:{prefix}"),
+                    status: status.as_u16(),
+                    body,
+                });
+            }
+
+            let bytes = resp.bytes().await.map_err(|e| Error::Http {
+                repo: format!("list:{prefix}"),
+                source: e,
+            })?;
+            let batch: Vec<RepoInfo> = serde_json::from_slice(&bytes).map_err(|e| Error::Json {
+                repo: format!("list:{prefix}:page{page}"),
+                source: e,
+            })?;
+
+            let done = batch.len() < limit;
+            all.extend(batch);
+
+            if done {
+                break;
+            }
+            page += 1;
+        }
+
+        Ok(all)
+    }
+
+    /// Fetch popular models sorted by downloads.
+    pub async fn list_popular_models(&self, count: usize) -> Result<Vec<RepoInfo>, Error> {
+        self.list_repos(&ListOptions {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: (count + 99) / 100,
+        })
+        .await
+    }
+
+    /// Fetch popular datasets sorted by downloads.
+    pub async fn list_popular_datasets(&self, count: usize) -> Result<Vec<RepoInfo>, Error> {
+        self.list_repos(&ListOptions {
+            repo_type: RepoType::Dataset,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: (count + 99) / 100,
+        })
+        .await
+    }
+
+    /// Fetch popular spaces sorted by likes.
+    pub async fn list_popular_spaces(&self, count: usize) -> Result<Vec<RepoInfo>, Error> {
+        self.list_repos(&ListOptions {
+            repo_type: RepoType::Space,
+            sort: "likes".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: (count + 99) / 100,
+        })
+        .await
+    }
+}
+
+#[cfg(feature = "sqlite")]
+impl HfClient {
+    /// Fetch popular models, datasets, and spaces and save to SQLite.
+    /// Returns the total number of repos synced.
+    pub async fn sync_popular(
+        &self,
+        db: &crate::db::HfDb,
+        models: usize,
+        datasets: usize,
+        spaces: usize,
+    ) -> Result<usize, Error> {
+        let mut total = 0;
+
+        if models > 0 {
+            let repos = self.list_popular_models(models).await?;
+            let count = db.upsert_repos(&repos, RepoType::Model)?;
+            tracing::info!(count, "synced popular models");
+            total += count;
+        }
+
+        if datasets > 0 {
+            let repos = self.list_popular_datasets(datasets).await?;
+            let count = db.upsert_repos(&repos, RepoType::Dataset)?;
+            tracing::info!(count, "synced popular datasets");
+            total += count;
+        }
+
+        if spaces > 0 {
+            let repos = self.list_popular_spaces(spaces).await?;
+            let count = db.upsert_repos(&repos, RepoType::Space)?;
+            tracing::info!(count, "synced popular spaces");
+            total += count;
+        }
+
+        Ok(total)
+    }
 }
 
 // ── Internal helpers ───────────────────────────────────────────

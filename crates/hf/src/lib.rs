@@ -22,6 +22,9 @@ mod client;
 mod error;
 mod types;
 
+#[cfg(feature = "sqlite")]
+pub mod db;
+
 pub use client::HfClient;
 pub use error::Error;
 pub use types::*;
