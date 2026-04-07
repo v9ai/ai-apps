@@ -76,7 +76,7 @@ class TemporalDisplacementModel(BaseModule):
 
         # predict displacement distribution per event
         disp_input = torch.cat([cls, temporal_summary.unsqueeze(0)], dim=-1)
-        mu = self.displacement_mu(disp_input)
+        mu = self.displacement_mu(disp_input).clamp(-10, 10)  # prevent exp overflow
         sigma = self.displacement_sigma(disp_input) + 0.1
 
         events = []
@@ -85,12 +85,15 @@ class TemporalDisplacementModel(BaseModule):
             if prob < 0.5:
                 continue
 
+            mu_i = mu[0, i].item()
+            sigma_i = sigma[0, i].item()
+
             # E[displacement] = exp(mu + sigma^2/2) for log-normal
-            expected_displacement = math.exp(mu[0, i].item() + sigma[0, i].item() ** 2 / 2)
+            expected_displacement = math.exp(min(mu_i + sigma_i ** 2 / 2, 20))  # cap at ~485M days
 
             # 90% confidence interval
-            lower = math.exp(mu[0, i].item() - 1.645 * sigma[0, i].item())
-            upper = math.exp(mu[0, i].item() + 1.645 * sigma[0, i].item())
+            lower = math.exp(min(mu_i - 1.645 * sigma_i, 20))
+            upper = math.exp(min(mu_i + 1.645 * sigma_i, 20))
 
             if expected_displacement < 3:
                 freshness = "current"
@@ -106,7 +109,7 @@ class TemporalDisplacementModel(BaseModule):
                 "fresh": expected_displacement < 30,
                 "displacement_days": round(expected_displacement, 1),
                 "displacement_ci": [round(lower, 1), round(upper, 1)],
-                "displacement_uncertainty": round(sigma[0, i].item(), 3),
+                "displacement_uncertainty": round(sigma_i, 3),
                 "temporal_features": {
                     "today_signal": round(temporal_summary[0].item(), 3),
                     "recent_signal": round(temporal_summary[1].item(), 3),

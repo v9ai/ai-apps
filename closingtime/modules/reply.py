@@ -85,19 +85,27 @@ class ConstrainedMultiLabelCRF(nn.Module):
         n = unary_logits.shape[-1]
 
         if n <= 12:
-            all_configs = []
-
+            # Build all 2^n configs as a tensor
+            configs = torch.zeros(2**n, n, device=unary_logits.device)
             for mask_int in range(2**n):
-                config = torch.zeros(1, n).to(unary_logits.device)
                 for bit in range(n):
                     if mask_int & (1 << bit):
-                        config[0, bit] = 1.0
+                        configs[mask_int, bit] = 1.0
 
-                score = self.score_configuration(unary_logits, config)
-                all_configs.append((score.item(), config))
+            # Vectorized scoring
+            unary_scores = (unary_logits.unsqueeze(1) * configs.unsqueeze(0)).sum(dim=-1)
+            pw = self.pairwise + self.hard_constraints
+            active = configs.unsqueeze(-1) * configs.unsqueeze(-2)
+            pw_scores = (pw.unsqueeze(0) * active).sum(dim=(-1, -2)) / 2
+            total = unary_scores + pw_scores.unsqueeze(0)
 
-            all_configs.sort(key=lambda x: -x[0])
-            return all_configs[:top_k]
+            # FIX: clamp top_k to number of configs
+            k = min(top_k, total.shape[-1])
+            top_indices = total[0].topk(k).indices
+            return [
+                (total[0, idx].item(), configs[idx].unsqueeze(0))
+                for idx in top_indices
+            ]
 
         else:
             return self._greedy_decode(unary_logits)
