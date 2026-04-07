@@ -11,6 +11,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Any
 
+from ..base import BaseModule
+
 
 OBJECTION_CATEGORIES = ["genuine_objection", "stall", "misunderstanding"]
 
@@ -169,7 +171,9 @@ COACHING_CARDS: dict[str, dict[str, Any]] = {
 }
 
 
-class ObjectionPreClassifier(nn.Module):
+class ObjectionPreClassifier(BaseModule):
+    name = "objection"
+    description = "3-way objection pre-classifier with coaching cards"
     """3-way pre-classifier: genuine objection, stall, or misunderstanding.
 
     This distinction is critical because each category requires a completely
@@ -199,7 +203,8 @@ class ObjectionPreClassifier(nn.Module):
             nn.Linear(64, 1), nn.Sigmoid(),
         )
 
-    def forward(self, encoder_output):
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
         cls = encoder_output.last_hidden_state[:, 0]
 
         # 3-way category

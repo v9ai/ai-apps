@@ -113,7 +113,7 @@ class Engine:
         for name, module in self._modules.items():
             t0 = time.perf_counter()
             try:
-                results[name] = module(encoded["encoder_output"])
+                results[name] = module.process(encoded, text)
             except Exception as e:
                 errors.append({"module": name, "error": str(e)})
             timings[name] = round(time.perf_counter() - t0, 4)

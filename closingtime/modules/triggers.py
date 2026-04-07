@@ -10,6 +10,8 @@ import torch
 import torch.nn as nn
 import math
 
+from ..base import BaseModule
+
 EVENTS = [
     "new_funding", "job_change", "expansion", "layoff_restructure",
     "acquisition_merger", "new_product_launch", "leadership_change",
@@ -17,7 +19,9 @@ EVENTS = [
 ]
 
 
-class TemporalDisplacementModel(nn.Module):
+class TemporalDisplacementModel(BaseModule):
+    name = "triggers"
+    description = "Temporal displacement model for event freshness estimation"
     """
     Instead of classifying freshness into bins (current/recent/historical),
     predict a continuous temporal displacement: how many days before the
@@ -54,7 +58,8 @@ class TemporalDisplacementModel(nn.Module):
             nn.Softplus(),
         )
 
-    def forward(self, encoder_output):
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
         tokens = encoder_output.last_hidden_state  # (B, seq, hidden)
         cls = tokens[:, 0]
 
