@@ -151,7 +151,43 @@ impl<'a> OrgScanner<'a> {
             pipeline_tags,
             training_signals,
             arxiv_links,
+            model_configs: HashMap::new(),
         })
+    }
+
+    /// Like [`scan_org`] but also fetches `config.json` for each model.
+    ///
+    /// This correctly detects custom architectures, MoE patterns, NER labels,
+    /// and large context windows that are invisible to the basic scan (which
+    /// only sees README YAML frontmatter, not the actual model config).
+    pub async fn scan_org_deep(&self, org_name: &str) -> Result<OrgProfile, Error> {
+        let mut profile = self.scan_org(org_name).await?;
+
+        let requests: Vec<FetchRequest> = profile
+            .models
+            .iter()
+            .filter_map(|m| m.repo_id.as_ref())
+            .map(|id| FetchRequest::model(id).with_path("config.json"))
+            .collect();
+
+        if requests.is_empty() {
+            return Ok(profile);
+        }
+
+        let results = self.client.fetch_raw_files(&requests).await;
+
+        for result in results {
+            if let FetchResult::Ok { repo_id, data } = result {
+                if let Ok(config) = serde_json::from_str::<serde_json::Value>(&data) {
+                    profile
+                        .training_signals
+                        .extend(Self::parse_config_signals(&repo_id, &config));
+                    profile.model_configs.insert(repo_id, config);
+                }
+            }
+        }
+
+        Ok(profile)
     }
 
     /// Parse training signals from a model card (README.md content).
@@ -253,22 +289,88 @@ impl<'a> OrgScanner<'a> {
         signals
     }
 
-    /// Parse config.json (from card_data) for architecture signals.
+    /// Parse config.json for architecture signals.
+    ///
+    /// Detects: custom model_type, MoE routing, NER label schemes,
+    /// large context windows, and custom attention patterns.
     pub fn parse_config_signals(
         repo_id: &str,
         config: &serde_json::Value,
     ) -> Vec<TrainingSignal> {
         let mut signals = Vec::new();
 
+        // Custom model_type
         if let Some(model_type) = config.get("model_type").and_then(|v| v.as_str()) {
             let is_standard = STANDARD_MODEL_TYPES
                 .iter()
                 .any(|&std| model_type.eq_ignore_ascii_case(std));
             if !is_standard {
+                let mut evidence = format!("Custom model_type: {model_type}");
+                // Enrich with attention pattern details
+                if let Some(k) = config.get("linear_conv_kernel_dim").and_then(|v| v.as_u64()) {
+                    evidence.push_str(&format!(", hybrid linear+full attention (kernel_dim={k})"));
+                }
+                if let Some(mode) = config.get("attention_mode").and_then(|v| v.as_str()) {
+                    if mode != "eager" {
+                        evidence.push_str(&format!(", attention_mode={mode}"));
+                    }
+                }
                 signals.push(TrainingSignal {
                     repo_id: repo_id.to_owned(),
                     signal_type: TrainingSignalType::CustomArchitecture,
-                    evidence: format!("Custom model_type: {model_type}"),
+                    evidence,
+                });
+            }
+        }
+
+        // MoE architecture
+        let expert_keys = ["num_experts", "num_local_experts"];
+        for key in expert_keys {
+            if let Some(n) = config.get(key).and_then(|v| v.as_u64()) {
+                if n > 1 {
+                    let active = config
+                        .get("num_activated_experts")
+                        .or(config.get("num_experts_per_tok"))
+                        .and_then(|v| v.as_u64());
+                    let evidence = match active {
+                        Some(a) => format!("MoE: {n} experts, {a} active per token"),
+                        None => format!("MoE: {n} experts"),
+                    };
+                    signals.push(TrainingSignal {
+                        repo_id: repo_id.to_owned(),
+                        signal_type: TrainingSignalType::MoEArchitecture,
+                        evidence,
+                    });
+                    break;
+                }
+            }
+        }
+
+        // NER label scheme (BIO tagging)
+        if let Some(id2label) = config.get("id2label").and_then(|v| v.as_object()) {
+            let labels: Vec<&str> = id2label.values().filter_map(|v| v.as_str()).collect();
+            let has_bio = labels.iter().any(|l| l.starts_with("B-") || l.starts_with("I-"));
+            if has_bio {
+                let mut label_strs: Vec<String> = labels.iter().map(|l| l.to_string()).collect();
+                label_strs.sort();
+                signals.push(TrainingSignal {
+                    repo_id: repo_id.to_owned(),
+                    signal_type: TrainingSignalType::NerLabels,
+                    evidence: format!("BIO NER: {}", label_strs.join(", ")),
+                });
+            }
+        }
+
+        // Large context window (>= 128K)
+        if let Some(ctx) = config
+            .get("max_position_embeddings")
+            .and_then(|v| v.as_u64())
+        {
+            if ctx >= 128_000 {
+                signals.push(TrainingSignal {
+                    repo_id: repo_id.to_owned(),
+                    signal_type: TrainingSignalType::LargeContext,
+                    evidence: format!("{ctx} tokens"),
                 });
             }
         }
