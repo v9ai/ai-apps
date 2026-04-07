@@ -32,9 +32,10 @@ class Chain:
         timings: dict[str, float] = {}
 
         for module in self.modules:
+            name = getattr(module, 'name', type(module).__name__)
             t0 = time.perf_counter()
             doc = doc | module
-            timings[module.name] = round(time.perf_counter() - t0, 4)
+            timings[name] = round(time.perf_counter() - t0, 4)
 
         return {
             "results": doc.results,
@@ -44,5 +45,5 @@ class Chain:
         }
 
     def __repr__(self) -> str:
-        names = " | ".join(m.name for m in self.modules)
+        names = " | ".join(getattr(m, 'name', type(m).__name__) for m in self.modules)
         return f"Chain({names})"

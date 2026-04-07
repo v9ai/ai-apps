@@ -6,7 +6,9 @@ module processing. Raises ClosingTimeValidationError with clear messages.
 
 from __future__ import annotations
 
-MAX_TEXT_LENGTH = 100_000
+import warnings
+
+MAX_TEXT_LENGTH = 10_000
 MIN_TEXT_LENGTH = 1
 
 
@@ -28,6 +30,12 @@ def validate_text(text: object, *, field: str = "text", max_length: int = MAX_TE
     if len(text) > max_length:
         raise ClosingTimeValidationError(
             f"{field} exceeds maximum length ({len(text)} > {max_length})"
+        )
+    if len(text) > 5_000:
+        warnings.warn(
+            f"{field} is {len(text)} chars; backbone truncates to 512 tokens — "
+            f"tail content will be ignored",
+            stacklevel=2,
         )
     return text
 
