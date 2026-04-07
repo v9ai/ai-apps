@@ -384,6 +384,7 @@ export const applications = sqliteTable(
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     userId: text("user_id").notNull(),
+    slug: text("slug").notNull(),
     company: text("company").notNull(),
     position: text("position").notNull(),
     url: text("url"),

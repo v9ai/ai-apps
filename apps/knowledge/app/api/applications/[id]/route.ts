@@ -3,7 +3,14 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/src/db";
 import { applications } from "@/src/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function whereApp(id: string, userId: string) {
+  const col = UUID_RE.test(id) ? applications.id : applications.slug;
+  return and(eq(col, id), eq(applications.userId, userId));
+}
 
 async function getSession() {
   return auth.api.getSession({ headers: await headers() });
@@ -16,7 +23,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const [row] = await db
     .select()
     .from(applications)
-    .where(and(eq(applications.id, id), eq(applications.userId, session.user.id)));
+    .where(whereApp(id, session.user.id));
 
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(row);
@@ -26,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const [session, { id }] = await Promise.all([getSession(), params]);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
-  const { company, position, url, status, notes, appliedAt, jobDescription, aiInterviewQuestions, aiTechStack, techDismissedTags } = body;
+  const { company, position, url, status, slug, notes, appliedAt, jobDescription, aiInterviewQuestions, aiTechStack, techDismissedTags } = body;
 
   const [row] = await db
     .update(applications)
@@ -35,6 +42,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       ...(position !== undefined && { position }),
       ...(url !== undefined && { url }),
       ...(status !== undefined && { status }),
+      ...(slug !== undefined && { slug }),
       ...(notes !== undefined && { notes }),
       ...(jobDescription !== undefined && { jobDescription }),
       ...(aiInterviewQuestions !== undefined && { aiInterviewQuestions }),
@@ -43,7 +51,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       ...(appliedAt !== undefined && { appliedAt: appliedAt ? new Date(appliedAt) : null }),
       updatedAt: new Date(),
     })
-    .where(and(eq(applications.id, id), eq(applications.userId, session.user.id)))
+    .where(whereApp(id, session.user.id))
     .returning();
 
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -55,7 +63,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const [row] = await db
     .delete(applications)
-    .where(and(eq(applications.id, id), eq(applications.userId, session.user.id)))
+    .where(whereApp(id, session.user.id))
     .returning();
 
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
