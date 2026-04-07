@@ -13,6 +13,7 @@ import { Box, Badge, Card, Callout, Flex, Heading, Separator, Skeleton, Text } f
 import Link from "next/link";
 import { Suspense } from "react";
 import { Brain, Pill, BarChart3, AlertTriangle, ExternalLink, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { MarkdownProse } from "@/components/markdown-prose";
 import { deleteProtocol, deleteSupplement, updateProtocolStatus } from "../actions";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 import { AddSupplementForm } from "../add-supplement-form";
@@ -261,21 +262,7 @@ async function ProtocolDetail({ slug }: { slug: string }) {
                 <Card variant="surface">
                   <Flex direction="column" gap="2">
                     <Text size="2" weight="medium" color="indigo">Synthesis</Text>
-                    <div
-                      className={css({
-                        fontSize: "13px",
-                        lineHeight: "1.6",
-                        color: "var(--gray-12)",
-                        "& h1, & h2, & h3": { fontSize: "14px", fontWeight: 600, marginTop: "12px", marginBottom: "4px" },
-                        "& p": { marginBottom: "8px" },
-                        "& ul, & ol": { paddingLeft: "20px", marginBottom: "8px" },
-                        "& li": { marginBottom: "4px" },
-                        "& strong": { fontWeight: 600 },
-                        whiteSpace: "pre-wrap",
-                      })}
-                    >
-                      {research.synthesis}
-                    </div>
+                    <MarkdownProse content={research.synthesis} />
                   </Flex>
                 </Card>
               )}
@@ -307,15 +294,11 @@ async function ProtocolDetail({ slug }: { slug: string }) {
                         <div
                           className={css({
                             padding: "12px",
-                            fontSize: "12px",
-                            lineHeight: "1.6",
-                            color: "var(--gray-11)",
-                            whiteSpace: "pre-wrap",
                             maxHeight: "400px",
                             overflow: "auto",
                           })}
                         >
-                          {sf.findings}
+                          <MarkdownProse content={sf.findings} />
                         </div>
                       </details>
                     ),
