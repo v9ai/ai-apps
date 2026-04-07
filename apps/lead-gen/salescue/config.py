@@ -166,7 +166,7 @@ SUBJECT_CONFIG = ClosingTimeConfig(
 EMAILGEN_CONFIG = ClosingTimeConfig(
     module_name="emailgen",
     architectures=["EmailGenerator"],
-    backbone="mistralai/Mistral-7B-v0.1",
+    backbone="Qwen/Qwen2.5-3B-Instruct",
 )
 
 ALL_CONFIGS = {

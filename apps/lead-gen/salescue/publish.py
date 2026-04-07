@@ -20,24 +20,35 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import tempfile
 
 # Modules that work with the standard predict(text) flow
+# icp accepts JSON: {"icp": "...", "prospect": "..."}
+# subject accepts JSON array: ["Subject A", "Subject B"]
 PUBLISHABLE_MODULES = [
     "spam", "score", "intent", "reply", "triggers",
     "objection", "sentiment", "entities", "call",
+    "icp", "subject",
 ]
 
 # Modules that require special input (not standard text prediction)
 SKIPPED_MODULES = {
-    "icp": "requires paired ICP/prospect embeddings",
-    "subject": "requires paired subject lines",
-    "emailgen": "uses Mistral backbone (separate from DeBERTa)",
+    "emailgen": "uses Qwen backbone (separate from DeBERTa)",
 }
 
 DEFAULT_ORG = "v9ai"
+
+
+def _test_input(module_name: str) -> str:
+    """Return an appropriate test input for verification of the given module."""
+    if module_name == "icp":
+        return json.dumps({"icp": "Mid-market B2B SaaS", "prospect": "300-person fintech"})
+    if module_name == "subject":
+        return json.dumps(["Quick question about Q3", "URGENT: Limited time offer!!!"])
+    return "test input for verification"
 
 
 def publish_module(
@@ -81,7 +92,8 @@ def publish_module(
 
         # Verify round-trip
         loaded = ClosingTimeModel.from_pretrained(out_dir)
-        result = loaded.predict("test input for verification")
+        test_input = _test_input(module_name)
+        result = loaded.predict(test_input)
         print(f"  VERIFY: round-trip OK — {list(result.keys())}")
         return None
 
@@ -92,7 +104,7 @@ def publish_module(
     # Verify from Hub
     try:
         loaded = ClosingTimeModel.from_pretrained(repo_id)
-        result = loaded.predict("test verification")
+        result = loaded.predict(_test_input(module_name))
         print(f"  VERIFY: Hub round-trip OK")
     except Exception as e:
         print(f"  WARN: Hub verification failed: {e}")

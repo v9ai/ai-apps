@@ -113,6 +113,6 @@ class TestBackboneAlignment:
     def test_all_configs_use_correct_backbone(self):
         for name, cfg in ALL_CONFIGS.items():
             if name == "emailgen":
-                assert "mistral" in cfg.backbone.lower()
+                assert "qwen" in cfg.backbone.lower()
             else:
                 assert cfg.backbone == BACKBONE_MODEL, f"{name} has wrong backbone"

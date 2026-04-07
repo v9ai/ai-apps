@@ -15,7 +15,7 @@ from typing import Any
 @dataclass
 class EmailGenConfig:
     """Configuration for email generation."""
-    model_name: str = "mistralai/Mistral-7B-v0.1"
+    model_name: str = "Qwen/Qwen2.5-3B-Instruct"
     lora_adapter: str | None = None  # path to LoRA weights
     max_new_tokens: int = 512
     temperature: float = 0.7
@@ -86,18 +86,18 @@ def build_prompt(context: ProspectContext, email_type: str = "initial_outreach")
 
 
 class EmailGenerator:
-    """Mistral LoRA email generator.
+    """Qwen LoRA email generator.
 
     This is a wrapper class (not nn.Module) because it manages its own
     model lifecycle separately from the shared DeBERTa backbone.
 
     Usage:
         gen = EmailGenerator(config)
-        gen.load()  # loads Mistral + LoRA adapter
+        gen.load()  # loads Qwen + LoRA adapter
         email = gen.generate(context)
     """
     name = "emailgen"
-    description = "Mistral LoRA email generator"
+    description = "Qwen LoRA email generator"
 
     def __init__(self, config: EmailGenConfig | None = None):
         self.config = config or EmailGenConfig()
@@ -106,7 +106,7 @@ class EmailGenerator:
         self._loaded = False
 
     def load(self) -> None:
-        """Load Mistral model with optional LoRA adapter."""
+        """Load Qwen model with optional LoRA adapter."""
         if self._loaded:
             return
 
