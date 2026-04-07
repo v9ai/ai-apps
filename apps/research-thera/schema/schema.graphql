@@ -163,6 +163,7 @@ type Mutation {
     goalId: Int
     issueId: Int
     feedbackId: Int
+    journalEntryId: Int
     familyMemberId: Int
     userContext: String
     language: String
@@ -373,6 +374,7 @@ type Research {
   goalId: Int
   feedbackId: Int
   issueId: Int
+  journalEntryId: Int
   therapeuticGoalType: String!
   title: String!
   authors: [String!]!
@@ -396,6 +398,7 @@ type TherapeuticQuestion {
   id: Int!
   goalId: Int
   issueId: Int
+  journalEntryId: Int
   question: String!
   researchId: Int
   researchTitle: String

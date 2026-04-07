@@ -1,5 +1,5 @@
-mutation GenerateTherapeuticQuestions($goalId: Int, $issueId: Int) {
-  generateTherapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+mutation GenerateTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {
+  generateTherapeuticQuestions(goalId: $goalId, issueId: $issueId, journalEntryId: $journalEntryId) {
     success
     message
     jobId
@@ -7,6 +7,7 @@ mutation GenerateTherapeuticQuestions($goalId: Int, $issueId: Int) {
       id
       goalId
       issueId
+      journalEntryId
       question
       researchId
       researchTitle

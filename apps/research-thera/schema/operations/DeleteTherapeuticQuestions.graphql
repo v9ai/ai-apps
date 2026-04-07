@@ -1,5 +1,5 @@
-mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int) {
-  deleteTherapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {
+  deleteTherapeuticQuestions(goalId: $goalId, issueId: $issueId, journalEntryId: $journalEntryId) {
     success
     message
     deletedCount
