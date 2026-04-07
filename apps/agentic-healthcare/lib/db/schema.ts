@@ -406,6 +406,7 @@ export const brainHealthProtocols = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
     targetAreas: jsonb("target_areas").notNull().default([]),
     status: text("status").notNull().default("active"),
     notes: text("notes"),

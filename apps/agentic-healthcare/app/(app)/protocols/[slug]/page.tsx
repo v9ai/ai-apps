@@ -82,15 +82,17 @@ function ScoreBar({ label, score, color, max = 10 }: { label: string; score: num
   );
 }
 
-async function ProtocolDetail({ id }: { id: string }) {
+async function ProtocolDetail({ slug }: { slug: string }) {
   const { userId } = await withAuth();
 
   const [protocol] = await db
     .select()
     .from(brainHealthProtocols)
-    .where(eq(brainHealthProtocols.id, id));
+    .where(eq(brainHealthProtocols.slug, slug));
 
   if (!protocol || protocol.userId !== userId) notFound();
+
+  const id = protocol.id;
 
   const supplements = await db
     .select()
@@ -350,9 +352,9 @@ async function ProtocolDetail({ id }: { id: string }) {
 export default async function ProtocolDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
 
   return (
     <Box py="6">
@@ -373,7 +375,7 @@ export default async function ProtocolDetailPage({
             <Card><Skeleton height="200px" /></Card>
           </Flex>
         }>
-          <ProtocolDetail id={id} />
+          <ProtocolDetail slug={slug} />
         </Suspense>
       </Flex>
     </Box>

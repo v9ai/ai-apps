@@ -112,7 +112,7 @@ async function ProtocolsList() {
 
         return (
           <Card key={p.id} asChild className={`${cardClass} ${statusBorder(p.status)}`}>
-            <Link href={`/protocols/${p.id}`}>
+            <Link href={`/protocols/${p.slug}`}>
               <Flex justify="between" align="start">
                 <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
                   <Flex align="center" gap="2">

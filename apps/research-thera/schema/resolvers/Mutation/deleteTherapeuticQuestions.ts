@@ -8,12 +8,13 @@ export const deleteTherapeuticQuestions: NonNullable<MutationResolvers['deleteTh
 
   const goalId = args.goalId ?? undefined;
   const issueId = args.issueId ?? undefined;
+  const journalEntryId = args.journalEntryId ?? undefined;
 
-  if (!goalId && !issueId) {
-    throw new Error("Either goalId or issueId is required");
+  if (!goalId && !issueId && !journalEntryId) {
+    throw new Error("Either goalId, issueId, or journalEntryId is required");
   }
 
-  const deletedCount = await deleteQuestions(goalId, issueId);
+  const deletedCount = await deleteQuestions(goalId, issueId, journalEntryId);
 
   return {
     success: true,
