@@ -204,6 +204,15 @@ importers:
       '@ai-apps/resume':
         specifier: workspace:*
         version: link:../../packages/resume
+      '@apollo/server':
+        specifier: ^5.4.0
+        version: 5.4.0(graphql@16.13.2)
+      '@as-integrations/next':
+        specifier: ^4.1.0
+        version: 4.1.0(@apollo/server@5.4.0(graphql@16.13.2))(next@16.2.1(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
+      '@graphql-tools/schema':
+        specifier: ^10.0.31
+        version: 10.0.31(graphql@16.13.2)
       '@neondatabase/serverless':
         specifier: ^0.10.4
         version: 0.10.4
@@ -225,6 +234,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@cloudflare/workers-types@4.20260307.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.11.6)(better-sqlite3@12.6.2)(gel@2.2.0)(kysely@0.28.11)(pg@8.20.0)
+      graphql:
+        specifier: ^16.13.2
+        version: 16.13.2
       next:
         specifier: latest
         version: 16.2.1(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -376,7 +388,7 @@ importers:
         version: 5.4.0(graphql@16.13.1)
       '@as-integrations/next':
         specifier: ^4.1.0
-        version: 4.1.0(@apollo/server@5.4.0(graphql@16.13.1))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
+        version: 4.1.0(@apollo/server@5.4.0(graphql@16.13.1))(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
       '@graphql-tools/load-files':
         specifier: ^7.0.1
         version: 7.0.1(graphql@16.13.1)
@@ -758,7 +770,7 @@ importers:
         version: 5.4.0(graphql@16.13.1)
       '@as-integrations/next':
         specifier: ^4.1.0
-        version: 4.1.0(@apollo/server@5.4.0(graphql@16.13.1))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
+        version: 4.1.0(@apollo/server@5.4.0(graphql@16.13.1))(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))
       '@aws-sdk/client-s3':
         specifier: ^3.988.0
         version: 3.1004.0
@@ -776,7 +788,7 @@ importers:
         version: 3.8.1
       '@neondatabase/auth':
         specifier: latest
-        version: 0.2.0-beta.1(c629d159be18def389de78a764dc0c0c)
+        version: 0.2.0-beta.1(837e25897cfa3368683c00f11f461d8c)
       '@neondatabase/serverless':
         specifier: ^0.10.4
         version: 0.10.4
@@ -1256,10 +1268,10 @@ importers:
     dependencies:
       jest:
         specifier: ^30.2.0
-        version: 30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
+        version: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3))
       ts-jest:
         specifier: ^29.4.6
-        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.3)(jest-util@30.2.0)(jest@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)))(typescript@5.9.3)
+        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.3)(jest-util@30.2.0)(jest@30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3)))(typescript@5.9.3)
     devDependencies:
       jest-environment-jsdom:
         specifier: ^30.2.0
@@ -12452,6 +12464,10 @@ packages:
     resolution: {integrity: sha512-gGgrVCoDKlIZ8fIqXBBb0pPKqDgki0Z/FSKNiQzSGj2uEYHr1tq5wmBegGwJx6QB5S5cM0khSBpi/JFHMCvsmQ==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
+  graphql@16.13.2:
+    resolution: {integrity: sha512-5bJ+nf/UCpAjHM8i06fl7eLyVC9iuNAjm9qzkiu2ZGhM0VscSvS6WDPfAwkdkBuoXGM9FJSbKl6wylMwP9Ktig==}
+    engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
+
   gray-matter@4.0.3:
     resolution: {integrity: sha512-5v6yZd4JK3eMI3FqqCouswVqwugaA9r4dNZB1wwcmrD02QkV5H0y7XBQW8QwQqEaZY1pM9aqORSORhJRdNK44Q==}
     engines: {node: '>=6.0'}
@@ -18859,6 +18875,10 @@ snapshots:
     dependencies:
       graphql: 16.13.1
 
+  '@apollo/cache-control-types@1.0.3(graphql@16.13.2)':
+    dependencies:
+      graphql: 16.13.2
+
   '@apollo/client@3.14.0(@types/react@19.2.14)(graphql-ws@6.0.7(graphql@16.13.1)(ws@8.20.0))(graphql@16.13.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.13.1)
@@ -18905,6 +18925,14 @@ snapshots:
       '@apollo/utils.logger': 3.0.0
       graphql: 16.13.1
 
+  '@apollo/server-gateway-interface@2.0.0(graphql@16.13.2)':
+    dependencies:
+      '@apollo/usage-reporting-protobuf': 4.1.1
+      '@apollo/utils.fetcher': 3.1.0
+      '@apollo/utils.keyvaluecache': 4.0.0
+      '@apollo/utils.logger': 3.0.0
+      graphql: 16.13.2
+
   '@apollo/server@5.4.0(graphql@16.13.1)':
     dependencies:
       '@apollo/cache-control-types': 1.0.3(graphql@16.13.1)
@@ -18932,6 +18960,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@apollo/server@5.4.0(graphql@16.13.2)':
+    dependencies:
+      '@apollo/cache-control-types': 1.0.3(graphql@16.13.2)
+      '@apollo/server-gateway-interface': 2.0.0(graphql@16.13.2)
+      '@apollo/usage-reporting-protobuf': 4.1.1
+      '@apollo/utils.createhash': 3.0.1
+      '@apollo/utils.fetcher': 3.1.0
+      '@apollo/utils.isnodelike': 3.0.0
+      '@apollo/utils.keyvaluecache': 4.0.0
+      '@apollo/utils.logger': 3.0.0
+      '@apollo/utils.usagereporting': 2.1.0(graphql@16.13.2)
+      '@apollo/utils.withrequired': 3.0.0
+      '@graphql-tools/schema': 10.0.31(graphql@16.13.2)
+      async-retry: 1.3.3
+      body-parser: 2.2.2
+      content-type: 1.0.5
+      cors: 2.8.6
+      finalhandler: 2.1.1
+      graphql: 16.13.2
+      loglevel: 1.9.2
+      lru-cache: 11.2.6
+      negotiator: 1.0.0
+      uuid: 11.1.0
+      whatwg-mimetype: 4.0.0
+    transitivePeerDependencies:
+      - supports-color
+
   '@apollo/usage-reporting-protobuf@4.1.1':
     dependencies:
       '@apollo/protobufjs': 1.2.7
@@ -18944,6 +18999,10 @@ snapshots:
   '@apollo/utils.dropunuseddefinitions@2.0.1(graphql@16.13.1)':
     dependencies:
       graphql: 16.13.1
+
+  '@apollo/utils.dropunuseddefinitions@2.0.1(graphql@16.13.2)':
+    dependencies:
+      graphql: 16.13.2
 
   '@apollo/utils.fetcher@3.1.0': {}
 
@@ -18960,18 +19019,35 @@ snapshots:
     dependencies:
       graphql: 16.13.1
 
+  '@apollo/utils.printwithreducedwhitespace@2.0.1(graphql@16.13.2)':
+    dependencies:
+      graphql: 16.13.2
+
   '@apollo/utils.removealiases@2.0.1(graphql@16.13.1)':
     dependencies:
       graphql: 16.13.1
+
+  '@apollo/utils.removealiases@2.0.1(graphql@16.13.2)':
+    dependencies:
+      graphql: 16.13.2
 
   '@apollo/utils.sortast@2.0.1(graphql@16.13.1)':
     dependencies:
       graphql: 16.13.1
       lodash.sortby: 4.7.0
 
+  '@apollo/utils.sortast@2.0.1(graphql@16.13.2)':
+    dependencies:
+      graphql: 16.13.2
+      lodash.sortby: 4.7.0
+
   '@apollo/utils.stripsensitiveliterals@2.0.1(graphql@16.13.1)':
     dependencies:
       graphql: 16.13.1
+
+  '@apollo/utils.stripsensitiveliterals@2.0.1(graphql@16.13.2)':
+    dependencies:
+      graphql: 16.13.2
 
   '@apollo/utils.usagereporting@2.1.0(graphql@16.13.1)':
     dependencies:
@@ -18983,6 +19059,16 @@ snapshots:
       '@apollo/utils.stripsensitiveliterals': 2.0.1(graphql@16.13.1)
       graphql: 16.13.1
 
+  '@apollo/utils.usagereporting@2.1.0(graphql@16.13.2)':
+    dependencies:
+      '@apollo/usage-reporting-protobuf': 4.1.1
+      '@apollo/utils.dropunuseddefinitions': 2.0.1(graphql@16.13.2)
+      '@apollo/utils.printwithreducedwhitespace': 2.0.1(graphql@16.13.2)
+      '@apollo/utils.removealiases': 2.0.1(graphql@16.13.2)
+      '@apollo/utils.sortast': 2.0.1(graphql@16.13.2)
+      '@apollo/utils.stripsensitiveliterals': 2.0.1(graphql@16.13.2)
+      graphql: 16.13.2
+
   '@apollo/utils.withrequired@3.0.0': {}
 
   '@ardatan/relay-compiler@13.0.0(graphql@16.13.1)':
@@ -18992,10 +19078,15 @@ snapshots:
       immutable: 5.1.5
       invariant: 2.2.4
 
-  '@as-integrations/next@4.1.0(@apollo/server@5.4.0(graphql@16.13.1))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))':
+  '@as-integrations/next@4.1.0(@apollo/server@5.4.0(graphql@16.13.1))(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))':
     dependencies:
       '@apollo/server': 5.4.0(graphql@16.13.1)
       next: 16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+
+  '@as-integrations/next@4.1.0(@apollo/server@5.4.0(graphql@16.13.2))(next@16.2.1(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))':
+    dependencies:
+      '@apollo/server': 5.4.0(graphql@16.13.2)
+      next: 16.2.1(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
 
   '@asamuzakjp/css-color@3.2.0':
     dependencies:
@@ -20808,14 +20899,14 @@ snapshots:
       '@better-auth/utils': 0.3.1
       mongodb: 7.0.0(gcp-metadata@8.1.2)(socks@2.8.7)
 
-  '@better-auth/passkey@1.5.5(@better-auth/core@1.4.6(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.1.5(zod@4.3.6))(jose@6.2.1)(kysely@0.28.11)(nanostores@1.1.1))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-auth@1.4.6(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)))(better-call@1.1.5(zod@3.25.76))(nanostores@1.1.1)':
+  '@better-auth/passkey@1.5.5(@better-auth/core@1.4.6(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.1.5(zod@4.3.6))(jose@6.2.1)(kysely@0.28.11)(nanostores@1.1.1))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-auth@1.4.6(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)))(better-call@1.1.5(zod@3.25.76))(nanostores@1.1.1)':
     dependencies:
       '@better-auth/core': 1.4.6(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.1.5(zod@4.3.6))(jose@6.2.1)(kysely@0.28.11)(nanostores@1.1.1)
       '@better-auth/utils': 0.3.0
       '@better-fetch/fetch': 1.1.18
       '@simplewebauthn/browser': 13.3.0
       '@simplewebauthn/server': 13.3.0
-      better-auth: 1.4.6(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3))
+      better-auth: 1.4.6(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3))
       better-call: 1.1.5(zod@3.25.76)
       nanostores: 1.1.1
       zod: 4.3.6
@@ -21279,20 +21370,20 @@ snapshots:
       enabled: 2.0.0
       kuler: 2.0.0
 
-  '@daveyplate/better-auth-tanstack@1.3.6(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.21(react@19.1.1))(better-auth@1.4.6(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@daveyplate/better-auth-tanstack@1.3.6(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.21(react@19.1.1))(better-auth@1.4.6(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
       '@tanstack/query-core': 5.90.20
       '@tanstack/react-query': 5.90.21(react@19.1.1)
-      better-auth: 1.4.6(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3))
+      better-auth: 1.4.6(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3))
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
 
-  '@daveyplate/better-auth-ui@3.3.9(19c3fec4d19e36457779ec7d9e06121c)':
+  '@daveyplate/better-auth-ui@3.3.9(3ccb43a2558330d09b51749ed215d5ec)':
     dependencies:
-      '@better-auth/passkey': 1.5.5(@better-auth/core@1.4.6(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.1.5(zod@4.3.6))(jose@6.2.1)(kysely@0.28.11)(nanostores@1.1.1))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-auth@1.4.6(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)))(better-call@1.1.5(zod@3.25.76))(nanostores@1.1.1)
+      '@better-auth/passkey': 1.5.5(@better-auth/core@1.4.6(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.1.5(zod@4.3.6))(jose@6.2.1)(kysely@0.28.11)(nanostores@1.1.1))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-auth@1.4.6(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)))(better-call@1.1.5(zod@3.25.76))(nanostores@1.1.1)
       '@better-fetch/fetch': 1.1.21
       '@captchafox/react': 1.11.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      '@daveyplate/better-auth-tanstack': 1.3.6(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.21(react@19.1.1))(better-auth@1.4.6(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      '@daveyplate/better-auth-tanstack': 1.3.6(@tanstack/query-core@5.90.20)(@tanstack/react-query@5.90.21(react@19.1.1))(better-auth@1.4.6(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@hcaptcha/react-hcaptcha': 1.17.4(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@hookform/resolvers': 5.2.2(react-hook-form@7.71.2(react@19.1.1))
       '@instantdb/react': 0.22.158(react@19.1.1)
@@ -21316,7 +21407,7 @@ snapshots:
       '@triplit/client': 1.0.50(better-sqlite3@12.6.2)(typescript@5.9.3)
       '@triplit/react': 1.0.51(better-sqlite3@12.6.2)(react@19.1.1)(typescript@5.9.3)
       '@wojtekmaj/react-recaptcha-v3': 0.1.4(@types/react@19.2.14)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      better-auth: 1.4.6(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3))
+      better-auth: 1.4.6(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3))
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       input-otp: 1.4.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -23094,6 +23185,12 @@ snapshots:
       graphql: 16.13.1
       tslib: 2.8.1
 
+  '@graphql-tools/merge@9.1.7(graphql@16.13.2)':
+    dependencies:
+      '@graphql-tools/utils': 11.0.0(graphql@16.13.2)
+      graphql: 16.13.2
+      tslib: 2.8.1
+
   '@graphql-tools/optimize@2.0.0(graphql@16.13.1)':
     dependencies:
       graphql: 16.13.1
@@ -23111,6 +23208,13 @@ snapshots:
       '@graphql-tools/merge': 9.1.7(graphql@16.13.1)
       '@graphql-tools/utils': 11.0.0(graphql@16.13.1)
       graphql: 16.13.1
+      tslib: 2.8.1
+
+  '@graphql-tools/schema@10.0.31(graphql@16.13.2)':
+    dependencies:
+      '@graphql-tools/merge': 9.1.7(graphql@16.13.2)
+      '@graphql-tools/utils': 11.0.0(graphql@16.13.2)
+      graphql: 16.13.2
       tslib: 2.8.1
 
   '@graphql-tools/url-loader@9.0.6(@types/node@20.19.37)(graphql@16.13.1)':
@@ -23173,6 +23277,14 @@ snapshots:
       graphql: 16.13.1
       tslib: 2.8.1
 
+  '@graphql-tools/utils@11.0.0(graphql@16.13.2)':
+    dependencies:
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.13.2)
+      '@whatwg-node/promise-helpers': 1.3.2
+      cross-inspect: 1.0.1
+      graphql: 16.13.2
+      tslib: 2.8.1
+
   '@graphql-tools/wrap@11.1.8(graphql@16.13.1)':
     dependencies:
       '@graphql-tools/delegate': 12.0.8(graphql@16.13.1)
@@ -23185,6 +23297,10 @@ snapshots:
   '@graphql-typed-document-node/core@3.2.0(graphql@16.13.1)':
     dependencies:
       graphql: 16.13.1
+
+  '@graphql-typed-document-node/core@3.2.0(graphql@16.13.2)':
+    dependencies:
+      graphql: 16.13.2
 
   '@hapi/hoek@9.3.0': {}
 
@@ -23751,42 +23867,6 @@ snapshots:
       graceful-fs: 4.2.11
       jest-changed-files: 30.2.0
       jest-config: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3))
-      jest-haste-map: 30.2.0
-      jest-message-util: 30.2.0
-      jest-regex-util: 30.0.1
-      jest-resolve: 30.2.0
-      jest-resolve-dependencies: 30.2.0
-      jest-runner: 30.2.0
-      jest-runtime: 30.2.0
-      jest-snapshot: 30.2.0
-      jest-util: 30.2.0
-      jest-validate: 30.2.0
-      jest-watcher: 30.2.0
-      micromatch: 4.0.8
-      pretty-format: 30.2.0
-      slash: 3.0.0
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - esbuild-register
-      - supports-color
-      - ts-node
-
-  '@jest/core@30.2.0(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))':
-    dependencies:
-      '@jest/console': 30.2.0
-      '@jest/pattern': 30.0.1
-      '@jest/reporters': 30.2.0
-      '@jest/test-result': 30.2.0
-      '@jest/transform': 30.2.0
-      '@jest/types': 30.2.0
-      '@types/node': 22.19.7
-      ansi-escapes: 4.3.2
-      chalk: 4.1.2
-      ci-info: 4.4.0
-      exit-x: 0.2.2
-      graceful-fs: 4.2.11
-      jest-changed-files: 30.2.0
-      jest-config: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
       jest-haste-map: 30.2.0
       jest-message-util: 30.2.0
       jest-regex-util: 30.0.1
@@ -24439,14 +24519,14 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@neondatabase/auth-ui@0.1.0-alpha.11(23eb51d67eea69e763b9f44aa316b104)':
+  '@neondatabase/auth-ui@0.1.0-alpha.11(3d353aff9be944aa6a600b8cfe70a071)':
     dependencies:
       '@captchafox/react': 1.11.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      '@daveyplate/better-auth-ui': 3.3.9(19c3fec4d19e36457779ec7d9e06121c)
+      '@daveyplate/better-auth-ui': 3.3.9(3ccb43a2558330d09b51749ed215d5ec)
       '@hcaptcha/react-hcaptcha': 1.17.4(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@hookform/resolvers': 5.2.2(react-hook-form@7.71.2(react@19.1.1))
       '@marsidev/react-turnstile': 1.4.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      '@neondatabase/auth': 0.2.0-beta.1(c629d159be18def389de78a764dc0c0c)
+      '@neondatabase/auth': 0.2.0-beta.1(837e25897cfa3368683c00f11f461d8c)
       '@radix-ui/react-avatar': 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@radix-ui/react-checkbox': 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@radix-ui/react-context': 1.1.3(@types/react@19.2.14)(react@19.1.1)
@@ -24489,11 +24569,11 @@ snapshots:
       - '@types/react-dom'
       - better-auth
 
-  '@neondatabase/auth@0.2.0-beta.1(c629d159be18def389de78a764dc0c0c)':
+  '@neondatabase/auth@0.2.0-beta.1(837e25897cfa3368683c00f11f461d8c)':
     dependencies:
-      '@neondatabase/auth-ui': 0.1.0-alpha.11(23eb51d67eea69e763b9f44aa316b104)
+      '@neondatabase/auth-ui': 0.1.0-alpha.11(3d353aff9be944aa6a600b8cfe70a071)
       '@supabase/auth-js': 2.79.0
-      better-auth: 1.4.6(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3))
+      better-auth: 1.4.6(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3))
       jose: 6.1.2
       zod: 4.1.12
     optionalDependencies:
@@ -30528,7 +30608,7 @@ snapshots:
 
   batch@0.6.1: {}
 
-  better-auth@1.4.6(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)):
+  better-auth@1.4.6(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.53.7)(vue@3.5.30(typescript@5.9.3)):
     dependencies:
       '@better-auth/core': 1.4.6(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.1.5(zod@4.3.6))(jose@6.2.1)(kysely@0.28.11)(nanostores@1.1.1)
       '@better-auth/telemetry': 1.4.6(@better-auth/core@1.4.6(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.1.5(zod@4.3.6))(jose@6.2.1)(kysely@0.28.11)(nanostores@1.1.1))
@@ -32412,7 +32492,7 @@ snapshots:
       '@typescript-eslint/parser': 8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       eslint: 9.39.4(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@2.6.1))
       eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.4(jiti@2.6.1))
       eslint-plugin-react: 7.37.5(eslint@9.39.4(jiti@2.6.1))
@@ -32456,21 +32536,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)):
-    dependencies:
-      '@nolyfill/is-core-module': 1.0.39
-      debug: 4.4.3(supports-color@5.5.0)
-      eslint: 9.39.4(jiti@2.6.1)
-      get-tsconfig: 4.13.6
-      is-bun-module: 2.0.0
-      stable-hash: 0.0.5
-      tinyglobby: 0.2.15
-      unrs-resolver: 1.11.1
-    optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
-    transitivePeerDependencies:
-      - supports-color
-
   eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
@@ -32486,6 +32551,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@2.6.1)):
+    dependencies:
+      '@nolyfill/is-core-module': 1.0.39
+      debug: 4.4.3(supports-color@5.5.0)
+      eslint: 9.39.4(jiti@2.6.1)
+      get-tsconfig: 4.13.6
+      is-bun-module: 2.0.0
+      stable-hash: 0.0.5
+      tinyglobby: 0.2.15
+      unrs-resolver: 1.11.1
+    optionalDependencies:
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
+    transitivePeerDependencies:
+      - supports-color
+
   eslint-module-utils@2.12.1(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.39.4(jiti@2.6.1)):
     dependencies:
       debug: 3.2.7
@@ -32496,14 +32576,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       eslint: 9.39.4(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@2.6.1))
     transitivePeerDependencies:
       - supports-color
 
@@ -32557,7 +32637,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.39.4(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -33573,6 +33653,8 @@ snapshots:
 
   graphql@16.13.1: {}
 
+  graphql@16.13.2: {}
+
   gray-matter@4.0.3:
     dependencies:
       js-yaml: 3.14.2
@@ -34516,25 +34598,6 @@ snapshots:
       - supports-color
       - ts-node
 
-  jest-cli@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)):
-    dependencies:
-      '@jest/core': 30.2.0(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
-      '@jest/test-result': 30.2.0
-      '@jest/types': 30.2.0
-      chalk: 4.1.2
-      exit-x: 0.2.2
-      import-local: 3.2.0
-      jest-config: 30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
-      jest-util: 30.2.0
-      jest-validate: 30.2.0
-      yargs: 17.7.2
-    transitivePeerDependencies:
-      - '@types/node'
-      - babel-plugin-macros
-      - esbuild-register
-      - supports-color
-      - ts-node
-
   jest-config@30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3)):
     dependencies:
       '@babel/core': 7.29.0
@@ -34565,74 +34628,6 @@ snapshots:
       '@types/node': 22.19.7
       esbuild-register: 3.6.0(esbuild@0.27.3)
       ts-node: 10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3)
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - supports-color
-
-  jest-config@30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)):
-    dependencies:
-      '@babel/core': 7.29.0
-      '@jest/get-type': 30.1.0
-      '@jest/pattern': 30.0.1
-      '@jest/test-sequencer': 30.2.0
-      '@jest/types': 30.2.0
-      babel-jest: 30.2.0(@babel/core@7.29.0)
-      chalk: 4.1.2
-      ci-info: 4.4.0
-      deepmerge: 4.3.1
-      glob: 10.4.5
-      graceful-fs: 4.2.11
-      jest-circus: 30.2.0
-      jest-docblock: 30.2.0
-      jest-environment-node: 30.2.0
-      jest-regex-util: 30.0.1
-      jest-resolve: 30.2.0
-      jest-runner: 30.2.0
-      jest-util: 30.2.0
-      jest-validate: 30.2.0
-      micromatch: 4.0.8
-      parse-json: 5.2.0
-      pretty-format: 30.2.0
-      slash: 3.0.0
-      strip-json-comments: 3.1.1
-    optionalDependencies:
-      '@types/node': 22.19.7
-      esbuild-register: 3.6.0(esbuild@0.27.3)
-      ts-node: 10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - supports-color
-
-  jest-config@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)):
-    dependencies:
-      '@babel/core': 7.29.0
-      '@jest/get-type': 30.1.0
-      '@jest/pattern': 30.0.1
-      '@jest/test-sequencer': 30.2.0
-      '@jest/types': 30.2.0
-      babel-jest: 30.2.0(@babel/core@7.29.0)
-      chalk: 4.1.2
-      ci-info: 4.4.0
-      deepmerge: 4.3.1
-      glob: 10.4.5
-      graceful-fs: 4.2.11
-      jest-circus: 30.2.0
-      jest-docblock: 30.2.0
-      jest-environment-node: 30.2.0
-      jest-regex-util: 30.0.1
-      jest-resolve: 30.2.0
-      jest-runner: 30.2.0
-      jest-util: 30.2.0
-      jest-validate: 30.2.0
-      micromatch: 4.0.8
-      parse-json: 5.2.0
-      pretty-format: 30.2.0
-      slash: 3.0.0
-      strip-json-comments: 3.1.1
-    optionalDependencies:
-      '@types/node': 24.12.0
-      esbuild-register: 3.6.0(esbuild@0.27.3)
-      ts-node: 10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -34892,19 +34887,6 @@ snapshots:
       '@jest/types': 30.2.0
       import-local: 3.2.0
       jest-cli: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3))
-    transitivePeerDependencies:
-      - '@types/node'
-      - babel-plugin-macros
-      - esbuild-register
-      - supports-color
-      - ts-node
-
-  jest@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)):
-    dependencies:
-      '@jest/core': 30.2.0(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
-      '@jest/types': 30.2.0
-      import-local: 3.2.0
-      jest-cli: 30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -40121,12 +40103,12 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.3)(jest-util@30.2.0)(jest@30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3)))(typescript@5.9.3):
+  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@30.2.0(@babel/core@7.29.0))(esbuild@0.27.3)(jest-util@30.2.0)(jest@30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3)))(typescript@5.9.3):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       handlebars: 4.7.8
-      jest: 30.2.0(@types/node@24.12.0)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@24.12.0)(typescript@5.9.3))
+      jest: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.19))(@types/node@22.19.7)(typescript@5.9.3))
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6

@@ -551,6 +551,32 @@ export const courseReviews = pgTable(
 export type CourseReview = typeof courseReviews.$inferSelect;
 export type NewCourseReview = typeof courseReviews.$inferInsert;
 
+// ── Application Notes ─────────────────────────────────────────────
+
+export const applicationNotes = pgTable(
+  "application_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    applicationId: uuid("application_id")
+      .references(() => applications.id, { onDelete: "cascade" })
+      .notNull(),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("application_notes_app_idx").on(table.applicationId),
+  ],
+);
+
+export type ApplicationNote = typeof applicationNotes.$inferSelect;
+export type NewApplicationNote = typeof applicationNotes.$inferInsert;
+
 // ── Relations ──────────────────────────────────────────────────────
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -612,5 +638,16 @@ export const courseReviewsRelations = relations(courseReviews, ({ one }) => ({
   course: one(externalCourses, {
     fields: [courseReviews.courseId],
     references: [externalCourses.id],
+  }),
+}));
+
+export const applicationsRelations = relations(applications, ({ many }) => ({
+  applicationNotes: many(applicationNotes),
+}));
+
+export const applicationNotesRelations = relations(applicationNotes, ({ one }) => ({
+  application: one(applications, {
+    fields: [applicationNotes.applicationId],
+    references: [applications.id],
   }),
 }));

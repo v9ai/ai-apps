@@ -327,17 +327,31 @@ impl<'a> OrgScanner<'a> {
         signals
     }
 
-    /// Extract arXiv links from text.
+    /// Extract arXiv links from text (handles markdown, inline URLs, arXiv:ID notation).
     pub fn extract_arxiv_links(text: &str) -> Vec<String> {
         let mut links = Vec::new();
 
-        // Match arxiv.org/abs/XXXX.XXXXX and arxiv.org/pdf/XXXX.XXXXX patterns
-        for word in text.split_whitespace() {
-            let word = word.trim_matches(|c: char| {
-                c == '(' || c == ')' || c == '[' || c == ']' || c == '<' || c == '>'
-            });
-            if word.contains("arxiv.org/abs/") || word.contains("arxiv.org/pdf/") {
-                links.push(word.to_owned());
+        // Extract arxiv.org URLs by scanning for the domain, then collecting the
+        // full URL (handles markdown `[text](url)`, bare URLs, etc.)
+        for prefix in ["arxiv.org/abs/", "arxiv.org/pdf/"] {
+            let mut search_from = 0;
+            while let Some(pos) = text[search_from..].find(prefix) {
+                let abs_pos = search_from + pos;
+                // Walk backwards to find "https://" or "http://"
+                let url_start = text[..abs_pos]
+                    .rfind("https://")
+                    .or_else(|| text[..abs_pos].rfind("http://"))
+                    .unwrap_or(abs_pos);
+                // Walk forwards to end of URL (stop at whitespace, ), ], >, ")
+                let url_end = text[abs_pos..]
+                    .find(|c: char| c.is_whitespace() || c == ')' || c == ']' || c == '>' || c == '"')
+                    .map(|i| abs_pos + i)
+                    .unwrap_or(text.len());
+                let url = &text[url_start..url_end];
+                if url.contains("arxiv.org/") {
+                    links.push(url.to_owned());
+                }
+                search_from = url_end;
             }
         }
 

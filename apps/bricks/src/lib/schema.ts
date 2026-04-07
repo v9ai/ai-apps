@@ -79,6 +79,19 @@ export const wantList = pgTable("want_list", {
   unique().on(t.userId, t.itemType, t.itemNum, t.color),
 ]);
 
+export const savedVideos = pgTable("saved_videos", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  videoId: text("video_id").notNull(),
+  title: text("title").notNull(),
+  channelName: text("channel_name").notNull().default(""),
+  thumbnailUrl: text("thumbnail_url"),
+  url: text("url").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique().on(t.userId, t.videoId),
+]);
+
 export const partMocsCache = pgTable("part_mocs_cache", {
   id: serial("id").primaryKey(),
   partNum: text("part_num").notNull().unique(),
