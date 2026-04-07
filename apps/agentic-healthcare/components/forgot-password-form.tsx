@@ -85,7 +85,7 @@ export function ForgotPasswordForm() {
               />
             </Flex>
 
-            <Button type="submit" disabled={isLoading} width="100%">
+            <Button type="submit" disabled={isLoading} style={{ width: "100%" }}>
               {isLoading && <Spinner />}
               {isLoading ? "Sending..." : "Send reset link"}
             </Button>
