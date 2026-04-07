@@ -1,8 +1,9 @@
-query GetTherapeuticQuestions($goalId: Int, $issueId: Int) {
-  therapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+query GetTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {
+  therapeuticQuestions(goalId: $goalId, issueId: $issueId, journalEntryId: $journalEntryId) {
     id
     goalId
     issueId
+    journalEntryId
     question
     researchId
     researchTitle
