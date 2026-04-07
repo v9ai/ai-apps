@@ -46,6 +46,8 @@ pub struct ListOptions {
     pub limit: usize,
     /// Max pages to fetch (0 = all until empty)
     pub max_pages: usize,
+    /// Request full metadata (siblings, cardData, etc.)
+    pub full: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -77,7 +79,6 @@ impl FetchRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct RepoInfo {
     #[serde(rename = "_id")]
     pub id: Option<String>,
@@ -87,6 +88,7 @@ pub struct RepoInfo {
     /// Internal HF model identifier. Present in listing alongside `id`.
     #[serde(rename = "modelId")]
     pub model_id: Option<String>,
+    pub author: Option<String>,
     pub sha: Option<String>,
     #[serde(rename = "lastModified")]
     pub last_modified: Option<String>,
@@ -100,6 +102,16 @@ pub struct RepoInfo {
     #[serde(rename = "createdAt")]
     pub created_at: Option<String>,
     pub private: Option<bool>,
+    pub gated: Option<serde_json::Value>,
+    pub disabled: Option<bool>,
+    pub description: Option<String>,
+    /// Spaces SDK (gradio, streamlit, docker, static)
+    pub sdk: Option<String>,
+    /// Files in the repo (only with `full=true`)
+    pub siblings: Option<Vec<SiblingFile>>,
+    /// Parsed YAML frontmatter from README (only with `full=true`)
+    #[serde(rename = "cardData")]
+    pub card_data: Option<serde_json::Value>,
     #[serde(flatten)]
     pub extra: serde_json::Value,
 }
