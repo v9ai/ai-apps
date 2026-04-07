@@ -10,6 +10,14 @@ import {
 } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 // ── Protocol CRUD ─────────────────────────────────────────────────
 
@@ -23,15 +31,29 @@ export async function addProtocol(formData: FormData) {
   const targetAreas = formData.getAll("targetAreas") as string[];
   const startDate = (formData.get("startDate") as string) || null;
 
-  await db.insert(brainHealthProtocols).values({
+  let slug = toSlug(name);
+
+  // Handle slug collisions by appending a suffix
+  const existing = await db
+    .select({ slug: brainHealthProtocols.slug })
+    .from(brainHealthProtocols)
+    .where(eq(brainHealthProtocols.slug, slug));
+
+  if (existing.length > 0) {
+    slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+  }
+
+  const [protocol] = await db.insert(brainHealthProtocols).values({
     userId,
     name,
+    slug,
     targetAreas,
     notes,
     startDate,
-  });
+  }).returning({ slug: brainHealthProtocols.slug });
 
   revalidatePath("/protocols");
+  redirect(`/protocols/${protocol.slug}`);
 }
 
 export async function deleteProtocol(id: string) {
@@ -51,12 +73,19 @@ export async function deleteProtocol(id: string) {
 export async function updateProtocolStatus(id: string, status: string) {
   const { userId } = await withAuth();
 
+  const [protocol] = await db
+    .select({ slug: brainHealthProtocols.slug })
+    .from(brainHealthProtocols)
+    .where(and(eq(brainHealthProtocols.id, id), eq(brainHealthProtocols.userId, userId)));
+
+  if (!protocol) return;
+
   await db
     .update(brainHealthProtocols)
     .set({ status, updatedAt: new Date() })
-    .where(and(eq(brainHealthProtocols.id, id), eq(brainHealthProtocols.userId, userId)));
+    .where(eq(brainHealthProtocols.id, id));
 
-  revalidatePath(`/protocols/${id}`);
+  revalidatePath(`/protocols/${protocol.slug}`);
   revalidatePath("/protocols");
 }
 

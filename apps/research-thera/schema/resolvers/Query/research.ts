@@ -10,5 +10,6 @@ export const research: NonNullable<QueryResolvers['research']> = async (
     args.goalId ?? undefined,
     args.issueId ?? undefined,
     args.feedbackId ?? undefined,
+    args.journalEntryId ?? undefined,
   );
 };

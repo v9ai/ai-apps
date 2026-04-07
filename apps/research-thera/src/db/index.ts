@@ -537,6 +537,7 @@ export async function upsertTherapyResearch(
       UPDATE therapy_research
       SET feedback_id = ${research.feedbackId ?? null},
           issue_id = ${research.issueId ?? null},
+          journal_entry_id = ${research.journalEntryId ?? null},
           therapeutic_goal_type = ${research.therapeuticGoalType},
           authors = ${authorsJson},
           year = ${research.year || null},
@@ -556,11 +557,11 @@ export async function upsertTherapyResearch(
   } else {
     const rows = await neonSql`
       INSERT INTO therapy_research (
-        goal_id, feedback_id, issue_id, therapeutic_goal_type, title, authors, year, journal, doi, url,
+        goal_id, feedback_id, issue_id, journal_entry_id, therapeutic_goal_type, title, authors, year, journal, doi, url,
         abstract, key_findings, therapeutic_techniques, evidence_level,
         relevance_score, extracted_by, extraction_confidence
       ) VALUES (
-        ${goalId ?? null}, ${research.feedbackId ?? null}, ${research.issueId ?? null},
+        ${goalId ?? null}, ${research.feedbackId ?? null}, ${research.issueId ?? null}, ${research.journalEntryId ?? null},
         ${research.therapeuticGoalType}, ${research.title}, ${authorsJson},
         ${research.year || null}, ${research.journal || null}, ${research.doi || null},
         ${research.url || null}, ${research.abstract || null}, ${keyFindingsJson},
@@ -574,11 +575,14 @@ export async function upsertTherapyResearch(
   }
 }
 
-export async function listTherapyResearch(goalId?: number, issueId?: number, feedbackId?: number) {
+export async function listTherapyResearch(goalId?: number, issueId?: number, feedbackId?: number, journalEntryId?: number) {
   let sqlStr = `SELECT * FROM therapy_research WHERE `;
   const args: any[] = [];
 
-  if (feedbackId != null) {
+  if (journalEntryId != null) {
+    sqlStr += `journal_entry_id = ?`;
+    args.push(journalEntryId);
+  } else if (feedbackId != null) {
     sqlStr += `feedback_id = ?`;
     args.push(feedbackId);
   } else if (issueId != null && goalId != null) {
@@ -604,6 +608,7 @@ export async function listTherapyResearch(goalId?: number, issueId?: number, fee
     goalId: (row.goal_id as number) || null,
     feedbackId: (row.feedback_id as number) || null,
     issueId: (row.issue_id as number) || null,
+    journalEntryId: (row.journal_entry_id as number) || null,
     therapeuticGoalType: row.therapeutic_goal_type as string,
     title: row.title as string,
     authors: JSON.parse(row.authors as string) as string[],
@@ -1197,17 +1202,20 @@ export async function getGenerationJob(id: string) {
 // Therapeutic Questions
 // ============================================
 
-export async function listTherapeuticQuestions(goalId?: number, issueId?: number) {
-  const rows = issueId
-    ? await neonSql`SELECT * FROM therapeutic_questions WHERE issue_id = ${issueId} ORDER BY created_at DESC`
-    : goalId
-      ? await neonSql`SELECT * FROM therapeutic_questions WHERE goal_id = ${goalId} ORDER BY created_at DESC`
-      : [];
+export async function listTherapeuticQuestions(goalId?: number, issueId?: number, journalEntryId?: number) {
+  const rows = journalEntryId
+    ? await neonSql`SELECT * FROM therapeutic_questions WHERE journal_entry_id = ${journalEntryId} ORDER BY created_at DESC`
+    : issueId
+      ? await neonSql`SELECT * FROM therapeutic_questions WHERE issue_id = ${issueId} ORDER BY created_at DESC`
+      : goalId
+        ? await neonSql`SELECT * FROM therapeutic_questions WHERE goal_id = ${goalId} ORDER BY created_at DESC`
+        : [];
 
   return rows.map((row) => ({
     id: row.id as number,
     goalId: (row.goal_id as number) || null,
     issueId: (row.issue_id as number) || null,
+    journalEntryId: (row.journal_entry_id as number) || null,
     question: row.question as string,
     researchId: (row.research_id as number) || null,
     researchTitle: (row.research_title as string) || null,
@@ -1222,6 +1230,7 @@ export async function insertTherapeuticQuestions(
   questions: Array<{
     goalId?: number;
     issueId?: number;
+    journalEntryId?: number;
     question: string;
     researchId?: number;
     researchTitle?: string;
@@ -1232,8 +1241,8 @@ export async function insertTherapeuticQuestions(
   const inserted = [];
   for (const q of questions) {
     const rows = await neonSql`
-      INSERT INTO therapeutic_questions (goal_id, issue_id, question, research_id, research_title, rationale, generated_at, created_at, updated_at)
-      VALUES (${q.goalId ?? null}, ${q.issueId ?? null}, ${q.question}, ${q.researchId ?? null}, ${q.researchTitle ?? null}, ${q.rationale}, ${now}, ${now}, ${now})
+      INSERT INTO therapeutic_questions (goal_id, issue_id, journal_entry_id, question, research_id, research_title, rationale, generated_at, created_at, updated_at)
+      VALUES (${q.goalId ?? null}, ${q.issueId ?? null}, ${q.journalEntryId ?? null}, ${q.question}, ${q.researchId ?? null}, ${q.researchTitle ?? null}, ${q.rationale}, ${now}, ${now}, ${now})
       RETURNING *
     `;
     if (rows[0]) inserted.push(rows[0]);
@@ -1242,6 +1251,7 @@ export async function insertTherapeuticQuestions(
     id: row.id as number,
     goalId: (row.goal_id as number) || null,
     issueId: (row.issue_id as number) || null,
+    journalEntryId: (row.journal_entry_id as number) || null,
     question: row.question as string,
     researchId: (row.research_id as number) || null,
     researchTitle: (row.research_title as string) || null,
@@ -1252,7 +1262,11 @@ export async function insertTherapeuticQuestions(
   }));
 }
 
-export async function deleteTherapeuticQuestions(goalId?: number, issueId?: number) {
+export async function deleteTherapeuticQuestions(goalId?: number, issueId?: number, journalEntryId?: number) {
+  if (journalEntryId) {
+    const rows = await neonSql`DELETE FROM therapeutic_questions WHERE journal_entry_id = ${journalEntryId} RETURNING id`;
+    return rows.length;
+  }
   if (issueId) {
     const rows = await neonSql`DELETE FROM therapeutic_questions WHERE issue_id = ${issueId} RETURNING id`;
     return rows.length;

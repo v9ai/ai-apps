@@ -62,12 +62,15 @@ async function runResearchEvals(
   goalId: number | undefined,
   prompt: string,
   hasRelatedMember: boolean,
+  journalEntryId?: number | undefined,
 ): Promise<Record<string, number | string>> {
-  const rows = issueId
-    ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE issue_id = ${issueId} ORDER BY relevance_score DESC LIMIT 10`
-    : feedbackId
-      ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE feedback_id = ${feedbackId} ORDER BY relevance_score DESC LIMIT 10`
-      : await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE goal_id = ${goalId} ORDER BY relevance_score DESC LIMIT 10`;
+  const rows = journalEntryId
+    ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE journal_entry_id = ${journalEntryId} ORDER BY relevance_score DESC LIMIT 10`
+    : issueId
+      ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE issue_id = ${issueId} ORDER BY relevance_score DESC LIMIT 10`
+      : feedbackId
+        ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE feedback_id = ${feedbackId} ORDER BY relevance_score DESC LIMIT 10`
+        : await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE goal_id = ${goalId} ORDER BY relevance_score DESC LIMIT 10`;
 
   if (!rows.length) return { error: "no papers found" };
 
@@ -161,6 +164,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
   const goalId = args.goalId ?? undefined;
   const issueId = args.issueId ?? undefined;
   const feedbackId = args.feedbackId ?? undefined;
+  const journalEntryId = args.journalEntryId ?? undefined;
 
   // Verify the goal exists and belongs to the user (only when goalId is provided)
   if (goalId) {
@@ -235,6 +239,42 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       ``,
       `IMPORTANT: When calling save_research_papers, use issue_id: ${issueId} — do NOT use feedback_id.`,
     ].filter(Boolean).join("\n");
+  } else if (journalEntryId) {
+    const entry = await db.getJournalEntry(journalEntryId, userEmail);
+    if (!entry) throw new Error("Journal entry not found");
+
+    let memberContext = "";
+    let journalSiblingSection = "";
+    if (entry.familyMemberId) {
+      const allIssues = await db.getIssuesForFamilyMember(entry.familyMemberId, undefined, userEmail);
+      journalSiblingSection = buildSiblingIssuesSection(allIssues);
+      try {
+        const fm = await db.getFamilyMember(entry.familyMemberId);
+        if (fm) {
+          memberContext = `Person: ${fm.firstName}${fm.name ? ` ${fm.name}` : ""}${fm.ageYears ? `, age ${fm.ageYears}` : ""}${fm.relationship ? ` (${fm.relationship})` : ""}`;
+        }
+      } catch { /* non-fatal */ }
+    }
+    prompt = [
+      `Find evidence-based therapeutic research for the following journal entry:`,
+      ``,
+      `journal_entry_id: ${journalEntryId}`,
+      entry.title ? `Title: ${entry.title}` : "",
+      `Content: ${entry.content}`,
+      entry.mood ? `Mood: ${entry.mood}${entry.moodScore ? ` (${entry.moodScore}/10)` : ""}` : "",
+      entry.tags?.length ? `Tags: ${entry.tags.join(", ")}` : "",
+      memberContext,
+      ``,
+      `IMPORTANT: If the journal content is NOT in English, first translate it to English before searching.`,
+      `Use the TRANSLATED English terms as your search queries.`,
+      journalSiblingSection,
+      ``,
+      `Search for academic papers that address the themes and concerns described in this journal entry.`,
+      `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
+      `Only save papers with real abstracts (not "None", "...", or empty). Skip papers lacking abstracts.`,
+      ``,
+      `IMPORTANT: When calling save_research_papers, use journal_entry_id: ${journalEntryId} — do NOT use goal_id, issue_id, or feedback_id.`,
+    ].filter(Boolean).join("\n");
   } else if (goalId) {
     const goal = await db.getGoal(goalId, userEmail);
     let goalSiblingSection = "";
@@ -269,7 +309,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       `IMPORTANT: When calling save_research_papers, use goal_id: ${goalId} — do NOT use issue_id or feedback_id.`,
     ].filter(Boolean).join("\n");
   } else {
-    throw new Error("Either goalId, issueId, or feedbackId is required");
+    throw new Error("Either goalId, issueId, feedbackId, or journalEntryId is required");
   }
 
   const hasRelatedMember = relatedFamilyMember !== null;
@@ -291,7 +331,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
 
     let evals: Record<string, number | string> | undefined;
     try {
-      evals = await runResearchEvals(issueId, feedbackId, goalId, prompt, hasRelatedMember);
+      evals = await runResearchEvals(issueId, feedbackId, goalId, prompt, hasRelatedMember, journalEntryId);
     } catch (evalErr) {
       console.error("[generateResearch] Eval error:", evalErr);
     }
