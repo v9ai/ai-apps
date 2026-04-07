@@ -168,6 +168,98 @@ class ClosingTimeModel:
             )
         return f"https://huggingface.co/{repo_id}"
 
+    # Per-module research contributions and descriptions
+    _MODULE_RESEARCH = {
+        "score": (
+            "Causal Signal Attribution via Learned Interventions",
+            "Standard counterfactual masking replaces tokens with [MASK], which shifts the input "
+            "distribution. LeadScorer learns a *null intervention embedding* per signal type that "
+            "represents \"this signal was never present\" rather than \"this signal was removed.\" "
+            "This is closer to Pearl's do-calculus: do(signal=absent) not observe(signal=masked). "
+            "The null embeddings are trained adversarially to produce encoder outputs "
+            "indistinguishable from inputs where the signal genuinely doesn't exist.\n\n"
+            "The model detects 15 buying signals (pricing interest, urgency, budget, referral, etc.) "
+            "via cross-attention, estimates causal effects using learned counterfactuals, and produces "
+            "an uncertainty-weighted score combining classification and regression (Kendall et al., 2018).",
+        ),
+        "spam": (
+            "Perplexity Ratio AI Detection",
+            "Existing AI detectors compare perplexity against a threshold, but perplexity varies "
+            "by domain, register, and topic. SpamHead computes the *perplexity ratio* between two "
+            "language models: one fine-tuned on human sales emails, one on AI-generated sales emails. "
+            "The ratio is domain-invariant because both models see the same domain distribution.\n\n"
+            "Combines neural spam scoring with provider-specific calibration (Gmail, Outlook, Yahoo) "
+            "and structural feature analysis (sentence variance, contraction use, punctuation patterns).",
+        ),
+        "intent": (
+            "Neural Hawkes Process for Buying Journey",
+            "Models the prospect's buying journey as a *marked temporal point process* where each "
+            "signal (event) has a type (mark) and arrival time. The intensity function of future "
+            "events depends on the history of past events via a neural Hawkes process. This directly "
+            "models the self-exciting property of buying behavior: interest begets more interest.",
+        ),
+        "reply": (
+            "Constrained CRF for Structured Reply Classification",
+            "Multi-label classification treats labels independently, but reply labels have structural "
+            "constraints: `unsubscribe` and `genuinely_interested` are mutually exclusive; `referral` "
+            "implies `not_now`. ReplyHead enforces these via a *constrained conditional random field* "
+            "where the transition matrix encodes label co-occurrence rules.",
+        ),
+        "triggers": (
+            "Temporal Displacement Model",
+            "Freshness isn't a classification — it's a continuous temporal reasoning task. "
+            "TemporalDisplacementModel learns P(event_date | article_date, text_features), "
+            "predicting when the event actually happened given how it's described. This models "
+            "the relationship between event mention and event occurrence as a *temporal "
+            "displacement distribution*.",
+        ),
+        "objection": (
+            "3-Way Pre-classifier with Coaching Cards",
+            "Most objection handling treats all objections the same. ObjectionPreClassifier "
+            "first classifies into genuine_objection / stall / misunderstanding using a 3-way "
+            "pre-classifier, then routes each to specialized handling. Each of the 12 objection "
+            "types gets a coaching card with a recommended response framework.",
+        ),
+        "sentiment": (
+            "MI-Minimized Sentiment-Intent Disentanglement",
+            "Sentiment and intent are entangled in text representations. DisentangledSentimentIntentHead "
+            "enforces disentanglement explicitly: the sentiment representation contains zero information "
+            "about intent, and vice versa. Uses *mutual information minimization* via the CLUB bound "
+            "(Cheng et al., 2020) to provably decorrelate the two representations, then learns "
+            "inversion patterns from their interaction.",
+        ),
+        "entities": (
+            "Regex + Pointer NER with Re-typing",
+            "Hybrid entity extraction combining high-precision regex patterns for structured entities "
+            "(emails, phones, URLs, money, dates) with a pointer-network NER for unstructured entities "
+            "(person, company, product, role). A re-typing layer reclassifies detected entities in "
+            "context — e.g., \"John\" becomes decision_maker vs. reference based on surrounding text.",
+        ),
+        "call": (
+            "Conditional Neural Process for Conversation Scoring",
+            "Models sales call transcripts as a *conditional neural process* (CNP). Given a "
+            "conversation context (partial transcript), the model predicts the distribution of "
+            "possible outcomes. This handles variable-length multi-speaker transcripts and "
+            "produces calibrated uncertainty estimates for deal health and next-action prediction.",
+        ),
+    }
+
+    # Map modules to HF pipeline tags
+    _PIPELINE_TAGS = {
+        "score": "text-classification",
+        "intent": "text-classification",
+        "reply": "text-classification",
+        "triggers": "text-classification",
+        "objection": "text-classification",
+        "sentiment": "text-classification",
+        "spam": "text-classification",
+        "entities": "token-classification",
+        "call": "text-classification",
+        "subject": "text-classification",
+        "icp": "feature-extraction",
+        "emailgen": "text-generation",
+    }
+
     def _generate_model_card(self, trained: bool = False) -> str:
         """Auto-generate a HF model card."""
         c = self.config
@@ -176,33 +268,32 @@ class ClosingTimeModel:
             labels_md = "\n".join(f"- `{l}`" for l in c.labels)
             labels_md = f"\n## Labels\n\n{labels_md}\n"
 
-        # Map modules to HF pipeline tags
-        pipeline_tags = {
-            "score": "text-classification",
-            "intent": "text-classification",
-            "reply": "text-classification",
-            "triggers": "text-classification",
-            "objection": "text-classification",
-            "sentiment": "text-classification",
-            "spam": "text-classification",
-            "entities": "token-classification",
-            "call": "text-classification",
-            "subject": "text-classification",
-            "icp": "feature-extraction",
-            "emailgen": "text-generation",
-        }
-        pipeline_tag = pipeline_tags.get(c.module_name, "text-classification")
+        pipeline_tag = self._PIPELINE_TAGS.get(c.module_name, "text-classification")
         status = "trained" if trained else "untrained"
         model_id = c.model_id or f"{HF_ORG}/closingtime-{c.module_name}-v{c.version}"
+
+        # Research contribution
+        title, description = self._MODULE_RESEARCH.get(
+            c.module_name,
+            (c.architectures[0] if c.architectures else c.module_name, ""),
+        )
+        research_md = ""
+        if description:
+            research_md = f"\n## Research Contribution\n\n**{title}**\n\n{description}\n"
 
         return f"""---
 library_name: closingtime
 pipeline_tag: {pipeline_tag}
+language:
+- en
+base_model: microsoft/deberta-v3-base
 tags:
 - sales
 - closingtime
 - {c.module_name}
 - sales-intelligence
+- b2b
+- pytorch
 license: mit
 ---
 
@@ -212,7 +303,7 @@ license: mit
 [ClosingTime](https://github.com/v9ai/ai-apps) sales intelligence library.
 
 > **Status**: `{status}` — {"production weights" if trained else "architecture only, random initialization. Use as a starting point for fine-tuning."}
-
+{research_md}
 ## Usage
 
 ```python
@@ -232,9 +323,22 @@ result = ai.{c.module_name}("your sales text here")
 {labels_md}
 ## Architecture
 
-- **Backbone**: `{c.backbone}` (shared encoder, {c.hidden_size}-dim)
+- **Backbone**: [`{c.backbone}`](https://huggingface.co/{c.backbone}) (shared encoder, {c.hidden_size}-dim)
 - **Head**: `{c.architectures[0] if c.architectures else 'unknown'}`
 - **Parameters**: head only (backbone loaded separately)
+
+## Intended Use
+
+- **Primary**: B2B sales intelligence — lead scoring, email analysis, conversation insights
+- **Users**: Sales teams, RevOps, GTM engineers building sales automation
+- **Input**: English sales text (emails, call transcripts, prospect communications)
+
+## Limitations
+
+- **Untrained weights**: This release contains the architecture only. Weights are randomly initialized and must be fine-tuned on domain-specific data before production use.
+- **English only**: Designed for English sales text. Performance on other languages is untested.
+- **Domain-specific**: Optimized for B2B sales communications. May not generalize to other text domains.
+- **Shared backbone**: Requires `microsoft/deberta-v3-base` loaded via the ClosingTime library.
 
 ## About ClosingTime
 
@@ -245,6 +349,8 @@ DeBERTa-v3-base encoder backbone. Modules can be composed via Unix-style piping:
 from closingtime import Document
 result = Document("interested in pricing") | ai.score | ai.intent | ai.sentiment
 ```
+
+All modules: `score` `intent` `reply` `triggers` `icp` `objection` `sentiment` `spam` `entities` `call` `subject` `emailgen`
 
 See the [ClosingTime documentation](https://github.com/v9ai/ai-apps) for details.
 """

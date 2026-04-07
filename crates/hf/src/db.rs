@@ -8,15 +8,24 @@ use crate::types::{RepoInfo, RepoType};
 const SCHEMA: &str = "
 CREATE TABLE IF NOT EXISTS hf_repos (
     repo_id       TEXT NOT NULL,
-    repo_type     TEXT NOT NULL,
+    repo_type     TEXT NOT NULL,  -- 'model', 'dataset', 'space'
+    author        TEXT,
     sha           TEXT,
     last_modified TEXT,
-    tags          TEXT,
+    created_at    TEXT,
+    tags          TEXT,           -- JSON array
     downloads     INTEGER,
     likes         INTEGER,
     library       TEXT,
     pipeline_tag  TEXT,
-    extra         TEXT,
+    private       INTEGER,       -- 0/1
+    gated         TEXT,           -- false | true | 'manual' | 'auto'
+    disabled      INTEGER,
+    description   TEXT,
+    sdk           TEXT,           -- spaces only: gradio, streamlit, docker, static
+    siblings      TEXT,           -- JSON array of {rfilename, size?}
+    card_data     TEXT,           -- JSON blob of parsed YAML frontmatter
+    extra         TEXT,           -- JSON blob for everything else
     synced_at     TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (repo_id, repo_type)
 );
@@ -29,19 +38,63 @@ CREATE INDEX IF NOT EXISTS idx_hf_repos_likes
 
 CREATE INDEX IF NOT EXISTS idx_hf_repos_synced
     ON hf_repos(synced_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_hf_repos_author
+    ON hf_repos(author);
+
+CREATE INDEX IF NOT EXISTS idx_hf_repos_library
+    ON hf_repos(repo_type, library);
+
+CREATE INDEX IF NOT EXISTS idx_hf_repos_pipeline
+    ON hf_repos(repo_type, pipeline_tag);
+
+CREATE INDEX IF NOT EXISTS idx_hf_repos_created
+    ON hf_repos(repo_type, created_at DESC);
+";
+
+// Migration: add columns that didn't exist in the original schema
+const MIGRATE: &str = "
+ALTER TABLE hf_repos ADD COLUMN author TEXT;
+ALTER TABLE hf_repos ADD COLUMN created_at TEXT;
+ALTER TABLE hf_repos ADD COLUMN private INTEGER;
+ALTER TABLE hf_repos ADD COLUMN gated TEXT;
+ALTER TABLE hf_repos ADD COLUMN disabled INTEGER;
+ALTER TABLE hf_repos ADD COLUMN description TEXT;
+ALTER TABLE hf_repos ADD COLUMN sdk TEXT;
+ALTER TABLE hf_repos ADD COLUMN siblings TEXT;
+ALTER TABLE hf_repos ADD COLUMN card_data TEXT;
 ";
 
 const UPSERT: &str = "
-INSERT INTO hf_repos (repo_id, repo_type, sha, last_modified, tags, downloads, likes, library, pipeline_tag, extra, synced_at)
-VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, datetime('now'))
+INSERT INTO hf_repos (
+    repo_id, repo_type, author, sha, last_modified, created_at,
+    tags, downloads, likes, library, pipeline_tag,
+    private, gated, disabled, description, sdk,
+    siblings, card_data, extra, synced_at
+)
+VALUES (
+    ?1, ?2, ?3, ?4, ?5, ?6,
+    ?7, ?8, ?9, ?10, ?11,
+    ?12, ?13, ?14, ?15, ?16,
+    ?17, ?18, ?19, datetime('now')
+)
 ON CONFLICT(repo_id, repo_type) DO UPDATE SET
+    author = excluded.author,
     sha = excluded.sha,
     last_modified = excluded.last_modified,
+    created_at = excluded.created_at,
     tags = excluded.tags,
     downloads = excluded.downloads,
     likes = excluded.likes,
     library = excluded.library,
     pipeline_tag = excluded.pipeline_tag,
+    private = excluded.private,
+    gated = excluded.gated,
+    disabled = excluded.disabled,
+    description = excluded.description,
+    sdk = excluded.sdk,
+    siblings = excluded.siblings,
+    card_data = excluded.card_data,
     extra = excluded.extra,
     synced_at = excluded.synced_at
 ";
@@ -55,8 +108,15 @@ impl HfDb {
     /// Open (or create) the database at the given path.
     pub fn open(path: impl AsRef<Path>) -> Result<Self, Error> {
         let conn = Connection::open(path)?;
-        conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;")?;
+        conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA cache_size=-64000;")?;
         conn.execute_batch(SCHEMA)?;
+        // Migrate old databases — ignore errors (columns already exist)
+        for line in MIGRATE.lines() {
+            let line = line.trim();
+            if line.starts_with("ALTER") {
+                let _ = conn.execute_batch(line);
+            }
+        }
         Ok(Self { conn })
     }
 
@@ -80,23 +140,31 @@ impl HfDb {
                 continue;
             }
             let tags_json = info.tags.as_ref().map(|t| serde_json::to_string(t).unwrap_or_default());
-            let extra_str = if info.extra.is_null() {
-                None
-            } else {
-                Some(info.extra.to_string())
-            };
+            let siblings_json = info.siblings.as_ref().map(|s| serde_json::to_string(s).unwrap_or_default());
+            let card_data_json = info.card_data.as_ref().map(|c| c.to_string());
+            let gated_str = info.gated.as_ref().map(|g| g.to_string());
+            let extra_str = if info.extra.is_null() { None } else { Some(info.extra.to_string()) };
 
             stmt.execute(params![
-                repo_id,
-                type_str,
-                info.sha,
-                info.last_modified,
-                tags_json,
-                info.downloads.map(|d| d as i64),
-                info.likes.map(|l| l as i64),
-                info.library,
-                info.pipeline_tag,
-                extra_str,
+                repo_id,                                    // 1
+                type_str,                                   // 2
+                info.author,                                // 3
+                info.sha,                                   // 4
+                info.last_modified,                         // 5
+                info.created_at,                            // 6
+                tags_json,                                  // 7
+                info.downloads.map(|d| d as i64),           // 8
+                info.likes.map(|l| l as i64),               // 9
+                info.library,                               // 10
+                info.pipeline_tag,                          // 11
+                info.private.map(|p| p as i32),             // 12
+                gated_str,                                  // 13
+                info.disabled.map(|d| d as i32),            // 14
+                info.description,                           // 15
+                info.sdk,                                   // 16
+                siblings_json,                              // 17
+                card_data_json,                             // 18
+                extra_str,                                  // 19
             ])?;
             count += 1;
         }
@@ -109,34 +177,14 @@ impl HfDb {
     /// Query top repos by type, ordered by downloads descending.
     pub fn top_repos(&self, repo_type: RepoType, limit: usize) -> Result<Vec<RepoInfo>, Error> {
         let mut stmt = self.conn.prepare(
-            "SELECT repo_id, sha, last_modified, tags, downloads, likes, library, pipeline_tag, extra
+            "SELECT repo_id, author, sha, last_modified, created_at, tags,
+                    downloads, likes, library, pipeline_tag, private, gated,
+                    disabled, description, sdk, siblings, card_data, extra
              FROM hf_repos WHERE repo_type = ?1
              ORDER BY downloads DESC LIMIT ?2",
         )?;
 
-        let rows = stmt.query_map(params![repo_type.as_str(), limit as i64], |row| {
-            let tags_raw: Option<String> = row.get(3)?;
-            let extra_raw: Option<String> = row.get(8)?;
-
-            Ok(RepoInfo {
-                id: None,
-                repo_id: row.get(0)?,
-                model_id: None,
-                sha: row.get(1)?,
-                last_modified: row.get(2)?,
-                tags: tags_raw.and_then(|s| serde_json::from_str(&s).ok()),
-                downloads: row.get::<_, Option<i64>>(4)?.map(|d| d as u64),
-                likes: row.get::<_, Option<i64>>(5)?.map(|l| l as u64),
-                library: row.get(6)?,
-                pipeline_tag: row.get(7)?,
-                created_at: None,
-                private: None,
-                extra: extra_raw
-                    .and_then(|s| serde_json::from_str(&s).ok())
-                    .unwrap_or(serde_json::Value::Null),
-            })
-        })?;
-
+        let rows = stmt.query_map(params![repo_type.as_str(), limit as i64], row_to_repo_info)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Error::from)
     }
 
@@ -150,51 +198,94 @@ impl HfDb {
         Ok(n as usize)
     }
 
+    /// Total count across all types.
+    pub fn total_count(&self) -> Result<usize, Error> {
+        let n: i64 = self.conn.query_row("SELECT COUNT(*) FROM hf_repos", [], |row| row.get(0))?;
+        Ok(n as usize)
+    }
+
+    /// Database file size in bytes (0 for in-memory).
+    pub fn file_size(&self) -> Result<u64, Error> {
+        let page_count: i64 = self.conn.query_row("PRAGMA page_count", [], |r| r.get(0))?;
+        let page_size: i64 = self.conn.query_row("PRAGMA page_size", [], |r| r.get(0))?;
+        Ok((page_count * page_size) as u64)
+    }
+
     /// Direct access to the connection for custom queries.
     pub fn conn(&self) -> &Connection {
         &self.conn
     }
 }
 
+fn row_to_repo_info(row: &rusqlite::Row) -> rusqlite::Result<RepoInfo> {
+    let tags_raw: Option<String> = row.get(5)?;
+    let gated_raw: Option<String> = row.get(11)?;
+    let siblings_raw: Option<String> = row.get(15)?;
+    let card_data_raw: Option<String> = row.get(16)?;
+    let extra_raw: Option<String> = row.get(17)?;
+
+    Ok(RepoInfo {
+        id: None,
+        repo_id: row.get(0)?,
+        model_id: None,
+        author: row.get(1)?,
+        sha: row.get(2)?,
+        last_modified: row.get(3)?,
+        created_at: row.get(4)?,
+        tags: tags_raw.and_then(|s| serde_json::from_str(&s).ok()),
+        downloads: row.get::<_, Option<i64>>(6)?.map(|d| d as u64),
+        likes: row.get::<_, Option<i64>>(7)?.map(|l| l as u64),
+        library: row.get(8)?,
+        pipeline_tag: row.get(9)?,
+        private: row.get::<_, Option<i32>>(10)?.map(|p| p != 0),
+        gated: gated_raw.and_then(|s| serde_json::from_str(&s).ok()),
+        disabled: row.get::<_, Option<i32>>(12)?.map(|d| d != 0),
+        description: row.get(13)?,
+        sdk: row.get(14)?,
+        siblings: siblings_raw.and_then(|s| serde_json::from_str(&s).ok()),
+        card_data: card_data_raw.and_then(|s| serde_json::from_str(&s).ok()),
+        extra: extra_raw
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or(serde_json::Value::Null),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn test_repo(repo_id: &str, downloads: u64, likes: u64) -> RepoInfo {
+        RepoInfo {
+            id: None,
+            repo_id: Some(repo_id.into()),
+            model_id: None,
+            author: Some(repo_id.split('/').next().unwrap_or("").into()),
+            sha: None,
+            last_modified: None,
+            created_at: None,
+            tags: Some(vec!["transformers".into()]),
+            downloads: Some(downloads),
+            likes: Some(likes),
+            library: Some("transformers".into()),
+            pipeline_tag: Some("text-generation".into()),
+            private: Some(false),
+            gated: None,
+            disabled: None,
+            description: None,
+            sdk: None,
+            siblings: None,
+            card_data: None,
+            extra: serde_json::Value::Null,
+        }
+    }
 
     #[test]
     fn upsert_and_query() {
         let db = HfDb::open_in_memory().unwrap();
 
         let repos = vec![
-            RepoInfo {
-                id: None,
-                repo_id: Some("meta-llama/Llama-3-8B".into()),
-                sha: None,
-                last_modified: None,
-                tags: Some(vec!["transformers".into(), "llama".into()]),
-                downloads: Some(5_000_000),
-                likes: Some(12_000),
-                library: Some("transformers".into()),
-                pipeline_tag: Some("text-generation".into()),
-                extra: serde_json::Value::Null,
-                model_id: None,
-                created_at: None,
-                private: None,
-            },
-            RepoInfo {
-                id: None,
-                repo_id: Some("openai/whisper-large-v3".into()),
-                model_id: None,
-                sha: None,
-                last_modified: None,
-                tags: Some(vec!["transformers".into(), "whisper".into()]),
-                downloads: Some(3_000_000),
-                likes: Some(8_000),
-                library: Some("transformers".into()),
-                pipeline_tag: Some("automatic-speech-recognition".into()),
-                created_at: None,
-                private: None,
-                extra: serde_json::Value::Null,
-            },
+            test_repo("meta-llama/Llama-3-8B", 5_000_000, 12_000),
+            test_repo("openai/whisper-large-v3", 3_000_000, 8_000),
         ];
 
         let count = db.upsert_repos(&repos, RepoType::Model).unwrap();
@@ -206,26 +297,25 @@ mod tests {
         assert_eq!(top.len(), 2);
         assert_eq!(top[0].repo_id.as_deref(), Some("meta-llama/Llama-3-8B"));
         assert_eq!(top[0].downloads, Some(5_000_000));
+        assert_eq!(top[0].author.as_deref(), Some("meta-llama"));
 
         // Upsert again with updated downloads — should overwrite
-        let updated = vec![RepoInfo {
-            id: None,
-            repo_id: Some("meta-llama/Llama-3-8B".into()),
-            model_id: None,
-            sha: None,
-            last_modified: None,
-            tags: None,
-            downloads: Some(6_000_000),
-            likes: Some(15_000),
-            library: Some("transformers".into()),
-            pipeline_tag: Some("text-generation".into()),
-            created_at: None,
-            private: None,
-            extra: serde_json::Value::Null,
-        }];
+        let updated = vec![test_repo("meta-llama/Llama-3-8B", 6_000_000, 15_000)];
         db.upsert_repos(&updated, RepoType::Model).unwrap();
-        assert_eq!(db.count(RepoType::Model).unwrap(), 2); // still 2, not 3
+        assert_eq!(db.count(RepoType::Model).unwrap(), 2);
         let top = db.top_repos(RepoType::Model, 1).unwrap();
         assert_eq!(top[0].downloads, Some(6_000_000));
+    }
+
+    #[test]
+    fn total_count_and_file_size() {
+        let db = HfDb::open_in_memory().unwrap();
+        assert_eq!(db.total_count().unwrap(), 0);
+
+        let repos = vec![test_repo("org/model-a", 100, 10)];
+        db.upsert_repos(&repos, RepoType::Model).unwrap();
+        db.upsert_repos(&repos, RepoType::Dataset).unwrap();
+        assert_eq!(db.total_count().unwrap(), 2);
+        assert!(db.file_size().unwrap() > 0);
     }
 }

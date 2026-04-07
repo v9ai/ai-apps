@@ -222,9 +222,10 @@ impl HfClient {
         let limit = opts.limit.min(100);
         let mut all = Vec::new();
         let mut page = 0;
+        let full_param = if opts.full { "&full=true" } else { "" };
         let mut next_url = Some(format!(
-            "{}/{}?sort={}&direction={}&limit={}",
-            HF_API_BASE, prefix, opts.sort, opts.direction, limit
+            "{}/{}?sort={}&direction={}&limit={}{}",
+            HF_API_BASE, prefix, opts.sort, opts.direction, limit, full_param
         ));
 
         while let Some(url) = next_url.take() {
@@ -283,7 +284,7 @@ impl HfClient {
         Ok(all)
     }
 
-    /// Fetch popular models sorted by downloads.
+    /// Fetch popular models sorted by downloads (with full metadata).
     pub async fn list_popular_models(&self, count: usize) -> Result<Vec<RepoInfo>, Error> {
         self.list_repos(&ListOptions {
             repo_type: RepoType::Model,
@@ -291,11 +292,12 @@ impl HfClient {
             direction: "-1".into(),
             limit: 100,
             max_pages: (count + 99) / 100,
+            full: true,
         })
         .await
     }
 
-    /// Fetch popular datasets sorted by downloads.
+    /// Fetch popular datasets sorted by downloads (with full metadata).
     pub async fn list_popular_datasets(&self, count: usize) -> Result<Vec<RepoInfo>, Error> {
         self.list_repos(&ListOptions {
             repo_type: RepoType::Dataset,
@@ -303,11 +305,12 @@ impl HfClient {
             direction: "-1".into(),
             limit: 100,
             max_pages: (count + 99) / 100,
+            full: true,
         })
         .await
     }
 
-    /// Fetch popular spaces sorted by likes.
+    /// Fetch popular spaces sorted by likes (with full metadata).
     pub async fn list_popular_spaces(&self, count: usize) -> Result<Vec<RepoInfo>, Error> {
         self.list_repos(&ListOptions {
             repo_type: RepoType::Space,
@@ -315,6 +318,7 @@ impl HfClient {
             direction: "-1".into(),
             limit: 100,
             max_pages: (count + 99) / 100,
+            full: true,
         })
         .await
     }
