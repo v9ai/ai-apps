@@ -3,6 +3,10 @@ import { Box, Card, Flex, Heading, Text } from "@radix-ui/themes";
 import { css } from "styled-system/css";
 
 const leftPanel = css({
+  display: "none",
+  "@media (min-width: 768px)": {
+    display: "flex",
+  },
   minHeight: "100vh",
   flexDirection: "column",
   alignItems: "center",
