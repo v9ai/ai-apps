@@ -106,26 +106,33 @@ where
 
 /// Fellegi-Sunter probabilistic record linkage model.
 ///
-/// Features: [0] name JW >= 0.85, [1] email domain exact, [2] soundex match, [3] company Lev >= 0.80
+/// Features (5):
+///   [0] name Jaro-Winkler >= 0.85
+///   [1] email domain exact match
+///   [2] soundex match
+///   [3] company Levenshtein >= 0.80
+///   [4] semantic embedding cosine >= 0.85 (BGE-based, optional)
 pub struct FellegiSunter {
     /// P(agree | match) for each feature
-    pub m_probs: [f64; 4],
+    pub m_probs: [f64; 5],
     /// P(agree | non-match) for each feature
-    pub u_probs: [f64; 4],
+    pub u_probs: [f64; 5],
 }
 
 impl FellegiSunter {
     pub fn new() -> Self {
         Self {
-            m_probs: [0.95, 0.90, 0.85, 0.80],
-            u_probs: [0.02, 0.10, 0.05, 0.15],
+            // Feature [4] semantic: high m_prob (true matches are semantically similar),
+            // moderate u_prob (some non-matches share similar descriptions)
+            m_probs: [0.95, 0.90, 0.85, 0.80, 0.90],
+            u_probs: [0.02, 0.10, 0.05, 0.15, 0.08],
         }
     }
 
     /// Compute log-likelihood ratio for an agreement vector.
-    pub fn log_likelihood_ratio(&self, agreements: &[bool; 4]) -> f64 {
+    pub fn log_likelihood_ratio(&self, agreements: &[bool; 5]) -> f64 {
         let mut llr = 0.0;
-        for i in 0..4 {
+        for i in 0..5 {
             if agreements[i] {
                 llr += (self.m_probs[i] / self.u_probs[i]).ln();
             } else {
@@ -136,13 +143,27 @@ impl FellegiSunter {
     }
 
     /// Convert LLR to a match probability via sigmoid.
-    pub fn match_probability(&self, agreements: &[bool; 4]) -> f64 {
+    pub fn match_probability(&self, agreements: &[bool; 5]) -> f64 {
         let llr = self.log_likelihood_ratio(agreements);
         1.0 / (1.0 + (-llr).exp())
     }
 
-    /// Compare two contact records and return a 4-feature agreement vector.
+    /// Compare two contact records and return a 4-feature agreement vector (no embeddings).
+    /// Use `compare_contacts_semantic()` when embeddings are available.
     pub fn compare_contacts(
+        first_a: &str, last_a: &str, email_a: &str, company_a: &str,
+        first_b: &str, last_b: &str, email_b: &str, company_b: &str,
+    ) -> [bool; 5] {
+        let base = Self::compare_contacts_base(
+            first_a, last_a, email_a, company_a,
+            first_b, last_b, email_b, company_b,
+        );
+        // Feature [4] defaults to false when no embeddings available
+        [base[0], base[1], base[2], base[3], false]
+    }
+
+    /// Compare using string features only (4-element, internal).
+    fn compare_contacts_base(
         first_a: &str, last_a: &str, email_a: &str, company_a: &str,
         first_b: &str, last_b: &str, email_b: &str, company_b: &str,
     ) -> [bool; 4] {
@@ -177,6 +198,22 @@ impl FellegiSunter {
         ]
     }
 
+    /// Compare two contacts with semantic embedding similarity (5-feature vector).
+    /// `cosine_sim` is the pre-computed cosine similarity between the two contacts'
+    /// profile embeddings (from BGE). Pass None to skip the semantic feature.
+    pub fn compare_contacts_semantic(
+        first_a: &str, last_a: &str, email_a: &str, company_a: &str,
+        first_b: &str, last_b: &str, email_b: &str, company_b: &str,
+        cosine_sim: Option<f32>,
+    ) -> [bool; 5] {
+        let base = Self::compare_contacts_base(
+            first_a, last_a, email_a, company_a,
+            first_b, last_b, email_b, company_b,
+        );
+        let semantic_match = cosine_sim.map_or(false, |sim| sim >= 0.85);
+        [base[0], base[1], base[2], base[3], semantic_match]
+    }
+
     /// Score a pair of contacts: compare then compute match probability.
     pub fn score_pair(
         &self,
@@ -190,9 +227,24 @@ impl FellegiSunter {
         self.match_probability(&agreements)
     }
 
+    /// Score a pair with semantic embedding similarity.
+    pub fn score_pair_semantic(
+        &self,
+        first_a: &str, last_a: &str, email_a: &str, company_a: &str,
+        first_b: &str, last_b: &str, email_b: &str, company_b: &str,
+        cosine_sim: Option<f32>,
+    ) -> f64 {
+        let agreements = Self::compare_contacts_semantic(
+            first_a, last_a, email_a, company_a,
+            first_b, last_b, email_b, company_b,
+            cosine_sim,
+        );
+        self.match_probability(&agreements)
+    }
+
     /// Update m/u probabilities from labeled pairs using Laplace smoothing.
-    pub fn estimate_from_pairs(&mut self, labeled: &[(bool, [bool; 4])]) {
-        for i in 0..4 {
+    pub fn estimate_from_pairs(&mut self, labeled: &[(bool, [bool; 5])]) {
+        for i in 0..5 {
             let mut m_agree = 1.0_f64; // Laplace smoothing
             let mut m_total = 2.0_f64;
             let mut u_agree = 1.0_f64;
@@ -365,32 +417,33 @@ mod tests {
     #[test]
     fn test_fellegi_sunter_perfect_match() {
         let fs = FellegiSunter::new();
-        let prob = fs.match_probability(&[true, true, true, true]);
+        let prob = fs.match_probability(&[true, true, true, true, true]);
         assert!(prob > 0.99, "prob={}", prob);
     }
 
     #[test]
     fn test_fellegi_sunter_no_match() {
         let fs = FellegiSunter::new();
-        let prob = fs.match_probability(&[false, false, false, false]);
+        let prob = fs.match_probability(&[false, false, false, false, false]);
         assert!(prob < 0.05, "prob={}", prob);
     }
 
     #[test]
     fn test_fellegi_sunter_partial() {
         let fs = FellegiSunter::new();
-        // Only soundex agrees — weakest single signal
-        let prob = fs.match_probability(&[false, false, true, false]);
-        assert!(prob > 0.01 && prob < 0.5, "prob={}", prob);
+        // Only soundex agrees — weakest single signal. With 5 features and 4 disagreeing,
+        // the probability is very low but still positive.
+        let prob = fs.match_probability(&[false, false, true, false, false]);
+        assert!(prob > 0.0001 && prob < 0.5, "prob={}", prob);
     }
 
     #[test]
     fn test_fellegi_sunter_llr_signs() {
         let fs = FellegiSunter::new();
-        let llr_all_agree = fs.log_likelihood_ratio(&[true, true, true, true]);
+        let llr_all_agree = fs.log_likelihood_ratio(&[true, true, true, true, true]);
         assert!(llr_all_agree > 0.0, "llr_all_agree={}", llr_all_agree);
 
-        let llr_none_agree = fs.log_likelihood_ratio(&[false, false, false, false]);
+        let llr_none_agree = fs.log_likelihood_ratio(&[false, false, false, false, false]);
         assert!(llr_none_agree < 0.0, "llr_none_agree={}", llr_none_agree);
     }
 
@@ -400,7 +453,8 @@ mod tests {
             "John", "Smith", "john@example.com", "Acme Inc",
             "John", "Smith", "john@example.com", "Acme Inc",
         );
-        assert_eq!(agreements, [true, true, true, true]);
+        // Semantic feature defaults to false when no embedding provided
+        assert_eq!(agreements, [true, true, true, true, false]);
     }
 
     #[test]
@@ -409,12 +463,11 @@ mod tests {
             "Alice", "Johnson", "alice@alpha.com", "Alpha Corp",
             "Bob", "Williams", "bob@beta.com", "Beta LLC",
         );
-        // Name JW < 0.85, domains differ, soundex differs, company Lev < 0.80
         assert_eq!(agreements[0], false, "name should not match");
         assert_eq!(agreements[1], false, "domain should not match");
-        // soundex: J525 vs W452 — differ
         assert_eq!(agreements[2], false, "soundex should not match");
         assert_eq!(agreements[3], false, "company should not match");
+        assert_eq!(agreements[4], false, "semantic defaults to false");
     }
 
     #[test]
@@ -423,30 +476,61 @@ mod tests {
             "Jon", "Smith", "jon@example.com", "Acme Inc",
             "John", "Smith", "john@example.com", "Acme Inc",
         );
-        // Name: "Jon Smith" vs "John Smith" — JW should be >= 0.85
         assert_eq!(agreements[0], true, "name should fuzzy match");
-        // Domain: both example.com
         assert_eq!(agreements[1], true, "domain should match");
-        // Soundex: smith = smith
         assert_eq!(agreements[2], true, "soundex should match");
-        // Company: exact
         assert_eq!(agreements[3], true, "company should match");
+    }
+
+    #[test]
+    fn test_compare_contacts_semantic() {
+        // High embedding similarity should trigger semantic match
+        let agreements = FellegiSunter::compare_contacts_semantic(
+            "Alice", "Johnson", "alice@alpha.com", "Alpha Corp",
+            "Bob", "Williams", "bob@beta.com", "Beta LLC",
+            Some(0.92), // high cosine sim — same role at rebrand
+        );
+        assert_eq!(agreements[4], true, "semantic should match at 0.92");
+
+        // Low similarity should not
+        let agreements_low = FellegiSunter::compare_contacts_semantic(
+            "Alice", "Johnson", "alice@alpha.com", "Alpha Corp",
+            "Bob", "Williams", "bob@beta.com", "Beta LLC",
+            Some(0.40),
+        );
+        assert_eq!(agreements_low[4], false, "semantic should not match at 0.40");
+
+        // None skips semantic
+        let agreements_none = FellegiSunter::compare_contacts_semantic(
+            "Alice", "Johnson", "alice@alpha.com", "Alpha Corp",
+            "Bob", "Williams", "bob@beta.com", "Beta LLC",
+            None,
+        );
+        assert_eq!(agreements_none[4], false, "semantic should be false with None");
+    }
+
+    #[test]
+    fn test_semantic_boosts_match_probability() {
+        let fs = FellegiSunter::new();
+        // Same string features, different semantic
+        let prob_without = fs.match_probability(&[true, true, false, false, false]);
+        let prob_with = fs.match_probability(&[true, true, false, false, true]);
+        assert!(prob_with > prob_without, "semantic should boost: {} > {}", prob_with, prob_without);
     }
 
     #[test]
     fn test_estimate_from_pairs() {
         let mut fs = FellegiSunter::new();
         let labeled = vec![
-            (true, [true, true, true, true]),
-            (true, [true, true, false, true]),
-            (false, [false, false, false, false]),
-            (false, [false, true, false, false]),
+            (true, [true, true, true, true, true]),
+            (true, [true, true, false, true, true]),
+            (false, [false, false, false, false, false]),
+            (false, [false, true, false, false, false]),
         ];
         fs.estimate_from_pairs(&labeled);
-        // m_probs should reflect matches: feature 0 had 2/2 agree among matches
-        // u_probs should reflect non-matches: feature 0 had 0/2 agree among non-matches
-        // With Laplace smoothing: m[0] = (1+2)/(2+2) = 0.75, u[0] = (1+0)/(2+2) = 0.25
         assert!(fs.m_probs[0] > fs.u_probs[0], "m[0]={} u[0]={}", fs.m_probs[0], fs.u_probs[0]);
+        // Semantic feature: 2/2 matches agree, 0/2 non-matches agree
+        assert!(fs.m_probs[4] > fs.u_probs[4], "m[4]={} u[4]={}", fs.m_probs[4], fs.u_probs[4]);
     }
 
     // ── UnionFind tests ──

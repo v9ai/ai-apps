@@ -140,6 +140,9 @@ pub struct ContactBatch {
     pub email_verified: [u8; 256],    // 2=verified, 1=catch-all, 0=unknown
     pub recency_days: [u16; 256],     // days since last update
 
+    // Semantic embedding features (from BGE cosine similarity)
+    pub semantic_icp_score: [f32; 256], // cosine(company_emb, icp_emb), 0.0 if unavailable
+
     // Output
     pub scores: [f32; 256],
 
@@ -186,6 +189,57 @@ impl ContactBatch {
             let icp_fit = (score / max) * 100.0;
 
             // Recency bonus (0-15 points)
+            let recency = match self.recency_days[i] {
+                0..=7 => 15.0f32,
+                8..=14 => 12.0,
+                15..=30 => 9.0,
+                31..=90 => 5.0,
+                91..=180 => 2.0,
+                _ => 0.0,
+            };
+
+            self.scores[i] = icp_fit * 0.85 + recency;
+        }
+    }
+
+    /// Compute ICP fit scores with semantic embedding boost.
+    /// When `semantic_icp_score[i] > 0`, it blends with the boolean features.
+    /// Semantic boost replaces the binary tech_overlap with continuous similarity.
+    pub fn compute_scores_semantic(&mut self, icp: &IcpProfile, semantic_weight: f32) {
+        let n = self.count;
+        let base_max = icp.industry_weight
+            + icp.employee_weight
+            + icp.seniority_weight
+            + icp.department_weight
+            + icp.tech_weight
+            + icp.email_weight;
+        let total_max = base_max + semantic_weight;
+
+        for i in 0..n {
+            let mut score: f32 = 0.0;
+
+            score += self.industry_match[i] as f32 * icp.industry_weight;
+            score += self.employee_in_range[i] as f32 * icp.employee_weight;
+            score += self.seniority_match[i] as f32 * icp.seniority_weight;
+            score += self.department_match[i] as f32 * icp.department_weight;
+
+            // Blend: use max(keyword tech_overlap, semantic similarity) for tech scoring
+            let keyword_tech = self.tech_overlap[i] as f32 / 10.0;
+            let semantic_tech = self.semantic_icp_score[i];
+            let blended_tech = keyword_tech.max(semantic_tech);
+            score += blended_tech * icp.tech_weight;
+
+            score += match self.email_verified[i] {
+                2 => icp.email_weight,
+                1 => icp.email_weight * 0.4,
+                _ => 0.0,
+            };
+
+            // Semantic ICP score as additive feature (captures soft signals keywords miss)
+            score += self.semantic_icp_score[i] * semantic_weight;
+
+            let icp_fit = (score / total_max) * 100.0;
+
             let recency = match self.recency_days[i] {
                 0..=7 => 15.0f32,
                 8..=14 => 12.0,
@@ -296,13 +350,25 @@ impl Default for WelfordStats {
 }
 
 /// Logistic regression scorer with learned weights.
-/// Features: [industry, employee, seniority, department, tech_norm, email_norm, recency_smooth]
+/// Features (7 or 8):
+///   [0] industry_match    (binary)
+///   [1] employee_in_range (binary)
+///   [2] seniority_match   (binary)
+///   [3] department_match   (binary)
+///   [4] tech_overlap / 10  (0-1)
+///   [5] email_verified / 2 (0-1)
+///   [6] smooth_recency     (exp decay)
+///   [7] semantic_icp_score (cosine, optional — 0.0 if unavailable)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogisticScorer {
     pub weights: [f32; 7],
     pub bias: f32,
     pub feature_stats: [WelfordStats; 7],
     pub trained: bool,
+    /// Optional 8th weight for semantic ICP score (from BGE embeddings).
+    /// Kept separate to maintain backward compatibility with 7-feature JSON files.
+    #[serde(default)]
+    pub semantic_weight: f32,
 }
 
 impl LogisticScorer {
@@ -312,6 +378,7 @@ impl LogisticScorer {
             bias: 0.0,
             feature_stats: std::array::from_fn(|_| WelfordStats::new()),
             trained: false,
+            semantic_weight: 0.0,
         }
     }
 
@@ -322,6 +389,7 @@ impl LogisticScorer {
             bias: -1.5,
             feature_stats: std::array::from_fn(|_| WelfordStats::new()),
             trained: true,
+            semantic_weight: 0.4, // moderate weight for semantic signal
         }
     }
 
@@ -350,7 +418,7 @@ impl LogisticScorer {
         ]
     }
 
-    /// Score a single feature vector.
+    /// Score a single feature vector (7 base features).
     pub fn score(&self, features: &[f32; 7]) -> f32 {
         let mut dot = self.bias;
         for i in 0..7 {
@@ -359,11 +427,26 @@ impl LogisticScorer {
         Self::sigmoid(dot)
     }
 
+    /// Score a feature vector with semantic ICP score (8th feature).
+    pub fn score_with_semantic(&self, features: &[f32; 7], semantic_score: f32) -> f32 {
+        let mut dot = self.bias;
+        for i in 0..7 {
+            dot += self.weights[i] * features[i];
+        }
+        dot += self.semantic_weight * semantic_score;
+        Self::sigmoid(dot)
+    }
+
     /// Score all contacts in a batch, writing results to batch.scores (0-100 scale).
     pub fn score_batch(&self, batch: &mut ContactBatch) {
         for i in 0..batch.count {
             let features = Self::extract_features(batch, i);
-            batch.scores[i] = self.score(&features) * 100.0;
+            let semantic = batch.semantic_icp_score[i];
+            batch.scores[i] = if semantic > 0.0 {
+                self.score_with_semantic(&features, semantic) * 100.0
+            } else {
+                self.score(&features) * 100.0
+            };
         }
     }
 

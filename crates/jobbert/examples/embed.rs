@@ -1,6 +1,6 @@
 //! Embed job titles with JobBERT-v3 and compute similarities.
 
-use jobbert::{best_device, EncodeMode, JobBertEmbedder};
+use jobbert::{best_device, JobBertEmbedder};
 
 fn main() -> jobbert::Result<()> {
     tracing_subscriber::fmt::init();
@@ -26,12 +26,10 @@ fn main() -> jobbert::Result<()> {
 
     let query_vecs = model.embed_batch(
         &queries.iter().map(|s| *s).collect::<Vec<_>>(),
-        EncodeMode::Anchor,
     )?;
 
     let doc_vecs = model.embed_batch(
         &documents.iter().map(|s| *s).collect::<Vec<_>>(),
-        EncodeMode::Positive,
     )?;
 
     for (i, query) in queries.iter().enumerate() {

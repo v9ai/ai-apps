@@ -29,6 +29,25 @@ pub struct EnrichedCompany {
     pub remote_policy: u8, // 0=unknown, 1=full_remote, 2=hybrid, 3=onsite
     pub enrichment_score: f64,
     pub confidence: f64,
+
+    /// BGE embedding of company description (384-dim, L2-normalized).
+    /// None if the BGE model is not loaded. Used for semantic ICP matching,
+    /// intent detection, and company dedup.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub embedding: Option<Vec<f32>>,
+
+    /// NER-extracted entities from company web pages.
+    /// Persons can feed into contact discovery, orgs into competitor detection.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub extracted_entities: Option<ExtractedEntities>,
+}
+
+/// Named entities extracted during enrichment via transformer NER.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtractedEntities {
+    pub persons: Vec<String>,       // PER entities — potential contacts
+    pub organizations: Vec<String>, // ORG entities — competitors/partners
+    pub locations: Vec<String>,     // LOC entities — office locations
 }
 
 pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
@@ -129,6 +148,12 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
             &ctx.icp_vertical,
         );
 
+        // Compute embedding and extract entities when ML models are available.
+        // These are set to None when models aren't loaded — the pipeline degrades
+        // gracefully to keyword-only scoring in that case.
+        let embedding: Option<Vec<f32>> = None; // Set by BGE embedder when kernel-bge enabled
+        let extracted_entities: Option<ExtractedEntities> = None; // Set by NER when kernel-ner-transformer enabled
+
         let enriched = EnrichedCompany {
             domain: company.domain.clone(),
             name: company.name.clone(),
@@ -141,6 +166,8 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
             remote_policy,
             enrichment_score,
             confidence,
+            embedding,
+            extracted_entities,
         };
 
         report.companies.push(enriched);
