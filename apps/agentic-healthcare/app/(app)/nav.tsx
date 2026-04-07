@@ -1,6 +1,6 @@
 "use client";
 
-import { Flex, Separator, TabNav, Tooltip } from "@radix-ui/themes";
+import { Flex, Separator, Tooltip } from "@radix-ui/themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -18,7 +18,7 @@ import {
   Brain,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { css } from "styled-system/css";
+import { css, cx } from "styled-system/css";
 
 const navLinks: { href: string; label: string; icon: LucideIcon; separator?: boolean }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -35,63 +35,77 @@ const navLinks: { href: string; label: string; icon: LucideIcon; separator?: boo
   { href: "/chat", label: "Chat", icon: MessageSquare },
 ];
 
-const navRootClass = css({
-  overflowX: "auto",
-  scrollbarWidth: "none",
-  width: "100%",
-  "&::-webkit-scrollbar": { display: "none" },
+const navListClass = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "1px",
+  flex: 1,
 });
 
-const navLinkClass = css({
-  transition: "color 150ms ease, background-color 150ms ease, border-color 150ms ease",
-  borderRadius: "6px 6px 0 0",
+const linkClass = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "var(--space-3)",
+  padding: "var(--space-2) var(--space-3)",
+  borderRadius: "var(--radius-2)",
+  textDecoration: "none",
+  color: "var(--gray-11)",
+  fontSize: "var(--font-size-2)",
+  lineHeight: 1,
+  transition: "background 150ms ease, color 150ms ease",
+  flexShrink: 0,
   "&:hover": {
-    backgroundColor: "var(--gray-a3) !important",
-    borderBottomColor: "var(--gray-a6) !important",
+    background: "var(--gray-a3)",
+  },
+  "@media (max-width: 768px)": {
+    justifyContent: "center",
+    padding: "var(--space-2)",
   },
 });
 
-const navLabelClass = css({
-  display: "inline",
+const linkActiveClass = css({
+  background: "var(--indigo-a3)",
+  color: "var(--indigo-11)",
+  "&:hover": {
+    background: "var(--indigo-a4)",
+  },
+});
+
+const labelClass = css({
+  whiteSpace: "nowrap",
   "@media (max-width: 768px)": {
     display: "none",
   },
+});
+
+const separatorClass = css({
+  margin: "var(--space-2) 0",
 });
 
 export function Nav() {
   const pathname = usePathname();
 
   return (
-    <TabNav.Root className={navRootClass}>
+    <nav className={navListClass}>
       {navLinks.map((link) => {
         const isActive = pathname.startsWith(link.href);
         return (
-          <Flex key={link.href} align="center" gap="0">
+          <div key={link.href}>
             {link.separator && (
-              <Separator
-                orientation="vertical"
-                size="1"
-                mx="2"
-                className={css({ height: "16px", flexShrink: "0" })}
-              />
+              <Separator size="4" className={separatorClass} />
             )}
-            <Tooltip content={link.label} side="bottom" delayDuration={400}>
-              <TabNav.Link
-                asChild
-                active={isActive}
-                className={navLinkClass}
+            <Tooltip content={link.label} side="right" delayDuration={400}>
+              <Link
+                href={link.href}
+                className={cx(linkClass, isActive && linkActiveClass)}
               >
-                <Link href={link.href}>
-                  <Flex align="center" gap="2">
-                    <link.icon size={16} />
-                    <span className={navLabelClass}>{link.label}</span>
-                  </Flex>
-                </Link>
-              </TabNav.Link>
+                <link.icon size={16} style={{ flexShrink: 0 }} />
+                <span className={labelClass}>{link.label}</span>
+              </Link>
             </Tooltip>
-          </Flex>
+          </div>
         );
       })}
-    </TabNav.Root>
+    </nav>
   );
 }
