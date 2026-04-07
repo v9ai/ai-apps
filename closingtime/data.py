@@ -97,12 +97,124 @@ def _score_samples() -> list[dict[str, Any]]:
     ]
 
 
-# TODO: remaining sample data generators (_intent_samples, _reply_samples, etc.)
-# will be added once the full sample data is provided.
+def _intent_samples() -> list[dict[str, Any]]:
+    return [
+        {"text": "What is ClosingTime?", "stage": "unaware"},
+        {"text": "I've heard of your product. Tell me more.", "stage": "aware"},
+        {"text": "We're comparing you against Gong and Outreach.", "stage": "evaluating"},
+        {"text": "Ready to sign, send over the contract.", "stage": "purchasing"},
+    ]
 
 
-_SAMPLE_GENERATORS: dict[str, Any] = {
+def _reply_samples() -> list[dict[str, Any]]:
+    return [
+        {"text": "This looks great, can we schedule a demo?",
+         "labels": ["genuinely_interested", "meeting_request"]},
+        {"text": "Thanks for the info, I'll take a look.",
+         "labels": ["politely_acknowledging"]},
+        {"text": "I'm out of the office until next Monday.",
+         "labels": ["out_of_office"]},
+        {"text": "The pricing is too high for our budget.",
+         "labels": ["objection", "negative_sentiment"]},
+    ]
+
+
+def _triggers_samples() -> list[dict[str, Any]]:
+    return [
+        {"text": "Acme Corp raised $50M Series C led by Sequoia.",
+         "event_type": "new_funding", "displacement_days": 0},
+        {"text": "Jane Smith joined BigCo as VP of Sales.",
+         "event_type": "job_change", "displacement_days": 3},
+        {"text": "TechCorp acquired DataInc for $200M.",
+         "event_type": "acquisition_merger", "displacement_days": 1},
+    ]
+
+
+def _icp_samples() -> list[dict[str, Any]]:
+    return [
+        {"text": "We're a 500-person SaaS company in fintech using Salesforce.",
+         "icp_text": "Mid-market SaaS, financial services, CRM users", "score": 0.92},
+        {"text": "Small bakery with 5 employees in rural Montana.",
+         "icp_text": "Enterprise B2B tech companies", "score": 0.08},
+    ]
+
+
+def _objection_samples() -> list[dict[str, Any]]:
+    return [
+        {"text": "Your pricing is way too high for what you offer.",
+         "category": "genuine_objection", "objection_type": "price_too_high"},
+        {"text": "Let me think about it and get back to you.",
+         "category": "stall", "objection_type": "need_to_think"},
+        {"text": "We're locked into a 2-year contract with your competitor.",
+         "category": "genuine_objection", "objection_type": "contract_locked"},
+    ]
+
+
+def _sentiment_samples() -> list[dict[str, Any]]:
+    return [
+        {"text": "This is exactly what we've been looking for! When can we start?",
+         "sentiment": "enthusiastic", "intent": "purchase"},
+        {"text": "Looks fine I guess. We'll consider it.",
+         "sentiment": "neutral_professional", "intent": "evaluate"},
+        {"text": "Stop emailing me. I've asked three times already.",
+         "sentiment": "hostile_rejection", "intent": "unsubscribe"},
+    ]
+
+
+def _spam_samples() -> list[dict[str, Any]]:
+    return [
+        {"text": "Hi John, following up on our conversation about the Q3 rollout.",
+         "label": "not_spam", "provider": "gmail"},
+        {"text": "CONGRATULATIONS! You've won a FREE iPhone! Click here NOW!!!",
+         "label": "spam", "provider": "unknown"},
+    ]
+
+
+def _entities_samples() -> list[dict[str, Any]]:
+    return [
+        {"text": "Jane Smith from Acme Corp is evaluating Salesforce alternatives.",
+         "entities": [
+             {"type": "person", "start": 0, "end": 10, "text": "Jane Smith"},
+             {"type": "company", "start": 16, "end": 24, "text": "Acme Corp"},
+             {"type": "product", "start": 41, "end": 51, "text": "Salesforce"},
+         ]},
+    ]
+
+
+def _call_samples() -> list[dict[str, Any]]:
+    return [
+        {"transcript": [
+            {"speaker": "rep", "text": "How's the evaluation going?"},
+            {"speaker": "prospect", "text": "We're ready to move forward with the proposal."},
+         ], "outcome": "send_proposal"},
+        {"transcript": [
+            {"speaker": "rep", "text": "Any questions about the demo?"},
+            {"speaker": "prospect", "text": "We need to loop in our CTO first."},
+         ], "outcome": "follow_up"},
+    ]
+
+
+def _subject_samples() -> list[dict[str, Any]]:
+    return [
+        {"subject_a": "Quick question about your Q3 plans",
+         "subject_b": "URGENT: Limited time offer!!!", "winner": "a"},
+        {"subject_a": "Re: Next steps for Acme partnership",
+         "subject_b": "Following up", "winner": "a"},
+    ]
+
+
+_SAMPLE_GENERATORS = {
     "score": _score_samples,
+    "intent": _intent_samples,
+    "reply": _reply_samples,
+    "triggers": _triggers_samples,
+    "icp": _icp_samples,
+    "objection": _objection_samples,
+    "sentiment": _sentiment_samples,
+    "spam": _spam_samples,
+    "entities": _entities_samples,
+    "call": _call_samples,
+    "subject": _subject_samples,
 }
 
 
