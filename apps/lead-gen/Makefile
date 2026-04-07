@@ -381,7 +381,7 @@ export-blocklist: ## Export blocked domains from Neon → data/blocklist.txt
 CT_DIR   := salescue
 CT_PY    := PYTHONPATH=$(CURDIR) $(CONSULT_PY)
 
-.PHONY: ct-publish ct-publish-dry ct-publish-all
+.PHONY: ct-publish ct-publish-dry ct-publish-all ct-test
 
 ct-publish: ## Publish module(s) to HF Hub: make ct-publish M=spam
 	@test -n "$(M)" || { echo "Usage: make ct-publish M=spam  or  make ct-publish M='spam score intent'"; exit 1; }
@@ -393,6 +393,9 @@ ct-publish-dry: ## Dry-run publish (local save + verify): make ct-publish-dry M=
 
 ct-publish-all: ## Publish all compatible modules to HF Hub
 	$(CT_PY) -m salescue.publish --all
+
+ct-test: ## Run salescue test suite (159 tests)
+	$(CT_PY) -m pytest salescue/tests/ -v --tb=short
 
 # ── All ────────────────────────────────────────────────────────
 
