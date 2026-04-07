@@ -41,9 +41,20 @@
           "job postings",
           "technographic data"
         ],
-        "is_realtime": false
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "data_moat",
+          "evidence": "NOT graph neural networks. Entity resolution layer mapping interactions to CRM objects. Graph used in social-graph sense. Moat is 3.5B+ indexed conversations.",
+          "publications": 0,
+          "verified": true
+        }
       }
-    ]
+    ],
+    "publications": {
+      "arxiv": 0,
+      "conference": 0,
+      "patents_granted": 4
+    }
   },
   {
     "id": 39046,
@@ -244,9 +255,20 @@
           "email threads",
           "web signals"
         ],
-        "is_realtime": false
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "marketing_only",
+          "evidence": "Reviews confirm does not learn from past workflows. AI is OpenAI API wrapper. Zero RL evidence anywhere.",
+          "publications": 0,
+          "verified": true
+        }
       }
-    ]
+    ],
+    "publications": {
+      "arxiv": 0,
+      "conference": 0,
+      "patents_granted": 0
+    }
   },
   {
     "id": 39082,
@@ -328,7 +350,13 @@
           "LinkedIn",
           "technographic data"
         ],
-        "is_realtime": false
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "marketing_inflated",
+          "evidence": "Only verifiable ML artifact is a 4-layer MLP patent from 2020 (basic DL). 300M+ contacts is a database, not a model. Zero published technical details on GTM-1/GTM-2.",
+          "publications": 0,
+          "verified": true
+        }
       },
       {
         "name": "Agentic Search",
@@ -342,7 +370,13 @@
           "email threads",
           "job postings"
         ],
-        "is_realtime": false
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "marketing_inflated",
+          "evidence": "Semantic search + ML — likely standard embedding search. No published architecture.",
+          "publications": 0,
+          "verified": true
+        }
       },
       {
         "name": "Agentic AI for GTM",
@@ -355,9 +389,20 @@
           "email threads",
           "call recordings"
         ],
-        "is_realtime": false
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "marketing_inflated",
+          "evidence": "RL appears to be multi-armed bandit optimization, not actual RLHF/PPO/DPO. Standard technique since 1950s.",
+          "publications": 0,
+          "verified": true
+        }
       }
-    ]
+    ],
+    "publications": {
+      "arxiv": 0,
+      "conference": 0,
+      "patents_granted": 1
+    }
   },
   {
     "id": 39063,
@@ -468,7 +513,13 @@
           "clinical notes",
           "research papers"
         ],
-        "is_realtime": false
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "practitioner",
+          "evidence": "Likely fine-tuned variant of Universal-3 Pro, not separate model. No published architecture details for medical specifically.",
+          "publications": 0,
+          "verified": true
+        }
       },
       {
         "name": "Superhuman Speech AI Models",
@@ -480,9 +531,20 @@
           "text data",
           "user interactions"
         ],
-        "is_realtime": true
+        "is_realtime": true,
+        "verified_depth": {
+          "rating": "practitioner",
+          "evidence": "600M-param Conformer RNN-T trained on 12.5M hrs. 3 arXiv papers. Every core technique (Conformer, BEST-RQ) invented at Google. Moat is execution and data scale.",
+          "publications": 3,
+          "verified": true
+        }
       }
-    ]
+    ],
+    "publications": {
+      "arxiv": 3,
+      "conference": 0,
+      "patents_granted": 0
+    }
   },
   {
     "id": 39045,
@@ -513,9 +575,20 @@
           "customer interactions",
           "market data"
         ],
-        "is_realtime": false
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "fine_tuned_wrapper",
+          "evidence": "Real time-series forecasting + AutoML. But multi-agent RL is marketing for LLM workflow orchestration. Zero RL evidence anywhere. 20+ process patents.",
+          "publications": 0,
+          "verified": true
+        }
       }
-    ]
+    ],
+    "publications": {
+      "arxiv": 0,
+      "conference": 0,
+      "patents_granted": 20
+    }
   },
   {
     "id": 39050,
@@ -536,7 +609,13 @@
           "guardrails",
           "channel-specific data"
         ],
-        "is_realtime": false
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "fine_tuned_wrapper",
+          "evidence": "Composes 15+ existing models. Founders call it an engineering challenge. Fine-tunes open-source with customer data. tau-bench eval paper only.",
+          "publications": 0,
+          "verified": true
+        }
       },
       {
         "name": "Composable Skills",
@@ -548,9 +627,20 @@
           "user workflows",
           "agent goals"
         ],
-        "is_realtime": false
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "fine_tuned_wrapper",
+          "evidence": "Software architecture pattern, not ML technique. Skill composition is agent workflow engineering.",
+          "publications": 0,
+          "verified": true
+        }
       }
-    ]
+    ],
+    "publications": {
+      "arxiv": 0,
+      "conference": 1,
+      "patents_granted": 0
+    }
   },
   {
     "id": 39030,
@@ -731,5 +821,111 @@
     "core_differentiator": "Empowers sales teams with AI-driven prospecting, enrichment, and engagement tools for maximum efficiency",
     "automation_level": "semi-auto",
     "features": []
+  },
+  {
+    "id": 39099,
+    "key": "alembic-com",
+    "name": "Causal AI for Revenue Attribution",
+    "domain": "alembic.com",
+    "website": "https://alembic.com/platform",
+    "core_differentiator": "Claims causal AI with spiking neural networks for marketing attribution. Runs on NVIDIA DGX SuperPOD.",
+    "automation_level": "semi-auto",
+    "publications": {
+      "arxiv": 0,
+      "conference": 0,
+      "patents_granted": 0
+    },
+    "features": [
+      {
+        "name": "Causal Attribution Engine",
+        "category": "analytics",
+        "description": "Marketing attribution via causal inference, claiming to go beyond correlation to identify true causal chains between marketing events and revenue.",
+        "ai_implementation": "Claims spiking neural networks and causal graph inference for marketing attribution. Runs on NVIDIA DGX SuperPOD with 576 Blackwell GPUs.",
+        "data_sources": [
+          "marketing spend data",
+          "web analytics",
+          "CRM data",
+          "social media signals",
+          "TV/radio/podcast data"
+        ],
+        "is_realtime": true,
+        "verified_depth": {
+          "rating": "marketing_inflated",
+          "evidence": "Zero SNN PhDs on team (CEO is ex-CMO). Zero publications. Zero granted patents. Likely time-series anomaly detection + Granger causality. Real customers (NVIDIA, Delta) but science overstated. $145M raised, $645M valuation.",
+          "publications": 0,
+          "verified": true
+        }
+      }
+    ]
+  },
+  {
+    "id": 39100,
+    "key": "cresta-com",
+    "name": "Real-Time Contact Center AI",
+    "domain": "cresta.com",
+    "website": "https://cresta.com",
+    "core_differentiator": "Domain-specific fine-tuned LLMs for contact center conversations with per-customer LoRA adapters.",
+    "automation_level": "semi-auto",
+    "publications": {
+      "arxiv": 0,
+      "conference": 0,
+      "patents_granted": 14
+    },
+    "features": [
+      {
+        "name": "Ocean-1 Contact Center Model",
+        "category": "engagement",
+        "description": "Fine-tuned Mistral/Mixtral models for real-time contact center conversation analysis, coaching, and automation.",
+        "ai_implementation": "LoRA fine-tuning of Mistral/Mixtral on contact center data. Per-customer adapters served via Fireworks. 4-layer progressive fine-tuning (Ocean Paradigm).",
+        "data_sources": [
+          "call transcripts",
+          "chat logs",
+          "CRM data",
+          "agent performance data"
+        ],
+        "is_realtime": true,
+        "verified_depth": {
+          "rating": "fine_tuned_wrapper",
+          "evidence": "Standard LoRA + Mistral/Mixtral. No published research. 14 process patents. Moat is product integration (Genesys, Five9), not ML. $52M revenue, $1.6B valuation. Stanford AI Lab PhDs + Sebastian Thrun.",
+          "publications": 0,
+          "verified": true
+        }
+      }
+    ]
+  },
+  {
+    "id": 39101,
+    "key": "sumble-com",
+    "name": "AI Sales Intelligence via Knowledge Graph",
+    "domain": "sumble.com",
+    "website": "https://sumble.com",
+    "core_differentiator": "NLP-extracted technographic intelligence from job postings with department-level granularity.",
+    "automation_level": "semi-auto",
+    "publications": {
+      "arxiv": 0,
+      "conference": 0,
+      "patents_granted": 0
+    },
+    "features": [
+      {
+        "name": "Technographic Knowledge Graph",
+        "category": "enrichment",
+        "description": "Department-level technology detection from job postings via NLP entity extraction, covering 2.6M companies.",
+        "ai_implementation": "BERT/LongFormer NER on job postings for department-level technology detection. Entity linking and deduplication. PostgreSQL/AlloyDB, not graph database.",
+        "data_sources": [
+          "job postings",
+          "professional profiles",
+          "company websites",
+          "regulatory filings"
+        ],
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "practitioner",
+          "evidence": "Honest NLP pipeline (NER + entity linking). No graph ML or GNNs despite knowledge graph branding. Kaggle founders (Goldbloom + Hamner). 19 enterprise customers. $38.5M raised.",
+          "publications": 0,
+          "verified": true
+        }
+      }
+    ]
   }
 ]
