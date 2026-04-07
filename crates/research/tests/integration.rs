@@ -208,6 +208,8 @@ fn dedup_papers_by_normalized_title() {
         published_date: None,
         primary_category: None,
         categories: None,
+        affiliations: None,
+        venue: None,
     };
 
     let mut papers = vec![
@@ -249,6 +251,8 @@ fn dedup_removes_empty_titles() {
             published_date: None,
             primary_category: None,
             categories: None,
+            affiliations: None,
+            venue: None,
         },
         ResearchPaper {
             title: "   ".to_string(),
@@ -265,6 +269,8 @@ fn dedup_removes_empty_titles() {
             published_date: None,
             primary_category: None,
             categories: None,
+            affiliations: None,
+            venue: None,
         },
     ];
 
@@ -298,6 +304,8 @@ fn papers_sort_by_citations_descending() {
         published_date: None,
         primary_category: None,
         categories: None,
+        affiliations: None,
+        venue: None,
     };
 
     let mut papers = vec![

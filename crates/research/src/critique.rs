@@ -598,6 +598,8 @@ mod tests {
             published_date: None,
             primary_category: None,
             categories: None,
+            affiliations: None,
+            venue: None,
         }
     }
 
@@ -624,6 +626,8 @@ mod tests {
             published_date: None,
             primary_category: None,
             categories: None,
+            affiliations: None,
+            venue: None,
         }
     }
 

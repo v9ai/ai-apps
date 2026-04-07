@@ -27,6 +27,8 @@ fn make_paper(title: &str, abstract_text: Option<&str>) -> ResearchPaper {
         published_date: None,
         primary_category: None,
         categories: None,
+        affiliations: None,
+        venue: None,
     }
 }
 

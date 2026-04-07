@@ -193,6 +193,8 @@ fn paper_from_batch(batch: &RecordBatch, i: usize) -> (ResearchPaper, f32) {
         published_date,
         primary_category,
         categories,
+        affiliations: None,
+        venue: None,
     };
 
     (paper, dist)
@@ -958,6 +960,8 @@ mod tests {
             published_date: None,
             primary_category: None,
             categories: None,
+            affiliations: None,
+            venue: None,
         }
     }
 

@@ -462,6 +462,8 @@ fn format_research_papers_includes_source() {
         published_date: None,
         primary_category: None,
         categories: None,
+        affiliations: None,
+        venue: None,
     }];
 
     let output = format_research_papers(&papers, &SearchToolConfig::default(), "test query", 1);
@@ -492,6 +494,8 @@ fn format_paper_detail_includes_all_fields() {
         published_date: None,
         primary_category: None,
         categories: None,
+        affiliations: None,
+        venue: None,
     };
 
     let output = format_paper_detail(&paper);

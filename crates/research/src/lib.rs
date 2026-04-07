@@ -30,6 +30,7 @@
 //! |------|--------|
 //! | `local-vector` | Enables Candle-based local embeddings, LanceDB vector store, text chunker, and semantic diversity scoring in critique. |
 
+pub mod affiliation;
 pub mod agent;
 pub mod arxiv;
 pub mod code;
@@ -38,6 +39,7 @@ pub mod critique;
 pub mod crossref;
 pub mod dual;
 pub mod embeddings;
+pub mod ml_depth;
 pub mod openalex;
 pub mod paper;
 pub mod retry;
@@ -56,6 +58,7 @@ pub mod local_embeddings;
 #[cfg_attr(docsrs, doc(cfg(feature = "local-vector")))]
 pub mod vector;
 
+pub use affiliation::CompanyPaperSearch;
 pub use agent::LlmProvider;
 pub use arxiv::ArxivClient;
 pub use core_api::CoreClient;
@@ -63,6 +66,7 @@ pub use critique::{Critique, CritiqueConfig, DimensionScores, DimensionWeights};
 pub use crossref::CrossrefClient;
 pub use dual::{DualModelResearcher, MultiModelResearcher, MultiResponse};
 pub use embeddings::{EmbeddingRanker, Ranker};
+pub use ml_depth::{MlDepthConfig, MlDepthDimensions, MlDepthScore, MlDepthVerdict};
 pub use openalex::OpenAlexClient;
 pub use paper::ResearchPaper;
 pub use retry::RetryConfig;

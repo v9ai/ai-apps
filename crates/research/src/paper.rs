@@ -217,6 +217,8 @@ impl From<CrossrefWork> for ResearchPaper {
             published_date,
             primary_category: None,
             categories: None,
+            affiliations: None,
+            venue: None,
         }
     }
 }
@@ -257,6 +259,8 @@ impl From<CoreWork> for ResearchPaper {
             published_date,
             primary_category: None,
             categories: None,
+            affiliations: None,
+            venue: None,
         }
     }
 }
@@ -293,6 +297,8 @@ impl From<ArxivPaper> for ResearchPaper {
             published_date,
             primary_category,
             categories,
+            affiliations: None,
+            venue: None,
         }
     }
 }
@@ -356,6 +362,8 @@ impl From<ZenodoRecord> for ResearchPaper {
             published_date,
             primary_category,
             categories,
+            affiliations: None,
+            venue: None,
         }
     }
 }
@@ -447,6 +455,8 @@ mod dedup_tests {
             published_date: None,
             primary_category: None,
             categories: None,
+            affiliations: None,
+            venue: None,
         }
     }
 
