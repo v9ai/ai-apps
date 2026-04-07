@@ -5,7 +5,7 @@
 //!   - anchor (query/job title): 2_Asym/6235903824_Dense/
 //!   - positive (document/skill): 2_Asym/6235904160_Dense/
 
-use candle_core::{DType, Device, Module, Tensor};
+use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
 use candle_transformers::models::xlm_roberta::{Config, XLMRobertaModel};
 use hf_hub::{api::sync::Api, Repo, RepoType};
@@ -105,7 +105,7 @@ impl JobBertEmbedder {
 
         tracing::info!("JobBERT-v3 ready (dim={OUTPUT_DIM}, max_seq={MAX_SEQ_LEN})");
 
-        Ok(Self { model, tokenizer, anchor_dense, positive_dense, device })
+        Ok(Self { model, tokenizer, anchor_dense, positive_dense, device: device.clone() })
     }
 
     /// Output embedding dimensionality.

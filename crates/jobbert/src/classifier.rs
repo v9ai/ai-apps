@@ -58,7 +58,7 @@ impl SkillClassifier {
 
         tracing::info!("Skill classifier ready (labels={NUM_LABELS})");
 
-        Ok(Self { bert, classifier_weight, classifier_bias, tokenizer, device })
+        Ok(Self { bert, classifier_weight, classifier_bias, tokenizer, device: device.clone() })
     }
 
     /// Extract skill spans from a single text.

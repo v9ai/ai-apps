@@ -14,12 +14,15 @@ cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
 candle-core = "0.8"
 candle-nn = "0.8"
 candle-transformers = "0.8"
-hf-hub = "0.3"
+hf-hub = "0.4"
 tokenizers = "0.21"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
 tracing = "0.1"
+
+[dev-dependencies]
+tracing-subscriber = "0.3"
 
 [[example]]
 name = "embed"
