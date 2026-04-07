@@ -178,6 +178,33 @@ class EmailGenerator:
             },
         }
 
+    def predict(self, text: str, **kwargs) -> dict:
+        """Generate email from plain text context.
+
+        Parses text as the prospect description and generates an email.
+        For structured input, use .generate(ProspectContext(...)) directly.
+        """
+        context = ProspectContext(name="", company="")
+        # Try to extract structure from free text
+        if ":" in text:
+            for line in text.strip().split("\n"):
+                if ":" in line:
+                    key, _, val = line.partition(":")
+                    key = key.strip().lower().replace(" ", "_")
+                    val = val.strip()
+                    if hasattr(context, key):
+                        setattr(context, key, val)
+        if not context.name and not context.company:
+            # Use raw text as company context
+            context.company = text.strip()
+
+        email_type = kwargs.get("email_type", "initial_outreach")
+
+        if not self._loaded:
+            self.load()
+
+        return self.generate(context, email_type=email_type)
+
     def unload(self) -> None:
         """Release model from memory."""
         self.model = None

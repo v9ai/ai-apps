@@ -28,6 +28,12 @@ def register_module(name: str, cls: type, **kwargs: Any) -> None:
     MODULE_REGISTRY[name] = (cls, kwargs)
 
 
+def list_modules() -> list[str]:
+    """Return a list of all available module names."""
+    _ensure_registry()
+    return list(MODULE_REGISTRY.keys())
+
+
 def _ensure_registry() -> None:
     """Populate the registry on first use."""
     if MODULE_REGISTRY:
@@ -44,6 +50,7 @@ def _ensure_registry() -> None:
     from .modules.sentiment import DisentangledSentimentIntentHead
     from .modules.entities import EntityExtractor
     from .modules.objection import ObjectionPreClassifier
+    from .modules.emailgen import EmailGenerator
 
     register_module("score", LeadScorer)
     register_module("intent", NeuralHawkesIntentPredictor)
@@ -56,6 +63,7 @@ def _ensure_registry() -> None:
     register_module("sentiment", DisentangledSentimentIntentHead)
     register_module("entities", EntityExtractor)
     register_module("objection", ObjectionPreClassifier)
+    register_module("emailgen", EmailGenerator)
 
 
 class Engine:
@@ -89,7 +97,9 @@ class Engine:
                     f"Unknown module '{name}'. Available: {list(MODULE_REGISTRY.keys())}"
                 )
             cls, kwargs = MODULE_REGISTRY[name]
-            module = cls(**kwargs).to(device).eval()
+            module = cls(**kwargs)
+            if isinstance(module, torch.nn.Module):
+                module = module.to(device).eval()
             self._modules[name] = module
 
         self._loaded = True
