@@ -1178,6 +1178,7 @@ mod tests {
             ],
             model_configs,
             model_maturity: vec![], // no maturity data → no penalty
+            sales_signals: vec![],
         };
         let score = OrgScanner::compute_hf_score(&profile);
         assert!(score >= 0.95, "research-heavy org should score near 1.0, got {score}");
@@ -1257,6 +1258,7 @@ mod tests {
             arxiv_links: vec![],
             model_configs: HashMap::new(),
             model_maturity: vec![],
+            sales_signals: vec![],
         };
 
         let single = OrgProfile { model_configs: configs_single, ..base.clone() };
@@ -1535,6 +1537,7 @@ mod tests {
             arxiv_links: vec!["https://arxiv.org/abs/1910.09700".into()],
             model_configs: HashMap::new(),
             model_maturity: vec![], // no maturity → no penalty (baseline)
+            sales_signals: vec![],
         };
 
         let with_trivial = OrgProfile {
@@ -1682,6 +1685,66 @@ tags:
         let readme = "";
         let tags = vec!["trl".into(), "kto".into()];
         assert_eq!(OrgScanner::detect_cookbook_recipe(readme, &tags), Some("TRL".into()));
+    }
+
+    // ── Sales signal detection tests ──────────────────────────────
+
+    #[test]
+    fn sales_email_outreach_from_repo_name() {
+        let signals = OrgScanner::detect_sales_signals("potbelly/email_sales", "", &[]);
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].category, SalesCategory::EmailOutreach);
+    }
+
+    #[test]
+    fn sales_conversation_from_readme() {
+        let readme = "This model was fine-tuned for sales conversation coaching.";
+        let signals = OrgScanner::detect_sales_signals("org/model", readme, &[]);
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].category, SalesCategory::SalesConversation);
+    }
+
+    #[test]
+    fn sales_intent_scoring() {
+        let signals = OrgScanner::detect_sales_signals(
+            "SrihariV/b2b-intent-signal-classifier",
+            "B2B intent signal classification model.",
+            &["text-classification".into()],
+        );
+        assert!(signals.iter().any(|s| s.category == SalesCategory::IntentScoring));
+    }
+
+    #[test]
+    fn sales_enrichment_technographic() {
+        let readme = "NER model for technographic intelligence from job postings.";
+        let signals = OrgScanner::detect_sales_signals("sumble/ner-model", readme, &[]);
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].category, SalesCategory::Enrichment);
+    }
+
+    #[test]
+    fn sales_general_from_platform_brand() {
+        let signals = OrgScanner::detect_sales_signals("salesloft/some-model", "", &[]);
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].category, SalesCategory::General);
+    }
+
+    #[test]
+    fn sales_forecasting_from_tags() {
+        let signals = OrgScanner::detect_sales_signals(
+            "org/model",
+            "",
+            &["sales forecasting".into()],
+        );
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].category, SalesCategory::Forecasting);
+    }
+
+    #[test]
+    fn no_sales_signal_for_generic_model() {
+        let readme = "We trained a BERT model on Wikipedia for NER.";
+        let signals = OrgScanner::detect_sales_signals("org/bert-ner", readme, &["ner".into()]);
+        assert!(signals.is_empty());
     }
 
     fn make_dummy_repo() -> RepoInfo {

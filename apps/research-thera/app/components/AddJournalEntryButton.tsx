@@ -32,7 +32,6 @@ interface EditEntry {
   entryDate: string;
   familyMemberId?: number | null;
   goalId?: number | null;
-  isPrivate: boolean;
   tags?: string[] | null;
 }
 
@@ -49,7 +48,6 @@ const defaultForm = () => ({
   entryDate: today(),
   familyMemberId: "",
   goalId: "",
-  isPrivate: true,
   tags: "",
 });
 
@@ -141,7 +139,7 @@ export default function AddJournalEntryButton({
               entryDate: form.entryDate,
               familyMemberId: form.familyMemberId ? parseInt(form.familyMemberId, 10) : undefined,
               goalId: form.goalId ? parseInt(form.goalId, 10) : undefined,
-              isPrivate: form.isPrivate,
+              isPrivate: true,
               tags: parsedTags.length > 0 ? parsedTags : undefined,
             },
           },
@@ -156,7 +154,7 @@ export default function AddJournalEntryButton({
               entryDate: form.entryDate,
               familyMemberId: form.familyMemberId ? parseInt(form.familyMemberId, 10) : undefined,
               goalId: form.goalId ? parseInt(form.goalId, 10) : undefined,
-              isPrivate: form.isPrivate,
+              isPrivate: true,
               tags: parsedTags.length > 0 ? parsedTags : undefined,
             },
           },
