@@ -1,0 +1,30 @@
+type ApplicationNote {
+  id: ID!
+  applicationId: ID!
+  title: String!
+  content: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Query {
+  applicationNotes(applicationId: ID!): [ApplicationNote!]!
+  applicationNote(id: ID!): ApplicationNote
+}
+
+input CreateApplicationNoteInput {
+  applicationId: ID!
+  title: String!
+  content: String!
+}
+
+input UpdateApplicationNoteInput {
+  title: String
+  content: String
+}
+
+type Mutation {
+  createApplicationNote(input: CreateApplicationNoteInput!): ApplicationNote!
+  updateApplicationNote(id: ID!, input: UpdateApplicationNoteInput!): ApplicationNote!
+  deleteApplicationNote(id: ID!): Boolean!
+}

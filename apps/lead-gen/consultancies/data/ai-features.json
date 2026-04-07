@@ -547,15 +547,27 @@
     },
     "hf_profile": {
       "org": "assemblyai",
-      "hf_score": 0.023,
+      "hf_score": 0.223,
       "models": 3,
       "datasets": 0,
       "spaces": 2,
       "total_downloads": 704,
-      "training_signals": 0,
+      "total_likes": 25,
+      "training_signals": 6,
+      "signal_types": ["ArxivCitation", "FineTuning"],
       "libraries": ["transformers"],
       "pipeline_tags": ["text-classification"],
-      "note": "HF presence is 3 demo BERT/DistilBERT fine-tunes — not their core Conformer speech models (proprietary, not on HF)."
+      "arxiv_from_cards": ["https://arxiv.org/abs/1810.04805", "https://arxiv.org/abs/1910.01108"],
+      "models_detail": [
+        "assemblyai/distilbert-base-uncased-qqp (DistilBERT, text-classification, dl=427)",
+        "assemblyai/distilbert-base-uncased-sst2 (DistilBERT, text-classification, dl=139)",
+        "assemblyai/bert-large-uncased-sst2 (BERT-Large, text-classification, dl=138)"
+      ],
+      "spaces_detail": [
+        "assemblyai/Conformer1-Demo (gradio, likes=19, RUNTIME_ERROR)",
+        "assemblyai/Conformer2-Demo (gradio, likes=3, RUNNING)"
+      ],
+      "note": "HF models are 3 blog-post demo fine-tunes (BERT/DistilBERT on SST2/QQP). ArXiv refs are to original BERT/DistilBERT papers, not AssemblyAI's own. Core Conformer speech models are proprietary. Spaces are Conformer API demos (one broken). Real ML moat is not on HF."
     }
   },
   {
@@ -920,15 +932,32 @@
     },
     "hf_profile": {
       "org": "sumble",
-      "hf_score": 0.088,
+      "hf_score": 0.138,
       "models": 1,
       "datasets": 1,
       "spaces": 0,
       "total_downloads": 7,
-      "training_signals": 1,
+      "total_likes": 0,
+      "training_signals": 4,
+      "signal_types": ["TrainingArgs", "FineTuning"],
       "libraries": ["transformers"],
       "pipeline_tags": ["token-classification"],
-      "note": "Real NER model (sumble/ner-pass2-test-0) with training_args.bin — confirms actual model training. 1 test dataset. Small but honest."
+      "arxiv_from_cards": [],
+      "models_detail": [
+        "sumble/ner-pass2-test-0 (LongFormer, token-classification, dl=1, fine-tuned from allenai/longformer-base-4096)"
+      ],
+      "datasets_detail": [
+        "sumble/test (json, n<1K rows, dl=6, conversations.json)"
+      ],
+      "training_hyperparams": {
+        "learning_rate": "2e-05",
+        "train_batch_size": 1,
+        "optimizer": "Adam(0.9,0.999)",
+        "lr_scheduler": "linear",
+        "training_steps": 10,
+        "framework": "Transformers 4.30.2 + PyTorch 2.0.0"
+      },
+      "note": "Real NER model fine-tuned from allenai/longformer-base-4096 with training artifacts (training_args.bin, hyperparams in card). Only 10 training steps — likely a test/prototype checkpoint. 1 small JSON dataset. Honest but minimal."
     },
     "features": [
       {

@@ -122,14 +122,18 @@ impl HfClient {
                 async move {
                     let path = req.path.as_deref().unwrap_or("README.md");
                     let rev = req.revision.as_deref().unwrap_or("main");
-                    let url = format!(
-                        "{}/{}/{}/resolve/{}/{}",
-                        HF_RAW_BASE,
-                        req.repo_type.api_prefix(),
-                        req.repo_id,
-                        rev,
-                        path
-                    );
+                    let prefix = req.repo_type.raw_prefix();
+                    let url = if prefix.is_empty() {
+                        format!(
+                            "{}/{}/resolve/{}/{}",
+                            HF_RAW_BASE, req.repo_id, rev, path
+                        )
+                    } else {
+                        format!(
+                            "{}/{}/{}/resolve/{}/{}",
+                            HF_RAW_BASE, prefix, req.repo_id, rev, path
+                        )
+                    };
                     debug!(repo = %req.repo_id, %path, "fetching raw file");
                     match fetch_text(&client, &url, &req.repo_id).await {
                         Ok(data) => FetchResult::Ok { repo_id: req.repo_id, data },

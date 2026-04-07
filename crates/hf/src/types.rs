@@ -16,6 +16,17 @@ impl RepoType {
         }
     }
 
+    /// URL prefix for raw file access via `huggingface.co/{prefix}/{repo}/resolve/...`.
+    /// Models are served at the root (`/{repo}`), datasets at `/datasets/{repo}`,
+    /// spaces at `/spaces/{repo}`.
+    pub fn raw_prefix(&self) -> &'static str {
+        match self {
+            Self::Model => "",
+            Self::Dataset => "datasets",
+            Self::Space => "spaces",
+        }
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Model => "model",

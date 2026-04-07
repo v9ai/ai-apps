@@ -1,9 +1,12 @@
 [
   {
-    "arxiv_links": [],
+    "arxiv_links": [
+      "https://arxiv.org/abs/1810.04805",
+      "https://arxiv.org/abs/1910.01108"
+    ],
     "dataset_count": 0,
     "datasets": [],
-    "hf_score": 0.023000000044703484,
+    "hf_score": 0.22300000488758087,
     "libraries_used": [
       [
         "transformers",
@@ -15,6 +18,7 @@
       {
         "author": "assemblyai",
         "card_data": null,
+        "card_text": "# DistilBERT-Base-Uncased for Duplicate Question Detection\nThis model is a fine-tuned version of [distilbert-base-uncased](https://huggingface.co/distilbert-base-uncased) originally released in [\"DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter\"](https://arxiv.org/abs/1910.01108) and trained on the [Quora Question Pairs](https://quoradata.quora.com/First-Quora-Dataset-Release-Question-Pairs) dataset; part of the [General Language Understanding Evaluation (GLUE)](https://gluebenchmark.com) benchmark. This model was fine-tuned by the team at [AssemblyAI](https://www.assemblyai.com) and is released with the [corresponding blog post]().  \n\n## Usage\nTo download and utilize this model for duplicate question detection please execute the following:\n```python\nimport torch.nn.functional as F \nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\ntokenizer = AutoTokenizer.from_pretrained(\"assemblyai/distilbert-base-uncased-qqp\")\nmodel = AutoModelForSequenceClassification.from_pretrained(\"assemblyai/distilbert-base-uncased-qqp\")\n\ntokenized_segments = tokenizer([\"How many hours does it take to fly from California to New York?\"], [\"What is the flight time from New York to Seattle?\"], return_tensors=\"pt\", padding=True, truncation=True)\ntokenized_segments_input_ids, tokenized_segments_attention_mask = tokenized_segments.input_ids, tokenized_segments.attention_mask\nmodel_predictions = F.softmax(model(input_ids=tokenized_segments_input_ids, attention_mask=tokenized_segments_attention_mask)['logits'], dim=1)\n\nprint(\"Duplicate probability: \"+str(model_predictions[0][1].item()*100)+\"%\")\nprint(\"Non-duplicate probability: \"+str(model_predictions[0][0].item()*100)+\"%\")\n```\n\nFor questions about how to use this model feel free to contact the team at [AssemblyAI](https://www.assemblyai.com)!",
         "created_at": "2022-03-02T23:29:05.000Z",
         "description": null,
         "disabled": null,
@@ -73,6 +77,7 @@
       {
         "author": "assemblyai",
         "card_data": null,
+        "card_text": "# DistilBERT-Base-Uncased for Sentiment Analysis\nThis model is a fine-tuned version of [distilbert-base-uncased](https://huggingface.co/distilbert-base-uncased) originally released in [\"DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter\"](https://arxiv.org/abs/1910.01108) and trained on the [Stanford Sentiment Treebank v2 (SST2)](https://nlp.stanford.edu/sentiment/); part of the [General Language Understanding Evaluation (GLUE)](https://gluebenchmark.com) benchmark. This model was fine-tuned by the team at [AssemblyAI](https://www.assemblyai.com) and is released with the [corresponding blog post]().  \n\n## Usage\nTo download and utilize this model for sentiment analysis please execute the following:\n```python\nimport torch.nn.functional as F \nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\ntokenizer = AutoTokenizer.from_pretrained(\"assemblyai/distilbert-base-uncased-sst2\")\nmodel = AutoModelForSequenceClassification.from_pretrained(\"assemblyai/distilbert-base-uncased-sst2\")\n\ntokenized_segments = tokenizer([\"AssemblyAI is the best speech-to-text API for modern developers with performance being second to none!\"], return_tensors=\"pt\", padding=True, truncation=True)\ntokenized_segments_input_ids, tokenized_segments_attention_mask = tokenized_segments.input_ids, tokenized_segments.attention_mask\nmodel_predictions = F.softmax(model(input_ids=tokenized_segments_input_ids, attention_mask=tokenized_segments_attention_mask)['logits'], dim=1)\n\nprint(\"Positive probability: \"+str(model_predictions[0][1].item()*100)+\"%\")\nprint(\"Negative probability: \"+str(model_predictions[0][0].item()*100)+\"%\")\n```\n\nFor questions about how to use this model feel free to contact the team at [AssemblyAI](https://www.assemblyai.com)!",
         "created_at": "2022-03-02T23:29:05.000Z",
         "description": null,
         "disabled": null,
@@ -131,6 +136,7 @@
       {
         "author": "assemblyai",
         "card_data": null,
+        "card_text": "# BERT-Large-Uncased for Sentiment Analysis\nThis model is a fine-tuned version of [bert-large-uncased](https://huggingface.co/bert-large-uncased) originally released in [\"BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding\"](https://arxiv.org/abs/1810.04805) and trained on the [Stanford Sentiment Treebank v2 (SST2)](https://nlp.stanford.edu/sentiment/); part of the [General Language Understanding Evaluation (GLUE)](https://gluebenchmark.com) benchmark. This model was fine-tuned by the team at [AssemblyAI](https://www.assemblyai.com) and is released with the [corresponding blog post]().  \n\n## Usage\nTo download and utilize this model for sentiment analysis please execute the following:\n```python\nimport torch.nn.functional as F \nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\ntokenizer = AutoTokenizer.from_pretrained(\"assemblyai/bert-large-uncased-sst2\") \nmodel = AutoModelForSequenceClassification.from_pretrained(\"assemblyai/bert-large-uncased-sst2\")\n\ntokenized_segments = tokenizer([\"AssemblyAI is the best speech-to-text API for modern developers with performance being second to none!\"], return_tensors=\"pt\", padding=True, truncation=True)\ntokenized_segments_input_ids, tokenized_segments_attention_mask = tokenized_segments.input_ids, tokenized_segments.attention_mask\nmodel_predictions = F.softmax(model(input_ids=tokenized_segments_input_ids, attention_mask=tokenized_segments_attention_mask)['logits'], dim=1)\n\nprint(\"Positive probability: \"+str(model_predictions[0][1].item()*100)+\"%\")\nprint(\"Negative probability: \"+str(model_predictions[0][0].item()*100)+\"%\")\n```\n\nFor questions about how to use this model feel free to contact the team at [AssemblyAI](https://www.assemblyai.com)!",
         "created_at": "2022-03-02T23:29:05.000Z",
         "description": null,
         "disabled": null,
@@ -198,6 +204,16 @@
     "spaces": [
       {
         "author": "assemblyai",
+        "card_data": {
+          "app_file": "app.py",
+          "colorFrom": "blue",
+          "colorTo": "green",
+          "emoji": "👁",
+          "pinned": false,
+          "sdk": "gradio",
+          "sdk_version": "3.21.0",
+          "title": "Conformer1 Demo"
+        },
         "created_at": "2023-03-16T18:10:51.000Z",
         "description": null,
         "downloads": null,
@@ -250,6 +266,16 @@
       },
       {
         "author": "assemblyai",
+        "card_data": {
+          "app_file": "app.py",
+          "colorFrom": "pink",
+          "colorTo": "gray",
+          "emoji": "🌖",
+          "pinned": false,
+          "sdk": "gradio",
+          "sdk_version": "3.41.2",
+          "title": "Conformer2 Demo"
+        },
         "created_at": "2023-08-29T12:46:24.000Z",
         "description": null,
         "downloads": null,
@@ -298,7 +324,39 @@
       }
     ],
     "total_downloads": 704,
-    "training_signals": []
+    "total_likes": 25,
+    "training_signals": [
+      {
+        "evidence": "https://arxiv.org/abs/1910.01108",
+        "repo_id": "assemblyai/distilbert-base-uncased-sst2",
+        "signal_type": "ArxivCitation"
+      },
+      {
+        "evidence": "'fine-tuned' mentioned in model card",
+        "repo_id": "assemblyai/distilbert-base-uncased-sst2",
+        "signal_type": "FineTuning"
+      },
+      {
+        "evidence": "https://arxiv.org/abs/1910.01108",
+        "repo_id": "assemblyai/distilbert-base-uncased-qqp",
+        "signal_type": "ArxivCitation"
+      },
+      {
+        "evidence": "'fine-tuned' mentioned in model card",
+        "repo_id": "assemblyai/distilbert-base-uncased-qqp",
+        "signal_type": "FineTuning"
+      },
+      {
+        "evidence": "https://arxiv.org/abs/1810.04805",
+        "repo_id": "assemblyai/bert-large-uncased-sst2",
+        "signal_type": "ArxivCitation"
+      },
+      {
+        "evidence": "'fine-tuned' mentioned in model card",
+        "repo_id": "assemblyai/bert-large-uncased-sst2",
+        "signal_type": "FineTuning"
+      }
+    ]
   },
   {
     "arxiv_links": [],
@@ -330,7 +388,7 @@
         ]
       }
     ],
-    "hf_score": 0.08799999952316284,
+    "hf_score": 0.1379999965429306,
     "libraries_used": [
       [
         "transformers",
@@ -342,6 +400,7 @@
       {
         "author": "sumble",
         "card_data": null,
+        "card_text": "---\nlicense: apache-2.0\ntags:\n- generated_from_trainer\nmodel-index:\n- name: ner-pass2-test-0\n  results: []\n---\n\n<!-- This model card has been generated automatically according to the information the Trainer had access to. You\nshould probably proofread and complete it, then remove this comment. -->\n\n# ner-pass2-test-0\n\nThis model is a fine-tuned version of [allenai/longformer-base-4096](https://huggingface.co/allenai/longformer-base-4096) on the None dataset.\n\n## Model description\n\nMore information needed\n\n## Intended uses & limitations\n\nMore information needed\n\n## Training and evaluation data\n\nMore information needed\n\n## Training procedure\n\n### Training hyperparameters\n\nThe following hyperparameters were used during training:\n- learning_rate: 2e-05\n- train_batch_size: 1\n- eval_batch_size: 8\n- seed: 42\n- optimizer: Adam with betas=(0.9,0.999) and epsilon=1e-08\n- lr_scheduler_type: linear\n- training_steps: 10\n\n### Training results\n\n\n\n### Framework versions\n\n- Transformers 4.30.2\n- Pytorch 2.0.0\n- Datasets 2.1.0\n- Tokenizers 0.13.3\n",
         "created_at": "2023-08-18T23:56:19.000Z",
         "description": null,
         "disabled": null,
@@ -425,7 +484,23 @@
     "space_count": 0,
     "spaces": [],
     "total_downloads": 7,
+    "total_likes": 0,
     "training_signals": [
+      {
+        "evidence": "learning_rate parameter",
+        "repo_id": "sumble/ner-pass2-test-0",
+        "signal_type": "TrainingArgs"
+      },
+      {
+        "evidence": "training procedure documented",
+        "repo_id": "sumble/ner-pass2-test-0",
+        "signal_type": "TrainingArgs"
+      },
+      {
+        "evidence": "'fine-tuned' mentioned in model card",
+        "repo_id": "sumble/ner-pass2-test-0",
+        "signal_type": "FineTuning"
+      },
       {
         "evidence": "training_args.bin present",
         "repo_id": "sumble/ner-pass2-test-0",
