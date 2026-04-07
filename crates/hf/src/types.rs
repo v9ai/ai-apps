@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::fmt;
+use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -36,13 +38,24 @@ impl RepoType {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+}
+
+impl FromStr for RepoType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "model" => Some(Self::Model),
-            "dataset" => Some(Self::Dataset),
-            "space" => Some(Self::Space),
-            _ => None,
+            "model" => Ok(Self::Model),
+            "dataset" => Ok(Self::Dataset),
+            "space" => Ok(Self::Space),
+            _ => Err(format!("unknown repo type: {s}")),
         }
+    }
+}
+
+impl fmt::Display for RepoType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
