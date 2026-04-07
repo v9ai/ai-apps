@@ -6,6 +6,11 @@ We model both ICP and prospect as distributions in embedding space and compute t
 Wasserstein distance (earth mover's distance) for matching.
 """
 
+from __future__ import annotations
+
+import json
+from typing import Any
+
 import torch
 import torch.nn as nn
 
@@ -50,10 +55,33 @@ class WassersteinICPMatcher(BaseModule):
         self.thresholds = nn.Parameter(torch.zeros(len(DIMS)))
 
     def process(self, encoded, text, **kwargs):
-        raise NotImplementedError(
-            "WassersteinICPMatcher requires separate ICP and prospect embeddings. "
-            "Use module.match(icp_cls, prospect_cls, prospect_completeness) directly."
-        )
+        """Process paired ICP/prospect text passed as JSON.
+
+        Accepts text as a JSON object: {"icp": "...", "prospect": "..."}
+        Encodes each separately through the backbone and calls match().
+        """
+        pair = _parse_pair(text)
+        icp_encoded = self.encode(pair["icp"])
+        prospect_encoded = self.encode(pair["prospect"])
+        icp_cls = icp_encoded["encoder_output"].last_hidden_state[:, 0]
+        prospect_cls = prospect_encoded["encoder_output"].last_hidden_state[:, 0]
+        return self.match(icp_cls, prospect_cls)
+
+    def predict(self, text: str, **kwargs: Any) -> dict[str, Any]:
+        """Public API — accepts JSON or dict with icp/prospect keys.
+
+        Usage:
+            model.predict('{"icp": "Mid-market SaaS", "prospect": "300-person fintech"}')
+        """
+        from ..validation import validate_text
+        pair = _parse_pair(text)
+        validate_text(pair["icp"])
+        validate_text(pair["prospect"])
+        icp_encoded = self.encode(pair["icp"])
+        prospect_encoded = self.encode(pair["prospect"])
+        icp_cls = icp_encoded["encoder_output"].last_hidden_state[:, 0]
+        prospect_cls = prospect_encoded["encoder_output"].last_hidden_state[:, 0]
+        return self.match(icp_cls, prospect_cls)
 
     def match(self, icp_cls, prospect_cls, prospect_completeness=None):
         if prospect_completeness is None:
@@ -113,3 +141,22 @@ class WassersteinICPMatcher(BaseModule):
             "dealbreakers": dealbreakers,
             "missing": missing,
         }
+
+
+def _parse_pair(text: str | dict) -> dict[str, str]:
+    """Parse ICP/prospect pair from JSON string or dict."""
+    if isinstance(text, dict):
+        pair = text
+    else:
+        try:
+            pair = json.loads(text)
+        except (json.JSONDecodeError, TypeError):
+            raise ValueError(
+                'ICP matcher requires JSON: {"icp": "...", "prospect": "..."}'
+            ) from None
+    if not isinstance(pair, dict) or "icp" not in pair or "prospect" not in pair:
+        raise ValueError(
+            'ICP matcher requires keys "icp" and "prospect". '
+            f"Got: {list(pair.keys()) if isinstance(pair, dict) else type(pair).__name__}"
+        )
+    return pair

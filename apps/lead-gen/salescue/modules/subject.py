@@ -7,6 +7,11 @@ model takes (subject_A, subject_B, context) and predicts the winner conditioned 
 prospect.
 """
 
+from __future__ import annotations
+
+import json
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -51,10 +56,32 @@ class ContextualBradleyTerry(BaseModule):
         )
 
     def process(self, encoded, text, **kwargs):
-        raise NotImplementedError(
-            "ContextualBradleyTerry requires subject embeddings. "
-            "Use module.score(), module.compare(), or module.rank()."
-        )
+        """Process subject lines passed as JSON list.
+
+        Accepts text as a JSON array: ["Subject A", "Subject B", ...]
+        Encodes each through the backbone and returns a ranking.
+        """
+        subjects = _parse_subjects(text)
+        embeds = [
+            self.encode(s)["encoder_output"].last_hidden_state[:, 0]
+            for s in subjects
+        ]
+        return self.rank(embeds, subjects)
+
+    def predict(self, text: str, **kwargs: Any) -> dict[str, Any]:
+        """Public API — accepts JSON array of subject lines.
+
+        Usage:
+            model.predict('["Quick question about Q3", "URGENT: Limited offer!!!"]')
+        """
+        from ..validation import validate_subjects
+        subjects = _parse_subjects(text)
+        validate_subjects(subjects)
+        embeds = [
+            self.encode(s)["encoder_output"].last_hidden_state[:, 0]
+            for s in subjects
+        ]
+        return self.rank(embeds, subjects)
 
     def score(self, subject_embed, context=None):
         s = self.subject_proj(subject_embed)
@@ -96,3 +123,20 @@ class ContextualBradleyTerry(BaseModule):
         loss = F.relu(margin - (s_win - s_lose)).mean()
 
         return loss
+
+
+def _parse_subjects(text: str | list) -> list[str]:
+    """Parse subject line list from JSON string or list."""
+    if isinstance(text, list):
+        return text
+    try:
+        parsed = json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        raise ValueError(
+            'Subject ranker requires a JSON array: ["Subject A", "Subject B"]'
+        ) from None
+    if not isinstance(parsed, list) or len(parsed) < 2:
+        raise ValueError(
+            "Subject ranker requires at least 2 subject lines for comparison."
+        )
+    return parsed
