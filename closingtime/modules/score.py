@@ -151,6 +151,7 @@ class LeadScorer(BaseModule):
     description = "Causal signal attribution via learned interventions"
 
     LABELS = ["hot", "warm", "cold", "disqualified"]
+    THRESHOLDS = [75, 50, 25]  # score >= 75 -> hot, >= 50 -> warm, >= 25 -> cold, else disqualified
     SIGNAL_NAMES = [
         "pricing_interest", "competitor_research", "icp_fit_strong",
         "icp_fit_weak", "seniority_match", "company_size_match",
@@ -197,8 +198,18 @@ class LeadScorer(BaseModule):
         score = self.regress_out(h) * 100
         probs = logits.softmax(-1)
 
+        # derive label from regression score to avoid classifier/score disagreement
+        score_val = score.item()
+        if score_val >= self.THRESHOLDS[0]:
+            label = self.LABELS[0]
+        elif score_val >= self.THRESHOLDS[1]:
+            label = self.LABELS[1]
+        elif score_val >= self.THRESHOLDS[2]:
+            label = self.LABELS[2]
+        else:
+            label = self.LABELS[3]
+
         # build causal evidence
-        labels = self.LABELS
         signals = []
         for i in range(len(self.SIGNAL_NAMES)):
             s = strengths[0, i].item()
@@ -215,8 +226,8 @@ class LeadScorer(BaseModule):
         signals.sort(key=lambda x: -abs(x["causal_impact"]))
 
         return {
-            "label": labels[probs.argmax(-1).item()],
-            "score": round(score.item()),
+            "label": label,
+            "score": round(score_val),
             "confidence": round(probs.max().item(), 3),
             "signals": signals[:5],
         }

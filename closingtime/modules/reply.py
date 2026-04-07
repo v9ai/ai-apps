@@ -81,23 +81,32 @@ class ConstrainedMultiLabelCRF(nn.Module):
         """
         Find the top-k highest scoring label configurations.
         With 10 labels, 2^10 = 1024 configurations — exact enumeration is feasible.
+        Uses a pre-computed binary config buffer to avoid per-iteration tensor allocation.
         """
         n = unary_logits.shape[-1]
 
         if n <= 12:
-            all_configs = []
+            n_configs = 2 ** n
+            # pre-compute all binary configurations as a single (n_configs, n) tensor
+            arange = torch.arange(n_configs, device=unary_logits.device)
+            bits = torch.arange(n, device=unary_logits.device)
+            all_configs_t = ((arange.unsqueeze(1) >> bits.unsqueeze(0)) & 1).float()  # (2^n, n)
 
-            for mask_int in range(2**n):
-                config = torch.zeros(1, n).to(unary_logits.device)
-                for bit in range(n):
-                    if mask_int & (1 << bit):
-                        config[0, bit] = 1.0
+            # vectorized scoring: unary component
+            unary_scores = (unary_logits * all_configs_t).sum(dim=-1)  # (2^n,)
 
-                score = self.score_configuration(unary_logits, config)
-                all_configs.append((score.item(), config))
+            # pairwise component
+            effective_pairwise = self.pairwise + self.hard_constraints
+            active_masks = all_configs_t.unsqueeze(-1) * all_configs_t.unsqueeze(-2)  # (2^n, n, n)
+            pairwise_scores = (effective_pairwise.unsqueeze(0) * active_masks).sum(dim=(-1, -2)) / 2
 
-            all_configs.sort(key=lambda x: -x[0])
-            return all_configs[:top_k]
+            total_scores = unary_scores + pairwise_scores  # (2^n,)
+
+            top_indices = total_scores.topk(min(top_k, n_configs)).indices
+            return [
+                (total_scores[i].item(), all_configs_t[i].unsqueeze(0))
+                for i in top_indices
+            ]
 
         else:
             return self._greedy_decode(unary_logits)

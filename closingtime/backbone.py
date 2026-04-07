@@ -85,7 +85,7 @@ class SharedEncoder:
             return_tensors="pt",
             truncation=True,
             max_length=max_length,
-            padding=True,
+            padding=False,
         ).to(device)
 
         with torch.no_grad():
