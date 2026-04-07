@@ -26,8 +26,7 @@ export function JobDescriptionTab({
 }: JobDescriptionTabProps) {
   const [editingJobDescription, setEditingJobDescription] = useState(false);
   const [jobDescriptionValue, setJobDescriptionValue] = useState("");
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [notesValue, setNotesValue] = useState("");
+
 
   const handleSaveJobDescription = async () => {
     const res = await fetch(`/api/applications/${app.id}`, {
@@ -39,19 +38,6 @@ export function JobDescriptionTab({
       const updated = await res.json();
       onUpdate(updated);
       setEditingJobDescription(false);
-    }
-  };
-
-  const handleSaveNotes = async () => {
-    const res = await fetch(`/api/applications/${app.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notes: notesValue }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      onUpdate(updated);
-      setEditingNotes(false);
     }
   };
 
@@ -121,41 +107,6 @@ export function JobDescriptionTab({
             )}
           </Flex>
         )}
-        {/* Notes — merged into JD card */}
-        <Box mt="5" pt="4" px="3" pb="3" style={{ borderTop: "1px solid var(--gray-4)", borderLeft: "3px solid var(--amber-6)", backgroundColor: "var(--amber-2)", borderRadius: 0 }}>
-          <Flex justify="between" align="center" mb="3">
-            <Heading size="4">Notes</Heading>
-            {isAdmin && !editingNotes && (
-              <Button
-                variant="soft"
-                size="1"
-                onClick={() => { setNotesValue(app.notes ?? ""); setEditingNotes(true); }}
-              >
-                {app.notes ? "Edit" : "Add Notes"}
-              </Button>
-            )}
-          </Flex>
-          {editingNotes ? (
-            <Flex direction="column" gap="2">
-              <TextArea
-                value={notesValue}
-                onChange={(e) => setNotesValue(e.target.value)}
-                placeholder="Add notes about this application..."
-                rows={4}
-              />
-              <Flex gap="2" justify="end">
-                <Button variant="soft" color="gray" size="1" onClick={() => setEditingNotes(false)}>
-                  Cancel
-                </Button>
-                <Button size="1" onClick={handleSaveNotes}>Save</Button>
-              </Flex>
-            </Flex>
-          ) : (
-            <Text size="2" color={app.notes ? undefined : "gray"}>
-              {app.notes || "No notes yet."}
-            </Text>
-          )}
-        </Box>
       </Card>
 
       {/* AI Interview Prep */}
