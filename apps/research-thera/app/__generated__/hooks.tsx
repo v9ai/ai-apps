@@ -2376,6 +2376,7 @@ export type GenerateLongFormTextMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   userContext?: InputMaybe<Scalars['String']['input']>;
   language?: InputMaybe<Scalars['String']['input']>;
@@ -4789,11 +4790,12 @@ export type GenerateHabitsFromIssueMutationHookResult = ReturnType<typeof useGen
 export type GenerateHabitsFromIssueMutationResult = Apollo.MutationResult<GenerateHabitsFromIssueMutation>;
 export type GenerateHabitsFromIssueMutationOptions = Apollo.BaseMutationOptions<GenerateHabitsFromIssueMutation, GenerateHabitsFromIssueMutationVariables>;
 export const GenerateLongFormTextDocument = gql`
-    mutation GenerateLongFormText($goalId: Int, $issueId: Int, $feedbackId: Int, $familyMemberId: Int, $userContext: String, $language: String, $minutes: Int) {
+    mutation GenerateLongFormText($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int, $familyMemberId: Int, $userContext: String, $language: String, $minutes: Int) {
   generateLongFormText(
     goalId: $goalId
     issueId: $issueId
     feedbackId: $feedbackId
+    journalEntryId: $journalEntryId
     familyMemberId: $familyMemberId
     userContext: $userContext
     language: $language
@@ -4828,6 +4830,7 @@ export type GenerateLongFormTextMutationFn = Apollo.MutationFunction<GenerateLon
  *      goalId: // value for 'goalId'
  *      issueId: // value for 'issueId'
  *      feedbackId: // value for 'feedbackId'
+ *      journalEntryId: // value for 'journalEntryId'
  *      familyMemberId: // value for 'familyMemberId'
  *      userContext: // value for 'userContext'
  *      language: // value for 'language'
