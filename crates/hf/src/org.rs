@@ -51,21 +51,28 @@ impl<'a> OrgScanner<'a> {
     }
 
     /// Scan an org's complete HF presence.
+    ///
+    /// The HF API `author` filter is lowercase-only, so the org name is
+    /// normalised automatically. The original casing is preserved in the
+    /// returned `OrgProfile.org_name`.
     pub async fn scan_org(&self, org_name: &str) -> Result<OrgProfile, Error> {
+        // HF API requires lowercase author param
+        let author = org_name.to_lowercase();
+
         // 1. Fetch all models, datasets, spaces for the org
         let models = self
             .client
-            .list_by_author(org_name, RepoType::Model, 500)
+            .list_by_author(&author, RepoType::Model, 500)
             .await
             .unwrap_or_default();
         let datasets = self
             .client
-            .list_by_author(org_name, RepoType::Dataset, 500)
+            .list_by_author(&author, RepoType::Dataset, 500)
             .await
             .unwrap_or_default();
         let spaces = self
             .client
-            .list_by_author(org_name, RepoType::Space, 500)
+            .list_by_author(&author, RepoType::Space, 500)
             .await
             .unwrap_or_default();
 
