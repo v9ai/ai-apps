@@ -1,6 +1,6 @@
-"""salescue/modules/emailgen.py — Mistral LoRA Email Generator (Separate)
+"""salescue/modules/emailgen.py — Qwen LoRA Email Generator (Separate)
 
-Generates personalized sales emails using a LoRA-fine-tuned Mistral model.
+Generates personalized sales emails using a LoRA-fine-tuned Qwen model.
 Runs as a separate module (NOT on the shared DeBERTa backbone) since it
 requires a generative LLM. Conditioned on outputs from other ClosingTime
 modules (score, intent, sentiment) for personalized generation.
