@@ -191,27 +191,34 @@ class SalesCueModel:
             "(Kendall et al., 2018), with causal attribution via learned counterfactuals.",
         ),
         "spam": (
-            "Hierarchical Bayesian Attention Gating with Adversarial Calibration",
+            "Multi-Probe Hierarchical Bayesian Attention Gating with Adversarial Calibration",
             "Spam signals are *level-dependent*: spammy tokens ('FREE') contribute differently than "
             "spammy sentence structures (urgency patterns) versus spammy document profiles (link density, "
-            "header anomalies). SpamHead introduces a Hierarchical Bayesian Attention Gate (HBAG) that "
-            "operates at token, sentence, and document level simultaneously. At each level, Bayesian "
-            "attention computes per-element spam contribution priors updated via amortized variational "
-            "inference. An adversarial calibration loss forces provider-specific scores to match "
-            "empirical inbox placement distributions.\n\n"
+            "header anomalies). SpamHead introduces a Hierarchical Bayesian Attention Gate (HBAG) with "
+            "4 aspect-specific probes (content, structure, deception, synthetic) that operate at token, "
+            "sentence, and document level simultaneously. Each probe computes independent Beta(α,β) "
+            "posteriors, blended via a learned gating mechanism. Per-sentence token-span encoding ensures "
+            "true hierarchical processing — each sentence gets its own neural signal from its token span. "
+            "An adversarial calibration loss forces provider-specific scores to match empirical inbox "
+            "placement distributions. Uncertainty is decomposed into aleatoric (category entropy) and "
+            "epistemic (Beta variance) components.\n\n"
             "**Sub-modules:**\n\n"
-            "- **HierarchicalBayesianAttentionGate**: Token-level Beta(α,β) priors → sentence-level "
-            "aggregation (12 structural features) → document-level 7-category classification\n"
-            "- **AdversarialStyleTransferDetector**: 32 structural features for AI detection "
-            "(perplexity ratio, trajectory smoothness, watermark detection per Kirchenbauer et al. 2023)\n"
+            "- **HierarchicalBayesianAttentionGate**: 4-probe multi-aspect attention → per-sentence "
+            "token-span aggregation (12 structural features) → document-level 7-category classification "
+            "with uncertainty decomposition\n"
+            "- **AdversarialStyleTransferDetector**: 32 information-theoretic features (Yule's K, "
+            "Shannon entropy, Honoré's R, trigram repetition, perplexity ratio, trajectory smoothness, "
+            "watermark detection per Kirchenbauer et al. 2023)\n"
             "- **HeaderAnalyzer**: SPF/DKIM/DMARC + routing analysis (16-dim feature vector)\n"
             "- **TemporalBurstDetector**: Cross-email send pattern analysis (Kleinberg burst model)\n"
-            "- **CampaignSimilarityDetector**: Template detection via pairwise CLS cosine similarity\n"
+            "- **CampaignSimilarityDetector**: Template detection via pairwise CLS cosine similarity "
+            "with proper union-find clustering\n"
             "- **ProviderCalibration**: 6-provider deliverability (Gmail, Outlook, Yahoo, ProtonMail, "
-            "Apple Mail, Corporate) with adversarial calibration discriminator\n\n"
+            "Apple Mail, Corporate) with 10-feature input and adversarial calibration discriminator\n\n"
             "7-category taxonomy: clean, template_spam, ai_generated, low_effort, role_account, "
-            "domain_suspect, content_violation. Production path: DeBERTa model distills to 24-feature "
-            "logistic regression weights loaded by a Rust SpamClassifier with SoA batch processing.",
+            "domain_suspect, content_violation. Residual gate decision network with layer norm. "
+            "Production path: DeBERTa model distills to 24-feature logistic regression weights loaded "
+            "by a Rust SpamClassifier with SoA batch processing.",
         ),
         "intent": (
             "Neural Hawkes Process for Buying Journey",
