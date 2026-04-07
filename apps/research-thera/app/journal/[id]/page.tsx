@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   Box,
   Flex,
@@ -11,6 +12,7 @@ import {
   Separator,
   AlertDialog,
   Button,
+  Select,
 } from "@radix-ui/themes";
 import {
   ArrowLeftIcon,
@@ -24,10 +26,16 @@ import dynamic from "next/dynamic";
 import {
   useGetJournalEntryQuery,
   useDeleteJournalEntryMutation,
+  useGenerateResearchMutation,
+  useGetResearchQuery,
+  useGetGenerationJobQuery,
+  useGenerateTherapeuticQuestionsMutation,
+  useDeleteTherapeuticQuestionsMutation,
+  useGetTherapeuticQuestionsQuery,
+  useGenerateLongFormTextMutation,
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
-import ConvertJournalToIssueButton from "@/app/components/ConvertJournalToIssueButton";
 
 const moodColor = (mood: string) =>
   (
@@ -66,6 +74,181 @@ function JournalEntryContent() {
 
   const handleDelete = async () => {
     await deleteJournalEntry({ variables: { id } });
+  };
+
+  // Research generation state
+  const [researchJobId, setResearchJobId] = useState<string | null>(null);
+  const [researchMessage, setResearchMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  const { data: researchData, refetch: refetchResearch } = useGetResearchQuery({
+    variables: { journalEntryId: id },
+    skip: !id,
+  });
+  const researchPapers = researchData?.research ?? [];
+
+  const [generateResearch, { loading: generatingResearch }] =
+    useGenerateResearchMutation({
+      onCompleted: (data) => {
+        if (data.generateResearch.success) {
+          setResearchMessage(null);
+          if (data.generateResearch.jobId) {
+            setResearchJobId(data.generateResearch.jobId);
+          }
+        } else {
+          setResearchMessage({
+            text: data.generateResearch.message || "Failed to generate research.",
+            type: "error",
+          });
+        }
+      },
+      onError: (err) => {
+        setResearchMessage({
+          text: err.message || "An error occurred while generating research.",
+          type: "error",
+        });
+      },
+    });
+
+  const { data: researchJobData, stopPolling: stopResearchPolling } =
+    useGetGenerationJobQuery({
+      variables: { id: researchJobId! },
+      skip: !researchJobId,
+      pollInterval: 2000,
+      notifyOnNetworkStatusChange: true,
+      fetchPolicy: "network-only",
+    });
+
+  useEffect(() => {
+    const status = researchJobData?.generationJob?.status;
+    if (status === "SUCCEEDED" || status === "FAILED") {
+      stopResearchPolling();
+      setResearchJobId(null);
+      if (status === "SUCCEEDED") {
+        setResearchMessage({ text: "Research generated successfully.", type: "success" });
+        refetchResearch();
+      } else {
+        setResearchMessage({
+          text: researchJobData?.generationJob?.error?.message ?? "Research generation failed.",
+          type: "error",
+        });
+      }
+    }
+  }, [researchJobData]);
+
+  const researchJobProgress = researchJobData?.generationJob?.progress ?? 0;
+  const researchJobStatus = researchJobData?.generationJob?.status;
+  const isResearchJobRunning =
+    !!researchJobId && researchJobStatus !== "SUCCEEDED" && researchJobStatus !== "FAILED";
+
+  const handleGenerateResearch = async () => {
+    if (!entry) return;
+    setResearchMessage(null);
+    await generateResearch({ variables: { journalEntryId: entry.id } });
+  };
+
+  // Questions state
+  const { data: questionsData, refetch: refetchQuestions } = useGetTherapeuticQuestionsQuery({
+    variables: { journalEntryId: id },
+    skip: !id,
+  });
+  const questions = questionsData?.therapeuticQuestions ?? [];
+
+  const [generateQuestions, { loading: generatingQuestions }] =
+    useGenerateTherapeuticQuestionsMutation({
+      onCompleted: () => refetchQuestions(),
+    });
+
+  const [deleteQuestions, { loading: deletingQuestions }] =
+    useDeleteTherapeuticQuestionsMutation({
+      onCompleted: () => refetchQuestions(),
+    });
+
+  const [questionsMessage, setQuestionsMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  const handleGenerateQuestions = async () => {
+    if (!entry) return;
+    setQuestionsMessage(null);
+    try {
+      const result = await generateQuestions({ variables: { journalEntryId: entry.id } });
+      const res = result.data?.generateTherapeuticQuestions;
+      if (res?.success) {
+        setQuestionsMessage({ text: res.message || "Questions generated.", type: "success" });
+      } else {
+        setQuestionsMessage({ text: res?.message || "Failed to generate questions.", type: "error" });
+      }
+    } catch (err: any) {
+      setQuestionsMessage({ text: err.message || "Error generating questions.", type: "error" });
+    }
+  };
+
+  const handleDeleteQuestions = async () => {
+    if (!entry) return;
+    try {
+      await deleteQuestions({ variables: { journalEntryId: entry.id } });
+      setQuestionsMessage(null);
+    } catch (err: any) {
+      setQuestionsMessage({ text: err.message || "Error deleting questions.", type: "error" });
+    }
+  };
+
+  // Story generation state
+  const [storyLanguage, setStoryLanguage] = useState("English");
+  const [storyMinutes, setStoryMinutes] = useState("5");
+  const [storyJobId, setStoryJobId] = useState<string | null>(null);
+  const [storyText, setStoryText] = useState<string | null>(null);
+  const [storyId, setStoryId] = useState<number | null>(null);
+  const [storyError, setStoryError] = useState<string | null>(null);
+
+  const [generateLongFormText, { loading: generatingStory }] =
+    useGenerateLongFormTextMutation();
+
+  const { data: storyJobData } = useGetGenerationJobQuery({
+    variables: { id: storyJobId! },
+    skip: !storyJobId,
+    pollInterval: 3000,
+  });
+
+  useEffect(() => {
+    if (!storyJobData?.generationJob) return;
+    const job = storyJobData.generationJob;
+    if (job.status === "SUCCEEDED") {
+      setStoryJobId(null);
+    } else if (job.status === "FAILED") {
+      setStoryError(job.error?.message || "Story generation failed");
+      setStoryJobId(null);
+    }
+  }, [storyJobData]);
+
+  const isGenerating = generatingStory || !!storyJobId;
+  const storyJobStatus = storyJobData?.generationJob;
+
+  const handleGenerateStory = async () => {
+    if (!entry) return;
+    setStoryError(null);
+    setStoryText(null);
+    setStoryId(null);
+    try {
+      const result = await generateLongFormText({
+        variables: {
+          journalEntryId: entry.id,
+          familyMemberId: entry.familyMemberId ?? undefined,
+          language: storyLanguage,
+          minutes: parseInt(storyMinutes, 10),
+        },
+      });
+      const res = result.data?.generateLongFormText;
+      if (res?.text) setStoryText(res.text);
+      if (res?.storyId) setStoryId(res.storyId);
+      if (res?.jobId) setStoryJobId(res.jobId);
+    } catch (err: any) {
+      setStoryError(err.message || "Failed to generate story");
+    }
   };
 
   if (loading) {
@@ -140,14 +323,6 @@ function JournalEntryContent() {
               </Flex>
             </Flex>
             <Flex align="center" gap="4">
-              {!entry.issue && (
-                <ConvertJournalToIssueButton
-                  journalEntryId={entry.id}
-                  defaultTitle={entry.title ?? undefined}
-                  defaultDescription={entry.content}
-                  defaultFamilyMemberId={entry.familyMemberId}
-                />
-              )}
               <Button
                 variant="ghost"
                 size="3"
@@ -307,6 +482,288 @@ function JournalEntryContent() {
               </Flex>
             )}
           </Flex>
+        </Flex>
+      </Card>
+
+      {/* Research Generation */}
+      <Card>
+        <Flex direction="column" gap="4" p="4">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
+            <Box>
+              <Heading size="3" mb="1">Generate Research</Heading>
+              <Text size="2" color="gray">
+                Find evidence-based academic papers for this journal entry.
+              </Text>
+            </Box>
+            <Button
+              onClick={handleGenerateResearch}
+              disabled={generatingResearch || isResearchJobRunning}
+            >
+              {(generatingResearch || isResearchJobRunning) && <Spinner />}
+              {generatingResearch || isResearchJobRunning ? "Generating..." : "Generate Research"}
+            </Button>
+          </Flex>
+
+          {isResearchJobRunning && (
+            <Flex direction="column" gap="2">
+              <Flex justify="between" align="center">
+                <Text size="2" color="gray">
+                  {researchJobProgress > 0
+                    ? `Searching for papers... ${researchJobProgress}%`
+                    : "Searching for papers..."}
+                </Text>
+              </Flex>
+              <Box
+                style={{
+                  height: 6,
+                  borderRadius: 3,
+                  background: "var(--gray-4)",
+                  overflow: "hidden",
+                }}
+              >
+                {researchJobProgress > 0 ? (
+                  <Box
+                    style={{
+                      height: "100%",
+                      width: `${researchJobProgress}%`,
+                      background: "var(--indigo-9)",
+                      transition: "width 0.4s ease",
+                      borderRadius: 3,
+                    }}
+                  />
+                ) : (
+                  <Box
+                    style={{
+                      height: "100%",
+                      width: "40%",
+                      background: "var(--indigo-9)",
+                      borderRadius: 3,
+                      animation: "researchSweep 1.4s ease-in-out infinite",
+                    }}
+                  />
+                )}
+              </Box>
+            </Flex>
+          )}
+
+          {researchMessage && (
+            <Text size="2" color={researchMessage.type === "success" ? "green" : "red"}>
+              {researchMessage.text}
+            </Text>
+          )}
+        </Flex>
+      </Card>
+
+      {/* Research Results */}
+      {researchPapers.length > 0 && (
+        <Card>
+          <Flex direction="column" gap="3" p="4">
+            <Heading size="3">Research ({researchPapers.length})</Heading>
+            <Separator size="4" />
+            {researchPapers.map((paper) => (
+              <Card key={paper.id} variant="surface">
+                <Flex direction="column" gap="2" p="3">
+                  <Flex justify="between" align="start" gap="3">
+                    <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                      <Text size="2" weight="bold">
+                        {paper.url ? (
+                          <a href={paper.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--indigo-11)", textDecoration: "underline" }}>
+                            {paper.title}
+                          </a>
+                        ) : paper.title}
+                      </Text>
+                      <Text size="1" color="gray">
+                        {[paper.authors?.join(", "), paper.year, paper.journal].filter(Boolean).join(" · ")}
+                      </Text>
+                    </Flex>
+                    <Flex gap="2" align="center" style={{ flexShrink: 0 }}>
+                      {paper.evidenceLevel && (
+                        <Badge variant="soft" color="indigo" size="1">{paper.evidenceLevel}</Badge>
+                      )}
+                      {paper.relevanceScore != null && (
+                        <Badge variant="soft" color="gray" size="1">{Math.round(paper.relevanceScore * 100)}% relevant</Badge>
+                      )}
+                    </Flex>
+                  </Flex>
+                  {paper.abstract && (
+                    <Text size="1" color="gray" style={{ lineHeight: "1.6" }}>
+                      {paper.abstract}
+                    </Text>
+                  )}
+                  {paper.keyFindings && paper.keyFindings.length > 0 && (
+                    <Box>
+                      <Text size="1" weight="medium" mb="1">Key Findings</Text>
+                      <ul style={{ margin: 0, paddingLeft: "16px" }}>
+                        {paper.keyFindings.map((f, i) => (
+                          <li key={i}><Text size="1" color="gray">{f}</Text></li>
+                        ))}
+                      </ul>
+                    </Box>
+                  )}
+                  {paper.therapeuticTechniques && paper.therapeuticTechniques.length > 0 && (
+                    <Flex gap="1" wrap="wrap">
+                      {paper.therapeuticTechniques.map((t, i) => (
+                        <Badge key={i} variant="outline" color="teal" size="1">{t}</Badge>
+                      ))}
+                    </Flex>
+                  )}
+                </Flex>
+              </Card>
+            ))}
+          </Flex>
+        </Card>
+      )}
+
+      {/* Generate Questions */}
+      {researchPapers.length > 0 && (
+        <Card>
+          <Flex direction="column" gap="4" p="4">
+            <Flex justify="between" align="start" wrap="wrap" gap="3">
+              <Box>
+                <Heading size="3" mb="1">Expand with Questions</Heading>
+                <Text size="2" color="gray">
+                  Generate follow-up questions based on research findings.
+                </Text>
+              </Box>
+              <Flex gap="2">
+                {questions.length > 0 && (
+                  <Button
+                    variant="soft"
+                    color="red"
+                    size="2"
+                    onClick={handleDeleteQuestions}
+                    disabled={deletingQuestions || generatingQuestions}
+                  >
+                    {deletingQuestions ? "Deleting..." : "Clear"}
+                  </Button>
+                )}
+                <Button
+                  onClick={handleGenerateQuestions}
+                  disabled={generatingQuestions}
+                >
+                  {generatingQuestions && <Spinner />}
+                  {generatingQuestions ? "Generating..." : questions.length > 0 ? "Regenerate" : "Generate Questions"}
+                </Button>
+              </Flex>
+            </Flex>
+
+            {questionsMessage && (
+              <Text size="2" color={questionsMessage.type === "success" ? "green" : "red"}>
+                {questionsMessage.text}
+              </Text>
+            )}
+
+            {questions.length > 0 && (
+              <>
+                <Separator size="4" />
+                {questions.map((q) => (
+                  <Card key={q.id} variant="surface">
+                    <Flex direction="column" gap="2" p="3">
+                      <Text size="2" weight="bold">{q.question}</Text>
+                      <Text size="1" color="gray" style={{ lineHeight: "1.6" }}>
+                        {q.rationale}
+                      </Text>
+                      {q.researchTitle && (
+                        <Flex gap="1" align="center">
+                          <Badge variant="outline" color="indigo" size="1">
+                            Based on: {q.researchTitle}
+                          </Badge>
+                        </Flex>
+                      )}
+                    </Flex>
+                  </Card>
+                ))}
+              </>
+            )}
+          </Flex>
+        </Card>
+      )}
+
+      {/* Story Generation */}
+      <Card>
+        <Flex direction="column" gap="4" p="4">
+          <Box>
+            <Heading size="3" mb="1">Generate Story</Heading>
+            <Text size="2" color="gray">
+              Create a therapeutic story based on this journal entry.
+            </Text>
+          </Box>
+
+          <Flex gap="3" align="end" wrap="wrap">
+            <Box style={{ minWidth: 140 }}>
+              <Text as="div" size="2" weight="medium" mb="1">Language</Text>
+              <Select.Root
+                value={storyLanguage}
+                onValueChange={setStoryLanguage}
+                disabled={isGenerating}
+              >
+                <Select.Trigger style={{ width: "100%" }} />
+                <Select.Content>
+                  <Select.Item value="English">English</Select.Item>
+                  <Select.Item value="Romanian">Romanian</Select.Item>
+                  <Select.Item value="Spanish">Spanish</Select.Item>
+                  <Select.Item value="French">French</Select.Item>
+                </Select.Content>
+              </Select.Root>
+            </Box>
+
+            <Box style={{ minWidth: 140 }}>
+              <Text as="div" size="2" weight="medium" mb="1">Duration</Text>
+              <Select.Root
+                value={storyMinutes}
+                onValueChange={setStoryMinutes}
+                disabled={isGenerating}
+              >
+                <Select.Trigger style={{ width: "100%" }} />
+                <Select.Content>
+                  <Select.Item value="3">3 minutes</Select.Item>
+                  <Select.Item value="5">5 minutes</Select.Item>
+                  <Select.Item value="10">10 minutes</Select.Item>
+                  <Select.Item value="30">30 minutes</Select.Item>
+                </Select.Content>
+              </Select.Root>
+            </Box>
+
+            <Button onClick={handleGenerateStory} disabled={isGenerating}>
+              {isGenerating && <Spinner />}
+              {isGenerating ? "Generating..." : "Generate Story"}
+            </Button>
+          </Flex>
+
+          {storyJobId && storyJobStatus && (
+            <Flex align="center" gap="2">
+              <Spinner size="1" />
+              <Text size="2" color="gray">
+                {storyJobStatus.status === "RUNNING"
+                  ? `Generating${storyJobStatus.progress ? ` · ${storyJobStatus.progress}%` : "..."}`
+                  : storyJobStatus.status}
+              </Text>
+            </Flex>
+          )}
+
+          {storyError && (
+            <Text color="red" size="2">{storyError}</Text>
+          )}
+
+          {storyText && (
+            <Box>
+              <Flex justify="between" align="center" mb="2">
+                <Text as="div" size="2" weight="medium">Generated Story</Text>
+                {storyId && (
+                  <Button variant="soft" size="1" asChild>
+                    <NextLink href={`/stories/${storyId}`}>View Story Page</NextLink>
+                  </Button>
+                )}
+              </Flex>
+              <Card variant="surface">
+                <Box p="3">
+                  <Text size="2" style={{ whiteSpace: "pre-wrap", lineHeight: "1.7" }}>
+                    {storyText}
+                  </Text>
+                </Box>
+              </Card>
+            </Box>
+          )}
         </Flex>
       </Card>
     </Flex>

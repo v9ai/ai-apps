@@ -1116,6 +1116,7 @@ export type MutationdeleteTeacherFeedbackArgs = {
 export type MutationdeleteTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1156,6 +1157,7 @@ export type MutationgenerateLongFormTextArgs = {
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
   language?: InputMaybe<Scalars['String']['input']>;
   minutes?: InputMaybe<Scalars['Int']['input']>;
   userContext?: InputMaybe<Scalars['String']['input']>;
@@ -1177,12 +1179,14 @@ export type MutationgenerateResearchArgs = {
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
 export type MutationgenerateTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1697,6 +1701,7 @@ export type QueryresearchArgs = {
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1723,6 +1728,7 @@ export type QueryteacherFeedbacksArgs = {
 export type QuerytherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type Relationship = {
@@ -1771,6 +1777,7 @@ export type Research = {
   id: Scalars['Int']['output'];
   issueId?: Maybe<Scalars['Int']['output']>;
   journal?: Maybe<Scalars['String']['output']>;
+  journalEntryId?: Maybe<Scalars['Int']['output']>;
   keyFindings: Array<Scalars['String']['output']>;
   relevanceScore: Scalars['Float']['output'];
   therapeuticGoalType: Scalars['String']['output'];
@@ -1869,6 +1876,7 @@ export type TherapeuticQuestion = {
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
   issueId?: Maybe<Scalars['Int']['output']>;
+  journalEntryId?: Maybe<Scalars['Int']['output']>;
   question: Scalars['String']['output'];
   rationale: Scalars['String']['output'];
   researchId?: Maybe<Scalars['Int']['output']>;
@@ -3194,6 +3202,7 @@ export type ResearchResolvers<ContextType = GraphQLContext, ParentType extends R
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   issueId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   journal?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  journalEntryId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   keyFindings?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   relevanceScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   therapeuticGoalType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3269,6 +3278,7 @@ export type TherapeuticQuestionResolvers<ContextType = GraphQLContext, ParentTyp
   goalId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   issueId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  journalEntryId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   question?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   rationale?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   researchId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
