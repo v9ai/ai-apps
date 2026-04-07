@@ -1,0 +1,1429 @@
+{
+  "architecture_families": {
+    "glm4_moe_lite": [
+      "diffbot/Diffbot-Coder-2602"
+    ],
+    "llama": [
+      "diffbot/Llama-3.1-Diffbot-Small-2412",
+      "diffbot/Llama-3.3-Diffbot-Small-XL-2504",
+      "diffbot/Llama-3.1-Diffbot-Small-2508",
+      "diffbot/Llama-3.3-Diffbot-Small-XL-2412",
+      "diffbot/Llama-3.1-Diffbot-Small-2504"
+    ],
+    "quantized_variant": [
+      "diffbot/Diffbot-Coder-2603-GGUF",
+      "diffbot/Diffbot-Coder-2601-GGUF",
+      "diffbot/Diffbot-Coder-2603-fp8"
+    ],
+    "qwen3_moe": [
+      "diffbot/Diffbot-Small-XL-2505",
+      "diffbot/Diffbot-Small-XL-2508",
+      "diffbot/Diffbot-Coder-2601"
+    ],
+    "qwen3_next": [
+      "diffbot/Diffbot-Coder-2603"
+    ]
+  },
+  "configs_fetched": 10,
+  "fetch_failures": 0,
+  "hf_score": 0.5350000262260437,
+  "model_cards_fetched": 7,
+  "models": [
+    {
+      "architecture": {
+        "architectures": [
+          "LlamaForCausalLM"
+        ],
+        "hidden_size": 8192,
+        "intermediate_size": 28672,
+        "kv_lora_rank": null,
+        "linear_conv_kernel_dim": null,
+        "max_position_embeddings": 131072,
+        "model_type": "llama",
+        "moe_intermediate_size": null,
+        "n_shared_experts": null,
+        "num_activated_experts": null,
+        "num_attention_heads": 64,
+        "num_experts": null,
+        "num_hidden_layers": 80,
+        "num_key_value_heads": 8,
+        "num_nextn_predict_layers": null,
+        "partial_rotary_factor": null,
+        "q_lora_rank": null,
+        "rope_theta": 500000.0,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 128256
+      },
+      "chat_template": {
+        "added_tokens_count": 256,
+        "bos_token": "<|begin_of_text|>",
+        "chat_template_length": 484,
+        "eos_token": "<|eot_id|>",
+        "has_chat_template": true,
+        "has_tool_tokens": false
+      },
+      "chat_template_analysis": null,
+      "created_at": "2024-12-30T16:04:22.000Z",
+      "downloads": 3,
+      "files": [
+        ".gitattributes",
+        "README.md",
+        "config.json",
+        "generation_config.json",
+        "pytorch_model-00001-of-00030.bin",
+        "pytorch_model-00001-of-00030.safetensors",
+        "pytorch_model-00002-of-00030.bin",
+        "pytorch_model-00002-of-00030.safetensors",
+        "pytorch_model-00003-of-00030.bin",
+        "pytorch_model-00003-of-00030.safetensors",
+        "pytorch_model-00004-of-00030.bin",
+        "pytorch_model-00004-of-00030.safetensors",
+        "pytorch_model-00005-of-00030.bin",
+        "pytorch_model-00005-of-00030.safetensors",
+        "pytorch_model-00006-of-00030.bin",
+        "pytorch_model-00006-of-00030.safetensors",
+        "pytorch_model-00007-of-00030.bin",
+        "pytorch_model-00007-of-00030.safetensors",
+        "pytorch_model-00008-of-00030.bin",
+        "pytorch_model-00008-of-00030.safetensors",
+        "pytorch_model-00009-of-00030.bin",
+        "pytorch_model-00009-of-00030.safetensors",
+        "pytorch_model-00010-of-00030.bin",
+        "pytorch_model-00010-of-00030.safetensors",
+        "pytorch_model-00011-of-00030.bin",
+        "pytorch_model-00011-of-00030.safetensors",
+        "pytorch_model-00012-of-00030.bin",
+        "pytorch_model-00012-of-00030.safetensors",
+        "pytorch_model-00013-of-00030.bin",
+        "pytorch_model-00013-of-00030.safetensors",
+        "pytorch_model-00014-of-00030.bin",
+        "pytorch_model-00014-of-00030.safetensors",
+        "pytorch_model-00015-of-00030.bin",
+        "pytorch_model-00015-of-00030.safetensors",
+        "pytorch_model-00016-of-00030.bin",
+        "pytorch_model-00016-of-00030.safetensors",
+        "pytorch_model-00017-of-00030.bin",
+        "pytorch_model-00017-of-00030.safetensors",
+        "pytorch_model-00018-of-00030.bin",
+        "pytorch_model-00018-of-00030.safetensors",
+        "pytorch_model-00019-of-00030.bin",
+        "pytorch_model-00019-of-00030.safetensors",
+        "pytorch_model-00020-of-00030.bin",
+        "pytorch_model-00020-of-00030.safetensors",
+        "pytorch_model-00021-of-00030.bin",
+        "pytorch_model-00021-of-00030.safetensors",
+        "pytorch_model-00022-of-00030.bin",
+        "pytorch_model-00022-of-00030.safetensors",
+        "pytorch_model-00023-of-00030.bin",
+        "pytorch_model-00023-of-00030.safetensors",
+        "pytorch_model-00024-of-00030.bin",
+        "pytorch_model-00024-of-00030.safetensors",
+        "pytorch_model-00025-of-00030.bin",
+        "pytorch_model-00025-of-00030.safetensors",
+        "pytorch_model-00026-of-00030.bin",
+        "pytorch_model-00026-of-00030.safetensors",
+        "pytorch_model-00027-of-00030.bin",
+        "pytorch_model-00027-of-00030.safetensors",
+        "pytorch_model-00028-of-00030.bin",
+        "pytorch_model-00028-of-00030.safetensors",
+        "pytorch_model-00029-of-00030.bin",
+        "pytorch_model-00029-of-00030.safetensors",
+        "pytorch_model-00030-of-00030.bin",
+        "pytorch_model-00030-of-00030.safetensors",
+        "pytorch_model.bin.index.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          128001,
+          128008,
+          128009
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.9
+      },
+      "last_modified": "2025-01-08T14:08:41.000Z",
+      "library": null,
+      "likes": 6,
+      "model_card": {
+        "first_paragraph": "---\nlicense: llama3.3\nbase_model:\n- meta-llama/Llama-3.3-70B-Instruct\n---",
+        "has_yaml_frontmatter": true,
+        "lines": 5
+      },
+      "modelfile": null,
+      "parameters": null,
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2412",
+      "tags": [
+        "pytorch",
+        "llama",
+        "base_model:meta-llama/Llama-3.3-70B-Instruct",
+        "base_model:finetune:meta-llama/Llama-3.3-70B-Instruct",
+        "license:llama3.3",
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": {
+        "architectures": [
+          "LlamaForCausalLM"
+        ],
+        "hidden_size": 4096,
+        "intermediate_size": 14336,
+        "kv_lora_rank": null,
+        "linear_conv_kernel_dim": null,
+        "max_position_embeddings": 131072,
+        "model_type": "llama",
+        "moe_intermediate_size": null,
+        "n_shared_experts": null,
+        "num_activated_experts": null,
+        "num_attention_heads": 32,
+        "num_experts": null,
+        "num_hidden_layers": 32,
+        "num_key_value_heads": 8,
+        "num_nextn_predict_layers": null,
+        "partial_rotary_factor": null,
+        "q_lora_rank": null,
+        "rope_theta": 500000.0,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 128256
+      },
+      "chat_template": {
+        "added_tokens_count": 256,
+        "bos_token": "<|begin_of_text|>",
+        "chat_template_length": 484,
+        "eos_token": "<|eot_id|>",
+        "has_chat_template": true,
+        "has_tool_tokens": false
+      },
+      "chat_template_analysis": null,
+      "created_at": "2024-12-30T18:10:56.000Z",
+      "downloads": 6,
+      "files": [
+        ".gitattributes",
+        "README.md",
+        "config.json",
+        "generation_config.json",
+        "pytorch_model-00001-of-00004.bin",
+        "pytorch_model-00001-of-00004.safetensors",
+        "pytorch_model-00002-of-00004.bin",
+        "pytorch_model-00002-of-00004.safetensors",
+        "pytorch_model-00003-of-00004.bin",
+        "pytorch_model-00003-of-00004.safetensors",
+        "pytorch_model-00004-of-00004.bin",
+        "pytorch_model-00004-of-00004.safetensors",
+        "pytorch_model.bin.index.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          128001,
+          128008,
+          128009
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.9
+      },
+      "last_modified": "2025-01-08T01:38:12.000Z",
+      "library": null,
+      "likes": 6,
+      "model_card": {
+        "first_paragraph": "---\nlicense: llama3.1\nbase_model:\n- meta-llama/Llama-3.1-8B-Instruct\n---",
+        "has_yaml_frontmatter": true,
+        "lines": 5
+      },
+      "modelfile": null,
+      "parameters": null,
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2412",
+      "tags": [
+        "pytorch",
+        "llama",
+        "base_model:meta-llama/Llama-3.1-8B-Instruct",
+        "base_model:finetune:meta-llama/Llama-3.1-8B-Instruct",
+        "license:llama3.1",
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": {
+        "architectures": [
+          "LlamaForCausalLM"
+        ],
+        "hidden_size": 4096,
+        "intermediate_size": 14336,
+        "kv_lora_rank": null,
+        "linear_conv_kernel_dim": null,
+        "max_position_embeddings": 131072,
+        "model_type": "llama",
+        "moe_intermediate_size": null,
+        "n_shared_experts": null,
+        "num_activated_experts": null,
+        "num_attention_heads": 32,
+        "num_experts": null,
+        "num_hidden_layers": 32,
+        "num_key_value_heads": 8,
+        "num_nextn_predict_layers": null,
+        "partial_rotary_factor": null,
+        "q_lora_rank": null,
+        "rope_theta": 500000.0,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 128256
+      },
+      "chat_template": {
+        "added_tokens_count": 256,
+        "bos_token": "<|begin_of_text|>",
+        "chat_template_length": 484,
+        "eos_token": "<|eot_id|>",
+        "has_chat_template": true,
+        "has_tool_tokens": false
+      },
+      "chat_template_analysis": null,
+      "created_at": "2025-04-23T23:18:40.000Z",
+      "downloads": 3,
+      "files": [
+        ".gitattributes",
+        "README.md",
+        "config.json",
+        "generation_config.json",
+        "model-00001-of-00004.safetensors",
+        "model-00002-of-00004.safetensors",
+        "model-00003-of-00004.safetensors",
+        "model-00004-of-00004.safetensors",
+        "model.safetensors.index.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          128001,
+          128008,
+          128009
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.9
+      },
+      "last_modified": "2025-04-24T14:57:35.000Z",
+      "library": null,
+      "likes": 9,
+      "model_card": {
+        "first_paragraph": "---\nlicense: llama3.1\nbase_model:\n- meta-llama/Llama-3.1-8B-Instruct\n---",
+        "has_yaml_frontmatter": true,
+        "lines": 5
+      },
+      "modelfile": null,
+      "parameters": {
+        "layer_structure": {
+          "first_layer": {
+            "components": 9,
+            "has_experts": false,
+            "layer": "0"
+          },
+          "sample_moe_layer": null,
+          "total_layers": 32
+        },
+        "shard_count": 4,
+        "total_size_bytes": 16060522496,
+        "total_size_gb": 16.06
+      },
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2504",
+      "tags": [
+        "safetensors",
+        "llama",
+        "base_model:meta-llama/Llama-3.1-8B-Instruct",
+        "base_model:finetune:meta-llama/Llama-3.1-8B-Instruct",
+        "license:llama3.1",
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": {
+        "architectures": [
+          "LlamaForCausalLM"
+        ],
+        "hidden_size": 8192,
+        "intermediate_size": 28672,
+        "kv_lora_rank": null,
+        "linear_conv_kernel_dim": null,
+        "max_position_embeddings": 131072,
+        "model_type": "llama",
+        "moe_intermediate_size": null,
+        "n_shared_experts": null,
+        "num_activated_experts": null,
+        "num_attention_heads": 64,
+        "num_experts": null,
+        "num_hidden_layers": 80,
+        "num_key_value_heads": 8,
+        "num_nextn_predict_layers": null,
+        "partial_rotary_factor": null,
+        "q_lora_rank": null,
+        "rope_theta": 500000.0,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 128256
+      },
+      "chat_template": {
+        "added_tokens_count": 256,
+        "bos_token": "<|begin_of_text|>",
+        "chat_template_length": 484,
+        "eos_token": "<|eot_id|>",
+        "has_chat_template": true,
+        "has_tool_tokens": false
+      },
+      "chat_template_analysis": null,
+      "created_at": "2025-04-23T23:22:22.000Z",
+      "downloads": 6,
+      "files": [
+        ".gitattributes",
+        "README.md",
+        "config.json",
+        "generation_config.json",
+        "model-00001-of-00030.safetensors",
+        "model-00002-of-00030.safetensors",
+        "model-00003-of-00030.safetensors",
+        "model-00004-of-00030.safetensors",
+        "model-00005-of-00030.safetensors",
+        "model-00006-of-00030.safetensors",
+        "model-00007-of-00030.safetensors",
+        "model-00008-of-00030.safetensors",
+        "model-00009-of-00030.safetensors",
+        "model-00010-of-00030.safetensors",
+        "model-00011-of-00030.safetensors",
+        "model-00012-of-00030.safetensors",
+        "model-00013-of-00030.safetensors",
+        "model-00014-of-00030.safetensors",
+        "model-00015-of-00030.safetensors",
+        "model-00016-of-00030.safetensors",
+        "model-00017-of-00030.safetensors",
+        "model-00018-of-00030.safetensors",
+        "model-00019-of-00030.safetensors",
+        "model-00020-of-00030.safetensors",
+        "model-00021-of-00030.safetensors",
+        "model-00022-of-00030.safetensors",
+        "model-00023-of-00030.safetensors",
+        "model-00024-of-00030.safetensors",
+        "model-00025-of-00030.safetensors",
+        "model-00026-of-00030.safetensors",
+        "model-00027-of-00030.safetensors",
+        "model-00028-of-00030.safetensors",
+        "model-00029-of-00030.safetensors",
+        "model-00030-of-00030.safetensors",
+        "model.safetensors.index.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          128001,
+          128008,
+          128009
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.9
+      },
+      "last_modified": "2025-04-24T14:58:42.000Z",
+      "library": null,
+      "likes": 8,
+      "model_card": {
+        "first_paragraph": "---\nlicense: llama3.3\nbase_model:\n- meta-llama/Llama-3.3-70B-Instruct\n---",
+        "has_yaml_frontmatter": true,
+        "lines": 5
+      },
+      "modelfile": null,
+      "parameters": {
+        "layer_structure": {
+          "first_layer": {
+            "components": 9,
+            "has_experts": false,
+            "layer": "0"
+          },
+          "sample_moe_layer": null,
+          "total_layers": 80
+        },
+        "shard_count": 30,
+        "total_size_bytes": 141107412992,
+        "total_size_gb": 141.11
+      },
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2504",
+      "tags": [
+        "safetensors",
+        "llama",
+        "base_model:meta-llama/Llama-3.3-70B-Instruct",
+        "base_model:finetune:meta-llama/Llama-3.3-70B-Instruct",
+        "license:llama3.3",
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": {
+        "architectures": [
+          "Qwen3MoeForCausalLM"
+        ],
+        "hidden_size": 2048,
+        "intermediate_size": 6144,
+        "kv_lora_rank": null,
+        "linear_conv_kernel_dim": null,
+        "max_position_embeddings": 40960,
+        "model_type": "qwen3_moe",
+        "moe_intermediate_size": 768,
+        "n_shared_experts": null,
+        "num_activated_experts": 8,
+        "num_attention_heads": 32,
+        "num_experts": 128,
+        "num_hidden_layers": 48,
+        "num_key_value_heads": 4,
+        "num_nextn_predict_layers": null,
+        "partial_rotary_factor": null,
+        "q_lora_rank": null,
+        "rope_theta": 1000000.0,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 151936
+      },
+      "chat_template": {
+        "added_tokens_count": 26,
+        "bos_token": null,
+        "chat_template_length": 2507,
+        "eos_token": "<|im_end|>",
+        "has_chat_template": true,
+        "has_tool_tokens": true
+      },
+      "chat_template_analysis": null,
+      "created_at": "2025-05-06T09:03:53.000Z",
+      "downloads": 4,
+      "files": [
+        ".gitattributes",
+        "README.md",
+        "added_tokens.json",
+        "config.json",
+        "generation_config.json",
+        "merges.txt",
+        "model-00001-of-00013.safetensors",
+        "model-00002-of-00013.safetensors",
+        "model-00003-of-00013.safetensors",
+        "model-00004-of-00013.safetensors",
+        "model-00005-of-00013.safetensors",
+        "model-00006-of-00013.safetensors",
+        "model-00007-of-00013.safetensors",
+        "model-00008-of-00013.safetensors",
+        "model-00009-of-00013.safetensors",
+        "model-00010-of-00013.safetensors",
+        "model-00011-of-00013.safetensors",
+        "model-00012-of-00013.safetensors",
+        "model-00013-of-00013.safetensors",
+        "model.safetensors.index.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "vocab.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          151645,
+          151643
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 0.6,
+        "top_k": 20,
+        "top_p": 0.95
+      },
+      "last_modified": "2025-08-21T18:02:51.000Z",
+      "library": null,
+      "likes": 3,
+      "model_card": {
+        "first_paragraph": "---\nlicense: apache-2.0\nbase_model:\n- Qwen/Qwen3-30B-A3B-Instruct-2507\n---",
+        "has_yaml_frontmatter": true,
+        "lines": 5
+      },
+      "modelfile": null,
+      "parameters": {
+        "layer_structure": {
+          "first_layer": {
+            "components": 393,
+            "has_experts": true,
+            "layer": "0"
+          },
+          "sample_moe_layer": {
+            "components": 393,
+            "expert_weight_count": 0,
+            "layer": "0"
+          },
+          "total_layers": 48
+        },
+        "shard_count": 13,
+        "total_size_bytes": 61064245248,
+        "total_size_gb": 61.06
+      },
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Diffbot-Small-XL-2505",
+      "tags": [
+        "safetensors",
+        "qwen3_moe",
+        "base_model:Qwen/Qwen3-30B-A3B-Instruct-2507",
+        "base_model:finetune:Qwen/Qwen3-30B-A3B-Instruct-2507",
+        "license:apache-2.0",
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": {
+        "architectures": [
+          "LlamaForCausalLM"
+        ],
+        "hidden_size": 4096,
+        "intermediate_size": 14336,
+        "kv_lora_rank": null,
+        "linear_conv_kernel_dim": null,
+        "max_position_embeddings": 131072,
+        "model_type": "llama",
+        "moe_intermediate_size": null,
+        "n_shared_experts": null,
+        "num_activated_experts": null,
+        "num_attention_heads": 32,
+        "num_experts": null,
+        "num_hidden_layers": 32,
+        "num_key_value_heads": 8,
+        "num_nextn_predict_layers": null,
+        "partial_rotary_factor": null,
+        "q_lora_rank": null,
+        "rope_theta": 500000.0,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 128256
+      },
+      "chat_template": {
+        "added_tokens_count": 256,
+        "bos_token": "<|begin_of_text|>",
+        "chat_template_length": null,
+        "eos_token": "<|eot_id|>",
+        "has_chat_template": false,
+        "has_tool_tokens": false
+      },
+      "chat_template_analysis": null,
+      "created_at": "2025-08-23T20:51:18.000Z",
+      "downloads": 4,
+      "files": [
+        ".gitattributes",
+        "README.md",
+        "chat_template.jinja",
+        "config.json",
+        "generation_config.json",
+        "model-00001-of-00004.safetensors",
+        "model-00002-of-00004.safetensors",
+        "model-00003-of-00004.safetensors",
+        "model-00004-of-00004.safetensors",
+        "model.safetensors.index.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          128001,
+          128008,
+          128009
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.9
+      },
+      "last_modified": "2025-08-23T20:55:18.000Z",
+      "library": null,
+      "likes": 1,
+      "model_card": {
+        "first_paragraph": "---\nlicense: llama3.1\nbase_model:\n- meta-llama/Llama-3.1-8B-Instruct\n---",
+        "has_yaml_frontmatter": true,
+        "lines": 5
+      },
+      "modelfile": null,
+      "parameters": {
+        "layer_structure": {
+          "first_layer": {
+            "components": 9,
+            "has_experts": false,
+            "layer": "0"
+          },
+          "sample_moe_layer": null,
+          "total_layers": 32
+        },
+        "shard_count": 4,
+        "total_size_bytes": 16060522496,
+        "total_size_gb": 16.06
+      },
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2508",
+      "tags": [
+        "safetensors",
+        "llama",
+        "base_model:meta-llama/Llama-3.1-8B-Instruct",
+        "base_model:finetune:meta-llama/Llama-3.1-8B-Instruct",
+        "license:llama3.1",
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": {
+        "architectures": [
+          "Qwen3MoeForCausalLM"
+        ],
+        "hidden_size": 2048,
+        "intermediate_size": 6144,
+        "kv_lora_rank": null,
+        "linear_conv_kernel_dim": null,
+        "max_position_embeddings": 262144,
+        "model_type": "qwen3_moe",
+        "moe_intermediate_size": 768,
+        "n_shared_experts": null,
+        "num_activated_experts": 8,
+        "num_attention_heads": 32,
+        "num_experts": 128,
+        "num_hidden_layers": 48,
+        "num_key_value_heads": 4,
+        "num_nextn_predict_layers": null,
+        "partial_rotary_factor": null,
+        "q_lora_rank": null,
+        "rope_theta": 10000000.0,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 151936
+      },
+      "chat_template": {
+        "added_tokens_count": 26,
+        "bos_token": null,
+        "chat_template_length": null,
+        "eos_token": "<|im_end|>",
+        "has_chat_template": false,
+        "has_tool_tokens": true
+      },
+      "chat_template_analysis": null,
+      "created_at": "2025-08-24T15:07:07.000Z",
+      "downloads": 4,
+      "files": [
+        ".gitattributes",
+        "added_tokens.json",
+        "chat_template.jinja",
+        "config.json",
+        "generation_config.json",
+        "merges.txt",
+        "model-00001-of-00013.safetensors",
+        "model-00002-of-00013.safetensors",
+        "model-00003-of-00013.safetensors",
+        "model-00004-of-00013.safetensors",
+        "model-00005-of-00013.safetensors",
+        "model-00006-of-00013.safetensors",
+        "model-00007-of-00013.safetensors",
+        "model-00008-of-00013.safetensors",
+        "model-00009-of-00013.safetensors",
+        "model-00010-of-00013.safetensors",
+        "model-00011-of-00013.safetensors",
+        "model-00012-of-00013.safetensors",
+        "model-00013-of-00013.safetensors",
+        "model.safetensors.index.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "vocab.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          151645,
+          151643
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 0.7,
+        "top_k": 20,
+        "top_p": 0.8
+      },
+      "last_modified": "2025-08-24T15:15:24.000Z",
+      "library": null,
+      "likes": 7,
+      "model_card": null,
+      "modelfile": null,
+      "parameters": {
+        "layer_structure": {
+          "first_layer": {
+            "components": 393,
+            "has_experts": true,
+            "layer": "0"
+          },
+          "sample_moe_layer": {
+            "components": 393,
+            "expert_weight_count": 0,
+            "layer": "0"
+          },
+          "total_layers": 48
+        },
+        "shard_count": 13,
+        "total_size_bytes": 61064245248,
+        "total_size_gb": 61.06
+      },
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Diffbot-Small-XL-2508",
+      "tags": [
+        "safetensors",
+        "qwen3_moe",
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": null,
+      "chat_template": null,
+      "chat_template_analysis": null,
+      "created_at": "2026-01-16T17:31:00.000Z",
+      "downloads": 27,
+      "files": [
+        ".gitattributes",
+        "diffbot-coder-Q4_K_M.gguf",
+        "diffbot-coder-Q6_K.gguf"
+      ],
+      "generation_config": null,
+      "last_modified": "2026-01-16T21:44:22.000Z",
+      "library": null,
+      "likes": 1,
+      "model_card": null,
+      "modelfile": null,
+      "parameters": null,
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Diffbot-Coder-2601-GGUF",
+      "tags": [
+        "gguf",
+        "endpoints_compatible",
+        "region:us",
+        "conversational"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": {
+        "architectures": [
+          "Qwen3MoeForCausalLM"
+        ],
+        "hidden_size": 2048,
+        "intermediate_size": 5472,
+        "kv_lora_rank": null,
+        "linear_conv_kernel_dim": null,
+        "max_position_embeddings": 262144,
+        "model_type": "qwen3_moe",
+        "moe_intermediate_size": 768,
+        "n_shared_experts": null,
+        "num_activated_experts": 8,
+        "num_attention_heads": 32,
+        "num_experts": 128,
+        "num_hidden_layers": 48,
+        "num_key_value_heads": 4,
+        "num_nextn_predict_layers": null,
+        "partial_rotary_factor": null,
+        "q_lora_rank": null,
+        "rope_theta": 10000000.0,
+        "torch_dtype": null,
+        "vocab_size": 151936
+      },
+      "chat_template": {
+        "added_tokens_count": 26,
+        "bos_token": null,
+        "chat_template_length": null,
+        "eos_token": "<|im_end|>",
+        "has_chat_template": false,
+        "has_tool_tokens": true
+      },
+      "chat_template_analysis": {
+        "has_function": true,
+        "has_think": false,
+        "has_tool_call": true,
+        "lines": 117,
+        "size_bytes": 6211
+      },
+      "created_at": "2026-01-16T18:11:05.000Z",
+      "downloads": 4,
+      "files": [
+        ".gitattributes",
+        "added_tokens.json",
+        "chat_template.jinja",
+        "config.json",
+        "generation_config.json",
+        "merges.txt",
+        "model-00001-of-00025.safetensors",
+        "model-00002-of-00025.safetensors",
+        "model-00003-of-00025.safetensors",
+        "model-00004-of-00025.safetensors",
+        "model-00005-of-00025.safetensors",
+        "model-00006-of-00025.safetensors",
+        "model-00007-of-00025.safetensors",
+        "model-00008-of-00025.safetensors",
+        "model-00009-of-00025.safetensors",
+        "model-00010-of-00025.safetensors",
+        "model-00011-of-00025.safetensors",
+        "model-00012-of-00025.safetensors",
+        "model-00013-of-00025.safetensors",
+        "model-00014-of-00025.safetensors",
+        "model-00015-of-00025.safetensors",
+        "model-00016-of-00025.safetensors",
+        "model-00017-of-00025.safetensors",
+        "model-00018-of-00025.safetensors",
+        "model-00019-of-00025.safetensors",
+        "model-00020-of-00025.safetensors",
+        "model-00021-of-00025.safetensors",
+        "model-00022-of-00025.safetensors",
+        "model-00023-of-00025.safetensors",
+        "model-00024-of-00025.safetensors",
+        "model-00025-of-00025.safetensors",
+        "model.safetensors.index.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "vocab.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          151645,
+          151643
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": 1.05,
+        "temperature": 0.7,
+        "top_k": 20,
+        "top_p": 0.8
+      },
+      "last_modified": "2026-01-17T01:09:04.000Z",
+      "library": null,
+      "likes": 0,
+      "model_card": null,
+      "modelfile": null,
+      "parameters": {
+        "layer_structure": {
+          "first_layer": {
+            "components": 393,
+            "has_experts": true,
+            "layer": "0"
+          },
+          "sample_moe_layer": {
+            "components": 393,
+            "expert_weight_count": 0,
+            "layer": "0"
+          },
+          "total_layers": 48
+        },
+        "shard_count": 25,
+        "total_size_bytes": 122128490496,
+        "total_size_gb": 122.13
+      },
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Diffbot-Coder-2601",
+      "tags": [
+        "safetensors",
+        "qwen3_moe",
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": {
+        "architectures": [
+          "Glm4MoeLiteForCausalLM"
+        ],
+        "hidden_size": 2048,
+        "intermediate_size": 10240,
+        "kv_lora_rank": 512,
+        "linear_conv_kernel_dim": null,
+        "max_position_embeddings": 202752,
+        "model_type": "glm4_moe_lite",
+        "moe_intermediate_size": 1536,
+        "n_shared_experts": 1,
+        "num_activated_experts": 4,
+        "num_attention_heads": 20,
+        "num_experts": null,
+        "num_hidden_layers": 47,
+        "num_key_value_heads": 20,
+        "num_nextn_predict_layers": 1,
+        "partial_rotary_factor": 1.0,
+        "q_lora_rank": 768,
+        "rope_theta": null,
+        "torch_dtype": null,
+        "vocab_size": 154880
+      },
+      "chat_template": {
+        "added_tokens_count": null,
+        "bos_token": null,
+        "chat_template_length": null,
+        "eos_token": "<|endoftext|>",
+        "has_chat_template": false,
+        "has_tool_tokens": false
+      },
+      "chat_template_analysis": {
+        "has_function": true,
+        "has_think": true,
+        "has_tool_call": true,
+        "lines": 86,
+        "size_bytes": 3120
+      },
+      "created_at": "2026-02-10T00:35:26.000Z",
+      "downloads": 4,
+      "files": [
+        ".gitattributes",
+        "chat_template.jinja",
+        "config.json",
+        "generation_config.json",
+        "model-00001-of-00002.safetensors",
+        "model-00002-of-00002.safetensors",
+        "model.safetensors.index.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "generation_config": {
+        "do_sample": null,
+        "eos_token_id": [
+          154820,
+          154827,
+          154829
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 1.0,
+        "top_k": null,
+        "top_p": null
+      },
+      "last_modified": "2026-02-10T00:43:20.000Z",
+      "library": null,
+      "likes": 0,
+      "model_card": null,
+      "modelfile": null,
+      "parameters": {
+        "layer_structure": {
+          "first_layer": {
+            "components": 12,
+            "has_experts": false,
+            "layer": "0"
+          },
+          "sample_moe_layer": {
+            "components": 206,
+            "expert_weight_count": 0,
+            "layer": "1"
+          },
+          "total_layers": 47
+        },
+        "shard_count": 2,
+        "total_size_bytes": 59886793728,
+        "total_size_gb": 59.89
+      },
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Diffbot-Coder-2602",
+      "tags": [
+        "safetensors",
+        "glm4_moe_lite",
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": {
+        "architectures": [
+          "Qwen3NextForCausalLM"
+        ],
+        "hidden_size": 2048,
+        "intermediate_size": 5120,
+        "kv_lora_rank": null,
+        "linear_conv_kernel_dim": 4,
+        "max_position_embeddings": 262144,
+        "model_type": "qwen3_next",
+        "moe_intermediate_size": 512,
+        "n_shared_experts": null,
+        "num_activated_experts": 10,
+        "num_attention_heads": 16,
+        "num_experts": 512,
+        "num_hidden_layers": 48,
+        "num_key_value_heads": 2,
+        "num_nextn_predict_layers": null,
+        "partial_rotary_factor": 0.25,
+        "q_lora_rank": null,
+        "rope_theta": 5000000.0,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 151936
+      },
+      "chat_template": {
+        "added_tokens_count": 26,
+        "bos_token": null,
+        "chat_template_length": 6067,
+        "eos_token": "<|im_end|>",
+        "has_chat_template": true,
+        "has_tool_tokens": true
+      },
+      "chat_template_analysis": {
+        "has_function": true,
+        "has_think": false,
+        "has_tool_call": true,
+        "lines": 117,
+        "size_bytes": 6068
+      },
+      "created_at": "2026-03-17T23:11:51.000Z",
+      "downloads": 15,
+      "files": [
+        ".gitattributes",
+        "README.md",
+        "chat_template.jinja",
+        "config.json",
+        "generation_config.json",
+        "merges.txt",
+        "model-00001-of-00040.safetensors",
+        "model-00002-of-00040.safetensors",
+        "model-00003-of-00040.safetensors",
+        "model-00004-of-00040.safetensors",
+        "model-00005-of-00040.safetensors",
+        "model-00006-of-00040.safetensors",
+        "model-00007-of-00040.safetensors",
+        "model-00008-of-00040.safetensors",
+        "model-00009-of-00040.safetensors",
+        "model-00010-of-00040.safetensors",
+        "model-00011-of-00040.safetensors",
+        "model-00012-of-00040.safetensors",
+        "model-00013-of-00040.safetensors",
+        "model-00014-of-00040.safetensors",
+        "model-00015-of-00040.safetensors",
+        "model-00016-of-00040.safetensors",
+        "model-00017-of-00040.safetensors",
+        "model-00018-of-00040.safetensors",
+        "model-00019-of-00040.safetensors",
+        "model-00020-of-00040.safetensors",
+        "model-00021-of-00040.safetensors",
+        "model-00022-of-00040.safetensors",
+        "model-00023-of-00040.safetensors",
+        "model-00024-of-00040.safetensors",
+        "model-00025-of-00040.safetensors",
+        "model-00026-of-00040.safetensors",
+        "model-00027-of-00040.safetensors",
+        "model-00028-of-00040.safetensors",
+        "model-00029-of-00040.safetensors",
+        "model-00030-of-00040.safetensors",
+        "model-00031-of-00040.safetensors",
+        "model-00032-of-00040.safetensors",
+        "model-00033-of-00040.safetensors",
+        "model-00034-of-00040.safetensors",
+        "model-00035-of-00040.safetensors",
+        "model-00036-of-00040.safetensors",
+        "model-00037-of-00040.safetensors",
+        "model-00038-of-00040.safetensors",
+        "model-00039-of-00040.safetensors",
+        "model-00040-of-00040.safetensors",
+        "model.safetensors.index.json",
+        "qwen3_coder_detector_sgl.py",
+        "qwen3coder_tool_parser_vllm.py",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "vocab.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          151645,
+          151643
+        ],
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 1.0,
+        "top_k": 40,
+        "top_p": 0.95
+      },
+      "last_modified": "2026-03-18T10:35:30.000Z",
+      "library": "transformers",
+      "likes": 0,
+      "model_card": {
+        "first_paragraph": "Today, we're announcing **Qwen3-Coder-Next**, an open-weight language model designed specifically for coding agents and local development. It features the following key enhancements:  \n- **Super Efficient with Significant Performance**: With only 3B activated parameters (80B total parameters), it achieves performance comparable to models with 10–20x more active parameters, making it highly cost-effective for agent deployment.\n- **Advanced Agentic Capabilities**: Through an elaborate training recipe, it excels at long-horizon reasoning, complex tool usage, and recovery from execution failures, ensuring robust performance in dynamic coding tasks.\n- **Versatile Integration with Real-World IDE**: Its 256k context length, combined with adaptability to various scaffold templates, enables seamless integration with different CLI/IDE platforms (e.g., Claude Code, Qwen Code, Qoder, Kilo, Trae, Cline, etc.), supporting diverse development environments.\n![image/jpeg](https://qianwen-res.oss-accelerate-overseas.aliyuncs.com/Qwen3-Coder-Next/benchmarks.png)",
+        "has_yaml_frontmatter": true,
+        "lines": 208
+      },
+      "modelfile": null,
+      "parameters": {
+        "layer_structure": {
+          "first_layer": {
+            "components": 1550,
+            "has_experts": true,
+            "layer": "0"
+          },
+          "sample_moe_layer": {
+            "components": 1550,
+            "expert_weight_count": 0,
+            "layer": "0"
+          },
+          "total_layers": 48
+        },
+        "shard_count": 40,
+        "total_size_bytes": 159348782592,
+        "total_size_gb": 159.35
+      },
+      "pipeline_tag": "text-generation",
+      "repo_id": "diffbot/Diffbot-Coder-2603",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "qwen3_next",
+        "text-generation",
+        "conversational",
+        "license:apache-2.0",
+        "endpoints_compatible",
+        "region:us"
+      ],
+      "tool_parsers": [
+        {
+          "filename": "qwen3coder_tool_parser_vllm.py",
+          "lines": 690,
+          "size_bytes": 31680
+        },
+        {
+          "filename": "qwen3_coder_detector_sgl.py",
+          "lines": 474,
+          "size_bytes": 19855
+        }
+      ]
+    },
+    {
+      "architecture": null,
+      "chat_template": null,
+      "chat_template_analysis": null,
+      "created_at": "2026-03-17T23:11:52.000Z",
+      "downloads": 0,
+      "files": [
+        ".gitattributes"
+      ],
+      "generation_config": null,
+      "last_modified": "2026-03-17T23:11:52.000Z",
+      "library": null,
+      "likes": 0,
+      "model_card": null,
+      "modelfile": null,
+      "parameters": null,
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Diffbot-Coder-2603-fp8",
+      "tags": [
+        "region:us"
+      ],
+      "tool_parsers": []
+    },
+    {
+      "architecture": null,
+      "chat_template": null,
+      "chat_template_analysis": null,
+      "created_at": "2026-03-17T23:11:53.000Z",
+      "downloads": 86,
+      "files": [
+        ".gitattributes",
+        "Modelfile.Q4_K_M",
+        "Modelfile.Q8_0",
+        "qwen3-coder-next-lora-Q4_K_M.gguf",
+        "qwen3-coder-next-lora-Q8_0.gguf"
+      ],
+      "generation_config": null,
+      "last_modified": "2026-03-18T06:38:35.000Z",
+      "library": null,
+      "likes": 0,
+      "model_card": null,
+      "modelfile": null,
+      "parameters": null,
+      "pipeline_tag": null,
+      "repo_id": "diffbot/Diffbot-Coder-2603-GGUF",
+      "tags": [
+        "gguf",
+        "endpoints_compatible",
+        "region:us",
+        "conversational"
+      ],
+      "tool_parsers": []
+    }
+  ],
+  "org": "diffbot",
+  "scan_method": "hf crate: scan_org_deep + fetch_raw_files + list_repo_files + fetch_model_cards",
+  "timeline": [
+    {
+      "date": "2024-12-30T16:04:22.000Z",
+      "model_type": "llama",
+      "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2412"
+    },
+    {
+      "date": "2024-12-30T18:10:56.000Z",
+      "model_type": "llama",
+      "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2412"
+    },
+    {
+      "date": "2025-04-23T23:18:40.000Z",
+      "model_type": "llama",
+      "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2504"
+    },
+    {
+      "date": "2025-04-23T23:22:22.000Z",
+      "model_type": "llama",
+      "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2504"
+    },
+    {
+      "date": "2025-05-06T09:03:53.000Z",
+      "model_type": "qwen3_moe",
+      "repo_id": "diffbot/Diffbot-Small-XL-2505"
+    },
+    {
+      "date": "2025-08-23T20:51:18.000Z",
+      "model_type": "llama",
+      "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2508"
+    },
+    {
+      "date": "2025-08-24T15:07:07.000Z",
+      "model_type": "qwen3_moe",
+      "repo_id": "diffbot/Diffbot-Small-XL-2508"
+    },
+    {
+      "date": "2026-01-16T17:31:00.000Z",
+      "model_type": "unknown",
+      "repo_id": "diffbot/Diffbot-Coder-2601-GGUF"
+    },
+    {
+      "date": "2026-01-16T18:11:05.000Z",
+      "model_type": "qwen3_moe",
+      "repo_id": "diffbot/Diffbot-Coder-2601"
+    },
+    {
+      "date": "2026-02-10T00:35:26.000Z",
+      "model_type": "glm4_moe_lite",
+      "repo_id": "diffbot/Diffbot-Coder-2602"
+    },
+    {
+      "date": "2026-03-17T23:11:51.000Z",
+      "model_type": "qwen3_next",
+      "repo_id": "diffbot/Diffbot-Coder-2603"
+    },
+    {
+      "date": "2026-03-17T23:11:52.000Z",
+      "model_type": "unknown",
+      "repo_id": "diffbot/Diffbot-Coder-2603-fp8"
+    },
+    {
+      "date": "2026-03-17T23:11:53.000Z",
+      "model_type": "unknown",
+      "repo_id": "diffbot/Diffbot-Coder-2603-GGUF"
+    }
+  ],
+  "total_files_fetched": 51,
+  "total_models": 13,
+  "training_signals": [
+    {
+      "evidence": "Custom model_type: qwen3_moe",
+      "repo_id": "diffbot/Diffbot-Small-XL-2505",
+      "signal_type": "CustomArchitecture"
+    },
+    {
+      "evidence": "MoE: 128 experts, 8 active per token",
+      "repo_id": "diffbot/Diffbot-Small-XL-2505",
+      "signal_type": "MoEArchitecture"
+    },
+    {
+      "evidence": "131072 tokens",
+      "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2412",
+      "signal_type": "LargeContext"
+    },
+    {
+      "evidence": "131072 tokens",
+      "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2508",
+      "signal_type": "LargeContext"
+    },
+    {
+      "evidence": "131072 tokens",
+      "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2504",
+      "signal_type": "LargeContext"
+    },
+    {
+      "evidence": "Custom model_type: qwen3_moe",
+      "repo_id": "diffbot/Diffbot-Small-XL-2508",
+      "signal_type": "CustomArchitecture"
+    },
+    {
+      "evidence": "MoE: 128 experts, 8 active per token",
+      "repo_id": "diffbot/Diffbot-Small-XL-2508",
+      "signal_type": "MoEArchitecture"
+    },
+    {
+      "evidence": "262144 tokens",
+      "repo_id": "diffbot/Diffbot-Small-XL-2508",
+      "signal_type": "LargeContext"
+    },
+    {
+      "evidence": "Custom model_type: qwen3_next, hybrid linear+full attention (kernel_dim=4)",
+      "repo_id": "diffbot/Diffbot-Coder-2603",
+      "signal_type": "CustomArchitecture"
+    },
+    {
+      "evidence": "MoE: 512 experts, 10 active per token",
+      "repo_id": "diffbot/Diffbot-Coder-2603",
+      "signal_type": "MoEArchitecture"
+    },
+    {
+      "evidence": "262144 tokens",
+      "repo_id": "diffbot/Diffbot-Coder-2603",
+      "signal_type": "LargeContext"
+    },
+    {
+      "evidence": "Custom model_type: qwen3_moe",
+      "repo_id": "diffbot/Diffbot-Coder-2601",
+      "signal_type": "CustomArchitecture"
+    },
+    {
+      "evidence": "MoE: 128 experts, 8 active per token",
+      "repo_id": "diffbot/Diffbot-Coder-2601",
+      "signal_type": "MoEArchitecture"
+    },
+    {
+      "evidence": "262144 tokens",
+      "repo_id": "diffbot/Diffbot-Coder-2601",
+      "signal_type": "LargeContext"
+    },
+    {
+      "evidence": "131072 tokens",
+      "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2412",
+      "signal_type": "LargeContext"
+    },
+    {
+      "evidence": "131072 tokens",
+      "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2504",
+      "signal_type": "LargeContext"
+    },
+    {
+      "evidence": "Custom model_type: glm4_moe_lite",
+      "repo_id": "diffbot/Diffbot-Coder-2602",
+      "signal_type": "CustomArchitecture"
+    },
+    {
+      "evidence": "202752 tokens",
+      "repo_id": "diffbot/Diffbot-Coder-2602",
+      "signal_type": "LargeContext"
+    }
+  ]
+}
