@@ -191,13 +191,27 @@ class SalesCueModel:
             "(Kendall et al., 2018), with causal attribution via learned counterfactuals.",
         ),
         "spam": (
-            "Perplexity Ratio AI Detection",
-            "Existing AI detectors compare perplexity against a threshold, but perplexity varies "
-            "by domain, register, and topic. SpamHead computes the *perplexity ratio* between two "
-            "language models: one fine-tuned on human sales emails, one on AI-generated sales emails. "
-            "The ratio is domain-invariant because both models see the same domain distribution.\n\n"
-            "Combines neural spam scoring with provider-specific calibration (Gmail, Outlook, Yahoo) "
-            "and structural feature analysis (sentence variance, contraction use, punctuation patterns).",
+            "Hierarchical Bayesian Attention Gating with Adversarial Calibration",
+            "Spam signals are *level-dependent*: spammy tokens ('FREE') contribute differently than "
+            "spammy sentence structures (urgency patterns) versus spammy document profiles (link density, "
+            "header anomalies). SpamHead introduces a Hierarchical Bayesian Attention Gate (HBAG) that "
+            "operates at token, sentence, and document level simultaneously. At each level, Bayesian "
+            "attention computes per-element spam contribution priors updated via amortized variational "
+            "inference. An adversarial calibration loss forces provider-specific scores to match "
+            "empirical inbox placement distributions.\n\n"
+            "**Sub-modules:**\n\n"
+            "- **HierarchicalBayesianAttentionGate**: Token-level Beta(α,β) priors → sentence-level "
+            "aggregation (12 structural features) → document-level 7-category classification\n"
+            "- **AdversarialStyleTransferDetector**: 32 structural features for AI detection "
+            "(perplexity ratio, trajectory smoothness, watermark detection per Kirchenbauer et al. 2023)\n"
+            "- **HeaderAnalyzer**: SPF/DKIM/DMARC + routing analysis (16-dim feature vector)\n"
+            "- **TemporalBurstDetector**: Cross-email send pattern analysis (Kleinberg burst model)\n"
+            "- **CampaignSimilarityDetector**: Template detection via pairwise CLS cosine similarity\n"
+            "- **ProviderCalibration**: 6-provider deliverability (Gmail, Outlook, Yahoo, ProtonMail, "
+            "Apple Mail, Corporate) with adversarial calibration discriminator\n\n"
+            "7-category taxonomy: clean, template_spam, ai_generated, low_effort, role_account, "
+            "domain_suspect, content_violation. Production path: DeBERTa model distills to 24-feature "
+            "logistic regression weights loaded by a Rust SpamClassifier with SoA batch processing.",
         ),
         "intent": (
             "Neural Hawkes Process for Buying Journey",
