@@ -11,10 +11,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
+from ..base import BaseModule
+
 STAGES = ["unaware", "aware", "researching", "evaluating", "committed", "purchasing"]
 
 
-class NeuralHawkesIntentPredictor(nn.Module):
+class NeuralHawkesIntentPredictor(BaseModule):
+    name = "intent"
+    description = "Neural Hawkes process for intent stage prediction"
     """
     Models the prospect's buying journey as a neural Hawkes process.
 
@@ -99,7 +103,13 @@ class NeuralHawkesIntentPredictor(nn.Module):
 
         return h, c, c_bar, delta
 
-    def forward(self, cls_embed, event_history=None):
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
+        cls_embed = encoder_output.last_hidden_state[:, 0]
+        event_history = kwargs.get("event_history")
+        return self._predict(cls_embed, event_history)
+
+    def _predict(self, cls_embed, event_history=None):
         """
         cls_embed: (B, hidden) from shared encoder for the current signal
         event_history: list of {"embed": tensor, "days": float, "type": str}

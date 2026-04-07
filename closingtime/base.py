@@ -1,39 +1,42 @@
 """closingtime/base.py — Abstract base class for all modules.
 
 Every ClosingTime module inherits from BaseModule and implements
-the `forward` method. Provides consistent interface for the pipe
+the `process` method. Provides consistent interface for the pipe
 operator, display rendering, and module registration.
 """
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Any
+
+import torch.nn as nn
 
 from .backbone import SharedEncoder
 from .display import CardRenderer
 
 
-class BaseModule(ABC):
+class BaseModule(nn.Module):
     """Abstract base class for ClosingTime modules.
 
     Subclasses must set `name` and `description` class attributes
-    and implement the `forward` method.
+    and implement the `process` method.
     """
 
     name: str = "unnamed"
     description: str = ""
 
     @abstractmethod
-    def forward(self, text: str, **kwargs: Any) -> dict[str, Any]:
-        """Run the module on input text. Returns a result dict."""
+    def process(self, encoded: dict, text: str, **kwargs: Any) -> dict[str, Any]:
+        """Run the module on pre-encoded input. Returns a result dict."""
         ...
 
-    def __call__(self, text: str, **kwargs: Any) -> dict[str, Any]:
-        """Validate input and delegate to forward."""
+    def forward(self, text: str, **kwargs: Any) -> dict[str, Any]:
+        """Validate input, encode via shared backbone, and delegate to process."""
         from .validation import validate_text
         text = validate_text(text)
-        return self.forward(text, **kwargs)
+        encoded = self.encode(text)
+        return self.process(encoded, text, **kwargs)
 
     def display(self, result: dict[str, Any], mode: str = "rich") -> str | None:
         """Render the result as a visual card."""

@@ -9,6 +9,9 @@ random field* where the transition matrix encodes label co-occurrence rules.
 import torch
 import torch.nn as nn
 
+from ..base import BaseModule
+from ..backbone import SharedEncoder
+
 LABELS = [
     "genuinely_interested", "politely_acknowledging", "objection",
     "not_now", "unsubscribe", "out_of_office", "bounce",
@@ -44,18 +47,20 @@ class ConstrainedMultiLabelCRF(nn.Module):
     def __init__(self, n_labels=10):
         super().__init__()
 
-        # pairwise compatibility: learned, initialized from constraints
+        # pairwise compatibility: learned soft preferences
         self.pairwise = nn.Parameter(torch.zeros(n_labels, n_labels))
 
-        # initialize from constraint matrix
+        # hard constraints as non-learnable buffer (gradient cannot override)
+        hard_constraints = torch.zeros(n_labels, n_labels)
         for (l1, l2), value in CONSTRAINT_MATRIX.items():
             i, j = LABELS.index(l1), LABELS.index(l2)
             if value == -float("inf"):
-                self.pairwise.data[i, j] = -10.0
-                self.pairwise.data[j, i] = -10.0
+                hard_constraints[i, j] = -1e9
+                hard_constraints[j, i] = -1e9
             else:
                 self.pairwise.data[i, j] = value
                 self.pairwise.data[j, i] = value
+        self.register_buffer('hard_constraints', hard_constraints)
 
     def score_configuration(self, unary_logits, label_config):
         """
@@ -67,7 +72,8 @@ class ConstrainedMultiLabelCRF(nn.Module):
 
         # pairwise score: sum of pairwise potentials for all active label pairs
         active_mask = label_config.unsqueeze(-1) * label_config.unsqueeze(-2)  # (B, n, n)
-        pairwise = (self.pairwise.unsqueeze(0) * active_mask).sum(dim=(-1, -2)) / 2
+        effective_pairwise = self.pairwise + self.hard_constraints
+        pairwise = (effective_pairwise.unsqueeze(0) * active_mask).sum(dim=(-1, -2)) / 2
 
         return unary + pairwise
 
@@ -125,7 +131,9 @@ class ConstrainedMultiLabelCRF(nn.Module):
         return [(self.score_configuration(unary_logits, config).item(), config)]
 
 
-class ReplyHead(nn.Module):
+class ReplyHead(BaseModule):
+    name = "reply"
+    description = "Constrained CRF for structured reply classification"
     def __init__(self, hidden=768, n_labels=10):
         super().__init__()
 
@@ -145,7 +153,11 @@ class ReplyHead(nn.Module):
         # position encoding for touchpoint context
         self.position_embed = nn.Embedding(10, 8)
 
-    def forward(self, encoder_output, tokenizer, input_ids, touchpoint=0):
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
+        input_ids = encoded["input_ids"]
+        _, tokenizer = SharedEncoder.load()
+        touchpoint = kwargs.get("touchpoint", 0)
         tokens = encoder_output.last_hidden_state
         seq_len = tokens.shape[1]
 

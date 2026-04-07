@@ -96,6 +96,8 @@ class EmailGenerator:
         gen.load()  # loads Mistral + LoRA adapter
         email = gen.generate(context)
     """
+    name = "emailgen"
+    description = "Mistral LoRA email generator"
 
     def __init__(self, config: EmailGenConfig | None = None):
         self.config = config or EmailGenConfig()
