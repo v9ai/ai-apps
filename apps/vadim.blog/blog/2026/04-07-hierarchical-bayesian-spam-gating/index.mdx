@@ -23,7 +23,187 @@ The solution is a **gating module**: a spam classifier that sits at stage 2 of t
 
 This article documents a hierarchical Bayesian spam gating system with 4 aspect-specific attention probes, information-theoretic AI detection features, uncertainty decomposition, and a full Rust distillation path. The Python model trains on DeBERTa-v3-base. The Rust classifier runs at batch speed with 24 features and zero ML dependencies.
 
-<!-- truncate -->
+{/* truncate */}
+
+## The Pipeline: What the Gate Protects
+
+The spam module does not exist in isolation. It is stage 2 of a **15-module pipeline** called SalesCue, where every module shares a single DeBERTa-v3-base encoder loaded as a thread-safe singleton. One encoder forward pass produces 768-dim token embeddings; then each module runs its own specialized head on those embeddings. The spam gate decides which emails proceed to the remaining 14 heads — and which get discarded before any of that compute is spent.
+
+<Flow
+  height={500}
+  nodes={[
+    { id: "email", position: { x: 250, y: 0 }, data: { label: "Inbound Email" }, type: "input" },
+    { id: "enc", position: { x: 250, y: 80 }, data: { label: "Shared DeBERTa Encoder\n(single forward pass)" } },
+    { id: "spam", position: { x: 250, y: 170 }, data: { label: "Spam Gate (Stage 2)" } },
+    { id: "block", position: { x: 50, y: 280 }, data: { label: "Block / Quarantine" }, type: "output" },
+    { id: "score", position: { x: 160, y: 310 }, data: { label: "Score" } },
+    { id: "intent", position: { x: 250, y: 310 }, data: { label: "Intent" } },
+    { id: "reply", position: { x: 340, y: 310 }, data: { label: "Reply" } },
+    { id: "more", position: { x: 440, y: 310 }, data: { label: "+12 modules" } },
+    { id: "out", position: { x: 280, y: 410 }, data: { label: "Scored Lead → Outreach" }, type: "output" },
+  ]}
+  edges={[
+    { id: "e1", source: "email", target: "enc" },
+    { id: "e2", source: "enc", target: "spam" },
+    { id: "e3", source: "spam", target: "block", label: "Junk" },
+    { id: "e4", source: "spam", target: "score", label: "Clean" },
+    { id: "e5", source: "spam", target: "intent" },
+    { id: "e6", source: "spam", target: "reply" },
+    { id: "e7", source: "spam", target: "more" },
+    { id: "e8", source: "score", target: "out" },
+    { id: "e9", source: "intent", target: "out" },
+    { id: "e10", source: "reply", target: "out" },
+    { id: "e11", source: "more", target: "out" },
+  ]}
+/>
+
+The 15 modules registered in the engine, with their ML techniques:
+
+| Module | Technique | What It Does |
+|--------|-----------|-------------|
+| **spam** | Hierarchical Bayesian Attention Gate | Filters junk (this article) |
+| **score** | Causal Signal Attribution (32 signals) | Lead scoring: hot/warm/cold/disqualified |
+| **intent** | Neural Hawkes Process | Buying stage prediction (unaware → purchasing) |
+| **reply** | Constrained CRF | Reply classification (10 types, structural constraints) |
+| **triggers** | Temporal Displacement Model | Event freshness (funding, hiring surge, product launch) |
+| **icp** | Wasserstein ICP Matcher | Ideal customer profile distance (6 dimensions) |
+| **call** | Conditional Neural Process | Conversation scoring, commitment extraction |
+| **subject** | Contextual Bradley-Terry | Subject line ranking conditioned on prospect context |
+| **sentiment** | MI-Minimized Disentanglement | Sentiment decoupled from intent (7 sentiments x 4 intents) |
+| **entities** | Regex + Pointer NER + Re-typing | Hybrid entity extraction (email, phone, company, role) |
+| **objection** | 3-Way Pre-classifier + Coaching Cards | Objection handling (genuine/stall/misunderstanding, 12 types) |
+| **emailgen** | Qwen LoRA Generator | Personalized email generation (separate LLM, not shared encoder) |
+| **survival** | Deep Survival Machine (Weibull mixture) | Time-to-conversion prediction, risk groups |
+| **anomaly** | DAGMM-inspired Signal Anomaly Detection | Detects 9 anomaly types (hiring spike, funding event) |
+| **bandit** | Contextual Thompson Sampling | Outreach optimization (125 arms: template x timing x style) |
+| **graph** | GraphSAGE (2-layer GNN) | Company relationship scoring (8 edge types, 5 graph labels) |
+
+Every text-based module calls `process(encoded, text)` where `encoded` is the shared encoder output. The encoder singleton (`SharedEncoder` in `backbone.py`) uses double-checked locking with an `RLock` to ensure the DeBERTa model loads exactly once, even under concurrent access:
+
+```python
+class SharedEncoder:
+    @staticmethod
+    def load(model_name="microsoft/deberta-v3-base"):
+        if _encoder is not None:
+            return _encoder, _tokenizer
+        with _lock:
+            if _encoder is not None:  # double-check after acquiring lock
+                return _encoder, _tokenizer
+            # Load model once, serve all 15 modules
+```
+
+## Why This Exists: The Compute Economics
+
+The business case is arithmetic. Each downstream module head costs 15-40ms of post-encoder computation per email. With 14 modules downstream of the spam gate, a single junk email wastes roughly **350ms** of module-specific inference (14 modules x ~25ms average).
+
+At scale:
+
+| Metric | Value |
+|--------|-------|
+| Daily inbound volume | ~1,000 emails |
+| Spam rate (observed) | ~40% |
+| Spam emails per day | ~400 |
+| Wasted compute per spam email | ~350ms (14 modules x 25ms) |
+| **Daily compute waste without gate** | **~140 seconds** |
+| Spam gate cost (Rust, batch of 256) | less than 1ms |
+| Spam gate cost (DeBERTa, per email) | ~20ms |
+| **ROI: cost-to-savings ratio** | **1:350** (Rust path) |
+
+The Bloom filter makes this even more asymmetric. Known spam domains (mailinator.com, guerrillamail.com, etc.) are rejected in a single O(1) hash check — before feature extraction, before the classifier, before the encoder even runs. The cheapest possible rejection.
+
+But the cost argument alone doesn't justify a Bayesian hierarchical architecture. A simple keyword filter would save the same compute. The deeper motivation is **false positive cost**. In B2B lead generation, a false positive — blocking a legitimate lead's email — is catastrophically more expensive than a false negative. A missed spam email wastes 350ms of compute. A blocked lead costs a potential deal worth thousands. The Bayesian uncertainty decomposition exists specifically to handle this asymmetry: when the model is uncertain, it quarantines rather than blocks, and the uncertainty type (aleatoric vs epistemic) tells operators whether to add more training data or accept inherent ambiguity.
+
+## Production Integration: Rust in the Outreach Pipeline
+
+In production, the Rust spam classifier is embedded in the outreach team's quality gate. When the LLM drafts a personalized email, `check_quality()` runs before the email is approved for sending:
+
+```rust
+fn check_quality(subject: &str, body: &str) -> QualityChecks {
+    let word_count = body.split_whitespace().count();
+
+    // Spam score heuristic
+    let mut spam = 0.0;
+    let lower_subj = subject.to_lowercase();
+    let spam_triggers = [
+        "free", "urgent", "act now", "limited time", "winner",
+        "click here", "buy now", "!!!",
+    ];
+    for trigger in &spam_triggers {
+        if lower_subj.contains(trigger) {
+            spam += 0.15;
+        }
+    }
+    if subject.chars().filter(|c| c.is_uppercase()).count() > subject.len() / 2 {
+        spam += 0.2;  // >50% caps in subject → spam signal
+    }
+
+    QualityChecks {
+        subject_length_ok: subject_len > 0 && subject_len <= 60,
+        body_word_count: word_count,
+        body_length_ok: (100..=250).contains(&word_count),
+        has_cta,
+        spam_score: f64::min(spam, 1.0),
+    }
+}
+```
+
+The `QualityChecks` struct feeds the outreach approval gate. If the spam score exceeds the threshold, the draft is rejected before it ever reaches the send queue. This dual-path architecture — lightweight heuristics in the outreach hot path, full Bayesian classifier for inbound scoring — lets the system operate at two speed tiers: sub-millisecond for outbound quality checks, sub-second for inbound classification with full uncertainty quantification.
+
+The spam scoring kernel is one of **10 feature-gated kernels** in the metal crate, compiled via Cargo feature flags:
+
+```toml
+[features]
+kernel = [
+  "kernel-btree", "kernel-scoring", "kernel-html",
+  "kernel-arena", "kernel-timer", "kernel-crc",
+  "kernel-ner", "kernel-ring", "kernel-eval",
+  "kernel-extract", "kernel-intent", "kernel-spam"
+]
+```
+
+Each kernel can be independently compiled in or out. The `kernel-spam` flag depends on `kernel-scoring`, ensuring the base scoring infrastructure is always available when spam detection is enabled.
+
+## Training Data: From Neon to Rust Weights
+
+The training pipeline is a four-stage process that converts raw email data in Neon PostgreSQL into production Rust classifier weights.
+
+**Stage 1: Data Export** (`export_spam_data.py`). Fetches emails from three Neon tables — `sent_emails` (delivery status), `received_emails` (inbound with reply classification), and `email_campaigns` (campaign-level metrics). Each email is labeled via heuristic rules:
+
+| Label | Heuristic |
+|-------|-----------|
+| `role_account` | From address starts with noreply@, info@, billing@, support@, etc. |
+| `ai_generated` | Flagged by the emailgen pipeline (known LLM-generated) |
+| `template_spam` | Low personalization score + template ID is set |
+| `content_violation` | Spam keyword density exceeds 0.7 |
+| `low_effort` | Word count below 30 and personalization below 0.2 |
+| `domain_suspect` | Sender domain matches disposable provider list |
+| `clean` | Default — everything else |
+
+**Stage 2: DeBERTa Training**. The SpamHead (1,352 lines of PyTorch) trains on the labeled data using the uncertainty-weighted multi-task loss described earlier. The model produces 7-class soft labels for every email.
+
+**Stage 3: Distillation** (`distill_spam_classifier.py`). Extracts 24-element feature vectors from every email using the same feature extraction logic as the Rust classifier (same keyword lists, same homoglyph codepoints, same circadian encoding). Fits 7 independent logistic regressions via SGD with L2 regularization, one per spam category. The feature parity between Python and Rust is exact — both implementations share the same constants:
+
+```python
+# Python distillation (identical to Rust SPAM_KEYWORDS)
+SPAM_KEYWORDS = [
+    "free", "act now", "limited time", "guaranteed", "no obligation",
+    "click here", "buy now", "discount", "winner", "congratulations",
+    # ... 33 keywords total
+]
+```
+
+**Stage 4: Weight Export**. Serializes the 7 weight vectors (24 floats each) and 7 biases as JSON. The Rust `SpamClassifier::from_json()` deserializes directly into the production struct:
+
+```rust
+pub fn from_json(path: &std::path::Path) -> Self {
+    std::fs::read_to_string(path)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default()  // falls back to untrained (all zeros)
+}
+```
+
+The fallback-to-default design means a missing or corrupt weights file doesn't crash the pipeline — it degrades to an untrained classifier that passes everything through, which is the safe default for a gating module (no false positives).
 
 ## Architecture: Why Hierarchical, Why Bayesian
 

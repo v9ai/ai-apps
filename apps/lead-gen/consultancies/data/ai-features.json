@@ -974,7 +974,43 @@
         "training_steps": 10,
         "framework": "Transformers 4.30.2 + PyTorch 2.0.0"
       },
-      "note": "Real NER model fine-tuned from allenai/longformer-base-4096 with training artifacts (training_args.bin, hyperparams in card). Only 10 training steps — likely a test/prototype checkpoint. 1 small JSON dataset. Honest but minimal."
+      "note": "Real NER model fine-tuned from allenai/longformer-base-4096 with training artifacts (training_args.bin, hyperparams in card). Only 10 training steps — likely a test/prototype checkpoint. 1 small JSON dataset. Honest but minimal.",
+      "ner_labels": {
+        "0": "O (Outside)",
+        "1": "B-TEAM (Beginning of Team entity)",
+        "2": "I-TEAM (Inside Team entity)",
+        "3": "B-TECH (Beginning of Tech entity)",
+        "4": "I-TECH (Inside Tech entity)"
+      },
+      "dataset_schema": "input (job posting text) + output (company names JSON array) + instruction (few-shot NER prompt). Note: dataset targets COMPANY extraction, but NER model labels are TEAM+TECH — multi-stage pipeline confirmed."
+    },
+    "integration_notes": {
+      "pipeline_fit": "HIGH — maps to Discovery + Enrichment + Intent Signals stages",
+      "api": {
+        "organizations_find": "POST /v5/organizations/find — search companies by tech/industry. 5 credits/row.",
+        "organizations_enrich": "POST /v5/organizations/enrich — enrich company with tech data. 5 credits/tech found.",
+        "people_find": "POST /v5/people/find — find professionals by role/seniority. 1 credit/person.",
+        "people_enrich": "POST /v5/people/enrich — get email/phone. 10 credits/enrichment.",
+        "jobs_find": "POST /v5/jobs/find — structured job postings. 2-3 credits/job.",
+        "pricing": "$0/mo (500 credits free), $99/user/mo (9,900 credits), Enterprise (custom, bulk enrichment)"
+      },
+      "technical_approach": {
+        "method": "GPT-4 for labeling → fine-tune LongFormer on ~500 labels → single T4 GPU, ~1 hour",
+        "gpt3_f1": 0.35,
+        "longformer_f1": "superior (exact number not disclosed)",
+        "hierarchy": "organization → team → people → projects → technologies",
+        "database": "PostgreSQL/AlloyDB (relational), NOT graph database"
+      },
+      "buy_vs_build": {
+        "buy": "Department-level tech signals across 2.6M companies (Sumble's unique data moat). Organizations/match for bulk matching. $99/mo entry.",
+        "build": "Fine-tune own LongFormer on job postings from linkedinPosts table using TEAM+TECH label scheme. Single T4 GPU, ~1 hour. Sumble's HF model is only a test checkpoint."
+      },
+      "schema_mapping": {
+        "companyFacts": "source_type=SUMBLE_TECH, method=API",
+        "intentSignals": "hiring_intent from job posting velocity, tech_adoption from new tech in postings",
+        "contacts": "People/find by role/seniority, People/enrich for email/phone"
+      },
+      "enterprise_customers": ["Snowflake", "Figma", "Wiz", "Vercel", "Elastic"]
     },
     "features": [
       {
@@ -1039,7 +1075,32 @@
         "diffbot/Diffbot-Coder-2601-GGUF (Q4_K_M + Q6_K quantizations)",
         "diffbot/Diffbot-Coder-2603-fp8 (FP8 quantization)"
       ],
-      "note": "Most impressive B2B sales-adjacent HF presence found. 13 models across 4 architecture families (Llama, Qwen3 MoE, qwen3_next, glm4_moe_lite). Active monthly releases Dec 2024→Mar 2026. Custom tool-use models with vLLM parsers. Sparse model cards hurt HF score but artifacts prove real training. Knowledge graph + fine-tuned LLMs = unique moat."
+      "note": "Most impressive B2B sales-adjacent HF presence found. 13 models across 4 architecture families (Llama, Qwen3 MoE, qwen3_next, glm4_moe_lite). Active monthly releases Dec 2024→Mar 2026. Custom tool-use models with vLLM parsers. Sparse model cards hurt HF score but artifacts prove real training. Knowledge graph + fine-tuned LLMs = unique moat.",
+      "model_architectures": {
+        "qwen3_next_79B": "512 experts, 10 active/token, hybrid linear+full attention (full every 4th layer), 256K context",
+        "qwen3_moe_30B": "128 experts, 8 active/token, 256K context",
+        "glm4_moe_lite_30B": "64 experts, 4 active/token, DeepSeek-style MLA, KV LoRA rank 512, 198K context",
+        "llama_8B": "Llama 3.1 8B fine-tune, 128K context",
+        "llama_70B": "Llama 3.3 70B fine-tune, 128K context"
+      }
+    },
+    "integration_notes": {
+      "pipeline_fit": "HIGHEST — maps to Enrichment + Contacts + Intent Signals stages",
+      "api": {
+        "enhance": "POST domain → full company profile. $0.025/company (25 credits). Industries, employees, financials, technographics, social, classifications.",
+        "kg_search": "DQL queries for company discovery. Example: type:Organization industries:\"AI\" nbEmployees>50",
+        "nl_extraction": "Raw text → entities + relationships + sentiment. 1 credit/10K chars.",
+        "pricing": "$0/mo (10K credits free), $299/mo (250K credits), $899/mo (1M credits)"
+      },
+      "buy_vs_build": {
+        "buy": "KG enrichment by domain (10B entities unreplicable). Enhance API for company profiles.",
+        "build": "Run 8B GGUF locally on M1 for entity extraction from our crawled content. Use XML tool format from their vLLM parser."
+      },
+      "schema_mapping": {
+        "companyFacts": "source_type=DIFFBOT_KG, method=API",
+        "intentSignals": "funding_event, leadership_change from KG monitoring",
+        "contacts": "Person entities with employment history"
+      }
     },
     "features": [
       {

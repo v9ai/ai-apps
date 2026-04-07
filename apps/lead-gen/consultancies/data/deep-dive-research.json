@@ -1,0 +1,215 @@
+{
+  "generated": "2026-04-07",
+  "purpose": "Deep-dive research on Diffbot and Sumble for lead-gen pipeline integration",
+
+  "diffbot": {
+    "domain": "diffbot.com",
+    "summary": "10B+ entity knowledge graph with custom fine-tuned LLMs. 13 HF models across 4 architecture families.",
+
+    "api": {
+      "knowledge_graph": {
+        "endpoint": "https://kg.diffbot.com/kg/v3/dql",
+        "entity_types": ["Organization", "Person", "Article", "Discussion", "Place", "CreativeWork", "Product", "Image", "Video", "Event", "JobPost", "LegalEntity", "Research", "FAQ"],
+        "query_language": "DQL (Diffbot Query Language)",
+        "coverage": "10B+ entities, 1T+ facts, 1.2B websites crawled",
+        "org_fields": {
+          "identity": ["id", "name", "fullName", "allNames", "description", "summary"],
+          "classification": ["industries", "categories", "naicsClassification", "sicClassification"],
+          "financial": ["revenue", "yearlyRevenues", "totalInvestment", "investments", "stock", "ipo"],
+          "employees": ["nbEmployees", "nbEmployeesMin", "nbEmployeesMax", "employeeCategories", "remoteScore"],
+          "technology": ["technographics", "monthlyTraffic", "monthlyTrafficGrowth"],
+          "structure": ["ceo", "boardMembers", "founders", "subsidiaries", "parentCompany"],
+          "relationships": ["competitors", "customers", "suppliers", "partnerships", "acquiredBy"],
+          "online_presence": ["homepageUri", "linkedInUri", "githubUri", "emailAddresses", "phoneNumbers"]
+        }
+      },
+      "enhance": {
+        "endpoint": "https://kg.diffbot.com/kg/v3/enhance",
+        "input": "name OR url (domain)",
+        "output": "Full KG record with all ontology fields",
+        "cost": "25 credits per entity (100 with refresh)",
+        "effective_price": "$0.025/company on Startup plan"
+      },
+      "natural_language": {
+        "endpoint": "https://nl.diffbot.com/v1/",
+        "input": "raw text (up to 100K chars)",
+        "output": "entities, facts/relationships, sentiment, salience",
+        "languages": 13,
+        "cost": "1 credit per 10K chars"
+      },
+      "pricing": {
+        "free": { "credits": 10000, "rate_limit": "5/min" },
+        "startup": { "price": 299, "credits": 250000, "rate_limit": "5/sec" },
+        "plus": { "price": 899, "credits": 1000000, "rate_limit": "25/sec" },
+        "enterprise": { "price": "custom", "rate_limit": "25+/sec" }
+      }
+    },
+
+    "hf_models": {
+      "total": 13,
+      "architectures": {
+        "qwen3_next": {
+          "model": "diffbot/Diffbot-Coder-2603",
+          "params": "79.67B",
+          "hidden_size": 2048,
+          "num_layers": 48,
+          "num_attention_heads": 16,
+          "num_kv_heads": 2,
+          "moe": { "num_experts": 512, "active_per_token": 10, "expert_size": 512 },
+          "context_length": 262144,
+          "unique": "Hybrid linear+full attention (full every 4th layer), linear_conv_kernel_dim=4, partial_rotary_factor=0.25",
+          "tool_format": "XML: <tool_call><function=NAME><parameter=KEY>VALUE</parameter></function></tool_call>"
+        },
+        "qwen3_moe": {
+          "model": "diffbot/Diffbot-Small-XL-2508",
+          "params": "30.53B",
+          "hidden_size": 2048,
+          "num_layers": 48,
+          "num_attention_heads": 32,
+          "num_kv_heads": 4,
+          "moe": { "num_experts": 128, "active_per_token": 8, "expert_size": 768 },
+          "context_length": 262144
+        },
+        "glm4_moe_lite": {
+          "model": "diffbot/Diffbot-Coder-2602",
+          "params": "29.94B",
+          "hidden_size": 2048,
+          "num_layers": 47,
+          "num_attention_heads": 20,
+          "moe": { "num_experts": 64, "active_per_token": 4, "shared_experts": 1, "scaling_factor": 1.8 },
+          "context_length": 202752,
+          "unique": "DeepSeek-style MLA (Multi-head Latent Attention), KV LoRA rank 512, Q LoRA rank 768"
+        },
+        "llama_8b": {
+          "model": "diffbot/Llama-3.1-Diffbot-Small-2412",
+          "params": "~8.03B",
+          "base": "meta-llama/Llama-3.1-8B-Instruct",
+          "context_length": 131072
+        },
+        "llama_70b": {
+          "model": "diffbot/Llama-3.3-Diffbot-Small-XL-2504",
+          "params": "70.55B",
+          "base": "meta-llama/Llama-3.3-70B-Instruct",
+          "context_length": 131072
+        }
+      },
+      "note": "HF models are code/general-purpose LLMs, NOT entity extraction models. For entity extraction, their NL API is the value — cannot replicate with HF models alone."
+    },
+
+    "integration_verdict": {
+      "buy_api": ["KG company enrichment by domain (Enhance API, $0.025/company)", "Technographics field", "Financial data", "Employee data", "Entity resolution"],
+      "build_local": ["General entity extraction using 8B GGUF on M1 Metal", "Tool-use integration using XML format from their parsers"],
+      "cannot_replicate": "10B entity knowledge graph with 1T facts — accumulated over years of crawling 1.2B websites"
+    }
+  },
+
+  "sumble": {
+    "domain": "sumble.com",
+    "summary": "Technographic intelligence from job postings. LongFormer NER extracts TEAM and TECH entities. 2.6M companies.",
+
+    "api": {
+      "base_url": "https://api.sumble.com/v5/",
+      "auth": "Bearer token (keys at sumble.com/account/api-keys)",
+      "endpoints": {
+        "organizations_find": { "method": "POST", "path": "/v5/organizations/find", "credits": "5/row", "purpose": "Search companies by tech/industry/firmographics" },
+        "organizations_enrich": { "method": "POST", "path": "/v5/organizations/enrich", "credits": "5/tech found", "purpose": "Enrich company with technology data" },
+        "organizations_match": { "method": "POST", "path": "/v5/organizations/match", "credits": "1/match", "purpose": "Match companies by name/URL (batch 1-1000)" },
+        "people_find": { "method": "POST", "path": "/v5/people/find", "credits": "1/person", "purpose": "Find professionals by role/seniority" },
+        "people_enrich": { "method": "POST", "path": "/v5/people/enrich", "credits": "10/enrichment", "purpose": "Get email/phone contact details" },
+        "jobs_find": { "method": "POST", "path": "/v5/jobs/find", "credits": "2-3/job", "purpose": "Retrieve structured job postings" },
+        "technologies_find": { "method": "POST", "path": "/v5/technologies/find", "credits": "1 if results", "purpose": "Look up tech names/slugs" }
+      },
+      "rate_limit": "10 requests/second",
+      "pricing": {
+        "free": { "credits": 500, "signals": "8/week" },
+        "pro": { "price": 99, "credits": 9900, "signals": "20/day" },
+        "enterprise": { "price": "custom", "bulk_enrichment": true, "crm_sync": true }
+      },
+      "integrations": ["Salesforce", "HubSpot", "Snowflake", "Databricks", "GCS", "Slack", "Okta"]
+    },
+
+    "ner_model": {
+      "repo": "sumble/ner-pass2-test-0",
+      "base": "allenai/longformer-base-4096",
+      "params": "~148.7M",
+      "architecture": "LongformerForTokenClassification",
+      "context_length": 4096,
+      "attention_window": 512,
+      "labels": {
+        "0": "O (Outside)",
+        "1": "B-TEAM (Beginning of Team entity)",
+        "2": "I-TEAM (Inside Team entity)",
+        "3": "B-TECH (Beginning of Tech entity)",
+        "4": "I-TECH (Inside Tech entity)"
+      },
+      "training": {
+        "learning_rate": "2e-05",
+        "batch_size": 1,
+        "steps": 10,
+        "framework": "Transformers 4.30.2 + PyTorch 2.0.0",
+        "note": "Only 10 training steps — this is a test checkpoint, not production model"
+      },
+      "dataset": {
+        "repo": "sumble/test",
+        "format": "json",
+        "schema": "input (job posting text) + output (extracted company names) + instruction (few-shot NER prompt)",
+        "note": "Dataset targets COMPANY extraction, but NER model labels are TEAM+TECH — multi-stage pipeline confirmed"
+      }
+    },
+
+    "technical_approach": {
+      "source": "Anthony Goldbloom (Arize AI podcast) + Ben Hamner (Hacker News)",
+      "method": "GPT-4 for labeling/annotation → fine-tune LongFormer on ~500 labels using single T4 GPU in ~1 hour",
+      "gpt3_f1": 0.35,
+      "longformer_f1": "superior (exact number not disclosed)",
+      "database": "Relational tables (PostgreSQL/AlloyDB), NOT graph database despite 'knowledge graph' branding",
+      "hierarchy": "organization → team → people → projects → technologies",
+      "internal_tools": "26+ marimo apps (not Jupyter)"
+    },
+
+    "coverage": {
+      "companies": "2.6M",
+      "sources": ["job postings (primary)", "resume/profile data (~85% coverage)", "company websites"],
+      "geographic": "Global",
+      "enterprise_customers": ["Snowflake", "Figma", "Wiz", "Vercel", "Elastic"],
+      "launched": "2025-10-22 (TechCrunch)",
+      "funding": "$38.5M"
+    },
+
+    "integration_verdict": {
+      "buy_api": ["Department-level technographic signals (Sumble's unique value)", "Organizations/match for bulk company matching", "People/find for contact discovery with tech filters"],
+      "build_own": ["Fine-tune own LongFormer NER on job postings from linkedinPosts table (Sumble's approach is replicable)", "Use TEAM+TECH label scheme"],
+      "cannot_replicate": "2.6M company coverage with historical tech adoption trends"
+    }
+  },
+
+  "pipeline_integration_map": {
+    "discovery": {
+      "diffbot": "KG search for companies matching ICP criteria (DQL query with industry/size/tech filters)",
+      "sumble": "Find companies adopting target technologies via /v5/organizations/find"
+    },
+    "enrichment": {
+      "diffbot": "Enhance API: domain → full company profile (financials, employees, technographics, classifications). Store as companyFacts with source_type=DIFFBOT_KG",
+      "sumble": "Enrich API: domain → department-level tech stack. Store as companyFacts with source_type=SUMBLE_TECH"
+    },
+    "contacts": {
+      "diffbot": "KG Person search: find executives by employment at target company",
+      "sumble": "People/find: professionals by role/seniority at target company. People/enrich: email/phone for 10 credits"
+    },
+    "intent_signals": {
+      "diffbot": "KG monitors funding events, M&A, executive changes. Map to intentSignals with signal_type=growth_signal|leadership_change",
+      "sumble": "Job posting velocity = hiring_intent. New tech adoption in postings = tech_adoption"
+    },
+    "schema_changes_needed": {
+      "companyFacts_source_type": ["DIFFBOT_KG", "SUMBLE_TECH", "JOB_NER", "HF_HUB"],
+      "companyFacts_method": ["API"]
+    }
+  },
+
+  "build_vs_buy": {
+    "diffbot_kg_enrichment": { "verdict": "BUY", "reason": "10B entity KG is unreplicable. $0.025/company via Enhance API. 250K credits = 10K companies for $299/mo." },
+    "diffbot_entity_extraction": { "verdict": "BUILD", "reason": "8B GGUF runs on M1 Metal. Good for extracting entities from our own crawled content. Cheaper than $0.001/10K chars API." },
+    "sumble_technographics": { "verdict": "BUY", "reason": "Department-level tech signals across 2.6M companies is unique data. $99/mo for 9,900 credits." },
+    "sumble_ner_approach": { "verdict": "BUILD", "reason": "Fine-tune own LongFormer on job postings from linkedinPosts table. TEAM+TECH labels. Single T4 GPU, ~1 hour. Sumble's HF model is only a test checkpoint (10 steps)." }
+  }
+}
