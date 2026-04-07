@@ -197,6 +197,39 @@ pub enum TrainingSignalType {
     LargeContext,
 }
 
+/// Per-model maturity assessment — distinguishes serious ML from one-afternoon experiments.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelMaturity {
+    pub repo_id: String,
+    pub downloads: u64,
+    /// 0.0 = real content, 1.0 = fully auto-generated placeholder card.
+    pub boilerplate_ratio: f32,
+    /// Detected cookbook/template tool (LlamaFactory, AutoTrain, Axolotl, etc.)
+    pub cookbook_tool: Option<String>,
+    /// Well-known generic public dataset used for training (UltraFeedback, Alpaca, etc.)
+    pub generic_dataset: Option<String>,
+    /// Whether the model is a LoRA/PEFT adapter (lighter than full fine-tune).
+    pub has_lora_adapter: bool,
+    /// Whether the model was updated after initial creation.
+    pub updated_after_creation: bool,
+    /// Overall assessment.
+    pub effort_level: EffortLevel,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum EffortLevel {
+    /// Serious production ML: custom data, iteration, documentation, adoption.
+    Production,
+    /// Real research: documented methodology, custom approach.
+    Research,
+    /// Moderate effort: some customization, some documentation.
+    Moderate,
+    /// Low effort: cookbook recipe, boilerplate README, no adoption.
+    Experiment,
+    /// Minimal: auto-generated everything, zero downloads.
+    Trivial,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrgSummary {
     pub author: String,
