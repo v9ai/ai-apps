@@ -2,7 +2,9 @@
   "found_orgs": [
     "assemblyai",
     "sumble",
-    "salesloft"
+    "salesloft",
+    "chorus",
+    "diffbot"
   ],
   "org_profiles": [
     {
@@ -343,16 +345,6 @@
           "signal_type": "FineTuning"
         },
         {
-          "evidence": "https://arxiv.org/abs/1810.04805",
-          "repo_id": "assemblyai/bert-large-uncased-sst2",
-          "signal_type": "ArxivCitation"
-        },
-        {
-          "evidence": "'fine-tuned' mentioned in model card",
-          "repo_id": "assemblyai/bert-large-uncased-sst2",
-          "signal_type": "FineTuning"
-        },
-        {
           "evidence": "https://arxiv.org/abs/1910.01108",
           "repo_id": "assemblyai/distilbert-base-uncased-sst2",
           "signal_type": "ArxivCitation"
@@ -360,6 +352,16 @@
         {
           "evidence": "'fine-tuned' mentioned in model card",
           "repo_id": "assemblyai/distilbert-base-uncased-sst2",
+          "signal_type": "FineTuning"
+        },
+        {
+          "evidence": "https://arxiv.org/abs/1810.04805",
+          "repo_id": "assemblyai/bert-large-uncased-sst2",
+          "signal_type": "ArxivCitation"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "assemblyai/bert-large-uncased-sst2",
           "signal_type": "FineTuning"
         }
       ]
@@ -660,6 +662,1661 @@
           "signal_type": "FineTuning"
         }
       ]
+    },
+    {
+      "arxiv_links": [],
+      "dataset_count": 0,
+      "datasets": [],
+      "hf_score": 0.00800000037997961,
+      "libraries_used": [],
+      "model_count": 1,
+      "models": [
+        {
+          "author": "chorus",
+          "card_data": null,
+          "card_text": null,
+          "created_at": "2023-10-15T17:04:22.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 0,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2023-10-15T17:06:20.000Z",
+          "library": null,
+          "likes": 0,
+          "model_id": "chorus/moriarti",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "chorus/moriarti",
+          "sdk": null,
+          "sha": "38d9e27f2bb2ac44c44a5f5dcba31f94efee580b",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "moriarti model by nomad.zip",
+              "size": null
+            }
+          ],
+          "tags": [
+            "region:us"
+          ]
+        }
+      ],
+      "org_name": "chorus",
+      "pipeline_tags": [],
+      "space_count": 0,
+      "spaces": [],
+      "total_downloads": 0,
+      "total_likes": 0,
+      "training_signals": []
+    },
+    {
+      "arxiv_links": [],
+      "dataset_count": 0,
+      "datasets": [],
+      "hf_score": 0.09799999743700027,
+      "libraries_used": [
+        [
+          "transformers",
+          1
+        ]
+      ],
+      "model_count": 13,
+      "models": [
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": null,
+          "created_at": "2026-03-17T23:11:53.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 86,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2026-03-18T06:38:35.000Z",
+          "library": null,
+          "likes": 0,
+          "model_id": "diffbot/Diffbot-Coder-2603-GGUF",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Diffbot-Coder-2603-GGUF",
+          "sdk": null,
+          "sha": "e00177029b645337a39502e1589087e8d102a0aa",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "Modelfile.Q4_K_M",
+              "size": null
+            },
+            {
+              "filename": "Modelfile.Q8_0",
+              "size": null
+            },
+            {
+              "filename": "qwen3-coder-next-lora-Q4_K_M.gguf",
+              "size": null
+            },
+            {
+              "filename": "qwen3-coder-next-lora-Q8_0.gguf",
+              "size": null
+            }
+          ],
+          "tags": [
+            "gguf",
+            "endpoints_compatible",
+            "region:us",
+            "conversational"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": null,
+          "created_at": "2026-01-16T17:31:00.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 27,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2026-01-16T21:44:22.000Z",
+          "library": null,
+          "likes": 1,
+          "model_id": "diffbot/Diffbot-Coder-2601-GGUF",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Diffbot-Coder-2601-GGUF",
+          "sdk": null,
+          "sha": "c9981d42fed5677067a325d31270c541d266b45e",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "diffbot-coder-Q4_K_M.gguf",
+              "size": null
+            },
+            {
+              "filename": "diffbot-coder-Q6_K.gguf",
+              "size": null
+            }
+          ],
+          "tags": [
+            "gguf",
+            "endpoints_compatible",
+            "region:us",
+            "conversational"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": "---\nlibrary_name: transformers\nlicense: apache-2.0\nlicense_link: https://huggingface.co/Qwen/Qwen3-Coder-Next/blob/main/LICENSE\npipeline_tag: text-generation\n---\n\n# Qwen3-Coder-Next\n\n## Highlights\n\nToday, we're announcing **Qwen3-Coder-Next**, an open-weight language model designed specifically for coding agents and local development. It features the following key enhancements:  \n\n- **Super Efficient with Significant Performance**: With only 3B activated parameters (80B total parameters), it achieves performance comparable to models with 10–20x more active parameters, making it highly cost-effective for agent deployment.\n- **Advanced Agentic Capabilities**: Through an elaborate training recipe, it excels at long-horizon reasoning, complex tool usage, and recovery from execution failures, ensuring robust performance in dynamic coding tasks.\n- **Versatile Integration with Real-World IDE**: Its 256k context length, combined with adaptability to various scaffold templates, enables seamless integration with different CLI/IDE platforms (e.g., Claude Code, Qwen Code, Qoder, Kilo, Trae, Cline, etc.), supporting diverse development environments.\n\n![image/jpeg](https://qianwen-res.oss-accelerate-overseas.aliyuncs.com/Qwen3-Coder-Next/benchmarks.png)\n\n![image/jpeg](https://qianwen-res.oss-accelerate-overseas.aliyuncs.com/Qwen3-Coder-Next/swebench_pro.png)\n\n## Model Overview\n\n**Qwen3-Coder-Next** has the following features:\n- Type: Causal Language Models\n- Training Stage: Pretraining & Post-training\n- Number of Parameters: 80B in total and 3B activated\n- Number of Parameters (Non-Embedding): 79B\n- Hidden Dimension: 2048\n- Number of Layers: 48\n  - Hybrid Layout: 12 \\* (3 \\* (Gated DeltaNet -> MoE) -> 1 \\* (Gated Attention -> MoE))\n- Gated Attention:\n  - Number of Attention Heads: 16 for Q and 2 for KV\n  - Head Dimension: 256\n  - Rotary Position Embedding Dimension: 64\n- Gated DeltaNet:\n  - Number of Linear Attention Heads: 32 for V and 16 for QK\n  - Head Dimension: 128\n- Mixture of Experts:\n  - Number of Experts: 512\n  - Number of Activated Experts: 10\n  - Number of Shared Experts: 1\n  - Expert Intermediate Dimension: 512\n- Context Length: 262,144 natively\n\n**NOTE: This model supports only non-thinking mode and does not generate ``<think></think>`` blocks in its output. Meanwhile, specifying `enable_thinking=False` is no longer required.**\n\nFor more details, including benchmark evaluation, hardware requirements, and inference performance, please refer to our [blog](https://qwen.ai/blog?id=qwen3-coder-next), [GitHub](https://github.com/QwenLM/Qwen3-Coder), and [Documentation](https://qwen.readthedocs.io/en/latest/).\n\n\n## Quickstart\n\nWe advise you to use the latest version of `transformers`.\n\nThe following contains a code snippet illustrating how to use the model generate content based on given inputs. \n```python\nfrom transformers import AutoModelForCausalLM, AutoTokenizer\n\nmodel_name = \"Qwen/Qwen3-Coder-Next\"\n\n# load the tokenizer and the model\ntokenizer = AutoTokenizer.from_pretrained(model_name)\nmodel = AutoModelForCausalLM.from_pretrained(\n  model_name,\n  torch_dtype=\"auto\",\n  device_map=\"auto\"\n)\n\n# prepare the model input\nprompt = \"Write a quick sort algorithm.\"\nmessages = [\n  {\"role\": \"user\", \"content\": prompt}\n]\ntext = tokenizer.apply_chat_template(\n  messages,\n  tokenize=False,\n  add_generation_prompt=True,\n)\nmodel_inputs = tokenizer([text], return_tensors=\"pt\").to(model.device)\n\n# conduct text completion\ngenerated_ids = model.generate(\n    **model_inputs,\n    max_new_tokens=65536\n)\noutput_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist() \n\ncontent = tokenizer.decode(output_ids, skip_special_tokens=True)\n\nprint(\"content:\", content)\n```\n\n**Note: If you encounter out-of-memory (OOM) issues, consider reducing the context length to a shorter value, such as `32,768`.**\n\nFor local use, applications such as Ollama, LMStudio, MLX-LM, llama.cpp, and KTransformers have also supported Qwen3.\n\n## Deployment\n\nFor deployment, you can use the latest `sglang` or `vllm` to create an OpenAI-compatible API endpoint.\n\n### SGLang\n\n[SGLang](https://github.com/sgl-project/sglang) is a fast serving framework for large language models and vision language models.\nSGLang could be used to launch a server with OpenAI-compatible API service. \n\n`sglang>=v0.5.8` is required for Qwen3-Coder-Next, which can be installed using:\n```shell\npip install 'sglang[all]>=v0.5.8'\n```\nSee [its documentation](https://docs.sglang.ai/get_started/install.html) for more details.\n\nThe following command can be used to create an API endpoint at `http://localhost:30000/v1` with maximum context length 256K tokens using tensor parallel on 4 GPUs.\n```shell\npython -m sglang.launch_server --model Qwen/Qwen3-Coder-Next --port 30000 --tp-size 2 --tool-call-parser qwen3_coder\n```\n\n> [!Note]\n> The default context length is 256K. Consider reducing the context length to a smaller value, e.g., `32768`, if the server fails to start.\n\n\n### vLLM\n\n[vLLM](https://github.com/vllm-project/vllm) is a high-throughput and memory-efficient inference and serving engine for LLMs.\nvLLM could be used to launch a server with OpenAI-compatible API service. \n\n`vllm>=0.15.0` is required for Qwen3-Coder-Next, which can be installed using:\n```shell\npip install 'vllm>=0.15.0'\n```\nSee [its documentation](https://docs.vllm.ai/en/stable/getting_started/installation/index.html) for more details.\n\nThe following command can be used to create an API endpoint at `http://localhost:8000/v1` with maximum context length 256K tokens using tensor parallel on 4 GPUs.\n```shell\nvllm serve Qwen/Qwen3-Coder-Next --port 8000 --tensor-parallel-size 2 --enable-auto-tool-choice --tool-call-parser qwen3_coder\n```\n\n> [!Note]\n> The default context length is 256K. Consider reducing the context length to a smaller value, e.g., `32768`, if the server fails to start.\n\n\n## Agentic Coding\n\nQwen3-Coder-Next excels in tool calling capabilities. \n\nYou can simply define or use any tools as following example.\n```python\n# Your tool implementation\ndef square_the_number(num: float) -> dict:\n    return num ** 2\n\n# Define Tools\ntools=[\n    {\n        \"type\":\"function\",\n        \"function\":{\n            \"name\": \"square_the_number\",\n            \"description\": \"output the square of the number.\",\n            \"parameters\": {\n                \"type\": \"object\",\n                \"required\": [\"input_num\"],\n                \"properties\": {\n                    'input_num': {\n                        'type': 'number', \n                        'description': 'input_num is a number that will be squared'\n                        }\n                },\n            }\n        }\n    }\n]\n\nfrom openai import OpenAI\n# Define LLM\nclient = OpenAI(\n    # Use a custom endpoint compatible with OpenAI API\n    base_url='http://localhost:8000/v1',  # api_base\n    api_key=\"EMPTY\"\n)\n \nmessages = [{'role': 'user', 'content': 'square the number 1024'}]\n\ncompletion = client.chat.completions.create(\n    messages=messages,\n    model=\"Qwen3-Coder-Next\",\n    max_tokens=65536,\n    tools=tools,\n)\n\nprint(completion.choices[0])\n```\n\n## Best Practices\n\nTo achieve optimal performance, we recommend the following sampling parameters: `temperature=1.0`, `top_p=0.95`, `top_k=40`.\n\n\n## Citation\n\nIf you find our work helpful, feel free to give us a cite.\n\n```\n@techreport{qwen_qwen3_coder_next_tech_report,\n  title        = {Qwen3-Coder-Next Technical Report},\n  author       = {{Qwen Team}},\n  url          = {https://github.com/QwenLM/Qwen3-Coder/blob/main/qwen3_coder_next_tech_report.pdf},\n  note         = {Accessed: 2026-02-03}\n}\n```",
+          "created_at": "2026-03-17T23:11:51.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 15,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2026-03-18T10:35:30.000Z",
+          "library": "transformers",
+          "likes": 0,
+          "model_id": "diffbot/Diffbot-Coder-2603",
+          "pipeline_tag": "text-generation",
+          "private": false,
+          "repo_id": "diffbot/Diffbot-Coder-2603",
+          "sdk": null,
+          "sha": "b704ee4aaac61758ed4feb59836c158b75a653fe",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "chat_template.jinja",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "merges.txt",
+              "size": null
+            },
+            {
+              "filename": "model-00001-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00002-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00003-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00004-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00005-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00006-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00007-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00008-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00009-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00010-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00011-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00012-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00013-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00014-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00015-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00016-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00017-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00018-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00019-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00020-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00021-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00022-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00023-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00024-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00025-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00026-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00027-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00028-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00029-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00030-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00031-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00032-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00033-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00034-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00035-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00036-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00037-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00038-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00039-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00040-of-00040.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model.safetensors.index.json",
+              "size": null
+            },
+            {
+              "filename": "qwen3_coder_detector_sgl.py",
+              "size": null
+            },
+            {
+              "filename": "qwen3coder_tool_parser_vllm.py",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            },
+            {
+              "filename": "vocab.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "transformers",
+            "safetensors",
+            "qwen3_next",
+            "text-generation",
+            "conversational",
+            "license:apache-2.0",
+            "endpoints_compatible",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": "---\nlicense: llama3.1\nbase_model:\n- meta-llama/Llama-3.1-8B-Instruct\n---",
+          "created_at": "2024-12-30T18:10:56.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 6,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2025-01-08T01:38:12.000Z",
+          "library": null,
+          "likes": 6,
+          "model_id": "diffbot/Llama-3.1-Diffbot-Small-2412",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2412",
+          "sdk": null,
+          "sha": "f6caeae07ffd0a9944de5f4cf4350c1e188ad7ab",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00001-of-00004.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00001-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00002-of-00004.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00002-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00003-of-00004.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00003-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00004-of-00004.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00004-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model.bin.index.json",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "pytorch",
+            "llama",
+            "base_model:meta-llama/Llama-3.1-8B-Instruct",
+            "base_model:finetune:meta-llama/Llama-3.1-8B-Instruct",
+            "license:llama3.1",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": "---\nlicense: llama3.3\nbase_model:\n- meta-llama/Llama-3.3-70B-Instruct\n---",
+          "created_at": "2025-04-23T23:22:22.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 6,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2025-04-24T14:58:42.000Z",
+          "library": null,
+          "likes": 8,
+          "model_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2504",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2504",
+          "sdk": null,
+          "sha": "c3379ffae31cf1d75ea6e22c28d0e4584f160414",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "model-00001-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00002-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00003-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00004-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00005-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00006-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00007-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00008-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00009-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00010-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00011-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00012-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00013-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00014-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00015-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00016-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00017-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00018-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00019-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00020-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00021-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00022-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00023-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00024-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00025-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00026-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00027-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00028-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00029-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00030-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model.safetensors.index.json",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "safetensors",
+            "llama",
+            "base_model:meta-llama/Llama-3.3-70B-Instruct",
+            "base_model:finetune:meta-llama/Llama-3.3-70B-Instruct",
+            "license:llama3.3",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": "---\nlicense: apache-2.0\nbase_model:\n- Qwen/Qwen3-30B-A3B-Instruct-2507\n---",
+          "created_at": "2025-05-06T09:03:53.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 4,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2025-08-21T18:02:51.000Z",
+          "library": null,
+          "likes": 3,
+          "model_id": "diffbot/Diffbot-Small-XL-2505",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Diffbot-Small-XL-2505",
+          "sdk": null,
+          "sha": "a41822d1db24b8da8e77b073ea95838fb977fc41",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "added_tokens.json",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "merges.txt",
+              "size": null
+            },
+            {
+              "filename": "model-00001-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00002-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00003-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00004-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00005-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00006-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00007-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00008-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00009-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00010-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00011-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00012-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00013-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model.safetensors.index.json",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            },
+            {
+              "filename": "vocab.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "safetensors",
+            "qwen3_moe",
+            "base_model:Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "base_model:finetune:Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "license:apache-2.0",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": "---\nlicense: llama3.1\nbase_model:\n- meta-llama/Llama-3.1-8B-Instruct\n---",
+          "created_at": "2025-08-23T20:51:18.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 4,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2025-08-23T20:55:18.000Z",
+          "library": null,
+          "likes": 1,
+          "model_id": "diffbot/Llama-3.1-Diffbot-Small-2508",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2508",
+          "sdk": null,
+          "sha": "f52ab2a93f3edde2bce9de734f9f5e82dc016052",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "chat_template.jinja",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "model-00001-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00002-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00003-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00004-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model.safetensors.index.json",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "safetensors",
+            "llama",
+            "base_model:meta-llama/Llama-3.1-8B-Instruct",
+            "base_model:finetune:meta-llama/Llama-3.1-8B-Instruct",
+            "license:llama3.1",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": null,
+          "created_at": "2025-08-24T15:07:07.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 4,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2025-08-24T15:15:24.000Z",
+          "library": null,
+          "likes": 7,
+          "model_id": "diffbot/Diffbot-Small-XL-2508",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Diffbot-Small-XL-2508",
+          "sdk": null,
+          "sha": "055764ecf2453bfacf47cffe8e4f46894e737474",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "added_tokens.json",
+              "size": null
+            },
+            {
+              "filename": "chat_template.jinja",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "merges.txt",
+              "size": null
+            },
+            {
+              "filename": "model-00001-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00002-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00003-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00004-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00005-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00006-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00007-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00008-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00009-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00010-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00011-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00012-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00013-of-00013.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model.safetensors.index.json",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            },
+            {
+              "filename": "vocab.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "safetensors",
+            "qwen3_moe",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": null,
+          "created_at": "2026-01-16T18:11:05.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 4,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2026-01-17T01:09:04.000Z",
+          "library": null,
+          "likes": 0,
+          "model_id": "diffbot/Diffbot-Coder-2601",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Diffbot-Coder-2601",
+          "sdk": null,
+          "sha": "195a90fa59b310cc90aee47d592cbce32275ed88",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "added_tokens.json",
+              "size": null
+            },
+            {
+              "filename": "chat_template.jinja",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "merges.txt",
+              "size": null
+            },
+            {
+              "filename": "model-00001-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00002-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00003-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00004-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00005-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00006-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00007-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00008-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00009-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00010-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00011-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00012-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00013-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00014-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00015-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00016-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00017-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00018-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00019-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00020-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00021-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00022-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00023-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00024-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00025-of-00025.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model.safetensors.index.json",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            },
+            {
+              "filename": "vocab.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "safetensors",
+            "qwen3_moe",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": null,
+          "created_at": "2026-02-10T00:35:26.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 4,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2026-02-10T00:43:20.000Z",
+          "library": null,
+          "likes": 0,
+          "model_id": "diffbot/Diffbot-Coder-2602",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Diffbot-Coder-2602",
+          "sdk": null,
+          "sha": "0d4c8c0a01dfbd1fbc302da88753481df9a75f24",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "chat_template.jinja",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "model-00001-of-00002.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00002-of-00002.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model.safetensors.index.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "safetensors",
+            "glm4_moe_lite",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": "---\nlicense: llama3.3\nbase_model:\n- meta-llama/Llama-3.3-70B-Instruct\n---",
+          "created_at": "2024-12-30T16:04:22.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 3,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2025-01-08T14:08:41.000Z",
+          "library": null,
+          "likes": 6,
+          "model_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2412",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2412",
+          "sdk": null,
+          "sha": "8e41d36fd2b9639ae8ebeb3737c8bfe2b396f570",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00001-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00001-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00002-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00002-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00003-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00003-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00004-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00004-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00005-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00005-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00006-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00006-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00007-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00007-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00008-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00008-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00009-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00009-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00010-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00010-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00011-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00011-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00012-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00012-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00013-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00013-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00014-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00014-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00015-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00015-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00016-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00016-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00017-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00017-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00018-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00018-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00019-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00019-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00020-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00020-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00021-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00021-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00022-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00022-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00023-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00023-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00024-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00024-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00025-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00025-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00026-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00026-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00027-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00027-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00028-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00028-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00029-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00029-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00030-of-00030.bin",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model-00030-of-00030.safetensors",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model.bin.index.json",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "pytorch",
+            "llama",
+            "base_model:meta-llama/Llama-3.3-70B-Instruct",
+            "base_model:finetune:meta-llama/Llama-3.3-70B-Instruct",
+            "license:llama3.3",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": "---\nlicense: llama3.1\nbase_model:\n- meta-llama/Llama-3.1-8B-Instruct\n---",
+          "created_at": "2025-04-23T23:18:40.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 3,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2025-04-24T14:57:35.000Z",
+          "library": null,
+          "likes": 9,
+          "model_id": "diffbot/Llama-3.1-Diffbot-Small-2504",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2504",
+          "sdk": null,
+          "sha": "09aefec73b0a0c082457521a52e823180d27aead",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "model-00001-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00002-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00003-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00004-of-00004.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model.safetensors.index.json",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "safetensors",
+            "llama",
+            "base_model:meta-llama/Llama-3.1-8B-Instruct",
+            "base_model:finetune:meta-llama/Llama-3.1-8B-Instruct",
+            "license:llama3.1",
+            "region:us"
+          ]
+        },
+        {
+          "author": "diffbot",
+          "card_data": null,
+          "card_text": null,
+          "created_at": "2026-03-17T23:11:52.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 0,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2026-03-17T23:11:52.000Z",
+          "library": null,
+          "likes": 0,
+          "model_id": "diffbot/Diffbot-Coder-2603-fp8",
+          "pipeline_tag": null,
+          "private": false,
+          "repo_id": "diffbot/Diffbot-Coder-2603-fp8",
+          "sdk": null,
+          "sha": "47b3d456c0280dc927fde72aa131b01dea8e2839",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            }
+          ],
+          "tags": [
+            "region:us"
+          ]
+        }
+      ],
+      "org_name": "diffbot",
+      "pipeline_tags": [
+        [
+          "text-generation",
+          1
+        ]
+      ],
+      "space_count": 0,
+      "spaces": [],
+      "total_downloads": 166,
+      "total_likes": 41,
+      "training_signals": []
     }
   ],
   "search_results": [
