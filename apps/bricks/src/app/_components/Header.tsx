@@ -103,6 +103,7 @@ export function Header() {
               {[
                 { label: "Analyze", href: "/" },
                 { label: "My Parts", href: "/my-parts" },
+                { label: "Want List", href: "/want-list" },
                 { label: "Scripts", href: "/scripts" },
                 { label: "Favorites", href: "/favorites" },
                 { label: "Firmware", href: "/firmware" },
