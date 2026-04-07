@@ -1,0 +1,1058 @@
+{
+  "found_orgs": [
+    "assemblyai",
+    "sumble",
+    "salesloft"
+  ],
+  "org_profiles": [
+    {
+      "arxiv_links": [
+        "https://arxiv.org/abs/1810.04805",
+        "https://arxiv.org/abs/1910.01108"
+      ],
+      "dataset_count": 0,
+      "datasets": [],
+      "hf_score": 0.22300000488758087,
+      "libraries_used": [
+        [
+          "transformers",
+          3
+        ]
+      ],
+      "model_count": 3,
+      "models": [
+        {
+          "author": "assemblyai",
+          "card_data": null,
+          "card_text": "# DistilBERT-Base-Uncased for Duplicate Question Detection\nThis model is a fine-tuned version of [distilbert-base-uncased](https://huggingface.co/distilbert-base-uncased) originally released in [\"DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter\"](https://arxiv.org/abs/1910.01108) and trained on the [Quora Question Pairs](https://quoradata.quora.com/First-Quora-Dataset-Release-Question-Pairs) dataset; part of the [General Language Understanding Evaluation (GLUE)](https://gluebenchmark.com) benchmark. This model was fine-tuned by the team at [AssemblyAI](https://www.assemblyai.com) and is released with the [corresponding blog post]().  \n\n## Usage\nTo download and utilize this model for duplicate question detection please execute the following:\n```python\nimport torch.nn.functional as F \nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\ntokenizer = AutoTokenizer.from_pretrained(\"assemblyai/distilbert-base-uncased-qqp\")\nmodel = AutoModelForSequenceClassification.from_pretrained(\"assemblyai/distilbert-base-uncased-qqp\")\n\ntokenized_segments = tokenizer([\"How many hours does it take to fly from California to New York?\"], [\"What is the flight time from New York to Seattle?\"], return_tensors=\"pt\", padding=True, truncation=True)\ntokenized_segments_input_ids, tokenized_segments_attention_mask = tokenized_segments.input_ids, tokenized_segments.attention_mask\nmodel_predictions = F.softmax(model(input_ids=tokenized_segments_input_ids, attention_mask=tokenized_segments_attention_mask)['logits'], dim=1)\n\nprint(\"Duplicate probability: \"+str(model_predictions[0][1].item()*100)+\"%\")\nprint(\"Non-duplicate probability: \"+str(model_predictions[0][0].item()*100)+\"%\")\n```\n\nFor questions about how to use this model feel free to contact the team at [AssemblyAI](https://www.assemblyai.com)!",
+          "created_at": "2022-03-02T23:29:05.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 427,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2021-06-14T22:13:49.000Z",
+          "library": "transformers",
+          "likes": 0,
+          "model_id": "assemblyai/distilbert-base-uncased-qqp",
+          "pipeline_tag": "text-classification",
+          "private": false,
+          "repo_id": "assemblyai/distilbert-base-uncased-qqp",
+          "sdk": null,
+          "sha": "c6a84d6432d9eccfa1850c252322fb1e0e77fcb4",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model.bin",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            },
+            {
+              "filename": "vocab.txt",
+              "size": null
+            }
+          ],
+          "tags": [
+            "transformers",
+            "pytorch",
+            "distilbert",
+            "text-classification",
+            "arxiv:1910.01108",
+            "endpoints_compatible",
+            "region:us"
+          ]
+        },
+        {
+          "author": "assemblyai",
+          "card_data": null,
+          "card_text": "# DistilBERT-Base-Uncased for Sentiment Analysis\nThis model is a fine-tuned version of [distilbert-base-uncased](https://huggingface.co/distilbert-base-uncased) originally released in [\"DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter\"](https://arxiv.org/abs/1910.01108) and trained on the [Stanford Sentiment Treebank v2 (SST2)](https://nlp.stanford.edu/sentiment/); part of the [General Language Understanding Evaluation (GLUE)](https://gluebenchmark.com) benchmark. This model was fine-tuned by the team at [AssemblyAI](https://www.assemblyai.com) and is released with the [corresponding blog post]().  \n\n## Usage\nTo download and utilize this model for sentiment analysis please execute the following:\n```python\nimport torch.nn.functional as F \nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\ntokenizer = AutoTokenizer.from_pretrained(\"assemblyai/distilbert-base-uncased-sst2\")\nmodel = AutoModelForSequenceClassification.from_pretrained(\"assemblyai/distilbert-base-uncased-sst2\")\n\ntokenized_segments = tokenizer([\"AssemblyAI is the best speech-to-text API for modern developers with performance being second to none!\"], return_tensors=\"pt\", padding=True, truncation=True)\ntokenized_segments_input_ids, tokenized_segments_attention_mask = tokenized_segments.input_ids, tokenized_segments.attention_mask\nmodel_predictions = F.softmax(model(input_ids=tokenized_segments_input_ids, attention_mask=tokenized_segments_attention_mask)['logits'], dim=1)\n\nprint(\"Positive probability: \"+str(model_predictions[0][1].item()*100)+\"%\")\nprint(\"Negative probability: \"+str(model_predictions[0][0].item()*100)+\"%\")\n```\n\nFor questions about how to use this model feel free to contact the team at [AssemblyAI](https://www.assemblyai.com)!",
+          "created_at": "2022-03-02T23:29:05.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 139,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2021-06-14T22:04:03.000Z",
+          "library": "transformers",
+          "likes": 3,
+          "model_id": "assemblyai/distilbert-base-uncased-sst2",
+          "pipeline_tag": "text-classification",
+          "private": false,
+          "repo_id": "assemblyai/distilbert-base-uncased-sst2",
+          "sdk": null,
+          "sha": "b22ecd1ae8fe1a941bf478fec027bdc996ba190f",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model.bin",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            },
+            {
+              "filename": "vocab.txt",
+              "size": null
+            }
+          ],
+          "tags": [
+            "transformers",
+            "pytorch",
+            "distilbert",
+            "text-classification",
+            "arxiv:1910.01108",
+            "endpoints_compatible",
+            "region:us"
+          ]
+        },
+        {
+          "author": "assemblyai",
+          "card_data": null,
+          "card_text": "# BERT-Large-Uncased for Sentiment Analysis\nThis model is a fine-tuned version of [bert-large-uncased](https://huggingface.co/bert-large-uncased) originally released in [\"BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding\"](https://arxiv.org/abs/1810.04805) and trained on the [Stanford Sentiment Treebank v2 (SST2)](https://nlp.stanford.edu/sentiment/); part of the [General Language Understanding Evaluation (GLUE)](https://gluebenchmark.com) benchmark. This model was fine-tuned by the team at [AssemblyAI](https://www.assemblyai.com) and is released with the [corresponding blog post]().  \n\n## Usage\nTo download and utilize this model for sentiment analysis please execute the following:\n```python\nimport torch.nn.functional as F \nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification\ntokenizer = AutoTokenizer.from_pretrained(\"assemblyai/bert-large-uncased-sst2\") \nmodel = AutoModelForSequenceClassification.from_pretrained(\"assemblyai/bert-large-uncased-sst2\")\n\ntokenized_segments = tokenizer([\"AssemblyAI is the best speech-to-text API for modern developers with performance being second to none!\"], return_tensors=\"pt\", padding=True, truncation=True)\ntokenized_segments_input_ids, tokenized_segments_attention_mask = tokenized_segments.input_ids, tokenized_segments.attention_mask\nmodel_predictions = F.softmax(model(input_ids=tokenized_segments_input_ids, attention_mask=tokenized_segments_attention_mask)['logits'], dim=1)\n\nprint(\"Positive probability: \"+str(model_predictions[0][1].item()*100)+\"%\")\nprint(\"Negative probability: \"+str(model_predictions[0][0].item()*100)+\"%\")\n```\n\nFor questions about how to use this model feel free to contact the team at [AssemblyAI](https://www.assemblyai.com)!",
+          "created_at": "2022-03-02T23:29:05.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 138,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2021-06-14T22:04:39.000Z",
+          "library": "transformers",
+          "likes": 0,
+          "model_id": "assemblyai/bert-large-uncased-sst2",
+          "pipeline_tag": "text-classification",
+          "private": false,
+          "repo_id": "assemblyai/bert-large-uncased-sst2",
+          "sdk": null,
+          "sha": "c062c23b049fad7e1bcda360ca2f77b9d61530e6",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model.bin",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            },
+            {
+              "filename": "vocab.txt",
+              "size": null
+            }
+          ],
+          "tags": [
+            "transformers",
+            "pytorch",
+            "bert",
+            "text-classification",
+            "arxiv:1810.04805",
+            "endpoints_compatible",
+            "region:us"
+          ]
+        }
+      ],
+      "org_name": "assemblyai",
+      "pipeline_tags": [
+        [
+          "text-classification",
+          3
+        ]
+      ],
+      "space_count": 2,
+      "spaces": [
+        {
+          "author": "assemblyai",
+          "card_data": {
+            "app_file": "app.py",
+            "colorFrom": "blue",
+            "colorTo": "green",
+            "emoji": "👁",
+            "pinned": false,
+            "sdk": "gradio",
+            "sdk_version": "3.21.0",
+            "title": "Conformer1 Demo"
+          },
+          "created_at": "2023-03-16T18:10:51.000Z",
+          "description": null,
+          "downloads": null,
+          "extra": {
+            "subdomain": "assemblyai-conformer1-demo"
+          },
+          "last_modified": "2023-03-20T18:02:13.000Z",
+          "likes": 19,
+          "repo_id": "assemblyai/Conformer1-Demo",
+          "sdk": "gradio",
+          "sha": "74067970f72059ee2899e52dc26d177a78757405",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "app.py",
+              "size": null
+            },
+            {
+              "filename": "audio/assemblyai_company.mp3",
+              "size": null
+            },
+            {
+              "filename": "audio/audio_sample1.flac",
+              "size": null
+            },
+            {
+              "filename": "helpers.py",
+              "size": null
+            },
+            {
+              "filename": "images/logo.png",
+              "size": null
+            },
+            {
+              "filename": "requirements.txt",
+              "size": null
+            }
+          ],
+          "tags": [
+            "gradio",
+            "region:us"
+          ]
+        },
+        {
+          "author": "assemblyai",
+          "card_data": {
+            "app_file": "app.py",
+            "colorFrom": "pink",
+            "colorTo": "gray",
+            "emoji": "🌖",
+            "pinned": false,
+            "sdk": "gradio",
+            "sdk_version": "3.41.2",
+            "title": "Conformer2 Demo"
+          },
+          "created_at": "2023-08-29T12:46:24.000Z",
+          "description": null,
+          "downloads": null,
+          "extra": {
+            "subdomain": "assemblyai-conformer2-demo"
+          },
+          "last_modified": "2023-08-29T15:53:19.000Z",
+          "likes": 3,
+          "repo_id": "assemblyai/Conformer2-Demo",
+          "sdk": "gradio",
+          "sha": "06bc3b5bae06bae45048d7703229c819cda26a1f",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "app.py",
+              "size": null
+            },
+            {
+              "filename": "audio/assemblyai_company.mp3",
+              "size": null
+            },
+            {
+              "filename": "audio/audio_sample1.flac",
+              "size": null
+            },
+            {
+              "filename": "images/logo.png",
+              "size": null
+            },
+            {
+              "filename": "requirements.txt",
+              "size": null
+            }
+          ],
+          "tags": [
+            "gradio",
+            "region:us"
+          ]
+        }
+      ],
+      "total_downloads": 704,
+      "total_likes": 25,
+      "training_signals": [
+        {
+          "evidence": "https://arxiv.org/abs/1910.01108",
+          "repo_id": "assemblyai/distilbert-base-uncased-qqp",
+          "signal_type": "ArxivCitation"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "assemblyai/distilbert-base-uncased-qqp",
+          "signal_type": "FineTuning"
+        },
+        {
+          "evidence": "https://arxiv.org/abs/1810.04805",
+          "repo_id": "assemblyai/bert-large-uncased-sst2",
+          "signal_type": "ArxivCitation"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "assemblyai/bert-large-uncased-sst2",
+          "signal_type": "FineTuning"
+        },
+        {
+          "evidence": "https://arxiv.org/abs/1910.01108",
+          "repo_id": "assemblyai/distilbert-base-uncased-sst2",
+          "signal_type": "ArxivCitation"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "assemblyai/distilbert-base-uncased-sst2",
+          "signal_type": "FineTuning"
+        }
+      ]
+    },
+    {
+      "arxiv_links": [],
+      "dataset_count": 1,
+      "datasets": [
+        {
+          "author": "sumble",
+          "card_data": null,
+          "created_at": "2024-02-01T04:19:43.000Z",
+          "description": null,
+          "downloads": 6,
+          "extra": {
+            "key": ""
+          },
+          "last_modified": "2024-02-29T20:52:31.000Z",
+          "likes": 0,
+          "repo_id": "sumble/test",
+          "sha": "3f3b57238e0e2c4d1b371bc7ce5fb8708ad65fbf",
+          "siblings": null,
+          "tags": [
+            "size_categories:n<1K",
+            "format:json",
+            "modality:text",
+            "library:datasets",
+            "library:pandas",
+            "library:mlcroissant",
+            "library:polars",
+            "region:us"
+          ]
+        }
+      ],
+      "hf_score": 0.1379999965429306,
+      "libraries_used": [
+        [
+          "transformers",
+          1
+        ]
+      ],
+      "model_count": 1,
+      "models": [
+        {
+          "author": "sumble",
+          "card_data": null,
+          "card_text": "---\nlicense: apache-2.0\ntags:\n- generated_from_trainer\nmodel-index:\n- name: ner-pass2-test-0\n  results: []\n---\n\n<!-- This model card has been generated automatically according to the information the Trainer had access to. You\nshould probably proofread and complete it, then remove this comment. -->\n\n# ner-pass2-test-0\n\nThis model is a fine-tuned version of [allenai/longformer-base-4096](https://huggingface.co/allenai/longformer-base-4096) on the None dataset.\n\n## Model description\n\nMore information needed\n\n## Intended uses & limitations\n\nMore information needed\n\n## Training and evaluation data\n\nMore information needed\n\n## Training procedure\n\n### Training hyperparameters\n\nThe following hyperparameters were used during training:\n- learning_rate: 2e-05\n- train_batch_size: 1\n- eval_batch_size: 8\n- seed: 42\n- optimizer: Adam with betas=(0.9,0.999) and epsilon=1e-08\n- lr_scheduler_type: linear\n- training_steps: 10\n\n### Training results\n\n\n\n### Framework versions\n\n- Transformers 4.30.2\n- Pytorch 2.0.0\n- Datasets 2.1.0\n- Tokenizers 0.13.3\n",
+          "created_at": "2023-08-18T23:56:19.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 1,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2023-08-18T23:58:34.000Z",
+          "library": "transformers",
+          "likes": 0,
+          "model_id": "sumble/ner-pass2-test-0",
+          "pipeline_tag": "token-classification",
+          "private": false,
+          "repo_id": "sumble/ner-pass2-test-0",
+          "sdk": null,
+          "sha": "7170b920bdb749b8d9c3870de807cdc7537100cc",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": ".gitignore",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "merges.txt",
+              "size": null
+            },
+            {
+              "filename": "pytorch_model.bin",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            },
+            {
+              "filename": "training_args.bin",
+              "size": null
+            },
+            {
+              "filename": "vocab.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "transformers",
+            "pytorch",
+            "longformer",
+            "token-classification",
+            "generated_from_trainer",
+            "license:apache-2.0",
+            "endpoints_compatible",
+            "region:us"
+          ]
+        }
+      ],
+      "org_name": "sumble",
+      "pipeline_tags": [
+        [
+          "token-classification",
+          1
+        ]
+      ],
+      "space_count": 0,
+      "spaces": [],
+      "total_downloads": 7,
+      "total_likes": 0,
+      "training_signals": [
+        {
+          "evidence": "learning_rate parameter",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "TrainingArgs"
+        },
+        {
+          "evidence": "training procedure documented",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "TrainingArgs"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "FineTuning"
+        },
+        {
+          "evidence": "training_args.bin present",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "TrainingArgs"
+        }
+      ]
+    },
+    {
+      "arxiv_links": [
+        "https://arxiv.org/abs/1910.09700"
+      ],
+      "dataset_count": 0,
+      "datasets": [],
+      "hf_score": 0.20800000429153442,
+      "libraries_used": [
+        [
+          "transformers",
+          1
+        ]
+      ],
+      "model_count": 1,
+      "models": [
+        {
+          "author": "salesloft",
+          "card_data": null,
+          "card_text": "---\nlibrary_name: transformers\ntags:\n- llama-factory\n---\n\n# Model Card for Model ID\n\n<!-- Provide a quick summary of what the model is/does. -->\n\n\n\n## Model Details\n\n### Model Description\n\n<!-- Provide a longer summary of what this model is. -->\n\nThis is the model card of a 🤗 transformers model that has been pushed on the Hub. This model card has been automatically generated.\n\n- **Developed by:** [More Information Needed]\n- **Funded by [optional]:** [More Information Needed]\n- **Shared by [optional]:** [More Information Needed]\n- **Model type:** [More Information Needed]\n- **Language(s) (NLP):** [More Information Needed]\n- **License:** [More Information Needed]\n- **Finetuned from model [optional]:** [More Information Needed]\n\n### Model Sources [optional]\n\n<!-- Provide the basic links for the model. -->\n\n- **Repository:** [More Information Needed]\n- **Paper [optional]:** [More Information Needed]\n- **Demo [optional]:** [More Information Needed]\n\n## Uses\n\n<!-- Address questions around how the model is intended to be used, including the foreseeable users of the model and those affected by the model. -->\n\n### Direct Use\n\n<!-- This section is for the model use without fine-tuning or plugging into a larger ecosystem/app. -->\n\n[More Information Needed]\n\n### Downstream Use [optional]\n\n<!-- This section is for the model use when fine-tuned for a task, or when plugged into a larger ecosystem/app -->\n\n[More Information Needed]\n\n### Out-of-Scope Use\n\n<!-- This section addresses misuse, malicious use, and uses that the model will not work well for. -->\n\n[More Information Needed]\n\n## Bias, Risks, and Limitations\n\n<!-- This section is meant to convey both technical and sociotechnical limitations. -->\n\n[More Information Needed]\n\n### Recommendations\n\n<!-- This section is meant to convey recommendations with respect to the bias, risk, and technical limitations. -->\n\nUsers (both direct and downstream) should be made aware of the risks, biases and limitations of the model. More information needed for further recommendations.\n\n## How to Get Started with the Model\n\nUse the code below to get started with the model.\n\n[More Information Needed]\n\n## Training Details\n\n### Training Data\n\n<!-- This should link to a Dataset Card, perhaps with a short stub of information on what the training data is all about as well as documentation related to data pre-processing or additional filtering. -->\n\n[More Information Needed]\n\n### Training Procedure\n\n<!-- This relates heavily to the Technical Specifications. Content here should link to that section when it is relevant to the training procedure. -->\n\n#### Preprocessing [optional]\n\n[More Information Needed]\n\n\n#### Training Hyperparameters\n\n- **Training regime:** [More Information Needed] <!--fp32, fp16 mixed precision, bf16 mixed precision, bf16 non-mixed precision, fp16 non-mixed precision, fp8 mixed precision -->\n\n#### Speeds, Sizes, Times [optional]\n\n<!-- This section provides information about throughput, start/end time, checkpoint size if relevant, etc. -->\n\n[More Information Needed]\n\n## Evaluation\n\n<!-- This section describes the evaluation protocols and provides the results. -->\n\n### Testing Data, Factors & Metrics\n\n#### Testing Data\n\n<!-- This should link to a Dataset Card if possible. -->\n\n[More Information Needed]\n\n#### Factors\n\n<!-- These are the things the evaluation is disaggregating by, e.g., subpopulations or domains. -->\n\n[More Information Needed]\n\n#### Metrics\n\n<!-- These are the evaluation metrics being used, ideally with a description of why. -->\n\n[More Information Needed]\n\n### Results\n\n[More Information Needed]\n\n#### Summary\n\n\n\n## Model Examination [optional]\n\n<!-- Relevant interpretability work for the model goes here -->\n\n[More Information Needed]\n\n## Environmental Impact\n\n<!-- Total emissions (in grams of CO2eq) and additional considerations, such as electricity usage, go here. Edit the suggested text below accordingly -->\n\nCarbon emissions can be estimated using the [Machine Learning Impact calculator](https://mlco2.github.io/impact#compute) presented in [Lacoste et al. (2019)](https://arxiv.org/abs/1910.09700).\n\n- **Hardware Type:** [More Information Needed]\n- **Hours used:** [More Information Needed]\n- **Cloud Provider:** [More Information Needed]\n- **Compute Region:** [More Information Needed]\n- **Carbon Emitted:** [More Information Needed]\n\n## Technical Specifications [optional]\n\n### Model Architecture and Objective\n\n[More Information Needed]\n\n### Compute Infrastructure\n\n[More Information Needed]\n\n#### Hardware\n\n[More Information Needed]\n\n#### Software\n\n[More Information Needed]\n\n## Citation [optional]\n\n<!-- If there is a paper or blog post introducing the model, the APA and Bibtex information for that should go in this section. -->\n\n**BibTeX:**\n\n[More Information Needed]\n\n**APA:**\n\n[More Information Needed]\n\n## Glossary [optional]\n\n<!-- If relevant, include terms and calculations in this section that can help readers understand the model or model card. -->\n\n[More Information Needed]\n\n## More Information [optional]\n\n[More Information Needed]\n\n## Model Card Authors [optional]\n\n[More Information Needed]\n\n## Model Card Contact\n\n[More Information Needed]",
+          "created_at": "2024-06-21T13:58:45.000Z",
+          "description": null,
+          "disabled": null,
+          "downloads": 0,
+          "extra": {},
+          "gated": false,
+          "last_modified": "2024-06-21T14:00:30.000Z",
+          "library": "transformers",
+          "likes": 0,
+          "model_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+          "pipeline_tag": "text-generation",
+          "private": false,
+          "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+          "sdk": null,
+          "sha": "16859a3d68fe7da36fae32eaba5fa5c90bf87363",
+          "siblings": [
+            {
+              "filename": ".gitattributes",
+              "size": null
+            },
+            {
+              "filename": "README.md",
+              "size": null
+            },
+            {
+              "filename": "config.json",
+              "size": null
+            },
+            {
+              "filename": "generation_config.json",
+              "size": null
+            },
+            {
+              "filename": "model-00001-of-00009.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00002-of-00009.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00003-of-00009.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00004-of-00009.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00005-of-00009.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00006-of-00009.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00007-of-00009.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00008-of-00009.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model-00009-of-00009.safetensors",
+              "size": null
+            },
+            {
+              "filename": "model.safetensors.index.json",
+              "size": null
+            },
+            {
+              "filename": "special_tokens_map.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer.json",
+              "size": null
+            },
+            {
+              "filename": "tokenizer_config.json",
+              "size": null
+            }
+          ],
+          "tags": [
+            "transformers",
+            "safetensors",
+            "llama",
+            "text-generation",
+            "llama-factory",
+            "conversational",
+            "arxiv:1910.09700",
+            "text-generation-inference",
+            "endpoints_compatible",
+            "region:us"
+          ]
+        }
+      ],
+      "org_name": "salesloft",
+      "pipeline_tags": [
+        [
+          "text-generation",
+          1
+        ]
+      ],
+      "space_count": 0,
+      "spaces": [],
+      "total_downloads": 0,
+      "total_likes": 0,
+      "training_signals": [
+        {
+          "evidence": "https://arxiv.org/abs/1910.09700",
+          "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+          "signal_type": "ArxivCitation"
+        },
+        {
+          "evidence": "training procedure documented",
+          "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+          "signal_type": "TrainingArgs"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+          "signal_type": "FineTuning"
+        }
+      ]
+    }
+  ],
+  "search_results": [
+    {
+      "author": "vakodiya",
+      "created_at": "2024-09-09T06:58:23.000Z",
+      "downloads": 4,
+      "library": "transformers",
+      "likes": 1,
+      "pipeline_tag": "text-generation",
+      "query": "sales conversation",
+      "repo_id": "vakodiya/sales-conversations-Unsloth-Llama-3.1-8B-instruct",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "llama",
+        "text-generation",
+        "text-generation-inference",
+        "unsloth",
+        "trl",
+        "sft",
+        "conversational",
+        "en",
+        "base_model:unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+        "base_model:quantized:unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+        "license:apache-2.0",
+        "endpoints_compatible",
+        "4-bit",
+        "bitsandbytes",
+        "deploy:azure",
+        "region:us"
+      ]
+    },
+    {
+      "author": "omoral02",
+      "created_at": "2025-06-08T09:07:13.000Z",
+      "downloads": 0,
+      "library": "-",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "revenue prediction",
+      "repo_id": "omoral02/RevenuePrediction",
+      "tags": [
+        "joblib",
+        "license:mit",
+        "region:us"
+      ]
+    },
+    {
+      "author": "kruschtspam",
+      "created_at": "2025-07-04T23:02:37.000Z",
+      "downloads": 0,
+      "library": "-",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "revenue prediction",
+      "repo_id": "kruschtspam/revenue-prediction-model",
+      "tags": [
+        "joblib",
+        "region:us"
+      ]
+    },
+    {
+      "author": "galsolomon9",
+      "created_at": "2025-12-06T14:57:36.000Z",
+      "downloads": 0,
+      "library": "-",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "revenue prediction",
+      "repo_id": "galsolomon9/Retail-revenue-prediction",
+      "tags": [
+        "region:us"
+      ]
+    },
+    {
+      "author": "kendrickfff",
+      "created_at": "2026-02-18T15:23:31.000Z",
+      "downloads": 0,
+      "library": "sklearn",
+      "likes": 0,
+      "pipeline_tag": "tabular-regression",
+      "query": "revenue prediction",
+      "repo_id": "kendrickfff/OJ-Sales-Revenue-Prediction",
+      "tags": [
+        "sklearn",
+        "tabular-regression",
+        "scikit-learn",
+        "gradient-boosting",
+        "microsoft-fabric",
+        "mlflow",
+        "revenue-prediction",
+        "en",
+        "dataset:azure-open-datasets/oj-sales",
+        "license:mit",
+        "region:us"
+      ]
+    },
+    {
+      "author": "SrihariV",
+      "created_at": "2026-03-08T16:06:34.000Z",
+      "downloads": 17,
+      "library": "transformers",
+      "likes": 0,
+      "pipeline_tag": "text-classification",
+      "query": "B2B intent",
+      "repo_id": "SrihariV/b2b-intent-signal-classifier",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "distilbert",
+        "text-classification",
+        "intent-detection",
+        "b2b",
+        "sales-intelligence",
+        "gtm",
+        "fine-tuned",
+        "en",
+        "dataset:custom-synthetic",
+        "license:mit",
+        "text-embeddings-inference",
+        "endpoints_compatible",
+        "region:us"
+      ]
+    },
+    {
+      "author": "potbelly",
+      "created_at": "2024-09-30T05:18:01.000Z",
+      "downloads": 12,
+      "library": "transformers",
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "query": "sales email",
+      "repo_id": "potbelly/email_sales",
+      "tags": [
+        "transformers",
+        "gguf",
+        "gemma",
+        "text-generation-inference",
+        "unsloth",
+        "text-generation",
+        "en",
+        "base_model:unsloth/gemma-2b-bnb-4bit",
+        "base_model:quantized:unsloth/gemma-2b-bnb-4bit",
+        "license:apache-2.0",
+        "endpoints_compatible",
+        "region:us"
+      ]
+    },
+    {
+      "author": "potbelly",
+      "created_at": "2024-09-30T14:55:36.000Z",
+      "downloads": 3,
+      "library": "transformers",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "sales email",
+      "repo_id": "potbelly/email_sales_mistral",
+      "tags": [
+        "transformers",
+        "gguf",
+        "mistral",
+        "text-generation-inference",
+        "unsloth",
+        "en",
+        "base_model:unsloth/mistral-7b-v0.3-bnb-4bit",
+        "base_model:quantized:unsloth/mistral-7b-v0.3-bnb-4bit",
+        "license:apache-2.0",
+        "endpoints_compatible",
+        "region:us"
+      ]
+    },
+    {
+      "author": "arad1367",
+      "created_at": "2025-02-07T15:29:13.000Z",
+      "downloads": 8,
+      "library": "sentence-transformers",
+      "likes": 0,
+      "pipeline_tag": "sentence-similarity",
+      "query": "technographic",
+      "repo_id": "arad1367/technographics-marketing-matryoshka",
+      "tags": [
+        "sentence-transformers",
+        "safetensors",
+        "bert",
+        "sentence-similarity",
+        "feature-extraction",
+        "generated_from_trainer",
+        "dataset_size:396",
+        "loss:MatryoshkaLoss",
+        "loss:MultipleNegativesRankingLoss",
+        "en",
+        "arxiv:1908.10084",
+        "arxiv:2205.13147",
+        "arxiv:1705.00652",
+        "base_model:BAAI/bge-base-en-v1.5",
+        "base_model:finetune:BAAI/bge-base-en-v1.5",
+        "license:apache-2.0",
+        "model-index",
+        "text-embeddings-inference",
+        "endpoints_compatible",
+        "region:us"
+      ]
+    },
+    {
+      "author": "hiraltalsaniya",
+      "created_at": "2024-01-23T10:26:06.000Z",
+      "downloads": 126,
+      "library": "transformers",
+      "likes": 0,
+      "pipeline_tag": "text-generation",
+      "query": "company classification",
+      "repo_id": "hiraltalsaniya/llama2-7b-fine-tune-company-task-classification-GGUF",
+      "tags": [
+        "transformers",
+        "gguf",
+        "llama",
+        "text-generation",
+        "endpoints_compatible",
+        "region:us"
+      ]
+    },
+    {
+      "author": "hiraltalsaniya",
+      "created_at": "2024-01-23T05:51:25.000Z",
+      "downloads": 1,
+      "library": "transformers",
+      "likes": 0,
+      "pipeline_tag": "text-classification",
+      "query": "company classification",
+      "repo_id": "hiraltalsaniya/llama2-7b-fine-tune-company-task-classification",
+      "tags": [
+        "transformers",
+        "pytorch",
+        "llama",
+        "text-generation",
+        "facebook",
+        "meta",
+        "llama-2",
+        "text-classification",
+        "en",
+        "license:mit",
+        "text-embeddings-inference",
+        "endpoints_compatible",
+        "region:us"
+      ]
+    },
+    {
+      "author": "ainewtrend07",
+      "created_at": "2025-09-28T06:03:36.000Z",
+      "downloads": 1,
+      "library": "transformers",
+      "likes": 0,
+      "pipeline_tag": "text-classification",
+      "query": "company classification",
+      "repo_id": "ainewtrend07/company-classification-bart-lora-merged",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "bart",
+        "text-classification",
+        "arxiv:1910.09700",
+        "endpoints_compatible",
+        "region:us"
+      ]
+    },
+    {
+      "author": "KawgKawgKawg",
+      "created_at": "2024-11-25T15:40:21.000Z",
+      "downloads": 0,
+      "library": "sklearn",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "company classification",
+      "repo_id": "KawgKawgKawg/Telephone-Company-Churn-Classification-Model",
+      "tags": [
+        "sklearn",
+        "en",
+        "base_model:scikit-learn-examples/example",
+        "base_model:finetune:scikit-learn-examples/example",
+        "license:mit",
+        "region:us"
+      ]
+    },
+    {
+      "author": "GALLARDO14",
+      "created_at": "2025-06-03T18:40:15.000Z",
+      "downloads": 0,
+      "library": "-",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "sales forecasting",
+      "repo_id": "GALLARDO14/salesforecasting",
+      "tags": [
+        "region:us"
+      ]
+    },
+    {
+      "author": "sukhmani1303",
+      "created_at": "2025-06-21T16:02:07.000Z",
+      "downloads": 0,
+      "library": "pytorch",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "sales forecasting",
+      "repo_id": "sukhmani1303/store-sales-ts-forecasting",
+      "tags": [
+        "pytorch",
+        "time-series",
+        "forecasting",
+        "lstm",
+        "retail",
+        "license:mit",
+        "model-index",
+        "region:us"
+      ]
+    },
+    {
+      "author": "aksace",
+      "created_at": "2025-10-21T05:47:21.000Z",
+      "downloads": 0,
+      "library": "-",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "sales forecasting",
+      "repo_id": "aksace/superkart-sales-forecasting-model",
+      "tags": [
+        "sales-forecasting",
+        "random-forest",
+        "regression",
+        "superkart",
+        "license:mit",
+        "region:us"
+      ]
+    },
+    {
+      "author": "Sidikat123",
+      "created_at": "2026-01-12T13:19:19.000Z",
+      "downloads": 0,
+      "library": "-",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "sales forecasting",
+      "repo_id": "Sidikat123/Electrotech_Sales_Forecasting",
+      "tags": [
+        "joblib",
+        "region:us"
+      ]
+    },
+    {
+      "author": "Bhawana12345",
+      "created_at": "2026-01-17T05:09:04.000Z",
+      "downloads": 0,
+      "library": "-",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "sales forecasting",
+      "repo_id": "Bhawana12345/Superkart_sales_forecasting",
+      "tags": [
+        "region:us"
+      ]
+    },
+    {
+      "author": "dizonj",
+      "created_at": "2026-02-27T16:56:31.000Z",
+      "downloads": 0,
+      "library": "-",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "sales forecasting",
+      "repo_id": "dizonj/kk_sales_forecasting",
+      "tags": [
+        "license:apache-2.0",
+        "region:us"
+      ]
+    },
+    {
+      "author": "yanetc86",
+      "created_at": "2026-03-09T12:27:12.000Z",
+      "downloads": 0,
+      "library": "-",
+      "likes": 0,
+      "pipeline_tag": "-",
+      "query": "sales forecasting",
+      "repo_id": "yanetc86/sales_forecasting-agentic-factory",
+      "tags": [
+        "ml-factory",
+        "sales_forecasting",
+        "agentic-ops",
+        "es",
+        "license:mit",
+        "region:us"
+      ]
+    }
+  ]
+}
