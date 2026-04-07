@@ -12,14 +12,24 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
 
   const goalId = args.goalId ?? undefined;
   const issueId = args.issueId ?? undefined;
+  const journalEntryId = args.journalEntryId ?? undefined;
 
-  if (!goalId && !issueId) {
-    throw new Error("Either goalId or issueId is required");
+  if (!goalId && !issueId && !journalEntryId) {
+    throw new Error("Either goalId, issueId, or journalEntryId is required");
   }
 
-  // Build context from issue or goal
+  // Build context from journal entry, issue, or goal
   let contextText: string;
-  if (issueId) {
+  if (journalEntryId) {
+    const entry = await db.getJournalEntry(journalEntryId, userEmail);
+    if (!entry) throw new Error("Journal entry not found");
+    contextText = [
+      entry.title ? `Journal Entry: ${entry.title}` : "Journal Entry",
+      `Content: ${entry.content}`,
+      entry.mood ? `Mood: ${entry.mood}${entry.moodScore ? ` (${entry.moodScore}/10)` : ""}` : "",
+      entry.tags?.length ? `Tags: ${entry.tags.join(", ")}` : "",
+    ].filter(Boolean).join("\n");
+  } else if (issueId) {
     const issue = await db.getIssue(issueId, userEmail);
     if (!issue) throw new Error("Issue not found");
     contextText = [
@@ -38,7 +48,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
   }
 
   // Fetch existing research
-  const research = await listTherapyResearch(goalId, issueId);
+  const research = await listTherapyResearch(goalId, issueId, undefined, journalEntryId);
   if (!research.length) {
     return {
       success: false,
@@ -104,6 +114,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
     object.questions.map((q) => ({
       goalId,
       issueId,
+      journalEntryId,
       question: q.question,
       researchId: q.researchId,
       researchTitle: q.researchTitle,
