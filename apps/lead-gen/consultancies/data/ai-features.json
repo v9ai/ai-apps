@@ -578,6 +578,23 @@
     "website": "https://www.salesloft.com/platform/drift",
     "core_differentiator": "AI transforms conversations into long-term relationships with real-time personalization and predictive analytics",
     "automation_level": "semi-auto",
+    "hf_profile": {
+      "org": "salesloft",
+      "hf_score": 0.208,
+      "models": 1,
+      "datasets": 0,
+      "spaces": 0,
+      "total_downloads": 0,
+      "total_likes": 0,
+      "training_signals": 3,
+      "signal_types": ["ArxivCitation", "TrainingArgs", "FineTuning"],
+      "libraries": ["transformers"],
+      "pipeline_tags": ["text-generation"],
+      "models_detail": [
+        "salesloft/llama3-8b-instruct-ultrafeedback-kto (Llama3 8B, KTO-trained via llama-factory on UltraFeedback, dl=0)"
+      ],
+      "note": "Single Llama3 8B fine-tune using KTO (Kahneman-Tversky Optimization) alignment on UltraFeedback dataset. Trained with llama-factory. Empty model card — likely internal experiment published to HF. Zero downloads suggests not production-facing."
+    },
     "features": []
   },
   {
