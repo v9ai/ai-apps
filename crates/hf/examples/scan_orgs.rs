@@ -5,7 +5,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = HfClient::from_env(8)?;
     let scanner = OrgScanner::new(&client);
 
-    let orgs = ["AssemblyAI", "sumble"];
+    let orgs = ["assemblyai", "sumble"];
 
     for org in orgs {
         println!("\n{}", "=".repeat(70));

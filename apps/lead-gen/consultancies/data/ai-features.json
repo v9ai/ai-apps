@@ -544,6 +544,18 @@
       "arxiv": 3,
       "conference": 0,
       "patents_granted": 0
+    },
+    "hf_profile": {
+      "org": "assemblyai",
+      "hf_score": 0.023,
+      "models": 3,
+      "datasets": 0,
+      "spaces": 2,
+      "total_downloads": 704,
+      "training_signals": 0,
+      "libraries": ["transformers"],
+      "pipeline_tags": ["text-classification"],
+      "note": "HF presence is 3 demo BERT/DistilBERT fine-tunes — not their core Conformer speech models (proprietary, not on HF)."
     }
   },
   {
@@ -905,6 +917,18 @@
       "arxiv": 0,
       "conference": 0,
       "patents_granted": 0
+    },
+    "hf_profile": {
+      "org": "sumble",
+      "hf_score": 0.088,
+      "models": 1,
+      "datasets": 1,
+      "spaces": 0,
+      "total_downloads": 7,
+      "training_signals": 1,
+      "libraries": ["transformers"],
+      "pipeline_tags": ["token-classification"],
+      "note": "Real NER model (sumble/ner-pass2-test-0) with training_args.bin — confirms actual model training. 1 test dataset. Small but honest."
     },
     "features": [
       {
