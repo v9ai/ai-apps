@@ -125,7 +125,7 @@ class ClosingTimeModel:
         module = module.to(target_device).eval()
         return cls(module, config)
 
-    def save_pretrained(self, save_directory: str) -> None:
+    def save_pretrained(self, save_directory: str, trained: bool = False) -> None:
         """Save model weights and config to a directory."""
         os.makedirs(save_directory, exist_ok=True)
 
@@ -139,7 +139,7 @@ class ClosingTimeModel:
         )
 
         # Generate model card
-        card = self._generate_model_card()
+        card = self._generate_model_card(trained=trained)
         with open(os.path.join(save_directory, "README.md"), "w") as f:
             f.write(card)
 
@@ -148,6 +148,7 @@ class ClosingTimeModel:
         repo_id: str,
         commit_message: str = "Upload ClosingTime model",
         private: bool = False,
+        trained: bool = False,
     ) -> str:
         """Push model to HuggingFace Hub.
 
@@ -157,7 +158,7 @@ class ClosingTimeModel:
         from huggingface_hub import HfApi
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            self.save_pretrained(tmpdir)
+            self.save_pretrained(tmpdir, trained=trained)
             api = HfApi()
             api.create_repo(repo_id, exist_ok=True, private=private)
             api.upload_folder(
@@ -167,7 +168,7 @@ class ClosingTimeModel:
             )
         return f"https://huggingface.co/{repo_id}"
 
-    def _generate_model_card(self) -> str:
+    def _generate_model_card(self, trained: bool = False) -> str:
         """Auto-generate a HF model card."""
         c = self.config
         labels_md = ""
@@ -175,12 +176,33 @@ class ClosingTimeModel:
             labels_md = "\n".join(f"- `{l}`" for l in c.labels)
             labels_md = f"\n## Labels\n\n{labels_md}\n"
 
+        # Map modules to HF pipeline tags
+        pipeline_tags = {
+            "score": "text-classification",
+            "intent": "text-classification",
+            "reply": "text-classification",
+            "triggers": "text-classification",
+            "objection": "text-classification",
+            "sentiment": "text-classification",
+            "spam": "text-classification",
+            "entities": "token-classification",
+            "call": "text-classification",
+            "subject": "text-classification",
+            "icp": "feature-extraction",
+            "emailgen": "text-generation",
+        }
+        pipeline_tag = pipeline_tags.get(c.module_name, "text-classification")
+        status = "trained" if trained else "untrained"
+        model_id = c.model_id or f"{HF_ORG}/closingtime-{c.module_name}-v{c.version}"
+
         return f"""---
 library_name: closingtime
+pipeline_tag: {pipeline_tag}
 tags:
 - sales
 - closingtime
 - {c.module_name}
+- sales-intelligence
 license: mit
 ---
 
@@ -189,12 +211,14 @@ license: mit
 {c.architectures[0] if c.architectures else c.module_name} module from the
 [ClosingTime](https://github.com/v9ai/ai-apps) sales intelligence library.
 
+> **Status**: `{status}` — {"production weights" if trained else "architecture only, random initialization. Use as a starting point for fine-tuning."}
+
 ## Usage
 
 ```python
 from closingtime import ClosingTimeModel
 
-model = ClosingTimeModel.from_pretrained("{c.model_id or f'{HF_ORG}/closingtime-{c.module_name}-v{c.version}'}")
+model = ClosingTimeModel.from_pretrained("{model_id}")
 result = model.predict("your sales text here")
 print(result)
 ```
@@ -212,10 +236,17 @@ result = ai.{c.module_name}("your sales text here")
 - **Head**: `{c.architectures[0] if c.architectures else 'unknown'}`
 - **Parameters**: head only (backbone loaded separately)
 
-## Training
+## About ClosingTime
 
-This model was trained on English sales text data.
-See the [ClosingTime documentation](https://github.com/v9ai/ai-apps) for training details.
+ClosingTime is a sales intelligence library with 12 ML modules sharing a single
+DeBERTa-v3-base encoder backbone. Modules can be composed via Unix-style piping:
+
+```python
+from closingtime import Document
+result = Document("interested in pricing") | ai.score | ai.intent | ai.sentiment
+```
+
+See the [ClosingTime documentation](https://github.com/v9ai/ai-apps) for details.
 """
 
     def __repr__(self) -> str:
