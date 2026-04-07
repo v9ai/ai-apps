@@ -55,8 +55,11 @@ COLUMN_MAPPINGS: dict[str, dict[str, str]] = {
     },
     "spam": {
         "text": "text",
-        "is_spam": "label",
+        "category": "label",        # clean/template_spam/ai_generated/...
         "provider": "provider",
+        "is_ai": "is_ai",           # boolean AI-generated flag
+        "headers": "headers",       # optional parsed header dict
+        "send_time": "send_time",   # optional ISO timestamp
     },
     "subject": {
         "subject_a": "subject_a",
@@ -163,10 +166,28 @@ def _sentiment_samples() -> list[dict[str, Any]]:
 
 def _spam_samples() -> list[dict[str, Any]]:
     return [
-        {"text": "Hi John, following up on our conversation about the Q3 rollout.",
-         "label": "not_spam", "provider": "gmail"},
-        {"text": "CONGRATULATIONS! You've won a FREE iPhone! Click here NOW!!!",
-         "label": "spam", "provider": "unknown"},
+        {"text": "Hi Sarah, following up on our conversation about the Q3 infrastructure rollout. "
+                 "I've put together some notes on the Kubernetes migration we discussed.",
+         "label": "clean", "provider": "gmail", "is_ai": False},
+        {"text": "CONGRATULATIONS! You've won a FREE iPhone 16! Click here NOW!!! "
+                 "Limited time offer expires TODAY! Act immediately!!!",
+         "label": "content_violation", "provider": "unknown", "is_ai": False},
+        {"text": "I hope this email finds you well. I wanted to reach out because "
+                 "I believe our solution could significantly enhance your team's "
+                 "productivity. Would you be open to a brief conversation?",
+         "label": "ai_generated", "provider": "gmail", "is_ai": True},
+        {"text": "Hi {{name}}, I noticed {{company}} is hiring for {{role}}. "
+                 "We help companies like {{company}} scale their engineering teams.",
+         "label": "template_spam", "provider": "outlook", "is_ai": False},
+        {"text": "Dear Sir/Madam, we have a business proposal for you. "
+                 "Please respond at your earliest convenience.",
+         "label": "low_effort", "provider": "yahoo", "is_ai": False},
+        {"text": "Your subscription has been renewed. This is an automated message "
+                 "from noreply@example.com. Do not reply to this email.",
+         "label": "role_account", "provider": "corporate", "is_ai": False},
+        {"text": "Greetings from tempmail.xyz! Verify your account now to claim "
+                 "your reward. Visit http://bit.ly/3xyzabc for details.",
+         "label": "domain_suspect", "provider": "unknown", "is_ai": False},
     ]
 
 

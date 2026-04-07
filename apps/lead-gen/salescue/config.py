@@ -142,7 +142,10 @@ SENTIMENT_CONFIG = SalesCueConfig(
 
 SPAM_CONFIG = SalesCueConfig(
     module_name="spam",
-    labels=["spam", "not_spam"],
+    labels=[
+        "clean", "template_spam", "ai_generated", "low_effort",
+        "role_account", "domain_suspect", "content_violation",
+    ],
     architectures=["SpamHead"],
 )
 
