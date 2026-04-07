@@ -61,6 +61,24 @@ export const userHubs = pgTable("user_hubs", {
   unique().on(t.userId, t.name),
 ]);
 
+export const wantList = pgTable("want_list", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  itemType: text("item_type").notNull(),
+  itemNum: text("item_num").notNull(),
+  name: text("name").notNull(),
+  color: text("color").notNull().default(""),
+  qty: integer("qty").notNull().default(1),
+  price: integer("price"),
+  url: text("url"),
+  imageUrl: text("image_url"),
+  notes: text("notes"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique().on(t.userId, t.itemType, t.itemNum, t.color),
+]);
+
 export const partMocsCache = pgTable("part_mocs_cache", {
   id: serial("id").primaryKey(),
   partNum: text("part_num").notNull().unique(),
