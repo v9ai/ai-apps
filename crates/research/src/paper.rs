@@ -44,6 +44,10 @@ pub struct ResearchPaper {
     pub primary_category: Option<String>,
     /// All categories / subjects associated with this paper.
     pub categories: Option<Vec<String>>,
+    /// Institutional affiliations extracted from authorship metadata.
+    pub affiliations: Option<Vec<String>>,
+    /// Publication venue (journal or conference name).
+    pub venue: Option<String>,
 }
 
 impl From<Paper> for ResearchPaper {
@@ -60,6 +64,7 @@ impl From<Paper> for ResearchPaper {
             .as_ref()
             .and_then(|f| f.first().cloned());
         let categories = p.fields_of_study.clone();
+        let venue = p.venue.clone();
         Self {
             title: p.title.unwrap_or_default(),
             abstract_text: p.abstract_text,
@@ -75,6 +80,8 @@ impl From<Paper> for ResearchPaper {
             published_date: p.publication_date,
             primary_category,
             categories,
+            affiliations: None,
+            venue,
         }
     }
 }
@@ -82,12 +89,38 @@ impl From<Paper> for ResearchPaper {
 impl From<OpenAlexWork> for ResearchPaper {
     fn from(w: OpenAlexWork) -> Self {
         let abstract_text = w.reconstruct_abstract();
-        let authors = w
-            .authorships
-            .unwrap_or_default()
-            .into_iter()
-            .filter_map(|a| a.author.and_then(|ao| ao.display_name))
+        let authorships = w.authorships.unwrap_or_default();
+
+        // Extract author names
+        let authors = authorships
+            .iter()
+            .filter_map(|a| a.author.as_ref().and_then(|ao| ao.display_name.clone()))
             .collect();
+
+        // Extract all institution display_names across all authorships
+        let mut affiliation_set = std::collections::HashSet::new();
+        for authorship in &authorships {
+            if let Some(institutions) = &authorship.institutions {
+                for inst in institutions {
+                    if let Some(name) = &inst.display_name {
+                        affiliation_set.insert(name.clone());
+                    }
+                }
+            }
+        }
+        let affiliations = if affiliation_set.is_empty() {
+            None
+        } else {
+            Some(affiliation_set.into_iter().collect())
+        };
+
+        // Extract venue from primary_location.source.display_name
+        let venue = w
+            .primary_location
+            .as_ref()
+            .and_then(|loc| loc.source.as_ref())
+            .and_then(|s| s.display_name.clone());
+
         let pdf_url = w
             .primary_location
             .as_ref()
@@ -114,6 +147,8 @@ impl From<OpenAlexWork> for ResearchPaper {
             published_date,
             primary_category: None,
             categories: None,
+            affiliations,
+            venue,
         }
     }
 }

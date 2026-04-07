@@ -64,30 +64,32 @@ class BayesianLinearArm(nn.Module):
         )
 
     def sample_weight(self) -> torch.Tensor:
-        """Sample w from the posterior for Thompson Sampling."""
-        # Posterior mean: mu = Lambda^-1 b
+        """Sample w from the posterior for Thompson Sampling.
+
+        All linear algebra runs on CPU (cholesky_solve not supported on MPS).
+        """
+        device = self.precision.device
+        prec = self.precision.detach().cpu()
+        b = self.b.detach().cpu()
         try:
-            L = torch.linalg.cholesky(self.precision)
-            mu = torch.cholesky_solve(self.b.unsqueeze(-1), L).squeeze(-1)
-
-            # Sample: w ~ N(mu, Lambda^-1)
-            z = torch.randn_like(mu)
+            L = torch.linalg.cholesky(prec)
+            mu = torch.cholesky_solve(b.unsqueeze(-1), L).squeeze(-1)
+            z = torch.randn(self.context_dim)
             w = mu + torch.cholesky_solve(z.unsqueeze(-1), L).squeeze(-1)
-        except torch._C._LinAlgError:
-            # Fallback if precision is not PD (early training)
-            mu = torch.zeros(self.context_dim)
-            w = mu + 0.1 * torch.randn_like(mu)
-
-        return w
+            return w.to(device)
+        except (RuntimeError, Exception):
+            return 0.1 * torch.randn(self.context_dim, device=device)
 
     def expected_reward(self, context: torch.Tensor) -> float:
         """Compute expected reward (posterior mean prediction)."""
+        prec = self.precision.detach().cpu()
+        b = self.b.detach().cpu()
         try:
-            L = torch.linalg.cholesky(self.precision)
-            mu = torch.cholesky_solve(self.b.unsqueeze(-1), L).squeeze(-1)
-        except torch._C._LinAlgError:
-            mu = torch.zeros(self.context_dim, device=context.device)
-        return (mu * context).sum().item()
+            L = torch.linalg.cholesky(prec)
+            mu = torch.cholesky_solve(b.unsqueeze(-1), L).squeeze(-1)
+            return (mu.to(context.device) * context).sum().item()
+        except (RuntimeError, Exception):
+            return 0.0
 
     def update(self, context: torch.Tensor, reward: float):
         """Update posterior with new observation (context, reward).
