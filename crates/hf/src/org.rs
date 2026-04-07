@@ -1212,7 +1212,7 @@ mod tests {
     fn detect_generic_dataset_ultrafeedback() {
         let readme = "Trained on UltraFeedback preference data with KTO.";
         assert_eq!(
-            OrgScanner::detect_generic_dataset(readme, None),
+            OrgScanner::detect_generic_dataset(readme, None, "org/model"),
             Some("UltraFeedback".into())
         );
     }
@@ -1222,7 +1222,16 @@ mod tests {
         let readme = "A fine-tuned model.";
         let card_data = serde_json::json!({"datasets": ["argilla/ultrafeedback-binarized"]});
         assert_eq!(
-            OrgScanner::detect_generic_dataset(readme, Some(&card_data)),
+            OrgScanner::detect_generic_dataset(readme, Some(&card_data), "org/model"),
+            Some("UltraFeedback".into())
+        );
+    }
+
+    #[test]
+    fn detect_generic_dataset_from_repo_name() {
+        let readme = "# Model Card\n\n[More Information Needed]\n";
+        assert_eq!(
+            OrgScanner::detect_generic_dataset(readme, None, "salesloft/llama3-8b-instruct-ultrafeedback-kto"),
             Some("UltraFeedback".into())
         );
     }
@@ -1230,7 +1239,7 @@ mod tests {
     #[test]
     fn detect_generic_dataset_custom() {
         let readme = "Trained on our proprietary sales conversation dataset.";
-        assert_eq!(OrgScanner::detect_generic_dataset(readme, None), None);
+        assert_eq!(OrgScanner::detect_generic_dataset(readme, None, "org/custom-model"), None);
     }
 
     // ── LoRA adapter detection tests ────────────────────────────────
