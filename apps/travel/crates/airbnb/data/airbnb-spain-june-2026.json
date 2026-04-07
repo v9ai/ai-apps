@@ -1,0 +1,324 @@
+[
+  {
+    "city": "Salou",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Salou, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Cambrils",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Cambrils, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Calafell",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Calafell, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Torrevieja",
+    "country": "Spain",
+    "note": "Cel mai ieftin loc de pe coasta Spaniei",
+    "params": {
+      "location": "Torrevieja, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Alicante",
+    "country": "Spain",
+    "note": "San Juan plajă",
+    "params": {
+      "location": "Alicante, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Benidorm",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Benidorm, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Dénia",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Dénia, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Torre del Mar",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Torre del Mar, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Torremolinos",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Torremolinos, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Almuñécar",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Almuñécar, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Fuengirola",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Fuengirola, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Valencia",
+    "country": "Spain",
+    "note": "Plajă + oraș mare",
+    "params": {
+      "location": "Valencia, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "La Manga del Mar Menor",
+    "country": "Spain",
+    "note": "Două mări",
+    "params": {
+      "location": "La Manga del Mar Menor, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  },
+  {
+    "city": "Águilas",
+    "country": "Spain",
+    "note": null,
+    "params": {
+      "location": "Águilas, Spain",
+      "checkin": "2026-06-01",
+      "checkout": "2026-06-30",
+      "price_min": null,
+      "price_max": 50,
+      "min_bedrooms": null,
+      "min_bathrooms": null,
+      "adults": null,
+      "children": null,
+      "amenities": [
+        "Pool"
+      ],
+      "room_types": [
+        "EntireHome"
+      ],
+      "items_per_grid": null
+    }
+  }
+]
