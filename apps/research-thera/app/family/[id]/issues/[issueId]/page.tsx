@@ -670,9 +670,21 @@ function IssueDetailContent() {
   if (error || !issue) {
     return (
       <Card>
-        <Text color="red">
-          {error ? `Error: ${error.message}` : "Issue not found"}
-        </Text>
+        <Flex direction="column" gap="3" p="4" align="center">
+          <Text color="red">
+            {error ? `Error: ${error.message}` : "Issue not found"}
+          </Text>
+          <Flex gap="3">
+            <Button variant="soft" color="gray" size="2" asChild>
+              <NextLink href={`/family/${familySlug}/issues`}>Back to Issues</NextLink>
+            </Button>
+            {error && (
+              <Button variant="soft" size="2" onClick={() => refetchIssue()}>
+                Try Again
+              </Button>
+            )}
+          </Flex>
+        </Flex>
       </Card>
     );
   }
