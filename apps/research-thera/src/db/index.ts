@@ -1304,7 +1304,7 @@ export async function getAudioAssetsForStory(storyId: number) {
     language: row.language as string,
     voice: row.voice as string,
     mimeType: row.mime_type as string,
-    manifest: safeJsonParse(row.manifest as string, {}),
+    manifest: safeJsonParse(row.manifest as string, { segmentCount: 0, segments: [] }),
     createdAt: row.created_at as string,
   }));
 }
@@ -2049,7 +2049,7 @@ function mapContactFeedbackRow(row: Record<string, unknown>) {
     tags: safeJsonParse(row.tags as string, null),
     source: (row.source as string) || null,
     extracted: (row.extracted as number) === 1,
-    extractedIssues: safeJsonParse(row.extracted_issues as string, null),
+    extractedIssues: safeJsonParse<any[] | null>(row.extracted_issues as string, null),
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
