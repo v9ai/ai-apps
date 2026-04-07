@@ -568,13 +568,13 @@ impl<'a> OrgScanner<'a> {
     }
 
     /// Detect well-known generic public datasets used for training.
+    /// Checks README text, cardData.datasets, and repo_id (repo names often encode the dataset).
     /// Returns the dataset name if found, None if training data appears custom.
     pub fn detect_generic_dataset(
         readme: &str,
         card_data: Option<&serde_json::Value>,
+        repo_id: &str,
     ) -> Option<String> {
-        let lower = readme.to_lowercase();
-
         let generic_datasets = [
             ("ultrafeedback", "UltraFeedback"),
             ("alpaca", "Alpaca"),
@@ -590,13 +590,15 @@ impl<'a> OrgScanner<'a> {
             ("lima", "LIMA"),
         ];
 
+        // Check README text
+        let lower = readme.to_lowercase();
         for (pattern, name) in &generic_datasets {
             if lower.contains(pattern) {
                 return Some(name.to_string());
             }
         }
 
-        // Also check cardData.datasets YAML field
+        // Check cardData.datasets YAML field
         if let Some(cd) = card_data {
             if let Some(datasets) = cd.get("datasets").and_then(|v| v.as_array()) {
                 for ds in datasets {
@@ -609,6 +611,14 @@ impl<'a> OrgScanner<'a> {
                         }
                     }
                 }
+            }
+        }
+
+        // Check repo_id — names like "org/llama3-ultrafeedback-kto" encode the dataset
+        let repo_lower = repo_id.to_lowercase();
+        for (pattern, name) in &generic_datasets {
+            if repo_lower.contains(pattern) {
+                return Some(name.to_string());
             }
         }
 
@@ -638,8 +648,8 @@ impl<'a> OrgScanner<'a> {
             .map(|r| Self::detect_cookbook_recipe(r, tags))
             .unwrap_or(None);
         let generic_dataset = readme
-            .map(|r| Self::detect_generic_dataset(r, repo.card_data.as_ref()))
-            .unwrap_or(None);
+            .map(|r| Self::detect_generic_dataset(r, repo.card_data.as_ref(), repo_id))
+            .unwrap_or_else(|| Self::detect_generic_dataset("", repo.card_data.as_ref(), repo_id));
         let has_lora = Self::has_lora_adapter(siblings);
 
         // Check if model was updated after creation (compare created_at vs last_modified)

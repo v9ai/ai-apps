@@ -42,7 +42,6 @@ export default function Page() {
     <Flex style={{ minHeight: "100svh" }}>
       {/* Brand panel — desktop only */}
       <Box
-        display={{ initial: "none", md: "flex" }}
         className={leftPanel}
         style={{ width: "42%", flexShrink: 0 }}
       >
