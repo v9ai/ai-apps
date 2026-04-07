@@ -211,8 +211,12 @@ pub struct ModelMaturity {
     pub cookbook_tool: Option<String>,
     /// Well-known generic public dataset used for training (UltraFeedback, Alpaca, etc.)
     pub generic_dataset: Option<String>,
+    /// Detected alignment method from tags/README (KTO, DPO, RLHF, SFT, etc.)
+    pub alignment_method: Option<String>,
     /// Whether the model is a LoRA/PEFT adapter (lighter than full fine-tune).
     pub has_lora_adapter: bool,
+    /// Whether arXiv citations appear to be auto-added by training frameworks.
+    pub has_auto_arxiv: bool,
     /// Whether the model was updated after initial creation.
     pub updated_after_creation: bool,
     /// Overall assessment.

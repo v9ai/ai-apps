@@ -551,6 +551,8 @@ impl<'a> OrgScanner<'a> {
             (&["axolotl"], &["axolotl"], "Axolotl"),
             (&["unsloth"], &["unsloth"], "Unsloth"),
             (&["mergekit"], &["mergekit", "merge"], "MergeKit"),
+            // TRL is HuggingFace's alignment toolkit — used for quick KTO/DPO/PPO recipes
+            (&[], &["trl"], "TRL"),
         ];
 
         for (readme_pats, tag_pats, name) in recipes {
@@ -634,6 +636,79 @@ impl<'a> OrgScanner<'a> {
         })
     }
 
+    /// Detect alignment method from tags and README.
+    /// Returns method name (KTO, DPO, RLHF, SFT, PPO) if detected.
+    pub fn detect_alignment_method(readme: &str, tags: &[String]) -> Option<String> {
+        let lower = readme.to_lowercase();
+
+        // Check tags first (more reliable than README text)
+        let tag_methods = [
+            ("kto", "KTO"),
+            ("dpo", "DPO"),
+            ("rlhf", "RLHF"),
+            ("sft", "SFT"),
+            ("ppo", "PPO"),
+            ("orpo", "ORPO"),
+            ("simpo", "SimPO"),
+        ];
+        for (tag_pat, name) in &tag_methods {
+            if tags.iter().any(|t| t.eq_ignore_ascii_case(tag_pat)) {
+                return Some(name.to_string());
+            }
+        }
+
+        // Check README text for alignment method mentions
+        let text_methods = [
+            ("kahneman-tversky", "KTO"),
+            (" kto ", "KTO"),
+            ("kto-aligned", "KTO"),
+            ("direct preference optimization", "DPO"),
+            (" dpo ", "DPO"),
+            ("dpo-trained", "DPO"),
+            ("reinforcement learning from human feedback", "RLHF"),
+            (" rlhf ", "RLHF"),
+            ("supervised fine-tun", "SFT"),
+            (" sft ", "SFT"),
+            ("proximal policy optimization", "PPO"),
+            (" ppo ", "PPO"),
+            (" orpo ", "ORPO"),
+        ];
+        for (pattern, name) in &text_methods {
+            if lower.contains(pattern) {
+                return Some(name.to_string());
+            }
+        }
+
+        None
+    }
+
+    /// Detect arXiv citations that are likely auto-added by training frameworks
+    /// rather than genuine research citations.
+    /// Known auto-added papers:
+    /// - 1910.09700 = Sentence-BERT (auto-added by LlamaFactory as citation template)
+    /// - 2305.18290 = QLoRA (auto-added by some LoRA tools)
+    pub fn detect_auto_arxiv(readme: &str) -> bool {
+        // Known framework-default arXiv IDs
+        const AUTO_ARXIV_IDS: &[&str] = &[
+            "1910.09700", // Sentence-BERT — LlamaFactory default citation
+            "2305.18290", // QLoRA — auto-added by QLoRA tools
+        ];
+
+        let lower = readme.to_lowercase();
+
+        for id in AUTO_ARXIV_IDS {
+            if lower.contains(id) {
+                // Check if this is the ONLY arxiv reference — if there are others,
+                // the auto-added one is less concerning
+                let all_arxiv = Self::extract_arxiv_links(readme);
+                if all_arxiv.len() <= 1 {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
     /// Assess a single model's maturity / seriousness level.
     pub fn assess_model_maturity(
         repo_id: &str,
@@ -651,6 +726,10 @@ impl<'a> OrgScanner<'a> {
             .map(|r| Self::detect_generic_dataset(r, repo.card_data.as_ref(), repo_id))
             .unwrap_or_else(|| Self::detect_generic_dataset("", repo.card_data.as_ref(), repo_id));
         let has_lora = Self::has_lora_adapter(siblings);
+        let alignment_method = readme
+            .map(|r| Self::detect_alignment_method(r, tags))
+            .unwrap_or(None);
+        let has_auto_arxiv = readme.is_some_and(Self::detect_auto_arxiv);
 
         // Check if model was updated after creation (compare created_at vs last_modified)
         let updated_after_creation = match (&repo.created_at, &repo.last_modified) {
@@ -679,7 +758,9 @@ impl<'a> OrgScanner<'a> {
             boilerplate_ratio,
             cookbook_tool,
             generic_dataset,
+            alignment_method,
             has_lora_adapter: has_lora,
+            has_auto_arxiv,
             updated_after_creation,
             effort_level,
         }
@@ -710,7 +791,7 @@ impl<'a> OrgScanner<'a> {
         }
 
         // Check for real documentation effort
-        let has_real_docs = readme.map_or(false, |r| {
+        let has_real_docs = readme.is_some_and(|r| {
             let lower = r.to_lowercase();
             // Look for substantive content beyond boilerplate
             (lower.contains("we trained")
@@ -1360,7 +1441,9 @@ mod tests {
                 boilerplate_ratio: 0.8,
                 cookbook_tool: Some("LlamaFactory".into()),
                 generic_dataset: Some("UltraFeedback".into()),
+                alignment_method: Some("KTO".into()),
                 has_lora_adapter: false,
+                has_auto_arxiv: true,
                 updated_after_creation: false,
                 effort_level: EffortLevel::Trivial,
             }],
@@ -1443,7 +1526,59 @@ tags:
         assert!(maturity.boilerplate_ratio > 0.5);
         assert_eq!(maturity.downloads, 0);
         assert_eq!(maturity.generic_dataset.as_deref(), Some("UltraFeedback"));
+        assert_eq!(maturity.alignment_method.as_deref(), Some("KTO"));
+        assert_eq!(maturity.cookbook_tool.as_deref(), Some("TRL"));
+        assert!(maturity.has_auto_arxiv, "Sentence-BERT citation should be detected as auto-added");
         assert!(!maturity.updated_after_creation);
+    }
+
+    // ── Alignment method detection tests ────────────────────────────
+
+    #[test]
+    fn detect_alignment_kto_from_tags() {
+        let tags = vec!["trl".into(), "kto".into()];
+        assert_eq!(OrgScanner::detect_alignment_method("", &tags), Some("KTO".into()));
+    }
+
+    #[test]
+    fn detect_alignment_dpo_from_readme() {
+        let readme = "This model was trained with DPO on preference data.";
+        assert_eq!(OrgScanner::detect_alignment_method(readme, &[]), Some("DPO".into()));
+    }
+
+    #[test]
+    fn detect_alignment_none() {
+        let readme = "A standard fine-tuned model.";
+        assert_eq!(OrgScanner::detect_alignment_method(readme, &[]), None);
+    }
+
+    // ── Auto-arXiv detection tests ──────────────────────────────────
+
+    #[test]
+    fn detect_auto_arxiv_sentence_bert() {
+        let readme = "@misc{reimers2019sentencebert,\n    eprint={1910.09700},\n}";
+        assert!(OrgScanner::detect_auto_arxiv(readme));
+    }
+
+    #[test]
+    fn detect_auto_arxiv_not_when_other_citations() {
+        let readme = "arXiv:1910.09700 and also https://arxiv.org/abs/2401.12345 (our paper)";
+        assert!(!OrgScanner::detect_auto_arxiv(readme), "should not flag when other real citations exist");
+    }
+
+    #[test]
+    fn detect_auto_arxiv_none() {
+        let readme = "arXiv:2401.54321 — our novel contribution.";
+        assert!(!OrgScanner::detect_auto_arxiv(readme));
+    }
+
+    // ── TRL cookbook detection ───────────────────────────────────────
+
+    #[test]
+    fn detect_cookbook_trl_from_tags() {
+        let readme = "";
+        let tags = vec!["trl".into(), "kto".into()];
+        assert_eq!(OrgScanner::detect_cookbook_recipe(readme, &tags), Some("TRL".into()));
     }
 
     fn make_dummy_repo() -> RepoInfo {
