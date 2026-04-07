@@ -1,6 +1,6 @@
 """salescue/base.py — Abstract base class for all modules.
 
-Every ClosingTime module inherits from BaseModule and implements
+Every SalesCue module inherits from BaseModule and implements
 the `process` method. Provides consistent interface for the pipe
 operator, display rendering, and module registration.
 """
@@ -17,7 +17,7 @@ from .display import CardRenderer
 
 
 class BaseModule(nn.Module):
-    """Abstract base class for ClosingTime modules.
+    """Abstract base class for SalesCue modules.
 
     Subclasses must set `name` and `description` class attributes
     and implement the `process` method.

@@ -99,7 +99,7 @@ def _score_samples() -> list[dict[str, Any]]:
 
 def _intent_samples() -> list[dict[str, Any]]:
     return [
-        {"text": "What is ClosingTime?", "stage": "unaware"},
+        {"text": "What is SalesCue?", "stage": "unaware"},
         {"text": "I've heard of your product. Tell me more.", "stage": "aware"},
         {"text": "We're comparing you against Gong and Outreach.", "stage": "evaluating"},
         {"text": "Ready to sign, send over the contract.", "stage": "purchasing"},

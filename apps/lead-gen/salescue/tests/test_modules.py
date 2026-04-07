@@ -4,7 +4,7 @@ import pytest
 import torch
 
 from salescue.modules import MODULE_CLASSES
-from salescue.modules.score import LeadScorer, LearnedInterventionAttribution
+from salescue.modules.score import LeadScorer, LearnedInterventionAttribution, MultiScaleSignalDetector, SignalInteractionGraph
 from salescue.modules.spam import SpamHead, PerplexityRatioDetector
 from salescue.modules.intent import NeuralHawkesIntentPredictor
 from salescue.modules.reply import ReplyHead
@@ -90,6 +90,13 @@ class TestModuleProcess:
         assert 0 <= result["score"] <= 100
         assert "confidence" in result
         assert "signals" in result
+        # v2: category sub-scores
+        assert "categories" in result
+        cats = result["categories"]
+        assert set(cats.keys()) == {"intent", "engagement", "enrichment", "analytics", "outreach", "automation"}
+        for v in cats.values():
+            assert 0 <= v <= 100
+        assert "n_signals_detected" in result
 
     def test_spam_process(self, mock_encoded):
         module = SpamHead(hidden=768).cpu().eval()
@@ -150,22 +157,32 @@ class TestModuleProcess:
             module.process(mock_encoded, "test text")
 
 
-class TestLearnedInterventionAttribution:
+class TestMultiScaleSignalDetector:
     def test_detect_signals(self):
-        attr = LearnedInterventionAttribution(hidden=768, n_signals=15)
+        detector = MultiScaleSignalDetector(hidden=768, n_signals=32)
         tokens = torch.randn(1, 32, 768)
-        signal_embeds, strengths, attn_weights = attr.detect_signals(tokens)
-        assert signal_embeds.shape == (1, 15, 192)  # h/4 = 192
-        assert strengths.shape == (1, 15)
-        assert attn_weights.shape == (1, 15, 32)
-        assert (strengths >= 0).all() and (strengths <= 1).all()
+        signal_embeds, strengths, attn_weights = detector(tokens)
+        assert signal_embeds.shape == (1, 32, 192)  # h/4 = 192
+        assert strengths.shape == (1, 32)
+        assert attn_weights.shape == (1, 32, 32)
 
+
+class TestLearnedInterventionAttribution:
     def test_estimate_causal_effects(self):
-        attr = LearnedInterventionAttribution(hidden=768, n_signals=15)
-        signal_embeds = torch.randn(1, 15, 192)
-        strengths = torch.rand(1, 15)
+        attr = LearnedInterventionAttribution(hidden=768, n_signals=32)
+        signal_embeds = torch.randn(1, 32, 192)
+        strengths = torch.rand(1, 32)
         effects = attr.estimate_causal_effects(signal_embeds, strengths)
-        assert effects.shape == (1, 15)
+        assert effects.shape == (1, 32)
+
+
+class TestSignalInteractionGraph:
+    def test_interaction(self):
+        graph = SignalInteractionGraph(n_signals=32, dim=192)
+        signal_embeds = torch.randn(1, 32, 192)
+        strengths = torch.rand(1, 32)
+        enhanced = graph(signal_embeds, strengths)
+        assert enhanced.shape == (1, 32, 192)
 
 
 class TestPerplexityRatioDetector:

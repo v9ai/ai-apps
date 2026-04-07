@@ -1,4 +1,4 @@
-"""ClosingTime — Sales intelligence library with 12 ML modules.
+"""SalesCue — Sales intelligence library with 12 ML modules.
 
 Three entry points:
     1. `from salescue import ai` — namespace for ai.score(text), ai.intent(text), etc.
@@ -12,10 +12,10 @@ from .document import Document
 from .chain import Chain
 from .engine import Engine, list_modules
 from .backbone import SharedEncoder, get_device, set_device
-from .validation import ClosingTimeValidationError
+from .validation import SalesCueValidationError
 from .reproducibility import set_deterministic, set_seed
-from .config import ClosingTimeConfig, ALL_CONFIGS
-from .hub import ClosingTimeModel
+from .config import SalesCueConfig, ALL_CONFIGS
+from .hub import SalesCueModel
 from .pipeline import pipeline as pipeline
 
 
@@ -84,12 +84,12 @@ __all__ = [
     "SharedEncoder",
     "get_device",
     "set_device",
-    "ClosingTimeValidationError",
+    "SalesCueValidationError",
     "set_deterministic",
     "set_seed",
-    "ClosingTimeConfig",
+    "SalesCueConfig",
     "ALL_CONFIGS",
-    "ClosingTimeModel",
+    "SalesCueModel",
     "pipeline",
 ]
 

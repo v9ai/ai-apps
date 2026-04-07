@@ -2,7 +2,7 @@
 
 import pytest
 
-from salescue.pipeline import pipeline, PIPELINE_REGISTRY, _ClosingTimePipeline
+from salescue.pipeline import pipeline, PIPELINE_REGISTRY, _SalesCuePipeline
 
 
 class TestPipelineRegistry:
@@ -21,12 +21,12 @@ class TestPipelineRegistry:
 class TestPipeline:
     def test_create_by_module_name(self):
         pipe = pipeline("spam")
-        assert isinstance(pipe, _ClosingTimePipeline)
+        assert isinstance(pipe, _SalesCuePipeline)
         assert pipe.name == "spam"
 
     def test_create_by_alias(self):
         pipe = pipeline("spam-detection")
-        assert isinstance(pipe, _ClosingTimePipeline)
+        assert isinstance(pipe, _SalesCuePipeline)
         assert pipe.name == "spam"
 
     def test_unknown_task_raises(self):
@@ -49,5 +49,5 @@ class TestPipeline:
     def test_repr(self):
         pipe = pipeline("spam")
         r = repr(pipe)
-        assert "ClosingTimePipeline" in r
+        assert "SalesCuePipeline" in r
         assert "spam" in r

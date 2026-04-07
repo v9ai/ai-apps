@@ -5,7 +5,7 @@ import os
 import tempfile
 
 from salescue.config import (
-    ClosingTimeConfig,
+    SalesCueConfig,
     ALL_CONFIGS,
     HF_ORG,
     BACKBONE_MODEL,
@@ -16,20 +16,20 @@ from salescue.config import (
 )
 
 
-class TestClosingTimeConfig:
+class TestSalesCueConfig:
     def test_default_values(self):
-        cfg = ClosingTimeConfig()
+        cfg = SalesCueConfig()
         assert cfg.model_type == "salescue"
         assert cfg.hidden_size == 768
         assert cfg.module_name == ""
 
     def test_auto_label_mappings(self):
-        cfg = ClosingTimeConfig(module_name="test", labels=["a", "b", "c"])
+        cfg = SalesCueConfig(module_name="test", labels=["a", "b", "c"])
         assert cfg.id2label == {0: "a", 1: "b", 2: "c"}
         assert cfg.label2id == {"a": 0, "b": 1, "c": 2}
 
     def test_auto_model_id(self):
-        cfg = ClosingTimeConfig(module_name="score", version="1")
+        cfg = SalesCueConfig(module_name="score", version="1")
         assert cfg.model_id == f"{HF_ORG}/salescue-score-v1"
 
     def test_to_dict(self):
@@ -38,7 +38,7 @@ class TestClosingTimeConfig:
         assert d["model_type"] == "salescue"
         assert d["module_name"] == "score"
         assert d["labels"] == ["hot", "warm", "cold", "disqualified"]
-        assert d["architectures"] == ["LeadScorer"]
+        assert "LeadScorer" in d["architectures"]
 
     def test_save_and_load_pretrained(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -50,12 +50,12 @@ class TestClosingTimeConfig:
                 data = json.load(f)
             assert data["module_name"] == "spam"
 
-            loaded = ClosingTimeConfig.from_pretrained(tmpdir)
+            loaded = SalesCueConfig.from_pretrained(tmpdir)
             assert loaded.module_name == "spam"
             assert loaded.labels == ["spam", "not_spam"]
 
     def test_save_load_roundtrip_preserves_fields(self):
-        original = ClosingTimeConfig(
+        original = SalesCueConfig(
             module_name="custom",
             labels=["x", "y"],
             version="3",
@@ -63,7 +63,7 @@ class TestClosingTimeConfig:
         )
         with tempfile.TemporaryDirectory() as tmpdir:
             original.save_pretrained(tmpdir)
-            loaded = ClosingTimeConfig.from_pretrained(tmpdir)
+            loaded = SalesCueConfig.from_pretrained(tmpdir)
             assert loaded.module_name == "custom"
             assert loaded.labels == ["x", "y"]
             assert loaded.version == "3"

@@ -7,85 +7,7 @@
     "website": "https://www.clari.com/revenue-intelligence/",
     "core_differentiator": "Unifies revenue data with AI to provide predictive analytics and real-time deal insights.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Revenue Forecasting",
-        "category": "analytics",
-        "description": "Predicts future revenue based on historical data and current deal activity.",
-        "ai_implementation": "Trains ML model on historical sales data, CRM metrics, and deal progress to forecast revenue.",
-        "data_sources": [
-          "CRM data",
-          "sales call transcripts",
-          "pipeline stages",
-          "deal activity logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Deal Risk Analysis",
-        "category": "analytics",
-        "description": "Identifies risks in deals by analyzing deal activity and historical win/loss patterns.",
-        "ai_implementation": "Uses clustering algorithms on deal activity and win/loss data to identify high-risk deals.",
-        "data_sources": [
-          "deal activity logs",
-          "sales call transcripts",
-          "CRM data",
-          "historical win/loss data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Sales Rep Performance Analytics",
-        "category": "analytics",
-        "description": "Evaluates sales rep performance using metrics like conversion rate and win rate.",
-        "ai_implementation": "Analyzes rep performance data using regression models to identify performance trends.",
-        "data_sources": [
-          "CRM data",
-          "sales call transcripts",
-          "rep activity logs",
-          "pipeline metrics"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Intelligence",
-        "category": "engagement",
-        "description": "Extracts key insights from sales meetings to improve follow-up strategies.",
-        "ai_implementation": "Uses speech-to-text and sentiment analysis on call recordings to extract insights.",
-        "data_sources": [
-          "call recordings",
-          "sales call transcripts",
-          "meeting notes"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with additional company and contact data.",
-        "ai_implementation": "Uses NLP on LinkedIn and web data to enrich lead profiles with company and contact details.",
-        "data_sources": [
-          "LinkedIn data",
-          "web signals",
-          "CRM data",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts pipeline performance based on historical data and current deal activity.",
-        "ai_implementation": "Trains ML model on historical pipeline data and deal activity to predict future performance.",
-        "data_sources": [
-          "CRM data",
-          "pipeline stages",
-          "deal activity logs",
-          "sales call transcripts"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39052,
@@ -95,67 +17,7 @@
     "website": "https://aisdr.com/",
     "core_differentiator": "AI-driven sales platform with seamless CRM integration and real-time engagement analytics.",
     "automation_level": "autonomous",
-    "features": [
-      {
-        "name": "AI Strategist",
-        "category": "outreach",
-        "description": "Generates personalized outreach strategies for sales teams.",
-        "ai_implementation": "LLM generates personalized outreach strategies using prospect data and company news.",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Prospecting with AI",
-        "category": "enrichment",
-        "description": "Automatically finds and engages ideal prospects.",
-        "ai_implementation": "ML model identifies ideal prospects based on technographic and firmographic data.",
-        "data_sources": [
-          "technographic data",
-          "CRM data",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI for HubSpot Sales",
-        "category": "automation",
-        "description": "Seamlessly integrates AI sales tools with HubSpot CRM.",
-        "ai_implementation": "AI tools sync with HubSpot to automate lead scoring and follow-up.",
-        "data_sources": [
-          "HubSpot CRM data",
-          "email threads",
-          "call recordings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Aircall Integration",
-        "category": "engagement",
-        "description": "Connects calls with AI-powered insights for better engagement.",
-        "ai_implementation": "Real-time speech-to-text and sentiment analysis on live calls.",
-        "data_sources": [
-          "call recordings",
-          "CRM data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Meeting Scheduling",
-        "category": "automation",
-        "description": "Automatically books meetings with ideal prospects.",
-        "ai_implementation": "AI analyzes prospect data to schedule optimal meeting times.",
-        "data_sources": [
-          "CRM data",
-          "prospect availability",
-          "email threads"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39072,
@@ -180,62 +42,6 @@
           "technographic data"
         ],
         "is_realtime": false
-      },
-      {
-        "name": "Revenue AI OS",
-        "category": "automation",
-        "description": "An AI operating system that optimizes revenue outcomes by integrating human, agent, and tool interactions.",
-        "ai_implementation": "Machine learning models orchestrate workflows and automate tasks based on predictive analytics.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads",
-          "call recordings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Intelligence Automation",
-        "category": "automation",
-        "description": "Automates and orchestrates revenue processes to improve efficiency and predictability.",
-        "ai_implementation": "AI models automate task execution and decision-making based on historical and real-time data.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads",
-          "call recordings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Gong Collective",
-        "category": "engagement",
-        "description": "Empowers revenue teams to win and grow predictably by providing clarity and precision.",
-        "ai_implementation": "AI models analyze engagement data to provide actionable insights and recommendations.",
-        "data_sources": [
-          "call recordings",
-          "email threads",
-          "web signals",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Revenue Intelligence Platform",
-        "category": "analytics",
-        "description": "Offers insights into buyer relationships and engagement activity to improve sales cycles and pipeline visibility.",
-        "ai_implementation": "Machine learning models analyze engagement data to predict revenue outcomes and provide actionable insights.",
-        "data_sources": [
-          "call recordings",
-          "email threads",
-          "web signals",
-          "CRM data",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
       }
     ]
   },
@@ -247,68 +53,7 @@
     "website": "https://www.bland.ai/",
     "core_differentiator": "Voice AI builder with real-time engagement and analytics for enterprise sales automation",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Voice AI Builder",
-        "category": "engagement",
-        "description": "Automates phone calls with conversational AI for customer service, scheduling, and sales.",
-        "ai_implementation": "real-time speech-to-text and natural language processing to generate responses during calls",
-        "data_sources": [
-          "call recordings",
-          "CRM data",
-          "web signals"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "First-call Resolution (FCR) Tracking",
-        "category": "analytics",
-        "description": "Measures the effectiveness of customer service interactions by tracking first-call resolution rates.",
-        "ai_implementation": "machine learning models analyze call transcripts and resolution outcomes to calculate FCR metrics",
-        "data_sources": [
-          "call recordings",
-          "CRM data",
-          "ticketing systems"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Qualification Agent",
-        "category": "intent",
-        "description": "Scores leads based on their likelihood to convert using behavioral and contextual data.",
-        "ai_implementation": "trains ML model on web visit signals, job postings, and CRM data to predict purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Outbound Sales Caller",
-        "category": "engagement",
-        "description": "Automates outbound sales calls with personalized scripts and real-time conversation handling.",
-        "ai_implementation": "real-time speech-to-text and NLP to generate and adapt responses during live calls",
-        "data_sources": [
-          "CRM data",
-          "LinkedIn",
-          "email threads"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Appointment Scheduling Bot",
-        "category": "automation",
-        "description": "Automates the scheduling of appointments based on lead availability and preferences.",
-        "ai_implementation": "predictive scheduling algorithm using CRM data and calendar availability",
-        "data_sources": [
-          "CRM data",
-          "calendar data",
-          "web signals"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39042,
@@ -318,57 +63,7 @@
     "website": "https://www.wildix.com/product/sales-intelligence-software/",
     "core_differentiator": "AI-powered sales intelligence with real-time analytics and agentic AI for enhanced productivity.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "Sales Intelligence Analytics",
-        "category": "analytics",
-        "description": "Converts conversations into actionable intelligence for sales managers.",
-        "ai_implementation": "Natural Language Processing (NLP) and sentiment analysis on call transcripts and chat logs to identify key insights.",
-        "data_sources": [
-          "call recordings",
-          "chat logs",
-          "email threads",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI+Data Boost Bundle",
-        "category": "enrichment",
-        "description": "Enhances data storage and processing capabilities for businesses.",
-        "ai_implementation": "Machine learning models to optimize data usage and predict storage needs based on historical data.",
-        "data_sources": [
-          "historical data usage",
-          "storage metrics",
-          "business activity logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Product Archive",
-        "category": "enrichment",
-        "description": "Provides access to historical product information for research and analysis.",
-        "ai_implementation": "AI-driven categorization and tagging of historical product data for easy retrieval.",
-        "data_sources": [
-          "product data",
-          "user feedback",
-          "sales performance data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Conversation Analytics",
-        "category": "analytics",
-        "description": "Analyzes conversations to provide insights into sales performance and customer behavior.",
-        "ai_implementation": "Speech-to-text conversion and sentiment analysis to evaluate conversation effectiveness.",
-        "data_sources": [
-          "call recordings",
-          "chat logs",
-          "email threads"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39036,
@@ -378,66 +73,7 @@
     "website": "https://www.dealcode.ai/blog/lead-generation-in-saas-companies-5-strategies-for-success",
     "core_differentiator": "AI-driven lead generation and enrichment with real-time data integration and predictive analytics",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Lead Search",
-        "category": "outreach",
-        "description": "Automates the search for qualified leads using AI-driven algorithms.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead data by integrating additional information from various sources.",
-        "ai_implementation": "uses NLP to extract and synthesize data from LinkedIn, company websites, and CRM data",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "company websites"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead data by integrating additional information from various sources.",
-        "ai_implementation": "uses NLP to extract and synthesize data from LinkedIn, company websites, and CRM data",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "company websites"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Lead Search",
-        "category": "outreach",
-        "description": "Automates the search for qualified leads using AI-driven algorithms.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead data by integrating additional information from various sources.",
-        "ai_implementation": "uses NLP to extract and synthesize data from LinkedIn, company websites, and CRM data",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "company websites"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39065,
@@ -447,65 +83,7 @@
     "website": "https://www.amplemarket.com/blog/best-ai-lead-generation-tools",
     "core_differentiator": "AI-driven lead generation with real-time engagement and deliverability optimization.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "Product Intelligence",
-        "category": "enrichment",
-        "description": "Provides detailed company and contact data to enhance lead profiles.",
-        "ai_implementation": "Utilizes technographic data and web signals to enrich prospect profiles.",
-        "data_sources": [
-          "technographic data",
-          "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Generation & Signals",
-        "category": "intent",
-        "description": "Generates rich signals to identify high-intent leads.",
-        "ai_implementation": "Analyzes web behavior and job postings to score purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Multichannel Engagement",
-        "category": "engagement",
-        "description": "Automates engagement across multiple channels to scale outreach.",
-        "ai_implementation": "Uses NLP to generate personalized messages for different platforms.",
-        "data_sources": [
-          "LinkedIn",
-          "email threads",
-          "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Email Writer",
-        "category": "outreach",
-        "description": "Automates the creation of personalized email content.",
-        "ai_implementation": "LLM generates personalized email content using LinkedIn and company data.",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Duo Copilot",
-        "category": "engagement",
-        "description": "Assists in real-time engagement during calls or chats.",
-        "ai_implementation": "Real-time speech-to-text and sentiment analysis during live interactions.",
-        "data_sources": [
-          "call recordings",
-          "chat logs"
-        ],
-        "is_realtime": true
-      }
-    ]
+    "features": []
   },
   {
     "id": 39089,
@@ -515,92 +93,7 @@
     "website": "https://www.sprinklr.com/",
     "core_differentiator": "AI-native CXM platform with real-time engagement and analytics for seamless customer experience.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Omnichannel Routing",
-        "category": "engagement",
-        "description": "Automatically routes customer interactions across multiple channels to the appropriate agent.",
-        "ai_implementation": "Uses machine learning to analyze interaction patterns and channel performance to optimize routing decisions.",
-        "data_sources": [
-          "customer interaction history",
-          "channel performance metrics",
-          "agent availability data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Conversational IVR",
-        "category": "engagement",
-        "description": "Enables AI-powered voice interactions to handle customer inquiries and route calls efficiently.",
-        "ai_implementation": "Leverages natural language processing and speech-to-text technology to understand and respond to customer queries in real-time.",
-        "data_sources": [
-          "call recordings",
-          "customer voice data",
-          "interaction history"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Unified Agent Desktop",
-        "category": "engagement",
-        "description": "Provides a centralized interface for agents to manage all customer interactions from a single dashboard.",
-        "ai_implementation": "AI models prioritize and categorize incoming interactions based on urgency and customer context.",
-        "data_sources": [
-          "customer data",
-          "interaction logs",
-          "agent performance metrics"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Live Chat Support",
-        "category": "engagement",
-        "description": "Offers real-time assistance to customers through chat, powered by AI to enhance response quality.",
-        "ai_implementation": "Utilizes NLP to understand customer queries and provide context-aware responses.",
-        "data_sources": [
-          "chat transcripts",
-          "customer profile data",
-          "previous interaction history"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Social Customer Service",
-        "category": "engagement",
-        "description": "Manages customer interactions across social media platforms with AI-driven support.",
-        "ai_implementation": "AI models monitor social media activity and prioritize responses based on sentiment and urgency.",
-        "data_sources": [
-          "social media feeds",
-          "customer sentiment data",
-          "interaction history"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Unified Customer Experience Management (CXM)",
-        "category": "analytics",
-        "description": "Provides a comprehensive view of customer interactions across all channels for improved experience management.",
-        "ai_implementation": "AI models aggregate and analyze customer data to identify trends and predict future interactions.",
-        "data_sources": [
-          "customer interaction data",
-          "social media data",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Workforce Management",
-        "category": "automation",
-        "description": "Automates workforce scheduling and agent performance tracking to optimize operations.",
-        "ai_implementation": "Machine learning models predict agent availability and workload to optimize scheduling.",
-        "data_sources": [
-          "agent availability data",
-          "interaction volume data",
-          "performance metrics"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39016,
@@ -610,68 +103,7 @@
     "website": "https://monday.com/blog/crm-and-sales/sales-automation-ai/",
     "core_differentiator": "Combines AI with monday.com's Work OS for seamless integration and real-time insights.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI-Powered CRM Integration",
-        "category": "enrichment",
-        "description": "Automatically enriches lead data by integrating with multiple data sources.",
-        "ai_implementation": "Uses machine learning to analyze and merge data from various sources into a unified CRM profile.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "LinkedIn",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Predictive Lead Scoring",
-        "category": "intent",
-        "description": "Scores leads based on their likelihood to purchase using AI.",
-        "ai_implementation": "Trains a machine learning model on web visit signals, job postings, and CRM data to predict purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Intelligence",
-        "category": "engagement",
-        "description": "Analyzes meeting content to provide insights and action items.",
-        "ai_implementation": "Real-time speech-to-text and sentiment analysis on live calls to extract key insights.",
-        "data_sources": [
-          "call recordings",
-          "email threads"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts future pipeline performance and revenue potential.",
-        "ai_implementation": "Uses historical sales data and market trends to forecast pipeline performance.",
-        "data_sources": [
-          "CRM data",
-          "sales history",
-          "market trends"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Automated Workflow Builder",
-        "category": "automation",
-        "description": "Automates repetitive tasks and workflows within the sales process.",
-        "ai_implementation": "AI identifies common tasks and creates automated workflows based on user behavior and historical data.",
-        "data_sources": [
-          "CRM data",
-          "user behavior",
-          "sales history"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39021,
@@ -681,56 +113,7 @@
     "website": "https://www.pipedrive.com/en/products/ai-crm/ai-automation",
     "core_differentiator": "Pipedrive's AI combines CRM data with real-time behavioral signals to deliver actionable insights and automation.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Sales AI and Automation",
-        "category": "automation",
-        "description": "Automates repetitive administrative tasks to allow salespeople to focus on building relationships.",
-        "ai_implementation": "Uses machine learning to predict and automate routine tasks based on historical sales data and user behavior.",
-        "data_sources": [
-          "CRM data",
-          "sales history",
-          "user behavior patterns"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Detection",
-        "category": "intent",
-        "description": "Scores the likelihood of a lead to make a purchase based on their behavior and engagement.",
-        "ai_implementation": "Trains a machine learning model on web signals, CRM data, and job postings to score purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Personalized Email Writing",
-        "category": "outreach",
-        "description": "Generates personalized emails for outreach based on prospect data and company news.",
-        "ai_implementation": "Leverages a large language model to generate personalized email content using LinkedIn profiles and company news.",
-        "data_sources": [
-          "LinkedIn profiles",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts future sales and pipeline performance based on historical data and current trends.",
-        "ai_implementation": "Applies predictive analytics and machine learning to forecast pipeline outcomes using historical sales data and current pipeline metrics.",
-        "data_sources": [
-          "sales history",
-          "pipeline data",
-          "market trends"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39074,
@@ -740,68 +123,7 @@
     "website": "https://topstartups.io/?industries=Sales",
     "core_differentiator": "Leverages advanced ML and NLP for real-time intent scoring and lead enrichment.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Automatically enriches lead data with company and contact information.",
-        "ai_implementation": "Uses NLP to parse LinkedIn and job postings for technographic and firmographic data.",
-        "data_sources": [
-          "LinkedIn",
-          "job postings",
-          "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Scoring",
-        "category": "intent",
-        "description": "Scores the likelihood of a company purchasing based on their online behavior.",
-        "ai_implementation": "Trains a ML model on web visit signals, job postings, and CRM data to predict purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Email Writer",
-        "category": "outreach",
-        "description": "Generates personalized email content for outreach campaigns.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile and company news.",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates the scheduling of meetings with prospects.",
-        "ai_implementation": "Uses ML to predict optimal meeting times based on prospect availability and calendar data.",
-        "data_sources": [
-          "calendar data",
-          "prospect availability",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts future pipeline performance and revenue forecasts.",
-        "ai_implementation": "Trains a predictive model on historical sales data and market trends to forecast pipeline performance.",
-        "data_sources": [
-          "historical sales data",
-          "market trends",
-          "CRM data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39061,
@@ -811,69 +133,7 @@
     "website": "https://scopicstudios.com/blog/best-ai-sdr-tools-for-b2b-pipeline-generation/",
     "core_differentiator": "AI SDR tools that balance automation with personalization, avoiding spam while targeting real opportunities.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Automated Outbound Platform",
-        "category": "outreach",
-        "description": "Automates cold outreach without spamming inboxes.",
-        "ai_implementation": "Uses NLP to personalize messages based on prospect data and company news.",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "web signals",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Scoring",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase.",
-        "ai_implementation": "Trains ML model on web visit signals, job postings, and technographic data to predict purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates meeting scheduling with calendar integration.",
-        "ai_implementation": "Uses ML to predict optimal meeting times based on prospect availability and calendar data.",
-        "data_sources": [
-          "calendar data",
-          "CRM data",
-          "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts pipeline performance and revenue potential.",
-        "ai_implementation": "Trains ML model on historical sales data, lead behavior, and market trends to forecast pipeline outcomes.",
-        "data_sources": [
-          "historical sales data",
-          "lead behavior",
-          "market trends"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead data with additional company and contact information.",
-        "ai_implementation": "Uses NLP to extract and structure data from LinkedIn, company websites, and public records.",
-        "data_sources": [
-          "LinkedIn",
-          "company websites",
-          "public records"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39038,
@@ -883,56 +143,7 @@
     "website": "https://www.genesy.ai/blog/lead-generation-saas",
     "core_differentiator": "AI-driven lead enrichment and outreach with real-time engagement capabilities",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Discover and verify company and contact details for lead research.",
-        "ai_implementation": "trains ML model on technographic data and web signals to predict company details",
-        "data_sources": [
-          "technographic data",
-          "web signals",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI-Powered Outreach",
-        "category": "outreach",
-        "description": "Generate personalized outreach campaigns across multiple channels.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "email threads",
-          "company news"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Scoring",
-        "category": "intent",
-        "description": "Score the likelihood of a prospect making a purchase.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Real-Time Engagement",
-        "category": "engagement",
-        "description": "Handle live conversations with AI-powered chat and voice assistants.",
-        "ai_implementation": "real-time speech-to-text + sentiment classifier on live calls",
-        "data_sources": [
-          "call recordings",
-          "live chat logs",
-          "voice data"
-        ],
-        "is_realtime": true
-      }
-    ]
+    "features": []
   },
   {
     "id": 39091,
@@ -942,56 +153,7 @@
     "website": "https://www.ocean.io",
     "core_differentiator": "Scrapes, cleans, and contextualizes the entire internet for hyper-accurate B2B lead data.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Lookalike Search Engine",
-        "category": "intent",
-        "description": "Identifies B2B companies similar to target accounts for sales and marketing.",
-        "ai_implementation": "Trains ML model on web signals, job postings, and company data to score purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Provides verified emails, phone numbers, and company data for lead research.",
-        "ai_implementation": "Uses NLP and data matching to enrich prospect profiles from structured and unstructured data.",
-        "data_sources": [
-          "CRM data",
-          "LinkedIn",
-          "web signals",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Email and Phone Number Verification",
-        "category": "enrichment",
-        "description": "Verifies and provides accurate contact information for outreach.",
-        "ai_implementation": "Uses machine learning to validate and match contact data across multiple sources.",
-        "data_sources": [
-          "email threads",
-          "web signals",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Credit-Based Pricing Model",
-        "category": "automation",
-        "description": "Offers flexible pricing based on credit usage for data access.",
-        "ai_implementation": "AI-driven credit allocation system based on user behavior and data consumption.",
-        "data_sources": [
-          "user behavior",
-          "data usage"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39037,
@@ -1001,68 +163,7 @@
     "website": "https://www.callboxinc.com/",
     "core_differentiator": "20+ years of B2B lead gen expertise combined with AI-driven personalization and multi-channel engagement",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Lead Generation for Companies Lacking Customer Data",
-        "category": "enrichment",
-        "description": "Identifies and engages ideal customers when customer data is limited.",
-        "ai_implementation": "trains ML model on technographic data and market trends to predict ideal customer profiles",
-        "data_sources": [
-          "technographic data",
-          "market trends",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Generation for CRM Software Companies",
-        "category": "enrichment",
-        "description": "Fills gaps in lead acquisition and sales development for CRM-focused businesses.",
-        "ai_implementation": "uses NLP to analyze CRM data and identify gaps in lead sources",
-        "data_sources": [
-          "CRM data",
-          "email threads",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Sales Development Solutions",
-        "category": "outreach",
-        "description": "Provides personalized outreach to scale sales development efforts.",
-        "ai_implementation": "LLM generates personalized outreach sequences using LinkedIn and company data",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling and Follow-Up",
-        "category": "automation",
-        "description": "Automates meeting scheduling and follow-up processes to boost sales efficiency.",
-        "ai_implementation": "uses ML to predict optimal meeting times based on prospect availability",
-        "data_sources": [
-          "calendar data",
-          "prospect availability",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting and Analytics",
-        "category": "analytics",
-        "description": "Predicts sales pipeline performance and revenue potential.",
-        "ai_implementation": "trains ML model on historical sales data and market trends to forecast pipeline performance",
-        "data_sources": [
-          "historical sales data",
-          "market trends",
-          "CRM data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39075,
@@ -1072,80 +173,7 @@
     "website": "https://aifundingtracker.com/top-ai-agent-startups/",
     "core_differentiator": "Offers comprehensive AI agent market insights with real-time funding and valuation tracking.",
     "automation_level": "assisted",
-    "features": [
-      {
-        "name": "AI Agent Market Analysis",
-        "category": "analytics",
-        "description": "Analyzes market trends and startup performance in AI agents.",
-        "ai_implementation": "Uses historical funding data and market growth metrics to predict future trends.",
-        "data_sources": [
-          "market reports",
-          "funding records",
-          "startup valuations"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Startup Valuation Tracking",
-        "category": "analytics",
-        "description": "Tracks and updates the valuation of AI agent startups.",
-        "ai_implementation": "Analyzes funding rounds and revenue projections to estimate valuations.",
-        "data_sources": [
-          "funding data",
-          "revenue forecasts",
-          "market benchmarks"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Funding Intelligence",
-        "category": "analytics",
-        "description": "Provides insights into AI agent startup funding activities.",
-        "ai_implementation": "Processes and categorizes funding events to identify investment patterns.",
-        "data_sources": [
-          "investment records",
-          "venture capital data",
-          "startup disclosures"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Market Growth Projections",
-        "category": "analytics",
-        "description": "Offers projections for the AI agent market's future growth.",
-        "ai_implementation": "Utilizes historical growth data and industry trends to forecast market size.",
-        "data_sources": [
-          "historical market data",
-          "industry reports",
-          "expert forecasts"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Startup Performance Comparison",
-        "category": "analytics",
-        "description": "Compares the performance of different AI agent startups.",
-        "ai_implementation": "Evaluates metrics like funding, valuation, and market share to rank startups.",
-        "data_sources": [
-          "startup metrics",
-          "market data",
-          "funding history"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Agent Research",
-        "category": "enrichment",
-        "description": "Enriches leads with detailed information about AI agent startups.",
-        "ai_implementation": "Aggregates and synthesizes data from various sources to provide comprehensive startup profiles.",
-        "data_sources": [
-          "startup profiles",
-          "funding data",
-          "market reports"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39034,
@@ -1155,80 +183,7 @@
     "website": "https://www.clay.com/",
     "core_differentiator": "Unifies AI agents, intent data, and enrichment to deliver actionable insights for sales teams",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Buyer Intent Detection",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase based on their online behavior and company data.",
-        "ai_implementation": "Trains ML model on web visit signals, job postings, and technographic data to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with detailed company and contact information to improve targeting.",
-        "ai_implementation": "Uses NLP to parse LinkedIn data and CRM inputs to build comprehensive prospect profiles",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Personalized Email Generation",
-        "category": "outreach",
-        "description": "Automatically generates tailored email content based on prospect data and company news.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Social Listening Tools",
-        "category": "analytics",
-        "description": "Monitors social media and online activity to identify potential leads and market trends.",
-        "ai_implementation": "Natural language processing models analyze social media signals and web activity",
-        "data_sources": [
-          "social media",
-          "web signals",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts future sales and pipeline performance using historical and real-time data.",
-        "ai_implementation": "Time-series forecasting models analyze historical sales data and current pipeline metrics",
-        "data_sources": [
-          "CRM data",
-          "historical sales data",
-          "pipeline metrics"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates the scheduling of meetings based on lead availability and calendar data.",
-        "ai_implementation": "AI-driven scheduling algorithm matches lead availability with calendar slots",
-        "data_sources": [
-          "calendar data",
-          "lead availability",
-          "CRM data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39071,
@@ -1238,84 +193,7 @@
     "website": "https://www.revenue.io/inside-sales-glossary/what-is-revenue-intelligence",
     "core_differentiator": "Unifies CRM, web signals, and market data with AI to predict revenue and optimize sales processes.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Revenue Forecasting",
-        "category": "analytics",
-        "description": "Predicts revenue by analyzing historical data and current deal trends.",
-        "ai_implementation": "Trains ML model on historical sales data, deal stages, and market trends to forecast revenue.",
-        "data_sources": [
-          "CRM data",
-          "deal pipeline",
-          "market trends",
-          "historical sales data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Deal Risk Scoring",
-        "category": "analytics",
-        "description": "Identifies risks in deals using predictive analytics.",
-        "ai_implementation": "Analyzes deal data, lead behavior, and market signals to score risk levels.",
-        "data_sources": [
-          "CRM data",
-          "lead behavior",
-          "market signals",
-          "deal pipeline"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Call Coaching",
-        "category": "engagement",
-        "description": "Provides real-time feedback during sales calls to improve performance.",
-        "ai_implementation": "Uses speech-to-text and sentiment analysis on live calls to offer real-time coaching.",
-        "data_sources": [
-          "call recordings",
-          "live call data",
-          "CRM data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Lead Response Automation",
-        "category": "automation",
-        "description": "Automates lead response to improve engagement and response time.",
-        "ai_implementation": "Uses AI to prioritize and route leads based on CRM data and lead behavior.",
-        "data_sources": [
-          "CRM data",
-          "lead behavior",
-          "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Predictive Pipeline Analysis",
-        "category": "analytics",
-        "description": "Analyzes pipeline data to predict deal outcomes and revenue potential.",
-        "ai_implementation": "Trains ML model on historical deal outcomes, lead data, and market conditions to predict pipeline performance.",
-        "data_sources": [
-          "CRM data",
-          "deal pipeline",
-          "historical outcomes",
-          "market data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Revenue Intelligence Platform",
-        "category": "analytics",
-        "description": "Unifies data from multiple sources to provide actionable insights for revenue growth.",
-        "ai_implementation": "Aggregates and analyzes data from CRM, web signals, and market trends to generate insights.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "market trends",
-          "sales data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39060,
@@ -1325,69 +203,7 @@
     "website": "https://www.qualified.com",
     "core_differentiator": "Agentic AI platform powers end-to-end sales automation with real-time data enrichment and multi-step agent actions.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "AI SDR Agent",
-        "category": "automation",
-        "description": "Autonomously nurtures and converts inbound prospects into pipeline 24/7.",
-        "ai_implementation": "trains ML model on web visit signals, job postings, and CRM data to score purchase likelihood and prioritize outreach",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI-Generated Emails",
-        "category": "outreach",
-        "description": "Sends personalized emails to prospects using AI-generated content.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "email threads",
-          "company news"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Marketing Offers",
-        "category": "enrichment",
-        "description": "Nurtures buyers with unique marketing offers.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts pipeline generation and revenue intelligence.",
-        "ai_implementation": "predictive analytics model using historical CRM data and web signals",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Slack Collaboration",
-        "category": "engagement",
-        "description": "Collaborates with teammates in Slack for real-time updates.",
-        "ai_implementation": "real-time data enrichment and sentiment analysis on Slack messages",
-        "data_sources": [
-          "Slack messages",
-          "CRM data",
-          "web signals"
-        ],
-        "is_realtime": true
-      }
-    ]
+    "features": []
   },
   {
     "id": 39057,
@@ -1397,68 +213,7 @@
     "website": "https://getbreakout.ai/blog/10-best-ai-sdr-agents-2025",
     "core_differentiator": "AI-driven lead enrichment and intent scoring with real-time engagement alerts",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Company & Person ID Identification",
-        "category": "enrichment",
-        "description": "Identifies company and person IDs for lead research and targeting.",
-        "ai_implementation": "trains ML model on web signals, job postings, and technographic data to identify company and person IDs",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Waterfall Enrichment",
-        "category": "enrichment",
-        "description": "Enhances inbound leads with detailed company and contact information.",
-        "ai_implementation": "uses deep research and data aggregation to enrich lead profiles",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "LinkedIn"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Email Writer",
-        "category": "outreach",
-        "description": "Generates personalized emails for outreach campaigns.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates the scheduling of meetings with prospects.",
-        "ai_implementation": "uses ML to predict optimal meeting times based on prospect availability",
-        "data_sources": [
-          "CRM data",
-          "email threads",
-          "calendar data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Engagement Alerts",
-        "category": "engagement",
-        "description": "Notifies users of new engagement opportunities with prospects.",
-        "ai_implementation": "real-time alerts based on email and chat activity",
-        "data_sources": [
-          "email threads",
-          "chat logs",
-          "CRM data"
-        ],
-        "is_realtime": true
-      }
-    ]
+    "features": []
   },
   {
     "id": 39093,
@@ -1468,81 +223,7 @@
     "website": "https://spotio.com/blog/ai-sales-tools/",
     "core_differentiator": "Built for field sales with real-time analytics, lead prioritization, and territory optimization.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Real-Time Visibility",
-        "category": "analytics",
-        "description": "Provides real-time insights into field sales activities and performance.",
-        "ai_implementation": "Utilizes machine learning to analyze field activity data and generate performance metrics.",
-        "data_sources": [
-          "field activity logs",
-          "sales pipeline data",
-          "territory performance metrics"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Lead Prioritization",
-        "category": "intent",
-        "description": "Prioritizes leads based on their likelihood to convert.",
-        "ai_implementation": "Trains a model on historical conversion data and lead behavior to score purchase likelihood.",
-        "data_sources": [
-          "historical sales data",
-          "web signals",
-          "CRM data",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Optimized Territories",
-        "category": "analytics",
-        "description": "Helps in creating and optimizing sales territories for maximum efficiency.",
-        "ai_implementation": "Uses clustering algorithms to group territories based on sales potential and accessibility.",
-        "data_sources": [
-          "sales performance data",
-          "geospatial data",
-          "territory metrics"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Sales Productivity Boost",
-        "category": "analytics",
-        "description": "Enhances sales productivity through data-driven insights and recommendations.",
-        "ai_implementation": "Analyzes sales activities and performance to provide actionable productivity insights.",
-        "data_sources": [
-          "sales activity logs",
-          "performance metrics",
-          "territory data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Revenue Growth Analytics",
-        "category": "analytics",
-        "description": "Offers analytics to track and predict revenue growth.",
-        "ai_implementation": "Applies predictive modeling on historical revenue data and market trends to forecast growth.",
-        "data_sources": [
-          "historical revenue data",
-          "market trends",
-          "sales forecasts"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Field Activity Tracking",
-        "category": "analytics",
-        "description": "Tracks and analyzes field sales activities for performance evaluation.",
-        "ai_implementation": "Uses natural language processing to analyze field notes and activity logs for performance insights.",
-        "data_sources": [
-          "field notes",
-          "activity logs",
-          "sales reports"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39018,
@@ -1554,43 +235,6 @@
     "automation_level": "semi-auto",
     "features": [
       {
-        "name": "Workflow Automation",
-        "category": "automation",
-        "description": "Automates repetitive tasks across multiple applications to save time.",
-        "ai_implementation": "Uses machine learning to predict optimal workflow sequences based on historical data and user behavior.",
-        "data_sources": [
-          "CRM data",
-          "email threads",
-          "web signals",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Integration Marketplace",
-        "category": "automation",
-        "description": "Enables users to connect and use a wide range of AI-powered tools seamlessly.",
-        "ai_implementation": "Leverages natural language processing to categorize and recommend relevant integrations based on user queries.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead data with additional company and contact information.",
-        "ai_implementation": "Utilizes predictive analytics to infer missing data points from publicly available information and CRM records.",
-        "data_sources": [
-          "LinkedIn",
-          "web signals",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
         "name": "Sales Workflow Optimization",
         "category": "automation",
         "description": "Optimizes sales processes by automating follow-ups and task scheduling.",
@@ -1599,18 +243,6 @@
           "CRM data",
           "email threads",
           "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI-Powered Analytics",
-        "category": "analytics",
-        "description": "Provides insights into sales performance and customer behavior.",
-        "ai_implementation": "Uses clustering algorithms to segment customers based on behavior and predict future actions.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads"
         ],
         "is_realtime": false
       }
@@ -1624,47 +256,7 @@
     "website": "https://persana.ai/blogs/ai-outreach-tools",
     "core_differentiator": "Combines affordable pricing with powerful AI-driven lead generation and personalization.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Sales Prospecting",
-        "category": "outreach",
-        "description": "Automates lead generation by identifying high-intent prospects using AI-driven data analysis.",
-        "ai_implementation": "trains ML model on web visit signals, job postings, and technographic data to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Personalized Email Writing",
-        "category": "outreach",
-        "description": "Generates tailored email content for outreach campaigns using AI.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Affordable Pricing Model",
-        "category": "automation",
-        "description": "Offers cost-effective and transparent pricing for all user tiers.",
-        "ai_implementation": "not applicable",
-        "data_sources": [],
-        "is_realtime": false
-      },
-      {
-        "name": "API Integration",
-        "category": "automation",
-        "description": "Allows seamless integration with existing sales tools and platforms.",
-        "ai_implementation": "not applicable",
-        "data_sources": [],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39032,
@@ -1674,68 +266,7 @@
     "website": "https://www.b2brocket.ai/",
     "core_differentiator": "AI agents handle time-consuming tasks, letting users focus on high ROI activities",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Email Writer",
-        "category": "outreach",
-        "description": "Generates personalized outreach emails for sales teams.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Detection",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enriches lead data with company and contact information.",
-        "ai_implementation": "uses technographic data and web scraping to populate lead profiles",
-        "data_sources": [
-          "technographic data",
-          "web signals",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Cold Email Automation",
-        "category": "outreach",
-        "description": "Automates the process of sending cold emails to prospects.",
-        "ai_implementation": "LLM generates and schedules personalized emails based on prospect data",
-        "data_sources": [
-          "CRM data",
-          "LinkedIn",
-          "buyer intent data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Sales Process Automation",
-        "category": "automation",
-        "description": "Automates repetitive sales tasks to improve efficiency.",
-        "ai_implementation": "uses ML to automate follow-up sequences and meeting scheduling",
-        "data_sources": [
-          "CRM data",
-          "email threads",
-          "meeting data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39085,
@@ -1745,68 +276,7 @@
     "website": "https://www.trellus.ai/post/ai-powered-sales-engagement-platforms",
     "core_differentiator": "AI-driven coaching and analytics for optimized sales engagement and conversion rates.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Sales Team Coaching",
-        "category": "engagement",
-        "description": "Provides real-time feedback and coaching to SDRs and managers during sales interactions.",
-        "ai_implementation": "Uses natural language processing (NLP) to analyze call transcripts and provide actionable insights.",
-        "data_sources": [
-          "call recordings",
-          "CRM data",
-          "sales scripts"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Lead Conversion Rate Analysis",
-        "category": "analytics",
-        "description": "Analyzes sales data to improve lead conversion rates and shorten sales cycles.",
-        "ai_implementation": "Trains machine learning models on historical sales data to predict conversion probabilities.",
-        "data_sources": [
-          "CRM data",
-          "sales history",
-          "pipeline data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Personalized Email Writing",
-        "category": "outreach",
-        "description": "Generates personalized email content for sales outreach based on prospect data.",
-        "ai_implementation": "Leverages large language models (LLMs) to craft emails using LinkedIn profiles and company news.",
-        "data_sources": [
-          "LinkedIn data",
-          "company news",
-          "email templates"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling Automation",
-        "category": "automation",
-        "description": "Automates the scheduling of meetings based on prospect availability and sales calendars.",
-        "ai_implementation": "Uses predictive algorithms to suggest optimal meeting times and send calendar invites.",
-        "data_sources": [
-          "calendar data",
-          "prospect availability",
-          "sales pipeline"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts future pipeline performance and revenue based on historical data.",
-        "ai_implementation": "Applies time-series forecasting models to historical sales data and market trends.",
-        "data_sources": [
-          "sales pipeline data",
-          "market trends",
-          "historical performance"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39026,
@@ -1816,68 +286,7 @@
     "website": "https://seamless.ai/products/platform-overview",
     "core_differentiator": "Unifies data, outreach, and automation into one platform for real-time, verified lead generation.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Real-Time Data Search",
-        "category": "enrichment",
-        "description": "Provides verified, real-time data to ensure accurate outreach.",
-        "ai_implementation": "trains ML model on web signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with detailed company and contact information.",
-        "ai_implementation": "uses NLP to parse LinkedIn and CRM data for prospect profiling",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Email Writer",
-        "category": "outreach",
-        "description": "Generates personalized email content for outreach campaigns.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Detection",
-        "category": "intent",
-        "description": "Scores leads based on their likelihood to purchase.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Real-Time Alerts",
-        "category": "analytics",
-        "description": "Notifies users of key decision maker activity in real-time.",
-        "ai_implementation": "uses NLP to analyze web signals and CRM data for real-time alerts",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "email threads"
-        ],
-        "is_realtime": true
-      }
-    ]
+    "features": []
   },
   {
     "id": 39023,
@@ -1887,84 +296,7 @@
     "website": "https://www.crono.one/academy/ai-tools-for-sales-prospecting/",
     "core_differentiator": "Unifies sales process with AI-native automation, offering real-time data integration and predictive analytics.",
     "automation_level": "autonomous",
-    "features": [
-      {
-        "name": "Unified Sales Process",
-        "category": "automation",
-        "description": "Orchestrates the entire sales process from data collection to outreach in one platform.",
-        "ai_implementation": "Uses AI to adapt and optimize the sales process based on real-time data and user behavior.",
-        "data_sources": [
-          "CRM data",
-          "email threads",
-          "web signals",
-          "sales process metrics"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Email Writer",
-        "category": "outreach",
-        "description": "Generates personalized and effective email content for outreach campaigns.",
-        "ai_implementation": "Leverages a large language model (LLM) to create tailored email content using prospect data and company news.",
-        "data_sources": [
-          "LinkedIn profiles",
-          "company news",
-          "CRM data",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Real-Time CRM Integration",
-        "category": "enrichment",
-        "description": "Syncs sales data with CRM platforms in real-time for seamless lead management.",
-        "ai_implementation": "Utilizes real-time data processing and synchronization algorithms to update CRM data dynamically.",
-        "data_sources": [
-          "CRM data",
-          "sales pipeline data",
-          "lead interaction data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with additional data to improve targeting and outreach.",
-        "ai_implementation": "Analyzes web signals, job postings, and technographic data to build detailed lead profiles.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data",
-          "LinkedIn data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates the scheduling of meetings based on lead availability and sales team calendars.",
-        "ai_implementation": "Uses machine learning to predict optimal meeting times and manage calendar conflicts.",
-        "data_sources": [
-          "calendar data",
-          "lead availability",
-          "sales team schedules"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Predictive Analytics",
-        "category": "analytics",
-        "description": "Provides predictive insights to forecast sales outcomes and pipeline performance.",
-        "ai_implementation": "Applies machine learning models to historical sales data and market trends for predictive analytics.",
-        "data_sources": [
-          "historical sales data",
-          "market trends",
-          "CRM data",
-          "pipeline metrics"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39056,
@@ -1974,67 +306,7 @@
     "website": "https://www.knock-ai.com/blog/build-ai-sdr-for-inbound-and-outbound-sales",
     "core_differentiator": "Unifies intent detection, lead enrichment, and automation into a single AI SDR platform for B2B sales.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Buyer Intent Detection",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase based on their online behavior and company data.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with detailed company and contact information to improve targeting.",
-        "ai_implementation": "uses NLP to parse LinkedIn and company data for prospect profiling",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Live Chat AI",
-        "category": "engagement",
-        "description": "Automates and personalizes live chat interactions with prospects.",
-        "ai_implementation": "real-time speech-to-text + sentiment classifier on live calls",
-        "data_sources": [
-          "call recordings",
-          "chat transcripts"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates the scheduling of meetings with prospects based on availability and intent.",
-        "ai_implementation": "predictive scheduling algorithm using CRM and calendar data",
-        "data_sources": [
-          "CRM data",
-          "calendar data",
-          "intent signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts pipeline performance and revenue potential using historical and real-time data.",
-        "ai_implementation": "predictive analytics model using historical sales data and CRM metrics",
-        "data_sources": [
-          "CRM data",
-          "sales history",
-          "pipeline data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39048,
@@ -2073,19 +345,6 @@
         "is_realtime": false
       },
       {
-        "name": "Industry-Specific Outreach",
-        "category": "outreach",
-        "description": "Generates hyper-relevant outreach messages tailored to specific industries like cybersecurity and financial services.",
-        "ai_implementation": "LLM models trained on industry-specific data to generate personalized outreach content based on prospect profiles.",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
         "name": "Agentic AI for GTM",
         "category": "automation",
         "description": "Automates repetitive GTM tasks to free up human resources for relationship-building.",
@@ -2095,19 +354,6 @@
           "CRM data",
           "email threads",
           "call recordings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Quality Boost",
-        "category": "analytics",
-        "description": "Improves pipeline quality by filtering out unqualified leads.",
-        "ai_implementation": "ML models trained on historical sales data to score leads based on purchase likelihood and fit.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "job postings",
-          "technographic data"
         ],
         "is_realtime": false
       }
@@ -2121,75 +367,7 @@
     "website": "https://www.outreach.io/resources/blog/best-ai-sales-pipeline-tools",
     "core_differentiator": "Unifies prospect engagement, customer retention, and revenue intelligence in one AI platform with responsible AI certification.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "Revenue Intelligence Platform",
-        "category": "analytics",
-        "description": "Unifies prospect engagement, customer retention, and revenue intelligence for sales teams.",
-        "ai_implementation": "Uses predictive analytics and machine learning to forecast revenue and identify high-value opportunities.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads",
-          "call recordings",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Agents",
-        "category": "automation",
-        "description": "Integrated AI agents handle prospect engagement, customer retention, and revenue intelligence.",
-        "ai_implementation": "Leverages natural language processing and machine learning to automate tasks like outreach and follow-ups.",
-        "data_sources": [
-          "CRM data",
-          "LinkedIn",
-          "web signals",
-          "email threads",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Responsible AI Certification",
-        "category": "analytics",
-        "description": "Ensures ethical and transparent use of AI in sales and lead generation processes.",
-        "ai_implementation": "Implements fairness, accountability, and transparency in AI models through rigorous testing and validation.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "job postings",
-          "user feedback"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts revenue and pipeline performance using historical and real-time data.",
-        "ai_implementation": "Applies time-series forecasting and machine learning to analyze past performance and market trends.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Account Strategy Management",
-        "category": "engagement",
-        "description": "Manages account strategies throughout the customer lifecycle with AI insights.",
-        "ai_implementation": "Uses clustering algorithms and predictive analytics to segment accounts and recommend strategies.",
-        "data_sources": [
-          "CRM data",
-          "LinkedIn",
-          "web signals",
-          "job postings"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39081,
@@ -2199,69 +377,7 @@
     "website": "https://tuesday.so/",
     "core_differentiator": "Triple-verified leads combined with AI-driven personalization for high-quality, scalable outreach.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Triple-Verified Leads",
-        "category": "enrichment",
-        "description": "Provides verified email and mobile number leads for outreach.",
-        "ai_implementation": "Uses machine learning to validate contact data against multiple sources for accuracy.",
-        "data_sources": [
-          "public records",
-          "email verification databases",
-          "phone number validation systems"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Email Personalization",
-        "category": "outreach",
-        "description": "Generates personalized emails at scale to increase response rates.",
-        "ai_implementation": "Natural Language Processing (NLP) models analyze prospect data to craft tailored email content.",
-        "data_sources": [
-          "LinkedIn profiles",
-          "company news",
-          "search history",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Hyper-Targeted Contact Lists",
-        "category": "enrichment",
-        "description": "Builds precise B2B contact lists without manual verification.",
-        "ai_implementation": "ML algorithms filter and segment leads based on technographic and firmographic data.",
-        "data_sources": [
-          "CRM data",
-          "technographic databases",
-          "firmographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Workflow Templates",
-        "category": "automation",
-        "description": "Offers pre-built templates to streamline outreach workflows.",
-        "ai_implementation": "AI suggests and auto-generates templates based on user input and historical success data.",
-        "data_sources": [
-          "user behavior",
-          "template performance data",
-          "outreach success metrics"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Credit-Based Usage Model",
-        "category": "outreach",
-        "description": "Limits usage based on a credit system for personalized email generation.",
-        "ai_implementation": "Credits are allocated based on the complexity and volume of personalized outreach requests.",
-        "data_sources": [
-          "email personalization requests",
-          "user plan tiers",
-          "usage analytics"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39095,
@@ -2271,74 +387,7 @@
     "website": "https://www.topo.io/blog/what-are-the-best-ai-sales-tools-to-boost-your-revenue-in-2025",
     "core_differentiator": "AI-driven sales automation with real-time intent detection and lead enrichment for scalable outreach.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "AI Sales Agents",
-        "category": "outreach",
-        "description": "Automates repetitive prospecting tasks by operating the platform on behalf of the user.",
-        "ai_implementation": "Trains AI models on historical prospecting data and user behavior to predict optimal outreach strategies.",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "LinkedIn",
-          "email threads",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead data by identifying and integrating relevant company and contact information.",
-        "ai_implementation": "Utilizes NLP and data mining techniques to extract and structure information from web sources and CRM data.",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "LinkedIn",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Detection",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase based on their behavior and signals.",
-        "ai_implementation": "Trains ML models on web visit signals, job postings, and CRM data to predict purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "CRM data",
-          "LinkedIn"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Real-Time Lead Scoring",
-        "category": "analytics",
-        "description": "Provides real-time analytics and scoring to prioritize leads based on their engagement and intent.",
-        "ai_implementation": "Uses real-time data from web signals and CRM interactions to update lead scores dynamically.",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "email threads",
-          "LinkedIn"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Automated Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates the scheduling of meetings with prospects based on their availability and engagement.",
-        "ai_implementation": "Analyzes prospect calendar data and engagement signals to suggest optimal meeting times.",
-        "data_sources": [
-          "CRM data",
-          "email threads",
-          "LinkedIn",
-          "web signals"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39084,
@@ -2348,82 +397,7 @@
     "website": "https://www.nooks.ai",
     "core_differentiator": "Unifies AI-driven outreach, engagement, and analytics in a single workspace for intelligent outbound sales.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Sequencing",
-        "category": "outreach",
-        "description": "Automates personalized outreach sequences across multiple channels for sales teams.",
-        "ai_implementation": "Generates sequences using predictive models trained on historical outreach success data and prospect engagement signals.",
-        "data_sources": [
-          "CRM data",
-          "email threads",
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Dialer",
-        "category": "engagement",
-        "description": "Automates and optimizes outbound calling with real-time feedback and adjustments.",
-        "ai_implementation": "Uses speech-to-text and sentiment analysis on live calls to detect engagement and adjust dialing strategies.",
-        "data_sources": [
-          "call recordings",
-          "CRM data",
-          "real-time engagement signals"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Parallel Dialing",
-        "category": "engagement",
-        "description": "Enables sales reps to make multiple calls simultaneously without manual effort.",
-        "ai_implementation": "Automates call routing and scheduling using predictive models to prioritize high-potential prospects.",
-        "data_sources": [
-          "CRM data",
-          "historical call data",
-          "prospect scoring"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Answer Detection",
-        "category": "engagement",
-        "description": "Identifies when a prospect answers a call to improve call efficiency.",
-        "ai_implementation": "Real-time audio processing with machine learning models to detect answer tones and speech patterns.",
-        "data_sources": [
-          "call recordings",
-          "real-time audio signals"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Spam Protection",
-        "category": "engagement",
-        "description": "Filters out spam calls and messages to ensure only relevant interactions reach the sales team.",
-        "ai_implementation": "Uses machine learning to analyze call patterns, message content, and historical spam data to identify and block spam.",
-        "data_sources": [
-          "call recordings",
-          "message content",
-          "spam databases"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Agent Workspace",
-        "category": "engagement",
-        "description": "Unified interface where sales reps collaborate with AI agents for all tasks.",
-        "ai_implementation": "Integrates AI models for task automation, data analysis, and real-time interaction support within a centralized platform.",
-        "data_sources": [
-          "CRM data",
-          "call data",
-          "email data",
-          "prospect profiles"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39040,
@@ -2433,68 +407,7 @@
     "website": "https://goconsensus.com/blog/best-ai-sales-tools",
     "core_differentiator": "Unifies AI-driven demo creation with personalized stakeholder experiences and analytics.",
     "automation_level": "autonomous",
-    "features": [
-      {
-        "name": "AI Demo Automation",
-        "category": "automation",
-        "description": "Generates studio-quality product demos using AI from raw content.",
-        "ai_implementation": "Trains ML model on video content and script data to automate demo creation.",
-        "data_sources": [
-          "video content",
-          "script data",
-          "product information"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Product Experience Platform",
-        "category": "enrichment",
-        "description": "Unifies product demos, data, and discovery for tailored stakeholder experiences.",
-        "ai_implementation": "Uses NLP to analyze stakeholder data and personalize content delivery.",
-        "data_sources": [
-          "stakeholder data",
-          "product data",
-          "user behavior"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Dynamic Tour AI",
-        "category": "enrichment",
-        "description": "Generates personalized product tours based on user data.",
-        "ai_implementation": "Uses ML to analyze user behavior and tailor tour content.",
-        "data_sources": [
-          "user behavior",
-          "product data",
-          "user preferences"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Content Studio",
-        "category": "enrichment",
-        "description": "Creates multilingual content for product demos and tours.",
-        "ai_implementation": "Leverages translation models to generate content in multiple languages.",
-        "data_sources": [
-          "content data",
-          "translation data",
-          "user language preferences"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Intelligence",
-        "category": "analytics",
-        "description": "Analyzes meeting data to provide insights for sales teams.",
-        "ai_implementation": "Uses speech-to-text and sentiment analysis on call recordings.",
-        "data_sources": [
-          "call recordings",
-          "meeting notes",
-          "participant data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39015,
@@ -2504,58 +417,7 @@
     "website": "https://coldiq.com/ai-sales-tools",
     "core_differentiator": "Unifies intent scoring, outreach, and analytics in a single AI-driven GTM flywheel for faster sales cycles.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "GTM Flywheel Integration",
-        "category": "automation",
-        "description": "Coordinates content, ads, and outbound efforts to streamline sales processes.",
-        "ai_implementation": "predictive analytics models prioritize high-value content and ad placements based on lead behavior patterns.",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "LinkedIn",
-          "email threads",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Scoring",
-        "category": "intent",
-        "description": "Scores leads based on their likelihood to purchase.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with detailed company and contact information.",
-        "ai_implementation": "natural language processing extracts data from public records and social media",
-        "data_sources": [
-          "LinkedIn",
-          "web signals",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts future pipeline performance and revenue potential.",
-        "ai_implementation": "time-series forecasting models analyze historical sales data and market trends",
-        "data_sources": [
-          "CRM data",
-          "pipeline data",
-          "market trends"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39092,
@@ -2565,81 +427,7 @@
     "website": "https://www.copilotai.com/",
     "core_differentiator": "Self-trained AI agents that collaborate to execute outbound sales strategies with high-intent targeting and personalization.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "AI-Powered Lead Prospecting Agents",
-        "category": "outreach",
-        "description": "Automates the process of identifying and engaging high-value prospects on LinkedIn.",
-        "ai_implementation": "Trains ML models on LinkedIn engagement signals, company data, and job postings to prioritize outreach targets.",
-        "data_sources": [
-          "LinkedIn",
-          "job postings",
-          "technographic data",
-          "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "High-Intent Conversation Scoring",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase based on their engagement and behavior.",
-        "ai_implementation": "Analyzes web visit signals, LinkedIn activity, and job postings to predict purchase intent.",
-        "data_sources": [
-          "web signals",
-          "LinkedIn",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI-Generated Sales Emails",
-        "category": "outreach",
-        "description": "Creates personalized and effective sales emails for outreach campaigns.",
-        "ai_implementation": "LLM generates personalized email content using LinkedIn profile data and company news.",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "A/B Testing for Campaigns",
-        "category": "analytics",
-        "description": "Allows users to test different versions of outreach campaigns to determine the most effective strategy.",
-        "ai_implementation": "Uses ML to analyze campaign performance metrics and suggest optimal variations.",
-        "data_sources": [
-          "campaign data",
-          "engagement metrics",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Nurture Message Automation",
-        "category": "engagement",
-        "description": "Automates the sending of follow-up messages to prospects to maintain engagement.",
-        "ai_implementation": "Generates and schedules personalized nurture messages based on prospect behavior and engagement.",
-        "data_sources": [
-          "LinkedIn",
-          "engagement metrics",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling and Booking",
-        "category": "outreach",
-        "description": "Automates the scheduling of high-value meetings with prospects.",
-        "ai_implementation": "Uses ML to predict the best times to schedule meetings based on prospect availability and engagement.",
-        "data_sources": [
-          "LinkedIn",
-          "calendar data",
-          "engagement metrics"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39014,
@@ -2649,68 +437,7 @@
     "website": "https://www.heyreach.io/blog/best-ai-sales-tools",
     "core_differentiator": "Unifies LinkedIn outreach with AI-driven personalization, analytics, and automation for scalable sales success.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "LinkedIn Outreach Automation",
-        "category": "outreach",
-        "description": "Automates LinkedIn outreach by generating personalized messages and managing follow-ups.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Scoring",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase based on their behavior.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enriches lead data by gathering detailed company and contact information.",
-        "ai_implementation": "uses LinkedIn and CRM data to profile prospects",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Intelligence",
-        "category": "analytics",
-        "description": "Analyzes meeting data to provide insights and improve future outreach.",
-        "ai_implementation": "real-time speech-to-text + sentiment classifier on live calls",
-        "data_sources": [
-          "call recordings",
-          "email threads",
-          "CRM data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Growth Analytics",
-        "category": "analytics",
-        "description": "Provides analytics to track the performance of outreach campaigns.",
-        "ai_implementation": "predictive analytics on outreach data to forecast pipeline performance",
-        "data_sources": [
-          "outreach data",
-          "CRM data",
-          "web signals"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39090,
@@ -2720,81 +447,7 @@
     "website": "https://www.apollo.io/",
     "core_differentiator": "AI sales platform with real-time data intelligence, crowdsourced data, and advanced personalization for smarter sales.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Sales Intelligence Platform",
-        "category": "enrichment",
-        "description": "Enriches leads with detailed company and contact data to improve sales outreach.",
-        "ai_implementation": "Utilizes crowdsourced data and machine learning to predict and enrich prospect information.",
-        "data_sources": [
-          "crowdsourced data",
-          "LinkedIn",
-          "web signals",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Email Writer",
-        "category": "outreach",
-        "description": "Generates personalized and effective email content for sales outreach.",
-        "ai_implementation": "Leverages large language models (LLMs) to craft personalized emails based on prospect data and company news.",
-        "data_sources": [
-          "LinkedIn profile",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates the scheduling of meetings with prospects.",
-        "ai_implementation": "AI analyzes calendar availability and prospect behavior to suggest optimal meeting times.",
-        "data_sources": [
-          "calendar data",
-          "email threads",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts sales pipeline performance and revenue outcomes.",
-        "ai_implementation": "Uses historical sales data and machine learning to forecast pipeline performance and revenue.",
-        "data_sources": [
-          "CRM data",
-          "sales history",
-          "market trends"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Scoring",
-        "category": "intent",
-        "description": "Scores leads based on their likelihood to purchase.",
-        "ai_implementation": "Trains machine learning models on web signals, job postings, and CRM data to score purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Automated Outreach Sequences",
-        "category": "automation",
-        "description": "Automates the follow-up sequences for sales outreach.",
-        "ai_implementation": "AI generates and executes personalized outreach sequences based on prospect behavior and engagement data.",
-        "data_sources": [
-          "email threads",
-          "engagement data",
-          "CRM data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39067,
@@ -2806,20 +459,6 @@
     "automation_level": "semi-auto",
     "features": [
       {
-        "name": "Revenue Intelligence Platform",
-        "category": "analytics",
-        "description": "Analyzes conversation data to provide competitive insights and revenue predictions.",
-        "ai_implementation": "Uses NLP and predictive modeling on call transcripts, CRM data, and market signals to forecast revenue.",
-        "data_sources": [
-          "call recordings",
-          "CRM data",
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
         "name": "Medical Mode",
         "category": "enrichment",
         "description": "Enhances accuracy in transcribing and understanding medical terminology.",
@@ -2828,17 +467,6 @@
           "medical terminology datasets",
           "clinical notes",
           "research papers"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Usage-Based Pricing",
-        "category": "automation",
-        "description": "Offers flexible pricing based on usage without long-term contracts.",
-        "ai_implementation": "AI-driven pricing models adjust based on user activity and scale.",
-        "data_sources": [
-          "user activity logs",
-          "usage metrics"
         ],
         "is_realtime": false
       },
@@ -2864,82 +492,7 @@
     "website": "https://www.salesloft.com/platform/drift",
     "core_differentiator": "AI transforms conversations into long-term relationships with real-time personalization and predictive analytics",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Real-Time Chat Agent",
-        "category": "engagement",
-        "description": "Engages website visitors with personalized, real-time conversations to generate qualified leads.",
-        "ai_implementation": "LLM generates personalized conversation scripts based on user behavior and company data",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "LinkedIn",
-          "job postings"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Revenue Forecasting",
-        "category": "analytics",
-        "description": "Predicts revenue based on historical data and current pipeline performance.",
-        "ai_implementation": "Time-series forecasting model using historical sales data and market trends",
-        "data_sources": [
-          "CRM data",
-          "sales history",
-          "market data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Account Research Automation",
-        "category": "enrichment",
-        "description": "Automates account research and lead generation by analyzing company data.",
-        "ai_implementation": "Natural language processing to extract key data points from public company information",
-        "data_sources": [
-          "technographic data",
-          "web signals",
-          "LinkedIn",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "CRM Sync",
-        "category": "automation",
-        "description": "Synchronizes data between the platform and CRM systems in real-time.",
-        "ai_implementation": "Automated data mapping and synchronization using AI-driven data matching",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Sales Process Automation",
-        "category": "automation",
-        "description": "Automates repetitive sales tasks and workflows to improve efficiency.",
-        "ai_implementation": "Rule-based automation with AI-driven prioritization of follow-up actions",
-        "data_sources": [
-          "sales history",
-          "email threads",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Scoring",
-        "category": "intent",
-        "description": "Scores leads based on their engagement and intent to purchase.",
-        "ai_implementation": "Machine learning model trained on web signals, CRM data, and job postings",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "job postings"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39068,
@@ -2951,30 +504,6 @@
     "automation_level": "agentic",
     "features": [
       {
-        "name": "Sales Coach Avatar",
-        "category": "engagement",
-        "description": "Provides real-time guidance during sales conversations to improve seller performance.",
-        "ai_implementation": "Natural Language Processing (NLP) models analyze conversation context and suggest optimal responses.",
-        "data_sources": [
-          "call recordings",
-          "CRM data",
-          "sales scripts"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Revenue Forecasting",
-        "category": "analytics",
-        "description": "Predicts revenue with high accuracy by analyzing historical and current sales data.",
-        "ai_implementation": "Machine learning models trained on historical sales data, market trends, and CRM metrics to forecast revenue.",
-        "data_sources": [
-          "CRM data",
-          "sales pipelines",
-          "market trends"
-        ],
-        "is_realtime": false
-      },
-      {
         "name": "Agentic AI Workforce",
         "category": "automation",
         "description": "Automates complex sales and marketing workflows using AI agents.",
@@ -2983,43 +512,6 @@
           "sales data",
           "customer interactions",
           "market data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Single Pane of Glass",
-        "category": "analytics",
-        "description": "Centralizes all sales, marketing, and customer success data for unified analysis.",
-        "ai_implementation": "Data integration and visualization tools powered by AI to identify patterns and insights.",
-        "data_sources": [
-          "CRM data",
-          "marketing automation",
-          "customer support logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with detailed company and contact information.",
-        "ai_implementation": "Natural Language Processing (NLP) and data scraping techniques extract relevant information from public sources.",
-        "data_sources": [
-          "LinkedIn",
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Agentic Workflows",
-        "category": "automation",
-        "description": "Automates repetitive tasks and optimizes sales processes using AI-driven workflows.",
-        "ai_implementation": "Rule-based and machine learning-driven workflows adapt to user behavior and market changes.",
-        "data_sources": [
-          "sales data",
-          "customer interactions",
-          "CRM data"
         ],
         "is_realtime": false
       }
@@ -3057,42 +549,6 @@
           "agent goals"
         ],
         "is_realtime": false
-      },
-      {
-        "name": "Agent Studio",
-        "category": "automation",
-        "description": "Empowers teams to build and manage AI agents without coding.",
-        "ai_implementation": "Uses no-code AI orchestration to set up customer journeys and configure knowledge.",
-        "data_sources": [
-          "user journeys",
-          "brand guidelines",
-          "knowledge base"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Unified Channel Deployment",
-        "category": "automation",
-        "description": "Deploys a single AI agent across multiple communication channels.",
-        "ai_implementation": "Coordinates multi-channel AI agents using a unified orchestration framework to maintain consistent brand messaging.",
-        "data_sources": [
-          "channel-specific data",
-          "agent configurations",
-          "brand guidelines"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Trust in AI",
-        "category": "analytics",
-        "description": "Enhances customer trust through AI accountability, empathy, and quality assurance.",
-        "ai_implementation": "Applies sentiment analysis and quality scoring models to ensure AI interactions align with brand values.",
-        "data_sources": [
-          "customer feedback",
-          "interaction logs",
-          "brand tone data"
-        ],
-        "is_realtime": false
       }
     ]
   },
@@ -3104,73 +560,7 @@
     "website": "https://prospectory.ai/",
     "core_differentiator": "AI-powered research, scoring, and outreach with real-time engagement and analytics.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "AI-Powered Research",
-        "category": "enrichment",
-        "description": "Builds comprehensive prospect profiles with detailed company and contact data.",
-        "ai_implementation": "Trains ML model on web signals, job postings, and technographic data to enrich profiles.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data",
-          "CRM data",
-          "LinkedIn"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Intelligent Scoring",
-        "category": "intent",
-        "description": "Scores prospects based on their likelihood to buy.",
-        "ai_implementation": "Trains ML model on web visit signals, job postings, and CRM data to predict purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "CRM data",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Agentic AI Chat Agent",
-        "category": "engagement",
-        "description": "Handles live chat interactions with prospects using AI.",
-        "ai_implementation": "Uses NLP to understand and respond to live chat conversations in real-time.",
-        "data_sources": [
-          "live chat transcripts",
-          "web signals",
-          "CRM data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Automated Response Handling",
-        "category": "automation",
-        "description": "Automates responses to prospect interactions across multiple channels.",
-        "ai_implementation": "Trains ML model on historical responses and interactions to generate automated replies.",
-        "data_sources": [
-          "email threads",
-          "call recordings",
-          "CRM data",
-          "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Sales Intelligence Platform",
-        "category": "analytics",
-        "description": "Provides analytics and insights to improve sales performance.",
-        "ai_implementation": "Analyzes sales data, prospect interactions, and market trends to generate actionable insights.",
-        "data_sources": [
-          "CRM data",
-          "sales pipeline data",
-          "web signals",
-          "job postings"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39029,
@@ -3180,55 +570,7 @@
     "website": "https://www.smartlead.ai/blog/the-definitive-guide-to-b2b-ai-prospecting-in-2026",
     "core_differentiator": "AI-driven lead scoring and personalization with real-time analytics for smarter sales decisions",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI-Powered B2B Prospecting",
-        "category": "enrichment",
-        "description": "Automatically identifies and scores high-quality B2B leads using AI analysis.",
-        "ai_implementation": "trains ML model on web signals, job postings, and technographic data to predict purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with detailed company and contact information.",
-        "ai_implementation": "uses NLP to parse LinkedIn data and CRM inputs for prospect profiling",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Sales Engagement Automation",
-        "category": "automation",
-        "description": "Automates repetitive sales tasks to improve efficiency and productivity.",
-        "ai_implementation": "workflow automation using predictive models to schedule follow-ups and meetings",
-        "data_sources": [
-          "CRM data",
-          "email threads",
-          "call recordings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pricing Plans",
-        "category": "analytics",
-        "description": "Offers flexible pricing options tailored to different business needs.",
-        "ai_implementation": "predictive analytics to recommend pricing plans based on usage patterns",
-        "data_sources": [
-          "usage data",
-          "plan performance metrics"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39022,
@@ -3238,54 +580,7 @@
     "website": "https://www.artisan.co/blog/ai-prospecting-tools",
     "core_differentiator": "Unifies AI-driven lead discovery, intent detection, and engagement analytics into a single platform.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Lead Discovery",
-        "category": "enrichment",
-        "description": "Identifies and targets ideal B2B contacts based on company and individual data.",
-        "ai_implementation": "trains ML model on technographic data, job postings, and web signals to score lead quality",
-        "data_sources": [
-          "technographic data",
-          "job postings",
-          "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Detection",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase based on their online behavior.",
-        "ai_implementation": "trains ML model on web visit signals, job postings, and CRM data to predict purchase likelihood",
-        "data_sources": [
-          "web visit signals",
-          "job postings",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Intelligence",
-        "category": "engagement",
-        "description": "Analyzes and provides insights from live calls and meetings.",
-        "ai_implementation": "real-time speech-to-text + sentiment classifier on live calls",
-        "data_sources": [
-          "call recordings"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts future sales pipeline performance and revenue potential.",
-        "ai_implementation": "trains ML model on historical sales data, lead scoring, and engagement metrics",
-        "data_sources": [
-          "historical sales data",
-          "lead scoring",
-          "engagement metrics"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39024,
@@ -3295,59 +590,7 @@
     "website": "https://salesmotion.io/blog/best-ai-prospecting-tools",
     "core_differentiator": "AI agents provide 24/7 account research, buying signal detection, and personalized outreach for sales teams",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "24/7 Account Research",
-        "category": "enrichment",
-        "description": "Continuously researches accounts to provide up-to-date business context for sales teams.",
-        "ai_implementation": "trains ML model on web signals, job postings, and technographic data to identify key account details",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data",
-          "CRM data",
-          "LinkedIn"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buying Signal Monitoring",
-        "category": "intent",
-        "description": "Detects and surfaces buying signals to help sales teams prioritize outreach.",
-        "ai_implementation": "trains ML model on web visit signals, email activity, and company news to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "email threads",
-          "company news",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Outreach Drafting",
-        "category": "outreach",
-        "description": "Automatically drafts personalized outreach emails for sales teams.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Real-Time Account Monitoring",
-        "category": "enrichment",
-        "description": "Monitors accounts in real-time for changes in business context or buying signals.",
-        "ai_implementation": "trains ML model on real-time web signals and CRM updates to detect changes",
-        "data_sources": [
-          "real-time web signals",
-          "CRM updates",
-          "LinkedIn"
-        ],
-        "is_realtime": true
-      }
-    ]
+    "features": []
   },
   {
     "id": 39059,
@@ -3357,67 +600,7 @@
     "website": "https://www.bdr.ai/",
     "core_differentiator": "AI-driven lead enrichment and outreach with real-time intent and technographic data",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Prospecting Agent",
-        "category": "enrichment",
-        "description": "Automatically identifies and filters high-quality leads using AI.",
-        "ai_implementation": "trains ML model on technographic, geographic, and intent data to score lead quality",
-        "data_sources": [
-          "technographic data",
-          "geographic data",
-          "intent data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Provides detailed contact data and company profiles for sales teams.",
-        "ai_implementation": "uses NLP to extract and structure data from LinkedIn and web sources",
-        "data_sources": [
-          "LinkedIn",
-          "web signals",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Warm Introductions",
-        "category": "outreach",
-        "description": "Facilitates introductions through LinkedIn using AI.",
-        "ai_implementation": "analyzes LinkedIn network to identify optimal introductions",
-        "data_sources": [
-          "LinkedIn network data",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Data As A Service",
-        "category": "enrichment",
-        "description": "Offers pay-per-record data for targeted prospecting.",
-        "ai_implementation": "curates and scores data based on intent and technographic signals",
-        "data_sources": [
-          "intent data",
-          "technographic data",
-          "geographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI-Powered Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts pipeline performance and sales outcomes.",
-        "ai_implementation": "uses historical sales data and lead scoring to forecast pipeline health",
-        "data_sources": [
-          "sales pipeline data",
-          "lead scoring data",
-          "historical sales data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39054,
@@ -3427,71 +610,7 @@
     "website": "https://www.usergems.com/product/ai-sdr",
     "core_differentiator": "Unifies AI-driven lead scoring, outreach, and analytics in one platform with real-time data integration.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Combined Signal Platform",
-        "category": "enrichment",
-        "description": "Unifies multiple data sources into a single platform for lead scoring and prioritization.",
-        "ai_implementation": "Aggregates and weights signals using machine learning to predict lead quality and engagement potential.",
-        "data_sources": [
-          "web signals",
-          "CRM data",
-          "LinkedIn",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Agents",
-        "category": "outreach",
-        "description": "Automates outbound communication with personalized email and outreach sequences.",
-        "ai_implementation": "Generates personalized outreach content using natural language processing and predictive analytics based on prospect data.",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "web signals",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Scoring",
-        "category": "intent",
-        "description": "Scores leads based on their likelihood to make a purchase.",
-        "ai_implementation": "Trains ML model on web visit signals, job postings, and company activity to predict purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates the scheduling of meetings with prospects.",
-        "ai_implementation": "Predicts optimal meeting times based on prospect availability and engagement signals.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Revenue Intelligence",
-        "category": "analytics",
-        "description": "Provides insights into pipeline performance and revenue forecasts.",
-        "ai_implementation": "Analyzes historical data and current pipeline metrics to predict revenue outcomes and identify bottlenecks.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "sales pipeline data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39083,
@@ -3501,51 +620,7 @@
     "website": "https://www.11x.ai/tips/ai-email-outreach-tools",
     "core_differentiator": "Leverages real-time signals and advanced ML to personalize outreach and predict buyer intent",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Email Writer",
-        "category": "outreach",
-        "description": "Generates personalized email content for outreach campaigns.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Detection",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Intelligence",
-        "category": "engagement",
-        "description": "Analyzes meetings to provide insights and summaries.",
-        "ai_implementation": "real-time speech-to-text + sentiment classifier on live calls",
-        "data_sources": [
-          "call recordings"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts future sales based on historical data and current trends.",
-        "ai_implementation": "trains ML model on historical sales data and current pipeline metrics",
-        "data_sources": [
-          "historical sales data",
-          "pipeline metrics"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39078,
@@ -3555,70 +630,7 @@
     "website": "https://www.cloudeagle.ai/blogs/top-ai-outreach-tools",
     "core_differentiator": "Continuous governance with AI-driven optimization for SaaS security and cost efficiency.",
     "automation_level": "autonomous",
-    "features": [
-      {
-        "name": "Continuous Governance & Optimization",
-        "category": "analytics",
-        "description": "Tracks access and spend across SaaS apps and identity systems to identify risks and optimize governance.",
-        "ai_implementation": "Uses ML to detect anomalies in access patterns and spending behavior across integrated systems.",
-        "data_sources": [
-          "SaaS app access logs",
-          "identity system data",
-          "finance system data",
-          "user activity logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Orchestration Engine",
-        "category": "automation",
-        "description": "Automates execution of governance and optimization actions across the tech stack.",
-        "ai_implementation": "ML models predict optimal actions based on historical data and current system state.",
-        "data_sources": [
-          "SaaS app access logs",
-          "identity system data",
-          "finance system data",
-          "user activity logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Zero-trust Security",
-        "category": "automation",
-        "description": "Enforces strict access controls to prevent unauthorized access to SaaS resources.",
-        "ai_implementation": "ML models assess user behavior and access patterns to dynamically adjust access permissions.",
-        "data_sources": [
-          "SaaS app access logs",
-          "identity system data",
-          "user activity logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "SaaS Procurement Optimization",
-        "category": "analytics",
-        "description": "Helps reduce software spend by identifying cost-saving opportunities in SaaS usage.",
-        "ai_implementation": "ML models analyze spending patterns and usage data to predict cost savings and optimize procurement.",
-        "data_sources": [
-          "finance system data",
-          "SaaS app usage logs",
-          "user activity logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI Governance",
-        "category": "analytics",
-        "description": "Continuously secures SaaS environments by governing AI systems and preventing misuse.",
-        "ai_implementation": "ML models monitor AI system behavior and enforce compliance with governance policies.",
-        "data_sources": [
-          "SaaS app access logs",
-          "AI system logs",
-          "user activity logs"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39098,
@@ -3628,68 +640,7 @@
     "website": "https://www.quotapath.com/blog/ai-sales-tools/",
     "core_differentiator": "Combines AI-driven analytics with real-time compensation tracking for optimized sales performance.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Automated Commission Tracking",
-        "category": "analytics",
-        "description": "Automates commission calculations and compensation management to reduce manual effort.",
-        "ai_implementation": "Utilizes algorithmic models to sync with deal systems and calculate commissions based on predefined rules.",
-        "data_sources": [
-          "deal system of record",
-          "commission plan configurations",
-          "user activity logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Sales Compensation Management",
-        "category": "analytics",
-        "description": "Helps in designing and managing sales compensation plans to align with business goals.",
-        "ai_implementation": "Applies predictive analytics to forecast performance based on historical data and plan configurations.",
-        "data_sources": [
-          "historical sales data",
-          "compensation plan templates",
-          "team performance metrics"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Commission Calculation Automation",
-        "category": "analytics",
-        "description": "Automates the calculation of commissions based on deal data and compensation plans.",
-        "ai_implementation": "Uses rule-based algorithms and machine learning to process deal data and apply compensation rules.",
-        "data_sources": [
-          "deal data",
-          "compensation plan rules",
-          "user activity logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Real-Time Compensation Insights",
-        "category": "analytics",
-        "description": "Provides real-time insights into compensation performance and team metrics.",
-        "ai_implementation": "Applies real-time data processing and visualization techniques to track compensation metrics.",
-        "data_sources": [
-          "real-time deal data",
-          "compensation plan data",
-          "user activity logs"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Compensation Plan Design",
-        "category": "analytics",
-        "description": "Assists in designing effective compensation plans aligned with business goals.",
-        "ai_implementation": "Uses predictive analytics to recommend compensation structures based on historical performance and business objectives.",
-        "data_sources": [
-          "historical sales data",
-          "business goals",
-          "compensation plan templates"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39066,
@@ -3699,70 +650,7 @@
     "website": "https://www.unifygtm.com/explore/best-pipeline-generation-tools",
     "core_differentiator": "Unify's AI agents combine web scraping, NLP, and ML to deliver hyper-relevant prospect research and personalization.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "AI Agents for Prospect Research",
-        "category": "enrichment",
-        "description": "Automates custom account and contact research to inform engagement strategies.",
-        "ai_implementation": "Trains ML models on web scraping and browsing data to extract company and contact details.",
-        "data_sources": [
-          "websites",
-          "web browsing",
-          "news",
-          "social media"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Observation Model for Context Gathering",
-        "category": "enrichment",
-        "description": "Gathers hyper-relevant context about prospects to inform sales interactions.",
-        "ai_implementation": "Uses NLP to analyze news, social media, and company updates to build prospect profiles.",
-        "data_sources": [
-          "news",
-          "social media",
-          "company updates",
-          "web signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Warm Outbound Email Deliverability",
-        "category": "outreach",
-        "description": "Improves email deliverability through managed Gmail mailboxes and warmup features.",
-        "ai_implementation": "Uses ML to optimize email sending schedules and manage domain rotation.",
-        "data_sources": [
-          "email threads",
-          "CRM data",
-          "deliverability logs"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Intent Data and Purchase Likelihood Scoring",
-        "category": "intent",
-        "description": "Scores purchase likelihood based on web signals and job postings.",
-        "ai_implementation": "Trains ML model on web visit signals and job postings to score purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Scheduling and Follow-Up Automation",
-        "category": "automation",
-        "description": "Automates meeting scheduling and follow-up sequences based on prospect engagement.",
-        "ai_implementation": "Uses ML to predict optimal meeting times and generate follow-up sequences.",
-        "data_sources": [
-          "prospect engagement data",
-          "calendar data",
-          "email interactions"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39020,
@@ -3772,74 +660,7 @@
     "website": "https://www.warmly.ai/p/blog/ai-sales-automation",
     "core_differentiator": "Real-time data verification and intent scoring with multi-agent orchestration for precise sales automation.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "Real-Time Intelligence Verification",
-        "category": "enrichment",
-        "description": "Verifies and updates lead data in real-time to ensure accuracy and relevance.",
-        "ai_implementation": "Uses ML to detect and verify data changes dynamically as requests are made.",
-        "data_sources": [
-          "CRM data",
-          "LinkedIn",
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "AI Revenue Orchestration",
-        "category": "automation",
-        "description": "Automates revenue processes to streamline pipeline management and deal closing.",
-        "ai_implementation": "ML models prioritize and sequence tasks based on lead scoring and historical performance.",
-        "data_sources": [
-          "CRM data",
-          "sales pipeline data",
-          "historical deal data",
-          "buyer intent signals"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "ML Intent Scoring",
-        "category": "intent",
-        "description": "Scores the likelihood of a buyer's purchase intent based on behavioral data.",
-        "ai_implementation": "Trains ML model on web visit signals and job postings to score purchase likelihood.",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "CRM data",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Dynamic Audience Segmentation",
-        "category": "analytics",
-        "description": "Segments leads into dynamic audiences for targeted outreach and analytics.",
-        "ai_implementation": "Uses clustering algorithms on CRM and web data to identify audience segments.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads",
-          "LinkedIn"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "AI-Powered Meeting Scheduling",
-        "category": "automation",
-        "description": "Automates meeting scheduling based on lead availability and sales pipeline data.",
-        "ai_implementation": "ML models predict optimal meeting times based on lead behavior and calendar data.",
-        "data_sources": [
-          "CRM data",
-          "calendar data",
-          "web signals",
-          "sales pipeline data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39049,
@@ -3849,68 +670,7 @@
     "website": "https://decagon.ai/",
     "core_differentiator": "AI agents deliver hyper-personalized, proactive customer experiences at scale with real-time engagement.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "Conversational AI Concierge",
-        "category": "engagement",
-        "description": "Handles customer interactions through AI agents to provide personalized experiences.",
-        "ai_implementation": "Natural Language Processing (NLP) models trained on customer interaction data to simulate human conversation.",
-        "data_sources": [
-          "customer interaction data",
-          "historical conversation logs",
-          "user behavior data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "AI Agent Personalization",
-        "category": "enrichment",
-        "description": "Tailors AI agents to treat each customer as unique based on their data.",
-        "ai_implementation": "Machine learning models trained on user data to adapt agent responses dynamically.",
-        "data_sources": [
-          "user profile data",
-          "purchase history",
-          "customer feedback"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Deflection Rate Optimization",
-        "category": "analytics",
-        "description": "Reduces the need for human support by efficiently handling customer queries.",
-        "ai_implementation": "Predictive analytics models that assess query complexity and route to appropriate AI agents.",
-        "data_sources": [
-          "support ticket data",
-          "query logs",
-          "customer service metrics"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Customer Experience Personalization",
-        "category": "engagement",
-        "description": "Delivers proactive and personalized customer experiences.",
-        "ai_implementation": "AI models trained on customer behavior and preferences to predict and act on user needs.",
-        "data_sources": [
-          "user behavior data",
-          "customer feedback",
-          "purchase history"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Agent Quality Scoring",
-        "category": "analytics",
-        "description": "Evaluates the performance of AI agents based on predefined metrics.",
-        "ai_implementation": "Machine learning models that analyze agent responses and customer satisfaction scores.",
-        "data_sources": [
-          "agent response data",
-          "customer satisfaction scores",
-          "interaction logs"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39080,
@@ -3920,70 +680,7 @@
     "website": "https://www.ringcentral.com/us/en/blog/ai-outreach/",
     "core_differentiator": "AI enhances customer communications with real-time insights and analytics, improving engagement and sales outcomes.",
     "automation_level": "agentic",
-    "features": [
-      {
-        "name": "Agentic Voice AI",
-        "category": "engagement",
-        "description": "Enhances customer interactions through AI-driven voice communication.",
-        "ai_implementation": "Real-time speech-to-text and sentiment analysis using NLP models to understand and respond to customer conversations.",
-        "data_sources": [
-          "call recordings",
-          "customer feedback",
-          "interaction logs"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "AI-Powered Analytics",
-        "category": "analytics",
-        "description": "Provides insights into customer engagement and sales performance.",
-        "ai_implementation": "Machine learning models analyze call data, email interactions, and CRM data to predict sales outcomes and customer sentiment.",
-        "data_sources": [
-          "call recordings",
-          "email threads",
-          "CRM data",
-          "customer feedback"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Conversational Intelligence",
-        "category": "engagement",
-        "description": "Improves call engagement through real-time insights and guidance.",
-        "ai_implementation": "Real-time speech-to-text and sentiment analysis to provide agents with actionable insights during calls.",
-        "data_sources": [
-          "call recordings",
-          "agent scripts",
-          "customer feedback"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "AI Sales Outreach Tools",
-        "category": "outreach",
-        "description": "Automates and personalizes sales outreach efforts.",
-        "ai_implementation": "Machine learning models generate personalized email sequences based on prospect data and company news.",
-        "data_sources": [
-          "email threads",
-          "LinkedIn data",
-          "CRM data",
-          "company news"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Intelligence",
-        "category": "analytics",
-        "description": "Analyzes meetings to provide actionable insights for sales teams.",
-        "ai_implementation": "Natural language processing models analyze meeting transcripts and notes to identify key discussion points and next steps.",
-        "data_sources": [
-          "meeting transcripts",
-          "email threads",
-          "CRM data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39069,
@@ -3993,78 +690,7 @@
     "website": "https://www.sybill.ai/blogs/best-revenue-intelligence-platforms",
     "core_differentiator": "AI learns from internal data and external signals to provide actionable insights and automate sales tasks.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Sales Assistant",
-        "category": "analytics",
-        "description": "Answers complex sales questions by analyzing internal data sources and external signals.",
-        "ai_implementation": "LLM trained on CRM data, call transcripts, email threads, and web signals to generate insights.",
-        "data_sources": [
-          "CRM data",
-          "call recordings",
-          "email threads",
-          "web signals",
-          "LinkedIn data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Intelligence",
-        "category": "engagement",
-        "description": "Summarizes meetings and provides actionable insights for follow-up.",
-        "ai_implementation": "Real-time speech-to-text and sentiment analysis on live calls.",
-        "data_sources": [
-          "call recordings"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "CRM Updates",
-        "category": "automation",
-        "description": "Automatically updates CRM with meeting notes and deal progress.",
-        "ai_implementation": "NLP models parse meeting summaries and extract key CRM fields.",
-        "data_sources": [
-          "meeting summaries",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Email Follow-Ups",
-        "category": "outreach",
-        "description": "Generates personalized follow-up emails based on conversation history.",
-        "ai_implementation": "LLM generates email content using CRM data and conversation context.",
-        "data_sources": [
-          "CRM data",
-          "email threads",
-          "call transcripts"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts pipeline performance using historical and real-time data.",
-        "ai_implementation": "Time-series forecasting models trained on past deal data and current pipeline metrics.",
-        "data_sources": [
-          "CRM data",
-          "historical deal data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Win/Loss Analysis",
-        "category": "analytics",
-        "description": "Analyzes reasons for lost deals using internal and external data.",
-        "ai_implementation": "ML model trained on win/loss data, call transcripts, and web signals to identify patterns.",
-        "data_sources": [
-          "CRM data",
-          "call recordings",
-          "web signals"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39077,
@@ -4074,66 +700,7 @@
     "website": "https://www.lindy.ai/blog/ai-outreach-tools",
     "core_differentiator": "Lindy combines real-time call intelligence with predictive analytics for smarter sales automation.",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI Email Writer",
-        "category": "outreach",
-        "description": "Generates personalized outreach emails for sales teams.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile + company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Meeting Intelligence",
-        "category": "engagement",
-        "description": "Analyzes live calls to provide insights and summaries.",
-        "ai_implementation": "real-time speech-to-text + sentiment classifier on live calls",
-        "data_sources": [
-          "call recordings"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with detailed company and contact data.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts sales pipeline outcomes and revenue forecasts.",
-        "ai_implementation": "predictive analytics using historical sales data and market trends",
-        "data_sources": [
-          "CRM data",
-          "historical sales data",
-          "market trends"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Automated Follow-Ups",
-        "category": "automation",
-        "description": "Automates follow-up sequences based on lead interactions.",
-        "ai_implementation": "workflow automation using lead behavior and engagement data",
-        "data_sources": [
-          "email threads",
-          "CRM data",
-          "engagement data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39035,
@@ -4143,77 +710,7 @@
     "website": "https://www.podium.com/",
     "core_differentiator": "24/7 AI employee handles lead engagement, scheduling, and sales with minimal oversight, boosting conversions and revenue.",
     "automation_level": "autonomous",
-    "features": [
-      {
-        "name": "24/7 AI Employee",
-        "category": "automation",
-        "description": "Automates lead engagement, scheduling, and sales tasks around the clock.",
-        "ai_implementation": "Uses NLP and machine learning to generate responses, schedule appointments, and follow up based on business context and user data.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads",
-          "call recordings",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Lead Capture and Tracking",
-        "category": "intent",
-        "description": "Captures and tracks all leads from calls, texts, and web interactions.",
-        "ai_implementation": "Trains ML models on web visit signals, call data, and messaging patterns to score lead intent and prioritize follow-ups.",
-        "data_sources": [
-          "web signals",
-          "call recordings",
-          "email threads",
-          "text messages",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "After-Hours Lead Handling",
-        "category": "engagement",
-        "description": "Handles lead interactions outside of business hours.",
-        "ai_implementation": "Real-time NLP models analyze text and voice data to respond to leads during non-business hours.",
-        "data_sources": [
-          "text messages",
-          "call recordings",
-          "web signals",
-          "email threads"
-        ],
-        "is_realtime": true
-      },
-      {
-        "name": "Appointment Scheduling",
-        "category": "automation",
-        "description": "Automates the scheduling of appointments with leads.",
-        "ai_implementation": "Uses predictive algorithms to determine optimal appointment times based on lead behavior and availability.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads",
-          "job postings"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Revenue Intelligence",
-        "category": "analytics",
-        "description": "Provides insights into revenue generation and lead conversion.",
-        "ai_implementation": "Analyzes historical sales data, lead behavior, and market trends to forecast revenue and identify conversion bottlenecks.",
-        "data_sources": [
-          "CRM data",
-          "web signals",
-          "email threads",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39062,
@@ -4223,68 +720,7 @@
     "website": "https://www.foundersgtm.com/p/the-ai-pipeline-system-how-b2b-founders",
     "core_differentiator": "Builds lean, AI-ready outbound systems for capital-light B2B founders",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "AI-Ready Outbound System",
-        "category": "outreach",
-        "description": "Automates personalized outbound sequences for B2B founders.",
-        "ai_implementation": "LLM generates personalized email sequences using LinkedIn data and company news",
-        "data_sources": [
-          "LinkedIn",
-          "company news",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Buyer Intent Scoring",
-        "category": "intent",
-        "description": "Scores the likelihood of a prospect making a purchase.",
-        "ai_implementation": "trains ML model on web visit signals and job postings to score purchase likelihood",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with detailed company and contact data.",
-        "ai_implementation": "uses LinkedIn and CRM data to profile prospects",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "email threads"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Pipeline Forecasting",
-        "category": "analytics",
-        "description": "Predicts future revenue based on current pipeline data.",
-        "ai_implementation": "uses historical sales data and lead behavior to forecast revenue",
-        "data_sources": [
-          "CRM data",
-          "historical sales",
-          "pipeline activity"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Win/Loss Analysis",
-        "category": "analytics",
-        "description": "Analyzes reasons for lost deals to improve sales strategies.",
-        "ai_implementation": "trains ML model on win/loss data to identify common factors",
-        "data_sources": [
-          "CRM data",
-          "win/loss records",
-          "sales team feedback"
-        ],
-        "is_realtime": false
-      }
-    ]
+    "features": []
   },
   {
     "id": 39031,
@@ -4294,66 +730,6 @@
     "website": "https://www.retreva.com/ultimate-guide-to-ai-for-b2b-prospecting/",
     "core_differentiator": "Empowers sales teams with AI-driven prospecting, enrichment, and engagement tools for maximum efficiency",
     "automation_level": "semi-auto",
-    "features": [
-      {
-        "name": "Prospecting Workflow Automation",
-        "category": "automation",
-        "description": "Automates lead generation and outreach sequences for sales teams.",
-        "ai_implementation": "Uses ML to prioritize leads based on web signals and job postings",
-        "data_sources": [
-          "web signals",
-          "job postings",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Lead Enrichment",
-        "category": "enrichment",
-        "description": "Enhances lead profiles with detailed company and contact information.",
-        "ai_implementation": "Trains ML models on LinkedIn and CRM data to predict company needs",
-        "data_sources": [
-          "LinkedIn",
-          "CRM data",
-          "technographic data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Personalized Email Outreach",
-        "category": "outreach",
-        "description": "Generates tailored email content for each prospect.",
-        "ai_implementation": "LLM generates personalized email using LinkedIn profile and company news",
-        "data_sources": [
-          "LinkedIn",
-          "email threads",
-          "company news"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Sales Team Analytics",
-        "category": "analytics",
-        "description": "Provides performance insights for sales teams.",
-        "ai_implementation": "Analyzes call and email data to forecast sales performance",
-        "data_sources": [
-          "call recordings",
-          "email threads",
-          "CRM data"
-        ],
-        "is_realtime": false
-      },
-      {
-        "name": "Real-Time Engagement",
-        "category": "engagement",
-        "description": "Enhances live interactions with AI-driven insights.",
-        "ai_implementation": "Real-time speech-to-text and sentiment analysis during calls",
-        "data_sources": [
-          "call recordings",
-          "web signals"
-        ],
-        "is_realtime": true
-      }
-    ]
+    "features": []
   }
 ]

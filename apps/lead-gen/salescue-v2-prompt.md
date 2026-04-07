@@ -1,8 +1,8 @@
-# ClosingTime v2 — Full Context for Continuation
+# SalesCue v2 — Full Context for Continuation
 
 ## What This Is
 
-ClosingTime is a sales intelligence library that ships as a Python package under the `v9ai` org.
+SalesCue is a sales intelligence library that ships as a Python package under the `v9ai` org.
 It provides 12 ML modules that analyze sales emails, calls, and prospect data — each with a
 novel research contribution beyond standard approaches. The library uses a shared encoder
 backbone (DeBERTa-v3-base) and composable Unix-style piping between modules.
@@ -105,7 +105,7 @@ backbone (DeBERTa-v3-base) and composable Unix-style piping between modules.
 ### validation.py
 - Input validation for all module entry points.
 - Text length limits, type checking, required field validation.
-- Raises `ClosingTimeValidationError` with clear messages.
+- Raises `SalesCueValidationError` with clear messages.
 
 ### backbone.py
 - `SharedEncoder`: Thread-safe singleton for DeBERTa-v3-base.
