@@ -122,33 +122,89 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         }
     }
 
-    // ── Contact dedup ─────────────────────────────────────────
+    // ── Contact dedup (Fellegi-Sunter probabilistic + exact email) ────
     if let Some(ref contacts) = contacts {
         let contact_list = &contacts.contacts;
         report.completeness.contacts_audited = contact_list.len();
         total_processed += contact_list.len();
 
-        // Check for duplicate emails
+        // Build company embedding lookup for semantic dedup feature
+        let company_embeddings: std::collections::HashMap<&str, &[f32]> = enrichment
+            .as_ref()
+            .map(|e| {
+                e.companies.iter()
+                    .filter_map(|c| c.embedding.as_ref().map(|emb| (c.domain.as_str(), emb.as_slice())))
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        let fs = crate::dedup::FellegiSunter::new();
+
+        // Probabilistic dedup via blocking + Fellegi-Sunter
+        let contact_tuples: Vec<(String, String, String)> = contact_list.iter().map(|c| {
+            let (first, last) = split_pattern_name(&c.pattern_name);
+            (first, last, c.email.clone())
+        }).collect();
+
+        let blocks = crate::dedup::build_blocks(&contact_tuples);
+
+        for indices in blocks.values() {
+            for i in 0..indices.len() {
+                for j in (i + 1)..indices.len() {
+                    let (a, b) = (indices[i], indices[j]);
+                    let (ca, cb) = (&contact_list[a], &contact_list[b]);
+
+                    // Semantic similarity from company embeddings (dot = cosine for L2-normalized)
+                    let cosine_sim = company_embeddings.get(ca.domain.as_str())
+                        .and_then(|emb_a| {
+                            company_embeddings.get(cb.domain.as_str()).map(|emb_b| {
+                                emb_a.iter().zip(emb_b.iter()).map(|(x, y)| x * y).sum::<f32>()
+                            })
+                        });
+
+                    let (first_a, last_a) = split_pattern_name(&ca.pattern_name);
+                    let (first_b, last_b) = split_pattern_name(&cb.pattern_name);
+
+                    let agreements = crate::dedup::FellegiSunter::compare_contacts_semantic(
+                        &first_a, &last_a, &ca.email, &ca.company_name,
+                        &first_b, &last_b, &cb.email, &cb.company_name,
+                        cosine_sim,
+                    );
+                    let prob = fs.match_probability(&agreements);
+
+                    if prob >= 0.80 {
+                        let action = if prob >= 0.95 { "auto_merge" } else { "review" };
+                        report.duplicates.contact_dupes.push(DupePair {
+                            a: ca.email.clone(),
+                            b: cb.email.clone(),
+                            similarity: prob,
+                            action: action.into(),
+                        });
+                    }
+                }
+            }
+        }
+
+        // Exact email dupe check (catches 100% matches that blocking may miss)
         let mut seen_emails = std::collections::HashSet::new();
         for contact in contact_list {
             if !seen_emails.insert(contact.email.to_lowercase()) {
-                report.duplicates.contact_dupes.push(DupePair {
-                    a: contact.email.clone(),
-                    b: contact.email.clone(),
-                    similarity: 1.0,
-                    action: "dedup".into(),
-                });
+                if !report.duplicates.contact_dupes.iter().any(|d| d.a == contact.email && d.b == contact.email) {
+                    report.duplicates.contact_dupes.push(DupePair {
+                        a: contact.email.clone(),
+                        b: contact.email.clone(),
+                        similarity: 1.0,
+                        action: "dedup".into(),
+                    });
+                }
             }
 
-            // Completeness — data fields present (email + domain + company)
-            // Verification status is tracked separately via bounce_rate
             if !contact.email.is_empty() && !contact.domain.is_empty() && !contact.company_name.is_empty() {
                 report.completeness.contacts_complete += 1;
             }
         }
 
-        // Verification rate analysis (SMTP verification failures ≠ outreach bounces)
-        // Bounce rate tracks actual outreach bounces, not pattern-guess SMTP failures
+        // Verification rate analysis
         let verified = contacts.verification_stats.verified_count as f64;
         let total = contact_list.len() as f64;
         let verification_rate = if total > 0.0 { verified / total } else { 0.0 };
@@ -251,4 +307,12 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         errors: vec![],
         duration_ms: 0,
     })
+}
+
+/// Split "john.smith" pattern name into (first, last).
+fn split_pattern_name(pattern: &str) -> (String, String) {
+    let parts: Vec<&str> = pattern.splitn(2, '.').collect();
+    let first = parts.first().unwrap_or(&"").to_string();
+    let last = parts.get(1).unwrap_or(&"").to_string();
+    (first, last)
 }
