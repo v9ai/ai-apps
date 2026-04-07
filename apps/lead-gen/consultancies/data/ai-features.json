@@ -997,5 +997,171 @@
         }
       }
     ]
+  },
+  {
+    "id": 39102,
+    "key": "diffbot-com",
+    "name": "Knowledge Graph-Powered Data Enrichment",
+    "domain": "diffbot.com",
+    "website": "https://diffbot.com",
+    "core_differentiator": "World's largest commercial knowledge graph (10B+ entities, 1T+ facts) with custom fine-tuned LLMs for entity extraction and GraphRAG.",
+    "automation_level": "agentic",
+    "publications": {
+      "arxiv": 1,
+      "conference": 0,
+      "patents_granted": 0
+    },
+    "hf_profile": {
+      "org": "diffbot",
+      "hf_score": 0.098,
+      "models": 13,
+      "datasets": 0,
+      "spaces": 0,
+      "total_downloads": 166,
+      "total_likes": 41,
+      "training_signals": 0,
+      "signal_types": [],
+      "libraries": ["transformers"],
+      "pipeline_tags": ["text-generation"],
+      "architectures": ["llama", "qwen3_moe", "qwen3_next", "glm4_moe_lite"],
+      "models_detail": [
+        "diffbot/Diffbot-Coder-2603 (qwen3_next, 40 shards, custom vLLM tool parser, Mar 2026)",
+        "diffbot/Diffbot-Coder-2602 (glm4_moe_lite, Feb 2026)",
+        "diffbot/Diffbot-Coder-2601 (qwen3_moe, 25 shards, Jan 2026)",
+        "diffbot/Diffbot-Small-XL-2508 (qwen3_moe, Aug 2025)",
+        "diffbot/Diffbot-Small-XL-2505 (Qwen3-30B-A3B MoE fine-tune, May 2025)",
+        "diffbot/Llama-3.3-Diffbot-Small-XL-2504 (Llama 3.3 70B fine-tune, 30 shards, Apr 2025)",
+        "diffbot/Llama-3.1-Diffbot-Small-2504 (Llama 3.1 8B fine-tune, Apr 2025)",
+        "diffbot/Llama-3.1-Diffbot-Small-2508 (Llama 3.1 8B fine-tune, Aug 2025)",
+        "diffbot/Llama-3.3-Diffbot-Small-XL-2412 (Llama 3.3 70B fine-tune, Dec 2024)",
+        "diffbot/Llama-3.1-Diffbot-Small-2412 (Llama 3.1 8B fine-tune, Dec 2024)",
+        "diffbot/Diffbot-Coder-2603-GGUF (Q4_K_M + Q8_0 quantizations)",
+        "diffbot/Diffbot-Coder-2601-GGUF (Q4_K_M + Q6_K quantizations)",
+        "diffbot/Diffbot-Coder-2603-fp8 (FP8 quantization)"
+      ],
+      "note": "Most impressive B2B sales-adjacent HF presence found. 13 models across 4 architecture families (Llama, Qwen3 MoE, qwen3_next, glm4_moe_lite). Active monthly releases Dec 2024→Mar 2026. Custom tool-use models with vLLM parsers. Sparse model cards hurt HF score but artifacts prove real training. Knowledge graph + fine-tuned LLMs = unique moat."
+    },
+    "features": [
+      {
+        "name": "GraphRAG Knowledge Graph LLM",
+        "category": "enrichment",
+        "description": "Custom fine-tuned LLMs grounded in 10B+ entity knowledge graph for factual data enrichment and entity extraction.",
+        "ai_implementation": "Fine-tuned Llama 3.1/3.3 and Qwen3 MoE models on knowledge graph data. Custom qwen3_next architecture for tool-use (KG API querying, JavaScript execution). Progressive model releases every 1-2 months.",
+        "data_sources": [
+          "web crawl data",
+          "knowledge graph (10B entities, 1T facts)",
+          "structured entity data"
+        ],
+        "is_realtime": false,
+        "verified_depth": {
+          "rating": "practitioner",
+          "evidence": "13 published HF models across 4 architectures. Active fine-tuning of Llama 3.1/3.3 70B, Qwen3 MoE, custom architectures. Referenced in arXiv:2210.13952 (KnowGL). vLLM tool parsers for KG integration. GraphRAG outperforms Gemini/ChatGPT on factual grounding.",
+          "publications": 1,
+          "verified": true
+        }
+      }
+    ]
+  },
+  {
+    "id": 39103,
+    "key": "uniphore-com",
+    "name": "Conversation Intelligence & Speech Analytics",
+    "domain": "uniphore.com",
+    "website": "https://uniphore.com",
+    "core_differentiator": "Enterprise conversation AI with real speech research team (Andreas Stolcke, 300+ papers, ex-ICSI/Amazon).",
+    "automation_level": "semi-auto",
+    "publications": {
+      "arxiv": 5,
+      "conference": 2,
+      "patents_granted": 0
+    },
+    "features": [
+      {
+        "name": "ASR Error Correction & Domain Adaptation",
+        "category": "enrichment",
+        "description": "LoRA-based ASR adaptation and LLM-powered speech recognition error correction for contact center conversations.",
+        "ai_implementation": "LoRA fine-tuning for low-rank ASR adaptation. LLM-based generative error correction with task-activating prompting. Semi-supervised multi-domain ASR. Published at Interspeech 2025 and ICASSP 2025.",
+        "data_sources": [
+          "contact center recordings",
+          "call transcripts",
+          "domain-specific vocabularies"
+        ],
+        "is_realtime": true,
+        "verified_depth": {
+          "rating": "practitioner",
+          "evidence": "5+ arXiv papers with Uniphore affiliations (2023-2025). Andreas Stolcke as Distinguished AI Scientist (h-index, 300+ papers). Published at Interspeech 2025 and ICASSP 2025 Workshop. Real LoRA ASR research, not just API wrapping.",
+          "publications": 5,
+          "verified": true
+        }
+      }
+    ]
+  },
+  {
+    "id": 39104,
+    "key": "observeai-com",
+    "name": "Contact Center AI with Custom ASR",
+    "domain": "observe.ai",
+    "website": "https://observe.ai",
+    "core_differentiator": "Custom LoRA-adapter ASR (SAM system) for domain-specific contact center speech recognition.",
+    "automation_level": "semi-auto",
+    "publications": {
+      "arxiv": 0,
+      "conference": 0,
+      "patents_granted": 0
+    },
+    "features": [
+      {
+        "name": "SAM Contextual ASR Adapter",
+        "category": "enrichment",
+        "description": "Spot and Merge (SAM) — custom LoRA adapter system for ASR that handles out-of-vocabulary terms in contact center conversations.",
+        "ai_implementation": "LoRA-based module integrated with base ASR model. Cross-attention weight examination for phrase spotting. Dynamic merge strategy for bias word injection. 1.5% absolute WER reduction over strong contextual adapter baselines.",
+        "data_sources": [
+          "contact center recordings",
+          "domain-specific vocabularies",
+          "proprietary contact-center data"
+        ],
+        "is_realtime": true,
+        "verified_depth": {
+          "rating": "practitioner",
+          "evidence": "SAM system with published benchmarks: 1.5% WER reduction, 73% F1 on rare word detection, 1.0% WER reduction on LibriSpeech. Custom LoRA adapter architecture. No HF models but real technical depth documented.",
+          "publications": 0,
+          "verified": true
+        }
+      }
+    ]
+  },
+  {
+    "id": 39105,
+    "key": "deepgram-com",
+    "name": "Custom End-to-End Speech AI",
+    "domain": "deepgram.com",
+    "website": "https://deepgram.com",
+    "core_differentiator": "Custom Transformer ASR trained from scratch (Nova series). Founded by 3 physicists. Multiple patents.",
+    "automation_level": "semi-auto",
+    "publications": {
+      "arxiv": 0,
+      "conference": 0,
+      "patents_granted": 3
+    },
+    "features": [
+      {
+        "name": "Nova End-to-End ASR",
+        "category": "enrichment",
+        "description": "Custom end-to-end Transformer ASR models (Nova, Nova-2, Nova-3) with multi-stage curriculum training on 100+ domains.",
+        "ai_implementation": "Acoustic Transformer encodes audio waveforms → Language Transformer decodes to text via universal attention. Multi-stage curriculum training on 47B tokens, 6M audio resources. Per-customer fine-tuning for Enterprise.",
+        "data_sources": [
+          "audio recordings",
+          "multi-domain speech data",
+          "customer-specific training data"
+        ],
+        "is_realtime": true,
+        "verified_depth": {
+          "rating": "practitioner",
+          "evidence": "Custom-trained ASR from scratch — not fine-tuned Whisper. Multiple USPTO patents (end-to-end ASR, teacher-student training, batching optimization). Nova-3 is unified multilingual with synthetic code-switched training. Founded by 3 U Michigan physicists. No HF models (proprietary).",
+          "publications": 0,
+          "verified": true
+        }
+      }
+    ]
   }
 ]
