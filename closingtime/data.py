@@ -219,9 +219,9 @@ _SAMPLE_GENERATORS = {
 
 
 def sample_dataset(module_name: str) -> list[dict[str, Any]]:
-    """Return a small sample dataset for the given module.
+    """Return sample training data for a module.
 
-    Useful for testing, demos, and as a schema reference for training data.
+    Useful for testing, demos, and quick-start notebooks.
     """
     if module_name not in _SAMPLE_GENERATORS:
         raise ValueError(f"No sample data for '{module_name}'. "
