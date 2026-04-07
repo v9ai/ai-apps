@@ -216,20 +216,20 @@ The module operates at three levels simultaneously:
 3. **Document-level**: Attention-weighted sentence aggregation feeds a 7-category classifier with information-theoretic features (character entropy, compression ratio)
 
 <Flow
-  height={820}
+  height={700}
   nodes={[
-    { id: "enc", position: { x: 300, y: 0 }, data: { label: "DeBERTa Encoder (768-dim)" }, type: "input", style: { background: '#312e81', color: '#a5b4fc', border: '1px solid #6366f1', borderRadius: 8, fontWeight: 600, width: 230 } },
-    { id: "tok", position: { x: 300, y: 110 }, data: { label: "Token-level: 4 Aspect Probes" }, style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, width: 230 } },
-    { id: "span", position: { x: 300, y: 220 }, data: { label: "Per-Sentence Span Aggregation" }, style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, width: 230 } },
-    { id: "sent", position: { x: 300, y: 330 }, data: { label: "Sentence-level: 12 Structural Features" }, style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, width: 250 } },
-    { id: "doc", position: { x: 300, y: 440 }, data: { label: "Document-level: Attention + 8 Features" }, style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, width: 250 } },
-    { id: "camp", position: { x: 0, y: 310 }, data: { label: "Campaign Similarity (4 Features)" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 180 } },
-    { id: "ai", position: { x: 0, y: 430 }, data: { label: "AI Detector (32 Features)" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 180 } },
-    { id: "hdr", position: { x: 620, y: 340 }, data: { label: "Header Analyzer (16 Features)" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 180 } },
-    { id: "tmp", position: { x: 620, y: 460 }, data: { label: "Temporal Burst (8 Features)" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 180 } },
-    { id: "gate", position: { x: 310, y: 580 }, data: { label: "Residual Gate MLP (7 → 1)" }, style: { background: '#78350f', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, fontWeight: 700, width: 210 } },
-    { id: "score", position: { x: 310, y: 690 }, data: { label: "Spam Score + Gate Decision" }, style: { background: '#78350f', color: '#fcd34d', border: '1px solid #f59e0b', borderRadius: 8, width: 210 } },
-    { id: "prov", position: { x: 310, y: 790 }, data: { label: "Provider Calibration (6 MLPs)" }, type: "output", style: { background: '#14532d', color: '#86efac', border: '1px solid #22c55e', borderRadius: 8, fontWeight: 600, width: 210 } },
+    { id: "enc", position: { x: 220, y: 0 }, data: { label: "DeBERTa Encoder (768-dim)" }, type: "input", style: { background: '#312e81', color: '#a5b4fc', border: '1px solid #6366f1', borderRadius: 8, fontWeight: 600, width: 230 } },
+    { id: "tok", position: { x: 220, y: 90 }, data: { label: "Token-level: 4 Aspect Probes" }, style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, width: 230 } },
+    { id: "span", position: { x: 220, y: 170 }, data: { label: "Per-Sentence Span Aggregation" }, style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, width: 230 } },
+    { id: "sent", position: { x: 220, y: 260 }, data: { label: "Sentence-level: 12 Structural Features" }, style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, width: 240 } },
+    { id: "doc", position: { x: 220, y: 350 }, data: { label: "Document-level: Attention + 8 Features" }, style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, width: 240 } },
+    { id: "camp", position: { x: 0, y: 240 }, data: { label: "Campaign Similarity (4)" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 155 } },
+    { id: "ai", position: { x: 0, y: 340 }, data: { label: "AI Detector (32)" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 155 } },
+    { id: "hdr", position: { x: 520, y: 270 }, data: { label: "Header Analyzer (16)" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 155 } },
+    { id: "tmp", position: { x: 520, y: 370 }, data: { label: "Temporal Burst (8)" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 155 } },
+    { id: "gate", position: { x: 230, y: 470 }, data: { label: "Residual Gate MLP (7 → 1)" }, style: { background: '#78350f', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, fontWeight: 700, width: 210 } },
+    { id: "score", position: { x: 230, y: 560 }, data: { label: "Spam Score + Gate Decision" }, style: { background: '#78350f', color: '#fcd34d', border: '1px solid #f59e0b', borderRadius: 8, width: 210 } },
+    { id: "prov", position: { x: 230, y: 650 }, data: { label: "Provider Calibration (6 MLPs)" }, type: "output", style: { background: '#14532d', color: '#86efac', border: '1px solid #22c55e', borderRadius: 8, fontWeight: 600, width: 210 } },
   ]}
   edges={[
     { id: "e1", source: "enc", target: "tok", type: "smoothstep", animated: true, style: { stroke: '#6366f1' } },
@@ -238,7 +238,7 @@ The module operates at three levels simultaneously:
     { id: "e4", source: "sent", target: "doc", type: "smoothstep", animated: true, style: { stroke: '#6366f1' } },
     { id: "e5", source: "doc", target: "gate", type: "smoothstep", label: "Category + Gate", style: { stroke: '#3b82f6' }, labelStyle: { fill: '#93c5fd' }, labelBgStyle: { fill: '#1a1a2e' } },
     { id: "e6", source: "ai", target: "gate", type: "smoothstep", label: "AI risk", style: { stroke: '#14b8a6' }, labelStyle: { fill: '#5eead4' }, labelBgStyle: { fill: '#1a1a2e' } },
-    { id: "e7", source: "hdr", target: "gate", type: "smoothstep", label: "Auth score", style: { stroke: '#14b8a6' }, labelStyle: { fill: '#5eead4' }, labelBgStyle: { fill: '#1a1a2e' } },
+    { id: "e7", source: "hdr", target: "gate", type: "smoothstep", label: "Auth", style: { stroke: '#14b8a6' }, labelStyle: { fill: '#5eead4' }, labelBgStyle: { fill: '#1a1a2e' } },
     { id: "e8", source: "tmp", target: "gate", type: "smoothstep", label: "Burst", style: { stroke: '#14b8a6' }, labelStyle: { fill: '#5eead4' }, labelBgStyle: { fill: '#1a1a2e' } },
     { id: "e9", source: "camp", target: "gate", type: "smoothstep", label: "Similarity", style: { stroke: '#14b8a6' }, labelStyle: { fill: '#5eead4' }, labelBgStyle: { fill: '#1a1a2e' } },
     { id: "e10", source: "gate", target: "score", type: "smoothstep", animated: true, style: { stroke: '#f59e0b' } },
@@ -1012,17 +1012,17 @@ The model, weights, and distillation pipeline are open source. The next step is 
 The complete gating pipeline from email ingestion to final verdict:
 
 <Flow
-  height={800}
+  height={860}
   nodes={[
     { id: "in", position: { x: 310, y: 0 }, data: { label: "Incoming Email" }, type: "input", style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, fontWeight: 600, width: 180 } },
     { id: "bloom", position: { x: 310, y: 110 }, data: { label: "Bloom Filter: Domain Check" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 210 } },
     { id: "hdr", position: { x: 310, y: 240 }, data: { label: "Header FSM: SPF/DKIM/DMARC" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 8, width: 220 } },
     { id: "feat", position: { x: 310, y: 360 }, data: { label: "24-Feature Extraction" }, style: { background: '#312e81', color: '#a5b4fc', border: '1px solid #6366f1', borderRadius: 8, fontWeight: 600, width: 190 } },
-    { id: "rust", position: { x: 50, y: 500 }, data: { label: "Rust Classifier (batch 256, sub-1ms)" }, style: { background: '#7c2d12', color: '#fdba74', border: '2px solid #f97316', borderRadius: 8, fontWeight: 600, width: 220 } },
-    { id: "deberta", position: { x: 480, y: 500 }, data: { label: "DeBERTa Model (6 sub-modules, ~200ms)" }, style: { background: '#3b0764', color: '#c4b5fd', border: '1px solid #8b5cf6', borderRadius: 8, width: 230 } },
-    { id: "block", position: { x: 20, y: 680 }, data: { label: "Block" }, type: "output", style: { background: '#7f1d1d', color: '#fca5a5', border: '1px solid #ef4444', borderRadius: 8, fontWeight: 600, width: 120 } },
-    { id: "quarantine", position: { x: 300, y: 680 }, data: { label: "Quarantine" }, type: "output", style: { background: '#78350f', color: '#fcd34d', border: '1px solid #f59e0b', borderRadius: 8, fontWeight: 600, width: 130 } },
-    { id: "pass", position: { x: 560, y: 680 }, data: { label: "Pass → Pipeline" }, type: "output", style: { background: '#14532d', color: '#86efac', border: '1px solid #22c55e', borderRadius: 8, fontWeight: 600, width: 140 } },
+    { id: "rust", position: { x: 20, y: 510 }, data: { label: "Rust Classifier (batch 256, sub-1ms)" }, style: { background: '#7c2d12', color: '#fdba74', border: '2px solid #f97316', borderRadius: 8, fontWeight: 600, width: 230 } },
+    { id: "deberta", position: { x: 510, y: 510 }, data: { label: "DeBERTa Model (6 sub-modules, ~200ms)" }, style: { background: '#3b0764', color: '#c4b5fd', border: '1px solid #8b5cf6', borderRadius: 8, width: 240 } },
+    { id: "block", position: { x: 0, y: 750 }, data: { label: "Block" }, type: "output", style: { background: '#7f1d1d', color: '#fca5a5', border: '1px solid #ef4444', borderRadius: 8, fontWeight: 600, width: 120 } },
+    { id: "quarantine", position: { x: 310, y: 750 }, data: { label: "Quarantine" }, type: "output", style: { background: '#78350f', color: '#fcd34d', border: '1px solid #f59e0b', borderRadius: 8, fontWeight: 600, width: 130 } },
+    { id: "pass", position: { x: 610, y: 750 }, data: { label: "Pass → Pipeline" }, type: "output", style: { background: '#14532d', color: '#86efac', border: '1px solid #22c55e', borderRadius: 8, fontWeight: 600, width: 140 } },
   ]}
   edges={[
     { id: "e1", source: "in", target: "bloom", type: "smoothstep", animated: true },
