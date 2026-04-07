@@ -18,8 +18,8 @@ BACKBONE_MODEL = "microsoft/deberta-v3-base"
 
 
 @dataclass
-class ClosingTimeConfig:
-    """Base config for all ClosingTime modules.
+class SalesCueConfig:
+    """Base config for all SalesCue modules.
 
     Mirrors the fields HF PretrainedConfig expects, plus module-specific ones.
     Can be serialized to/from config.json for HF Hub compatibility.
@@ -66,7 +66,7 @@ class ClosingTimeConfig:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def from_pretrained(cls, path_or_id: str) -> "ClosingTimeConfig":
+    def from_pretrained(cls, path_or_id: str) -> "SalesCueConfig":
         import json, os
         if os.path.isdir(path_or_id):
             config_path = os.path.join(path_or_id, "config.json")
@@ -82,19 +82,19 @@ class ClosingTimeConfig:
 
 # Per-module configs with their label sets
 
-SCORE_CONFIG = ClosingTimeConfig(
+SCORE_CONFIG = SalesCueConfig(
     module_name="score",
     labels=["hot", "warm", "cold", "disqualified"],
-    architectures=["LeadScorer"],
+    architectures=["LeadScorer", "MultiScaleSignalDetector", "SignalInteractionGraph", "LearnedInterventionAttribution", "CategoryHead"],
 )
 
-INTENT_CONFIG = ClosingTimeConfig(
+INTENT_CONFIG = SalesCueConfig(
     module_name="intent",
     labels=["unaware", "aware", "researching", "evaluating", "committed", "purchasing"],
     architectures=["NeuralHawkesIntentPredictor"],
 )
 
-REPLY_CONFIG = ClosingTimeConfig(
+REPLY_CONFIG = SalesCueConfig(
     module_name="reply",
     labels=[
         "genuinely_interested", "politely_acknowledging", "objection",
@@ -104,7 +104,7 @@ REPLY_CONFIG = ClosingTimeConfig(
     architectures=["ReplyHead"],
 )
 
-TRIGGERS_CONFIG = ClosingTimeConfig(
+TRIGGERS_CONFIG = SalesCueConfig(
     module_name="triggers",
     labels=[
         "new_funding", "job_change", "expansion", "layoff_restructure",
@@ -114,13 +114,13 @@ TRIGGERS_CONFIG = ClosingTimeConfig(
     architectures=["TemporalDisplacementModel"],
 )
 
-ICP_CONFIG = ClosingTimeConfig(
+ICP_CONFIG = SalesCueConfig(
     module_name="icp",
     labels=["industry", "size", "tech", "role", "signal"],
     architectures=["WassersteinICPMatcher"],
 )
 
-OBJECTION_CONFIG = ClosingTimeConfig(
+OBJECTION_CONFIG = SalesCueConfig(
     module_name="objection",
     labels=[
         "price_too_high", "no_budget", "not_the_right_time",
@@ -131,7 +131,7 @@ OBJECTION_CONFIG = ClosingTimeConfig(
     architectures=["ObjectionPreClassifier"],
 )
 
-SENTIMENT_CONFIG = ClosingTimeConfig(
+SENTIMENT_CONFIG = SalesCueConfig(
     module_name="sentiment",
     labels=[
         "enthusiastic", "positive_engaged", "neutral_professional",
@@ -140,30 +140,30 @@ SENTIMENT_CONFIG = ClosingTimeConfig(
     architectures=["DisentangledSentimentIntentHead"],
 )
 
-SPAM_CONFIG = ClosingTimeConfig(
+SPAM_CONFIG = SalesCueConfig(
     module_name="spam",
     labels=["spam", "not_spam"],
     architectures=["SpamHead"],
 )
 
-ENTITIES_CONFIG = ClosingTimeConfig(
+ENTITIES_CONFIG = SalesCueConfig(
     module_name="entities",
     labels=["person", "company", "product", "role", "location", "technology"],
     architectures=["EntityExtractor"],
 )
 
-CALL_CONFIG = ClosingTimeConfig(
+CALL_CONFIG = SalesCueConfig(
     module_name="call",
     labels=["follow_up", "send_proposal", "escalate", "nurture", "close"],
     architectures=["ConversationNeuralProcess"],
 )
 
-SUBJECT_CONFIG = ClosingTimeConfig(
+SUBJECT_CONFIG = SalesCueConfig(
     module_name="subject",
     architectures=["ContextualBradleyTerry"],
 )
 
-EMAILGEN_CONFIG = ClosingTimeConfig(
+EMAILGEN_CONFIG = SalesCueConfig(
     module_name="emailgen",
     architectures=["EmailGenerator"],
     backbone="Qwen/Qwen2.5-3B-Instruct",

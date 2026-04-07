@@ -1,9 +1,9 @@
 """salescue/hub.py — HuggingFace Hub integration.
 
 Provides from_pretrained, push_to_hub, and auto model card generation
-for all ClosingTime modules. Follows HF patterns:
+for all SalesCue modules. Follows HF patterns:
 
-    model = ClosingTimeModel.from_pretrained("v9ai/salescue-score-v1")
+    model = SalesCueModel.from_pretrained("v9ai/salescue-score-v1")
     result = model.predict("interested in your enterprise plan")
     model.push_to_hub("my-org/my-score-model")
 """
@@ -17,7 +17,7 @@ from typing import Any
 
 import torch
 
-from .config import ClosingTimeConfig, ALL_CONFIGS, HF_ORG
+from .config import SalesCueConfig, ALL_CONFIGS, HF_ORG
 
 
 def _resolve_module_class(module_name: str):
@@ -28,12 +28,12 @@ def _resolve_module_class(module_name: str):
     return MODULE_CLASSES[module_name]
 
 
-class ClosingTimeModel:
+class SalesCueModel:
     """HF-native wrapper providing from_pretrained/push_to_hub for all modules.
 
     Usage:
         # Load from Hub
-        scorer = ClosingTimeModel.from_pretrained("v9ai/salescue-score-v1")
+        scorer = SalesCueModel.from_pretrained("v9ai/salescue-score-v1")
         result = scorer.predict("interested in pricing for 500 seats")
 
         # Save locally and push
@@ -41,13 +41,13 @@ class ClosingTimeModel:
         scorer.push_to_hub("my-org/my-scorer")
 
         # Load with custom labels
-        clf = ClosingTimeModel.from_pretrained(
+        clf = SalesCueModel.from_pretrained(
             "v9ai/salescue-reply-v1",
             labels=["interested", "not_interested", "question"]
         )
     """
 
-    def __init__(self, module, config: ClosingTimeConfig):
+    def __init__(self, module, config: SalesCueConfig):
         self._module = module
         self.config = config
 
@@ -76,8 +76,8 @@ class ClosingTimeModel:
         labels: list[str] | None = None,
         device: str | None = None,
         **kwargs,
-    ) -> "ClosingTimeModel":
-        """Load a ClosingTime module from the HF Hub or local directory.
+    ) -> "SalesCueModel":
+        """Load a SalesCue module from the HF Hub or local directory.
 
         Args:
             model_id: HF model ID (e.g. "v9ai/salescue-score-v1") or local path.
@@ -92,13 +92,13 @@ class ClosingTimeModel:
 
         # Load config
         try:
-            config = ClosingTimeConfig.from_pretrained(model_id)
+            config = SalesCueConfig.from_pretrained(model_id)
         except Exception:
             # Infer from model_id pattern: v9ai/salescue-{name}-v{version}
             parts = model_id.rstrip("/").split("/")[-1]  # salescue-score-v1
             segments = parts.replace("salescue-", "").rsplit("-v", 1)
             module_name = segments[0] if segments else "score"
-            config = ALL_CONFIGS.get(module_name, ClosingTimeConfig(module_name=module_name))
+            config = ALL_CONFIGS.get(module_name, SalesCueConfig(module_name=module_name))
 
         if labels:
             config.labels = labels
@@ -146,7 +146,7 @@ class ClosingTimeModel:
     def push_to_hub(
         self,
         repo_id: str,
-        commit_message: str = "Upload ClosingTime model",
+        commit_message: str = "Upload SalesCue model",
         private: bool = False,
         trained: bool = False,
     ) -> str:
@@ -171,16 +171,24 @@ class ClosingTimeModel:
     # Per-module research contributions and descriptions
     _MODULE_RESEARCH = {
         "score": (
-            "Causal Signal Attribution via Learned Interventions",
+            "Causal Signal Attribution via Learned Interventions (v2)",
             "Standard counterfactual masking replaces tokens with [MASK], which shifts the input "
             "distribution. LeadScorer learns a *null intervention embedding* per signal type that "
             "represents \"this signal was never present\" rather than \"this signal was removed.\" "
             "This is closer to Pearl's do-calculus: do(signal=absent) not observe(signal=masked). "
             "The null embeddings are trained adversarially to produce encoder outputs "
             "indistinguishable from inputs where the signal genuinely doesn't exist.\n\n"
-            "The model detects 15 buying signals (pricing interest, urgency, budget, referral, etc.) "
-            "via cross-attention, estimates causal effects using learned counterfactuals, and produces "
-            "an uncertainty-weighted score combining classification and regression (Kendall et al., 2018).",
+            "**v2 enhancements** (grounded in competitive analysis of 60 sales AI platforms, 303 features):\n\n"
+            "- **32 signals** across 6 industry categories (intent, engagement, enrichment, analytics, "
+            "outreach, automation) — up from 15 generic signals\n"
+            "- **Multi-scale signal detection**: token-level cross-attention, document-level CLS projection, "
+            "with learned scale fusion\n"
+            "- **Signal interaction graph**: learned adjacency matrix for cross-signal amplification/inhibition "
+            "(e.g., urgency + budget = amplified; engagement_low + meeting_request = contradiction)\n"
+            "- **Per-category sub-scores**: interpretable 0-100 breakdowns for each of the 6 categories\n"
+            "- **Deeper scoring network**: 512→256 projection with layer norm and dropout\n\n"
+            "The model produces an uncertainty-weighted score combining classification and regression "
+            "(Kendall et al., 2018), with causal attribution via learned counterfactuals.",
         ),
         "spam": (
             "Perplexity Ratio AI Detection",
@@ -315,19 +323,19 @@ tags:
 license: mit
 ---
 
-# ClosingTime — {c.module_name}
+# SalesCue — {c.module_name}
 
 {c.architectures[0] if c.architectures else c.module_name} module from the
-[ClosingTime](https://github.com/v9ai/ai-apps) sales intelligence library.
+[SalesCue](https://github.com/v9ai/ai-apps) sales intelligence library.
 
 > **Status**: `{status}` — {"production weights" if trained else "architecture only, random initialization. Use as a starting point for fine-tuning."}
 {research_md}
 ## Usage
 
 ```python
-from salescue import ClosingTimeModel
+from salescue import SalesCueModel
 
-model = ClosingTimeModel.from_pretrained("{model_id}")
+model = SalesCueModel.from_pretrained("{model_id}")
 {self._usage_example(c.module_name)}
 ```
 {labels_md}
@@ -348,11 +356,11 @@ model = ClosingTimeModel.from_pretrained("{model_id}")
 - **Untrained weights**: This release contains the architecture only. Weights are randomly initialized and must be fine-tuned on domain-specific data before production use.
 - **English only**: Designed for English sales text. Performance on other languages is untested.
 - **Domain-specific**: Optimized for B2B sales communications. May not generalize to other text domains.
-- **Shared backbone**: Requires `microsoft/deberta-v3-base` loaded via the ClosingTime library.
+- **Shared backbone**: Requires `microsoft/deberta-v3-base` loaded via the SalesCue library.
 
-## About ClosingTime
+## About SalesCue
 
-ClosingTime is a sales intelligence library with 12 ML modules sharing a single
+SalesCue is a sales intelligence library with 12 ML modules sharing a single
 DeBERTa-v3-base encoder backbone. Modules can be composed via Unix-style piping:
 
 ```python
@@ -362,7 +370,7 @@ result = Document("interested in pricing") | ai.score | ai.intent | ai.sentiment
 
 All modules: `score` `intent` `reply` `triggers` `icp` `objection` `sentiment` `spam` `entities` `call` `subject` `emailgen`
 
-See the [ClosingTime documentation](https://github.com/v9ai/ai-apps) for details.
+See the [SalesCue documentation](https://github.com/v9ai/ai-apps) for details.
 """
 
     def _usage_example(self, module_name: str) -> str:
@@ -384,5 +392,6 @@ See the [ClosingTime documentation](https://github.com/v9ai/ai-apps) for details
         )
 
     def __repr__(self) -> str:
-        return (f"ClosingTimeModel(module={self.config.module_name!r}, "
+        return (f"SalesCueModel(module={self.config.module_name!r}, "
                 f"model_id={self.config.model_id!r})")
+

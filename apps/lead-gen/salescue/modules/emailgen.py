@@ -2,7 +2,7 @@
 
 Generates personalized sales emails using a LoRA-fine-tuned Qwen model.
 Runs as a separate module (NOT on the shared DeBERTa backbone) since it
-requires a generative LLM. Conditioned on outputs from other ClosingTime
+requires a generative LLM. Conditioned on outputs from other SalesCue
 modules (score, intent, sentiment) for personalized generation.
 """
 
@@ -30,7 +30,7 @@ class ProspectContext:
     company: str = ""
     role: str = ""
     industry: str = ""
-    # from other ClosingTime modules
+    # from other SalesCue modules
     score_label: str = ""  # hot/warm/cold
     intent_stage: str = ""  # unaware -> purchasing
     sentiment: str = ""  # from sentiment module
@@ -41,7 +41,7 @@ class ProspectContext:
 def build_prompt(context: ProspectContext, email_type: str = "initial_outreach") -> str:
     """Build the generation prompt from prospect context and module outputs.
 
-    This prompt template incorporates signals from other ClosingTime modules
+    This prompt template incorporates signals from other SalesCue modules
     to generate contextually appropriate emails.
     """
     parts = [f"Write a {email_type} sales email with the following context:"]

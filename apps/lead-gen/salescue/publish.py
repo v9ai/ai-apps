@@ -62,7 +62,7 @@ def publish_module(
     Returns the HF URL on success, None on dry run.
     """
     from .config import ALL_CONFIGS
-    from .hub import ClosingTimeModel
+    from .hub import SalesCueModel
     from .modules import MODULE_CLASSES
 
     if module_name not in MODULE_CLASSES:
@@ -81,7 +81,7 @@ def publish_module(
     # Instantiate module with random init
     module_cls = MODULE_CLASSES[module_name]
     module = module_cls(hidden=config.hidden_size)
-    model = ClosingTimeModel(module, config)
+    model = SalesCueModel(module, config)
 
     repo_id = f"{org}/salescue-{module_name}-v{config.version}"
 
@@ -91,7 +91,7 @@ def publish_module(
         print(f"  DRY RUN: saved to {out_dir}")
 
         # Verify round-trip
-        loaded = ClosingTimeModel.from_pretrained(out_dir)
+        loaded = SalesCueModel.from_pretrained(out_dir)
         test_input = _test_input(module_name)
         result = loaded.predict(test_input)
         print(f"  VERIFY: round-trip OK — {list(result.keys())}")
@@ -103,7 +103,7 @@ def publish_module(
 
     # Verify from Hub
     try:
-        loaded = ClosingTimeModel.from_pretrained(repo_id)
+        loaded = SalesCueModel.from_pretrained(repo_id)
         result = loaded.predict(_test_input(module_name))
         print(f"  VERIFY: Hub round-trip OK")
     except Exception as e:
@@ -113,7 +113,7 @@ def publish_module(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Publish ClosingTime modules to HF Hub")
+    parser = argparse.ArgumentParser(description="Publish SalesCue modules to HF Hub")
     parser.add_argument("modules", nargs="*", help="Module names to publish")
     parser.add_argument("--all", action="store_true", help="Publish all compatible modules")
     parser.add_argument("--dry-run", action="store_true", help="Save locally, don't push")

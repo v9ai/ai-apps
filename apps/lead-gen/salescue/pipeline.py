@@ -1,6 +1,6 @@
 """salescue/pipeline.py — HuggingFace pipeline() integration.
 
-Registers ClosingTime modules as custom pipelines so they can be used via:
+Registers SalesCue modules as custom pipelines so they can be used via:
 
     from transformers import pipeline
     scorer = pipeline("sales-scoring", model="v9ai/salescue-score-v1")
@@ -49,8 +49,8 @@ def pipeline(
     model: str | None = None,
     device: str | None = None,
     **kwargs,
-) -> "_ClosingTimePipeline":
-    """Create a ClosingTime pipeline.
+) -> "_SalesCuePipeline":
+    """Create a SalesCue pipeline.
 
     Args:
         task: Pipeline task name (e.g. "score", "intent", "sales-scoring").
@@ -71,9 +71,9 @@ def pipeline(
     module_name = PIPELINE_REGISTRY.get(task, task)
 
     if model:
-        from .hub import ClosingTimeModel
-        wrapped = ClosingTimeModel.from_pretrained(model, device=device, **kwargs)
-        return _ClosingTimePipeline(wrapped, module_name)
+        from .hub import SalesCueModel
+        wrapped = SalesCueModel.from_pretrained(model, device=device, **kwargs)
+        return _SalesCuePipeline(wrapped, module_name)
 
     # Load from registry
     from .engine import MODULE_REGISTRY, _ensure_registry
@@ -94,10 +94,10 @@ def pipeline(
     if isinstance(module, torch.nn.Module):
         module = module.to(get_device()).eval()
 
-    return _ClosingTimePipeline(module, module_name)
+    return _SalesCuePipeline(module, module_name)
 
 
-class _ClosingTimePipeline:
+class _SalesCuePipeline:
     """Callable pipeline wrapper with batch support."""
 
     def __init__(self, module, name: str):
@@ -127,4 +127,4 @@ class _ClosingTimePipeline:
         return self._module(text, **kwargs)
 
     def __repr__(self) -> str:
-        return f"<ClosingTimePipeline task={self.name!r}>"
+        return f"<SalesCuePipeline task={self.name!r}>"

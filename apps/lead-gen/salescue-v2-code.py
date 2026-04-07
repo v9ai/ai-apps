@@ -1,7 +1,7 @@
 """salescue/validation.py — Input validation for all module entry points.
 
 Validates text inputs, required fields, and type constraints before any
-module processing. Raises ClosingTimeValidationError with clear messages.
+module processing. Raises SalesCueValidationError with clear messages.
 """
 
 from __future__ import annotations
@@ -10,23 +10,23 @@ MAX_TEXT_LENGTH = 100_000
 MIN_TEXT_LENGTH = 1
 
 
-class ClosingTimeValidationError(ValueError):
+class SalesCueValidationError(ValueError):
     """Raised when module input fails validation."""
 
 
 def validate_text(text: object, *, field: str = "text", max_length: int = MAX_TEXT_LENGTH) -> str:
     """Validate a text input and return the cleaned string."""
     if text is None:
-        raise ClosingTimeValidationError(f"{field} is required (got None)")
+        raise SalesCueValidationError(f"{field} is required (got None)")
     if not isinstance(text, str):
-        raise ClosingTimeValidationError(
+        raise SalesCueValidationError(
             f"{field} must be a string, got {type(text).__name__}"
         )
     text = text.strip()
     if len(text) < MIN_TEXT_LENGTH:
-        raise ClosingTimeValidationError(f"{field} must be non-empty after stripping whitespace")
+        raise SalesCueValidationError(f"{field} must be non-empty after stripping whitespace")
     if len(text) > max_length:
-        raise ClosingTimeValidationError(
+        raise SalesCueValidationError(
             f"{field} exceeds maximum length ({len(text)} > {max_length})"
         )
     return text
@@ -35,19 +35,19 @@ def validate_text(text: object, *, field: str = "text", max_length: int = MAX_TE
 def validate_transcript(transcript: object) -> list[dict]:
     """Validate a call transcript (list of turn dicts)."""
     if not isinstance(transcript, list):
-        raise ClosingTimeValidationError(
+        raise SalesCueValidationError(
             f"transcript must be a list, got {type(transcript).__name__}"
         )
     if len(transcript) == 0:
-        raise ClosingTimeValidationError("transcript must contain at least one turn")
+        raise SalesCueValidationError("transcript must contain at least one turn")
 
     for i, turn in enumerate(transcript):
         if not isinstance(turn, dict):
-            raise ClosingTimeValidationError(f"transcript[{i}] must be a dict")
+            raise SalesCueValidationError(f"transcript[{i}] must be a dict")
         if "text" not in turn:
-            raise ClosingTimeValidationError(f"transcript[{i}] missing required key 'text'")
+            raise SalesCueValidationError(f"transcript[{i}] missing required key 'text'")
         if "speaker" not in turn:
-            raise ClosingTimeValidationError(f"transcript[{i}] missing required key 'speaker'")
+            raise SalesCueValidationError(f"transcript[{i}] missing required key 'speaker'")
         turn["text"] = validate_text(turn["text"], field=f"transcript[{i}].text")
 
     return transcript
@@ -56,11 +56,11 @@ def validate_transcript(transcript: object) -> list[dict]:
 def validate_subjects(subjects: object) -> list[str]:
     """Validate a list of subject lines."""
     if not isinstance(subjects, list):
-        raise ClosingTimeValidationError(
+        raise SalesCueValidationError(
             f"subjects must be a list, got {type(subjects).__name__}"
         )
     if len(subjects) < 2:
-        raise ClosingTimeValidationError("subjects must contain at least 2 items for comparison")
+        raise SalesCueValidationError("subjects must contain at least 2 items for comparison")
 
     return [validate_text(s, field=f"subjects[{i}]", max_length=500) for i, s in enumerate(subjects)]
 """salescue/backbone.py — Shared encoder singleton with thread safety.
@@ -294,7 +294,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class Document:
-    """A document flowing through the ClosingTime pipeline.
+    """A document flowing through the SalesCue pipeline.
 
     Accumulates results from each module it passes through.
     Supports pipe composition via the | operator.
@@ -388,7 +388,7 @@ class Chain:
         return f"Chain({names})"
 """salescue/base.py — Abstract base class for all modules.
 
-Every ClosingTime module inherits from BaseModule and implements
+Every SalesCue module inherits from BaseModule and implements
 the `forward` method. Provides consistent interface for the pipe
 operator, display rendering, and module registration.
 """
@@ -403,7 +403,7 @@ from .display import CardRenderer
 
 
 class BaseModule(ABC):
-    """Abstract base class for ClosingTime modules.
+    """Abstract base class for SalesCue modules.
 
     Subclasses must set `name` and `description` class attributes
     and implement the `forward` method.
@@ -2477,7 +2477,7 @@ class DisentangledSentimentIntentHead(nn.Module):
 
 Generates personalized sales emails using a LoRA-fine-tuned Mistral model.
 Runs as a separate module (NOT on the shared DeBERTa backbone) since it
-requires a generative LLM. Conditioned on outputs from other ClosingTime
+requires a generative LLM. Conditioned on outputs from other SalesCue
 modules (score, intent, sentiment) for personalized generation.
 """
 
@@ -2505,7 +2505,7 @@ class ProspectContext:
     company: str = ""
     role: str = ""
     industry: str = ""
-    # from other ClosingTime modules
+    # from other SalesCue modules
     score_label: str = ""  # hot/warm/cold
     intent_stage: str = ""  # unaware -> purchasing
     sentiment: str = ""  # from sentiment module
@@ -2516,7 +2516,7 @@ class ProspectContext:
 def build_prompt(context: ProspectContext, email_type: str = "initial_outreach") -> str:
     """Build the generation prompt from prospect context and module outputs.
 
-    This prompt template incorporates signals from other ClosingTime modules
+    This prompt template incorporates signals from other SalesCue modules
     to generate contextually appropriate emails.
     """
     parts = [f"Write a {email_type} sales email with the following context:"]
@@ -2721,7 +2721,7 @@ def _ensure_registry() -> None:
 
 
 class Engine:
-    """Unified inference engine for ClosingTime modules.
+    """Unified inference engine for SalesCue modules.
 
     Preloads specified modules and the shared encoder backbone,
     then provides .run() for single texts and .run_batch() for lists.
@@ -2800,7 +2800,7 @@ class Engine:
     def __repr__(self) -> str:
         status = "loaded" if self._loaded else "not loaded"
         return f"Engine(modules={self.module_names}, {status})"
-"""ClosingTime — Sales intelligence library with 12 ML modules.
+"""SalesCue — Sales intelligence library with 12 ML modules.
 
 Three entry points:
     1. `from salescue import ai` — namespace for ai.score(text), ai.intent(text), etc.
@@ -2814,7 +2814,7 @@ from .document import Document
 from .chain import Chain
 from .engine import Engine
 from .backbone import SharedEncoder, get_device, set_device
-from .validation import ClosingTimeValidationError
+from .validation import SalesCueValidationError
 from .reproducibility import set_deterministic, set_seed
 
 
@@ -2851,7 +2851,7 @@ __all__ = [
     "SharedEncoder",
     "get_device",
     "set_device",
-    "ClosingTimeValidationError",
+    "SalesCueValidationError",
     "set_deterministic",
     "set_seed",
 ]

@@ -67,7 +67,7 @@ def _ensure_registry() -> None:
 
 
 class Engine:
-    """Unified inference engine for ClosingTime modules.
+    """Unified inference engine for SalesCue modules.
 
     Preloads specified modules and the shared encoder backbone,
     then provides .run() for single texts and .run_batch() for lists.

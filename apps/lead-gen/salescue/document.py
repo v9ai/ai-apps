@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class Document:
-    """A document flowing through the ClosingTime pipeline.
+    """A document flowing through the SalesCue pipeline.
 
     Accumulates results from each module it passes through.
     Supports pipe composition via the | operator.
