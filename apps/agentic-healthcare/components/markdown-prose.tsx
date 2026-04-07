@@ -107,7 +107,9 @@ export function MarkdownProse({ content }: { content: string }) {
             </td>
           ),
         }}
-      />
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }
