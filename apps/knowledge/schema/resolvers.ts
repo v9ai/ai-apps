@@ -2,14 +2,23 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../src/db";
 import { applicationNotes } from "../src/db/schema";
 
+function serializeNote(note: Record<string, unknown>) {
+  return {
+    ...note,
+    createdAt: note.createdAt instanceof Date ? note.createdAt.toISOString() : String(note.createdAt),
+    updatedAt: note.updatedAt instanceof Date ? note.updatedAt.toISOString() : String(note.updatedAt),
+  };
+}
+
 export const resolvers = {
   Query: {
     applicationNotes: async (_: unknown, { applicationId }: { applicationId: string }) => {
       const db = getDb();
-      return db
+      const rows = await db
         .select()
         .from(applicationNotes)
         .where(eq(applicationNotes.applicationId, applicationId));
+      return rows.map(serializeNote);
     },
     applicationNote: async (_: unknown, { id }: { id: string }) => {
       const db = getDb();
@@ -17,7 +26,7 @@ export const resolvers = {
         .select()
         .from(applicationNotes)
         .where(eq(applicationNotes.id, id));
-      return note ?? null;
+      return note ? serializeNote(note) : null;
     },
   },
   Mutation: {
@@ -30,7 +39,7 @@ export const resolvers = {
         .insert(applicationNotes)
         .values(input)
         .returning();
-      return note;
+      return serializeNote(note);
     },
     updateApplicationNote: async (
       _: unknown,
@@ -42,7 +51,7 @@ export const resolvers = {
         .set({ ...input, updatedAt: new Date() })
         .where(eq(applicationNotes.id, id))
         .returning();
-      return note;
+      return serializeNote(note);
     },
     deleteApplicationNote: async (_: unknown, { id }: { id: string }) => {
       const db = getDb();
