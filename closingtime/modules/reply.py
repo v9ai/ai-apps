@@ -90,21 +90,22 @@ class ConstrainedMultiLabelCRF(nn.Module):
             # pre-compute all binary configurations as a single (n_configs, n) tensor
             arange = torch.arange(n_configs, device=unary_logits.device)
             bits = torch.arange(n, device=unary_logits.device)
-            all_configs_t = ((arange.unsqueeze(1) >> bits.unsqueeze(0)) & 1).float()  # (2^n, n)
+            all_configs = ((arange.unsqueeze(1) >> bits.unsqueeze(0)) & 1).float()  # (2^n, n)
 
             # vectorized scoring: unary component
-            unary_scores = (unary_logits * all_configs_t).sum(dim=-1)  # (2^n,)
+            unary_scores = (unary_logits * all_configs).sum(dim=-1)  # (2^n,)
 
             # pairwise component
             effective_pairwise = self.pairwise + self.hard_constraints
-            active_masks = all_configs_t.unsqueeze(-1) * all_configs_t.unsqueeze(-2)  # (2^n, n, n)
+            active_masks = all_configs.unsqueeze(-1) * all_configs.unsqueeze(-2)  # (2^n, n, n)
             pairwise_scores = (effective_pairwise.unsqueeze(0) * active_masks).sum(dim=(-1, -2)) / 2
 
             total_scores = unary_scores + pairwise_scores  # (2^n,)
 
-            top_indices = total_scores.topk(min(top_k, n_configs)).indices
+            k = min(top_k, n_configs)
+            top_indices = total_scores.topk(k).indices
             return [
-                (total_scores[i].item(), all_configs_t[i].unsqueeze(0))
+                (total_scores[i].item(), all_configs[i].unsqueeze(0))
                 for i in top_indices
             ]
 
