@@ -550,8 +550,8 @@ export default function WantListPage() {
                     src={item.imageUrl}
                     alt={item.name}
                     className={css({
-                      w: "10",
-                      h: "10",
+                      w: "16",
+                      h: "16",
                       objectFit: "contain",
                       rounded: "lg",
                       bg: "white",
@@ -561,8 +561,8 @@ export default function WantListPage() {
                 ) : (
                   <div
                     className={css({
-                      w: "10",
-                      h: "10",
+                      w: "16",
+                      h: "16",
                       rounded: "stud",
                       display: "flex",
                       alignItems: "center",
