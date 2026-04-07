@@ -1,0 +1,548 @@
+{
+  "org_profiles": [
+    {
+      "architecture_analysis": [
+        {
+          "architectures": [
+            "LlamaForCausalLM"
+          ],
+          "hidden_size": 4096,
+          "id2label": null,
+          "max_position_embeddings": 131072,
+          "model_type": "llama",
+          "num_activated_experts": null,
+          "num_attention_heads": 32,
+          "num_experts": null,
+          "num_hidden_layers": 32,
+          "num_key_value_heads": 8,
+          "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2508",
+          "vocab_size": 128256
+        },
+        {
+          "architectures": [
+            "LlamaForCausalLM"
+          ],
+          "hidden_size": 4096,
+          "id2label": null,
+          "max_position_embeddings": 131072,
+          "model_type": "llama",
+          "num_activated_experts": null,
+          "num_attention_heads": 32,
+          "num_experts": null,
+          "num_hidden_layers": 32,
+          "num_key_value_heads": 8,
+          "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2504",
+          "vocab_size": 128256
+        },
+        {
+          "architectures": [
+            "Qwen3MoeForCausalLM"
+          ],
+          "hidden_size": 2048,
+          "id2label": null,
+          "max_position_embeddings": 262144,
+          "model_type": "qwen3_moe",
+          "num_activated_experts": 8,
+          "num_attention_heads": 32,
+          "num_experts": 128,
+          "num_hidden_layers": 48,
+          "num_key_value_heads": 4,
+          "repo_id": "diffbot/Diffbot-Coder-2601",
+          "vocab_size": 151936
+        },
+        {
+          "architectures": [
+            "LlamaForCausalLM"
+          ],
+          "hidden_size": 4096,
+          "id2label": null,
+          "max_position_embeddings": 131072,
+          "model_type": "llama",
+          "num_activated_experts": null,
+          "num_attention_heads": 32,
+          "num_experts": null,
+          "num_hidden_layers": 32,
+          "num_key_value_heads": 8,
+          "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2412",
+          "vocab_size": 128256
+        },
+        {
+          "architectures": [
+            "LlamaForCausalLM"
+          ],
+          "hidden_size": 8192,
+          "id2label": null,
+          "max_position_embeddings": 131072,
+          "model_type": "llama",
+          "num_activated_experts": null,
+          "num_attention_heads": 64,
+          "num_experts": null,
+          "num_hidden_layers": 80,
+          "num_key_value_heads": 8,
+          "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2504",
+          "vocab_size": 128256
+        },
+        {
+          "architectures": [
+            "Qwen3MoeForCausalLM"
+          ],
+          "hidden_size": 2048,
+          "id2label": null,
+          "max_position_embeddings": 40960,
+          "model_type": "qwen3_moe",
+          "num_activated_experts": 8,
+          "num_attention_heads": 32,
+          "num_experts": 128,
+          "num_hidden_layers": 48,
+          "num_key_value_heads": 4,
+          "repo_id": "diffbot/Diffbot-Small-XL-2505",
+          "vocab_size": 151936
+        },
+        {
+          "architectures": [
+            "LlamaForCausalLM"
+          ],
+          "hidden_size": 8192,
+          "id2label": null,
+          "max_position_embeddings": 131072,
+          "model_type": "llama",
+          "num_activated_experts": null,
+          "num_attention_heads": 64,
+          "num_experts": null,
+          "num_hidden_layers": 80,
+          "num_key_value_heads": 8,
+          "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2412",
+          "vocab_size": 128256
+        },
+        {
+          "architectures": [
+            "Qwen3MoeForCausalLM"
+          ],
+          "hidden_size": 2048,
+          "id2label": null,
+          "max_position_embeddings": 262144,
+          "model_type": "qwen3_moe",
+          "num_activated_experts": 8,
+          "num_attention_heads": 32,
+          "num_experts": 128,
+          "num_hidden_layers": 48,
+          "num_key_value_heads": 4,
+          "repo_id": "diffbot/Diffbot-Small-XL-2508",
+          "vocab_size": 151936
+        },
+        {
+          "architectures": [
+            "Qwen3NextForCausalLM"
+          ],
+          "hidden_size": 2048,
+          "id2label": null,
+          "max_position_embeddings": 262144,
+          "model_type": "qwen3_next",
+          "num_activated_experts": 10,
+          "num_attention_heads": 16,
+          "num_experts": 512,
+          "num_hidden_layers": 48,
+          "num_key_value_heads": 2,
+          "repo_id": "diffbot/Diffbot-Coder-2603",
+          "vocab_size": 151936
+        },
+        {
+          "architectures": [
+            "Glm4MoeLiteForCausalLM"
+          ],
+          "hidden_size": 2048,
+          "id2label": null,
+          "max_position_embeddings": 202752,
+          "model_type": "glm4_moe_lite",
+          "num_activated_experts": 4,
+          "num_attention_heads": 20,
+          "num_experts": null,
+          "num_hidden_layers": 47,
+          "num_key_value_heads": 20,
+          "repo_id": "diffbot/Diffbot-Coder-2602",
+          "vocab_size": 154880
+        }
+      ],
+      "arxiv_links": [],
+      "config_count": 10,
+      "dataset_count": 0,
+      "hf_score": 0.5350000262260437,
+      "libraries_used": [
+        [
+          "transformers",
+          1
+        ]
+      ],
+      "model_count": 13,
+      "org_name": "diffbot",
+      "pipeline_tags": [
+        [
+          "text-generation",
+          1
+        ]
+      ],
+      "signal_count": 18,
+      "space_count": 0,
+      "total_downloads": 166,
+      "total_likes": 41,
+      "training_signals": [
+        {
+          "evidence": "Custom model_type: qwen3_moe",
+          "repo_id": "diffbot/Diffbot-Small-XL-2508",
+          "signal_type": "CustomArchitecture"
+        },
+        {
+          "evidence": "MoE: 128 experts, 8 active per token",
+          "repo_id": "diffbot/Diffbot-Small-XL-2508",
+          "signal_type": "MoEArchitecture"
+        },
+        {
+          "evidence": "262144 tokens",
+          "repo_id": "diffbot/Diffbot-Small-XL-2508",
+          "signal_type": "LargeContext"
+        },
+        {
+          "evidence": "Custom model_type: qwen3_next, hybrid linear+full attention (kernel_dim=4)",
+          "repo_id": "diffbot/Diffbot-Coder-2603",
+          "signal_type": "CustomArchitecture"
+        },
+        {
+          "evidence": "MoE: 512 experts, 10 active per token",
+          "repo_id": "diffbot/Diffbot-Coder-2603",
+          "signal_type": "MoEArchitecture"
+        },
+        {
+          "evidence": "262144 tokens",
+          "repo_id": "diffbot/Diffbot-Coder-2603",
+          "signal_type": "LargeContext"
+        },
+        {
+          "evidence": "131072 tokens",
+          "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2412",
+          "signal_type": "LargeContext"
+        },
+        {
+          "evidence": "131072 tokens",
+          "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2504",
+          "signal_type": "LargeContext"
+        },
+        {
+          "evidence": "Custom model_type: qwen3_moe",
+          "repo_id": "diffbot/Diffbot-Small-XL-2505",
+          "signal_type": "CustomArchitecture"
+        },
+        {
+          "evidence": "MoE: 128 experts, 8 active per token",
+          "repo_id": "diffbot/Diffbot-Small-XL-2505",
+          "signal_type": "MoEArchitecture"
+        },
+        {
+          "evidence": "131072 tokens",
+          "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2508",
+          "signal_type": "LargeContext"
+        },
+        {
+          "evidence": "Custom model_type: glm4_moe_lite",
+          "repo_id": "diffbot/Diffbot-Coder-2602",
+          "signal_type": "CustomArchitecture"
+        },
+        {
+          "evidence": "202752 tokens",
+          "repo_id": "diffbot/Diffbot-Coder-2602",
+          "signal_type": "LargeContext"
+        },
+        {
+          "evidence": "Custom model_type: qwen3_moe",
+          "repo_id": "diffbot/Diffbot-Coder-2601",
+          "signal_type": "CustomArchitecture"
+        },
+        {
+          "evidence": "MoE: 128 experts, 8 active per token",
+          "repo_id": "diffbot/Diffbot-Coder-2601",
+          "signal_type": "MoEArchitecture"
+        },
+        {
+          "evidence": "262144 tokens",
+          "repo_id": "diffbot/Diffbot-Coder-2601",
+          "signal_type": "LargeContext"
+        },
+        {
+          "evidence": "131072 tokens",
+          "repo_id": "diffbot/Llama-3.3-Diffbot-Small-XL-2412",
+          "signal_type": "LargeContext"
+        },
+        {
+          "evidence": "131072 tokens",
+          "repo_id": "diffbot/Llama-3.1-Diffbot-Small-2504",
+          "signal_type": "LargeContext"
+        }
+      ]
+    },
+    {
+      "architecture_analysis": [
+        {
+          "architectures": [
+            "LongformerForTokenClassification"
+          ],
+          "hidden_size": 768,
+          "id2label": {
+            "0": "O",
+            "1": "B-TEAM",
+            "2": "I-TEAM",
+            "3": "B-TECH",
+            "4": "I-TECH"
+          },
+          "max_position_embeddings": 4098,
+          "model_type": "longformer",
+          "num_activated_experts": null,
+          "num_attention_heads": 12,
+          "num_experts": null,
+          "num_hidden_layers": 12,
+          "num_key_value_heads": null,
+          "repo_id": "sumble/ner-pass2-test-0",
+          "vocab_size": 50265
+        }
+      ],
+      "arxiv_links": [],
+      "config_count": 1,
+      "dataset_count": 1,
+      "hf_score": 0.35600000619888306,
+      "libraries_used": [
+        [
+          "transformers",
+          1
+        ]
+      ],
+      "model_count": 1,
+      "org_name": "sumble",
+      "pipeline_tags": [
+        [
+          "token-classification",
+          1
+        ]
+      ],
+      "signal_count": 6,
+      "space_count": 0,
+      "total_downloads": 7,
+      "total_likes": 0,
+      "training_signals": [
+        {
+          "evidence": "learning_rate parameter",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "TrainingArgs"
+        },
+        {
+          "evidence": "training procedure documented",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "TrainingArgs"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "FineTuning"
+        },
+        {
+          "evidence": "training_args.bin present",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "TrainingArgs"
+        },
+        {
+          "evidence": "Custom model_type: longformer, attention_mode=longformer",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "CustomArchitecture"
+        },
+        {
+          "evidence": "BIO NER: B-TEAM, B-TECH, I-TEAM, I-TECH, O",
+          "repo_id": "sumble/ner-pass2-test-0",
+          "signal_type": "NerLabels"
+        }
+      ]
+    },
+    {
+      "architecture_analysis": [
+        {
+          "architectures": [
+            "DistilBertForSequenceClassification"
+          ],
+          "hidden_size": null,
+          "id2label": null,
+          "max_position_embeddings": 512,
+          "model_type": "distilbert",
+          "num_activated_experts": null,
+          "num_attention_heads": null,
+          "num_experts": null,
+          "num_hidden_layers": null,
+          "num_key_value_heads": null,
+          "repo_id": "assemblyai/distilbert-base-uncased-sst2",
+          "vocab_size": 30522
+        },
+        {
+          "architectures": [
+            "DistilBertForSequenceClassification"
+          ],
+          "hidden_size": null,
+          "id2label": null,
+          "max_position_embeddings": 512,
+          "model_type": "distilbert",
+          "num_activated_experts": null,
+          "num_attention_heads": null,
+          "num_experts": null,
+          "num_hidden_layers": null,
+          "num_key_value_heads": null,
+          "repo_id": "assemblyai/distilbert-base-uncased-qqp",
+          "vocab_size": 30522
+        },
+        {
+          "architectures": [
+            "BertForSequenceClassification"
+          ],
+          "hidden_size": 1024,
+          "id2label": null,
+          "max_position_embeddings": 512,
+          "model_type": "bert",
+          "num_activated_experts": null,
+          "num_attention_heads": 16,
+          "num_experts": null,
+          "num_hidden_layers": 24,
+          "num_key_value_heads": null,
+          "repo_id": "assemblyai/bert-large-uncased-sst2",
+          "vocab_size": 30522
+        }
+      ],
+      "arxiv_links": [
+        "https://arxiv.org/abs/1810.04805",
+        "https://arxiv.org/abs/1910.01108"
+      ],
+      "config_count": 3,
+      "dataset_count": 0,
+      "hf_score": 0.28299999237060547,
+      "libraries_used": [
+        [
+          "transformers",
+          3
+        ]
+      ],
+      "model_count": 3,
+      "org_name": "assemblyai",
+      "pipeline_tags": [
+        [
+          "text-classification",
+          3
+        ]
+      ],
+      "signal_count": 6,
+      "space_count": 2,
+      "total_downloads": 704,
+      "total_likes": 25,
+      "training_signals": [
+        {
+          "evidence": "https://arxiv.org/abs/1910.01108",
+          "repo_id": "assemblyai/distilbert-base-uncased-qqp",
+          "signal_type": "ArxivCitation"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "assemblyai/distilbert-base-uncased-qqp",
+          "signal_type": "FineTuning"
+        },
+        {
+          "evidence": "https://arxiv.org/abs/1810.04805",
+          "repo_id": "assemblyai/bert-large-uncased-sst2",
+          "signal_type": "ArxivCitation"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "assemblyai/bert-large-uncased-sst2",
+          "signal_type": "FineTuning"
+        },
+        {
+          "evidence": "https://arxiv.org/abs/1910.01108",
+          "repo_id": "assemblyai/distilbert-base-uncased-sst2",
+          "signal_type": "ArxivCitation"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "assemblyai/distilbert-base-uncased-sst2",
+          "signal_type": "FineTuning"
+        }
+      ]
+    },
+    {
+      "architecture_analysis": [
+        {
+          "architectures": [
+            "LlamaForCausalLM"
+          ],
+          "hidden_size": 4096,
+          "id2label": null,
+          "max_position_embeddings": 8192,
+          "model_type": "llama",
+          "num_activated_experts": null,
+          "num_attention_heads": 32,
+          "num_experts": null,
+          "num_hidden_layers": 32,
+          "num_key_value_heads": 8,
+          "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+          "vocab_size": 128256
+        }
+      ],
+      "arxiv_links": [
+        "https://arxiv.org/abs/1910.09700"
+      ],
+      "config_count": 1,
+      "dataset_count": 0,
+      "hf_score": 0.23600000143051147,
+      "libraries_used": [
+        [
+          "transformers",
+          1
+        ]
+      ],
+      "model_count": 1,
+      "org_name": "salesloft",
+      "pipeline_tags": [
+        [
+          "text-generation",
+          1
+        ]
+      ],
+      "signal_count": 3,
+      "space_count": 0,
+      "total_downloads": 0,
+      "total_likes": 0,
+      "training_signals": [
+        {
+          "evidence": "https://arxiv.org/abs/1910.09700",
+          "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+          "signal_type": "ArxivCitation"
+        },
+        {
+          "evidence": "training procedure documented",
+          "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+          "signal_type": "TrainingArgs"
+        },
+        {
+          "evidence": "'fine-tuned' mentioned in model card",
+          "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+          "signal_type": "FineTuning"
+        }
+      ]
+    },
+    {
+      "architecture_analysis": [],
+      "arxiv_links": [],
+      "config_count": 0,
+      "dataset_count": 0,
+      "hf_score": 0.03799999877810478,
+      "libraries_used": [],
+      "model_count": 1,
+      "org_name": "chorus",
+      "pipeline_tags": [],
+      "signal_count": 0,
+      "space_count": 0,
+      "total_downloads": 0,
+      "total_likes": 0,
+      "training_signals": []
+    }
+  ]
+}
