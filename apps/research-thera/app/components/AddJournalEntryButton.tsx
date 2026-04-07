@@ -11,7 +11,6 @@ import {
   TextField,
   TextArea,
   Select,
-  Checkbox,
 } from "@radix-ui/themes";
 import { PlusIcon, Pencil1Icon } from "@radix-ui/react-icons";
 import {
@@ -182,7 +181,6 @@ export default function AddJournalEntryButton({
             entryDate: editEntry.entryDate || today(),
             familyMemberId: editEntry.familyMemberId ? String(editEntry.familyMemberId) : "",
             goalId: editEntry.goalId ? String(editEntry.goalId) : "",
-            isPrivate: editEntry.isPrivate,
             tags: (editEntry.tags || []).join(", "),
           });
         }
@@ -361,19 +359,6 @@ export default function AddJournalEntryButton({
                 ) : null;
               })()}
             </label>
-
-            <Text as="label" size="2">
-              <Flex gap="2" align="center">
-                <Checkbox
-                  checked={form.isPrivate}
-                  onCheckedChange={(checked) =>
-                    setForm((f) => ({ ...f, isPrivate: checked === true }))
-                  }
-                  disabled={loading}
-                />
-                <Text weight="medium">Private entry</Text>
-              </Flex>
-            </Text>
 
             {error && (
               <Text color="red" size="2">

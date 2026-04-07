@@ -12,7 +12,6 @@ import {
   TextField,
   TextArea,
   Select,
-  Checkbox,
   Spinner,
   Separator,
 } from "@radix-ui/themes";
@@ -62,7 +61,6 @@ function JournalEditContent() {
     entryDate: today(),
     familyMemberId: "",
     goalId: "",
-    isPrivate: true,
     tags: "",
   });
   const [formError, setFormError] = useState<string | null>(null);
@@ -77,7 +75,6 @@ function JournalEditContent() {
         entryDate: entry.entryDate || today(),
         familyMemberId: entry.familyMemberId ? String(entry.familyMemberId) : "",
         goalId: entry.goalId ? String(entry.goalId) : "",
-        isPrivate: entry.isPrivate,
         tags: (entry.tags || []).join(", "),
       });
       setInitialized(true);
@@ -129,7 +126,7 @@ function JournalEditContent() {
               ? parseInt(form.familyMemberId, 10)
               : undefined,
             goalId: form.goalId ? parseInt(form.goalId, 10) : undefined,
-            isPrivate: form.isPrivate,
+            isPrivate: true,
             tags: parsedTags.length > 0 ? parsedTags : undefined,
           },
         },
@@ -343,19 +340,6 @@ function JournalEditContent() {
                 ) : null;
               })()}
             </label>
-
-            <Text as="label" size="2">
-              <Flex gap="2" align="center">
-                <Checkbox
-                  checked={form.isPrivate}
-                  onCheckedChange={(checked) =>
-                    setForm((f) => ({ ...f, isPrivate: checked === true }))
-                  }
-                  disabled={saving}
-                />
-                <Text weight="medium">Private entry</Text>
-              </Flex>
-            </Text>
 
             {formError && (
               <Text color="red" size="2">
