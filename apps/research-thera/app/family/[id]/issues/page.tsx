@@ -10,53 +10,19 @@ import {
   Spinner,
   Button,
   Separator,
-  Link,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon, PlusIcon } from "@radix-ui/react-icons";
-import { useRouter, useParams } from "next/navigation";
+import { ArrowLeftIcon } from "@radix-ui/react-icons";
+import { useParams } from "next/navigation";
 import NextLink from "next/link";
 import {
   useGetIssuesQuery,
   useGetFamilyMemberQuery,
   useDeleteIssueMutation,
 } from "@/app/__generated__/hooks";
-
-function getSeverityColor(severity: string) {
-  switch (severity.toLowerCase()) {
-    case "high":
-      return "red" as const;
-    case "medium":
-      return "orange" as const;
-    case "low":
-      return "green" as const;
-    default:
-      return "gray" as const;
-  }
-}
-
-function getCategoryColor(category: string) {
-  switch (category.toLowerCase()) {
-    case "academic":
-      return "blue" as const;
-    case "behavioral":
-      return "orange" as const;
-    case "social":
-      return "purple" as const;
-    case "emotional":
-      return "pink" as const;
-    case "developmental":
-      return "cyan" as const;
-    case "health":
-      return "red" as const;
-    case "communication":
-      return "yellow" as const;
-    default:
-      return "gray" as const;
-  }
-}
+import AddIssueButton from "@/app/components/AddIssueButton";
+import { getSeverityColor, getCategoryColor } from "@/app/lib/issue-colors";
 
 function IssuesListContent() {
-  const router = useRouter();
   const params = useParams();
   const familySlug = params.id as string;
   const isNumeric = /^\d+$/.test(familySlug);
@@ -96,7 +62,12 @@ function IssuesListContent() {
   if (error) {
     return (
       <Card>
-        <Text color="red">Error: {error.message}</Text>
+        <Flex direction="column" gap="3" p="4" align="center">
+          <Text color="red">Error: {error.message}</Text>
+          <Button variant="soft" size="2" onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </Flex>
       </Card>
     );
   }
@@ -123,10 +94,13 @@ function IssuesListContent() {
             )}
           </Box>
         </Flex>
-        <Button variant="soft" color="iris" size="2">
-          <PlusIcon />
-          Add Issue
-        </Button>
+        {!isNaN(familyMemberId) && (
+          <AddIssueButton
+            familyMemberId={familyMemberId}
+            refetchQueries={["GetIssues"]}
+            size="2"
+          />
+        )}
       </Flex>
 
       <Separator size="4" />
@@ -169,25 +143,14 @@ function IssuesListContent() {
                     <Text size="1" color="gray">
                       {new Date(issue.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                     </Text>
-                    <Text size="2" color="gray">
+                    <Text size="2" color="gray" style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}>
                       {issue.description}
                     </Text>
-                    {issue.recommendations && issue.recommendations.length > 0 && (
-                      <Flex direction="column" gap="1">
-                        <Text size="2" weight="medium">
-                          Recommendations:
-                        </Text>
-                        <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                          {issue.recommendations.map((rec, idx) => (
-                            <li key={idx}>
-                              <Text size="2" color="gray">
-                                {rec}
-                              </Text>
-                            </li>
-                          ))}
-                        </ul>
-                      </Flex>
-                    )}
                   </Flex>
                   <Flex gap="2">
                     <Button
