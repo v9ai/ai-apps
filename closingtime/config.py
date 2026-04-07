@@ -14,7 +14,7 @@ from typing import Any
 # Maps to PretrainedConfig when saving/loading via HF Hub.
 
 HF_ORG = "v9ai"
-BACKBONE_MODEL = "v9ai/neobert-sales-v1"
+BACKBONE_MODEL = "microsoft/deberta-v3-base"
 
 
 @dataclass
@@ -163,6 +163,12 @@ SUBJECT_CONFIG = ClosingTimeConfig(
     architectures=["ContextualBradleyTerry"],
 )
 
+EMAILGEN_CONFIG = ClosingTimeConfig(
+    module_name="emailgen",
+    architectures=["EmailGenerator"],
+    backbone="mistralai/Mistral-7B-v0.1",
+)
+
 ALL_CONFIGS = {
     "score": SCORE_CONFIG,
     "intent": INTENT_CONFIG,
@@ -175,4 +181,5 @@ ALL_CONFIGS = {
     "entities": ENTITIES_CONFIG,
     "call": CALL_CONFIG,
     "subject": SUBJECT_CONFIG,
+    "emailgen": EMAILGEN_CONFIG,
 }
