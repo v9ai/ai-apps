@@ -1,0 +1,58 @@
+[
+  {
+    "org_name": "AssemblyAI",
+    "hf_score": 0.223,
+    "model_count": 3,
+    "dataset_count": 0,
+    "space_count": 2,
+    "total_downloads": 704,
+    "total_likes": 25,
+    "libraries_used": { "transformers": 3 },
+    "pipeline_tags": { "text-classification": 3 },
+    "arxiv_links": [
+      "https://arxiv.org/abs/1810.04805",
+      "https://arxiv.org/abs/1910.01108"
+    ],
+    "models": [
+      { "repo_id": "assemblyai/distilbert-base-uncased-qqp", "pipeline_tag": "text-classification", "library": "transformers", "downloads": 427, "likes": 0 },
+      { "repo_id": "assemblyai/distilbert-base-uncased-sst2", "pipeline_tag": "text-classification", "library": "transformers", "downloads": 139, "likes": 3 },
+      { "repo_id": "assemblyai/bert-large-uncased-sst2", "pipeline_tag": "text-classification", "library": "transformers", "downloads": 138, "likes": 0 }
+    ],
+    "datasets": [],
+    "spaces": [
+      { "repo_id": "assemblyai/Conformer1-Demo", "sdk": "gradio", "likes": 19 },
+      { "repo_id": "assemblyai/Conformer2-Demo", "sdk": "gradio", "likes": 3 }
+    ],
+    "training_signals": [
+      { "repo_id": "assemblyai/distilbert-base-uncased-qqp", "signal_type": "ArxivCitation" },
+      { "repo_id": "assemblyai/distilbert-base-uncased-qqp", "signal_type": "FineTuning" },
+      { "repo_id": "assemblyai/distilbert-base-uncased-sst2", "signal_type": "ArxivCitation" },
+      { "repo_id": "assemblyai/distilbert-base-uncased-sst2", "signal_type": "FineTuning" },
+      { "repo_id": "assemblyai/bert-large-uncased-sst2", "signal_type": "ArxivCitation" },
+      { "repo_id": "assemblyai/bert-large-uncased-sst2", "signal_type": "FineTuning" }
+    ]
+  },
+  {
+    "org_name": "sumble",
+    "hf_score": 0.138,
+    "model_count": 1,
+    "dataset_count": 1,
+    "space_count": 0,
+    "total_downloads": 7,
+    "total_likes": 0,
+    "libraries_used": { "transformers": 1 },
+    "pipeline_tags": { "token-classification": 1 },
+    "arxiv_links": [],
+    "models": [
+      { "repo_id": "sumble/ner-pass2-test-0", "pipeline_tag": "token-classification", "library": "transformers", "downloads": 1, "likes": 0 }
+    ],
+    "datasets": [
+      { "repo_id": "sumble/test", "downloads": 6, "likes": 0 }
+    ],
+    "spaces": [],
+    "training_signals": [
+      { "repo_id": "sumble/ner-pass2-test-0", "signal_type": "TrainingArgs" },
+      { "repo_id": "sumble/ner-pass2-test-0", "signal_type": "FineTuning" }
+    ]
+  }
+]
