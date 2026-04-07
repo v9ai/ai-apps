@@ -3,7 +3,7 @@ slug: red-teaming-llm-applications-deepteam-guide
 title: "Red Teaming LLM Applications with DeepTeam: A Production Implementation Guide"
 description: "A production guide to red teaming LLM applications with DeepTeam covering 37 vulnerability types, 27 attack methods, custom domain vulnerabilities, compliance frameworks, CI integration, and a real-world 6-agent legal adversarial pipeline case study."
 date: 2026-03-22
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - red-teaming
   - llm-safety

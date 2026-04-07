@@ -3,7 +3,7 @@ slug: understanding-linear-regression-in-machine-learning
 title: Understanding Linear Regression in Machine Learning
 date: 2024-11-14
 description: "How gradient descent optimizes linear regression — parameter updates, gradient sign mechanics, learning rate selection, and convergence analysis."
-authors: [nicolad]
+authors: [v9ai]
 tags: [Machine Learning, Linear Regression, AI]
 ---
 

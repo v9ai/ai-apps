@@ -2,7 +2,7 @@
 title: "Building Long-Running TTS Pipelines with LangGraph: Orchestrating Long-Form Audio Generation"
 description: "Deep dive into architecting a resilient long-form text-to-speech system using LangGraph orchestration, PostgreSQL checkpointing, and OpenAI TTS streaming for long-form audio content with resumable workflows"
 date: 2026-01-18
-authors: [nicolad]
+authors: [v9ai]
 tags: [langgraph, tts, architecture, python, deepseek, openai, cloudflare-r2, postgres, audio-generation]
 ---
 

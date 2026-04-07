@@ -2,7 +2,7 @@
 title: "Langfuse Features: Prompts, Tracing, Scores, Usage"
 description: Complete guide to using Langfuse features in Nomadically.work
 tags: [langfuse, prompts, tracing, scores, usage, ai, llm, integration]
-authors: [nicolad]
+authors: [v9ai]
 slug: /langfuse-features-prompts-tracing-scores-usage
 ---
 

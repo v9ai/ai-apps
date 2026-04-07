@@ -3,7 +3,7 @@ slug: verification-gate-research-to-practice
 title: "The Agent That Says No: Why Verification Beats Generation"
 description: "An autonomous improvement system without verification is autonomous damage. Meet the agent that gates every change with confidence scores, counterfactual analysis, and build checks."
 date: 2026-02-25
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - autonomous-agents
   - verification

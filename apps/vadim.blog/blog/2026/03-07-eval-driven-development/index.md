@@ -3,7 +3,7 @@ slug: eval-driven-development
 title: "Eval Driven Development"
 description: "Here's the counterintuitive premise: for any LLM application where errors have real consequences, you must build your evaluation harness *before* you write a single prompt. You don't prompt-engineer b"
 date: 2026-03-07
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - eval
   - driven

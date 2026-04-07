@@ -2,7 +2,7 @@
 title: Building a Job Search Agent with Google ADK and Search Grounding
 description: Implement an AI-powered job search agent using Google's Agent Development Kit (ADK) with Google Search grounding, including grounding metadata extraction and citation integration.
 tags: [google, adk, search, grounding, ai, job-search-agent]
-authors: [nicolad]
+authors: [v9ai]
 slug: /job-search-agent-google-adk-search-grounding
 ---
 

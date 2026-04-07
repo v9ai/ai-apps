@@ -3,7 +3,7 @@ title: AI-Powered Skill Extraction with Cloudflare Embeddings and a Vector Taxon
 description: Bulk skill extraction for job descriptions using Cloudflare Workers AI embeddings (384-dim) + Turso/libSQL vector taxonomy retrieval + Mastra workflow structured extraction, with persistence and robust logging.
 sidebar_position: 1
 slug: /ai-powered-bulk-skill-extraction-cloudflare-embeddings-vector-taxonomy
-authors: [nicolad]
+authors: [v9ai]
 image: ./image.png
 
 ---

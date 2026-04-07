@@ -3,7 +3,7 @@ slug: qlib-ai-quant-workflow-scoreic
 title: Understanding Score IC in Qlib for Enhanced Profit
 date: 2024-12-24
 description: "Deploy Qlib AdaRNN for adaptive deep learning in quant finance — handling temporal distribution shift in stock market predictions."
-authors: [nicolad]
+authors: [v9ai]
 tags:
   [
     finance,

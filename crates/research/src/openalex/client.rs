@@ -111,7 +111,7 @@ impl OpenAlexClient {
     ) -> Result<SearchResponse, Error> {
         let url = format!("{}/works", self.base_url);
         let filter = format!(
-            "authorships.institutions.display_name.search:{}",
+            "raw_affiliation_strings.search:{}",
             company_name
         );
         let params = vec![
@@ -134,7 +134,7 @@ impl OpenAlexClient {
     ) -> Result<SearchResponse, Error> {
         let url = format!("{}/works", self.base_url);
         let filter = format!(
-            "authorships.author.display_name.search:{}",
+            "raw_author_name.search:{}",
             author_name
         );
         let params = vec![

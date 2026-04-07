@@ -4,7 +4,7 @@ description: "Beyond the marketing — what actually makes CrewAI different from
 og_title: "CrewAI vs. The Rest: What Actually Makes It Different in 2026"
 og_description: "Cut through the hype. A technical deep dive into CrewAI's unique features — code, architecture, and honest limitations — compared to LangGraph, AutoGen, and more."
 date: 2026-03-20
-authors: [nicolad]
+authors: [v9ai]
 slug: crewai-unique-features
 tags: [crewai, ai-agents, multi-agent, langgraph, autogen, python]
 ---

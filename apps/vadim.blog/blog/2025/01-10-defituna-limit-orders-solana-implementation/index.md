@@ -3,7 +3,7 @@ slug: defituna-limit-orders-solana-implementation
 title: "DeFiTuna: On-Chain Limit Orders on Solana"
 description: "Real-world implementation of DeFiTuna on-chain limit orders on Solana mainnet — direct RPC interaction, PDA derivation, position lifecycle, and SDK patterns."
 date: 2026-01-10
-authors: [nicolad]
+authors: [v9ai]
 tags: [solana, defi, rust, rpc, limit-orders]
 image: ./og.png
 ---

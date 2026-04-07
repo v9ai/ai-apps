@@ -3,7 +3,7 @@ slug: ml-features-crypto-scalping-research-papers
 title: "From Research Papers to Production: ML Features Powering a Crypto Scalping Engine"
 description: "A deep catalog of 14 ML and microstructure features implemented in a production Rust scalping engine — each traced back to its foundational research paper, with formulas, code, and architecture."
 date: 2026-03-11
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - rust
   - crypto

@@ -3,7 +3,7 @@ slug: synthetic-evaluation-deepeval-rag-testing
 title: "Synthetic Evaluation with DeepEval: A Production RAG Testing Framework"
 description: "Your RAG pipeline passes all 20 hand-written tests. Then users ask the 21st question. With 0.4% test coverage, the other 99.6% is untested surface area. Here's how to close that gap with synthetic evaluation."
 date: 2026-03-23
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - synthetic
   - evaluation

@@ -2,7 +2,7 @@
 title: Streaming OpenAI TTS to Cloudflare R2
 description: A production-ready implementation of OpenAI Text-to-Speech with chunking, merging, and Cloudflare R2 upload (GraphQL + REST).
 tags: [openai, tts, cloudflare, r2, streaming]
-authors: [nicolad]
+authors: [v9ai]
 slug: /streaming-openai-tts-to-cloudflare-r2
 ---
 
