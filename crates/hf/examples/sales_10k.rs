@@ -1,7 +1,7 @@
-//! Search HF for sales-adjacent models with 10k+ downloads.
-//! Fetches model cards for hits to verify genuine sales relevance.
+//! Search HF for sales-adjacent models — report all with 1k+ downloads,
+//! highlight any with 10k+.
 
-use hf::{HfClient, OrgScanner};
+use hf::{HfClient, OrgScanner, SalesCategory};
 use std::collections::HashMap;
 
 const QUERIES: &[&str] = &[
@@ -45,11 +45,12 @@ const QUERIES: &[&str] = &[
     "conversation intelligence",
     "call coaching",
     "sentiment analysis sales",
-    // Broader — catch sales-adjacent at scale
-    "sales",
+    // Broader — established adjacent categories
     "demand forecasting",
     "price prediction",
     "customer segmentation",
+    "customer churn",
+    "product recommendation",
 ];
 
 #[tokio::main]
@@ -57,75 +58,95 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = HfClient::from_env(12)?;
 
     let mut seen: HashMap<String, u64> = HashMap::new();
-    let mut all_hits = Vec::new();
+    let mut hits_1k = Vec::new();
 
     eprintln!("Searching {} queries...\n", QUERIES.len());
 
     for query in QUERIES {
         let results = client.search_models(query, 100).await.unwrap_or_default();
-        let mut query_10k = 0;
         for m in results {
             let repo_id = m.repo_id.clone().unwrap_or_default();
             let dl = m.downloads.unwrap_or(0);
-            if dl >= 10_000 && !seen.contains_key(&repo_id) {
+            if dl >= 1_000 && !seen.contains_key(&repo_id) {
                 seen.insert(repo_id.clone(), dl);
 
                 let tags = m.tags.clone().unwrap_or_default();
                 let sales_signals = OrgScanner::detect_sales_signals(&repo_id, "", &tags);
 
-                // Skip Salesforce general research models — brand match, not sales-specific
+                // Skip Salesforce general research models
                 let author = m.author.as_deref().unwrap_or("");
-                if author == "Salesforce" && sales_signals.iter().all(|s| s.category == hf::SalesCategory::General) {
+                let is_sf_general = author == "Salesforce"
+                    && (sales_signals.is_empty()
+                        || sales_signals
+                            .iter()
+                            .all(|s| s.category == SalesCategory::General));
+                if is_sf_general {
                     continue;
                 }
 
-                query_10k += 1;
-                all_hits.push((dl, repo_id.clone(), query.to_string(), m, sales_signals));
+                hits_1k.push((dl, repo_id, query.to_string(), m, sales_signals));
             }
-        }
-        if query_10k > 0 {
-            eprintln!("  \"{query}\" → {query_10k} models with 10k+ dl");
         }
     }
 
     // Sort by downloads descending
-    all_hits.sort_by(|a, b| b.0.cmp(&a.0));
+    hits_1k.sort_by(|a, b| b.0.cmp(&a.0));
 
-    eprintln!("\n{}", "=".repeat(120));
-    eprintln!("  GENUINE SALES-ADJACENT MODELS WITH 10K+ DOWNLOADS");
-    eprintln!("{}", "=".repeat(120));
+    let count_10k = hits_1k.iter().filter(|(dl, ..)| *dl >= 10_000).count();
+    let count_1k = hits_1k.len();
 
-    if all_hits.is_empty() {
-        eprintln!("\n  *** NONE FOUND ***");
-        eprintln!("  No model with 10k+ downloads is genuinely sales-specific.");
-        eprintln!("  Sales AI lives behind proprietary APIs (Gong, Clari, Outreach, etc.),");
-        eprintln!("  not on HuggingFace.\n");
-    } else {
-        for (dl, repo_id, query, m, signals) in &all_hits {
-            let lib = m.library.as_deref().unwrap_or("-");
-            let tag = m.pipeline_tag.as_deref().unwrap_or("-");
-            let author = m.author.as_deref().unwrap_or("-");
-            let created = m.created_at.as_deref().map(|d| &d[..10]).unwrap_or("?");
-            let likes = m.likes.unwrap_or(0);
-            let cats: Vec<String> = signals.iter().map(|s| format!("{:?}", s.category)).collect();
+    eprintln!("\n{}", "=".repeat(130));
+    eprintln!(
+        "  SALES-ADJACENT MODELS: {} with 10k+ dl, {} with 1k+ dl (excl. Salesforce Research)",
+        count_10k, count_1k
+    );
+    eprintln!("{}", "=".repeat(130));
 
-            eprintln!(
-                "  {dl:>12} dl  {likes:>5} likes  {repo_id:<55} author={author:<20} lib={lib:<15} tag={tag:<25} {created}  [{cats}]  q=\"{query}\""
-                , cats = cats.join(",")
-            );
-        }
+    for (dl, repo_id, query, m, signals) in &hits_1k {
+        let lib = m.library.as_deref().unwrap_or("-");
+        let tag = m.pipeline_tag.as_deref().unwrap_or("-");
+        let author = m.author.as_deref().unwrap_or("-");
+        let created = m.created_at.as_deref().map(|d| &d[..10]).unwrap_or("?");
+        let likes = m.likes.unwrap_or(0);
+        let cats: String = if signals.is_empty() {
+            "-".into()
+        } else {
+            signals
+                .iter()
+                .map(|s| format!("{:?}", s.category))
+                .collect::<Vec<_>>()
+                .join(",")
+        };
+        let marker = if *dl >= 10_000 { "***" } else { "   " };
+
+        eprintln!(
+            "{marker} {dl:>10} dl  {likes:>4} lk  {repo_id:<60} {author:<20} {lib:<18} {tag:<28} {created}  [{cats}]  q=\"{query}\""
+        );
     }
 
-    // Fetch model cards for top hits for deeper analysis
-    if !all_hits.is_empty() {
-        let top_ids: Vec<String> = all_hits.iter().take(20).map(|(_, id, _, _, _)| id.clone()).collect();
-        eprintln!("\nFetching model cards for top {} hits...", top_ids.len());
+    // Fetch model cards for top hits
+    if !hits_1k.is_empty() {
+        let top_ids: Vec<String> = hits_1k
+            .iter()
+            .take(30)
+            .map(|(_, id, _, _, _)| id.clone())
+            .collect();
+        eprintln!(
+            "\nFetching model cards for top {} hits...",
+            top_ids.len()
+        );
         let cards = client.fetch_model_cards(&top_ids).await.unwrap_or_default();
 
-        for (_, repo_id, _, _, _) in all_hits.iter().take(20) {
+        eprintln!("\n  MODEL CARD ANALYSIS:");
+        for (_, repo_id, _, _, _) in hits_1k.iter().take(30) {
             if let Some(card) = cards.get(repo_id.as_str()) {
                 let lower = card.to_lowercase();
-                let sales_mentions: Vec<&str> = ["sales", "lead", "revenue", "crm", "outreach", "prospect", "pipeline", "deal", "quota"]
+                let kws = [
+                    "sales", "lead", "revenue", "crm", "outreach", "prospect",
+                    "pipeline", "deal", "quota", "churn", "retention", "forecast",
+                    "customer lifetime", "recommendation", "segmentation",
+                ];
+                let mentions: Vec<&str> = kws
                     .iter()
                     .filter(|&&kw| lower.contains(kw))
                     .copied()
@@ -133,15 +154,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let boilerplate = OrgScanner::detect_boilerplate(card);
                 let lines = card.lines().count();
+                let cookbook = OrgScanner::detect_cookbook_recipe(card, &[]);
+                let generic_ds = OrgScanner::detect_generic_dataset(card, None, repo_id);
 
-                if !sales_mentions.is_empty() {
-                    eprintln!("  {repo_id}: card={lines} lines, boilerplate={boilerplate:.2}, mentions: {sales_mentions:?}");
-                }
+                eprintln!(
+                    "  {repo_id:<55} lines={lines:<4} bp={boilerplate:.2}  cookbook={:<15} ds={:<15} kw={mentions:?}",
+                    cookbook.as_deref().unwrap_or("-"),
+                    generic_ds.as_deref().unwrap_or("-"),
+                );
             }
         }
     }
 
-    eprintln!("\nTotal: {} models with 10k+ downloads across {} queries (excluding Salesforce Research)", all_hits.len(), QUERIES.len());
+    eprintln!(
+        "\nSummary: {count_10k} models ≥10k dl, {count_1k} models ≥1k dl, across {} queries",
+        QUERIES.len()
+    );
 
     Ok(())
 }
