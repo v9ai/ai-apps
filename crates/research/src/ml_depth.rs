@@ -14,37 +14,59 @@ use crate::paper::ResearchPaper;
 // ── Constants ────────────────────────────────────────────────────────────────
 
 /// Top ML venues for venue quality scoring.
+/// Includes both abbreviations and full names since OpenAlex returns full names.
 pub const TOP_ML_VENUES: &[&str] = &[
-    // Top-tier ML conferences
+    // Top-tier ML conferences (abbreviations + full names)
     "neurips",
     "nips",
+    "neural information processing systems",
     "icml",
+    "international conference on machine learning",
     "iclr",
+    "international conference on learning representations",
     // NLP
     "acl",
+    "association for computational linguistics",
     "emnlp",
+    "empirical methods in natural language",
     "naacl",
+    "north american chapter",
     "eacl",
     "coling",
     // Computer Vision
     "cvpr",
+    "conference on computer vision and pattern recognition",
     "iccv",
+    "international conference on computer vision",
     "eccv",
+    "european conference on computer vision",
     // AI general
     "aaai",
+    "association for the advancement of artificial intelligence",
     "ijcai",
-    // Journals
+    "international joint conference on artificial intelligence",
+    // Top journals
     "jmlr",
     "tmlr",
-    "nature machine intelligence",
-    "transactions on pattern analysis",
     "journal of machine learning research",
-    // Workshops / secondary
+    "transactions on machine learning research",
+    "nature machine intelligence",
+    "nature",
+    "science",
+    "transactions on pattern analysis",
+    "ieee transactions on neural networks",
+    "artificial intelligence",
+    // Secondary but still strong
     "interspeech",
     "icassp",
+    "international conference on acoustics",
     "sigir",
     "kdd",
+    "knowledge discovery and data mining",
     "www",
+    "world wide web",
+    "acm computing surveys",
+    "ieee signal processing",
 ];
 
 /// Known elite ML research labs for pedigree detection.

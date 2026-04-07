@@ -75,8 +75,12 @@ impl CompanyPaperSearch {
         }
 
         // 3. arXiv search (tertiary)
-        // Use all: prefix to search across all fields for the company name
-        let arxiv_query = format!("all:{company_name}");
+        // Quote multi-word names; single words search across all fields
+        let arxiv_query = if company_name.contains(' ') {
+            format!("all:\"{company_name}\"")
+        } else {
+            company_name.to_owned()
+        };
         match self
             .arxiv
             .search(&arxiv_query, 0, limit.min(20), None, None)
