@@ -35,7 +35,35 @@ The module operates at three levels simultaneously:
 2. **Sentence-level**: Token posteriors are aggregated within each sentence's token span, combined with 12 structural features (greeting detection, CTA presence, urgency words, personalization signals)
 3. **Document-level**: Attention-weighted sentence aggregation feeds a 7-category classifier with information-theoretic features (character entropy, compression ratio)
 
-The Bayesian framing is not decorative. Each token gets a Beta(alpha, beta) prior where alpha/(alpha+beta) is the expected spam contribution. The precision (alpha+beta) tells you how confident the model is about that token. This propagates through the hierarchy: a sentence full of high-precision spam tokens is a stronger signal than a sentence with low-precision ambiguous tokens.
+```mermaid
+graph TD
+    A["DeBERTa Encoder<br/>(768-dim hidden states)"] --> B["Token-level<br/>4 Aspect Probes"]
+    B --> C["Per-Sentence Span<br/>Aggregation"]
+    C --> D["Sentence-level<br/>12 Structural Features"]
+    D --> E["Document-level<br/>Attention + 8 Features"]
+    E --> F["7-Category Head"]
+    E --> G["Gate Head"]
+    F --> H["Residual Gate MLP"]
+    G --> H
+    I["AI Detector<br/>32 Features"] --> H
+    J["Header Analyzer<br/>16 Features"] --> H
+    K["Temporal Burst<br/>8 Features"] --> H
+    L["Campaign Similarity<br/>4 Features"] --> H
+    H --> M["Spam Score + Gate Decision"]
+    M --> N["Provider Calibration<br/>6 Provider MLPs"]
+```
+
+### Why Beta Priors
+
+The Bayesian framing is not decorative. The Beta distribution is the conjugate prior for Bernoulli observations, which makes it the natural choice for binary "spam or not" token-level indicators. Each token gets a Beta($\alpha$, $\beta$) prior where:
+
+- The **mean** $\mu = \frac{\alpha}{\alpha + \beta}$ is the expected spam contribution
+- The **precision** $\kappa = \alpha + \beta$ quantifies confidence — high precision means the model is sure about this token's role
+- The **variance** $\sigma^2 = \frac{\alpha\beta}{(\alpha+\beta)^2(\alpha+\beta+1)}$ decreases as precision increases
+
+This propagates through the hierarchy: a sentence full of high-precision spam tokens is a stronger signal than a sentence with low-precision ambiguous tokens. A document where all sentences have high-confidence spam scores should be blocked immediately; a document with mixed-confidence sentences should be quarantined for review.
+
+The Beta distribution's two parameters also give us a natural **uncertainty decomposition** that we exploit later — aleatoric versus epistemic — which a point-estimate classifier cannot provide.
 
 ## The Four Aspect Probes
 
@@ -52,7 +80,33 @@ self.probes = nn.ParameterDict({
 })
 ```
 
-Each probe independently computes attention weights over the token sequence, generates its own Beta posteriors, and produces an aspect-specific spam signal. A learned gating mechanism blends the four signals:
+### Scaled Dot-Product Attention with Beta Posteriors
+
+Each probe independently computes attention over the token sequence using scaled dot-product attention with the probe vector as the query:
+
+$$\text{attn}_a = \text{softmax}\left(\frac{q_a \cdot K^\top}{\sqrt{d_k}}\right)$$
+
+where $q_a$ is the learned probe for aspect $a$, $K = W_K \cdot H$ is the key projection of the encoder hidden states, and $d_k = \text{hidden}/4 = 192$. The attention weights are then used to compute per-token Beta posteriors:
+
+```python
+for aspect in self.ASPECTS:
+    probe = self.probes[aspect].unsqueeze(0)        # (1, 1, h/4)
+    attn = torch.bmm(probe, keys.transpose(1, 2)) / scale  # (1, 1, seq)
+    attn_w = attn.softmax(dim=-1).squeeze(1)        # (1, seq)
+
+    # Beta posterior parameters via Softplus (ensures α,β > 1)
+    a = self.prior_alpha[aspect](values).squeeze(-1) + 1.0  # (1, seq)
+    b = self.prior_beta[aspect](values).squeeze(-1) + 1.0   # (1, seq)
+    posterior = a / (a + b)   # E[Beta] = α/(α+β)
+
+    aspect_signals[aspect] = (attn_w * posterior).sum(dim=-1)  # scalar
+```
+
+The `Softplus` activation ensures $\alpha, \beta > 0$, and the `+ 1.0` shift ensures $\alpha, \beta > 1$, giving a unimodal Beta distribution (the mode exists and is well-defined). Without this shift, the model could learn degenerate U-shaped priors.
+
+### Aspect Gating
+
+A learned gating mechanism blends the four aspect signals into a single token-level spam score:
 
 ```python
 stacked_signals = torch.stack(
@@ -60,6 +114,12 @@ stacked_signals = torch.stack(
 gate_weights = self.aspect_gate(stacked_signals)        # (1, 4) softmax
 token_spam_signal = (stacked_signals * gate_weights).sum(dim=-1)
 ```
+
+The blended attention weights for downstream aggregation are computed as:
+
+$$\text{attn}_{\text{blend}} = \sum_{a} w_a \cdot \text{attn}_a$$
+
+where $w_a$ is the softmax gate weight for aspect $a$. This means the sentence-level aggregation naturally focuses on whichever aspect dominates for a given email.
 
 The output includes per-aspect attribution: "this email was flagged 62% because of deception signals (urgency words at positions 3, 7, 12) and 28% because of synthetic signals (low perplexity variance)." This interpretability matters for false positive investigation — when a legitimate email gets quarantined, you can see exactly which aspect triggered it.
 
@@ -84,17 +144,79 @@ sent_agg = torch.bmm(span_attn.unsqueeze(1), span_values).squeeze(1)
 
 Now a sentence containing "ACT NOW! LIMITED TIME!" produces a genuinely different neural representation than "I enjoyed our meeting last Tuesday about the Q3 roadmap" — because each sentence's aggregation is computed from its own token span, not from a global pool.
 
+### The 12 Sentence-Level Structural Features
+
+Each sentence is augmented with 12 hand-crafted features that capture spam-indicative patterns not easily learned from token embeddings alone:
+
+| # | Feature | Extraction |
+|---|---------|-----------|
+| 0 | Word count | `len(words)` |
+| 1 | Has greeting | Starts with "hey", "hi", "hello", "dear", "good morning" |
+| 2 | Has CTA | Contains "call", "schedule", "book", "demo", "sign up" |
+| 3 | Has urgency | Matches against 14 urgency word patterns |
+| 4 | Has personalization | Regex: `\b(your company\|your team\|you mentioned)\b` |
+| 5 | Has link | `https?://` pattern match |
+| 6 | Is question | Ends with "?" |
+| 7 | Punctuation density | Punctuation characters / total characters |
+| 8 | CAPS ratio | All-caps words / total words |
+| 9 | Pronoun ratio | First-person pronouns ("I", "me", "my", "we", "our") / words |
+| 10 | Specificity | Capitalized non-common words / total words |
+| 11 | Formality | Formal words ("please", "kindly", "sincerely") / total words |
+
+The structural features are projected to 32 dimensions and concatenated with the neural span aggregation (192-dim), giving a 224-dim sentence representation. A 2-layer MLP with GELU activation produces a per-sentence spam score $s_i \in [0, 1]$.
+
+### Document-Level Attention
+
+Sentence embeddings are stacked and aggregated via learned document attention:
+
+```python
+sent_stack = torch.cat(sentence_embeds_list, dim=0).unsqueeze(0)  # (1, n_sent, 64)
+sent_attn = self.doc_attention(sent_stack).softmax(dim=1)         # (1, n_sent, 1)
+doc_embed = (sent_attn * sent_stack).sum(dim=1)                   # (1, 64)
+```
+
+This allows the model to focus on the most spam-indicative sentences. An email with one spammy call-to-action sentence surrounded by legitimate content will have its attention concentrated on that sentence, rather than being diluted by the benign context.
+
 ## Information-Theoretic AI Detection
 
-Detecting AI-generated content is an adversarial problem. Paraphrasing tools, style transfer, and instruction-tuned models make surface-level detection unreliable. The module uses 32 structural features grouped into four categories, with several drawn from information theory and computational linguistics.
+Detecting AI-generated content is an adversarial problem. Paraphrasing tools, style transfer, and instruction-tuned models make surface-level detection unreliable. The `AdversarialStyleTransferDetector` uses **32 structural features** grouped into four categories, with several drawn from information theory and computational linguistics.
 
-### Yule's K (Vocabulary Richness)
+### Group 1: Basic Stylistic (Features 1-8)
+
+| # | Feature | Signal |
+|---|---------|--------|
+| 1 | Sentence length std | AI text has more uniform sentence lengths |
+| 2 | Contraction density | AI underuses contractions ("do not" vs "don't") |
+| 3 | Parenthetical/dash count | Human writers use more digressions |
+| 4 | Exclamation density | Spam and AI have distinct patterns |
+| 5 | First-person density | "I", "I'm", "my", "me" — humans self-reference more |
+| 6 | Average word length | AI tends toward longer, more formal vocabulary |
+| 7 | Sentence starter variety | AI often starts consecutive sentences identically |
+| 8 | Normalized text length | Short vs long text behaves differently |
+
+### Group 2: Vocabulary Richness (Features 9-16)
+
+These features measure the statistical properties of word frequency distributions:
+
+**Type-Token Ratio (TTR)**:
+
+$$\text{TTR} = \frac{V}{N}$$
+
+where $V$ is vocabulary size (unique words) and $N$ is total tokens. A crude measure — it scales with text length — but effective when combined with length normalization.
+
+**Hapax Ratio**:
+
+$$\text{HR} = \frac{V_1}{N}$$
+
+where $V_1$ is the count of hapax legomena (words appearing exactly once). High hapax ratio indicates diverse, non-repetitive vocabulary.
+
+**Yule's K (Vocabulary Richness)**:
 
 Raw word frequency variance is a weak signal — it scales with text length. **Yule's K** is length-invariant:
 
 $$K = 10^4 \cdot \frac{M_2 - N}{N^2}$$
 
-where $M_2 = \sum i^2 \cdot V_i$, $V_i$ is the count of words appearing exactly $i$ times, and $N$ is total tokens. AI text has characteristically different K values than human text because LLMs produce more uniform word frequency distributions.
+where $M_2 = \sum i^2 \cdot V_i$, $V_i$ is the count of words appearing exactly $i$ times, and $N$ is total tokens. AI text has characteristically lower K values than human text because LLMs produce more uniform word frequency distributions — they avoid both very common and very rare words, compressing the frequency spectrum toward the middle.
 
 ```python
 freq_of_freq = Counter(freq.values())
@@ -102,31 +224,108 @@ m2 = sum(i * i * vi for i, vi in freq_of_freq.items())
 yules_k = 1e4 * (m2 - N) / max(N * N, 1)
 ```
 
-### Shannon Word Entropy
+**Honore's R Statistic**:
+
+$$R = \frac{100 \cdot \ln N}{1 - V_1 / V}$$
+
+This measures vocabulary diversity independent of text length. A high R indicates rich, varied vocabulary. AI-generated text has a characteristic R profile that differs from human writing — not always lower, but distributed differently across text lengths. The denominator $1 - V_1/V$ captures the proportion of non-hapax vocabulary: text with mostly unique words (high hapax) drives R toward infinity, while text with heavily reused words drives R down.
+
+```python
+if V > 0 and hapax < V:
+    honore_r = 100.0 * math.log(max(N, 1)) / max(1.0 - hapax / V, 0.01)
+else:
+    honore_r = 0.0
+honore_r = min(honore_r / 1000.0, 1.0)  # normalize to ~[0,1]
+```
+
+The remaining features in this group: clause nesting density (commas + semicolons per sentence), conjunction density, hedging density ("perhaps", "might", "possibly"), filler word density ("basically", "literally", "honestly"), and list pattern detection.
+
+### Group 3: Stylistic Fingerprints (Features 17-24)
+
+| # | Feature | Why It Matters |
+|---|---------|---------------|
+| 17 | Question density | Human sales emails ask more questions |
+| 18 | 1st-vs-3rd person ratio | Self-referential vs expository balance |
+| 19 | Passive voice ratio | `was/were + *ed` pattern; AI overuses passive |
+| 20 | Information density | Content words / total words |
+| 21 | Paragraph length variance | AI produces uniform paragraph blocks |
+| 22 | Opening sentence length | Human emails often start with short greetings |
+| 23 | Honore's R statistic | See above |
+| 24 | Transition word density | "therefore", "furthermore", "consequently" — AI overuses transitions |
+
+### Group 4: Adversarial Fingerprints (Features 25-32)
+
+**Shannon Word Entropy**:
 
 The entropy of the word frequency distribution measures predictability:
 
 $$H = -\sum p_i \log_2 p_i$$
 
-normalized by $\log_2 V$ where $V$ is vocabulary size. AI text tends toward lower entropy — more predictable, more uniform distributions — because language models optimize for the most probable next token.
+normalized by $\log_2 V$ where $V$ is vocabulary size. AI text tends toward lower entropy — more predictable, more uniform distributions — because language models optimize for the most probable next token. The normalization ensures the feature is comparable across texts of different vocabulary sizes.
 
-### Honore's R Statistic
+```python
+word_entropy = 0.0
+for count in freq.values():
+    p = count / N
+    if p > 0:
+        word_entropy -= p * math.log2(p)
+word_entropy /= max(math.log2(max(V, 2)), 1.0)  # normalize to [0, 1]
+```
 
-$$R = \frac{100 \cdot \ln N}{1 - V_1 / V}$$
+**N-gram Repetition Score**: Combined bigram + trigram repetition rate. Template spam and AI text both show higher n-gram repetition, but for different reasons: templates reuse exact phrases, while AI has subtler lexical loops.
 
-where $V_1$ is the number of hapax legomena (words appearing exactly once). This measures vocabulary diversity independent of text length. A high R indicates rich, varied vocabulary. AI-generated text often has a characteristic R profile that differs from human writing — not always lower, but distributed differently across text lengths.
+```python
+bigrams = [f"{words[i]} {words[i+1]}" for i in range(len(words)-1)]
+trigrams = [f"{words[i]} {words[i+1]} {words[i+2]}" for i in range(len(words)-2)]
+bi_rep = 1.0 - (len(set(bigrams)) / max(len(bigrams), 1))
+tri_rep = 1.0 - (len(set(trigrams)) / max(len(trigrams), 1))
+repetition_score = (bi_rep + tri_rep) / 2.0
+```
+
+**Formality Index**: Ratio of formal words ("sincerely", "pursuant", "herein") to informal words ("hey", "cool", "gonna", "btw"). AI tends toward higher formality — LLMs default to a formal register unless explicitly prompted otherwise.
+
+**Self-Reference Pattern**: Ratio of self-reference pronouns ("I", "we", "our") to other-reference ("you", "your"). Legitimate sales emails focus on the recipient; AI-generated bulk content often defaults to self-promotional language.
+
+**Template Markers**: Binary detection of template placeholders — `{{`, `[[`, `<NAME>`, `[Company]`, `__FIELD__` patterns that escaped variable substitution.
+
+**Unicode Anomaly Score**: Weighted combination of non-ASCII characters, Cyrillic homoglyphs (6 codepoints that look identical to Latin: а, е, о, р, с, х), and zero-width characters. Homoglyphs get 5x weight, zero-width chars get 10x, because these indicate active deception rather than legitimate internationalization.
 
 ### Trajectory Smoothness
 
-LLMs maintain topic coherence too consistently. Human writing has natural velocity changes — digressions, asides, topic shifts. The trajectory smoothness feature measures the variance of consecutive sentence embedding cosine similarities:
+LLMs maintain topic coherence too consistently. Human writing has natural velocity changes — digressions, asides, topic shifts. The trajectory smoothness feature measures the mean cosine similarity between consecutive sentence embedding positions:
 
 ```python
+projected = self.trajectory_proj(tokens[0])  # (seq, 32)
+sampled = projected[::stride]                 # (~20, 32) evenly spaced
+
 normed = F.normalize(sampled, dim=-1)
 consec_cos = (normed[:-1] * normed[1:]).sum(dim=-1)
 smoothness = consec_cos.mean().item()
 ```
 
-High smoothness (consistently high cosine similarity between consecutive sentences) is a signal of AI generation. Human text has lower mean similarity and higher variance.
+High smoothness (consistently high cosine similarity between consecutive positions) is a signal of AI generation. Human text has lower mean similarity and higher variance — the embedding trajectory is "jerkier."
+
+### Watermark Detection
+
+The watermark head detects statistical patterns from LLM watermarking schemes (Kirchenbauer et al. 2023), where the model biases token selection toward a pseudo-random "green list." The detection head is a 2-layer MLP operating on the CLS embedding, producing a probability that watermarking artifacts are present.
+
+### Combining Signals
+
+All detection signals are fused through a combiner MLP:
+
+```python
+combiner_input = torch.cat([
+    log_ratio.view(1, -1),                                 # perplexity ratio (1)
+    (human_score + ai_score).view(1, -1),                  # magnitude (1)
+    struct_embed,                                          # 32 features → 64-dim (64)
+    torch.tensor([[trajectory, watermark, template_score]],
+                 device=cls.device),                       # (3)
+], dim=-1)  # total: 69-dim
+
+ai_risk = self.combiner(combiner_input).item()  # → sigmoid → [0, 1]
+```
+
+The perplexity ratio is the difference between learned human and AI pattern scorers operating on the CLS embedding: $\log r = s_{\text{human}}(\text{CLS}) - s_{\text{AI}}(\text{CLS})$. Positive values indicate human-like patterns; negative values indicate AI patterns. The magnitude $s_{\text{human}} + s_{\text{AI}}$ captures overall confidence.
 
 ## The Seven-Category Taxonomy
 
@@ -142,7 +341,27 @@ Binary spam classification hides actionable information. The module classifies i
 | `domain_suspect` | Disposable/newly-registered domains | Block |
 | `content_violation` | Urgency manipulation, deceptive subject | Block |
 
-The classification head sits on top of the document-level embedding, after attention-weighted sentence aggregation and 8 information-theoretic document features (character Shannon entropy, compression ratio, link density, urgency count, template markers, caps ratio, sentence count, text length).
+The classification head sits on top of the document-level embedding (64-dim), concatenated with 8 information-theoretic document features projected to 48 dimensions, giving a 112-dim input to a 2-layer MLP:
+
+```python
+cat_input = torch.cat([doc_embed, doc_feat_embed], dim=-1)  # (1, 112)
+category_logits = self.category_head(cat_input)             # (1, 7)
+```
+
+### The 8 Document-Level Features
+
+| # | Feature | Extraction |
+|---|---------|-----------|
+| 0 | Text length | `min(word_count / 500, 1.0)` |
+| 1 | Link density | `link_count / word_count * 100` |
+| 2 | CAPS ratio | All-caps words / total words |
+| 3 | Sentence count | `n_sentences / 20.0` |
+| 4 | Character Shannon entropy | $-\sum \frac{c_i}{n} \log_2 \frac{c_i}{n}$, normalized by $\log_2 |\text{alphabet}|$ |
+| 5 | Urgency word count | Raw count of urgency pattern matches |
+| 6 | Template markers | Binary: `{{`, `[[`, `<NAME>`, `[Company]` present |
+| 7 | Compression ratio | `unique_chars / text_length` (low = repetitive/templated) |
+
+Character Shannon entropy is particularly useful for detecting image-only or heavily encoded spam. Legitimate email text has a characteristic entropy range; emails that are mostly HTML tags or base64-encoded content have distinctly different profiles.
 
 ## Uncertainty Decomposition
 
@@ -150,29 +369,160 @@ A spam score of 0.6 is useless without knowing *why* the model is uncertain. The
 
 **Aleatoric uncertainty** (inherent ambiguity): the normalized entropy of the category probability distribution. High aleatoric uncertainty means the email itself is genuinely ambiguous — it has properties of multiple categories simultaneously.
 
-$$U_{aleatoric} = \frac{-\sum p_i \ln p_i}{\ln K}$$
+$$U_{\text{aleatoric}} = \frac{-\sum p_i \ln p_i}{\ln K}$$
+
+where $K = 7$ is the number of categories and $p_i$ is the softmax probability of category $i$. The denominator $\ln K$ normalizes to $[0, 1]$: uniform distribution gives $U_{\text{aleatoric}} = 1$, a one-hot distribution gives $U_{\text{aleatoric}} = 0$.
 
 **Epistemic uncertainty** (model uncertainty): the mean variance of the Beta distributions across all token posteriors. High epistemic uncertainty means the model hasn't seen enough training data similar to this email.
 
-$$U_{epistemic} = \text{mean}\left(\frac{\alpha \cdot \beta}{(\alpha + \beta)^2 (\alpha + \beta + 1)}\right)$$
+$$U_{\text{epistemic}} = \text{mean}\left(\frac{\alpha \cdot \beta}{(\alpha + \beta)^2 (\alpha + \beta + 1)}\right)$$
 
-The combined confidence is `1 - (aleatoric + epistemic) / 2`. This tells operators: "I'm uncertain because the email is ambiguous" (high aleatoric, low epistemic) versus "I'm uncertain because I haven't seen emails like this" (low aleatoric, high epistemic). The latter case is a signal to add more training data.
+This is the exact variance formula for the Beta distribution, averaged across all tokens and aspects. A Beta($1, 1$) uniform prior has maximum variance of $1/12 \approx 0.083$; as the model becomes more confident (higher $\alpha + \beta$), variance approaches zero.
+
+```python
+# Aleatoric: category distribution entropy
+cat_entropy = -(category_probs * (category_probs + 1e-8).log()).sum(dim=-1)
+aleatoric = (cat_entropy / math.log(category_logits.shape[-1])).item()
+
+# Epistemic: mean Beta variance across all tokens
+beta_var = (alpha * beta) / ((alpha + beta).pow(2) * (alpha + beta + 1))
+epistemic = beta_var.mean().item()
+
+gate_confidence = max(0.0, min(1.0, 1.0 - (aleatoric + epistemic) / 2))
+```
+
+The combined confidence tells operators: "I'm uncertain because the email is ambiguous" (high aleatoric, low epistemic) versus "I'm uncertain because I haven't seen emails like this" (low aleatoric, high epistemic). The latter case is a signal to add more training data. The former is a signal that the email needs human review.
 
 ## The Six Sub-Modules
 
-Beyond the Bayesian gate and AI detector, four additional sub-modules contribute signals:
+### A. HierarchicalBayesianAttentionGate
 
-**HeaderAnalyzer**: Extracts a 16-dimensional feature vector from email headers — SPF/DKIM/DMARC one-hot encoding (9 dims), hop count, reply-to mismatch, return-path mismatch, list-unsubscribe presence, known mailer flag, and circular send-hour encoding (sine/cosine pair).
+The core module described above. Computes token → sentence → document hierarchical gating with 4 aspect probes and Beta posteriors. Returns category logits, gate score, per-token contributions, per-sentence scores, aspect attributions, and uncertainty decomposition.
 
-**TemporalBurstDetector**: Analyzes cross-email send timestamps for burst patterns (Kleinberg model), cadence regularity, time-of-day entropy, day-of-week entropy, volume, and send rate acceleration. Ten emails in ten seconds from the same sender is a clear campaign burst.
+### B. AdversarialStyleTransferDetector
 
-**CampaignSimilarityDetector**: Computes pairwise cosine similarity of CLS embeddings across a batch. If >70% of email pairs have cosine similarity >0.85, it's a template campaign. Uses proper union-find with path compression for cluster counting.
+The 32-feature AI detection module described above. Additionally computes:
 
-**ProviderCalibration**: Six provider-specific MLPs (Gmail, Outlook, Yahoo, ProtonMail, Apple Mail, Corporate) each take 10 features — spam score, AI risk, text length, link density, urgency count, header authentication score, template markers, caps ratio, sentence count, and role account flag — and produce calibrated deliverability scores. An adversarial discriminator forces the predicted scores to match empirical inbox placement distributions.
+- **Perplexity ratio**: Dual-head architecture with separate human-pattern and AI-pattern scorers (3-layer MLPs: 768 → 128 → 64 → 1). The log-ratio acts as a discriminative signal.
+- **Trajectory smoothness**: Sentence-level embedding cosine similarity mean, computed on ~20 evenly-spaced projected positions.
+- **Watermark detection**: Kirchenbauer-style green-list bias detection via learned head on CLS.
+
+### C. HeaderAnalyzer
+
+Extracts a **16-dimensional** feature vector from email headers:
+
+```python
+[
+    spf_pass, spf_fail, spf_none,       # one-hot (3)
+    dkim_pass, dkim_fail, dkim_none,     # one-hot (3)
+    dmarc_pass, dmarc_fail, dmarc_none,  # one-hot (3)
+    hop_count / 20.0,                    # normalized (1)
+    reply_to_mismatch,                   # binary (1)
+    return_path_mismatch,                # binary (1)
+    has_list_unsubscribe,                # binary (1)
+    known_mailer,                        # binary (1)
+    sin(2*pi*hour/24),                   # circadian encoding (1)
+    cos(2*pi*hour/24),                   # circadian encoding (1)
+]
+```
+
+The circadian encoding captures send-time patterns without discontinuity at midnight. A sine/cosine pair maps the 24-hour cycle to a continuous 2D circle: hour 0 and hour 23 are adjacent, not 23 apart. Spam campaigns cluster at specific hours; legitimate business emails follow predictable circadian patterns per timezone.
+
+The one-hot encoding for SPF/DKIM/DMARC (rather than a single pass/fail bit) allows the model to learn that "none" (no authentication) is a different signal than "fail" (authentication attempted and failed). Failed DKIM is more suspicious than absent DKIM.
+
+### D. TemporalBurstDetector
+
+Analyzes cross-email send timestamps for burst patterns and cadence regularity. The 8-dimensional feature vector:
+
+| # | Feature | Signal |
+|---|---------|--------|
+| 0 | Mean interval | Average time between emails (normalized to hours) |
+| 1 | Interval variance | High variance = irregular sending; low = automated |
+| 2 | Burst fraction | Proportion of intervals < 60 seconds |
+| 3 | Cadence regularity | $1/(1 + CV)$ where $CV$ = coefficient of variation |
+| 4 | Time-of-day entropy | Entropy over 24-hour bins, normalized by $\ln 24$ |
+| 5 | Day-of-week entropy | Entropy over 7-day bins, normalized by $\ln 7$ |
+| 6 | Volume | `min(n_emails / 100, 1.0)` |
+| 7 | Acceleration | Is send rate increasing? First-half vs second-half mean interval |
+
+Ten emails in ten seconds from the same sender is a clear campaign burst (burst fraction ≈ 1.0). A perfectly regular cadence (low CV, high regularity) with low time-of-day entropy suggests an automated scheduler. Human senders have high entropy across both time-of-day and day-of-week; bots concentrate in narrow windows.
+
+The acceleration feature detects campaigns that ramp up: if the second half of observed intervals is shorter than the first half, the sender is accelerating. This catches "start slow, then blast" patterns common in warming campaigns.
+
+### E. CampaignSimilarityDetector
+
+Computes pairwise cosine similarity of CLS embeddings across a batch. The detection threshold: if >70% of email pairs have cosine similarity >0.85, it's a template campaign.
+
+The cluster counting uses proper **union-find with path compression** (path halving, union by rank):
+
+```python
+parent = list(range(n))
+rank = [0] * n
+
+def _find(x):
+    while parent[x] != x:
+        parent[x] = parent[parent[x]]  # path halving
+        x = parent[x]
+    return x
+
+def _union(a, b):
+    ra, rb = _find(a), _find(b)
+    if ra == rb:
+        return
+    if rank[ra] < rank[rb]:
+        ra, rb = rb, ra
+    parent[rb] = ra
+    if rank[ra] == rank[rb]:
+        rank[ra] += 1
+
+for i in range(n):
+    for j in range(i + 1, n):
+        if sim_matrix[i, j].item() > 0.85:
+            _union(i, j)
+
+cluster_ratio = len(set(_find(i) for i in range(n))) / max(n, 1)
+```
+
+The 4-dimensional output: max pairwise similarity, mean pairwise similarity, fraction above threshold, and cluster ratio (number of distinct clusters / total emails). A cluster ratio near 1.0 means all emails are unique; near $1/n$ means they all merged into a single cluster.
+
+### F. ProviderCalibration
+
+Six provider-specific MLPs (Gmail, Outlook, Yahoo, ProtonMail, Apple Mail, Corporate) each take 10 features and produce calibrated deliverability scores:
+
+```python
+# 10-dim input per provider
+feat_vec = [
+    spam_score, ai_risk, text_length_norm, link_density,
+    urgency_count_norm, header_auth_score, template_marker,
+    caps_ratio, sentence_count_norm, role_account,
+]
+```
+
+Each provider MLP has the architecture: `Linear(10, 32) → GELU → Dropout(0.1) → Linear(32, 16) → ReLU → Linear(16, 1) → Sigmoid`.
+
+Rule-based adjustments are applied on top of the learned scores using empirical provider thresholds:
+
+| Provider | Base | Link Penalty | Urgency Penalty |
+|----------|------|-------------|----------------|
+| Gmail | 0.45 | 0.08 | 0.12 |
+| Outlook | 0.40 | 0.10 | 0.10 |
+| Yahoo | 0.50 | 0.06 | 0.15 |
+| ProtonMail | 0.35 | 0.12 | 0.08 |
+| Apple Mail | 0.42 | 0.07 | 0.11 |
+| Corporate | 0.38 | 0.10 | 0.10 |
+
+ProtonMail has the lowest base threshold (most aggressive filtering) and highest link penalty — consistent with its privacy-focused positioning. Yahoo has the highest base threshold (most lenient) but the highest urgency penalty. Gmail sits in the middle but penalizes urgency more than links.
+
+An **adversarial discriminator** forces the predicted scores to match empirical inbox placement distributions. The discriminator takes a (score, real/fake) pair and learns to distinguish model-predicted deliverability from ground-truth measurements. The generator loss pushes the provider MLPs to produce scores the discriminator cannot distinguish from real data:
+
+```python
+d_loss = BCE(D(real_score, 1), ones) + BCE(D(pred_score, 0), zeros)
+g_loss = BCE(D(pred_score, 0), ones)  # fool the discriminator
+```
 
 ## Residual Gate Decision
 
-The final spam score comes from a residual MLP that fuses all six sub-module outputs:
+The final spam score comes from a **residual MLP** that fuses all six sub-module outputs:
 
 ```python
 self.gate_norm = nn.LayerNorm(7)
@@ -184,25 +534,106 @@ self.gate_residual = nn.Linear(7, 32)  # skip connection
 self.gate_out = nn.Sequential(nn.LayerNorm(32), nn.Linear(32, 1), nn.Sigmoid())
 ```
 
-The seven inputs are: base gate score, AI risk, header authentication score, temporal anomaly, campaign similarity, role account indicator, and urgency count. The skip connection prevents gradient degradation when training with the multi-task loss, and the layer normalization stabilizes the heterogeneous input scales.
+The seven inputs are:
+
+| # | Signal | Source |
+|---|--------|--------|
+| 0 | Base gate score | HierarchicalBayesianAttentionGate |
+| 1 | AI risk | AdversarialStyleTransferDetector |
+| 2 | Header auth score | HeaderAnalyzer (mean of SPF/DKIM/DMARC pass signals) |
+| 3 | Temporal anomaly | TemporalBurstDetector (burst fraction) |
+| 4 | Campaign similarity | CampaignSimilarityDetector |
+| 5 | Role account indicator | Address prefix matching |
+| 6 | Urgency count (norm) | `urgency_count / 5.0` |
+
+The skip connection prevents gradient degradation when training with the multi-task loss, and the layer normalization stabilizes the heterogeneous input scales (some signals are probabilities in $[0,1]$, others are normalized counts). The residual path `gate_residual(x)` provides a direct linear shortcut from raw signals to the output, so the trunk only needs to learn corrections to the linear baseline.
+
+### Gate Decisions and Risk Levels
+
+The final spam score maps to a three-tier gate:
+
+```
+score < 0.3  → Pass        risk: low
+score < 0.5  → Quarantine  risk: medium
+score < 0.7  → Quarantine  risk: high
+score ≥ 0.7  → Block       risk: critical
+```
+
+### Risk Factor Attribution
+
+Nine named risk factors are detected and reported with severity scores:
+
+| Risk Factor | Trigger | Severity |
+|-------------|---------|----------|
+| `urgency_manipulation` | ≥ 2 urgency words | `count / 5.0` |
+| `link_overload` | > 3 links | `count / 10.0` |
+| `url_shortener` | Any shortened URL | `count / 3.0` |
+| `encoding_tricks` | Template markers detected | 0.5 |
+| `homoglyph_attack` | Unicode anomaly > 0.01 | Anomaly score |
+| `reply_to_mismatch` | Reply-To ≠ From domain | 0.8 |
+| `image_only` | Mostly image tags | Image ratio |
+| `invisible_text` | Zero-width characters | Char count |
+| `zero_width_chars` | `\u200B`, `\u200C`, `\u200D`, `\uFEFF` | Char count |
 
 ## Multi-Task Loss with Uncertainty Weighting
 
-Training uses the Kendall et al. (2018) uncertainty-weighted multi-task loss:
+Training uses the Kendall et al. (2018) uncertainty-weighted multi-task loss. Each task has a learned log-variance parameter $\log \sigma_i^2$ that automatically scales its contribution:
 
 $$\mathcal{L} = \sum_i \frac{1}{2\sigma_i^2} \mathcal{L}_i + \log \sigma_i$$
 
-where each task's loss is weighted by a learned precision $1/\sigma_i^2$, and the $\log \sigma_i$ term prevents all precisions from going to infinity. The five tasks are:
+The precision $1/\sigma_i^2 = \exp(-\log \sigma_i^2)$ weights each task's loss. The $\log \sigma_i$ regularizer prevents all precisions from going to infinity (which would minimize loss trivially).
 
-1. **Category cross-entropy** (7-way classification)
-2. **Gate BCE** (binary spam/not-spam)
-3. **AI detection BCE** (binary AI/human)
-4. **KL regularization** (Beta posteriors vs uniform Beta(1,1) prior)
-5. **Adversarial calibration** (provider discriminator + generator, after warmup at epoch 3)
+```python
+prec_cat = torch.exp(-self.log_var_cat)    # learned precision
+prec_gate = torch.exp(-self.log_var_gate)
+prec_ai = torch.exp(-self.log_var_ai)
+
+loss_cat = prec_cat * F.cross_entropy(category_logits, true_category) + self.log_var_cat
+loss_gate = prec_gate * F.binary_cross_entropy(gate_score, true_is_spam) + self.log_var_gate
+loss_ai = prec_ai * F.binary_cross_entropy(ai_risk, true_is_ai) + self.log_var_ai
+```
+
+The five loss components:
+
+1. **Category cross-entropy** (7-way classification): The primary classification objective
+2. **Gate BCE** (binary spam/not-spam): The gating decision
+3. **AI detection BCE** (binary AI/human): The content authenticity signal
+4. **KL regularization** (Beta posteriors vs uniform prior): Prevents posterior collapse
+
+$$\text{KL}\left[\text{Beta}(\alpha, \beta) \| \text{Beta}(1, 1)\right] = \ln \frac{B(1,1)}{B(\alpha,\beta)} + (\alpha - 1)\left[\psi(\alpha) - \psi(\alpha + \beta)\right] + (\beta - 1)\left[\psi(\beta) - \psi(\alpha + \beta)\right]$$
+
+where $B$ is the Beta function and $\psi$ is the digamma function. This regularizer pulls the learned posteriors toward the uniform Beta(1,1) prior, preventing overconfident token-level predictions. The KL weight is 0.01 — light regularization that allows the model to deviate from the prior when the data supports it.
+
+5. **Adversarial calibration** (provider discriminator + generator): Activated after epoch 3 warmup with weight 0.1, giving the classification heads time to converge before the adversarial signal introduces instability.
 
 ## The Rust Distillation Path
 
 The DeBERTa model is too expensive for production gating at scale. The distillation pipeline converts the neural classifier into a 24-feature logistic regression that runs in pure Rust with zero ML dependencies.
+
+### Distillation Pipeline
+
+The distillation process:
+
+1. **Data export** (`export_spam_data.py`, 498 lines): Fetches emails from Neon PostgreSQL (contact_emails, received_emails tables), labels via heuristic rules based on personalization scores, template IDs, keyword density, and word count thresholds
+2. **Soft label generation**: Runs the DeBERTa SpamHead on all emails to produce 7-class probability distributions
+3. **Feature extraction**: Computes the same 24-element feature vector used by the Rust classifier
+4. **One-vs-Rest training**: Fits 7 independent logistic regressions using SGD with L2 regularization ($\lambda = 0.01$), 500 epochs, learning rate 0.1
+5. **Weight export**: Serializes as JSON matching the Rust `SpamClassifier` struct format
+
+```python
+def train_logistic(X, y, epochs=500, lr=0.1):
+    w = np.zeros(d, dtype=np.float64)
+    b = 0.0
+    for epoch in range(epochs):
+        z = X @ w + b
+        pred = 1.0 / (1.0 + np.exp(-np.clip(z, -30, 30)))
+        error = pred - y
+        grad_w = (X.T @ error) / n + 0.01 * w  # L2 regularization
+        grad_b = error.mean()
+        w -= lr * grad_w
+        b -= lr * grad_b
+    return w.astype(np.float32), float(b)
+```
 
 ### Feature Extraction (24 dimensions)
 
@@ -210,19 +641,47 @@ The Rust `extract_spam_features()` function mirrors the Python feature set using
 
 | # | Feature | Extraction Method |
 |---|---------|-------------------|
-| 0-1 | Spam/urgency keyword density | Keyword match count / word count |
-| 2-4 | Link count, URL shorteners, image tags | Byte-level pattern scanning |
-| 5-6 | Exclamation density, ALL CAPS ratio | Character classification |
-| 7-9 | Sentence length variance, pronouns, contractions | Split-and-count |
-| 10-13 | Type-token ratio, word length, starter variety, text length | Vocabulary statistics |
-| 14-17 | Unicode anomalies, homoglyphs, zero-width chars, template markers | Codepoint scanning |
-| 18-20 | SPF+DKIM+DMARC composite, reply-to mismatch, hop count | Parsed headers |
-| 21-22 | Send hour sine/cosine | Circadian encoding |
-| 23 | Role account indicator | Prefix matching |
+| 0-1 | Spam/urgency keyword density | Keyword match count / word count (29 spam keywords, 14 urgency keywords) |
+| 2-4 | Link count, URL shorteners, image tags | Byte-level pattern scanning for `http://`, `bit.ly`, `<img` |
+| 5-6 | Exclamation density, ALL CAPS ratio | `text.bytes().filter(\|&b\| b == b'!')` / Character classification |
+| 7-9 | Sentence length variance, pronouns, contractions | Split-and-count with variance normalization |
+| 10-13 | Type-token ratio, word length, starter variety, text length | `HashSet` for unique words, normalized to [0,1] |
+| 14-17 | Unicode anomalies, homoglyphs, zero-width chars, template markers | Codepoint scanning (6 Cyrillic homoglyphs, 4 zero-width chars) |
+| 18-20 | SPF+DKIM+DMARC composite, reply-to mismatch, hop count | Parsed headers via `EmailHeaders` struct |
+| 21-22 | Send hour sine/cosine | `(hour / 24.0 * TAU).sin()`, `.cos()` |
+| 23 | Role account indicator | Prefix matching against 15 role account patterns |
+
+### Rust Classifier
+
+The distilled model is a simple struct with 7 weight vectors and 7 biases:
+
+```rust
+pub struct SpamClassifier {
+    pub weights: Vec<[f32; 24]>,  // 7 classifiers × 24 features
+    pub biases: [f32; 7],
+    pub trained: bool,
+}
+
+impl SpamClassifier {
+    pub fn classify(&self, features: &[f32; 24]) -> [f32; 7] {
+        let mut scores = [0.0f32; 7];
+        for i in 0..7 {
+            let mut z = self.biases[i];
+            for j in 0..24 {
+                z += self.weights[i][j] * features[j];
+            }
+            scores[i] = sigmoid(z);
+        }
+        scores
+    }
+}
+```
+
+The spam score is `1.0 - clean_score` (index 0 is "clean"). The dominant category is the argmax. Gate thresholds: `Pass` (score below 0.3), `Quarantine` (0.3 to 0.7), `Block` (above 0.7).
 
 ### Batch Processing (SoA Layout)
 
-The `SpamBatch` struct uses Structure-of-Arrays layout with 64-byte cache alignment for optimal auto-vectorization on ARM NEON and x86 SSE:
+The `SpamBatch` struct uses **Structure-of-Arrays** layout with 64-byte cache alignment for optimal auto-vectorization on ARM NEON and x86 SSE:
 
 ```rust
 #[repr(C, align(64))]
@@ -235,29 +694,99 @@ pub struct SpamBatch {
 }
 ```
 
-A batch of 256 emails is scored in a single pass. The `push()` method provides ergonomic batch building, and `mean_score()`, `pass_rate()`, and `category_distribution()` give batch-level analytics without allocations.
+Why 64-byte alignment? Modern CPUs load data in cache lines of 64 bytes. When the feature array starts at a cache-line boundary, sequential access never straddles two cache lines, and the compiler can emit aligned NEON/SSE load instructions (`LDR Q` / `MOVAPS`) instead of unaligned ones. The inner loop of `classify()` — a dot product of 24 `f32` values — fits in 96 bytes (1.5 cache lines), and the alignment ensures the first cache line is loaded without penalty.
+
+A batch of 256 emails is scored in a single pass with ergonomic batch building:
+
+```rust
+// Build batch
+let mut batch = SpamBatch::new();
+for email in &emails {
+    batch.push(&email.text, Some(&email.headers));
+}
+
+// Score all
+batch.compute_scores(&classifier);
+
+// Analytics
+let pass_rate = batch.pass_rate(0.3);
+let distribution = batch.category_distribution();
+let clean_indices = batch.passed_indices(0.3);
+```
 
 ### Domain Filtering (Bloom Filter)
 
-Before feature extraction even runs, a Bloom filter checks the sender domain against known spam and disposable email provider lists. At 0.1% false positive rate, this catches the obvious cases — mailinator.com, guerrillamail.com — at near-zero cost.
+Before feature extraction even runs, a Bloom filter checks the sender domain against known spam and disposable email provider lists. The filter uses **double hashing** with AHash:
 
-### Zero-Copy Header Parsing
+```rust
+fn double_hash(item: &[u8]) -> (u64, u64) {
+    let mut h1 = AHasher::default();
+    item.hash(&mut h1);
+    let hash1 = h1.finish();
 
-The `header_fsm.rs` module parses raw email headers in a single pass with no heap allocation. A finite state machine identifies Authentication-Results, From, Reply-To, Return-Path, Received, DKIM-Signature, Content-Type, List-Unsubscribe, and X-Mailer headers. The parsed result borrows directly from the input byte buffer:
+    let mut h2 = AHasher::default();
+    hash1.hash(&mut h2);
+    item.hash(&mut h2);
+    let hash2 = h2.finish();
+
+    (hash1, hash2)
+}
+
+// Combined hash for k-th probe: h1 + k*h2
+fn combined_hash(h1: u64, h2: u64, i: u32) -> u64 {
+    h1.wrapping_add((i as u64).wrapping_mul(h2))
+}
+```
+
+Optimal sizing follows the standard formulas:
+
+$$m = -\frac{n \ln p}{(\ln 2)^2}, \qquad k = \frac{m}{n} \ln 2$$
+
+where $m$ is bit count, $n$ is expected capacity, and $p$ is target false positive rate. For 1,000 domains at $p = 0.001$ (0.1% FPR), this gives $m \approx 14,378$ bits (1.8 KB) and $k \approx 10$ hash functions.
+
+Two separate Bloom filters: one for 15 known spam domains (spammer.com, phish-bait.com, etc.) and one for 30 disposable email providers (mailinator.com, guerrillamail.com, tempmail.com, etc.). The check returns a `DomainVerdict`: Clean, KnownSpam, or Disposable.
+
+### Zero-Copy Header FSM
+
+The `header_fsm.rs` module (541 lines) parses raw email headers in a single pass with zero heap allocation. A finite state machine processes byte-by-byte, with **length-based field name dispatch** for performance:
+
+```rust
+fn identify_field(raw: &[u8], start: usize, end: usize) -> CurrentField {
+    match end - start {
+        4  => if starts_with_icase(raw, start, b"From") { From }
+        8  => { /* Reply-To, Received, X-Mailer */ }
+        11 => { /* Return-Path */ }
+        12 => { /* Content-Type */ }
+        14 => { /* DKIM-Signature */ }
+        16 => { /* List-Unsubscribe */ }
+        22 => { /* Authentication-Results */ }
+        _  => Unknown,
+    }
+}
+```
+
+The parser handles folded headers (continuation lines starting with space/tab), case-insensitive field matching, and both `\n` and `\r\n` line endings. The result borrows directly from the input buffer:
 
 ```rust
 pub struct ParsedHeaders<'a> {
     pub spf_result: AuthResult,
     pub dkim_result: AuthResult,
     pub dmarc_result: AuthResult,
-    pub from_domain: &'a str,
+    pub from_domain: &'a str,        // borrows from input
     pub reply_to_domain: Option<&'a str>,
+    pub return_path_domain: Option<&'a str>,
+    pub received_count: u8,
+    pub has_list_unsubscribe: bool,
+    pub x_mailer: Option<&'a str>,
     pub dkim_domain: Option<&'a str>,
     pub content_type: Option<&'a str>,
     pub is_multipart: bool,
-    // ...
 }
 ```
+
+Authentication-Results parsing extracts SPF, DKIM, and DMARC results from the value field by scanning for `spf=`, `dkim=`, `dmarc=` substrings and classifying the result token as Pass, Fail, SoftFail, or None. DKIM-Signature parsing extracts the signing domain from the `d=` field. Content-Type parsing detects `multipart/*` MIME types.
+
+The zero-copy design means parsing a 2 KB header block involves no allocations — the `ParsedHeaders` struct is 128 bytes on the stack, and all string slices point into the input buffer. This is critical at batch scale: parsing 256 email headers should not produce 256 separate string allocations.
 
 ## Results
 
@@ -273,5 +802,14 @@ gate_confidence, aspect_scores, uncertainty
 The full system — 1,352 lines of Python (6 sub-modules), 843 lines of Rust (classifier + batch + domain filter), 541 lines of Rust (header FSM) — runs the DeBERTa model on CPU in under 200ms per email for training and evaluation. The distilled Rust classifier processes a batch of 256 emails in under 1ms.
 
 The key insight is that spam gating is not a classification problem — it is a **resource allocation** problem. Every false negative costs downstream compute. Every false positive costs a missed lead. The Bayesian uncertainty decomposition lets you tune this tradeoff explicitly: route high-epistemic-uncertainty emails to human review instead of auto-blocking them, and auto-block only when aleatoric uncertainty is low and the spam score is high.
+
+The decision matrix:
+
+| Aleatoric | Epistemic | Action |
+|-----------|-----------|--------|
+| Low | Low | Trust the score — auto-pass or auto-block |
+| High | Low | Genuinely ambiguous email — quarantine for human review |
+| Low | High | Model hasn't seen this pattern — add to training data |
+| High | High | Unknown and ambiguous — escalate immediately |
 
 The model, weights, and distillation pipeline are open source. The next step is calibrating the provider-specific models against real inbox placement data from Resend delivery webhooks.
