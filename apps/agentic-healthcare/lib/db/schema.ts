@@ -396,6 +396,38 @@ export const conditionResearches = pgTable(
   ],
 );
 
+// ── Protocol Research ─────────────────────────────────────────────
+
+export const protocolResearches = pgTable(
+  "protocol_researches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    protocolId: uuid("protocol_id")
+      .notNull()
+      .references(() => brainHealthProtocols.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    supplementFindings: jsonb("supplement_findings").notNull().default([]),
+    papers: jsonb("papers").notNull().default([]),
+    synthesis: text("synthesis"),
+    paperCount: text("paper_count"),
+    supplementCount: text("supplement_count"),
+    status: text("status").notNull().default("pending"),
+    errorMessage: text("error_message"),
+    durationMs: text("duration_ms"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("pr_protocol_idx").on(table.protocolId),
+    index("pr_user_idx").on(table.userId),
+    index("pr_status_idx").on(table.status),
+  ],
+);
+
 // ── Brain Health Protocols ────────────────────────────────────────
 
 export const brainHealthProtocols = pgTable(

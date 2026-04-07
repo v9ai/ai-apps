@@ -62,6 +62,7 @@ import {
   useDeleteIssueScreenshotMutation,
 } from "@/app/__generated__/hooks";
 import { ConversationsSection } from "@/app/components/ConversationsSection";
+import { getSeverityColor, getCategoryColor } from "@/app/lib/issue-colors";
 
 const CATEGORY_OPTIONS = [
   "academic",
@@ -75,40 +76,6 @@ const CATEGORY_OPTIONS = [
 ];
 
 const SEVERITY_OPTIONS = ["low", "medium", "high"];
-
-function getSeverityColor(severity: string) {
-  switch (severity.toLowerCase()) {
-    case "high":
-      return "red" as const;
-    case "medium":
-      return "orange" as const;
-    case "low":
-      return "green" as const;
-    default:
-      return "gray" as const;
-  }
-}
-
-function getCategoryColor(category: string) {
-  switch (category.toLowerCase()) {
-    case "academic":
-      return "blue" as const;
-    case "behavioral":
-      return "orange" as const;
-    case "social":
-      return "purple" as const;
-    case "emotional":
-      return "pink" as const;
-    case "developmental":
-      return "cyan" as const;
-    case "health":
-      return "red" as const;
-    case "communication":
-      return "yellow" as const;
-    default:
-      return "gray" as const;
-  }
-}
 
 function IssueDetailContent() {
   const router = useRouter();
