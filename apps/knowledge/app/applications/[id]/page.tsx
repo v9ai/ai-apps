@@ -122,7 +122,7 @@ function ApplicationDetailInner() {
 
   return (
     <Container size="3" p={{ initial: "4", md: "8" }}>
-      <ApplicationHeader app={app} isAdmin={isAdmin} onUpdate={setApp} />
+      <ApplicationHeader app={app} isAdmin={isAdmin} onUpdate={setApp} onSlugChange={(s) => router.replace(`/applications/${s}?tab=${activeTab}`)} />
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List style={{ borderBottom: "1px solid var(--gray-6)" }}>

@@ -31,9 +31,10 @@ interface ApplicationHeaderProps {
   app: AppData;
   isAdmin: boolean;
   onUpdate: (updated: AppData) => void;
+  onSlugChange?: (newSlug: string) => void;
 }
 
-export function ApplicationHeader({ app, isAdmin, onUpdate }: ApplicationHeaderProps) {
+export function ApplicationHeader({ app, isAdmin, onUpdate, onSlugChange }: ApplicationHeaderProps) {
   const router = useRouter();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -43,6 +44,7 @@ export function ApplicationHeader({ app, isAdmin, onUpdate }: ApplicationHeaderP
   const [positionValue, setPositionValue] = useState("");
   const [companyValue, setCompanyValue] = useState("");
   const [urlValue, setUrlValue] = useState("");
+  const [slugValue, setSlugValue] = useState("");
   const [appSaving, setAppSaving] = useState(false);
   const [appSaveError, setAppSaveError] = useState<string | null>(null);
 
@@ -55,7 +57,7 @@ export function ApplicationHeader({ app, isAdmin, onUpdate }: ApplicationHeaderP
   const jobUrl = app.url?.startsWith("http") ? app.url : null;
 
   const handleStatusChange = async (status: ApplicationStatus) => {
-    const res = await fetch(`/api/applications/${app.id}`, {
+    const res = await fetch(`/api/applications/${app.slug}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -70,19 +72,25 @@ export function ApplicationHeader({ app, isAdmin, onUpdate }: ApplicationHeaderP
     setAppSaving(true);
     setAppSaveError(null);
     try {
-      const res = await fetch(`/api/applications/${app.id}`, {
+      const cleanSlug = slugValue.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      const slugChanged = cleanSlug && cleanSlug !== app.slug;
+      const res = await fetch(`/api/applications/${app.slug}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           position: positionValue || undefined,
           company: companyValue || undefined,
           url: urlValue || null,
+          ...(slugChanged && { slug: cleanSlug }),
         }),
       });
       if (!res.ok) throw new Error("Save failed");
       const updated = await res.json();
       onUpdate(updated);
       setEditingApp(false);
+      if (slugChanged && onSlugChange) {
+        onSlugChange(cleanSlug);
+      }
     } catch (e) {
       setAppSaveError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -116,6 +124,7 @@ export function ApplicationHeader({ app, isAdmin, onUpdate }: ApplicationHeaderP
               setPositionValue(app.position);
               setCompanyValue(app.company);
               setUrlValue(app.url ?? "");
+              setSlugValue(app.slug);
               setAppSaveError(null);
               setEditingApp(true);
             }}>
@@ -147,7 +156,7 @@ export function ApplicationHeader({ app, isAdmin, onUpdate }: ApplicationHeaderP
               onClick={async () => {
                 setDeleting(true);
                 try {
-                  const res = await fetch(`/api/applications/${app.id}`, { method: "DELETE" });
+                  const res = await fetch(`/api/applications/${app.slug}`, { method: "DELETE" });
                   if (res.ok) router.push("/applications");
                 } catch {
                   setDeleting(false);
@@ -269,6 +278,15 @@ export function ApplicationHeader({ app, isAdmin, onUpdate }: ApplicationHeaderP
                 onChange={(e) => setCompanyValue(e.target.value)}
                 placeholder="Acme Corp"
               />
+            </Box>
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="div">Slug</Text>
+              <TextField.Root
+                value={slugValue}
+                onChange={(e) => setSlugValue(e.target.value)}
+                placeholder="company-position"
+              />
+              <Text size="1" color="gray">/applications/{slugValue || "..."}</Text>
             </Box>
             <Box>
               <Text size="2" weight="medium" mb="1" as="div">Job URL</Text>

@@ -92,7 +92,7 @@ function NotesPageInner() {
 
   return (
     <Container size="3" p={{ initial: "4", md: "8" }}>
-      <ApplicationHeader app={app} isAdmin={isAdmin} onUpdate={setApp} />
+      <ApplicationHeader app={app} isAdmin={isAdmin} onUpdate={setApp} onSlugChange={(s) => router.replace(`/applications/${s}/notes`)} />
 
       <Tabs.Root value="notes" onValueChange={handleTabChange}>
         <Tabs.List style={{ borderBottom: "1px solid var(--gray-6)" }}>

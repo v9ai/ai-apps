@@ -90,7 +90,7 @@ function ApplicationRow({
 
   return (
     <Link
-      href={`/applications/${app.id}`}
+      href={`/applications/${app.slug}`}
       style={{ textDecoration: "none", color: "inherit" }}
     >
       <Flex
@@ -124,18 +124,18 @@ function ApplicationRow({
             </DropdownMenu.Trigger>
             <DropdownMenu.Content size="1">
               {nextStatus && nextLabel && (
-                <DropdownMenu.Item onClick={() => onMove(app.id, nextStatus)}>
+                <DropdownMenu.Item onClick={() => onMove(app.slug, nextStatus)}>
                   <ArrowRightIcon />
                   Move to {nextLabel}
                 </DropdownMenu.Item>
               )}
               {app.status !== "rejected" && (
-                <DropdownMenu.Item color="red" onClick={() => onReject(app.id)}>
+                <DropdownMenu.Item color="red" onClick={() => onReject(app.slug)}>
                   Mark Rejected
                 </DropdownMenu.Item>
               )}
               {app.status === "rejected" && (
-                <DropdownMenu.Item onClick={() => onMove(app.id, "saved")}>
+                <DropdownMenu.Item onClick={() => onMove(app.slug, "saved")}>
                   Restore to Saved
                 </DropdownMenu.Item>
               )}
@@ -351,19 +351,19 @@ export default function ApplicationsPage() {
 
   if (isPending || !session?.user) return null;
 
-  const handleMove = async (id: string, status: ApplicationStatus) => {
-    const res = await fetch(`/api/applications/${id}`, {
+  const handleMove = async (slug: string, status: ApplicationStatus) => {
+    const res = await fetch(`/api/applications/${slug}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
     if (res.ok) {
       const updated = await res.json();
-      setApps((prev) => prev.map((a) => (a.id === id ? updated : a)));
+      setApps((prev) => prev.map((a) => (a.slug === slug ? updated : a)));
     }
   };
 
-  const handleReject = (id: string) => handleMove(id, "rejected");
+  const handleReject = (slug: string) => handleMove(slug, "rejected");
 
   const total = apps.length;
   const activeCount = apps.filter((a) => a.status !== "rejected").length;
