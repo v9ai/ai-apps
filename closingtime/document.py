@@ -28,11 +28,12 @@ class Document:
 
     def __or__(self, module: "BaseModule") -> "Document":
         """Pipe operator: doc | module runs the module and stores results."""
+        name = getattr(module, 'name', type(module).__name__)
         try:
             result = module(self.text)
-            self.results[module.name] = result
+            self.results[name] = result
         except Exception as e:
-            self.errors.append({"module": module.name, "error": str(e)})
+            self.errors.append({"module": name, "error": str(e)})
         return self
 
     def __getattr__(self, name: str) -> Any:

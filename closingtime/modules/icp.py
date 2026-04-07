@@ -55,7 +55,9 @@ class WassersteinICPMatcher(BaseModule):
             "Use module.match(icp_cls, prospect_cls, prospect_completeness) directly."
         )
 
-    def match(self, icp_cls, prospect_cls, prospect_completeness):
+    def match(self, icp_cls, prospect_cls, prospect_completeness=None):
+        if prospect_completeness is None:
+            prospect_completeness = self.completeness(prospect_cls)
         dimensions = {}
         dealbreakers = []
         missing = []

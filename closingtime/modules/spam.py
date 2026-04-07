@@ -33,6 +33,9 @@ class PerplexityRatioDetector(nn.Module):
         self.ai_pattern_scorer = nn.Sequential(
             nn.Linear(hidden, 64), nn.GELU(), nn.Linear(64, 1))
         self.structure_features = nn.Linear(8, 16)
+        self.combiner = nn.Sequential(
+            nn.Linear(2 + 16, 32), nn.GELU(), nn.Linear(32, 1), nn.Sigmoid()
+        )
 
     def compute_structural_features(self, text):
         """Extract features that distinguish human from AI writing."""
@@ -64,22 +67,20 @@ class PerplexityRatioDetector(nn.Module):
 
     def forward(self, encoder_output, input_ids, tokenizer, text):
         cls = encoder_output.last_hidden_state[:, 0]
-        human_score = self.human_pattern_scorer(cls).item()
-        ai_score = self.ai_pattern_scorer(cls).item()
+        human_score = self.human_pattern_scorer(cls)
+        ai_score = self.ai_pattern_scorer(cls)
 
         struct_features = self.compute_structural_features(text).to(cls.device)
         struct_embed = self.structure_features(struct_features)
-        struct_bias = struct_embed.mean().item()
 
-        log_ratio = human_score - ai_score
-        structural_ai_signal = (
-            struct_features[0] < 2.0
-            and struct_features[1] < 0.05
-            and struct_features[5] > 5.0
-        )
-        ai_risk = torch.sigmoid(
-            torch.tensor(-log_ratio + struct_bias + (0.5 if structural_ai_signal else -0.5))
-        ).item()
+        # combine neural scores with structural embedding via combiner network
+        log_ratio = human_score - ai_score  # (1, 1)
+        combiner_input = torch.cat([
+            log_ratio.view(1, -1),
+            (human_score + ai_score).view(1, -1),
+            struct_embed.unsqueeze(0),
+        ], dim=-1)
+        ai_risk = self.combiner(combiner_input).item()
         return round(max(0, min(1.0, ai_risk)), 3)
 
 
