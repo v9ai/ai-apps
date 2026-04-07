@@ -70,17 +70,6 @@ async function ConditionDetail({ id }: { id: string }) {
             <Flex direction="column" gap="3">
               <Skeleton height="20px" width="180px" />
               <Skeleton height="60px" />
-            </Flex>
-          </Card>
-        }>
-          <LinkedMedications conditionId={condition.id} />
-        </Suspense>
-
-        <Suspense fallback={
-          <Card>
-            <Flex direction="column" gap="3">
-              <Skeleton height="20px" width="180px" />
-              <Skeleton height="60px" />
               <Skeleton height="60px" />
             </Flex>
           </Card>

@@ -6,6 +6,7 @@ import {
   boolean,
   date,
   jsonb,
+  real,
   index,
   uniqueIndex,
   primaryKey,
@@ -392,5 +393,91 @@ export const conditionResearches = pgTable(
   },
   (table) => [
     uniqueIndex("condition_researches_condition_idx").on(table.conditionId),
+  ],
+);
+
+// ── Brain Health Protocols ────────────────────────────────────────
+
+export const brainHealthProtocols = pgTable(
+  "brain_health_protocols",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    targetAreas: jsonb("target_areas").notNull().default([]),
+    status: text("status").notNull().default("active"),
+    notes: text("notes"),
+    startDate: date("start_date"),
+    endDate: date("end_date"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("bhp_user_idx").on(table.userId),
+    index("bhp_status_idx").on(table.status),
+  ],
+);
+
+export const protocolSupplements = pgTable(
+  "protocol_supplements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    protocolId: uuid("protocol_id")
+      .notNull()
+      .references(() => brainHealthProtocols.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    dosage: text("dosage").notNull(),
+    frequency: text("frequency").notNull(),
+    mechanism: text("mechanism"),
+    targetAreas: jsonb("target_areas").notNull().default([]),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("ps_protocol_idx").on(table.protocolId),
+  ],
+);
+
+export const cognitiveBaselines = pgTable(
+  "cognitive_baselines",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    protocolId: uuid("protocol_id")
+      .notNull()
+      .references(() => brainHealthProtocols.id, { onDelete: "cascade" })
+      .unique(),
+    memoryScore: real("memory_score"),
+    focusScore: real("focus_score"),
+    processingSpeedScore: real("processing_speed_score"),
+    moodScore: real("mood_score"),
+    sleepScore: real("sleep_score"),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("cb_protocol_idx").on(table.protocolId),
+  ],
+);
+
+export const cognitiveCheckIns = pgTable(
+  "cognitive_check_ins",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    protocolId: uuid("protocol_id")
+      .notNull()
+      .references(() => brainHealthProtocols.id, { onDelete: "cascade" }),
+    memoryScore: real("memory_score"),
+    focusScore: real("focus_score"),
+    processingSpeedScore: real("processing_speed_score"),
+    moodScore: real("mood_score"),
+    sleepScore: real("sleep_score"),
+    sideEffects: text("side_effects"),
+    notes: text("notes"),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("cci_protocol_idx").on(table.protocolId),
+    index("cci_recorded_idx").on(table.recordedAt),
   ],
 );
