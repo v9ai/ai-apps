@@ -100,7 +100,7 @@ export function LoginForm() {
               </Callout.Root>
             )}
 
-            <Button type="submit" disabled={isLoading} width="100%">
+            <Button type="submit" disabled={isLoading} style={{ width: "100%" }}>
               {isLoading && <Spinner />}
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>

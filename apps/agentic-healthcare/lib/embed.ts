@@ -13,6 +13,7 @@ let _pipeline: FeatureExtractionPipeline | null = null;
 
 async function getEmbedder(): Promise<FeatureExtractionPipeline> {
   if (!_pipeline) {
+    // @ts-expect-error — union too complex for HF transformers overloads
     _pipeline = await pipeline("feature-extraction", "Xenova/bge-large-en-v1.5", {
       dtype: "q8",
     });

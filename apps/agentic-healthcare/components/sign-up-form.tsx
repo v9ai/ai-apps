@@ -122,7 +122,7 @@ export function SignUpForm() {
               </Callout.Root>
             )}
 
-            <Button type="submit" disabled={isLoading} width="100%">
+            <Button type="submit" disabled={isLoading} style={{ width: "100%" }}>
               {isLoading && <Spinner />}
               {isLoading ? "Creating account..." : "Sign up"}
             </Button>

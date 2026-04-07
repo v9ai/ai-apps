@@ -108,7 +108,6 @@ export default function Home() {
           background:
             "linear-gradient(180deg, color-mix(in srgb, var(--indigo-2) 60%, transparent) 0%, color-mix(in srgb, var(--color-background) 85%, transparent) 100%)",
           backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
         })}
       >
         <header>
