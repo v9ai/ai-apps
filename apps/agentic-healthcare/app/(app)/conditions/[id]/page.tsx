@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 import { EditNotesForm } from "../edit-notes-form";
 import { EditConditionHeader } from "../edit-condition-header";
 import { RelatedMarkers } from "../related-markers";
+import { LinkedMedications } from "../linked-medications";
 import { ConditionResearch } from "../condition-research";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
