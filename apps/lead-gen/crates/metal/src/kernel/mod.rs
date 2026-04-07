@@ -36,3 +36,6 @@ pub mod html_extractor;
 
 #[cfg(feature = "kernel-intent")]
 pub mod intent_scoring;
+
+#[cfg(feature = "kernel-spam")]
+pub mod spam_scoring;

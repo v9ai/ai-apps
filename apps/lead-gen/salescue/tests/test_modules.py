@@ -5,7 +5,17 @@ import torch
 
 from salescue.modules import MODULE_CLASSES
 from salescue.modules.score import LeadScorer, LearnedInterventionAttribution, MultiScaleSignalDetector, SignalInteractionGraph
-from salescue.modules.spam import SpamHead, PerplexityRatioDetector
+from salescue.modules.spam import (
+    SpamHead,
+    HierarchicalBayesianAttentionGate,
+    AdversarialStyleTransferDetector,
+    HeaderAnalyzer,
+    TemporalBurstDetector,
+    CampaignSimilarityDetector,
+    ProviderCalibration,
+    SPAM_CATEGORIES,
+    RISK_FACTORS,
+)
 from salescue.modules.intent import NeuralHawkesIntentPredictor
 from salescue.modules.reply import ReplyHead
 from salescue.modules.triggers import TemporalDisplacementModel
@@ -100,12 +110,25 @@ class TestModuleProcess:
 
     def test_spam_process(self, mock_encoded):
         module = SpamHead(hidden=768).cpu().eval()
-        result = module.process(mock_encoded, "test email")
+        result = module.process(mock_encoded, "test email content for spam detection")
         assert "spam_score" in result
+        assert 0 <= result["spam_score"] <= 1
+        assert "spam_category" in result
+        assert result["spam_category"] in SPAM_CATEGORIES
+        assert "category_scores" in result
+        assert len(result["category_scores"]) == 7
         assert "ai_risk" in result
+        assert "ai_details" in result
+        assert "header_verdict" in result
         assert "deliverability" in result
         assert "provider_scores" in result
-        assert result["risk_level"] in ("low", "medium", "high")
+        assert len(result["provider_scores"]) == 6  # 6 providers
+        assert result["risk_level"] in ("low", "medium", "high", "critical")
+        assert "risk_factors" in result
+        assert "token_spam_contributions" in result
+        assert "sentence_scores" in result
+        assert result["gate_decision"] in ("pass", "quarantine", "block")
+        assert "gate_confidence" in result
 
     def test_intent_process(self, mock_encoded):
         module = NeuralHawkesIntentPredictor(hidden=768).cpu().eval()
@@ -185,19 +208,181 @@ class TestSignalInteractionGraph:
         assert enhanced.shape == (1, 32, 192)
 
 
-class TestPerplexityRatioDetector:
-    def test_structural_features(self):
-        detector = PerplexityRatioDetector(hidden=768)
-        features = detector.compute_structural_features(
-            "Hello! I'm interested in your product. Can we talk?"
+class TestHierarchicalBayesianGate:
+    def test_instantiation(self):
+        gate = HierarchicalBayesianAttentionGate(hidden=768)
+        assert isinstance(gate, torch.nn.Module)
+
+    def test_forward(self):
+        gate = HierarchicalBayesianAttentionGate(hidden=768).cpu().eval()
+        # Mock encoder output
+        mock_output = type("MockOutput", (), {
+            "last_hidden_state": torch.randn(1, 32, 768),
+        })()
+        result = gate(mock_output, "Hello, this is a test email. How are you?")
+        assert "category_logits" in result
+        assert result["category_logits"].shape == (1, 7)
+        assert "gate_score" in result
+        assert 0 <= result["gate_score"] <= 1
+        assert "token_contributions" in result
+        assert "sentence_scores" in result
+        assert "gate_confidence" in result
+        assert "alpha" in result
+        assert "beta" in result
+
+    def test_sentence_features(self):
+        feats = HierarchicalBayesianAttentionGate.extract_sentence_features(
+            "Hello! I'm interested in your product. Can we schedule a demo?"
         )
-        assert features.shape == (8,)
+        assert len(feats) == 12
+
+    def test_doc_features(self):
+        feats = HierarchicalBayesianAttentionGate.extract_doc_features(
+            "Test email with http://example.com link. Multiple sentences here."
+        )
+        assert len(feats) == 8
+
+    def test_kl_loss(self):
+        gate = HierarchicalBayesianAttentionGate(hidden=768)
+        alpha = torch.tensor([[2.0, 3.0, 1.5]])
+        beta = torch.tensor([[1.0, 2.0, 1.0]])
+        kl = gate.compute_kl_loss(alpha, beta)
+        assert torch.isfinite(torch.tensor(kl.item()))
+
+    def test_kl_loss_uniform_prior(self):
+        """KL(Beta(1,1) || Beta(1,1)) should be ~0."""
+        gate = HierarchicalBayesianAttentionGate(hidden=768)
+        alpha = torch.tensor([[1.0, 1.0, 1.0]])
+        beta = torch.tensor([[1.0, 1.0, 1.0]])
+        kl = gate.compute_kl_loss(alpha, beta)
+        assert abs(kl.item()) < 0.01
+
+
+class TestAdversarialStyleTransferDetector:
+    def test_structural_features_32(self):
+        feats = AdversarialStyleTransferDetector.compute_structural_features(
+            "Hello! I'm interested in your product. Can we talk? "
+            "I've been using similar tools and they're great."
+        )
+        assert len(feats) == 32
 
     def test_structural_features_empty(self):
-        detector = PerplexityRatioDetector(hidden=768)
-        features = detector.compute_structural_features("")
-        assert features.shape == (8,)
-        assert (features == 0).all()
+        feats = AdversarialStyleTransferDetector.compute_structural_features("")
+        assert len(feats) == 32
+
+    def test_forward(self):
+        detector = AdversarialStyleTransferDetector(hidden=768).cpu().eval()
+        mock_output = type("MockOutput", (), {
+            "last_hidden_state": torch.randn(1, 32, 768),
+        })()
+        result = detector(mock_output, torch.randint(0, 1000, (1, 32)), None,
+                          "Test text for AI detection analysis.")
+        assert "ai_risk" in result
+        assert 0 <= result["ai_risk"] <= 1
+        assert "perplexity_ratio" in result
+        assert "style_transfer_score" in result
+        assert "watermark_detected" in result
+        assert "structural_features" in result
+        assert "type_token_ratio" in result["structural_features"]
+
+    def test_trajectory_smoothness(self):
+        detector = AdversarialStyleTransferDetector(hidden=768).cpu().eval()
+        tokens = torch.randn(1, 64, 768)
+        smoothness = detector.compute_trajectory_smoothness(tokens)
+        assert isinstance(smoothness, float)
+
+    def test_trajectory_short_text(self):
+        detector = AdversarialStyleTransferDetector(hidden=768).cpu().eval()
+        tokens = torch.randn(1, 2, 768)
+        smoothness = detector.compute_trajectory_smoothness(tokens)
+        assert smoothness == 0.0
+
+
+class TestHeaderAnalyzer:
+    def test_no_headers(self):
+        feats = HeaderAnalyzer.extract_header_features(None)
+        assert len(feats) == 16
+        assert all(f == 0.0 for f in feats)
+
+    def test_full_headers(self):
+        headers = {
+            "spf": "pass", "dkim": "pass", "dmarc": "pass",
+            "hop_count": 3, "reply_to_mismatch": True,
+            "return_path_mismatch": False, "has_list_unsubscribe": True,
+            "known_mailer": True, "send_hour": 14,
+        }
+        feats = HeaderAnalyzer.extract_header_features(headers)
+        assert len(feats) == 16
+        assert feats[0] == 1.0  # spf_pass
+        assert feats[10] == 1.0  # reply_to_mismatch
+
+    def test_forward(self):
+        analyzer = HeaderAnalyzer().cpu().eval()
+        result = analyzer({"spf": "pass", "dkim": "fail", "dmarc": "none"})
+        assert "header_embed" in result
+        assert result["header_embed"].shape == (1, 16)
+
+
+class TestTemporalBurstDetector:
+    def test_no_timestamps(self):
+        feats = TemporalBurstDetector.extract_temporal_features(None)
+        assert len(feats) == 8
+        assert all(f == 0.0 for f in feats)
+
+    def test_burst_detection(self):
+        # Send 10 emails in 10 seconds — clear burst
+        timestamps = [1000.0 + i for i in range(10)]
+        feats = TemporalBurstDetector.extract_temporal_features(timestamps)
+        assert len(feats) == 8
+        assert feats[2] > 0.5  # burst indicator should be high
+
+    def test_regular_cadence(self):
+        # Send 5 emails 1 hour apart — regular cadence
+        timestamps = [1000.0 + i * 3600 for i in range(5)]
+        feats = TemporalBurstDetector.extract_temporal_features(timestamps)
+        assert feats[3] > 0.5  # regularity should be high
+
+
+class TestCampaignSimilarityDetector:
+    def test_no_embeddings(self):
+        feats = CampaignSimilarityDetector.compute_similarity_features(None)
+        assert len(feats) == 4
+        assert all(f == 0.0 for f in feats)
+
+    def test_identical_embeddings(self):
+        emb = torch.randn(1, 768)
+        batch = emb.repeat(5, 1)  # 5 identical emails
+        feats = CampaignSimilarityDetector.compute_similarity_features(batch)
+        assert feats[0] > 0.99  # max similarity ~ 1.0
+        assert feats[2] > 0.99  # all pairs above threshold
+
+    def test_diverse_embeddings(self):
+        batch = torch.randn(5, 768)
+        feats = CampaignSimilarityDetector.compute_similarity_features(batch)
+        assert len(feats) == 4
+
+
+class TestProviderCalibration:
+    def test_6_providers(self):
+        cal = ProviderCalibration().cpu().eval()
+        result = cal(0.5, 0.3, "Test email text", "gmail")
+        assert len(result["provider_scores"]) == 6
+        assert all(p in result["provider_scores"] for p in [
+            "gmail", "outlook", "yahoo", "protonmail", "apple_mail", "corporate"])
+        assert 0 <= result["deliverability"] <= 10
+
+
+class TestSpamTaxonomy:
+    def test_categories(self):
+        assert len(SPAM_CATEGORIES) == 7
+        assert "clean" in SPAM_CATEGORIES
+        assert "ai_generated" in SPAM_CATEGORIES
+        assert "content_violation" in SPAM_CATEGORIES
+
+    def test_risk_factors(self):
+        assert len(RISK_FACTORS) == 9
+        assert "urgency_manipulation" in RISK_FACTORS
+        assert "homoglyph_attack" in RISK_FACTORS
 
 
 class TestICPMatcher:

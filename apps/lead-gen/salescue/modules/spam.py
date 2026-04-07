@@ -15,8 +15,11 @@ style transfer trajectory analysis and statistical watermark detection, making i
 against paraphrased and rewritten LLM content.
 """
 
+from __future__ import annotations
+
 import math
 import re
+from typing import Optional
 
 import torch
 import torch.nn as nn
