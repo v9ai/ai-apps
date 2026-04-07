@@ -462,6 +462,7 @@ export async function upsertTherapyResearch(
   research: {
     issueId?: number | null;
     feedbackId?: number | null;
+    journalEntryId?: number | null;
     therapeuticGoalType: string;
     title: string;
     authors: string[];
