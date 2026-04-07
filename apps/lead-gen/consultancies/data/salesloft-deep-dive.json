@@ -1,0 +1,212 @@
+{
+  "architecture_families": {
+    "llama": [
+      "salesloft/llama3-8b-instruct-ultrafeedback-kto"
+    ]
+  },
+  "configs_fetched": 1,
+  "datasets": [],
+  "fetch_failures": 0,
+  "hf_score": 0.23600000143051147,
+  "model_cards_fetched": 1,
+  "models": [
+    {
+      "adapter_config": null,
+      "architecture": {
+        "_name_or_path": "meta-llama/Meta-Llama-3-8B-Instruct",
+        "architectures": [
+          "LlamaForCausalLM"
+        ],
+        "hidden_size": 4096,
+        "intermediate_size": 14336,
+        "max_position_embeddings": 8192,
+        "model_type": "llama",
+        "num_attention_heads": 32,
+        "num_hidden_layers": 32,
+        "num_key_value_heads": 8,
+        "rope_theta": 500000.0,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 128256
+      },
+      "chat_template": {
+        "added_tokens_count": 256,
+        "bos_token": "<|begin_of_text|>",
+        "chat_template_length": 569,
+        "eos_token": "<|eot_id|>",
+        "has_chat_template": true
+      },
+      "created_at": "2024-06-21T13:58:45.000Z",
+      "downloads": 0,
+      "files": [
+        ".gitattributes",
+        "README.md",
+        "config.json",
+        "generation_config.json",
+        "model-00001-of-00009.safetensors",
+        "model-00002-of-00009.safetensors",
+        "model-00003-of-00009.safetensors",
+        "model-00004-of-00009.safetensors",
+        "model-00005-of-00009.safetensors",
+        "model-00006-of-00009.safetensors",
+        "model-00007-of-00009.safetensors",
+        "model-00008-of-00009.safetensors",
+        "model-00009-of-00009.safetensors",
+        "model.safetensors.index.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "generation_config": {
+        "do_sample": true,
+        "eos_token_id": [
+          128001,
+          128009
+        ],
+        "max_length": 4096,
+        "max_new_tokens": null,
+        "repetition_penalty": null,
+        "temperature": 0.6,
+        "top_k": null,
+        "top_p": 0.9
+      },
+      "last_modified": "2024-06-21T14:00:30.000Z",
+      "library": "transformers",
+      "likes": 0,
+      "model_card_analysis": {
+        "body_preview": "\n# Model Card for Model ID\n\n<!-- Provide a quick summary of what the model is/does. -->\n\n\n\n## Model Details\n\n### Model Description\n\n<!-- Provide a longer summary of what this model is. -->\n\nThis is the model card of a 🤗 transformers model that has been pushed on the Hub. This model card has been automatically generated.\n\n- **Developed by:** [More Information Needed]\n- **Funded by [optional]:** [More Information Needed]\n- **Shared by [optional]:** [More Information Needed]\n- **Model type:** [More Information Needed]\n- **Language(s) (NLP):** [More Information Needed]\n- **License:** [More Information Needed]\n- **Finetuned from model [optional]:** [More Information Needed]\n\n### Model Sources [optional]\n\n<!-- Provide the basic links for the model. -->\n\n- **Repository:** [More Information Needed]\n- **Paper [optional]:** [More Information Needed]\n- **Demo [optional]:** [More Information Needed]\n\n## Uses\n\n<!-- Address questions around how the model is intended to be used, including the foreseeable users of the model and those affected by the model. -->\n\n### Direct Use\n\n<!-- This section is for the model use without fine-tuning or plugging into a larger ecosystem/app. -->\n\n[More Information Needed]\n\n### Downstream Use [optional]\n\n<!-- This section is for the model use when fine-tuned for a task, or when plugged into a larger ecosystem/app -->\n\n[More Information Needed]\n\n### Out-of-Scope Use\n\n<!-- This section addresses misuse, malicious use, and uses that the model will not work well for. -->\n\n[More Information Needed]\n\n## Bias, Risks, and Limitations\n\n<!-- This section is meant to convey both technical and sociotechnical limitations. -->\n\n[More Information Needed]\n\n### Recommendations\n\n<!-- This section is meant to convey recommendations with respect to the bias, risk, and technical limitations. -->\n\nUsers (both direct and downstream) should be made aware of the risks, biases and limitations of the model. More information needed for further recommendations.\n\n## How to Get S",
+        "code_block_languages": [],
+        "has_yaml_frontmatter": true,
+        "headers": [
+          "# Model Card for Model ID",
+          "## Model Details",
+          "### Model Description",
+          "### Model Sources [optional]",
+          "## Uses",
+          "### Direct Use",
+          "### Downstream Use [optional]",
+          "### Out-of-Scope Use",
+          "## Bias, Risks, and Limitations",
+          "### Recommendations",
+          "## How to Get Started with the Model",
+          "## Training Details",
+          "### Training Data",
+          "### Training Procedure",
+          "#### Preprocessing [optional]",
+          "#### Training Hyperparameters",
+          "#### Speeds, Sizes, Times [optional]",
+          "## Evaluation",
+          "### Testing Data, Factors & Metrics",
+          "#### Testing Data",
+          "#### Factors",
+          "#### Metrics",
+          "### Results",
+          "#### Summary",
+          "## Model Examination [optional]",
+          "## Environmental Impact",
+          "## Technical Specifications [optional]",
+          "### Model Architecture and Objective",
+          "### Compute Infrastructure",
+          "#### Hardware",
+          "#### Software",
+          "## Citation [optional]",
+          "## Glossary [optional]",
+          "## More Information [optional]",
+          "## Model Card Authors [optional]",
+          "## Model Card Contact"
+        ],
+        "methodology": {
+          "mentions_conversation": false,
+          "mentions_customer": false,
+          "mentions_dpo": false,
+          "mentions_email": false,
+          "mentions_kto": false,
+          "mentions_outreach": false,
+          "mentions_peft": false,
+          "mentions_qlora": false,
+          "mentions_rlhf": false,
+          "mentions_sales": false,
+          "mentions_sft": false,
+          "mentions_trl": false,
+          "mentions_ultrafeedback": false
+        },
+        "total_lines": 200,
+        "urls_referenced": [
+          "https://mlco2.github.io/impact#compute",
+          "https://arxiv.org/abs/1910.09700)."
+        ],
+        "yaml_section_lines": 3
+      },
+      "parameters": {
+        "shard_count": 9,
+        "total_size_bytes": 16060522496,
+        "total_size_gb": 16.06
+      },
+      "pipeline_tag": "text-generation",
+      "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+      "tags": [
+        "transformers",
+        "safetensors",
+        "llama",
+        "text-generation",
+        "llama-factory",
+        "conversational",
+        "arxiv:1910.09700",
+        "text-generation-inference",
+        "endpoints_compatible",
+        "region:us"
+      ]
+    }
+  ],
+  "org": "salesloft",
+  "sales_relevance": {
+    "alignment_method": "unknown",
+    "assessment": "SalesLoft published an aligned LLM fine-tune — KTO on Llama-3 suggests internal ML team experimenting with preference-aligned generation for sales workflows (email drafting, conversation coaching, response generation).",
+    "base_models": [
+      "meta-llama/Meta-Llama-3-8B-Instruct"
+    ],
+    "has_chat_model": false,
+    "has_instruct_model": true,
+    "mentions_sales_in_cards": false,
+    "sales_applications": [
+      "Email personalization / outreach generation",
+      "Sales call coaching / response suggestions",
+      "Customer conversation summarization",
+      "Objection handling / response drafting"
+    ],
+    "training_data": "unknown"
+  },
+  "scan_method": "hf crate: scan_org_deep + fetch_raw_files + list_repo_files + fetch_model_cards",
+  "timeline": [
+    {
+      "date": "2024-06-21T13:58:45.000Z",
+      "model_type": "llama",
+      "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto"
+    }
+  ],
+  "total_datasets": 0,
+  "total_files_fetched": 5,
+  "total_models": 1,
+  "total_spaces": 0,
+  "training_signals": [
+    {
+      "evidence": "https://arxiv.org/abs/1910.09700",
+      "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+      "signal_type": "ArxivCitation"
+    },
+    {
+      "evidence": "training procedure documented",
+      "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+      "signal_type": "TrainingArgs"
+    },
+    {
+      "evidence": "'fine-tuned' mentioned in model card",
+      "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+      "signal_type": "FineTuning"
+    },
+    {
+      "evidence": "fine-tuned from meta-llama/Meta-Llama-3-8B-Instruct",
+      "repo_id": "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+      "signal_type": "FineTuning"
+    }
+  ]
+}
