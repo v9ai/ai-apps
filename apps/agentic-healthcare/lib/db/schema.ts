@@ -230,6 +230,23 @@ export const familyMemberDoctors = pgTable(
   ],
 );
 
+export const conditionMedications = pgTable(
+  "condition_medications",
+  {
+    conditionId: uuid("condition_id")
+      .notNull()
+      .references(() => conditions.id, { onDelete: "cascade" }),
+    medicationId: uuid("medication_id")
+      .notNull()
+      .references(() => medications.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conditionId, table.medicationId] }),
+    index("cm_condition_idx").on(table.conditionId),
+    index("cm_medication_idx").on(table.medicationId),
+  ],
+);
+
 export const medicalLetters = pgTable(
   "medical_letters",
   {
