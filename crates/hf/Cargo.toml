@@ -24,3 +24,7 @@ rusqlite = { version = "0.32", features = ["bundled"], optional = true }
 
 [dev-dependencies]
 tokio-test = "0.4"
+
+[[example]]
+name = "sync_popular"
+required-features = ["sqlite"]

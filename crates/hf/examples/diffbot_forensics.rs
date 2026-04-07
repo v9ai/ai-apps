@@ -2,7 +2,7 @@
 //! Weight map layer analysis, tool parser code, chat templates, Modelfiles,
 //! cross-model architecture evolution, and pytorch index for older models.
 
-use hf::{FetchRequest, FetchResult, HfClient, RepoType};
+use hf::{FetchRequest, FetchResult, HfClient};
 use serde_json::json;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
@@ -141,7 +141,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let has_q_proj = components.iter().any(|c| c.contains("q_proj"));
                 let has_in_proj = components.iter().any(|c| c.contains("in_proj"));
                 let has_a_log = components.iter().any(|c| c.contains("A_log"));
-                let has_conv1d = components.iter().any(|c| c.contains("conv1d"));
+                let _has_conv1d = components.iter().any(|c| c.contains("conv1d"));
                 let has_dt_bias = components.iter().any(|c| c.contains("dt_bias"));
                 let has_q_norm = components.iter().any(|c| c.contains("q_norm"));
 
