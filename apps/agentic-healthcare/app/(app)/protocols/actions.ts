@@ -89,16 +89,20 @@ export async function updateProtocolStatus(id: string, status: string) {
   revalidatePath("/protocols");
 }
 
+async function getProtocolSlug(protocolId: string, userId: string) {
+  const [p] = await db
+    .select({ id: brainHealthProtocols.id, slug: brainHealthProtocols.slug })
+    .from(brainHealthProtocols)
+    .where(and(eq(brainHealthProtocols.id, protocolId), eq(brainHealthProtocols.userId, userId)));
+  return p ?? null;
+}
+
 // ── Supplements ───────────────────────────────────────────────────
 
 export async function addSupplement(protocolId: string, formData: FormData) {
   const { userId } = await withAuth();
 
-  const [protocol] = await db
-    .select({ id: brainHealthProtocols.id })
-    .from(brainHealthProtocols)
-    .where(and(eq(brainHealthProtocols.id, protocolId), eq(brainHealthProtocols.userId, userId)));
-
+  const protocol = await getProtocolSlug(protocolId, userId);
   if (!protocol) return;
 
   const name = (formData.get("name") as string)?.trim();
@@ -122,13 +126,13 @@ export async function addSupplement(protocolId: string, formData: FormData) {
     url,
   });
 
-  revalidatePath(`/protocols/${protocolId}`);
+  revalidatePath("/protocols", "layout");
 }
 
 export async function deleteSupplement(id: string, protocolId: string) {
   await withAuth();
   await db.delete(protocolSupplements).where(eq(protocolSupplements.id, id));
-  revalidatePath(`/protocols/${protocolId}`);
+  revalidatePath("/protocols", "layout");
 }
 
 // ── Cognitive Tracking ────────────────────────────────────────────
@@ -159,7 +163,7 @@ export async function recordBaseline(protocolId: string, formData: FormData) {
       set: { ...scores, recordedAt: new Date() },
     });
 
-  revalidatePath(`/protocols/${protocolId}`);
+  revalidatePath("/protocols", "layout");
 }
 
 export async function recordCheckIn(protocolId: string, formData: FormData) {
@@ -183,5 +187,5 @@ export async function recordCheckIn(protocolId: string, formData: FormData) {
     notes: (formData.get("notes") as string)?.trim() || null,
   });
 
-  revalidatePath(`/protocols/${protocolId}`);
+  revalidatePath("/protocols", "layout");
 }

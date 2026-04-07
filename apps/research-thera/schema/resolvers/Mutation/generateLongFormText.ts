@@ -12,11 +12,12 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
   const goalId = args.goalId ?? undefined;
   const issueId = args.issueId ?? undefined;
   const feedbackId = args.feedbackId ?? undefined;
+  const journalEntryId = args.journalEntryId ?? undefined;
   const familyMemberId = args.familyMemberId ?? undefined;
   const userContext = args.userContext ?? undefined;
 
-  if (!goalId && !issueId && !feedbackId && !familyMemberId && !userContext) {
-    throw new Error("At least one of goalId, issueId, feedbackId, familyMemberId, or userContext is required");
+  if (!goalId && !issueId && !feedbackId && !journalEntryId && !familyMemberId && !userContext) {
+    throw new Error("At least one of goalId, issueId, feedbackId, journalEntryId, familyMemberId, or userContext is required");
   }
 
   if (goalId) {
@@ -40,6 +41,7 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
       goal_id: goalId ?? null,
       issue_id: issueId ?? null,
       feedback_id: feedbackId ?? null,
+      journal_entry_id: journalEntryId ?? null,
       family_member_id: familyMemberId ?? null,
       user_context: userContext ?? null,
       language: args.language ?? "English",
