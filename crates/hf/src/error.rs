@@ -19,4 +19,8 @@ pub enum Error {
 
     #[error("Invalid header value: {0}")]
     InvalidHeader(#[from] reqwest::header::InvalidHeaderValue),
+
+    #[cfg(feature = "sqlite")]
+    #[error("Database error: {0}")]
+    Db(#[from] rusqlite::Error),
 }
