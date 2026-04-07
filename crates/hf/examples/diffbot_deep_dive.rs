@@ -94,60 +94,66 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // ── 3. Fetch common config files from all models ───────────
+    // ── 3. Fetch config files per-type (avoids buffer_unordered ordering issues) ──
     eprintln!("\n=== Phase 3: Fetching config files ===");
-    let mut fetch_requests: Vec<FetchRequest> = Vec::new();
-
-    for repo_id in &repo_ids {
-        let files = repo_files.get(repo_id);
-        for &filename in COMMON_FILES {
-            // Only request files that exist in the repo
-            let exists = files
-                .map(|fs| fs.iter().any(|f| f == filename))
-                .unwrap_or(true); // if no listing, try anyway
-            if exists {
-                fetch_requests.push(FetchRequest::model(repo_id).with_path(filename));
-            }
-        }
-    }
-
-    // Add extra files for specific repos
-    for &(repo_id, extra) in EXTRA_FILES {
-        if repo_ids.iter().any(|r| r == repo_id) {
-            let files = repo_files.get(repo_id);
-            for &filename in extra {
-                let exists = files
-                    .map(|fs| fs.iter().any(|f| f == filename))
-                    .unwrap_or(true);
-                if exists {
-                    fetch_requests.push(FetchRequest::model(repo_id).with_path(filename));
-                }
-            }
-        }
-    }
-
-    eprintln!("Fetching {} files across {} models...", fetch_requests.len(), repo_ids.len());
-
-    let raw_results = client.fetch_raw_files(&fetch_requests).await;
-
-    // Organize by repo_id -> filename -> content
     let mut repo_data: HashMap<String, HashMap<String, String>> = HashMap::new();
     let mut fetch_ok = 0usize;
     let mut fetch_err = 0usize;
 
-    for (req, result) in fetch_requests.iter().zip(raw_results.into_iter()) {
-        let filename = req.path.as_deref().unwrap_or("?");
-        match result {
-            FetchResult::Ok { repo_id, data } => {
-                fetch_ok += 1;
-                repo_data
-                    .entry(repo_id)
-                    .or_default()
-                    .insert(filename.to_owned(), data);
+    // Build all (filename, requests) batches
+    let mut batches: Vec<(&str, Vec<FetchRequest>)> = Vec::new();
+
+    for &filename in COMMON_FILES {
+        let reqs: Vec<FetchRequest> = repo_ids
+            .iter()
+            .filter(|id| {
+                repo_files
+                    .get(*id)
+                    .map(|fs| fs.iter().any(|f| f == filename))
+                    .unwrap_or(false)
+            })
+            .map(|id| FetchRequest::model(id).with_path(filename))
+            .collect();
+        if !reqs.is_empty() {
+            batches.push((filename, reqs));
+        }
+    }
+
+    // Extra files for specific repos
+    for &(target_repo, extras) in EXTRA_FILES {
+        if !repo_ids.iter().any(|r| r == target_repo) {
+            continue;
+        }
+        let files = repo_files.get(target_repo);
+        for &filename in extras {
+            let exists = files
+                .map(|fs| fs.iter().any(|f| f == filename))
+                .unwrap_or(false);
+            if exists {
+                batches.push((filename, vec![FetchRequest::model(target_repo).with_path(filename)]));
             }
-            FetchResult::Err { repo_id, error } => {
-                fetch_err += 1;
-                eprintln!("  FAIL {repo_id}/{filename}: {error}");
+        }
+    }
+
+    let total_files: usize = batches.iter().map(|(_, r)| r.len()).sum();
+    eprintln!("Fetching {total_files} files across {} models...", repo_ids.len());
+
+    // Fetch each file type as a batch — results match by repo_id
+    for (filename, reqs) in &batches {
+        let results = client.fetch_raw_files(reqs).await;
+        for result in results {
+            match result {
+                FetchResult::Ok { repo_id, data } => {
+                    fetch_ok += 1;
+                    repo_data
+                        .entry(repo_id)
+                        .or_default()
+                        .insert(filename.to_string(), data);
+                }
+                FetchResult::Err { repo_id, error } => {
+                    fetch_err += 1;
+                    eprintln!("  FAIL {repo_id}/{filename}: {error}");
+                }
             }
         }
     }
@@ -446,14 +452,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }));
     }
 
-    // ── 7. Architecture family grouping ────────────────────────
+    // ── 7. Parse all configs into a lookup for family grouping ──
+    let mut parsed_configs: HashMap<String, serde_json::Value> = HashMap::new();
+    for (repo_id, files) in &repo_data {
+        if let Some(cfg_str) = files.get("config.json") {
+            if let Ok(cfg) = serde_json::from_str::<serde_json::Value>(cfg_str) {
+                parsed_configs.insert(repo_id.clone(), cfg);
+            }
+        }
+    }
+
     let mut arch_families: BTreeMap<String, Vec<String>> = BTreeMap::new();
-    for analysis in &model_analyses {
-        let repo_id = analysis["repo_id"].as_str().unwrap_or("?");
-        let model_type = analysis["architecture"]
-            .get("model_type")
-            .and_then(|v| v.as_str())
-            .unwrap_or("unknown");
+    for m in &models {
+        let repo_id = m.repo_id.as_deref().unwrap_or("?");
+        let model_type = parsed_configs
+            .get(repo_id)
+            .and_then(|c| c.get("model_type").and_then(|v| v.as_str()))
+            .unwrap_or(if repo_id.contains("GGUF") || repo_id.contains("fp8") {
+                "quantized_variant"
+            } else {
+                "unknown"
+            });
         arch_families
             .entry(model_type.to_owned())
             .or_default()
@@ -465,12 +484,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .iter()
         .map(|m| {
             let repo_id = m.repo_id.as_deref().unwrap_or("?");
-            let model_type = repo_data
+            let model_type = parsed_configs
                 .get(repo_id)
-                .and_then(|d| d.get("config.json"))
-                .and_then(|s| serde_json::from_str::<serde_json::Value>(s).ok())
-                .and_then(|c| c.get("model_type").and_then(|v| v.as_str()).map(String::from))
-                .unwrap_or_else(|| "unknown".into());
+                .and_then(|c| c.get("model_type").and_then(|v| v.as_str()))
+                .unwrap_or("unknown");
             json!({
                 "date": m.created_at,
                 "repo_id": repo_id,
