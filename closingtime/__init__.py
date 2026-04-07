@@ -14,9 +14,9 @@ from .engine import Engine, list_modules
 from .backbone import SharedEncoder, get_device, set_device
 from .validation import ClosingTimeValidationError
 from .reproducibility import set_deterministic, set_seed
-from .hub import ClosingTimeModel
-from .pipeline import pipeline
 from .config import ClosingTimeConfig, ALL_CONFIGS
+from .hub import ClosingTimeModel
+from .pipeline import pipeline as pipeline
 
 
 class _ModuleProxy:
@@ -87,9 +87,9 @@ __all__ = [
     "ClosingTimeValidationError",
     "set_deterministic",
     "set_seed",
-    "ClosingTimeModel",
     "ClosingTimeConfig",
     "ALL_CONFIGS",
+    "ClosingTimeModel",
     "pipeline",
 ]
 

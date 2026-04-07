@@ -11,8 +11,7 @@ from .entities import EntityExtractor, PointerNER, RetypingLayer
 from .objection import ObjectionPreClassifier, OBJECTION_TYPES, COACHING_CARDS
 from .emailgen import EmailGenerator, EmailGenConfig, ProspectContext
 
-# Module name -> class mapping for hub.py from_pretrained
-MODULE_CLASSES: dict[str, type] = {
+MODULE_CLASSES = {
     "score": LeadScorer,
     "intent": NeuralHawkesIntentPredictor,
     "reply": ReplyHead,
