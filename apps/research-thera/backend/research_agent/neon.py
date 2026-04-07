@@ -143,6 +143,7 @@ async def upsert_research_paper(
     feedback_id: int | None = None,
     issue_id: int | None = None,
     goal_id: int | None = None,
+    journal_entry_id: int | None = None,
 ) -> int:
     """Insert or skip a research paper into Neon therapy_research table."""
     conn_str = _get_conn_str()
@@ -157,7 +158,9 @@ async def upsert_research_paper(
     confidence = 40 + (has_abstract * 25) + (has_findings * 20) + (has_techniques * 15)
 
     # Build dedup condition based on which id is provided
-    if issue_id is not None:
+    if journal_entry_id is not None:
+        dedup_col, dedup_val = "journal_entry_id", journal_entry_id
+    elif issue_id is not None:
         dedup_col, dedup_val = "issue_id", issue_id
     elif feedback_id is not None:
         dedup_col, dedup_val = "feedback_id", feedback_id
@@ -188,15 +191,15 @@ async def upsert_research_paper(
             # Insert
             await cur.execute(
                 """INSERT INTO therapy_research (
-                    goal_id, feedback_id, issue_id, therapeutic_goal_type, title, authors, year, doi, url,
+                    goal_id, feedback_id, issue_id, journal_entry_id, therapeutic_goal_type, title, authors, year, doi, url,
                     abstract, key_findings, therapeutic_techniques, evidence_level,
                     relevance_score, extracted_by, extraction_confidence,
                     created_at, updated_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
                 ) RETURNING id""",
                 (
-                    goal_id, feedback_id, issue_id, therapeutic_goal_type, title, authors_json,
+                    goal_id, feedback_id, issue_id, journal_entry_id, therapeutic_goal_type, title, authors_json,
                     year, doi, url, abstract, findings_json, techniques_json,
                     evidence_level, score, "langgraph:deepseek-chat:v1", confidence,
                 ),
