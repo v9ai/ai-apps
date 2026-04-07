@@ -424,6 +424,7 @@ export const applications = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: text("user_id").notNull(),
+    slug: text("slug").notNull(),
     company: text("company").notNull(),
     position: text("position").notNull(),
     url: text("url"),
@@ -444,6 +445,7 @@ export const applications = pgTable(
   (table) => [
     index("applications_user_idx").on(table.userId),
     index("applications_status_idx").on(table.userId, table.status),
+    uniqueIndex("applications_slug_idx").on(table.userId, table.slug),
   ],
 );
 

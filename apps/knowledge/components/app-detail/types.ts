@@ -7,6 +7,7 @@ export type ApplicationStatus =
 
 export interface AppData {
   id: string;
+  slug: string;
   company: string;
   position: string;
   url: string | null;
