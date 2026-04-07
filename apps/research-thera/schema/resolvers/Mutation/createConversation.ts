@@ -7,6 +7,7 @@ import {
 } from "@/src/db";
 import { deepseekModel } from "@/src/lib/deepseek";
 import { generateText } from "ai";
+import { buildConversationSystemPrompt } from "@/src/lib/conversation-context";
 
 export const createConversation: NonNullable<MutationResolvers['createConversation']> = async (
   _parent,
@@ -29,7 +30,7 @@ export const createConversation: NonNullable<MutationResolvers['createConversati
 
   await addConversationMessage({ conversationId, role: "user", content: args.message });
 
-  const systemPrompt = buildSystemPrompt(issue);
+  const systemPrompt = await buildConversationSystemPrompt(issue, userEmail);
 
   const { text } = await generateText({
     model: deepseekModel(),
@@ -43,20 +44,3 @@ export const createConversation: NonNullable<MutationResolvers['createConversati
   return conversation as any;
 };
 
-function buildSystemPrompt(issue: {
-  title: string;
-  description: string;
-  category: string;
-  severity: string;
-  recommendations: string[] | null;
-}): string {
-  const recText = issue.recommendations?.length
-    ? `\nCurrent recommendations: ${issue.recommendations.join(", ")}`
-    : "";
-  return `You are a compassionate therapeutic advisor helping a parent understand and address a child's issue. Provide practical, evidence-based guidance in a warm, supportive tone. Keep responses focused and actionable.
-
-Issue: ${issue.title}
-Description: ${issue.description}
-Category: ${issue.category}
-Severity: ${issue.severity}${recText}`;
-}

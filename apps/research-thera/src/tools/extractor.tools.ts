@@ -160,6 +160,11 @@ export async function planResearchQuery(params: {
   title: string;
   description: string;
   notes: string[];
+  clinicalDomain?: string;
+  behaviorDirection?: string;
+  developmentalTier?: string;
+  requiredKeywords?: string[];
+  excludedTopics?: string[];
 }): Promise<ResearchPlan> {
   const { title, description, notes } = params;
 
@@ -171,6 +176,11 @@ export async function planResearchQuery(params: {
 Goal: ${title}
 Description: ${description}
 Notes: ${notes.join("\n- ")}
+${params.clinicalDomain ? `\nClinical Domain: ${params.clinicalDomain}` : ""}
+${params.behaviorDirection ? `Behavior Direction: ${params.behaviorDirection}` : ""}
+${params.developmentalTier ? `Developmental Tier: ${params.developmentalTier}` : ""}
+${params.requiredKeywords?.length ? `Required Keywords (MUST appear in relevant papers): ${params.requiredKeywords.join(", ")}` : ""}
+${params.excludedTopics?.length ? `Excluded Topics (do NOT search for these): ${params.excludedTopics.join(", ")}` : ""}
 
 Generate MULTIPLE diverse queries to maximize recall from different psychological/therapy databases.
 
@@ -180,7 +190,9 @@ QUERY STRATEGY:
 3. PubMed queries (min 1): Use MeSH terms and clinical psychology terminology
 
 Focus on finding psychological research relevant to the specific therapeutic goal.
-Include queries about: therapeutic interventions, mechanisms, evidence-based treatments, coping strategies.`,
+Include queries about: therapeutic interventions, mechanisms, evidence-based treatments, coping strategies.
+${params.requiredKeywords?.length ? `\nIMPORTANT: At least half of all generated queries MUST include one or more of these required keywords: ${params.requiredKeywords.join(", ")}` : ""}
+${params.excludedTopics?.length ? `IMPORTANT: No query should target these excluded topics: ${params.excludedTopics.join(", ")}` : ""}`,
   });
 
   return {
@@ -198,6 +210,8 @@ export async function extractResearch(params: {
   goalDescription: string;
   goalType: string;
   paper: PaperDetails;
+  developmentalTier?: string;
+  patientAge?: number | null;
 }): Promise<ExtractedResearchV2> {
   const { goalTitle, goalDescription, goalType, paper } = params;
 
@@ -206,6 +220,8 @@ export async function extractResearch(params: {
 Therapeutic Goal: ${goalTitle}
 Goal Description: ${goalDescription}
 Goal Type: ${goalType}
+${params.patientAge ? `Target Patient Age: ${params.patientAge} years old` : ""}
+${params.developmentalTier ? `Developmental Tier: ${params.developmentalTier}` : ""}
 
 Paper:
 Title: ${paper.title ?? ""}
@@ -239,7 +255,7 @@ RELEVANCE SCORING RUBRIC (be strict):
 
 STRICT FILTERING:
 - Score 0.1 or lower if paper is about: forensic interviews, legal proceedings, homework completion, academic achievement, adult populations (when goal is for a child)
-- Population mismatch: reduce score by 0.3 if study population age does not match patient age
+- Population mismatch: reduce score by 0.3 if study population age does not match ${params.patientAge ? `patient age (${params.patientAge} years, ${params.developmentalTier ?? "unknown"} tier)` : "the target population"}
 - If abstract is missing or fewer than 300 characters, return relevanceScore=0, confidence=0, rejectReason='insufficient_abstract'
 - Only extract findings EXPLICITLY stated in the abstract`;
 
