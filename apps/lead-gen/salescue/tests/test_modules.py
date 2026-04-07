@@ -129,6 +129,9 @@ class TestModuleProcess:
         assert "sentence_scores" in result
         assert result["gate_decision"] in ("pass", "quarantine", "block")
         assert "gate_confidence" in result
+        # v3: aspect scores and uncertainty decomposition
+        assert "aspect_scores" in result
+        assert "uncertainty" in result
 
     def test_intent_process(self, mock_encoded):
         module = NeuralHawkesIntentPredictor(hidden=768).cpu().eval()
@@ -213,6 +216,14 @@ class TestHierarchicalBayesianGate:
         gate = HierarchicalBayesianAttentionGate(hidden=768)
         assert isinstance(gate, torch.nn.Module)
 
+    def test_4_aspect_probes(self):
+        """Multi-probe: 4 aspect-specific probes are registered."""
+        gate = HierarchicalBayesianAttentionGate(hidden=768)
+        assert len(gate.probes) == 4
+        assert set(gate.probes.keys()) == {"content", "structure", "deception", "synthetic"}
+        assert len(gate.prior_alpha) == 4
+        assert len(gate.prior_beta) == 4
+
     def test_forward(self):
         gate = HierarchicalBayesianAttentionGate(hidden=768).cpu().eval()
         # Mock encoder output
@@ -229,6 +240,27 @@ class TestHierarchicalBayesianGate:
         assert "gate_confidence" in result
         assert "alpha" in result
         assert "beta" in result
+        # Multi-probe outputs
+        assert "aspect_scores" in result
+        assert set(result["aspect_scores"].keys()) == {"content", "structure", "deception", "synthetic"}
+        assert "aspect_weights" in result
+        # Uncertainty decomposition
+        assert "uncertainty" in result
+        assert "aleatoric" in result["uncertainty"]
+        assert "epistemic" in result["uncertainty"]
+        assert 0 <= result["uncertainty"]["aleatoric"] <= 1
+        assert result["uncertainty"]["epistemic"] >= 0
+
+    def test_per_sentence_spans(self):
+        """Different sentences should produce different sentence scores."""
+        gate = HierarchicalBayesianAttentionGate(hidden=768).cpu().eval()
+        mock_output = type("MockOutput", (), {
+            "last_hidden_state": torch.randn(1, 64, 768),
+        })()
+        # Two very different sentences should give different scores
+        text = "URGENT! Act now! FREE money!" + " " + "I enjoyed our meeting last Tuesday about the Q3 roadmap."
+        result = gate(mock_output, text)
+        assert len(result["sentence_scores"]) >= 2
 
     def test_sentence_features(self):
         feats = HierarchicalBayesianAttentionGate.extract_sentence_features(
@@ -269,6 +301,42 @@ class TestAdversarialStyleTransferDetector:
     def test_structural_features_empty(self):
         feats = AdversarialStyleTransferDetector.compute_structural_features("")
         assert len(feats) == 32
+
+    def test_yules_k(self):
+        """f11 is now Yule's K — should be > 0 for normal text."""
+        feats = AdversarialStyleTransferDetector.compute_structural_features(
+            "The quick brown fox jumps over the lazy dog. "
+            "A quick brown fox jumped the lazy dog again."
+        )
+        yules_k = feats[10]  # f11, index 10
+        assert yules_k > 0, f"Yule's K should be > 0 for normal text, got {yules_k}"
+
+    def test_shannon_entropy(self):
+        """f26 is now Shannon word entropy — should be in [0, 1]."""
+        feats = AdversarialStyleTransferDetector.compute_structural_features(
+            "The meeting was productive and the team discussed the roadmap."
+        )
+        entropy = feats[25]  # f26, index 25
+        assert 0 <= entropy <= 1, f"Shannon entropy should be in [0,1], got {entropy}"
+
+    def test_honores_r(self):
+        """f23 is now Honoré's R — should be > 0 for text with hapax legomena."""
+        feats = AdversarialStyleTransferDetector.compute_structural_features(
+            "The innovative approach streamlined our quarterly review process. "
+            "Several stakeholders appreciated the comprehensive analysis."
+        )
+        honores_r = feats[22]  # f23, index 22
+        assert honores_r >= 0, f"Honoré's R should be >= 0, got {honores_r}"
+
+    def test_trigram_repetition(self):
+        """f28 enhanced with trigram analysis — repetitive text should score higher."""
+        repetitive = AdversarialStyleTransferDetector.compute_structural_features(
+            "buy now buy now buy now buy now buy now buy now buy now"
+        )
+        diverse = AdversarialStyleTransferDetector.compute_structural_features(
+            "The innovative approach streamlined our quarterly review process yesterday."
+        )
+        assert repetitive[27] > diverse[27]  # f28, index 27
 
     def test_forward(self):
         detector = AdversarialStyleTransferDetector(hidden=768).cpu().eval()
@@ -365,11 +433,23 @@ class TestCampaignSimilarityDetector:
 class TestProviderCalibration:
     def test_6_providers(self):
         cal = ProviderCalibration().cpu().eval()
-        result = cal(0.5, 0.3, "Test email text", "gmail")
+        feature_dict = {
+            "spam_score": 0.5, "ai_risk": 0.3, "text_length_norm": 0.1,
+            "link_density": 0.01, "urgency_count_norm": 0.0,
+            "header_auth_score": 0.67, "template_marker": 0.0,
+            "caps_ratio": 0.0, "sentence_count_norm": 0.1,
+            "role_account": 0.0,
+        }
+        result = cal(feature_dict, "gmail")
         assert len(result["provider_scores"]) == 6
         assert all(p in result["provider_scores"] for p in [
             "gmail", "outlook", "yahoo", "protonmail", "apple_mail", "corporate"])
         assert 0 <= result["deliverability"] <= 10
+
+    def test_10_features(self):
+        """ProviderCalibration now accepts 10-feature dict."""
+        cal = ProviderCalibration().cpu().eval()
+        assert cal.N_FEATURES == 10
 
 
 class TestSpamTaxonomy:
