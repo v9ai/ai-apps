@@ -132,8 +132,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut attention_types: BTreeMap<usize, String> = BTreeMap::new();
 
             for (&layer_num, components) in &layers {
-                let has_experts = components.iter().any(|c| c.starts_with("experts.") || c.starts_with("block_sparse_moe.experts."));
-                let has_shared_expert = components.iter().any(|c| c.contains("shared_expert"));
+                let has_experts = components.iter().any(|c| c.contains("experts."));
+                let has_shared_expert = components.iter().any(|c| c.contains("shared_expert"))
+                    || components.iter().any(|c| c.contains("shared_experts"));
                 let has_gate = components.iter().any(|c| c.contains("gate"));
 
                 // Attention type detection
@@ -225,7 +226,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Count weights per expert to estimate expert size
                 let expert_weights: Vec<&String> = components
                     .iter()
-                    .filter(|c| c.starts_with("experts.0."))
+                    .filter(|c| c.contains("experts.0."))
                     .collect();
                 json!({
                     "layer": layer_num,
