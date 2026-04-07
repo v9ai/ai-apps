@@ -7,60 +7,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = HfClient::from_env(8)?;
     let scanner = OrgScanner::new(&client);
 
-    // All companies from ai-features.json that have features + key domain variants
-    // Plus potential HF orgs for all 63 companies
+    // Companies with HF presence (confirmed) + new discoveries
     let orgs = [
-        // 9 companies with features (known)
+        // Confirmed HF presence from previous scans
         "assemblyai",
         "sumble",
-        "gong-io", "gong",
-        "landbase",
-        "aviso", "aviso-ai",
-        "sierra-ai", "sierraai",
-        "alembic", "alembic-ai",
-        "cresta", "cresta-ai",
-        "zapier",
-        // Other companies from the list — try common HF org patterns
-        "clari",
-        "bland-ai", "blandai",
-        "amplemarket",
-        "ocean-io", "ocean-ai",
-        "clay-com", "clay-ai", "clay-hq",
-        "revenue-io",
-        "qualified",
-        "outreach", "outreach-io",
-        "nooks-ai", "nooksai",
-        "apollo-io", "apolloio",
         "salesloft",
-        "smartlead",
-        "artisan-ai", "artisanai",
-        "11x-ai",
-        "usergems",
-        "sybill-ai", "sybill",
-        "lindy-ai", "lindyai",
-        "decagon-ai", "decagon",
-        "warmly-ai",
-        // B2B sales AI companies NOT in list — discovered via research
-        "chorus-ai", "chorusai",     // conversation intelligence (acquired by ZoomInfo)
-        "people-ai", "peopleai",     // revenue intelligence
-        "clari-ai",
-        "6sense",                     // predictive analytics
-        "bombora",                    // intent data
-        "zoominfo",                   // data enrichment
-        "clearbit",                   // data enrichment
-        "lusha",                      // contact data
-        "cognism",                    // sales intelligence
-        "apollo",                     // sales engagement
-        "outplay",                    // sales engagement
-        "regie-ai", "regieai",       // AI content for sales
-        "copy-ai", "copyai",         // AI content
-        "lavender-ai", "lavenderai", // email AI
-        "drift",                      // conversational marketing
-        "intercom",                   // customer messaging
-        "conversica",                 // AI sales assistant
-        "exceed-ai", "exceedai",     // AI sales assistant
-        "orum",                       // AI dialer
-        "salience", "salience-ai",   // NLP
+        "chorus",
+        // New discovery — Diffbot (13 models, Llama/Qwen fine-tunes)
+        "diffbot",
+        // Deep research discoveries — verify HF
+        "uniphore",
+        "deepgram",
+        "dialpad",
     ];
 
     let mut all_profiles = Vec::new();
