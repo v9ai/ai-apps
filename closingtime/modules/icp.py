@@ -9,10 +9,14 @@ Wasserstein distance (earth mover's distance) for matching.
 import torch
 import torch.nn as nn
 
+from ..base import BaseModule
+
 DIMS = ["industry", "size", "tech", "role", "signal"]
 
 
-class WassersteinICPMatcher(nn.Module):
+class WassersteinICPMatcher(BaseModule):
+    name = "icp"
+    description = "Wasserstein distance ICP matching"
     """
     Models ICP and prospect as distributions in embedding space.
     Matching score = negative Wasserstein distance between distributions.
@@ -45,7 +49,13 @@ class WassersteinICPMatcher(nn.Module):
         # learned dealbreaker thresholds
         self.thresholds = nn.Parameter(torch.zeros(len(DIMS)))
 
-    def forward(self, icp_cls, prospect_cls, prospect_completeness):
+    def process(self, encoded, text, **kwargs):
+        raise NotImplementedError(
+            "WassersteinICPMatcher requires separate ICP and prospect embeddings. "
+            "Use module.match(icp_cls, prospect_cls, prospect_completeness) directly."
+        )
+
+    def match(self, icp_cls, prospect_cls, prospect_completeness):
         dimensions = {}
         dealbreakers = []
         missing = []

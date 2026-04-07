@@ -16,6 +16,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
+from ..base import BaseModule
+
 
 class LearnedInterventionAttribution(nn.Module):
     """
@@ -144,7 +146,11 @@ class LearnedInterventionAttribution(nn.Module):
         return d_loss, g_loss
 
 
-class LeadScorer(nn.Module):
+class LeadScorer(BaseModule):
+    name = "score"
+    description = "Causal signal attribution via learned interventions"
+
+    LABELS = ["hot", "warm", "cold", "disqualified"]
     SIGNAL_NAMES = [
         "pricing_interest", "competitor_research", "icp_fit_strong",
         "icp_fit_weak", "seniority_match", "company_size_match",
@@ -173,7 +179,8 @@ class LeadScorer(nn.Module):
         self.log_var_class = nn.Parameter(torch.zeros(1))
         self.log_var_regress = nn.Parameter(torch.zeros(1))
 
-    def forward(self, encoder_output):
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
         tokens = encoder_output.last_hidden_state  # (B, seq, hidden)
 
         # detect signals via cross-attention
@@ -191,7 +198,7 @@ class LeadScorer(nn.Module):
         probs = logits.softmax(-1)
 
         # build causal evidence
-        labels = ["hot", "warm", "cold", "disqualified"]
+        labels = self.LABELS
         signals = []
         for i in range(len(self.SIGNAL_NAMES)):
             s = strengths[0, i].item()

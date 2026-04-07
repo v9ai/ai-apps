@@ -11,8 +11,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ..base import BaseModule
 
-class ContextualBradleyTerry(nn.Module):
+
+class ContextualBradleyTerry(BaseModule):
+    name = "subject"
+    description = "Contextual Bradley-Terry subject line ranking"
     """
     Standard Bradley-Terry: P(A > B) = sigma(score(A) - score(B))
     Our extension: P(A > B | context) = sigma(score(A, context) - score(B, context))
@@ -44,6 +48,12 @@ class ContextualBradleyTerry(nn.Module):
         # context-free scorer (fallback)
         self.scorer_no_ctx = nn.Sequential(
             nn.Linear(64, 32), nn.GELU(), nn.Linear(32, 1),
+        )
+
+    def process(self, encoded, text, **kwargs):
+        raise NotImplementedError(
+            "ContextualBradleyTerry requires subject embeddings. "
+            "Use module.score(), module.compare(), or module.rank()."
         )
 
     def score(self, subject_embed, context=None):

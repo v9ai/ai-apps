@@ -10,6 +10,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ..base import BaseModule
+from ..backbone import SharedEncoder, get_device
+
 
 class CommitmentDetector:
     """Rule-based commitment extraction from conversation turns."""
@@ -42,7 +45,7 @@ class CommitmentDetector:
         return commitments
 
 
-class ConversationNeuralProcess(nn.Module):
+class ConversationNeuralProcess(BaseModule):
     """
     A Conditional Neural Process (CNP) for call scoring.
 
@@ -53,6 +56,8 @@ class ConversationNeuralProcess(nn.Module):
     At inference: the "context" is the conversation so far,
                   the "target" is predicting the outcome.
     """
+    name = "call"
+    description = "Conditional neural process for conversation scoring"
 
     def __init__(self, hidden=768, latent_dim=128, local_window=8):
         super().__init__()
@@ -122,7 +127,22 @@ class ConversationNeuralProcess(nn.Module):
 
         return mu, sigma
 
-    def forward(self, encoder, tokenizer, transcript):
+    def forward(self, transcript, **kwargs):
+        """Accept a transcript (list of turn dicts with 'text' and 'speaker')."""
+        from ..validation import validate_transcript
+        transcript = validate_transcript(transcript)
+        return self.analyze(transcript)
+
+    def process(self, encoded, text, **kwargs):
+        raise NotImplementedError(
+            "ConversationNeuralProcess requires a transcript. "
+            "Use module(transcript) directly."
+        )
+
+    def analyze(self, transcript):
+        encoder, tokenizer = SharedEncoder.load()
+        device = get_device()
+
         # encode all turns
         tokens = tokenizer(
             [t["text"] for t in transcript],
@@ -130,8 +150,10 @@ class ConversationNeuralProcess(nn.Module):
             truncation=True,
             max_length=128,
             padding=True,
-        )
-        speakers = torch.tensor([0 if t["speaker"] == "customer" else 1 for t in transcript])
+        ).to(device)
+        speakers = torch.tensor(
+            [0 if t["speaker"] == "customer" else 1 for t in transcript]
+        ).to(device)
 
         with torch.no_grad():
             enc = encoder(**tokens)
@@ -186,11 +208,13 @@ class ConversationNeuralProcess(nn.Module):
                     "speaker": transcript[i]["speaker"],
                 })
 
+        # compute final hidden state once
+        h_final = self.decoder(torch.cat([
+            turn_embeds[-1], context_repr.squeeze(0)]))
+
         # momentum
         if n > 2:
-            h_last = self.decoder(torch.cat([
-                turn_embeds[-1], context_repr.squeeze(0)]))
-            mom = self.momentum_head(h_last.unsqueeze(0))
+            mom = self.momentum_head(h_final.unsqueeze(0))
             momentum = ["accelerating", "stable", "decelerating"][mom.argmax(-1).item()]
         else:
             momentum = "stable"
@@ -198,8 +222,6 @@ class ConversationNeuralProcess(nn.Module):
         commitments = self.commitment_detector.process(transcript)
 
         # action
-        h_final = self.decoder(torch.cat([
-            turn_embeds[-1], context_repr.squeeze(0)]))
         action = self.actions[self.action_head(h_final.unsqueeze(0)).argmax(-1).item()]
 
         return {
