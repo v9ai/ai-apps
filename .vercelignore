@@ -1,9 +1,8 @@
-# Exclude all apps except agentic-healthcare, lead-gen, todo, and knowledge
+# Exclude all apps except agentic-healthcare, lead-gen, todo, knowledge, and bricks
 apps/podcasts
 apps/real-estate
 apps/research-thera
 apps/vadim.blog
-apps/bricks
 
 # Exclude packages not needed
 packages/qwen
@@ -41,6 +40,8 @@ apps/agentic-healthcare/.next
 apps/knowledge/.next
 apps/knowledge/evals
 apps/knowledge/backend
+apps/bricks/.next
+apps/bricks/backend
 __pycache__
 *.egg-info
 .langgraph_api

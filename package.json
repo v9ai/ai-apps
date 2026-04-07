@@ -25,6 +25,7 @@
     "deploy:k": "VERCEL_PROJECT_ID=prj_HmZ37BPDql0kOnFT9iiPsnQBOryr VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
     "deploy:t": "vercel deploy --prod --cwd apps/todo",
     "deploy:p": "vercel deploy --prod --cwd apps/podcasts",
+    "deploy:br": "VERCEL_PROJECT_ID=prj_KzjAVUDbxWndDLQrvPsmAuoaHqsw VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
     "dev:p": "turbo run dev --filter=humans-of-ai",
     "dev:br": "turbo run dev --filter=bricks",
     "dev:tr": "turbo run dev --filter=travel",
