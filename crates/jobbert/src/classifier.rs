@@ -1,7 +1,10 @@
 //! Skill extraction via BertForTokenClassification.
 //!
-//! Model: jjzha/jobbert_skill_extraction
+//! Model: jjzha/jobbert_knowledge_extraction (hard skills)
 //! Labels: {0: "B", 1: "I", 2: "O"} (BIO tagging for skill spans)
+//!
+//! Note: This model primarily uses B tags for skills, rarely I.
+//! The BIO decoder merges adjacent B tokens into single spans.
 
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
@@ -12,7 +15,7 @@ use tokenizers::Tokenizer;
 use crate::bio::{decode_bio, ExtractedSkill};
 use crate::{Error, Result};
 
-const REPO_ID: &str = "jjzha/jobbert_skill_extraction";
+const REPO_ID: &str = "jjzha/jobbert_knowledge_extraction";
 const NUM_LABELS: usize = 3; // B=0, I=1, O=2
 
 pub struct SkillClassifier {

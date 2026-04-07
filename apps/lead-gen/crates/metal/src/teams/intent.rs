@@ -75,6 +75,15 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
 
     let use_local = classifier.trained || semantic_classifier.trained;
 
+    // Load BGE embedder for on-the-fly embedding when enrichment didn't produce one
+    #[cfg(feature = "kernel-bge")]
+    let bge_embedder: Option<crate::similarity::bge::BgeEmbedder> = {
+        match crate::similarity::bge::BgeEmbedder::load_default() {
+            Ok(e) => { eprintln!("  BGE embedder loaded for intent"); Some(e) }
+            Err(e) => { eprintln!("  BGE unavailable for intent: {e}"); None }
+        }
+    };
+
     for company in candidates {
         let mut text_parts = Vec::new();
         if !company.domain.is_empty() {
@@ -101,10 +110,21 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
 
             let results = if semantic_classifier.trained {
                 if let Some(ref proto) = prototypes {
-                    // When BGE embedder is loaded, compute real embedding here.
-                    // For now, zero embedding for graceful degradation to keyword features.
-                    let zero_embedding = vec![0.0f32; proto.dim];
-                    semantic_classifier.classify_text(truncated, source_type, has_url, proto, &zero_embedding)
+                    // Use enrichment embedding if available, else compute via BGE, else zero fallback.
+                    // Zero embedding degrades gracefully to keyword-only features.
+                    let text_embedding = if let Some(ref emb) = company.embedding {
+                        emb.clone()
+                    } else {
+                        #[cfg(feature = "kernel-bge")]
+                        {
+                            bge_embedder.as_ref()
+                                .and_then(|emb| crate::similarity::bge::embed_document(emb, truncated).ok())
+                                .unwrap_or_else(|| vec![0.0f32; proto.dim])
+                        }
+                        #[cfg(not(feature = "kernel-bge"))]
+                        { vec![0.0f32; proto.dim] }
+                    };
+                    semantic_classifier.classify_text(truncated, source_type, has_url, proto, &text_embedding)
                 } else {
                     classifier.classify_text(truncated, source_type, has_url)
                 }

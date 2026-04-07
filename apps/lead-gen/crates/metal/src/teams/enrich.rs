@@ -70,6 +70,23 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
         errors: Vec::new(),
     };
 
+    // Load ONNX models once before the loop (graceful degradation if unavailable)
+    #[cfg(feature = "kernel-bge")]
+    let bge_embedder: Option<crate::similarity::bge::BgeEmbedder> = {
+        match crate::similarity::bge::BgeEmbedder::load_default() {
+            Ok(e) => { eprintln!("  BGE embedder loaded (384-dim)"); Some(e) }
+            Err(e) => { eprintln!("  BGE embedder unavailable: {e}"); None }
+        }
+    };
+
+    #[cfg(feature = "kernel-ner-transformer")]
+    let ner_model: Option<crate::kernel::ner::NerModel> = {
+        match crate::kernel::ner::NerModel::load_default() {
+            Ok(n) => { eprintln!("  NER model loaded (bert-base-NER)"); Some(n) }
+            Err(e) => { eprintln!("  NER model unavailable: {e}"); None }
+        }
+    };
+
     for company in candidates {
         // Fetch additional pages for richer signals
         let mut all_text = company.description.clone();
@@ -148,11 +165,56 @@ pub async fn run(ctx: &TeamContext) -> Result<StageReport> {
             &ctx.icp_vertical,
         );
 
-        // Compute embedding and extract entities when ML models are available.
-        // These are set to None when models aren't loaded — the pipeline degrades
-        // gracefully to keyword-only scoring in that case.
-        let embedding: Option<Vec<f32>> = None; // Set by BGE embedder when kernel-bge enabled
-        let extracted_entities: Option<ExtractedEntities> = None; // Set by NER when kernel-ner-transformer enabled
+        // Compute embedding when BGE model is available.
+        // Truncate to ~2000 chars — BGE tokenizer handles 512 tokens max.
+        #[cfg(feature = "kernel-bge")]
+        let embedding: Option<Vec<f32>> = if let Some(ref emb) = bge_embedder {
+            let trunc = &all_text[..all_text.len().min(2000)];
+            match crate::similarity::bge::embed_document(emb, trunc) {
+                Ok(vec) => Some(vec),
+                Err(e) => {
+                    report.errors.push(format!("{}: BGE embed: {e}", company.domain));
+                    None
+                }
+            }
+        } else { None };
+        #[cfg(not(feature = "kernel-bge"))]
+        let embedding: Option<Vec<f32>> = None;
+
+        // Extract named entities when NER model is available.
+        // Truncate to ~3000 chars — BERT handles 512 tokens max.
+        #[cfg(feature = "kernel-ner-transformer")]
+        let extracted_entities: Option<ExtractedEntities> = if let Some(ref ner) = ner_model {
+            let trunc = &all_text[..all_text.len().min(3000)];
+            match ner.extract(trunc) {
+                Ok(entities) => {
+                    use crate::kernel::ner::EntityType;
+                    let persons: Vec<String> = entities.iter()
+                        .filter(|e| e.entity_type == EntityType::Person)
+                        .map(|e| e.text.clone())
+                        .collect();
+                    let organizations: Vec<String> = entities.iter()
+                        .filter(|e| e.entity_type == EntityType::Organization)
+                        .map(|e| e.text.clone())
+                        .collect();
+                    let locations: Vec<String> = entities.iter()
+                        .filter(|e| e.entity_type == EntityType::Location)
+                        .map(|e| e.text.clone())
+                        .collect();
+                    if persons.is_empty() && organizations.is_empty() && locations.is_empty() {
+                        None
+                    } else {
+                        Some(ExtractedEntities { persons, organizations, locations })
+                    }
+                }
+                Err(e) => {
+                    report.errors.push(format!("{}: NER extract: {e}", company.domain));
+                    None
+                }
+            }
+        } else { None };
+        #[cfg(not(feature = "kernel-ner-transformer"))]
+        let extracted_entities: Option<ExtractedEntities> = None;
 
         let enriched = EnrichedCompany {
             domain: company.domain.clone(),
