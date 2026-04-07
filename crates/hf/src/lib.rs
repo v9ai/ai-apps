@@ -1,6 +1,6 @@
 //! # hf
 //!
-//! Parallel data retrieval from Hugging Face Hub for the closingtime / v9ai
+//! Parallel data retrieval from Hugging Face Hub for the salescue / v9ai
 //! lead-generation ecosystem. Bounded concurrency via `buffer_unordered`.
 //!
 //! ```rust,no_run
@@ -9,7 +9,7 @@
 //! #[tokio::main]
 //! async fn main() -> Result<(), hf::Error> {
 //!     let client = HfClient::new(None, 8)?;
-//!     let repos = vec!["v9ai/closingtime-score-v1", "v9ai/closingtime-intent-v1"];
+//!     let repos = vec!["v9ai/salescue-score-v1", "v9ai/salescue-intent-v1"];
 //!     let cards = client.fetch_model_cards(&repos).await?;
 //!     for (repo, card) in cards {
 //!         println!("{repo}: {} bytes", card.len());

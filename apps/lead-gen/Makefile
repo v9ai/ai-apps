@@ -376,23 +376,23 @@ blocklist: start-build ## Show blocked domains
 export-blocklist: ## Export blocked domains from Neon → data/blocklist.txt
 	pnpm tsx scripts/export-blocklist.ts
 
-# ── ClosingTime HF Publishing ──────────────────────────────────
+# ── Salescue HF Publishing ─────────────────────────────────────
 
-CT_DIR   := closingtime
+CT_DIR   := salescue
 CT_PY    := PYTHONPATH=$(CURDIR) $(CONSULT_PY)
 
 .PHONY: ct-publish ct-publish-dry ct-publish-all
 
 ct-publish: ## Publish module(s) to HF Hub: make ct-publish M=spam
 	@test -n "$(M)" || { echo "Usage: make ct-publish M=spam  or  make ct-publish M='spam score intent'"; exit 1; }
-	$(CT_PY) -m closingtime.publish $(M)
+	$(CT_PY) -m salescue.publish $(M)
 
 ct-publish-dry: ## Dry-run publish (local save + verify): make ct-publish-dry M=spam
 	@test -n "$(M)" || { echo "Usage: make ct-publish-dry M=spam"; exit 1; }
-	$(CT_PY) -m closingtime.publish $(M) --dry-run
+	$(CT_PY) -m salescue.publish $(M) --dry-run
 
 ct-publish-all: ## Publish all compatible modules to HF Hub
-	$(CT_PY) -m closingtime.publish --all
+	$(CT_PY) -m salescue.publish --all
 
 # ── All ────────────────────────────────────────────────────────
 
