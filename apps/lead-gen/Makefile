@@ -379,7 +379,7 @@ export-blocklist: ## Export blocked domains from Neon → data/blocklist.txt
 # ── ClosingTime HF Publishing ──────────────────────────────────
 
 CT_DIR   := ../../closingtime
-CT_PY    := PYTHONPATH=$(dir $(CT_DIR)) python3
+CT_PY    := PYTHONPATH=/Users/vadimnicolai/Public/ai-apps $(CONSULT_PY)
 
 .PHONY: ct-publish ct-publish-dry ct-publish-all
 
