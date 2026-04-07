@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { queryAirbnb } from "@/lib/airbnb";
 import { AirbnbPageContent } from "./AirbnbPageContent";
 
 export const metadata: Metadata = {
@@ -14,6 +15,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AirbnbPage() {
-  return <AirbnbPageContent />;
+export default async function AirbnbPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const priceMax = Number(params.price_max) || 50;
+  const region =
+    typeof params.region === "string" ? params.region : undefined;
+
+  const data = queryAirbnb({ priceMax, region });
+
+  return <AirbnbPageContent data={data} />;
 }
