@@ -78,6 +78,7 @@ export const therapyResearch = pgTable("therapy_research", {
   therapeuticTechniques: text("therapeutic_techniques").notNull(), // JSON array
   evidenceLevel: text("evidence_level"),
   issueId: integer("issue_id"),
+  journalEntryId: integer("journal_entry_id"),
   relevanceScore: integer("relevance_score").notNull(),
   extractedBy: text("extracted_by").notNull(),
   extractionConfidence: integer("extraction_confidence").notNull(),
@@ -93,6 +94,7 @@ export const therapeuticQuestions = pgTable("therapeutic_questions", {
   id: serial("id").primaryKey(),
   goalId: integer("goal_id"),
   issueId: integer("issue_id"),
+  journalEntryId: integer("journal_entry_id"),
   question: text("question").notNull(),
   researchId: integer("research_id"),
   researchTitle: text("research_title"),
