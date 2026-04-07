@@ -3,7 +3,7 @@ slug: predicting-bank-failures-gradient-descent
 title: Predicting Bank Failures Using Gradient Descent and Machine Learning
 date: 2024-09-08
 description: "Use gradient descent and logistic regression to predict bank failures — a machine learning approach to financial risk management and early warning systems."
-authors: [nicolad]
+authors: [v9ai]
 tags:
   [
     AI,

@@ -2,7 +2,7 @@
 title: Production-Ready AI Job Classification in Python with LangChain and Cloudflare Workers AI
 description: A production-ready implementation of AI job classification with LangChain and Cloudflare Workers AI.
 tags: [ai, langchain, cloudflare, workers, job-classification, python]
-authors: [nicolad]
+authors: [v9ai]
 slug: /production-ready-ai-job-classification-in-python-with-langchain-and-cloudflare-workers-ai
 ---
 We needed a pipeline that ingests hundreds of job postings from ATS platforms (Greenhouse, Lever, Ashby), enriches each posting with structured data from their public APIs, and then classifies whether a job is a **fully remote EU position** — all running on Cloudflare's edge with zero GPU costs.

@@ -3,7 +3,7 @@ slug: llamaindex-embeddings-healthcare-rag-pgvector-production
 title: "LlamaIndex Embeddings for Healthcare RAG: From PDF to pgvector in Production"
 description: "A production deep dive into building a healthcare embedding pipeline with LlamaIndex Document/TextNode abstractions, FastEmbed bge-large-en-v1.5, LlamaParse, pgvector hybrid search, derived clinical metrics, and a 500+ line eval suite."
 date: 2026-03-18
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - llamaindex
   - embeddings

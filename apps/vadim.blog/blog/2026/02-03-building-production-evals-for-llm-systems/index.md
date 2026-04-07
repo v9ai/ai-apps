@@ -2,7 +2,7 @@
 title: "Evals for Workflow-First Production LLMs: Contracts, Rubrics, Sampling, and Observability"
 description: "How to measure (and improve) LLM systems in production using scorers, judges, and a workflow-first evaluation harness."
 date: 2026-02-03
-authors: [nicolad]
+authors: [v9ai]
 tags: []
 image: ./image.png
 ---

@@ -3,7 +3,7 @@ slug: building-jupiter-swap-integration-solana-anchor
 title: Building a Production-Ready Jupiter Swap Integration on Solana with Anchor
 date: 2025-12-21
 description: "Build a production-ready Jupiter swap integration on Solana with Anchor — on-chain policy layer, fee collection, slippage caps, and structured telemetry."
-authors: [nicolad]
+authors: [v9ai]
 image: ./jupiter.jpeg
 ---
 

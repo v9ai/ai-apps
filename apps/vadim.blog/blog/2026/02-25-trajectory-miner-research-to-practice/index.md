@@ -3,7 +3,7 @@ slug: trajectory-miner-research-to-practice
 title: "Why Do AI Agents Keep Making the Same Mistakes?"
 description: "AI agents start fresh every session, repeating errors. We built a trajectory miner that extracts patterns from past sessions — here's the architecture, grounded in 4 research papers."
 date: 2026-02-25
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - autonomous-agents
   - self-improvement

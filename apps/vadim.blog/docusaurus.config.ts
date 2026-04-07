@@ -17,7 +17,7 @@ const config: Config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: "nicolad", // Usually your GitHub org/user name.
+  organizationName: "v9ai", // Usually your GitHub org/user name.
   projectName: "vadim.blog", // Usually your repo name.
 
   onBrokenLinks: "throw",
@@ -59,7 +59,7 @@ const config: Config = {
         author: {
           "@type": "Person",
           name: "Vadim Nicolai",
-          url: "https://www.linkedin.com/in/vadimnicolai/",
+          url: "https://www.linkedin.com/in/v9ai/",
         },
       }),
     },
@@ -114,11 +114,11 @@ const config: Config = {
           items: [
             {
               label: "LinkedIn",
-              href: "https://www.linkedin.com/in/vadimnicolai/",
+              href: "https://www.linkedin.com/in/v9ai/",
             },
             {
               label: "GitHub",
-              href: "https://github.com/nicolad",
+              href: "https://github.com/v9ai",
             },
           ],
         },

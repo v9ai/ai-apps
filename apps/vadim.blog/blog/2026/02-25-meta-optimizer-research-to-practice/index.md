@@ -3,7 +3,7 @@ slug: meta-optimizer-research-to-practice
 title: "We Built a Strategic Brain for Our AI Pipeline. Here's What It Learned."
 description: "Six agents can mine, audit, evolve, fix, and verify code. None knows when to do any of it. We built the coordinator that decides — with phase detection, cost-aware routing, and a kill switch."
 date: 2026-02-25
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - autonomous-agents
   - meta-optimization

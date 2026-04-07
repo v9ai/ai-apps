@@ -3,7 +3,7 @@ slug: llm-as-judge
 title: "LLM as Judge: What AI Engineers Get Wrong About Automated Evaluation"
 description: "LLM-as-judge achieves 80% human agreement at 500x lower cost. But position bias, self-preference, and the meta-evaluation problem mean most pipelines ship broken."
 date: 2026-03-15
-authors: [nicolad]
+authors: [v9ai]
 image: /img/social-card.png
 tags:
   - llm-evaluation

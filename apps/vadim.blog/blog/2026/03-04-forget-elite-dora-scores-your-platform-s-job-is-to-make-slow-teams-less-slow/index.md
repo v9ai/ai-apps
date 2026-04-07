@@ -3,7 +3,7 @@ slug: forget-elite-dora-scores-your-platform-s-job-is-to-make-slow-teams-less-sl
 title: "Forget Elite DORA Scores. Your Platform’s Job is to Make Slow Teams Less Slow."
 description: "If your platform team’s North Star is getting every development squad into the “elite” performer bracket for DORA metrics, you’re aiming at the wrong target. You’re probably making things worse. I’ve "
 date: 2026-03-04
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - forget
   - elite

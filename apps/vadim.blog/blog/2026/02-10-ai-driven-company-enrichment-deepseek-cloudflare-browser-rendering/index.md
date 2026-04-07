@@ -2,7 +2,7 @@
 title: AI-Driven Company Enrichment with DeepSeek via Cloudflare Browser Rendering
 description: Extract a clean company profile (careers + LinkedIn + ATS boards) using Cloudflare Browser Rendering /json with DeepSeek.
 slug: /ai-driven-company-enrichment-deepseek-cloudflare-browser-rendering
-authors: [nicolad]
+authors: [v9ai]
 image: ./image.png
 ---
 

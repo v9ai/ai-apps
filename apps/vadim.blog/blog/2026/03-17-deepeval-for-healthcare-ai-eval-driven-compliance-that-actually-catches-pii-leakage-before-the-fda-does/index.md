@@ -3,7 +3,7 @@ slug: deepeval-for-healthcare-ai-eval-driven-compliance-that-actually-catches-pi
 title: "DeepEval for Healthcare AI: Eval-Driven Compliance That Actually Catches PII Leakage Before the FDA Does"
 description: "Most healthcare AI teams bolt compliance checks onto shipping code. DeepEval lets you encode HIPAA, FDA, and PII constraints as executable metrics that fail your pipeline before PHI ever leaks."
 date: 2026-03-17
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - deepeval
   - healthcare-ai

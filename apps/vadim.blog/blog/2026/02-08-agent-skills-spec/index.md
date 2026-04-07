@@ -1,7 +1,7 @@
 ---
 title: Agent Skills spec + Mastra integration
 description: How to author SKILL.md skills, structure skill folders, validate them, and wire them into Mastra Workspaces (discovery, activation, search indexing).
-authors: [nicolad]
+authors: [v9ai]
 image: ./image.png
 ---
 

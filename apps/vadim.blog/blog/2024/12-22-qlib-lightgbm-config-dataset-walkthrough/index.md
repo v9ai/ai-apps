@@ -3,7 +3,7 @@ slug: qlib-ai-quant-workflow-lightgbm
 title: Harnessing AI for Quantitative Finance with Qlib and LightGBM
 date: 2024-12-22
 description: "Configure and run Qlib's LightGBM workflow for quantitative stock prediction — dataset setup, feature engineering, and model evaluation walkthrough."
-authors: [nicolad]
+authors: [v9ai]
 tags:
   [
     python,

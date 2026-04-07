@@ -3,7 +3,7 @@ slug: how-i-built-ux-team-claude-code-agent-teams
 title: "How I Built a UX Team with Claude Code Agent Teams"
 description: "A practical walkthrough of designing, wiring, and running a 3-agent UX team (UX Lead + UX Researcher + UI Designer) inside a real Next.js project using Claude Code Agent Teams and BMAD Method."
 date: 2026-02-24
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - claude-code
   - agent-teams

@@ -3,7 +3,7 @@ slug: gradient-descent-trading-algorithms
 title: Understanding Gradient Descent and Its Applications in Trading Algorithms
 date: 2024-09-08
 description: "Learn how gradient descent optimizes predictive models in algorithmic trading — from price forecasting to portfolio optimization strategies."
-authors: [nicolad]
+authors: [v9ai]
 tags:
   [
     AI,

@@ -3,7 +3,7 @@ slug: pixel-perfect-playwright-figma-mcp
 title: "Pixel-Perfect UI with Playwright and Figma MCP: What Actually Works in 2026"
 description: "Honest assessment of achieving pixel-perfect UI using headless Playwright and Figma MCP. Real code, real friction, and what breaks when AI meets design tokens."
 date: 2026-03-02
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - figma-mcp
   - playwright

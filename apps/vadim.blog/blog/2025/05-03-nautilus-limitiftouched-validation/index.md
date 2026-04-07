@@ -4,7 +4,7 @@ title: Contributing a Safer MarketIfTouchedOrder to Nautilus Trader — Hardenin
 description: "PR #2577 adds fallible constructors and domain-level validation for MarketIfTouchedOrder in Nautilus Trader, closing issue #2529 on order safety."
 tags: [rust, nautilus-trader, open-source, algorithmic-trading, validation]
 date: 2025-05-03
-authors: [nicolad]
+authors: [v9ai]
 ---
 
 > **TL;DR** – PR [#2577](https://github.com/nautechsystems/nautilus_trader/pull/2577) introduces a _fallible_ constructor, complete domain-level checks, and four focussed tests for `MarketIfTouchedOrder`, thereby closing long-standing Issue [#2529](https://github.com/nautechsystems/nautilus_trader/issues/2529) on order-validation consistency.

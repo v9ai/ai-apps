@@ -3,7 +3,7 @@ slug: skill-evolver-research-to-practice
 title: "How We Built an Agent That Edits Its Own Instructions"
 description: "An AI agent that improves its own prompts based on measured evidence — not vibes. Five research papers, five anti-patterns, and one strict scope boundary that makes it safe."
 date: 2026-02-25
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - autonomous-agents
   - self-improvement

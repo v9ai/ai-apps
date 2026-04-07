@@ -3,7 +3,7 @@ title: "Building an Automated Architecture Reviewer with Claude Opus 4.6"
 description: "How we built an Anthropic-powered Architect agent that autonomously reviews codebases and produces comprehensive architecture reports."
 slug: architect-agent
 date: 2026-02-17
-authors: [nicolad]
+authors: [v9ai]
 tags: [anthropic, claude, agents, architecture, automation, ai-engineering]
 ---
 

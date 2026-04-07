@@ -3,7 +3,7 @@ slug: the-research-on-llm-self-correction
 title: "The Research on LLM Self-Correction"
 description: "If you’re building with LLMs today, you’ve likely been sold a bill of goods about “reflection.” The narrative is seductive: just have the model check its own work, and watch quality magically improve."
 date: 2026-03-08
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - research
   - self

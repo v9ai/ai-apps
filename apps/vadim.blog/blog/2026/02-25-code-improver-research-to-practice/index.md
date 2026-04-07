@@ -3,7 +3,7 @@ slug: code-improver-research-to-practice
 title: "5 Meta-Tools, 0 Ad-Hoc Edits: Structured Code Repair with AI Agents"
 description: "Ad-hoc AI edits break code. Standardized repair workflows don't. Five meta-tools for N+1 queries, type safety, performance, dead code, and security — grounded in 5 research papers."
 date: 2026-02-25
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - autonomous-agents
   - automated-repair

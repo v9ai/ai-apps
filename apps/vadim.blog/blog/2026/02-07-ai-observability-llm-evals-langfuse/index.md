@@ -3,7 +3,7 @@ title: AI Observability for LLM Evals with Langfuse
 description: A deep dive into end-to-end AI observability for batch evaluation—traces, spans, prompt versions, structured outputs, scoring, and debugging workflows.
 sidebar_position: 1
 slug: /ai-observability-llm-evals-langfuse
-authors: [nicolad]
+authors: [v9ai]
 image: ./image.png
 tags:
 - ai-observability

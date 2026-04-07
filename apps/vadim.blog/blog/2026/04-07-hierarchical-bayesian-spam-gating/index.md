@@ -3,7 +3,7 @@ slug: hierarchical-bayesian-spam-gating
 title: "Multi-Probe Bayesian Spam Gating: Filtering Junk Before Spending Compute"
 description: "How I built a research-grade spam gating module with 4-aspect Bayesian attention, information-theoretic AI detection, and a Rust distillation path — all running on a single M1 MacBook."
 date: 2026-04-07
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - machine learning
   - bayesian-inference

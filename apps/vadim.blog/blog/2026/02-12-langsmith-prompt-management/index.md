@@ -2,7 +2,7 @@
 title: LangSmith Prompt Management
 description: Learn how to manage prompts effectively using LangSmith, including best practices, tools, and strategies for optimizing AI interactions.
 tags: [langsmith, "prompt management", ai, llm, optimization]
-authors: [nicolad]
+authors: [v9ai]
 slug: /langsmith-prompt-management
 ---
 

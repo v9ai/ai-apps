@@ -3,7 +3,7 @@ slug: the-strategic-case-against-mandatory-in-person-work-in-ai-startups
 title: "The Case Against Mandatory In-Person Work for AI Startups"
 description: "Mandatory office policies hinder AI startups. We analyze why remote & hybrid models offer strategic advantages in talent, innovation, and cost for AI companies."
 date: 2026-03-16
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - remote work
   - AI startups

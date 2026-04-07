@@ -3,7 +3,7 @@ slug: qlib-portfolio-strategy
 title: A Comprehensive Guide to Qlib’s Portfolio Strategy, TopkDropoutStrategy, and EnhancedIndexingStrategy
 date: 2024-12-25
 description: "Comprehensive guide to Qlib's portfolio strategies — TopkDropoutStrategy, EnhancedIndexingStrategy, and practical portfolio construction for quant trading."
-authors: [nicolad]
+authors: [v9ai]
 tags:
   [
     finance,

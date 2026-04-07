@@ -3,7 +3,7 @@ slug: catboost-vs-xgboost
 date: 2024-07-27T10:00
 title: Enhancing Trading Strategies with AI - Comparing CatBoost and XGBoost
 description: "Compare CatBoost and XGBoost for AI-driven trading strategies — performance metrics, feature handling, and practical considerations for financial modeling."
-authors: nicolad
+authors: v9ai
 tags: [AI, trading, CatBoost, XGBoost, machine learning]
 ---
 

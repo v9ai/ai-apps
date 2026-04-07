@@ -3,7 +3,7 @@ slug: multi-modal-deepeval-lego-part-discovery
 title: "Multi-Modal Evaluation for AI-Generated LEGO Parts: A Production DeepEval Pipeline"
 description: "How we evaluate an AI pipeline that extracts LEGO parts lists from MOC builds — using DeepEval's image coherence, reference accuracy, and helpfulness metrics with a custom DeepSeek judge, all wired through LangGraph."
 date: 2026-03-23
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - deepeval
   - langgraph

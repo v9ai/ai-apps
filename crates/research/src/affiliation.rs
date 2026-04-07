@@ -58,7 +58,8 @@ impl CompanyPaperSearch {
         }
 
         // 2. Semantic Scholar keyword search (secondary)
-        let s2_query = format!("{company_name} machine learning");
+        // Search specifically for the company name in quotes to get papers BY the company
+        let s2_query = format!("\"{company_name}\"");
         let s2_fields = "paperId,title,abstract,year,citationCount,openAccessPdf,authors,fieldsOfStudy,url,publicationDate,venue";
         match self
             .scholar
@@ -74,7 +75,8 @@ impl CompanyPaperSearch {
         }
 
         // 3. arXiv search (tertiary)
-        let arxiv_query = format!("au:{company_name} OR abs:{company_name}");
+        // Use all: prefix to search across all fields for the company name
+        let arxiv_query = format!("all:{company_name}");
         match self
             .arxiv
             .search(&arxiv_query, 0, limit.min(20), None, None)

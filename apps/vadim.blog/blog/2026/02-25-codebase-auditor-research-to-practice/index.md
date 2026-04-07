@@ -3,7 +3,7 @@ slug: codebase-auditor-research-to-practice
 title: "Your Linter Can't Trace Execution Paths. This Agent Can."
 description: "Linters catch patterns. This AI agent traces N+1 queries from resolver to database and back. Four research papers shaped an auditor with playbooks for perf, security, types, and dead code."
 date: 2026-02-25
-authors: [nicolad]
+authors: [v9ai]
 tags:
   - autonomous-agents
   - code-auditing

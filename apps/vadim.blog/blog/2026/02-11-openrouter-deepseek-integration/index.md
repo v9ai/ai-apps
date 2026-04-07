@@ -2,7 +2,7 @@
 title: OpenRouter Integration with DeepSeek
 description: Complete guide to using OpenRouter with DeepSeek models in Nomadically.work
 tags: [openrouter, deepseek, ai, llm, integration]
-authors: [nicolad]
+authors: [v9ai]
 image: ./image.jpeg
 slug: /openrouter-deepseek-integration
 ---

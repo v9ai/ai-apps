@@ -3,7 +3,7 @@ slug: qlib-mlflow-integration
 title: Leveraging Qlib and MLflow for Unified Experiment Tracking
 date: 2024-12-29
 description: "Integrate Qlib with MLflow for unified experiment tracking — log model metrics, compare runs, and manage quant finance ML experiments systematically."
-authors: [nicolad]
+authors: [v9ai]
 tags:
   [
     machine-learning,

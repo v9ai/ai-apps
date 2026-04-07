@@ -3,7 +3,7 @@ slug: amm-vs-cpamm-solana-liquidity-designs
 title: "AMM vs CPAMM on Solana: constant product vs CLMM, DLMM, PMM, and order books"
 date: 2025-12-20
 description: "Compare AMM liquidity designs on Solana — constant product (CPAMM), concentrated liquidity (CLMM), DLMM, PMM, and order books with practical tradeoffs."
-authors: [nicolad]
+authors: [v9ai]
 ---
 
 ![Solana runtime constraints: accounts, locks, and contention](./solana.png)
