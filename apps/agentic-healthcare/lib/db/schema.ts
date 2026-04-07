@@ -433,6 +433,7 @@ export const protocolSupplements = pgTable(
     mechanism: text("mechanism"),
     targetAreas: jsonb("target_areas").notNull().default([]),
     notes: text("notes"),
+    url: text("url"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

@@ -80,6 +80,7 @@ export async function addSupplement(protocolId: string, formData: FormData) {
   const mechanism = (formData.get("mechanism") as string)?.trim() || null;
   const targetAreas = formData.getAll("targetAreas") as string[];
   const notes = (formData.get("notes") as string)?.trim() || null;
+  const url = (formData.get("url") as string)?.trim() || null;
 
   await db.insert(protocolSupplements).values({
     protocolId,
@@ -89,6 +90,7 @@ export async function addSupplement(protocolId: string, formData: FormData) {
     mechanism,
     targetAreas,
     notes,
+    url,
   });
 
   revalidatePath(`/protocols/${protocolId}`);

@@ -58,7 +58,8 @@ export function AddSupplementForm({ protocolId }: { protocolId: string }) {
               ))}
             </Select.Content>
           </Select.Root>
-          <TextField.Root name="notes" placeholder="Notes" style={{ flex: 2 }} />
+          <TextField.Root name="notes" placeholder="Notes" style={{ flex: 1 }} />
+          <TextField.Root name="url" placeholder="Product URL" type="url" style={{ flex: 1 }} />
         </Flex>
         <Flex gap="2">
           <Button type="submit" size="1" variant="soft" disabled={isPending}>

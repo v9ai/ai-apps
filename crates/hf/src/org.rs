@@ -600,9 +600,10 @@ impl<'a> OrgScanner<'a> {
                 SalesCategory::CrmIntelligence,
                 "CRM / revenue analytics",
             ),
-            // General sales mention
+            // General sales mention (exclude "salesforce" — they publish general AI
+            // research, not sales-specific models; only flag smaller sales platforms)
             (
-                &["salesloft", "salesforce", "hubspot", "gong.io", "outreach.io", "apollo.io"],
+                &["salesloft", "hubspot", "gong.io", "outreach.io", "apollo.io"],
                 SalesCategory::General,
                 "sales platform brand",
             ),

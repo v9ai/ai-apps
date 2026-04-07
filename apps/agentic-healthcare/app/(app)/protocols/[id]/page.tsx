@@ -11,7 +11,7 @@ import { notFound, redirect } from "next/navigation";
 import { Box, Badge, Card, Callout, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Brain, Pill, BarChart3, AlertTriangle } from "lucide-react";
+import { Brain, Pill, BarChart3, AlertTriangle, ExternalLink } from "lucide-react";
 import { deleteProtocol, deleteSupplement, updateProtocolStatus } from "../actions";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 import { AddSupplementForm } from "../add-supplement-form";
@@ -192,7 +192,16 @@ async function ProtocolDetail({ id }: { id: string }) {
                     <Card key={s.id} variant="surface">
                       <Flex justify="between" align="start">
                         <Flex direction="column" gap="1">
-                          <Text size="2" weight="medium">{s.name}</Text>
+                          {s.url ? (
+                            <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+                              <Flex align="center" gap="1">
+                                <Text size="2" weight="medium" color="indigo">{s.name}</Text>
+                                <ExternalLink size={12} style={{ color: "var(--gray-8)" }} />
+                              </Flex>
+                            </a>
+                          ) : (
+                            <Text size="2" weight="medium">{s.name}</Text>
+                          )}
                           <Text size="1" color="indigo">
                             {s.dosage} &middot; {s.frequency}
                           </Text>
