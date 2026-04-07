@@ -139,9 +139,14 @@ class TestModuleProcess:
         assert "entities" in result
         assert isinstance(result["entities"], list)
 
-    def test_icp_process_raises(self, mock_encoded):
+    def test_icp_process_requires_json(self, mock_encoded):
         module = WassersteinICPMatcher(hidden=768).cpu().eval()
-        with pytest.raises(NotImplementedError, match="requires separate"):
+        with pytest.raises(ValueError, match="requires JSON"):
+            module.process(mock_encoded, "test text")
+
+    def test_subject_process_requires_json(self, mock_encoded):
+        module = ContextualBradleyTerry(hidden=768).cpu().eval()
+        with pytest.raises(ValueError, match="requires a JSON array"):
             module.process(mock_encoded, "test text")
 
 

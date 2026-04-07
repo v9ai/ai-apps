@@ -242,6 +242,24 @@ class ClosingTimeModel:
             "possible outcomes. This handles variable-length multi-speaker transcripts and "
             "produces calibrated uncertainty estimates for deal health and next-action prediction.",
         ),
+        "icp": (
+            "Wasserstein Distance ICP Matching",
+            "Cosine similarity treats both ICP and prospect as point vectors, but an ICP like "
+            "\"100-500 employees\" represents a *range*, not a point. WassersteinICPMatcher models "
+            "the ICP as a Gaussian distribution in embedding space and the prospect as a point, "
+            "then computes the Wasserstein distance (earth mover's distance) between them. "
+            "Per-dimension projections (industry, size, tech, role, signal) with learned dealbreaker "
+            "thresholds provide interpretable matching with explicit disqualification reasons.",
+        ),
+        "subject": (
+            "Contextual Bradley-Terry Subject Line Ranking",
+            "Static pairwise comparison assumes fixed preferences, but subject line effectiveness "
+            "depends on context: who you're sending to, what industry, what relationship stage. "
+            "ContextualBradleyTerry extends the Bradley-Terry model with contextual modulation — "
+            "P(A > B | context) = sigma(score(A, context) - score(B, context)). This means the "
+            "model can learn that \"Quick question\" beats \"Detailed analysis\" for cold outreach "
+            "but loses for existing customers.",
+        ),
     }
 
     # Map modules to HF pipeline tags
@@ -310,15 +328,7 @@ license: mit
 from salescue import ClosingTimeModel
 
 model = ClosingTimeModel.from_pretrained("{model_id}")
-result = model.predict("your sales text here")
-print(result)
-```
-
-Or via the convenience API:
-
-```python
-from salescue import ai
-result = ai.{c.module_name}("your sales text here")
+{self._usage_example(c.module_name)}
 ```
 {labels_md}
 ## Architecture
@@ -354,6 +364,24 @@ All modules: `score` `intent` `reply` `triggers` `icp` `objection` `sentiment` `
 
 See the [ClosingTime documentation](https://github.com/v9ai/ai-apps) for details.
 """
+
+    def _usage_example(self, module_name: str) -> str:
+        if module_name == "icp":
+            return (
+                'result = model.predict(\'{"icp": "Mid-market SaaS companies", '
+                '"prospect": "300-person fintech startup"}\')\nprint(result)  '
+                "# score, qualified, dimensions, dealbreakers"
+            )
+        if module_name == "subject":
+            return (
+                'result = model.predict(\'["Quick question about Q3", '
+                '"URGENT: Limited time offer!!!"]\')\nprint(result)  '
+                "# ranking, best, worst"
+            )
+        return (
+            'result = model.predict("your sales text here")\n'
+            "print(result)"
+        )
 
     def __repr__(self) -> str:
         return (f"ClosingTimeModel(module={self.config.module_name!r}, "
