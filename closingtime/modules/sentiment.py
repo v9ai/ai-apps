@@ -49,7 +49,7 @@ class CLUBEstimator(nn.Module):
         Minimizing this makes x and y independent.
         """
         mu = self.mu_net(x)
-        logvar = self.logvar_net(x)
+        logvar = self.logvar_net(x).clamp(-10, 10)  # prevent exp overflow/underflow
 
         # log p(y|x) under the learned conditional
         positive = -(mu - y) ** 2 / (2 * logvar.exp()) - 0.5 * logvar
@@ -57,7 +57,7 @@ class CLUBEstimator(nn.Module):
         # log p(y|x') for random x' (negative samples)
         x_shuffled = x[torch.randperm(x.shape[0], device=x.device)]
         mu_neg = self.mu_net(x_shuffled)
-        logvar_neg = self.logvar_net(x_shuffled)
+        logvar_neg = self.logvar_net(x_shuffled).clamp(-10, 10)
         negative = -(mu_neg - y) ** 2 / (2 * logvar_neg.exp()) - 0.5 * logvar_neg
 
         # CLUB bound: E[log p(y|x)] - E[log p(y|x')]
