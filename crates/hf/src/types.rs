@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -169,6 +170,9 @@ pub struct OrgProfile {
     pub pipeline_tags: Vec<(String, usize)>,
     pub training_signals: Vec<TrainingSignal>,
     pub arxiv_links: Vec<String>,
+    /// Raw config.json per model (repo_id → parsed JSON). Populated by `scan_org_deep`.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub model_configs: HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -188,6 +192,9 @@ pub enum TrainingSignalType {
     LargeParamCount,
     PreTraining,
     FineTuning,
+    MoEArchitecture,
+    NerLabels,
+    LargeContext,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

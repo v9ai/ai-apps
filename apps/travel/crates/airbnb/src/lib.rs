@@ -23,6 +23,7 @@
 //! let all = spain_june_2026();
 //! ```
 
+pub mod discover;
 pub mod regions;
 pub mod url_builder;
 
