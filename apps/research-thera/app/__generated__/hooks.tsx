@@ -1125,6 +1125,7 @@ export type MutationDeleteTeacherFeedbackArgs = {
 export type MutationDeleteTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1165,6 +1166,7 @@ export type MutationGenerateLongFormTextArgs = {
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
   language?: InputMaybe<Scalars['String']['input']>;
   minutes?: InputMaybe<Scalars['Int']['input']>;
   userContext?: InputMaybe<Scalars['String']['input']>;
@@ -1186,12 +1188,14 @@ export type MutationGenerateResearchArgs = {
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
 export type MutationGenerateTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1713,6 +1717,7 @@ export type QueryResearchArgs = {
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1739,6 +1744,7 @@ export type QueryTeacherFeedbacksArgs = {
 export type QueryTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type Relationship = {
@@ -1788,6 +1794,7 @@ export type Research = {
   id: Scalars['Int']['output'];
   issueId?: Maybe<Scalars['Int']['output']>;
   journal?: Maybe<Scalars['String']['output']>;
+  journalEntryId?: Maybe<Scalars['Int']['output']>;
   keyFindings: Array<Scalars['String']['output']>;
   relevanceScore: Scalars['Float']['output'];
   therapeuticGoalType: Scalars['String']['output'];
@@ -1887,6 +1894,7 @@ export type TherapeuticQuestion = {
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
   issueId?: Maybe<Scalars['Int']['output']>;
+  journalEntryId?: Maybe<Scalars['Int']['output']>;
   question: Scalars['String']['output'];
   rationale: Scalars['String']['output'];
   researchId?: Maybe<Scalars['Int']['output']>;
@@ -2316,6 +2324,7 @@ export type DeleteTeacherFeedbackMutation = { __typename?: 'Mutation', deleteTea
 export type DeleteTherapeuticQuestionsMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
@@ -2402,6 +2411,7 @@ export type GenerateResearchMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
@@ -2410,10 +2420,11 @@ export type GenerateResearchMutation = { __typename?: 'Mutation', generateResear
 export type GenerateTherapeuticQuestionsMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type GenerateTherapeuticQuestionsMutation = { __typename?: 'Mutation', generateTherapeuticQuestions: { __typename?: 'GenerateQuestionsResult', success: boolean, message?: string | null, jobId?: string | null, questions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> } };
+export type GenerateTherapeuticQuestionsMutation = { __typename?: 'Mutation', generateTherapeuticQuestions: { __typename?: 'GenerateQuestionsResult', success: boolean, message?: string | null, jobId?: string | null, questions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, journalEntryId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> } };
 
 export type GetAllIssuesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2640,10 +2651,11 @@ export type GetResearchQueryVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type GetResearchQuery = { __typename?: 'Query', research: Array<{ __typename?: 'Research', id: number, goalId?: number | null, feedbackId?: number | null, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> };
+export type GetResearchQuery = { __typename?: 'Query', research: Array<{ __typename?: 'Research', id: number, goalId?: number | null, feedbackId?: number | null, journalEntryId?: number | null, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> };
 
 export type GetStoriesQueryVariables = Exact<{
   goalId: Scalars['Int']['input'];
@@ -2669,10 +2681,11 @@ export type GetTeacherFeedbacksQuery = { __typename?: 'Query', teacherFeedbacks:
 export type GetTherapeuticQuestionsQueryVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+  journalEntryId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type GetTherapeuticQuestionsQuery = { __typename?: 'Query', therapeuticQuestions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> };
+export type GetTherapeuticQuestionsQuery = { __typename?: 'Query', therapeuticQuestions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, journalEntryId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> };
 
 export type LinkContactToIssueMutationVariables = Exact<{
   issueId: Scalars['Int']['input'];
@@ -4517,8 +4530,12 @@ export type DeleteTeacherFeedbackMutationHookResult = ReturnType<typeof useDelet
 export type DeleteTeacherFeedbackMutationResult = Apollo.MutationResult<DeleteTeacherFeedbackMutation>;
 export type DeleteTeacherFeedbackMutationOptions = Apollo.BaseMutationOptions<DeleteTeacherFeedbackMutation, DeleteTeacherFeedbackMutationVariables>;
 export const DeleteTherapeuticQuestionsDocument = gql`
-    mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int) {
-  deleteTherapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+    mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {
+  deleteTherapeuticQuestions(
+    goalId: $goalId
+    issueId: $issueId
+    journalEntryId: $journalEntryId
+  ) {
     success
     message
     deletedCount
@@ -4542,6 +4559,7 @@ export type DeleteTherapeuticQuestionsMutationFn = Apollo.MutationFunction<Delet
  *   variables: {
  *      goalId: // value for 'goalId'
  *      issueId: // value for 'issueId'
+ *      journalEntryId: // value for 'journalEntryId'
  *   },
  * });
  */
@@ -4938,8 +4956,13 @@ export type GenerateParentAdviceMutationHookResult = ReturnType<typeof useGenera
 export type GenerateParentAdviceMutationResult = Apollo.MutationResult<GenerateParentAdviceMutation>;
 export type GenerateParentAdviceMutationOptions = Apollo.BaseMutationOptions<GenerateParentAdviceMutation, GenerateParentAdviceMutationVariables>;
 export const GenerateResearchDocument = gql`
-    mutation GenerateResearch($goalId: Int, $issueId: Int, $feedbackId: Int) {
-  generateResearch(goalId: $goalId, issueId: $issueId, feedbackId: $feedbackId) {
+    mutation GenerateResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int) {
+  generateResearch(
+    goalId: $goalId
+    issueId: $issueId
+    feedbackId: $feedbackId
+    journalEntryId: $journalEntryId
+  ) {
     success
     message
     jobId
@@ -4965,6 +4988,7 @@ export type GenerateResearchMutationFn = Apollo.MutationFunction<GenerateResearc
  *      goalId: // value for 'goalId'
  *      issueId: // value for 'issueId'
  *      feedbackId: // value for 'feedbackId'
+ *      journalEntryId: // value for 'journalEntryId'
  *   },
  * });
  */
@@ -4976,8 +5000,12 @@ export type GenerateResearchMutationHookResult = ReturnType<typeof useGenerateRe
 export type GenerateResearchMutationResult = Apollo.MutationResult<GenerateResearchMutation>;
 export type GenerateResearchMutationOptions = Apollo.BaseMutationOptions<GenerateResearchMutation, GenerateResearchMutationVariables>;
 export const GenerateTherapeuticQuestionsDocument = gql`
-    mutation GenerateTherapeuticQuestions($goalId: Int, $issueId: Int) {
-  generateTherapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+    mutation GenerateTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {
+  generateTherapeuticQuestions(
+    goalId: $goalId
+    issueId: $issueId
+    journalEntryId: $journalEntryId
+  ) {
     success
     message
     jobId
@@ -4985,6 +5013,7 @@ export const GenerateTherapeuticQuestionsDocument = gql`
       id
       goalId
       issueId
+      journalEntryId
       question
       researchId
       researchTitle
@@ -5013,6 +5042,7 @@ export type GenerateTherapeuticQuestionsMutationFn = Apollo.MutationFunction<Gen
  *   variables: {
  *      goalId: // value for 'goalId'
  *      issueId: // value for 'issueId'
+ *      journalEntryId: // value for 'journalEntryId'
  *   },
  * });
  */
@@ -7273,11 +7303,17 @@ export type GetRelationshipsLazyQueryHookResult = ReturnType<typeof useGetRelati
 export type GetRelationshipsSuspenseQueryHookResult = ReturnType<typeof useGetRelationshipsSuspenseQuery>;
 export type GetRelationshipsQueryResult = Apollo.QueryResult<GetRelationshipsQuery, GetRelationshipsQueryVariables>;
 export const GetResearchDocument = gql`
-    query GetResearch($goalId: Int, $issueId: Int, $feedbackId: Int) {
-  research(goalId: $goalId, issueId: $issueId, feedbackId: $feedbackId) {
+    query GetResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int) {
+  research(
+    goalId: $goalId
+    issueId: $issueId
+    feedbackId: $feedbackId
+    journalEntryId: $journalEntryId
+  ) {
     id
     goalId
     feedbackId
+    journalEntryId
     title
     authors
     year
@@ -7311,6 +7347,7 @@ export const GetResearchDocument = gql`
  *      goalId: // value for 'goalId'
  *      issueId: // value for 'issueId'
  *      feedbackId: // value for 'feedbackId'
+ *      journalEntryId: // value for 'journalEntryId'
  *   },
  * });
  */
@@ -7511,11 +7548,16 @@ export type GetTeacherFeedbacksLazyQueryHookResult = ReturnType<typeof useGetTea
 export type GetTeacherFeedbacksSuspenseQueryHookResult = ReturnType<typeof useGetTeacherFeedbacksSuspenseQuery>;
 export type GetTeacherFeedbacksQueryResult = Apollo.QueryResult<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>;
 export const GetTherapeuticQuestionsDocument = gql`
-    query GetTherapeuticQuestions($goalId: Int, $issueId: Int) {
-  therapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+    query GetTherapeuticQuestions($goalId: Int, $issueId: Int, $journalEntryId: Int) {
+  therapeuticQuestions(
+    goalId: $goalId
+    issueId: $issueId
+    journalEntryId: $journalEntryId
+  ) {
     id
     goalId
     issueId
+    journalEntryId
     question
     researchId
     researchTitle
@@ -7541,6 +7583,7 @@ export const GetTherapeuticQuestionsDocument = gql`
  *   variables: {
  *      goalId: // value for 'goalId'
  *      issueId: // value for 'issueId'
+ *      journalEntryId: // value for 'journalEntryId'
  *   },
  * });
  */

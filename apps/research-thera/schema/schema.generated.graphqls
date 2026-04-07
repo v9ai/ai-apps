@@ -811,17 +811,17 @@ type Mutation {
   deleteResearch(goalId: Int!): DeleteResearchResult!
   deleteStory(id: Int!): DeleteStoryResult!
   deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
-  deleteTherapeuticQuestions(goalId: Int, issueId: Int): DeleteQuestionsResult!
+  deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
   generateHabitsForFamilyMember(count: Int, familyMemberId: Int!): GenerateHabitsResult!
   generateHabitsFromIssue(count: Int, issueId: Int!): GenerateHabitsResult!
-  generateLongFormText(familyMemberId: Int, feedbackId: Int, goalId: Int, issueId: Int, language: String, minutes: Int, userContext: String): GenerateLongFormTextResult!
+  generateLongFormText(familyMemberId: Int, feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int, language: String, minutes: Int, userContext: String): GenerateLongFormTextResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
-  generateResearch(feedbackId: Int, goalId: Int, issueId: Int): GenerateResearchResult!
-  generateTherapeuticQuestions(goalId: Int, issueId: Int): GenerateQuestionsResult!
+  generateResearch(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): GenerateResearchResult!
+  generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   linkContactToIssue(contactId: Int!, issueId: Int!): IssueContactLink!
   linkIssues(issueId: Int!, linkType: String, linkedIssueId: Int!): IssueLink!
   logHabit(count: Int, habitId: Int!, loggedDate: String!, notes: String): HabitLog!
@@ -1030,12 +1030,12 @@ type Query {
   notes(entityId: Int!, entityType: String!): [Note!]!
   relationship(id: Int!): Relationship
   relationships(subjectId: Int!, subjectType: PersonType!): [Relationship!]!
-  research(feedbackId: Int, goalId: Int, issueId: Int): [Research!]!
+  research(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int): [Research!]!
   stories(goalId: Int!): [Story!]!
   story(id: Int!): Story
   teacherFeedback(id: Int!): TeacherFeedback
   teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
-  therapeuticQuestions(goalId: Int, issueId: Int): [TherapeuticQuestion!]!
+  therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
   userSettings: UserSettings!
 }
 
@@ -1083,6 +1083,7 @@ type Research {
   id: Int!
   issueId: Int
   journal: String
+  journalEntryId: Int
   keyFindings: [String!]!
   relevanceScore: Float!
   therapeuticGoalType: String!
@@ -1166,6 +1167,7 @@ type TherapeuticQuestion {
   goalId: Int
   id: Int!
   issueId: Int
+  journalEntryId: Int
   question: String!
   rationale: String!
   researchId: Int
