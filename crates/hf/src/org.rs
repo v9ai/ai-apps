@@ -478,51 +478,69 @@ impl<'a> OrgScanner<'a> {
     /// Compute an overall HF depth score (0.0-1.0) from the org profile.
     ///
     /// Weights:
-    /// - Model count: 0.15 (saturates at 20)
-    /// - Dataset count: 0.15 (saturates at 5)
-    /// - ArXiv links: 0.25 (saturates at 5)
-    /// - Training signal diversity: 0.25 (saturates at 5 distinct types)
-    /// - Pre-training / custom architecture: 0.20 / 0.15
+    /// - Model count:              0.10 (saturates at 20)
+    /// - Dataset count:            0.10 (saturates at 5)
+    /// - ArXiv links:              0.20 (saturates at 5)
+    /// - Training signal diversity: 0.20 (saturates at 5 distinct types)
+    /// - Pre-training / custom:    0.15 / 0.10
+    /// - Architecture diversity:   0.15 (saturates at 4 distinct model_types)
+    /// - Release cadence:          0.10 (saturates at 3 distinct year-months)
     pub fn compute_hf_score(profile: &OrgProfile) -> f32 {
         let mut score = 0.0f32;
 
-        // Model count signal (more models = more active, up to 0.15)
+        // Model count (up to 0.10)
         let model_count = profile.models.len() as f32;
-        score += (model_count / 20.0).min(1.0) * 0.15;
+        score += (model_count / 20.0).min(1.0) * 0.10;
 
-        // Dataset count (publishing datasets = research-oriented, up to 0.15)
+        // Dataset count (up to 0.10)
         let dataset_count = profile.datasets.len() as f32;
-        score += (dataset_count / 5.0).min(1.0) * 0.15;
+        score += (dataset_count / 5.0).min(1.0) * 0.10;
 
-        // ArXiv links (strong research signal, up to 0.25)
+        // ArXiv links (up to 0.20)
         let arxiv_count = profile.arxiv_links.len() as f32;
-        score += (arxiv_count / 5.0).min(1.0) * 0.25;
+        score += (arxiv_count / 5.0).min(1.0) * 0.20;
 
-        // Training signals diversity (up to 0.25)
+        // Training signal diversity (up to 0.20)
         let signal_types: HashSet<_> = profile
             .training_signals
             .iter()
             .map(|s| std::mem::discriminant(&s.signal_type))
             .collect();
-        score += (signal_types.len() as f32 / 5.0).min(1.0) * 0.25;
+        score += (signal_types.len() as f32 / 5.0).min(1.0) * 0.20;
 
-        // Pre-training signal (strongest indicator, up to 0.20)
+        // Pre-training / custom architecture (up to 0.15)
         let has_pretraining = profile
             .training_signals
             .iter()
             .any(|s| s.signal_type == TrainingSignalType::PreTraining);
         if has_pretraining {
-            score += 0.20;
+            score += 0.15;
         } else {
-            // Custom architecture also strong
             let has_custom = profile
                 .training_signals
                 .iter()
                 .any(|s| s.signal_type == TrainingSignalType::CustomArchitecture);
             if has_custom {
-                score += 0.15;
+                score += 0.10;
             }
         }
+
+        // Architecture diversity — distinct model_types from config.json (up to 0.15)
+        let arch_types: HashSet<&str> = profile
+            .model_configs
+            .values()
+            .filter_map(|c| c.get("model_type").and_then(|v| v.as_str()))
+            .collect();
+        score += (arch_types.len() as f32 / 4.0).min(1.0) * 0.15;
+
+        // Release cadence — distinct year-months across models (up to 0.10)
+        let months: HashSet<&str> = profile
+            .models
+            .iter()
+            .filter_map(|m| m.created_at.as_deref())
+            .filter_map(|d| d.get(..7)) // "2025-01" from "2025-01-15T..."
+            .collect();
+        score += (months.len() as f32 / 3.0).min(1.0) * 0.10;
 
         score.min(1.0)
     }
@@ -622,6 +640,7 @@ mod tests {
             pipeline_tags: vec![],
             training_signals: vec![],
             arxiv_links: vec![],
+            model_configs: HashMap::new(),
         };
         let score = OrgScanner::compute_hf_score(&profile);
         assert_eq!(score, 0.0);
@@ -629,9 +648,25 @@ mod tests {
 
     #[test]
     fn compute_score_research_heavy() {
+        let mut model_configs = HashMap::new();
+        model_configs.insert("r/a".into(), serde_json::json!({"model_type": "qwen3_next"}));
+        model_configs.insert("r/b".into(), serde_json::json!({"model_type": "glm4_moe_lite"}));
+        model_configs.insert("r/c".into(), serde_json::json!({"model_type": "llama"}));
+        model_configs.insert("r/d".into(), serde_json::json!({"model_type": "qwen3_moe"}));
+
+        let mut models: Vec<RepoInfo> = (0..25).map(|i| {
+            let mut r = make_dummy_repo();
+            r.created_at = Some(format!("2025-{:02}-15T00:00:00.000Z", (i % 6) + 1));
+            r
+        }).collect();
+        // Ensure at least 3 distinct months for cadence
+        models[0].created_at = Some("2025-01-15T00:00:00.000Z".into());
+        models[1].created_at = Some("2025-04-15T00:00:00.000Z".into());
+        models[2].created_at = Some("2025-08-15T00:00:00.000Z".into());
+
         let profile = OrgProfile {
             org_name: "research-lab".into(),
-            models: vec![make_dummy_repo(); 25],
+            models,
             datasets: vec![make_dummy_repo(); 10],
             spaces: vec![],
             total_downloads: 1_000_000,
@@ -671,9 +706,96 @@ mod tests {
                 "https://arxiv.org/abs/2301.00004".into(),
                 "https://arxiv.org/abs/2301.00005".into(),
             ],
+            model_configs,
         };
         let score = OrgScanner::compute_hf_score(&profile);
         assert!(score >= 0.95, "research-heavy org should score near 1.0, got {score}");
+    }
+
+    #[test]
+    fn parse_config_moe() {
+        let config = serde_json::json!({
+            "model_type": "qwen3_next",
+            "num_experts": 512,
+            "num_activated_experts": 10
+        });
+        let signals = OrgScanner::parse_config_signals("diffbot/model", &config);
+        let types: Vec<_> = signals.iter().map(|s| s.signal_type).collect();
+        assert!(types.contains(&TrainingSignalType::CustomArchitecture));
+        assert!(types.contains(&TrainingSignalType::MoEArchitecture));
+        let moe = signals.iter().find(|s| s.signal_type == TrainingSignalType::MoEArchitecture).unwrap();
+        assert!(moe.evidence.contains("512 experts"), "evidence: {}", moe.evidence);
+        assert!(moe.evidence.contains("10 active"), "evidence: {}", moe.evidence);
+    }
+
+    #[test]
+    fn parse_config_ner_labels() {
+        let config = serde_json::json!({
+            "model_type": "longformer",
+            "id2label": {"0": "O", "1": "B-TEAM", "2": "I-TEAM", "3": "B-TECH", "4": "I-TECH"}
+        });
+        let signals = OrgScanner::parse_config_signals("sumble/ner", &config);
+        let types: Vec<_> = signals.iter().map(|s| s.signal_type).collect();
+        assert!(types.contains(&TrainingSignalType::NerLabels));
+        let ner = signals.iter().find(|s| s.signal_type == TrainingSignalType::NerLabels).unwrap();
+        assert!(ner.evidence.contains("B-TEAM"), "evidence: {}", ner.evidence);
+        assert!(ner.evidence.contains("B-TECH"), "evidence: {}", ner.evidence);
+    }
+
+    #[test]
+    fn parse_config_large_context() {
+        let config = serde_json::json!({
+            "model_type": "qwen3_next",
+            "max_position_embeddings": 262144
+        });
+        let signals = OrgScanner::parse_config_signals("diffbot/model", &config);
+        let types: Vec<_> = signals.iter().map(|s| s.signal_type).collect();
+        assert!(types.contains(&TrainingSignalType::CustomArchitecture));
+        assert!(types.contains(&TrainingSignalType::LargeContext));
+        let ctx = signals.iter().find(|s| s.signal_type == TrainingSignalType::LargeContext).unwrap();
+        assert!(ctx.evidence.contains("262144"), "evidence: {}", ctx.evidence);
+    }
+
+    #[test]
+    fn parse_config_no_moe_for_dense() {
+        let config = serde_json::json!({ "model_type": "llama", "num_experts": 1 });
+        let signals = OrgScanner::parse_config_signals("org/model", &config);
+        assert!(!signals.iter().any(|s| s.signal_type == TrainingSignalType::MoEArchitecture));
+    }
+
+    #[test]
+    fn compute_score_arch_diversity() {
+        let mut configs_single = HashMap::new();
+        configs_single.insert("a".into(), serde_json::json!({"model_type": "llama"}));
+
+        let mut configs_diverse = HashMap::new();
+        configs_diverse.insert("a".into(), serde_json::json!({"model_type": "qwen3_next"}));
+        configs_diverse.insert("b".into(), serde_json::json!({"model_type": "glm4_moe_lite"}));
+        configs_diverse.insert("c".into(), serde_json::json!({"model_type": "qwen3_moe"}));
+        configs_diverse.insert("d".into(), serde_json::json!({"model_type": "llama"}));
+
+        let base = OrgProfile {
+            org_name: "test".into(),
+            models: vec![make_dummy_repo(); 5],
+            datasets: vec![],
+            spaces: vec![],
+            total_downloads: 0,
+            libraries_used: vec![],
+            pipeline_tags: vec![],
+            training_signals: vec![],
+            arxiv_links: vec![],
+            model_configs: HashMap::new(),
+        };
+
+        let single = OrgProfile { model_configs: configs_single, ..base.clone() };
+        let diverse = OrgProfile { model_configs: configs_diverse, ..base };
+
+        let score_single = OrgScanner::compute_hf_score(&single);
+        let score_diverse = OrgScanner::compute_hf_score(&diverse);
+        assert!(
+            score_diverse > score_single,
+            "diverse ({score_diverse}) should beat single ({score_single})"
+        );
     }
 
     fn make_dummy_repo() -> RepoInfo {
