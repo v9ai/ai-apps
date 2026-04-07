@@ -1,5 +1,5 @@
 [package]
-name = "hf-parallel-fetch"
+name = "hf"
 version = "0.1.0"
 edition = "2021"
 authors = ["Vadim Nicolai <v9ai>"]

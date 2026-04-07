@@ -28,7 +28,7 @@ impl HfClient {
     pub fn new(token: Option<&str>, concurrency: usize) -> Result<Self, Error> {
         let concurrency = concurrency.clamp(1, 64);
         let mut headers = HeaderMap::new();
-        headers.insert(USER_AGENT, HeaderValue::from_static("hf-parallel-fetch/0.1"));
+        headers.insert(USER_AGENT, HeaderValue::from_static("hf/0.1"));
         if let Some(t) = token {
             headers.insert(
                 AUTHORIZATION,
