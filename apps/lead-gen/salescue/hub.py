@@ -387,7 +387,7 @@ license: mit
 # SalesCue — {c.module_name}
 
 {c.architectures[0] if c.architectures else c.module_name} module from the
-[SalesCue](https://github.com/v9ai/ai-apps) sales intelligence library.
+[SalesCue](https://github.com/v9ai/ai-apps/tree/main/apps/lead-gen) sales intelligence library.
 
 > **Status**: `{status}` — {"production weights" if trained else "architecture only, random initialization. Use as a starting point for fine-tuning."}
 {research_md}
@@ -431,7 +431,7 @@ result = Document("interested in pricing") | ai.score | ai.intent | ai.sentiment
 
 All modules: `score` `intent` `reply` `triggers` `icp` `objection` `sentiment` `spam` `entities` `call` `subject` `emailgen`
 
-See the [SalesCue documentation](https://github.com/v9ai/ai-apps) for details.
+See the [SalesCue documentation](https://github.com/v9ai/ai-apps/tree/main/apps/lead-gen) for details.
 """
 
     def _usage_example(self, module_name: str) -> str:
