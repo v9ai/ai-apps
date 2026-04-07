@@ -25,6 +25,30 @@ The classifier's effectiveness hinges on the quality and relevance of its traini
 
 ## The "Multi-Probe" Architecture: Layered, Low-Cost Checks
 
+
+<Flow
+  height={500}
+  nodes={[
+    { id: "n1", position: { x: 250, y: 0 }, data: { label: "Incoming Request" }, type: "input" },
+    { id: "n2", position: { x: 250, y: 150 }, data: { label: "Reputation Check" } },
+    { id: "n3", position: { x: 250, y: 300 }, data: { label: "Heuristic Rules" } },
+    { id: "n4", position: { x: 250, y: 450 }, data: { label: "Bayesian Content Filter" } },
+    { id: "n5", position: { x: 100, y: 600 }, data: { label: "Reject Spam" }, type: "output" },
+    { id: "n6", position: { x: 250, y: 600 }, data: { label: "Queue For Review" }, type: "output" },
+    { id: "n7", position: { x: 400, y: 600 }, data: { label: "Accept To Main System" }, type: "output" }
+  ]}
+  edges={[
+    { id: "e1-2", source: "n1", target: "n2" },
+    { id: "e2-3", source: "n2", target: "n3", label: "Passes" },
+    { id: "e3-4", source: "n3", target: "n4", label: "Passes" },
+    { id: "e4-5", source: "n4", target: "n5", label: "High Spam Score" },
+    { id: "e4-6", source: "n4", target: "n6", label: "Ambiguous Score" },
+    { id: "e4-7", source: "n4", target: "n7", label: "Low Spam Score" },
+    { id: "e2-5", source: "n2", target: "n5", label: "Fails" },
+    { id: "e3-5", source: "n3", target: "n5", label: "Fails" }
+  ]}
+/>
+
 The "multi-probe" concept extends this idea into a staged defense. Instead of one comprehensive (and potentially costly) analysis, the system employs a sequence of simpler, faster checks. Early probes act as coarse filters. They might examine non-content features like request metadata, sender reputation scores, or simple heuristic rules (e.g., detecting known spammy domains). These probes are designed for one thing: speed. Their goal is to identify and discard the most obvious junk with minimal computational investment.
 
 Only inputs that pass these initial gates proceed to more sophisticated—and more expensive—analysis, like a full Bayesian content evaluation. This layered approach ensures that the bulk of the traffic is triaged quickly, while complex probabilistic reasoning is reserved for the ambiguous cases that actually need it.
