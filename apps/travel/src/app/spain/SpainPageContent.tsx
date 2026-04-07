@@ -220,6 +220,59 @@ export function SpainPageContent() {
         </p>
       </header>
 
+      {/* ── Airbnb CTA ── */}
+      <div
+        className={css({
+          mx: "auto",
+          maxW: "6xl",
+          px: { base: "5", md: "8" },
+          mb: "8",
+        })}
+      >
+        <a
+          href="/spain/airbnb"
+          className={css({
+            display: "block",
+            bg: "steel.surface",
+            border: "1px solid",
+            borderColor: "amber.warm",
+            rounded: "card",
+            p: "6",
+            textDecoration: "none",
+            textAlign: "center",
+            transition: "all 0.2s ease",
+            _hover: {
+              shadow: "card.hover",
+              transform: "translateY(-2px)",
+            },
+          })}
+        >
+          <p
+            className={css({
+              fontSize: "h3",
+              fontWeight: "700",
+              fontFamily: "display",
+              color: "amber.warm",
+              letterSpacing: "h3",
+              mb: "2",
+            })}
+          >
+            Airbnb Iunie 2026
+          </p>
+          <p
+            className={css({
+              fontSize: "body",
+              color: "text.secondary",
+              lineHeight: "body",
+            })}
+          >
+            {lang === "ro"
+              ? "14 orașe · piscină · casă întreagă · max 50€/noapte → link-uri directe"
+              : "14 cities · pool · entire home · max €50/night → direct links"}
+          </p>
+        </a>
+      </div>
+
       {/* ── Regions Grid ── */}
       <main
         className={css({
