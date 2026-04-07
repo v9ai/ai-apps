@@ -5,6 +5,13 @@ import { db } from "@/src/db";
 import { applications } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function whereApp(id: string, userId: string) {
+  const col = UUID_RE.test(id) ? applications.id : applications.slug;
+  return and(eq(col, id), eq(applications.userId, userId));
+}
+
 async function getSession() {
   return auth.api.getSession({ headers: await headers() });
 }
@@ -19,7 +26,7 @@ export async function GET(
   const [row] = await db
     .select({ techDismissedTags: applications.techDismissedTags })
     .from(applications)
-    .where(and(eq(applications.id, id), eq(applications.userId, session.user.id)));
+    .where(whereApp(id, session.user.id));
 
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -46,7 +53,7 @@ export async function PATCH(
       techDismissedTags: JSON.stringify(dismissed),
       updatedAt: new Date(),
     })
-    .where(and(eq(applications.id, id), eq(applications.userId, session.user.id)));
+    .where(whereApp(id, session.user.id));
 
   return NextResponse.json({ dismissed });
 }

@@ -37,13 +37,13 @@ export function InterviewPrepTab({ app, isAdmin }: TabBaseProps) {
     setError(null);
 
     try {
-      const res = await fetch(`/api/applications/${app.id}/prep`, { method: "POST" });
+      const res = await fetch(`/api/applications/${app.slug}/prep`, { method: "POST" });
       const data = await res.json() as { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Failed to start pipeline");
 
       pollRef.current = setInterval(async () => {
         try {
-          const pollRes = await fetch(`/api/applications/${app.id}/prep`);
+          const pollRes = await fetch(`/api/applications/${app.slug}/prep`);
           const pollData = await pollRes.json() as { hasInterview?: boolean };
           if (pollData.hasInterview) {
             stopPolling();

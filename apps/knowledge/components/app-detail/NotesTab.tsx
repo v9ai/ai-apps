@@ -17,7 +17,7 @@ export function NotesTab({ app, isAdmin, onUpdate }: NotesTabProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/applications/${app.id}`, {
+      const res = await fetch(`/api/applications/${app.slug}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes: value }),

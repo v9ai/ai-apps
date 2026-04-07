@@ -7,6 +7,13 @@ import { db } from "@/src/db";
 import { applications } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function whereApp(id: string, userId: string) {
+  const col = UUID_RE.test(id) ? applications.id : applications.slug;
+  return and(eq(col, id), eq(applications.userId, userId));
+}
+
 const BACKEND_DIR = path.resolve(process.cwd(), "backend");
 
 async function getSession() {
@@ -26,7 +33,7 @@ export async function POST(
       jobDescription: applications.jobDescription,
     })
     .from(applications)
-    .where(and(eq(applications.id, id), eq(applications.userId, session.user.id)));
+    .where(whereApp(id, session.user.id));
 
   if (!app) {
     return NextResponse.json({ error: "Application not found" }, { status: 404 });
@@ -66,7 +73,7 @@ export async function GET(
       aiTechStack: applications.aiTechStack,
     })
     .from(applications)
-    .where(and(eq(applications.id, id), eq(applications.userId, session.user.id)));
+    .where(whereApp(id, session.user.id));
 
   if (!app) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

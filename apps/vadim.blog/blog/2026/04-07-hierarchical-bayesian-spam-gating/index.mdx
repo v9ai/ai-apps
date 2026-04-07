@@ -35,23 +35,36 @@ The module operates at three levels simultaneously:
 2. **Sentence-level**: Token posteriors are aggregated within each sentence's token span, combined with 12 structural features (greeting detection, CTA presence, urgency words, personalization signals)
 3. **Document-level**: Attention-weighted sentence aggregation feeds a 7-category classifier with information-theoretic features (character entropy, compression ratio)
 
-```mermaid
-graph TD
-    A["DeBERTa Encoder<br/>(768-dim hidden states)"] --> B["Token-level<br/>4 Aspect Probes"]
-    B --> C["Per-Sentence Span<br/>Aggregation"]
-    C --> D["Sentence-level<br/>12 Structural Features"]
-    D --> E["Document-level<br/>Attention + 8 Features"]
-    E --> F["7-Category Head"]
-    E --> G["Gate Head"]
-    F --> H["Residual Gate MLP"]
-    G --> H
-    I["AI Detector<br/>32 Features"] --> H
-    J["Header Analyzer<br/>16 Features"] --> H
-    K["Temporal Burst<br/>8 Features"] --> H
-    L["Campaign Similarity<br/>4 Features"] --> H
-    H --> M["Spam Score + Gate Decision"]
-    M --> N["Provider Calibration<br/>6 Provider MLPs"]
-```
+<Flow
+  height={620}
+  nodes={[
+    { id: "enc", position: { x: 250, y: 0 }, data: { label: "DeBERTa Encoder (768-dim)" }, type: "input" },
+    { id: "tok", position: { x: 250, y: 80 }, data: { label: "Token-level: 4 Aspect Probes" } },
+    { id: "span", position: { x: 250, y: 160 }, data: { label: "Per-Sentence Span Aggregation" } },
+    { id: "sent", position: { x: 250, y: 240 }, data: { label: "Sentence-level: 12 Structural Features" } },
+    { id: "doc", position: { x: 250, y: 320 }, data: { label: "Document-level: Attention + 8 Features" } },
+    { id: "ai", position: { x: 30, y: 320 }, data: { label: "AI Detector\n32 Features" } },
+    { id: "hdr", position: { x: 500, y: 260 }, data: { label: "Header Analyzer\n16 Features" } },
+    { id: "tmp", position: { x: 500, y: 340 }, data: { label: "Temporal Burst\n8 Features" } },
+    { id: "camp", position: { x: 30, y: 240 }, data: { label: "Campaign Similarity\n4 Features" } },
+    { id: "gate", position: { x: 250, y: 430 }, data: { label: "Residual Gate MLP (7 → 1)" } },
+    { id: "score", position: { x: 250, y: 520 }, data: { label: "Spam Score + Gate Decision" } },
+    { id: "prov", position: { x: 250, y: 600 }, data: { label: "Provider Calibration (6 MLPs)" }, type: "output" },
+  ]}
+  edges={[
+    { id: "e1", source: "enc", target: "tok" },
+    { id: "e2", source: "tok", target: "span" },
+    { id: "e3", source: "span", target: "sent" },
+    { id: "e4", source: "sent", target: "doc" },
+    { id: "e5", source: "doc", target: "gate", label: "Category + Gate" },
+    { id: "e6", source: "ai", target: "gate", label: "AI risk" },
+    { id: "e7", source: "hdr", target: "gate", label: "Auth score" },
+    { id: "e8", source: "tmp", target: "gate", label: "Burst" },
+    { id: "e9", source: "camp", target: "gate", label: "Similarity" },
+    { id: "e10", source: "gate", target: "score" },
+    { id: "e11", source: "score", target: "prov" },
+  ]}
+/>
 
 ### Why Beta Priors
 
@@ -813,3 +826,72 @@ The decision matrix:
 | High | High | Unknown and ambiguous — escalate immediately |
 
 The model, weights, and distillation pipeline are open source. The next step is calibrating the provider-specific models against real inbox placement data from Resend delivery webhooks.
+
+## End-to-End Gate Flow
+
+The complete gating pipeline from email ingestion to final verdict:
+
+<Flow
+  height={620}
+  nodes={[
+    { id: "in", position: { x: 250, y: 0 }, data: { label: "Incoming Email" }, type: "input" },
+    { id: "bloom", position: { x: 250, y: 90 }, data: { label: "Bloom Filter: Domain Check" } },
+    { id: "hdr", position: { x: 250, y: 180 }, data: { label: "Header FSM: SPF/DKIM/DMARC" } },
+    { id: "feat", position: { x: 250, y: 270 }, data: { label: "24-Feature Extraction" } },
+    { id: "rust", position: { x: 100, y: 370 }, data: { label: "Rust Classifier\n(batch of 256, <1ms)" } },
+    { id: "deberta", position: { x: 400, y: 370 }, data: { label: "DeBERTa Model\n(6 sub-modules, ~200ms)" } },
+    { id: "block", position: { x: 50, y: 500 }, data: { label: "Block" }, type: "output" },
+    { id: "quarantine", position: { x: 250, y: 500 }, data: { label: "Quarantine" }, type: "output" },
+    { id: "pass", position: { x: 450, y: 500 }, data: { label: "Pass → Pipeline" }, type: "output" },
+  ]}
+  edges={[
+    { id: "e1", source: "in", target: "bloom" },
+    { id: "e2", source: "bloom", target: "hdr", label: "Clean domain" },
+    { id: "e2b", source: "bloom", target: "block", label: "Known spam / disposable" },
+    { id: "e3", source: "hdr", target: "feat" },
+    { id: "e4a", source: "feat", target: "rust", label: "Production" },
+    { id: "e4b", source: "feat", target: "deberta", label: "Training / eval" },
+    { id: "e5a", source: "rust", target: "block", label: "> 0.7" },
+    { id: "e5b", source: "rust", target: "quarantine", label: "0.3 — 0.7" },
+    { id: "e5c", source: "rust", target: "pass", label: "< 0.3" },
+    { id: "e6a", source: "deberta", target: "block", label: "High confidence spam" },
+    { id: "e6b", source: "deberta", target: "quarantine", label: "Uncertain" },
+    { id: "e6c", source: "deberta", target: "pass", label: "Clean" },
+  ]}
+/>
+
+In production, the Rust path handles all traffic at batch speed. The DeBERTa path runs offline for training, evaluation, and generating soft labels for distillation. The Bloom filter short-circuits known spam domains before any feature extraction runs — the cheapest check first.
+
+## FAQ
+
+**What is the main advantage of multi-probe attention over a single attention head?**
+
+A single probe compresses all spam signals — keyword spam, AI-generated content, urgency manipulation, template structure — into one attention distribution. Multi-probe attention lets each aspect specialize independently. The learned gating mechanism automatically upweights whichever aspect is most relevant for a given email, and the per-aspect attribution enables interpretable false positive investigation.
+
+**Can this system detect AI-generated emails that have been paraphrased?**
+
+The 32-feature AI detection subsystem is designed to be robust against paraphrasing. Surface-level features (keyword matching) are easily defeated, but information-theoretic features — Yule's K, Shannon word entropy, trajectory smoothness, n-gram repetition patterns — capture statistical properties of the word frequency distribution that survive paraphrasing. The watermark detection head catches Kirchenbauer-style green-list bias when present.
+
+**Why distill to logistic regression instead of a smaller neural network?**
+
+Logistic regression has zero ML dependencies in Rust — no ONNX runtime, no tensor library, no BLAS. The 24-feature dot product runs in a tight loop that auto-vectorizes on ARM NEON and x86 SSE. At batch scale (256 emails), the entire scoring pass completes in under 1ms. A small neural network would require matrix multiplication infrastructure that adds complexity without proportional accuracy gain for the gating task.
+
+**How does the system handle emails it has never seen before?**
+
+Epistemic uncertainty — the mean Beta variance across token posteriors — directly measures model uncertainty about unfamiliar patterns. High epistemic uncertainty triggers quarantine rather than auto-blocking, and flags the email for human review and potential addition to the training set. This is fundamentally different from a confidence threshold on a point estimate, which cannot distinguish "I'm unsure because the email is ambiguous" from "I'm unsure because I haven't seen this pattern."
+
+**Does the system need retraining as spam tactics evolve?**
+
+Yes. The Bayesian priors adapt during training but not at inference time. The distillation pipeline (export → soft labels → logistic regression → Rust weights) is designed to run periodically as new labeled data accumulates. The temporal burst detector and campaign similarity detector provide cross-email signals that help detect novel campaign patterns even before retraining.
+
+## References
+
+1. Sahami, M., Dumais, S., Heckerman, D., & Horvitz, E. (1998). A Bayesian approach to filtering junk e-mail. *AAAI Workshop on Learning for Text Categorization*. Foundational paper on applying Naive Bayes classifiers to spam filtering.
+
+2. Kendall, A., Gal, Y., & Cipolla, R. (2018). Multi-task learning using uncertainty to weigh losses for scene geometry and semantics. *CVPR*. The uncertainty-weighted multi-task loss used in training.
+
+3. Kirchenbauer, J., Geiping, J., Wen, Y., Katz, J., Miers, I., & Goldstein, T. (2023). A watermark for large language models. *ICML*. The green-list watermarking scheme detected by the watermark head.
+
+4. Yule, G. U. (1944). *The Statistical Study of Literary Vocabulary*. Cambridge University Press. Origin of Yule's K characteristic for vocabulary richness measurement.
+
+5. Honore, A. (1979). Some simple measures of richness of vocabulary. *Association for Literary and Linguistic Computing Bulletin*, 7(2). The R statistic for length-independent vocabulary diversity.

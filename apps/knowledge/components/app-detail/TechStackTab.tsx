@@ -134,13 +134,13 @@ export function TechStackTab({ app, isAdmin }: TabBaseProps) {
     setRunning(true);
     setPrepError(null);
     try {
-      const res = await fetch(`/api/applications/${app.id}/prep`, { method: "POST" });
+      const res = await fetch(`/api/applications/${app.slug}/prep`, { method: "POST" });
       const data = await res.json() as { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Failed to start pipeline");
 
       pollRef.current = setInterval(async () => {
         try {
-          const pollRes = await fetch(`/api/applications/${app.id}/prep`);
+          const pollRes = await fetch(`/api/applications/${app.slug}/prep`);
           const pollData = await pollRes.json() as { hasTech?: boolean };
           if (pollData.hasTech) {
             if (pollRef.current) clearInterval(pollRef.current);
@@ -156,12 +156,12 @@ export function TechStackTab({ app, isAdmin }: TabBaseProps) {
 
   // Load dismissed tags from API
   useEffect(() => {
-    fetch(`/api/applications/${app.id}/tech-dismissed`)
+    fetch(`/api/applications/${app.slug}/tech-dismissed`)
       .then((r) => r.json())
       .then((data) => setDismissed(new Set(data.dismissed || [])))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [app.id]);
+  }, [app.slug]);
 
   const toggleDismiss = useCallback(
     async (tag: string) => {
@@ -173,13 +173,13 @@ export function TechStackTab({ app, isAdmin }: TabBaseProps) {
       }
       setDismissed(next);
 
-      await fetch(`/api/applications/${app.id}/tech-dismissed`, {
+      await fetch(`/api/applications/${app.slug}/tech-dismissed`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dismissed: Array.from(next) }),
       }).catch(() => {});
     },
-    [app.id, dismissed],
+    [app.slug, dismissed],
   );
 
   if (techs.length === 0) {

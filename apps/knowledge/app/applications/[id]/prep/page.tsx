@@ -92,7 +92,7 @@ function PrepPageInner() {
 
   return (
     <Container size="3" p={{ initial: "4", md: "8" }}>
-      <ApplicationHeader app={app} isAdmin={isAdmin} onUpdate={setApp} />
+      <ApplicationHeader app={app} isAdmin={isAdmin} onUpdate={setApp} onSlugChange={(s) => router.replace(`/applications/${s}/prep`)} />
 
       <Tabs.Root value="prep" onValueChange={handleTabChange}>
         <Tabs.List style={{ borderBottom: "1px solid var(--gray-6)" }}>
