@@ -173,6 +173,9 @@ pub struct OrgProfile {
     /// Raw config.json per model (repo_id → parsed JSON). Populated by `scan_org_deep`.
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub model_configs: HashMap<String, serde_json::Value>,
+    /// Per-model maturity assessments. Populated by `scan_org` / `scan_org_deep`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub model_maturity: Vec<ModelMaturity>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

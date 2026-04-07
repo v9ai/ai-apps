@@ -160,6 +160,18 @@ impl<'a> OrgScanner<'a> {
         arxiv_links.sort();
         arxiv_links.dedup();
 
+        // 6. Per-model maturity assessment
+        let model_maturity: Vec<ModelMaturity> = models
+            .iter()
+            .map(|m| {
+                let repo_id = m.repo_id.as_deref().unwrap_or("");
+                let readme = cards.get(repo_id).map(|s| s.as_str());
+                let siblings = m.siblings.as_deref().unwrap_or(&[]);
+                let tags: Vec<String> = m.tags.clone().unwrap_or_default();
+                Self::assess_model_maturity(repo_id, m, readme, siblings, &tags)
+            })
+            .collect();
+
         Ok(OrgProfile {
             org_name: org_name.to_owned(),
             models,
@@ -171,6 +183,7 @@ impl<'a> OrgScanner<'a> {
             training_signals,
             arxiv_links,
             model_configs: HashMap::new(),
+            model_maturity,
         })
     }
 
@@ -506,6 +519,217 @@ impl<'a> OrgScanner<'a> {
         links
     }
 
+    // ── Model maturity assessment ─────────────────────────────────
+
+    /// Detect boilerplate ratio in a model card README.
+    /// Returns 0.0 (real content) to 1.0 (fully auto-generated placeholder).
+    pub fn detect_boilerplate(readme: &str) -> f32 {
+        let placeholder_count = readme.matches("[More Information Needed]").count();
+        if placeholder_count == 0 {
+            return 0.0;
+        }
+        // Count headings as a proxy for total sections
+        let section_count = readme
+            .lines()
+            .filter(|l| l.starts_with('#'))
+            .count()
+            .max(1);
+        (placeholder_count as f32 / section_count as f32).min(1.0)
+    }
+
+    /// Detect cookbook / template training tools from README text and tags.
+    pub fn detect_cookbook_recipe(readme: &str, tags: &[String]) -> Option<String> {
+        let lower = readme.to_lowercase();
+
+        let recipes: &[(&[&str], &[&str], &str)] = &[
+            (
+                &["llamafactory", "llama-factory", "llama_factory"],
+                &["llama-factory"],
+                "LlamaFactory",
+            ),
+            (&["autotrain"], &["autotrain"], "AutoTrain"),
+            (&["axolotl"], &["axolotl"], "Axolotl"),
+            (&["unsloth"], &["unsloth"], "Unsloth"),
+            (&["mergekit"], &["mergekit", "merge"], "MergeKit"),
+        ];
+
+        for (readme_pats, tag_pats, name) in recipes {
+            if readme_pats.iter().any(|p| lower.contains(p)) {
+                return Some(name.to_string());
+            }
+            if tag_pats
+                .iter()
+                .any(|tp| tags.iter().any(|t| t.contains(tp)))
+            {
+                return Some(name.to_string());
+            }
+        }
+        None
+    }
+
+    /// Detect well-known generic public datasets used for training.
+    /// Returns the dataset name if found, None if training data appears custom.
+    pub fn detect_generic_dataset(
+        readme: &str,
+        card_data: Option<&serde_json::Value>,
+    ) -> Option<String> {
+        let lower = readme.to_lowercase();
+
+        let generic_datasets = [
+            ("ultrafeedback", "UltraFeedback"),
+            ("alpaca", "Alpaca"),
+            ("open-orca", "OpenOrca"),
+            ("slimorca", "SlimOrca"),
+            ("oasst", "OASST"),
+            ("sharegpt", "ShareGPT"),
+            ("dolly", "Dolly"),
+            ("wizardlm", "WizardLM"),
+            ("openhermes", "OpenHermes"),
+            ("capybara", "Capybara"),
+            ("orca-math", "OrcaMath"),
+            ("lima", "LIMA"),
+        ];
+
+        for (pattern, name) in &generic_datasets {
+            if lower.contains(pattern) {
+                return Some(name.to_string());
+            }
+        }
+
+        // Also check cardData.datasets YAML field
+        if let Some(cd) = card_data {
+            if let Some(datasets) = cd.get("datasets").and_then(|v| v.as_array()) {
+                for ds in datasets {
+                    if let Some(ds_str) = ds.as_str() {
+                        let ds_lower = ds_str.to_lowercase();
+                        for (pattern, name) in &generic_datasets {
+                            if ds_lower.contains(pattern) {
+                                return Some(name.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
+    /// Check if a model repo contains LoRA / PEFT adapter files.
+    pub fn has_lora_adapter(siblings: &[SiblingFile]) -> bool {
+        siblings.iter().any(|f| {
+            f.filename == "adapter_config.json"
+                || f.filename == "adapter_model.safetensors"
+                || f.filename == "adapter_model.bin"
+        })
+    }
+
+    /// Assess a single model's maturity / seriousness level.
+    pub fn assess_model_maturity(
+        repo_id: &str,
+        repo: &RepoInfo,
+        readme: Option<&str>,
+        siblings: &[SiblingFile],
+        tags: &[String],
+    ) -> ModelMaturity {
+        let downloads = repo.downloads.unwrap_or(0);
+        let boilerplate_ratio = readme.map(Self::detect_boilerplate).unwrap_or(0.0);
+        let cookbook_tool = readme
+            .map(|r| Self::detect_cookbook_recipe(r, tags))
+            .unwrap_or(None);
+        let generic_dataset = readme
+            .map(|r| Self::detect_generic_dataset(r, repo.card_data.as_ref()))
+            .unwrap_or(None);
+        let has_lora = Self::has_lora_adapter(siblings);
+
+        // Check if model was updated after creation (compare created_at vs last_modified)
+        let updated_after_creation = match (&repo.created_at, &repo.last_modified) {
+            (Some(created), Some(modified)) => {
+                // Compare first 10 chars (date portion) — if different day, it was updated
+                let c = created.get(..10).unwrap_or("");
+                let m = modified.get(..10).unwrap_or("");
+                !c.is_empty() && !m.is_empty() && c != m
+            }
+            _ => false,
+        };
+
+        // Determine effort level from combined signals
+        let effort_level = Self::classify_effort(
+            downloads,
+            boilerplate_ratio,
+            cookbook_tool.is_some(),
+            generic_dataset.is_some(),
+            updated_after_creation,
+            readme,
+        );
+
+        ModelMaturity {
+            repo_id: repo_id.to_owned(),
+            downloads,
+            boilerplate_ratio,
+            cookbook_tool,
+            generic_dataset,
+            has_lora_adapter: has_lora,
+            updated_after_creation,
+            effort_level,
+        }
+    }
+
+    /// Classify effort level from maturity signals.
+    fn classify_effort(
+        downloads: u64,
+        boilerplate_ratio: f32,
+        is_cookbook: bool,
+        is_generic_dataset: bool,
+        updated: bool,
+        readme: Option<&str>,
+    ) -> EffortLevel {
+        // Trivial: boilerplate README + zero downloads + no iteration
+        if boilerplate_ratio > 0.5 && downloads == 0 && !updated {
+            return EffortLevel::Trivial;
+        }
+
+        // Experiment: cookbook recipe + generic dataset + low downloads
+        if is_cookbook && is_generic_dataset && downloads < 100 {
+            return EffortLevel::Experiment;
+        }
+
+        // Experiment: boilerplate + cookbook, even with some downloads
+        if boilerplate_ratio > 0.5 && is_cookbook {
+            return EffortLevel::Experiment;
+        }
+
+        // Check for real documentation effort
+        let has_real_docs = readme.map_or(false, |r| {
+            let lower = r.to_lowercase();
+            // Look for substantive content beyond boilerplate
+            (lower.contains("we trained")
+                || lower.contains("we fine-tuned")
+                || lower.contains("training procedure")
+                || lower.contains("evaluation")
+                    && lower.contains("results"))
+                && boilerplate_ratio < 0.3
+        });
+
+        // Production: high downloads + documentation + iteration
+        if downloads >= 1000 && has_real_docs && updated {
+            return EffortLevel::Production;
+        }
+
+        // Research: real documentation + custom data or novel approach
+        if has_real_docs && !is_generic_dataset {
+            return EffortLevel::Research;
+        }
+
+        // Moderate: some positive signals but not fully polished
+        if downloads >= 100 || (updated && !is_cookbook) || (has_real_docs && is_generic_dataset) {
+            return EffortLevel::Moderate;
+        }
+
+        // Default: experiment
+        EffortLevel::Experiment
+    }
+
     /// Compute an overall HF depth score (0.0-1.0) from the org profile.
     ///
     /// Weights:
@@ -572,6 +796,26 @@ impl<'a> OrgScanner<'a> {
             .filter_map(|d| d.get(..7)) // "2025-01" from "2025-01-15T..."
             .collect();
         score += (months.len() as f32 / 3.0).min(1.0) * 0.10;
+
+        // ── Maturity penalty ────────────────────────────────────────
+        // Discount the score when models are low-effort experiments.
+        if !profile.model_maturity.is_empty() {
+            let maturity_scores: Vec<f32> = profile
+                .model_maturity
+                .iter()
+                .map(|m| match m.effort_level {
+                    EffortLevel::Production => 1.0,
+                    EffortLevel::Research => 0.85,
+                    EffortLevel::Moderate => 0.7,
+                    EffortLevel::Experiment => 0.35,
+                    EffortLevel::Trivial => 0.15,
+                })
+                .collect();
+            let avg_maturity =
+                maturity_scores.iter().sum::<f32>() / maturity_scores.len() as f32;
+            // Apply as a multiplier: a fully trivial org gets ~15% of raw score
+            score *= avg_maturity;
+        }
 
         score.min(1.0)
     }
@@ -672,6 +916,7 @@ mod tests {
             training_signals: vec![],
             arxiv_links: vec![],
             model_configs: HashMap::new(),
+            model_maturity: vec![],
         };
         let score = OrgScanner::compute_hf_score(&profile);
         assert_eq!(score, 0.0);
@@ -738,6 +983,7 @@ mod tests {
                 "https://arxiv.org/abs/2301.00005".into(),
             ],
             model_configs,
+            model_maturity: vec![], // no maturity data → no penalty
         };
         let score = OrgScanner::compute_hf_score(&profile);
         assert!(score >= 0.95, "research-heavy org should score near 1.0, got {score}");
@@ -816,6 +1062,7 @@ mod tests {
             training_signals: vec![],
             arxiv_links: vec![],
             model_configs: HashMap::new(),
+            model_maturity: vec![],
         };
 
         let single = OrgProfile { model_configs: configs_single, ..base.clone() };
@@ -866,6 +1113,318 @@ mod tests {
         let signals = OrgScanner::parse_config_signals("diffbot/Coder-2603", &config);
         let types: Vec<_> = signals.iter().map(|s| s.signal_type).collect();
         assert!(!types.contains(&TrainingSignalType::FineTuning));
+    }
+
+    // ── Boilerplate detection tests ────────────────────────────────
+
+    #[test]
+    fn detect_boilerplate_full() {
+        let readme = r#"# Model Card for Model ID
+
+## Model Details
+
+### Model Description
+
+- **Developed by:** [More Information Needed]
+- **Funded by:** [More Information Needed]
+- **Model type:** [More Information Needed]
+- **Language(s):** [More Information Needed]
+- **License:** [More Information Needed]
+- **Finetuned from model:** [More Information Needed]
+
+## Uses
+
+### Direct Use
+
+[More Information Needed]
+
+### Out-of-Scope Use
+
+[More Information Needed]
+
+## Training Details
+
+### Training Data
+
+[More Information Needed]
+
+### Training Procedure
+
+[More Information Needed]
+
+## Evaluation
+
+[More Information Needed]
+"#;
+        let ratio = OrgScanner::detect_boilerplate(readme);
+        assert!(ratio > 0.5, "fully boilerplate card should have high ratio, got {ratio}");
+    }
+
+    #[test]
+    fn detect_boilerplate_none() {
+        let readme = "# My Custom Model\n\nWe trained this model on our proprietary sales dataset.\n\n## Results\n\nAccuracy: 92.3%\n";
+        let ratio = OrgScanner::detect_boilerplate(readme);
+        assert_eq!(ratio, 0.0, "real content should have 0 boilerplate ratio");
+    }
+
+    // ── Cookbook recipe detection tests ──────────────────────────────
+
+    #[test]
+    fn detect_cookbook_llamafactory() {
+        let readme = "Built with LlamaFactory using KTO alignment.";
+        let tags = vec![];
+        assert_eq!(
+            OrgScanner::detect_cookbook_recipe(readme, &tags),
+            Some("LlamaFactory".into())
+        );
+    }
+
+    #[test]
+    fn detect_cookbook_from_tags() {
+        let readme = "A fine-tuned model.";
+        let tags = vec!["text-generation".into(), "unsloth".into()];
+        assert_eq!(
+            OrgScanner::detect_cookbook_recipe(readme, &tags),
+            Some("Unsloth".into())
+        );
+    }
+
+    #[test]
+    fn detect_cookbook_none() {
+        let readme = "We trained this model with a custom training loop.";
+        let tags = vec!["text-generation".into()];
+        assert_eq!(OrgScanner::detect_cookbook_recipe(readme, &tags), None);
+    }
+
+    // ── Generic dataset detection tests ─────────────────────────────
+
+    #[test]
+    fn detect_generic_dataset_ultrafeedback() {
+        let readme = "Trained on UltraFeedback preference data with KTO.";
+        assert_eq!(
+            OrgScanner::detect_generic_dataset(readme, None),
+            Some("UltraFeedback".into())
+        );
+    }
+
+    #[test]
+    fn detect_generic_dataset_from_card_data() {
+        let readme = "A fine-tuned model.";
+        let card_data = serde_json::json!({"datasets": ["argilla/ultrafeedback-binarized"]});
+        assert_eq!(
+            OrgScanner::detect_generic_dataset(readme, Some(&card_data)),
+            Some("UltraFeedback".into())
+        );
+    }
+
+    #[test]
+    fn detect_generic_dataset_custom() {
+        let readme = "Trained on our proprietary sales conversation dataset.";
+        assert_eq!(OrgScanner::detect_generic_dataset(readme, None), None);
+    }
+
+    // ── LoRA adapter detection tests ────────────────────────────────
+
+    #[test]
+    fn detect_lora_present() {
+        let siblings = vec![
+            SiblingFile { filename: "config.json".into(), size: Some(100) },
+            SiblingFile { filename: "adapter_config.json".into(), size: Some(500) },
+            SiblingFile { filename: "adapter_model.safetensors".into(), size: Some(1000) },
+        ];
+        assert!(OrgScanner::has_lora_adapter(&siblings));
+    }
+
+    #[test]
+    fn detect_lora_absent() {
+        let siblings = vec![
+            SiblingFile { filename: "config.json".into(), size: Some(100) },
+            SiblingFile { filename: "model.safetensors".into(), size: Some(16_000_000_000) },
+        ];
+        assert!(!OrgScanner::has_lora_adapter(&siblings));
+    }
+
+    // ── Effort level classification tests ───────────────────────────
+
+    #[test]
+    fn effort_trivial_boilerplate_zero_downloads() {
+        let mut repo = make_dummy_repo();
+        repo.downloads = Some(0);
+        repo.created_at = Some("2024-06-21T00:00:00.000Z".into());
+        repo.last_modified = Some("2024-06-21T00:00:00.000Z".into());
+
+        let readme = "# Model Card\n\n- **Developed by:** [More Information Needed]\n- **Model type:** [More Information Needed]\n## Uses\n[More Information Needed]\n## Training\n[More Information Needed]\n";
+        let maturity = OrgScanner::assess_model_maturity(
+            "salesloft/model",
+            &repo,
+            Some(readme),
+            &[],
+            &[],
+        );
+        assert_eq!(maturity.effort_level, EffortLevel::Trivial);
+        assert!(maturity.boilerplate_ratio > 0.5);
+        assert_eq!(maturity.downloads, 0);
+    }
+
+    #[test]
+    fn effort_experiment_cookbook_generic() {
+        let mut repo = make_dummy_repo();
+        repo.downloads = Some(5);
+        repo.created_at = Some("2024-06-21T00:00:00.000Z".into());
+        repo.last_modified = Some("2024-06-22T00:00:00.000Z".into());
+
+        let readme = "Fine-tuned with LlamaFactory on UltraFeedback.";
+        let maturity = OrgScanner::assess_model_maturity(
+            "org/model",
+            &repo,
+            Some(readme),
+            &[],
+            &[],
+        );
+        assert_eq!(maturity.effort_level, EffortLevel::Experiment);
+        assert_eq!(maturity.cookbook_tool.as_deref(), Some("LlamaFactory"));
+        assert_eq!(maturity.generic_dataset.as_deref(), Some("UltraFeedback"));
+    }
+
+    #[test]
+    fn effort_production_high_downloads_docs_iteration() {
+        let mut repo = make_dummy_repo();
+        repo.downloads = Some(50_000);
+        repo.created_at = Some("2024-01-15T00:00:00.000Z".into());
+        repo.last_modified = Some("2024-06-22T00:00:00.000Z".into());
+
+        let readme = "# Our Sales Model\n\nWe trained this model on our proprietary dataset.\n\n## Evaluation\n\nExtensive results on held-out test set.\n";
+        let maturity = OrgScanner::assess_model_maturity(
+            "org/model",
+            &repo,
+            Some(readme),
+            &[],
+            &[],
+        );
+        assert_eq!(maturity.effort_level, EffortLevel::Production);
+        assert!(maturity.updated_after_creation);
+    }
+
+    // ── Score with maturity penalty test ─────────────────────────────
+
+    #[test]
+    fn compute_score_penalizes_trivial_models() {
+        let base = OrgProfile {
+            org_name: "experiment-org".into(),
+            models: vec![make_dummy_repo()],
+            datasets: vec![],
+            spaces: vec![],
+            total_downloads: 0,
+            libraries_used: vec![],
+            pipeline_tags: vec![],
+            training_signals: vec![
+                TrainingSignal {
+                    repo_id: "r".into(),
+                    signal_type: TrainingSignalType::FineTuning,
+                    evidence: "fine-tuned mentioned".into(),
+                },
+                TrainingSignal {
+                    repo_id: "r".into(),
+                    signal_type: TrainingSignalType::ArxivCitation,
+                    evidence: "https://arxiv.org/abs/1910.09700".into(),
+                },
+            ],
+            arxiv_links: vec!["https://arxiv.org/abs/1910.09700".into()],
+            model_configs: HashMap::new(),
+            model_maturity: vec![], // no maturity → no penalty (baseline)
+        };
+
+        let with_trivial = OrgProfile {
+            model_maturity: vec![ModelMaturity {
+                repo_id: "r".into(),
+                downloads: 0,
+                boilerplate_ratio: 0.8,
+                cookbook_tool: Some("LlamaFactory".into()),
+                generic_dataset: Some("UltraFeedback".into()),
+                has_lora_adapter: false,
+                updated_after_creation: false,
+                effort_level: EffortLevel::Trivial,
+            }],
+            ..base.clone()
+        };
+
+        let score_base = OrgScanner::compute_hf_score(&base);
+        let score_trivial = OrgScanner::compute_hf_score(&with_trivial);
+
+        assert!(
+            score_trivial < score_base * 0.3,
+            "trivial maturity should heavily penalize score: base={score_base}, trivial={score_trivial}"
+        );
+    }
+
+    #[test]
+    fn salesloft_scenario() {
+        // Simulate the exact SalesLoft case from the issue:
+        // 1 model, 0 downloads, boilerplate README, LlamaFactory+KTO+UltraFeedback
+        let mut repo = make_dummy_repo();
+        repo.downloads = Some(0);
+        repo.likes = Some(0);
+        repo.repo_id = Some("salesloft/llama3-8b-instruct-ultrafeedback-kto".into());
+        repo.created_at = Some("2024-06-21T00:00:00.000Z".into());
+        repo.last_modified = Some("2024-06-21T00:00:00.000Z".into());
+
+        let boilerplate_readme = r#"---
+library_name: transformers
+tags:
+- trl
+- kto
+---
+
+# Model Card for Model ID
+
+## Model Details
+
+### Model Description
+
+- **Developed by:** [More Information Needed]
+- **Funded by [optional]:** [More Information Needed]
+- **Shared by [optional]:** [More Information Needed]
+- **Model type:** [More Information Needed]
+- **Language(s) (NLP):** [More Information Needed]
+- **License:** [More Information Needed]
+- **Finetuned from model [optional]:** [More Information Needed]
+
+## Uses
+
+[More Information Needed]
+
+## Training Details
+
+[More Information Needed]
+
+## Evaluation
+
+[More Information Needed]
+
+## Citation
+
+@misc{reimers2019sentencebert,
+    title={Sentence-BERT},
+    author={Nils Reimers and Iryna Gurevych},
+    year={2019},
+    eprint={1910.09700},
+}
+"#;
+
+        let maturity = OrgScanner::assess_model_maturity(
+            "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+            &repo,
+            Some(boilerplate_readme),
+            &[],
+            &["trl".into(), "kto".into()],
+        );
+
+        assert_eq!(maturity.effort_level, EffortLevel::Trivial,
+            "SalesLoft model should be classified as Trivial, got {:?}", maturity.effort_level);
+        assert!(maturity.boilerplate_ratio > 0.5);
+        assert_eq!(maturity.downloads, 0);
+        assert_eq!(maturity.generic_dataset.as_deref(), Some("UltraFeedback"));
+        assert!(!maturity.updated_after_creation);
     }
 
     fn make_dummy_repo() -> RepoInfo {
