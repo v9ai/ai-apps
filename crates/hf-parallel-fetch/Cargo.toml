@@ -1,0 +1,21 @@
+[package]
+name = "hf-parallel-fetch"
+version = "0.1.0"
+edition = "2021"
+authors = ["Vadim Nicolai <v9ai>"]
+description = "Parallel data retrieval from Hugging Face Hub API for lead-gen pipelines"
+license = "MIT"
+repository = "https://github.com/v9ai/lead-gen-crates"
+keywords = ["huggingface", "parallel", "async", "sales", "lead-generation"]
+
+[dependencies]
+reqwest = { version = "0.12", features = ["json", "stream"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+futures = "0.3"
+thiserror = "2"
+tracing = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"
