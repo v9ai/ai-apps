@@ -30,30 +30,30 @@ This article documents a hierarchical Bayesian spam gating system with 4 aspect-
 The spam module does not exist in isolation. It is stage 2 of a **15-module pipeline** called SalesCue, where every module shares a single DeBERTa-v3-base encoder loaded as a thread-safe singleton. One encoder forward pass produces 768-dim token embeddings; then each module runs its own specialized head on those embeddings. The spam gate decides which emails proceed to the remaining 14 heads — and which get discarded before any of that compute is spent.
 
 <Flow
-  height={500}
+  height={560}
   nodes={[
-    { id: "email", position: { x: 250, y: 0 }, data: { label: "Inbound Email" }, type: "input" },
-    { id: "enc", position: { x: 250, y: 80 }, data: { label: "Shared DeBERTa Encoder\n(single forward pass)" } },
-    { id: "spam", position: { x: 250, y: 170 }, data: { label: "Spam Gate (Stage 2)" } },
-    { id: "block", position: { x: 50, y: 280 }, data: { label: "Block / Quarantine" }, type: "output" },
-    { id: "score", position: { x: 160, y: 310 }, data: { label: "Score" } },
-    { id: "intent", position: { x: 250, y: 310 }, data: { label: "Intent" } },
-    { id: "reply", position: { x: 340, y: 310 }, data: { label: "Reply" } },
-    { id: "more", position: { x: 440, y: 310 }, data: { label: "+12 modules" } },
-    { id: "out", position: { x: 280, y: 410 }, data: { label: "Scored Lead → Outreach" }, type: "output" },
+    { id: "email", position: { x: 250, y: 0 }, data: { label: "Inbound Email" }, type: "input", style: { background: '#1e3a5f', color: '#93c5fd', border: '1px solid #3b82f6', borderRadius: 8, fontWeight: 600, width: 180 } },
+    { id: "enc", position: { x: 250, y: 100 }, data: { label: "Shared DeBERTa Encoder (single forward pass)" }, style: { background: '#312e81', color: '#a5b4fc', border: '1px solid #6366f1', borderRadius: 8, width: 260 } },
+    { id: "spam", position: { x: 250, y: 200 }, data: { label: "Spam Gate (Stage 2)" }, style: { background: '#78350f', color: '#fcd34d', border: '2px solid #f59e0b', borderRadius: 8, fontWeight: 700, width: 180 } },
+    { id: "block", position: { x: 10, y: 330 }, data: { label: "Block / Quarantine" }, type: "output", style: { background: '#7f1d1d', color: '#fca5a5', border: '1px solid #ef4444', borderRadius: 8 } },
+    { id: "score", position: { x: 170, y: 350 }, data: { label: "Score" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 6 } },
+    { id: "intent", position: { x: 270, y: 350 }, data: { label: "Intent" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 6 } },
+    { id: "reply", position: { x: 370, y: 350 }, data: { label: "Reply" }, style: { background: '#134e4a', color: '#5eead4', border: '1px solid #14b8a6', borderRadius: 6 } },
+    { id: "more", position: { x: 470, y: 350 }, data: { label: "+12 modules" }, style: { background: '#134e4a', color: '#5eead4', border: '1px dashed #14b8a6', borderRadius: 6 } },
+    { id: "out", position: { x: 280, y: 470 }, data: { label: "Scored Lead → Outreach" }, type: "output", style: { background: '#14532d', color: '#86efac', border: '1px solid #22c55e', borderRadius: 8, fontWeight: 600, width: 200 } },
   ]}
   edges={[
-    { id: "e1", source: "email", target: "enc" },
-    { id: "e2", source: "enc", target: "spam" },
-    { id: "e3", source: "spam", target: "block", label: "Junk" },
-    { id: "e4", source: "spam", target: "score", label: "Clean" },
-    { id: "e5", source: "spam", target: "intent" },
-    { id: "e6", source: "spam", target: "reply" },
-    { id: "e7", source: "spam", target: "more" },
-    { id: "e8", source: "score", target: "out" },
-    { id: "e9", source: "intent", target: "out" },
-    { id: "e10", source: "reply", target: "out" },
-    { id: "e11", source: "more", target: "out" },
+    { id: "e1", source: "email", target: "enc", type: "smoothstep", animated: true },
+    { id: "e2", source: "enc", target: "spam", type: "smoothstep", animated: true },
+    { id: "e3", source: "spam", target: "block", type: "smoothstep", label: "Junk", style: { stroke: '#ef4444' }, labelStyle: { fill: '#fca5a5' }, labelBgStyle: { fill: '#1a1a2e' } },
+    { id: "e4", source: "spam", target: "score", type: "smoothstep", label: "Clean", style: { stroke: '#22c55e' }, labelStyle: { fill: '#86efac' }, labelBgStyle: { fill: '#1a1a2e' } },
+    { id: "e5", source: "spam", target: "intent", type: "smoothstep", style: { stroke: '#22c55e' } },
+    { id: "e6", source: "spam", target: "reply", type: "smoothstep", style: { stroke: '#22c55e' } },
+    { id: "e7", source: "spam", target: "more", type: "smoothstep", style: { stroke: '#22c55e' } },
+    { id: "e8", source: "score", target: "out", type: "smoothstep", style: { stroke: '#14b8a6' } },
+    { id: "e9", source: "intent", target: "out", type: "smoothstep", style: { stroke: '#14b8a6' } },
+    { id: "e10", source: "reply", target: "out", type: "smoothstep", style: { stroke: '#14b8a6' } },
+    { id: "e11", source: "more", target: "out", type: "smoothstep", style: { stroke: '#14b8a6', strokeDasharray: '5 5' } },
   ]}
 />
 

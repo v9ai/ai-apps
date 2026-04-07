@@ -124,7 +124,7 @@ function NotesPageInner() {
 
         <Box pt="4">
           <Tabs.Content value="notes">
-            <NotesTab app={app} isAdmin={isAdmin} onUpdate={setApp} />
+            <NotesTab app={app} isAdmin={isAdmin} />
           </Tabs.Content>
         </Box>
       </Tabs.Root>
