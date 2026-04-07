@@ -39,17 +39,6 @@ impl<'a> Default for ParsedHeaders<'a> {
     }
 }
 
-// FSM states for parsing
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum State {
-    /// Scanning the field name at the start of a line
-    FieldName,
-    /// Matched a field name, now scanning its value
-    FieldValue,
-    /// Inside a folded continuation line (starts with space/tab)
-    Continuation,
-}
-
 /// Which field we're currently accumulating value for
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum CurrentField {
@@ -343,11 +332,6 @@ fn identify_field(raw: &[u8], start: usize, end: usize) -> CurrentField {
 
     CurrentField::Unknown
 }
-
-// Suppress unused warnings for enums used in the state machine design
-const _: () = {
-    fn _assert_state_used(_: State) {}
-};
 
 #[cfg(test)]
 mod tests {
