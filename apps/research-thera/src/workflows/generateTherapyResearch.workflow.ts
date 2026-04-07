@@ -246,6 +246,11 @@ async function planQuery<T extends {
   goal: { title: string; description: string | null };
   notes: Array<{ content: string }>;
   translatedGoalTitle?: string;
+  clinicalDomain?: string;
+  behaviorDirection?: string;
+  developmentalTier?: string;
+  requiredKeywords?: string[];
+  excludedTopics?: string[];
 }>(ctx: T) {
   if (ctx.jobId) {
     await db.updateGenerationJob(ctx.jobId, { progress: 20 }).catch(() => {});
@@ -257,6 +262,11 @@ async function planQuery<T extends {
     title: planTitle,
     description: ctx.goal.description ?? "",
     notes: ctx.notes.map((n) => n.content),
+    clinicalDomain: ctx.clinicalDomain,
+    behaviorDirection: ctx.behaviorDirection,
+    developmentalTier: ctx.developmentalTier,
+    requiredKeywords: ctx.requiredKeywords,
+    excludedTopics: ctx.excludedTopics,
   });
 
   const plan = extractorTools.sanitize(rawPlan);
@@ -442,6 +452,8 @@ async function extractOnePaper(params: {
   goalType: string;
   goalTitle: string;
   goalDescription: string | null;
+  developmentalTier?: string;
+  patientAge?: number | null;
 }): Promise<{ ok: boolean; score: number; research?: any; reason: string }> {
   try {
     const paper = await sourceTools.fetchPaperDetails(params.candidate);
@@ -451,6 +463,8 @@ async function extractOnePaper(params: {
       goalDescription: params.goalDescription ?? "",
       goalType: params.goalType,
       paper,
+      developmentalTier: params.developmentalTier,
+      patientAge: params.patientAge,
     });
 
     const ok =
@@ -542,6 +556,8 @@ async function extractAll<T extends {
   candidates: any[];
   translatedGoalTitle?: string;
   requiredKeywords?: string[];
+  developmentalTier?: string;
+  familyMemberAge?: number | null;
   [key: string]: any;
 }>(ctx: T) {
   if (ctx.jobId) {
@@ -570,6 +586,8 @@ async function extractAll<T extends {
           goalType: ctx.goalType,
           goalTitle: ctx.translatedGoalTitle ?? ctx.goal.title,
           goalDescription: ctx.goal.description,
+          developmentalTier: ctx.developmentalTier,
+          patientAge: ctx.familyMemberAge,
         }),
       ),
     );
