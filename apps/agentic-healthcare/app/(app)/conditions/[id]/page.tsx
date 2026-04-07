@@ -11,7 +11,6 @@ import { redirect } from "next/navigation";
 import { EditNotesForm } from "../edit-notes-form";
 import { EditConditionHeader } from "../edit-condition-header";
 import { RelatedMarkers } from "../related-markers";
-import { LinkedMedications } from "../linked-medications";
 import { ConditionResearch } from "../condition-research";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { css } from "styled-system/css";
@@ -66,6 +65,17 @@ async function ConditionDetail({ id }: { id: string }) {
 
       {/* Sidebar */}
       <Flex direction="column" gap="4">
+        <Suspense fallback={
+          <Card>
+            <Flex direction="column" gap="3">
+              <Skeleton height="20px" width="180px" />
+              <Skeleton height="60px" />
+            </Flex>
+          </Card>
+        }>
+          <LinkedMedications conditionId={condition.id} />
+        </Suspense>
+
         <Suspense fallback={
           <Card>
             <Flex direction="column" gap="3">
