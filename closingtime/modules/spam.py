@@ -11,6 +11,9 @@ import re
 import torch
 import torch.nn as nn
 
+from ..base import BaseModule
+from ..backbone import SharedEncoder
+
 
 class PerplexityRatioDetector(nn.Module):
     """
@@ -65,7 +68,8 @@ class PerplexityRatioDetector(nn.Module):
         ai_score = self.ai_pattern_scorer(cls).item()
 
         struct_features = self.compute_structural_features(text).to(cls.device)
-        self.structure_features(struct_features)
+        struct_embed = self.structure_features(struct_features)
+        struct_bias = struct_embed.mean().item()
 
         log_ratio = human_score - ai_score
         structural_ai_signal = (
@@ -74,7 +78,7 @@ class PerplexityRatioDetector(nn.Module):
             and struct_features[5] > 5.0
         )
         ai_risk = torch.sigmoid(
-            torch.tensor(-log_ratio + (0.5 if structural_ai_signal else -0.5))
+            torch.tensor(-log_ratio + struct_bias + (0.5 if structural_ai_signal else -0.5))
         ).item()
         return round(max(0, min(1.0, ai_risk)), 3)
 
@@ -87,12 +91,14 @@ PROVIDER_THRESHOLDS = {
 }
 
 
-class SpamHead(nn.Module):
+class SpamHead(BaseModule):
     """Provider-calibrated spam scoring with AI detection.
 
     Combines a neural spam classifier with the PerplexityRatioDetector
     and provider-specific calibration for Gmail, Outlook, and Yahoo.
     """
+    name = "spam"
+    description = "Provider-calibrated spam scoring with AI detection"
 
     def __init__(self, hidden=768):
         super().__init__()
@@ -104,20 +110,16 @@ class SpamHead(nn.Module):
             for p in ["gmail", "outlook", "yahoo"]
         })
 
-    def forward(self, encoder_output, input_ids=None, tokenizer=None,
-                text="", provider="gmail"):
+    def process(self, encoded, text, **kwargs):
         """Score email for spam risk and AI detection.
-
-        Args:
-            encoder_output: from shared encoder
-            input_ids: tokenized input IDs
-            tokenizer: tokenizer for decoding (used by AI detector)
-            text: raw text (used for structural features)
-            provider: email provider for calibrated scoring
 
         Returns:
             Dict with spam_score, ai_risk, deliverability, provider details.
         """
+        encoder_output = encoded["encoder_output"]
+        input_ids = encoded["input_ids"]
+        _, tokenizer = SharedEncoder.load()
+        provider = kwargs.get("provider", "gmail")
         cls = encoder_output.last_hidden_state[:, 0]
 
         # base spam score

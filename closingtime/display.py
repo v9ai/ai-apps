@@ -6,6 +6,7 @@ output. Cards show confidence bars, signal breakdowns, and evidence spans.
 
 from __future__ import annotations
 
+import html as html_mod
 from typing import Any
 
 
@@ -23,7 +24,7 @@ def _color_for_score(score: float) -> str:
         return "yellow"
     if score >= 0.25:
         return "red"
-    return "bright_red"
+    return "#cc0000"
 
 
 class CardRenderer:
@@ -98,13 +99,13 @@ class CardRenderer:
                     f'<div style="background:{color};height:100%;width:{pct}%;border-radius:4px"></div>'
                     f'</div> {value:.3f}'
                 )
-                rows.append(f"<tr><td><b>{key}</b></td><td>{bar_html}</td></tr>")
+                rows.append(f"<tr><td><b>{html_mod.escape(str(key))}</b></td><td>{bar_html}</td></tr>")
             else:
-                rows.append(f"<tr><td><b>{key}</b></td><td>{value}</td></tr>")
+                rows.append(f"<tr><td><b>{html_mod.escape(str(key))}</b></td><td>{html_mod.escape(str(value))}</td></tr>")
 
         return (
             f'<div style="border:1px solid #ccc;border-radius:8px;padding:12px;margin:8px 0;font-family:monospace">'
-            f'<h3 style="margin:0 0 8px">{module_name.upper()}</h3>'
+            f'<h3 style="margin:0 0 8px">{html_mod.escape(module_name.upper())}</h3>'
             f'<table>{"".join(rows)}</table>'
             f'</div>'
         )

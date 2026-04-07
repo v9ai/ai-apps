@@ -12,6 +12,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ..base import BaseModule
+
 SENTIMENTS = [
     "enthusiastic", "positive_engaged", "neutral_professional",
     "cautious_interest", "polite_decline", "frustrated_objection", "hostile_rejection",
@@ -53,7 +55,7 @@ class CLUBEstimator(nn.Module):
         positive = -(mu - y) ** 2 / (2 * logvar.exp()) - 0.5 * logvar
 
         # log p(y|x') for random x' (negative samples)
-        x_shuffled = x[torch.randperm(x.shape[0])]
+        x_shuffled = x[torch.randperm(x.shape[0], device=x.device)]
         mu_neg = self.mu_net(x_shuffled)
         logvar_neg = self.logvar_net(x_shuffled)
         negative = -(mu_neg - y) ** 2 / (2 * logvar_neg.exp()) - 0.5 * logvar_neg
@@ -64,7 +66,9 @@ class CLUBEstimator(nn.Module):
         return mi_estimate
 
 
-class DisentangledSentimentIntentHead(nn.Module):
+class DisentangledSentimentIntentHead(BaseModule):
+    name = "sentiment"
+    description = "MI-minimized sentiment-intent disentanglement"
     """
     Provably disentangled sentiment and intent representations.
 
@@ -110,7 +114,8 @@ class DisentangledSentimentIntentHead(nn.Module):
         # evidence extractor for inversion explanations
         self.evidence_proj = nn.Linear(hidden, 64)
 
-    def forward(self, encoder_output, text=None):
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
         cls = encoder_output.last_hidden_state[:, 0]
 
         # project to disentangled representations

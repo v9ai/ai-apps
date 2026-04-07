@@ -13,6 +13,9 @@ from typing import Any
 import torch
 import torch.nn as nn
 
+from ..base import BaseModule
+from ..backbone import SharedEncoder
+
 
 # --- Regex patterns for structured entities ---
 
@@ -155,7 +158,9 @@ class RetypingLayer(nn.Module):
         }
 
 
-class EntityExtractor(nn.Module):
+class EntityExtractor(BaseModule):
+    name = "entities"
+    description = "Hybrid regex + pointer NER with context-dependent re-typing"
     """Combined regex + neural NER with re-typing.
 
     Pipeline:
@@ -183,7 +188,10 @@ class EntityExtractor(nn.Module):
                 })
         return entities
 
-    def forward(self, encoder_output, tokenizer, input_ids, text: str):
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
+        input_ids = encoded["input_ids"]
+        _, tokenizer = SharedEncoder.load()
         tokens = encoder_output.last_hidden_state[0]  # (seq, hidden)
         cls = tokens[0]
 
