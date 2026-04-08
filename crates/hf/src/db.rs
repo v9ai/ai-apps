@@ -237,7 +237,7 @@ impl HfDb {
         query: &str,
         repo_type: Option<RepoType>,
     ) -> Result<Vec<RepoInfo>, Error> {
-        let like_pattern = format!("%{query}%");
+        let like_pattern = format!("%{}%", escape_like(query));
 
         if let Some(rt) = repo_type {
             let mut stmt = self.conn.prepare(
@@ -245,7 +245,7 @@ impl HfDb {
                         downloads, likes, library, pipeline_tag, private, gated,
                         disabled, description, sdk, siblings, card_data, extra
                  FROM hf_repos
-                 WHERE repo_type = ?1 AND (repo_id LIKE ?2 OR description LIKE ?2)
+                 WHERE repo_type = ?1 AND (repo_id LIKE ?2 ESCAPE '\\' OR description LIKE ?2 ESCAPE '\\')
                  ORDER BY downloads DESC
                  LIMIT 100",
             )?;
@@ -257,7 +257,7 @@ impl HfDb {
                         downloads, likes, library, pipeline_tag, private, gated,
                         disabled, description, sdk, siblings, card_data, extra
                  FROM hf_repos
-                 WHERE repo_id LIKE ?1 OR description LIKE ?1
+                 WHERE repo_id LIKE ?1 ESCAPE '\\' OR description LIKE ?1 ESCAPE '\\'
                  ORDER BY downloads DESC
                  LIMIT 100",
             )?;
@@ -341,6 +341,18 @@ impl HfDb {
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Error::from)
     }
+}
+
+/// Escape LIKE metacharacters so `%` and `_` are treated as literals.
+fn escape_like(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for ch in s.chars() {
+        match ch {
+            '\\' | '%' | '_' => { out.push('\\'); out.push(ch); }
+            _ => out.push(ch),
+        }
+    }
+    out
 }
 
 fn row_to_repo_info(row: &rusqlite::Row) -> rusqlite::Result<RepoInfo> {
@@ -618,18 +630,23 @@ mod tests {
     }
 
     #[test]
-    fn search_special_chars_no_panic() {
+    fn search_special_chars_escaped_correctly() {
         let db = HfDb::open_in_memory().unwrap();
         let mut repo = test_repo("org/model-a", 100, 5);
         repo.description = Some("100% accuracy on test_set".into());
         db.upsert_repos(&[repo], RepoType::Model).unwrap();
 
-        // SQL LIKE wildcards in search term should not cause issues
-        let results = db.search_repos("%", None).unwrap();
-        assert_eq!(results.len(), 1, "% in description should match LIKE '%\\%%'");
+        // A second repo without special chars — should NOT match wildcard searches
+        db.upsert_repos(&[test_repo("org/model-b", 200, 10)], RepoType::Model).unwrap();
 
+        // Searching for literal "%" should only match the repo containing "%"
+        let results = db.search_repos("%", None).unwrap();
+        assert_eq!(results.len(), 1, "% should be treated literally, not as wildcard");
+        assert_eq!(results[0].repo_id.as_deref(), Some("org/model-a"));
+
+        // Searching for literal "_" should only match the repo containing "_"
         let results = db.search_repos("_", None).unwrap();
-        assert_eq!(results.len(), 1, "_ in description should match LIKE '%\\_%'");
+        assert_eq!(results.len(), 1, "_ should be treated literally, not as wildcard");
 
         // Single quotes should not cause SQL errors (parameterized queries)
         let results = db.search_repos("it's", None).unwrap();
