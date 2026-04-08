@@ -9,7 +9,9 @@
 "use client";
 
 import * as React from "react";
-import { TextField, IconButton, Tooltip } from "@radix-ui/themes";
+import { css } from "styled-system/css";
+import { flex } from "styled-system/patterns";
+import { button } from "@/recipes/button";
 import { MagnifyingGlassIcon, Cross2Icon } from "@radix-ui/react-icons";
 
 type Props = {
@@ -32,7 +34,7 @@ export function JobsSearchBar({
   onSubmit,
   onClear,
   debounceMs = 120,
-  placeholder = "Search jobs…",
+  placeholder = "Search jobs...",
 }: Props) {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const debounceRef = React.useRef<number | null>(null);
@@ -89,38 +91,53 @@ export function JobsSearchBar({
   }, []);
 
   return (
-    <TextField.Root
-      ref={inputRef}
-      size="3"
-      variant="surface"
-      value={value}
-      placeholder={placeholder}
-      onChange={(e) => handleChange(e.target.value)}
-      onKeyDown={handleKeyDown}
-      aria-label="Search input"
-      autoCorrect="off"
-      autoCapitalize="off"
-      spellCheck={false}
-      style={{ boxShadow: "0 0 0 1px var(--gray-6) inset" }}
+    <div
+      className={flex({ align: "center" })}
+      style={{ boxShadow: "0 0 0 1px var(--colors-ui-border) inset" }}
     >
-      <TextField.Slot side="left">
+      <div className={css({ pl: "3", display: "flex", alignItems: "center", color: "ui.tertiary" })}>
         <MagnifyingGlassIcon />
-      </TextField.Slot>
+      </div>
+
+      <input
+        ref={inputRef}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => handleChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        aria-label="Search input"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        className={css({
+          flex: 1,
+          border: "none",
+          outline: "none",
+          bg: "transparent",
+          py: "2",
+          px: "2",
+          fontSize: "base",
+          color: "ui.heading",
+          height: "40px",
+          _placeholder: {
+            color: "ui.tertiary",
+          },
+        })}
+      />
 
       {value.length > 0 && (
-        <TextField.Slot side="right">
-          <Tooltip content="Clear (Esc)">
-            <IconButton
-              variant="ghost"
-              radius="full"
-              aria-label="Clear input"
-              onClick={clear}
-            >
-              <Cross2Icon />
-            </IconButton>
-          </Tooltip>
-        </TextField.Slot>
+        <div className={css({ pr: "2", display: "flex", alignItems: "center" })}>
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
+            aria-label="Clear input"
+            title="Clear (Esc)"
+            onClick={clear}
+            style={{ padding: "4px", height: "24px", width: "24px", minWidth: "24px" }}
+          >
+            <Cross2Icon />
+          </button>
+        </div>
       )}
-    </TextField.Root>
+    </div>
   );
 }

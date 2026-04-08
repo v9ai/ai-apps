@@ -90,18 +90,20 @@ export function LandingFooter() {
               href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
               target="_blank"
               rel="noopener noreferrer"
-              className={flex({
-                align: "center",
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
                 gap: "2",
                 mt: "4",
-              })}
-              style={{
-                color: "var(--gray-9)",
-                fontSize: "11px",
+                color: "ui.tertiary",
+                fontSize: "xs",
                 textDecoration: "none",
-                letterSpacing: "0.02em",
-                transition: "color 0.15s",
-              }}
+                letterSpacing: "normal",
+                transition: "color 150ms ease",
+                _hover: {
+                  color: "ui.body",
+                },
+              })}
             >
               <GitHubLogoIcon width={14} height={14} />
               source code
@@ -183,7 +185,10 @@ export function LandingFooter() {
             mt: "4",
             pt: "4",
           })}
-          style={{ borderTop: "1px solid var(--gray-4)" }}
+          className={css({
+            borderTop: "1px solid",
+            borderTopColor: "ui.border",
+          })}
         >
           <p
             className={css({
