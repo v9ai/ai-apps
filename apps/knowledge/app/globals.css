@@ -629,15 +629,6 @@ body {
   margin-bottom: 16px;
   line-height: 1;
 }
-.research-collections-subtitle {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--gray-8);
-  margin-bottom: 12px;
-  line-height: 1;
-}
 .research-collections-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -667,7 +658,7 @@ body {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: var(--gray-8);
+  color: var(--gray-9);
   margin-bottom: 12px;
   padding: 8px 14px;
   border-left: 3px solid var(--section-accent, var(--gray-6));
