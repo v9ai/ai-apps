@@ -1,18 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Badge,
-  Box,
-  Callout,
-  Checkbox,
-  Code,
-  Flex,
-  Separator,
-  Text,
-  TextArea,
-  TextField,
-} from "@radix-ui/themes";
+import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import {
   CheckIcon,
@@ -23,6 +12,42 @@ import {
   PaperPlaneIcon,
 } from "@radix-ui/react-icons";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
+
+// ── Reusable form styles ─────────────────────────────────────────────────────
+
+const inputStyles = css({
+  bg: "ui.surface",
+  border: "1px solid",
+  borderColor: "ui.border",
+  color: "ui.body",
+  p: "6px 10px",
+  fontSize: "base",
+  width: "100%",
+  outline: "none",
+  fontFamily: "inherit",
+  borderRadius: "0",
+  _focus: { borderColor: "accent.primary" },
+  _placeholder: { color: "ui.tertiary" },
+});
+
+const textareaStyles = css({
+  bg: "ui.surface",
+  border: "1px solid",
+  borderColor: "ui.border",
+  color: "ui.body",
+  p: "2",
+  fontSize: "base",
+  width: "100%",
+  outline: "none",
+  fontFamily: "inherit",
+  borderRadius: "0",
+  resize: "vertical",
+  minHeight: "80px",
+  _focus: { borderColor: "accent.primary" },
+  _placeholder: { color: "ui.tertiary" },
+});
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 type Step = "input" | "extracted" | "edit" | "sent";
 
@@ -207,49 +232,63 @@ export function ComposeFromLinkedIn({
   // ─── Render ────────────────────────────────────────────────────────────
 
   return (
-    <Flex direction="column" gap="4" style={{ maxWidth: 640 }}>
+    <div className={css({ display: "flex", flexDirection: "column", gap: "4", maxWidth: "640px" })}>
       {/* ── INPUT step ── */}
       {step === "input" && (
         <>
-          <Text size="2" color="gray">
+          <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
             Paste a LinkedIn post URL to extract content and compose an outreach
             email.
-          </Text>
+          </span>
 
-          <Flex gap="2" align="end">
-            <Box style={{ flex: 1 }}>
-              <Text size="1" color="gray" weight="medium" mb="1" as="p">
+          <div className={css({ display: "flex", gap: "2", alignItems: "flex-end" })}>
+            <div className={css({ flex: 1 })}>
+              <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
                 LinkedIn Post URL
-              </Text>
-              <TextField.Root
-                placeholder="https://linkedin.com/posts/..."
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-              >
-                <TextField.Slot>
+              </p>
+              <div className={css({ position: "relative" })}>
+                <span className={css({ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "ui.tertiary" })}>
                   <LinkedInLogoIcon />
-                </TextField.Slot>
-              </TextField.Root>
-            </Box>
+                </span>
+                <input
+                  className={css({
+                    bg: "ui.surface",
+                    border: "1px solid",
+                    borderColor: "ui.border",
+                    color: "ui.body",
+                    p: "6px 10px",
+                    pl: "32px",
+                    fontSize: "base",
+                    width: "100%",
+                    outline: "none",
+                    fontFamily: "inherit",
+                    borderRadius: "0",
+                    _focus: { borderColor: "accent.primary" },
+                    _placeholder: { color: "ui.tertiary" },
+                  })}
+                  placeholder="https://linkedin.com/posts/..."
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                />
+              </div>
+            </div>
             <button
               className={button({ variant: "ghost" })}
               onClick={handleExtract}
               disabled={!linkedinUrl.trim() || extracting}
             >
-              {extracting ? "Extracting…" : "Extract"}
+              {extracting ? "Extracting..." : "Extract"}
             </button>
-          </Flex>
+          </div>
 
           {extractError && (
-            <Callout.Root color="red" size="1">
-              <Callout.Icon>
-                <ExclamationTriangleIcon />
-              </Callout.Icon>
-              <Callout.Text>{extractError}</Callout.Text>
-            </Callout.Root>
+            <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.500/30", bg: "red.500/10" })}>
+              <ExclamationTriangleIcon />
+              <span className={css({ fontSize: "sm", color: "ui.body" })}>{extractError}</span>
+            </div>
           )}
 
-          <Separator size="4" />
+          <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
 
           <button
             className={button({ variant: "ghost", size: "sm" })}
@@ -264,93 +303,94 @@ export function ComposeFromLinkedIn({
       {step === "extracted" && (
         <>
           {extraction && extraction.extractionQuality === "failed" && (
-            <Callout.Root color="orange" size="1">
-              <Callout.Icon>
-                <ExclamationTriangleIcon />
-              </Callout.Icon>
-              <Callout.Text>
+            <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "orange.500/30", bg: "orange.500/10" })}>
+              <ExclamationTriangleIcon />
+              <span className={css({ fontSize: "sm", color: "ui.body" })}>
                 {extraction.reason ??
                   "Could not extract content. Paste it manually below."}
-              </Callout.Text>
-            </Callout.Root>
+              </span>
+            </div>
           )}
 
           {extraction && extraction.extractionQuality === "partial" && (
-            <Callout.Root color="blue" size="1">
-              <Callout.Icon>
-                <LinkedInLogoIcon />
-              </Callout.Icon>
-              <Callout.Text>
+            <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "accent.border", bg: "accent.subtle" })}>
+              <LinkedInLogoIcon />
+              <span className={css({ fontSize: "sm", color: "ui.body" })}>
                 Extracted partial content from OG tags. Review and edit below.
-              </Callout.Text>
-            </Callout.Root>
+              </span>
+            </div>
           )}
 
-          <Box>
-            <Text size="1" color="gray" weight="medium" mb="1" as="p">
+          <div>
+            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
               Post Content
-            </Text>
-            <TextArea
+            </p>
+            <textarea
+              className={textareaStyles}
               placeholder="Paste or edit the LinkedIn post content..."
               value={postContent}
               onChange={(e) => setPostContent(e.target.value)}
               rows={5}
               disabled={isStreaming}
             />
-          </Box>
+          </div>
 
-          <Flex gap="3">
-            <Box style={{ flex: 1 }}>
-              <Text size="1" color="gray" weight="medium" mb="1" as="p">
+          <div className={css({ display: "flex", gap: "3" })}>
+            <div className={css({ flex: 1 })}>
+              <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
                 Recipient Name
-              </Text>
-              <TextField.Root
+              </p>
+              <input
+                className={inputStyles}
                 placeholder="John Doe"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
                 disabled={isStreaming}
               />
-            </Box>
-            <Box style={{ flex: 1 }}>
-              <Text size="1" color="gray" weight="medium" mb="1" as="p">
+            </div>
+            <div className={css({ flex: 1 })}>
+              <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
                 Recipient Email
-              </Text>
-              <TextField.Root
+              </p>
+              <input
+                className={inputStyles}
                 placeholder="john@company.com"
                 type="email"
                 value={recipientEmail}
                 onChange={(e) => setRecipientEmail(e.target.value)}
                 disabled={isStreaming}
               />
-            </Box>
-          </Flex>
+            </div>
+          </div>
 
-          <Box>
-            <Text size="1" color="gray" weight="medium" mb="1" as="p">
+          <div>
+            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
               Company (optional)
-            </Text>
-            <TextField.Root
+            </p>
+            <input
+              className={inputStyles}
               placeholder="Acme Inc."
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               disabled={isStreaming}
             />
-          </Box>
+          </div>
 
-          <Box>
-            <Text size="1" color="gray" weight="medium" mb="1" as="p">
+          <div>
+            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
               Instructions (optional)
-            </Text>
-            <TextArea
+            </p>
+            <textarea
+              className={textareaStyles}
               placeholder="E.g. mention their work on open-source, ask about remote roles..."
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               rows={3}
               disabled={isStreaming}
             />
-          </Box>
+          </div>
 
-          <Flex gap="2">
+          <div className={css({ display: "flex", gap: "2" })}>
             <button
               className={button({ variant: "ghost" })}
               onClick={handleGenerate}
@@ -375,96 +415,92 @@ export function ComposeFromLinkedIn({
                 Regenerate
               </button>
             )}
-            <Box style={{ flex: 1 }} />
+            <div className={css({ flex: 1 })} />
             <button
               className={button({ variant: "ghost", size: "md" })}
               onClick={handleReset}
             >
               Start over
             </button>
-          </Flex>
+          </div>
 
           {streamError && (
-            <Callout.Root color="red" size="1">
-              <Callout.Icon>
-                <ExclamationTriangleIcon />
-              </Callout.Icon>
-              <Callout.Text>{streamError}</Callout.Text>
-            </Callout.Root>
+            <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.500/30", bg: "red.500/10" })}>
+              <ExclamationTriangleIcon />
+              <span className={css({ fontSize: "sm", color: "ui.body" })}>{streamError}</span>
+            </div>
           )}
 
           {isStreaming && partialContent && (
-            <Box>
-              <Text size="1" color="gray" mb="1" as="p">
+            <div>
+              <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
                 Streaming...
-              </Text>
-              <Code
-                size="1"
-                style={{
+              </p>
+              <code
+                className={css({
                   display: "block",
                   whiteSpace: "pre-wrap",
-                  maxHeight: 200,
+                  maxHeight: "200px",
                   overflow: "auto",
-                }}
+                  fontSize: "xs",
+                  color: "ui.body",
+                  bg: "ui.surfaceRaised",
+                  p: "2",
+                  fontFamily: "monospace",
+                })}
               >
                 {partialContent}
-              </Code>
-            </Box>
+              </code>
+            </div>
           )}
 
           {content && !isStreaming && (
             <>
-              <Box
-                style={{
-                  background: "var(--green-a2)",
-                  border: "1px solid var(--green-a5)",
-                  borderRadius: 0,
-                  padding: "var(--space-3)",
-                }}
+              <div
+                className={css({
+                  bg: "green.500/10",
+                  border: "1px solid",
+                  borderColor: "green.500/30",
+                  p: "3",
+                })}
               >
-                <Flex justify="between" align="center" mb="2">
-                  <Badge color="green" size="1">
+                <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "2" })}>
+                  <span className={css({ fontSize: "xs", px: "2", py: "1", bg: "green.500/10", color: "status.positive", border: "1px solid", borderColor: "green.500/30", display: "inline-flex", alignItems: "center", gap: "1" })}>
                     <CheckIcon /> Generated
-                  </Badge>
-                </Flex>
-                <Text size="1" color="gray" weight="bold" as="p" mb="1">
+                  </span>
+                </div>
+                <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "bold", mb: "1" })}>
                   SUBJECT
-                </Text>
-                <Text size="2" weight="medium" as="p" mb="3">
+                </p>
+                <p className={css({ fontSize: "sm", fontWeight: "medium", color: "ui.body", mb: "3" })}>
                   {content.subject}
-                </Text>
-                <Text size="1" color="gray" weight="bold" as="p" mb="1">
+                </p>
+                <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "bold", mb: "1" })}>
                   BODY
-                </Text>
-                <Text
-                  size="2"
-                  as="p"
-                  style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}
-                >
+                </p>
+                <p className={css({ fontSize: "sm", color: "ui.body", whiteSpace: "pre-wrap", lineHeight: "1.6" })}>
                   {content.body}
-                </Text>
-              </Box>
+                </p>
+              </div>
 
-              <Flex asChild gap="2" align="center">
-                <label>
-                  <Checkbox
-                    checked={includeResume}
-                    onCheckedChange={(checked) =>
-                      setIncludeResume(checked === true)
-                    }
-                  />
-                  <Text size="2">Attach resume</Text>
-                </label>
-              </Flex>
+              <label className={css({ display: "flex", gap: "2", alignItems: "center", cursor: "pointer" })}>
+                <input
+                  type="checkbox"
+                  checked={includeResume}
+                  onChange={(e) => setIncludeResume(e.target.checked)}
+                  className={css({ accentColor: "accent.primary" })}
+                />
+                <span className={css({ fontSize: "sm", color: "ui.body" })}>Attach resume</span>
+              </label>
 
-              <Flex justify="end">
+              <div className={css({ display: "flex", justifyContent: "flex-end" })}>
                 <button
                   className={button({ variant: "ghost" })}
                   onClick={handleProceedToEdit}
                 >
                   Edit & Send
                 </button>
-              </Flex>
+              </div>
             </>
           )}
         </>
@@ -473,74 +509,78 @@ export function ComposeFromLinkedIn({
       {/* ── EDIT step ── */}
       {step === "edit" && (
         <>
-          <Box>
-            <Text size="1" color="gray" weight="medium" mb="1" as="p">
+          <div>
+            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
               To
-            </Text>
-            <TextField.Root
+            </p>
+            <input
+              className={inputStyles}
               value={recipientEmail}
               onChange={(e) => setRecipientEmail(e.target.value)}
             />
-          </Box>
+          </div>
 
-          <Box>
-            <Text size="1" color="gray" weight="medium" mb="1" as="p">
+          <div>
+            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
               Subject
-            </Text>
-            <TextField.Root
+            </p>
+            <input
+              className={inputStyles}
               value={editSubject}
               onChange={(e) => setEditSubject(e.target.value)}
             />
-          </Box>
+          </div>
 
-          <Box>
-            <Text size="1" color="gray" weight="medium" mb="1" as="p">
+          <div>
+            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
               Body
-            </Text>
-            <TextArea
+            </p>
+            <textarea
+              className={textareaStyles}
               value={editBody}
               onChange={(e) => setEditBody(e.target.value)}
               rows={12}
-              style={{ fontFamily: "var(--default-font-family)" }}
             />
-          </Box>
+          </div>
 
-          <Flex asChild gap="2" align="center">
-            <label>
-              <Checkbox
-                checked={includeResume}
-                onCheckedChange={(checked) =>
-                  setIncludeResume(checked === true)
-                }
-              />
-              <Text size="2">Attach resume</Text>
-            </label>
-          </Flex>
+          <label className={css({ display: "flex", gap: "2", alignItems: "center", cursor: "pointer" })}>
+            <input
+              type="checkbox"
+              checked={includeResume}
+              onChange={(e) => setIncludeResume(e.target.checked)}
+              className={css({ accentColor: "accent.primary" })}
+            />
+            <span className={css({ fontSize: "sm", color: "ui.body" })}>Attach resume</span>
+          </label>
 
           {sendResult && (
-            <Callout.Root
-              color={sendResult.type === "success" ? "green" : "red"}
-              size="1"
+            <div
+              className={css({
+                display: "flex",
+                gap: "3",
+                p: "3",
+                border: "1px solid",
+                borderColor: sendResult.type === "success" ? "green.500/30" : "red.500/30",
+                bg: sendResult.type === "success" ? "green.500/10" : "red.500/10",
+              })}
             >
-              <Callout.Icon>
-                {sendResult.type === "success" ? (
-                  <CheckIcon />
-                ) : (
-                  <ExclamationTriangleIcon />
-                )}
-              </Callout.Icon>
-              <Callout.Text>{sendResult.message}</Callout.Text>
-            </Callout.Root>
+              {sendResult.type === "success" ? (
+                <CheckIcon />
+              ) : (
+                <ExclamationTriangleIcon />
+              )}
+              <span className={css({ fontSize: "sm", color: "ui.body" })}>{sendResult.message}</span>
+            </div>
           )}
 
-          <Flex gap="2" justify="between">
+          <div className={css({ display: "flex", gap: "2", justifyContent: "space-between" })}>
             <button
               className={button({ variant: "ghost" })}
               onClick={() => setStep("extracted")}
             >
               Back
             </button>
-            <Flex gap="2">
+            <div className={css({ display: "flex", gap: "2" })}>
               <button
                 className={button({ variant: "ghost" })}
                 onClick={handleCopy}
@@ -554,31 +594,35 @@ export function ComposeFromLinkedIn({
                 disabled={sending || !recipientEmail || !editSubject || !editBody}
               >
                 <PaperPlaneIcon />
-                {sending ? "Sending…" : "Send"}
+                {sending ? "Sending..." : "Send"}
               </button>
-            </Flex>
-          </Flex>
+            </div>
+          </div>
         </>
       )}
 
       {/* ── SENT step ── */}
       {step === "sent" && (
         <>
-          <Callout.Root
-            color={sendResult?.type === "success" ? "green" : "red"}
-            size="2"
+          <div
+            className={css({
+              display: "flex",
+              gap: "3",
+              p: "3",
+              border: "1px solid",
+              borderColor: sendResult?.type === "success" ? "green.500/30" : "red.500/30",
+              bg: sendResult?.type === "success" ? "green.500/10" : "red.500/10",
+            })}
           >
-            <Callout.Icon>
-              {sendResult?.type === "success" ? (
-                <CheckIcon />
-              ) : (
-                <ExclamationTriangleIcon />
-              )}
-            </Callout.Icon>
-            <Callout.Text>
+            {sendResult?.type === "success" ? (
+              <CheckIcon />
+            ) : (
+              <ExclamationTriangleIcon />
+            )}
+            <span className={css({ fontSize: "sm", color: "ui.body" })}>
               {sendResult?.message ?? "Email sent successfully."}
-            </Callout.Text>
-          </Callout.Root>
+            </span>
+          </div>
 
           <button
             className={button({ variant: "ghost" })}
@@ -588,6 +632,6 @@ export function ComposeFromLinkedIn({
           </button>
         </>
       )}
-    </Flex>
+    </div>
   );
 }

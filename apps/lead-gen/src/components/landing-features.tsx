@@ -4,7 +4,6 @@ import Link from "next/link";
 import { css } from "styled-system/css";
 import { flex, container } from "styled-system/patterns";
 import { button } from "@/recipes/button";
-import { badge } from "@/recipes/badge";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 const CARD_ACCENTS = [
