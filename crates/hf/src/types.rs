@@ -170,6 +170,96 @@ impl<T> FetchResult<T> {
     }
 }
 
+// ── Builder for ListOptions ─────────────────────────────────────
+
+impl ListOptions {
+    /// Sensible defaults for listing models (sorted by downloads, descending).
+    pub fn models() -> Self {
+        Self {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: 1,
+            full: true,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        }
+    }
+
+    /// Sensible defaults for listing datasets (sorted by downloads, descending).
+    pub fn datasets() -> Self {
+        Self {
+            repo_type: RepoType::Dataset,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: 1,
+            full: true,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        }
+    }
+
+    /// Sensible defaults for listing spaces (sorted by likes, descending).
+    pub fn spaces() -> Self {
+        Self {
+            repo_type: RepoType::Space,
+            sort: "likes".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: 1,
+            full: true,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        }
+    }
+
+    pub fn search(mut self, q: impl Into<String>) -> Self {
+        self.search = Some(q.into());
+        self
+    }
+
+    pub fn author(mut self, a: impl Into<String>) -> Self {
+        self.author = Some(a.into());
+        self
+    }
+
+    pub fn library(mut self, l: impl Into<String>) -> Self {
+        self.library_filter = Some(l.into());
+        self
+    }
+
+    pub fn pipeline_tag(mut self, t: impl Into<String>) -> Self {
+        self.pipeline_tag_filter = Some(t.into());
+        self
+    }
+
+    pub fn max_pages(mut self, n: usize) -> Self {
+        self.max_pages = n;
+        self
+    }
+
+    pub fn limit(mut self, n: usize) -> Self {
+        self.limit = n;
+        self
+    }
+
+    pub fn full(mut self, f: bool) -> Self {
+        self.full = f;
+        self
+    }
+}
+
 // ── Organization profiling types ──────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
