@@ -1,7 +1,7 @@
 "use client";
 
-import { Flex, Box, Text } from "@radix-ui/themes";
 import { css } from "styled-system/css";
+import { flex } from "styled-system/patterns";
 
 function renderTextWithBold(text: string) {
   const parts = text.split("**");
@@ -21,41 +21,32 @@ export function MarkdownContent({ content }: { content: string }) {
     if (match.index > lastIndex) {
       const textSegment = content.slice(lastIndex, match.index);
       segments.push(
-        <Text
+        <p
           key={key++}
-          as="p"
-          size="2"
-          className={css({ lineHeight: "relaxed" })}
-          style={{ whiteSpace: "pre-wrap" }}
+          className={css({ fontSize: "sm", lineHeight: "relaxed", whiteSpace: "pre-wrap", color: "ui.body" })}
         >
           {renderTextWithBold(textSegment)}
-        </Text>
+        </p>
       );
     }
 
     const codeContent = match[2];
     segments.push(
-      <Box
+      <div
         key={key++}
-        style={{
-          background: "var(--gray-3)",
-          borderRadius: 0,
-          padding: "12px 16px",
+        className={css({
+          bg: "ui.surface",
+          p: "12px 16px",
           overflowX: "auto",
-          marginBlock: "4px",
-        }}
+          my: "1",
+        })}
       >
         <pre
-          className={css({ fontSize: "sm", lineHeight: "normal" })}
-          style={{
-            margin: 0,
-            fontFamily: "var(--font-mono, monospace)",
-            whiteSpace: "pre",
-          }}
+          className={css({ fontSize: "sm", lineHeight: "normal", m: "0", fontFamily: "mono", whiteSpace: "pre" })}
         >
           <code>{codeContent}</code>
         </pre>
-      </Box>
+      </div>
     );
 
     lastIndex = match.index + match[0].length;
@@ -64,35 +55,29 @@ export function MarkdownContent({ content }: { content: string }) {
   if (lastIndex < content.length) {
     const textSegment = content.slice(lastIndex);
     segments.push(
-      <Text
+      <p
         key={key++}
-        as="p"
-        size="2"
-        className={css({ lineHeight: "relaxed" })}
-        style={{ whiteSpace: "pre-wrap" }}
+        className={css({ fontSize: "sm", lineHeight: "relaxed", whiteSpace: "pre-wrap", color: "ui.body" })}
       >
         {renderTextWithBold(textSegment)}
-      </Text>
+      </p>
     );
   }
 
   if (segments.length === 0) {
     segments.push(
-      <Text
+      <p
         key={0}
-        as="p"
-        size="2"
-        className={css({ lineHeight: "relaxed" })}
-        style={{ whiteSpace: "pre-wrap" }}
+        className={css({ fontSize: "sm", lineHeight: "relaxed", whiteSpace: "pre-wrap", color: "ui.body" })}
       >
         {renderTextWithBold(content)}
-      </Text>
+      </p>
     );
   }
 
   return (
-    <Flex direction="column" gap="2">
+    <div className={flex({ direction: "column", gap: "2" })}>
       {segments}
-    </Flex>
+    </div>
   );
 }

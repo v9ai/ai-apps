@@ -10,7 +10,7 @@ import { ArrowRightIcon } from "@radix-ui/react-icons";
 const CARD_ACCENTS = [
   "accent.primary",
   "status.positive",
-  "#E5484D", // warm red -- no semantic token yet
+  "#E5484D",
 ];
 
 const CARD_ACCENT_RAW = [
