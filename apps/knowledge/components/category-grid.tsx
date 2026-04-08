@@ -4,6 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Lesson, GroupedLessons } from "@/lib/articles";
 
+/** Humanize minutes into "~Xh" or "~Xm" for at-a-glance commitment gauging */
+function humanizeTime(min: number): string {
+  if (min < 60) return `~${Math.round(min)} min`;
+  const h = Math.floor(min / 60);
+  const rem = Math.round(min % 60);
+  if (rem === 0) return `~${h}h`;
+  if (rem < 15) return `~${h}h`;
+  if (rem >= 45) return `~${h + 1}h`;
+  return `~${h}h ${rem}m`;
+}
+
 /** Fill incomplete last row: if 1 leftover → full-width, if 2 → last spans 2 */
 function cardClass(index: number, total: number): string {
   const remainder = total % 3;
@@ -291,7 +302,7 @@ export function CategoryGrid({ groups }: Props) {
             })()}
             <div className="cat-card-footer">
               <span className="cat-card-footer-time">
-                {Math.round(group.articles.reduce((sum, a) => sum + a.readingTimeMin, 0))} min total
+                {humanizeTime(group.articles.reduce((sum, a) => sum + a.readingTimeMin, 0))} reading
               </span>
               <DifficultyBar articles={group.articles} />
             </div>

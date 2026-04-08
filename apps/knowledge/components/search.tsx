@@ -42,6 +42,7 @@ export function Search({ groups }: Props) {
   const [diffFilter, setDiffFilter] = useState<DifficultyLevel | "all">("all");
   const [isDeepSearch, setIsDeepSearch] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [searchMs, setSearchMs] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -54,6 +55,11 @@ export function Search({ groups }: Props) {
     }
     return map;
   }, [groups]);
+
+  const totalLessons = useMemo(
+    () => groups.reduce((sum, g) => sum + g.articles.length, 0),
+    [groups],
+  );
 
   const filteredGroups = useMemo(() => {
     if (diffFilter === "all") return groups;
@@ -82,12 +88,16 @@ export function Search({ groups }: Props) {
     if (trimmed.length < 2) {
       setResults([]);
       setSearching(false);
+      setSearchMs(null);
       return;
     }
     setSearching(true);
+    setSearchMs(null);
+    const t0 = performance.now();
     const res = isDeepSearch
       ? await deepSearch(trimmed)
       : await searchContent(trimmed);
+    setSearchMs(Math.round(performance.now() - t0));
     setResults(res);
     setSearching(false);
   }, [isDeepSearch]);

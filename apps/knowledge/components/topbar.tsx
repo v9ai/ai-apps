@@ -51,14 +51,12 @@ export function Topbar({ lessonCount }: { lessonCount?: number }) {
         AI ENGINEERING
       </Link>
 
-      {/* Active category breadcrumb — visible when scrolled into content */}
-      {scrolledPast && activeCategory && (
-        <span className="yc-topbar-breadcrumb">
-          <span className="yc-topbar-breadcrumb-sep">/</span>
-          <span className="yc-topbar-breadcrumb-icon">{activeCategory.icon}</span>
-          {activeCategory.name}
-        </span>
-      )}
+      {/* Active category breadcrumb — always rendered, animated via CSS */}
+      <span className={`yc-topbar-breadcrumb${scrolledPast && activeCategory ? " yc-topbar-breadcrumb--visible" : ""}`}>
+        <span className="yc-topbar-breadcrumb-sep">/</span>
+        <span className="yc-topbar-breadcrumb-icon">{activeCategory?.icon}</span>
+        {activeCategory?.name}
+      </span>
 
       {!scrolledPast && lessonCount != null && (
         <span className="yc-topbar-count">{lessonCount} lessons</span>

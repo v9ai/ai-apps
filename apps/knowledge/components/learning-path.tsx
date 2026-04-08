@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GroupedLessons } from "@/lib/articles";
 
 /** Humanize minutes into "~Xh" or "~Xm" for at-a-glance commitment gauging */
@@ -21,6 +21,7 @@ interface Props {
 export function LearningPath({ groups }: Props) {
   const [visitedCats, setVisitedCats] = useState<Set<string>>(new Set());
   const [activeCat, setActiveCat] = useState<string>("");
+  const trackRef = useRef<HTMLDivElement>(null);
 
   /* Poll the body data attribute set by CategoryGrid for visited state */
   useEffect(() => {

@@ -531,7 +531,7 @@ body {
 .learning-path {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 24px 32px;
+  padding: 0 var(--page-gutter) var(--section-gap);
 }
 .learning-path-title {
   font-size: 13px;
@@ -621,7 +621,7 @@ body {
 .research-collections {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px 32px;
+  padding: 0 var(--page-gutter) var(--section-gap);
 }
 .research-collections-title {
   font-size: 13px;
@@ -694,7 +694,7 @@ body {
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px 16px;
+  padding: 0 var(--page-gutter) 16px;
 }
 .yc-search input {
   background: rgba(255, 255, 255, 0.03);
@@ -851,7 +851,7 @@ body {
   gap: 8px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px 16px;
+  padding: 0 var(--page-gutter) 16px;
 }
 .difficulty-filter-btn {
   display: inline-flex;
