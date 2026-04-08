@@ -143,9 +143,9 @@ function StatusIndicator() {
       const timeout = setTimeout(() => {
         setIdx((prev) => (prev + 1) % STATUS_LINES.length);
         setVis(true);
-      }, 300);
+      }, 500);
       return () => clearTimeout(timeout);
-    }, 3200);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -157,13 +157,13 @@ function StatusIndicator() {
           w: "6px",
           h: "6px",
           bg: "status.positive",
+          borderRadius: "50%",
           flexShrink: 0,
-          animation: "pulse 2s ease-in-out infinite",
         })}
       />
       <span
         className={css({
-          transition: "opacity 0.3s ease",
+          transition: "opacity 0.5s ease",
           opacity: vis ? 1 : 0,
         })}
       >
