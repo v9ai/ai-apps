@@ -292,6 +292,13 @@ export async function getCourseReview(courseId: string) {
 export type CourseReviewData = Awaited<ReturnType<typeof getCourseReview>>;
 
 export const TOPIC_GROUP_ORDER = [
+  // Frontend
+  "CSS & Layout",
+  "React & Frontend Frameworks",
+  "TypeScript & JavaScript",
+  "Design Systems & Accessibility",
+  "Frontend Interview Prep",
+  // AI/ML
   "Generative AI & LLMs",
   "RAG & Vector Search",
   "AI Agents & Frameworks",
