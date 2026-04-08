@@ -1,16 +1,47 @@
-import { Card as RadixCard } from "@radix-ui/themes";
-import { type ComponentPropsWithoutRef } from "react";
+import { forwardRef, type HTMLAttributes } from "react";
+import { css, cx } from "styled-system/css";
 
-type RadixCardProps = ComponentPropsWithoutRef<typeof RadixCard>;
-
-interface CardProps extends Omit<RadixCardProps, "variant"> {
-  padding?: RadixCardProps["size"];
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  interactive?: boolean;
+  padding?: "sm" | "md" | "lg";
 }
 
-export function Card({ padding = "3", children, ...rest }: CardProps) {
-  return (
-    <RadixCard variant="surface" size={padding} {...rest}>
-      {children}
-    </RadixCard>
-  );
-}
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  (
+    { interactive = false, padding = "md", className, children, ...rest },
+    ref
+  ) => {
+    const paddingMap = { sm: "2", md: "3", lg: "5" } as const;
+    return (
+      <div
+        ref={ref}
+        className={cx(
+          css({
+            bg: "ui.surface",
+            border: "1px solid",
+            borderColor: "ui.border",
+            borderRadius: "0",
+            boxShadow: "none",
+            p: paddingMap[padding],
+            ...(interactive
+              ? {
+                  cursor: "pointer",
+                  transition:
+                    "background 150ms ease, border-color 150ms ease",
+                  _hover: {
+                    bg: "ui.surfaceHover",
+                    borderColor: "ui.borderHover",
+                  },
+                }
+              : {}),
+          }),
+          className
+        )}
+        {...rest}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+Card.displayName = "Card";
