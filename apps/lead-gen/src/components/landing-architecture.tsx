@@ -110,7 +110,6 @@ export function LandingArchitecture() {
                   color: "ui.tertiary",
                   letterSpacing: "0.02em",
                   textTransform: "lowercase",
-                  style: { fontSize: "10px" },
                 })}
                 style={{ fontSize: "10px" }}
               >
