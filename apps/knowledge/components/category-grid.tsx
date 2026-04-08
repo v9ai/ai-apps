@@ -93,6 +93,8 @@ interface Props {
 
 export function CategoryGrid({ groups }: Props) {
   const [activeSlug, setActiveSlug] = useState<string>("");
+  const [focusedPillIndex, setFocusedPillIndex] = useState(0);
+  const pillRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   /* Track which category sections have been scrolled past (for learning-path visited state) */
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
@@ -147,16 +149,44 @@ export function CategoryGrid({ groups }: Props) {
 
   return (
     <>
-      <nav className="cat-nav" aria-label="Category navigation">
-        {groups.map((g) => {
+      <nav
+        className="cat-nav"
+        aria-label="Category navigation"
+        role="toolbar"
+        onKeyDown={(e) => {
+          const len = groups.length;
+          let next = focusedPillIndex;
+          if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            next = (focusedPillIndex + 1) % len;
+          } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+            e.preventDefault();
+            next = (focusedPillIndex - 1 + len) % len;
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            next = 0;
+          } else if (e.key === "End") {
+            e.preventDefault();
+            next = len - 1;
+          } else {
+            return;
+          }
+          setFocusedPillIndex(next);
+          pillRefs.current[next]?.focus();
+        }}
+      >
+        {groups.map((g, i) => {
           const slug = `cat-${g.meta.slug}`;
           const isActive = activeSlug === slug;
           const isVisited = visitedSlugs.has(slug);
           return (
             <button
               key={g.category}
+              ref={(el) => { pillRefs.current[i] = el; }}
+              tabIndex={i === focusedPillIndex ? 0 : -1}
               className={`cat-nav-pill cat-${g.meta.slug}${isActive ? " cat-nav-pill--active" : ""}${isVisited && !isActive ? " cat-nav-pill--visited" : ""}`}
               aria-pressed={isActive}
+              onFocus={() => setFocusedPillIndex(i)}
               onClick={() => {
                 document.getElementById(slug)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
