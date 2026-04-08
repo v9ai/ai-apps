@@ -383,3 +383,233 @@ pub struct OrgSummary {
     pub libraries: Vec<String>,
     pub pipeline_tags: Vec<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── RepoType tests ─────────────────────────────────────────
+
+    #[test]
+    fn repo_type_api_prefix() {
+        assert_eq!(RepoType::Model.api_prefix(), "models");
+        assert_eq!(RepoType::Dataset.api_prefix(), "datasets");
+        assert_eq!(RepoType::Space.api_prefix(), "spaces");
+    }
+
+    #[test]
+    fn repo_type_raw_prefix() {
+        assert_eq!(RepoType::Model.raw_prefix(), "");
+        assert_eq!(RepoType::Dataset.raw_prefix(), "datasets");
+        assert_eq!(RepoType::Space.raw_prefix(), "spaces");
+    }
+
+    #[test]
+    fn repo_type_as_str() {
+        assert_eq!(RepoType::Model.as_str(), "model");
+        assert_eq!(RepoType::Dataset.as_str(), "dataset");
+        assert_eq!(RepoType::Space.as_str(), "space");
+    }
+
+    #[test]
+    fn repo_type_display() {
+        assert_eq!(format!("{}", RepoType::Model), "model");
+        assert_eq!(format!("{}", RepoType::Dataset), "dataset");
+        assert_eq!(format!("{}", RepoType::Space), "space");
+    }
+
+    #[test]
+    fn repo_type_from_str_valid() {
+        assert_eq!("model".parse::<RepoType>().unwrap(), RepoType::Model);
+        assert_eq!("dataset".parse::<RepoType>().unwrap(), RepoType::Dataset);
+        assert_eq!("space".parse::<RepoType>().unwrap(), RepoType::Space);
+    }
+
+    #[test]
+    fn repo_type_from_str_invalid() {
+        assert!("unknown".parse::<RepoType>().is_err());
+        assert!("Model".parse::<RepoType>().is_err());
+    }
+
+    #[test]
+    fn repo_type_roundtrip() {
+        for rt in [RepoType::Model, RepoType::Dataset, RepoType::Space] {
+            let parsed: RepoType = rt.as_str().parse().unwrap();
+            assert_eq!(parsed, rt);
+        }
+    }
+
+    // ── FetchRequest tests ─────────────────────────────────────
+
+    #[test]
+    fn fetch_request_model() {
+        let req = FetchRequest::model("org/name");
+        assert_eq!(req.repo_id, "org/name");
+        assert_eq!(req.repo_type, RepoType::Model);
+        assert!(req.path.is_none());
+        assert!(req.revision.is_none());
+    }
+
+    #[test]
+    fn fetch_request_dataset() {
+        let req = FetchRequest::dataset("org/ds");
+        assert_eq!(req.repo_id, "org/ds");
+        assert_eq!(req.repo_type, RepoType::Dataset);
+    }
+
+    #[test]
+    fn fetch_request_builder_chain() {
+        let req = FetchRequest::model("org/m")
+            .with_path("config.json")
+            .with_revision("v2");
+        assert_eq!(req.path.as_deref(), Some("config.json"));
+        assert_eq!(req.revision.as_deref(), Some("v2"));
+    }
+
+    // ── FetchResult tests ──────────────────────────────────────
+
+    #[test]
+    fn fetch_result_is_ok() {
+        let ok: FetchResult<String> = FetchResult::Ok {
+            repo_id: "a".into(),
+            data: "hello".into(),
+        };
+        assert!(ok.is_ok());
+
+        let err: FetchResult<String> = FetchResult::Err {
+            repo_id: "a".into(),
+            error: crate::Error::Api {
+                repo: "a".into(),
+                status: 404,
+                body: "not found".into(),
+            },
+        };
+        assert!(!err.is_ok());
+    }
+
+    // ── Serde tests ────────────────────────────────────────────
+
+    #[test]
+    fn repo_info_deserialize_listing() {
+        let json = serde_json::json!({
+            "_id": "abc123",
+            "id": "meta-llama/Llama-3-8B",
+            "modelId": "meta-llama/Llama-3-8B",
+            "author": "meta-llama",
+            "lastModified": "2024-06-01T00:00:00.000Z",
+            "createdAt": "2024-01-15T00:00:00.000Z",
+            "downloads": 5000000,
+            "likes": 12000,
+            "library_name": "transformers",
+            "pipeline_tag": "text-generation",
+            "tags": ["transformers", "pytorch"],
+            "cardData": {"language": "en"}
+        });
+        let info: RepoInfo = serde_json::from_value(json).unwrap();
+        assert_eq!(info.id.as_deref(), Some("abc123"));
+        assert_eq!(info.repo_id.as_deref(), Some("meta-llama/Llama-3-8B"));
+        assert_eq!(info.model_id.as_deref(), Some("meta-llama/Llama-3-8B"));
+        assert_eq!(info.author.as_deref(), Some("meta-llama"));
+        assert_eq!(info.last_modified.as_deref(), Some("2024-06-01T00:00:00.000Z"));
+        assert_eq!(info.created_at.as_deref(), Some("2024-01-15T00:00:00.000Z"));
+        assert_eq!(info.downloads, Some(5000000));
+        assert_eq!(info.likes, Some(12000));
+        assert_eq!(info.library.as_deref(), Some("transformers"));
+        assert_eq!(info.pipeline_tag.as_deref(), Some("text-generation"));
+        assert!(info.card_data.is_some());
+    }
+
+    #[test]
+    fn repo_info_deserialize_minimal() {
+        let json = serde_json::json!({"id": "org/model"});
+        let info: RepoInfo = serde_json::from_value(json).unwrap();
+        assert_eq!(info.repo_id.as_deref(), Some("org/model"));
+        assert!(info.id.is_none());
+        assert!(info.author.is_none());
+        assert!(info.downloads.is_none());
+        assert!(info.tags.is_none());
+        assert!(info.siblings.is_none());
+    }
+
+    #[test]
+    fn sibling_file_deserialize() {
+        let json = serde_json::json!({"rfilename": "model.bin", "size": 100});
+        let f: SiblingFile = serde_json::from_value(json).unwrap();
+        assert_eq!(f.filename, "model.bin");
+        assert_eq!(f.size, Some(100));
+    }
+
+    #[test]
+    fn repo_info_serde_roundtrip() {
+        let info = RepoInfo {
+            id: Some("abc".into()),
+            repo_id: Some("org/model".into()),
+            model_id: None,
+            author: Some("org".into()),
+            sha: None,
+            last_modified: Some("2024-01-01T00:00:00Z".into()),
+            created_at: None,
+            tags: Some(vec!["transformers".into()]),
+            downloads: Some(1000),
+            likes: Some(50),
+            library: Some("transformers".into()),
+            pipeline_tag: Some("text-generation".into()),
+            private: Some(false),
+            gated: None,
+            disabled: None,
+            description: Some("A test model".into()),
+            sdk: None,
+            siblings: None,
+            card_data: None,
+            extra: serde_json::Value::Null,
+        };
+        let json = serde_json::to_string(&info).unwrap();
+        let back: RepoInfo = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.repo_id, info.repo_id);
+        assert_eq!(back.downloads, info.downloads);
+        assert_eq!(back.author, info.author);
+    }
+
+    // ── ListOptions builder tests ──────────────────────────────
+
+    #[test]
+    fn list_options_models_defaults() {
+        let opts = ListOptions::models();
+        assert_eq!(opts.repo_type, RepoType::Model);
+        assert_eq!(opts.sort, "downloads");
+        assert_eq!(opts.direction, "-1");
+        assert!(opts.full);
+        assert!(opts.search.is_none());
+    }
+
+    #[test]
+    fn list_options_builder_chain() {
+        let opts = ListOptions::models()
+            .search("llama")
+            .author("meta-llama")
+            .library("transformers")
+            .pipeline_tag("text-generation")
+            .max_pages(5)
+            .limit(50);
+        assert_eq!(opts.search.as_deref(), Some("llama"));
+        assert_eq!(opts.author.as_deref(), Some("meta-llama"));
+        assert_eq!(opts.library_filter.as_deref(), Some("transformers"));
+        assert_eq!(opts.pipeline_tag_filter.as_deref(), Some("text-generation"));
+        assert_eq!(opts.max_pages, 5);
+        assert_eq!(opts.limit, 50);
+    }
+
+    #[test]
+    fn list_options_datasets_defaults() {
+        let opts = ListOptions::datasets();
+        assert_eq!(opts.repo_type, RepoType::Dataset);
+        assert_eq!(opts.sort, "downloads");
+    }
+
+    #[test]
+    fn list_options_spaces_defaults() {
+        let opts = ListOptions::spaces();
+        assert_eq!(opts.repo_type, RepoType::Space);
+        assert_eq!(opts.sort, "likes");
+    }
+}
