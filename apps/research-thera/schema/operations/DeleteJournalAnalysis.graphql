@@ -1,0 +1,6 @@
+mutation DeleteJournalAnalysis($journalEntryId: Int!) {
+  deleteJournalAnalysis(journalEntryId: $journalEntryId) {
+    success
+    message
+  }
+}

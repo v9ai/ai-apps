@@ -2343,6 +2343,13 @@ export type DeleteIssueScreenshotMutationVariables = Exact<{
 
 export type DeleteIssueScreenshotMutation = { __typename?: 'Mutation', deleteIssueScreenshot: { __typename?: 'DeleteIssueScreenshotResult', success: boolean } };
 
+export type DeleteJournalAnalysisMutationVariables = Exact<{
+  journalEntryId: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteJournalAnalysisMutation = { __typename?: 'Mutation', deleteJournalAnalysis: { __typename?: 'DeleteJournalAnalysisResult', success: boolean, message?: string | null } };
+
 export type DeleteJournalEntryMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -2435,6 +2442,13 @@ export type GenerateHabitsFromIssueMutationVariables = Exact<{
 
 
 export type GenerateHabitsFromIssueMutation = { __typename?: 'Mutation', generateHabitsFromIssue: { __typename?: 'GenerateHabitsResult', success: boolean, message?: string | null, count?: number | null, habits?: Array<{ __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, familyMemberId?: number | null, createdAt: string }> | null } };
+
+export type GenerateJournalAnalysisMutationVariables = Exact<{
+  journalEntryId: Scalars['Int']['input'];
+}>;
+
+
+export type GenerateJournalAnalysisMutation = { __typename?: 'Mutation', generateJournalAnalysis: { __typename?: 'GenerateJournalAnalysisResult', success: boolean, message?: string | null, analysis?: { __typename?: 'JournalAnalysis', id: number, journalEntryId: number, summary: string, reflectionPrompts: Array<string>, model: string, createdAt: string, emotionalLandscape: { __typename?: 'EmotionalLandscape', primaryEmotions: Array<string>, underlyingEmotions: Array<string>, emotionalRegulation: string, attachmentPatterns?: string | null }, therapeuticInsights: Array<{ __typename?: 'TherapeuticInsight', title: string, observation: string, clinicalRelevance: string, relatedResearchIds?: Array<number> | null }>, actionableRecommendations: Array<{ __typename?: 'ActionableRecommendation', title: string, description: string, priority: string, concreteSteps: Array<string>, relatedResearchIds?: Array<number> | null }> } | null } };
 
 export type GenerateLongFormTextMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -2674,7 +2688,7 @@ export type GetJournalEntryQueryVariables = Exact<{
 }>;
 
 
-export type GetJournalEntryQuery = { __typename?: 'Query', journalEntry?: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null } | null, issue?: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null } | null };
+export type GetJournalEntryQuery = { __typename?: 'Query', journalEntry?: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null } | null, issue?: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, analysis?: { __typename?: 'JournalAnalysis', id: number, journalEntryId: number, summary: string, reflectionPrompts: Array<string>, model: string, createdAt: string, emotionalLandscape: { __typename?: 'EmotionalLandscape', primaryEmotions: Array<string>, underlyingEmotions: Array<string>, emotionalRegulation: string, attachmentPatterns?: string | null }, therapeuticInsights: Array<{ __typename?: 'TherapeuticInsight', title: string, observation: string, clinicalRelevance: string, relatedResearchIds?: Array<number> | null }>, actionableRecommendations: Array<{ __typename?: 'ActionableRecommendation', title: string, description: string, priority: string, concreteSteps: Array<string>, relatedResearchIds?: Array<number> | null }> } | null } | null };
 
 export type GetMySharedFamilyMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4389,6 +4403,40 @@ export function useDeleteIssueScreenshotMutation(baseOptions?: Apollo.MutationHo
 export type DeleteIssueScreenshotMutationHookResult = ReturnType<typeof useDeleteIssueScreenshotMutation>;
 export type DeleteIssueScreenshotMutationResult = Apollo.MutationResult<DeleteIssueScreenshotMutation>;
 export type DeleteIssueScreenshotMutationOptions = Apollo.BaseMutationOptions<DeleteIssueScreenshotMutation, DeleteIssueScreenshotMutationVariables>;
+export const DeleteJournalAnalysisDocument = gql`
+    mutation DeleteJournalAnalysis($journalEntryId: Int!) {
+  deleteJournalAnalysis(journalEntryId: $journalEntryId) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteJournalAnalysisMutationFn = Apollo.MutationFunction<DeleteJournalAnalysisMutation, DeleteJournalAnalysisMutationVariables>;
+
+/**
+ * __useDeleteJournalAnalysisMutation__
+ *
+ * To run a mutation, you first call `useDeleteJournalAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteJournalAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteJournalAnalysisMutation, { data, loading, error }] = useDeleteJournalAnalysisMutation({
+ *   variables: {
+ *      journalEntryId: // value for 'journalEntryId'
+ *   },
+ * });
+ */
+export function useDeleteJournalAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<DeleteJournalAnalysisMutation, DeleteJournalAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteJournalAnalysisMutation, DeleteJournalAnalysisMutationVariables>(DeleteJournalAnalysisDocument, options);
+      }
+export type DeleteJournalAnalysisMutationHookResult = ReturnType<typeof useDeleteJournalAnalysisMutation>;
+export type DeleteJournalAnalysisMutationResult = Apollo.MutationResult<DeleteJournalAnalysisMutation>;
+export type DeleteJournalAnalysisMutationOptions = Apollo.BaseMutationOptions<DeleteJournalAnalysisMutation, DeleteJournalAnalysisMutationVariables>;
 export const DeleteJournalEntryDocument = gql`
     mutation DeleteJournalEntry($id: Int!) {
   deleteJournalEntry(id: $id) {
@@ -4853,6 +4901,67 @@ export function useGenerateHabitsFromIssueMutation(baseOptions?: Apollo.Mutation
 export type GenerateHabitsFromIssueMutationHookResult = ReturnType<typeof useGenerateHabitsFromIssueMutation>;
 export type GenerateHabitsFromIssueMutationResult = Apollo.MutationResult<GenerateHabitsFromIssueMutation>;
 export type GenerateHabitsFromIssueMutationOptions = Apollo.BaseMutationOptions<GenerateHabitsFromIssueMutation, GenerateHabitsFromIssueMutationVariables>;
+export const GenerateJournalAnalysisDocument = gql`
+    mutation GenerateJournalAnalysis($journalEntryId: Int!) {
+  generateJournalAnalysis(journalEntryId: $journalEntryId) {
+    success
+    message
+    analysis {
+      id
+      journalEntryId
+      summary
+      emotionalLandscape {
+        primaryEmotions
+        underlyingEmotions
+        emotionalRegulation
+        attachmentPatterns
+      }
+      therapeuticInsights {
+        title
+        observation
+        clinicalRelevance
+        relatedResearchIds
+      }
+      actionableRecommendations {
+        title
+        description
+        priority
+        concreteSteps
+        relatedResearchIds
+      }
+      reflectionPrompts
+      model
+      createdAt
+    }
+  }
+}
+    `;
+export type GenerateJournalAnalysisMutationFn = Apollo.MutationFunction<GenerateJournalAnalysisMutation, GenerateJournalAnalysisMutationVariables>;
+
+/**
+ * __useGenerateJournalAnalysisMutation__
+ *
+ * To run a mutation, you first call `useGenerateJournalAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateJournalAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateJournalAnalysisMutation, { data, loading, error }] = useGenerateJournalAnalysisMutation({
+ *   variables: {
+ *      journalEntryId: // value for 'journalEntryId'
+ *   },
+ * });
+ */
+export function useGenerateJournalAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<GenerateJournalAnalysisMutation, GenerateJournalAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateJournalAnalysisMutation, GenerateJournalAnalysisMutationVariables>(GenerateJournalAnalysisDocument, options);
+      }
+export type GenerateJournalAnalysisMutationHookResult = ReturnType<typeof useGenerateJournalAnalysisMutation>;
+export type GenerateJournalAnalysisMutationResult = Apollo.MutationResult<GenerateJournalAnalysisMutation>;
+export type GenerateJournalAnalysisMutationOptions = Apollo.BaseMutationOptions<GenerateJournalAnalysisMutation, GenerateJournalAnalysisMutationVariables>;
 export const GenerateLongFormTextDocument = gql`
     mutation GenerateLongFormText($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int, $familyMemberId: Int, $userContext: String, $language: String, $minutes: Int) {
   generateLongFormText(
@@ -6968,6 +7077,33 @@ export const GetJournalEntryDocument = gql`
     entryDate
     createdAt
     updatedAt
+    analysis {
+      id
+      journalEntryId
+      summary
+      emotionalLandscape {
+        primaryEmotions
+        underlyingEmotions
+        emotionalRegulation
+        attachmentPatterns
+      }
+      therapeuticInsights {
+        title
+        observation
+        clinicalRelevance
+        relatedResearchIds
+      }
+      actionableRecommendations {
+        title
+        description
+        priority
+        concreteSteps
+        relatedResearchIds
+      }
+      reflectionPrompts
+      model
+      createdAt
+    }
   }
 }
     `;
