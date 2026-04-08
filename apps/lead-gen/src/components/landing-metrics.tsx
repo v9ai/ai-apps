@@ -283,18 +283,21 @@ export function LandingMetrics() {
                   href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={flex({
-                    align: "center",
-                    gap: "1.5",
-                  })}
-                  style={{
-                    color: "var(--gray-9)",
-                    fontSize: "10px",
-                    textDecoration: "none",
-                    letterSpacing: "0.04em",
-                    textTransform: "lowercase",
-                    transition: "color 0.15s",
-                  }}
+                  className={cx(
+                    flex({
+                      align: "center",
+                      gap: "1.5",
+                    }),
+                    css({
+                      color: "ui.tertiary",
+                      fontSize: "2xs",
+                      textDecoration: "none",
+                      letterSpacing: "wide",
+                      textTransform: "lowercase",
+                      transition: "color 150ms ease",
+                      _hover: { color: "ui.secondary" },
+                    }),
+                  )}
                 >
                   <GitHubLogoIcon width={12} height={12} />
                   view source
