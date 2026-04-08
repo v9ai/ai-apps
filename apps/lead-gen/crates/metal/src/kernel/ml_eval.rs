@@ -328,7 +328,7 @@ pub fn evaluate_scoring(
         sample_count: n,
         positive_count,
         threshold,
-        weights: scorer.weights,
+        weights: scorer.weights.clone(),
         bias: scorer.bias,
     }
 }
@@ -439,13 +439,15 @@ mod tests {
 
     // Helper: build a scorer whose decision boundary cleanly separates
     // all-ones features (positive) from all-zeros features (negative).
-    // dot([1..1], weights) + bias = 7*3.0 + (-10.5) = 10.5 → sigmoid ≈ 1.0
-    // dot([0..0], weights) + bias = 0.0 + (-10.5) = -10.5 → sigmoid ≈ 0.0
+    // dot([1..1], weights) + bias = 13*3.0 + (-19.5) = 19.5 → sigmoid ≈ 1.0
+    // dot([0..0], weights) + bias = 0.0 + (-19.5) = -19.5 → sigmoid ≈ 0.0
     fn perfect_scorer() -> LogisticScorer {
         LogisticScorer {
-            weights: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0],
-            bias: -10.5,
-            feature_stats: std::array::from_fn(|_| super::super::scoring::WelfordStats::new()),
+            weights: vec![3.0; FEATURE_COUNT],
+            bias: -(FEATURE_COUNT as f32 * 3.0 / 2.0),
+            feature_stats: (0..FEATURE_COUNT)
+                .map(|_| super::super::scoring::WelfordStats::new())
+                .collect(),
             trained: true,
             semantic_weight: 0.0,
         }
@@ -457,9 +459,9 @@ mod tests {
                 let pos = i % 2 == 0;
                 LabeledSample {
                     features: if pos {
-                        [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+                        [1.0; FEATURE_COUNT]
                     } else {
-                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                        [0.0; FEATURE_COUNT]
                     },
                     label: if pos { 1.0 } else { 0.0 },
                 }
@@ -507,9 +509,11 @@ mod tests {
     #[test]
     fn test_random_classifier() {
         let scorer = LogisticScorer {
-            weights: [0.0; 7],
+            weights: vec![0.0; FEATURE_COUNT],
             bias: 0.0,
-            feature_stats: std::array::from_fn(|_| super::super::scoring::WelfordStats::new()),
+            feature_stats: (0..FEATURE_COUNT)
+                .map(|_| super::super::scoring::WelfordStats::new())
+                .collect(),
             trained: true,
             semantic_weight: 0.0,
         };
@@ -611,10 +615,10 @@ mod tests {
         use std::io::Write;
 
         let jsonl = concat!(
-            r#"{"features":[1.0,1.0,1.0,1.0,0.8,1.0,0.9],"label":1.0}"#,
+            r#"{"features":[1.0,1.0,1.0,1.0,0.8,1.0,0.9,0.7,0.5,0.6,0.8,1.0,0.3],"label":1.0}"#,
             "\n",
             "\n",
-            r#"{"features":[0.0,0.0,0.0,0.0,0.0,0.0,0.0],"label":0.0}"#,
+            r#"{"features":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"label":0.0}"#,
             "\n",
         );
 
@@ -635,10 +639,10 @@ mod tests {
         use std::io::Write;
 
         let jsonl = concat!(
-            r#"{"features":[1.0,1.0,1.0,1.0,0.8,1.0,0.9],"label":1.0}"#,
+            r#"{"features":[1.0,1.0,1.0,1.0,0.8,1.0,0.9,0.7,0.5,0.6,0.8,1.0,0.3],"label":1.0}"#,
             "\n",
             "not valid json\n",
-            r#"{"features":[0.0,0.0,0.0,0.0,0.0,0.0,0.0],"label":0.0}"#,
+            r#"{"features":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"label":0.0}"#,
             "\n",
         );
 

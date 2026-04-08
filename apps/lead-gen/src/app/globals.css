@@ -578,7 +578,9 @@ a:hover svg { color: var(--colors-ui-heading) !important; }
   .pipeline-flow-label,
   .hero-dot-grid,
   .terminal-line-animated,
-  .terminal-cursor {
+  .terminal-cursor,
+  .metric-card-animate,
+  .metric-glow {
     animation: none !important;
     transition: none !important;
   }
@@ -588,7 +590,8 @@ a:hover svg { color: var(--colors-ui-heading) !important; }
   .pipeline-connector,
   .pipeline-flow-label,
   .terminal-line-animated,
-  .terminal-cursor {
+  .terminal-cursor,
+  .metric-card-animate {
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;
