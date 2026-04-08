@@ -74,13 +74,19 @@ impl Rng {
 /// and deliberate noise/overlap so the boundary is not trivially separable.
 ///
 /// Feature vector layout (matches `LabeledSample.features`):
-///   [0] industry_match      binary
-///   [1] employee_in_range   binary
-///   [2] seniority_match     binary
-///   [3] department_match    binary
-///   [4] tech_norm           continuous [0, 1]
-///   [5] email_norm          continuous [0, 1]
-///   [6] recency_smooth      continuous [0, 1]
+///   [0]  industry_match      binary
+///   [1]  employee_in_range   binary
+///   [2]  seniority_match     binary
+///   [3]  department_match    binary
+///   [4]  tech_norm           continuous [0, 1]
+///   [5]  email_norm          continuous [0, 1]
+///   [6]  recency_smooth      continuous [0, 1]
+///   [7]  hf_score            continuous [0, 1]
+///   [8]  hf_model_depth      continuous [0, 1]
+///   [9]  hf_training_depth   continuous [0, 1]
+///   [10] hf_maturity         continuous [0, 1]
+///   [11] hf_research         binary
+///   [12] hf_sales_relevance  continuous [0, 1]
 pub fn generate_contact_labels(count: usize) -> Vec<LabeledSample> {
     let mut rng = Rng::new(0xDEAD_BEEF_1234_5678);
     let mut samples = Vec::with_capacity(count);
@@ -102,6 +108,14 @@ pub fn generate_contact_labels(count: usize) -> Vec<LabeledSample> {
         let email_norm = rng.next_range(0.5, 1.0);
         let recency_smooth = rng.next_range(0.5, 1.0);
 
+        // HF features — positive leads correlate with AI-active HF orgs
+        let hf_score = rng.next_range(0.4, 1.0);
+        let hf_model_depth = rng.next_range(0.3, 1.0);
+        let hf_training_depth = rng.next_range(0.2, 1.0);
+        let hf_maturity = rng.next_range(0.5, 1.0);
+        let hf_research = rng.binary_feature(0.6);
+        let hf_sales_relevance = rng.next_range(0.1, 0.8);
+
         samples.push(LabeledSample {
             features: [
                 industry_match,
@@ -111,6 +125,12 @@ pub fn generate_contact_labels(count: usize) -> Vec<LabeledSample> {
                 tech_norm,
                 email_norm,
                 recency_smooth,
+                hf_score,
+                hf_model_depth,
+                hf_training_depth,
+                hf_maturity,
+                hf_research,
+                hf_sales_relevance,
             ],
             label: 1.0,
         });
@@ -129,6 +149,14 @@ pub fn generate_contact_labels(count: usize) -> Vec<LabeledSample> {
         let email_norm = rng.next_range(0.0, 0.50);
         let recency_smooth = rng.next_range(0.05, 0.50);
 
+        // HF features — negative leads have low/zero HF presence
+        let hf_score = rng.next_range(0.0, 0.3);
+        let hf_model_depth = rng.next_range(0.0, 0.2);
+        let hf_training_depth = rng.next_range(0.0, 0.15);
+        let hf_maturity = rng.next_range(0.0, 0.4);
+        let hf_research = rng.binary_feature(0.1);
+        let hf_sales_relevance = rng.next_range(0.0, 0.2);
+
         samples.push(LabeledSample {
             features: [
                 industry_match,
@@ -138,6 +166,12 @@ pub fn generate_contact_labels(count: usize) -> Vec<LabeledSample> {
                 tech_norm,
                 email_norm,
                 recency_smooth,
+                hf_score,
+                hf_model_depth,
+                hf_training_depth,
+                hf_maturity,
+                hf_research,
+                hf_sales_relevance,
             ],
             label: 0.0,
         });

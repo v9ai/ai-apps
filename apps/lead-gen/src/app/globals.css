@@ -351,6 +351,30 @@ a:hover svg { color: var(--colors-ui-heading) !important; }
 .stats-row-animated > :nth-child(3) .stat-value-inner { animation-delay: 0.8s; }
 .stats-row-animated > :nth-child(4) .stat-value-inner { animation-delay: 0.9s; }
 
+/* --- 3b. Metric card entrance (staggered per card within group) --- */
+@keyframes metric-card-enter {
+  from { opacity: 0; transform: translateY(12px); filter: blur(3px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+.metric-card-animate {
+  opacity: 0;
+  animation: metric-card-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* stagger within each group grid */
+.metric-group-grid > :nth-child(1) .metric-card-animate { animation-delay: 0.1s; }
+.metric-group-grid > :nth-child(2) .metric-card-animate { animation-delay: 0.2s; }
+.metric-group-grid > :nth-child(3) .metric-card-animate { animation-delay: 0.3s; }
+.metric-group-grid > :nth-child(4) .metric-card-animate { animation-delay: 0.4s; }
+
+/* --- 3c. Metric accent glow for highlighted cards --- */
+@keyframes accent-glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(62, 99, 221, 0.15), inset 0 1px 0 rgba(62, 99, 221, 0.08); }
+  50%      { box-shadow: 0 0 20px rgba(62, 99, 221, 0.25), inset 0 1px 0 rgba(62, 99, 221, 0.12); }
+}
+.metric-glow {
+  animation: accent-glow-pulse 4s ease-in-out infinite;
+}
+
 /* --- 4. Pipeline arrow sequential pulse --- */
 @keyframes arrow-flow-pulse {
   0% { opacity: 0.3; transform: translateX(0); }
@@ -514,13 +538,19 @@ a:hover svg { color: var(--colors-ui-heading) !important; }
   .headline-word,
   .badge-scan-animated::after,
   .pipeline-arrow-flow,
-  .pipeline-card-hover::after {
+  .pipeline-card-hover::after,
+  .pipeline-connector,
+  .pipeline-connector line,
+  .pipeline-stage-live,
+  .pipeline-flow-label {
     animation: none !important;
     transition: none !important;
   }
   .pipeline-card-animated,
   .stat-value-inner,
-  .headline-word {
+  .headline-word,
+  .pipeline-connector,
+  .pipeline-flow-label {
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;
