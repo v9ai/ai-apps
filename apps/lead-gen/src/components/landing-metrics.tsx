@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
 import { css, cx } from "styled-system/css";
 import { flex, grid, container } from "styled-system/patterns";
 import { BarChartIcon } from "@radix-ui/react-icons";
+import { useCountUp } from "@/hooks/use-count-up";
 
 /* ------------------------------------------------------------------ */
 /*  Metric data                                                        */
@@ -66,58 +66,7 @@ const METRICS: Metric[] = [
 /* ------------------------------------------------------------------ */
 
 function MetricCard({ value, label, context }: Metric) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  const [display, setDisplay] = useState(value);
-
-  /* parse numeric target -- supports "92%", "182ms", "1,500", "1ms" etc. */
-  const numericMatch = value.replace(/,/g, "").match(/^(\d+)(\D*)$/);
-  const target = numericMatch ? parseInt(numericMatch[1], 10) : 0;
-  const suffix = numericMatch ? numericMatch[2] : "";
-  const hasCommas = value.includes(",");
-
-  /* observe scroll into view */
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.3 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  /* count-up animation */
-  const formatNum = useCallback(
-    (n: number): string => {
-      if (hasCommas) return n.toLocaleString("en-US");
-      return String(n);
-    },
-    [hasCommas],
-  );
-
-  useEffect(() => {
-    if (!visible || !target) return;
-    const duration = 1200;
-    const startTime = performance.now();
-
-    function tick(now: number) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = Math.round(eased * target);
-      setDisplay(formatNum(current) + suffix);
-      if (progress < 1) requestAnimationFrame(tick);
-    }
-
-    requestAnimationFrame(tick);
-  }, [visible, target, suffix, formatNum]);
+  const { ref, display, visible } = useCountUp(value);
 
   return (
     <div
