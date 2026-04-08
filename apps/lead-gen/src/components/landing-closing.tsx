@@ -118,7 +118,7 @@ export function LandingClosing() {
                   letterSpacing: "wide",
                 })}
               >
-                Not ready yet? Get Agentic Lead Gen updates
+                Get the benchmark report: 5 agents vs $13K/year CRM
               </span>
             </div>
             <form
@@ -161,7 +161,7 @@ export function LandingClosing() {
                 type="submit"
                 className={button({ variant: "solid", size: "md" })}
               >
-                subscribe
+                Send me the report
               </button>
             </form>
             <p
@@ -173,7 +173,7 @@ export function LandingClosing() {
                 letterSpacing: "normal",
               })}
             >
-              One email per month. New agents, benchmarks, and autonomy upgrades.
+              Plus monthly agent performance data. Unsubscribe anytime.
             </p>
           </div>
         </div>

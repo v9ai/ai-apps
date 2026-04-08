@@ -57,9 +57,17 @@ export function useCountUp(value: string, options?: UseCountUpOptions) {
     [hasCommas],
   );
 
-  /* count-up animation via requestAnimationFrame */
+  /* count-up animation via requestAnimationFrame (respects reduced motion) */
   useEffect(() => {
     if (!visible || !target) return;
+
+    // Skip animation for users who prefer reduced motion
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+      setDisplay(formatNum(target) + suffix);
+      return;
+    }
+
     const startTime = performance.now();
 
     function tick(now: number) {

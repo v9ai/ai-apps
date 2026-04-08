@@ -135,6 +135,7 @@ export function LandingMetrics() {
     <section
       id="benchmarks"
       className={css({
+        pt: { base: "sectionMobile", lg: "section" },
         pb: { base: "sectionMobile", lg: "section" },
         scrollMarginTop: "56px",
       })}
