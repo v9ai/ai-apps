@@ -198,8 +198,8 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
 
     // Prior deep analyses
     if (deepAnalyses.length > 0) {
-      const daLines = deepAnalyses.slice(0, 2).map((da: { summary: string; createdAt: string }) =>
-        `- ${da.createdAt.slice(0, 10)}: ${da.summary.slice(0, 400)}`
+      const daLines = deepAnalyses.slice(0, 1).map((da: { summary: string; createdAt: string }) =>
+        `- ${da.createdAt.slice(0, 10)}: ${da.summary.slice(0, 300)}`
       );
       sections.push(`### Prior Deep Issue Analyses (${deepAnalyses.length})\n${daLines.join("\n")}`);
     }
@@ -291,6 +291,7 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
     schema: analysisSchema,
     prompt,
     temperature: 0.3,
+    max_tokens: 8192,
   });
 
   const analysisId = await db.createJournalAnalysis({
