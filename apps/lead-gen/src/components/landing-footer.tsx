@@ -1,6 +1,6 @@
 "use client";
 
-import { css } from "styled-system/css";
+import { css, cx } from "styled-system/css";
 import { button } from "@/recipes/button";
 import { flex, grid, container } from "styled-system/patterns";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
@@ -179,16 +179,18 @@ export function LandingFooter() {
 
         {/* bottom bar */}
         <div
-          className={flex({
-            align: "center",
-            justify: "space-between",
-            mt: "4",
-            pt: "4",
-          })}
-          className={css({
-            borderTop: "1px solid",
-            borderTopColor: "ui.border",
-          })}
+          className={cx(
+            flex({
+              align: "center",
+              justify: "space-between",
+              mt: "4",
+              pt: "4",
+            }),
+            css({
+              borderTop: "1px solid",
+              borderTopColor: "ui.border",
+            }),
+          )}
         >
           <p
             className={css({
