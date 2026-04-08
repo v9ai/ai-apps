@@ -54,6 +54,17 @@ const SEED_TOPICS = [
   "fine-tuning",
   // Reinforcement Learning
   "reinforcement-learning",
+  // Frontend / CSS / React / TypeScript
+  "css",
+  "react-js",
+  "typescript",
+  "javascript",
+  "flexbox",
+  "css-grid",
+  "frontend-web-development",
+  "web-design",
+  "responsive-design",
+  "web-accessibility",
 ];
 
 // Promotional courses Udemy shows on every topic page — skip these.
@@ -96,6 +107,18 @@ const RELEVANCE_KEYWORDS = [
   "fine-tun", "lora", "peft", "rlhf", "instruction tuning",
   // RL
   "reinforcement learning",
+  // CSS & Layout
+  "css", "flexbox", "grid layout", "css grid", "responsive design",
+  "css animation", "css layout", "box model", "css specificity",
+  "css positioning", "media queries", "sass", "scss",
+  // React & Frontend
+  "react", "react hooks", "usestate", "useeffect", "react component",
+  "react patterns", "jsx", "virtual dom", "react performance", "next.js", "nextjs",
+  // TypeScript & JavaScript
+  "typescript", "type system", "generics", "type inference", "javascript", "es6",
+  // General Frontend
+  "frontend", "front-end", "design system", "component library",
+  "web accessibility", "a11y", "aria", "storybook",
 ];
 
 // Keywords used when following related topics from course/topic pages.
@@ -108,6 +131,10 @@ const FOLLOW_TOPIC_KEYWORDS = [
   "pytorch", "tensorflow", "keras",
   "mlops", "deploy", "model-serv",
   "fine-tun", "reinforcement", "agent",
+  // Frontend
+  "css", "react", "frontend", "front-end", "typescript", "javascript",
+  "component", "responsive", "accessibility", "design-system", "web-dev",
+  "layout", "flexbox", "grid", "sass", "tailwind", "next-js",
 ];
 
 // ── Topic group classifier ───────────────────────────────────────────
@@ -190,6 +217,51 @@ const TOPIC_GROUPS: Array<{ name: string; signals: string[] }> = [
       "gradient boosting", "random forest", "decision tree",
       "logistic regression", "linear regression", "statistics for data",
       "data science",
+    ],
+  },
+  // Frontend
+  {
+    name: "CSS & Layout",
+    signals: [
+      "css", "flexbox", "css grid", "grid layout", "responsive design",
+      "css animation", "css layout", "box model", "css specificity",
+      "css positioning", "media queries", "sass", "scss", "tailwind",
+      "css architecture", "css modules", "styled-components",
+    ],
+  },
+  {
+    name: "React & Frontend Frameworks",
+    signals: [
+      "react hooks", "usestate", "useeffect", "react component",
+      "react pattern", "jsx", "virtual dom", "react performance",
+      "react router", "next.js", "nextjs", "remix", "gatsby",
+      "react native", "react context", "react redux", "zustand",
+      "react query", "tanstack",
+    ],
+  },
+  {
+    name: "TypeScript & JavaScript",
+    signals: [
+      "typescript", "type system", "type inference", "generics",
+      "javascript", "es6", "es2015", "ecmascript", "promises",
+      "async await", "closure", "prototype", "dom manipulation",
+    ],
+  },
+  {
+    name: "Design Systems & Accessibility",
+    signals: [
+      "design system", "component library", "design tokens",
+      "storybook", "accessibility", "a11y", "aria", "screen reader",
+      "keyboard navigation", "wcag", "inclusive design",
+    ],
+  },
+  {
+    name: "Frontend Interview Prep",
+    signals: [
+      "frontend interview", "front-end interview", "css interview",
+      "react interview", "javascript interview", "coding challenge",
+      "css challenge", "react challenge", "frontend assessment",
+      "take-home", "whiteboard",
     ],
   },
 ];
@@ -281,6 +353,46 @@ const SLUG_KEYWORDS: Record<string, string[]> = {
   "agent-architectures": [
     "ai agent", "agent architecture", "react agent", "react loop",
     "multi-agent", "agentic",
+  ],
+  // Frontend
+  "css-layout-fundamentals": [
+    "flexbox", "css grid", "grid layout", "css layout", "responsive design",
+    "responsive layout", "centering", "css centering", "media queries",
+    "mobile first", "css display", "css float", "css position",
+  ],
+  "css-theory": [
+    "box model", "css specificity", "cascade", "css positioning",
+    "stacking context", "z-index", "block formatting", "bfc",
+    "css animation", "css transition", "css debugging", "css inheritance",
+    "css variables", "custom properties",
+  ],
+  "react-patterns": [
+    "react hooks", "usestate", "useeffect", "usememo", "usecallback",
+    "useref", "custom hook", "component composition", "render prop",
+    "higher order component", "hoc", "react context", "react performance",
+    "react memo", "react suspense", "error boundary",
+  ],
+  "typescript-for-react": [
+    "typescript react", "react typescript", "type inference", "generics",
+    "discriminated union", "type guard", "utility type", "mapped type",
+    "conditional type", "typescript generic", "typescript interface",
+    "typescript enum",
+  ],
+  "design-systems": [
+    "design system", "component library", "design tokens", "style guide",
+    "atomic design", "storybook", "design pattern", "theming",
+    "design consistency", "ui kit",
+  ],
+  "frontend-accessibility": [
+    "accessibility", "a11y", "aria", "screen reader", "keyboard navigation",
+    "wcag", "accessible component", "semantic html", "focus management",
+    "color contrast", "assistive technology",
+  ],
+  "frontend-interview": [
+    "frontend interview", "front-end interview", "css interview",
+    "react interview", "javascript interview", "coding challenge",
+    "css challenge", "react challenge", "frontend assessment",
+    "web developer interview", "technical interview frontend",
   ],
 };
 

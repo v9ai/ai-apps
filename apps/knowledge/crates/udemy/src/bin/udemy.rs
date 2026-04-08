@@ -87,6 +87,28 @@ enum Command {
         batch: usize,
     },
 
+    /// Add one or more courses by URL (fetch → parse → embed → store)
+    Add {
+        /// Course URLs (e.g. https://www.udemy.com/course/css-grid/)
+        urls: Vec<String>,
+
+        /// Output JSON file (written alongside embed/store)
+        #[arg(long)]
+        output: Option<PathBuf>,
+
+        /// LanceDB path
+        #[arg(long, default_value = "./lance-db")]
+        db: String,
+
+        /// Embed server URL
+        #[arg(long, default_value = "http://localhost:9999")]
+        embed_url: String,
+
+        /// Skip embedding + LanceDB storage (just fetch & parse)
+        #[arg(long)]
+        no_embed: bool,
+    },
+
     /// Semantic search over embedded Udemy courses
     Search {
         /// The search query
@@ -171,6 +193,13 @@ async fn main() -> Result<()> {
             )
             .await
         }
+        Command::Add {
+            urls,
+            output,
+            db,
+            embed_url,
+            no_embed,
+        } => cmd_add(urls, output, db, embed_url, no_embed).await,
         Command::Scrape {
             json,
             db,
@@ -516,6 +545,293 @@ async fn cmd_crawl(
     stats.elapsed_secs = start.elapsed().as_secs_f64();
     eprintln!("\n{}", "─".repeat(50));
     eprintln!("{stats}");
+
+    Ok(())
+}
+
+// ── add ───────────────────────────────────────────────────────────────────────
+
+/// Normalise a user-supplied Udemy URL to `https://www.udemy.com/course/<slug>/`.
+fn normalise_course_url(raw: &str) -> String {
+    // Strip /learn/lecture/... or any query/fragment
+    let base = raw
+        .split("/learn/")
+        .next()
+        .unwrap_or(raw)
+        .split('?')
+        .next()
+        .unwrap_or(raw)
+        .split('#')
+        .next()
+        .unwrap_or(raw);
+
+    let slug = base
+        .trim_end_matches('/')
+        .rsplit('/')
+        .next()
+        .unwrap_or("unknown");
+
+    format!("https://www.udemy.com/course/{slug}/")
+}
+
+/// Udemy public API response for a course.
+#[derive(Deserialize)]
+struct ApiCourse {
+    title: String,
+    #[serde(default)]
+    headline: Option<String>,
+    #[serde(default)]
+    description: Option<String>,
+    #[serde(default)]
+    num_subscribers: Option<u32>,
+    #[serde(default)]
+    avg_rating: Option<f64>,
+    #[serde(default)]
+    num_reviews: Option<u32>,
+    #[serde(default)]
+    image_480x270: Option<String>,
+    #[serde(default)]
+    instructional_level: Option<String>,
+    #[serde(default)]
+    content_info: Option<String>,
+    #[serde(default)]
+    is_paid: Option<bool>,
+    #[serde(default)]
+    price: Option<String>,
+    #[serde(default)]
+    visible_instructors: Vec<ApiInstructor>,
+    locale: Option<ApiLocale>,
+}
+
+#[derive(Deserialize)]
+struct ApiInstructor {
+    #[serde(default)]
+    display_name: Option<String>,
+    #[serde(default)]
+    title: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct ApiLocale {
+    #[serde(default)]
+    simple_english_title: Option<String>,
+}
+
+/// Fetch course metadata via the Udemy public API (no auth required).
+async fn fetch_via_api(http: &reqwest::Client, slug: &str) -> Result<Course> {
+    let api_url = format!(
+        "https://www.udemy.com/api-2.0/courses/{slug}/?fields%5Bcourse%5D=\
+         title,headline,description,num_subscribers,avg_rating,num_reviews,\
+         image_480x270,instructional_level,content_info,visible_instructors,\
+         is_paid,price,locale"
+    );
+
+    let api: ApiCourse = http
+        .get(&api_url)
+        .send()
+        .await
+        .context("Udemy API request failed")?
+        .json()
+        .await
+        .context("parsing Udemy API response")?;
+
+    // Parse duration from content_info like "2.5 total hours"
+    let duration_hours = api
+        .content_info
+        .as_deref()
+        .and_then(|s| {
+            let lower = s.to_lowercase();
+            lower
+                .split_whitespace()
+                .next()
+                .and_then(|n| n.parse::<f32>().ok())
+        })
+        .unwrap_or(0.0);
+
+    let instructor = api
+        .visible_instructors
+        .first()
+        .and_then(|i| i.display_name.as_deref().or(i.title.as_deref()))
+        .unwrap_or("")
+        .to_string();
+
+    // Strip HTML from description
+    let description = api
+        .description
+        .or(api.headline.clone())
+        .map(|d| strip_html_tags(&d))
+        .unwrap_or_default();
+
+    let price = if api.is_paid == Some(false) {
+        "Free".to_string()
+    } else {
+        api.price.unwrap_or_default()
+    };
+
+    Ok(Course {
+        course_id: slug.to_string(),
+        title: api.title,
+        url: format!("https://www.udemy.com/course/{slug}/"),
+        description,
+        instructor,
+        level: api.instructional_level.unwrap_or_else(|| "All Levels".to_string()),
+        rating: api.avg_rating.unwrap_or(0.0) as f32,
+        review_count: api.num_reviews.unwrap_or(0),
+        num_students: api.num_subscribers.unwrap_or(0),
+        duration_hours,
+        price,
+        language: api
+            .locale
+            .and_then(|l| l.simple_english_title)
+            .unwrap_or_else(|| "English".to_string()),
+        category: String::new(),
+        image_url: api.image_480x270.unwrap_or_default(),
+        topics_json: "[]".to_string(),
+    })
+}
+
+/// Minimal HTML tag stripping.
+fn strip_html_tags(html: &str) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut in_tag = false;
+    for ch in html.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => out.push(ch),
+            _ => {}
+        }
+    }
+    // Collapse whitespace
+    out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+async fn cmd_add(
+    urls: Vec<String>,
+    output: Option<PathBuf>,
+    db: String,
+    embed_url: String,
+    no_embed: bool,
+) -> Result<()> {
+    if urls.is_empty() {
+        anyhow::bail!("provide at least one course URL");
+    }
+
+    let crawler = UdemyClient::new(&CrawlConfig::default());
+    let http = reqwest::Client::new();
+    let mut courses: Vec<Course> = Vec::new();
+    let mut ext_courses: Vec<ExternalCourseJson> = Vec::new();
+
+    for raw_url in &urls {
+        let url = normalise_course_url(raw_url);
+        let slug = url
+            .trim_end_matches('/')
+            .rsplit('/')
+            .next()
+            .unwrap_or("unknown");
+
+        eprintln!("Fetching {url} ...");
+
+        // Try HTML scrape first, fall back to Udemy API
+        let course = match crawler.fetch_page(&url).await {
+            FetchResult::Ok(html) => {
+                match parse_course_html(&html, &url) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        eprintln!("  parse error ({e}), falling back to API...");
+                        fetch_via_api(&http, slug).await?
+                    }
+                }
+            }
+            _ => {
+                eprintln!("  Cloudflare blocked, using Udemy API...");
+                fetch_via_api(&http, slug).await?
+            }
+        };
+
+        let full_text = course.embed_text();
+        let topic_group = classify_topic_group(&full_text);
+        let slug_mappings: Vec<SlugMapping> = match_slugs(&full_text)
+            .into_iter()
+            .map(|(slug, relevance)| SlugMapping { slug, relevance })
+            .collect();
+
+        eprintln!(
+            "  ✓ {} — {:.1}★ ({} reviews) [{}]",
+            course.title, course.rating, course.review_count, topic_group
+        );
+
+        let metadata = serde_json::json!({
+            "instructors": [course.instructor],
+            "whatYoullLearn": serde_json::from_str::<Vec<String>>(&course.topics_json).unwrap_or_default(),
+        });
+
+        ext_courses.push(ExternalCourseJson {
+            title: course.title.clone(),
+            url: course.url.clone(),
+            provider: "Udemy".to_string(),
+            description: if course.description.is_empty() { None } else { Some(course.description.clone()) },
+            level: if course.level.is_empty() { None } else { Some(course.level.clone()) },
+            rating: if course.rating > 0.0 { Some(course.rating as f64) } else { None },
+            review_count: if course.review_count > 0 { Some(course.review_count) } else { None },
+            duration_hours: if course.duration_hours > 0.0 { Some(course.duration_hours as f64) } else { None },
+            is_free: course.price.to_lowercase() == "free",
+            enrolled: if course.num_students > 0 { Some(course.num_students) } else { None },
+            image_url: if course.image_url.is_empty() { None } else { Some(course.image_url.clone()) },
+            language: course.language.clone(),
+            topic_group: topic_group.to_string(),
+            metadata,
+            slug_mappings,
+        });
+
+        courses.push(course);
+    }
+
+    if courses.is_empty() {
+        eprintln!("\nNo courses fetched successfully.");
+        return Ok(());
+    }
+
+    // Write JSON if requested
+    if let Some(path) = &output {
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).ok();
+        }
+        let json = serde_json::to_string_pretty(&ext_courses)?;
+        std::fs::write(path, &json)?;
+        eprintln!("\nWrote {} course(s) to {}", ext_courses.len(), path.display());
+    }
+
+    // Embed + store
+    if !no_embed {
+        let http = reqwest::Client::new();
+        http.get(format!("{embed_url}/health"))
+            .send()
+            .await
+            .context("embed server not reachable — start with: cargo run -p candle --bin embed-server --features server")?;
+
+        let mut store = CourseStore::connect(&db).await?;
+        let existing = store.existing_ids().await?;
+
+        let mut new_courses = Vec::new();
+        let mut new_texts = Vec::new();
+        for c in &courses {
+            if existing.contains(&c.course_id) {
+                eprintln!("  skip {} (already in store)", c.course_id);
+            } else {
+                new_texts.push(c.embed_text());
+                new_courses.push(c.clone());
+            }
+        }
+
+        if new_courses.is_empty() {
+            eprintln!("\nAll courses already in store.");
+        } else {
+            let vecs = embed_batch(&http, &embed_url, &new_texts).await?;
+            store.add(&new_courses, &vecs).await?;
+            eprintln!("\nStored {} course(s) in {db}", new_courses.len());
+        }
+    }
 
     Ok(())
 }
