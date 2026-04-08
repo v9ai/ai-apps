@@ -46,7 +46,10 @@ export async function GET(
           (c: { color_id: number; color_name: string; part_img_url: string | null; elements: string[]; num_sets: number }) => ({
             id: c.color_id,
             name: c.color_name,
-            imageUrl: c.part_img_url,
+            imageUrl: c.part_img_url
+              ?? (c.elements?.length
+                ? `https://cdn.rebrickable.com/media/parts/elements/${c.elements[0]}.jpg`
+                : null),
             numSets: c.num_sets,
           })
         );
@@ -58,7 +61,9 @@ export async function GET(
     return NextResponse.json({
       partNum: resolvedNum,
       name: data.name,
-      imageUrl: data.part_img_url,
+      imageUrl: data.part_img_url
+        ?? colors.find((c: { imageUrl: string | null }) => c.imageUrl)?.imageUrl
+        ?? null,
       categoryId: data.part_cat_id,
       externalIds: data.external_ids,
       colors,
