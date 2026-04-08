@@ -182,7 +182,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 .to_string()
                         });
 
-                    let dl = top_models.iter().find(|(_, id, ..)| id == repo_id)
+                    let _dl = top_models.iter().find(|(_, id, ..)| id == repo_id)
                         .map(|m| m.0).unwrap_or(0);
 
                     eprintln!(

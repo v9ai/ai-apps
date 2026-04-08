@@ -288,7 +288,7 @@ export function LandingHero() {
               }),
               "headline-word",
             )}
-            style={{ animationDelay: "0.32s" }}
+            style={{ animationDelay: "0.5s" }}
           >
             Discover, enrich, and close B2B leads — autonomously.
           </span>
