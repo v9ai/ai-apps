@@ -468,6 +468,39 @@ a:hover svg { color: var(--colors-ui-heading) !important; }
 .headline-word:nth-child(5) { animation-delay: 0.33s; }
 .headline-word:nth-child(6) { animation-delay: 0.40s; }
 
+/* --- 6. Hero dot grid background --- */
+.hero-dot-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 70%);
+  animation: hero-grid-drift 20s linear infinite;
+}
+@keyframes hero-grid-drift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 32px 32px; }
+}
+
+/* --- 7. Terminal line typewriter entrance --- */
+@keyframes terminal-line-enter {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.terminal-line-animated {
+  opacity: 0;
+  animation: terminal-line-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* --- 8. Terminal blinking cursor --- */
+@keyframes terminal-blink {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 1; }
+}
+.terminal-cursor {
+  opacity: 0;
+  animation: terminal-blink 1.2s step-end 4s infinite;
+}
+
 /* ---------- responsive landing hero typography ---------- */
 @media (max-width: 640px) {
   .landing-hero-section {
@@ -542,7 +575,10 @@ a:hover svg { color: var(--colors-ui-heading) !important; }
   .pipeline-connector,
   .pipeline-connector line,
   .pipeline-stage-live,
-  .pipeline-flow-label {
+  .pipeline-flow-label,
+  .hero-dot-grid,
+  .terminal-line-animated,
+  .terminal-cursor {
     animation: none !important;
     transition: none !important;
   }
@@ -550,7 +586,9 @@ a:hover svg { color: var(--colors-ui-heading) !important; }
   .stat-value-inner,
   .headline-word,
   .pipeline-connector,
-  .pipeline-flow-label {
+  .pipeline-flow-label,
+  .terminal-line-animated,
+  .terminal-cursor {
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;

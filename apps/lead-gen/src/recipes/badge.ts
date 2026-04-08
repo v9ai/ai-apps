@@ -37,6 +37,25 @@ export const badge = cva({
         letterSpacing: "wide",
         textTransform: "lowercase",
       },
+      tech: {
+        color: "ui.secondary",
+        borderColor: "whiteAlpha.10",
+        background: "whiteAlpha.5",
+        fontSize: "2xs",
+        fontFamily: "mono",
+        letterSpacing: "normal",
+        textTransform: "none",
+      },
+      metric: {
+        color: "ui.heading",
+        borderColor: "accent.border",
+        background: "accent.subtle",
+        fontSize: "sm",
+        fontWeight: "bold",
+        fontFamily: "mono",
+        letterSpacing: "tight",
+        textTransform: "none",
+      },
     },
     size: {
       sm: {
