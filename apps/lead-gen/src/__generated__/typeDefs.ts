@@ -1324,11 +1324,18 @@ type SalescueSimilarCompany {
 }
 
 type SalescueSpamResult {
-  category: String!
-  categoryConfidence: Float!
+  aiRisk: Float!
+  aspectScores: JSON!
+  categoryScores: JSON!
+  deliverability: Int!
+  gateConfidence: Float!
+  gateDecision: String!
+  provider: String!
   providerScores: JSON!
   riskFactors: [String!]!
-  score: Float!
+  riskLevel: String!
+  spamCategory: String!
+  spamScore: Float!
 }
 
 type SalescueSubjectRanking {

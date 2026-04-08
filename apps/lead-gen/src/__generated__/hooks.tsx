@@ -2027,11 +2027,18 @@ export type SalescueSimilarCompany = {
 
 export type SalescueSpamResult = {
   __typename?: 'SalescueSpamResult';
-  category: Scalars['String']['output'];
-  categoryConfidence: Scalars['Float']['output'];
+  aiRisk: Scalars['Float']['output'];
+  aspectScores: Scalars['JSON']['output'];
+  categoryScores: Scalars['JSON']['output'];
+  deliverability: Scalars['Int']['output'];
+  gateConfidence: Scalars['Float']['output'];
+  gateDecision: Scalars['String']['output'];
+  provider: Scalars['String']['output'];
   providerScores: Scalars['JSON']['output'];
   riskFactors: Array<Scalars['String']['output']>;
-  score: Scalars['Float']['output'];
+  riskLevel: Scalars['String']['output'];
+  spamCategory: Scalars['String']['output'];
+  spamScore: Scalars['Float']['output'];
 };
 
 export type SalescueSubjectRanking = {
