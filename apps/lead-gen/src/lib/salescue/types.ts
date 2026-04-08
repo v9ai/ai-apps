@@ -196,12 +196,37 @@ export type SpamCategory =
   | "content_violation";
 
 export interface SpamResult {
-  category: SpamCategory;
-  category_confidence: number;
-  score: number;
+  spam_score: number;
+  spam_category: SpamCategory;
+  category_scores: Record<SpamCategory, number>;
+  ai_risk: number;
+  ai_details: {
+    ai_risk: number;
+    perplexity_ratio: number;
+    style_transfer_score: number;
+    watermark_detected: boolean;
+    watermark_score: number;
+    trajectory_smoothness: number;
+    structural_features: Record<string, number | boolean>;
+  };
+  header_verdict: {
+    spf: string;
+    dkim: string;
+    dmarc: string;
+    reply_to_mismatch: boolean;
+    header_score: number;
+  };
+  deliverability: number;
+  provider: string;
   provider_scores: Record<string, number>;
+  risk_level: string;
   risk_factors: string[];
-  token_explanations: Array<{ token: string; contribution: number }>;
+  token_spam_contributions: Array<{ token: string; score: number }>;
+  sentence_scores: number[];
+  gate_decision: string;
+  gate_confidence: number;
+  aspect_scores: Record<string, number>;
+  uncertainty: { aleatoric: number; epistemic: number };
 }
 
 // ── Objection ───────────────────────────────────────────────────────────────

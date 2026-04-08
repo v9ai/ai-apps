@@ -103,11 +103,18 @@ function mapIcpResult(r: Record<string, unknown>) {
 
 function mapSpamResult(r: Record<string, unknown>) {
   return {
-    category: r.category,
-    categoryConfidence: r.category_confidence,
-    score: r.score,
+    spamScore: r.spam_score,
+    spamCategory: r.spam_category,
+    categoryScores: r.category_scores,
+    aiRisk: r.ai_risk,
+    deliverability: r.deliverability,
+    provider: r.provider,
     providerScores: r.provider_scores,
+    riskLevel: r.risk_level,
     riskFactors: r.risk_factors,
+    gateDecision: r.gate_decision,
+    gateConfidence: r.gate_confidence,
+    aspectScores: r.aspect_scores,
   };
 }
 

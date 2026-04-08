@@ -145,11 +145,18 @@ type SalescueICPResult {
 # ── Spam ─────────────────────────────────────────────────────────────────────
 
 type SalescueSpamResult {
-  category: String!
-  categoryConfidence: Float!
-  score: Float!
+  spamScore: Float!
+  spamCategory: String!
+  categoryScores: JSON!
+  aiRisk: Float!
+  deliverability: Int!
+  provider: String!
   providerScores: JSON!
+  riskLevel: String!
   riskFactors: [String!]!
+  gateDecision: String!
+  gateConfidence: Float!
+  aspectScores: JSON!
 }
 
 # ── Objection ────────────────────────────────────────────────────────────────
