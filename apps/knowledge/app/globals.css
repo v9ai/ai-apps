@@ -309,25 +309,50 @@ body {
   letter-spacing: 0.1em;
   color: var(--gray-8);
 }
+.hero-cta-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 32px;
+  position: relative;
+}
 .hero-cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 32px;
-  padding: 10px 24px;
+  padding: 12px 28px;
   border-radius: 99px;
-  background: linear-gradient(135deg, var(--accent-9), #06b6d4);
-  color: #fff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   letter-spacing: 0.02em;
   transition: all 0.3s ease;
+  cursor: pointer;
+}
+.hero-cta-primary {
+  background: linear-gradient(135deg, var(--accent-9), #06b6d4);
+  color: #fff;
   box-shadow: 0 4px 16px color-mix(in srgb, var(--accent-9) 30%, transparent);
 }
-.hero-cta:hover {
+.hero-cta-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-9) 40%, transparent);
+}
+.hero-cta-primary svg {
+  flex-shrink: 0;
+}
+.hero-cta-ghost {
+  background: transparent;
+  color: var(--gray-10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.hero-cta-ghost:hover {
+  border-color: var(--accent-7);
+  color: var(--accent-11);
+  transform: translateY(-2px);
 }
 .hero-bottom-line {
   position: absolute;
@@ -517,6 +542,45 @@ body {
   color: var(--gray-9);
   line-height: 1.5;
   margin-top: 8px;
+}
+
+/* Interview Prep — subtitle */
+.interview-subtitle {
+  font-size: 13px;
+  color: var(--gray-9);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* Interview Prep — section label (tab-like header) */
+.interview-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--gray-7);
+  margin-bottom: 12px;
+  padding: 8px 14px;
+  border-left: 3px solid var(--section-accent, var(--gray-6));
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0 8px 8px 0;
+}
+
+/* Interview Prep — grid with bottom spacing between sections */
+.interview-section-grid {
+  margin-bottom: 28px;
+}
+
+/* External link indicator on cards */
+.cat-card--external .cat-card-name::after {
+  content: "\2197";
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 12px;
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+}
+.cat-card--external:hover .cat-card-name::after {
+  opacity: 0.8;
 }
 
 /* ================================================================
@@ -722,8 +786,13 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  animation: fade-up 0.5s ease both;
   scroll-margin-top: 108px;
+  /* scroll-triggered: start hidden, revealed by IntersectionObserver */
+  opacity: 0;
+  transform: translateY(20px);
+}
+.cat-card.in-view {
+  animation: fade-up 0.5s ease both;
 }
 .cat-card::before {
   content: "";
@@ -2104,7 +2173,15 @@ body {
     margin: 24px auto 0;
   }
   .hero-stat { width: 100%; max-width: none; }
-  .hero-cta { margin-top: 24px; }
+  .hero-cta-group {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .hero-cta-ghost {
+    padding: 10px 24px;
+    font-size: 13px;
+  }
 
   .yc-search { padding: 0 16px 16px; }
 

@@ -34,21 +34,54 @@ function LessonCard({ lesson, isFirst }: { lesson: Lesson; isFirst?: boolean }) 
       ref={ref}
       href={lesson.url}
       className="article-card"
-      title={lesson.excerpt || undefined}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
     >
-      <span className="article-card-num">
-        {String(lesson.number).padStart(2, "0")}
-      </span>
-      {isFirst && <span className="article-card-start">Start here</span>}
-      <span className="article-card-title">{lesson.title}</span>
-      <span className={`article-card-level article-card-level--${lesson.difficulty}`}>
-        {lesson.difficulty === "beginner" ? "Beginner" : lesson.difficulty === "intermediate" ? "Mid" : "Adv"}
-      </span>
-      <span className="article-card-time">{lesson.readingTimeMin}m</span>
-      <span className="article-card-arrow">&rarr;</span>
+      <div className="article-card-top">
+        <span className="article-card-num">
+          {String(lesson.number).padStart(2, "0")}
+        </span>
+        {isFirst && <span className="article-card-start">Start here</span>}
+        <span className="article-card-title">{lesson.title}</span>
+        <span className={`article-card-level article-card-level--${lesson.difficulty}`}>
+          {lesson.difficulty === "beginner" ? "Beginner" : lesson.difficulty === "intermediate" ? "Mid" : "Adv"}
+        </span>
+        <span className="article-card-time">{lesson.readingTimeMin}m</span>
+        <span className="article-card-arrow">&rarr;</span>
+      </div>
+      {lesson.excerpt && (
+        <span className="article-card-excerpt">{lesson.excerpt}</span>
+      )}
     </Link>
+  );
+}
+
+function DifficultyBar({ articles }: { articles: Lesson[] }) {
+  const total = articles.length;
+  const beginner = articles.filter((a) => a.difficulty === "beginner").length;
+  const intermediate = articles.filter((a) => a.difficulty === "intermediate").length;
+  const advanced = total - beginner - intermediate;
+  return (
+    <span className="difficulty-bar" title={`${beginner} beginner, ${intermediate} intermediate, ${advanced} advanced`}>
+      {beginner > 0 && (
+        <span
+          className="difficulty-bar-seg difficulty-bar-seg--beginner"
+          style={{ flex: beginner }}
+        />
+      )}
+      {intermediate > 0 && (
+        <span
+          className="difficulty-bar-seg difficulty-bar-seg--intermediate"
+          style={{ flex: intermediate }}
+        />
+      )}
+      {advanced > 0 && (
+        <span
+          className="difficulty-bar-seg difficulty-bar-seg--advanced"
+          style={{ flex: advanced }}
+        />
+      )}
+    </span>
   );
 }
 
@@ -122,11 +155,17 @@ export function CategoryGrid({ groups }: Props) {
                 ))}
               </ul>
             )}
+            <div className="cat-card-divider">
+              <span className="cat-card-divider-label">Lessons</span>
+            </div>
             {group.articles.map((lesson, j) => (
               <LessonCard key={lesson.slug} lesson={lesson} isFirst={j === 0} />
             ))}
             <div className="cat-card-footer">
-              {Math.round(group.articles.reduce((sum, a) => sum + a.readingTimeMin, 0))} min total reading
+              <span className="cat-card-footer-time">
+                {Math.round(group.articles.reduce((sum, a) => sum + a.readingTimeMin, 0))} min total
+              </span>
+              <DifficultyBar articles={group.articles} />
             </div>
           </div>
         ))}

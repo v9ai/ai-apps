@@ -5,6 +5,7 @@ import { Hero } from "@/components/hero";
 import { LearningPath } from "@/components/learning-path";
 import { Search } from "@/components/search";
 import { Footer } from "@/components/footer";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 export default async function HomePage() {
   const groups = await getGroupedLessons();
@@ -14,15 +15,19 @@ export default async function HomePage() {
   const wordCount = allLessons.reduce((sum, l) => sum + l.wordCount, 0);
   const readingHours = Math.round(allLessons.reduce((sum, l) => sum + l.readingTimeMin, 0) / 60);
   return (
-    <div>
+    <>
+      <a href="#main-content" className="skip-to-content">
+        Skip to content
+      </a>
       <Topbar lessonCount={total} />
 
+      <main id="main-content">
       <Hero lessonCount={total} domainCount={catCount} wordCount={wordCount} readingHours={readingHours} />
 
       <LearningPath groups={groups} />
 
       {/* Research Collections */}
-      <section className="research-collections">
+      <section className="research-collections" aria-labelledby="research-collections-heading">
         <h2 className="research-collections-title">RESEARCH COLLECTIONS</h2>
         <div className="research-collections-grid">
           <Link href="/kv-quant" className="cat-card" style={{ "--cat-from": "#f59e0b", "--cat-to": "#ef4444" } as React.CSSProperties}>
@@ -127,7 +132,8 @@ export default async function HomePage() {
         <Search groups={groups} />
       </div>
 
+      </main>
       <Footer />
-    </div>
+    </>
   );
 }

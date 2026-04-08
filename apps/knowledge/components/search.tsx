@@ -191,9 +191,15 @@ export function Search({ groups }: Props) {
         <div className="search-results" aria-live="polite">
           {searching && results.length === 0 && (
             <div className="search-loading">
+              <div className="search-loading-bar search-loading-bar--wide" />
               <div className="search-loading-bar" />
+              <div className="search-loading-bar search-loading-bar--narrow" />
               <div className="search-loading-bar" />
-              <div className="search-loading-bar" />
+            </div>
+          )}
+          {searching && results.length > 0 && (
+            <div className="search-refreshing">
+              <div className="search-refreshing-bar" />
             </div>
           )}
           {!searching && results.length === 0 && (
@@ -202,19 +208,19 @@ export function Search({ groups }: Props) {
               <div className="no-results-title">No results found</div>
               <div className="no-results-hint">
                 {!isDeepSearch
-                  ? "No keyword matches — try Deep search for semantic / conceptual queries"
+                  ? "No keyword matches — try AI Semantic search for conceptual queries"
                   : "Try different keywords or a shorter query"}
               </div>
               {!isDeepSearch && (
                 <button
-                  className="yc-search-mode yc-search-mode--inline"
+                  className="no-results-switch"
                   onClick={() => {
                     setIsDeepSearch(true);
                     clearTimeout(timerRef.current);
                     timerRef.current = setTimeout(() => doSearch(query), 100);
                   }}
                 >
-                  Try Deep Search
+                  Switch to AI Semantic
                 </button>
               )}
               <button className="no-results-clear" onClick={handleClear}>
@@ -228,9 +234,9 @@ export function Search({ groups }: Props) {
               <Link
                 key={`${r.resultType}-${r.title}-${i}`}
                 href={meta?.url ?? `/${r.lessonSlug}`}
-                className={`search-result-card${meta ? ` cat-${meta.catSlug}` : ""}`}
+                className={`search-result-card${meta ? ` cat-${meta.catSlug}` : ""}${searching ? " search-result-card--stale" : ""}`}
               >
-                <div className="search-result-header">
+                <div className="search-result-meta">
                   <span className="badge-pill badge-pill--glass search-result-type">
                     {typeBadgeLabel(r.resultType)}
                   </span>
@@ -244,15 +250,15 @@ export function Search({ groups }: Props) {
                       {meta.difficulty === "beginner" ? "Beginner" : meta.difficulty === "intermediate" ? "Mid" : "Adv"}
                     </span>
                   )}
-                  <span className="search-result-title">{r.title}</span>
-                </div>
-                <div className="search-result-snippet">
-                  {highlightSnippet(r.snippet)}
                   {isDeepSearch && "similarity" in r && (r as DeepSearchResult).similarity > 0 && (
                     <span className="search-result-similarity">
-                      {((r as DeepSearchResult).similarity * 100).toFixed(0)}% match
+                      {((r as DeepSearchResult).similarity * 100).toFixed(0)}%
                     </span>
                   )}
+                </div>
+                <div className="search-result-title">{r.title}</div>
+                <div className="search-result-snippet">
+                  {highlightSnippet(r.snippet)}
                 </div>
                 {r.resultType !== "lesson" && r.lessonTitle && (
                   <div className="search-result-lesson">{r.lessonTitle}</div>
