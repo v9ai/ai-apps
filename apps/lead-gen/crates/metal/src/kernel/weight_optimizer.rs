@@ -63,24 +63,12 @@ fn compute_f1(predicted: &[bool], actual: &[bool]) -> f32 {
 /// Populate one slot in a `ContactBatch` from a pre-computed feature vector.
 ///
 /// Because `LabeledSample::features` are already in normalised form, we
-/// reverse the normalisation that `LogisticScorer::extract_features` applies:
-///
-/// | idx | batch field         | reversal                                  |
-/// |-----|---------------------|-------------------------------------------|
-/// | 0   | `industry_match`    | `(f > 0.5) as u8`                        |
-/// | 1   | `employee_in_range` | `(f > 0.5) as u8`                        |
-/// | 2   | `seniority_match`   | `(f > 0.5) as u8`                        |
-/// | 3   | `department_match`  | `(f > 0.5) as u8`                        |
-/// | 4   | `tech_overlap`      | `(f * 10.0) as u8`                       |
-/// | 5   | `email_verified`    | `(f * 2.0) as u8`                        |
-/// | 6   | `recency_days`      | `-ln(f) / 0.015`, clamped to `0..=365`  |
-/// | 7   | `hf_score`          | direct passthrough                      |
-/// | 8   | `hf_model_depth`    | direct passthrough                      |
-/// | 9   | `hf_training_depth` | direct passthrough                      |
-/// | 10  | `hf_maturity`       | direct passthrough                      |
-/// | 11  | `hf_research`       | direct passthrough                      |
-/// | 12  | `hf_sales_relevance`| direct passthrough                      |
+/// reverse the normalisation that `LogisticScorer::extract_features` applies
+/// for the base contact fields (0-6), and pass through all HF features (7-37)
+/// directly.  Interaction features (38-43) are not stored in the batch — they
+/// are recomputed by `extract_features()`.
 fn populate_batch_from_sample(batch: &mut ContactBatch, idx: usize, features: &[f32; FEATURE_COUNT]) {
+    // Base contact — reverse normalisation
     batch.industry_match[idx] = (features[0] > 0.5) as u8;
     batch.employee_in_range[idx] = (features[1] > 0.5) as u8;
     batch.seniority_match[idx] = (features[2] > 0.5) as u8;
@@ -89,18 +77,59 @@ fn populate_batch_from_sample(batch: &mut ContactBatch, idx: usize, features: &[
     batch.email_verified[idx] = (features[5] * 2.0).clamp(0.0, 2.0) as u8;
 
     // Reverse smooth_recency: f = exp(-0.015 * d)  →  d = -ln(f) / 0.015
-    // Guard against ln(0) and values outside (0, 1].
     let f6 = features[6].clamp(1e-7, 1.0);
     let days_f = -f6.ln() / 0.015;
     batch.recency_days[idx] = days_f.clamp(0.0, 365.0) as u16;
 
-    // HF features are [0, 1] floats — pass through directly.
+    // HF composite + depth (7-9)
     batch.hf_score[idx] = features[7];
     batch.hf_model_depth[idx] = features[8];
     batch.hf_training_depth[idx] = features[9];
-    batch.hf_maturity[idx] = features[10];
-    batch.hf_research[idx] = features[11];
-    batch.hf_sales_relevance[idx] = features[12];
+
+    // Maturity decomposed (10-14)
+    batch.hf_max_effort[idx] = features[10];
+    batch.hf_production_ratio[idx] = features[11];
+    batch.hf_dl_weighted_maturity[idx] = features[12];
+    batch.hf_alignment_diversity[idx] = features[13];
+    batch.hf_maturity_trend[idx] = features[14];
+
+    // Research (15)
+    batch.hf_research[idx] = features[15];
+
+    // Sales decomposed (16-19)
+    batch.hf_sales_b2b_core[idx] = features[16];
+    batch.hf_sales_outreach[idx] = features[17];
+    batch.hf_sales_funnel[idx] = features[18];
+    batch.hf_sales_platform[idx] = features[19];
+
+    // Training signals (20-23)
+    batch.hf_research_intensity[idx] = features[20];
+    batch.hf_infra_sophistication[idx] = features[21];
+    batch.hf_signal_breadth[idx] = features[22];
+    batch.hf_domain_nlp_focus[idx] = features[23];
+
+    // Architecture diversity (24-28)
+    batch.hf_library_sophistication[idx] = features[24];
+    batch.hf_pipeline_diversity[idx] = features[25];
+    batch.hf_custom_arch_ratio[idx] = features[26];
+    batch.hf_framework_diversity[idx] = features[27];
+    batch.hf_moe_ratio[idx] = features[28];
+
+    // Download signals (29-33)
+    batch.hf_download_scale[idx] = features[29];
+    batch.hf_download_per_model[idx] = features[30];
+    batch.hf_top_model_dominance[idx] = features[31];
+    batch.hf_likes_per_download[idx] = features[32];
+    batch.hf_download_breadth[idx] = features[33];
+
+    // Temporal (34-37)
+    batch.hf_recency[idx] = features[34];
+    batch.hf_acceleration[idx] = features[35];
+    batch.hf_longevity[idx] = features[36];
+    batch.hf_burst_intensity[idx] = features[37];
+
+    // Interaction features (38-43) are NOT stored in the batch — they are
+    // computed on-the-fly by LogisticScorer::extract_features().
 }
 
 /// Score all `samples` with `icp` (rule-based) and return the F1 at `threshold`.

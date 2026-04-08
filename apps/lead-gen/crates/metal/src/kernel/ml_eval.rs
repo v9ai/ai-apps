@@ -634,18 +634,25 @@ mod tests {
 
     // ── load_labels ───────────────────────────────────────────────────────────
 
+    /// Build a JSON features array string with `FEATURE_COUNT` elements, all set to `val`.
+    fn features_json(val: f32) -> String {
+        let vals: Vec<String> = (0..FEATURE_COUNT).map(|_| format!("{val}")).collect();
+        format!("[{}]", vals.join(","))
+    }
+
+    /// Build a JSONL line for a labeled sample with all features set to `val`.
+    fn sample_jsonl(val: f32, label: f32) -> String {
+        format!(r#"{{"features":{},"label":{}}}"#, features_json(val), label)
+    }
+
     // Well-formed JSONL with a blank line in the middle.
     #[test]
     fn test_load_labels() {
         use std::io::Write;
 
-        let jsonl = concat!(
-            r#"{"features":[1.0,1.0,1.0,1.0,0.8,1.0,0.9,0.7,0.5,0.6,0.8,1.0,0.3],"label":1.0}"#,
-            "\n",
-            "\n",
-            r#"{"features":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"label":0.0}"#,
-            "\n",
-        );
+        let line1 = sample_jsonl(1.0, 1.0);
+        let line2 = sample_jsonl(0.0, 0.0);
+        let jsonl = format!("{line1}\n\n{line2}\n");
 
         let mut tmp = tempfile::NamedTempFile::new().expect("tempfile");
         tmp.write_all(jsonl.as_bytes()).expect("write");
@@ -663,13 +670,9 @@ mod tests {
     fn test_load_labels_skips_bad_lines() {
         use std::io::Write;
 
-        let jsonl = concat!(
-            r#"{"features":[1.0,1.0,1.0,1.0,0.8,1.0,0.9,0.7,0.5,0.6,0.8,1.0,0.3],"label":1.0}"#,
-            "\n",
-            "not valid json\n",
-            r#"{"features":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"label":0.0}"#,
-            "\n",
-        );
+        let line1 = sample_jsonl(1.0, 1.0);
+        let line2 = sample_jsonl(0.0, 0.0);
+        let jsonl = format!("{line1}\nnot valid json\n{line2}\n");
 
         let mut tmp = tempfile::NamedTempFile::new().expect("tempfile");
         tmp.write_all(jsonl.as_bytes()).expect("write");
@@ -694,14 +697,12 @@ mod tests {
 
         let scorer = perfect_scorer();
 
+        let ones = features_json(1.0);
+        let zeros = features_json(0.0);
         let jsonl: String = (0..10)
             .map(|i| {
                 let pos = i % 2 == 0;
-                let feat = if pos {
-                    "[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]"
-                } else {
-                    "[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]"
-                };
+                let feat = if pos { &ones } else { &zeros };
                 let label = if pos { "1.0" } else { "0.0" };
                 format!(r#"{{"features":{},"label":{}}}"#, feat, label)
             })
