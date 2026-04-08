@@ -2027,11 +2027,18 @@ export type SalescueSimilarCompany = {
 
 export type SalescueSpamResult = {
   __typename?: 'SalescueSpamResult';
-  category: Scalars['String']['output'];
-  categoryConfidence: Scalars['Float']['output'];
+  aiRisk: Scalars['Float']['output'];
+  aspectScores: Scalars['JSON']['output'];
+  categoryScores: Scalars['JSON']['output'];
+  deliverability: Scalars['Int']['output'];
+  gateConfidence: Scalars['Float']['output'];
+  gateDecision: Scalars['String']['output'];
+  provider: Scalars['String']['output'];
   providerScores: Scalars['JSON']['output'];
   riskFactors: Array<Scalars['String']['output']>;
-  score: Scalars['Float']['output'];
+  riskLevel: Scalars['String']['output'];
+  spamCategory: Scalars['String']['output'];
+  spamScore: Scalars['Float']['output'];
 };
 
 export type SalescueSubjectRanking = {
@@ -3822,11 +3829,18 @@ export type SalescueSimilarCompanyResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type SalescueSpamResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSpamResult'] = ResolversParentTypes['SalescueSpamResult']> = {
-  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  categoryConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  aiRisk?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  aspectScores?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  categoryScores?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  deliverability?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  gateConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  gateDecision?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  provider?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   providerScores?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
   riskFactors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  riskLevel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  spamCategory?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  spamScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
 export type SalescueSubjectRankingResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSubjectRanking'] = ResolversParentTypes['SalescueSubjectRanking']> = {
