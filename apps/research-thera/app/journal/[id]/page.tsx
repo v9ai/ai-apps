@@ -33,6 +33,8 @@ import {
   useDeleteTherapeuticQuestionsMutation,
   useGetTherapeuticQuestionsQuery,
   useGenerateLongFormTextMutation,
+  useGenerateJournalAnalysisMutation,
+  useDeleteJournalAnalysisMutation,
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
@@ -57,7 +59,7 @@ function JournalEntryContent() {
   const { data: session } = authClient.useSession();
   const user = session?.user;
 
-  const { data, loading, error } = useGetJournalEntryQuery({
+  const { data, loading, error, refetch: refetchEntry } = useGetJournalEntryQuery({
     variables: { id },
     skip: !id,
   });
@@ -249,6 +251,43 @@ function JournalEntryContent() {
     } catch (err: any) {
       setStoryError(err.message || "Failed to generate story");
     }
+  };
+
+  // Deep Analysis state
+  const analysis = entry?.analysis ?? null;
+  const [analysisMessage, setAnalysisMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState<"emotions" | "insights" | "recommendations" | "prompts">("emotions");
+
+  const [generateAnalysis, { loading: generatingAnalysis }] = useGenerateJournalAnalysisMutation({
+    onCompleted: (data) => {
+      if (data.generateJournalAnalysis.success) {
+        setAnalysisMessage({ text: data.generateJournalAnalysis.message || "Analysis generated.", type: "success" });
+        refetchEntry();
+      } else {
+        setAnalysisMessage({ text: data.generateJournalAnalysis.message || "Failed.", type: "error" });
+      }
+    },
+    onError: (err) => {
+      setAnalysisMessage({ text: err.message, type: "error" });
+    },
+  });
+
+  const [deleteAnalysis, { loading: deletingAnalysis }] = useDeleteJournalAnalysisMutation({
+    onCompleted: () => {
+      setAnalysisMessage(null);
+      refetchEntry();
+    },
+  });
+
+  const handleGenerateAnalysis = async () => {
+    if (!entry) return;
+    setAnalysisMessage(null);
+    await generateAnalysis({ variables: { journalEntryId: entry.id } });
+  };
+
+  const handleDeleteAnalysis = async () => {
+    if (!entry) return;
+    await deleteAnalysis({ variables: { journalEntryId: entry.id } });
   };
 
   if (loading) {
@@ -482,6 +521,196 @@ function JournalEntryContent() {
               </Flex>
             )}
           </Flex>
+        </Flex>
+      </Card>
+
+      {/* Deep Analysis */}
+      <Card>
+        <Flex direction="column" gap="4" p="4">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
+            <Box>
+              <Heading size="3" mb="1">Deep Analysis</Heading>
+              <Text size="2" color="gray">
+                Clinical therapeutic analysis of this journal entry.
+              </Text>
+            </Box>
+            <Flex gap="2">
+              {analysis && (
+                <Button
+                  variant="soft"
+                  color="red"
+                  size="2"
+                  onClick={handleDeleteAnalysis}
+                  disabled={deletingAnalysis || generatingAnalysis}
+                >
+                  {deletingAnalysis ? "Deleting..." : "Delete"}
+                </Button>
+              )}
+              <Button
+                onClick={handleGenerateAnalysis}
+                disabled={generatingAnalysis}
+              >
+                {generatingAnalysis && <Spinner />}
+                {generatingAnalysis ? "Analyzing..." : analysis ? "Regenerate" : "Run Deep Analysis"}
+              </Button>
+            </Flex>
+          </Flex>
+
+          {generatingAnalysis && (
+            <Flex direction="column" gap="2">
+              <Text size="2" color="gray">Analyzing journal entry...</Text>
+              <Box style={{ height: 6, borderRadius: 3, background: "var(--gray-4)", overflow: "hidden" }}>
+                <Box style={{ height: "100%", width: "40%", background: "var(--indigo-9)", borderRadius: 3, animation: "researchSweep 1.4s ease-in-out infinite" }} />
+              </Box>
+            </Flex>
+          )}
+
+          {analysisMessage && (
+            <Text size="2" color={analysisMessage.type === "success" ? "green" : "red"}>
+              {analysisMessage.text}
+            </Text>
+          )}
+
+          {analysis && (
+            <>
+              <Separator size="4" />
+
+              {/* Summary */}
+              <Box>
+                <Text size="2" style={{ whiteSpace: "pre-wrap", lineHeight: "1.7" }}>
+                  {analysis.summary}
+                </Text>
+                <Flex gap="2" mt="2" wrap="wrap">
+                  <Badge variant="outline" color="gray" size="1">
+                    {analysis.model}
+                  </Badge>
+                  <Badge variant="outline" color="gray" size="1">
+                    {new Date(analysis.createdAt).toLocaleDateString()}
+                  </Badge>
+                </Flex>
+              </Box>
+
+              {/* Tabs */}
+              <Flex gap="2" wrap="wrap">
+                {(["emotions", "insights", "recommendations", "prompts"] as const).map((tab) => (
+                  <Button
+                    key={tab}
+                    variant={activeAnalysisTab === tab ? "solid" : "soft"}
+                    size="1"
+                    onClick={() => setActiveAnalysisTab(tab)}
+                  >
+                    {tab === "emotions" ? "Emotions"
+                      : tab === "insights" ? `Insights (${analysis.therapeuticInsights.length})`
+                      : tab === "recommendations" ? `Recommendations (${analysis.actionableRecommendations.length})`
+                      : `Reflection (${analysis.reflectionPrompts.length})`}
+                  </Button>
+                ))}
+              </Flex>
+
+              {/* Emotional Landscape Tab */}
+              {activeAnalysisTab === "emotions" && (
+                <Flex direction="column" gap="3">
+                  <Box>
+                    <Text size="2" weight="bold" mb="1" as="div">Primary Emotions</Text>
+                    <Flex gap="2" wrap="wrap">
+                      {analysis.emotionalLandscape.primaryEmotions.map((e, i) => (
+                        <Badge key={i} variant="soft" color="indigo" size="2">{e}</Badge>
+                      ))}
+                    </Flex>
+                  </Box>
+                  <Box>
+                    <Text size="2" weight="bold" mb="1" as="div">Underlying Emotions</Text>
+                    <Flex gap="2" wrap="wrap">
+                      {analysis.emotionalLandscape.underlyingEmotions.map((e, i) => (
+                        <Badge key={i} variant="soft" color="purple" size="2">{e}</Badge>
+                      ))}
+                    </Flex>
+                  </Box>
+                  <Box>
+                    <Text size="2" weight="bold" mb="1" as="div">Emotional Regulation</Text>
+                    <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                      {analysis.emotionalLandscape.emotionalRegulation}
+                    </Text>
+                  </Box>
+                  {analysis.emotionalLandscape.attachmentPatterns && (
+                    <Box>
+                      <Text size="2" weight="bold" mb="1" as="div">Attachment Patterns</Text>
+                      <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                        {analysis.emotionalLandscape.attachmentPatterns}
+                      </Text>
+                    </Box>
+                  )}
+                </Flex>
+              )}
+
+              {/* Therapeutic Insights Tab */}
+              {activeAnalysisTab === "insights" && (
+                <Flex direction="column" gap="3">
+                  {analysis.therapeuticInsights.map((insight, i) => (
+                    <Card key={i} variant="surface">
+                      <Flex direction="column" gap="2" p="3">
+                        <Text size="2" weight="bold">{insight.title}</Text>
+                        <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                          {insight.observation}
+                        </Text>
+                        <Text size="1" color="indigo" style={{ lineHeight: "1.6" }}>
+                          {insight.clinicalRelevance}
+                        </Text>
+                      </Flex>
+                    </Card>
+                  ))}
+                </Flex>
+              )}
+
+              {/* Actionable Recommendations Tab */}
+              {activeAnalysisTab === "recommendations" && (
+                <Flex direction="column" gap="3">
+                  {analysis.actionableRecommendations.map((rec, i) => (
+                    <Card key={i} variant="surface">
+                      <Flex direction="column" gap="2" p="3">
+                        <Flex justify="between" align="center">
+                          <Text size="2" weight="bold">{rec.title}</Text>
+                          <Badge
+                            variant="soft"
+                            size="1"
+                            color={rec.priority === "immediate" ? "red" : rec.priority === "short_term" ? "orange" : "green"}
+                          >
+                            {rec.priority.replace("_", " ")}
+                          </Badge>
+                        </Flex>
+                        <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                          {rec.description}
+                        </Text>
+                        {rec.concreteSteps.length > 0 && (
+                          <Box>
+                            <Text size="1" weight="medium" mb="1" as="div">Steps</Text>
+                            <ul style={{ margin: 0, paddingLeft: "16px" }}>
+                              {rec.concreteSteps.map((step, j) => (
+                                <li key={j}><Text size="1" color="gray">{step}</Text></li>
+                              ))}
+                            </ul>
+                          </Box>
+                        )}
+                      </Flex>
+                    </Card>
+                  ))}
+                </Flex>
+              )}
+
+              {/* Reflection Prompts Tab */}
+              {activeAnalysisTab === "prompts" && (
+                <Flex direction="column" gap="3">
+                  {analysis.reflectionPrompts.map((prompt, i) => (
+                    <Card key={i} variant="surface">
+                      <Box p="3">
+                        <Text size="2" style={{ lineHeight: "1.6" }}>{prompt}</Text>
+                      </Box>
+                    </Card>
+                  ))}
+                </Flex>
+              )}
+            </>
+          )}
         </Flex>
       </Card>
 
