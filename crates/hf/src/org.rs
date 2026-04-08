@@ -1041,6 +1041,31 @@ mod tests {
     }
 
     #[test]
+    fn extract_arxiv_without_protocol() {
+        // Regression: bare "arxiv.org/abs/..." without https:// should get protocol added
+        let text = "See the arxiv.org/abs/2301.12345 paper for details.";
+        let links = OrgScanner::extract_arxiv_links(text);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0], "https://arxiv.org/abs/2301.12345");
+    }
+
+    #[test]
+    fn extract_arxiv_pdf_link() {
+        let text = "Download at https://arxiv.org/pdf/2301.12345";
+        let links = OrgScanner::extract_arxiv_links(text);
+        assert_eq!(links.len(), 1);
+        assert!(links[0].contains("arxiv.org/pdf/2301.12345"));
+    }
+
+    #[test]
+    fn extract_arxiv_markdown_link() {
+        let text = "Based on [this paper](https://arxiv.org/abs/2401.54321) and others.";
+        let links = OrgScanner::extract_arxiv_links(text);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0], "https://arxiv.org/abs/2401.54321");
+    }
+
+    #[test]
     fn extract_arxiv_dedup() {
         let text = "arXiv:2301.12345 and https://arxiv.org/abs/2301.12345";
         let links = OrgScanner::extract_arxiv_links(text);
