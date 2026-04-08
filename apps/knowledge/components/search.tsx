@@ -226,12 +226,19 @@ export function Search({ groups }: Props) {
           {!searching && results.length === 0 && (
             <div className="no-results" role="status">
               <div className="no-results-icon">🔍</div>
-              <div className="no-results-title">No results found</div>
+              <div className="no-results-title">
+                0 results in {totalLessons} lessons
+              </div>
               <div className="no-results-hint">
                 {!isDeepSearch
                   ? "No keyword matches — try AI Semantic search for conceptual queries"
                   : "Try different keywords or a shorter query"}
               </div>
+              {searchMs !== null && (
+                <div className="no-results-timing">
+                  searched in {searchMs} ms
+                </div>
+              )}
               {!isDeepSearch && (
                 <button
                   className="no-results-switch"

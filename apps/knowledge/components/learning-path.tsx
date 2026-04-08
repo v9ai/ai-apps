@@ -49,6 +49,20 @@ export function LearningPath({ groups }: Props) {
     return () => observer.disconnect();
   }, []);
 
+  /* Auto-scroll the track to center the active node on mobile */
+  useEffect(() => {
+    if (!activeCat || !trackRef.current) return;
+    const activeEl = trackRef.current.querySelector<HTMLElement>(
+      `.learning-path-node--active`
+    );
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  }, [activeCat]);
+
+  const exploredCount = visitedCats.size;
+  const totalCount = groups.length;
+
   return (
     <div className="learning-path">
       <div className="learning-path-title">Learning Path</div>

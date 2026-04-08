@@ -896,7 +896,7 @@ body {
   gap: 16px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px 64px;
+  padding: 0 var(--page-gutter) var(--section-gap);
 }
 .bento-grid .cat-card--wide { grid-column: span 2; }
 .bento-grid .cat-card--full { grid-column: span 3; }
@@ -915,11 +915,17 @@ body {
   -webkit-backdrop-filter: blur(12px);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   scroll-margin-top: 108px;
-  /* scroll-triggered: start hidden, revealed by IntersectionObserver */
+  /* content-visibility: skip layout/paint for offscreen cards */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+
+/* scroll-triggered: only hide cards when JS is available (js-ready on <html>) */
+.js-ready .cat-card {
   opacity: 0;
   transform: translateY(20px);
 }
-.cat-card.in-view {
+.js-ready .cat-card.in-view {
   animation: fade-up 0.5s ease both;
 }
 .cat-card::before {
