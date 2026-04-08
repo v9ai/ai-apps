@@ -105,16 +105,14 @@ function CourseCard({ course }: { course: ExternalCourse }) {
 
 /* ── Course group section ────────────────────────────────────── */
 function CourseGroup({
-  id,
   name,
   courses,
 }: {
-  id: string;
   name: string;
   courses: ExternalCourse[];
 }) {
   return (
-    <section id={id} className="courses-group">
+    <section className="courses-group">
       <div className="courses-group-header">
         <h2 className="courses-group-title">{name}</h2>
         <span className="courses-group-count">{courses.length} courses</span>
@@ -241,7 +239,7 @@ export function CoursesShell({
           const slug = slugify(g.name);
           return (
             <div key={slug} ref={refCallback(slug)} id={slug}>
-              <CourseGroup id={`${slug}-section`} name={g.name} courses={g.courses} />
+              <CourseGroup name={g.name} courses={g.courses} />
             </div>
           );
         })}
