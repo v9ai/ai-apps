@@ -18,6 +18,8 @@ const HF_RAW_BASE: &str = "https://huggingface.co";
 pub struct HfClient {
     http: reqwest::Client,
     concurrency: usize,
+    api_base: String,
+    raw_base: String,
 }
 
 impl HfClient {
@@ -40,13 +42,47 @@ impl HfClient {
             .pool_max_idle_per_host(concurrency)
             .build()
             .map_err(Error::ClientBuild)?;
-        Ok(Self { http, concurrency })
+        Ok(Self {
+            http,
+            concurrency,
+            api_base: HF_API_BASE.into(),
+            raw_base: HF_RAW_BASE.into(),
+        })
     }
 
     /// Convenience: read `HF_TOKEN` env var.
     pub fn from_env(concurrency: usize) -> Result<Self, Error> {
         let token = std::env::var("HF_TOKEN").ok();
         Self::new(token.as_deref(), concurrency)
+    }
+
+    /// Create a client with custom base URLs (for testing or self-hosted HF Hub).
+    pub(crate) fn with_base_urls(
+        token: Option<&str>,
+        concurrency: usize,
+        api_base: String,
+        raw_base: String,
+    ) -> Result<Self, Error> {
+        let concurrency = concurrency.clamp(1, 64);
+        let mut headers = HeaderMap::new();
+        headers.insert(USER_AGENT, HeaderValue::from_static("hf/0.1"));
+        if let Some(t) = token {
+            headers.insert(
+                AUTHORIZATION,
+                HeaderValue::from_str(&format!("Bearer {t}"))?,
+            );
+        }
+        let http = reqwest::Client::builder()
+            .default_headers(headers)
+            .pool_max_idle_per_host(concurrency)
+            .build()
+            .map_err(Error::ClientBuild)?;
+        Ok(Self {
+            http,
+            concurrency,
+            api_base,
+            raw_base,
+        })
     }
 
     // ── Repo metadata ──────────────────────────────────────────
@@ -60,10 +96,11 @@ impl HfClient {
         stream::iter(requests.iter().cloned())
             .map(|req| {
                 let client = client.clone();
+                let api_base = api_base.clone();
                 async move {
                     let url = format!(
                         "{}/{}/{}",
-                        HF_API_BASE,
+                        api_base,
                         req.repo_type.api_prefix(),
                         req.repo_id
                     );
