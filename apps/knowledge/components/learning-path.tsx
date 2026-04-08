@@ -3,6 +3,17 @@
 import { useEffect, useState } from "react";
 import type { GroupedLessons } from "@/lib/articles";
 
+/** Humanize minutes into "~Xh" or "~Xm" for at-a-glance commitment gauging */
+function humanizeTime(min: number): string {
+  if (min < 60) return `~${Math.round(min)} min`;
+  const h = Math.floor(min / 60);
+  const rem = Math.round(min % 60);
+  if (rem === 0) return `~${h}h`;
+  if (rem < 15) return `~${h}h`;
+  if (rem >= 45) return `~${h + 1}h`;
+  return `~${h}h ${rem}m`;
+}
+
 interface Props {
   groups: GroupedLessons[];
 }

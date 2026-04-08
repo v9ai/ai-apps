@@ -119,6 +119,17 @@ export function Search({ groups }: Props) {
           onChange={handleChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              if (query.length > 0) {
+                setQuery("");
+                setResults([]);
+                clearTimeout(timerRef.current);
+              }
+              inputRef.current?.blur();
+            }
+          }}
         />
         <div className="yc-search-controls">
           <div className="yc-search-toggle" role="radiogroup" aria-label="Search mode">

@@ -20,11 +20,16 @@ export function Topbar({ lessonCount }: { lessonCount?: number }) {
     return () => window.removeEventListener("active-category-change", onCategoryChange as EventListener);
   }, []);
 
-  /* Detect when user scrolls past the learning-path / hero area */
+  /* Detect when user scrolls past the learning-path / hero area + update scroll progress */
   useEffect(() => {
     function onScroll() {
       const threshold = window.innerHeight * 0.6;
       setScrolledPast(window.scrollY > threshold);
+
+      /* Scroll progress (0 to 1) for the topbar progress bar */
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(window.scrollY / docHeight, 1) : 0;
+      document.documentElement.style.setProperty("--scroll-progress", String(progress));
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();

@@ -91,6 +91,8 @@ interface Props {
   groups: GroupedLessons[];
 }
 
+const LESSON_COLLAPSE_THRESHOLD = 5;
+
 export function CategoryGrid({ groups }: Props) {
   const [activeSlug, setActiveSlug] = useState<string>("");
   const [focusedPillIndex, setFocusedPillIndex] = useState(0);
@@ -98,6 +100,29 @@ export function CategoryGrid({ groups }: Props) {
 
   /* Track which category sections have been scrolled past (for learning-path visited state) */
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
+
+  /* Expanded lesson lists (categories with >5 lessons start collapsed) */
+  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
+  /* Expanded outcomes (all start collapsed) */
+  const [expandedOutcomes, setExpandedOutcomes] = useState<Set<string>>(new Set());
+
+  const toggleLessons = useCallback((slug: string) => {
+    setExpandedLessons((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  }, []);
+
+  const toggleOutcomes = useCallback((slug: string) => {
+    setExpandedOutcomes((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const ids = groups.map((g) => `cat-${g.meta.slug}`);
@@ -214,19 +239,56 @@ export function CategoryGrid({ groups }: Props) {
               </span>
             </div>
             <div className="cat-card-desc">{group.meta.description}</div>
-            {group.meta.outcomes && group.meta.outcomes.length > 0 && (
-              <ul className="cat-card-outcomes">
-                {group.meta.outcomes.map((o, k) => (
-                  <li key={k}>{o}</li>
-                ))}
-              </ul>
-            )}
+            {group.meta.outcomes && group.meta.outcomes.length > 0 && (() => {
+              const slug = group.meta.slug;
+              const isOpen = expandedOutcomes.has(slug);
+              return (
+                <div className="cat-card-outcomes-wrap">
+                  <button
+                    className={`cat-card-outcomes-toggle${isOpen ? " cat-card-outcomes-toggle--open" : ""}`}
+                    onClick={() => toggleOutcomes(slug)}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="cat-card-outcomes-toggle-icon">{isOpen ? "\u25BE" : "\u25B8"}</span>
+                    What you&apos;ll learn
+                  </button>
+                  <ul className={`cat-card-outcomes${isOpen ? " cat-card-outcomes--open" : ""}`}>
+                    {group.meta.outcomes.map((o, k) => (
+                      <li key={k}>{o}</li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
             <div className="cat-card-divider">
               <span className="cat-card-divider-label">Lessons</span>
             </div>
-            {group.articles.map((lesson, j) => (
-              <LessonCard key={lesson.slug} lesson={lesson} isFirst={j === 0} />
-            ))}
+            {(() => {
+              const slug = group.meta.slug;
+              const total = group.articles.length;
+              const needsCollapse = total > LESSON_COLLAPSE_THRESHOLD;
+              const isExpanded = expandedLessons.has(slug);
+              const visible = needsCollapse && !isExpanded
+                ? group.articles.slice(0, LESSON_COLLAPSE_THRESHOLD)
+                : group.articles;
+              return (
+                <>
+                  {visible.map((lesson, j) => (
+                    <LessonCard key={lesson.slug} lesson={lesson} isFirst={j === 0} />
+                  ))}
+                  {needsCollapse && (
+                    <button
+                      className="cat-card-lessons-toggle"
+                      onClick={() => toggleLessons(slug)}
+                    >
+                      {isExpanded
+                        ? "Show fewer lessons"
+                        : `Show all ${total} lessons`}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
             <div className="cat-card-footer">
               <span className="cat-card-footer-time">
                 {Math.round(group.articles.reduce((sum, a) => sum + a.readingTimeMin, 0))} min total
