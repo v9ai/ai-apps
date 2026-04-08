@@ -434,6 +434,7 @@ export const applications = pgTable(
     aiInterviewQuestions: text("ai_interview_questions"),
     aiTechStack: text("ai_tech_stack"),
     techDismissedTags: text("tech_dismissed_tags"),
+    public: boolean("public").notNull().default(false),
     appliedAt: timestamp("applied_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

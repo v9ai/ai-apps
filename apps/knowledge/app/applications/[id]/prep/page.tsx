@@ -15,7 +15,6 @@ import {
 import { ArrowLeftIcon, ExternalLinkIcon } from "@radix-ui/react-icons";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSession } from "@/lib/auth-client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { AppData } from "@/components/app-detail/types";
@@ -23,32 +22,27 @@ import type { AppData } from "@/components/app-detail/types";
 function PrepPageInner() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { data: session, isPending } = useSession();
 
   const [app, setApp] = useState<AppData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isPending && !session?.user) {
-      router.push("/login");
-    }
-  }, [isPending, session, router]);
-
-  useEffect(() => {
-    if (session?.user && params.id) {
+    if (params.id) {
       fetch(`/api/applications/${params.id}`)
         .then((r) => {
+          if (r.status === 401) {
+            router.push("/login");
+            return null;
+          }
           if (!r.ok) throw new Error("Not found");
           return r.json();
         })
-        .then(setApp)
+        .then((data) => data && setApp(data))
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     }
-  }, [session, params.id]);
-
-  if (isPending || !session?.user) return null;
+  }, [params.id, router]);
 
   if (loading) {
     return (

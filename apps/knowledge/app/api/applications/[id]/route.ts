@@ -18,15 +18,26 @@ async function getSession() {
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const [session, { id }] = await Promise.all([getSession(), params]);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [row] = await db
+  if (session) {
+    const [row] = await db
+      .select()
+      .from(applications)
+      .where(whereApp(id, session.user.id));
+    if (row) return NextResponse.json(row);
+  }
+
+  // Allow public access for apps marked as public
+  const col = UUID_RE.test(id) ? applications.id : applications.slug;
+  const [publicRow] = await db
     .select()
     .from(applications)
-    .where(whereApp(id, session.user.id));
+    .where(and(eq(col, id), eq(applications.public, true)));
 
-  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(row);
+  if (publicRow) return NextResponse.json(publicRow);
+
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  return NextResponse.json({ error: "Not found" }, { status: 404 });
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
