@@ -130,29 +130,6 @@ const features: FeatureCardProps[] = [
   },
 ];
 
-const ARCHITECTURE_LAYERS = [
-  {
-    layer: "storage",
-    techs: ["SQLite WAL", "LanceDB HNSW", "ChromaDB"],
-    role: "hybrid graph + vector + document store",
-  },
-  {
-    layer: "ML / RL",
-    techs: ["DQN", "UCB1", "XGBoost", "BERT NER", "Siamese"],
-    role: "RL crawling + ensemble scoring",
-  },
-  {
-    layer: "generation",
-    techs: ["Ollama", "RAG", "BERTopic"],
-    role: "local LLM report generation",
-  },
-  {
-    layer: "evaluation",
-    techs: ["SHAP", "Evidently"],
-    role: "cascade error tracking + drift detection",
-  },
-] as const;
-
 export function LandingFeatures() {
   return (
     <section
