@@ -259,32 +259,25 @@ impl HfClient {
         let limit = opts.limit.min(100);
         let mut all = Vec::new();
         let mut page = 0;
-        let full_param = if opts.full { "&full=true" } else { "" };
 
         // Build optional filter query params
-        let mut extra_params = String::new();
-        if let Some(ref q) = opts.search {
-            extra_params.push_str(&format!("&search={}", url_encode(q)));
-        }
-        if let Some(ref author) = opts.author {
-            extra_params.push_str(&format!("&author={}", url_encode(author)));
-        }
+        let mut params: Vec<(&str, String)> = Vec::new();
+        if opts.full { params.push(("full", "true".into())); }
+        if let Some(ref q) = opts.search { params.push(("search", url_encode(q))); }
+        if let Some(ref a) = opts.author { params.push(("author", url_encode(a))); }
         if let Some(ref filters) = opts.filter {
-            for f in filters {
-                extra_params.push_str(&format!("&filter={}", url_encode(f)));
-            }
+            for f in filters { params.push(("filter", url_encode(f))); }
         }
-        if let Some(ref tag) = opts.pipeline_tag_filter {
-            extra_params.push_str(&format!("&pipeline_tag={}", url_encode(tag)));
-        }
-        if let Some(ref lib) = opts.library_filter {
-            extra_params.push_str(&format!("&library={}", url_encode(lib)));
-        }
+        if let Some(ref t) = opts.pipeline_tag_filter { params.push(("pipeline_tag", url_encode(t))); }
+        if let Some(ref l) = opts.library_filter { params.push(("library", url_encode(l))); }
+        let extra: String = params.iter().map(|(k, v)| format!("&{k}={v}")).collect();
 
         let mut next_url = Some(format!(
-            "{}/{}?sort={}&direction={}&limit={}{}{}",
-            self.api_base, prefix, opts.sort, opts.direction, limit, full_param, extra_params
+            "{}/{}?sort={}&direction={}&limit={}{}",
+            self.api_base, prefix, opts.sort, opts.direction, limit, extra
         ));
+
+        let list_id = format!("list:{prefix}");
 
         while let Some(url) = next_url.take() {
             if opts.max_pages > 0 && page >= opts.max_pages {
@@ -292,29 +285,7 @@ impl HfClient {
             }
             debug!(page, %url, "listing repos");
 
-            let resp = self.http.get(&url).send().await.map_err(|e| Error::Http {
-                repo: format!("list:{prefix}"),
-                source: e,
-            })?;
-
-            let status = resp.status();
-            if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
-                let retry = resp
-                    .headers()
-                    .get("retry-after")
-                    .and_then(|v| v.to_str().ok())
-                    .and_then(|s| s.parse().ok())
-                    .unwrap_or(60);
-                return Err(Error::RateLimited { retry_after_secs: retry });
-            }
-            if !status.is_success() {
-                let body = resp.text().await.unwrap_or_default();
-                return Err(Error::Api {
-                    repo: format!("list:{prefix}"),
-                    status: status.as_u16(),
-                    body,
-                });
-            }
+            let resp = send_checked(&self.http, &url, &list_id).await?;
 
             // Extract cursor from Link header: <URL>; rel="next"
             next_url = resp
@@ -324,11 +295,11 @@ impl HfClient {
                 .and_then(parse_next_link);
 
             let bytes = resp.bytes().await.map_err(|e| Error::Http {
-                repo: format!("list:{prefix}"),
+                repo: list_id.clone(),
                 source: e,
             })?;
             let batch: Vec<RepoInfo> = serde_json::from_slice(&bytes).map_err(|e| Error::Json {
-                repo: format!("list:{prefix}:page{page}"),
+                repo: format!("{list_id}:page{page}"),
                 source: e,
             })?;
 

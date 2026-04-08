@@ -491,6 +491,29 @@ impl<'a> OrgScanner<'a> {
             }
         }
 
+        // Detect deployment-format files (GGUF, ONNX, MLX) — indicate production usage
+        let deployment_extensions: &[(&str, &str)] = &[
+            (".gguf", "GGUF quantized model file"),
+            (".onnx", "ONNX exported model"),
+        ];
+        for (ext, evidence) in deployment_extensions {
+            if filenames.iter().any(|f| f.ends_with(ext)) {
+                signals.push(TrainingSignal {
+                    repo_id: repo_id.to_owned(),
+                    signal_type: TrainingSignalType::CustomArchitecture,
+                    evidence: evidence.to_string(),
+                });
+            }
+        }
+        // MLX-converted models (filenames like mlx_model.safetensors, mlx_lm/)
+        if filenames.iter().any(|f| f.starts_with("mlx") || f.contains("/mlx")) {
+            signals.push(TrainingSignal {
+                repo_id: repo_id.to_owned(),
+                signal_type: TrainingSignalType::CustomArchitecture,
+                evidence: "MLX-converted model files".to_string(),
+            });
+        }
+
         signals
     }
 
@@ -608,7 +631,7 @@ impl<'a> OrgScanner<'a> {
             // General sales mention (exclude "salesforce" — they publish general AI
             // research, not sales-specific models; only flag smaller sales platforms)
             (
-                &["hubspot", "gong.io", "outreach.io", "apollo.io", "6sense"],
+                &["hubspot", "gong.io", "outreach.io", "apollo.io", "6sense", "zoominfo", "clearbit", "lusha"],
                 SalesCategory::General,
                 "sales platform brand",
             ),
