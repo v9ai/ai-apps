@@ -71,7 +71,7 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
   const otherEntries = await db.listJournalEntries(userEmail, {
     familyMemberId: entry.familyMemberId ?? undefined,
   });
-  const siblings = otherEntries.filter(e => e.id !== journalEntryId).slice(0, 15);
+  const siblings = otherEntries.filter(e => e.id !== journalEntryId).slice(0, 8);
   if (siblings.length > 0) {
     const lines = siblings.map(e => {
       let line = `- ${e.entryDate}`;
@@ -134,10 +134,10 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
 
     // All issues
     if (issues.length > 0) {
-      const issueLines = issues.slice(0, 20).map((i: { id: number; title: string; severity: string; category: string; description: string; recommendations?: string[] | null }) => {
-        let line = `- [ID:${i.id}] **${i.title}** [${i.severity}/${i.category}]: ${i.description.slice(0, 200)}`;
+      const issueLines = issues.slice(0, 15).map((i: { id: number; title: string; severity: string; category: string; description: string; recommendations?: string[] | null }) => {
+        let line = `- [ID:${i.id}] **${i.title}** [${i.severity}/${i.category}]: ${i.description.slice(0, 150)}`;
         if (i.recommendations && i.recommendations.length > 0) {
-          line += `\n  Recommendations: ${i.recommendations.join("; ")}`;
+          line += `\n  Recommendations: ${i.recommendations.slice(0, 3).join("; ")}`;
         }
         return line;
       });
@@ -147,7 +147,7 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
       const issueIds = issues.map((i: { id: number }) => i.id);
       const issueResearch = await getResearchForFamilyMemberIssues(issueIds);
       if (issueResearch.length > 0) {
-        const rLines = issueResearch.slice(0, 15).map((r: { id: number; issueId: number | null; title: string; keyFindings: string[]; therapeuticTechniques: string[]; evidenceLevel: string | null }) => {
+        const rLines = issueResearch.slice(0, 10).map((r: { id: number; issueId: number | null; title: string; keyFindings: string[]; therapeuticTechniques: string[]; evidenceLevel: string | null }) => {
           let line = `- [ResearchID:${r.id}] "${r.title}"`;
           if (r.evidenceLevel) line += ` (${r.evidenceLevel})`;
           if (r.issueId) line += ` for issue #${r.issueId}`;
@@ -161,12 +161,12 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
 
     // Behavior observations
     if (observations.length > 0) {
-      const obsLines = observations.slice(0, 15).map((o: { observedAt: string; observationType: string; frequency?: number | null; intensity: string | null; context?: string | null; notes: string | null }) => {
+      const obsLines = observations.slice(0, 10).map((o: { observedAt: string; observationType: string; frequency?: number | null; intensity: string | null; context?: string | null; notes: string | null }) => {
         let line = `- ${o.observedAt}: ${o.observationType}`;
         if (o.frequency) line += `, freq=${o.frequency}`;
         if (o.intensity) line += `, intensity=${o.intensity}`;
-        if (o.context) line += ` | Context: ${o.context.slice(0, 150)}`;
-        if (o.notes) line += ` | Notes: ${o.notes.slice(0, 150)}`;
+        if (o.context) line += ` | Context: ${o.context.slice(0, 100)}`;
+        if (o.notes) line += ` | Notes: ${o.notes.slice(0, 100)}`;
         return line;
       });
       sections.push(`### Behavior Observations (${observations.length})\n${obsLines.join("\n")}`);
@@ -174,16 +174,16 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
 
     // Teacher feedbacks
     if (teacherFeedbacks.length > 0) {
-      const tfLines = teacherFeedbacks.slice(0, 10).map((tf: { feedbackDate: string; teacherName: string; subject: string | null; content: string }) =>
-        `- ${tf.feedbackDate} from ${tf.teacherName}${tf.subject ? ` (${tf.subject})` : ""}\n  ${tf.content.slice(0, 300)}`
+      const tfLines = teacherFeedbacks.slice(0, 5).map((tf: { feedbackDate: string; teacherName: string; subject: string | null; content: string }) =>
+        `- ${tf.feedbackDate} from ${tf.teacherName}${tf.subject ? ` (${tf.subject})` : ""}\n  ${tf.content.slice(0, 200)}`
       );
       sections.push(`### Teacher Feedbacks (${teacherFeedbacks.length})\n${tfLines.join("\n")}`);
     }
 
     // Contact feedbacks
     if (contactFeedbacks.length > 0) {
-      const cfLines = contactFeedbacks.slice(0, 10).map((cf: { feedbackDate: string; subject: string | null; content: string }) =>
-        `- ${cf.feedbackDate}${cf.subject ? ` (${cf.subject})` : ""}\n  ${cf.content.slice(0, 300)}`
+      const cfLines = contactFeedbacks.slice(0, 5).map((cf: { feedbackDate: string; subject: string | null; content: string }) =>
+        `- ${cf.feedbackDate}${cf.subject ? ` (${cf.subject})` : ""}\n  ${cf.content.slice(0, 200)}`
       );
       sections.push(`### Contact Feedbacks (${contactFeedbacks.length})\n${cfLines.join("\n")}`);
     }
