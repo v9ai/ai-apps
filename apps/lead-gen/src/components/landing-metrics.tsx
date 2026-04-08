@@ -2,7 +2,7 @@
 
 import { css, cx } from "styled-system/css";
 import { flex, grid, container } from "styled-system/patterns";
-import { BarChartIcon } from "@radix-ui/react-icons";
+import { BarChartIcon, GitHubLogoIcon, CheckCircledIcon } from "@radix-ui/react-icons";
 import { useCountUp } from "@/hooks/use-count-up";
 
 /* ------------------------------------------------------------------ */
@@ -202,7 +202,106 @@ export function LandingMetrics() {
             textTransform: "lowercase",
           })}
         >
-          All benchmarks from local Agentic Lead Gen runs — no cherry-picked cloud numbers.
+          All benchmarks from local runs — no cherry-picked cloud numbers.
+        </div>
+
+        {/* --- builder attribution (merged from standalone section) --- */}
+        <div
+          className={css({
+            mt: "8",
+            border: "1px solid",
+            borderColor: "ui.border",
+            bg: "ui.surface",
+            px: { base: "5", md: "6" },
+            py: { base: "4", md: "5" },
+          })}
+        >
+          <div
+            className={flex({
+              direction: { base: "column", md: "row" },
+              align: { base: "start", md: "center" },
+              gap: { base: "3", md: "5" },
+            })}
+          >
+            <div
+              className={css({
+                w: "40px",
+                h: "40px",
+                bg: "accent.subtle",
+                border: "1px solid",
+                borderColor: "accent.border",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                fontSize: "sm",
+                fontWeight: "bold",
+                color: "accent.primary",
+                letterSpacing: "tight",
+              })}
+            >
+              VN
+            </div>
+            <div className={css({ flex: 1, minWidth: 0 })}>
+              <p
+                className={css({
+                  fontSize: { base: "sm", md: "base" },
+                  color: "ui.heading",
+                  lineHeight: "relaxed",
+                  letterSpacing: "snug",
+                })}
+              >
+                Built by{" "}
+                <span className={css({ fontWeight: "bold" })}>Vadim Nicolai</span>
+                {" "}&mdash; an AI engineer who got tired of paying $10K+/year for
+                cloud CRMs. Autonomous agents crawl, extract, score, and enrich
+                B2B prospects end-to-end.
+              </p>
+              <div
+                className={flex({
+                  align: "center",
+                  gap: "4",
+                  mt: "2",
+                  flexWrap: "wrap",
+                })}
+              >
+                <span
+                  className={css({
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "2xs",
+                    color: "status.positive",
+                    letterSpacing: "wide",
+                    textTransform: "lowercase",
+                  })}
+                >
+                  <CheckCircledIcon width={10} height={10} />
+                  35 cited papers
+                </span>
+                <a
+                  href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={flex({
+                    align: "center",
+                    gap: "1.5",
+                  })}
+                  style={{
+                    color: "var(--gray-9)",
+                    fontSize: "10px",
+                    textDecoration: "none",
+                    letterSpacing: "0.04em",
+                    textTransform: "lowercase",
+                    transition: "color 0.15s",
+                  }}
+                >
+                  <GitHubLogoIcon width={12} height={12} />
+                  view source
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

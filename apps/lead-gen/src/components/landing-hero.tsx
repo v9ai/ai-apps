@@ -67,10 +67,10 @@ export function LandingHero() {
                 background:
                   "linear-gradient(135deg, {colors.ui.heading} 0%, {colors.accent.primary} 50%, {colors.status.positive} 100%)",
                 WebkitBackgroundClip: "text",
+                animationDelay: "0.5s",
               }),
               "headline-word",
             )}
-            style={{ animationDelay: "0.5s" }}
           >
             discover, enrich, and close B2B leads.
           </span>

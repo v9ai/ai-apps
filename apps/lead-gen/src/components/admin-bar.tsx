@@ -1,6 +1,7 @@
 "use client";
 
-import { Flex, Text } from "@radix-ui/themes";
+import { css } from "styled-system/css";
+import { flex } from "styled-system/patterns";
 import { Card, Badge } from "@/components/ui";
 
 interface AdminBarProps {
@@ -10,10 +11,10 @@ interface AdminBarProps {
 export function AdminBar({ userEmail }: AdminBarProps) {
   return (
     <Card padding="2" mb="2">
-      <Flex align="center" gap="2">
+      <div className={flex({ align: "center", gap: "2" })}>
         <Badge variant="orange">admin</Badge>
-        <Text size="1" color="gray">{userEmail}</Text>
-      </Flex>
+        <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>{userEmail}</span>
+      </div>
     </Card>
   );
 }

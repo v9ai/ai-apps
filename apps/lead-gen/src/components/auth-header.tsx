@@ -2,7 +2,8 @@
 
 import { GearIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
-import { Flex, Text } from "@radix-ui/themes";
+import { css } from "styled-system/css";
+import { flex } from "styled-system/patterns";
 import { Button } from "@/components/ui";
 import { authClient } from "@/lib/auth/client";
 import { AuthDialog } from "@/components/AuthDialog";
@@ -12,15 +13,15 @@ export function AuthHeader() {
 
   if (isPending) {
     return (
-      <Text size="1" color="gray" style={{ paddingLeft: 4, paddingRight: 4 }}>
+      <span className={css({ fontSize: "xs", color: "ui.tertiary", px: "1" })}>
         …
-      </Text>
+      </span>
     );
   }
 
   if (!session) {
     return (
-      <Flex direction="column" gap="2">
+      <div className={flex({ direction: "column", gap: "2" })}>
         <AuthDialog
           trigger={
             <Button variant="ghost" size="sm" style={{ width: "100%" }}>
@@ -37,25 +38,32 @@ export function AuthHeader() {
           }
           defaultMode="signup"
         />
-      </Flex>
+      </div>
     );
   }
 
   const displayName = session.user.name || session.user.email;
 
   return (
-    <Flex direction="column" gap="2">
-      <Text
-        size="1"
-        color="gray"
-        truncate
+    <div className={flex({ direction: "column", gap: "2" })}>
+      <span
+        className={css({
+          fontSize: "xs",
+          color: "ui.tertiary",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        })}
         title={displayName ?? undefined}
       >
         {displayName}
-      </Text>
-      <Flex align="center" gap="2">
-        <Link href="/settings" style={{ display: "flex", alignItems: "center" }}>
-          <GearIcon width={14} height={14} style={{ color: "var(--gray-9)" }} />
+      </span>
+      <div className={flex({ align: "center", gap: "2" })}>
+        <Link
+          href="/settings"
+          className={css({ display: "flex", alignItems: "center" })}
+        >
+          <GearIcon width={14} height={14} className={css({ color: "ui.tertiary" })} />
         </Link>
         <Button
           variant="ghost"
@@ -64,7 +72,7 @@ export function AuthHeader() {
         >
           sign out
         </Button>
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 }

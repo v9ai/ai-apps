@@ -1,0 +1,70 @@
+import { cva } from "styled-system/css";
+
+export const markdown = cva({
+  base: {
+    fontSize: "base",
+    lineHeight: "loose",
+    color: "ui.body",
+    "& h1, & h2, & h3": {
+      fontWeight: "bold",
+      color: "ui.heading",
+      mt: "5",
+      mb: "2",
+    },
+    "& h1": { fontSize: "2xl" },
+    "& h2": { fontSize: "xl" },
+    "& h3": { fontSize: "lg" },
+    "& p": { mb: "3" },
+    "& ul, & ol": { pl: "5", mb: "3" },
+    "& li": { mb: "1" },
+    "& strong": { fontWeight: "bold", color: "ui.heading" },
+    "& code": {
+      fontFamily: "mono",
+      fontSize: "sm",
+      bg: "ui.surfaceRaised",
+      px: "1",
+      borderRadius: "0",
+    },
+    "& pre": {
+      bg: "ui.surfaceRaised",
+      borderRadius: "0",
+      p: "3",
+      overflowX: "auto",
+      mb: "3",
+      border: "1px solid",
+      borderColor: "ui.border",
+    },
+    "& pre code": { bg: "transparent", p: "0" },
+    "& blockquote": {
+      borderLeft: "3px solid",
+      borderLeftColor: "accent.primary",
+      pl: "3",
+      color: "ui.secondary",
+      fontStyle: "italic",
+      mb: "3",
+    },
+    "& hr": {
+      border: "none",
+      borderTop: "1px solid",
+      borderTopColor: "ui.border",
+      my: "4",
+    },
+    "& table": {
+      borderCollapse: "collapse",
+      width: "100%",
+      my: "4",
+      fontSize: "sm",
+    },
+    "& th, & td": {
+      border: "1px solid",
+      borderColor: "ui.border",
+      p: "2",
+      textAlign: "left",
+    },
+    "& th": {
+      bg: "ui.surfaceRaised",
+      fontWeight: "bold",
+      color: "ui.heading",
+    },
+  },
+});

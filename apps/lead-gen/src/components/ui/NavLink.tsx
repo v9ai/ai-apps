@@ -1,24 +1,24 @@
 import Link from "next/link";
-import { type ComponentPropsWithoutRef, type CSSProperties } from "react";
+import { forwardRef, type ComponentPropsWithoutRef } from "react";
+import { cx } from "styled-system/css";
+import { navLink } from "@/recipes/nav";
 
-interface NavLinkProps extends Omit<ComponentPropsWithoutRef<typeof Link>, "style"> {
+interface NavLinkProps extends ComponentPropsWithoutRef<typeof Link> {
   active?: boolean;
-  style?: CSSProperties;
+  collapsed?: boolean;
 }
 
-export function NavLink({ active = false, children, style, ...rest }: NavLinkProps) {
-  return (
-    <Link
-      style={{
-        color: active ? "var(--gray-12)" : "var(--gray-11)",
-        textDecoration: "none",
-        textTransform: "lowercase",
-        transition: "color 0.15s",
-        ...style,
-      }}
-      {...rest}
-    >
-      {children}
-    </Link>
-  );
-}
+export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(
+  ({ active = false, collapsed = false, className, children, ...rest }, ref) => {
+    return (
+      <Link
+        ref={ref}
+        className={cx(navLink({ active, collapsed }), className)}
+        {...rest}
+      >
+        {children}
+      </Link>
+    );
+  }
+);
+NavLink.displayName = "NavLink";

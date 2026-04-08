@@ -4,7 +4,7 @@ import {
   EnvelopeClosedIcon,
   PersonIcon,
 } from "@radix-ui/react-icons";
-import { Flex } from "@radix-ui/themes";
+import { flex } from "styled-system/patterns";
 import { authClient } from "@/lib/auth/client";
 import { NavLink } from "@/components/ui";
 import { ADMIN_EMAIL } from "@/lib/constants";
@@ -21,17 +21,17 @@ export function AdminNav() {
   return (
     <>
       <NavLink href="/admin/contacts" title="Contacts">
-        <Flex align="center" gap="2">
+        <div className={flex({ align: "center", gap: "2" })}>
           <PersonIcon width={14} height={14} />
           contacts
-        </Flex>
+        </div>
       </NavLink>
 
       <NavLink href="/admin/emails" title="Emails">
-        <Flex align="center" gap="2">
+        <div className={flex({ align: "center", gap: "2" })}>
           <EnvelopeClosedIcon width={14} height={14} />
           emails
-        </Flex>
+        </div>
       </NavLink>
     </>
   );

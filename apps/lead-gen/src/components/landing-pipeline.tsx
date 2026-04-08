@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { css, cx } from "styled-system/css";
 import { flex, grid, container } from "styled-system/patterns";
 import { badge } from "@/recipes/badge";
@@ -15,15 +14,6 @@ import {
   CheckCircledIcon,
   ArrowRightIcon,
 } from "@radix-ui/react-icons";
-import {
-  ReactFlow,
-  Background,
-  BackgroundVariant,
-  Handle,
-  Position,
-  type Node,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -34,7 +24,6 @@ interface StageData {
   badge: string;
   step: string;
   accentOpacity: number;
-  [key: string]: unknown;
 }
 
 // ── Pipeline stage definitions ─────────────────────────────────────────────────
@@ -89,7 +78,7 @@ const PIPELINE_STAGES: StageData[] = [
     icon: <FileTextIcon width={20} height={20} />,
     title: "Report Generation",
     description:
-      "Agentic Lead Gen's local LLM agent (Ollama) + SQLite/ChromaDB RAG generates reports with 97% factual accuracy in 10-30s",
+      "Local LLM agent (Ollama) + SQLite/ChromaDB RAG generates reports with 97% factual accuracy in 10-30s",
     badge: "report",
     step: "05",
     accentOpacity: 0.9,
@@ -98,35 +87,27 @@ const PIPELINE_STAGES: StageData[] = [
     icon: <CheckCircledIcon width={20} height={20} />,
     title: "Evaluation",
     description:
-      "SHAP explanations + cascade error tracking monitor pipeline health — keeping Agentic Lead Gen accurate at scale (CER ~0.15)",
+      "SHAP explanations + cascade error tracking monitor pipeline health — keeping accuracy at scale (CER ~0.15)",
     badge: "evaluate",
     step: "06",
     accentOpacity: 1,
   },
 ];
 
-// ── Custom pipeline node ───────────────────────────────────────────────────────
+// ── Pipeline card ─────────────────────────────────────────────────────────────
 
-function PipelineNode({ data }: { data: Record<string, unknown> }) {
-  const stage = data as unknown as StageData;
-
+function PipelineStageCard({ stage }: { stage: StageData }) {
   return (
     <div
-      className={cx(pipelineCard(), "pipeline-card-hover")}
-      style={{
-        borderTop: `2px solid rgba(62, 99, 221, ${stage.accentOpacity})`,
-        position: "relative",
-        width: 220,
-        minHeight: 110,
-        boxSizing: "border-box",
-      }}
+      className={cx(
+        pipelineCard(),
+        css({
+          borderTop: `2px solid rgba(62, 99, 221, ${stage.accentOpacity})`,
+          position: "relative",
+        }),
+        "pipeline-card-hover",
+      )}
     >
-      <Handle
-        type="target"
-        position={Position.Top}
-        style={{ opacity: 0, pointerEvents: "none" }}
-      />
-
       <span
         className={css({
           fontSize: "3xl",
@@ -142,12 +123,10 @@ function PipelineNode({ data }: { data: Record<string, unknown> }) {
       >
         {stage.step}
       </span>
-
       <div className={flex({ align: "center", gap: "2", mb: "3" })}>
         <div className={iconHolder()}>{stage.icon}</div>
         <span className={badge({ variant: "pipeline" })}>{stage.badge}</span>
       </div>
-
       <p
         className={css({
           fontSize: "sm",
@@ -159,7 +138,6 @@ function PipelineNode({ data }: { data: Record<string, unknown> }) {
       >
         {stage.title}
       </p>
-
       <p
         className={css({
           fontSize: "xs",
@@ -169,70 +147,6 @@ function PipelineNode({ data }: { data: Record<string, unknown> }) {
       >
         {stage.description}
       </p>
-
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        style={{ opacity: 0, pointerEvents: "none" }}
-      />
-    </div>
-  );
-}
-
-const nodeTypes = { pipelineNode: PipelineNode };
-
-// ── Per-module diagram ─────────────────────────────────────────────────────────
-
-function ModuleDiagram({ stage }: { stage: StageData }) {
-  const nodes = useMemo<Node[]>(
-    () => [
-      {
-        id: stage.step,
-        type: "pipelineNode",
-        position: { x: 0, y: 0 },
-        data: stage as unknown as Record<string, unknown>,
-      },
-    ],
-    // stage is a module-level constant — deps array is intentionally empty
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
-
-  return (
-    <div
-      style={{ height: 196 }}
-      className={css({
-        border: "1px solid",
-        borderColor: "ui.border",
-        position: "relative",
-        overflow: "hidden",
-        transition: "border-color 150ms ease",
-        _hover: { borderColor: "ui.borderHover" },
-      })}
-    >
-      <ReactFlow
-        nodes={nodes}
-        edges={[]}
-        nodeTypes={nodeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.1 }}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable={false}
-        panOnDrag={false}
-        zoomOnScroll={false}
-        zoomOnPinch={false}
-        zoomOnDoubleClick={false}
-        colorMode="dark"
-        style={{ background: "transparent" }}
-      >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
-          color="rgba(255,255,255,0.04)"
-        />
-      </ReactFlow>
     </div>
   );
 }
@@ -244,6 +158,7 @@ export function LandingPipeline() {
     <section
       id="pipeline"
       className={css({
+        pt: { base: "sectionMobile", lg: "section" },
         pb: { base: "sectionMobile", lg: "section" },
         scrollMarginTop: "56px",
       })}
@@ -284,7 +199,7 @@ export function LandingPipeline() {
                   letterSpacing: "wide",
                 })}
               >
-                agentic lead gen — pipeline modules
+                pipeline modules
               </span>
             </div>
 
@@ -303,7 +218,7 @@ export function LandingPipeline() {
 
           {/* ── Right: module cards ── */}
           <div>
-            {/* ── Desktop: 2-column grid of individual module diagrams ──── */}
+            {/* ── Desktop: 2-column grid ── */}
             <div
               className={css({
                 display: { base: "none", md: "grid" },
@@ -315,16 +230,15 @@ export function LandingPipeline() {
                 <div
                   key={stage.step}
                   className={css({
-                    // span full width for the last (7th) card
                     gridColumn: i === 6 ? "1 / -1" : undefined,
                   })}
                 >
-                  <ModuleDiagram stage={stage} />
+                  <PipelineStageCard stage={stage} />
                 </div>
               ))}
             </div>
 
-            {/* ── Mobile: vertical stack ───────────────────────────────── */}
+            {/* ── Mobile: vertical stack ── */}
             <div
               className={grid({
                 columns: 1,
@@ -333,73 +247,25 @@ export function LandingPipeline() {
               })}
             >
               {PIPELINE_STAGES.map((stage, i) => (
-            <div key={stage.title} className="pipeline-card-animated">
-              {i > 0 && (
-                <div className={flex({ justify: "center", mb: "3" })}>
-                  <ArrowRightIcon
-                    width={16}
-                    height={16}
-                    className={cx(
-                      css({
-                        color: "ui.dim",
-                        transform: "rotate(90deg)",
-                      }),
-                      "pipeline-arrow-flow",
-                    )}
-                    data-pipeline-arrow={i - 1}
-                  />
+                <div key={stage.title} className="pipeline-card-animated">
+                  {i > 0 && (
+                    <div className={flex({ justify: "center", mb: "3" })}>
+                      <ArrowRightIcon
+                        width={16}
+                        height={16}
+                        className={cx(
+                          css({
+                            color: "ui.dim",
+                            transform: "rotate(90deg)",
+                          }),
+                          "pipeline-arrow-flow",
+                        )}
+                        data-pipeline-arrow={i - 1}
+                      />
+                    </div>
+                  )}
+                  <PipelineStageCard stage={stage} />
                 </div>
-              )}
-              <div
-                className={cx(pipelineCard(), "pipeline-card-hover")}
-                style={{
-                  borderTop: `2px solid rgba(62, 99, 221, ${stage.accentOpacity})`,
-                  position: "relative",
-                }}
-              >
-                <span
-                  className={css({
-                    fontSize: "3xl",
-                    fontWeight: "bold",
-                    lineHeight: "none",
-                    letterSpacing: "tighter",
-                    color: "ui.border",
-                    position: "absolute",
-                    top: "3",
-                    right: "4",
-                    userSelect: "none",
-                  })}
-                >
-                  {stage.step}
-                </span>
-                <div className={flex({ align: "center", gap: "2", mb: "3" })}>
-                  <div className={iconHolder()}>{stage.icon}</div>
-                  <span className={badge({ variant: "pipeline" })}>
-                    {stage.badge}
-                  </span>
-                </div>
-                <p
-                  className={css({
-                    fontSize: "sm",
-                    fontWeight: "semibold",
-                    color: "ui.heading",
-                    textTransform: "lowercase",
-                    mb: "1",
-                  })}
-                >
-                  {stage.title}
-                </p>
-                <p
-                  className={css({
-                    fontSize: "xs",
-                    color: "ui.secondary",
-                    lineHeight: "normal",
-                  })}
-                >
-                  {stage.description}
-                </p>
-              </div>
-            </div>
               ))}
             </div>
           </div>
