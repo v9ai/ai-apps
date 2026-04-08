@@ -1,289 +1,96 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { css, cx } from "styled-system/css";
-import { flex, container } from "styled-system/patterns";
-import { button } from "@/recipes/button";
 import {
-  ArrowRightIcon,
-  MagnifyingGlassIcon,
-  MixerVerticalIcon,
-  DesktopIcon,
-} from "@radix-ui/react-icons";
+  Box,
+  Flex,
+  Container,
+  Heading,
+  Text,
+  Grid,
+  Section,
+  Card,
+  Badge,
+} from "@radix-ui/themes";
+import Link from "next/link";
+import { css } from "styled-system/css";
+import { flex } from "styled-system/patterns";
+import { button } from "@/recipes/button";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 
-// ── Accent system ────────────────────────────────────────────────────────────
+const badgeStyle: React.CSSProperties = {
+  borderRadius: 0,
+  textTransform: "lowercase" as const,
+};
 
 const CARD_ACCENTS = [
-  { token: "accent.primary", raw: "#3E63DD", glow: "rgba(62, 99, 221, 0.25)", dimBg: "rgba(62, 99, 221, 0.06)" },
-  { token: "status.positive", raw: "#30A46C", glow: "rgba(48, 164, 108, 0.25)", dimBg: "rgba(48, 164, 108, 0.06)" },
-  { token: "status.negative", raw: "#E5484D", glow: "rgba(229, 72, 77, 0.25)", dimBg: "rgba(229, 72, 77, 0.06)" },
+  "#3E63DD", // accent.primary (indigo)
+  "#30A46C", // status.positive (green)
+  "#E5484D", // warm red
 ];
-
-const CARD_ICONS = [
-  <MagnifyingGlassIcon key="search" width={18} height={18} />,
-  <MixerVerticalIcon key="mixer" width={18} height={18} />,
-  <DesktopIcon key="desktop" width={18} height={18} />,
-];
-
-// ── Types ────────────────────────────────────────────────────────────────────
 
 interface FeatureCardProps {
   title: string;
   description: string;
   details: string[];
-  codeSnippet: string;
   index?: number;
 }
 
-// ── Code snippet component ───────────────────────────────────────────────────
-
-function CodeSnippet({ code, accentRaw }: { code: string; accentRaw: string }) {
-  return (
-    <div
-      className={css({
-        mt: "4",
-        p: "3",
-        bg: "rgba(10, 10, 15, 0.6)",
-        border: "1px solid",
-        borderColor: "ui.border",
-        fontFamily: "mono",
-        fontSize: "2xs",
-        lineHeight: "relaxed",
-        color: "ui.secondary",
-        overflow: "hidden",
-        position: "relative",
-      })}
-    >
-      {/* top bar */}
-      <div
-        className={flex({
-          align: "center",
-          gap: "2",
-          mb: "2",
-          pb: "2",
-        })}
-        style={{ borderBottom: `1px solid rgba(44, 44, 47, 0.5)` }}
-      >
-        <div
-          className={css({ w: "5px", h: "5px", flexShrink: 0, opacity: 0.5 })}
-          style={{ background: accentRaw }}
-        />
-        <span className={css({ fontSize: "2xs", color: "ui.dim", letterSpacing: "wide" })}>
-          example
-        </span>
-      </div>
-      <pre className={css({ whiteSpace: "pre-wrap", wordBreak: "break-all", m: 0 })}>
-        {code.split("\n").map((line, i) => (
-          <div key={i}>
-            <span className={css({ color: "ui.dim", userSelect: "none", mr: "2" })}>
-              {String(i + 1).padStart(2, " ")}
-            </span>
-            <CodeLine line={line} accentRaw={accentRaw} />
-          </div>
-        ))}
-      </pre>
-    </div>
-  );
-}
-
-/** Minimal syntax coloring — keywords, strings, numbers, comments */
-function CodeLine({ line, accentRaw }: { line: string; accentRaw: string }) {
-  const keywords = /\b(const|let|import|from|async|await|return|new|function|if|else|for|of|in|true|false|null)\b/g;
-  const strings = /(["'`])(?:(?!\1).)*?\1/g;
-  const numbers = /\b(\d+\.?\d*)\b/g;
-  const comments = /(\/\/.*)$/g;
-
-  type Segment = { text: string; color: string; start: number; end: number };
-  const segments: Segment[] = [];
-
-  let match: RegExpExecArray | null;
-
-  // comments first (highest priority)
-  while ((match = comments.exec(line)) !== null) {
-    segments.push({ text: match[0], color: "#5A5A5E", start: match.index, end: match.index + match[0].length });
-  }
-
-  // strings
-  while ((match = strings.exec(line)) !== null) {
-    segments.push({ text: match[0], color: "#30A46C", start: match.index, end: match.index + match[0].length });
-  }
-
-  // keywords
-  while ((match = keywords.exec(line)) !== null) {
-    segments.push({ text: match[0], color: accentRaw, start: match.index, end: match.index + match[0].length });
-  }
-
-  // numbers
-  while ((match = numbers.exec(line)) !== null) {
-    segments.push({ text: match[0], color: "#F5A623", start: match.index, end: match.index + match[0].length });
-  }
-
-  if (segments.length === 0) {
-    return <span>{line}</span>;
-  }
-
-  // sort by start position, remove overlaps
-  segments.sort((a, b) => a.start - b.start);
-  const filtered: Segment[] = [];
-  let lastEnd = 0;
-  for (const seg of segments) {
-    if (seg.start >= lastEnd) {
-      filtered.push(seg);
-      lastEnd = seg.end;
-    }
-  }
-
-  const parts: React.ReactNode[] = [];
-  let cursor = 0;
-  for (const seg of filtered) {
-    if (seg.start > cursor) {
-      parts.push(<span key={`t${cursor}`}>{line.slice(cursor, seg.start)}</span>);
-    }
-    parts.push(<span key={`s${seg.start}`} style={{ color: seg.color }}>{seg.text}</span>);
-    cursor = seg.end;
-  }
-  if (cursor < line.length) {
-    parts.push(<span key={`t${cursor}`}>{line.slice(cursor)}</span>);
-  }
-  return <>{parts}</>;
-}
-
-// ── Feature card ─────────────────────────────────────────────────────────────
-
-function FeatureCard({ title, description, details, codeSnippet, index = 0 }: FeatureCardProps) {
+function FeatureCard({ title, description, details, index = 0 }: FeatureCardProps) {
   const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
-  const icon = CARD_ICONS[index % CARD_ICONS.length];
-
   return (
-    <div
-      className={css({
-        border: "1px solid",
-        borderColor: "ui.border",
-        borderLeftWidth: "3px",
-        bg: "ui.surface",
-        transition: "transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms cubic-bezier(0.16,1,0.3,1), border-color 300ms ease",
-        _hover: {
-          transform: "translateY(-4px)",
-          borderColor: "ui.borderHover",
-        },
-      })}
+    <Card
       style={{
-        borderLeftColor: accent.raw,
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 32px rgba(0,0,0,0.4), 0 0 24px ${accent.glow}`;
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = "none";
+        borderRadius: 0,
+        boxShadow: "none",
+        border: "1px solid var(--gray-6)",
+        borderLeft: `3px solid ${accent}`,
+        background: "var(--gray-2)",
       }}
     >
-      <div className={css({ p: { base: "4", sm: "5" } })}>
-        {/* ── Header with icon ── */}
-        <div className={flex({ align: "center", gap: "3", mb: "3" })}>
-          <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              w: "32px",
-              h: "32px",
-              flexShrink: 0,
-              border: "1px solid",
-              borderColor: "ui.border",
-            })}
-            style={{ background: accent.dimBg, color: accent.raw }}
-          >
-            {icon}
-          </div>
-          <h3
-            className={css({
-              fontSize: "lg",
-              fontWeight: "bold",
-              color: "ui.heading",
-              letterSpacing: "tight",
-              lineHeight: "snug",
-            })}
-          >
-            {title}
-          </h3>
-        </div>
-
-        {/* ── Description ── */}
-        <p
-          className={css({
-            fontSize: "sm",
-            color: "ui.body",
-            lineHeight: "relaxed",
-            mb: "4",
-          })}
+      <Box p={{ initial: "3", sm: "4" }}>
+        <Heading
+          as="h3"
+          size="4"
+          weight="bold"
+          style={{
+            color: "var(--gray-12)",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.2,
+          }}
+          mb="3"
         >
+          {title}
+        </Heading>
+        <Text as="p" size="2" style={{ color: "var(--gray-11)", lineHeight: 1.6 }} mb="4">
           {description}
-        </p>
-
-        {/* ── Bullet points with checkmarks ── */}
-        <div className={flex({ direction: "column", gap: "2" })}>
+        </Text>
+        <Flex direction="column" gap="2">
           {details.map((detail) => (
-            <div key={detail} className={flex({ align: "baseline", gap: "2" })}>
-              <span
-                className={css({
-                  fontSize: "xs",
-                  fontWeight: "bold",
+            <Flex key={detail} align="baseline" gap="2">
+              <Box
+                style={{
+                  width: 4,
+                  height: 4,
+                  background: accent,
                   flexShrink: 0,
-                  lineHeight: "normal",
-                })}
-                style={{ color: accent.raw }}
-              >
-                &#10003;
-              </span>
-              <p
-                className={css({
-                  fontSize: "xs",
-                  color: "ui.secondary",
-                  lineHeight: "normal",
-                })}
+                  marginTop: 6,
+                  opacity: 0.6,
+                }}
+              />
+              <Text
+                as="p"
+                size="1"
+                style={{ color: "var(--gray-10)", lineHeight: 1.5 }}
               >
                 {detail}
-              </p>
-            </div>
+              </Text>
+            </Flex>
           ))}
-        </div>
-
-        {/* ── Code snippet ── */}
-        <CodeSnippet code={codeSnippet} accentRaw={accent.raw} />
-      </div>
-    </div>
+        </Flex>
+      </Box>
+    </Card>
   );
 }
-
-// ── IntersectionObserver hook for stagger animation ──────────────────────────
-
-function useStaggeredEntry(count: number) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return { ref, visible };
-}
-
-// ── Feature data ─────────────────────────────────────────────────────────────
 
 const features: FeatureCardProps[] = [
   {
@@ -295,193 +102,254 @@ const features: FeatureCardProps[] = [
       "UCB1 bandit balances exploration vs exploitation across 820 domains",
       "You get 3\u00d7 more relevant pages per crawl cycle, automatically",
     ],
-    codeSnippet: `const agent = new DQNAgent({
-  stateSize: 448,
-  actionSpace: 820,
-  bandit: 'ucb1',
-  gamma: 0.99
-});
-const action = await agent.selectDomain(state);`,
   },
   {
     title: "ML ensemble, not a single model",
     description:
-      "XGBoost handles 50% of scoring weight, logistic regression 25%, random forest 25%. Each model catches what the others miss \u2014 89.7% precision, 86.5% recall.",
+      "XGBoost handles 50% of scoring weight, logistic regression 25%, random forest 25%. each model catches what the others miss \u2014 89.7% precision, 86.5% recall.",
     details: [
       "Ensemble outperforms any single model by 4-7% on precision-recall AUC",
       "SHAP explanations show why each lead scored high or low",
       "Conformal prediction gives calibrated confidence intervals on every score",
     ],
-    codeSnippet: `const ensemble = new EnsembleScorer([
-  { model: xgboost, weight: 0.50 },
-  { model: logReg,  weight: 0.25 },
-  { model: randFor, weight: 0.25 },
-]);
-const { score, shap } = ensemble.predict(lead);`,
   },
   {
-    title: "Local-first \u2014 your data, your pipeline, your control",
+    title: "Local-first — your data, your pipeline, your control",
     description:
-      "SQLite graph + LanceDB vectors + ChromaDB embeddings \u2014 all local. No API calls to score leads \u2014 runs entirely on commodity hardware. $1,500/year total cost vs $5,400-13,200 for cloud alternatives.",
+      "SQLite graph + LanceDB vectors + ChromaDB embeddings \u2014 all local. no API calls to score leads — Agentic Lead Gen runs entirely on commodity hardware. $1,500/year total cost vs $5,400-13,200 for cloud alternatives.",
     details: [
       "~15 GB footprint for the entire pipeline with all indexes",
       "182ms per-lead end-to-end latency without LLM generation",
       "64-89% cost savings: commodity hardware vs cloud CRM subscriptions",
     ],
-    codeSnippet: `import { db } from '@/db';
-import { leads } from '@/db/schema';
-
-const qualified = await db
-  .select()
-  .from(leads)
-  .where(gte(leads.score, 0.85))
-  .limit(100);`,
   },
 ];
 
-// ── Component ────────────────────────────────────────────────────────────────
+const ARCHITECTURE_LAYERS = [
+  {
+    layer: "storage",
+    techs: ["SQLite WAL", "LanceDB HNSW", "ChromaDB"],
+    role: "hybrid graph + vector + document store",
+  },
+  {
+    layer: "ML / RL",
+    techs: ["DQN", "UCB1", "XGBoost", "BERT NER", "Siamese"],
+    role: "RL crawling + ensemble scoring",
+  },
+  {
+    layer: "generation",
+    techs: ["Ollama", "RAG", "BERTopic"],
+    role: "local LLM report generation",
+  },
+  {
+    layer: "evaluation",
+    techs: ["SHAP", "Evidently"],
+    role: "cascade error tracking + drift detection",
+  },
+] as const;
 
 export function LandingFeatures() {
-  const { ref, visible } = useStaggeredEntry(features.length);
-
   return (
-    <section
-      id="features"
-      className={css({
-        py: { base: "sectionMobile", lg: "section" },
-        scrollMarginTop: "56px",
-      })}
-    >
-      <div className={container({ maxW: "breakpoint-lg" })}>
-        {/* ── Section heading ── */}
-        <div className={css({ mt: "2", mb: "8" })}>
-          <div className={flex({ align: "center", gap: "2", mb: "3" })}>
-            <div
-              className={css({
-                w: "16px",
-                h: "2px",
-                bg: "accent.primary",
-              })}
-            />
-            <span
-              className={css({
-                fontSize: "2xs",
-                fontWeight: "bold",
-                color: "accent.primary",
-                textTransform: "uppercase",
-                letterSpacing: "editorial",
-              })}
-            >
-              Differentiators
-            </span>
-          </div>
-          <h2
-            className={css({
-              fontSize: { base: "2xl", md: "3xl" },
-              fontWeight: "bold",
-              color: "ui.heading",
-              letterSpacing: "tight",
-              lineHeight: "snug",
-            })}
+    <Section size="2" id="features" style={{ scrollMarginTop: 56 }}>
+      <Container size="3">
+        {/* -- heading -- */}
+        <Box mt="2" mb="6">
+          <Heading
+            as="h2"
+            size="5"
+            weight="bold"
+            style={{ color: "var(--gray-12)", letterSpacing: "-0.02em" }}
           >
             Why Agentic Lead Gen
-          </h2>
-          <p
-            className={css({
-              fontSize: "base",
-              color: "ui.tertiary",
-              mt: "2",
-              maxW: "620px",
-              lineHeight: "relaxed",
-            })}
+          </Heading>
+          <Text
+            as="p"
+            size="3"
+            mt="2"
+            style={{ color: "var(--gray-9)", maxWidth: 560 }}
           >
             Cloud CRMs are optimized for their margins, not your pipeline.
-            Agentic Lead Gen reverses that — autonomous agents on your hardware,
-            reinforcement learning over keyword matching, ML ensembles over single-model scoring.
-          </p>
-        </div>
+            Agentic Lead Gen reverses that — autonomous agents on your hardware, working 24/7.
+          </Text>
+        </Box>
 
-        {/* ── Feature cards with stagger animation ── */}
-        <div
-          ref={ref}
-          className={css({
-            display: "grid",
-            gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-            gap: "4",
-            mb: "6",
-          })}
+        {/* -- feature cards -- */}
+        <Grid
+          columns={{ initial: "1", md: "3" }}
+          gap="4"
+          mb="6"
         >
           {features.map((feature, i) => (
-            <div
-              key={feature.title}
-              className={css({
-                opacity: 0,
-              })}
-              style={
-                visible
-                  ? {
-                      animation: `feature-card-enter 0.5s cubic-bezier(0.16,1,0.3,1) forwards`,
-                      animationDelay: `${i * 150}ms`,
-                    }
-                  : undefined
-              }
-            >
-              <FeatureCard {...feature} index={i} />
-            </div>
+            <FeatureCard key={feature.title} {...feature} index={i} />
           ))}
-        </div>
+        </Grid>
 
-        {/* ── CTA block ── */}
-        <div
-          className={css({
-            py: "6",
-            px: "6",
-            border: "1px solid",
-            borderColor: "accent.border",
-            bg: "accent.subtle",
-          })}
+        {/* -- post-features CTA block -- */}
+        <Box
+          py="6"
+          px="6"
+          mb="6"
+          style={{
+            border: "1px solid var(--indigo-7)",
+            borderRadius: 0,
+            background: "rgba(62, 99, 221, 0.04)",
+          }}
         >
-          <div
-            className={flex({
-              direction: { base: "column", sm: "row" },
-              align: { base: "start", sm: "center" },
-              justify: "space-between",
-              gap: "4",
-            })}
+          <Flex
+            direction={{ initial: "column", sm: "row" }}
+            align={{ initial: "start", sm: "center" }}
+            justify="between"
+            gap="4"
           >
-            <div>
-              <p
-                className={css({
-                  fontSize: "base",
-                  fontWeight: "bold",
-                  color: "ui.heading",
-                  letterSpacing: "snug",
-                })}
+            <Box>
+              <Text
+                as="p"
+                size="3"
+                weight="bold"
+                style={{ color: "var(--gray-12)", letterSpacing: "-0.01em" }}
               >
-                Ready to deploy?
-              </p>
-              <p
-                className={css({
-                  fontSize: "sm",
-                  mt: "1",
-                  color: "ui.secondary",
-                })}
+                Ready to deploy Agentic Lead Gen?
+              </Text>
+              <Text
+                as="p"
+                size="2"
+                mt="1"
+                style={{ color: "var(--gray-10)" }}
               >
-                Autonomous agents. 300 qualified leads per cycle. Fully local.
-              </p>
-            </div>
+                Autonomous agents. 300 qualified leads per cycle. Fully local. 35 cited papers.
+              </Text>
+            </Box>
             <div className={flex({ gap: "3", flexShrink: 0 })}>
-              <Link
-                href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen#deploy"
+              <a
+                href="https://doi.org/10.5281/zenodo.lead-gen"
+                target="_blank"
+                rel="noopener noreferrer"
                 className={button({ variant: "solid", size: "md" })}
               >
-                Deploy now
+                Read the paper
                 <ArrowRightIcon width={14} height={14} />
-              </Link>
+              </a>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
+          </Flex>
+        </Box>
+
+        {/* -- architecture layers tech stack -- */}
+        <Box mb="6" id="stack" style={{ scrollMarginTop: 56 }}>
+          <Text
+            as="p"
+            size="1"
+            weight="medium"
+            mb="3"
+            style={{ color: "var(--gray-8)", textTransform: "lowercase" }}
+          >
+            architecture
+          </Text>
+          <Grid columns={{ initial: "1", sm: "2", md: "4" }} gap="3">
+            {ARCHITECTURE_LAYERS.map((layer) => (
+              <Box
+                key={layer.layer}
+                py="3"
+                px="4"
+                style={{
+                  border: "1px solid var(--gray-6)",
+                  borderRadius: 0,
+                  background: "var(--gray-2)",
+                }}
+              >
+                <Text
+                  as="p"
+                  size="1"
+                  weight="bold"
+                  style={{
+                    color: "var(--gray-12)",
+                    textTransform: "lowercase",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {layer.layer}
+                </Text>
+                <Text
+                  as="p"
+                  size="1"
+                  mt="1"
+                  style={{
+                    color: "var(--gray-9)",
+                    fontSize: "10px",
+                    letterSpacing: "0.02em",
+                    textTransform: "lowercase",
+                  }}
+                >
+                  {layer.role}
+                </Text>
+                <Flex gap="2" mt="2" wrap="wrap">
+                  {layer.techs.map((tech) => (
+                    <Badge
+                      key={tech}
+                      variant="outline"
+                      color="gray"
+                      size="1"
+                      style={badgeStyle}
+                    >
+                      {tech.toLowerCase()}
+                    </Badge>
+                  ))}
+                </Flex>
+              </Box>
+            ))}
+          </Grid>
+        </Box>
+
+        {/* -- open source callout -- */}
+        <Box
+          py="4"
+          px="5"
+          style={{
+            border: "1px solid var(--green-9)",
+            borderRadius: 0,
+            background: "transparent",
+          }}
+        >
+          <Flex
+            direction={{ initial: "column", sm: "row" }}
+            align={{ initial: "start", sm: "center" }}
+            justify="between"
+            gap="3"
+          >
+            <Text size="2" style={{ color: "var(--gray-11)" }}>
+              Agentic Lead Gen is fully open source — fork it, self-host it, extend the agents for your ICP
+            </Text>
+            <div className={flex({ gap: "3", flexShrink: 0 })}>
+              <Link
+                href="/deploy"
+                className={button({ variant: "solidGreen", size: "sm" })}
+              >
+                Deploy locally
+              </Link>
+              <a
+                href="/architecture"
+                className={css({
+                  display: "inline-flex",
+                  alignItems: "center",
+                  fontSize: "base",
+                  fontWeight: "medium",
+                  color: "var(--gray-9)",
+                  textDecoration: "none",
+                  textTransform: "lowercase",
+                  letterSpacing: "0.01em",
+                  borderBottom: "1px solid var(--gray-7)",
+                  paddingBottom: "1px",
+                  transition: "color 150ms ease",
+                  _hover: {
+                    color: "var(--gray-11)",
+                  },
+                })}
+              >
+                Architecture docs
+              </a>
+            </div>
+          </Flex>
+        </Box>
+      </Container>
+    </Section>
   );
 }

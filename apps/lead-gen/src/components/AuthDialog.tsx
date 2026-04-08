@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { css, cx } from "styled-system/css";
-import { flex } from "styled-system/patterns";
-import { button as buttonRecipe } from "@/recipes/button";
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  Button,
+  Flex,
+  Text,
+  TextField,
+  Separator,
+} from "@radix-ui/themes";
 import { authClient } from "@/lib/auth/client";
 
 type Mode = "signin" | "signup";
@@ -14,70 +19,6 @@ interface AuthDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
-
-const overlayStyle = css({
-  position: "fixed",
-  inset: 0,
-  zIndex: 50,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  bg: "rgba(10, 10, 15, 0.85)",
-  animation: "fadeIn 150ms ease",
-});
-
-const panelStyle = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  borderRadius: "md",
-  p: "6",
-  w: "full",
-  maxW: "400px",
-  mx: "4",
-  position: "relative",
-  animation: "fadeIn 150ms ease",
-});
-
-const inputStyle = css({
-  display: "block",
-  w: "full",
-  px: "3",
-  py: "2",
-  fontSize: "sm",
-  bg: "ui.bg",
-  border: "1px solid",
-  borderColor: "ui.border",
-  borderRadius: "sm",
-  color: "ui.body",
-  outline: "none",
-  transition: "border-color 150ms ease",
-  _focus: {
-    borderColor: "accent.primary",
-  },
-  _disabled: {
-    opacity: 0.5,
-    cursor: "not-allowed",
-  },
-  _placeholder: {
-    color: "ui.dim",
-  },
-});
-
-const labelTextStyle = css({
-  display: "block",
-  fontSize: "sm",
-  fontWeight: "medium",
-  mb: "1",
-  color: "ui.body",
-});
-
-const separatorStyle = css({
-  border: "none",
-  borderTop: "1px solid",
-  borderColor: "ui.border",
-  my: "4",
-});
 
 export function AuthDialog({
   trigger,
@@ -96,7 +37,6 @@ export function AuthDialog({
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -107,25 +47,6 @@ export function AuthDialog({
       setError(null);
     }
   }, [open, defaultMode]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, setOpen]);
-
-  const handleOverlayClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    },
-    [setOpen],
-  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,110 +72,94 @@ export function AuthDialog({
   };
 
   return (
-    <>
-      {trigger && (
-        <span onClick={() => setOpen(true)} style={{ cursor: "pointer" }}>
-          {trigger}
-        </span>
-      )}
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      {trigger && <Dialog.Trigger>{trigger}</Dialog.Trigger>}
+      <Dialog.Content style={{ maxWidth: 400 }}>
+        <Dialog.Title>
+          {mode === "signin" ? "Sign In" : "Create Account"}
+        </Dialog.Title>
+        <Dialog.Description size="2" mb="4" color="gray">
+          {mode === "signin"
+            ? "Sign in to your account."
+            : "Create a new account."}
+        </Dialog.Description>
 
-      {open && (
-        <div className={overlayStyle} onClick={handleOverlayClick}>
-          <div className={panelStyle} ref={panelRef} role="dialog" aria-modal="true">
-            <h2 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "1" })}>
-              {mode === "signin" ? "Sign In" : "Create Account"}
-            </h2>
-            <p className={css({ fontSize: "sm", color: "ui.tertiary", mb: "4" })}>
-              {mode === "signin"
-                ? "Sign in to your account."
-                : "Create a new account."}
-            </p>
-
-            <form onSubmit={handleSubmit}>
-              <div className={flex({ direction: "column", gap: "3" })}>
-                {mode === "signup" && (
-                  <label>
-                    <span className={labelTextStyle}>Name</span>
-                    <input
-                      className={inputStyle}
-                      placeholder="Your name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      disabled={loading}
-                    />
-                  </label>
-                )}
-
-                <label>
-                  <span className={labelTextStyle}>Email</span>
-                  <input
-                    className={inputStyle}
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </label>
-
-                <label>
-                  <span className={labelTextStyle}>Password</span>
-                  <input
-                    className={inputStyle}
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </label>
-
-                {error && (
-                  <span className={css({ fontSize: "sm", color: "status.negative" })}>
-                    {error}
-                  </span>
-                )}
-
-                <button
-                  type="submit"
+        <form onSubmit={handleSubmit}>
+          <Flex direction="column" gap="3">
+            {mode === "signup" && (
+              <label>
+                <Text as="div" size="2" mb="1" weight="medium">
+                  Name
+                </Text>
+                <TextField.Root
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   disabled={loading}
-                  className={cx(
-                    buttonRecipe({ variant: "solid", size: "md" }),
-                    css({ mt: "2", w: "full", justifyContent: "center" }),
-                  )}
-                >
-                  {loading
-                    ? "Loading..."
-                    : mode === "signin"
-                      ? "Sign In"
-                      : "Create Account"}
-                </button>
-              </div>
-            </form>
+                />
+              </label>
+            )}
 
-            <hr className={separatorStyle} />
+            <label>
+              <Text as="div" size="2" mb="1" weight="medium">
+                Email
+              </Text>
+              <TextField.Root
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </label>
 
-            <div className={flex({ justify: "center" })}>
-              <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
-                {mode === "signin" ? "No account? " : "Already have an account? "}
-                <span
-                  className={css({
-                    fontSize: "sm",
-                    color: "accent.primary",
-                    cursor: "pointer",
-                    _hover: { textDecoration: "underline" },
-                  })}
-                  onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-                >
-                  {mode === "signin" ? "Sign up" : "Sign in"}
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+            <label>
+              <Text as="div" size="2" mb="1" weight="medium">
+                Password
+              </Text>
+              <TextField.Root
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </label>
+
+            {error && (
+              <Text size="2" color="red">
+                {error}
+              </Text>
+            )}
+
+            <Button type="submit" disabled={loading} mt="2">
+              {loading
+                ? "Loading..."
+                : mode === "signin"
+                  ? "Sign In"
+                  : "Create Account"}
+            </Button>
+          </Flex>
+        </form>
+
+        <Separator size="4" my="4" />
+
+        <Flex justify="center">
+          <Text size="2" color="gray">
+            {mode === "signin" ? "No account? " : "Already have an account? "}
+            <Text
+              size="2"
+              color="indigo"
+              style={{ cursor: "pointer" }}
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+            >
+              {mode === "signin" ? "Sign up" : "Sign in"}
+            </Text>
+          </Text>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

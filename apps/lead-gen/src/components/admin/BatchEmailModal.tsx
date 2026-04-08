@@ -1,7 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { css } from "styled-system/css";
+import {
+  Badge,
+  Box,
+  Callout,
+  Checkbox,
+  Dialog,
+  Flex,
+  Heading,
+  ScrollArea,
+  Separator,
+  Spinner,
+  Text,
+  TextArea,
+  TextField,
+} from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 import {
   CalendarIcon,
@@ -15,64 +29,6 @@ import {
   MagicWandIcon,
   PaperPlaneIcon,
 } from "@radix-ui/react-icons";
-
-// ── Reusable form styles ─────────────────────────────────────────────────────
-
-const inputStyles = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  color: "ui.body",
-  p: "6px 10px",
-  fontSize: "base",
-  width: "100%",
-  outline: "none",
-  fontFamily: "inherit",
-  borderRadius: "0",
-  _focus: { borderColor: "accent.primary" },
-  _placeholder: { color: "ui.tertiary" },
-});
-
-const textareaStyles = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  color: "ui.body",
-  p: "2",
-  fontSize: "base",
-  width: "100%",
-  outline: "none",
-  fontFamily: "inherit",
-  borderRadius: "0",
-  resize: "vertical",
-  minHeight: "80px",
-  _focus: { borderColor: "accent.primary" },
-  _placeholder: { color: "ui.tertiary" },
-});
-
-const spinnerStyles = css({
-  display: "inline-block",
-  width: "16px",
-  height: "16px",
-  border: "2px solid",
-  borderColor: "ui.border",
-  borderTopColor: "accent.primary",
-  borderRadius: "50%",
-  animation: "spin 0.6s linear infinite",
-});
-
-const spinnerLargeStyles = css({
-  display: "inline-block",
-  width: "32px",
-  height: "32px",
-  border: "3px solid",
-  borderColor: "ui.border",
-  borderTopColor: "accent.primary",
-  borderRadius: "50%",
-  animation: "spin 0.6s linear infinite",
-});
-
-// ── Types ────────────────────────────────────────────────────────────────────
 
 interface Recipient {
   email: string;
@@ -232,87 +188,37 @@ export function BatchEmailModal({
     body.trim().length > 0 &&
     recipients.length > 0;
 
-  if (!open) return null;
-
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className={css({
-          position: "fixed",
-          inset: 0,
-          zIndex: 50,
-          bg: "rgba(10, 10, 15, 0.85)",
-          backdropFilter: "blur(12px)",
-        })}
-        onClick={() => handleOpenChange(false)}
-      />
-      {/* Panel */}
-      <div
-        className={css({
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          zIndex: 51,
-          bg: "ui.surface",
-          border: "1px solid",
-          borderColor: "ui.border",
-          width: "100%",
-          maxWidth: "700px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          p: "6",
-        })}
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Content
+        maxWidth="700px"
+        style={{ maxHeight: "90vh", overflowY: "auto" }}
       >
-        {/* Header */}
-        <div
-          className={css({
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            pb: "4",
-            mb: "4",
-            borderBottom: "1px solid",
-            borderBottomColor: "ui.border",
-          })}
-        >
-          <h2 className={css({ fontSize: "xl", fontWeight: "bold", color: "ui.heading" })}>
-            Send Batch Email
-          </h2>
-          <button
-            className={button({ variant: "ghost", size: "sm" })}
-            aria-label="Close"
-            onClick={() => handleOpenChange(false)}
-          >
-            <Cross2Icon />
-          </button>
-        </div>
+        <Flex justify="between" align="center" mb="4">
+          <Dialog.Title>
+            <Heading size="5">Send Batch Email</Heading>
+          </Dialog.Title>
+          <Dialog.Close>
+            <button className={button({ variant: "ghost", size: "sm" })} aria-label="Close">
+              <Cross2Icon />
+            </button>
+          </Dialog.Close>
+        </Flex>
 
         {state === "compose" && (
-          <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
+          <Flex direction="column" gap="4">
             {/* Recipients section */}
-            <div>
-              <div className={css({ display: "flex", gap: "2", alignItems: "center", justifyContent: "space-between" })}>
-                <div className={css({ display: "flex", gap: "2", alignItems: "center" })}>
-                  <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+            <Box>
+              <Flex gap="2" align="center" justify="between">
+                <Flex gap="2" align="center">
+                  <Text size="2" color="gray">
                     Recipients:
-                  </span>
-                  <span
-                    className={css({
-                      fontSize: "sm",
-                      px: "2",
-                      py: "1",
-                      bg: "accent.subtle",
-                      color: "accent.primary",
-                      border: "1px solid",
-                      borderColor: "accent.border",
-                    })}
-                  >
+                  </Text>
+                  <Badge color="blue" variant="soft" size="2">
                     {recipients.length} subscriber
                     {recipients.length === 1 ? "" : "s"}
-                  </span>
-                </div>
+                  </Badge>
+                </Flex>
                 <button
                   className={button({ variant: "ghost", size: "sm" })}
                   onClick={() => setShowRecipients(!showRecipients)}
@@ -320,72 +226,72 @@ export function BatchEmailModal({
                   {showRecipients ? <ChevronUpIcon /> : <ChevronDownIcon />}
                   {showRecipients ? "Hide" : "Preview"}
                 </button>
-              </div>
+              </Flex>
 
               {showRecipients && (
-                <div
-                  className={css({
-                    mt: "2",
-                    bg: "ui.surfaceRaised",
-                    p: "2",
-                  })}
+                <Box
+                  mt="2"
+                  style={{
+                    background: "var(--gray-a2)",
+                    borderRadius: 0,
+                    padding: "var(--space-2)",
+                  }}
                 >
-                  <div className={css({ overflowY: "auto", maxHeight: "140px" })}>
-                    <div className={css({ display: "flex", flexDirection: "column", gap: "1" })}>
+                  <ScrollArea style={{ maxHeight: 140 }}>
+                    <Flex direction="column" gap="1">
                       {recipients.slice(0, 10).map((r) => (
-                        <div key={r.email} className={css({ display: "flex", gap: "2", alignItems: "center" })}>
-                          <span className={css({ fontSize: "xs", fontWeight: "medium", color: "ui.body" })}>
+                        <Flex key={r.email} gap="2" align="center">
+                          <Text size="1" weight="medium">
                             {r.name}
-                          </span>
-                          <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                          </Text>
+                          <Text size="1" color="gray">
                             {r.email}
-                          </span>
-                        </div>
+                          </Text>
+                        </Flex>
                       ))}
                       {recipients.length > 10 && (
-                        <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                        <Text size="1" color="gray">
                           ...and {recipients.length - 10} more
-                        </span>
+                        </Text>
                       )}
-                    </div>
-                  </div>
-                </div>
+                    </Flex>
+                  </ScrollArea>
+                </Box>
               )}
-            </div>
+            </Box>
 
             {sendError !== null && (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.500/30", bg: "red.500/10" })}>
-                <ExclamationTriangleIcon />
-                <span className={css({ fontSize: "sm", color: "ui.body" })}>{sendError}</span>
-              </div>
+              <Callout.Root color="red" size="1">
+                <Callout.Icon>
+                  <ExclamationTriangleIcon />
+                </Callout.Icon>
+                <Callout.Text>{sendError}</Callout.Text>
+              </Callout.Root>
             )}
 
             {/* AI Generation */}
-            <div>
-              <span
-                className={css({
-                  fontSize: "sm",
-                  fontWeight: "medium",
-                  color: "ui.body",
-                  display: "block",
-                  mb: "2",
-                })}
+            <Box>
+              <Text
+                size="2"
+                weight="medium"
+                mb="2"
+                style={{ display: "block" }}
               >
                 AI Generation
-              </span>
-              <div className={css({ display: "flex", flexDirection: "column", gap: "2" })}>
-                <input
-                  className={inputStyles}
+              </Text>
+              <Flex direction="column" gap="2">
+                <TextField.Root
                   placeholder="Company name (optional)"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
+                  size="2"
                 />
-                <textarea
-                  className={textareaStyles}
+                <TextArea
                   placeholder="Instructions — e.g. pitch Rust/trading background, ask for a call"
                   value={instructions}
                   onChange={(e) => setInstructions(e.target.value)}
                   rows={3}
+                  size="2"
                 />
                 <button
                   className={button({ variant: "ghost" })}
@@ -394,7 +300,7 @@ export function BatchEmailModal({
                 >
                   {generating ? (
                     <>
-                      <div className={spinnerStyles} />
+                      <Spinner size="1" />
                       Generating with DeepSeek Reasoner...
                     </>
                   ) : (
@@ -405,226 +311,213 @@ export function BatchEmailModal({
                   )}
                 </button>
                 {genError !== null && (
-                  <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.500/30", bg: "red.500/10" })}>
-                    <ExclamationTriangleIcon />
-                    <span className={css({ fontSize: "sm", color: "ui.body" })}>{genError}</span>
-                  </div>
+                  <Callout.Root color="red" size="1">
+                    <Callout.Icon>
+                      <ExclamationTriangleIcon />
+                    </Callout.Icon>
+                    <Callout.Text>{genError}</Callout.Text>
+                  </Callout.Root>
                 )}
-              </div>
-            </div>
+              </Flex>
+            </Box>
 
-            <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
+            <Separator size="4" />
 
             {/* Subject */}
-            <div>
-              <label
-                className={css({
-                  fontSize: "sm",
-                  fontWeight: "medium",
-                  color: "ui.body",
-                  display: "block",
-                  mb: "1",
-                })}
+            <Box>
+              <Text
+                as="label"
+                size="2"
+                weight="medium"
+                mb="1"
+                style={{ display: "block" }}
               >
                 Subject
-              </label>
-              <input
-                className={inputStyles}
+              </Text>
+              <TextField.Root
                 placeholder="Email subject..."
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
+                size="2"
               />
-            </div>
+            </Box>
 
             {/* Body */}
-            <div>
-              <label
-                className={css({
-                  fontSize: "sm",
-                  fontWeight: "medium",
-                  color: "ui.body",
-                  display: "block",
-                  mb: "1",
-                })}
+            <Box>
+              <Text
+                as="label"
+                size="2"
+                weight="medium"
+                mb="1"
+                style={{ display: "block" }}
               >
                 Body
-              </label>
-              <span
-                className={css({
-                  fontSize: "xs",
-                  color: "ui.tertiary",
-                  display: "block",
-                  mb: "1",
-                })}
+              </Text>
+              <Text
+                size="1"
+                color="gray"
+                mb="1"
+                style={{ display: "block" }}
               >
                 Use {"{{name}}"} for personalization. Separate paragraphs with a
                 blank line.
-              </span>
-              <textarea
-                className={textareaStyles}
+              </Text>
+              <TextArea
                 placeholder={
                   "Hi {{name}},\n\nYour message here...\n\nThanks,\nThe Team"
                 }
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 rows={10}
+                size="2"
               />
-            </div>
+            </Box>
 
             {/* Preview personalization */}
             {body.trim() && recipients.length > 0 && (
-              <div>
-                <span className={css({ fontSize: "xs", fontWeight: "medium", color: "ui.tertiary", display: "block", mb: "1" })}>
+              <Box>
+                <Text size="1" weight="medium" color="gray" mb="1" style={{ display: "block" }}>
                   Preview ({recipients[0].name}):
-                </span>
-                <div
-                  className={css({
-                    bg: "ui.surfaceRaised",
-                    p: "2",
-                    fontSize: "xs",
+                </Text>
+                <Box
+                  style={{
+                    background: "var(--gray-a2)",
+                    borderRadius: 0,
+                    padding: "var(--space-2)",
+                    fontSize: "var(--font-size-1)",
                     whiteSpace: "pre-wrap",
-                    maxHeight: "120px",
+                    maxHeight: 120,
                     overflow: "auto",
-                    color: "ui.body",
-                  })}
+                  }}
                 >
                   {previewPersonalization(recipients[0].name)}
-                </div>
-              </div>
+                </Box>
+              </Box>
             )}
 
-            <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
+            <Separator size="4" />
 
             {/* Scheduling options */}
-            <div>
-              <span
-                className={css({
-                  fontSize: "sm",
-                  fontWeight: "medium",
-                  color: "ui.body",
-                  display: "block",
-                  mb: "2",
-                })}
+            <Box>
+              <Text
+                size="2"
+                weight="medium"
+                mb="2"
+                style={{ display: "block" }}
               >
                 Scheduling
-              </span>
-              <div className={css({ display: "flex", flexDirection: "column", gap: "2" })}>
-                <label className={css({ display: "flex", gap: "2", alignItems: "center", cursor: "pointer" })}>
-                  <input
-                    type="checkbox"
-                    checked={useScheduler}
-                    onChange={(e) => setUseScheduler(e.target.checked)}
-                    className={css({ accentColor: "accent.primary" })}
-                  />
-                  <span className={css({ fontSize: "sm", color: "ui.body" })}>
-                    Distribute across business days (Mon-Fri, 8am UTC)
-                  </span>
-                </label>
+              </Text>
+              <Flex direction="column" gap="2">
+                <Flex asChild gap="2" align="center">
+                  <label>
+                    <Checkbox
+                      checked={useScheduler}
+                      onCheckedChange={(checked) =>
+                        setUseScheduler(checked === true)
+                      }
+                    />
+                    <Text size="2">
+                      Distribute across business days (Mon-Fri, 8am UTC)
+                    </Text>
+                  </label>
+                </Flex>
 
                 {useScheduler ? (
-                  <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "accent.border", bg: "accent.subtle" })}>
-                    <CalendarIcon />
-                    <span className={css({ fontSize: "sm", color: "ui.body" })}>
+                  <Callout.Root color="blue" size="1">
+                    <Callout.Icon>
+                      <CalendarIcon />
+                    </Callout.Icon>
+                    <Callout.Text>
                       Emails will be distributed across business days with
                       random 2-45 minute delays between each. Adaptive rate:{" "}
                       {recipients.length < 50 ? "5" : Math.ceil(recipients.length / 30)}{" "}
                       emails/day.
-                    </span>
-                  </div>
+                    </Callout.Text>
+                  </Callout.Root>
                 ) : (
-                  <div className={css({ display: "flex", gap: "1", alignItems: "center" })}>
+                  <Flex gap="1" align="center">
                     <ClockIcon />
-                    <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                    <Text size="1" color="gray">
                       All emails scheduled 10 minutes from now.
-                    </span>
-                  </div>
+                    </Text>
+                  </Flex>
                 )}
-              </div>
-            </div>
+              </Flex>
+            </Box>
 
-            {/* Footer */}
-            <div className={css({ display: "flex", justifyContent: "flex-end", gap: "3", mt: "2" })}>
-              <button
-                className={button({ variant: "ghost" })}
-                onClick={() => handleOpenChange(false)}
-              >
-                Cancel
-              </button>
+            <Flex justify="end" gap="3" mt="2">
+              <Dialog.Close>
+                <button className={button({ variant: "ghost" })}>
+                  Cancel
+                </button>
+              </Dialog.Close>
               <button className={button({})} disabled={!canSend} onClick={handleSend}>
                 <PaperPlaneIcon />
                 {useScheduler ? "Schedule" : "Send"} to {recipients.length}{" "}
                 recipient{recipients.length === 1 ? "" : "s"}
               </button>
-            </div>
-          </div>
+            </Flex>
+          </Flex>
         )}
 
         {state === "sending" && (
-          <div className={css({ display: "flex", flexDirection: "column", alignItems: "center", gap: "4", py: "8" })}>
-            <div className={spinnerLargeStyles} />
-            <span className={css({ fontSize: "base", color: "ui.tertiary" })}>
+          <Flex direction="column" align="center" gap="4" py="8">
+            <Spinner size="3" />
+            <Text size="3" color="gray">
               {useScheduler
                 ? "Scheduling emails across business days..."
                 : "Sending emails..."}
-            </span>
-          </div>
+            </Text>
+          </Flex>
         )}
 
         {state === "done" && result !== null && (
-          <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
-            <div
-              className={css({
-                display: "flex",
-                gap: "3",
-                p: "3",
-                border: "1px solid",
-                borderColor: result.success ? "green.500/30" : "orange.500/30",
-                bg: result.success ? "green.500/10" : "orange.500/10",
-              })}
+          <Flex direction="column" gap="4">
+            <Callout.Root
+              color={result.success ? "green" : "orange"}
+              size="1"
             >
-              {result.success ? <CheckCircledIcon /> : <ExclamationTriangleIcon />}
-              <span className={css({ fontSize: "sm", color: "ui.body" })}>{result.message}</span>
-            </div>
+              <Callout.Icon>
+                {result.success ? (
+                  <CheckCircledIcon />
+                ) : (
+                  <ExclamationTriangleIcon />
+                )}
+              </Callout.Icon>
+              <Callout.Text>{result.message}</Callout.Text>
+            </Callout.Root>
 
             {result.schedulingPlan && (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "accent.border", bg: "accent.subtle" })}>
-                <CalendarIcon />
-                <span className={css({ fontSize: "sm", color: "ui.body" })}>{result.schedulingPlan}</span>
-              </div>
+              <Callout.Root color="blue" size="1">
+                <Callout.Icon>
+                  <CalendarIcon />
+                </Callout.Icon>
+                <Callout.Text>{result.schedulingPlan}</Callout.Text>
+              </Callout.Root>
             )}
 
             {result.sent.length > 0 && (
-              <div>
-                <div className={css({ display: "flex", gap: "2", alignItems: "center", mb: "2" })}>
-                  <CheckCircledIcon color="var(--colors-status-positive)" />
-                  <span className={css({ fontSize: "sm", fontWeight: "medium", color: "ui.body" })}>
+              <Box>
+                <Flex gap="2" align="center" mb="2">
+                  <CheckCircledIcon color="var(--green-9)" />
+                  <Text size="2" weight="medium">
                     Sent ({result.sent.length})
-                  </span>
-                </div>
-                <div className={css({ overflowY: "auto", maxHeight: "200px" })}>
-                  <div className={css({ display: "flex", flexDirection: "column", gap: "1" })}>
+                  </Text>
+                </Flex>
+                <ScrollArea style={{ maxHeight: 200 }}>
+                  <Flex direction="column" gap="1">
                     {result.sent.map((r) => (
-                      <div key={r.email} className={css({ display: "flex", gap: "2", alignItems: "center" })}>
-                        <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                      <Flex key={r.email} gap="2" align="center">
+                        <Text size="1" color="gray">
                           {r.email}
-                        </span>
+                        </Text>
                         {r.batchDay && (
-                          <span
-                            className={css({
-                              fontSize: "xs",
-                              px: "2",
-                              py: "1",
-                              bg: "accent.subtle",
-                              color: "accent.primary",
-                              border: "1px solid",
-                              borderColor: "accent.border",
-                            })}
-                          >
+                          <Badge color="blue" variant="soft" size="1">
                             Day {r.batchDay}
-                          </span>
+                          </Badge>
                         )}
                         {r.scheduledAt && (
-                          <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                          <Text size="1" color="gray">
                             {new Date(r.scheduledAt).toLocaleDateString("en-GB", {
                               weekday: "short",
                               month: "short",
@@ -632,44 +525,44 @@ export function BatchEmailModal({
                               hour: "2-digit",
                               minute: "2-digit",
                             })}
-                          </span>
+                          </Text>
                         )}
-                      </div>
+                      </Flex>
                     ))}
-                  </div>
-                </div>
-              </div>
+                  </Flex>
+                </ScrollArea>
+              </Box>
             )}
 
             {result.failed.length > 0 && (
-              <div>
-                <div className={css({ display: "flex", gap: "2", alignItems: "center", mb: "2" })}>
-                  <CrossCircledIcon color="var(--colors-red-9)" />
-                  <span className={css({ fontSize: "sm", fontWeight: "medium", color: "ui.body" })}>
+              <Box>
+                <Flex gap="2" align="center" mb="2">
+                  <CrossCircledIcon color="var(--red-9)" />
+                  <Text size="2" weight="medium">
                     Failed ({result.failed.length})
-                  </span>
-                </div>
-                <div className={css({ display: "flex", flexDirection: "column", gap: "1" })}>
+                  </Text>
+                </Flex>
+                <Flex direction="column" gap="1">
                   {result.failed.map((r) => (
-                    <span key={r.email} className={css({ fontSize: "xs", color: "red.400" })}>
+                    <Text key={r.email} size="1" color="red">
                       {r.email}: {r.error}
-                    </span>
+                    </Text>
                   ))}
-                </div>
-              </div>
+                </Flex>
+              </Box>
             )}
 
-            <div className={css({ display: "flex", justifyContent: "flex-end", gap: "3", mt: "2" })}>
+            <Flex justify="end" gap="3" mt="2">
               <button className={button({ variant: "ghost" })} onClick={resetForm}>
                 Compose Another
               </button>
-              <button className={button({})} onClick={() => handleOpenChange(false)}>
-                Done
-              </button>
-            </div>
-          </div>
+              <Dialog.Close>
+                <button className={button({})}>Done</button>
+              </Dialog.Close>
+            </Flex>
+          </Flex>
         )}
-      </div>
-    </>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

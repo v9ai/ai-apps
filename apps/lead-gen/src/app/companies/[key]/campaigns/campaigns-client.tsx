@@ -1,19 +1,18 @@
 "use client";
 
-import { css } from "styled-system/css";
-import { flex } from "styled-system/patterns";
+import { Callout, Container, Heading, Text, Table, Badge, Flex, Spinner } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 import { ExclamationTriangleIcon, PlusIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { useGetCompanyQuery, useGetEmailCampaignsQuery, useCreateDraftCampaignMutation } from "@/__generated__/hooks";
 
-const statusBadgeStyle: Record<string, { color: string; borderColor: string; bg: string }> = {
-  draft: { color: "ui.secondary", borderColor: "ui.border", bg: "transparent" },
-  pending: { color: "status.warning", borderColor: "status.warning", bg: "transparent" },
-  running: { color: "accent.primary", borderColor: "accent.primary", bg: "transparent" },
-  completed: { color: "status.positive", borderColor: "status.positive", bg: "status.positiveDim" },
-  failed: { color: "status.negative", borderColor: "status.negative", bg: "transparent" },
-  stopped: { color: "status.negative", borderColor: "status.negative", bg: "transparent" },
+const statusColors: Record<string, "green" | "yellow" | "blue" | "red" | "gray"> = {
+  draft: "gray",
+  pending: "yellow",
+  running: "blue",
+  completed: "green",
+  failed: "red",
+  stopped: "red",
 };
 
 export function CampaignsClient({ companyKey }: { companyKey: string }) {
@@ -36,33 +35,33 @@ export function CampaignsClient({ companyKey }: { companyKey: string }) {
 
   if (companyLoading || loading) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={flex({ justify: "center", align: "center" })} style={{ minHeight: "400px" }}>
-          <div className={css({ w: "16px", h: "16px", border: "2px solid", borderColor: "ui.border", borderTopColor: "accent.primary", borderRadius: "50%", animation: "spin 0.6s linear infinite" })} />
-        </div>
-      </div>
+      <Container size="4" p="8">
+        <Flex justify="center" align="center" style={{ minHeight: "400px" }}>
+          <Spinner size="3" />
+        </Flex>
+      </Container>
     );
   }
 
   if (companyError || campaignsError) {
     const message = companyError?.message ?? campaignsError?.message ?? "Unknown error";
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={flex({ gap: "3" })} style={{ padding: "12px", border: "1px solid", borderColor: "var(--colors-status-negative)" }}>
-          <div className={css({ flexShrink: 0 })}>
+      <Container size="4" p="8">
+        <Callout.Root color="red">
+          <Callout.Icon>
             <ExclamationTriangleIcon />
-          </div>
-          <span>Failed to load campaigns: {message}</span>
-        </div>
-      </div>
+          </Callout.Icon>
+          <Callout.Text>Failed to load campaigns: {message}</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
   if (!company) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <span className={css({ color: "status.negative" })}>Company not found</span>
-      </div>
+      <Container size="4" p="8">
+        <Text color="red">Company not found</Text>
+      </Container>
     );
   }
 
@@ -79,63 +78,60 @@ export function CampaignsClient({ companyKey }: { companyKey: string }) {
   };
 
   return (
-    <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "6" })}>
-      <div className={flex({ justify: "space-between", align: "center" })} style={{ marginBottom: "16px" }}>
+    <Container size="4" p="6">
+      <Flex justify="between" align="center" mb="4">
         <div>
-          <h2 className={css({ fontSize: "xl", fontWeight: "bold", color: "ui.heading" })}>
+          <Heading size="5">
             <Link href={`/companies/${companyKey}`} style={{ textDecoration: "none", color: "inherit" }}>
               {company.name}
             </Link>
             {" / Campaigns"}
-          </h2>
-          <span className={css({ fontSize: "sm", color: "ui.secondary" })}>{campaigns.length} campaign(s)</span>
+          </Heading>
+          <Text size="2" color="gray">{campaigns.length} campaign(s)</Text>
         </div>
         <button className={button({ variant: "ghost" })} onClick={handleCreate} disabled={creating}>
           <PlusIcon /> New Campaign
         </button>
-      </div>
+      </Flex>
 
       {campaigns.length === 0 ? (
-        <span className={css({ color: "ui.secondary" })}>No campaigns yet for this company.</span>
+        <Text color="gray">No campaigns yet for this company.</Text>
       ) : (
-        <table className={css({ borderCollapse: "collapse", width: "100%", fontSize: "sm" })}>
-          <thead>
-            <tr className={css({ borderBottom: "1px solid", borderBottomColor: "ui.border" })}>
-              <th className={css({ bg: "ui.surfaceRaised", fontWeight: "bold", p: "2 3", textAlign: "left", fontSize: "xs", color: "ui.secondary", textTransform: "lowercase" })}>Name</th>
-              <th className={css({ bg: "ui.surfaceRaised", fontWeight: "bold", p: "2 3", textAlign: "left", fontSize: "xs", color: "ui.secondary", textTransform: "lowercase" })}>Status</th>
-              <th className={css({ bg: "ui.surfaceRaised", fontWeight: "bold", p: "2 3", textAlign: "left", fontSize: "xs", color: "ui.secondary", textTransform: "lowercase" })}>Mode</th>
-              <th className={css({ bg: "ui.surfaceRaised", fontWeight: "bold", p: "2 3", textAlign: "left", fontSize: "xs", color: "ui.secondary", textTransform: "lowercase" })}>Recipients</th>
-              <th className={css({ bg: "ui.surfaceRaised", fontWeight: "bold", p: "2 3", textAlign: "left", fontSize: "xs", color: "ui.secondary", textTransform: "lowercase" })}>Sent</th>
-              <th className={css({ bg: "ui.surfaceRaised", fontWeight: "bold", p: "2 3", textAlign: "left", fontSize: "xs", color: "ui.secondary", textTransform: "lowercase" })}>Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {campaigns.map((campaign) => {
-              const style = statusBadgeStyle[campaign.status] ?? statusBadgeStyle.draft;
-              return (
-                <tr key={campaign.id} className={css({ borderBottom: "1px solid", borderBottomColor: "ui.border" })}>
-                  <td className={css({ p: "2 3" })}>
-                    <span className={css({ fontWeight: "medium" })}>{campaign.name}</span>
-                  </td>
-                  <td className={css({ p: "2 3" })}>
-                    <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: style.borderColor, color: style.color, bg: style.bg })}>
-                      {campaign.status}
-                    </span>
-                  </td>
-                  <td className={css({ p: "2 3" })}>{campaign.mode ?? "-"}</td>
-                  <td className={css({ p: "2 3" })}>{campaign.totalRecipients}</td>
-                  <td className={css({ p: "2 3" })}>{campaign.emailsSent}</td>
-                  <td className={css({ p: "2 3" })}>
-                    <span className={css({ fontSize: "xs", color: "ui.secondary" })}>
-                      {new Date(campaign.createdAt).toLocaleDateString()}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <Table.Root variant="surface">
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Mode</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Recipients</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Sent</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Created</Table.ColumnHeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {campaigns.map((campaign) => (
+              <Table.Row key={campaign.id}>
+                <Table.Cell>
+                  <Text weight="medium">{campaign.name}</Text>
+                </Table.Cell>
+                <Table.Cell>
+                  <Badge color={statusColors[campaign.status] ?? "gray"}>
+                    {campaign.status}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>{campaign.mode ?? "-"}</Table.Cell>
+                <Table.Cell>{campaign.totalRecipients}</Table.Cell>
+                <Table.Cell>{campaign.emailsSent}</Table.Cell>
+                <Table.Cell>
+                  <Text size="1" color="gray">
+                    {new Date(campaign.createdAt).toLocaleDateString()}
+                  </Text>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
       )}
-    </div>
+    </Container>
   );
 }

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import "@radix-ui/themes/styles.css";
 import "./globals.css";
-import { Theme } from "@radix-ui/themes";
+import { Theme, Flex } from "@radix-ui/themes";
 import { Providers } from "@/components/providers";
 import { SidebarProvider } from "@/components/sidebar-provider";
 import { Sidebar, MainContent } from "@/components/sidebar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Inter } from "next/font/google";
-import { css } from "styled-system/css";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.variable}>
         <a href="#main-content" className="skip-to-content">
           skip to content
@@ -36,10 +35,10 @@ export default function RootLayout({
           <Providers>
             <ErrorBoundary>
               <SidebarProvider>
-                <div className={css({ display: "flex", minHeight: "100vh" })}>
+                <Flex minHeight="100vh">
                   <Sidebar />
                   <MainContent>{children}</MainContent>
-                </div>
+                </Flex>
               </SidebarProvider>
             </ErrorBoundary>
           </Providers>

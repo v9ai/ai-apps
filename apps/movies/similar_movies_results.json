@@ -1,23 +1,22 @@
 {
-  "generated_at": "2026-04-08T17:13:37.027446+00:00",
-  "query_movie": "The LEGO Movie",
+  "generated_at": "2026-03-28T15:56:40.508033+00:00",
+  "query_movie": "The Little Mermaid",
   "results": [
     {
-      "age_rating": "G",
-      "director": "John Lasseter",
+      "age_rating": "PG",
+      "director": "Mark Osborne",
       "genre": [
         "Animation",
         "Adventure",
-        "Comedy",
-        "Family"
+        "Drama"
       ],
-      "imdb_rating": 8.3,
-      "platform": "Disney+",
+      "imdb_rating": 7.7,
+      "platform": "Netflix",
       "rank": 1,
-      "similarity_score": 0.5811414122581482,
-      "title": "Toy Story",
-      "why_similar": "It features toys coming to life and overcoming their rivalry through teamwork and creativity to save their owner, similar to the collaborative, imaginative spirit of The LEGO Movie.",
-      "year": 1995
+      "similarity_score": 0.31757673621177673,
+      "title": "The Little Prince",
+      "why_similar": "It shares themes of a sheltered child's life being transformed by a magical story that opens up a new world of imagination and possibility.",
+      "year": 2016
     },
     {
       "age_rating": "PG",
@@ -30,325 +29,58 @@
       "imdb_rating": 7.0,
       "platform": "Netflix",
       "rank": 2,
-      "similarity_score": 0.5267959237098694,
+      "similarity_score": 0.2620767056941986,
       "title": "The Super Mario Bros. Movie",
-      "why_similar": "An ordinary character is thrust into a vibrant, rules-bending world where he must believe in himself and team up with others to save the day, mirroring the underdog and collaborative themes of The LEGO Movie.",
+      "why_similar": "It is a family-friendly adventure about an ordinary person being transported to a magical kingdom and transforming into a hero to rescue a princess.",
       "year": 2023
     },
     {
-      "age_rating": "G",
-      "director": "Wolfgang Reitherman",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy",
-        "Family",
-        "Fantasy"
-      ],
-      "imdb_rating": 7.2,
-      "platform": "Disney+",
-      "rank": 3,
-      "similarity_score": 0.5228318572044373,
-      "title": "The Sword in the Stone",
-      "why_similar": "It follows a young, underestimated boy who is mentored through creative and unconventional lessons to unlock his potential, similar to Emmet's journey of self-discovery guided by more experienced builders.",
-      "year": 1963
-    },
-    {
-      "age_rating": "TV-PG",
-      "director": "Giancarlo Volpe (Season 1 lead)",
-      "genre": [
-        "Animation",
-        "Action",
-        "Adventure",
-        "Family",
-        "Fantasy"
-      ],
-      "imdb_rating": 8.3,
-      "platform": "Netflix",
-      "rank": 4,
-      "similarity_score": 0.5077305436134338,
-      "title": "The Dragon Prince",
-      "why_similar": "It centers on an unlikely team from opposing sides overcoming ancient fears and building trust on a quest, reflecting the core message of unity and cooperation against a divided world found in The LEGO Movie.",
-      "year": 2018
-    },
-    {
       "age_rating": "PG",
-      "director": "Brad Bird",
-      "genre": [
-        "Animation",
-        "Action",
-        "Adventure"
-      ],
-      "imdb_rating": 8.0,
-      "platform": "Disney+",
-      "rank": 5,
-      "similarity_score": 0.49608615040779114,
-      "title": "The Incredibles",
-      "why_similar": "A family of superheroes must combine their unique, individual talents and work as a team to defeat a villain, paralleling the 'team of specialists' and collaborative problem-solving in The LEGO Movie.",
-      "year": 2004
-    },
-    {
-      "age_rating": "G",
-      "director": "Stephen J. Anderson",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy",
-        "Family",
-        "Sci-Fi"
-      ],
-      "imdb_rating": 6.8,
-      "platform": "Disney+",
-      "rank": 6,
-      "similarity_score": 0.49114757776260376,
-      "title": "Meet the Robinsons",
-      "why_similar": "It follows a young, creative inventor who learns the importance of perseverance, family, and an optimistic forward-looking mindset, echoing the themes of creativity, failure, and hope in The LEGO Movie.",
-      "year": 2007
-    },
-    {
-      "age_rating": "PG",
-      "director": "Kevin R. Adams, Joe Ksander",
-      "genre": [
-        "Animation",
-        "Action",
-        "Adventure",
-        "Comedy",
-        "Family",
-        "Sci-Fi"
-      ],
-      "imdb_rating": 6.6,
-      "platform": "Netflix",
-      "rank": 7,
-      "similarity_score": 0.4905427098274231,
-      "title": "Next Gen",
-      "why_similar": "A lonely outcast and a rebellious robot form a friendship and use technology creatively to fight a corporate threat, similar to the bond between Emmet and Wyldstyle and the theme of individuality vs. conformity.",
-      "year": 2018
-    },
-    {
-      "age_rating": "PG",
-      "director": "Paul King",
-      "genre": [
-        "Adventure",
-        "Comedy",
-        "Family"
-      ],
-      "imdb_rating": 7.8,
-      "platform": "Netflix",
-      "rank": 8,
-      "similarity_score": 0.48701927065849304,
-      "title": "Paddington 2",
-      "why_similar": "An eternally optimistic and kind-hearted character inspires his diverse community to work together creatively to overcome injustice, mirroring the themes of positivity, community, and collaborative problem-solving in The LEGO Movie.",
-      "year": 2018
-    },
-    {
-      "age_rating": "TV-Y",
-      "director": "Alex Woo, Stanley Moore",
-      "genre": [
-        "Animation",
-        "Short",
-        "Adventure",
-        "Comedy",
-        "Family"
-      ],
-      "imdb_rating": 6.9,
-      "platform": "Netflix",
-      "rank": 9,
-      "similarity_score": 0.4825860261917114,
-      "title": "Go! Go! Cory Carson",
-      "why_similar": "A cheerful, positive protagonist navigates everyday adventures and learns about friendship and overcoming small fears, reflecting the upbeat, can-do attitude and simple collaborative lessons at the heart of The LEGO Movie.",
-      "year": 2024
-    },
-    {
-      "age_rating": "PG",
-      "director": "Sergio Pablos",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy",
-        "Drama",
-        "Family"
-      ],
-      "imdb_rating": 8.2,
-      "platform": "Netflix",
-      "rank": 10,
-      "similarity_score": 0.47932153940200806,
-      "title": "Klaus",
-      "why_similar": "It shares a theme of an ordinary, cynical person discovering the power of creativity and kindness to transform a community, much like Emmet in The LEGO Movie.",
-      "year": 2019
-    },
-    {
-      "age_rating": "G",
-      "director": "Jack Kinney, Clyde Geronimi, James Algar",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy",
-        "Family",
-        "Fantasy"
-      ],
-      "imdb_rating": 6.9,
-      "platform": "Disney+",
-      "rank": 11,
-      "similarity_score": 0.4784921407699585,
-      "title": "The Adventures of Ichabod and Mr. Toad",
-      "why_similar": "It features imaginative, larger-than-life characters whose obsessions lead them on wild adventures, echoing the boundless, rule-breaking creativity of The LEGO Movie.",
-      "year": 1949
-    },
-    {
-      "age_rating": "PG",
-      "director": "Rich Moore",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy",
-        "Family"
-      ],
-      "imdb_rating": 7.7,
-      "platform": "Disney+",
-      "rank": 12,
-      "similarity_score": 0.47113150358200073,
-      "title": "Wreck-It Ralph",
-      "why_similar": "It follows a character tired of his prescribed role who ventures into other worlds to prove his worth, similar to Emmet breaking free from his instructions to become the Special.",
-      "year": 2012
-    },
-    {
-      "age_rating": "PG",
-      "director": "Don Hall, Chris Williams",
-      "genre": [
-        "Animation",
-        "Action",
-        "Adventure",
-        "Comedy",
-        "Family",
-        "Sci-Fi"
-      ],
-      "imdb_rating": 7.8,
-      "platform": "Disney+",
-      "rank": 13,
-      "similarity_score": 0.46847277879714966,
-      "title": "Big Hero 6",
-      "why_similar": "A team of unlikely heroes uses creativity, technology, and teamwork to fight a villain, mirroring the inventive, build-anything spirit and ensemble heroics of The LEGO Movie.",
-      "year": 2014
-    },
-    {
-      "age_rating": "G",
-      "director": "Jerry Rees",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy",
-        "Drama",
-        "Family",
-        "Fantasy"
-      ],
-      "imdb_rating": 7.3,
-      "platform": "Disney+",
-      "rank": 14,
-      "similarity_score": 0.4626787602901459,
-      "title": "The Brave Little Toaster",
-      "why_similar": "A group of ordinary objects embarks on a perilous, heartfelt quest to reunite with their owner, reflecting the theme of loyalty and the hidden potential in everyday things central to The LEGO Movie.",
-      "year": 1987
-    },
-    {
-      "age_rating": "PG",
-      "director": "Joel Crawford",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy",
-        "Family",
-        "Fantasy"
-      ],
-      "imdb_rating": 7.9,
-      "platform": "Netflix",
-      "rank": 15,
-      "similarity_score": 0.4507544040679931,
-      "title": "Puss in Boots: The Last Wish",
-      "why_similar": "A self-centered hero learns to value friendship and teamwork over solo glory, similar to how The LEGO Movie's Batman learns to be part of a team.",
-      "year": 2022
-    },
-    {
-      "age_rating": "PG",
-      "director": "Mike Rianda",
-      "genre": [
-        "Animation",
-        "Action",
-        "Adventure",
-        "Comedy",
-        "Family",
-        "Sci-Fi"
-      ],
-      "imdb_rating": 7.6,
-      "platform": "Netflix",
-      "rank": 16,
-      "similarity_score": 0.443985253572464,
-      "title": "The Mitchells vs. The Machines",
-      "why_similar": "It celebrates chaotic creativity, individuality, and a dysfunctional family learning to work together, mirroring the inventive animation style and theme of embracing one's unique talents found in The LEGO Movie.",
-      "year": 2021
-    },
-    {
-      "age_rating": "PG",
-      "director": "Dan Scanlon",
+      "director": "Enrico Casarosa",
       "genre": [
         "Animation",
         "Adventure",
         "Comedy"
       ],
       "imdb_rating": 7.4,
-      "platform": "Disney+",
-      "rank": 17,
-      "similarity_score": 0.4419841170310974,
-      "title": "Onward",
-      "why_similar": "It shares a theme of an ordinary protagonist embarking on an extraordinary, imaginative quest that blends the mundane with the magical.",
-      "year": 2020
+      "platform": "Netflix",
+      "rank": 3,
+      "similarity_score": 0.24221742153167725,
+      "title": "Luca",
+      "why_similar": "It centers on a young sea creature who dreams of exploring the human world above the sea, hiding his true identity while discovering friendship and belonging.",
+      "year": 2021
     },
     {
       "age_rating": "PG",
-      "director": "Walt Dohrn",
+      "director": "Nathan Greno, Byron Howard",
       "genre": [
         "Animation",
         "Adventure",
         "Comedy"
       ],
-      "imdb_rating": 6.5,
-      "platform": "Netflix",
-      "rank": 18,
-      "similarity_score": 0.4401877522468567,
-      "title": "Trolls",
-      "why_similar": "It centers on an relentlessly optimistic hero who uses creativity, music, and friendship to overcome challenges in a brightly colored world.",
-      "year": 2016
-    },
-    {
-      "age_rating": "PG",
-      "director": "Wendy Rogers",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Drama"
-      ],
-      "imdb_rating": 6.7,
-      "platform": "Netflix",
-      "rank": 19,
-      "similarity_score": 0.42895880341529846,
-      "title": "The Magician's Elephant",
-      "why_similar": "It follows an ordinary boy on an impossible, imaginative quest that challenges the rules of his world and requires belief in the extraordinary.",
-      "year": 2023
+      "imdb_rating": 7.7,
+      "platform": "Disney+",
+      "rank": 4,
+      "similarity_score": 0.23839080333709717,
+      "title": "Tangled",
+      "why_similar": "It features a sheltered protagonist with a magical quality who yearns to explore the outside world and rebels against a manipulative parental figure.",
+      "year": 2010
     },
     {
       "age_rating": "G",
-      "director": "Pete Docter",
+      "director": "Clyde Geronimi, Wilfred Jackson, Hamilton Luske",
       "genre": [
         "Animation",
-        "Adventure",
-        "Comedy"
+        "Family",
+        "Fantasy"
       ],
-      "imdb_rating": 8.1,
+      "imdb_rating": 7.3,
       "platform": "Disney+",
-      "rank": 20,
-      "similarity_score": 0.4211808741092682,
-      "title": "Monsters, Inc.",
-      "why_similar": "It features a duo of mismatched partners in a highly imaginative world who undergo a transformative journey that changes their entire society's perspective.",
-      "year": 2001
+      "rank": 5,
+      "similarity_score": 0.23300200700759888,
+      "title": "Cinderella",
+      "why_similar": "It involves a transformative magical intervention that helps a kind-hearted protagonist escape a restrictive life and achieve her dreams of love and a better world.",
+      "year": 1950
     },
     {
       "age_rating": "PG",
@@ -360,111 +92,111 @@
       ],
       "imdb_rating": 7.0,
       "platform": "Netflix",
-      "rank": 21,
-      "similarity_score": 0.41928115487098694,
+      "rank": 6,
+      "similarity_score": 0.22087526321411133,
       "title": "The Sea Beast",
-      "why_similar": "It involves a naive but passionate character who joins a legendary adventurer, challenging established myths and forging a new, more truthful narrative.",
+      "why_similar": "It follows a young protagonist who forms a bond with a feared sea creature, challenging the beliefs of her guardian and bridging two opposing worlds, much like Ariel does.",
       "year": 2022
     },
     {
       "age_rating": "G",
-      "director": "John Lasseter",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy"
-      ],
-      "imdb_rating": 7.2,
-      "platform": "Disney+",
-      "rank": 22,
-      "similarity_score": 0.3988374173641205,
-      "title": "Cars",
-      "why_similar": "A self-centered protagonist learns humility and the value of community, mirroring the journey of Emmet in The LEGO Movie who learns he's more than just an ordinary guy.",
-      "year": 2006
-    },
-    {
-      "age_rating": "PG",
-      "director": "Pete Docter",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy"
-      ],
-      "imdb_rating": 8.3,
-      "platform": "Disney+",
-      "rank": 23,
-      "similarity_score": 0.3953837454319,
-      "title": "Up",
-      "why_similar": "It centers on an unlikely duo embarking on a grand, imaginative adventure, paralleling the partnership between Emmet and Wyldstyle in The LEGO Movie.",
-      "year": 2009
-    },
-    {
-      "age_rating": "PG",
-      "director": "Chris Sanders, Dean DeBlois",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy"
-      ],
-      "imdb_rating": 7.3,
-      "platform": "Disney+",
-      "rank": 24,
-      "similarity_score": 0.39472439885139465,
-      "title": "Lilo & Stitch",
-      "why_similar": "It focuses on a misfit finding a place to belong and forming a unique family, similar to how Emmet finds his purpose and builds a team in The LEGO Movie.",
-      "year": 2002
-    },
-    {
-      "age_rating": "G",
-      "director": "Andrew Stanton",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy"
-      ],
-      "imdb_rating": 8.2,
-      "platform": "Disney+",
-      "rank": 25,
-      "similarity_score": 0.3918361961841583,
-      "title": "Finding Nemo",
-      "why_similar": "A cautious parent embarks on a vast, perilous journey, forming an unlikely team to save his child, echoing the epic quest and team-building in The LEGO Movie.",
-      "year": 2003
-    },
-    {
-      "age_rating": "PG",
-      "director": "Sarah Smith, Jean-Philippe Vine, Octavio E. Rodriguez",
-      "genre": [
-        "Animation",
-        "Adventure",
-        "Comedy"
-      ],
-      "imdb_rating": 7.0,
-      "platform": "Disney+",
-      "rank": 26,
-      "similarity_score": 0.38875696063041687,
-      "title": "Ron's Gone Wrong",
-      "why_similar": "A boy and his defective robot friend challenge a conformist, corporate-controlled world, similar to The LEGO Movie's themes of creativity versus rigid order.",
-      "year": 2021
-    },
-    {
-      "age_rating": "PG",
       "director": "Ron Clements, John Musker",
       "genre": [
         "Animation",
         "Adventure",
         "Comedy"
       ],
-      "imdb_rating": 7.6,
+      "imdb_rating": 7.1,
       "platform": "Disney+",
-      "rank": 27,
-      "similarity_score": 0.3862834870815277,
-      "title": "Moana",
-      "why_similar": "An ordinary person discovers an extraordinary destiny and teams up with a flawed, legendary figure on a quest, much like Emmet's journey with Vitruvius in The LEGO Movie.",
-      "year": 2016
+      "rank": 7,
+      "similarity_score": 0.20885716378688812,
+      "title": "The Princess and the Frog",
+      "why_similar": "It features a protagonist who is magically transformed and embarks on an aquatic adventure, learning about true love and what matters most beyond her original ambitions.",
+      "year": 2009
     },
     {
       "age_rating": "PG",
-      "director": "Byron Howard, Rich Moore",
+      "director": "Mamoru Hosoda",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Drama"
+      ],
+      "imdb_rating": 7.0,
+      "platform": "Netflix",
+      "rank": 8,
+      "similarity_score": 0.176511749625206,
+      "title": "Mirai",
+      "why_similar": "It shares a theme of a young protagonist feeling displaced and embarking on a magical journey to understand their family and find their place, similar to Ariel's quest for identity.",
+      "year": 2018
+    },
+    {
+      "age_rating": "PG",
+      "director": "Mark Andrews, Brenda Chapman",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.1,
+      "platform": "Disney+",
+      "rank": 9,
+      "similarity_score": 0.17435021698474884,
+      "title": "Brave",
+      "why_similar": "It features a headstrong protagonist who defies parental expectations and uses a magical bargain to change their circumstances, mirroring Ariel's defiance and deal with Ursula.",
+      "year": 2012
+    },
+    {
+      "age_rating": "G",
+      "director": "Aaron Blaise, Robert Walker",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 6.8,
+      "platform": "Disney+",
+      "rank": 10,
+      "similarity_score": 0.1719173640012741,
+      "title": "Brother Bear",
+      "why_similar": "It centers on a protagonist who is magically transformed into a different being, leading to a journey of empathy and understanding about a world they once opposed, akin to Ariel's transformation.",
+      "year": 2003
+    },
+    {
+      "age_rating": "G",
+      "director": "Tony Bancroft, Barry Cook",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Drama"
+      ],
+      "imdb_rating": 7.7,
+      "platform": "Disney+",
+      "rank": 11,
+      "similarity_score": 0.16487310826778412,
+      "title": "Mulan",
+      "why_similar": "It follows a protagonist who must change her identity and defy societal/familial expectations to pursue her own path and protect her family, paralleling Ariel's journey.",
+      "year": 1998
+    },
+    {
+      "age_rating": "PG",
+      "director": "Chris Buck, Jennifer Lee",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy"
+      ],
+      "imdb_rating": 7.4,
+      "platform": "Disney+",
+      "rank": 12,
+      "similarity_score": 0.1553197056055069,
+      "title": "Frozen",
+      "why_similar": "It explores a magical crisis born from a character's true nature, themes of self-acceptance, and the tension between familial duty and personal identity, similar to Ariel's story.",
+      "year": 2013
+    },
+    {
+      "age_rating": "G",
+      "director": "Ron Clements, John Musker",
       "genre": [
         "Animation",
         "Adventure",
@@ -472,44 +204,208 @@
       ],
       "imdb_rating": 8.0,
       "platform": "Disney+",
-      "rank": 28,
-      "similarity_score": 0.385839968919754,
-      "title": "Zootopia",
-      "why_similar": "An optimistic underdog teams up with a cynical partner to solve a mystery and prove themselves, mirroring the dynamic and themes of belief in The LEGO Movie.",
-      "year": 2016
+      "rank": 13,
+      "similarity_score": 0.1545400619506836,
+      "title": "Aladdin",
+      "why_similar": "It features a protagonist who uses magical intervention to transform their social identity and win love, while grappling with themes of authenticity, much like Ariel.",
+      "year": 1992
     },
     {
       "age_rating": "G",
-      "director": "John Lasseter, Andrew Stanton",
+      "director": "Gary Trousdale, Kirk Wise",
+      "genre": [
+        "Animation",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 8.0,
+      "platform": "Disney+",
+      "rank": 14,
+      "similarity_score": 0.14648400247097015,
+      "title": "Beauty and the Beast",
+      "why_similar": "It is a classic tale of a transformative curse and a romance that challenges appearances and societal norms, echoing the magical transformation and 'fish-out-of-water' romance of The Little Mermaid.",
+      "year": 1991
+    },
+    {
+      "age_rating": "G",
+      "director": "Ron Clements, John Musker",
       "genre": [
         "Animation",
         "Adventure",
         "Comedy"
       ],
-      "imdb_rating": 7.2,
+      "imdb_rating": 7.3,
       "platform": "Disney+",
-      "rank": 29,
-      "similarity_score": 0.3830028772354126,
-      "title": "A Bug's Life",
-      "why_similar": "An inventive misfit recruits a ragtag team of performers to stand up against oppressive bullies, celebrating the underdog and teamwork like The LEGO Movie.",
-      "year": 1998
+      "rank": 15,
+      "similarity_score": 0.14276054501533508,
+      "title": "Hercules",
+      "why_similar": "It follows a protagonist who feels they don't belong in their world and must prove their worth on a journey of self-discovery to find their true place, similar to Ariel's arc.",
+      "year": 1997
     },
     {
       "age_rating": "PG",
-      "director": "Glen Keane",
+      "director": "Peter Sohn",
       "genre": [
         "Animation",
         "Adventure",
         "Comedy"
       ],
-      "imdb_rating": 6.5,
+      "imdb_rating": 7.0,
+      "platform": "Disney+",
+      "rank": 16,
+      "similarity_score": 0.13677500188350675,
+      "title": "Elemental",
+      "why_similar": "It centers on a protagonist from a tight-knit community who forms a forbidden connection with someone from a different world, challenging her father's expectations, much like Ariel's story.",
+      "year": 2023
+    },
+    {
+      "age_rating": "PG",
+      "director": "Jared Bush, Byron Howard, Charise Castro Smith",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Fantasy",
+        "Musical"
+      ],
+      "imdb_rating": 7.2,
+      "platform": "Disney+",
+      "rank": 17,
+      "similarity_score": 0.12948402762413025,
+      "title": "Encanto",
+      "why_similar": "It features a young protagonist who feels out of place in her family and community, embarking on a personal journey of self-discovery to find her place and save her home, similar to Ariel's quest for identity.",
+      "year": 2021
+    },
+    {
+      "age_rating": "G",
+      "director": "Mike Gabriel, Eric Goldberg",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Drama",
+        "Family",
+        "Musical",
+        "Romance"
+      ],
+      "imdb_rating": 6.7,
+      "platform": "Disney+",
+      "rank": 18,
+      "similarity_score": 0.12831702828407288,
+      "title": "Pocahontas",
+      "why_similar": "It centers on a strong-willed heroine who is drawn to a forbidden world and love interest, creating conflict with her father and exploring themes of bridging different worlds, much like Ariel.",
+      "year": 1995
+    },
+    {
+      "age_rating": "PG",
+      "director": "Dean DeBlois",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 7.8,
       "platform": "Netflix",
-      "rank": 30,
-      "similarity_score": 0.377387136220932,
-      "title": "Over the Moon",
-      "why_similar": "A determined protagonist uses boundless creativity and assembles a quirky team to achieve an impossible goal, similar to the imaginative, build-anything spirit of The LEGO Movie.",
+      "rank": 19,
+      "similarity_score": 0.11651340872049332,
+      "title": "How to Train Your Dragon 2",
+      "why_similar": "The protagonist, Hiccup, explores new worlds and faces a deep family conflict that challenges his identity and destiny, paralleling Ariel's exploration of a new world and conflict with her father.",
+      "year": 2014
+    },
+    {
+      "age_rating": "PG",
+      "director": "Kirk DeMicco",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Family",
+        "Musical"
+      ],
+      "imdb_rating": 6.7,
+      "platform": "Netflix",
+      "rank": 20,
+      "similarity_score": 0.11633086949586868,
+      "title": "Vivo",
+      "why_similar": "It follows a journey across a cultural divide to deliver a message of love, mirroring Ariel's journey between worlds to pursue love and connection.",
+      "year": 2021
+    },
+    {
+      "age_rating": "PG",
+      "director": "Joaquim Dos Santos, Kemp Powers, Justin K. Thompson",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Sci-Fi"
+      ],
+      "imdb_rating": 8.6,
+      "platform": "Netflix",
+      "rank": 21,
+      "similarity_score": 0.11320815980434418,
+      "title": "Spider-Man: Across the Spider-Verse",
+      "why_similar": "Miles Morales rebels against a predetermined fate to forge his own path and protect his family, similar to Ariel defying her father's rules and her oceanic destiny to choose her own life.",
+      "year": 2023
+    },
+    {
+      "age_rating": "PG",
+      "director": "Jun'ichi Satô, Tomotaka Shibayama",
+      "genre": [
+        "Animation",
+        "Drama",
+        "Family",
+        "Fantasy",
+        "Romance"
+      ],
+      "imdb_rating": 6.7,
+      "platform": "Netflix",
+      "rank": 22,
+      "similarity_score": 0.11142349243164062,
+      "title": "A Whisker Away",
+      "why_similar": "The protagonist uses a magical transformation to escape her current life and get closer to her crush, exploring themes of identity and true feelings, akin to Ariel's deal with Ursula to become human.",
       "year": 2020
+    },
+    {
+      "age_rating": "PG",
+      "director": "Don Hall, Carlos López Estrada",
+      "genre": [
+        "Animation",
+        "Action",
+        "Adventure",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 7.3,
+      "platform": "Disney+",
+      "rank": 23,
+      "similarity_score": 0.1060778871178627,
+      "title": "Raya and the Last Dragon",
+      "why_similar": "It features a determined heroine on a quest to heal her fractured world, learning about trust and sacrifice, similar to Ariel's mission to unite her world with the human world through love and perseverance.",
+      "year": 2021
+    },
+    {
+      "age_rating": "PG",
+      "director": "Sergio Pablos",
+      "genre": [
+        "Animation",
+        "Adventure",
+        "Comedy",
+        "Drama",
+        "Family",
+        "Fantasy"
+      ],
+      "imdb_rating": 8.2,
+      "platform": "Netflix",
+      "rank": 24,
+      "similarity_score": 0.09701857715845108,
+      "title": "Klaus",
+      "why_similar": "It follows a selfish protagonist's transformative journey where he finds purpose and connection, bridging a family and community conflict, much like Ariel's transformation from a self-focused dreamer to a heroine who unites two worlds.",
+      "year": 2019
     }
   ],
-  "total_results": 30
+  "total_results": 24
 }

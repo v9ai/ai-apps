@@ -2,8 +2,21 @@
 
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { css, cx } from "styled-system/css";
-import { flex } from "styled-system/patterns";
+import {
+  Badge,
+  Box,
+  Card,
+  Container,
+  Dialog,
+  Flex,
+  Heading,
+  Spinner,
+  Switch,
+  Tabs,
+  Text,
+  TextArea,
+  TextField,
+} from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 import {
   ExternalLinkIcon,
@@ -61,19 +74,21 @@ type ReceivedEmail = {
   created_at: string;
 };
 
-function statusBadgeStyles(status: string) {
+function statusColor(
+  status: string,
+): "green" | "blue" | "red" | "orange" | "gray" {
   switch (status) {
     case "delivered":
-      return css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" });
+      return "green";
     case "sent":
-      return css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "blue.9", color: "blue.9", bg: "blue.3" });
+      return "blue";
     case "bounced":
     case "complained":
-      return css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "red.9", color: "red.9", bg: "red.3" });
+      return "red";
     case "delivery_delayed":
-      return css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "orange.9", color: "orange.9", bg: "orange.3" });
+      return "orange";
     default:
-      return css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", bg: "ui.surface" });
+      return "gray";
   }
 }
 
@@ -84,16 +99,16 @@ type StatCardProps = {
 
 function StatCard({ label, value }: StatCardProps) {
   return (
-    <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-      <div className={flex({ direction: "column", gap: "1" })}>
-        <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+    <Card>
+      <Flex direction="column" gap="1" p="1">
+        <Text size="1" color="gray">
           {label}
-        </span>
-        <span className={css({ fontSize: "xl", fontWeight: "bold" })}>
+        </Text>
+        <Text size="5" weight="bold">
           {value}
-        </span>
-      </div>
-    </div>
+        </Text>
+      </Flex>
+    </Card>
   );
 }
 
@@ -104,10 +119,10 @@ type StatSectionProps = {
 
 function StatSection({ title, stats }: StatSectionProps) {
   return (
-    <div>
-      <div className={css({ fontSize: "sm", fontWeight: "bold", mb: "2" })}>
+    <Box>
+      <Text size="2" weight="bold" mb="2" as="div">
         {title}
-      </div>
+      </Text>
       <div
         style={{
           display: "grid",
@@ -119,7 +134,7 @@ function StatSection({ title, stats }: StatSectionProps) {
           <StatCard key={s.label} label={s.label} value={s.value} />
         ))}
       </div>
-    </div>
+    </Box>
   );
 }
 
@@ -130,22 +145,22 @@ function EmailStatsDashboard() {
 
   if (loading && !data) {
     return (
-      <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
-        Loading stats\u2026
-      </span>
+      <Text color="gray" size="2">
+        Loading stats…
+      </Text>
     );
   }
 
   if (error) {
     return (
-      <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-        <div className={flex({ gap: "2", align: "center" })}>
+      <Card>
+        <Flex gap="2" align="center">
           <ExclamationTriangleIcon color="red" />
-          <span className={css({ fontSize: "sm", color: "red.9" })}>
+          <Text color="red" size="2">
             {error.message}
-          </span>
-        </div>
-      </div>
+          </Text>
+        </Flex>
+      </Card>
     );
   }
 
@@ -153,22 +168,22 @@ function EmailStatsDashboard() {
 
   if (!stats) {
     return (
-      <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-        <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+      <Card>
+        <Text color="gray" size="2">
           No stats available.
-        </span>
-      </div>
+        </Text>
+      </Card>
     );
   }
 
   return (
-    <div className={flex({ direction: "column", gap: "5" })}>
-      <div className={flex({ justify: "space-between", align: "center" })}>
-        <h2 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading" })}>Email Statistics</h2>
+    <Flex direction="column" gap="5">
+      <Flex justify="between" align="center">
+        <Heading size="4">Email Statistics</Heading>
         <button className={button({ variant: "ghost", size: "sm" })} onClick={() => refetch()}>
           <ReloadIcon /> Refresh
         </button>
-      </div>
+      </Flex>
 
       <StatSection
         title="Sending"
@@ -214,7 +229,7 @@ function EmailStatsDashboard() {
           { label: "Opened this month", value: stats.openedThisMonth },
         ]}
       />
-    </div>
+    </Flex>
   );
 }
 
@@ -261,88 +276,92 @@ function SentList() {
 
   if (loading) {
     return (
-      <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
-        Loading\u2026
-      </span>
+      <Text color="gray" size="2">
+        Loading…
+      </Text>
     );
   }
 
   if (error) {
     return (
-      <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-        <div className={flex({ gap: "2", align: "center" })}>
+      <Card>
+        <Flex gap="2" align="center">
           <ExclamationTriangleIcon color="red" />
-          <span className={css({ fontSize: "sm", color: "red.9" })}>
+          <Text color="red" size="2">
             {error}
-          </span>
-        </div>
-      </div>
+          </Text>
+        </Flex>
+      </Card>
     );
   }
 
   if (emails.length === 0) {
     return (
-      <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-        <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+      <Card>
+        <Text color="gray" size="2">
           No sent emails found.
-        </span>
-      </div>
+        </Text>
+      </Card>
     );
   }
 
   return (
-    <div className={flex({ direction: "column", gap: "2" })}>
-      <div className={flex({ justify: "space-between", align: "center", mb: "2" })}>
-        <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", bg: "ui.surface" })}>
+    <Flex direction="column" gap="2">
+      <Flex justify="between" align="center" mb="2">
+        <Badge color="gray" size="2" variant="soft">
           {emails.length} emails
-        </span>
-        <div className={flex({ gap: "2", align: "center" })}>
+        </Badge>
+        <Flex gap="2" align="center">
           <button
             className={button({ variant: "ghost", size: "sm" })}
             onClick={handleSync}
             disabled={syncing}
           >
-            <UpdateIcon /> {syncing ? "Syncing\u2026" : "Sync Resend"}
+            <UpdateIcon /> {syncing ? "Syncing…" : "Sync Resend"}
           </button>
           <button
             className={button({ variant: "ghost", size: "sm" })}
             onClick={handleImport}
             disabled={importing}
           >
-            <ReloadIcon /> {importing ? "Importing\u2026" : "Import from Resend"}
+            <ReloadIcon /> {importing ? "Importing…" : "Import from Resend"}
           </button>
           <button className={button({ variant: "ghost", size: "sm" })} onClick={load}>
             <ReloadIcon /> Refresh
           </button>
-        </div>
-      </div>
+        </Flex>
+      </Flex>
       {importSummary && (
-        <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+        <Text size="1" color="gray">
           {importSummary}
-        </span>
+        </Text>
       )}
       {emails.map((email) => (
-        <div key={email.id} className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-          <div className={flex({ justify: "space-between", align: "start", gap: "4" })}>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div className={flex({ gap: "2", align: "center", mb: "1", wrap: "wrap" })}>
+        <Card key={email.id}>
+          <Flex justify="between" align="start" gap="4">
+            <Box style={{ minWidth: 0, flex: 1 }}>
+              <Flex gap="2" align="center" mb="1" wrap="wrap">
                 <EnvelopeClosedIcon />
-                <span className={css({ fontSize: "sm", fontWeight: "bold", flex: "1" })}>
+                <Text size="2" weight="bold" style={{ flex: 1 }}>
                   {email.subject || "(no subject)"}
-                </span>
+                </Text>
                 {email.last_event && (
-                  <span className={statusBadgeStyles(email.last_event)}>
+                  <Badge
+                    color={statusColor(email.last_event)}
+                    size="1"
+                    variant="soft"
+                  >
                     {email.last_event}
-                  </span>
+                  </Badge>
                 )}
-              </div>
-              <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+              </Flex>
+              <Text size="1" color="gray">
                 To: {email.to?.join(", ")}
-              </span>
-              <div className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+              </Text>
+              <Text size="1" color="gray" as="div">
                 {new Date(email.created_at).toLocaleString()}
-              </div>
-            </div>
+              </Text>
+            </Box>
             <a
               href={`https://resend.com/emails/${email.id}`}
               target="_blank"
@@ -352,10 +371,10 @@ function SentList() {
             >
               Resend <ExternalLinkIcon />
             </a>
-          </div>
-        </div>
+          </Flex>
+        </Card>
       ))}
-    </div>
+    </Flex>
   );
 }
 
@@ -382,81 +401,79 @@ function ReceivedList() {
   };
 
   if (loading && !data) {
-    return <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>Loading\u2026</span>;
+    return <Text color="gray" size="2">Loading…</Text>;
   }
 
   if (error) {
     return (
-      <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-        <div className={flex({ gap: "2", align: "center" })}>
+      <Card>
+        <Flex gap="2" align="center">
           <ExclamationTriangleIcon color="red" />
-          <span className={css({ fontSize: "sm", color: "red.9" })}>{error.message}</span>
-        </div>
-      </div>
+          <Text color="red" size="2">{error.message}</Text>
+        </Flex>
+      </Card>
     );
   }
 
   return (
-    <div className={flex({ direction: "column", gap: "2" })}>
-      <div className={flex({ justify: "space-between", align: "center", mb: "2" })}>
-        <div className={flex({ gap: "2", align: "center" })}>
-          <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", bg: "ui.surface" })}>
-            {totalCount} emails
-          </span>
+    <Flex direction="column" gap="2">
+      <Flex justify="between" align="center" mb="2">
+        <Flex gap="2" align="center">
+          <Badge color="gray" size="2" variant="soft">{totalCount} emails</Badge>
           <button
             className={button({ variant: showArchived ? "solid" : "ghost", size: "sm" })}
             onClick={() => setShowArchived(!showArchived)}
           >
             {showArchived ? "Show Inbox" : "Show Archived"}
           </button>
-        </div>
+        </Flex>
         <button className={button({ variant: "ghost", size: "sm" })} onClick={() => refetch()}>
           <ReloadIcon /> Refresh
         </button>
-      </div>
+      </Flex>
       {emails.length === 0 ? (
-        <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-          <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+        <Card>
+          <Text color="gray" size="2">
             {showArchived ? "No archived emails." : "No received emails found."}
-          </span>
-        </div>
+          </Text>
+        </Card>
       ) : (
         emails.map((email) => (
-          <div key={email.id} className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-            <div className={flex({ justify: "space-between", align: "start", gap: "4" })}>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div className={flex({ gap: "2", align: "center", mb: "1" })}>
+          <Card key={email.id}>
+            <Flex justify="between" align="start" gap="4">
+              <Box style={{ minWidth: 0, flex: 1 }}>
+                <Flex gap="2" align="center" mb="1">
                   <EnvelopeOpenIcon />
-                  <span className={css({ fontSize: "sm", fontWeight: "bold", flex: "1" })}>
+                  <Text size="2" weight="bold" style={{ flex: 1 }}>
                     {email.subject || "(no subject)"}
-                  </span>
-                </div>
-                <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>From: {email.fromEmail}</span>
-                <div className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                  </Text>
+                </Flex>
+                <Text size="1" color="gray">From: {email.fromEmail}</Text>
+                <Text size="1" color="gray" as="div">
                   {new Date(email.receivedAt).toLocaleString()}
-                </div>
-              </div>
+                </Text>
+              </Box>
               <button
                 className={button({ variant: "ghost", size: "sm" })}
                 onClick={() => showArchived ? handleUnarchive(email.id) : handleArchive(email.id)}
               >
                 {showArchived ? "Unarchive" : "Archive"}
               </button>
-            </div>
-          </div>
+            </Flex>
+          </Card>
         ))
       )}
-    </div>
+    </Flex>
   );
 }
 
-const CAMPAIGN_STATUS_STYLES: Record<string, string> = {
-  draft: css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", bg: "ui.surface" }),
-  pending: css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "blue.9", color: "blue.9", bg: "blue.3" }),
-  running: css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "orange.9", color: "orange.9", bg: "orange.3" }),
-  completed: css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" }),
-  failed: css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "red.9", color: "red.9", bg: "red.3" }),
-  stopped: css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", bg: "ui.surface" }),
+const CAMPAIGN_STATUS_COLORS: Record<string, "gray" | "blue" | "green" | "red" | "orange"> = {
+  draft: "gray",
+  pending: "blue",
+  running: "orange",
+  completed: "green",
+  failed: "red",
+  stopped: "gray",
 };
 
 function CampaignsList() {
@@ -483,65 +500,54 @@ function CampaignsList() {
     refetch();
   }
 
-  if (loading) return <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>Loading\u2026</span>;
+  if (loading) return <Text color="gray" size="2">Loading…</Text>;
 
   return (
-    <div className={flex({ direction: "column", gap: "3" })}>
-      <div className={flex({ justify: "space-between", align: "center" })}>
-        <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", bg: "ui.surface" })}>
-          {campaigns.length} campaigns
-        </span>
-        <div>
-          <button className={button({ variant: "ghost", size: "sm" })} onClick={() => setCreateOpen(true)}>
-            <PlusIcon /> New Campaign
-          </button>
-        </div>
-      </div>
-
-      {/* Create Campaign Modal */}
-      {createOpen && (
-        <div className={css({ position: "fixed", inset: "0", bg: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: "50" })} onClick={() => setCreateOpen(false)}>
-          <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "400px", width: "100%" })} onClick={(e) => e.stopPropagation()}>
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "3" })}>New Campaign</h3>
+    <Flex direction="column" gap="3">
+      <Flex justify="between" align="center">
+        <Badge color="gray" size="2" variant="soft">{campaigns.length} campaigns</Badge>
+        <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
+          <Dialog.Trigger>
+            <button className={button({ variant: "ghost", size: "sm" })}><PlusIcon /> New Campaign</button>
+          </Dialog.Trigger>
+          <Dialog.Content maxWidth="400px">
+            <Dialog.Title>New Campaign</Dialog.Title>
             <form onSubmit={handleCreate}>
-              <div className={flex({ direction: "column", gap: "3" })}>
-                <input className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })} name="name" placeholder="Campaign name *" required />
-                <input className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })} name="fromEmail" placeholder="From email" type="email" />
-                <div className={flex({ gap: "3", justify: "end", mt: "2" })}>
-                  <button type="button" className={button({ variant: "ghost" })} onClick={() => setCreateOpen(false)}>Cancel</button>
-                  <button className={button({ variant: "ghost" })} type="submit" disabled={creating}>{creating ? "Creating\u2026" : "Create"}</button>
-                </div>
-              </div>
+              <Flex direction="column" gap="3" mt="3">
+                <TextField.Root name="name" placeholder="Campaign name *" required />
+                <TextField.Root name="fromEmail" placeholder="From email" type="email" />
+                <Flex gap="3" justify="end" mt="2">
+                  <Dialog.Close><button className={button({ variant: "ghost" })}>Cancel</button></Dialog.Close>
+                  <button className={button({ variant: "ghost" })} type="submit" disabled={creating}>{creating ? "Creating…" : "Create"}</button>
+                </Flex>
+              </Flex>
             </form>
-          </div>
-        </div>
-      )}
-
+          </Dialog.Content>
+        </Dialog.Root>
+      </Flex>
       {campaigns.length === 0 ? (
-        <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-          <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>No campaigns yet.</span>
-        </div>
+        <Card><Text color="gray" size="2">No campaigns yet.</Text></Card>
       ) : (
         campaigns.map((c) => (
-          <div key={c.id} className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-            <div className={flex({ justify: "space-between", align: "center", gap: "3" })}>
-              <div style={{ flex: 1 }}>
-                <div className={flex({ align: "center", gap: "2", mb: "1" })}>
-                  <span className={css({ fontSize: "sm", fontWeight: "bold" })}>{c.name}</span>
-                  <span className={CAMPAIGN_STATUS_STYLES[c.status] ?? CAMPAIGN_STATUS_STYLES.draft}>{c.status}</span>
-                </div>
-                <div className={flex({ gap: "3", wrap: "wrap" })}>
-                  <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>Sent: {c.emailsSent}/{c.totalRecipients}</span>
-                  {c.emailsFailed > 0 && <span className={css({ fontSize: "xs", color: "red.9" })}>Failed: {c.emailsFailed}</span>}
-                  <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>{new Date(c.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-              <div className={flex({ gap: "1" })}>
+          <Card key={c.id}>
+            <Flex justify="between" align="center" gap="3">
+              <Box style={{ flex: 1 }}>
+                <Flex align="center" gap="2" mb="1">
+                  <Text size="2" weight="bold">{c.name}</Text>
+                  <Badge color={CAMPAIGN_STATUS_COLORS[c.status] ?? "gray"} size="1" variant="soft">{c.status}</Badge>
+                </Flex>
+                <Flex gap="3" wrap="wrap">
+                  <Text size="1" color="gray">Sent: {c.emailsSent}/{c.totalRecipients}</Text>
+                  {c.emailsFailed > 0 && <Text size="1" color="red">Failed: {c.emailsFailed}</Text>}
+                  <Text size="1" color="gray">{new Date(c.createdAt).toLocaleDateString()}</Text>
+                </Flex>
+              </Box>
+              <Flex gap="1">
                 <button className={button({ variant: "ghost", size: "sm" })} onClick={() => setEditingCampaignId(c.id)}><Pencil1Icon /></button>
                 <button className={button({ variant: "ghost", size: "sm" })} onClick={() => handleDelete(c.id)}><TrashIcon /></button>
-              </div>
-            </div>
-          </div>
+              </Flex>
+            </Flex>
+          </Card>
         ))
       )}
       {editingCampaignId && (
@@ -552,7 +558,7 @@ function CampaignsList() {
           onSuccess={() => refetch()}
         />
       )}
-    </div>
+    </Flex>
   );
 }
 
@@ -592,73 +598,57 @@ function EmailTemplatesList() {
     refetch();
   }
 
-  if (loading) return <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>Loading\u2026</span>;
+  if (loading) return <Text color="gray" size="2">Loading…</Text>;
 
   return (
-    <div className={flex({ direction: "column", gap: "3" })}>
-      <div className={flex({ justify: "space-between", align: "center" })}>
-        <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", bg: "ui.surface" })}>
-          {templates.length} templates
-        </span>
-        <div>
-          <button className={button({ variant: "ghost", size: "sm" })} onClick={() => setCreateOpen(true)}>
-            <PlusIcon /> New Template
-          </button>
-        </div>
-      </div>
-
-      {/* Create Template Modal */}
-      {createOpen && (
-        <div className={css({ position: "fixed", inset: "0", bg: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: "50" })} onClick={() => setCreateOpen(false)}>
-          <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "500px", width: "100%" })} onClick={(e) => e.stopPropagation()}>
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "3" })}>New Email Template</h3>
+    <Flex direction="column" gap="3">
+      <Flex justify="between" align="center">
+        <Badge color="gray" size="2" variant="soft">{templates.length} templates</Badge>
+        <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
+          <Dialog.Trigger>
+            <button className={button({ variant: "ghost", size: "sm" })}><PlusIcon /> New Template</button>
+          </Dialog.Trigger>
+          <Dialog.Content maxWidth="500px">
+            <Dialog.Title>New Email Template</Dialog.Title>
             <form onSubmit={handleCreate}>
-              <div className={flex({ direction: "column", gap: "3" })}>
-                <input className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })} name="name" placeholder="Template name *" required />
-                <input className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })} name="subject" placeholder="Subject line" />
-                <input className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })} name="category" placeholder="Category (e.g. outreach, follow-up)" />
-                <textarea className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" }, resize: "vertical" })} name="textContent" placeholder="Email body text" rows={6} />
-                <div className={flex({ gap: "3", justify: "end", mt: "2" })}>
-                  <button type="button" className={button({ variant: "ghost" })} onClick={() => setCreateOpen(false)}>Cancel</button>
-                  <button className={button({ variant: "ghost" })} type="submit" disabled={creating}>{creating ? "Creating\u2026" : "Create"}</button>
-                </div>
-              </div>
+              <Flex direction="column" gap="3" mt="3">
+                <TextField.Root name="name" placeholder="Template name *" required />
+                <TextField.Root name="subject" placeholder="Subject line" />
+                <TextField.Root name="category" placeholder="Category (e.g. outreach, follow-up)" />
+                <TextArea name="textContent" placeholder="Email body text" rows={6} />
+                <Flex gap="3" justify="end" mt="2">
+                  <Dialog.Close><button className={button({ variant: "ghost" })}>Cancel</button></Dialog.Close>
+                  <button className={button({ variant: "ghost" })} type="submit" disabled={creating}>{creating ? "Creating…" : "Create"}</button>
+                </Flex>
+              </Flex>
             </form>
-          </div>
-        </div>
-      )}
-
+          </Dialog.Content>
+        </Dialog.Root>
+      </Flex>
       {templates.length === 0 ? (
-        <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-          <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>No templates yet.</span>
-        </div>
+        <Card><Text color="gray" size="2">No templates yet.</Text></Card>
       ) : (
         templates.map((t) => (
-          <div key={t.id} className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-            <div className={flex({ justify: "space-between", align: "center", gap: "3" })}>
-              <div style={{ flex: 1 }}>
-                <div className={flex({ align: "center", gap: "2", mb: "1" })}>
-                  <span className={css({ fontSize: "sm", fontWeight: "bold" })}>{t.name}</span>
-                  {t.category && <span className={css({ fontSize: "xs", fontWeight: "medium", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", textTransform: "lowercase" })}>{t.category}</span>}
-                  {!t.isActive && <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "red.9", color: "red.9", bg: "red.3" })}>inactive</span>}
-                </div>
-                {t.subject && <p className={css({ fontSize: "xs", color: "ui.tertiary" })}>Subject: {t.subject}</p>}
-                <p className={css({ fontSize: "xs", color: "ui.tertiary" })}>{new Date(t.createdAt).toLocaleDateString()}</p>
-              </div>
-              <div className={flex({ align: "center", gap: "2" })}>
-                <button
-                  className={cx(button({ variant: "ghost", size: "sm" }), css({ fontWeight: t.isActive ? "bold" : "normal" }))}
-                  onClick={() => handleToggleActive(t.id, t.isActive)}
-                >
-                  {t.isActive ? "Active" : "Inactive"}
-                </button>
+          <Card key={t.id}>
+            <Flex justify="between" align="center" gap="3">
+              <Box style={{ flex: 1 }}>
+                <Flex align="center" gap="2" mb="1">
+                  <Text size="2" weight="bold">{t.name}</Text>
+                  {t.category && <Badge color="gray" variant="surface" size="1">{t.category}</Badge>}
+                  {!t.isActive && <Badge color="red" variant="soft" size="1">inactive</Badge>}
+                </Flex>
+                {t.subject && <Text size="1" color="gray" as="p">Subject: {t.subject}</Text>}
+                <Text size="1" color="gray" as="p">{new Date(t.createdAt).toLocaleDateString()}</Text>
+              </Box>
+              <Flex align="center" gap="2">
+                <Switch checked={t.isActive} onCheckedChange={() => handleToggleActive(t.id, t.isActive)} />
                 <button className={button({ variant: "ghost", size: "sm" })} onClick={() => handleDelete(t.id)}><TrashIcon /></button>
-              </div>
-            </div>
-          </div>
+              </Flex>
+            </Flex>
+          </Card>
         ))
       )}
-    </div>
+    </Flex>
   );
 }
 
@@ -684,15 +674,15 @@ function EmailsPageContent() {
   };
 
   return (
-    <div className={css({ maxWidth: "1100px", mx: "auto", px: "4", py: "8" })}>
-      <div className={flex({ justify: "space-between", align: "center", mb: "6" })}>
-        <div>
-          <h1 className={css({ fontSize: "2xl", fontWeight: "bold", color: "ui.heading" })}>Emails</h1>
-          <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+    <Container size="4" p="8" style={{ maxWidth: "1100px" }}>
+      <Flex justify="between" align="center" mb="6">
+        <Box>
+          <Heading size="7">Emails</Heading>
+          <Text color="gray" size="2">
             Sent and received emails via Resend
-          </span>
-        </div>
-        <div className={flex({ gap: "2", align: "center" })}>
+          </Text>
+        </Box>
+        <Flex gap="2" align="center">
           <button
             className={button({ variant: "solid", size: "md" })}
             onClick={handleOpenBatchModal}
@@ -708,8 +698,8 @@ function EmailsPageContent() {
           >
             Resend dashboard <ExternalLinkIcon />
           </a>
-        </div>
-      </div>
+        </Flex>
+      </Flex>
 
       <BatchEmailModal
         open={batchModalOpen}
@@ -717,49 +707,59 @@ function EmailsPageContent() {
         recipients={subscribers}
       />
 
-      {/* Tab bar */}
-      <div className={css({ display: "flex", borderBottom: "1px solid", borderBottomColor: "ui.border", mb: "4" })}>
-        {[
-          { value: "received", icon: <EnvelopeOpenIcon />, label: "Received" },
-          { value: "sent", icon: <EnvelopeClosedIcon />, label: "Sent" },
-          { value: "campaigns", icon: <RocketIcon />, label: "Campaigns" },
-          { value: "templates", icon: <FileTextIcon />, label: "Templates" },
-          { value: "compose", icon: <LinkedInLogoIcon />, label: "Compose" },
-          { value: "stats", icon: <BarChartIcon />, label: "Stats" },
-        ].map((t) => (
-          <button
-            key={t.value}
-            onClick={() => handleTabChange(t.value)}
-            className={css({
-              px: "4",
-              py: "2",
-              fontSize: "sm",
-              color: tab === t.value ? "ui.heading" : "ui.tertiary",
-              fontWeight: tab === t.value ? "semibold" : "medium",
-              borderBottom: tab === t.value ? "2px solid" : "2px solid transparent",
-              borderBottomColor: tab === t.value ? "accent.primary" : "transparent",
-              bg: "transparent",
-              cursor: "pointer",
-              textTransform: "lowercase",
-              display: "flex",
-              alignItems: "center",
-              gap: "1",
-            })}
-          >
-            {t.icon}
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs.Root value={tab} onValueChange={handleTabChange}>
+        <Tabs.List mb="4">
+          <Tabs.Trigger value="received">
+            <EnvelopeOpenIcon />
+            &nbsp;Received
+          </Tabs.Trigger>
+          <Tabs.Trigger value="sent">
+            <EnvelopeClosedIcon />
+            &nbsp;Sent
+          </Tabs.Trigger>
+          <Tabs.Trigger value="campaigns">
+            <RocketIcon />
+            &nbsp;Campaigns
+          </Tabs.Trigger>
+          <Tabs.Trigger value="templates">
+            <FileTextIcon />
+            &nbsp;Templates
+          </Tabs.Trigger>
+          <Tabs.Trigger value="compose">
+            <LinkedInLogoIcon />
+            &nbsp;Compose
+          </Tabs.Trigger>
+          <Tabs.Trigger value="stats">
+            <BarChartIcon />
+            &nbsp;Stats
+          </Tabs.Trigger>
+        </Tabs.List>
 
-      {/* Tab content */}
-      {tab === "sent" && <div className={css({ pt: "4" })}><SentList /></div>}
-      {tab === "received" && <div className={css({ pt: "4" })}><ReceivedList /></div>}
-      {tab === "campaigns" && <div className={css({ pt: "4" })}><CampaignsList /></div>}
-      {tab === "templates" && <div className={css({ pt: "4" })}><EmailTemplatesList /></div>}
-      {tab === "compose" && <div className={css({ pt: "4" })}><ComposeFromLinkedIn /></div>}
-      {tab === "stats" && <div className={css({ pt: "4" })}><EmailStatsDashboard /></div>}
-    </div>
+        <Tabs.Content value="sent">
+          <SentList />
+        </Tabs.Content>
+
+        <Tabs.Content value="received">
+          <ReceivedList />
+        </Tabs.Content>
+
+        <Tabs.Content value="campaigns">
+          <CampaignsList />
+        </Tabs.Content>
+
+        <Tabs.Content value="templates">
+          <EmailTemplatesList />
+        </Tabs.Content>
+
+        <Tabs.Content value="compose">
+          <ComposeFromLinkedIn />
+        </Tabs.Content>
+
+        <Tabs.Content value="stats">
+          <EmailStatsDashboard />
+        </Tabs.Content>
+      </Tabs.Root>
+    </Container>
   );
 }
 
@@ -768,24 +768,24 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <span className={css({ color: "ui.tertiary" })}>Loading\u2026</span>
-      </div>
+      <Container size="3" p="8">
+        <Text color="gray">Loading…</Text>
+      </Container>
     );
   }
 
   if (user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-          <div className={flex({ direction: "column", align: "center", gap: "4", p: "4" })}>
+      <Container size="3" p="8">
+        <Card>
+          <Flex direction="column" align="center" gap="4" p="4">
             <ExclamationTriangleIcon width="32" height="32" color="red" />
-            <h2 className={css({ fontSize: "xl", fontWeight: "bold", color: "ui.heading" })}>Access denied</h2>
-            <span className={css({ color: "ui.tertiary" })}>This page is restricted to administrators.</span>
-            <Link href="/" className={button({ variant: "ghost" })}>&#8592; Back to Jobs</Link>
-          </div>
-        </div>
-      </div>
+            <Heading size="5">Access denied</Heading>
+            <Text color="gray">This page is restricted to administrators.</Text>
+            <Link href="/" className={button({ variant: "ghost" })}>← Back to Jobs</Link>
+          </Flex>
+        </Card>
+      </Container>
     );
   }
 
@@ -797,9 +797,9 @@ export default function EmailsPage() {
     <AdminGuard>
       <Suspense
         fallback={
-          <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-            <span className={css({ color: "ui.tertiary" })}>Loading\u2026</span>
-          </div>
+          <Container size="3" p="8">
+            <Text color="gray">Loading…</Text>
+          </Container>
         }
       >
         <EmailsPageContent />

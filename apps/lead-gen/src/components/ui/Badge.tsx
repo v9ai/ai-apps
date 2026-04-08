@@ -1,34 +1,30 @@
-import { forwardRef, type HTMLAttributes } from "react";
-import { cx } from "styled-system/css";
-import { badge } from "@/recipes/badge";
+import { Badge as RadixBadge } from "@radix-ui/themes";
+import { type ComponentPropsWithoutRef } from "react";
 
-type BadgeVariant = "default" | "orange" | "green" | "accent" | "status" | "pipeline";
+type RadixBadgeProps = ComponentPropsWithoutRef<typeof RadixBadge>;
 
-interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: BadgeVariant;
-  size?: "sm" | "md";
+interface BadgeProps extends Omit<RadixBadgeProps, "variant" | "color"> {
+  variant?: "default" | "orange" | "green";
 }
 
-export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
-  ({ variant = "default", size = "sm", className, children, ...rest }, ref) => {
-    // Map legacy color-based variants to recipe variants
-    const recipeVariant =
-      variant === "default" || variant === "orange" || variant === "green"
-        ? "pipeline"
-        : variant;
+const variantMap: Record<
+  NonNullable<BadgeProps["variant"]>,
+  { color: RadixBadgeProps["color"] }
+> = {
+  default: { color: "gray" },
+  orange: { color: "orange" },
+  green: { color: "green" },
+};
 
-    return (
-      <span
-        ref={ref}
-        className={cx(
-          badge({ variant: recipeVariant as "pipeline" | "accent" | "status", size }),
-          className
-        )}
-        {...rest}
-      >
-        {children}
-      </span>
-    );
-  }
-);
-Badge.displayName = "Badge";
+export function Badge({
+  variant = "default",
+  children,
+  ...rest
+}: BadgeProps) {
+  const { color } = variantMap[variant];
+  return (
+    <RadixBadge variant="outline" color={color} {...rest}>
+      {children}
+    </RadixBadge>
+  );
+}

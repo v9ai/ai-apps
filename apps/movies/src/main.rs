@@ -10,7 +10,7 @@ use serde_json::json;
 use std::collections::HashSet;
 use std::sync::Arc;
 
-const MOVIE: &str = "The LEGO Movie";
+const MOVIE: &str = "The Little Mermaid";
 const EMBED_URL: &str = "http://localhost:9999/embed";
 const MIN_IMDB: f64 = 6.5;
 
@@ -63,10 +63,9 @@ async fn analyze_movie(client: &DeepSeekClient<ReqwestClient>, movie: &str) -> R
         vec![deepseek::types::user_msg(&format!(
             "Analyze the movie \"{movie}\" and produce a detailed profile including:\n\
              - Genre(s)\n\
-             - Key themes (teamwork, creativity, building, friendship, father-son bond, \
-             believing in yourself, humor, overcoming fear)\n\
-             - Emotional tone and target audience (7-year-old boy who loves LEGO and building)\n\
-             - Narrative patterns (hero's journey, underdog, learning to work together)\n\
+             - Key themes (adventure, transformation, belonging, love, family conflict, magic)\n\
+             - Emotional tone and target audience\n\
+             - Narrative patterns (hero's journey, coming-of-age, forbidden romance)\n\
              Return a structured text profile for similarity matching."
         ))],
         None,
@@ -88,9 +87,8 @@ async fn search_platform(
         vec![deepseek::types::user_msg(&format!(
             "Based on this movie profile for \"{movie}\":\n{profile}\n\n\
              List 20-25 movies currently available on {platform} that are thematically similar.\n\
-             Focus on: animated/family, adventure, teamwork/friendship, building/creativity, \
-             humor, overcoming fears, emotional growth, father-child bond.\n\
-             Target audience: 7-year-old boy who loves LEGO, building, and action-adventure.\n\
+             Focus on: animated/family, adventure, transformation/coming-of-age, romance, \
+             parent-child conflict, magic/fantasy.\n\
              Do NOT include \"{movie}\" itself.\n\n\
              For each: Title (Year) - brief thematic description (1-2 sentences).\n\
              Format as numbered list. Be exhaustive."

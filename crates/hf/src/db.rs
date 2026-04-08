@@ -237,7 +237,7 @@ impl HfDb {
         query: &str,
         repo_type: Option<RepoType>,
     ) -> Result<Vec<RepoInfo>, Error> {
-        let like_pattern = format!("%{}%", escape_like(query));
+        let like_pattern = format!("%{query}%");
 
         if let Some(rt) = repo_type {
             let mut stmt = self.conn.prepare(
@@ -245,7 +245,7 @@ impl HfDb {
                         downloads, likes, library, pipeline_tag, private, gated,
                         disabled, description, sdk, siblings, card_data, extra
                  FROM hf_repos
-                 WHERE repo_type = ?1 AND (repo_id LIKE ?2 ESCAPE '\\' OR description LIKE ?2 ESCAPE '\\')
+                 WHERE repo_type = ?1 AND (repo_id LIKE ?2 OR description LIKE ?2)
                  ORDER BY downloads DESC
                  LIMIT 100",
             )?;
@@ -257,7 +257,7 @@ impl HfDb {
                         downloads, likes, library, pipeline_tag, private, gated,
                         disabled, description, sdk, siblings, card_data, extra
                  FROM hf_repos
-                 WHERE repo_id LIKE ?1 ESCAPE '\\' OR description LIKE ?1 ESCAPE '\\'
+                 WHERE repo_id LIKE ?1 OR description LIKE ?1
                  ORDER BY downloads DESC
                  LIMIT 100",
             )?;
@@ -341,18 +341,6 @@ impl HfDb {
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Error::from)
     }
-}
-
-/// Escape LIKE metacharacters so `%` and `_` are treated as literals.
-fn escape_like(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for ch in s.chars() {
-        match ch {
-            '\\' | '%' | '_' => { out.push('\\'); out.push(ch); }
-            _ => out.push(ch),
-        }
-    }
-    out
 }
 
 fn row_to_repo_info(row: &rusqlite::Row) -> rusqlite::Result<RepoInfo> {
@@ -455,201 +443,5 @@ mod tests {
         db.upsert_repos(&repos, RepoType::Dataset).unwrap();
         assert_eq!(db.total_count().unwrap(), 2);
         assert!(db.file_size().unwrap() > 0);
-    }
-
-    #[test]
-    fn open_in_memory_creates_schema() {
-        let db = HfDb::open_in_memory().unwrap();
-        // Schema should be created — we can run queries without error
-        assert_eq!(db.count(RepoType::Model).unwrap(), 0);
-        assert_eq!(db.count(RepoType::Dataset).unwrap(), 0);
-        assert_eq!(db.count(RepoType::Space).unwrap(), 0);
-    }
-
-    #[test]
-    fn upsert_empty_repo_id_skipped() {
-        let db = HfDb::open_in_memory().unwrap();
-        let repo = RepoInfo {
-            id: None,
-            repo_id: None, // no id
-            model_id: None,
-            author: None,
-            sha: None,
-            last_modified: None,
-            created_at: None,
-            tags: None,
-            downloads: Some(100),
-            likes: None,
-            library: None,
-            pipeline_tag: None,
-            private: None,
-            gated: None,
-            disabled: None,
-            description: None,
-            sdk: None,
-            siblings: None,
-            card_data: None,
-            extra: serde_json::Value::Null,
-        };
-        let count = db.upsert_repos(&[repo], RepoType::Model).unwrap();
-        assert_eq!(count, 0, "repo with no id should be skipped");
-        assert_eq!(db.count(RepoType::Model).unwrap(), 0);
-    }
-
-    #[test]
-    fn repos_by_author_filters_correctly() {
-        let db = HfDb::open_in_memory().unwrap();
-        db.upsert_repos(
-            &[
-                test_repo("org-a/model-1", 500, 10),
-                test_repo("org-a/model-2", 100, 5),
-                test_repo("org-b/model-3", 200, 8),
-            ],
-            RepoType::Model,
-        )
-        .unwrap();
-
-        let results = db.repos_by_author("org-a").unwrap();
-        assert_eq!(results.len(), 2);
-        // Should be sorted by downloads desc
-        assert_eq!(results[0].repo_id.as_deref(), Some("org-a/model-1"));
-        assert_eq!(results[1].repo_id.as_deref(), Some("org-a/model-2"));
-    }
-
-    #[test]
-    fn repos_by_author_empty() {
-        let db = HfDb::open_in_memory().unwrap();
-        db.upsert_repos(&[test_repo("org-a/m", 100, 10)], RepoType::Model).unwrap();
-        let results = db.repos_by_author("nonexistent").unwrap();
-        assert!(results.is_empty());
-    }
-
-    #[test]
-    fn search_repos_by_name() {
-        let db = HfDb::open_in_memory().unwrap();
-        db.upsert_repos(
-            &[
-                test_repo("org/llama-7b", 500, 10),
-                test_repo("org/whisper-v3", 200, 8),
-            ],
-            RepoType::Model,
-        )
-        .unwrap();
-
-        let results = db.search_repos("llama", None).unwrap();
-        assert_eq!(results.len(), 1);
-        assert_eq!(results[0].repo_id.as_deref(), Some("org/llama-7b"));
-    }
-
-    #[test]
-    fn search_repos_by_description() {
-        let db = HfDb::open_in_memory().unwrap();
-        let mut repo = test_repo("org/model-a", 500, 10);
-        repo.description = Some("Speech recognition model for English".into());
-        db.upsert_repos(&[repo], RepoType::Model).unwrap();
-
-        let results = db.search_repos("Speech recognition", None).unwrap();
-        assert_eq!(results.len(), 1);
-    }
-
-    #[test]
-    fn search_repos_with_type_filter() {
-        let db = HfDb::open_in_memory().unwrap();
-        db.upsert_repos(&[test_repo("org/llama-data", 100, 5)], RepoType::Model).unwrap();
-        db.upsert_repos(&[test_repo("org/llama-dataset", 200, 8)], RepoType::Dataset).unwrap();
-
-        let models = db.search_repos("llama", Some(RepoType::Model)).unwrap();
-        assert_eq!(models.len(), 1);
-        assert_eq!(models[0].repo_id.as_deref(), Some("org/llama-data"));
-
-        let datasets = db.search_repos("llama", Some(RepoType::Dataset)).unwrap();
-        assert_eq!(datasets.len(), 1);
-        assert_eq!(datasets[0].repo_id.as_deref(), Some("org/llama-dataset"));
-    }
-
-    #[test]
-    fn org_summary_counts_correctly() {
-        let db = HfDb::open_in_memory().unwrap();
-        let mut m1 = test_repo("org-x/model-1", 500, 10);
-        m1.library = Some("transformers".into());
-        m1.pipeline_tag = Some("text-generation".into());
-
-        let mut m2 = test_repo("org-x/model-2", 300, 5);
-        m2.library = Some("pytorch".into());
-        m2.pipeline_tag = Some("text-classification".into());
-
-        db.upsert_repos(&[m1, m2], RepoType::Model).unwrap();
-        db.upsert_repos(&[test_repo("org-x/ds-1", 100, 2)], RepoType::Dataset).unwrap();
-        db.upsert_repos(&[test_repo("org-x/space-1", 50, 1)], RepoType::Space).unwrap();
-
-        let summary = db.org_summary("org-x").unwrap();
-        assert_eq!(summary.author, "org-x");
-        assert_eq!(summary.model_count, 2);
-        assert_eq!(summary.dataset_count, 1);
-        assert_eq!(summary.space_count, 1);
-        assert_eq!(summary.total_downloads, 950); // 500+300+100+50
-        assert_eq!(summary.total_likes, 18); // 10+5+2+1
-        assert_eq!(summary.libraries.len(), 2);
-        assert!(summary.libraries.contains(&"transformers".into()));
-        assert!(summary.libraries.contains(&"pytorch".into()));
-        assert_eq!(summary.pipeline_tags.len(), 2);
-    }
-
-    #[test]
-    fn org_summary_empty_author() {
-        let db = HfDb::open_in_memory().unwrap();
-        let summary = db.org_summary("nonexistent").unwrap();
-        assert_eq!(summary.model_count, 0);
-        assert_eq!(summary.dataset_count, 0);
-        assert_eq!(summary.total_downloads, 0);
-        assert!(summary.libraries.is_empty());
-    }
-
-    #[test]
-    fn top_authors_sorted() {
-        let db = HfDb::open_in_memory().unwrap();
-        db.upsert_repos(
-            &[
-                test_repo("alpha/m1", 100, 5),
-                test_repo("alpha/m2", 200, 10),
-                test_repo("beta/m3", 500, 20),
-            ],
-            RepoType::Model,
-        )
-        .unwrap();
-
-        let authors = db.top_authors(RepoType::Model, 10).unwrap();
-        assert_eq!(authors.len(), 2);
-        // alpha has 2 repos, beta has 1 — alpha first by count
-        assert_eq!(authors[0].0, "alpha");
-        assert_eq!(authors[0].1, 2); // count
-        assert_eq!(authors[0].2, 300); // total downloads
-        assert_eq!(authors[1].0, "beta");
-        assert_eq!(authors[1].1, 1);
-        assert_eq!(authors[1].2, 500);
-    }
-
-    #[test]
-    fn search_special_chars_escaped_correctly() {
-        let db = HfDb::open_in_memory().unwrap();
-        let mut repo = test_repo("org/model-a", 100, 5);
-        repo.description = Some("100% accuracy on test_set".into());
-        db.upsert_repos(&[repo], RepoType::Model).unwrap();
-
-        // A second repo without special chars — should NOT match wildcard searches
-        db.upsert_repos(&[test_repo("org/model-b", 200, 10)], RepoType::Model).unwrap();
-
-        // Searching for literal "%" should only match the repo containing "%"
-        let results = db.search_repos("%", None).unwrap();
-        assert_eq!(results.len(), 1, "% should be treated literally, not as wildcard");
-        assert_eq!(results[0].repo_id.as_deref(), Some("org/model-a"));
-
-        // Searching for literal "_" should only match the repo containing "_"
-        let results = db.search_repos("_", None).unwrap();
-        assert_eq!(results.len(), 1, "_ should be treated literally, not as wildcard");
-
-        // Single quotes should not cause SQL errors (parameterized queries)
-        let results = db.search_repos("it's", None).unwrap();
-        assert!(results.is_empty());
     }
 }

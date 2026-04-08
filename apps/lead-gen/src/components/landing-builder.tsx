@@ -31,7 +31,7 @@ export function LandingBuilder() {
           <LightningBoltIcon
             width={12}
             height={12}
-            className={css({ color: "ui.tertiary" })}
+            style={{ color: "var(--gray-9)" }}
           />
           <span
             className={css({
@@ -122,20 +122,18 @@ export function LandingBuilder() {
                   href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={css({
-                    display: "inline-flex",
-                    alignItems: "center",
+                  className={flex({
+                    align: "center",
                     gap: "1.5",
-                    color: "ui.tertiary",
-                    fontSize: "2xs",
-                    textDecoration: "none",
-                    letterSpacing: "wide",
-                    textTransform: "lowercase",
-                    transition: "color 150ms ease",
-                    _hover: {
-                      color: "ui.body",
-                    },
                   })}
+                  style={{
+                    color: "var(--gray-9)",
+                    fontSize: "10px",
+                    textDecoration: "none",
+                    letterSpacing: "0.04em",
+                    textTransform: "lowercase",
+                    transition: "color 0.15s",
+                  }}
                 >
                   <GitHubLogoIcon width={12} height={12} />
                   view source

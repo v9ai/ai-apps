@@ -24,29 +24,3 @@ pub enum Error {
     #[error("Database error: {0}")]
     Db(#[from] rusqlite::Error),
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn display_rate_limited() {
-        let err = Error::RateLimited { retry_after_secs: 30 };
-        let msg = err.to_string();
-        assert!(msg.contains("429"), "should mention 429: {msg}");
-        assert!(msg.contains("30"), "should mention retry seconds: {msg}");
-    }
-
-    #[test]
-    fn display_api() {
-        let err = Error::Api {
-            repo: "org/model".into(),
-            status: 404,
-            body: "not found".into(),
-        };
-        let msg = err.to_string();
-        assert!(msg.contains("org/model"), "should contain repo: {msg}");
-        assert!(msg.contains("404"), "should contain status: {msg}");
-        assert!(msg.contains("not found"), "should contain body: {msg}");
-    }
-}

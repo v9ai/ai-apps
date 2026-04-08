@@ -1,14 +1,14 @@
 import { ContactsClient } from "./contacts-client";
 import { Suspense } from "react";
-import { css } from "styled-system/css";
+import { Container, Text } from "@radix-ui/themes";
 
 export default function ContactsPage() {
   return (
     <Suspense
       fallback={
-        <div className={css({ maxWidth: "1200px", mx: "auto", p: "8" })}>
-          <span className={css({ color: "ui.secondary" })}>Loading...</span>
-        </div>
+        <Container size="4" p="8">
+          <Text color="gray">Loading...</Text>
+        </Container>
       }
     >
       <ContactsClient />
