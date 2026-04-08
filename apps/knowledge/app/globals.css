@@ -86,6 +86,20 @@ body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+.yc-topbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-9), #06b6d4);
+  transform-origin: left;
+  transform: scaleX(var(--scroll-progress, 0));
+  transition: transform 0.15s linear;
+  z-index: 1;
+  opacity: var(--scroll-progress, 0);
+}
 .yc-topbar::after {
   content: "";
   position: absolute;
@@ -887,6 +901,41 @@ body {
   .difficulty-filter-btn { font-size: 10px; padding: 8px 12px; }
 }
 
+/* ---------- difficulty filter: empty state ---------- */
+.difficulty-empty {
+  padding: 48px 24px;
+  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.difficulty-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-10);
+  margin-bottom: 8px;
+}
+.difficulty-empty-hint {
+  font-size: 13px;
+  color: var(--gray-7);
+  margin-bottom: 20px;
+}
+.difficulty-empty-reset {
+  display: inline-flex;
+  padding: 8px 20px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--gray-11);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.difficulty-empty-reset:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
 /* ================================================================
    BENTO GRID
    ================================================================ */
@@ -897,6 +946,7 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--page-gutter) var(--section-gap);
+  counter-reset: cat-counter;
 }
 .bento-grid .cat-card--wide { grid-column: span 2; }
 .bento-grid .cat-card--full { grid-column: span 3; }
@@ -991,14 +1041,48 @@ body {
   line-height: 1.5;
 }
 
-/* category outcomes */
+/* category outcomes — collapsible */
+.cat-card-outcomes-wrap {
+  margin: 0 0 12px;
+}
+.cat-card-outcomes-toggle {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--gray-8);
+  letter-spacing: 0.02em;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+.cat-card-outcomes-toggle:hover {
+  color: var(--gray-11);
+}
+.cat-card-outcomes-toggle-icon {
+  font-size: 9px;
+  display: inline-block;
+  width: 10px;
+  text-align: center;
+}
 .cat-card-outcomes {
   list-style: none;
   padding: 0;
-  margin: 0 0 12px;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease, margin 0.3s ease;
+}
+.cat-card-outcomes--open {
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 6px;
 }
 .cat-card-outcomes li {
   font-size: 11px;
@@ -1017,6 +1101,31 @@ body {
   border-radius: 50%;
   background: var(--cat-from);
   opacity: 0.6;
+}
+
+/* lesson list — show-more toggle */
+.cat-card-lessons-toggle {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px 0;
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-8);
+  letter-spacing: 0.02em;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.08);
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.cat-card-lessons-toggle:hover {
+  color: var(--gray-11);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.14);
 }
 
 /* section divider between meta and lessons */
@@ -1128,7 +1237,7 @@ body {
   gap: 8px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 12px var(--page-gutter);
   justify-content: center;
   position: sticky;
   top: var(--yc-topbar-height);
@@ -3267,10 +3376,10 @@ body {
 .yc-topbar-search-trigger svg{opacity:0.6}
 .yc-topbar-search-trigger:hover svg{opacity:1}
 .yc-topbar-search-key{font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--gray-8);line-height:1.4}
-.yc-topbar-breadcrumb{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--gray-10);animation:breadcrumb-in 0.3s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.yc-topbar-breadcrumb{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--gray-10);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;opacity:0;transform:translateX(-8px);pointer-events:none;transition:opacity 0.3s ease,transform 0.3s ease}
 .yc-topbar-breadcrumb-sep{color:var(--gray-6);font-weight:300;font-size:14px}
 .yc-topbar-breadcrumb-icon{font-size:12px}
-@keyframes breadcrumb-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.yc-topbar-breadcrumb--visible{opacity:1;transform:translateX(0);pointer-events:auto}
 .yc-topbar--scrolled{background:rgba(0,0,0,0.75)}
 
 /* ---- CAT-NAV: visited pill state ---- */

@@ -11,6 +11,10 @@ import { useEffect } from "react";
  */
 export function ScrollAnimations() {
   useEffect(() => {
+    /* Mark <html> so CSS knows JS is active — enables scroll-triggered hide/reveal.
+       Without this class, cards remain visible (no-JS fallback). */
+    document.documentElement.classList.add("js-ready");
+
     const prefersReduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;

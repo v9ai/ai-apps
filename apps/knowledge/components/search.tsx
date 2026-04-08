@@ -208,6 +208,23 @@ export function Search({ groups }: Props) {
         </div>
       )}
 
+      {!hasQuery && diffFilter !== "all" && filteredGroups.length === 0 && (
+        <div className="difficulty-empty" role="status">
+          <div className="difficulty-empty-title">
+            No {diffFilter} lessons yet
+          </div>
+          <div className="difficulty-empty-hint">
+            Try another level — lessons are added regularly
+          </div>
+          <button
+            className="difficulty-empty-reset"
+            onClick={() => setDiffFilter("all")}
+          >
+            Show all levels
+          </button>
+        </div>
+      )}
+
       {hasQuery ? (
         <div className="search-results" aria-live="polite">
           {searching && results.length === 0 && (

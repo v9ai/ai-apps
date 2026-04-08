@@ -66,7 +66,7 @@ export function LearningPath({ groups }: Props) {
   return (
     <div className="learning-path">
       <div className="learning-path-title">Learning Path</div>
-      <div className="learning-path-track">
+      <div className="learning-path-track" ref={trackRef}>
         {groups.map((g, i) => {
           const slug = `cat-${g.meta.slug}`;
           const totalMin = g.articles.reduce((sum, a) => sum + a.readingTimeMin, 0);
@@ -81,7 +81,7 @@ export function LearningPath({ groups }: Props) {
               <span className="learning-path-icon">{g.meta.icon}</span>
               <span className="learning-path-name">{g.category}</span>
               <span className="learning-path-meta">
-                {g.articles.length} lessons &middot; {totalMin}m
+                {g.articles.length} lessons &middot; <span className="learning-path-time">{humanizeTime(totalMin)}</span>
               </span>
               {isVisited && <span className="learning-path-check" aria-label="Visited" />}
               {i < groups.length - 1 && (
@@ -90,6 +90,17 @@ export function LearningPath({ groups }: Props) {
             </a>
           );
         })}
+      </div>
+      <div className="learning-path-progress">
+        <span className="learning-path-progress-label">
+          {exploredCount} of {totalCount} categories explored
+        </span>
+        <div className="learning-path-progress-track">
+          <div
+            className="learning-path-progress-fill"
+            style={{ width: `${totalCount > 0 ? (exploredCount / totalCount) * 100 : 0}%` }}
+          />
+        </div>
       </div>
     </div>
   );
