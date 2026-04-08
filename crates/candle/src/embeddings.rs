@@ -52,22 +52,41 @@ impl EmbeddingModel {
             .encode_batch(texts.to_vec(), true)
             .map_err(|e| Error::Tokenizer(e.to_string()))?;
 
+        // Pad all sequences to max length in the batch
+        let max_len = encodings.iter().map(|e| e.get_ids().len()).max().unwrap_or(0);
+
         let token_ids: Vec<Tensor> = encodings
             .iter()
             .map(|enc| {
-                let ids: Vec<u32> = enc.get_ids().to_vec();
+                let mut ids: Vec<u32> = enc.get_ids().to_vec();
+                ids.resize(max_len, 0); // pad with 0
                 Tensor::new(ids.as_slice(), &self.device)
             })
             .collect::<std::result::Result<Vec<_>, _>>()?;
 
+        // Build attention mask: 1 for real tokens, 0 for padding
+        let attention_masks: Vec<Tensor> = encodings
+            .iter()
+            .map(|enc| {
+                let len = enc.get_ids().len();
+                let mut mask = vec![1.0f32; len];
+                mask.resize(max_len, 0.0);
+                Tensor::new(mask.as_slice(), &self.device)
+            })
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+
         let token_ids = Tensor::stack(&token_ids, 0)?;
+        let attention_mask = Tensor::stack(&attention_masks, 0)?;
 
         let token_type_ids = token_ids.zeros_like()?;
         let embeddings = self.model.forward(&token_ids, &token_type_ids, None)?;
 
-        // Mean pooling over sequence length
-        let (_batch, seq_len, _hidden) = embeddings.dims3()?;
-        let mean = (embeddings.sum(1)? / (seq_len as f64))?;
+        // Masked mean pooling: only average over real tokens, not padding
+        let mask_expanded = attention_mask.unsqueeze(2)?.broadcast_as(embeddings.shape())?;
+        let masked = (embeddings * mask_expanded)?;
+        let sum = masked.sum(1)?;
+        let counts = attention_mask.sum(1)?.unsqueeze(1)?.broadcast_as(sum.shape())?;
+        let mean = (sum / counts)?;
 
         Ok(mean)
     }
