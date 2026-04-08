@@ -953,4 +953,93 @@ mod tests {
             assert_eq!(data[1].filename, "model.safetensors");
         }
     }
+
+    #[tokio::test]
+    async fn retry_after_non_numeric_falls_back() {
+        let server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/models/org/model"))
+            .respond_with(
+                ResponseTemplate::new(429)
+                    .insert_header("retry-after", "Wed, 21 Oct 2025 07:28:00 GMT"),
+            )
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let results = client.fetch_repo_info(&[FetchRequest::model("org/model")]).await;
+        assert_eq!(results.len(), 1);
+        if let FetchResult::Err { error, .. } = &results[0] {
+            match error {
+                Error::RateLimited { retry_after_secs } => {
+                    assert_eq!(*retry_after_secs, 60, "should default to 60 for non-numeric");
+                }
+                other => panic!("expected RateLimited, got {other:?}"),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn retry_after_missing_falls_back() {
+        let server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/models/org/model"))
+            .respond_with(ResponseTemplate::new(429)) // no retry-after header
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let results = client.fetch_repo_info(&[FetchRequest::model("org/model")]).await;
+        assert_eq!(results.len(), 1);
+        if let FetchResult::Err { error, .. } = &results[0] {
+            match error {
+                Error::RateLimited { retry_after_secs } => {
+                    assert_eq!(*retry_after_secs, 60, "should default to 60 when missing");
+                }
+                other => panic!("expected RateLimited, got {other:?}"),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn fetch_raw_files_success() {
+        let server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(path("/org/model/resolve/main/README.md"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("# Hello"))
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let results = client
+            .fetch_raw_files(&[FetchRequest::model("org/model").with_path("README.md")])
+            .await;
+        assert_eq!(results.len(), 1);
+        assert!(results[0].is_ok());
+        if let FetchResult::Ok { data, .. } = &results[0] {
+            assert_eq!(data, "# Hello");
+        }
+    }
+
+    #[tokio::test]
+    async fn list_repos_includes_query_params() {
+        let server = MockServer::start().await;
+
+        Mock::given(method("GET"))
+            .and(wiremock::matchers::query_param("search", "llama"))
+            .and(wiremock::matchers::query_param("author", "meta-llama"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!([])))
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let result = client
+            .list_repos(&ListOptions::models().search("llama").author("meta-llama"))
+            .await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
 }

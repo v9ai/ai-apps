@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { css, cx } from "styled-system/css";
+import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { button } from "@/recipes/button";
 import {
