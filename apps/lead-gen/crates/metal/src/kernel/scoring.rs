@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 /// Number of features in the logistic regression model.
 ///
 /// Layout:
+///   Base contact (0-6):
 ///   [0]  industry_match       (binary)
 ///   [1]  employee_in_range    (binary)
 ///   [2]  seniority_match      (binary)
@@ -10,32 +11,153 @@ use serde::{Deserialize, Serialize};
 ///   [4]  tech_norm            (0-1)
 ///   [5]  email_norm           (0-1)
 ///   [6]  smooth_recency       (exp decay)
-///   [7]  hf_score             (0-1)  — compute_hf_score() composite
-///   [8]  hf_model_depth       (0-1)  — log(1 + models) / log(1 + 20)
-///   [9]  hf_training_depth    (0-1)  — distinct signal types / 5
-///   [10] hf_maturity          (0-1)  — avg effort level ordinal
-///   [11] hf_research          (binary) — has pretraining OR arxiv > 0
-///   [12] hf_sales_relevance   (0-1)  — sales_signals / 3
-pub const FEATURE_COUNT: usize = 13;
+///
+///   HF composite + depth (7-9):
+///   [7]  hf_score             (0-1)
+///   [8]  hf_model_depth       (0-1)
+///   [9]  hf_training_depth    (0-1)
+///
+///   Maturity decomposed (10-14):
+///   [10] hf_max_effort        (0-1) ordinal of highest EffortLevel
+///   [11] hf_production_ratio  (0-1) fraction at Production|Research
+///   [12] hf_dl_weighted_maturity (0-1) download-weighted avg maturity
+///   [13] hf_alignment_diversity (0-1) distinct alignment methods / 4
+///   [14] hf_maturity_trend    (0-1) mapped Pearson-r of effort vs time
+///
+///   Research (15):
+///   [15] hf_research          (binary)
+///
+///   Sales decomposed (16-19):
+///   [16] hf_sales_b2b_core    (binary) IntentScoring|LeadClassification|CrmIntelligence
+///   [17] hf_sales_outreach    (binary) EmailOutreach|SalesConversation
+///   [18] hf_sales_funnel      (0-1) distinct categories / 7
+///   [19] hf_sales_platform    (binary) General category (brand names)
+///
+///   Training signals (20-23):
+///   [20] hf_research_intensity (0-1) per-repo PreTraining+CustomDataset+ArxivCitation
+///   [21] hf_infra_sophistication (0-1) weighted MoE/LargeParams/LargeContext/CustomArch
+///   [22] hf_signal_breadth    (0-1) repos with any signal / total repos
+///   [23] hf_domain_nlp_focus  (0-1) NerLabels+LargeContext presence
+///
+///   Architecture diversity (24-28):
+///   [24] hf_library_sophistication (0-1) tiered lib scoring
+///   [25] hf_pipeline_diversity (0-1) distinct modality buckets / 4
+///   [26] hf_custom_arch_ratio (0-1) non-standard model types / total
+///   [27] hf_framework_diversity (0-1) distinct frameworks / 4
+///   [28] hf_moe_ratio         (0-1) MoE models / total
+///
+///   Download signals (29-33):
+///   [29] hf_download_scale    (0-1) ln(1+total)/ln(1+10M)
+///   [30] hf_download_per_model (0-1) ln(1+avg)/ln(1+500K)
+///   [31] hf_top_model_dominance (0-1) max_dl/total_dl
+///   [32] hf_likes_per_download (0-1) ratio*10 capped
+///   [33] hf_download_breadth  (0-1) fraction models with >100 dl
+///
+///   Temporal (34-37):
+///   [34] hf_recency           (0-1) exp(-days/180)
+///   [35] hf_acceleration      (0-1) recent90/older90
+///   [36] hf_longevity         (0-1) span_days/730
+///   [37] hf_burst_intensity   (0-1) max_weekly_burst/5
+///
+///   Cross-signal interactions (38-43):
+///   [38] ix_research_x_seniority  features[15] * features[2]
+///   [39] ix_score_x_tech          features[7] * features[4]
+///   [40] ix_training_x_production features[9] * features[11]
+///   [41] ix_depth_x_industry      features[8] * features[0]
+///   [42] ix_sales_x_department    features[18] * features[3]
+///   [43] ix_hf_threshold          (features[7] > 0.6) as f32
+pub const FEATURE_COUNT: usize = 44;
+
+/// Number of base features (before interaction terms).
+pub const BASE_FEATURE_COUNT: usize = 38;
+
+/// Number of cross-signal interaction features.
+pub const INTERACTION_COUNT: usize = 6;
 
 // ── HuggingFace company-level signals ────────────────────────────────────────
 
 /// Pre-computed HF signals for a company, derived from an HF org profile.
 /// All values are normalized to [0, 1] for direct use as ML features.
+/// Maps to feature indices 7-37 in the 44-feature layout.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct HfCompanySignals {
+    // ── Composite + depth (features 7-9) ─────────────────────────────────
     /// Composite HF score (0-1), from `compute_hf_score()`.
     pub hf_score: f32,
     /// log(1 + model_count) / log(1 + 20), capped at 1.0.
     pub model_depth: f32,
     /// Distinct training signal types / 5, capped at 1.0.
     pub training_depth: f32,
-    /// Average model maturity ordinal (Production=1.0 … Trivial=0.15).
-    pub maturity: f32,
+
+    // ── Maturity decomposed (features 10-14) ─────────────────────────────
+    /// Ordinal of highest EffortLevel across all models (0-1).
+    pub max_effort: f32,
+    /// Fraction of models at Production or Research effort level (0-1).
+    pub production_ratio: f32,
+    /// Download-weighted average maturity (0-1).
+    pub dl_weighted_maturity: f32,
+    /// Distinct alignment methods / 4 (0-1).
+    pub alignment_diversity: f32,
+    /// Mapped Pearson-r of effort vs time (0-1, 0.5 = neutral).
+    pub maturity_trend: f32,
+
+    // ── Research (feature 15) ────────────────────────────────────────────
     /// 1.0 if org has pre-training evidence OR arxiv papers, else 0.0.
     pub research: f32,
-    /// sales_signals.len() / 3, capped at 1.0.
-    pub sales_relevance: f32,
+
+    // ── Sales decomposed (features 16-19) ────────────────────────────────
+    /// 1.0 if IntentScoring|LeadClassification|CrmIntelligence present.
+    pub sales_b2b_core: f32,
+    /// 1.0 if EmailOutreach|SalesConversation present.
+    pub sales_outreach: f32,
+    /// Distinct sales categories / 7, capped at 1.0.
+    pub sales_funnel: f32,
+    /// 1.0 if General sales category (brand names) present.
+    pub sales_platform: f32,
+
+    // ── Training signals (features 20-23) ────────────────────────────────
+    /// Per-repo PreTraining+CustomDataset+ArxivCitation intensity (0-1).
+    pub research_intensity: f32,
+    /// Weighted MoE/LargeParams/LargeContext/CustomArch score (0-1).
+    pub infra_sophistication: f32,
+    /// Repos with any training signal / total repos (0-1).
+    pub signal_breadth: f32,
+    /// NerLabels+LargeContext presence indicator (0-1).
+    pub domain_nlp_focus: f32,
+
+    // ── Architecture diversity (features 24-28) ──────────────────────────
+    /// Tiered library scoring (0-1).
+    pub library_sophistication: f32,
+    /// Distinct modality buckets / 4 (0-1).
+    pub pipeline_diversity: f32,
+    /// Non-standard model types / total models (0-1).
+    pub custom_arch_ratio: f32,
+    /// Distinct frameworks / 4 (0-1).
+    pub framework_diversity: f32,
+    /// MoE models / total models (0-1).
+    pub moe_ratio: f32,
+
+    // ── Download signals (features 29-33) ────────────────────────────────
+    /// ln(1+total_downloads) / ln(1+10M), capped at 1.0.
+    pub download_scale: f32,
+    /// ln(1+avg_downloads_per_model) / ln(1+500K), capped at 1.0.
+    pub download_per_model: f32,
+    /// max_model_downloads / total_downloads (0-1).
+    pub top_model_dominance: f32,
+    /// (total_likes / total_downloads) * 10, capped at 1.0.
+    pub likes_per_download: f32,
+    /// Fraction of models with >100 downloads (0-1).
+    pub download_breadth: f32,
+
+    // ── Temporal (features 34-37) ────────────────────────────────────────
+    /// exp(-days_since_last_update / 180), (0-1).
+    pub recency: f32,
+    /// recent_90_count / older_90_count ratio, capped at 1.0.
+    pub acceleration: f32,
+    /// span_days / 730, capped at 1.0.
+    pub longevity: f32,
+    /// max_weekly_burst / 5, capped at 1.0.
+    pub burst_intensity: f32,
 }
 
 impl HfCompanySignals {
