@@ -1801,6 +1801,47 @@ tags:
         assert!(signals.is_empty());
     }
 
+    #[test]
+    fn file_signals_gguf() {
+        let siblings = vec![
+            SiblingFile { filename: "model-q4_k_m.gguf".into(), size: Some(4_000_000_000) },
+        ];
+        let signals = OrgScanner::parse_file_signals("org/model", &siblings);
+        assert!(signals.iter().any(|s| s.evidence.contains("GGUF")), "should detect GGUF file");
+    }
+
+    #[test]
+    fn file_signals_onnx() {
+        let siblings = vec![
+            SiblingFile { filename: "model.onnx".into(), size: Some(500_000_000) },
+        ];
+        let signals = OrgScanner::parse_file_signals("org/model", &siblings);
+        assert!(signals.iter().any(|s| s.evidence.contains("ONNX")), "should detect ONNX file");
+    }
+
+    #[test]
+    fn file_signals_mlx() {
+        let siblings = vec![
+            SiblingFile { filename: "mlx_model.safetensors".into(), size: Some(1_000_000_000) },
+        ];
+        let signals = OrgScanner::parse_file_signals("org/model", &siblings);
+        assert!(signals.iter().any(|s| s.evidence.contains("MLX")), "should detect MLX file");
+    }
+
+    #[test]
+    fn sales_brand_zoominfo() {
+        let signals = OrgScanner::detect_sales_signals("zoominfo/some-model", "", &[]);
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].category, SalesCategory::General);
+    }
+
+    #[test]
+    fn sales_brand_clearbit() {
+        let signals = OrgScanner::detect_sales_signals("clearbit/enrichment-model", "", &[]);
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].category, SalesCategory::General);
+    }
+
     fn make_dummy_repo() -> RepoInfo {
         RepoInfo {
             id: None,
