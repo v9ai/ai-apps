@@ -554,14 +554,14 @@ export function LandingPipeline() {
           <div
             className={flex({
               justify: "flex-end",
-              pr: "5",
+              pr: "4",
               my: "1",
             })}
           >
             <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
+              width="16"
+              height="20"
+              viewBox="0 0 16 20"
               fill="none"
               className={cx(
                 css({ display: { base: "none", md: "block" } }),
@@ -569,18 +569,20 @@ export function LandingPipeline() {
               )}
               style={{ animationDelay: "0.9s" }}
             >
-              <path
-                d="M12 2 L12 16 L4 16"
+              <line
+                x1="8"
+                y1="0"
+                x2="8"
+                y2="14"
                 stroke={PIPELINE_STAGES[3].accentColor}
                 strokeWidth="1.5"
-                strokeDasharray="4 4"
-                strokeOpacity="0.4"
-                fill="none"
+                strokeDasharray="3 3"
+                strokeOpacity="0.5"
               />
               <polygon
-                points="4,13 0,16 4,19"
+                points="5,14 8,20 11,14"
                 fill={PIPELINE_STAGES[4].accentColor}
-                fillOpacity="0.4"
+                fillOpacity="0.5"
               />
             </svg>
           </div>

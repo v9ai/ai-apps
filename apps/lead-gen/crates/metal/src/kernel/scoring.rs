@@ -839,7 +839,9 @@ mod tests {
 
         assert!(batch.scores[0] > batch.scores[1]);
         assert!(batch.scores[1] > batch.scores[2]);
-        assert!(batch.scores[0] > 90.0); // near-perfect
+        // With hf_weight in denominator (total max=110), a perfect non-HF candidate
+        // gets (95/110)*100*0.85 + 15 ≈ 88.4.  Threshold lowered accordingly.
+        assert!(batch.scores[0] > 80.0, "perfect candidate got {}", batch.scores[0]);
         assert!(batch.scores[2] < 20.0); // weak
     }
 
@@ -894,6 +896,7 @@ mod tests {
             department_weight: 0.0,
             tech_weight: 0.0,
             email_weight: 0.0,
+            hf_weight: 0.0,
         };
 
         batch.compute_scores_with(&icp);
