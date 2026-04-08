@@ -38,6 +38,7 @@ impl HfClient {
     }
 
     /// Create a client with custom base URLs (for testing or self-hosted HF Hub).
+    #[cfg(test)]
     pub(crate) fn with_base_urls(
         token: Option<&str>,
         concurrency: usize,
