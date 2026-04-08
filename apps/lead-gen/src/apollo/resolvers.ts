@@ -9,6 +9,8 @@ import { emailTemplateResolvers } from "./resolvers/email-templates";
 import { receivedEmailResolvers } from "./resolvers/received-emails";
 import { linkedinPostResolvers } from "./resolvers/linkedin-posts";
 import { intentSignalResolvers } from "./resolvers/intent-signals";
+import { mlResolvers } from "./resolvers/ml";
+import { salescueResolvers } from "./resolvers/salescue";
 import { merge } from "lodash";
 
 export const resolvers = merge(
@@ -24,4 +26,6 @@ export const resolvers = merge(
   receivedEmailResolvers,
   linkedinPostResolvers,
   intentSignalResolvers,
+  mlResolvers,
+  salescueResolvers,
 );

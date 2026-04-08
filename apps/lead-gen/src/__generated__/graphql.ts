@@ -110,6 +110,8 @@ export type Company = {
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];
+  /** ML data quality assessment */
+  dataQuality: DataQualityScore;
   deep_analysis: Maybe<Scalars['String']['output']>;
   description: Maybe<Scalars['String']['output']>;
   email: Maybe<Scalars['String']['output']>;
@@ -117,6 +119,8 @@ export type Company = {
   facts: Array<CompanyFact>;
   facts_count: Scalars['Int']['output'];
   githubUrl: Maybe<Scalars['String']['output']>;
+  /** ICP similarity score via embeddings (0-1) */
+  icpSimilarity: Maybe<Scalars['Float']['output']>;
   id: Scalars['Int']['output'];
   industries: Array<Scalars['String']['output']>;
   industry: Maybe<Scalars['String']['output']>;
@@ -133,6 +137,10 @@ export type Company = {
   location: Maybe<Scalars['String']['output']>;
   logo_url: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  /** ML quality gate evaluation */
+  qualityGate: QualityGateResult;
+  /** ML-computed rank score (0-1) */
+  rankScore: Maybe<Scalars['Float']['output']>;
   score: Scalars['Float']['output'];
   score_reasons: Array<Scalars['String']['output']>;
   service_taxonomy: Array<Scalars['String']['output']>;
@@ -489,6 +497,15 @@ export type CreateReminderInput = {
   remindAt: Scalars['String']['input'];
 };
 
+export type DataQualityScore = {
+  __typename: 'DataQualityScore';
+  completeness: Scalars['Float']['output'];
+  composite: Scalars['Float']['output'];
+  freshness: Scalars['Float']['output'];
+  missingFields: Array<Scalars['String']['output']>;
+  staleFields: Array<Scalars['String']['output']>;
+};
+
 export type DeleteCampaignResult = {
   __typename: 'DeleteCampaignResult';
   message: Maybe<Scalars['String']['output']>;
@@ -752,6 +769,14 @@ export type GenerateEmailResult = {
   text: Scalars['String']['output'];
 };
 
+export type GenerateEmbeddingsResult = {
+  __typename: 'GenerateEmbeddingsResult';
+  errors: Array<Scalars['String']['output']>;
+  failed: Scalars['Int']['output'];
+  processed: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateReplyInput = {
   additionalDetails?: InputMaybe<Scalars['String']['input']>;
   includeCalendly?: InputMaybe<Scalars['Boolean']['input']>;
@@ -897,6 +922,14 @@ export type LinkedInPostType =
   | 'job'
   | 'post';
 
+export type MlStats = {
+  __typename: 'MLStats';
+  companiesEmbedded: Scalars['Int']['output'];
+  lastEmbeddingAt: Maybe<Scalars['String']['output']>;
+  modelsAvailable: Array<Scalars['String']['output']>;
+  totalCompanies: Scalars['Int']['output'];
+};
+
 export type MarkRepliedResult = {
   __typename: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -953,6 +986,8 @@ export type Mutation = {
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   flagContactsForDeletion: BatchOperationResult;
+  /** Generate and store embeddings for companies missing them. Admin only. */
+  generateCompanyEmbeddings: GenerateEmbeddingsResult;
   generateEmail: GenerateEmailResult;
   generateReply: GenerateReplyResult;
   importCompanies: ImportCompaniesResult;
@@ -1142,6 +1177,12 @@ export type MutationFindContactEmailArgs = {
 
 export type MutationFlagContactsForDeletionArgs = {
   threshold?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type MutationGenerateCompanyEmbeddingsArgs = {
+  batchSize?: InputMaybe<Scalars['Int']['input']>;
+  companyIds?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
 
@@ -1345,11 +1386,21 @@ export type PreviewEmailInput = {
   subject: Scalars['String']['input'];
 };
 
+export type QualityGateResult = {
+  __typename: 'QualityGateResult';
+  adjustedScore: Scalars['Float']['output'];
+  flags: Array<Scalars['String']['output']>;
+  pass: Scalars['Boolean']['output'];
+  recommendations: Array<Scalars['String']['output']>;
+};
+
 export type Query = {
   __typename: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
   companies: CompaniesResponse;
   companiesByIntent: CompaniesResponse;
+  /** Find companies similar to a given company by ID */
+  companiesLike: Array<SimilarCompanyResult>;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
   company_facts: Array<CompanyFact>;
@@ -1371,9 +1422,17 @@ export type Query = {
   intentSignals: IntentSignalsResponse;
   linkedinPost: Maybe<LinkedInPost>;
   linkedinPosts: Array<LinkedInPost>;
+  /** ML model health and stats */
+  mlStats: MlStats;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
+  /** Next best companies to contact based on ML scoring */
+  recommendedCompanies: Array<RecommendedCompany>;
+  /** Best contacts to reach within a company */
+  recommendedContacts: Array<RankedContact>;
   resendEmail: Maybe<ResendEmailDetail>;
+  /** Semantic similarity search: find companies matching a natural language query */
+  similarCompanies: Array<SimilarCompanyResult>;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -1391,6 +1450,13 @@ export type QueryCompaniesByIntentArgs = {
   offset?: InputMaybe<Scalars['Int']['input']>;
   signalType?: InputMaybe<IntentSignalType>;
   threshold: Scalars['Float']['input'];
+};
+
+
+export type QueryCompaniesLikeArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
 };
 
 
@@ -1518,13 +1584,40 @@ export type QueryReceivedEmailsArgs = {
 };
 
 
+export type QueryRecommendedCompaniesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type QueryRecommendedContactsArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryResendEmailArgs = {
   resendId: Scalars['String']['input'];
 };
 
 
+export type QuerySimilarCompaniesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minAiTier?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+  query: Scalars['String']['input'];
+};
+
+
 export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
+};
+
+export type RankedContact = {
+  __typename: 'RankedContact';
+  contact: Contact;
+  rankScore: Scalars['Float']['output'];
+  reasons: Array<Scalars['String']['output']>;
 };
 
 export type ReceivedEmail = {
@@ -1555,6 +1648,13 @@ export type ReceivedEmailsResult = {
   __typename: 'ReceivedEmailsResult';
   emails: Array<ReceivedEmail>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type RecommendedCompany = {
+  __typename: 'RecommendedCompany';
+  company: Company;
+  reasons: Array<Scalars['String']['output']>;
+  score: Scalars['Float']['output'];
 };
 
 export type RefreshIntentResult = {
@@ -1652,6 +1752,12 @@ export type SignalTypeCount = {
   __typename: 'SignalTypeCount';
   count: Scalars['Int']['output'];
   signalType: IntentSignalType;
+};
+
+export type SimilarCompanyResult = {
+  __typename: 'SimilarCompanyResult';
+  company: Company;
+  similarity: Scalars['Float']['output'];
 };
 
 export type SourceType =

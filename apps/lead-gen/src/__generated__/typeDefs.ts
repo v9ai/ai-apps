@@ -85,6 +85,8 @@ type Company {
   category: CompanyCategory!
   contacts: [Contact!]!
   created_at: String!
+  """ML data quality assessment"""
+  dataQuality: DataQualityScore!
   deep_analysis: String
   description: String
   email: String
@@ -92,6 +94,8 @@ type Company {
   facts(field: String, limit: Int, offset: Int): [CompanyFact!]!
   facts_count: Int!
   githubUrl: String
+  """ICP similarity score via embeddings (0-1)"""
+  icpSimilarity: Float
   id: Int!
   industries: [String!]!
   industry: String
@@ -108,6 +112,10 @@ type Company {
   location: String
   logo_url: String
   name: String!
+  """ML quality gate evaluation"""
+  qualityGate: QualityGateResult!
+  """ML-computed rank score (0-1)"""
+  rankScore: Float
   score: Float!
   score_reasons: [String!]!
   service_taxonomy: [String!]!
@@ -440,6 +448,14 @@ input CreateReminderInput {
   remindAt: String!
 }
 
+type DataQualityScore {
+  completeness: Float!
+  composite: Float!
+  freshness: Float!
+  missingFields: [String!]!
+  staleFields: [String!]!
+}
+
 scalar DateTime
 
 type DeleteCampaignResult {
@@ -685,6 +701,13 @@ type GenerateEmailResult {
   text: String!
 }
 
+type GenerateEmbeddingsResult {
+  errors: [String!]!
+  failed: Int!
+  processed: Int!
+  success: Boolean!
+}
+
 input GenerateReplyInput {
   additionalDetails: String
   includeCalendly: Boolean
@@ -824,6 +847,13 @@ enum LinkedInPostType {
   post
 }
 
+type MLStats {
+  companiesEmbedded: Int!
+  lastEmbeddingAt: String
+  modelsAvailable: [String!]!
+  totalCompanies: Int!
+}
+
 type MarkRepliedResult {
   message: String
   success: Boolean!
@@ -876,6 +906,8 @@ type Mutation {
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!
   flagContactsForDeletion(threshold: Float): BatchOperationResult!
+  """Generate and store embeddings for companies missing them. Admin only."""
+  generateCompanyEmbeddings(batchSize: Int, companyIds: [Int!]): GenerateEmbeddingsResult!
   generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
   generateReply(input: GenerateReplyInput!): GenerateReplyResult!
   importCompanies(companies: [CompanyImportInput!]!): ImportCompaniesResult!
@@ -921,10 +953,19 @@ input PreviewEmailInput {
   subject: String!
 }
 
+type QualityGateResult {
+  adjustedScore: Float!
+  flags: [String!]!
+  pass: Boolean!
+  recommendations: [String!]!
+}
+
 type Query {
   allCompanyTags: [String!]!
   companies(filter: CompanyFilterInput, limit: Int, offset: Int, order_by: CompanyOrderBy): CompaniesResponse!
   companiesByIntent(limit: Int, offset: Int, signalType: IntentSignalType, threshold: Float!): CompaniesResponse!
+  """Find companies similar to a given company by ID"""
+  companiesLike(companyId: Int!, limit: Int, minScore: Float): [SimilarCompanyResult!]!
   company(id: Int, key: String): Company
   companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
   company_facts(company_id: Int!, field: String, limit: Int, offset: Int): [CompanyFact!]!
@@ -946,10 +987,26 @@ type Query {
   intentSignals(companyId: Int!, limit: Int, offset: Int, signalType: IntentSignalType): IntentSignalsResponse!
   linkedinPost(id: Int!): LinkedInPost
   linkedinPosts(companyId: Int, limit: Int, offset: Int, type: LinkedInPostType): [LinkedInPost!]!
+  """ML model health and stats"""
+  mlStats: MLStats!
   receivedEmail(id: Int!): ReceivedEmail
   receivedEmails(archived: Boolean, classification: String, limit: Int, offset: Int): ReceivedEmailsResult!
+  """Next best companies to contact based on ML scoring"""
+  recommendedCompanies(limit: Int, minScore: Float): [RecommendedCompany!]!
+  """Best contacts to reach within a company"""
+  recommendedContacts(companyId: Int!, limit: Int): [RankedContact!]!
   resendEmail(resendId: String!): ResendEmailDetail
+  """
+  Semantic similarity search: find companies matching a natural language query
+  """
+  similarCompanies(limit: Int, minAiTier: Int, minScore: Float, query: String!): [SimilarCompanyResult!]!
   userSettings(userId: String!): UserSettings
+}
+
+type RankedContact {
+  contact: Contact!
+  rankScore: Float!
+  reasons: [String!]!
 }
 
 type ReceivedEmail {
@@ -978,6 +1035,12 @@ type ReceivedEmail {
 type ReceivedEmailsResult {
   emails: [ReceivedEmail!]!
   totalCount: Int!
+}
+
+type RecommendedCompany {
+  company: Company!
+  reasons: [String!]!
+  score: Float!
 }
 
 type RefreshIntentResult {
@@ -1067,6 +1130,11 @@ type SendOutreachEmailResult {
 type SignalTypeCount {
   count: Int!
   signalType: IntentSignalType!
+}
+
+type SimilarCompanyResult {
+  company: Company!
+  similarity: Float!
 }
 
 enum SourceType {

@@ -1,0 +1,87 @@
+# ML-powered queries and types
+
+extend type Query {
+  """Semantic similarity search: find companies matching a natural language query"""
+  similarCompanies(query: String!, limit: Int, minScore: Float, minAiTier: Int): [SimilarCompanyResult!]!
+
+  """Find companies similar to a given company by ID"""
+  companiesLike(companyId: Int!, limit: Int, minScore: Float): [SimilarCompanyResult!]!
+
+  """Next best companies to contact based on ML scoring"""
+  recommendedCompanies(limit: Int, minScore: Float): [RecommendedCompany!]!
+
+  """Best contacts to reach within a company"""
+  recommendedContacts(companyId: Int!, limit: Int): [RankedContact!]!
+
+  """ML model health and stats"""
+  mlStats: MLStats!
+}
+
+extend type Mutation {
+  """Generate and store embeddings for companies missing them. Admin only."""
+  generateCompanyEmbeddings(companyIds: [Int!], batchSize: Int): GenerateEmbeddingsResult!
+}
+
+# --- Result types ---
+
+type SimilarCompanyResult {
+  company: Company!
+  similarity: Float!
+}
+
+type RecommendedCompany {
+  company: Company!
+  score: Float!
+  reasons: [String!]!
+}
+
+type RankedContact {
+  contact: Contact!
+  rankScore: Float!
+  reasons: [String!]!
+}
+
+type GenerateEmbeddingsResult {
+  success: Boolean!
+  processed: Int!
+  failed: Int!
+  errors: [String!]!
+}
+
+type DataQualityScore {
+  completeness: Float!
+  freshness: Float!
+  composite: Float!
+  missingFields: [String!]!
+  staleFields: [String!]!
+}
+
+type QualityGateResult {
+  pass: Boolean!
+  flags: [String!]!
+  adjustedScore: Float!
+  recommendations: [String!]!
+}
+
+type MLStats {
+  companiesEmbedded: Int!
+  totalCompanies: Int!
+  modelsAvailable: [String!]!
+  lastEmbeddingAt: String
+}
+
+# --- Extend Company with ML fields ---
+
+extend type Company {
+  """ML data quality assessment"""
+  dataQuality: DataQualityScore!
+
+  """ML quality gate evaluation"""
+  qualityGate: QualityGateResult!
+
+  """ML-computed rank score (0-1)"""
+  rankScore: Float
+
+  """ICP similarity score via embeddings (0-1)"""
+  icpSimilarity: Float
+}
