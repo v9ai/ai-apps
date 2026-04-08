@@ -398,18 +398,21 @@ export function LandingPipeline() {
   useEffect(() => {
     if (!isVisible) return;
 
+    let interval: ReturnType<typeof setInterval> | null = null;
+
     // Start pulse after entrance animations finish
     const startDelay = setTimeout(() => {
       let i = 0;
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setLiveStageIndex(i % PIPELINE_STAGES.length);
         i++;
       }, PULSE_STAGE_MS);
-
-      return () => clearInterval(interval);
     }, 1200);
 
-    return () => clearTimeout(startDelay);
+    return () => {
+      clearTimeout(startDelay);
+      if (interval) clearInterval(interval);
+    };
   }, [isVisible]);
 
   return (

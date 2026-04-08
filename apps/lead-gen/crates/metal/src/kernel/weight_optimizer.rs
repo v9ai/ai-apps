@@ -13,7 +13,7 @@ pub struct OptimizationResult {
     /// Best-found ICP weight profile (rule-based layer).
     pub icp_weights: IcpProfile,
     /// Logistic regression weights after SGD refinement.
-    pub logistic_weights: [f32; 7],
+    pub logistic_weights: Vec<f32>,
     /// Logistic regression bias after SGD refinement.
     pub logistic_bias: f32,
     /// Threshold that maximised F1 on the training set.
@@ -74,7 +74,13 @@ fn compute_f1(predicted: &[bool], actual: &[bool]) -> f32 {
 /// | 4   | `tech_overlap`      | `(f * 10.0) as u8`                       |
 /// | 5   | `email_verified`    | `(f * 2.0) as u8`                        |
 /// | 6   | `recency_days`      | `-ln(f) / 0.015`, clamped to `0..=365`  |
-fn populate_batch_from_sample(batch: &mut ContactBatch, idx: usize, features: &[f32; 7]) {
+/// | 7   | `hf_score`          | direct passthrough                      |
+/// | 8   | `hf_model_depth`    | direct passthrough                      |
+/// | 9   | `hf_training_depth` | direct passthrough                      |
+/// | 10  | `hf_maturity`       | direct passthrough                      |
+/// | 11  | `hf_research`       | direct passthrough                      |
+/// | 12  | `hf_sales_relevance`| direct passthrough                      |
+fn populate_batch_from_sample(batch: &mut ContactBatch, idx: usize, features: &[f32; FEATURE_COUNT]) {
     batch.industry_match[idx] = (features[0] > 0.5) as u8;
     batch.employee_in_range[idx] = (features[1] > 0.5) as u8;
     batch.seniority_match[idx] = (features[2] > 0.5) as u8;
@@ -87,6 +93,14 @@ fn populate_batch_from_sample(batch: &mut ContactBatch, idx: usize, features: &[
     let f6 = features[6].clamp(1e-7, 1.0);
     let days_f = -f6.ln() / 0.015;
     batch.recency_days[idx] = days_f.clamp(0.0, 365.0) as u16;
+
+    // HF features are [0, 1] floats — pass through directly.
+    batch.hf_score[idx] = features[7];
+    batch.hf_model_depth[idx] = features[8];
+    batch.hf_training_depth[idx] = features[9];
+    batch.hf_maturity[idx] = features[10];
+    batch.hf_research[idx] = features[11];
+    batch.hf_sales_relevance[idx] = features[12];
 }
 
 /// Score all `samples` with `icp` (rule-based) and return the F1 at `threshold`.
@@ -121,10 +135,10 @@ fn icp_f1(samples: &[LabeledSample], icp: &IcpProfile, threshold: f32) -> f32 {
 
 // ── Grid search ───────────────────────────────────────────────────────────────
 
-/// Grid search over the six ICP weights.
+/// Grid search over the seven ICP weights (6 original + hf_weight).
 ///
 /// Each weight independently takes one of the values in `grid_values`.  For a
-/// default grid of `[5.0, 15.0, 25.0, 35.0]` that is 4^6 = 4 096 combinations.
+/// default grid of `[5.0, 15.0, 25.0, 35.0]` that is 4^7 = 16 384 combinations.
 ///
 /// Returns the `IcpProfile` that maximises F1 on `samples` at `threshold`, and
 /// the corresponding F1 value.
@@ -136,16 +150,16 @@ pub fn grid_search_icp(
     let g = grid_values.len();
     assert!(g > 0, "grid_values must not be empty");
 
-    let total_combos = g.pow(6);
+    let total_combos = g.pow(7);
     // Initialise best to a sentinel so the first combo always wins on tie.
     let mut best_f1 = -1.0f32;
     let mut best_icp = IcpProfile::default();
 
-    // Iterate over all combinations by treating the 6-weight tuple as a
+    // Iterate over all combinations by treating the 7-weight tuple as a
     // mixed-radix number in base `g`.
     for combo in 0..total_combos {
         let mut rem = combo;
-        let mut indices = [0usize; 6];
+        let mut indices = [0usize; 7];
         for slot in indices.iter_mut() {
             *slot = rem % g;
             rem /= g;
@@ -158,6 +172,7 @@ pub fn grid_search_icp(
             department_weight: grid_values[indices[3]],
             tech_weight: grid_values[indices[4]],
             email_weight: grid_values[indices[5]],
+            hf_weight: grid_values[indices[6]],
         };
 
         let f1 = icp_f1(samples, &candidate, threshold);
@@ -175,7 +190,7 @@ pub fn grid_search_icp(
 /// Train a fresh `LogisticScorer` on `samples` using stochastic gradient
 /// descent for `epochs` passes at learning rate `lr`.
 pub fn sgd_refine(samples: &[LabeledSample], epochs: usize, lr: f32) -> LogisticScorer {
-    let features: Vec<[f32; 7]> = samples.iter().map(|s| s.features).collect();
+    let features: Vec<[f32; FEATURE_COUNT]> = samples.iter().map(|s| s.features).collect();
     let labels: Vec<f32> = samples.iter().map(|s| s.label).collect();
 
     let mut scorer = LogisticScorer::new();

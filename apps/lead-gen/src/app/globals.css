@@ -611,3 +611,217 @@ a:hover svg { color: var(--colors-ui-heading) !important; }
   nav { display: none !important; }
   .collapsible-body { grid-template-rows: 1fr !important; }
 }
+
+/* ==========================================================
+   SCROLL IMPROVEMENTS
+   ========================================================== */
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  color-scheme: dark;
+}
+
+/* --- custom scrollbar --- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--colors-accent-primary) rgba(255, 255, 255, 0.04);
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--colors-accent-primary);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--colors-accent-hover, var(--colors-accent-primary));
+}
+
+/* ==========================================================
+   UTILITY ANIMATIONS
+   ========================================================== */
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ==========================================================
+   ACCESSIBILITY — FOCUS-VISIBLE
+   ========================================================== */
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--colors-accent-primary);
+  outline-offset: 2px;
+}
+
+/* Replace default browser ring with consistent box-shadow on form controls */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  box-shadow: 0 0 0 1px var(--colors-accent-primary);
+}
+
+/* ==========================================================
+   TYPOGRAPHY UTILITIES
+   ========================================================== */
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- dark-theme code block polish --- */
+code,
+kbd,
+samp {
+  font-family: var(--fonts-mono);
+  font-size: 0.875em;
+  background: var(--colors-ui-surface-raised);
+  color: var(--colors-accent-primary);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+pre code,
+pre kbd,
+pre samp {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* ==========================================================
+   REDUCED MOTION — COMPREHENSIVE (covers new utility animations)
+   ========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================
+   PRINT STYLES
+   ========================================================== */
+
+@media print {
+  nav,
+  aside,
+  [role="navigation"],
+  .skip-to-content,
+  .pipeline-arrow-flow,
+  .badge-scan-animated::after,
+  .pipeline-card-hover::after,
+  .cta-solid-animated::before,
+  .cta-ghost-animated::before,
+  .pipeline-connector,
+  .pipeline-stage-live,
+  .hero-dot-grid,
+  .terminal-cursor {
+    display: none !important;
+  }
+
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  a {
+    color: #111 !important;
+    text-decoration: underline;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #555;
+  }
+
+  .collapsible-body {
+    grid-template-rows: 1fr !important;
+  }
+
+  img,
+  svg {
+    max-width: 100% !important;
+  }
+
+  h1, h2, h3, h4 {
+    color: #000 !important;
+    page-break-after: avoid;
+  }
+
+  table {
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    border: 1px solid #ccc !important;
+    color: #111 !important;
+    background: #fff !important;
+  }
+}
