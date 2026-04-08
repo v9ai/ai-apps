@@ -116,6 +116,15 @@ export default defineConfig({
             filter: "blur(0)",
           },
         },
+        "pipeline-live-pulse": {
+          "0%": { boxShadow: "0 0 0 0 var(--stage-accent)" },
+          "40%": { boxShadow: "0 0 12px 3px var(--stage-accent)" },
+          "100%": { boxShadow: "0 0 0 0 var(--stage-accent)" },
+        },
+        "connector-fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
         "toolbar-enter": {
           from: { opacity: "0", transform: "translateY(4px)" },
           to: { opacity: "1", transform: "translateY(0)" },
@@ -135,6 +144,26 @@ export default defineConfig({
         fadeIn: {
           from: { opacity: "0" },
           to: { opacity: "1" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        glowPulse: {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(62,99,221,0.2)" },
+          "50%": { boxShadow: "0 0 40px rgba(62,99,221,0.4)" },
+        },
+        slideUp: {
+          "0%": { transform: "translateY(16px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        slideInRight: {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
         },
       },
 
@@ -244,11 +273,16 @@ export default defineConfig({
           "ui.overlay": { value: "rgba(10, 10, 15, 0.85)" },
           "ui.overlayHeavy": { value: "rgba(10, 10, 15, 0.95)" },
 
+          // ---- glass / divider ----
+          "ui.surfaceGlass": { value: "rgba(17, 17, 19, 0.7)" },
+          "ui.divider": { value: "rgba(44, 44, 47, 0.5)" },
+
           // ---- accent (Radix indigo dark) ----
           "accent.primary": { value: "#3E63DD" },
           "accent.hover": { value: "#4D72E5" },
           "accent.contrast": { value: "#FFFFFF" },
           "accent.subtle": { value: "rgba(62, 99, 221, 0.12)" },
+          "accent.glow": { value: "rgba(62, 99, 221, 0.15)" },
           "accent.border": { value: "rgba(62, 99, 221, 0.30)" },
 
           // ---- status (Radix green dark) ----
