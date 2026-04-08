@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import "@radix-ui/themes/styles.css";
 import "./globals.css";
+import { Theme } from "@radix-ui/themes";
 import { Providers } from "@/components/providers";
 import { SidebarProvider } from "@/components/sidebar-provider";
 import { Sidebar, MainContent } from "@/components/sidebar";
@@ -25,21 +27,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
       <body className={inter.variable}>
         <a href="#main-content" className="skip-to-content">
           skip to content
         </a>
-        <Providers>
-          <ErrorBoundary>
-            <SidebarProvider>
-              <div className={css({ display: "flex", minHeight: "100vh" })}>
-                <Sidebar />
-                <MainContent>{children}</MainContent>
-              </div>
-            </SidebarProvider>
-          </ErrorBoundary>
-        </Providers>
+        <Theme appearance="dark">
+          <Providers>
+            <ErrorBoundary>
+              <SidebarProvider>
+                <div className={css({ display: "flex", minHeight: "100vh" })}>
+                  <Sidebar />
+                  <MainContent>{children}</MainContent>
+                </div>
+              </SidebarProvider>
+            </ErrorBoundary>
+          </Providers>
+        </Theme>
       </body>
     </html>
   );

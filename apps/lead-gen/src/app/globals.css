@@ -1,5 +1,9 @@
 @layer panda_reset, panda_base, panda_tokens, panda_recipes, panda_utilities;
 
+:root {
+  color-scheme: dark;
+}
+
 /* ============================================================
    Agentic Lead Gen — PandaCSS Design System
    ============================================================

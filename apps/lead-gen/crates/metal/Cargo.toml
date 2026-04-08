@@ -28,10 +28,12 @@ chrono = { version = "0.4", features = ["serde"] }
 ort = { version = "2.0.0-rc.12", features = ["load-dynamic"], optional = true }
 tokenizers = { version = "0.21", optional = true }
 ndarray = { version = "0.16", optional = true }
+hf = { path = "../../../../crates/hf", optional = true }
 
 [features]
 default = ["safe", "kernel"]
 safe = ["scraper"]
+kernel-hf = ["hf"]
 kernel-btree = []
 kernel-scoring = []
 kernel-html = []
@@ -48,7 +50,7 @@ kernel-bge = ["ort", "tokenizers", "ndarray"]
 kernel-ner-transformer = ["ort", "tokenizers", "ndarray"]
 kernel-reranker = ["ort", "tokenizers", "ndarray"]
 kernel = ["kernel-btree", "kernel-scoring", "kernel-html", "kernel-arena", "kernel-timer", "kernel-crc", "kernel-ner", "kernel-ring", "kernel-eval", "kernel-extract", "kernel-intent", "kernel-spam"]
-kernel-ml = ["kernel", "kernel-bge", "kernel-ner-transformer", "kernel-reranker"]
+kernel-ml = ["kernel", "kernel-bge", "kernel-ner-transformer", "kernel-reranker", "kernel-hf"]
 
 [dev-dependencies]
 tempfile = "3"
