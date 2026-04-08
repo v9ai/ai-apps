@@ -78,10 +78,10 @@ export function LandingClosing() {
           {/* primary CTA repeated */}
           <div className={flex({ justify: "center", gap: "3", mt: "6" })}>
             <Link
-              href="/how-it-works"
+              href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen#deploy"
               className={button({ variant: "solid", size: "lg" })}
             >
-              Deploy Agentic Lead Gen locally
+              Clone and deploy
               <ArrowRightIcon width={14} height={14} />
             </Link>
           </div>

@@ -20,9 +20,9 @@ import { cx } from "styled-system/css";
 const SECTION_ANCHORS = [
   { id: "hero", label: "home" },
   { id: "pipeline", label: "pipeline" },
-  { id: "metrics", label: "metrics" },
+  { id: "benchmarks", label: "metrics" },
   { id: "features", label: "features" },
-  { id: "research", label: "research" },
+  { id: "research", label: "architecture" },
 ] as const;
 
 const SITE_LINKS = [
