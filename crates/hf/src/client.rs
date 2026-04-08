@@ -925,6 +925,127 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn fetch_raw_files_429_returns_rate_limited() {
+        // Regression: fetch_text previously didn't handle 429, returning
+        // Error::Api instead of Error::RateLimited
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/org/model/resolve/main/README.md"))
+            .respond_with(
+                ResponseTemplate::new(429)
+                    .insert_header("retry-after", "15"),
+            )
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let requests = vec![FetchRequest::model("org/model").with_path("README.md")];
+        let results = client.fetch_raw_files(&requests).await;
+
+        assert_eq!(results.len(), 1);
+        assert!(!results[0].is_ok());
+        if let FetchResult::Err { error, .. } = &results[0] {
+            let msg = error.to_string();
+            assert!(
+                msg.contains("429"),
+                "fetch_text should return RateLimited on 429, got: {msg}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn list_repos_pagination_follows_link() {
+        let server = MockServer::start().await;
+
+        let repo1 = serde_json::json!([{
+            "id": "org/model-page1",
+            "author": "org",
+            "downloads": 100
+        }]);
+        let repo2 = serde_json::json!([{
+            "id": "org/model-page2",
+            "author": "org",
+            "downloads": 50
+        }]);
+
+        // Page 1 returns data + Link header pointing to page 2
+        Mock::given(method("GET"))
+            .and(path("/models"))
+            .and(wiremock::matchers::query_param_is_missing("cursor"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(&repo1)
+                    .insert_header(
+                        "link",
+                        &format!(r#"<{}/models?cursor=page2&sort=downloads&direction=-1&limit=100>; rel="next""#, server.uri()),
+                    ),
+            )
+            .mount(&server)
+            .await;
+
+        // Page 2 returns data, no Link header
+        Mock::given(method("GET"))
+            .and(path("/models"))
+            .and(wiremock::matchers::query_param("cursor", "page2"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(&repo2),
+            )
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let opts = ListOptions {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: 0, // unlimited
+            full: false,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        };
+        let repos = client.list_repos(&opts).await.unwrap();
+        assert_eq!(repos.len(), 2, "should collect from both pages");
+        assert_eq!(repos[0].repo_id.as_deref(), Some("org/model-page1"));
+        assert_eq!(repos[1].repo_id.as_deref(), Some("org/model-page2"));
+    }
+
+    #[tokio::test]
+    async fn list_repos_api_error_propagates() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/models"))
+            .respond_with(
+                ResponseTemplate::new(500).set_body_string("internal server error"),
+            )
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let opts = ListOptions {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: 1,
+            full: false,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        };
+        let err = client.list_repos(&opts).await.unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("500"), "should propagate 500: {msg}");
+        assert!(msg.contains("internal server error"), "should include body: {msg}");
+    }
+
+    #[tokio::test]
     async fn list_repo_files_extracts_siblings() {
         let server = MockServer::start().await;
         let repo_json = serde_json::json!({
