@@ -344,76 +344,22 @@ impl HfClient {
 
     /// Fetch popular models sorted by downloads (with full metadata).
     pub async fn list_popular_models(&self, count: usize) -> Result<Vec<RepoInfo>, Error> {
-        self.list_repos(&ListOptions {
-            repo_type: RepoType::Model,
-            sort: "downloads".into(),
-            direction: "-1".into(),
-            limit: 100,
-            max_pages: count.div_ceil(100),
-            full: true,
-            search: None,
-            author: None,
-            filter: None,
-            pipeline_tag_filter: None,
-            library_filter: None,
-        })
-        .await
+        self.list_repos(&ListOptions::models().max_pages(count.div_ceil(100))).await
     }
 
     /// Fetch popular datasets sorted by downloads (with full metadata).
     pub async fn list_popular_datasets(&self, count: usize) -> Result<Vec<RepoInfo>, Error> {
-        self.list_repos(&ListOptions {
-            repo_type: RepoType::Dataset,
-            sort: "downloads".into(),
-            direction: "-1".into(),
-            limit: 100,
-            max_pages: count.div_ceil(100),
-            full: true,
-            search: None,
-            author: None,
-            filter: None,
-            pipeline_tag_filter: None,
-            library_filter: None,
-        })
-        .await
+        self.list_repos(&ListOptions::datasets().max_pages(count.div_ceil(100))).await
     }
 
     /// Fetch popular spaces sorted by likes (with full metadata).
     pub async fn list_popular_spaces(&self, count: usize) -> Result<Vec<RepoInfo>, Error> {
-        self.list_repos(&ListOptions {
-            repo_type: RepoType::Space,
-            sort: "likes".into(),
-            direction: "-1".into(),
-            limit: 100,
-            max_pages: count.div_ceil(100),
-            full: true,
-            search: None,
-            author: None,
-            filter: None,
-            pipeline_tag_filter: None,
-            library_filter: None,
-        })
-        .await
+        self.list_repos(&ListOptions::spaces().max_pages(count.div_ceil(100))).await
     }
-
-    // ── Filtered search methods ────────────────────────────────────
 
     /// Search models by text query, sorted by downloads.
     pub async fn search_models(&self, query: &str, limit: usize) -> Result<Vec<RepoInfo>, Error> {
-        self.list_repos(&ListOptions {
-            repo_type: RepoType::Model,
-            sort: "downloads".into(),
-            direction: "-1".into(),
-            limit: 100,
-            max_pages: limit.div_ceil(100),
-            full: true,
-            search: Some(query.to_owned()),
-            author: None,
-            filter: None,
-            pipeline_tag_filter: None,
-            library_filter: None,
-        })
-        .await
+        self.list_repos(&ListOptions::models().search(query).max_pages(limit.div_ceil(100))).await
     }
 
     /// List all repos (of a given type) by a specific author/organization.
@@ -423,20 +369,12 @@ impl HfClient {
         repo_type: RepoType,
         limit: usize,
     ) -> Result<Vec<RepoInfo>, Error> {
-        self.list_repos(&ListOptions {
-            repo_type,
-            sort: "downloads".into(),
-            direction: "-1".into(),
-            limit: 100,
-            max_pages: limit.div_ceil(100),
-            full: true,
-            search: None,
-            author: Some(author.to_owned()),
-            filter: None,
-            pipeline_tag_filter: None,
-            library_filter: None,
-        })
-        .await
+        let opts = match repo_type {
+            RepoType::Model => ListOptions::models(),
+            RepoType::Dataset => ListOptions::datasets(),
+            RepoType::Space => ListOptions::spaces(),
+        };
+        self.list_repos(&opts.author(author).max_pages(limit.div_ceil(100))).await
     }
 
     /// List models that use a specific library (e.g. "transformers", "pytorch").
@@ -445,20 +383,7 @@ impl HfClient {
         library: &str,
         limit: usize,
     ) -> Result<Vec<RepoInfo>, Error> {
-        self.list_repos(&ListOptions {
-            repo_type: RepoType::Model,
-            sort: "downloads".into(),
-            direction: "-1".into(),
-            limit: 100,
-            max_pages: limit.div_ceil(100),
-            full: true,
-            search: None,
-            author: None,
-            filter: None,
-            pipeline_tag_filter: None,
-            library_filter: Some(library.to_owned()),
-        })
-        .await
+        self.list_repos(&ListOptions::models().library(library).max_pages(limit.div_ceil(100))).await
     }
 
     /// List models by pipeline tag (e.g. "text-generation", "image-classification").
@@ -467,20 +392,7 @@ impl HfClient {
         tag: &str,
         limit: usize,
     ) -> Result<Vec<RepoInfo>, Error> {
-        self.list_repos(&ListOptions {
-            repo_type: RepoType::Model,
-            sort: "downloads".into(),
-            direction: "-1".into(),
-            limit: 100,
-            max_pages: limit.div_ceil(100),
-            full: true,
-            search: None,
-            author: None,
-            filter: None,
-            pipeline_tag_filter: Some(tag.to_owned()),
-            library_filter: None,
-        })
-        .await
+        self.list_repos(&ListOptions::models().pipeline_tag(tag).max_pages(limit.div_ceil(100))).await
     }
 }
 

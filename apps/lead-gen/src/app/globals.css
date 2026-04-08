@@ -785,11 +785,11 @@ nav a.active {
   opacity: 0;
   animation: stat-slot-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
-/* parent stagger offsets for direct children */
-.stats-row-animated > :nth-child(1) .stat-value-inner { animation-delay: 0s; }
-.stats-row-animated > :nth-child(2) .stat-value-inner { animation-delay: 0.1s; }
-.stats-row-animated > :nth-child(3) .stat-value-inner { animation-delay: 0.2s; }
-.stats-row-animated > :nth-child(4) .stat-value-inner { animation-delay: 0.3s; }
+/* parent stagger offsets — delayed to land after headline entrance */
+.stats-row-animated > :nth-child(1) .stat-value-inner { animation-delay: 0.6s; }
+.stats-row-animated > :nth-child(2) .stat-value-inner { animation-delay: 0.7s; }
+.stats-row-animated > :nth-child(3) .stat-value-inner { animation-delay: 0.8s; }
+.stats-row-animated > :nth-child(4) .stat-value-inner { animation-delay: 0.9s; }
 
 /* --- 4. Pipeline arrow sequential pulse --- */
 @keyframes arrow-flow-pulse {
@@ -844,7 +844,7 @@ nav a.active {
     rgba(255, 255, 255, 0.06),
     transparent
   );
-  animation: badge-scan 3s ease-in-out infinite;
+  animation: badge-scan 3s ease-in-out 1s infinite;
   pointer-events: none;
 }
 
