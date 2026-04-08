@@ -254,7 +254,7 @@ pub fn optimize(
     const GRID_THRESHOLD: f32 = 0.5;
 
     // Stage 1 — grid search.
-    let grid_combos = DEFAULT_GRID.len().pow(6);
+    let grid_combos = DEFAULT_GRID.len().pow(7);
     let (best_icp, _grid_f1) = grid_search_icp(samples, DEFAULT_GRID, GRID_THRESHOLD);
 
     // Stage 2 — SGD refinement.
@@ -271,7 +271,7 @@ pub fn optimize(
 
     let result = OptimizationResult {
         icp_weights: best_icp,
-        logistic_weights: scorer.weights,
+        logistic_weights: scorer.weights.clone(),
         logistic_bias: scorer.bias,
         best_threshold,
         best_f1,
@@ -310,16 +310,16 @@ mod tests {
         (0..n)
             .map(|i| {
                 let pos = i % 2 == 0;
+                let mut features = [0.0f32; FEATURE_COUNT];
+                features[0] = if pos { 1.0 } else { 0.0 }; // industry_match
+                features[1] = 0.5;                           // employee_in_range — neutral
+                features[2] = if pos { 1.0 } else { 0.0 };  // seniority_match
+                features[6] = 0.5;                           // recency_smooth — neutral
+                // HF features neutral
+                features[7] = 0.5;  // hf_score — neutral
+                features[10] = 0.5; // hf_maturity — neutral
                 LabeledSample {
-                    features: [
-                        if pos { 1.0 } else { 0.0 }, // industry_match
-                        0.5,                          // employee_in_range — neutral
-                        if pos { 1.0 } else { 0.0 }, // seniority_match
-                        0.0,                          // department_match — noise
-                        0.0,                          // tech_overlap — noise
-                        0.0,                          // email_verified — noise
-                        0.5,                          // recency_smooth — neutral
-                    ],
+                    features,
                     label: if pos { 1.0 } else { 0.0 },
                 }
             })
@@ -334,7 +334,7 @@ mod tests {
                 let pos = i % 2 == 0;
                 let v = if pos { 1.0 } else { 0.0 };
                 LabeledSample {
-                    features: [v; 7],
+                    features: [v; FEATURE_COUNT],
                     label: v,
                 }
             })
@@ -477,7 +477,7 @@ mod tests {
         let scorer = LogisticScorer::default_pretrained();
         let samples: Vec<LabeledSample> = (0..10)
             .map(|_| LabeledSample {
-                features: [1.0; 7],
+                features: [1.0; FEATURE_COUNT],
                 label: 1.0,
             })
             .collect();
@@ -494,8 +494,8 @@ mod tests {
         let samples = balanced_samples(40);
         let (result, scorer, calibrator) = optimize(&samples);
 
-        // 4^6 = 4096 combinations in the default grid.
-        assert_eq!(result.grid_search_combos, 4096);
+        // 4^7 = 16384 combinations in the default grid.
+        assert_eq!(result.grid_search_combos, 16384);
         assert_eq!(result.sgd_epochs, 100);
         assert!(result.calibrated);
 

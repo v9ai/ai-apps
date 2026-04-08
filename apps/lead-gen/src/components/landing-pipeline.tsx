@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { css, cx } from "styled-system/css";
 import { flex, container } from "styled-system/patterns";
 import { badge } from "@/recipes/badge";
@@ -129,9 +129,11 @@ const PULSE_STAGE_MS = PULSE_CYCLE_MS / PIPELINE_STAGES.length;
 function ConnectorArrow({
   accentColor,
   delay,
+  direction = "right",
 }: {
   accentColor: string;
   delay: number;
+  direction?: "right" | "left";
 }) {
   return (
     <div
@@ -149,23 +151,43 @@ function ConnectorArrow({
       )}
       style={{ animationDelay: `${delay}s` }}
     >
-      <svg width="32" height="24" viewBox="0 0 32 24" fill="none">
-        <line
-          x1="0"
-          y1="12"
-          x2="24"
-          y2="12"
-          stroke={accentColor}
-          strokeWidth="1.5"
-          strokeDasharray="4 4"
-          strokeOpacity="0.6"
-        />
-        <polygon
-          points="24,7 32,12 24,17"
-          fill={accentColor}
-          fillOpacity="0.5"
-        />
-      </svg>
+      {direction === "right" ? (
+        <svg width="32" height="24" viewBox="0 0 32 24" fill="none">
+          <line
+            x1="0"
+            y1="12"
+            x2="24"
+            y2="12"
+            stroke={accentColor}
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            strokeOpacity="0.6"
+          />
+          <polygon
+            points="24,7 32,12 24,17"
+            fill={accentColor}
+            fillOpacity="0.5"
+          />
+        </svg>
+      ) : (
+        <svg width="32" height="24" viewBox="0 0 32 24" fill="none">
+          <line
+            x1="8"
+            y1="12"
+            x2="32"
+            y2="12"
+            stroke={accentColor}
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            strokeOpacity="0.6"
+          />
+          <polygon
+            points="8,7 0,12 8,17"
+            fill={accentColor}
+            fillOpacity="0.5"
+          />
+        </svg>
+      )}
     </div>
   );
 }
@@ -563,7 +585,7 @@ export function LandingPipeline() {
             </svg>
           </div>
 
-          {/* Row 2: stages 4-6 (reverse visual order for continuity) */}
+          {/* Row 2: stages 4-6 (reverse visual order for serpentine flow) */}
           <div
             className={css({
               display: "flex",
@@ -573,9 +595,9 @@ export function LandingPipeline() {
           >
             {PIPELINE_STAGES.slice(4)
               .reverse()
-              .map((stage, i) => {
+              .map((stage, i, arr) => {
                 const realIndex = PIPELINE_STAGES.length - 1 - i;
-                // stages 6, 5, 4 in visual order (reversed)
+                // Visual order: [6, 5, 4] — flow goes right-to-left
                 return (
                   <div
                     key={stage.step}
@@ -583,12 +605,6 @@ export function LandingPipeline() {
                       display: "contents",
                     })}
                   >
-                    {i > 0 && (
-                      <ConnectorArrow
-                        accentColor={PIPELINE_STAGES[realIndex + 1].accentColor}
-                        delay={1.0 + i * 0.15}
-                      />
-                    )}
                     <div
                       className={cx(
                         css({ flex: "1", minW: "0" }),
@@ -605,6 +621,15 @@ export function LandingPipeline() {
                         isLive={liveStageIndex === realIndex}
                       />
                     </div>
+                    {i < arr.length - 1 && (
+                      <ConnectorArrow
+                        accentColor={
+                          PIPELINE_STAGES[realIndex - 1].accentColor
+                        }
+                        delay={1.0 + i * 0.15}
+                        direction="left"
+                      />
+                    )}
                   </div>
                 );
               })}
