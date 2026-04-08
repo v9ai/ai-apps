@@ -26,7 +26,7 @@ import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
 import type { GetContactsQuery } from "@/__generated__/hooks";
-import { css, cx } from "styled-system/css";
+import { css } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { button } from "@/recipes/button";
 import {

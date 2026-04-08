@@ -621,4 +621,30 @@ mod tests {
         assert_eq!(opts.repo_type, RepoType::Space);
         assert_eq!(opts.sort, "likes");
     }
+
+    #[test]
+    fn fetch_request_space() {
+        let req = FetchRequest::space("org/demo");
+        assert_eq!(req.repo_id, "org/demo");
+        assert_eq!(req.repo_type, RepoType::Space);
+        assert!(req.path.is_none());
+    }
+
+    #[test]
+    fn list_options_filter_builder() {
+        let opts = ListOptions::models()
+            .filter("task:text-generation")
+            .filter("language:en");
+        let filters = opts.filter.unwrap();
+        assert_eq!(filters.len(), 2);
+        assert_eq!(filters[0], "task:text-generation");
+        assert_eq!(filters[1], "language:en");
+    }
+
+    #[test]
+    fn repo_type_is_copy() {
+        let a = RepoType::Model;
+        let b = a; // Copy
+        assert_eq!(a, b);
+    }
 }

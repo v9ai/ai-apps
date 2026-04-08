@@ -616,4 +616,23 @@ mod tests {
         assert_eq!(authors[1].1, 1);
         assert_eq!(authors[1].2, 500);
     }
+
+    #[test]
+    fn search_special_chars_no_panic() {
+        let db = HfDb::open_in_memory().unwrap();
+        let mut repo = test_repo("org/model-a", 100, 5);
+        repo.description = Some("100% accuracy on test_set".into());
+        db.upsert_repos(&[repo], RepoType::Model).unwrap();
+
+        // SQL LIKE wildcards in search term should not cause issues
+        let results = db.search_repos("%", None).unwrap();
+        assert_eq!(results.len(), 1, "% in description should match LIKE '%\\%%'");
+
+        let results = db.search_repos("_", None).unwrap();
+        assert_eq!(results.len(), 1, "_ in description should match LIKE '%\\_%'");
+
+        // Single quotes should not cause SQL errors (parameterized queries)
+        let results = db.search_repos("it's", None).unwrap();
+        assert!(results.is_empty());
+    }
 }
