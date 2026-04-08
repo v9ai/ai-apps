@@ -12,7 +12,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Confirmed HF presence from previous scans
         "assemblyai",
         "sumble",
-        "salesloft",
         "chorus",
         // New discovery — Diffbot (13 models, Llama/Qwen fine-tunes)
         "diffbot",

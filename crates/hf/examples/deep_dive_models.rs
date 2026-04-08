@@ -11,7 +11,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "diffbot",
         "sumble",
         "assemblyai",
-        "salesloft",
         "chorus",
         "uniphore",
         "deepgram",
