@@ -601,6 +601,11 @@ body {
   color: var(--gray-9);
   font-variant-numeric: tabular-nums;
 }
+.learning-path-time {
+  color: var(--gray-11);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
 .learning-path-arrow {
   position: absolute;
   right: -10px;
@@ -968,6 +973,7 @@ body {
   /* content-visibility: skip layout/paint for offscreen cards */
   content-visibility: auto;
   contain-intrinsic-size: auto 400px;
+  counter-increment: cat-counter;
 }
 
 /* scroll-triggered: only hide cards when JS is available (js-ready on <html>) */
@@ -2055,6 +2061,12 @@ body {
 .no-results-clear:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.15);
+}
+.no-results-timing {
+  font-size: 11px;
+  color: var(--gray-7);
+  margin-bottom: 16px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Search skeleton shimmer */
@@ -3397,6 +3409,34 @@ body {
 .learning-path-check::after{content:"";display:block;width:5px;height:8px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translate(-0.5px,-0.5px)}
 .learning-path-arrow--done{background:linear-gradient(90deg,var(--cat-from),var(--cat-to)) !important}
 .learning-path-arrow--done::after{border-left-color:var(--cat-to) !important}
+
+/* ---- LEARNING PATH: progress summary ---- */
+.learning-path-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.learning-path-progress-label {
+  font-size: 10px;
+  color: var(--gray-8);
+  letter-spacing: 0.02em;
+}
+.learning-path-progress-track {
+  width: 100%;
+  max-width: 280px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.learning-path-progress-fill {
+  height: 100%;
+  border-radius: 1px;
+  background: linear-gradient(90deg, var(--gray-8), var(--gray-10));
+  transition: width 0.4s ease;
+}
 @media(max-width:768px){.yc-topbar-breadcrumb{max-width:120px;font-size:10px}.yc-topbar-search-trigger{padding:4px 8px;margin-right:8px}.yc-topbar-search-key{display:none}.learning-path-check{width:12px;height:12px;top:4px;right:4px}.learning-path-check::after{width:4px;height:6px}}
 
 /* ================================================================
