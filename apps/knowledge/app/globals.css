@@ -286,7 +286,7 @@ body {
 }
 .hero-supporting {
   font-size: 13px;
-  color: var(--gray-8);
+  color: var(--gray-9);
   margin: 8px auto 0;
   max-width: 420px;
   line-height: 1.5;
@@ -337,7 +337,7 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--gray-8);
+  color: var(--gray-9);
 }
 .hero-cta-group {
   display: flex;
@@ -465,7 +465,7 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--gray-8);
+  color: var(--gray-9);
 }
 .footer-cats {
   display: flex;
@@ -627,6 +627,15 @@ body {
   letter-spacing: 0.12em;
   color: var(--gray-9);
   margin-bottom: 16px;
+  line-height: 1;
+}
+.research-collections-subtitle {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gray-8);
+  margin-bottom: 12px;
   line-height: 1;
 }
 .research-collections-grid {
@@ -1182,12 +1191,38 @@ body {
   color: var(--gray-7);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
 }
-.cat-card-footer::before {
+.cat-card-footer-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cat-card-footer-time::before {
   content: "\23F1";
   font-size: 12px;
 }
+
+/* difficulty mix bar in footer */
+.difficulty-bar {
+  flex: 1;
+  display: flex;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  gap: 1px;
+  min-width: 40px;
+}
+.difficulty-bar-seg {
+  border-radius: 2px;
+  transition: flex 0.3s ease;
+}
+.difficulty-bar-seg--beginner { background: #34d399; opacity: 0.6; }
+.difficulty-bar-seg--intermediate { background: #fbbf24; opacity: 0.6; }
+.difficulty-bar-seg--advanced { background: #fb7185; opacity: 0.6; }
+.cat-card:hover .difficulty-bar-seg { opacity: 0.9; }
 
 /* ================================================================
    CATEGORY CSS VARS (identity colors)
