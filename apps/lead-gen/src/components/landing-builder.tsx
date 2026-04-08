@@ -31,7 +31,7 @@ export function LandingBuilder() {
           <LightningBoltIcon
             width={12}
             height={12}
-            style={{ color: "var(--gray-9)" }}
+            className={css({ color: "ui.tertiary" })}
           />
           <span
             className={css({

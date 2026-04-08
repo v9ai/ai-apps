@@ -1,14 +1,8 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import {
-  Popover,
-  Text,
-  Flex,
-  Box,
-  Separator,
-  ScrollArea,
-} from "@radix-ui/themes";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { css } from "styled-system/css";
+import { flex } from "styled-system/patterns";
 import { button } from "@/recipes/button";
 import {
   MagnifyingGlassIcon,
@@ -38,6 +32,7 @@ export function CompanyPicker({
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const { data, loading, error: queryError } = useGetCompaniesQuery({
     variables: { text: search || undefined, limit: 20 },
@@ -49,6 +44,18 @@ export function CompanyPicker({
     () => data?.companies?.companies ?? [],
     [data],
   );
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   const handleSelect = useCallback(
     (key: string, name: string) => {
@@ -95,130 +102,136 @@ export function CompanyPicker({
   const createName = search.trim() || companyName || "";
 
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger>
-        <button className={button({ variant: "ghost", size: "sm" })}>
-          <Link2Icon /> Link Company
-        </button>
-      </Popover.Trigger>
-      <Popover.Content
-        side="bottom"
-        align="start"
-        style={{ width: 300, padding: 0 }}
+    <div ref={containerRef} className={css({ position: "relative", display: "inline-block" })}>
+      <button
+        className={button({ variant: "ghost", size: "sm" })}
+        onClick={() => setOpen((prev) => !prev)}
       >
-        {/* Search input */}
-        <Box p="2">
-          <Flex
-            align="center"
-            gap="2"
-            style={{
-              border: "1px solid var(--gray-6)",
-              borderRadius: 0,
-              padding: "4px 8px",
-              background: "var(--gray-2)",
-            }}
-          >
-            <MagnifyingGlassIcon style={{ color: "var(--gray-9)", flexShrink: 0 }} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search companies…"
-              autoFocus
-              style={{
-                border: "none",
-                outline: "none",
-                background: "transparent",
-                flex: 1,
-                fontSize: "var(--font-size-2)",
-                color: "var(--gray-12)",
-              }}
-            />
-          </Flex>
-        </Box>
+        <Link2Icon /> Link Company
+      </button>
 
-        <Separator size="4" />
-
-        {/* Results */}
-        <ScrollArea
-          style={{ maxHeight: 200 }}
-          scrollbars="vertical"
+      {open && (
+        <div
+          className={css({
+            position: "absolute",
+            zIndex: 50,
+            bg: "ui.surface",
+            border: "1px solid",
+            borderColor: "ui.border",
+            mt: "1",
+            width: "300px",
+          })}
         >
-          <Box p="1">
-            {loading && (
-              <Box p="3">
-                <Text size="2" color="gray">Searching…</Text>
-              </Box>
-            )}
-            {queryError && (
-              <Box p="3">
-                <Text size="2" color="red">Failed to load companies</Text>
-              </Box>
-            )}
-            {!loading && !queryError && companies.length === 0 && (
-              <Box p="3">
-                <Text size="2" color="gray">No companies found</Text>
-              </Box>
-            )}
-            {companies.map((c) => (
-              <Box
-                key={c.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleSelect(c.key, c.name)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleSelect(c.key, c.name);
-                  }
-                }}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 0,
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "var(--accent-3)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "transparent")
-                }
-              >
-                <Text size="2" weight="medium">{c.name}</Text>
-                {c.website && (
-                  <Text size="1" color="gray" as="div">
-                    {c.website.replace(/^https?:\/\//, "")}
-                  </Text>
-                )}
-              </Box>
-            ))}
-          </Box>
-        </ScrollArea>
+          {/* Search input */}
+          <div className={css({ p: "2" })}>
+            <div
+              className={flex({
+                align: "center",
+                gap: "2",
+              })}
+              style={{
+                border: "1px solid var(--colors-ui-border)",
+                padding: "4px 8px",
+                background: "var(--colors-ui-surface)",
+              }}
+            >
+              <MagnifyingGlassIcon
+                className={css({ color: "ui.tertiary", flexShrink: 0 })}
+              />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search companies..."
+                autoFocus
+                className={css({
+                  border: "none",
+                  outline: "none",
+                  bg: "transparent",
+                  flex: 1,
+                  fontSize: "sm",
+                  color: "ui.heading",
+                })}
+              />
+            </div>
+          </div>
 
-        {/* Create new */}
-        {createName && (
-          <>
-            <Separator size="4" />
-            <Box p="2">
-              <button
-                className={button({ variant: "ghost", size: "md" })}
-                style={{ width: "100%" }}
-                onClick={handleCreate}
-                disabled={creating}
-              >
-                <PlusIcon />
-                {creating
-                  ? "Creating…"
-                  : `Create "${createName}"`}
-              </button>
-              {error && (
-                <Text size="1" color="red" mt="1" as="div">
-                  {error}
-                </Text>
+          <hr className={css({ border: "none", borderTop: "1px solid", borderColor: "ui.border" })} />
+
+          {/* Results */}
+          <div className={css({ overflowY: "auto", maxHeight: "200px" })}>
+            <div className={css({ p: "1" })}>
+              {loading && (
+                <div className={css({ p: "3" })}>
+                  <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>Searching...</span>
+                </div>
               )}
-            </Box>
-          </>
-        )}
-      </Popover.Content>
-    </Popover.Root>
+              {queryError && (
+                <div className={css({ p: "3" })}>
+                  <span className={css({ fontSize: "sm", color: "status.negative" })}>Failed to load companies</span>
+                </div>
+              )}
+              {!loading && !queryError && companies.length === 0 && (
+                <div className={css({ p: "3" })}>
+                  <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>No companies found</span>
+                </div>
+              )}
+              {companies.map((c) => (
+                <div
+                  key={c.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleSelect(c.key, c.name)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSelect(c.key, c.name);
+                    }
+                  }}
+                  className={css({
+                    padding: "6px 10px",
+                    cursor: "pointer",
+                    _hover: {
+                      bg: "accent.subtle",
+                    },
+                  })}
+                >
+                  <span className={css({ fontSize: "sm", fontWeight: "medium", display: "block" })}>{c.name}</span>
+                  {c.website && (
+                    <span className={css({ fontSize: "xs", color: "ui.tertiary", display: "block" })}>
+                      {c.website.replace(/^https?:\/\//, "")}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Create new */}
+          {createName && (
+            <>
+              <hr className={css({ border: "none", borderTop: "1px solid", borderColor: "ui.border" })} />
+              <div className={css({ p: "2" })}>
+                <button
+                  className={button({ variant: "ghost", size: "md" })}
+                  style={{ width: "100%" }}
+                  onClick={handleCreate}
+                  disabled={creating}
+                >
+                  <PlusIcon />
+                  {creating
+                    ? "Creating..."
+                    : `Create "${createName}"`}
+                </button>
+                {error && (
+                  <div className={css({ fontSize: "xs", color: "status.negative", mt: "1" })}>
+                    {error}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

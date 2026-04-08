@@ -1,31 +1,22 @@
 "use client";
 
-import {
-  Box,
-  Flex,
-  Container,
-  Heading,
-  Text,
-  Grid,
-  Section,
-  Card,
-  Badge,
-} from "@radix-ui/themes";
 import Link from "next/link";
 import { css } from "styled-system/css";
-import { flex } from "styled-system/patterns";
+import { flex, container } from "styled-system/patterns";
 import { button } from "@/recipes/button";
+import { badge } from "@/recipes/badge";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 
-const badgeStyle: React.CSSProperties = {
-  borderRadius: 0,
-  textTransform: "lowercase" as const,
-};
-
 const CARD_ACCENTS = [
-  "#3E63DD", // accent.primary (indigo)
-  "#30A46C", // status.positive (green)
-  "#E5484D", // warm red
+  "accent.primary",
+  "status.positive",
+  "#E5484D", // warm red -- no semantic token yet
+];
+
+const CARD_ACCENT_RAW = [
+  "#3E63DD",
+  "#30A46C",
+  "#E5484D",
 ];
 
 interface FeatureCardProps {
@@ -36,59 +27,73 @@ interface FeatureCardProps {
 }
 
 function FeatureCard({ title, description, details, index = 0 }: FeatureCardProps) {
-  const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
+  const accentRaw = CARD_ACCENT_RAW[index % CARD_ACCENT_RAW.length];
   return (
-    <Card
-      style={{
-        borderRadius: 0,
+    <div
+      className={css({
+        borderRadius: "0",
         boxShadow: "none",
-        border: "1px solid var(--gray-6)",
-        borderLeft: `3px solid ${accent}`,
-        background: "var(--gray-2)",
-      }}
+        border: "1px solid",
+        borderColor: "ui.border",
+        borderLeftWidth: "3px",
+        borderLeftColor: CARD_ACCENTS[index % CARD_ACCENTS.length],
+        bg: "ui.surface",
+      })}
     >
-      <Box p={{ initial: "3", sm: "4" }}>
-        <Heading
-          as="h3"
-          size="4"
-          weight="bold"
-          style={{
-            color: "var(--gray-12)",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.2,
-          }}
-          mb="3"
+      <div
+        className={css({
+          p: { base: "3", sm: "4" },
+        })}
+      >
+        <h3
+          className={css({
+            fontSize: "lg",
+            fontWeight: "bold",
+            color: "ui.heading",
+            letterSpacing: "tight",
+            lineHeight: "snug",
+            mb: "3",
+          })}
         >
           {title}
-        </Heading>
-        <Text as="p" size="2" style={{ color: "var(--gray-11)", lineHeight: 1.6 }} mb="4">
+        </h3>
+        <p
+          className={css({
+            fontSize: "sm",
+            color: "ui.body",
+            lineHeight: "relaxed",
+            mb: "4",
+          })}
+        >
           {description}
-        </Text>
-        <Flex direction="column" gap="2">
+        </p>
+        <div className={flex({ direction: "column", gap: "2" })}>
           {details.map((detail) => (
-            <Flex key={detail} align="baseline" gap="2">
-              <Box
-                style={{
-                  width: 4,
-                  height: 4,
-                  background: accent,
+            <div key={detail} className={flex({ align: "baseline", gap: "2" })}>
+              <div
+                className={css({
+                  w: "4px",
+                  h: "4px",
                   flexShrink: 0,
-                  marginTop: 6,
+                  mt: "6px",
                   opacity: 0.6,
-                }}
+                })}
+                style={{ background: accentRaw }}
               />
-              <Text
-                as="p"
-                size="1"
-                style={{ color: "var(--gray-10)", lineHeight: 1.5 }}
+              <p
+                className={css({
+                  fontSize: "xs",
+                  color: "ui.secondary",
+                  lineHeight: "normal",
+                })}
               >
                 {detail}
-              </Text>
-            </Flex>
+              </p>
+            </div>
           ))}
-        </Flex>
-      </Box>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -114,9 +119,9 @@ const features: FeatureCardProps[] = [
     ],
   },
   {
-    title: "Local-first — your data, your pipeline, your control",
+    title: "Local-first \u2014 your data, your pipeline, your control",
     description:
-      "SQLite graph + LanceDB vectors + ChromaDB embeddings \u2014 all local. no API calls to score leads — Agentic Lead Gen runs entirely on commodity hardware. $1,500/year total cost vs $5,400-13,200 for cloud alternatives.",
+      "SQLite graph + LanceDB vectors + ChromaDB embeddings \u2014 all local. no API calls to score leads \u2014 Agentic Lead Gen runs entirely on commodity hardware. $1,500/year total cost vs $5,400-13,200 for cloud alternatives.",
     details: [
       "~15 GB footprint for the entire pipeline with all indexes",
       "182ms per-lead end-to-end latency without LLM generation",
@@ -150,75 +155,94 @@ const ARCHITECTURE_LAYERS = [
 
 export function LandingFeatures() {
   return (
-    <Section size="2" id="features" style={{ scrollMarginTop: 56 }}>
-      <Container size="3">
+    <section
+      id="features"
+      className={css({
+        py: { base: "sectionMobile", lg: "section" },
+        scrollMarginTop: "56px",
+      })}
+    >
+      <div className={container({ maxW: "breakpoint-lg" })}>
         {/* -- heading -- */}
-        <Box mt="2" mb="6">
-          <Heading
-            as="h2"
-            size="5"
-            weight="bold"
-            style={{ color: "var(--gray-12)", letterSpacing: "-0.02em" }}
+        <div className={css({ mt: "2", mb: "6" })}>
+          <h2
+            className={css({
+              fontSize: "xl",
+              fontWeight: "bold",
+              color: "ui.heading",
+              letterSpacing: "tight",
+            })}
           >
             Why Agentic Lead Gen
-          </Heading>
-          <Text
-            as="p"
-            size="3"
-            mt="2"
-            style={{ color: "var(--gray-9)", maxWidth: 560 }}
+          </h2>
+          <p
+            className={css({
+              fontSize: "base",
+              color: "ui.tertiary",
+              mt: "2",
+              maxW: "560px",
+            })}
           >
             Cloud CRMs are optimized for their margins, not your pipeline.
             Agentic Lead Gen reverses that — autonomous agents on your hardware, working 24/7.
-          </Text>
-        </Box>
+          </p>
+        </div>
 
         {/* -- feature cards -- */}
-        <Grid
-          columns={{ initial: "1", md: "3" }}
-          gap="4"
-          mb="6"
+        <div
+          className={css({
+            display: "grid",
+            gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+            gap: "4",
+            mb: "6",
+          })}
         >
           {features.map((feature, i) => (
             <FeatureCard key={feature.title} {...feature} index={i} />
           ))}
-        </Grid>
+        </div>
 
         {/* -- post-features CTA block -- */}
-        <Box
-          py="6"
-          px="6"
-          mb="6"
-          style={{
-            border: "1px solid var(--indigo-7)",
-            borderRadius: 0,
-            background: "rgba(62, 99, 221, 0.04)",
-          }}
+        <div
+          className={css({
+            py: "6",
+            px: "6",
+            mb: "6",
+            border: "1px solid",
+            borderColor: "accent.border",
+            borderRadius: "0",
+            bg: "accent.subtle",
+          })}
         >
-          <Flex
-            direction={{ initial: "column", sm: "row" }}
-            align={{ initial: "start", sm: "center" }}
-            justify="between"
-            gap="4"
+          <div
+            className={flex({
+              direction: { base: "column", sm: "row" },
+              align: { base: "start", sm: "center" },
+              justify: "space-between",
+              gap: "4",
+            })}
           >
-            <Box>
-              <Text
-                as="p"
-                size="3"
-                weight="bold"
-                style={{ color: "var(--gray-12)", letterSpacing: "-0.01em" }}
+            <div>
+              <p
+                className={css({
+                  fontSize: "base",
+                  fontWeight: "bold",
+                  color: "ui.heading",
+                  letterSpacing: "snug",
+                })}
               >
                 Ready to deploy Agentic Lead Gen?
-              </Text>
-              <Text
-                as="p"
-                size="2"
-                mt="1"
-                style={{ color: "var(--gray-10)" }}
+              </p>
+              <p
+                className={css({
+                  fontSize: "sm",
+                  mt: "1",
+                  color: "ui.secondary",
+                })}
               >
                 Autonomous agents. 300 qualified leads per cycle. Fully local. 35 cited papers.
-              </Text>
-            </Box>
+              </p>
+            </div>
             <div className={flex({ gap: "3", flexShrink: 0 })}>
               <a
                 href="https://doi.org/10.5281/zenodo.lead-gen"
@@ -230,94 +254,108 @@ export function LandingFeatures() {
                 <ArrowRightIcon width={14} height={14} />
               </a>
             </div>
-          </Flex>
-        </Box>
+          </div>
+        </div>
 
         {/* -- architecture layers tech stack -- */}
-        <Box mb="6" id="stack" style={{ scrollMarginTop: 56 }}>
-          <Text
-            as="p"
-            size="1"
-            weight="medium"
-            mb="3"
-            style={{ color: "var(--gray-8)", textTransform: "lowercase" }}
+        <div
+          id="stack"
+          className={css({ mb: "6", scrollMarginTop: "56px" })}
+        >
+          <p
+            className={css({
+              fontSize: "xs",
+              fontWeight: "medium",
+              mb: "3",
+              color: "ui.dim",
+              textTransform: "lowercase",
+            })}
           >
             architecture
-          </Text>
-          <Grid columns={{ initial: "1", sm: "2", md: "4" }} gap="3">
+          </p>
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+              gap: "3",
+            })}
+          >
             {ARCHITECTURE_LAYERS.map((layer) => (
-              <Box
+              <div
                 key={layer.layer}
-                py="3"
-                px="4"
-                style={{
-                  border: "1px solid var(--gray-6)",
-                  borderRadius: 0,
-                  background: "var(--gray-2)",
-                }}
+                className={css({
+                  py: "3",
+                  px: "4",
+                  border: "1px solid",
+                  borderColor: "ui.border",
+                  borderRadius: "0",
+                  bg: "ui.surface",
+                })}
               >
-                <Text
-                  as="p"
-                  size="1"
-                  weight="bold"
-                  style={{
-                    color: "var(--gray-12)",
+                <p
+                  className={css({
+                    fontSize: "xs",
+                    fontWeight: "bold",
+                    color: "ui.heading",
                     textTransform: "lowercase",
-                    letterSpacing: "0.04em",
-                  }}
+                    letterSpacing: "wide",
+                  })}
                 >
                   {layer.layer}
-                </Text>
-                <Text
-                  as="p"
-                  size="1"
-                  mt="1"
-                  style={{
-                    color: "var(--gray-9)",
-                    fontSize: "10px",
-                    letterSpacing: "0.02em",
+                </p>
+                <p
+                  className={css({
+                    fontSize: "2xs",
+                    mt: "1",
+                    color: "ui.tertiary",
+                    letterSpacing: "normal",
                     textTransform: "lowercase",
-                  }}
+                  })}
                 >
                   {layer.role}
-                </Text>
-                <Flex gap="2" mt="2" wrap="wrap">
+                </p>
+                <div className={flex({ gap: "2", mt: "2", flexWrap: "wrap" })}>
                   {layer.techs.map((tech) => (
-                    <Badge
+                    <span
                       key={tech}
-                      variant="outline"
-                      color="gray"
-                      size="1"
-                      style={badgeStyle}
+                      className={badge({ variant: "pipeline", size: "sm" })}
                     >
                       {tech.toLowerCase()}
-                    </Badge>
+                    </span>
                   ))}
-                </Flex>
-              </Box>
+                </div>
+              </div>
             ))}
-          </Grid>
-        </Box>
+          </div>
+        </div>
 
         {/* -- open source callout -- */}
-        <Box
-          py="4"
-          px="5"
-          style={{
-            border: "1px solid var(--green-9)",
-            borderRadius: 0,
-            background: "transparent",
-          }}
+        <div
+          className={css({
+            py: "4",
+            px: "5",
+            border: "1px solid",
+            borderColor: "status.positive",
+            borderRadius: "0",
+            bg: "transparent",
+          })}
         >
-          <Flex
-            direction={{ initial: "column", sm: "row" }}
-            align={{ initial: "start", sm: "center" }}
-            justify="between"
-            gap="3"
+          <div
+            className={flex({
+              direction: { base: "column", sm: "row" },
+              align: { base: "start", sm: "center" },
+              justify: "space-between",
+              gap: "3",
+            })}
           >
-            <Text size="2" style={{ color: "var(--gray-11)" }}>
+            <span
+              className={css({
+                fontSize: "sm",
+                color: "ui.body",
+              })}
+            >
               Agentic Lead Gen is fully open source — fork it, self-host it, extend the agents for your ICP
-            </Text>
+            </span>
             <div className={flex({ gap: "3", flexShrink: 0 })}>
               <Link
                 href="/deploy"
@@ -332,24 +370,25 @@ export function LandingFeatures() {
                   alignItems: "center",
                   fontSize: "base",
                   fontWeight: "medium",
-                  color: "var(--gray-9)",
+                  color: "ui.tertiary",
                   textDecoration: "none",
                   textTransform: "lowercase",
-                  letterSpacing: "0.01em",
-                  borderBottom: "1px solid var(--gray-7)",
+                  letterSpacing: "snug",
+                  borderBottom: "1px solid",
+                  borderBottomColor: "ui.border",
                   paddingBottom: "1px",
                   transition: "color 150ms ease",
                   _hover: {
-                    color: "var(--gray-11)",
+                    color: "ui.body",
                   },
                 })}
               >
                 Architecture docs
               </a>
             </div>
-          </Flex>
-        </Box>
-      </Container>
-    </Section>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
