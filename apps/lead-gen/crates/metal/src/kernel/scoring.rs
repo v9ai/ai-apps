@@ -160,8 +160,58 @@ pub struct HfCompanySignals {
     pub burst_intensity: f32,
 }
 
+/// Raw inputs for constructing `HfCompanySignals` with full fidelity.
+///
+/// Use `HfCompanySignals::from_inputs()` to build a fully-populated signals struct.
+#[derive(Debug, Clone, Default)]
+pub struct HfRawInputs {
+    // Composite
+    pub hf_score: f32,
+    pub model_count: usize,
+    pub training_signal_types: usize,
+    // Maturity
+    pub max_effort_ordinal: f32,
+    pub production_ratio: f32,
+    pub dl_weighted_maturity: f32,
+    pub alignment_method_count: usize,
+    pub maturity_trend: f32,
+    // Research
+    pub has_pretraining: bool,
+    pub arxiv_count: usize,
+    // Sales
+    pub has_b2b_core: bool,
+    pub has_outreach: bool,
+    pub sales_category_count: usize,
+    pub has_general_sales: bool,
+    // Training signals
+    pub research_intensity: f32,
+    pub infra_sophistication: f32,
+    pub signal_breadth: f32,
+    pub domain_nlp_focus: f32,
+    // Architecture diversity
+    pub library_sophistication: f32,
+    pub pipeline_diversity: f32,
+    pub custom_arch_ratio: f32,
+    pub framework_diversity: f32,
+    pub moe_ratio: f32,
+    // Downloads
+    pub total_downloads: u64,
+    pub model_count_for_avg: usize,
+    pub total_likes: u64,
+    pub models_with_downloads_above_100: usize,
+    pub max_model_downloads: u64,
+    // Temporal
+    pub days_since_last_update: f32,
+    pub recent_90_count: usize,
+    pub older_90_count: usize,
+    pub span_days: f32,
+    pub max_weekly_burst: usize,
+}
+
 impl HfCompanySignals {
-    /// Build signals from raw org-level counts (no hf crate dependency needed).
+    /// Build signals from the old 7-argument interface (backward compatible).
+    ///
+    /// New fields are populated with sensible defaults/proxies from the available data.
     pub fn from_raw(
         hf_score: f32,
         model_count: usize,
@@ -175,9 +225,110 @@ impl HfCompanySignals {
             hf_score: hf_score.clamp(0.0, 1.0),
             model_depth: ((1.0 + model_count as f32).ln() / (1.0 + 20.0_f32).ln()).min(1.0),
             training_depth: (training_signal_types as f32 / 5.0).min(1.0),
-            maturity: avg_maturity.clamp(0.0, 1.0),
+            // Maturity decomposed — proxied from the old avg_maturity
+            max_effort: avg_maturity.clamp(0.0, 1.0),
+            production_ratio: if avg_maturity > 0.8 { 0.5 } else { 0.0 },
+            dl_weighted_maturity: avg_maturity.clamp(0.0, 1.0),
+            alignment_diversity: 0.0,
+            maturity_trend: 0.5, // neutral
+            // Research
             research: if has_pretraining || arxiv_count > 0 { 1.0 } else { 0.0 },
-            sales_relevance: (sales_signal_count as f32 / 3.0).min(1.0),
+            // Sales decomposed — proxied from old count
+            sales_b2b_core: 0.0,
+            sales_outreach: 0.0,
+            sales_funnel: (sales_signal_count as f32 / 7.0).min(1.0),
+            sales_platform: 0.0,
+            // Training signals — no data from old interface
+            research_intensity: 0.0,
+            infra_sophistication: 0.0,
+            signal_breadth: 0.0,
+            domain_nlp_focus: 0.0,
+            // Architecture diversity — no data
+            library_sophistication: 0.0,
+            pipeline_diversity: 0.0,
+            custom_arch_ratio: 0.0,
+            framework_diversity: 0.0,
+            moe_ratio: 0.0,
+            // Downloads — no data
+            download_scale: 0.0,
+            download_per_model: 0.0,
+            top_model_dominance: 0.0,
+            likes_per_download: 0.0,
+            download_breadth: 0.0,
+            // Temporal — no data
+            recency: 0.5, // neutral
+            acceleration: 0.5, // neutral
+            longevity: 0.0,
+            burst_intensity: 0.0,
+        }
+    }
+
+    /// Build signals from a comprehensive raw inputs struct.
+    pub fn from_inputs(inp: &HfRawInputs) -> Self {
+        let model_count_f = inp.model_count_for_avg.max(inp.model_count) as f32;
+        let total_dl = inp.total_downloads as f32;
+
+        Self {
+            hf_score: inp.hf_score.clamp(0.0, 1.0),
+            model_depth: ((1.0 + inp.model_count as f32).ln() / (1.0 + 20.0_f32).ln()).min(1.0),
+            training_depth: (inp.training_signal_types as f32 / 5.0).min(1.0),
+            // Maturity
+            max_effort: inp.max_effort_ordinal.clamp(0.0, 1.0),
+            production_ratio: inp.production_ratio.clamp(0.0, 1.0),
+            dl_weighted_maturity: inp.dl_weighted_maturity.clamp(0.0, 1.0),
+            alignment_diversity: (inp.alignment_method_count as f32 / 4.0).min(1.0),
+            maturity_trend: inp.maturity_trend.clamp(0.0, 1.0),
+            // Research
+            research: if inp.has_pretraining || inp.arxiv_count > 0 { 1.0 } else { 0.0 },
+            // Sales
+            sales_b2b_core: if inp.has_b2b_core { 1.0 } else { 0.0 },
+            sales_outreach: if inp.has_outreach { 1.0 } else { 0.0 },
+            sales_funnel: (inp.sales_category_count as f32 / 7.0).min(1.0),
+            sales_platform: if inp.has_general_sales { 1.0 } else { 0.0 },
+            // Training signals
+            research_intensity: inp.research_intensity.clamp(0.0, 1.0),
+            infra_sophistication: inp.infra_sophistication.clamp(0.0, 1.0),
+            signal_breadth: inp.signal_breadth.clamp(0.0, 1.0),
+            domain_nlp_focus: inp.domain_nlp_focus.clamp(0.0, 1.0),
+            // Architecture diversity
+            library_sophistication: inp.library_sophistication.clamp(0.0, 1.0),
+            pipeline_diversity: inp.pipeline_diversity.clamp(0.0, 1.0),
+            custom_arch_ratio: inp.custom_arch_ratio.clamp(0.0, 1.0),
+            framework_diversity: inp.framework_diversity.clamp(0.0, 1.0),
+            moe_ratio: inp.moe_ratio.clamp(0.0, 1.0),
+            // Downloads
+            download_scale: ((1.0 + total_dl).ln() / (1.0 + 10_000_000.0_f32).ln()).min(1.0),
+            download_per_model: if model_count_f > 0.0 {
+                ((1.0 + total_dl / model_count_f).ln() / (1.0 + 500_000.0_f32).ln()).min(1.0)
+            } else {
+                0.0
+            },
+            top_model_dominance: if total_dl > 0.0 {
+                (inp.max_model_downloads as f32 / total_dl).min(1.0)
+            } else {
+                0.0
+            },
+            likes_per_download: if total_dl > 0.0 {
+                ((inp.total_likes as f32 / total_dl) * 10.0).min(1.0)
+            } else {
+                0.0
+            },
+            download_breadth: if model_count_f > 0.0 {
+                (inp.models_with_downloads_above_100 as f32 / model_count_f).min(1.0)
+            } else {
+                0.0
+            },
+            // Temporal
+            recency: (-inp.days_since_last_update / 180.0).exp().clamp(0.0, 1.0),
+            acceleration: if inp.older_90_count > 0 {
+                (inp.recent_90_count as f32 / inp.older_90_count as f32).min(1.0)
+            } else if inp.recent_90_count > 0 {
+                1.0
+            } else {
+                0.5
+            },
+            longevity: (inp.span_days / 730.0).min(1.0),
+            burst_intensity: (inp.max_weekly_burst as f32 / 5.0).min(1.0),
         }
     }
 }
@@ -201,19 +352,41 @@ impl HfCompanySignals {
             .iter()
             .any(|s| s.signal_type == hf::TrainingSignalType::PreTraining);
 
-        let avg_maturity = if profile.model_maturity.is_empty() {
+        // Effort ordinal mapping
+        let effort_ordinal = |e: &hf::EffortLevel| -> f32 {
+            match e {
+                hf::EffortLevel::Production => 1.0,
+                hf::EffortLevel::Research => 0.85,
+                hf::EffortLevel::Moderate => 0.7,
+                hf::EffortLevel::Experiment => 0.35,
+                hf::EffortLevel::Trivial => 0.15,
+            }
+        };
+
+        let max_effort = profile
+            .model_maturity
+            .iter()
+            .map(|m| effort_ordinal(&m.effort_level))
+            .fold(0.0_f32, f32::max);
+
+        let production_research_count = profile
+            .model_maturity
+            .iter()
+            .filter(|m| matches!(m.effort_level, hf::EffortLevel::Production | hf::EffortLevel::Research))
+            .count();
+        let production_ratio = if profile.model_maturity.is_empty() {
+            0.0
+        } else {
+            production_research_count as f32 / profile.model_maturity.len() as f32
+        };
+
+        let dl_weighted_maturity = if profile.model_maturity.is_empty() {
             0.0
         } else {
             let sum: f32 = profile
                 .model_maturity
                 .iter()
-                .map(|m| match m.effort_level {
-                    hf::EffortLevel::Production => 1.0,
-                    hf::EffortLevel::Research => 0.85,
-                    hf::EffortLevel::Moderate => 0.7,
-                    hf::EffortLevel::Experiment => 0.35,
-                    hf::EffortLevel::Trivial => 0.15,
-                })
+                .map(|m| effort_ordinal(&m.effort_level))
                 .sum();
             sum / profile.model_maturity.len() as f32
         };
@@ -222,7 +395,7 @@ impl HfCompanySignals {
             hf_score,
             profile.models.len(),
             signal_types.len(),
-            avg_maturity,
+            dl_weighted_maturity,
             has_pretraining,
             profile.arxiv_links.len(),
             profile.sales_signals.len(),
@@ -381,12 +554,45 @@ pub struct ContactBatch {
     pub semantic_icp_score: [f32; 256], // cosine(company_emb, icp_emb), 0.0 if unavailable
 
     // HuggingFace company-level signals (same value for all contacts from same company)
+    // Composite + depth (features 7-9)
     pub hf_score: [f32; 256],
     pub hf_model_depth: [f32; 256],
     pub hf_training_depth: [f32; 256],
-    pub hf_maturity: [f32; 256],
+    // Maturity decomposed (features 10-14)
+    pub hf_max_effort: [f32; 256],
+    pub hf_production_ratio: [f32; 256],
+    pub hf_dl_weighted_maturity: [f32; 256],
+    pub hf_alignment_diversity: [f32; 256],
+    pub hf_maturity_trend: [f32; 256],
+    // Research (feature 15)
     pub hf_research: [f32; 256],
-    pub hf_sales_relevance: [f32; 256],
+    // Sales decomposed (features 16-19)
+    pub hf_sales_b2b_core: [f32; 256],
+    pub hf_sales_outreach: [f32; 256],
+    pub hf_sales_funnel: [f32; 256],
+    pub hf_sales_platform: [f32; 256],
+    // Training signals (features 20-23)
+    pub hf_research_intensity: [f32; 256],
+    pub hf_infra_sophistication: [f32; 256],
+    pub hf_signal_breadth: [f32; 256],
+    pub hf_domain_nlp_focus: [f32; 256],
+    // Architecture diversity (features 24-28)
+    pub hf_library_sophistication: [f32; 256],
+    pub hf_pipeline_diversity: [f32; 256],
+    pub hf_custom_arch_ratio: [f32; 256],
+    pub hf_framework_diversity: [f32; 256],
+    pub hf_moe_ratio: [f32; 256],
+    // Download signals (features 29-33)
+    pub hf_download_scale: [f32; 256],
+    pub hf_download_per_model: [f32; 256],
+    pub hf_top_model_dominance: [f32; 256],
+    pub hf_likes_per_download: [f32; 256],
+    pub hf_download_breadth: [f32; 256],
+    // Temporal (features 34-37)
+    pub hf_recency: [f32; 256],
+    pub hf_acceleration: [f32; 256],
+    pub hf_longevity: [f32; 256],
+    pub hf_burst_intensity: [f32; 256],
 
     // Output
     pub scores: [f32; 256],
@@ -402,12 +608,45 @@ impl ContactBatch {
 
     /// Populate HuggingFace signals for a batch slot (company-level, same for all contacts).
     pub fn populate_hf_slot(&mut self, idx: usize, signals: &HfCompanySignals) {
+        // Composite + depth (7-9)
         self.hf_score[idx] = signals.hf_score;
         self.hf_model_depth[idx] = signals.model_depth;
         self.hf_training_depth[idx] = signals.training_depth;
-        self.hf_maturity[idx] = signals.maturity;
+        // Maturity decomposed (10-14)
+        self.hf_max_effort[idx] = signals.max_effort;
+        self.hf_production_ratio[idx] = signals.production_ratio;
+        self.hf_dl_weighted_maturity[idx] = signals.dl_weighted_maturity;
+        self.hf_alignment_diversity[idx] = signals.alignment_diversity;
+        self.hf_maturity_trend[idx] = signals.maturity_trend;
+        // Research (15)
         self.hf_research[idx] = signals.research;
-        self.hf_sales_relevance[idx] = signals.sales_relevance;
+        // Sales decomposed (16-19)
+        self.hf_sales_b2b_core[idx] = signals.sales_b2b_core;
+        self.hf_sales_outreach[idx] = signals.sales_outreach;
+        self.hf_sales_funnel[idx] = signals.sales_funnel;
+        self.hf_sales_platform[idx] = signals.sales_platform;
+        // Training signals (20-23)
+        self.hf_research_intensity[idx] = signals.research_intensity;
+        self.hf_infra_sophistication[idx] = signals.infra_sophistication;
+        self.hf_signal_breadth[idx] = signals.signal_breadth;
+        self.hf_domain_nlp_focus[idx] = signals.domain_nlp_focus;
+        // Architecture diversity (24-28)
+        self.hf_library_sophistication[idx] = signals.library_sophistication;
+        self.hf_pipeline_diversity[idx] = signals.pipeline_diversity;
+        self.hf_custom_arch_ratio[idx] = signals.custom_arch_ratio;
+        self.hf_framework_diversity[idx] = signals.framework_diversity;
+        self.hf_moe_ratio[idx] = signals.moe_ratio;
+        // Download signals (29-33)
+        self.hf_download_scale[idx] = signals.download_scale;
+        self.hf_download_per_model[idx] = signals.download_per_model;
+        self.hf_top_model_dominance[idx] = signals.top_model_dominance;
+        self.hf_likes_per_download[idx] = signals.likes_per_download;
+        self.hf_download_breadth[idx] = signals.download_breadth;
+        // Temporal (34-37)
+        self.hf_recency[idx] = signals.recency;
+        self.hf_acceleration[idx] = signals.acceleration;
+        self.hf_longevity[idx] = signals.longevity;
+        self.hf_burst_intensity[idx] = signals.burst_intensity;
     }
 
     /// Compute ICP fit scores for the entire batch using default weights.
@@ -611,22 +850,10 @@ impl Default for WelfordStats {
     }
 }
 
-/// Logistic regression scorer with learned weights.
-/// Features (FEATURE_COUNT + 1 optional semantic):
-///   [0]  industry_match    (binary)
-///   [1]  employee_in_range (binary)
-///   [2]  seniority_match   (binary)
-///   [3]  department_match  (binary)
-///   [4]  tech_overlap / 10 (0-1)
-///   [5]  email_verified / 2(0-1)
-///   [6]  smooth_recency    (exp decay)
-///   [7]  hf_score          (0-1)
-///   [8]  hf_model_depth    (0-1)
-///   [9]  hf_training_depth (0-1)
-///   [10] hf_maturity       (0-1)
-///   [11] hf_research       (binary)
-///   [12] hf_sales_relevance(0-1)
-///   [+]  semantic_icp_score(cosine, optional — 0.0 if unavailable)
+/// Logistic regression scorer with learned weights (44-feature layout).
+///
+/// See `FEATURE_COUNT` doc comment for the full 44-feature layout.
+/// An optional semantic ICP score can be appended via `score_with_semantic()`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogisticScorer {
     pub weights: Vec<f32>,
@@ -649,25 +876,66 @@ impl LogisticScorer {
         }
     }
 
-    /// Pre-trained weights calibrated for B2B lead scoring.
+    /// Pre-trained weights calibrated for B2B lead scoring (44 features).
     pub fn default_pretrained() -> Self {
         Self {
             weights: vec![
-                0.8,  //  0: industry_match
-                0.5,  //  1: employee_in_range
-                0.8,  //  2: seniority_match
-                0.5,  //  3: department_match
-                0.3,  //  4: tech_norm
-                0.2,  //  5: email_norm
-                0.3,  //  6: smooth_recency
-                0.7,  //  7: hf_score — strong composite signal
-                0.4,  //  8: hf_model_depth — model publishing depth
-                0.5,  //  9: hf_training_depth — custom training = serious org
-                0.3,  // 10: hf_maturity — production models matter
-                0.6,  // 11: hf_research — papers/pretraining = deep ML
-                0.3,  // 12: hf_sales_relevance — sales models = potential customer
+                // Contact base (0-6)
+                0.8,   //  0: industry_match
+                0.5,   //  1: employee_in_range
+                0.8,   //  2: seniority_match
+                0.5,   //  3: department_match
+                0.3,   //  4: tech_norm
+                0.2,   //  5: email_norm
+                0.3,   //  6: smooth_recency
+                // HF composite + depth (7-9)
+                0.7,   //  7: hf_score
+                0.4,   //  8: hf_model_depth
+                0.5,   //  9: hf_training_depth
+                // Maturity decomposed (10-14)
+                0.4,   // 10: hf_max_effort
+                0.5,   // 11: hf_production_ratio
+                0.3,   // 12: hf_dl_weighted_maturity
+                0.3,   // 13: hf_alignment_diversity
+                0.2,   // 14: hf_maturity_trend
+                // Research (15)
+                0.6,   // 15: hf_research
+                // Sales decomposed (16-19)
+                0.7,   // 16: hf_sales_b2b_core
+                0.5,   // 17: hf_sales_outreach
+                0.4,   // 18: hf_sales_funnel
+                0.3,   // 19: hf_sales_platform
+                // Training signals (20-23)
+                0.7,   // 20: hf_research_intensity
+                0.5,   // 21: hf_infra_sophistication
+                0.4,   // 22: hf_signal_breadth
+                0.3,   // 23: hf_domain_nlp_focus
+                // Architecture diversity (24-28)
+                0.4,   // 24: hf_library_sophistication
+                0.3,   // 25: hf_pipeline_diversity
+                0.3,   // 26: hf_custom_arch_ratio
+                0.2,   // 27: hf_framework_diversity
+                0.3,   // 28: hf_moe_ratio
+                // Download signals (29-33)
+                0.6,   // 29: hf_download_scale
+                0.4,   // 30: hf_download_per_model
+                -0.3,  // 31: hf_top_model_dominance (negative: over-concentration is bad)
+                0.2,   // 32: hf_likes_per_download
+                0.3,   // 33: hf_download_breadth
+                // Temporal (34-37)
+                0.4,   // 34: hf_recency
+                0.5,   // 35: hf_acceleration
+                0.2,   // 36: hf_longevity
+                0.3,   // 37: hf_burst_intensity
+                // Cross-signal interactions (38-43)
+                0.5,   // 38: ix_research_x_seniority
+                0.4,   // 39: ix_score_x_tech
+                0.4,   // 40: ix_training_x_production
+                0.3,   // 41: ix_depth_x_industry
+                0.3,   // 42: ix_sales_x_department
+                0.4,   // 43: ix_hf_threshold
             ],
-            bias: -1.8,
+            bias: -4.5,
             feature_stats: (0..FEATURE_COUNT).map(|_| WelfordStats::new()).collect(),
             trained: true,
             semantic_weight: 0.4,
@@ -687,23 +955,76 @@ impl LogisticScorer {
     }
 
     /// Extract a FEATURE_COUNT-element vector from a ContactBatch at a given index.
+    ///
+    /// Returns 38 base features plus 6 computed interaction terms (44 total).
     pub fn extract_features(batch: &ContactBatch, idx: usize) -> [f32; FEATURE_COUNT] {
-        [
-            batch.industry_match[idx] as f32,
-            batch.employee_in_range[idx] as f32,
-            batch.seniority_match[idx] as f32,
-            batch.department_match[idx] as f32,
-            batch.tech_overlap[idx] as f32 / 10.0,
-            batch.email_verified[idx] as f32 / 2.0,
-            Self::smooth_recency(batch.recency_days[idx]),
-            // HF features
-            batch.hf_score[idx],
-            batch.hf_model_depth[idx],
-            batch.hf_training_depth[idx],
-            batch.hf_maturity[idx],
-            batch.hf_research[idx],
-            batch.hf_sales_relevance[idx],
-        ]
+        let mut f = [0.0f32; FEATURE_COUNT];
+
+        // Base contact (0-6)
+        f[0] = batch.industry_match[idx] as f32;
+        f[1] = batch.employee_in_range[idx] as f32;
+        f[2] = batch.seniority_match[idx] as f32;
+        f[3] = batch.department_match[idx] as f32;
+        f[4] = batch.tech_overlap[idx] as f32 / 10.0;
+        f[5] = batch.email_verified[idx] as f32 / 2.0;
+        f[6] = Self::smooth_recency(batch.recency_days[idx]);
+
+        // HF composite + depth (7-9)
+        f[7] = batch.hf_score[idx];
+        f[8] = batch.hf_model_depth[idx];
+        f[9] = batch.hf_training_depth[idx];
+
+        // Maturity decomposed (10-14)
+        f[10] = batch.hf_max_effort[idx];
+        f[11] = batch.hf_production_ratio[idx];
+        f[12] = batch.hf_dl_weighted_maturity[idx];
+        f[13] = batch.hf_alignment_diversity[idx];
+        f[14] = batch.hf_maturity_trend[idx];
+
+        // Research (15)
+        f[15] = batch.hf_research[idx];
+
+        // Sales decomposed (16-19)
+        f[16] = batch.hf_sales_b2b_core[idx];
+        f[17] = batch.hf_sales_outreach[idx];
+        f[18] = batch.hf_sales_funnel[idx];
+        f[19] = batch.hf_sales_platform[idx];
+
+        // Training signals (20-23)
+        f[20] = batch.hf_research_intensity[idx];
+        f[21] = batch.hf_infra_sophistication[idx];
+        f[22] = batch.hf_signal_breadth[idx];
+        f[23] = batch.hf_domain_nlp_focus[idx];
+
+        // Architecture diversity (24-28)
+        f[24] = batch.hf_library_sophistication[idx];
+        f[25] = batch.hf_pipeline_diversity[idx];
+        f[26] = batch.hf_custom_arch_ratio[idx];
+        f[27] = batch.hf_framework_diversity[idx];
+        f[28] = batch.hf_moe_ratio[idx];
+
+        // Download signals (29-33)
+        f[29] = batch.hf_download_scale[idx];
+        f[30] = batch.hf_download_per_model[idx];
+        f[31] = batch.hf_top_model_dominance[idx];
+        f[32] = batch.hf_likes_per_download[idx];
+        f[33] = batch.hf_download_breadth[idx];
+
+        // Temporal (34-37)
+        f[34] = batch.hf_recency[idx];
+        f[35] = batch.hf_acceleration[idx];
+        f[36] = batch.hf_longevity[idx];
+        f[37] = batch.hf_burst_intensity[idx];
+
+        // Cross-signal interactions (38-43) — computed from base features
+        f[38] = f[15] * f[2];  // research × seniority
+        f[39] = f[7] * f[4];   // hf_score × tech
+        f[40] = f[9] * f[11];  // training_depth × production_ratio
+        f[41] = f[8] * f[0];   // model_depth × industry
+        f[42] = f[18] * f[3];  // sales_funnel × department
+        f[43] = if f[7] > 0.6 { 1.0 } else { 0.0 }; // hf_threshold
+
+        f
     }
 
     /// Score a single feature vector.
@@ -1293,24 +1614,56 @@ mod tests {
     fn test_logistic_fit() {
         let mut scorer = LogisticScorer::new();
 
-        // 10 positive examples (all features high, including HF signals)
-        // 10 negative examples (all features low)
+        // Build positive and negative feature vectors for the 44-feature layout
+        let mut pos_feat = [0.0f32; FEATURE_COUNT];
+        // Base contact
+        pos_feat[0] = 1.0; pos_feat[1] = 1.0; pos_feat[2] = 1.0; pos_feat[3] = 1.0;
+        pos_feat[4] = 0.8; pos_feat[5] = 1.0; pos_feat[6] = 0.9;
+        // HF composite
+        pos_feat[7] = 0.8; pos_feat[8] = 0.6; pos_feat[9] = 0.7;
+        // Maturity
+        pos_feat[10] = 0.9; pos_feat[11] = 0.7; pos_feat[12] = 0.8;
+        pos_feat[13] = 0.5; pos_feat[14] = 0.6;
+        // Research
+        pos_feat[15] = 1.0;
+        // Sales
+        pos_feat[16] = 0.0; pos_feat[17] = 0.0; pos_feat[18] = 0.3; pos_feat[19] = 0.0;
+        // Training signals
+        pos_feat[20] = 0.5; pos_feat[21] = 0.4; pos_feat[22] = 0.6; pos_feat[23] = 0.3;
+        // Arch diversity
+        pos_feat[24] = 0.5; pos_feat[25] = 0.4; pos_feat[26] = 0.2; pos_feat[27] = 0.3; pos_feat[28] = 0.1;
+        // Downloads
+        pos_feat[29] = 0.6; pos_feat[30] = 0.4; pos_feat[31] = 0.3; pos_feat[32] = 0.05; pos_feat[33] = 0.5;
+        // Temporal
+        pos_feat[34] = 0.8; pos_feat[35] = 0.6; pos_feat[36] = 0.5; pos_feat[37] = 0.3;
+        // Interactions
+        pos_feat[38] = pos_feat[15] * pos_feat[2];
+        pos_feat[39] = pos_feat[7] * pos_feat[4];
+        pos_feat[40] = pos_feat[9] * pos_feat[11];
+        pos_feat[41] = pos_feat[8] * pos_feat[0];
+        pos_feat[42] = pos_feat[18] * pos_feat[3];
+        pos_feat[43] = if pos_feat[7] > 0.6 { 1.0 } else { 0.0 };
+
+        let mut neg_feat = [0.0f32; FEATURE_COUNT];
+        neg_feat[4] = 0.1; neg_feat[6] = 0.1;
+        // Interactions are all 0.0 for neg
+
         let mut features = Vec::new();
         let mut labels = Vec::new();
         for _ in 0..10 {
-            features.push([1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9, 0.8, 0.6, 0.7, 0.9, 1.0, 0.5]);
+            features.push(pos_feat);
             labels.push(1.0);
         }
         for _ in 0..10 {
-            features.push([0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
+            features.push(neg_feat);
             labels.push(0.0);
         }
 
         scorer.fit(&features, &labels, 0.5, 100);
         assert!(scorer.trained);
 
-        let pos_score = scorer.score(&[1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9, 0.8, 0.6, 0.7, 0.9, 1.0, 0.5]);
-        let neg_score = scorer.score(&[0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
+        let pos_score = scorer.score(&pos_feat);
+        let neg_score = scorer.score(&neg_feat);
         assert!(
             pos_score > neg_score,
             "pos={} neg={}",
@@ -1352,15 +1705,48 @@ mod tests {
         batch.tech_overlap[0] = 5;
         batch.email_verified[0] = 2;
         batch.recency_days[0] = 0;
-        // HF signals
+        // HF signals — composite + depth
         batch.hf_score[0] = 0.75;
         batch.hf_model_depth[0] = 0.6;
         batch.hf_training_depth[0] = 0.8;
-        batch.hf_maturity[0] = 0.9;
+        // Maturity decomposed
+        batch.hf_max_effort[0] = 0.9;
+        batch.hf_production_ratio[0] = 0.7;
+        batch.hf_dl_weighted_maturity[0] = 0.85;
+        batch.hf_alignment_diversity[0] = 0.5;
+        batch.hf_maturity_trend[0] = 0.6;
+        // Research
         batch.hf_research[0] = 1.0;
-        batch.hf_sales_relevance[0] = 0.33;
+        // Sales
+        batch.hf_sales_b2b_core[0] = 1.0;
+        batch.hf_sales_outreach[0] = 0.0;
+        batch.hf_sales_funnel[0] = 0.33;
+        batch.hf_sales_platform[0] = 0.0;
+        // Training signals
+        batch.hf_research_intensity[0] = 0.4;
+        batch.hf_infra_sophistication[0] = 0.3;
+        batch.hf_signal_breadth[0] = 0.5;
+        batch.hf_domain_nlp_focus[0] = 0.2;
+        // Arch diversity
+        batch.hf_library_sophistication[0] = 0.6;
+        batch.hf_pipeline_diversity[0] = 0.4;
+        batch.hf_custom_arch_ratio[0] = 0.1;
+        batch.hf_framework_diversity[0] = 0.3;
+        batch.hf_moe_ratio[0] = 0.05;
+        // Downloads
+        batch.hf_download_scale[0] = 0.7;
+        batch.hf_download_per_model[0] = 0.4;
+        batch.hf_top_model_dominance[0] = 0.3;
+        batch.hf_likes_per_download[0] = 0.02;
+        batch.hf_download_breadth[0] = 0.5;
+        // Temporal
+        batch.hf_recency[0] = 0.8;
+        batch.hf_acceleration[0] = 0.6;
+        batch.hf_longevity[0] = 0.4;
+        batch.hf_burst_intensity[0] = 0.2;
 
         let features = LogisticScorer::extract_features(&batch, 0);
+        // Base contact
         assert_eq!(features[0], 1.0); // industry
         assert_eq!(features[1], 1.0); // employee
         assert_eq!(features[2], 0.0); // seniority
@@ -1368,13 +1754,52 @@ mod tests {
         assert!((features[4] - 0.5).abs() < 1e-6); // tech: 5/10
         assert!((features[5] - 1.0).abs() < 1e-6); // email: 2/2
         assert!((features[6] - 1.0).abs() < 1e-6); // recency: day 0 = 1.0
-        // HF features
-        assert!((features[7] - 0.75).abs() < 1e-6); // hf_score
-        assert!((features[8] - 0.6).abs() < 1e-6);  // hf_model_depth
-        assert!((features[9] - 0.8).abs() < 1e-6);  // hf_training_depth
-        assert!((features[10] - 0.9).abs() < 1e-6); // hf_maturity
-        assert!((features[11] - 1.0).abs() < 1e-6); // hf_research
-        assert!((features[12] - 0.33).abs() < 1e-6); // hf_sales_relevance
+        // HF composite
+        assert!((features[7] - 0.75).abs() < 1e-6);
+        assert!((features[8] - 0.6).abs() < 1e-6);
+        assert!((features[9] - 0.8).abs() < 1e-6);
+        // Maturity decomposed
+        assert!((features[10] - 0.9).abs() < 1e-6);
+        assert!((features[11] - 0.7).abs() < 1e-6);
+        assert!((features[12] - 0.85).abs() < 1e-6);
+        assert!((features[13] - 0.5).abs() < 1e-6);
+        assert!((features[14] - 0.6).abs() < 1e-6);
+        // Research
+        assert!((features[15] - 1.0).abs() < 1e-6);
+        // Sales
+        assert!((features[16] - 1.0).abs() < 1e-6);
+        assert!((features[17] - 0.0).abs() < 1e-6);
+        assert!((features[18] - 0.33).abs() < 1e-6);
+        assert!((features[19] - 0.0).abs() < 1e-6);
+        // Training signals
+        assert!((features[20] - 0.4).abs() < 1e-6);
+        assert!((features[21] - 0.3).abs() < 1e-6);
+        assert!((features[22] - 0.5).abs() < 1e-6);
+        assert!((features[23] - 0.2).abs() < 1e-6);
+        // Arch diversity
+        assert!((features[24] - 0.6).abs() < 1e-6);
+        assert!((features[25] - 0.4).abs() < 1e-6);
+        assert!((features[26] - 0.1).abs() < 1e-6);
+        assert!((features[27] - 0.3).abs() < 1e-6);
+        assert!((features[28] - 0.05).abs() < 1e-6);
+        // Downloads
+        assert!((features[29] - 0.7).abs() < 1e-6);
+        assert!((features[30] - 0.4).abs() < 1e-6);
+        assert!((features[31] - 0.3).abs() < 1e-6);
+        assert!((features[32] - 0.02).abs() < 1e-6);
+        assert!((features[33] - 0.5).abs() < 1e-6);
+        // Temporal
+        assert!((features[34] - 0.8).abs() < 1e-6);
+        assert!((features[35] - 0.6).abs() < 1e-6);
+        assert!((features[36] - 0.4).abs() < 1e-6);
+        assert!((features[37] - 0.2).abs() < 1e-6);
+        // Interactions
+        assert!((features[38] - 1.0 * 0.0).abs() < 1e-6); // research × seniority (seniority=0)
+        assert!((features[39] - 0.75 * 0.5).abs() < 1e-6); // score × tech
+        assert!((features[40] - 0.8 * 0.7).abs() < 1e-6);  // training × production
+        assert!((features[41] - 0.6 * 1.0).abs() < 1e-6);  // depth × industry
+        assert!((features[42] - 0.33 * 1.0).abs() < 1e-6);  // sales_funnel × department
+        assert!((features[43] - 1.0).abs() < 1e-6);  // hf_threshold (0.75 > 0.6)
     }
 
     // ── IsotonicCalibrator tests ──
@@ -1502,9 +1927,11 @@ mod tests {
         assert!((sig.hf_score - 0.72).abs() < 1e-6);
         assert!(sig.model_depth > 0.0 && sig.model_depth <= 1.0);
         assert!((sig.training_depth - 0.8).abs() < 1e-6); // 4/5
-        assert!((sig.maturity - 0.85).abs() < 1e-6);
+        assert!((sig.max_effort - 0.85).abs() < 1e-6); // proxied from avg_maturity
+        assert!((sig.dl_weighted_maturity - 0.85).abs() < 1e-6); // proxied from avg_maturity
+        assert_eq!(sig.production_ratio, 0.5); // avg_maturity > 0.8
         assert_eq!(sig.research, 1.0); // has_pretraining = true
-        assert!((sig.sales_relevance - (2.0 / 3.0)).abs() < 1e-6);
+        assert!((sig.sales_funnel - (2.0 / 7.0)).abs() < 1e-6); // now /7
     }
 
     #[test]
@@ -1513,9 +1940,11 @@ mod tests {
         assert_eq!(sig.hf_score, 0.0);
         assert_eq!(sig.model_depth, 0.0);
         assert_eq!(sig.training_depth, 0.0);
-        assert_eq!(sig.maturity, 0.0);
+        assert_eq!(sig.max_effort, 0.0);
+        assert_eq!(sig.production_ratio, 0.0);
+        assert_eq!(sig.dl_weighted_maturity, 0.0);
         assert_eq!(sig.research, 0.0);
-        assert_eq!(sig.sales_relevance, 0.0);
+        assert_eq!(sig.sales_funnel, 0.0);
     }
 
     #[test]
@@ -1524,8 +1953,8 @@ mod tests {
         assert_eq!(sig.hf_score, 1.0); // clamped
         assert_eq!(sig.model_depth, 1.0); // clamped
         assert_eq!(sig.training_depth, 1.0); // clamped
-        assert_eq!(sig.maturity, 1.0); // clamped
-        assert_eq!(sig.sales_relevance, 1.0); // clamped
+        assert_eq!(sig.max_effort, 1.0); // clamped
+        assert_eq!(sig.dl_weighted_maturity, 1.0); // clamped
     }
 
     #[test]
@@ -1586,11 +2015,12 @@ mod tests {
             batch.hf_model_depth[i] = 0.5;
             batch.hf_training_depth[i] = 0.5;
             batch.hf_research[i] = 1.0;
-            batch.hf_sales_relevance[i] = 0.3;
+            batch.hf_sales_funnel[i] = 0.3;
         }
-        batch.hf_maturity[0] = 1.0;  // Production
-        batch.hf_maturity[1] = 0.7;  // Moderate
-        batch.hf_maturity[2] = 0.15; // Trivial
+        // Vary maturity decomposed: max_effort + production_ratio + dl_weighted_maturity
+        batch.hf_max_effort[0] = 1.0;  batch.hf_production_ratio[0] = 0.8; batch.hf_dl_weighted_maturity[0] = 0.9;
+        batch.hf_max_effort[1] = 0.7;  batch.hf_production_ratio[1] = 0.4; batch.hf_dl_weighted_maturity[1] = 0.6;
+        batch.hf_max_effort[2] = 0.15; batch.hf_production_ratio[2] = 0.0; batch.hf_dl_weighted_maturity[2] = 0.1;
 
         scorer.score_batch(&mut batch);
         assert!(batch.scores[0] > batch.scores[1], "prod={} mod={}", batch.scores[0], batch.scores[1]);
@@ -1606,9 +2036,10 @@ mod tests {
         assert!((batch.hf_score[0] - 0.65).abs() < 1e-6);
         assert!(batch.hf_model_depth[0] > 0.0);
         assert!((batch.hf_training_depth[0] - 0.6).abs() < 1e-6); // 3/5
-        assert!((batch.hf_maturity[0] - 0.7).abs() < 1e-6);
+        assert!((batch.hf_max_effort[0] - 0.7).abs() < 1e-6); // proxied from avg_maturity
+        assert!((batch.hf_dl_weighted_maturity[0] - 0.7).abs() < 1e-6); // proxied
         assert_eq!(batch.hf_research[0], 1.0); // arxiv_count=2 > 0
-        assert!((batch.hf_sales_relevance[0] - (1.0 / 3.0)).abs() < 1e-6);
+        assert!((batch.hf_sales_funnel[0] - (1.0 / 7.0)).abs() < 1e-6); // now /7
     }
 
     #[test]

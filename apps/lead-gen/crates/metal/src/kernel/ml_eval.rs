@@ -20,20 +20,45 @@ use serde::{Deserialize, Serialize};
 
 use super::scoring::{LogisticScorer, FEATURE_COUNT};
 
+// ── Serde support for [f32; FEATURE_COUNT] ───────────────────────────────────
+//
+// Standard serde only derives Serialize/Deserialize for arrays up to 32 elements.
+// Since FEATURE_COUNT = 44, we provide a custom (de)serializer via a Vec<f32>
+// round-trip.  This is the canonical no-dependency approach.
+
+mod feature_array_serde {
+    use super::FEATURE_COUNT;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S: Serializer>(arr: &[f32; FEATURE_COUNT], s: S) -> Result<S::Ok, S::Error> {
+        arr.as_slice().serialize(s)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<[f32; FEATURE_COUNT], D::Error> {
+        let v: Vec<f32> = Vec::deserialize(d)?;
+        v.try_into()
+            .map_err(|v: Vec<f32>| {
+                serde::de::Error::invalid_length(v.len(), &format!("{FEATURE_COUNT}").as_str())
+            })
+    }
+}
+
 // ── Data types ────────────────────────────────────────────────────────────────
 
 /// A single labeled sample loaded from the JSONL evaluation file.
 ///
 /// Each JSONL line must be a JSON object of this shape:
 /// ```json
-/// {"features": [1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9, 0.7, 0.5, 0.6, 0.8, 1.0, 0.3], "label": 1.0}
+/// {"features": [1.0, ..., 0.0], "label": 1.0}
 /// ```
+/// where `features` is a FEATURE_COUNT-element array (currently 44).
 ///
 /// `features` maps to the FEATURE_COUNT-element vector produced by
 /// `LogisticScorer::extract_features`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LabeledSample {
     /// FEATURE_COUNT-element feature vector.
+    #[serde(with = "feature_array_serde")]
     pub features: [f32; FEATURE_COUNT],
     /// Ground-truth label: `1.0` = positive lead, `0.0` = negative.
     pub label: f32,
