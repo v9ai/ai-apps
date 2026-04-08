@@ -554,6 +554,24 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updatedAt"),
 });
 
+export const journalAnalyses = pgTable("journal_analyses", {
+  id: serial("id").primaryKey(),
+  journalEntryId: integer("journal_entry_id").notNull(),
+  userId: text("user_id").notNull(),
+  summary: text("summary").notNull(),
+  emotionalLandscape: text("emotional_landscape").notNull(), // JSON
+  therapeuticInsights: text("therapeutic_insights").notNull(), // JSON
+  actionableRecommendations: text("actionable_recommendations").notNull(), // JSON
+  reflectionPrompts: text("reflection_prompts").notNull(), // JSON
+  model: text("model").notNull().default("deepseek-chat"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const familyMemberCharacteristics = pgTable("family_member_characteristics", {
   id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id").notNull(),

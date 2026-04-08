@@ -2827,6 +2827,49 @@ export async function getAllTags(userId: string): Promise<string[]> {
 }
 
 // ============================================
+// Journal Analyses
+// ============================================
+
+export async function getJournalAnalysis(journalEntryId: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM journal_analyses WHERE journal_entry_id = ${journalEntryId} AND user_id = ${userId} ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id as number,
+    journalEntryId: r.journal_entry_id as number,
+    userId: r.user_id as string,
+    summary: r.summary as string,
+    emotionalLandscape: safeJsonParse(r.emotional_landscape as string, {}),
+    therapeuticInsights: safeJsonParse(r.therapeutic_insights as string, []),
+    actionableRecommendations: safeJsonParse(r.actionable_recommendations as string, []),
+    reflectionPrompts: safeJsonParse(r.reflection_prompts as string, []),
+    model: r.model as string,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+export async function createJournalAnalysis(data: {
+  journalEntryId: number;
+  userId: string;
+  summary: string;
+  emotionalLandscape: unknown;
+  therapeuticInsights: unknown;
+  actionableRecommendations: unknown;
+  reflectionPrompts: unknown;
+  model?: string;
+}) {
+  const rows = await neonSql`
+    INSERT INTO journal_analyses (journal_entry_id, user_id, summary, emotional_landscape, therapeutic_insights, actionable_recommendations, reflection_prompts, model)
+    VALUES (${data.journalEntryId}, ${data.userId}, ${data.summary}, ${JSON.stringify(data.emotionalLandscape)}, ${JSON.stringify(data.therapeuticInsights)}, ${JSON.stringify(data.actionableRecommendations)}, ${JSON.stringify(data.reflectionPrompts)}, ${data.model ?? "deepseek-chat"})
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
+export async function deleteJournalAnalysis(journalEntryId: number, userId: string): Promise<void> {
+  await neonSql`DELETE FROM journal_analyses WHERE journal_entry_id = ${journalEntryId} AND user_id = ${userId}`;
+}
+
 // ============================================
 // Conversations
 // ============================================
@@ -3069,6 +3112,10 @@ export const db = {
   deleteHabitLog,
   listHabitLogs,
   getTodayLogForHabit,
+  // Journal Analyses
+  getJournalAnalysis,
+  createJournalAnalysis,
+  deleteJournalAnalysis,
   // Conversations
   createConversation,
   getConversation,
