@@ -41,16 +41,16 @@ class DeepSeekClient {
       },
       body: JSON.stringify({ ...request, stream: false }),
     });
+    const body = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
       throw new Error(
-        (err as { error?: { message?: string } }).error?.message ||
-          `HTTP ${resp.status}`
+        (body as { error?: { message?: string } }).error?.message ||
+          `DeepSeek HTTP ${resp.status}`
       );
     }
-    return resp.json() as Promise<{
+    return body as {
       choices: Array<{ message: { content: string } }>;
-    }>;
+    };
   }
 }
 
@@ -90,6 +90,9 @@ export async function generateObject<T>({
     temperature,
   });
 
+  if (!response.choices?.length) {
+    throw new Error(`DeepSeek returned no choices: ${JSON.stringify(response).slice(0, 300)}`);
+  }
   const content = response.choices[0]?.message?.content ?? "{}";
   const parsed = JSON.parse(content);
   return { object: schema.parse(parsed) };
