@@ -165,6 +165,10 @@ export default defineConfig({
           "0%": { transform: "translateX(100%)", opacity: "0" },
           "100%": { transform: "translateX(0)", opacity: "1" },
         },
+        "feature-card-enter": {
+          from: { opacity: "0", transform: "translateY(24px)", filter: "blur(3px)" },
+          to: { opacity: "1", transform: "translateY(0)", filter: "blur(0)" },
+        },
       },
 
       // ---- Text Styles ----

@@ -83,6 +83,29 @@ export const button = cva({
           textUnderlineOffset: "3px",
         },
       },
+      glow: {
+        background: "accent.primary",
+        color: "accent.contrast",
+        border: "1px solid transparent",
+        fontWeight: "bold",
+        boxShadow: "glow",
+        _hover: {
+          background: "accent.hover",
+          boxShadow: "glowStrong",
+        },
+      },
+      gradient: {
+        background: "linear-gradient(135deg, #3E63DD 0%, #4D72E5 50%, #30A46C 100%)",
+        color: "accent.contrast",
+        border: "1px solid transparent",
+        fontWeight: "bold",
+        backgroundSize: "200% 200%",
+        backgroundPosition: "0% 50%",
+        transition: "background-position 300ms ease, opacity 150ms ease",
+        _hover: {
+          backgroundPosition: "100% 50%",
+        },
+      },
     },
     size: {
       sm: {

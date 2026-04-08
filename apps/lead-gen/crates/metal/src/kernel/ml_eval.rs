@@ -6,7 +6,9 @@
 //!
 //! Feature order (must match `LogisticScorer::extract_features`):
 //! `[industry_match, employee_in_range, seniority_match, department_match,
-//!   tech_norm, email_norm, recency_smooth]`
+//!   tech_norm, email_norm, recency_smooth,
+//!   hf_score, hf_model_depth, hf_training_depth, hf_maturity,
+//!   hf_research, hf_sales_relevance]`
 //!
 //! Enabled with the `kernel-eval` Cargo feature.
 
@@ -16,7 +18,7 @@ use std::path::Path;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use super::scoring::LogisticScorer;
+use super::scoring::{LogisticScorer, FEATURE_COUNT};
 
 // ── Data types ────────────────────────────────────────────────────────────────
 
@@ -24,34 +26,32 @@ use super::scoring::LogisticScorer;
 ///
 /// Each JSONL line must be a JSON object of this shape:
 /// ```json
-/// {"features": [1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9], "label": 1.0}
+/// {"features": [1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9, 0.7, 0.5, 0.6, 0.8, 1.0, 0.3], "label": 1.0}
 /// ```
 ///
-/// `features` maps to the 7-element vector produced by
-/// `LogisticScorer::extract_features`:
-/// `[industry_match, employee_in_range, seniority_match, department_match,
-///   tech_norm, email_norm, recency_smooth]`
+/// `features` maps to the FEATURE_COUNT-element vector produced by
+/// `LogisticScorer::extract_features`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LabeledSample {
-    /// 7-element feature vector.
-    pub features: [f32; 7],
+    /// FEATURE_COUNT-element feature vector.
+    pub features: [f32; FEATURE_COUNT],
     /// Ground-truth label: `1.0` = positive lead, `0.0` = negative.
     pub label: f32,
 }
 
 impl LabeledSample {
     /// Construct a sample directly from a feature vector and label.
-    pub fn new(features: [f32; 7], label: f32) -> Self {
+    pub fn new(features: [f32; FEATURE_COUNT], label: f32) -> Self {
         Self { features, label }
     }
 
     /// Convenience constructor for a positive-class sample (label = 1.0).
-    pub fn positive(features: [f32; 7]) -> Self {
+    pub fn positive(features: [f32; FEATURE_COUNT]) -> Self {
         Self::new(features, 1.0)
     }
 
     /// Convenience constructor for a negative-class sample (label = 0.0).
-    pub fn negative(features: [f32; 7]) -> Self {
+    pub fn negative(features: [f32; FEATURE_COUNT]) -> Self {
         Self::new(features, 0.0)
     }
 }
@@ -78,7 +78,7 @@ pub struct ScoringEval {
     /// Decision threshold used to binarize probabilities.
     pub threshold: f32,
     /// Learned weight vector copied from the scorer.
-    pub weights: [f32; 7],
+    pub weights: Vec<f32>,
     /// Learned bias term copied from the scorer.
     pub bias: f32,
 }
@@ -263,7 +263,7 @@ pub fn evaluate_scoring(
             sample_count: 0,
             positive_count: 0,
             threshold,
-            weights: scorer.weights,
+            weights: scorer.weights.clone(),
             bias: scorer.bias,
         };
     }

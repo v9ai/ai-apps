@@ -13,3 +13,9 @@ export { tabList, tabTrigger, tabContent } from "./tabs";
 export { callout } from "./callout";
 export { container, pageHeader, panel } from "./layout";
 export { markdown } from "./markdown";
+export {
+  sectionHeader,
+  statCard,
+  trustBadge,
+  comparisonRow,
+} from "./landing";

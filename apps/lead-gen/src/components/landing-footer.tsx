@@ -21,7 +21,7 @@ const FOOTER_SECTIONS = [
     links: [
       { href: "/#pipeline", label: "7 modules" },
       { href: "/#features", label: "features" },
-      { href: "/#metrics", label: "benchmarks" },
+      { href: "/#benchmarks", label: "benchmarks" },
       { href: "/#research", label: "research" },
     ],
   },
@@ -35,22 +35,35 @@ const FOOTER_SECTIONS = [
   },
 ] as const;
 
+const TECH_STACK = [
+  "Next.js 16",
+  "React 19",
+  "GraphQL",
+  "Drizzle ORM",
+  "Neon PostgreSQL",
+  "Apollo Server",
+  "Vercel AI SDK",
+  "PandaCSS",
+] as const;
+
 export function LandingFooter() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer
       className={css({
         borderTop: "1px solid",
         borderTopColor: "ui.border",
-        pt: { base: "8", lg: "10" },
+        pt: { base: "10", lg: "12" },
         pb: { base: "6", lg: "8" },
-        mt: { base: "8", lg: "10" },
       })}
     >
       <div className={container({ maxW: "breakpoint-lg" })}>
+        {/* ---- main grid: brand + link columns ---- */}
         <div
           className={grid({
             columns: { base: 1, sm: 2, md: 4 },
-            gap: { base: "6", md: "4" },
+            gap: { base: "8", md: "4" },
           })}
         >
           {/* brand column */}
@@ -62,7 +75,12 @@ export function LandingFooter() {
                 css({ textDecoration: "none" }),
               )}
             >
-              <Image src="/logo.svg" alt="Agentic Lead Gen" width={100} height={22} />
+              <Image
+                src="/logo.svg"
+                alt="Agentic Lead Gen"
+                width={100}
+                height={22}
+              />
             </Link>
             <p
               className={css({
@@ -71,7 +89,7 @@ export function LandingFooter() {
                 color: "accent.primary",
                 textTransform: "lowercase",
                 letterSpacing: "wide",
-                mb: "2",
+                mb: "3",
               })}
             >
               autonomous B2B lead generation
@@ -82,11 +100,11 @@ export function LandingFooter() {
                 color: "ui.tertiary",
                 lineHeight: "relaxed",
                 maxW: "200px",
+                mb: "4",
               })}
             >
-              Agentic Lead Gen is the open-source, local-first B2B pipeline that
-              puts autonomous AI agents to work on your hardware — discovery,
-              enrichment, scoring, and outreach, end to end.
+              Open-source, local-first pipeline. Autonomous AI agents discover,
+              enrich, score, and deliver qualified B2B leads end to end.
             </p>
             <a
               href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
@@ -96,14 +114,13 @@ export function LandingFooter() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "2",
-                mt: "4",
                 color: "ui.tertiary",
                 fontSize: "xs",
                 textDecoration: "none",
                 letterSpacing: "normal",
                 transition: "color 150ms ease",
                 _hover: {
-                  color: "ui.body",
+                  color: "ui.heading",
                 },
               })}
             >
@@ -122,12 +139,12 @@ export function LandingFooter() {
                   color: "ui.dim",
                   textTransform: "uppercase",
                   letterSpacing: "editorial",
-                  mb: "3",
+                  mb: "4",
                 })}
               >
                 {section.title}
               </p>
-              <div className={flex({ direction: "column", gap: "2" })}>
+              <div className={flex({ direction: "column", gap: "3" })}>
                 {section.links.map(({ href, label }) => (
                   <Link
                     key={href}
@@ -138,7 +155,6 @@ export function LandingFooter() {
                       textDecoration: "none",
                       textTransform: "lowercase",
                       letterSpacing: "normal",
-                      borderRadius: "0",
                       transition: "color 150ms ease",
                       _hover: {
                         color: "ui.heading",
@@ -153,7 +169,60 @@ export function LandingFooter() {
           ))}
         </div>
 
-        {/* brutalist manifesto strip */}
+        {/* ---- built with section ---- */}
+        <div
+          className={css({
+            mt: "10",
+            pt: "6",
+            borderTop: "1px solid",
+            borderTopColor: "ui.border",
+          })}
+        >
+          <p
+            className={css({
+              fontSize: "2xs",
+              fontWeight: "bold",
+              color: "ui.dim",
+              textTransform: "uppercase",
+              letterSpacing: "editorial",
+              mb: "3",
+            })}
+          >
+            built with
+          </p>
+          <div
+            className={flex({
+              gap: "2",
+              wrap: "wrap",
+            })}
+          >
+            {TECH_STACK.map((tech) => (
+              <span
+                key={tech}
+                className={css({
+                  fontSize: "2xs",
+                  fontWeight: "medium",
+                  color: "ui.tertiary",
+                  px: "2",
+                  py: "1",
+                  border: "1px solid",
+                  borderColor: "ui.border",
+                  textTransform: "lowercase",
+                  letterSpacing: "normal",
+                  transition: "border-color 150ms ease, color 150ms ease",
+                  _hover: {
+                    borderColor: "ui.borderHover",
+                    color: "ui.secondary",
+                  },
+                })}
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* ---- manifesto strip ---- */}
         <div
           className={css({
             mt: "8",
@@ -173,13 +242,13 @@ export function LandingFooter() {
             })}
           >
             Agentic Lead Gen was built by one person who got tired of paying
-            cloud CRMs $10K/year to own their own leads. This is not a startup. There is no pricing page.
-            It is a pipeline that does one thing well: generate qualified B2B
-            leads on commodity hardware.
+            cloud CRMs $10K/year to own their own leads. This is not a startup.
+            There is no pricing page. It is a pipeline that does one thing well:
+            generate qualified B2B leads on commodity hardware.
           </p>
         </div>
 
-        {/* bottom bar */}
+        {/* ---- bottom bar: copyright + back to top ---- */}
         <div
           className={cx(
             flex({
@@ -201,14 +270,31 @@ export function LandingFooter() {
               letterSpacing: "normal",
             })}
           >
-            © 2025 Agentic Lead Gen
+            &copy; {currentYear} Agentic Lead Gen
           </p>
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className={button({ variant: "ghost", size: "sm" })}
-          >
-            Back to top
-          </button>
+          <div className={flex({ align: "center", gap: "4" })}>
+            <a
+              href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={css({
+                color: "ui.dim",
+                transition: "color 150ms ease",
+                _hover: {
+                  color: "ui.secondary",
+                },
+              })}
+              aria-label="GitHub repository"
+            >
+              <GitHubLogoIcon width={14} height={14} />
+            </a>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className={button({ variant: "ghost", size: "sm" })}
+            >
+              back to top
+            </button>
+          </div>
         </div>
       </div>
     </footer>
