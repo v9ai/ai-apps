@@ -190,8 +190,8 @@ export const generateJournalAnalysis: NonNullable<MutationResolvers['generateJou
 
     // Issues from other family members referencing this person
     if (relatedIssues.length > 0) {
-      const riLines = relatedIssues.slice(0, 10).map((ri: { id: number; title: string; category: string; severity: string; description: string; familyMemberId: number }) =>
-        `- [ID:${ri.id}] "${ri.title}" (${ri.category}, ${ri.severity}) from member #${ri.familyMemberId}\n  ${ri.description.slice(0, 200)}`
+      const riLines = relatedIssues.slice(0, 5).map((ri: { id: number; title: string; category: string; severity: string; description: string; familyMemberId: number }) =>
+        `- [ID:${ri.id}] "${ri.title}" (${ri.category}, ${ri.severity}) from member #${ri.familyMemberId}\n  ${ri.description.slice(0, 150)}`
       );
       sections.push(`### Issues From Other Members Referencing This Person (${relatedIssues.length})\n${riLines.join("\n")}`);
     }
