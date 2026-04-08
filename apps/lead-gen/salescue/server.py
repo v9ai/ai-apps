@@ -159,7 +159,10 @@ def intent(req: IntentRequest):
 
 @app.post("/reply")
 def reply(req: ReplyRequest):
-    return _run_module("reply", req.text, touchpoint=req.touchpoint)
+    kwargs = {}
+    if req.touchpoint is not None:
+        kwargs["touchpoint"] = req.touchpoint
+    return _run_module("reply", req.text, **kwargs)
 
 
 @app.post("/sentiment")
