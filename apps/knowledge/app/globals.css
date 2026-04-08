@@ -1176,6 +1176,14 @@ body {
   font-size: 13px;
   line-height: 1.7;
 }
+.code-pair-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 768px) {
+  .code-pair-grid { grid-template-columns: 1fr; }
+}
 .code-block-wrapper { position: relative; }
 .code-block-bar {
   display: flex;
