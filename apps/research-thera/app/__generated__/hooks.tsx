@@ -17,6 +17,15 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export type ActionableRecommendation = {
+  __typename?: 'ActionableRecommendation';
+  concreteSteps: Array<Scalars['String']['output']>;
+  description: Scalars['String']['output'];
+  priority: Scalars['String']['output'];
+  relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
+  title: Scalars['String']['output'];
+};
+
 export type AudioAsset = {
   __typename?: 'AudioAsset';
   createdAt: Scalars['String']['output'];
@@ -434,6 +443,12 @@ export type DeleteIssueScreenshotResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteJournalAnalysisResult = {
+  __typename?: 'DeleteJournalAnalysisResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteJournalEntryResult = {
   __typename?: 'DeleteJournalEntryResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -485,6 +500,14 @@ export enum DevelopmentalTier {
   LateAdolescence = 'LATE_ADOLESCENCE',
   MiddleChildhood = 'MIDDLE_CHILDHOOD'
 }
+
+export type EmotionalLandscape = {
+  __typename?: 'EmotionalLandscape';
+  attachmentPatterns?: Maybe<Scalars['String']['output']>;
+  emotionalRegulation: Scalars['String']['output'];
+  primaryEmotions: Array<Scalars['String']['output']>;
+  underlyingEmotions: Array<Scalars['String']['output']>;
+};
 
 export type EvidenceItem = {
   __typename?: 'EvidenceItem';
@@ -601,6 +624,13 @@ export type GenerateHabitsResult = {
   __typename?: 'GenerateHabitsResult';
   count?: Maybe<Scalars['Int']['output']>;
   habits?: Maybe<Array<Habit>>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type GenerateJournalAnalysisResult = {
+  __typename?: 'GenerateJournalAnalysisResult';
+  analysis?: Maybe<JournalAnalysis>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -837,8 +867,22 @@ export enum JobType {
   Research = 'RESEARCH'
 }
 
+export type JournalAnalysis = {
+  __typename?: 'JournalAnalysis';
+  actionableRecommendations: Array<ActionableRecommendation>;
+  createdAt: Scalars['String']['output'];
+  emotionalLandscape: EmotionalLandscape;
+  id: Scalars['Int']['output'];
+  journalEntryId: Scalars['Int']['output'];
+  model: Scalars['String']['output'];
+  reflectionPrompts: Array<Scalars['String']['output']>;
+  summary: Scalars['String']['output'];
+  therapeuticInsights: Array<TherapeuticInsight>;
+};
+
 export type JournalEntry = {
   __typename?: 'JournalEntry';
+  analysis?: Maybe<JournalAnalysis>;
   content: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
   createdBy: Scalars['String']['output'];
@@ -889,6 +933,7 @@ export type Mutation = {
   deleteHabitLog: Scalars['Boolean']['output'];
   deleteIssue: DeleteIssueResult;
   deleteIssueScreenshot: DeleteIssueScreenshotResult;
+  deleteJournalAnalysis: DeleteJournalAnalysisResult;
   deleteJournalEntry: DeleteJournalEntryResult;
   deleteNote: DeleteNoteResult;
   deleteRelationship: DeleteRelationshipResult;
@@ -901,6 +946,7 @@ export type Mutation = {
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
   generateHabitsForFamilyMember: GenerateHabitsResult;
   generateHabitsFromIssue: GenerateHabitsResult;
+  generateJournalAnalysis: GenerateJournalAnalysisResult;
   generateLongFormText: GenerateLongFormTextResult;
   generateOpenAIAudio: GenerateOpenAiAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
@@ -1092,6 +1138,11 @@ export type MutationDeleteIssueScreenshotArgs = {
 };
 
 
+export type MutationDeleteJournalAnalysisArgs = {
+  journalEntryId: Scalars['Int']['input'];
+};
+
+
 export type MutationDeleteJournalEntryArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1158,6 +1209,11 @@ export type MutationGenerateHabitsForFamilyMemberArgs = {
 export type MutationGenerateHabitsFromIssueArgs = {
   count?: InputMaybe<Scalars['Int']['input']>;
   issueId: Scalars['Int']['input'];
+};
+
+
+export type MutationGenerateJournalAnalysisArgs = {
+  journalEntryId: Scalars['Int']['input'];
 };
 
 
@@ -1885,6 +1941,14 @@ export type TextSegment = {
   idx: Scalars['Int']['output'];
   storyId?: Maybe<Scalars['Int']['output']>;
   text: Scalars['String']['output'];
+};
+
+export type TherapeuticInsight = {
+  __typename?: 'TherapeuticInsight';
+  clinicalRelevance: Scalars['String']['output'];
+  observation: Scalars['String']['output'];
+  relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
+  title: Scalars['String']['output'];
 };
 
 export type TherapeuticQuestion = {

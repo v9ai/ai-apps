@@ -246,6 +246,10 @@ type Mutation {
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
   deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
 
+  # Journal Analysis
+  generateJournalAnalysis(journalEntryId: Int!): GenerateJournalAnalysisResult!
+  deleteJournalAnalysis(journalEntryId: Int!): DeleteJournalAnalysisResult!
+
   # Conversations
   createConversation(issueId: Int!, message: String!): Conversation!
   sendConversationMessage(conversationId: Int!, message: String!): Conversation!
@@ -925,6 +929,7 @@ type JournalEntry {
   entryDate: String!
   createdAt: String!
   updatedAt: String!
+  analysis: JournalAnalysis
 }
 
 input CreateJournalEntryInput {
@@ -1463,6 +1468,55 @@ type GenerateDeepAnalysisResult {
 }
 
 type DeleteDeepAnalysisResult {
+  success: Boolean!
+  message: String
+}
+
+# ============================================
+# Journal Analysis
+# ============================================
+
+type JournalAnalysis {
+  id: Int!
+  journalEntryId: Int!
+  summary: String!
+  emotionalLandscape: EmotionalLandscape!
+  therapeuticInsights: [TherapeuticInsight!]!
+  actionableRecommendations: [ActionableRecommendation!]!
+  reflectionPrompts: [String!]!
+  model: String!
+  createdAt: String!
+}
+
+type EmotionalLandscape {
+  primaryEmotions: [String!]!
+  underlyingEmotions: [String!]!
+  emotionalRegulation: String!
+  attachmentPatterns: String
+}
+
+type TherapeuticInsight {
+  title: String!
+  observation: String!
+  clinicalRelevance: String!
+  relatedResearchIds: [Int!]
+}
+
+type ActionableRecommendation {
+  title: String!
+  description: String!
+  priority: String!
+  concreteSteps: [String!]!
+  relatedResearchIds: [Int!]
+}
+
+type GenerateJournalAnalysisResult {
+  success: Boolean!
+  message: String
+  analysis: JournalAnalysis
+}
+
+type DeleteJournalAnalysisResult {
   success: Boolean!
   message: String
 }

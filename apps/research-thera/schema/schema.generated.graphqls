@@ -1,3 +1,11 @@
+type ActionableRecommendation {
+  concreteSteps: [String!]!
+  description: String!
+  priority: String!
+  relatedResearchIds: [Int!]
+  title: String!
+}
+
 type AudioAsset {
   createdAt: String!
   createdBy: String!
@@ -388,6 +396,11 @@ type DeleteIssueScreenshotResult {
   success: Boolean!
 }
 
+type DeleteJournalAnalysisResult {
+  message: String
+  success: Boolean!
+}
+
 type DeleteJournalEntryResult {
   message: String
   success: Boolean!
@@ -431,6 +444,13 @@ enum DevelopmentalTier {
   EARLY_CHILDHOOD
   LATE_ADOLESCENCE
   MIDDLE_CHILDHOOD
+}
+
+type EmotionalLandscape {
+  attachmentPatterns: String
+  emotionalRegulation: String!
+  primaryEmotions: [String!]!
+  underlyingEmotions: [String!]!
 }
 
 type EvidenceItem {
@@ -534,6 +554,12 @@ type GenerateDeepAnalysisResult {
 type GenerateHabitsResult {
   count: Int
   habits: [Habit!]
+  message: String
+  success: Boolean!
+}
+
+type GenerateJournalAnalysisResult {
+  analysis: JournalAnalysis
   message: String
   success: Boolean!
 }
@@ -755,7 +781,20 @@ enum JobType {
   RESEARCH
 }
 
+type JournalAnalysis {
+  actionableRecommendations: [ActionableRecommendation!]!
+  createdAt: String!
+  emotionalLandscape: EmotionalLandscape!
+  id: Int!
+  journalEntryId: Int!
+  model: String!
+  reflectionPrompts: [String!]!
+  summary: String!
+  therapeuticInsights: [TherapeuticInsight!]!
+}
+
 type JournalEntry {
+  analysis: JournalAnalysis
   content: String!
   createdAt: String!
   createdBy: String!
@@ -805,6 +844,7 @@ type Mutation {
   deleteHabitLog(id: Int!): Boolean!
   deleteIssue(id: Int!): DeleteIssueResult!
   deleteIssueScreenshot(id: Int!): DeleteIssueScreenshotResult!
+  deleteJournalAnalysis(journalEntryId: Int!): DeleteJournalAnalysisResult!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!
@@ -817,6 +857,7 @@ type Mutation {
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
   generateHabitsForFamilyMember(count: Int, familyMemberId: Int!): GenerateHabitsResult!
   generateHabitsFromIssue(count: Int, issueId: Int!): GenerateHabitsResult!
+  generateJournalAnalysis(journalEntryId: Int!): GenerateJournalAnalysisResult!
   generateLongFormText(familyMemberId: Int, feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int, language: String, minutes: Int, userContext: String): GenerateLongFormTextResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
@@ -1159,6 +1200,13 @@ type TextSegment {
   idx: Int!
   storyId: Int
   text: String!
+}
+
+type TherapeuticInsight {
+  clinicalRelevance: String!
+  observation: String!
+  relatedResearchIds: [Int!]
+  title: String!
 }
 
 type TherapeuticQuestion {

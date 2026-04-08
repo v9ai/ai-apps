@@ -35,5 +35,32 @@ query GetJournalEntry($id: Int!) {
     entryDate
     createdAt
     updatedAt
+    analysis {
+      id
+      journalEntryId
+      summary
+      emotionalLandscape {
+        primaryEmotions
+        underlyingEmotions
+        emotionalRegulation
+        attachmentPatterns
+      }
+      therapeuticInsights {
+        title
+        observation
+        clinicalRelevance
+        relatedResearchIds
+      }
+      actionableRecommendations {
+        title
+        description
+        priority
+        concreteSteps
+        relatedResearchIds
+      }
+      reflectionPrompts
+      model
+      createdAt
+    }
   }
 }
