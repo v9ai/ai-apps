@@ -31,6 +31,9 @@ pub mod data_gen;
 #[cfg(feature = "kernel-eval")]
 pub mod weight_optimizer;
 
+#[cfg(feature = "kernel-eval")]
+pub mod cross_validation;
+
 #[cfg(feature = "kernel-extract")]
 pub mod html_extractor;
 

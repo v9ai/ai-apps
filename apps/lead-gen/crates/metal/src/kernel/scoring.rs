@@ -336,23 +336,24 @@ impl HfCompanySignals {
 /// Build `HfCompanySignals` directly from an `hf::OrgProfile`.
 #[cfg(feature = "kernel-hf")]
 impl HfCompanySignals {
+    /// Standard model types for custom architecture detection.
+    /// Defined locally so we don't need to import from the hf crate.
+    const STANDARD_MODEL_TYPES: &[&str] = &[
+        "bert", "roberta", "distilbert", "albert", "electra", "deberta", "deberta-v2",
+        "xlnet", "longformer", "bigbird",
+        "gpt2", "gpt_neo", "gpt_neox", "llama", "mistral", "mixtral", "gemma", "gemma2",
+        "phi", "phi3", "qwen2", "qwen2_moe", "falcon", "mpt", "cohere", "starcoder2", "codellama",
+        "t5", "bart", "pegasus", "marian",
+        "whisper", "wav2vec2",
+        "vit", "clip", "deit", "swin", "resnet", "convnext",
+        "stable-diffusion", "sdxl",
+    ];
+
     pub fn from_org_profile(profile: &hf::OrgProfile) -> Self {
-        use std::collections::HashSet;
+        use std::collections::{HashMap, HashSet};
 
-        let hf_score = hf::OrgScanner::compute_hf_score(profile);
+        // ── Helpers ──────────────────────────────────────────────────────────
 
-        let signal_types: HashSet<_> = profile
-            .training_signals
-            .iter()
-            .map(|s| std::mem::discriminant(&s.signal_type))
-            .collect();
-
-        let has_pretraining = profile
-            .training_signals
-            .iter()
-            .any(|s| s.signal_type == hf::TrainingSignalType::PreTraining);
-
-        // Effort ordinal mapping
         let effort_ordinal = |e: &hf::EffortLevel| -> f32 {
             match e {
                 hf::EffortLevel::Production => 1.0,
@@ -362,6 +363,38 @@ impl HfCompanySignals {
                 hf::EffortLevel::Trivial => 0.15,
             }
         };
+
+        fn iso_to_epoch_days(s: &str) -> Option<i64> {
+            if s.len() < 10 { return None; }
+            let y: i64 = s.get(0..4)?.parse().ok()?;
+            let m: i64 = s.get(5..7)?.parse().ok()?;
+            let d: i64 = s.get(8..10)?.parse().ok()?;
+            let m_adj = if m <= 2 { m + 9 } else { m - 3 };
+            let y_adj = if m <= 2 { y - 1 } else { y };
+            Some(365 * y_adj + y_adj / 4 - y_adj / 100 + y_adj / 400 + (m_adj * 153 + 2) / 5 + d - 1)
+        }
+
+        fn today_epoch_days() -> i64 {
+            let secs = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64;
+            secs / 86400 + 719468
+        }
+
+        // ── Composite + depth (features 7-9) ────────────────────────────────
+
+        let hf_score = hf::OrgScanner::compute_hf_score(profile);
+        let model_count = profile.models.len();
+
+        let signal_types: HashSet<_> = profile
+            .training_signals
+            .iter()
+            .map(|s| std::mem::discriminant(&s.signal_type))
+            .collect();
+        let training_signal_types = signal_types.len();
+
+        // ── Maturity (features 10-14) ────────────────────────────────────────
 
         let max_effort = profile
             .model_maturity
@@ -380,26 +413,390 @@ impl HfCompanySignals {
             production_research_count as f32 / profile.model_maturity.len() as f32
         };
 
-        let dl_weighted_maturity = if profile.model_maturity.is_empty() {
-            0.0
-        } else {
-            let sum: f32 = profile
-                .model_maturity
-                .iter()
-                .map(|m| effort_ordinal(&m.effort_level))
-                .sum();
-            sum / profile.model_maturity.len() as f32
+        // Download-weighted average maturity (weight by m.downloads)
+        let dl_weighted_maturity = {
+            let total_dl: u64 = profile.model_maturity.iter().map(|m| m.downloads).sum();
+            if total_dl == 0 {
+                // Fallback to uniform average
+                if profile.model_maturity.is_empty() {
+                    0.0
+                } else {
+                    let sum: f32 = profile.model_maturity.iter()
+                        .map(|m| effort_ordinal(&m.effort_level))
+                        .sum();
+                    sum / profile.model_maturity.len() as f32
+                }
+            } else {
+                let weighted_sum: f64 = profile.model_maturity.iter()
+                    .map(|m| effort_ordinal(&m.effort_level) as f64 * m.downloads as f64)
+                    .sum();
+                (weighted_sum / total_dl as f64) as f32
+            }
         };
 
-        Self::from_raw(
+        // Alignment diversity: distinct alignment methods / 4
+        let alignment_method_count = {
+            let methods: HashSet<&str> = profile.model_maturity.iter()
+                .filter_map(|m| m.alignment_method.as_deref())
+                .collect();
+            methods.len()
+        };
+
+        // Maturity trend: Pearson-r of (creation-time rank, effort ordinal)
+        // Join model_maturity repo_ids to profile.models for created_at
+        let maturity_trend = {
+            let created_map: HashMap<&str, &str> = profile.models.iter()
+                .filter_map(|m| {
+                    let id = m.repo_id.as_deref()?;
+                    let ca = m.created_at.as_deref()?;
+                    Some((id, ca))
+                })
+                .collect();
+
+            // Build (created_at, effort_ordinal) pairs
+            let mut pairs: Vec<(&str, f32)> = profile.model_maturity.iter()
+                .filter_map(|m| {
+                    let ca = created_map.get(m.repo_id.as_str())?;
+                    Some((*ca, effort_ordinal(&m.effort_level)))
+                })
+                .collect();
+
+            if pairs.len() < 2 {
+                0.5 // neutral
+            } else {
+                // Sort lexicographically by ISO date (sorts correctly)
+                pairs.sort_by(|a, b| a.0.cmp(b.0));
+
+                // Pearson-r of (rank, effort_ordinal)
+                let n = pairs.len() as f64;
+                let mut sum_x = 0.0_f64;
+                let mut sum_y = 0.0_f64;
+                let mut sum_xy = 0.0_f64;
+                let mut sum_x2 = 0.0_f64;
+                let mut sum_y2 = 0.0_f64;
+                for (i, (_, eff)) in pairs.iter().enumerate() {
+                    let x = i as f64;
+                    let y = *eff as f64;
+                    sum_x += x;
+                    sum_y += y;
+                    sum_xy += x * y;
+                    sum_x2 += x * x;
+                    sum_y2 += y * y;
+                }
+                let num = n * sum_xy - sum_x * sum_y;
+                let den = ((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y)).sqrt();
+                let r = if den.abs() < 1e-12 { 0.0 } else { num / den };
+                // Map [-1, 1] to [0, 1]
+                ((r + 1.0) / 2.0) as f32
+            }
+        };
+
+        // ── Research (feature 15) ────────────────────────────────────────────
+
+        let has_pretraining = profile
+            .training_signals
+            .iter()
+            .any(|s| s.signal_type == hf::TrainingSignalType::PreTraining);
+        let arxiv_count = profile.arxiv_links.len();
+
+        // ── Sales (features 16-19) ───────────────────────────────────────────
+
+        let has_b2b_core = profile.sales_signals.iter().any(|sig| matches!(
+            sig.category,
+            hf::SalesCategory::IntentScoring
+                | hf::SalesCategory::LeadClassification
+                | hf::SalesCategory::CrmIntelligence
+        ));
+
+        let has_outreach = profile.sales_signals.iter().any(|sig| matches!(
+            sig.category,
+            hf::SalesCategory::EmailOutreach | hf::SalesCategory::SalesConversation
+        ));
+
+        let sales_category_count = {
+            let cats: HashSet<_> = profile.sales_signals.iter()
+                .map(|sig| std::mem::discriminant(&sig.category))
+                .collect();
+            cats.len()
+        };
+
+        let has_general_sales = profile.sales_signals.iter().any(|sig|
+            matches!(sig.category, hf::SalesCategory::General)
+        );
+
+        // ── Training signals (features 20-23) ───────────────────────────────
+
+        let total_models = model_count.max(1);
+
+        // Group training_signals by repo_id
+        let mut signals_by_repo: HashMap<&str, Vec<&hf::TrainingSignal>> = HashMap::new();
+        for sig in &profile.training_signals {
+            signals_by_repo.entry(sig.repo_id.as_str()).or_default().push(sig);
+        }
+
+        // research_intensity: per-repo check for PreTraining+CustomDataset+ArxivCitation
+        let research_intensity = {
+            let mut count = 0usize;
+            for sigs in signals_by_repo.values() {
+                let has_pt = sigs.iter().any(|s| s.signal_type == hf::TrainingSignalType::PreTraining);
+                let has_cd = sigs.iter().any(|s| s.signal_type == hf::TrainingSignalType::CustomDataset);
+                let has_ax = sigs.iter().any(|s| s.signal_type == hf::TrainingSignalType::ArxivCitation);
+                if has_pt && has_cd && has_ax { count += 1; }
+            }
+            count as f32 / total_models as f32
+        };
+
+        // infra_sophistication: weighted MoE(3)+LargeParams(2)+LargeContext(2)+CustomArch(1) / 8
+        let infra_sophistication = {
+            let mut total_score = 0.0_f32;
+            for sigs in signals_by_repo.values() {
+                let mut repo_score = 0.0_f32;
+                for sig in sigs {
+                    repo_score += match sig.signal_type {
+                        hf::TrainingSignalType::MoEArchitecture => 3.0,
+                        hf::TrainingSignalType::LargeParamCount => 2.0,
+                        hf::TrainingSignalType::LargeContext => 2.0,
+                        hf::TrainingSignalType::CustomArchitecture => 1.0,
+                        _ => 0.0,
+                    };
+                }
+                total_score += (repo_score / 8.0).min(1.0);
+            }
+            total_score / total_models as f32
+        };
+
+        // signal_breadth: repos with any signal / total models
+        let signal_breadth = signals_by_repo.len() as f32 / total_models as f32;
+
+        // domain_nlp_focus: (NerLabels+LargeContext presence)/2 * 0.6 + NLP pipeline tag ratio * 0.4
+        let domain_nlp_focus = {
+            let all_sigs: Vec<&hf::TrainingSignal> = profile.training_signals.iter().collect();
+            let has_ner = all_sigs.iter().any(|s| s.signal_type == hf::TrainingSignalType::NerLabels);
+            let has_lc = all_sigs.iter().any(|s| s.signal_type == hf::TrainingSignalType::LargeContext);
+            let ner_lc = (has_ner as u8 as f32 + has_lc as u8 as f32) / 2.0;
+
+            let nlp_tags = ["text-generation", "text-classification", "token-classification",
+                "question-answering", "summarization", "translation", "fill-mask",
+                "text2text-generation", "sentence-similarity", "conversational",
+                "text-to-text"];
+            let total_tag_count: usize = profile.pipeline_tags.iter().map(|(_, c)| c).sum();
+            let nlp_tag_count: usize = profile.pipeline_tags.iter()
+                .filter(|(tag, _)| nlp_tags.iter().any(|&t| tag == t))
+                .map(|(_, c)| c)
+                .sum();
+            let nlp_ratio = if total_tag_count > 0 {
+                nlp_tag_count as f32 / total_tag_count as f32
+            } else {
+                0.0
+            };
+
+            ner_lc * 0.6 + nlp_ratio * 0.4
+        };
+
+        // ── Architecture diversity (features 24-28) ──────────────────────────
+
+        // library_sophistication: tiered scoring
+        let library_sophistication = {
+            let mut score = 0.0_f32;
+            for (lib, _) in &profile.libraries_used {
+                let lib_lower = lib.to_lowercase();
+                score += match lib_lower.as_str() {
+                    "vllm" | "triton" | "trl" => 3.0,
+                    "tensorrt" | "onnx" | "deepspeed" | "peft" | "bitsandbytes"
+                        | "accelerate" | "jax" => 2.0,
+                    "transformers" | "pytorch" | "tensorflow" => 1.0,
+                    _ => 0.0,
+                };
+            }
+            (score / 15.0).min(1.0)
+        };
+
+        // pipeline_diversity: map pipeline_tags to 4 modality buckets
+        let pipeline_diversity = {
+            let text_tags = ["text-generation", "text-classification", "token-classification",
+                "question-answering", "summarization", "translation", "fill-mask",
+                "text2text-generation", "sentence-similarity", "conversational",
+                "text-to-text", "feature-extraction", "zero-shot-classification"];
+            let vision_tags = ["image-classification", "object-detection", "image-segmentation",
+                "image-to-text", "text-to-image", "image-to-image", "depth-estimation",
+                "visual-question-answering", "image-feature-extraction"];
+            let audio_tags = ["text-to-speech", "automatic-speech-recognition",
+                "audio-classification", "audio-to-audio", "voice-activity-detection"];
+            let multimodal_tags = ["multimodal", "video-classification", "document-question-answering",
+                "video-text-to-text", "image-text-to-text", "any-to-any"];
+
+            let mut buckets = [false; 4];
+            for (tag, _) in &profile.pipeline_tags {
+                if text_tags.iter().any(|&t| tag == t) { buckets[0] = true; }
+                if vision_tags.iter().any(|&t| tag == t) { buckets[1] = true; }
+                if audio_tags.iter().any(|&t| tag == t) { buckets[2] = true; }
+                if multimodal_tags.iter().any(|&t| tag == t) { buckets[3] = true; }
+            }
+            let distinct = buckets.iter().filter(|&&b| b).count();
+            distinct as f32 / 4.0
+        };
+
+        // custom_arch_ratio: model_configs with model_type NOT in standard types / total
+        let custom_arch_ratio = {
+            if profile.model_configs.is_empty() {
+                0.0
+            } else {
+                let custom_count = profile.model_configs.values()
+                    .filter(|cfg| {
+                        if let Some(mt) = cfg.get("model_type").and_then(|v| v.as_str()) {
+                            !Self::STANDARD_MODEL_TYPES.iter()
+                                .any(|&std| mt.eq_ignore_ascii_case(std))
+                        } else {
+                            false
+                        }
+                    })
+                    .count();
+                custom_count as f32 / profile.model_configs.len() as f32
+            }
+        };
+
+        // framework_diversity: distinct frameworks / 4
+        let framework_diversity = {
+            let frameworks = ["pytorch", "jax", "tensorflow", "flax", "onnx", "tensorrt"];
+            let distinct = profile.libraries_used.iter()
+                .filter(|(lib, _)| {
+                    let ll = lib.to_lowercase();
+                    frameworks.iter().any(|&f| ll == f)
+                })
+                .count();
+            (distinct as f32 / 4.0).min(1.0)
+        };
+
+        // moe_ratio: model_configs with num_experts/num_local_experts/n_routed_experts > 1 / total
+        let moe_ratio = {
+            if profile.model_configs.is_empty() {
+                0.0
+            } else {
+                let moe_count = profile.model_configs.values()
+                    .filter(|cfg| {
+                        let expert_keys = ["num_experts", "num_local_experts", "n_routed_experts"];
+                        expert_keys.iter().any(|key|
+                            cfg.get(*key).and_then(|v| v.as_u64()).map_or(false, |n| n > 1)
+                        )
+                    })
+                    .count();
+                moe_count as f32 / profile.model_configs.len() as f32
+            }
+        };
+
+        // ── Downloads (features 29-33) ───────────────────────────────────────
+
+        let total_downloads = profile.total_downloads;
+        let total_likes: u64 = profile.models.iter()
+            .chain(profile.datasets.iter())
+            .chain(profile.spaces.iter())
+            .filter_map(|r| r.likes)
+            .sum();
+        let max_model_downloads: u64 = profile.models.iter()
+            .filter_map(|m| m.downloads)
+            .max()
+            .unwrap_or(0);
+        let models_with_downloads_above_100: usize = profile.models.iter()
+            .filter(|m| m.downloads.map_or(false, |d| d > 100))
+            .count();
+
+        // ── Temporal (features 34-37) ────────────────────────────────────────
+
+        let today = today_epoch_days();
+
+        let all_repos = profile.models.iter()
+            .chain(profile.datasets.iter())
+            .chain(profile.spaces.iter());
+
+        let mut all_created_days: Vec<i64> = Vec::new();
+        let mut max_last_modified: Option<i64> = None;
+
+        for repo in all_repos {
+            if let Some(ca) = repo.created_at.as_deref().and_then(iso_to_epoch_days) {
+                all_created_days.push(ca);
+            }
+            if let Some(lm) = repo.last_modified.as_deref().and_then(iso_to_epoch_days) {
+                max_last_modified = Some(max_last_modified.map_or(lm, |cur: i64| cur.max(lm)));
+            }
+        }
+
+        let days_since_last_update = max_last_modified
+            .map(|lm| (today - lm).max(0) as f32)
+            .unwrap_or(365.0);
+
+        let recent_90_count = all_created_days.iter()
+            .filter(|&&d| today - d <= 90)
+            .count();
+        let older_90_count = all_created_days.iter()
+            .filter(|&&d| { let age = today - d; age > 90 && age <= 180 })
+            .count();
+
+        let span_days = if all_created_days.len() < 2 {
+            0.0
+        } else {
+            let min_d = *all_created_days.iter().min().unwrap();
+            let max_d = *all_created_days.iter().max().unwrap();
+            (max_d - min_d) as f32
+        };
+
+        // max_weekly_burst: sliding window of width 7 on sorted created_days, two-pointer scan
+        let max_weekly_burst = {
+            let mut sorted = all_created_days.clone();
+            sorted.sort_unstable();
+            if sorted.is_empty() {
+                0usize
+            } else {
+                let mut max_burst = 0usize;
+                let mut left = 0usize;
+                for right in 0..sorted.len() {
+                    while sorted[right] - sorted[left] > 7 {
+                        left += 1;
+                    }
+                    max_burst = max_burst.max(right - left + 1);
+                }
+                max_burst
+            }
+        };
+
+        // ── Build HfRawInputs and call from_inputs() ────────────────────────
+
+        let inputs = HfRawInputs {
             hf_score,
-            profile.models.len(),
-            signal_types.len(),
+            model_count,
+            training_signal_types,
+            max_effort_ordinal: max_effort,
+            production_ratio,
             dl_weighted_maturity,
+            alignment_method_count,
+            maturity_trend,
             has_pretraining,
-            profile.arxiv_links.len(),
-            profile.sales_signals.len(),
-        )
+            arxiv_count,
+            has_b2b_core,
+            has_outreach,
+            sales_category_count,
+            has_general_sales,
+            research_intensity,
+            infra_sophistication,
+            signal_breadth,
+            domain_nlp_focus,
+            library_sophistication,
+            pipeline_diversity,
+            custom_arch_ratio,
+            framework_diversity,
+            moe_ratio,
+            total_downloads,
+            model_count_for_avg: model_count,
+            total_likes,
+            models_with_downloads_above_100,
+            max_model_downloads,
+            days_since_last_update,
+            recent_90_count,
+            older_90_count,
+            span_days,
+            max_weekly_burst,
+        };
+
+        Self::from_inputs(&inputs)
     }
 }
 
