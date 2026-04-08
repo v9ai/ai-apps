@@ -1053,7 +1053,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 .cat-card-name {
   font-size: 16px;
@@ -1078,7 +1078,7 @@ body {
 
 /* category outcomes — collapsible */
 .cat-card-outcomes-wrap {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
 }
 .cat-card-outcomes-toggle {
   all: unset;
@@ -1147,7 +1147,7 @@ body {
   justify-content: center;
   width: 100%;
   padding: 8px 0;
-  margin: 4px 0 0;
+  margin: 8px 0 0;
   font-size: 11px;
   font-weight: 600;
   color: var(--gray-8);
@@ -1167,8 +1167,8 @@ body {
 .cat-card-divider {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 4px 0 10px;
+  gap: 8px;
+  margin: 8px 0 8px;
 }
 .cat-card-divider::before,
 .cat-card-divider::after {
@@ -1360,8 +1360,8 @@ body {
 
 /* category card footer */
 .cat-card-footer {
-  margin-top: 12px;
-  padding-top: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.04);
   font-size: 11px;
   color: var(--gray-7);
