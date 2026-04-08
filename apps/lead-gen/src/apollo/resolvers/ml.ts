@@ -132,23 +132,24 @@ export const mlResolvers = {
         .map(c => {
           const features = {
             authorityScore: c.authority_score ?? 0,
-            seniorityOrdinal: seniorityToOrdinal(c.seniority),
-            departmentMatch: 1, // assume match
-            emailVerified: c.email_verified ? 1 : 0,
+            isDecisionMaker: c.is_decision_maker ? 1 : 0,
+            hasVerifiedEmail: c.email_verified ? 1 : 0,
+            emailCount: 1,
             hasLinkedin: c.linkedin_url ? 1 : 0,
             hasGithub: c.github_handle ? 1 : 0,
-            hasAiProfile: c.ai_profile ? 1 : 0,
-            aiProfileConfidence: 0,
-            daysSinceCreated: daysSince(c.created_at),
-            outboundCount: 0,
-            anyReply: 0,
-            deletionScore: c.deletion_score ?? 0,
+            departmentRelevance: c.department === "AI/ML" || c.department === "Engineering" ? 0.8 : 0.3,
+            emailsSent: 0,
+            daysSinceLastContact: c.last_contacted_at ? daysSince(c.last_contacted_at) : 0,
+            hasReplied: 0,
+            doNotContact: c.do_not_contact ? 1 : 0,
+            nextTouchScore: c.next_touch_score ?? 0,
           };
           const score = scoreContact(features);
           const reasons: string[] = [];
           if (features.authorityScore > 0.7) reasons.push("High authority");
-          if (features.emailVerified) reasons.push("Email verified");
+          if (features.hasVerifiedEmail) reasons.push("Email verified");
           if (features.hasLinkedin) reasons.push("LinkedIn available");
+          if (features.isDecisionMaker) reasons.push("Decision maker");
           return { contact: c, rankScore: score, reasons };
         })
         .sort((a, b) => b.rankScore - a.rankScore)
