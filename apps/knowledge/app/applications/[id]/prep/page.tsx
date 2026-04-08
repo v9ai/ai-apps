@@ -1,8 +1,8 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
+import type { ReactElement } from "react";
 import {
-  Container,
   Heading,
   Button,
   Flex,
@@ -18,6 +18,42 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { AppData } from "@/components/app-detail/types";
+
+const LANG_LABELS: Record<string, string> = {
+  jsx: "React", tsx: "React", react: "React",
+  css: "CSS", scss: "CSS", sass: "CSS", less: "CSS",
+  js: "JavaScript", javascript: "JavaScript",
+  ts: "TypeScript", typescript: "TypeScript",
+  html: "HTML", json: "JSON", bash: "Terminal", sh: "Terminal",
+  sql: "SQL", python: "Python", py: "Python",
+};
+
+function langLabel(lang: string): string {
+  return LANG_LABELS[lang.toLowerCase()] || lang.toUpperCase();
+}
+
+/** Merge consecutive fenced code blocks into a single `codepair` block */
+function groupCodeBlocks(md: string): string {
+  return md.replace(
+    /```(\w+)\n([\s\S]*?)```\n{1,3}```(\w+)\n([\s\S]*?)```/g,
+    (_, l1, c1, l2, c2) =>
+      `\`\`\`codepair\n${l1}\n${c1.trimEnd()}\n====CODESPLIT====\n${l2}\n${c2.trimEnd()}\n\`\`\``,
+  );
+}
+
+function CodePanel({ lang, code }: { lang: string; code: string }) {
+  return (
+    <div className="code-block-wrapper" style={{ flex: 1, minWidth: 0 }}>
+      <div className="code-block-bar">
+        <div className="code-block-dots"><span /><span /><span /></div>
+        <span className="code-block-lang">{langLabel(lang)}</span>
+      </div>
+      <pre style={{ margin: 0, padding: 16, overflowX: "auto", fontSize: "var(--font-size-1)", fontFamily: "var(--font-mono, monospace)", lineHeight: 1.7, backgroundColor: "var(--gray-2)" }}>
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
 
 function PrepPageInner() {
   const params = useParams<{ id: string }>();
@@ -46,16 +82,16 @@ function PrepPageInner() {
 
   if (loading) {
     return (
-      <Container size="3" p="8">
+      <Box px={{ initial: "4", md: "8" }} py="8">
         <Skeleton height="32px" mb="6" style={{ maxWidth: 300 }} />
         <Skeleton height="600px" />
-      </Container>
+      </Box>
     );
   }
 
   if (error || !app) {
     return (
-      <Container size="3" p="8">
+      <Box px={{ initial: "4", md: "8" }} py="8">
         <Card>
           <Flex direction="column" align="center" gap="4" p="6">
             <Heading size="5">{error ? "Error" : "Not Found"}</Heading>
@@ -65,14 +101,15 @@ function PrepPageInner() {
             </Button>
           </Flex>
         </Card>
-      </Container>
+      </Box>
     );
   }
 
   const content = app.aiInterviewQuestions;
+  const processed = content ? groupCodeBlocks(content) : null;
 
   return (
-    <Container size="3" p={{ initial: "4", md: "8" }}>
+    <Box px={{ initial: "4", md: "8" }} py={{ initial: "4", md: "8" }}>
       {/* Navigation */}
       <Flex align="center" gap="3" mb="5">
         <Link
@@ -110,8 +147,8 @@ function PrepPageInner() {
       </Flex>
 
       {/* Content */}
-      {content ? (
-        <Box className="interview-prep-md" style={{ maxWidth: "100%" }}>
+      {processed ? (
+        <Box className="interview-prep-md">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
@@ -168,15 +205,51 @@ function PrepPageInner() {
               td: ({ children }) => (
                 <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--gray-4)" }}>{children}</td>
               ),
+              pre: ({ children }) => {
+                let lang = "";
+                let rawText = "";
+                const codeEl = children as ReactElement<{ className?: string; children?: string }>;
+                if (codeEl?.props) {
+                  const match = codeEl.props.className?.match(/language-(\w+)/);
+                  if (match) lang = match[1];
+                  rawText = String(codeEl.props.children || "").replace(/\n$/, "");
+                }
+
+                if (lang === "codepair") {
+                  const parts = rawText.split("\n====CODESPLIT====\n");
+                  const blocks = parts.map((part) => {
+                    const lines = part.split("\n");
+                    return { lang: lines[0], code: lines.slice(1).join("\n") };
+                  });
+                  return (
+                    <Box mb="4">
+                      <div className="code-pair-grid">
+                        {blocks.map((block, i) => (
+                          <CodePanel key={i} lang={block.lang} code={block.code} />
+                        ))}
+                      </div>
+                    </Box>
+                  );
+                }
+
+                return (
+                  <Box mb="4">
+                    <div className="code-block-wrapper">
+                      <div className="code-block-bar">
+                        <div className="code-block-dots"><span /><span /><span /></div>
+                        {lang && <span className="code-block-lang">{langLabel(lang)}</span>}
+                      </div>
+                      <pre style={{ margin: 0, padding: 16, overflowX: "auto", fontSize: "var(--font-size-1)", fontFamily: "var(--font-mono, monospace)", lineHeight: 1.7, backgroundColor: "var(--gray-2)" }}>
+                        {children}
+                      </pre>
+                    </div>
+                  </Box>
+                );
+              },
               code: ({ children, className }) => {
                 const isBlock = className?.includes("language-");
-                return isBlock ? (
-                  <Box mb="4" p="4" style={{ backgroundColor: "var(--gray-2)", borderRadius: "var(--radius-2)", overflowX: "auto", border: "1px solid var(--gray-4)" }}>
-                    <pre style={{ margin: 0, fontSize: "var(--font-size-1)", fontFamily: "var(--font-mono, monospace)", lineHeight: 1.7 }}>
-                      <code>{children}</code>
-                    </pre>
-                  </Box>
-                ) : (
+                if (isBlock) return <code>{children}</code>;
+                return (
                   <code style={{ backgroundColor: "var(--violet-3)", padding: "2px 6px", borderRadius: "var(--radius-1)", fontSize: "0.9em", fontFamily: "var(--font-mono, monospace)" }}>
                     {children}
                   </code>
@@ -187,7 +260,7 @@ function PrepPageInner() {
               ),
             }}
           >
-            {content}
+            {processed}
           </ReactMarkdown>
         </Box>
       ) : (
@@ -203,17 +276,17 @@ function PrepPageInner() {
           </Flex>
         </Card>
       )}
-    </Container>
+    </Box>
   );
 }
 
 export default function PrepPage() {
   return (
     <Suspense fallback={
-      <Container size="3" p="8">
+      <Box px={{ initial: "4", md: "8" }} py="8">
         <Skeleton height="32px" mb="6" style={{ maxWidth: 300 }} />
         <Skeleton height="600px" />
-      </Container>
+      </Box>
     }>
       <PrepPageInner />
     </Suspense>
