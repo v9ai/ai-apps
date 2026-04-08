@@ -608,7 +608,7 @@ impl<'a> OrgScanner<'a> {
             // General sales mention (exclude "salesforce" — they publish general AI
             // research, not sales-specific models; only flag smaller sales platforms)
             (
-                &["salesloft", "hubspot", "gong.io", "outreach.io", "apollo.io"],
+                &["hubspot", "gong.io", "outreach.io", "apollo.io", "6sense"],
                 SalesCategory::General,
                 "sales platform brand",
             ),
@@ -1448,7 +1448,7 @@ mod tests {
     fn detect_generic_dataset_from_repo_name() {
         let readme = "# Model Card\n\n[More Information Needed]\n";
         assert_eq!(
-            OrgScanner::detect_generic_dataset(readme, None, "salesloft/llama3-8b-instruct-ultrafeedback-kto"),
+            OrgScanner::detect_generic_dataset(readme, None, "acme-ai/llama3-8b-instruct-ultrafeedback-kto"),
             Some("UltraFeedback".into())
         );
     }
@@ -1491,7 +1491,7 @@ mod tests {
 
         let readme = "# Model Card\n\n- **Developed by:** [More Information Needed]\n- **Model type:** [More Information Needed]\n## Uses\n[More Information Needed]\n## Training\n[More Information Needed]\n";
         let maturity = OrgScanner::assess_model_maturity(
-            "salesloft/model",
+            "acme-ai/model",
             &repo,
             Some(readme),
             &[],
@@ -1597,13 +1597,13 @@ mod tests {
     }
 
     #[test]
-    fn salesloft_scenario() {
-        // Simulate the exact SalesLoft case from the issue:
+    fn trivial_cookbook_scenario() {
+        // Simulate a trivial cookbook model:
         // 1 model, 0 downloads, boilerplate README, LlamaFactory+KTO+UltraFeedback
         let mut repo = make_dummy_repo();
         repo.downloads = Some(0);
         repo.likes = Some(0);
-        repo.repo_id = Some("salesloft/llama3-8b-instruct-ultrafeedback-kto".into());
+        repo.repo_id = Some("acme-ai/llama3-8b-instruct-ultrafeedback-kto".into());
         repo.created_at = Some("2024-06-21T00:00:00.000Z".into());
         repo.last_modified = Some("2024-06-21T00:00:00.000Z".into());
 
@@ -1651,7 +1651,7 @@ tags:
 "#;
 
         let maturity = OrgScanner::assess_model_maturity(
-            "salesloft/llama3-8b-instruct-ultrafeedback-kto",
+            "acme-ai/llama3-8b-instruct-ultrafeedback-kto",
             &repo,
             Some(boilerplate_readme),
             &[],
