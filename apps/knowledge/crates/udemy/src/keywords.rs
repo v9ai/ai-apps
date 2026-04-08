@@ -55,6 +55,48 @@ pub const RELEVANCE_KEYWORDS: &[&str] = &[
     "attention mechanism",
     "convolutional",
     "generative ai",
+    // CSS & Layout
+    "css",
+    "flexbox",
+    "grid layout",
+    "css grid",
+    "responsive design",
+    "css animation",
+    "css layout",
+    "box model",
+    "css specificity",
+    "css positioning",
+    "media queries",
+    "sass",
+    "scss",
+    // React & Frontend
+    "react",
+    "react hooks",
+    "usestate",
+    "useeffect",
+    "react component",
+    "react patterns",
+    "jsx",
+    "virtual dom",
+    "react performance",
+    "next.js",
+    "nextjs",
+    // TypeScript & JavaScript
+    "typescript",
+    "type system",
+    "generics",
+    "type inference",
+    "javascript",
+    "es6",
+    // General Frontend
+    "frontend",
+    "front-end",
+    "design system",
+    "component library",
+    "web accessibility",
+    "a11y",
+    "aria",
+    "storybook",
 ];
 
 // ── Topic group classification ──────────────────────────────────────────────
@@ -144,6 +186,51 @@ pub const TOPIC_GROUPS: &[TopicGroup] = &[
             "data science",
         ],
     },
+    // ── Frontend ────────────────────────────────────────────────────────────
+    TopicGroup {
+        name: "CSS & Layout",
+        signals: &[
+            "css", "flexbox", "css grid", "grid layout", "responsive design",
+            "css animation", "css layout", "box model", "css specificity",
+            "css positioning", "media queries", "sass", "scss", "tailwind",
+            "css architecture", "css modules", "styled-components",
+        ],
+    },
+    TopicGroup {
+        name: "React & Frontend Frameworks",
+        signals: &[
+            "react hooks", "usestate", "useeffect", "react component",
+            "react pattern", "jsx", "virtual dom", "react performance",
+            "react router", "next.js", "nextjs", "remix", "gatsby",
+            "react native", "react context", "react redux", "zustand",
+            "react query", "tanstack",
+        ],
+    },
+    TopicGroup {
+        name: "TypeScript & JavaScript",
+        signals: &[
+            "typescript", "type system", "type inference", "generics",
+            "javascript", "es6", "es2015", "ecmascript", "promises",
+            "async await", "closure", "prototype", "dom manipulation",
+        ],
+    },
+    TopicGroup {
+        name: "Design Systems & Accessibility",
+        signals: &[
+            "design system", "component library", "design tokens",
+            "storybook", "accessibility", "a11y", "aria", "screen reader",
+            "keyboard navigation", "wcag", "inclusive design",
+        ],
+    },
+    TopicGroup {
+        name: "Frontend Interview Prep",
+        signals: &[
+            "frontend interview", "front-end interview", "css interview",
+            "react interview", "javascript interview", "coding challenge",
+            "css challenge", "react challenge", "frontend assessment",
+            "take-home", "whiteboard",
+        ],
+    },
 ];
 
 /// Classify text into one of the 10 topic groups. Returns "Other" if no match.
@@ -169,6 +256,10 @@ pub const FOLLOW_TOPIC_KEYWORDS: &[&str] = &[
     "pytorch", "tensorflow", "keras",
     "mlops", "deploy", "model-serv",
     "fine-tun", "reinforcement", "agent",
+    // Frontend
+    "css", "react", "frontend", "front-end", "typescript", "javascript",
+    "component", "responsive", "accessibility", "design-system", "web-dev",
+    "layout", "flexbox", "grid", "sass", "tailwind", "next-js",
 ];
 
 /// Returns true if a discovered topic slug is worth following.
@@ -210,6 +301,17 @@ pub const SEED_TOPICS: &[&str] = &[
     "prompt-engineering",
     "chatgpt",
     "large-language-models",
+    // Frontend / CSS / React / TypeScript
+    "css",
+    "react-js",
+    "typescript",
+    "javascript",
+    "flexbox",
+    "css-grid",
+    "frontend-web-development",
+    "web-design",
+    "responsive-design",
+    "web-accessibility",
 ];
 
 type SlugEntry = (&'static str, &'static [&'static str]);
@@ -429,6 +531,129 @@ pub const SLUG_KEYWORDS: &[SlugEntry] = &[
             "parameter efficient",
         ],
     ),
+    // ── Frontend ────────────────────────────────────────────────────────────
+    (
+        "css-layout-fundamentals",
+        &[
+            "flexbox",
+            "css grid",
+            "grid layout",
+            "css layout",
+            "responsive design",
+            "responsive layout",
+            "centering",
+            "css centering",
+            "media queries",
+            "mobile first",
+            "css display",
+            "css float",
+            "css position",
+        ],
+    ),
+    (
+        "css-theory",
+        &[
+            "box model",
+            "css specificity",
+            "cascade",
+            "css positioning",
+            "stacking context",
+            "z-index",
+            "block formatting",
+            "bfc",
+            "css animation",
+            "css transition",
+            "css debugging",
+            "css inheritance",
+            "css variables",
+            "custom properties",
+        ],
+    ),
+    (
+        "react-patterns",
+        &[
+            "react hooks",
+            "usestate",
+            "useeffect",
+            "usememo",
+            "usecallback",
+            "useref",
+            "custom hook",
+            "component composition",
+            "render prop",
+            "higher order component",
+            "hoc",
+            "react context",
+            "react performance",
+            "react memo",
+            "react suspense",
+            "error boundary",
+        ],
+    ),
+    (
+        "typescript-for-react",
+        &[
+            "typescript react",
+            "react typescript",
+            "type inference",
+            "generics",
+            "discriminated union",
+            "type guard",
+            "utility type",
+            "mapped type",
+            "conditional type",
+            "typescript generic",
+            "typescript interface",
+            "typescript enum",
+        ],
+    ),
+    (
+        "design-systems",
+        &[
+            "design system",
+            "component library",
+            "design tokens",
+            "style guide",
+            "atomic design",
+            "storybook",
+            "design pattern",
+            "theming",
+            "design consistency",
+            "ui kit",
+        ],
+    ),
+    (
+        "frontend-accessibility",
+        &[
+            "accessibility",
+            "a11y",
+            "aria",
+            "screen reader",
+            "keyboard navigation",
+            "wcag",
+            "accessible component",
+            "semantic html",
+            "focus management",
+            "color contrast",
+            "assistive technology",
+        ],
+    ),
+    (
+        "frontend-interview",
+        &[
+            "frontend interview",
+            "front-end interview",
+            "css interview",
+            "react interview",
+            "javascript interview",
+            "coding challenge",
+            "css challenge",
+            "react challenge",
+            "frontend assessment",
+            "web developer interview",
+            "technical interview frontend",
+        ],
+    ),
 ];
 
 /// Returns true if the course text passes the hard relevance filter.
@@ -611,5 +836,122 @@ mod tests {
     #[test]
     fn should_not_follow_excel() {
         assert!(!should_follow_topic("microsoft-excel"));
+    }
+
+    // ── Frontend relevance ─────────────────────────────────────────────────
+
+    #[test]
+    fn is_relevant_matches_css() {
+        assert!(is_relevant("Master CSS Flexbox and Grid Layout for modern web design"));
+    }
+
+    #[test]
+    fn is_relevant_matches_react() {
+        assert!(is_relevant("React Hooks: Build modern component-based UIs"));
+    }
+
+    #[test]
+    fn is_relevant_matches_typescript() {
+        assert!(is_relevant("TypeScript Generics and Type Inference deep dive"));
+    }
+
+    #[test]
+    fn is_relevant_matches_accessibility() {
+        assert!(is_relevant("Web Accessibility with ARIA and screen reader testing"));
+    }
+
+    // ── Frontend topic group classification ────────────────────────────────
+
+    #[test]
+    fn classify_css_layout() {
+        assert_eq!(
+            classify_topic_group("Learn CSS Flexbox and Grid for responsive design"),
+            "CSS & Layout"
+        );
+    }
+
+    #[test]
+    fn classify_react_frontend() {
+        assert_eq!(
+            classify_topic_group("React hooks usestate useeffect patterns"),
+            "React & Frontend Frameworks"
+        );
+    }
+
+    #[test]
+    fn classify_typescript() {
+        assert_eq!(
+            classify_topic_group("TypeScript type system and generics"),
+            "TypeScript & JavaScript"
+        );
+    }
+
+    #[test]
+    fn classify_design_systems() {
+        assert_eq!(
+            classify_topic_group("Build a design system with Storybook"),
+            "Design Systems & Accessibility"
+        );
+    }
+
+    #[test]
+    fn classify_frontend_interview() {
+        assert_eq!(
+            classify_topic_group("Frontend interview prep with coding challenges and take-home projects"),
+            "Frontend Interview Prep"
+        );
+    }
+
+    #[test]
+    fn classify_react_agent_as_ai_not_frontend() {
+        assert_eq!(
+            classify_topic_group("Build a ReAct agent with LangChain tool calling"),
+            "AI Agents & Frameworks"
+        );
+    }
+
+    // ── Frontend slug matching ─────────────────────────────────────────────
+
+    #[test]
+    fn match_slugs_css_layout() {
+        let results = match_slugs("Learn flexbox css grid responsive design and media queries");
+        let slugs: Vec<&str> = results.iter().map(|(s, _)| s.as_str()).collect();
+        assert!(slugs.contains(&"css-layout-fundamentals"), "expected css-layout-fundamentals in {slugs:?}");
+    }
+
+    #[test]
+    fn match_slugs_react_patterns() {
+        let results = match_slugs("React hooks usestate useeffect custom hook component composition");
+        let slugs: Vec<&str> = results.iter().map(|(s, _)| s.as_str()).collect();
+        assert!(slugs.contains(&"react-patterns"), "expected react-patterns in {slugs:?}");
+    }
+
+    #[test]
+    fn match_slugs_typescript_for_react() {
+        let results = match_slugs("TypeScript React with generics and type inference");
+        let slugs: Vec<&str> = results.iter().map(|(s, _)| s.as_str()).collect();
+        assert!(slugs.contains(&"typescript-for-react"), "expected typescript-for-react in {slugs:?}");
+    }
+
+    // ── Frontend follow-topic ──────────────────────────────────────────────
+
+    #[test]
+    fn should_follow_css_topic() {
+        assert!(should_follow_topic("css-advanced"));
+    }
+
+    #[test]
+    fn should_follow_react_topic() {
+        assert!(should_follow_topic("react-js-advanced"));
+    }
+
+    #[test]
+    fn should_follow_typescript_topic() {
+        assert!(should_follow_topic("typescript-fundamentals"));
+    }
+
+    #[test]
+    fn should_follow_accessibility_topic() {
+        assert!(should_follow_topic("web-accessibility"));
     }
 }
