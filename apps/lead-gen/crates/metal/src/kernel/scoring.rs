@@ -587,9 +587,8 @@ impl LogisticScorer {
     /// Score a single feature vector.
     pub fn score(&self, features: &[f32; FEATURE_COUNT]) -> f32 {
         let mut dot = self.bias;
-        let n = self.weights.len().min(FEATURE_COUNT);
-        for i in 0..n {
-            dot += self.weights[i] * features[i];
+        for (&w, &f) in self.weights.iter().zip(features.iter()) {
+            dot += w * f;
         }
         Self::sigmoid(dot)
     }
@@ -597,9 +596,8 @@ impl LogisticScorer {
     /// Score a feature vector with semantic ICP score (extra feature).
     pub fn score_with_semantic(&self, features: &[f32; FEATURE_COUNT], semantic_score: f32) -> f32 {
         let mut dot = self.bias;
-        let n = self.weights.len().min(FEATURE_COUNT);
-        for i in 0..n {
-            dot += self.weights[i] * features[i];
+        for (&w, &f) in self.weights.iter().zip(features.iter()) {
+            dot += w * f;
         }
         dot += self.semantic_weight * semantic_score;
         Self::sigmoid(dot)
@@ -633,8 +631,8 @@ impl LogisticScorer {
         }
 
         for sample in features {
-            for j in 0..FEATURE_COUNT {
-                self.feature_stats[j].update(sample[j]);
+            for (stat, &val) in self.feature_stats.iter_mut().zip(sample.iter()) {
+                stat.update(val);
             }
         }
 
@@ -643,8 +641,8 @@ impl LogisticScorer {
             for (x, &y) in features.iter().zip(labels.iter()) {
                 let pred = self.score(x);
                 let error = pred - y;
-                for j in 0..FEATURE_COUNT {
-                    self.weights[j] -= lr * error * x[j];
+                for (w, &xi) in self.weights.iter_mut().zip(x.iter()) {
+                    *w -= lr * error * xi;
                 }
                 self.bias -= lr * error;
             }
