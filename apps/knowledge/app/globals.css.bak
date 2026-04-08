@@ -691,7 +691,7 @@ body {
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px 16px;
+  padding: 0 24px 24px;
 }
 .yc-search input {
   background: rgba(255, 255, 255, 0.03);

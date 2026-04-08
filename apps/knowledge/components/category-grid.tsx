@@ -18,6 +18,8 @@ function LessonCard({ lesson, isFirst }: { lesson: Lesson; isFirst?: boolean }) 
   const onMove = useCallback((e: React.MouseEvent) => {
     const el = ref.current;
     if (!el) return;
+    // Skip 3D tilt for users who prefer reduced motion
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const rect = el.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
@@ -92,13 +94,36 @@ interface Props {
 export function CategoryGrid({ groups }: Props) {
   const [activeSlug, setActiveSlug] = useState<string>("");
 
+  /* Track which category sections have been scrolled past (for learning-path visited state) */
+  const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     const ids = groups.map((g) => `cat-${g.meta.slug}`);
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            setActiveSlug(entry.target.id);
+            const slug = entry.target.id;
+            setActiveSlug(slug);
+
+            /* Broadcast active category to topbar */
+            const group = groups.find((g) => `cat-${g.meta.slug}` === slug);
+            if (group) {
+              window.dispatchEvent(
+                new CustomEvent("active-category-change", {
+                  detail: { icon: group.meta.icon, name: group.category },
+                }),
+              );
+            }
+
+            /* Mark all categories above the current one as visited */
+            setVisitedSlugs((prev) => {
+              const idx = ids.indexOf(slug);
+              if (idx <= 0) return prev;
+              const next = new Set(prev);
+              for (let i = 0; i < idx; i++) next.add(ids[i]);
+              return next;
+            });
           }
         }
       },
@@ -111,27 +136,38 @@ export function CategoryGrid({ groups }: Props) {
     return () => observer.disconnect();
   }, [groups]);
 
+  /* Clear the active category broadcast when unmounting or when no section is visible */
+  useEffect(() => {
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent("active-category-change", { detail: null }),
+      );
+    };
+  }, []);
+
   return (
     <>
-      <div className="cat-nav">
+      <nav className="cat-nav" aria-label="Category navigation">
         {groups.map((g) => {
-          const isActive = activeSlug === `cat-${g.meta.slug}`;
+          const slug = `cat-${g.meta.slug}`;
+          const isActive = activeSlug === slug;
+          const isVisited = visitedSlugs.has(slug);
           return (
             <button
               key={g.category}
-              className={`cat-nav-pill cat-${g.meta.slug}${isActive ? " cat-nav-pill--active" : ""}`}
+              className={`cat-nav-pill cat-${g.meta.slug}${isActive ? " cat-nav-pill--active" : ""}${isVisited && !isActive ? " cat-nav-pill--visited" : ""}`}
               aria-pressed={isActive}
               onClick={() => {
-                document.getElementById(`cat-${g.meta.slug}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                document.getElementById(slug)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
             >
               <span className="cat-nav-icon">{g.meta.icon}</span>
-              {g.category}
+              <span className="cat-nav-label">{g.category}</span>
               <span className="cat-nav-count">{g.articles.length}</span>
             </button>
           );
         })}
-      </div>
+      </nav>
 
       <div className="bento-grid">
         {groups.map((group, i) => (

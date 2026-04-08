@@ -40,7 +40,7 @@ export function Topbar({ lessonCount }: { lessonCount?: number }) {
   }, []);
 
   return (
-    <div className={`yc-topbar${scrolledPast ? " yc-topbar--scrolled" : ""}`}>
+    <nav className={`yc-topbar${scrolledPast ? " yc-topbar--scrolled" : ""}`} aria-label="Main navigation">
       <Link href="/">
         <span className="yc-topbar-logo" />
         AI ENGINEERING
@@ -90,6 +90,6 @@ export function Topbar({ lessonCount }: { lessonCount?: number }) {
           </Link>
         )}
       </div>
-    </div>
+    </nav>
   );
 }
