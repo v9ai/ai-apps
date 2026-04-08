@@ -19,31 +19,15 @@ import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import {
-  AlertDialog,
-  Avatar,
-  Badge,
-  Blockquote,
-  Box,
-  Button,
-  Callout,
-  Card,
-  Code,
-  Container,
-  Dialog,
-  Em,
-  Flex,
-  Heading,
-  Link as RadixLink,
-  Select,
-  Separator,
-  Skeleton,
-  Strong,
-  TabNav,
-  Text,
-  TextArea,
-  TextField,
-} from "@radix-ui/themes";
+import { css, cx } from "styled-system/css";
+import { flex } from "styled-system/patterns";
+import { button } from "@/recipes/button";
+import { input, textarea, fieldLabel } from "@/recipes/input";
+import { select } from "@/recipes/select";
+import { overlay, dialog } from "@/recipes/modal";
+import { callout } from "@/recipes/callout";
+import { tabList, tabTrigger } from "@/recipes/tabs";
+import { markdown } from "@/recipes/markdown";
 import {
   CheckCircledIcon,
   ExternalLinkIcon,
@@ -87,12 +71,57 @@ const CATEGORY_COLORS: Record<string, string> = {
   UNKNOWN: "gray",
 };
 
+const CATEGORY_CSS: Record<string, { color: string; borderColor: string; bg: string }> = {
+  PRODUCT: { color: "rgb(59, 130, 246)", borderColor: "rgba(59, 130, 246, 0.3)", bg: "rgba(59, 130, 246, 0.1)" },
+  CONSULTANCY: { color: "rgb(139, 92, 246)", borderColor: "rgba(139, 92, 246, 0.3)", bg: "rgba(139, 92, 246, 0.1)" },
+  AGENCY: { color: "rgb(245, 158, 11)", borderColor: "rgba(245, 158, 11, 0.3)", bg: "rgba(245, 158, 11, 0.1)" },
+  STAFFING: { color: "rgb(34, 197, 94)", borderColor: "rgba(34, 197, 94, 0.3)", bg: "rgba(34, 197, 94, 0.1)" },
+  DIRECTORY: { color: "rgb(6, 182, 212)", borderColor: "rgba(6, 182, 212, 0.3)", bg: "rgba(6, 182, 212, 0.1)" },
+  OTHER: { color: "var(--gray-9)", borderColor: "var(--gray-6)", bg: "var(--gray-3)" },
+  UNKNOWN: { color: "var(--gray-9)", borderColor: "var(--gray-6)", bg: "var(--gray-3)" },
+};
+
+const SCORE_CSS: Record<string, { color: string; borderColor: string; bg: string }> = {
+  green: { color: "rgb(34, 197, 94)", borderColor: "rgba(34, 197, 94, 0.3)", bg: "rgba(34, 197, 94, 0.1)" },
+  amber: { color: "rgb(245, 158, 11)", borderColor: "rgba(245, 158, 11, 0.3)", bg: "rgba(245, 158, 11, 0.1)" },
+  red: { color: "rgb(239, 68, 68)", borderColor: "rgba(239, 68, 68, 0.3)", bg: "rgba(239, 68, 68, 0.1)" },
+  gray: { color: "var(--gray-9)", borderColor: "var(--gray-6)", bg: "var(--gray-3)" },
+};
+
 
 function scoreColor(score?: number | null): "green" | "amber" | "red" | "gray" {
   if (score == null || !Number.isFinite(score)) return "gray";
   if (score >= 0.7) return "green";
   if (score >= 0.4) return "amber";
   return "red";
+}
+
+/* ------------------------------------------------------------------ */
+/*  Lightweight modal wrapper (replaces Radix Dialog)                  */
+/* ------------------------------------------------------------------ */
+function Modal({
+  open,
+  onOpenChange,
+  children,
+  maxWidth = "560px",
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
+  maxWidth?: string;
+}) {
+  if (!open) return null;
+  return (
+    <div className={overlay()} onClick={() => onOpenChange(false)}>
+      <div
+        className={dialog()}
+        style={{ maxWidth }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }
 
 function SectionCard({
@@ -105,40 +134,56 @@ function SectionCard({
   right?: React.ReactNode;
 }) {
   return (
-    <Card>
-      <Box p="4">
-        <Flex align="center" justify="between" gap="3">
-          <Text
-            size="2"
-            color="gray"
-            weight="medium"
-            style={{ letterSpacing: '0.1em' }}
-          >
-            {title.toUpperCase()}
-          </Text>
-          {right}
-        </Flex>
-        <Box mt="3">{children}</Box>
-      </Box>
-    </Card>
+    <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "4" })}>
+      <div className={flex({ align: "center", justify: "space-between", gap: "3" })}>
+        <span
+          className={css({
+            fontSize: "sm",
+            color: "ui.tertiary",
+            fontWeight: "medium",
+            letterSpacing: "0.1em",
+          })}
+        >
+          {title.toUpperCase()}
+        </span>
+        {right}
+      </div>
+      <div className={css({ mt: "3" })}>{children}</div>
+    </div>
   );
 }
 
 function Chip({
   children,
   title,
-  color = "gray",
-  variant = "surface",
 }: {
   children: React.ReactNode;
   title?: string;
-  color?: React.ComponentProps<typeof Badge>["color"];
-  variant?: React.ComponentProps<typeof Badge>["variant"];
 }) {
   return (
-    <Badge color={color} variant={variant} size="1" title={title}>
-      <Text truncate>{children}</Text>
-    </Badge>
+    <span
+      className={css({
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        border: "1px solid",
+        borderColor: "ui.border",
+        bg: "transparent",
+        fontWeight: "medium",
+        lineHeight: "none",
+        whiteSpace: "nowrap",
+        userSelect: "none",
+        fontSize: "xs",
+        px: "2",
+        py: "1",
+        color: "ui.secondary",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+      })}
+      title={title}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -160,29 +205,28 @@ function CollapsibleChips({
   const shown = expanded ? normalized : normalized.slice(0, visibleCount);
 
   return (
-    <Box>
-      <Flex gap="2" wrap="wrap">
+    <div>
+      <div className={flex({ gap: "2", wrap: "wrap" })}>
         {shown.map((item) => (
           <Chip key={item} title={item}>
             {item}
           </Chip>
         ))}
-      </Flex>
+      </div>
 
       {canCollapse && (
-        <Box mt="3">
-          <Button
+        <div className={css({ mt: "3" })}>
+          <button
             type="button"
-            variant="ghost"
-            color="gray"
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={() => setExpanded((v) => !v)}
           >
             {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
             {expanded ? "Show less" : `Show more (${normalized.length - visibleCount})`}
-          </Button>
-        </Box>
+          </button>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }
 
@@ -204,24 +248,23 @@ function CollapsibleList({
   const shown = expanded ? normalized : normalized.slice(0, visibleCount);
 
   return (
-    <Box>
-      <Flex direction="column" gap="2">
+    <div>
+      <div className={flex({ direction: "column", gap: "2" })}>
         {shown.map((item) => (
-          <Flex key={item} align="start" gap="2">
-            <Text color="gray" size="1" style={{ flexShrink: 0, marginTop: 2 }}>•</Text>
-            <Text size="2" color="gray">
+          <div key={item} className={flex({ align: "start", gap: "2" })}>
+            <span className={css({ color: "ui.tertiary", fontSize: "xs", flexShrink: 0, mt: "2px" })}>•</span>
+            <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
               {item}
-            </Text>
-          </Flex>
+            </span>
+          </div>
         ))}
-      </Flex>
+      </div>
 
       {canCollapse && (
-        <Box mt="3">
-          <Button
+        <div className={css({ mt: "3" })}>
+          <button
             type="button"
-            variant="ghost"
-            color="gray"
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={() => setExpanded((v) => !v)}
           >
             {expanded ? (
@@ -233,21 +276,21 @@ function CollapsibleList({
                 <ChevronDownIcon /> Show more ({normalized.length - visibleCount})
               </>
             )}
-          </Button>
-        </Box>
+          </button>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }
 
 function CompanyAvatar({
   name,
   logoUrl,
-  size = "5",
+  size = 48,
 }: {
   name: string;
   logoUrl?: string | null;
-  size?: React.ComponentProps<typeof Avatar>["size"];
+  size?: number;
 }) {
   const initials = name
     .split(/\s+/)
@@ -256,21 +299,58 @@ function CompanyAvatar({
     .join("")
     .toUpperCase();
 
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt={name}
+        className={css({
+          flexShrink: 0,
+          borderRadius: "50%",
+          objectFit: "cover",
+        })}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
   return (
-    <Avatar
-      size={size}
-      src={logoUrl ?? undefined}
-      fallback={initials}
-      radius="full"
-      color="indigo"
-      style={{ flexShrink: 0 }}
-    />
+    <div
+      className={css({
+        flexShrink: 0,
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bg: "accent.subtle",
+        color: "accent.primary",
+        fontWeight: "bold",
+        fontSize: "sm",
+        userSelect: "none",
+      })}
+      style={{ width: size, height: size }}
+    >
+      {initials}
+    </div>
   );
 }
 
 function formatScore(score?: number | null): string {
-  if (typeof score !== "number" || !Number.isFinite(score)) return "—";
+  if (typeof score !== "number" || !Number.isFinite(score)) return "\u2014";
   return score.toFixed(2);
+}
+
+function Skeleton({ width, height }: { width?: string; height?: string }) {
+  return (
+    <div
+      className={css({
+        bg: "ui.surfaceRaised",
+        borderRadius: "0",
+        animation: "toolbar-spin 1.5s ease-in-out infinite alternate",
+      })}
+      style={{ width: width ?? "100%", height: height ?? "16px" }}
+    />
+  );
 }
 
 type KeyFactsCardProps = {
@@ -304,39 +384,53 @@ function KeyFactsCard({
     {
       label: "LinkedIn",
       value: linkedinHref ? (
-        <Flex display="inline-flex" align="center" gap="1" maxWidth="100%" overflow="hidden" asChild>
-          <RadixLink
-            href={linkedinHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            color="gray"
-            title={linkedinHref}
-          >
-            <Text truncate>linkedin.com</Text>
-            <ExternalLinkIcon />
-          </RadixLink>
-        </Flex>
+        <a
+          href={linkedinHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={linkedinHref}
+          className={css({
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "1",
+            maxWidth: "100%",
+            overflow: "hidden",
+            color: "ui.secondary",
+            textDecoration: "none",
+            _hover: { textDecoration: "underline" },
+          })}
+        >
+          <span className={css({ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" })}>linkedin.com</span>
+          <ExternalLinkIcon />
+        </a>
       ) : (
-        <Text size="2">—</Text>
+        <span className={css({ fontSize: "sm" })}>{"\u2014"}</span>
       ),
     },
     {
       label: "Job board",
       value: jobBoardHref ? (
-        <Flex display="inline-flex" align="center" gap="1" maxWidth="100%" overflow="hidden" asChild>
-          <RadixLink
-            href={jobBoardHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            color="gray"
-            title={jobBoardHref}
-          >
-            <Text truncate>Jobs</Text>
-            <ExternalLinkIcon />
-          </RadixLink>
-        </Flex>
+        <a
+          href={jobBoardHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={jobBoardHref}
+          className={css({
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "1",
+            maxWidth: "100%",
+            overflow: "hidden",
+            color: "ui.secondary",
+            textDecoration: "none",
+            _hover: { textDecoration: "underline" },
+          })}
+        >
+          <span className={css({ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" })}>Jobs</span>
+          <ExternalLinkIcon />
+        </a>
       ) : (
-        <Text size="2">—</Text>
+        <span className={css({ fontSize: "sm" })}>{"\u2014"}</span>
       ),
     },
     ...(isAdmin
@@ -344,9 +438,9 @@ function KeyFactsCard({
           {
             label: "Crawl confidence",
             value: (
-              <Text size="2">
+              <span className={css({ fontSize: "sm" })}>
                 {formatScore(score)}
-              </Text>
+              </span>
             ),
           },
         ]
@@ -356,13 +450,13 @@ function KeyFactsCard({
           {
             label: "Updated",
             value: (
-              <Text size="2">
+              <span className={css({ fontSize: "sm" })}>
                 {new Date(updatedAt).toLocaleDateString("en-GB", {
                   day: "numeric",
                   month: "short",
                   year: "numeric",
                 })}
-              </Text>
+              </span>
             ),
           },
         ]
@@ -370,51 +464,55 @@ function KeyFactsCard({
   ];
 
   return (
-    <Card>
-      {/* tighter padding to reduce "empty space" */}
-      <Box p="3">
-        <Text
-          size="1"
-          color="gray"
-          weight="medium"
-          style={{ letterSpacing: "0.12em" }}
-        >
-          KEY FACTS
-        </Text>
+    <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
+      <span
+        className={css({
+          fontSize: "xs",
+          color: "ui.tertiary",
+          fontWeight: "medium",
+          letterSpacing: "0.12em",
+        })}
+      >
+        KEY FACTS
+      </span>
 
-        <Box mt="3">
-          {rows.map((row, idx) => (
-            <Box key={row.label}>
-              <Flex
-                direction={{ initial: "column", sm: "row" }}
-                align={{ initial: "start", sm: "center" }}
-                justify="between"
-                gap="1"
-                minWidth="0"
-                py="1"
+      <div className={css({ mt: "3" })}>
+        {rows.map((row, idx) => (
+          <div key={row.label}>
+            <div
+              className={css({
+                display: "flex",
+                flexDirection: { base: "column", sm: "row" },
+                alignItems: { base: "start", sm: "center" },
+                justifyContent: "space-between",
+                gap: "1",
+                minWidth: "0",
+                py: "1",
+              })}
+            >
+              <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                {row.label}
+              </span>
+
+              {/* right-aligned value, ellipsis-safe */}
+              <div
+                className={css({
+                  minWidth: "0",
+                  maxWidth: "100%",
+                  textAlign: "right",
+                })}
               >
-                <Text size="1" color="gray">
-                  {row.label}
-                </Text>
+                {row.value}
+              </div>
+            </div>
 
-                {/* right-aligned value, ellipsis-safe */}
-                <Box
-                  minWidth="0"
-                  maxWidth="100%"
-                  style={{ textAlign: "right" }}
-                >
-                  {row.value}
-                </Box>
-              </Flex>
-
-              {idx < rows.length - 1 ? (
-                <Separator size="4" my="1" />
-              ) : null}
-            </Box>
-          ))}
-        </Box>
-      </Box>
-    </Card>
+            {idx < rows.length - 1 ? (
+              <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "1" })} />
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -539,160 +637,162 @@ function LinkedInLeadDialog({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-      <Dialog.Trigger>
-        <Button variant="ghost" color="gray">
-          <Link2Icon />
-          Import Lead
-        </Button>
-      </Dialog.Trigger>
+    <>
+      <button
+        className={button({ variant: "ghost", size: "sm" })}
+        onClick={() => handleOpenChange(true)}
+      >
+        <Link2Icon />
+        Import Lead
+      </button>
 
-      <Dialog.Content maxWidth="520px">
-        <Dialog.Title>Import LinkedIn Lead</Dialog.Title>
-        <Dialog.Description size="2" color="gray" mb="4">
+      <Modal open={open} onOpenChange={handleOpenChange} maxWidth="520px">
+        <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "1" })}>
+          Import LinkedIn Lead
+        </h3>
+        <p className={css({ fontSize: "sm", color: "ui.tertiary", mb: "4" })}>
           Paste a LinkedIn post to extract contact info for {companyName}.
-        </Dialog.Description>
+        </p>
 
         {success ? (
-          <Flex direction="column" gap="3">
-            <Callout.Root color="green" size="1">
-              <Callout.Icon>
-                <CheckCircledIcon />
-              </Callout.Icon>
-              <Callout.Text>{success}</Callout.Text>
-            </Callout.Root>
-            <Flex justify="end">
-              <Dialog.Close>
-                <Button variant="ghost" color="gray">
-                  Close
-                </Button>
-              </Dialog.Close>
-            </Flex>
-          </Flex>
+          <div className={flex({ direction: "column", gap: "3" })}>
+            <div className={callout({ variant: "success" })}>
+              <CheckCircledIcon />
+              <span>{success}</span>
+            </div>
+            <div className={flex({ justify: "flex-end" })}>
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
+                onClick={() => handleOpenChange(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
         ) : phase === "paste" ? (
-          <Flex direction="column" gap="3">
+          <div className={flex({ direction: "column", gap: "3" })}>
             {error && (
-              <Callout.Root color="red" size="1">
-                <Callout.Icon>
-                  <InfoCircledIcon />
-                </Callout.Icon>
-                <Callout.Text>{error}</Callout.Text>
-              </Callout.Root>
+              <div className={callout({ variant: "error" })}>
+                <InfoCircledIcon />
+                <span>{error}</span>
+              </div>
             )}
 
-            <Flex direction="column" gap="1">
-              <Text size="2" weight="medium">
+            <div className={flex({ direction: "column", gap: "1" })}>
+              <span className={css({ fontSize: "sm", fontWeight: "medium" })}>
                 LinkedIn post URL
-              </Text>
-              <TextField.Root
+              </span>
+              <input
+                className={input()}
                 value={postUrl}
                 onChange={(e) => setPostUrl(e.target.value)}
                 placeholder="https://linkedin.com/feed/update/..."
               />
-            </Flex>
+            </div>
 
-            <Flex direction="column" gap="1">
-              <Text size="2" weight="medium">
+            <div className={flex({ direction: "column", gap: "1" })}>
+              <span className={css({ fontSize: "sm", fontWeight: "medium" })}>
                 Post text
-              </Text>
-              <TextArea
+              </span>
+              <textarea
+                className={textarea()}
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
                 placeholder="Paste the LinkedIn post text here..."
                 rows={8}
               />
-            </Flex>
+            </div>
 
-            <Flex justify="end" gap="2">
-              <Dialog.Close>
-                <Button variant="ghost" color="gray">
-                  Cancel
-                </Button>
-              </Dialog.Close>
-              <Button
-                variant="ghost"
-                color="gray"
+            <div className={flex({ justify: "flex-end", gap: "2" })}>
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
+                onClick={() => handleOpenChange(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
                 onClick={handleExtract}
                 disabled={!rawText.trim()}
               >
                 Extract email
-              </Button>
-            </Flex>
-          </Flex>
+              </button>
+            </div>
+          </div>
         ) : (
-          <Flex direction="column" gap="3">
+          <div className={flex({ direction: "column", gap: "3" })}>
             {error && (
-              <Callout.Root color="red" size="1">
-                <Callout.Icon>
-                  <InfoCircledIcon />
-                </Callout.Icon>
-                <Callout.Text>{error}</Callout.Text>
-              </Callout.Root>
+              <div className={callout({ variant: "error" })}>
+                <InfoCircledIcon />
+                <span>{error}</span>
+              </div>
             )}
 
-            <Flex gap="3">
-              <Flex direction="column" gap="1" flexGrow="1">
-                <Text size="2" weight="medium">
+            <div className={flex({ gap: "3" })}>
+              <div className={css({ flex: 1, display: "flex", flexDirection: "column", gap: "1" })}>
+                <span className={css({ fontSize: "sm", fontWeight: "medium" })}>
                   First name
-                </Text>
-                <TextField.Root
+                </span>
+                <input
+                  className={input()}
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                 />
-              </Flex>
-              <Flex direction="column" gap="1" flexGrow="1">
-                <Text size="2" weight="medium">
+              </div>
+              <div className={css({ flex: 1, display: "flex", flexDirection: "column", gap: "1" })}>
+                <span className={css({ fontSize: "sm", fontWeight: "medium" })}>
                   Last name
-                </Text>
-                <TextField.Root
+                </span>
+                <input
+                  className={input()}
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                 />
-              </Flex>
-            </Flex>
+              </div>
+            </div>
 
-            <Flex direction="column" gap="1">
-              <Text size="2" weight="medium">
+            <div className={flex({ direction: "column", gap: "1" })}>
+              <span className={css({ fontSize: "sm", fontWeight: "medium" })}>
                 Email
-              </Text>
-              <TextField.Root
+              </span>
+              <input
+                className={input()}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-            </Flex>
+            </div>
 
-            <Flex direction="column" gap="1">
-              <Text size="2" weight="medium">
+            <div className={flex({ direction: "column", gap: "1" })}>
+              <span className={css({ fontSize: "sm", fontWeight: "medium" })}>
                 LinkedIn profile URL
-              </Text>
-              <TextField.Root
+              </span>
+              <input
+                className={input()}
                 value={linkedinProfile}
                 onChange={(e) => setLinkedinProfile(e.target.value)}
                 placeholder="https://linkedin.com/in/..."
               />
-            </Flex>
+            </div>
 
-            <Flex justify="end" gap="2">
-              <Button
-                variant="ghost"
-                color="gray"
+            <div className={flex({ justify: "flex-end", gap: "2" })}>
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
                 onClick={() => setPhase("paste")}
               >
                 Back
-              </Button>
-              <Button
-                variant="ghost"
-                color="gray"
+              </button>
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
                 onClick={handleSave}
                 disabled={saving}
               >
                 {saving ? "Saving..." : "Create contact"}
-              </Button>
-            </Flex>
-          </Flex>
+              </button>
+            </div>
+          </div>
         )}
-      </Dialog.Content>
-    </Dialog.Root>
+      </Modal>
+    </>
   );
 }
 
@@ -777,151 +877,163 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger>
-        <Button variant="ghost" color="gray" onClick={handleOpen}>
-          <Pencil1Icon />
-          Edit
-        </Button>
-      </Dialog.Trigger>
+    <>
+      <button
+        className={button({ variant: "ghost", size: "sm" })}
+        onClick={handleOpen}
+      >
+        <Pencil1Icon />
+        Edit
+      </button>
 
-      <Dialog.Content maxWidth="560px">
-        <Dialog.Title>Edit company</Dialog.Title>
-        <Dialog.Description size="2" color="gray" mb="4">
+      <Modal open={open} onOpenChange={setOpen} maxWidth="560px">
+        <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "1" })}>
+          Edit company
+        </h3>
+        <p className={css({ fontSize: "sm", color: "ui.tertiary", mb: "4" })}>
           Update company fields. Leave blank to keep existing value.
-        </Dialog.Description>
+        </p>
 
-        <Flex direction="column" gap="3">
+        <div className={flex({ direction: "column", gap: "3" })}>
           {saveError && (
-            <Callout.Root color="red" size="1">
-              <Callout.Icon>
-                <InfoCircledIcon />
-              </Callout.Icon>
-              <Callout.Text>{saveError}</Callout.Text>
-            </Callout.Root>
+            <div className={callout({ variant: "error" })}>
+              <InfoCircledIcon />
+              <span>{saveError}</span>
+            </div>
           )}
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">Name</Text>
-            <TextField.Root
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>Name</span>
+            <input
+              className={input()}
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="Company name"
             />
-          </Flex>
+          </div>
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">Website</Text>
-            <TextField.Root
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>Website</span>
+            <input
+              className={input()}
               value={form.website}
               onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
               placeholder="https://example.com"
             />
-          </Flex>
+          </div>
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">Logo URL</Text>
-            <TextField.Root
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>Logo URL</span>
+            <input
+              className={input()}
               value={form.logo_url}
               onChange={(e) => setForm((f) => ({ ...f, logo_url: e.target.value }))}
               placeholder="https://..."
             />
-          </Flex>
+          </div>
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">Size</Text>
-            <TextField.Root
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>Size</span>
+            <input
+              className={input()}
               value={form.size}
               onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))}
               placeholder="e.g. 51-200"
             />
-          </Flex>
+          </div>
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">LinkedIn URL</Text>
-            <TextField.Root
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>LinkedIn URL</span>
+            <input
+              className={input()}
               value={form.linkedin_url}
               onChange={(e) => setForm((f) => ({ ...f, linkedin_url: e.target.value }))}
               placeholder="https://linkedin.com/company/..."
             />
-          </Flex>
+          </div>
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">Job board URL</Text>
-            <TextField.Root
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>Job board URL</span>
+            <input
+              className={input()}
               value={form.job_board_url}
               onChange={(e) => setForm((f) => ({ ...f, job_board_url: e.target.value }))}
               placeholder="https://jobs.example.com/..."
             />
-          </Flex>
+          </div>
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">Category</Text>
-            <Select.Root
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>Category</span>
+            <select
+              className={select()}
               value={form.category ?? "__none__"}
-              onValueChange={(v) =>
-                setForm((f) => ({ ...f, category: v === "__none__" ? null : (v as CompanyCategory) }))
+              onChange={(e) =>
+                setForm((f) => ({ ...f, category: e.target.value === "__none__" ? null : (e.target.value as CompanyCategory) }))
               }
             >
-              <Box width="100%"><Select.Trigger placeholder="Select…" /></Box>
-              <Select.Content>
-                <Select.Item value="__none__">— none —</Select.Item>
-                {CATEGORY_OPTIONS.map((c) => (
-                  <Select.Item key={c} value={c}>
-                    {c}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select.Root>
-          </Flex>
+              <option value="__none__">{"\u2014 none \u2014"}</option>
+              {CATEGORY_OPTIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">Tags <Text size="1" color="gray">(comma-separated)</Text></Text>
-            <TextField.Root
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>
+              Tags <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>(comma-separated)</span>
+            </span>
+            <input
+              className={input()}
               value={form.tags}
               onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
               placeholder="tag1, tag2, tag3"
             />
-          </Flex>
+          </div>
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">Services <Text size="1" color="gray">(one per line)</Text></Text>
-            <TextArea
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>
+              Services <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>(one per line)</span>
+            </span>
+            <textarea
+              className={textarea()}
               value={form.services}
               onChange={(e) => setForm((f) => ({ ...f, services: e.target.value }))}
-              placeholder="Service A&#10;Service B"
+              placeholder={"Service A\nService B"}
               rows={4}
             />
-          </Flex>
+          </div>
 
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">Description</Text>
-            <TextArea
+          <div className={flex({ direction: "column", gap: "1" })}>
+            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>Description</span>
+            <textarea
+              className={textarea()}
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              placeholder="Company description…"
+              placeholder="Company description..."
               rows={4}
             />
-          </Flex>
-        </Flex>
+          </div>
+        </div>
 
-        <Flex gap="3" mt="5" justify="end">
-          <Dialog.Close>
-            <Button variant="ghost" color="gray">
-              Cancel
-            </Button>
-          </Dialog.Close>
-          <Button
-            variant="ghost"
-            color="gray"
+        <div className={flex({ gap: "3", mt: "5", justify: "flex-end" })}>
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={handleSave}
             disabled={loading}
           >
-            {loading ? "Saving…" : "Save"}
-          </Button>
-        </Flex>
-      </Dialog.Content>
-    </Dialog.Root>
+            {loading ? "Saving\u2026" : "Save"}
+          </button>
+        </div>
+      </Modal>
+    </>
   );
 }
 
@@ -1054,13 +1166,13 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
         setLinkedInFetchError(data.reason ?? "LinkedIn requires authentication");
         return;
       }
-      const input: Record<string, string> = {};
-      if (data.tagline) input.description = data.tagline;
-      if (data.logoUrl) input.logo_url = data.logoUrl;
-      if (Object.keys(input).length > 0) {
-        await updateCompanyDirect({ variables: { id: company.id, input } });
+      const patchInput: Record<string, string> = {};
+      if (data.tagline) patchInput.description = data.tagline;
+      if (data.logoUrl) patchInput.logo_url = data.logoUrl;
+      if (Object.keys(patchInput).length > 0) {
+        await updateCompanyDirect({ variables: { id: company.id, input: patchInput } });
         await refetch();
-        setLinkedInFetchSuccess(`Updated: ${Object.keys(input).join(", ")}`);
+        setLinkedInFetchSuccess(`Updated: ${Object.keys(patchInput).join(", ")}`);
       } else {
         setLinkedInFetchSuccess("LinkedIn returned no metadata (description/logo).");
       }
@@ -1080,370 +1192,378 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     }
   }, [company, blockCompany, unblockCompany]);
 
+  /* -- Delete confirmation state -- */
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
   if (loading) {
     return (
-      <Container size="3" p={{ initial: "4", md: "6" }}>
-        <Flex direction="column" gap="4">
-          <Flex gap="4" align="center">
+      <div className={css({ maxWidth: "1200px", mx: "auto", px: { base: "4", md: "6" } })}>
+        <div className={flex({ direction: "column", gap: "4" })}>
+          <div className={flex({ gap: "4", align: "center" })}>
             <Skeleton width="52px" height="52px" />
-            <Flex direction="column" gap="2" flexGrow="1">
+            <div className={css({ flex: 1, display: "flex", flexDirection: "column", gap: "2" })}>
               <Skeleton height="28px" width="60%" />
               <Skeleton height="16px" width="40%" />
-            </Flex>
-          </Flex>
+            </div>
+          </div>
           <Skeleton height="120px" />
           <Skeleton height="80px" />
-        </Flex>
-      </Container>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Container size="3" p={{ initial: "4", md: "6" }}>
-        <Callout.Root color="red">
-          <Callout.Icon>
-            <InfoCircledIcon />
-          </Callout.Icon>
-          <Callout.Text>
-            <Strong>Error loading company:</Strong> {error.message}
-          </Callout.Text>
-        </Callout.Root>
-      </Container>
+      <div className={css({ maxWidth: "1200px", mx: "auto", px: { base: "4", md: "6" } })}>
+        <div className={callout({ variant: "error" })}>
+          <InfoCircledIcon />
+          <span>
+            <strong>Error loading company:</strong> {error.message}
+          </span>
+        </div>
+      </div>
     );
   }
 
   if (!company) {
     return (
-      <Container size="3" p={{ initial: "4", md: "6" }}>
-        <Callout.Root>
-          <Callout.Icon>
-            <InfoCircledIcon />
-          </Callout.Icon>
-          <Callout.Text>Company not found.</Callout.Text>
-        </Callout.Root>
-      </Container>
+      <div className={css({ maxWidth: "1200px", mx: "auto", px: { base: "4", md: "6" } })}>
+        <div className={callout({ variant: "info" })}>
+          <InfoCircledIcon />
+          <span>Company not found.</span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Container size="3" p={{ initial: "4", md: "6" }}>
-      <Flex direction="column" gap="5">
+    <div className={css({ maxWidth: "1200px", mx: "auto", px: { base: "4", md: "6" } })}>
+      <div className={flex({ direction: "column", gap: "5" })}>
         {/* Alerts */}
         {enhanceError && (
-          <Callout.Root color="red">
-            <Callout.Icon>
-              <InfoCircledIcon />
-            </Callout.Icon>
-            <Callout.Text>
-              <Strong>Enhancement error:</Strong> {enhanceError}
-            </Callout.Text>
-          </Callout.Root>
+          <div className={callout({ variant: "error" })}>
+            <InfoCircledIcon />
+            <span>
+              <strong>Enhancement error:</strong> {enhanceError}
+            </span>
+          </div>
         )}
 
         {enhanceSuccess && (
-          <Callout.Root color="green">
-            <Callout.Icon>
-              <InfoCircledIcon />
-            </Callout.Icon>
-            <Callout.Text>{enhanceSuccess}</Callout.Text>
-          </Callout.Root>
+          <div className={callout({ variant: "success" })}>
+            <InfoCircledIcon />
+            <span>{enhanceSuccess}</span>
+          </div>
         )}
 
         {analyzeError && (
-          <Callout.Root color="red">
-            <Callout.Icon>
-              <InfoCircledIcon />
-            </Callout.Icon>
-            <Callout.Text>
-              <Strong>Analysis error:</Strong> {analyzeError}
-            </Callout.Text>
-          </Callout.Root>
+          <div className={callout({ variant: "error" })}>
+            <InfoCircledIcon />
+            <span>
+              <strong>Analysis error:</strong> {analyzeError}
+            </span>
+          </div>
         )}
 
         {analyzeSuccess && (
-          <Callout.Root color="green">
-            <Callout.Icon>
-              <InfoCircledIcon />
-            </Callout.Icon>
-            <Callout.Text>{analyzeSuccess}</Callout.Text>
-          </Callout.Root>
+          <div className={callout({ variant: "success" })}>
+            <InfoCircledIcon />
+            <span>{analyzeSuccess}</span>
+          </div>
         )}
 
         {linkedInFetchError && (
-          <Callout.Root color="red">
-            <Callout.Icon>
-              <InfoCircledIcon />
-            </Callout.Icon>
-            <Callout.Text>
-              <Strong>LinkedIn fetch error:</Strong> {linkedInFetchError}
-            </Callout.Text>
-          </Callout.Root>
+          <div className={callout({ variant: "error" })}>
+            <InfoCircledIcon />
+            <span>
+              <strong>LinkedIn fetch error:</strong> {linkedInFetchError}
+            </span>
+          </div>
         )}
 
         {linkedInFetchSuccess && (
-          <Callout.Root color="green">
-            <Callout.Icon>
-              <LinkedInLogoIcon />
-            </Callout.Icon>
-            <Callout.Text>{linkedInFetchSuccess}</Callout.Text>
-          </Callout.Root>
+          <div className={callout({ variant: "success" })}>
+            <LinkedInLogoIcon />
+            <span>{linkedInFetchSuccess}</span>
+          </div>
         )}
 
         {/* Header */}
-        <Card variant="surface">
-          <Box p="5">
-            <Flex
-              direction={{ initial: "column", sm: "row" }}
-              gap="4"
-              align={{ initial: "start", sm: "center" }}
-              justify="between"
+        <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5" })}>
+          <div
+            className={css({
+              display: "flex",
+              flexDirection: { base: "column", sm: "row" },
+              gap: "4",
+              alignItems: { base: "start", sm: "center" },
+              justifyContent: "space-between",
+            })}
+          >
+            <div className={flex({ gap: "4", align: "start", flex: 1, minWidth: 0 })}>
+              <CompanyAvatar name={company.name} logoUrl={company.logo_url} size={56} />
+              <div className={css({ flex: 1, minWidth: 0 })}>
+                <h1 className={css({ fontSize: "2xl", fontWeight: "bold", color: "ui.heading", lineHeight: "1.2", overflowWrap: "break-word" })}>
+                  {company.name}
+                </h1>
+
+                <div className={flex({ align: "center", gap: "3", mt: "2", wrap: "wrap" })}>
+                  {websiteHref && (
+                    <div className={flex({ align: "center", gap: "2", minWidth: 0 })}>
+                      <GlobeIcon />
+                      <a
+                        href={websiteHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={websiteHref}
+                        className={css({
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "1",
+                          minWidth: 0,
+                          maxWidth: "100%",
+                          overflow: "hidden",
+                          color: "ui.secondary",
+                          textDecoration: "none",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          _hover: { textDecoration: "underline" },
+                        })}
+                      >
+                        {websiteLabel || websiteHref}
+                        <ExternalLinkIcon />
+                      </a>
+                    </div>
+                  )}
+
+                  {company.linkedin_url && (
+                    <div className={flex({ align: "center", gap: "2" })}>
+                      <a
+                        href={coerceExternalUrl(company.linkedin_url) ?? ""}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={css({
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "1",
+                          color: "ui.secondary",
+                          textDecoration: "none",
+                          _hover: { textDecoration: "underline" },
+                        })}
+                      >
+                        <span className={css({ fontSize: "sm" })}>LinkedIn</span>
+                        <ExternalLinkIcon />
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                <div className={flex({ gap: "2", wrap: "wrap", mt: "3" })}>
+                  {company.category ? (
+                    <span
+                      className={css({
+                        display: "inline-flex",
+                        alignItems: "center",
+                        fontSize: "xs",
+                        fontWeight: "medium",
+                        px: "2",
+                        py: "1",
+                        border: "1px solid",
+                      })}
+                      style={{
+                        color: CATEGORY_CSS[company.category]?.color ?? "var(--gray-9)",
+                        borderColor: CATEGORY_CSS[company.category]?.borderColor ?? "var(--gray-6)",
+                        backgroundColor: CATEGORY_CSS[company.category]?.bg ?? "var(--gray-3)",
+                      }}
+                    >
+                      {company.category}
+                    </span>
+                  ) : null}
+                  {company.size ? <Chip>{company.size}</Chip> : null}
+                  {company.location ? <Chip>{company.location}</Chip> : null}
+                  {company.score != null && (() => {
+                    const sc = scoreColor(company.score);
+                    const scCss = SCORE_CSS[sc];
+                    return (
+                      <span
+                        className={css({
+                          display: "inline-flex",
+                          alignItems: "center",
+                          fontSize: "xs",
+                          fontWeight: "medium",
+                          px: "2",
+                          py: "1",
+                          border: "1px solid",
+                        })}
+                        style={{
+                          color: scCss.color,
+                          borderColor: scCss.borderColor,
+                          backgroundColor: scCss.bg,
+                        }}
+                      >
+                        {"\u2605"} {company.score.toFixed(2)}
+                      </span>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={css({
+                display: "flex",
+                gap: "2",
+                alignItems: "center",
+                flexWrap: "wrap",
+                justifyContent: { base: "start", sm: "end" },
+              })}
             >
-              <Flex gap="4" align="start" flexGrow="1" minWidth="0">
-                <CompanyAvatar name={company.name} logoUrl={company.logo_url} size="6" />
-                <Box flexGrow="1" minWidth="0">
-                  <Heading size="6" style={{ lineHeight: 1.2, overflowWrap: 'break-word' }}>
-                    {company.name}
-                  </Heading>
-
-                  <Flex align="center" gap="3" mt="2" wrap="wrap">
-                    {websiteHref && (
-                      <Flex align="center" gap="2" minWidth="0">
-                        <GlobeIcon />
-                        <Flex display="inline-flex" align="center" gap="1" minWidth="0" maxWidth="100%" overflow="hidden">
-                          <RadixLink
-                            href={websiteHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            color="gray"
-                            truncate
-                            title={websiteHref}
-                          >
-                            {websiteLabel || websiteHref}
-                          </RadixLink>
-                          <ExternalLinkIcon />
-                        </Flex>
-                      </Flex>
-                    )}
-
-                    {company.linkedin_url && (
-                      <Flex align="center" gap="2">
-                        <Flex display="inline-flex" align="center" gap="1">
-                          <RadixLink
-                            href={coerceExternalUrl(company.linkedin_url) ?? ""}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            color="gray"
-                          >
-                            <Text size="2">LinkedIn</Text>
-                          </RadixLink>
-                          <ExternalLinkIcon />
-                        </Flex>
-                      </Flex>
-                    )}
-                  </Flex>
-
-                  <Flex gap="2" wrap="wrap" mt="3">
-                    {company.category ? (
-                      <Badge
-                        color={(CATEGORY_COLORS[company.category] ?? "gray") as "blue" | "violet" | "amber" | "green" | "cyan" | "gray"}
-                        variant="soft"
-                        radius="full"
+              {isAdmin && company && (
+                <LinkedInLeadDialog
+                  companyId={company.id}
+                  companyName={company.name}
+                  onCreated={refetch}
+                />
+              )}
+              {isAdmin && (
+                <CompanyEditDialog company={company} onSaved={refetch} />
+              )}
+              {isAdmin && (
+                <button
+                  className={button({ variant: "ghost", size: "sm" })}
+                  onClick={handleEnhance}
+                  disabled={isEnhancing}
+                >
+                  <MagicWandIcon />
+                  {isEnhancing ? "Enhancing\u2026" : "Enhance"}
+                </button>
+              )}
+              {isAdmin && company.linkedin_url && (
+                <button
+                  className={button({ variant: "ghost", size: "sm" })}
+                  onClick={handleFetchLinkedIn}
+                  disabled={isLinkedInFetching}
+                >
+                  <LinkedInLogoIcon />
+                  {isLinkedInFetching ? "Fetching\u2026" : "Fetch LinkedIn"}
+                </button>
+              )}
+              {isAdmin && company.website && (
+                <button
+                  className={button({ variant: "ghost", size: "sm" })}
+                  onClick={handleAnalyze}
+                  disabled={isAnalyzing}
+                >
+                  <MagicWandIcon />
+                  {isAnalyzing ? "Analyzing\u2026" : company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  className={cx(
+                    button({ variant: company?.blocked ? "solid" : "ghost", size: "sm" }),
+                    company?.blocked ? css({ bg: "rgba(229, 72, 77, 0.8)", _hover: { bg: "rgba(229, 72, 77, 1)" } }) : ""
+                  )}
+                  onClick={handleToggleBlock}
+                  disabled={isBlocking || isUnblocking}
+                >
+                  <CrossCircledIcon />
+                  {isBlocking || isUnblocking ? "Updating\u2026" : company?.blocked ? "Blocked" : "Block"}
+                </button>
+              )}
+              {isAdmin && (
+                <>
+                  <button
+                    className={button({ variant: "ghost", size: "sm" })}
+                    disabled={isDeleting}
+                    onClick={() => setDeleteConfirmOpen(true)}
+                  >
+                    <TrashIcon />
+                    {isDeleting ? "Deleting\u2026" : "Delete"}
+                  </button>
+                  <Modal open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen} maxWidth="400px">
+                    <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "1" })}>
+                      Delete company
+                    </h3>
+                    <p className={css({ fontSize: "sm", color: "ui.secondary", mb: "4" })}>
+                      Are you sure you want to delete <strong>{company.name}</strong>? This action cannot be undone.
+                    </p>
+                    <div className={flex({ gap: "3", justify: "flex-end" })}>
+                      <button
+                        className={button({ variant: "ghost", size: "sm" })}
+                        onClick={() => setDeleteConfirmOpen(false)}
                       >
-                        {company.category}
-                      </Badge>
-                    ) : null}
-                    {company.size ? <Chip color="blue" variant="surface">{company.size}</Chip> : null}
-                    {company.location ? <Chip color="gray" variant="surface">{company.location}</Chip> : null}
-                    {company.score != null && (
-                      <Badge
-                        color={scoreColor(company.score)}
-                        variant="soft"
-                        radius="full"
+                        Cancel
+                      </button>
+                      <button
+                        className={button({ variant: "ghost", size: "sm" })}
+                        onClick={() => { setDeleteConfirmOpen(false); handleDelete(); }}
                       >
-                        ★ {company.score.toFixed(2)}
-                      </Badge>
-                    )}
-                  </Flex>
-                </Box>
-              </Flex>
-
-              <Flex
-                gap="2"
-                align="center"
-                wrap="wrap"
-                justify={{ initial: "start", sm: "end" }}
-              >
-                {isAdmin && company && (
-                  <LinkedInLeadDialog
-                    companyId={company.id}
-                    companyName={company.name}
-                    onCreated={refetch}
-                  />
-                )}
-                {isAdmin && (
-                  <CompanyEditDialog company={company} onSaved={refetch} />
-                )}
-                {isAdmin && (
-                  <Button
-                    variant="soft"
-                    onClick={handleEnhance}
-                    disabled={isEnhancing}
-                  >
-                    <MagicWandIcon />
-                    {isEnhancing ? "Enhancing…" : "Enhance"}
-                  </Button>
-                )}
-                {isAdmin && company.linkedin_url && (
-                  <Button
-                    variant="soft"
-                    onClick={handleFetchLinkedIn}
-                    disabled={isLinkedInFetching}
-                  >
-                    <LinkedInLogoIcon />
-                    {isLinkedInFetching ? "Fetching…" : "Fetch LinkedIn"}
-                  </Button>
-                )}
-                {isAdmin && company.website && (
-                  <Button
-                    variant="soft"
-                    onClick={handleAnalyze}
-                    disabled={isAnalyzing}
-                  >
-                    <MagicWandIcon />
-                    {isAnalyzing ? "Analyzing…" : company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
-                  </Button>
-                )}
-                {isAdmin && (
-                  <Button
-                    variant={company?.blocked ? "solid" : "ghost"}
-                    color={company?.blocked ? "red" : "gray"}
-                    onClick={handleToggleBlock}
-                    disabled={isBlocking || isUnblocking}
-                  >
-                    <CrossCircledIcon />
-                    {isBlocking || isUnblocking ? "Updating…" : company?.blocked ? "Blocked" : "Block"}
-                  </Button>
-                )}
-                {isAdmin && (
-                  <AlertDialog.Root>
-                    <AlertDialog.Trigger>
-                      <Button variant="ghost" color="gray" disabled={isDeleting}>
-                        <TrashIcon />
-                        {isDeleting ? "Deleting…" : "Delete"}
-                      </Button>
-                    </AlertDialog.Trigger>
-                    <AlertDialog.Content maxWidth="400px">
-                      <AlertDialog.Title>Delete company</AlertDialog.Title>
-                      <AlertDialog.Description size="2">
-                        Are you sure you want to delete <Strong>{company.name}</Strong>? This action cannot be undone.
-                      </AlertDialog.Description>
-                      <Flex gap="3" mt="4" justify="end">
-                        <AlertDialog.Cancel>
-                          <Button variant="ghost" color="gray">Cancel</Button>
-                        </AlertDialog.Cancel>
-                        <AlertDialog.Action>
-                          <Button variant="ghost" color="gray" onClick={handleDelete}>Delete</Button>
-                        </AlertDialog.Action>
-                      </Flex>
-                    </AlertDialog.Content>
-                  </AlertDialog.Root>
-                )}
-              </Flex>
-            </Flex>
-          </Box>
-        </Card>
+                        Delete
+                      </button>
+                    </div>
+                  </Modal>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Tab nav */}
-        <TabNav.Root>
-          <TabNav.Link active>Overview</TabNav.Link>
+        <nav className={tabList()}>
+          <span className={tabTrigger({ active: true })}>Overview</span>
           {isAdmin && (
-            <TabNav.Link asChild>
-              <Link href={`/companies/${effectiveKey}/contacts`}>Contacts</Link>
-            </TabNav.Link>
+            <Link
+              href={`/companies/${effectiveKey}/contacts`}
+              className={tabTrigger()}
+            >
+              Contacts
+            </Link>
           )}
           {isAdmin && (
-            <TabNav.Link asChild>
-              <Link href={`/companies/${effectiveKey}/emails`}>Emails</Link>
-            </TabNav.Link>
+            <Link
+              href={`/companies/${effectiveKey}/emails`}
+              className={tabTrigger()}
+            >
+              Emails
+            </Link>
           )}
-        </TabNav.Root>
+        </nav>
 
-        <Box pt="4">
-              <Flex direction="column" gap="5">
+        <div className={css({ pt: "4" })}>
+              <div className={flex({ direction: "column", gap: "5" })}>
                 {/* Balanced 2/3 + 1/3 layout */}
-                <Flex
-                  direction={{ initial: "column", md: "row" }}
-                  gap="4"
-                  align="start"
+                <div
+                  className={css({
+                    display: "flex",
+                    flexDirection: { base: "column", md: "row" },
+                    gap: "4",
+                    alignItems: "start",
+                  })}
                 >
-                  <Box flexGrow="2" minWidth="0">
-                    <Flex direction="column" gap="4">
+                  <div className={css({ flex: 2, minWidth: 0 })}>
+                    <div className={flex({ direction: "column", gap: "4" })}>
                       {company.deep_analysis && (
                         <SectionCard title="Deep Analysis">
-                          <Text size="2" as="div">
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                h1: ({ children }) => (
-                                  <Heading as="h1" size="5" weight="bold" mt="4" mb="2">{children}</Heading>
-                                ),
-                                h2: ({ children }) => (
-                                  <Heading as="h2" size="4" weight="bold" mt="3" mb="2">{children}</Heading>
-                                ),
-                                h3: ({ children }) => (
-                                  <Heading as="h3" size="3" weight="bold" mt="3" mb="1">{children}</Heading>
-                                ),
-                                p: ({ children }) => (
-                                  <Text as="p" size="2" color="gray" mb="3">{children}</Text>
-                                ),
-                                ul: ({ children }) => (
-                                  <ul style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ul>
-                                ),
-                                ol: ({ children }) => (
-                                  <ol style={{ paddingLeft: '1.5em', marginBottom: '0.5em' }}>{children}</ol>
-                                ),
-                                li: ({ children }) => (
-                                  <li style={{ marginBottom: '0.25em' }}>{children}</li>
-                                ),
-                                strong: ({ children }) => (
-                                  <Strong>{children}</Strong>
-                                ),
-                                em: ({ children }) => (
-                                  <Em>{children}</Em>
-                                ),
-                                code: ({ children, className }) => {
-                                  const isBlock = className?.includes('language-');
-                                  return isBlock ? (
-                                    <Code size="2" style={{ display: 'block', overflowX: 'auto', padding: '0.5em 0.75em' }}>{children}</Code>
-                                  ) : (
-                                    <Code size="2">{children}</Code>
-                                  );
-                                },
-                                blockquote: ({ children }) => (
-                                  <Blockquote>{children}</Blockquote>
-                                ),
-                                hr: () => (
-                                  <Separator size="4" my="4" />
-                                ),
-                              }}
-                            >
+                          <div className={markdown()}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {company.deep_analysis}
                             </ReactMarkdown>
-                          </Text>
+                          </div>
                         </SectionCard>
                       )}
 
                       {company.description ? (
                         <SectionCard title="About">
-                          <Text
-                            as="p"
-                            size="3"
-                            color="gray"
-                            style={{ whiteSpace: "pre-wrap" }}
+                          <p
+                            className={css({
+                              fontSize: "base",
+                              color: "ui.tertiary",
+                              whiteSpace: "pre-wrap",
+                            })}
                           >
                             {company.description}
-                          </Text>
+                          </p>
                         </SectionCard>
                       ) : null}
 
@@ -1453,11 +1573,11 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                         </SectionCard>
                       ) : null}
 
-                    </Flex>
-                  </Box>
+                    </div>
+                  </div>
 
-                  <Box flexGrow="1" minWidth="0">
-                    <Flex direction="column" gap="4">
+                  <div className={css({ flex: 1, minWidth: 0 })}>
+                    <div className={flex({ direction: "column", gap: "4" })}>
                       <KeyFactsCard
                         linkedinUrl={company.linkedin_url}
                         jobBoardUrl={company.job_board_url}
@@ -1483,23 +1603,25 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                           </SectionCard>
                         ) : null;
                       })()}
-                    </Flex>
-                  </Box>
-                </Flex>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Admin-only: Score breakdown */}
                 {isAdmin && company.score_reasons?.length ? (
                   <SectionCard title="Score breakdown">
-                    <Flex direction="column" gap="2">
+                    <div className={flex({ direction: "column", gap: "2" })}>
                       {company.score_reasons.map((reason: string, idx: number) => (
-                        <Box key={`${idx}-${reason}`} px="3" py="1" style={{ background: 'var(--gray-2)' }}><Text size="2" color="gray">{reason}</Text></Box>
+                        <div key={`${idx}-${reason}`} className={css({ px: "3", py: "1", bg: "ui.surfaceRaised" })}>
+                          <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>{reason}</span>
+                        </div>
                       ))}
-                    </Flex>
+                    </div>
                   </SectionCard>
                 ) : null}
-              </Flex>
-            </Box>
-      </Flex>
-    </Container>
+              </div>
+            </div>
+      </div>
+    </div>
   );
 }

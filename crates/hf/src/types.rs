@@ -102,6 +102,10 @@ impl FetchRequest {
         Self { repo_id: repo_id.into(), repo_type: RepoType::Dataset, path: None, revision: None }
     }
 
+    pub fn space(repo_id: impl Into<String>) -> Self {
+        Self { repo_id: repo_id.into(), repo_type: RepoType::Space, path: None, revision: None }
+    }
+
     pub fn with_path(mut self, path: impl Into<String>) -> Self {
         self.path = Some(path.into());
         self
@@ -256,6 +260,11 @@ impl ListOptions {
 
     pub fn full(mut self, f: bool) -> Self {
         self.full = f;
+        self
+    }
+
+    pub fn filter(mut self, f: impl Into<String>) -> Self {
+        self.filter.get_or_insert_with(Vec::new).push(f.into());
         self
     }
 }
