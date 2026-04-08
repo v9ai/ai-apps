@@ -1,7 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { css } from "styled-system/css";
+import {
+  Badge,
+  Box,
+  Callout,
+  Dialog,
+  Flex,
+  Heading,
+  ScrollArea,
+  Separator,
+  Spinner,
+  Text,
+  TextArea,
+  TextField,
+} from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 import {
   CheckCircledIcon,
@@ -12,62 +25,6 @@ import {
   Pencil1Icon,
   ResetIcon,
 } from "@radix-ui/react-icons";
-
-// ── Reusable form styles ─────────────────────────────────────────────────────
-
-const inputStyles = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  color: "ui.body",
-  p: "6px 10px",
-  fontSize: "base",
-  width: "100%",
-  outline: "none",
-  fontFamily: "inherit",
-  borderRadius: "0",
-  _focus: { borderColor: "accent.primary" },
-  _placeholder: { color: "ui.tertiary" },
-});
-
-const textareaStyles = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  color: "ui.body",
-  p: "2",
-  fontSize: "base",
-  width: "100%",
-  outline: "none",
-  fontFamily: "inherit",
-  borderRadius: "0",
-  resize: "vertical",
-  minHeight: "80px",
-  _focus: { borderColor: "accent.primary" },
-  _placeholder: { color: "ui.tertiary" },
-});
-
-const spinnerStyles = css({
-  display: "inline-block",
-  width: "16px",
-  height: "16px",
-  border: "2px solid",
-  borderColor: "ui.border",
-  borderTopColor: "accent.primary",
-  borderRadius: "50%",
-  animation: "spin 0.6s linear infinite",
-});
-
-const spinnerLargeStyles = css({
-  display: "inline-block",
-  width: "32px",
-  height: "32px",
-  border: "3px solid",
-  borderColor: "ui.border",
-  borderTopColor: "accent.primary",
-  borderRadius: "50%",
-  animation: "spin 0.6s linear infinite",
-});
 
 interface Contact {
   id: number;
@@ -237,95 +194,58 @@ export function GenerateAndSendBatchEmailModal({
     }
   }
 
-  if (!open) return null;
-
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className={css({
-          position: "fixed",
-          inset: 0,
-          zIndex: 50,
-          bg: "rgba(10, 10, 15, 0.85)",
-          backdropFilter: "blur(12px)",
-        })}
-        onClick={() => onOpenChange(false)}
-      />
-      {/* Panel */}
-      <div
-        className={css({
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          zIndex: 51,
-          bg: "ui.surface",
-          border: "1px solid",
-          borderColor: "ui.border",
-          width: "100%",
-          maxWidth: "750px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          p: "6",
-        })}
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Content
+        maxWidth="750px"
+        style={{ maxHeight: "90vh", overflowY: "auto" }}
       >
-        {/* Header */}
-        <div
-          className={css({
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            pb: "4",
-            mb: "4",
-            borderBottom: "1px solid",
-            borderBottomColor: "ui.border",
-          })}
-        >
-          <h2 className={css({ fontSize: "xl", fontWeight: "bold", color: "ui.heading" })}>
-            Generate & Send {companyName ? `-- ${companyName}` : ""}
-          </h2>
-          <button
-            className={button({ variant: "ghost", size: "sm" })}
-            aria-label="Close"
-            onClick={() => onOpenChange(false)}
-          >
-            <Cross2Icon />
-          </button>
-        </div>
+        <Flex justify="between" align="center" mb="4">
+          <Dialog.Title>
+            <Heading size="5">
+              Generate & Send {companyName ? `— ${companyName}` : ""}
+            </Heading>
+          </Dialog.Title>
+          <Dialog.Close>
+            <button className={button({ variant: "ghost", size: "sm" })} aria-label="Close">
+              <Cross2Icon />
+            </button>
+          </Dialog.Close>
+        </Flex>
 
         {/* Step 1: Generate */}
         {step === "generate" && (
-          <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
-            <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "accent.border", bg: "accent.subtle" })}>
-              <span className={css({ fontSize: "sm", color: "ui.body" })}>
+          <Flex direction="column" gap="4">
+            <Callout.Root color="blue" size="1">
+              <Callout.Text>
                 Generating personalized emails for {contacts.length} contact
                 {contacts.length === 1 ? "" : "s"}
-              </span>
-            </div>
+              </Callout.Text>
+            </Callout.Root>
 
-            <textarea
-              className={textareaStyles}
+            <TextArea
               placeholder="Special instructions (e.g., mention their recent work, ask about specific roles)"
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               rows={4}
+              size="2"
             />
 
             {genError && (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.500/30", bg: "red.500/10" })}>
-                <ExclamationTriangleIcon />
-                <span className={css({ fontSize: "sm", color: "ui.body" })}>{genError}</span>
-              </div>
+              <Callout.Root color="red" size="1">
+                <Callout.Icon>
+                  <ExclamationTriangleIcon />
+                </Callout.Icon>
+                <Callout.Text>{genError}</Callout.Text>
+              </Callout.Root>
             )}
 
-            <div className={css({ display: "flex", justifyContent: "flex-end", gap: "3" })}>
-              <button
-                className={button({ variant: "ghost" })}
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </button>
+            <Flex justify="end" gap="3">
+              <Dialog.Close>
+                <button className={button({ variant: "ghost" })}>
+                  Cancel
+                </button>
+              </Dialog.Close>
               <button
                 className={button({})}
                 disabled={generating}
@@ -333,7 +253,7 @@ export function GenerateAndSendBatchEmailModal({
               >
                 {generating ? (
                   <>
-                    <div className={spinnerStyles} /> Generating...
+                    <Spinner size="1" /> Generating...
                   </>
                 ) : (
                   <>
@@ -341,58 +261,45 @@ export function GenerateAndSendBatchEmailModal({
                   </>
                 )}
               </button>
-            </div>
-          </div>
+            </Flex>
+          </Flex>
         )}
 
         {/* Step 2: Preview & Edit */}
         {step === "preview" && (
-          <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
-            <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center" })}>
-              <span
-                className={css({
-                  fontSize: "xs",
-                  px: "2",
-                  py: "1",
-                  border: "1px solid",
-                  borderColor: "accent.border",
-                  bg: "accent.subtle",
-                  color: "accent.primary",
-                })}
-              >
+          <Flex direction="column" gap="4">
+            <Flex justify="between" align="center">
+              <Badge color="violet" size="2">
                 {generatedEmails.length} email
                 {generatedEmails.length !== 1 ? "s" : ""} generated
-              </span>
-              <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+              </Badge>
+              <Text size="1" color="gray">
                 Click to edit before sending
-              </span>
-            </div>
+              </Text>
+            </Flex>
 
-            <div className={css({ overflowY: "auto", maxHeight: "400px" })}>
-              <div className={css({ display: "flex", flexDirection: "column", gap: "2" })}>
+            <ScrollArea style={{ maxHeight: 400 }}>
+              <Flex direction="column" gap="2">
                 {generatedEmails.map((email) => {
                   const current = getEmail(email.contactId);
                   const isEdited = editedEmails.has(email.contactId);
                   const isExpanded = expandedContact === email.contactId;
 
                   return (
-                    <div
+                    <Box
                       key={email.contactId}
-                      className={css({
-                        border: "1px solid",
-                        borderColor: "ui.border",
-                        p: "3",
-                      })}
+                      style={{
+                        border: "1px solid var(--gray-a5)",
+                        borderRadius: 0,
+                        padding: "var(--space-3)",
+                      }}
                     >
-                      <div
-                        className={css({
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          cursor: "pointer",
-                        })}
+                      <Flex
+                        justify="between"
+                        align="center"
                         role="button"
                         tabIndex={0}
+                        style={{ cursor: "pointer" }}
                         onClick={() =>
                           setExpandedContact(isExpanded ? null : email.contactId)
                         }
@@ -404,61 +311,49 @@ export function GenerateAndSendBatchEmailModal({
                         }}
                         aria-expanded={isExpanded}
                       >
-                        <div className={css({ display: "flex", gap: "2", alignItems: "center" })}>
-                          <span className={css({ fontSize: "sm", fontWeight: "medium", color: "ui.body" })}>
+                        <Flex gap="2" align="center">
+                          <Text size="2" weight="medium">
                             {email.contactName}
-                          </span>
-                          <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                          </Text>
+                          <Text size="1" color="gray">
                             {email.contactEmail}
-                          </span>
+                          </Text>
                           {isEdited && (
-                            <span
-                              className={css({
-                                fontSize: "xs",
-                                px: "2",
-                                py: "1",
-                                border: "1px solid",
-                                borderColor: "ui.border",
-                                color: "ui.secondary",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "1",
-                              })}
-                            >
+                            <Badge color="amber" size="1" variant="soft">
                               <Pencil1Icon /> Edited
-                            </span>
+                            </Badge>
                           )}
-                        </div>
-                      </div>
+                        </Flex>
+                      </Flex>
 
                       {isExpanded && (
-                        <div className={css({ display: "flex", flexDirection: "column", gap: "2", mt: "3" })}>
-                          <input
-                            className={inputStyles}
+                        <Flex direction="column" gap="2" mt="3">
+                          <TextField.Root
                             value={current.subject}
                             onChange={(e) =>
                               handleEdit(email.contactId, "subject", e.target.value)
                             }
+                            size="2"
                           />
-                          <textarea
-                            className={textareaStyles}
+                          <TextArea
                             value={current.body}
                             onChange={(e) =>
                               handleEdit(email.contactId, "body", e.target.value)
                             }
                             rows={8}
+                            size="2"
                           />
-                        </div>
+                        </Flex>
                       )}
-                    </div>
+                    </Box>
                   );
                 })}
-              </div>
-            </div>
+              </Flex>
+            </ScrollArea>
 
-            <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
+            <Separator size="4" />
 
-            <div className={css({ display: "flex", justifyContent: "space-between" })}>
+            <Flex justify="between">
               <button
                 className={button({ variant: "ghost" })}
                 onClick={() => {
@@ -472,52 +367,50 @@ export function GenerateAndSendBatchEmailModal({
               <button className={button({ variant: "solidGreen" })} onClick={handleSend}>
                 <PaperPlaneIcon /> Send All Emails
               </button>
-            </div>
-          </div>
+            </Flex>
+          </Flex>
         )}
 
         {/* Step 3: Sending */}
         {step === "sending" && (
-          <div className={css({ display: "flex", flexDirection: "column", alignItems: "center", gap: "4", py: "8" })}>
-            <div className={spinnerLargeStyles} />
-            <span className={css({ fontSize: "base", color: "ui.tertiary" })}>
+          <Flex direction="column" align="center" gap="4" py="8">
+            <Spinner size="3" />
+            <Text size="3" color="gray">
               Scheduling emails...
-            </span>
-          </div>
+            </Text>
+          </Flex>
         )}
 
         {/* Step 4: Done */}
         {step === "done" && sendResult && (
-          <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
-            <div
-              className={css({
-                display: "flex",
-                gap: "3",
-                p: "3",
-                border: "1px solid",
-                borderColor: sendResult.failed === 0 ? "green.500/30" : "orange.500/30",
-                bg: sendResult.failed === 0 ? "green.500/10" : "orange.500/10",
-              })}
+          <Flex direction="column" gap="4">
+            <Callout.Root
+              color={sendResult.failed === 0 ? "green" : "orange"}
+              size="1"
             >
-              <CheckCircledIcon />
-              <span className={css({ fontSize: "sm", color: "ui.body" })}>{sendResult.message}</span>
-            </div>
+              <Callout.Icon>
+                <CheckCircledIcon />
+              </Callout.Icon>
+              <Callout.Text>{sendResult.message}</Callout.Text>
+            </Callout.Root>
 
-            <div className={css({ display: "flex", flexDirection: "column", gap: "1" })}>
-              <span className={css({ fontSize: "sm", color: "ui.body" })}>Sent: {sendResult.sent}</span>
+            <Flex direction="column" gap="1">
+              <Text size="2">Sent: {sendResult.sent}</Text>
               {sendResult.failed > 0 && (
-                <span className={css({ fontSize: "sm", color: "red.400" })}>
+                <Text size="2" color="red">
                   Failed: {sendResult.failed}
-                </span>
+                </Text>
               )}
-            </div>
+            </Flex>
 
-            <div className={css({ display: "flex", justifyContent: "flex-end" })}>
-              <button className={button({})} onClick={() => onOpenChange(false)}>Done</button>
-            </div>
-          </div>
+            <Flex justify="end">
+              <Dialog.Close>
+                <button className={button({})}>Done</button>
+              </Dialog.Close>
+            </Flex>
+          </Flex>
         )}
-      </div>
-    </>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

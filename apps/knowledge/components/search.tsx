@@ -41,8 +41,6 @@ export function Search({ groups }: Props) {
   const [searching, setSearching] = useState(false);
   const [diffFilter, setDiffFilter] = useState<DifficultyLevel | "all">("all");
   const [isDeepSearch, setIsDeepSearch] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const [searchMs, setSearchMs] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -55,11 +53,6 @@ export function Search({ groups }: Props) {
     }
     return map;
   }, [groups]);
-
-  const totalLessons = useMemo(
-    () => groups.reduce((sum, g) => sum + g.articles.length, 0),
-    [groups],
-  );
 
   const filteredGroups = useMemo(() => {
     if (diffFilter === "all") return groups;
@@ -88,16 +81,12 @@ export function Search({ groups }: Props) {
     if (trimmed.length < 2) {
       setResults([]);
       setSearching(false);
-      setSearchMs(null);
       return;
     }
     setSearching(true);
-    setSearchMs(null);
-    const t0 = performance.now();
     const res = isDeepSearch
       ? await deepSearch(trimmed)
       : await searchContent(trimmed);
-    setSearchMs(Math.round(performance.now() - t0));
     setResults(res);
     setSearching(false);
   }, [isDeepSearch]);
@@ -119,73 +108,37 @@ export function Search({ groups }: Props) {
 
   return (
     <>
-      <div className={`yc-search${isFocused ? " yc-search--focused" : ""}`}>
+      <div className="yc-search">
         <input
           ref={inputRef}
           type="text"
           aria-label="Search lessons"
-          placeholder={isDeepSearch ? "Semantic search across all content..." : "Search lessons, topics, concepts..."}
+          placeholder={isDeepSearch ? "Deep search with AI embeddings..." : "Search lessons, topics, concepts..."}
           value={query}
           onChange={handleChange}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              e.preventDefault();
-              if (query.length > 0) {
-                setQuery("");
-                setResults([]);
-                clearTimeout(timerRef.current);
-              }
-              inputRef.current?.blur();
+        />
+        <button
+          className={`yc-search-mode${isDeepSearch ? " yc-search-mode--active" : ""}`}
+          onClick={() => {
+            setIsDeepSearch((v) => !v);
+            if (query.trim().length >= 2) {
+              clearTimeout(timerRef.current);
+              timerRef.current = setTimeout(() => doSearch(query), 100);
             }
           }}
-        />
-        <div className="yc-search-controls">
-          <div className="yc-search-toggle" role="radiogroup" aria-label="Search mode">
-            <button
-              className={`yc-search-toggle-btn${!isDeepSearch ? " yc-search-toggle-btn--active" : ""}`}
-              role="radio"
-              aria-checked={!isDeepSearch}
-              onClick={() => {
-                if (isDeepSearch) {
-                  setIsDeepSearch(false);
-                  if (query.trim().length >= 2) {
-                    clearTimeout(timerRef.current);
-                    timerRef.current = setTimeout(() => doSearch(query), 100);
-                  }
-                }
-              }}
-            >
-              Keyword
-            </button>
-            <button
-              className={`yc-search-toggle-btn${isDeepSearch ? " yc-search-toggle-btn--active" : ""}`}
-              role="radio"
-              aria-checked={isDeepSearch}
-              onClick={() => {
-                if (!isDeepSearch) {
-                  setIsDeepSearch(true);
-                  if (query.trim().length >= 2) {
-                    clearTimeout(timerRef.current);
-                    timerRef.current = setTimeout(() => doSearch(query), 100);
-                  }
-                }
-              }}
-            >
-              AI Semantic
-            </button>
-          </div>
-          {hasQuery && results.length > 0 && (
-            <span className="yc-search-count">{results.length} result{results.length !== 1 ? "s" : ""}</span>
-          )}
-          {!hasQuery && !isFocused && <kbd className="yc-search-kbd">&#8984;K</kbd>}
-          {query.length > 0 && (
-            <button className="yc-search-clear" aria-label="Clear search" onClick={handleClear}>
-              ✕
-            </button>
-          )}
-        </div>
+          title={isDeepSearch ? "Deep search (pgvector + FTS)" : "Keyword search (FTS only)"}
+        >
+          {isDeepSearch ? "Deep" : "FTS"}
+        </button>
+        {!hasQuery && <span className="yc-search-hint">⌘K</span>}
+        {hasQuery && results.length > 0 && (
+          <span className="yc-search-count">{results.length}</span>
+        )}
+        {query.length > 0 && (
+          <button className="yc-search-clear" aria-label="Clear search" onClick={handleClear}>
+            ✕
+          </button>
+        )}
       </div>
 
       {!hasQuery && (
@@ -208,64 +161,34 @@ export function Search({ groups }: Props) {
         </div>
       )}
 
-      {!hasQuery && diffFilter !== "all" && filteredGroups.length === 0 && (
-        <div className="difficulty-empty" role="status">
-          <div className="difficulty-empty-title">
-            No {diffFilter} lessons yet
-          </div>
-          <div className="difficulty-empty-hint">
-            Try another level — lessons are added regularly
-          </div>
-          <button
-            className="difficulty-empty-reset"
-            onClick={() => setDiffFilter("all")}
-          >
-            Show all levels
-          </button>
-        </div>
-      )}
-
       {hasQuery ? (
         <div className="search-results" aria-live="polite">
           {searching && results.length === 0 && (
             <div className="search-loading">
-              <div className="search-loading-bar search-loading-bar--wide" />
               <div className="search-loading-bar" />
-              <div className="search-loading-bar search-loading-bar--narrow" />
               <div className="search-loading-bar" />
-            </div>
-          )}
-          {searching && results.length > 0 && (
-            <div className="search-refreshing">
-              <div className="search-refreshing-bar" />
+              <div className="search-loading-bar" />
             </div>
           )}
           {!searching && results.length === 0 && (
             <div className="no-results" role="status">
               <div className="no-results-icon">🔍</div>
-              <div className="no-results-title">
-                0 results in {totalLessons} lessons
-              </div>
+              <div className="no-results-title">No results found</div>
               <div className="no-results-hint">
                 {!isDeepSearch
-                  ? "No keyword matches — try AI Semantic search for conceptual queries"
+                  ? "No keyword matches — try Deep search for semantic / conceptual queries"
                   : "Try different keywords or a shorter query"}
               </div>
-              {searchMs !== null && (
-                <div className="no-results-timing">
-                  searched in {searchMs} ms
-                </div>
-              )}
               {!isDeepSearch && (
                 <button
-                  className="no-results-switch"
+                  className="yc-search-mode yc-search-mode--inline"
                   onClick={() => {
                     setIsDeepSearch(true);
                     clearTimeout(timerRef.current);
                     timerRef.current = setTimeout(() => doSearch(query), 100);
                   }}
                 >
-                  Switch to AI Semantic
+                  Try Deep Search
                 </button>
               )}
               <button className="no-results-clear" onClick={handleClear}>
@@ -279,9 +202,9 @@ export function Search({ groups }: Props) {
               <Link
                 key={`${r.resultType}-${r.title}-${i}`}
                 href={meta?.url ?? `/${r.lessonSlug}`}
-                className={`search-result-card${meta ? ` cat-${meta.catSlug}` : ""}${searching ? " search-result-card--stale" : ""}`}
+                className={`search-result-card${meta ? ` cat-${meta.catSlug}` : ""}`}
               >
-                <div className="search-result-meta">
+                <div className="search-result-header">
                   <span className="badge-pill badge-pill--glass search-result-type">
                     {typeBadgeLabel(r.resultType)}
                   </span>
@@ -295,15 +218,15 @@ export function Search({ groups }: Props) {
                       {meta.difficulty === "beginner" ? "Beginner" : meta.difficulty === "intermediate" ? "Mid" : "Adv"}
                     </span>
                   )}
-                  {isDeepSearch && "similarity" in r && (r as DeepSearchResult).similarity > 0 && (
-                    <span className="search-result-similarity">
-                      {((r as DeepSearchResult).similarity * 100).toFixed(0)}%
-                    </span>
-                  )}
+                  <span className="search-result-title">{r.title}</span>
                 </div>
-                <div className="search-result-title">{r.title}</div>
                 <div className="search-result-snippet">
                   {highlightSnippet(r.snippet)}
+                  {isDeepSearch && "similarity" in r && (r as DeepSearchResult).similarity > 0 && (
+                    <span className="search-result-similarity">
+                      {((r as DeepSearchResult).similarity * 100).toFixed(0)}% match
+                    </span>
+                  )}
                 </div>
                 {r.resultType !== "lesson" && r.lessonTitle && (
                   <div className="search-result-lesson">{r.lessonTitle}</div>

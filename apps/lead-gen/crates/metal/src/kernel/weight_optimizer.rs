@@ -13,7 +13,7 @@ pub struct OptimizationResult {
     /// Best-found ICP weight profile (rule-based layer).
     pub icp_weights: IcpProfile,
     /// Logistic regression weights after SGD refinement.
-    pub logistic_weights: Vec<f32>,
+    pub logistic_weights: [f32; 7],
     /// Logistic regression bias after SGD refinement.
     pub logistic_bias: f32,
     /// Threshold that maximised F1 on the training set.
@@ -63,12 +63,18 @@ fn compute_f1(predicted: &[bool], actual: &[bool]) -> f32 {
 /// Populate one slot in a `ContactBatch` from a pre-computed feature vector.
 ///
 /// Because `LabeledSample::features` are already in normalised form, we
-/// reverse the normalisation that `LogisticScorer::extract_features` applies
-/// for the base contact fields (0-6), and pass through all HF features (7-37)
-/// directly.  Interaction features (38-43) are not stored in the batch — they
-/// are recomputed by `extract_features()`.
-fn populate_batch_from_sample(batch: &mut ContactBatch, idx: usize, features: &[f32; FEATURE_COUNT]) {
-    // Base contact — reverse normalisation
+/// reverse the normalisation that `LogisticScorer::extract_features` applies:
+///
+/// | idx | batch field         | reversal                                  |
+/// |-----|---------------------|-------------------------------------------|
+/// | 0   | `industry_match`    | `(f > 0.5) as u8`                        |
+/// | 1   | `employee_in_range` | `(f > 0.5) as u8`                        |
+/// | 2   | `seniority_match`   | `(f > 0.5) as u8`                        |
+/// | 3   | `department_match`  | `(f > 0.5) as u8`                        |
+/// | 4   | `tech_overlap`      | `(f * 10.0) as u8`                       |
+/// | 5   | `email_verified`    | `(f * 2.0) as u8`                        |
+/// | 6   | `recency_days`      | `-ln(f) / 0.015`, clamped to `0..=365`  |
+fn populate_batch_from_sample(batch: &mut ContactBatch, idx: usize, features: &[f32; 7]) {
     batch.industry_match[idx] = (features[0] > 0.5) as u8;
     batch.employee_in_range[idx] = (features[1] > 0.5) as u8;
     batch.seniority_match[idx] = (features[2] > 0.5) as u8;
@@ -77,59 +83,10 @@ fn populate_batch_from_sample(batch: &mut ContactBatch, idx: usize, features: &[
     batch.email_verified[idx] = (features[5] * 2.0).clamp(0.0, 2.0) as u8;
 
     // Reverse smooth_recency: f = exp(-0.015 * d)  →  d = -ln(f) / 0.015
+    // Guard against ln(0) and values outside (0, 1].
     let f6 = features[6].clamp(1e-7, 1.0);
     let days_f = -f6.ln() / 0.015;
     batch.recency_days[idx] = days_f.clamp(0.0, 365.0) as u16;
-
-    // HF composite + depth (7-9)
-    batch.hf_score[idx] = features[7];
-    batch.hf_model_depth[idx] = features[8];
-    batch.hf_training_depth[idx] = features[9];
-
-    // Maturity decomposed (10-14)
-    batch.hf_max_effort[idx] = features[10];
-    batch.hf_production_ratio[idx] = features[11];
-    batch.hf_dl_weighted_maturity[idx] = features[12];
-    batch.hf_alignment_diversity[idx] = features[13];
-    batch.hf_maturity_trend[idx] = features[14];
-
-    // Research (15)
-    batch.hf_research[idx] = features[15];
-
-    // Sales decomposed (16-19)
-    batch.hf_sales_b2b_core[idx] = features[16];
-    batch.hf_sales_outreach[idx] = features[17];
-    batch.hf_sales_funnel[idx] = features[18];
-    batch.hf_sales_platform[idx] = features[19];
-
-    // Training signals (20-23)
-    batch.hf_research_intensity[idx] = features[20];
-    batch.hf_infra_sophistication[idx] = features[21];
-    batch.hf_signal_breadth[idx] = features[22];
-    batch.hf_domain_nlp_focus[idx] = features[23];
-
-    // Architecture diversity (24-28)
-    batch.hf_library_sophistication[idx] = features[24];
-    batch.hf_pipeline_diversity[idx] = features[25];
-    batch.hf_custom_arch_ratio[idx] = features[26];
-    batch.hf_framework_diversity[idx] = features[27];
-    batch.hf_moe_ratio[idx] = features[28];
-
-    // Download signals (29-33)
-    batch.hf_download_scale[idx] = features[29];
-    batch.hf_download_per_model[idx] = features[30];
-    batch.hf_top_model_dominance[idx] = features[31];
-    batch.hf_likes_per_download[idx] = features[32];
-    batch.hf_download_breadth[idx] = features[33];
-
-    // Temporal (34-37)
-    batch.hf_recency[idx] = features[34];
-    batch.hf_acceleration[idx] = features[35];
-    batch.hf_longevity[idx] = features[36];
-    batch.hf_burst_intensity[idx] = features[37];
-
-    // Interaction features (38-43) are NOT stored in the batch — they are
-    // computed on-the-fly by LogisticScorer::extract_features().
 }
 
 /// Score all `samples` with `icp` (rule-based) and return the F1 at `threshold`.
@@ -164,10 +121,10 @@ fn icp_f1(samples: &[LabeledSample], icp: &IcpProfile, threshold: f32) -> f32 {
 
 // ── Grid search ───────────────────────────────────────────────────────────────
 
-/// Grid search over the seven ICP weights (6 original + hf_weight).
+/// Grid search over the six ICP weights.
 ///
 /// Each weight independently takes one of the values in `grid_values`.  For a
-/// default grid of `[5.0, 15.0, 25.0, 35.0]` that is 4^7 = 16 384 combinations.
+/// default grid of `[5.0, 15.0, 25.0, 35.0]` that is 4^6 = 4 096 combinations.
 ///
 /// Returns the `IcpProfile` that maximises F1 on `samples` at `threshold`, and
 /// the corresponding F1 value.
@@ -179,16 +136,16 @@ pub fn grid_search_icp(
     let g = grid_values.len();
     assert!(g > 0, "grid_values must not be empty");
 
-    let total_combos = g.pow(7);
+    let total_combos = g.pow(6);
     // Initialise best to a sentinel so the first combo always wins on tie.
     let mut best_f1 = -1.0f32;
     let mut best_icp = IcpProfile::default();
 
-    // Iterate over all combinations by treating the 7-weight tuple as a
+    // Iterate over all combinations by treating the 6-weight tuple as a
     // mixed-radix number in base `g`.
     for combo in 0..total_combos {
         let mut rem = combo;
-        let mut indices = [0usize; 7];
+        let mut indices = [0usize; 6];
         for slot in indices.iter_mut() {
             *slot = rem % g;
             rem /= g;
@@ -201,7 +158,6 @@ pub fn grid_search_icp(
             department_weight: grid_values[indices[3]],
             tech_weight: grid_values[indices[4]],
             email_weight: grid_values[indices[5]],
-            hf_weight: grid_values[indices[6]],
         };
 
         let f1 = icp_f1(samples, &candidate, threshold);
@@ -219,7 +175,7 @@ pub fn grid_search_icp(
 /// Train a fresh `LogisticScorer` on `samples` using stochastic gradient
 /// descent for `epochs` passes at learning rate `lr`.
 pub fn sgd_refine(samples: &[LabeledSample], epochs: usize, lr: f32) -> LogisticScorer {
-    let features: Vec<[f32; FEATURE_COUNT]> = samples.iter().map(|s| s.features).collect();
+    let features: Vec<[f32; 7]> = samples.iter().map(|s| s.features).collect();
     let labels: Vec<f32> = samples.iter().map(|s| s.label).collect();
 
     let mut scorer = LogisticScorer::new();
@@ -283,7 +239,7 @@ pub fn optimize(
     const GRID_THRESHOLD: f32 = 0.5;
 
     // Stage 1 — grid search.
-    let grid_combos = DEFAULT_GRID.len().pow(7);
+    let grid_combos = DEFAULT_GRID.len().pow(6);
     let (best_icp, _grid_f1) = grid_search_icp(samples, DEFAULT_GRID, GRID_THRESHOLD);
 
     // Stage 2 — SGD refinement.
@@ -300,7 +256,7 @@ pub fn optimize(
 
     let result = OptimizationResult {
         icp_weights: best_icp,
-        logistic_weights: scorer.weights.clone(),
+        logistic_weights: scorer.weights,
         logistic_bias: scorer.bias,
         best_threshold,
         best_f1,
@@ -339,16 +295,16 @@ mod tests {
         (0..n)
             .map(|i| {
                 let pos = i % 2 == 0;
-                let mut features = [0.0f32; FEATURE_COUNT];
-                features[0] = if pos { 1.0 } else { 0.0 }; // industry_match
-                features[1] = 0.5;                           // employee_in_range — neutral
-                features[2] = if pos { 1.0 } else { 0.0 };  // seniority_match
-                features[6] = 0.5;                           // recency_smooth — neutral
-                // HF features neutral
-                features[7] = 0.5;  // hf_score — neutral
-                features[10] = 0.5; // hf_maturity — neutral
                 LabeledSample {
-                    features,
+                    features: [
+                        if pos { 1.0 } else { 0.0 }, // industry_match
+                        0.5,                          // employee_in_range — neutral
+                        if pos { 1.0 } else { 0.0 }, // seniority_match
+                        0.0,                          // department_match — noise
+                        0.0,                          // tech_overlap — noise
+                        0.0,                          // email_verified — noise
+                        0.5,                          // recency_smooth — neutral
+                    ],
                     label: if pos { 1.0 } else { 0.0 },
                 }
             })
@@ -363,7 +319,7 @@ mod tests {
                 let pos = i % 2 == 0;
                 let v = if pos { 1.0 } else { 0.0 };
                 LabeledSample {
-                    features: [v; FEATURE_COUNT],
+                    features: [v; 7],
                     label: v,
                 }
             })
@@ -506,7 +462,7 @@ mod tests {
         let scorer = LogisticScorer::default_pretrained();
         let samples: Vec<LabeledSample> = (0..10)
             .map(|_| LabeledSample {
-                features: [1.0; FEATURE_COUNT],
+                features: [1.0; 7],
                 label: 1.0,
             })
             .collect();
@@ -523,8 +479,8 @@ mod tests {
         let samples = balanced_samples(40);
         let (result, scorer, calibrator) = optimize(&samples);
 
-        // 4^7 = 16384 combinations in the default grid.
-        assert_eq!(result.grid_search_combos, 16384);
+        // 4^6 = 4096 combinations in the default grid.
+        assert_eq!(result.grid_search_combos, 4096);
         assert_eq!(result.sgd_epochs, 100);
         assert!(result.calibrated);
 

@@ -27,8 +27,6 @@ pub mod org;
 pub mod db;
 
 pub use client::HfClient;
-#[cfg(feature = "sqlite")]
-pub use db::HfDb;
 pub use error::Error;
 pub use org::OrgScanner;
 pub use types::*;

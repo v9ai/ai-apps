@@ -13,24 +13,20 @@ export function Hero({
     wordCount >= 1000 ? `${Math.round(wordCount / 1000)}K+` : String(wordCount);
 
   return (
-    <section className="hero" aria-label="Hero">
-      <div className="hero-glow" aria-hidden="true" />
-      <div className="hero-grid-bg" aria-hidden="true" />
+    <section className="hero">
+      <div className="hero-glow" />
+      <div className="hero-grid-bg" />
       <div className="hero-content">
-        <p className="hero-kicker">
-          <span className="hero-badge">100% Free</span>
-          From Zero to AI Engineer
-        </p>
+        <p className="hero-kicker">From Zero to AI Engineer</p>
         <h1 className="hero-title">
           Your Deep-Dive into{" "}
           <span className="hero-title-accent">AI Engineering</span>
         </h1>
         <p className="hero-subtitle">
-          Master evals, RAG, agents, fine-tuning &amp; production AI systems
-          — {lessonCount} hands-on lessons, {wordLabel} words of practical depth.
-        </p>
-        <p className="hero-supporting">
-          Built for junior engineers ready to go deep across {domainCount} skill areas.
+          {lessonCount} hands-on lessons across {domainCount} skill areas
+          — {wordLabel} words of practical knowledge covering evals, RAG, agents,
+          fine-tuning, prompting &amp; production AI systems. Built for junior
+          engineers ready to go deep.
         </p>
         <div className="hero-stats">
           <div className="hero-stat">
@@ -50,19 +46,11 @@ export function Hero({
             <span className="hero-stat-label">Words</span>
           </div>
         </div>
-        <div className="hero-cta-group">
-          <a href="#lessons" className="hero-cta hero-cta-primary">
-            Start Learning
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 3v10M4 9l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </a>
-          <a href="#lessons" className="hero-cta hero-cta-ghost">
-            Browse Curriculum
-          </a>
-        </div>
+        <a href="#lessons" className="hero-cta">
+          Start Learning ↓
+        </a>
       </div>
-      <div className="hero-bottom-line" aria-hidden="true" />
+      <div className="hero-bottom-line" />
     </section>
   );
 }
