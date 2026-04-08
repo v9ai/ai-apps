@@ -11,7 +11,8 @@ import {
   CheckCircledIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useCountUp } from "@/hooks/use-count-up";
 
 /**
  * LANDING HERO — Agentic Lead Gen
@@ -33,52 +34,7 @@ import { useEffect, useRef, useState } from "react";
 /*  Animated stat counter: counts up from 0 on scroll into view       */
 /* ------------------------------------------------------------------ */
 function AnimatedStat({ value, label, context }: { value: string; label: string; context?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  const [display, setDisplay] = useState(value);
-
-  const numericMatch = value.replace(/,/g, "").match(/^(\d+)(\D*)$/);
-  const target = numericMatch ? parseInt(numericMatch[1], 10) : 0;
-  const suffix = numericMatch ? numericMatch[2] : "";
-  const hasCommas = value.includes(",");
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.3 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!visible || !target) return;
-    const duration = 1200;
-    const startTime = performance.now();
-
-    function formatNum(n: number): string {
-      if (hasCommas) return n.toLocaleString("en-US");
-      return String(n);
-    }
-
-    function tick(now: number) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = Math.round(eased * target);
-      setDisplay(formatNum(current) + suffix);
-      if (progress < 1) requestAnimationFrame(tick);
-    }
-
-    requestAnimationFrame(tick);
-  }, [visible, target, suffix, hasCommas]);
+  const { ref, display, visible } = useCountUp(value);
 
   return (
     <div

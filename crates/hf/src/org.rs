@@ -1659,7 +1659,7 @@ tags:
         );
 
         assert_eq!(maturity.effort_level, EffortLevel::Trivial,
-            "SalesLoft model should be classified as Trivial, got {:?}", maturity.effort_level);
+            "Trivial cookbook model should be classified as Trivial, got {:?}", maturity.effort_level);
         assert!(maturity.boilerplate_ratio > 0.5);
         assert_eq!(maturity.downloads, 0);
         assert_eq!(maturity.generic_dataset.as_deref(), Some("UltraFeedback"));
@@ -1755,7 +1755,7 @@ tags:
 
     #[test]
     fn sales_general_from_platform_brand() {
-        let signals = OrgScanner::detect_sales_signals("salesloft/some-model", "", &[]);
+        let signals = OrgScanner::detect_sales_signals("hubspot/some-model", "", &[]);
         assert_eq!(signals.len(), 1);
         assert_eq!(signals[0].category, SalesCategory::General);
     }
