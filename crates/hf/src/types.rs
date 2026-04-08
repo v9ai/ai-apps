@@ -60,7 +60,7 @@ impl fmt::Display for RepoType {
 }
 
 /// Options for listing repos from the HF Hub API.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ListOptions {
     pub repo_type: RepoType,
     /// Sort field: "downloads", "likes", "trending", "created"
@@ -85,7 +85,7 @@ pub struct ListOptions {
     pub library_filter: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FetchRequest {
     pub repo_id: String,
     pub repo_type: RepoType,
@@ -155,7 +155,7 @@ pub struct RepoInfo {
     pub extra: serde_json::Value,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SiblingFile {
     #[serde(rename = "rfilename")]
     pub filename: String,
