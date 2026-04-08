@@ -1,5 +1,113 @@
 use serde::{Deserialize, Serialize};
 
+/// Number of features in the logistic regression model.
+///
+/// Layout:
+///   [0]  industry_match       (binary)
+///   [1]  employee_in_range    (binary)
+///   [2]  seniority_match      (binary)
+///   [3]  department_match     (binary)
+///   [4]  tech_norm            (0-1)
+///   [5]  email_norm           (0-1)
+///   [6]  smooth_recency       (exp decay)
+///   [7]  hf_score             (0-1)  — compute_hf_score() composite
+///   [8]  hf_model_depth       (0-1)  — log(1 + models) / log(1 + 20)
+///   [9]  hf_training_depth    (0-1)  — distinct signal types / 5
+///   [10] hf_maturity          (0-1)  — avg effort level ordinal
+///   [11] hf_research          (binary) — has pretraining OR arxiv > 0
+///   [12] hf_sales_relevance   (0-1)  — sales_signals / 3
+pub const FEATURE_COUNT: usize = 13;
+
+// ── HuggingFace company-level signals ────────────────────────────────────────
+
+/// Pre-computed HF signals for a company, derived from an HF org profile.
+/// All values are normalized to [0, 1] for direct use as ML features.
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+pub struct HfCompanySignals {
+    /// Composite HF score (0-1), from `compute_hf_score()`.
+    pub hf_score: f32,
+    /// log(1 + model_count) / log(1 + 20), capped at 1.0.
+    pub model_depth: f32,
+    /// Distinct training signal types / 5, capped at 1.0.
+    pub training_depth: f32,
+    /// Average model maturity ordinal (Production=1.0 … Trivial=0.15).
+    pub maturity: f32,
+    /// 1.0 if org has pre-training evidence OR arxiv papers, else 0.0.
+    pub research: f32,
+    /// sales_signals.len() / 3, capped at 1.0.
+    pub sales_relevance: f32,
+}
+
+impl HfCompanySignals {
+    /// Build signals from raw org-level counts (no hf crate dependency needed).
+    pub fn from_raw(
+        hf_score: f32,
+        model_count: usize,
+        training_signal_types: usize,
+        avg_maturity: f32,
+        has_pretraining: bool,
+        arxiv_count: usize,
+        sales_signal_count: usize,
+    ) -> Self {
+        Self {
+            hf_score: hf_score.clamp(0.0, 1.0),
+            model_depth: ((1.0 + model_count as f32).ln() / (1.0 + 20.0_f32).ln()).min(1.0),
+            training_depth: (training_signal_types as f32 / 5.0).min(1.0),
+            maturity: avg_maturity.clamp(0.0, 1.0),
+            research: if has_pretraining || arxiv_count > 0 { 1.0 } else { 0.0 },
+            sales_relevance: (sales_signal_count as f32 / 3.0).min(1.0),
+        }
+    }
+}
+
+/// Build `HfCompanySignals` directly from an `hf::OrgProfile`.
+#[cfg(feature = "kernel-hf")]
+impl HfCompanySignals {
+    pub fn from_org_profile(profile: &hf::OrgProfile) -> Self {
+        use std::collections::HashSet;
+
+        let hf_score = hf::OrgScanner::compute_hf_score(profile);
+
+        let signal_types: HashSet<_> = profile
+            .training_signals
+            .iter()
+            .map(|s| std::mem::discriminant(&s.signal_type))
+            .collect();
+
+        let has_pretraining = profile
+            .training_signals
+            .iter()
+            .any(|s| s.signal_type == hf::TrainingSignalType::PreTraining);
+
+        let avg_maturity = if profile.model_maturity.is_empty() {
+            0.0
+        } else {
+            let sum: f32 = profile
+                .model_maturity
+                .iter()
+                .map(|m| match m.effort_level {
+                    hf::EffortLevel::Production => 1.0,
+                    hf::EffortLevel::Research => 0.85,
+                    hf::EffortLevel::Moderate => 0.7,
+                    hf::EffortLevel::Experiment => 0.35,
+                    hf::EffortLevel::Trivial => 0.15,
+                })
+                .sum();
+            sum / profile.model_maturity.len() as f32
+        };
+
+        Self::from_raw(
+            hf_score,
+            profile.models.len(),
+            signal_types.len(),
+            avg_maturity,
+            has_pretraining,
+            profile.arxiv_links.len(),
+            profile.sales_signals.len(),
+        )
+    }
+}
+
 /// ICP matching criteria — defines what signals to look for in contact records.
 pub struct IcpMatcher {
     /// Target industries (lowercase). A contact's industry matches if any substring matches.
@@ -79,7 +187,12 @@ pub struct IcpProfile {
     pub department_weight: f32,  // default 15
     pub tech_weight: f32,        // default 10 (0-10 scale input)
     pub email_weight: f32,       // default 5
+    /// HuggingFace composite signal weight (0-1 input).
+    #[serde(default = "default_hf_weight")]
+    pub hf_weight: f32,          // default 15
 }
+
+fn default_hf_weight() -> f32 { 15.0 }
 
 impl IcpProfile {
     /// Load weights from a JSON file, falling back to defaults on any error.
@@ -143,6 +256,14 @@ pub struct ContactBatch {
     // Semantic embedding features (from BGE cosine similarity)
     pub semantic_icp_score: [f32; 256], // cosine(company_emb, icp_emb), 0.0 if unavailable
 
+    // HuggingFace company-level signals (same value for all contacts from same company)
+    pub hf_score: [f32; 256],
+    pub hf_model_depth: [f32; 256],
+    pub hf_training_depth: [f32; 256],
+    pub hf_maturity: [f32; 256],
+    pub hf_research: [f32; 256],
+    pub hf_sales_relevance: [f32; 256],
+
     // Output
     pub scores: [f32; 256],
 
@@ -153,6 +274,16 @@ impl ContactBatch {
     pub fn new() -> Self {
         // Safety: all-zeros is valid for this struct
         unsafe { std::mem::zeroed() }
+    }
+
+    /// Populate HuggingFace signals for a batch slot (company-level, same for all contacts).
+    pub fn populate_hf_slot(&mut self, idx: usize, signals: &HfCompanySignals) {
+        self.hf_score[idx] = signals.hf_score;
+        self.hf_model_depth[idx] = signals.model_depth;
+        self.hf_training_depth[idx] = signals.training_depth;
+        self.hf_maturity[idx] = signals.maturity;
+        self.hf_research[idx] = signals.research;
+        self.hf_sales_relevance[idx] = signals.sales_relevance;
     }
 
     /// Compute ICP fit scores for the entire batch using default weights.
