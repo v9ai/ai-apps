@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Container, Theme } from "@radix-ui/themes";
 import { ApolloProvider } from "./providers/ApolloProvider";
 import { Header } from "./components/Header";
+import { GlobalJournalShortcut } from "./components/GlobalJournalShortcut";
 
 export const metadata: Metadata = {
   title: "ResearchThera.com",
@@ -26,6 +27,7 @@ export default function RootLayout({
         >
           <ApolloProvider>
             <Header />
+            <GlobalJournalShortcut />
             <Container size="3" pb="6" px={{ initial: "3", md: "5" }}>
               {children}
             </Container>

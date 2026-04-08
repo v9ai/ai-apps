@@ -36,6 +36,8 @@ interface EditEntry {
 
 interface AddJournalEntryButtonProps {
   editEntry?: EditEntry;
+  controlledOpen?: boolean;
+  onControlledOpenChange?: (open: boolean) => void;
 }
 
 const today = () => new Date().toISOString().split("T")[0];
@@ -52,13 +54,18 @@ const defaultForm = () => ({
 
 export default function AddJournalEntryButton({
   editEntry,
+  controlledOpen,
+  onControlledOpenChange,
 }: AddJournalEntryButtonProps) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const isSignedIn = !!session?.user;
   const isEdit = !!editEntry;
+  const isControlled = controlledOpen !== undefined;
 
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? onControlledOpenChange! : setInternalOpen;
   const [form, setForm] = useState(defaultForm);
   const [error, setError] = useState<string | null>(null);
 
@@ -189,18 +196,20 @@ export default function AddJournalEntryButton({
         }
       }}
     >
-      <Dialog.Trigger>
-        {isEdit ? (
-          <Button variant="ghost" size="2" style={{ cursor: "pointer" }}>
-            <Pencil1Icon width="16" height="16" />
-          </Button>
-        ) : (
-          <Button size="3">
-            <PlusIcon width="16" height="16" />
-            New Entry
-          </Button>
-        )}
-      </Dialog.Trigger>
+      {!isControlled && (
+        <Dialog.Trigger>
+          {isEdit ? (
+            <Button variant="ghost" size="2" style={{ cursor: "pointer" }}>
+              <Pencil1Icon width="16" height="16" />
+            </Button>
+          ) : (
+            <Button size="3">
+              <PlusIcon width="16" height="16" />
+              New Entry
+            </Button>
+          )}
+        </Dialog.Trigger>
+      )}
 
       <Dialog.Content style={{ maxWidth: 500 }}>
         <Dialog.Title>
