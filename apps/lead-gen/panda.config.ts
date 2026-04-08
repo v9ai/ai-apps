@@ -19,8 +19,202 @@ export default defineConfig({
     utilities: "panda_utilities",
   },
 
+  // ---- Global CSS (base body styles) ----
+  globalCss: {
+    body: {
+      fontFamily: "sans",
+      fontSize: "base",
+      lineHeight: "relaxed",
+      fontVariationSettings: '"wght" 420',
+      letterSpacing: "normal",
+      color: "ui.body",
+      background: "ui.bg",
+      WebkitFontSmoothing: "antialiased",
+      MozOsxFontSmoothing: "grayscale",
+      textRendering: "optimizeLegibility",
+    },
+  },
+
+  // ---- Breakpoints ----
+  conditions: {
+    extend: {
+      sm: "@media (min-width: 640px)",
+      md: "@media (min-width: 968px)",
+      lg: "@media (min-width: 1200px)",
+      xl: "@media (min-width: 1440px)",
+    },
+  },
+
   theme: {
     extend: {
+      // ---- Breakpoints ----
+      breakpoints: {
+        sm: "640px",
+        md: "968px",
+        lg: "1200px",
+        xl: "1440px",
+      },
+
+      // ---- Keyframes ----
+      keyframes: {
+        mask: {
+          "0%": {
+            maskImage:
+              "linear-gradient(60deg, #000 25%, rgba(0, 0, 0, 0.4) 50%, #000 75%)",
+            maskSize: "400%",
+            maskPosition: "100%",
+          },
+          "70%, 100%": {
+            maskImage:
+              "linear-gradient(60deg, #000 25%, rgba(0, 0, 0, 0.4) 50%, #000 75%)",
+            maskSize: "400%",
+            maskPosition: "0",
+          },
+        },
+        pulse: {
+          "0%, 100%": { opacity: "0.3", transform: "scale(0.85)" },
+          "50%": { opacity: "1", transform: "scale(1)" },
+        },
+        "pipeline-card-enter": {
+          from: { opacity: "0", transform: "translateY(12px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "scanline-sweep": {
+          "0%": { left: "-100%", opacity: "1" },
+          "100%": { left: "100%", opacity: "1" },
+        },
+        "stat-slot-up": {
+          from: {
+            opacity: "0",
+            transform: "translateY(16px)",
+            filter: "blur(4px)",
+          },
+          to: {
+            opacity: "1",
+            transform: "translateY(0)",
+            filter: "blur(0)",
+          },
+        },
+        "arrow-flow-pulse": {
+          "0%": { opacity: "0.3", transform: "translateX(0)" },
+          "50%": { opacity: "1", transform: "translateX(3px)" },
+          "100%": { opacity: "0.3", transform: "translateX(0)" },
+        },
+        "badge-scan": {
+          "0%": { left: "-30%" },
+          "100%": { left: "130%" },
+        },
+        "headline-word-enter": {
+          from: {
+            opacity: "0",
+            transform: "translateY(8px)",
+            filter: "blur(2px)",
+          },
+          to: {
+            opacity: "1",
+            transform: "translateY(0)",
+            filter: "blur(0)",
+          },
+        },
+        "toolbar-enter": {
+          from: { opacity: "0", transform: "translateY(4px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "toolbar-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
+        "toolbar-spin": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
+        "tab-fade-in": {
+          from: { opacity: "0", transform: "translateY(4px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+
+      // ---- Text Styles ----
+      textStyles: {
+        heading1: {
+          value: {
+            fontSize: "4xl",
+            fontWeight: "bold",
+            lineHeight: "tight",
+            letterSpacing: "tighter",
+            color: "ui.heading",
+          },
+        },
+        heading2: {
+          value: {
+            fontSize: "2xl",
+            fontWeight: "bold",
+            lineHeight: "snug",
+            letterSpacing: "tight",
+            color: "ui.heading",
+          },
+        },
+        heading3: {
+          value: {
+            fontSize: "lg",
+            fontWeight: "semibold",
+            lineHeight: "compact",
+            letterSpacing: "snug",
+            color: "ui.heading",
+          },
+        },
+        body: {
+          value: {
+            fontSize: "base",
+            fontWeight: "normal",
+            lineHeight: "normal",
+            letterSpacing: "normal",
+            color: "ui.body",
+          },
+        },
+        caption: {
+          value: {
+            fontSize: "sm",
+            fontWeight: "normal",
+            lineHeight: "normal",
+            letterSpacing: "normal",
+            color: "ui.secondary",
+          },
+        },
+        label: {
+          value: {
+            fontSize: "2xs",
+            fontWeight: "medium",
+            letterSpacing: "editorial",
+            textTransform: "uppercase",
+            color: "ui.dim",
+          },
+        },
+        mono: {
+          value: {
+            fontFamily: "mono",
+            fontSize: "sm",
+            lineHeight: "normal",
+          },
+        },
+        rowTitle: {
+          value: {
+            fontSize: "md",
+            fontWeight: "semibold",
+            lineHeight: "compact",
+            color: "ui.heading",
+          },
+        },
+        rowMeta: {
+          value: {
+            fontSize: "sm",
+            fontWeight: "normal",
+            letterSpacing: "normal",
+            color: "ui.secondary",
+          },
+        },
+      },
+
       tokens: {
         colors: {
           // ---- page background ----
@@ -42,6 +236,10 @@ export default defineConfig({
           "ui.tertiary": { value: "#737376" },
           "ui.dim": { value: "#5A5A5E" },
 
+          // ---- overlays ----
+          "ui.overlay": { value: "rgba(10, 10, 15, 0.85)" },
+          "ui.overlayHeavy": { value: "rgba(10, 10, 15, 0.95)" },
+
           // ---- accent (Radix indigo dark) ----
           "accent.primary": { value: "#3E63DD" },
           "accent.hover": { value: "#4D72E5" },
@@ -53,6 +251,14 @@ export default defineConfig({
           "status.positive": { value: "#30A46C" },
           "status.positiveHover": { value: "#2B9362" },
           "status.positiveDim": { value: "rgba(48, 164, 108, 0.15)" },
+
+          // ---- status: warning ----
+          "status.warning": { value: "#F5A623" },
+          "status.warningDim": { value: "rgba(245, 166, 35, 0.15)" },
+
+          // ---- status: negative ----
+          "status.negative": { value: "#E5484D" },
+          "status.negativeDim": { value: "rgba(229, 72, 77, 0.15)" },
 
           // ---- white-alpha scale ----
           "whiteAlpha.3": { value: "rgba(255, 255, 255, 0.03)" },
@@ -119,6 +325,21 @@ export default defineConfig({
         },
 
         spacing: {
+          "1": { value: "4px" },
+          "2": { value: "8px" },
+          "3": { value: "12px" },
+          "4": { value: "16px" },
+          "5": { value: "20px" },
+          "6": { value: "24px" },
+          "8": { value: "32px" },
+          "10": { value: "40px" },
+          "12": { value: "48px" },
+          "16": { value: "64px" },
+          rowHeight: { value: "64px" },
+          topbarHeight: { value: "36px" },
+          navHeight: { value: "48px" },
+          sidebarWidth: { value: "200px" },
+          sidebarCollapsed: { value: "56px" },
           section: { value: "64px" },
           sectionMobile: { value: "40px" },
         },
@@ -142,6 +363,15 @@ export default defineConfig({
         easings: {
           smooth: { value: "cubic-bezier(0.25, 0.46, 0.45, 0.94)" },
           expoOut: { value: "cubic-bezier(0.16, 1, 0.30, 1)" },
+        },
+
+        zIndex: {
+          base: { value: 0 },
+          sticky: { value: 10 },
+          overlay: { value: 40 },
+          modal: { value: 50 },
+          popover: { value: 60 },
+          toast: { value: 70 },
         },
       },
     },
