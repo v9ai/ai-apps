@@ -41,6 +41,7 @@ export function Search({ groups }: Props) {
   const [searching, setSearching] = useState(false);
   const [diffFilter, setDiffFilter] = useState<DifficultyLevel | "all">("all");
   const [isDeepSearch, setIsDeepSearch] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -108,37 +109,62 @@ export function Search({ groups }: Props) {
 
   return (
     <>
-      <div className="yc-search">
+      <div className={`yc-search${isFocused ? " yc-search--focused" : ""}`}>
         <input
           ref={inputRef}
           type="text"
           aria-label="Search lessons"
-          placeholder={isDeepSearch ? "Deep search with AI embeddings..." : "Search lessons, topics, concepts..."}
+          placeholder={isDeepSearch ? "Semantic search across all content..." : "Search lessons, topics, concepts..."}
           value={query}
           onChange={handleChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
         />
-        <button
-          className={`yc-search-mode${isDeepSearch ? " yc-search-mode--active" : ""}`}
-          onClick={() => {
-            setIsDeepSearch((v) => !v);
-            if (query.trim().length >= 2) {
-              clearTimeout(timerRef.current);
-              timerRef.current = setTimeout(() => doSearch(query), 100);
-            }
-          }}
-          title={isDeepSearch ? "Deep search (pgvector + FTS)" : "Keyword search (FTS only)"}
-        >
-          {isDeepSearch ? "Deep" : "FTS"}
-        </button>
-        {!hasQuery && <span className="yc-search-hint">⌘K</span>}
-        {hasQuery && results.length > 0 && (
-          <span className="yc-search-count">{results.length}</span>
-        )}
-        {query.length > 0 && (
-          <button className="yc-search-clear" aria-label="Clear search" onClick={handleClear}>
-            ✕
-          </button>
-        )}
+        <div className="yc-search-controls">
+          <div className="yc-search-toggle" role="radiogroup" aria-label="Search mode">
+            <button
+              className={`yc-search-toggle-btn${!isDeepSearch ? " yc-search-toggle-btn--active" : ""}`}
+              role="radio"
+              aria-checked={!isDeepSearch}
+              onClick={() => {
+                if (isDeepSearch) {
+                  setIsDeepSearch(false);
+                  if (query.trim().length >= 2) {
+                    clearTimeout(timerRef.current);
+                    timerRef.current = setTimeout(() => doSearch(query), 100);
+                  }
+                }
+              }}
+            >
+              Keyword
+            </button>
+            <button
+              className={`yc-search-toggle-btn${isDeepSearch ? " yc-search-toggle-btn--active" : ""}`}
+              role="radio"
+              aria-checked={isDeepSearch}
+              onClick={() => {
+                if (!isDeepSearch) {
+                  setIsDeepSearch(true);
+                  if (query.trim().length >= 2) {
+                    clearTimeout(timerRef.current);
+                    timerRef.current = setTimeout(() => doSearch(query), 100);
+                  }
+                }
+              }}
+            >
+              AI Semantic
+            </button>
+          </div>
+          {hasQuery && results.length > 0 && (
+            <span className="yc-search-count">{results.length} result{results.length !== 1 ? "s" : ""}</span>
+          )}
+          {!hasQuery && !isFocused && <kbd className="yc-search-kbd">&#8984;K</kbd>}
+          {query.length > 0 && (
+            <button className="yc-search-clear" aria-label="Clear search" onClick={handleClear}>
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {!hasQuery && (

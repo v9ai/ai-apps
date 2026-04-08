@@ -231,6 +231,9 @@ body {
   margin: 0 auto;
 }
 .hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -238,6 +241,26 @@ body {
   color: var(--accent-11);
   margin-top: 0;
   margin-bottom: 16px;
+}
+.hero-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 99px;
+  background: linear-gradient(135deg, var(--accent-9), #06b6d4);
+  color: #fff;
+  line-height: 1.4;
+}
+.hero-supporting {
+  font-size: 13px;
+  color: var(--gray-8);
+  margin: 8px auto 0;
+  max-width: 420px;
+  line-height: 1.5;
+  position: relative;
 }
 .hero-title-accent {
   background: linear-gradient(135deg, var(--accent-9), #06b6d4);
