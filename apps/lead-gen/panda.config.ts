@@ -351,6 +351,11 @@ export default defineConfig({
         shadows: {
           card: { value: "0 1px 2px rgba(0, 0, 0, 0.30)" },
           navBorder: { value: "0 1px 0 rgba(255, 255, 255, 0.08)" },
+          sm: { value: "0 1px 2px rgba(0,0,0,0.3)" },
+          md: { value: "0 4px 12px rgba(0,0,0,0.4)" },
+          lg: { value: "0 8px 24px rgba(0,0,0,0.5)" },
+          glow: { value: "0 0 20px rgba(62,99,221,0.3)" },
+          glowStrong: { value: "0 0 40px rgba(62,99,221,0.4)" },
         },
 
         radii: {
