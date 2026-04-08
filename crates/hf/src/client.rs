@@ -436,11 +436,13 @@ impl HfClient {
 
 // ── Internal helpers ───────────────────────────────────────────
 
-async fn fetch_json<T: serde::de::DeserializeOwned>(
+/// Send a GET request and check the response status.
+/// Returns the raw `Response` on success, or an appropriate `Error` on 429/4xx/5xx.
+async fn send_checked(
     client: &reqwest::Client,
     url: &str,
     repo_id: &str,
-) -> Result<T, Error> {
+) -> Result<reqwest::Response, Error> {
     let resp = client.get(url).send().await.map_err(|e| Error::Http {
         repo: repo_id.to_owned(),
         source: e,
@@ -448,12 +450,7 @@ async fn fetch_json<T: serde::de::DeserializeOwned>(
 
     let status = resp.status();
     if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
-        let retry = resp
-            .headers()
-            .get("retry-after")
-            .and_then(|v| v.to_str().ok())
-            .and_then(|s| s.parse().ok())
-            .unwrap_or(60);
+        let retry = parse_retry_after(&resp);
         return Err(Error::RateLimited { retry_after_secs: retry });
     }
     if !status.is_success() {
@@ -464,12 +461,34 @@ async fn fetch_json<T: serde::de::DeserializeOwned>(
             body,
         });
     }
+    Ok(resp)
+}
 
+/// Parse `retry-after` header value, defaulting to 60s if missing or non-numeric.
+fn parse_retry_after(resp: &reqwest::Response) -> u64 {
+    resp.headers()
+        .get("retry-after")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| match s.parse::<u64>() {
+            Ok(n) => Some(n),
+            Err(_) => {
+                warn!(value = s, "non-numeric retry-after header, defaulting to 60s");
+                None
+            }
+        })
+        .unwrap_or(60)
+}
+
+async fn fetch_json<T: serde::de::DeserializeOwned>(
+    client: &reqwest::Client,
+    url: &str,
+    repo_id: &str,
+) -> Result<T, Error> {
+    let resp = send_checked(client, url, repo_id).await?;
     let bytes = resp.bytes().await.map_err(|e| Error::Http {
         repo: repo_id.to_owned(),
         source: e,
     })?;
-
     serde_json::from_slice(&bytes).map_err(|e| Error::Json {
         repo: repo_id.to_owned(),
         source: e,
@@ -481,30 +500,7 @@ async fn fetch_text(
     url: &str,
     repo_id: &str,
 ) -> Result<String, Error> {
-    let resp = client.get(url).send().await.map_err(|e| Error::Http {
-        repo: repo_id.to_owned(),
-        source: e,
-    })?;
-
-    let status = resp.status();
-    if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
-        let retry = resp
-            .headers()
-            .get("retry-after")
-            .and_then(|v| v.to_str().ok())
-            .and_then(|s| s.parse().ok())
-            .unwrap_or(60);
-        return Err(Error::RateLimited { retry_after_secs: retry });
-    }
-    if !status.is_success() {
-        let body = resp.text().await.unwrap_or_default();
-        return Err(Error::Api {
-            repo: repo_id.to_owned(),
-            status: status.as_u16(),
-            body,
-        });
-    }
-
+    let resp = send_checked(client, url, repo_id).await?;
     resp.text().await.map_err(|e| Error::Http {
         repo: repo_id.to_owned(),
         source: e,
