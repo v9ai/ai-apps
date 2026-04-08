@@ -67,27 +67,16 @@ impl Rng {
 // Contact label generation
 // ---------------------------------------------------------------------------
 
-/// Generate synthetic ICP contact training data.
+/// Generate synthetic ICP contact training data (44-feature layout).
 ///
 /// Creates `count` labeled samples — roughly half positive (ICP match, label
 /// 1.0) and half negative (label 0.0) — with realistic feature distributions
 /// and deliberate noise/overlap so the boundary is not trivially separable.
 ///
-/// Feature vector layout (matches `LabeledSample.features`):
-///   [0]  industry_match      binary
-///   [1]  employee_in_range   binary
-///   [2]  seniority_match     binary
-///   [3]  department_match    binary
-///   [4]  tech_norm           continuous [0, 1]
-///   [5]  email_norm          continuous [0, 1]
-///   [6]  recency_smooth      continuous [0, 1]
-///   [7]  hf_score            continuous [0, 1]
-///   [8]  hf_model_depth      continuous [0, 1]
-///   [9]  hf_training_depth   continuous [0, 1]
-///   [10] hf_maturity         continuous [0, 1]
-///   [11] hf_research         binary
-///   [12] hf_sales_relevance  continuous [0, 1]
+/// See `FEATURE_COUNT` doc comment in `scoring.rs` for the full 44-feature layout.
 pub fn generate_contact_labels(count: usize) -> Vec<LabeledSample> {
+    use super::scoring::FEATURE_COUNT;
+
     let mut rng = Rng::new(0xDEAD_BEEF_1234_5678);
     let mut samples = Vec::with_capacity(count);
 
@@ -97,84 +86,148 @@ pub fn generate_contact_labels(count: usize) -> Vec<LabeledSample> {
 
     // --- Positive examples (ICP match) ------------------------------------
     for _ in 0..positives {
+        let mut features = [0.0f32; FEATURE_COUNT];
         // Add noise: ~15 % of positives have one weak signal to blur boundary
         let noise = rng.next_bool(0.15);
 
-        let industry_match = if noise { rng.binary_feature(0.6) } else { rng.binary_feature(0.88) };
-        let employee_in_range = rng.binary_feature(0.82);
-        let seniority_match = if noise { rng.binary_feature(0.55) } else { rng.binary_feature(0.80) };
-        let department_match = rng.binary_feature(0.75);
-        let tech_norm = rng.next_range(0.5, 1.0);
-        let email_norm = rng.next_range(0.5, 1.0);
-        let recency_smooth = rng.next_range(0.5, 1.0);
+        // Base contact (0-6)
+        features[0] = if noise { rng.binary_feature(0.6) } else { rng.binary_feature(0.88) }; // industry
+        features[1] = rng.binary_feature(0.82); // employee
+        features[2] = if noise { rng.binary_feature(0.55) } else { rng.binary_feature(0.80) }; // seniority
+        features[3] = rng.binary_feature(0.75); // department
+        features[4] = rng.next_range(0.5, 1.0); // tech_norm
+        features[5] = rng.next_range(0.5, 1.0); // email_norm
+        features[6] = rng.next_range(0.5, 1.0); // recency_smooth
 
-        // HF features — positive leads correlate with AI-active HF orgs
-        let hf_score = rng.next_range(0.4, 1.0);
-        let hf_model_depth = rng.next_range(0.3, 1.0);
-        let hf_training_depth = rng.next_range(0.2, 1.0);
-        let hf_maturity = rng.next_range(0.5, 1.0);
-        let hf_research = rng.binary_feature(0.6);
-        let hf_sales_relevance = rng.next_range(0.1, 0.8);
+        // HF composite + depth (7-9)
+        features[7] = rng.next_range(0.4, 1.0);  // hf_score
+        features[8] = rng.next_range(0.3, 1.0);  // hf_model_depth
+        features[9] = rng.next_range(0.2, 1.0);  // hf_training_depth
 
-        samples.push(LabeledSample {
-            features: [
-                industry_match,
-                employee_in_range,
-                seniority_match,
-                department_match,
-                tech_norm,
-                email_norm,
-                recency_smooth,
-                hf_score,
-                hf_model_depth,
-                hf_training_depth,
-                hf_maturity,
-                hf_research,
-                hf_sales_relevance,
-            ],
-            label: 1.0,
-        });
+        // Maturity decomposed (10-14)
+        features[10] = rng.next_range(0.7, 1.0);  // max_effort
+        features[11] = rng.next_range(0.3, 0.9);  // production_ratio
+        features[12] = rng.next_range(0.5, 1.0);  // dl_weighted_maturity
+        features[13] = rng.next_range(0.0, 0.8);  // alignment_diversity
+        features[14] = rng.next_range(0.3, 0.8);  // maturity_trend
+
+        // Research (15)
+        features[15] = rng.binary_feature(0.6);
+
+        // Sales decomposed (16-19)
+        features[16] = rng.binary_feature(0.3);   // sales_b2b_core
+        features[17] = rng.binary_feature(0.25);  // sales_outreach
+        features[18] = rng.next_range(0.1, 0.6);  // sales_funnel
+        features[19] = rng.binary_feature(0.15);  // sales_platform
+
+        // Training signals (20-23)
+        features[20] = rng.next_range(0.1, 0.7);  // research_intensity
+        features[21] = rng.next_range(0.2, 0.8);  // infra_sophistication
+        features[22] = rng.next_range(0.3, 0.9);  // signal_breadth
+        features[23] = rng.next_range(0.0, 0.6);  // domain_nlp_focus
+
+        // Architecture diversity (24-28)
+        features[24] = rng.next_range(0.3, 0.9);  // library_sophistication
+        features[25] = rng.next_range(0.2, 0.8);  // pipeline_diversity
+        features[26] = rng.next_range(0.0, 0.5);  // custom_arch_ratio
+        features[27] = rng.next_range(0.1, 0.7);  // framework_diversity
+        features[28] = rng.next_range(0.0, 0.3);  // moe_ratio
+
+        // Download signals (29-33)
+        features[29] = rng.next_range(0.3, 1.0);  // download_scale
+        features[30] = rng.next_range(0.2, 0.8);  // download_per_model
+        features[31] = rng.next_range(0.2, 0.6);  // top_model_dominance
+        features[32] = rng.next_range(0.01, 0.1); // likes_per_download
+        features[33] = rng.next_range(0.3, 0.9);  // download_breadth
+
+        // Temporal (34-37)
+        features[34] = rng.next_range(0.5, 1.0);  // recency
+        features[35] = rng.next_range(0.3, 1.0);  // acceleration
+        features[36] = rng.next_range(0.2, 1.0);  // longevity
+        features[37] = rng.next_range(0.1, 0.6);  // burst_intensity
+
+        // Cross-signal interactions (38-43)
+        features[38] = features[15] * features[2];  // research × seniority
+        features[39] = features[7] * features[4];   // score × tech
+        features[40] = features[9] * features[11];  // training × production_ratio
+        features[41] = features[8] * features[0];   // depth × industry
+        features[42] = features[18] * features[3];  // sales_funnel × department
+        features[43] = if features[7] > 0.6 { 1.0 } else { 0.0 }; // hf_threshold
+
+        samples.push(LabeledSample { features, label: 1.0 });
     }
 
     // --- Negative examples (not ICP match) --------------------------------
     for _ in 0..negatives {
+        let mut features = [0.0f32; FEATURE_COUNT];
         // Add noise: ~10 % of negatives look almost positive
         let noise = rng.next_bool(0.10);
 
-        let industry_match = if noise { rng.binary_feature(0.55) } else { rng.binary_feature(0.18) };
-        let employee_in_range = rng.binary_feature(0.30);
-        let seniority_match = if noise { rng.binary_feature(0.50) } else { rng.binary_feature(0.15) };
-        let department_match = rng.binary_feature(0.28);
-        let tech_norm = rng.next_range(0.0, 0.35);
-        let email_norm = rng.next_range(0.0, 0.50);
-        let recency_smooth = rng.next_range(0.05, 0.50);
+        // Base contact (0-6)
+        features[0] = if noise { rng.binary_feature(0.55) } else { rng.binary_feature(0.18) }; // industry
+        features[1] = rng.binary_feature(0.30); // employee
+        features[2] = if noise { rng.binary_feature(0.50) } else { rng.binary_feature(0.15) }; // seniority
+        features[3] = rng.binary_feature(0.28); // department
+        features[4] = rng.next_range(0.0, 0.35); // tech_norm
+        features[5] = rng.next_range(0.0, 0.50); // email_norm
+        features[6] = rng.next_range(0.05, 0.50); // recency_smooth
 
-        // HF features — negative leads have low/zero HF presence
-        let hf_score = rng.next_range(0.0, 0.3);
-        let hf_model_depth = rng.next_range(0.0, 0.2);
-        let hf_training_depth = rng.next_range(0.0, 0.15);
-        let hf_maturity = rng.next_range(0.0, 0.4);
-        let hf_research = rng.binary_feature(0.1);
-        let hf_sales_relevance = rng.next_range(0.0, 0.2);
+        // HF composite + depth (7-9) — low/zero HF presence
+        features[7] = rng.next_range(0.0, 0.3);   // hf_score
+        features[8] = rng.next_range(0.0, 0.2);   // hf_model_depth
+        features[9] = rng.next_range(0.0, 0.15);  // hf_training_depth
 
-        samples.push(LabeledSample {
-            features: [
-                industry_match,
-                employee_in_range,
-                seniority_match,
-                department_match,
-                tech_norm,
-                email_norm,
-                recency_smooth,
-                hf_score,
-                hf_model_depth,
-                hf_training_depth,
-                hf_maturity,
-                hf_research,
-                hf_sales_relevance,
-            ],
-            label: 0.0,
-        });
+        // Maturity decomposed (10-14) — low
+        features[10] = rng.next_range(0.0, 0.3);  // max_effort
+        features[11] = rng.next_range(0.0, 0.15); // production_ratio
+        features[12] = rng.next_range(0.0, 0.3);  // dl_weighted_maturity
+        features[13] = rng.next_range(0.0, 0.2);  // alignment_diversity
+        features[14] = rng.next_range(0.2, 0.5);  // maturity_trend (neutral-ish)
+
+        // Research (15) — rare
+        features[15] = rng.binary_feature(0.1);
+
+        // Sales decomposed (16-19) — low
+        features[16] = rng.binary_feature(0.05);  // sales_b2b_core
+        features[17] = rng.binary_feature(0.05);  // sales_outreach
+        features[18] = rng.next_range(0.0, 0.15); // sales_funnel
+        features[19] = rng.binary_feature(0.05);  // sales_platform
+
+        // Training signals (20-23) — low
+        features[20] = rng.next_range(0.0, 0.15); // research_intensity
+        features[21] = rng.next_range(0.0, 0.15); // infra_sophistication
+        features[22] = rng.next_range(0.0, 0.2);  // signal_breadth
+        features[23] = rng.next_range(0.0, 0.15); // domain_nlp_focus
+
+        // Architecture diversity (24-28) — low
+        features[24] = rng.next_range(0.0, 0.2);  // library_sophistication
+        features[25] = rng.next_range(0.0, 0.2);  // pipeline_diversity
+        features[26] = rng.next_range(0.0, 0.1);  // custom_arch_ratio
+        features[27] = rng.next_range(0.0, 0.15); // framework_diversity
+        features[28] = rng.next_range(0.0, 0.05); // moe_ratio
+
+        // Download signals (29-33) — low
+        features[29] = rng.next_range(0.0, 0.2);  // download_scale
+        features[30] = rng.next_range(0.0, 0.15); // download_per_model
+        features[31] = rng.next_range(0.0, 0.3);  // top_model_dominance
+        features[32] = rng.next_range(0.0, 0.02); // likes_per_download
+        features[33] = rng.next_range(0.0, 0.2);  // download_breadth
+
+        // Temporal (34-37) — low/stale
+        features[34] = rng.next_range(0.0, 0.3);  // recency
+        features[35] = rng.next_range(0.0, 0.3);  // acceleration
+        features[36] = rng.next_range(0.0, 0.3);  // longevity
+        features[37] = rng.next_range(0.0, 0.15); // burst_intensity
+
+        // Cross-signal interactions (38-43)
+        features[38] = features[15] * features[2];
+        features[39] = features[7] * features[4];
+        features[40] = features[9] * features[11];
+        features[41] = features[8] * features[0];
+        features[42] = features[18] * features[3];
+        features[43] = if features[7] > 0.6 { 1.0 } else { 0.0 };
+
+        samples.push(LabeledSample { features, label: 0.0 });
     }
 
     samples
