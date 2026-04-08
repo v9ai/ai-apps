@@ -8,7 +8,7 @@ use hf::{
 fn client_constructs_and_types_compose() {
     // Public API: construct client, create typed requests
     let client = HfClient::new(None, 8).unwrap();
-    let _requests = vec![
+    let _requests = [
         FetchRequest::model("meta-llama/Llama-3-8B").with_path("config.json"),
         FetchRequest::dataset("squad").with_revision("v2"),
     ];
