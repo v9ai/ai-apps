@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { CompanyDetailProvider } from "@/components/company-detail-provider";
-import { Container, Spinner, Flex } from "@radix-ui/themes";
+import { css } from "styled-system/css";
+import { Spinner } from "@/components/ui/Spinner";
 
 type Props = {
   params: Promise<{ key: string }>;
@@ -8,15 +9,15 @@ type Props = {
 
 export default async function CompanyPage({ params }: Props) {
   const { key } = await params;
-  
+
   return (
     <Suspense
       fallback={
-        <Container size="4" p="8">
-          <Flex justify="center" align="center" style={{ minHeight: "400px" }}>
-            <Spinner size="3" />
-          </Flex>
-        </Container>
+        <div className={css({ maxWidth: "1200px", mx: "auto", p: "8" })}>
+          <div className={css({ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" })}>
+            <Spinner size={20} />
+          </div>
+        </div>
       }
     >
       <CompanyDetailProvider companyKey={key} />

@@ -8,18 +8,8 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { button } from "@/recipes/button";
-import {
-  Badge,
-  Box,
-  Callout,
-  Card,
-  Container,
-  Flex,
-  Heading,
-  Spinner,
-  Text,
-  TextField,
-} from "@radix-ui/themes";
+import { css } from "styled-system/css";
+import { flex } from "styled-system/patterns";
 import {
   EnvelopeClosedIcon,
   ExclamationTriangleIcon,
@@ -64,14 +54,14 @@ export function ContactsClient() {
 
   if (!isAdmin) {
     return (
-      <Container size="3" p="8">
-        <Callout.Root color="red">
-          <Callout.Icon>
+      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
+        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.9", bg: "red.3" })}>
+          <div className={css({ flexShrink: 0 })}>
             <ExclamationTriangleIcon />
-          </Callout.Icon>
-          <Callout.Text>Access denied. Admin only.</Callout.Text>
-        </Callout.Root>
-      </Container>
+          </div>
+          <span>Access denied. Admin only.</span>
+        </div>
+      </div>
     );
   }
 
@@ -80,54 +70,55 @@ export function ContactsClient() {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
-    <Container size="3" p={{ initial: "4", md: "6" }}>
-      <Flex direction="column" gap="5">
-        <Heading size="6">Contacts</Heading>
+    <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: { base: "4", md: "6" } })}>
+      <div className={flex({ direction: "column", gap: "5" })}>
+        <h2 className={css({ fontSize: "2xl", fontWeight: "bold", color: "ui.heading" })}>Contacts</h2>
 
         {/* Toolbar */}
-        <Flex align="center" justify="between" gap="3" wrap="wrap">
-          <Text size="2" color="gray">
+        <div className={flex({ align: "center", justify: "space-between", gap: "3", wrap: "wrap" })}>
+          <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
             {loading
-              ? "Loading…"
+              ? "Loading\u2026"
               : `${totalCount} contact${totalCount !== 1 ? "s" : ""}`}
-          </Text>
-          <Box style={{ width: 280 }}>
-            <TextField.Root
-              size="2"
-              placeholder="Search contacts…"
-              value={search}
-              onChange={(e) => handleSearch(e.target.value)}
-            >
-              <TextField.Slot>
+          </span>
+          <div style={{ width: 280 }}>
+            <div className={css({ position: "relative" })}>
+              <div className={css({ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "ui.tertiary" })}>
                 <MagnifyingGlassIcon />
-              </TextField.Slot>
-            </TextField.Root>
-          </Box>
-        </Flex>
+              </div>
+              <input
+                className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", pl: "32px", width: "100%", outline: "none", fontSize: "sm", _focus: { borderColor: "accent.primary" } })}
+                placeholder="Search contacts\u2026"
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Contacts list */}
         {loading && contactsList.length === 0 ? (
-          <Flex justify="center" py="6">
-            <Spinner size="3" />
-          </Flex>
+          <div className={flex({ justify: "center", py: "6" })}>
+            <div className={css({ w: "16px", h: "16px", border: "2px solid", borderColor: "ui.border", borderTopColor: "accent.primary", borderRadius: "50%", animation: "spin 0.6s linear infinite" })} />
+          </div>
         ) : contactsList.length === 0 ? (
-          <Callout.Root color="gray" variant="soft">
-            <Callout.Icon>
+          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "ui.border", bg: "ui.surface" })}>
+            <div className={css({ flexShrink: 0 })}>
               <InfoCircledIcon />
-            </Callout.Icon>
-            <Callout.Text>No contacts found.</Callout.Text>
-          </Callout.Root>
+            </div>
+            <span>No contacts found.</span>
+          </div>
         ) : (
-          <Flex direction="column" gap="2">
+          <div className={flex({ direction: "column", gap: "2" })}>
             {contactsList.map((contact) => (
               <ContactCard key={contact.id} contact={contact} />
             ))}
-          </Flex>
+          </div>
         )}
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <Flex justify="center" align="center" gap="3">
+          <div className={flex({ justify: "center", align: "center", gap: "3" })}>
             <button
               className={button({ variant: "ghost", size: "md" })}
               disabled={page === 0}
@@ -136,9 +127,9 @@ export function ContactsClient() {
               <ChevronLeftIcon />
               Previous
             </button>
-            <Text size="2" color="gray">
+            <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
               Page {page + 1} of {totalPages}
-            </Text>
+            </span>
             <button
               className={button({ variant: "ghost", size: "md" })}
               disabled={page >= totalPages - 1}
@@ -147,10 +138,10 @@ export function ContactsClient() {
               Next
               <ChevronRightIcon />
             </button>
-          </Flex>
+          </div>
         )}
-      </Flex>
-    </Container>
+      </div>
+    </div>
   );
 }
 
@@ -160,74 +151,73 @@ function ContactCard({ contact }: { contact: Contact }) {
       href={`/contacts/${contact.id}`}
       style={{ textDecoration: "none", color: "inherit" }}
     >
-      <Card
-        style={{ cursor: "pointer", transition: "box-shadow 0.15s" }}
-        className="contact-card"
+      <div
+        className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3", cursor: "pointer", transition: "box-shadow 0.15s" })}
       >
-        <Box p="3">
-          <Flex align="start" justify="between" gap="3" wrap="wrap">
-            <Box style={{ minWidth: 0 }}>
-              <Flex align="center" gap="2" wrap="wrap">
-                <Text size="3" weight="medium">
+        <div className={css({ p: "3" })}>
+          <div className={flex({ align: "start", justify: "space-between", gap: "3", wrap: "wrap" })}>
+            <div style={{ minWidth: 0 }}>
+              <div className={flex({ align: "center", gap: "2", wrap: "wrap" })}>
+                <span className={css({ fontSize: "md", fontWeight: "medium" })}>
                   {contact.firstName} {contact.lastName}
-                </Text>
+                </span>
                 {contact.emailVerified && (
-                  <Badge color="green" variant="soft" size="1">
+                  <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" })}>
                     verified
-                  </Badge>
+                  </span>
                 )}
                 {contact.email && !contact.emailVerified && contact.nbResult && (
-                  <Badge color="orange" variant="soft" size="1">
+                  <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "orange.9", color: "orange.9", bg: "orange.3" })}>
                     {contact.nbResult}
-                  </Badge>
+                  </span>
                 )}
                 {contact.doNotContact && (
-                  <Badge color="red" variant="soft" size="1">
+                  <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "red.9", color: "red.9", bg: "red.3" })}>
                     do not contact
-                  </Badge>
+                  </span>
                 )}
-              </Flex>
+              </div>
 
               {(contact.position || contact.company) && (
-                <Text size="2" color="gray" mt="1" as="p">
+                <p className={css({ fontSize: "sm", color: "ui.tertiary", mt: "1" })}>
                   {contact.position}
-                  {contact.position && contact.company && " · "}
+                  {contact.position && contact.company && " \u00b7 "}
                   {contact.company}
-                </Text>
+                </p>
               )}
 
-              <Flex gap="3" mt="2" wrap="wrap" align="center">
+              <div className={flex({ gap: "3", mt: "2", wrap: "wrap", align: "center" })}>
                 {contact.email && (
-                  <Flex align="center" gap="1">
+                  <div className={flex({ align: "center", gap: "1" })}>
                     <EnvelopeClosedIcon color="gray" />
-                    <Text size="2" color="gray">
+                    <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
                       {contact.email}
-                    </Text>
-                  </Flex>
+                    </span>
+                  </div>
                 )}
                 {contact.linkedinUrl && (
-                  <Flex align="center" gap="1">
+                  <div className={flex({ align: "center", gap: "1" })}>
                     <LinkedInLogoIcon color="gray" />
-                    <Text size="2" color="gray">
+                    <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
                       LinkedIn
-                    </Text>
-                  </Flex>
+                    </span>
+                  </div>
                 )}
-              </Flex>
+              </div>
 
               {contact.tags && contact.tags.length > 0 && (
-                <Flex gap="1" mt="2" wrap="wrap">
+                <div className={flex({ gap: "1", mt: "2", wrap: "wrap" })}>
                   {contact.tags.map((tag) => (
-                    <Badge key={tag} color="gray" variant="surface" size="1">
+                    <span key={tag} className={css({ fontSize: "xs", fontWeight: "medium", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", textTransform: "lowercase" })}>
                       {tag}
-                    </Badge>
+                    </span>
                   ))}
-                </Flex>
+                </div>
               )}
-            </Box>
-          </Flex>
-        </Box>
-      </Card>
+            </div>
+          </div>
+        </div>
+      </div>
     </Link>
   );
 }
