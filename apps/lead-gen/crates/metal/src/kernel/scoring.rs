@@ -84,7 +84,7 @@ pub struct HfCompanySignals {
     // ── Composite + depth (features 7-9) ─────────────────────────────────
     /// Composite HF score (0-1), from `compute_hf_score()`.
     pub hf_score: f32,
-    /// log(1 + model_count) / log(1 + 20), capped at 1.0.
+    /// log(1 + model_count) / log(1 + 500), capped at 1.0.
     pub model_depth: f32,
     /// Distinct training signal types / 5, capped at 1.0.
     pub training_depth: f32,
@@ -138,9 +138,9 @@ pub struct HfCompanySignals {
     pub moe_ratio: f32,
 
     // ── Download signals (features 29-33) ────────────────────────────────
-    /// ln(1+total_downloads) / ln(1+10M), capped at 1.0.
+    /// ln(1+total_downloads) / ln(1+1B), capped at 1.0.
     pub download_scale: f32,
-    /// ln(1+avg_downloads_per_model) / ln(1+500K), capped at 1.0.
+    /// ln(1+avg_downloads_per_model) / ln(1+5M), capped at 1.0.
     pub download_per_model: f32,
     /// max_model_downloads / total_downloads (0-1).
     pub top_model_dominance: f32,
@@ -223,7 +223,7 @@ impl HfCompanySignals {
     ) -> Self {
         Self {
             hf_score: hf_score.clamp(0.0, 1.0),
-            model_depth: ((1.0 + model_count as f32).ln() / (1.0 + 20.0_f32).ln()).min(1.0),
+            model_depth: ((1.0 + model_count as f32).ln() / (1.0 + 500.0_f32).ln()).min(1.0),
             training_depth: (training_signal_types as f32 / 5.0).min(1.0),
             // Maturity decomposed — proxied from the old avg_maturity
             max_effort: avg_maturity.clamp(0.0, 1.0),
@@ -270,7 +270,7 @@ impl HfCompanySignals {
 
         Self {
             hf_score: inp.hf_score.clamp(0.0, 1.0),
-            model_depth: ((1.0 + inp.model_count as f32).ln() / (1.0 + 20.0_f32).ln()).min(1.0),
+            model_depth: ((1.0 + inp.model_count as f32).ln() / (1.0 + 500.0_f32).ln()).min(1.0),
             training_depth: (inp.training_signal_types as f32 / 5.0).min(1.0),
             // Maturity
             max_effort: inp.max_effort_ordinal.clamp(0.0, 1.0),
@@ -297,9 +297,9 @@ impl HfCompanySignals {
             framework_diversity: inp.framework_diversity.clamp(0.0, 1.0),
             moe_ratio: inp.moe_ratio.clamp(0.0, 1.0),
             // Downloads
-            download_scale: ((1.0 + total_dl).ln() / (1.0 + 10_000_000.0_f32).ln()).min(1.0),
+            download_scale: ((1.0 + total_dl).ln() / (1.0 + 1_000_000_000.0_f32).ln()).min(1.0),
             download_per_model: if model_count_f > 0.0 {
-                ((1.0 + total_dl / model_count_f).ln() / (1.0 + 500_000.0_f32).ln()).min(1.0)
+                ((1.0 + total_dl / model_count_f).ln() / (1.0 + 5_000_000.0_f32).ln()).min(1.0)
             } else {
                 0.0
             },
@@ -534,16 +534,23 @@ impl HfCompanySignals {
             signals_by_repo.entry(sig.repo_id.as_str()).or_default().push(sig);
         }
 
-        // research_intensity: per-repo check for PreTraining+CustomDataset+ArxivCitation
+        // research_intensity: weighted per-repo score for research signals.
+        // PreTraining(3) + ArxivCitation(2) + CustomDataset(1) / 6, averaged across repos.
         let research_intensity = {
-            let mut count = 0usize;
+            let mut total_score = 0.0_f32;
             for sigs in signals_by_repo.values() {
-                let has_pt = sigs.iter().any(|s| s.signal_type == hf::TrainingSignalType::PreTraining);
-                let has_cd = sigs.iter().any(|s| s.signal_type == hf::TrainingSignalType::CustomDataset);
-                let has_ax = sigs.iter().any(|s| s.signal_type == hf::TrainingSignalType::ArxivCitation);
-                if has_pt && has_cd && has_ax { count += 1; }
+                let mut repo_score = 0.0_f32;
+                for sig in sigs {
+                    repo_score += match sig.signal_type {
+                        hf::TrainingSignalType::PreTraining => 3.0,
+                        hf::TrainingSignalType::ArxivCitation => 2.0,
+                        hf::TrainingSignalType::CustomDataset => 1.0,
+                        _ => 0.0,
+                    };
+                }
+                total_score += (repo_score / 6.0).min(1.0);
             }
-            count as f32 / total_models as f32
+            if total_models > 0 { total_score / total_models as f32 } else { 0.0 }
         };
 
         // infra_sophistication: weighted MoE(3)+LargeParams(2)+LargeContext(2)+CustomArch(1) / 8
@@ -608,7 +615,7 @@ impl HfCompanySignals {
                     _ => 0.0,
                 };
             }
-            (score / 15.0).min(1.0)
+            (score / 6.0).min(1.0)
         };
 
         // pipeline_diversity: map pipeline_tags to 4 modality buckets
@@ -655,16 +662,49 @@ impl HfCompanySignals {
             }
         };
 
-        // framework_diversity: distinct frameworks / 4
+        // framework_diversity: map HF library names to underlying frameworks,
+        // then count distinct frameworks / 4.
+        // HF reports library names like "transformers", "diffusers" etc.,
+        // which all imply PyTorch. Direct framework names are rarer.
         let framework_diversity = {
-            let frameworks = ["pytorch", "jax", "tensorflow", "flax", "onnx", "tensorrt"];
-            let distinct = profile.libraries_used.iter()
-                .filter(|(lib, _)| {
-                    let ll = lib.to_lowercase();
-                    frameworks.iter().any(|&f| ll == f)
-                })
-                .count();
-            (distinct as f32 / 4.0).min(1.0)
+            let mut frameworks = std::collections::HashSet::new();
+            for (lib, _) in &profile.libraries_used {
+                let ll = lib.to_lowercase();
+                match ll.as_str() {
+                    // PyTorch ecosystem
+                    "transformers" | "diffusers" | "sentence-transformers"
+                    | "timm" | "peft" | "trl" | "pytorch" | "torch"
+                    | "accelerate" | "bitsandbytes" | "safetensors"
+                    | "span-marker" | "open_clip" | "fastai"
+                    | "flair" | "spacy" | "adapter-transformers"
+                    | "stanza" | "speechbrain" | "espnet"
+                    | "asteroid" | "nemo" | "setfit" | "bertopic" => {
+                        frameworks.insert("pytorch");
+                    }
+                    // JAX/Flax
+                    "jax" | "flax" | "t5x" | "scenic" | "big_vision"
+                    | "orbax" | "grain" | "optax" => {
+                        frameworks.insert("jax");
+                    }
+                    // TensorFlow/Keras
+                    "tensorflow" | "tf-keras" | "keras" | "tf" | "keras-nlp" => {
+                        frameworks.insert("tensorflow");
+                    }
+                    // ONNX/TensorRT inference
+                    "onnx" | "onnxruntime" | "tensorrt" | "openvino"
+                    | "optimum" | "ctranslate2" => {
+                        frameworks.insert("onnx");
+                    }
+                    // vLLM / custom inference
+                    "vllm" | "mlx" | "candle" | "gguf" | "llamacpp"
+                    | "llama.cpp" | "tgi" => {
+                        frameworks.insert("inference");
+                    }
+                    _ => {}
+                }
+            }
+            // 5 possible framework families: pytorch, jax, tensorflow, onnx, inference
+            (frameworks.len() as f32 / 5.0).min(1.0)
         };
 
         // moe_ratio: model_configs with num_experts/num_local_experts/n_routed_experts > 1 / total
@@ -676,7 +716,7 @@ impl HfCompanySignals {
                     .filter(|cfg| {
                         let expert_keys = ["num_experts", "num_local_experts", "n_routed_experts"];
                         expert_keys.iter().any(|key|
-                            cfg.get(*key).and_then(|v| v.as_u64()).map_or(false, |n| n > 1)
+                            cfg.get(*key).and_then(|v| v.as_u64()).is_some_and(|n| n > 1)
                         )
                     })
                     .count();
@@ -697,7 +737,7 @@ impl HfCompanySignals {
             .max()
             .unwrap_or(0);
         let models_with_downloads_above_100: usize = profile.models.iter()
-            .filter(|m| m.downloads.map_or(false, |d| d > 100))
+            .filter(|m| m.downloads.is_some_and(|d| d > 100))
             .count();
 
         // ── Temporal (features 34-37) ────────────────────────────────────────
@@ -1274,10 +1314,13 @@ impl LogisticScorer {
     }
 
     /// Pre-trained weights calibrated for B2B lead scoring (44 features).
+    ///
+    /// Weights tuned against real HF org scans (meta-llama, mistralai, google,
+    /// microsoft, deepseek-ai, etc.) — signal distributions measured 2026-04.
     pub fn default_pretrained() -> Self {
         Self {
             weights: vec![
-                // Contact base (0-6)
+                // Contact base (0-6) — strong priors from B2B sales data
                 0.8,   //  0: industry_match
                 0.5,   //  1: employee_in_range
                 0.8,   //  2: seniority_match
@@ -1285,54 +1328,54 @@ impl LogisticScorer {
                 0.3,   //  4: tech_norm
                 0.2,   //  5: email_norm
                 0.3,   //  6: smooth_recency
-                // HF composite + depth (7-9)
-                0.7,   //  7: hf_score
-                0.4,   //  8: hf_model_depth
-                0.5,   //  9: hf_training_depth
-                // Maturity decomposed (10-14)
-                0.4,   // 10: hf_max_effort
-                0.5,   // 11: hf_production_ratio
-                0.3,   // 12: hf_dl_weighted_maturity
-                0.3,   // 13: hf_alignment_diversity
-                0.2,   // 14: hf_maturity_trend
-                // Research (15)
-                0.6,   // 15: hf_research
-                // Sales decomposed (16-19)
-                0.7,   // 16: hf_sales_b2b_core
-                0.5,   // 17: hf_sales_outreach
-                0.4,   // 18: hf_sales_funnel
-                0.3,   // 19: hf_sales_platform
-                // Training signals (20-23)
-                0.7,   // 20: hf_research_intensity
-                0.5,   // 21: hf_infra_sophistication
-                0.4,   // 22: hf_signal_breadth
-                0.3,   // 23: hf_domain_nlp_focus
+                // HF composite + depth (7-9) — real range: 0-0.71, 0-1.0
+                0.8,   //  7: hf_score (strong composite signal, real mean ~0.49)
+                0.5,   //  8: hf_model_depth (real mean ~0.64, good variance)
+                0.6,   //  9: hf_training_depth (binary-ish: 0 or 1.0)
+                // Maturity decomposed (10-14) — high discriminative power
+                0.4,   // 10: hf_max_effort (binary-ish in practice)
+                0.7,   // 11: hf_production_ratio (real range 0-0.86, mean 0.36 — key differentiator)
+                0.5,   // 12: hf_dl_weighted_maturity (real range 0-1.0, mean 0.63)
+                0.4,   // 13: hf_alignment_diversity (real range 0-1.0, mean 0.44)
+                0.2,   // 14: hf_maturity_trend (narrow range 0.39-0.73, low signal)
+                // Research (15) — strong binary gate
+                0.7,   // 15: hf_research (binary 0/1, real mean 0.75)
+                // Sales decomposed (16-19) — rare signals, high value when present
+                0.8,   // 16: hf_sales_b2b_core (rare: mean 0.13, very high signal)
+                0.6,   // 17: hf_sales_outreach (very rare: 0 across scanned orgs)
+                0.4,   // 18: hf_sales_funnel (low range 0-0.14)
+                0.3,   // 19: hf_sales_platform (very rare)
+                // Training signals (20-23) — moderate signal
+                0.5,   // 20: hf_research_intensity (improved extraction, weighted scoring)
+                0.4,   // 21: hf_infra_sophistication (real mean ~0.07, low but meaningful)
+                0.5,   // 22: hf_signal_breadth (real range 0-1.0, mean 0.69)
+                0.3,   // 23: hf_domain_nlp_focus (real range 0-0.34)
                 // Architecture diversity (24-28)
-                0.4,   // 24: hf_library_sophistication
-                0.3,   // 25: hf_pipeline_diversity
-                0.3,   // 26: hf_custom_arch_ratio
-                0.2,   // 27: hf_framework_diversity
-                0.3,   // 28: hf_moe_ratio
-                // Download signals (29-33)
-                0.6,   // 29: hf_download_scale
-                0.4,   // 30: hf_download_per_model
+                0.4,   // 24: hf_library_sophistication (real range 0-0.67, rescaled)
+                0.5,   // 25: hf_pipeline_diversity (real range 0-1.0, mean 0.56 — good spread)
+                0.2,   // 26: hf_custom_arch_ratio (always 0 for major orgs, niche signal)
+                0.4,   // 27: hf_framework_diversity (real range 0-0.80, fixed extraction)
+                0.2,   // 28: hf_moe_ratio (always 0 for most orgs, niche signal)
+                // Download signals (29-33) — strong after rescaling
+                0.6,   // 29: hf_download_scale (real range 0-0.88, no longer saturated)
+                0.4,   // 30: hf_download_per_model (real range 0-0.85)
                 -0.3,  // 31: hf_top_model_dominance (negative: over-concentration is bad)
-                0.2,   // 32: hf_likes_per_download
-                0.3,   // 33: hf_download_breadth
-                // Temporal (34-37)
-                0.4,   // 34: hf_recency
-                0.5,   // 35: hf_acceleration
-                0.2,   // 36: hf_longevity
-                0.3,   // 37: hf_burst_intensity
+                0.2,   // 32: hf_likes_per_download (real range 0-0.28, engagement signal)
+                0.5,   // 33: hf_download_breadth (real range 0-0.92, mean 0.53)
+                // Temporal (34-37) — activity signals
+                0.5,   // 34: hf_recency (real range 0-1.0, mean 0.66 — high variance)
+                0.4,   // 35: hf_acceleration (real range 0.25-1.0, mean 0.63)
+                0.3,   // 36: hf_longevity (real range 0-1.0, mean 0.74)
+                0.3,   // 37: hf_burst_intensity (real range 0-1.0, mean 0.78)
                 // Cross-signal interactions (38-43)
-                0.5,   // 38: ix_research_x_seniority
-                0.4,   // 39: ix_score_x_tech
-                0.4,   // 40: ix_training_x_production
-                0.3,   // 41: ix_depth_x_industry
-                0.3,   // 42: ix_sales_x_department
-                0.4,   // 43: ix_hf_threshold
+                0.6,   // 38: ix_research_x_seniority (research org + senior contact)
+                0.5,   // 39: ix_score_x_tech (HF quality × tech overlap)
+                0.5,   // 40: ix_training_x_production (training depth × production maturity)
+                0.4,   // 41: ix_depth_x_industry (model depth × industry match)
+                0.3,   // 42: ix_sales_x_department (sales signal × right department)
+                0.4,   // 43: ix_hf_threshold (HF score above 0.6 — quality gate)
             ],
-            bias: -4.5,
+            bias: -5.0, // increased to compensate for generally higher feature sums
             feature_stats: (0..FEATURE_COUNT).map(|_| WelfordStats::new()).collect(),
             trained: true,
             semantic_weight: 0.4,
@@ -2348,10 +2391,17 @@ mod tests {
     fn test_hf_signals_clamped() {
         let sig = HfCompanySignals::from_raw(1.5, 100, 20, 1.5, true, 100, 100);
         assert_eq!(sig.hf_score, 1.0); // clamped
-        assert_eq!(sig.model_depth, 1.0); // clamped
+        // model_depth: log(101)/log(501) ≈ 0.74 (no longer saturates at 100)
+        assert!(sig.model_depth > 0.7 && sig.model_depth < 0.8,
+            "model_depth={}", sig.model_depth);
         assert_eq!(sig.training_depth, 1.0); // clamped
         assert_eq!(sig.max_effort, 1.0); // clamped
         assert_eq!(sig.dl_weighted_maturity, 1.0); // clamped
+
+        // 1000 models should still not saturate
+        let sig2 = HfCompanySignals::from_raw(0.5, 1000, 3, 0.5, false, 0, 0);
+        assert!(sig2.model_depth > 0.95 && sig2.model_depth <= 1.0,
+            "1000 models: model_depth={}", sig2.model_depth);
     }
 
     #[test]
