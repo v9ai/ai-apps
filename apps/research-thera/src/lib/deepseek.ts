@@ -32,6 +32,7 @@ class DeepSeekClient {
     messages: Array<{ role: string; content: string }>;
     response_format?: { type: string };
     temperature?: number;
+    max_tokens?: number;
   }) {
     const resp = await fetch(`${this.baseURL}/chat/completions`, {
       method: "POST",
@@ -74,11 +75,13 @@ export async function generateObject<T>({
   prompt,
   model = DEEPSEEK_MODELS.CHAT,
   temperature,
+  max_tokens,
 }: {
   schema: z.ZodType<T>;
   prompt: string;
   model?: string;
   temperature?: number;
+  max_tokens?: number;
 }): Promise<{ object: T }> {
   const response = await getDefaultClient().chat({
     model,
@@ -88,6 +91,7 @@ export async function generateObject<T>({
     ],
     response_format: { type: "json_object" },
     temperature,
+    max_tokens,
   });
 
   if (!response.choices?.length) {
