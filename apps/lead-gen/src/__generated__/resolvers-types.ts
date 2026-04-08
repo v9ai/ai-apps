@@ -111,6 +111,8 @@ export type Company = {
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];
+  /** ML data quality assessment */
+  dataQuality: DataQualityScore;
   deep_analysis: Maybe<Scalars['String']['output']>;
   description: Maybe<Scalars['String']['output']>;
   email: Maybe<Scalars['String']['output']>;
@@ -118,6 +120,8 @@ export type Company = {
   facts: Array<CompanyFact>;
   facts_count: Scalars['Int']['output'];
   githubUrl: Maybe<Scalars['String']['output']>;
+  /** ICP similarity score via embeddings (0-1) */
+  icpSimilarity: Maybe<Scalars['Float']['output']>;
   id: Scalars['Int']['output'];
   industries: Array<Scalars['String']['output']>;
   industry: Maybe<Scalars['String']['output']>;
@@ -134,6 +138,10 @@ export type Company = {
   location: Maybe<Scalars['String']['output']>;
   logo_url: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  /** ML quality gate evaluation */
+  qualityGate: QualityGateResult;
+  /** ML-computed rank score (0-1) */
+  rankScore: Maybe<Scalars['Float']['output']>;
   score: Scalars['Float']['output'];
   score_reasons: Array<Scalars['String']['output']>;
   service_taxonomy: Array<Scalars['String']['output']>;
@@ -490,6 +498,15 @@ export type CreateReminderInput = {
   remindAt: Scalars['String']['input'];
 };
 
+export type DataQualityScore = {
+  __typename?: 'DataQualityScore';
+  completeness: Scalars['Float']['output'];
+  composite: Scalars['Float']['output'];
+  freshness: Scalars['Float']['output'];
+  missingFields: Array<Scalars['String']['output']>;
+  staleFields: Array<Scalars['String']['output']>;
+};
+
 export type DeleteCampaignResult = {
   __typename?: 'DeleteCampaignResult';
   message: Maybe<Scalars['String']['output']>;
@@ -753,6 +770,14 @@ export type GenerateEmailResult = {
   text: Scalars['String']['output'];
 };
 
+export type GenerateEmbeddingsResult = {
+  __typename?: 'GenerateEmbeddingsResult';
+  errors: Array<Scalars['String']['output']>;
+  failed: Scalars['Int']['output'];
+  processed: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateReplyInput = {
   additionalDetails?: InputMaybe<Scalars['String']['input']>;
   includeCalendly?: InputMaybe<Scalars['Boolean']['input']>;
@@ -898,6 +923,14 @@ export type LinkedInPostType =
   | 'job'
   | 'post';
 
+export type MlStats = {
+  __typename?: 'MLStats';
+  companiesEmbedded: Scalars['Int']['output'];
+  lastEmbeddingAt: Maybe<Scalars['String']['output']>;
+  modelsAvailable: Array<Scalars['String']['output']>;
+  totalCompanies: Scalars['Int']['output'];
+};
+
 export type MarkRepliedResult = {
   __typename?: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -954,6 +987,8 @@ export type Mutation = {
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   flagContactsForDeletion: BatchOperationResult;
+  /** Generate and store embeddings for companies missing them. Admin only. */
+  generateCompanyEmbeddings: GenerateEmbeddingsResult;
   generateEmail: GenerateEmailResult;
   generateReply: GenerateReplyResult;
   importCompanies: ImportCompaniesResult;
@@ -1143,6 +1178,12 @@ export type MutationFindContactEmailArgs = {
 
 export type MutationFlagContactsForDeletionArgs = {
   threshold?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type MutationGenerateCompanyEmbeddingsArgs = {
+  batchSize?: InputMaybe<Scalars['Int']['input']>;
+  companyIds?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
 
@@ -1346,11 +1387,21 @@ export type PreviewEmailInput = {
   subject: Scalars['String']['input'];
 };
 
+export type QualityGateResult = {
+  __typename?: 'QualityGateResult';
+  adjustedScore: Scalars['Float']['output'];
+  flags: Array<Scalars['String']['output']>;
+  pass: Scalars['Boolean']['output'];
+  recommendations: Array<Scalars['String']['output']>;
+};
+
 export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
   companies: CompaniesResponse;
   companiesByIntent: CompaniesResponse;
+  /** Find companies similar to a given company by ID */
+  companiesLike: Array<SimilarCompanyResult>;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
   company_facts: Array<CompanyFact>;
@@ -1372,9 +1423,17 @@ export type Query = {
   intentSignals: IntentSignalsResponse;
   linkedinPost: Maybe<LinkedInPost>;
   linkedinPosts: Array<LinkedInPost>;
+  /** ML model health and stats */
+  mlStats: MlStats;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
+  /** Next best companies to contact based on ML scoring */
+  recommendedCompanies: Array<RecommendedCompany>;
+  /** Best contacts to reach within a company */
+  recommendedContacts: Array<RankedContact>;
   resendEmail: Maybe<ResendEmailDetail>;
+  /** Semantic similarity search: find companies matching a natural language query */
+  similarCompanies: Array<SimilarCompanyResult>;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -1392,6 +1451,13 @@ export type QueryCompaniesByIntentArgs = {
   offset?: InputMaybe<Scalars['Int']['input']>;
   signalType?: InputMaybe<IntentSignalType>;
   threshold: Scalars['Float']['input'];
+};
+
+
+export type QueryCompaniesLikeArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
 };
 
 
@@ -1519,13 +1585,40 @@ export type QueryReceivedEmailsArgs = {
 };
 
 
+export type QueryRecommendedCompaniesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type QueryRecommendedContactsArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryResendEmailArgs = {
   resendId: Scalars['String']['input'];
 };
 
 
+export type QuerySimilarCompaniesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minAiTier?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+  query: Scalars['String']['input'];
+};
+
+
 export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
+};
+
+export type RankedContact = {
+  __typename?: 'RankedContact';
+  contact: Contact;
+  rankScore: Scalars['Float']['output'];
+  reasons: Array<Scalars['String']['output']>;
 };
 
 export type ReceivedEmail = {
@@ -1556,6 +1649,13 @@ export type ReceivedEmailsResult = {
   __typename?: 'ReceivedEmailsResult';
   emails: Array<ReceivedEmail>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type RecommendedCompany = {
+  __typename?: 'RecommendedCompany';
+  company: Company;
+  reasons: Array<Scalars['String']['output']>;
+  score: Scalars['Float']['output'];
 };
 
 export type RefreshIntentResult = {
@@ -1653,6 +1753,12 @@ export type SignalTypeCount = {
   __typename?: 'SignalTypeCount';
   count: Scalars['Int']['output'];
   signalType: IntentSignalType;
+};
+
+export type SimilarCompanyResult = {
+  __typename?: 'SimilarCompanyResult';
+  company: Company;
+  similarity: Scalars['Float']['output'];
 };
 
 export type SourceType =
@@ -1928,6 +2034,7 @@ export type ResolversTypes = {
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
   CreateEmailTemplateInput: ResolverTypeWrapper<Partial<CreateEmailTemplateInput>>;
   CreateReminderInput: ResolverTypeWrapper<Partial<CreateReminderInput>>;
+  DataQualityScore: ResolverTypeWrapper<Partial<DataQualityScore>>;
   DateTime: ResolverTypeWrapper<Partial<Scalars['DateTime']['output']>>;
   DeleteCampaignResult: ResolverTypeWrapper<Partial<DeleteCampaignResult>>;
   DeleteCompaniesResult: ResolverTypeWrapper<Partial<DeleteCompaniesResult>>;
@@ -1958,6 +2065,7 @@ export type ResolversTypes = {
   FollowUpEmailsResult: ResolverTypeWrapper<Partial<FollowUpEmailsResult>>;
   GenerateEmailInput: ResolverTypeWrapper<Partial<GenerateEmailInput>>;
   GenerateEmailResult: ResolverTypeWrapper<Partial<GenerateEmailResult>>;
+  GenerateEmbeddingsResult: ResolverTypeWrapper<Partial<GenerateEmbeddingsResult>>;
   GenerateReplyInput: ResolverTypeWrapper<Partial<GenerateReplyInput>>;
   GenerateReplyResult: ResolverTypeWrapper<Partial<GenerateReplyResult>>;
   ImportCompaniesResult: ResolverTypeWrapper<Partial<ImportCompaniesResult>>;
@@ -1975,14 +2083,18 @@ export type ResolversTypes = {
   JSON: ResolverTypeWrapper<Partial<Scalars['JSON']['output']>>;
   LinkedInPost: ResolverTypeWrapper<Partial<LinkedInPost>>;
   LinkedInPostType: ResolverTypeWrapper<Partial<LinkedInPostType>>;
+  MLStats: ResolverTypeWrapper<Partial<MlStats>>;
   MarkRepliedResult: ResolverTypeWrapper<Partial<MarkRepliedResult>>;
   MergeCompaniesResult: ResolverTypeWrapper<Partial<MergeCompaniesResult>>;
   MergeDuplicateContactsResult: ResolverTypeWrapper<Partial<MergeDuplicateContactsResult>>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   PreviewEmailInput: ResolverTypeWrapper<Partial<PreviewEmailInput>>;
+  QualityGateResult: ResolverTypeWrapper<Partial<QualityGateResult>>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  RankedContact: ResolverTypeWrapper<Partial<RankedContact>>;
   ReceivedEmail: ResolverTypeWrapper<Partial<ReceivedEmail>>;
   ReceivedEmailsResult: ResolverTypeWrapper<Partial<ReceivedEmailsResult>>;
+  RecommendedCompany: ResolverTypeWrapper<Partial<RecommendedCompany>>;
   RefreshIntentResult: ResolverTypeWrapper<Partial<RefreshIntentResult>>;
   ResendEmailDetail: ResolverTypeWrapper<Partial<ResendEmailDetail>>;
   ScheduleBatchEmailsInput: ResolverTypeWrapper<Partial<ScheduleBatchEmailsInput>>;
@@ -1994,6 +2106,7 @@ export type ResolversTypes = {
   SendOutreachEmailInput: ResolverTypeWrapper<Partial<SendOutreachEmailInput>>;
   SendOutreachEmailResult: ResolverTypeWrapper<Partial<SendOutreachEmailResult>>;
   SignalTypeCount: ResolverTypeWrapper<Partial<SignalTypeCount>>;
+  SimilarCompanyResult: ResolverTypeWrapper<Partial<SimilarCompanyResult>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
@@ -2051,6 +2164,7 @@ export type ResolversParentTypes = {
   CreateContactInput: Partial<CreateContactInput>;
   CreateEmailTemplateInput: Partial<CreateEmailTemplateInput>;
   CreateReminderInput: Partial<CreateReminderInput>;
+  DataQualityScore: Partial<DataQualityScore>;
   DateTime: Partial<Scalars['DateTime']['output']>;
   DeleteCampaignResult: Partial<DeleteCampaignResult>;
   DeleteCompaniesResult: Partial<DeleteCompaniesResult>;
@@ -2080,6 +2194,7 @@ export type ResolversParentTypes = {
   FollowUpEmailsResult: Partial<FollowUpEmailsResult>;
   GenerateEmailInput: Partial<GenerateEmailInput>;
   GenerateEmailResult: Partial<GenerateEmailResult>;
+  GenerateEmbeddingsResult: Partial<GenerateEmbeddingsResult>;
   GenerateReplyInput: Partial<GenerateReplyInput>;
   GenerateReplyResult: Partial<GenerateReplyResult>;
   ImportCompaniesResult: Partial<ImportCompaniesResult>;
@@ -2095,14 +2210,18 @@ export type ResolversParentTypes = {
   IntentSignalsResponse: Partial<IntentSignalsResponse>;
   JSON: Partial<Scalars['JSON']['output']>;
   LinkedInPost: Partial<LinkedInPost>;
+  MLStats: Partial<MlStats>;
   MarkRepliedResult: Partial<MarkRepliedResult>;
   MergeCompaniesResult: Partial<MergeCompaniesResult>;
   MergeDuplicateContactsResult: Partial<MergeDuplicateContactsResult>;
   Mutation: Record<PropertyKey, never>;
   PreviewEmailInput: Partial<PreviewEmailInput>;
+  QualityGateResult: Partial<QualityGateResult>;
   Query: Record<PropertyKey, never>;
+  RankedContact: Partial<RankedContact>;
   ReceivedEmail: Partial<ReceivedEmail>;
   ReceivedEmailsResult: Partial<ReceivedEmailsResult>;
+  RecommendedCompany: Partial<RecommendedCompany>;
   RefreshIntentResult: Partial<RefreshIntentResult>;
   ResendEmailDetail: Partial<ResendEmailDetail>;
   ScheduleBatchEmailsInput: Partial<ScheduleBatchEmailsInput>;
@@ -2114,6 +2233,7 @@ export type ResolversParentTypes = {
   SendOutreachEmailInput: Partial<SendOutreachEmailInput>;
   SendOutreachEmailResult: Partial<SendOutreachEmailResult>;
   SignalTypeCount: Partial<SignalTypeCount>;
+  SimilarCompanyResult: Partial<SimilarCompanyResult>;
   String: Partial<Scalars['String']['output']>;
   SyncResendResult: Partial<SyncResendResult>;
   URL: Partial<Scalars['URL']['output']>;
@@ -2204,6 +2324,7 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   category?: Resolver<ResolversTypes['CompanyCategory'], ParentType, ContextType>;
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
   created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  dataQuality?: Resolver<ResolversTypes['DataQualityScore'], ParentType, ContextType>;
   deep_analysis?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2211,6 +2332,7 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, Partial<CompanyFactsArgs>>;
   facts_count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   githubUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  icpSimilarity?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   industries?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   industry?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2227,6 +2349,8 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   location?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   logo_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  qualityGate?: Resolver<ResolversTypes['QualityGateResult'], ParentType, ContextType>;
+  rankScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   score_reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   service_taxonomy?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2435,6 +2559,14 @@ export type ContactReminderWithContactResolvers<ContextType = GraphQLContext, Pa
 export type ContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactsResult'] = ResolversParentTypes['ContactsResult']> = {
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type DataQualityScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DataQualityScore'] = ResolversParentTypes['DataQualityScore']> = {
+  completeness?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  composite?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  freshness?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  missingFields?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  staleFields?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
@@ -2647,6 +2779,13 @@ export type GenerateEmailResultResolvers<ContextType = GraphQLContext, ParentTyp
   text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type GenerateEmbeddingsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateEmbeddingsResult'] = ResolversParentTypes['GenerateEmbeddingsResult']> = {
+  errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  processed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type GenerateReplyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateReplyResult'] = ResolversParentTypes['GenerateReplyResult']> = {
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2752,6 +2891,13 @@ export type LinkedInPostResolvers<ContextType = GraphQLContext, ParentType exten
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type MlStatsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MLStats'] = ResolversParentTypes['MLStats']> = {
+  companiesEmbedded?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  lastEmbeddingAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  modelsAvailable?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  totalCompanies?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type MarkRepliedResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MarkRepliedResult'] = ResolversParentTypes['MarkRepliedResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2804,6 +2950,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   findCompanyEmails?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType, RequireFields<MutationFindCompanyEmailsArgs, 'companyId'>>;
   findContactEmail?: Resolver<ResolversTypes['FindContactEmailResult'], ParentType, ContextType, RequireFields<MutationFindContactEmailArgs, 'contactId'>>;
   flagContactsForDeletion?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationFlagContactsForDeletionArgs>>;
+  generateCompanyEmbeddings?: Resolver<ResolversTypes['GenerateEmbeddingsResult'], ParentType, ContextType, Partial<MutationGenerateCompanyEmbeddingsArgs>>;
   generateEmail?: Resolver<ResolversTypes['GenerateEmailResult'], ParentType, ContextType, RequireFields<MutationGenerateEmailArgs, 'input'>>;
   generateReply?: Resolver<ResolversTypes['GenerateReplyResult'], ParentType, ContextType, RequireFields<MutationGenerateReplyArgs, 'input'>>;
   importCompanies?: Resolver<ResolversTypes['ImportCompaniesResult'], ParentType, ContextType, RequireFields<MutationImportCompaniesArgs, 'companies'>>;
@@ -2842,10 +2989,18 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
 };
 
+export type QualityGateResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['QualityGateResult'] = ResolversParentTypes['QualityGateResult']> = {
+  adjustedScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  flags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  pass?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  recommendations?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   allCompanyTags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   companies?: Resolver<ResolversTypes['CompaniesResponse'], ParentType, ContextType, Partial<QueryCompaniesArgs>>;
   companiesByIntent?: Resolver<ResolversTypes['CompaniesResponse'], ParentType, ContextType, RequireFields<QueryCompaniesByIntentArgs, 'threshold'>>;
+  companiesLike?: Resolver<Array<ResolversTypes['SimilarCompanyResult']>, ParentType, ContextType, RequireFields<QueryCompaniesLikeArgs, 'companyId'>>;
   company?: Resolver<Maybe<ResolversTypes['Company']>, ParentType, ContextType, Partial<QueryCompanyArgs>>;
   companyContactEmails?: Resolver<Array<ResolversTypes['CompanyContactEmail']>, ParentType, ContextType, RequireFields<QueryCompanyContactEmailsArgs, 'companyId'>>;
   company_facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, RequireFields<QueryCompany_FactsArgs, 'company_id'>>;
@@ -2867,10 +3022,20 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   intentSignals?: Resolver<ResolversTypes['IntentSignalsResponse'], ParentType, ContextType, RequireFields<QueryIntentSignalsArgs, 'companyId'>>;
   linkedinPost?: Resolver<Maybe<ResolversTypes['LinkedInPost']>, ParentType, ContextType, RequireFields<QueryLinkedinPostArgs, 'id'>>;
   linkedinPosts?: Resolver<Array<ResolversTypes['LinkedInPost']>, ParentType, ContextType, Partial<QueryLinkedinPostsArgs>>;
+  mlStats?: Resolver<ResolversTypes['MLStats'], ParentType, ContextType>;
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
+  recommendedCompanies?: Resolver<Array<ResolversTypes['RecommendedCompany']>, ParentType, ContextType, Partial<QueryRecommendedCompaniesArgs>>;
+  recommendedContacts?: Resolver<Array<ResolversTypes['RankedContact']>, ParentType, ContextType, RequireFields<QueryRecommendedContactsArgs, 'companyId'>>;
   resendEmail?: Resolver<Maybe<ResolversTypes['ResendEmailDetail']>, ParentType, ContextType, RequireFields<QueryResendEmailArgs, 'resendId'>>;
+  similarCompanies?: Resolver<Array<ResolversTypes['SimilarCompanyResult']>, ParentType, ContextType, RequireFields<QuerySimilarCompaniesArgs, 'query'>>;
   userSettings?: Resolver<Maybe<ResolversTypes['UserSettings']>, ParentType, ContextType, RequireFields<QueryUserSettingsArgs, 'userId'>>;
+};
+
+export type RankedContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RankedContact'] = ResolversParentTypes['RankedContact']> = {
+  contact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType>;
+  rankScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReceivedEmail'] = ResolversParentTypes['ReceivedEmail']> = {
@@ -2899,6 +3064,12 @@ export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType exte
 export type ReceivedEmailsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReceivedEmailsResult'] = ResolversParentTypes['ReceivedEmailsResult']> = {
   emails?: Resolver<Array<ResolversTypes['ReceivedEmail']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type RecommendedCompanyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RecommendedCompany'] = ResolversParentTypes['RecommendedCompany']> = {
+  company?: Resolver<ResolversTypes['Company'], ParentType, ContextType>;
+  reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
 export type RefreshIntentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RefreshIntentResult'] = ResolversParentTypes['RefreshIntentResult']> = {
@@ -2960,6 +3131,11 @@ export type SendOutreachEmailResultResolvers<ContextType = GraphQLContext, Paren
 export type SignalTypeCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SignalTypeCount'] = ResolversParentTypes['SignalTypeCount']> = {
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   signalType?: Resolver<ResolversTypes['IntentSignalType'], ParentType, ContextType>;
+};
+
+export type SimilarCompanyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SimilarCompanyResult'] = ResolversParentTypes['SimilarCompanyResult']> = {
+  company?: Resolver<ResolversTypes['Company'], ParentType, ContextType>;
+  similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
 export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SyncResendResult'] = ResolversParentTypes['SyncResendResult']> = {
@@ -3042,6 +3218,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactReminder?: ContactReminderResolvers<ContextType>;
   ContactReminderWithContact?: ContactReminderWithContactResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
+  DataQualityScore?: DataQualityScoreResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   DeleteCampaignResult?: DeleteCampaignResultResolvers<ContextType>;
   DeleteCompaniesResult?: DeleteCompaniesResultResolvers<ContextType>;
@@ -3067,6 +3244,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   FollowUpEmail?: FollowUpEmailResolvers<ContextType>;
   FollowUpEmailsResult?: FollowUpEmailsResultResolvers<ContextType>;
   GenerateEmailResult?: GenerateEmailResultResolvers<ContextType>;
+  GenerateEmbeddingsResult?: GenerateEmbeddingsResultResolvers<ContextType>;
   GenerateReplyResult?: GenerateReplyResultResolvers<ContextType>;
   ImportCompaniesResult?: ImportCompaniesResultResolvers<ContextType>;
   ImportCompanyResult?: ImportCompanyResultResolvers<ContextType>;
@@ -3078,13 +3256,17 @@ export type Resolvers<ContextType = GraphQLContext> = {
   IntentSignalsResponse?: IntentSignalsResponseResolvers<ContextType>;
   JSON?: GraphQLScalarType;
   LinkedInPost?: LinkedInPostResolvers<ContextType>;
+  MLStats?: MlStatsResolvers<ContextType>;
   MarkRepliedResult?: MarkRepliedResultResolvers<ContextType>;
   MergeCompaniesResult?: MergeCompaniesResultResolvers<ContextType>;
   MergeDuplicateContactsResult?: MergeDuplicateContactsResultResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
+  QualityGateResult?: QualityGateResultResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
+  RankedContact?: RankedContactResolvers<ContextType>;
   ReceivedEmail?: ReceivedEmailResolvers<ContextType>;
   ReceivedEmailsResult?: ReceivedEmailsResultResolvers<ContextType>;
+  RecommendedCompany?: RecommendedCompanyResolvers<ContextType>;
   RefreshIntentResult?: RefreshIntentResultResolvers<ContextType>;
   ResendEmailDetail?: ResendEmailDetailResolvers<ContextType>;
   ScheduleBatchResult?: ScheduleBatchResultResolvers<ContextType>;
@@ -3093,6 +3275,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SendNowResult?: SendNowResultResolvers<ContextType>;
   SendOutreachEmailResult?: SendOutreachEmailResultResolvers<ContextType>;
   SignalTypeCount?: SignalTypeCountResolvers<ContextType>;
+  SimilarCompanyResult?: SimilarCompanyResultResolvers<ContextType>;
   SyncResendResult?: SyncResendResultResolvers<ContextType>;
   URL?: GraphQLScalarType;
   UnverifyContactsResult?: UnverifyContactsResultResolvers<ContextType>;
