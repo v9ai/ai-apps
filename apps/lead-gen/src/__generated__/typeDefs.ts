@@ -923,6 +923,7 @@ type Mutation {
   previewEmail(input: PreviewEmailInput!): EmailPreview!
   purgeDeletedContacts(companyId: Int): BatchOperationResult!
   refreshIntentScores: RefreshIntentResult!
+  salescueAnalyze(modules: [SalescueModule!], text: String!): SalescueAnalyzeResult!
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
   scoreContactsML(companyId: Int!): ScoreContactsMLResult!
@@ -996,6 +997,17 @@ type Query {
   """Best contacts to reach within a company"""
   recommendedContacts(companyId: Int!, limit: Int): [RankedContact!]!
   resendEmail(resendId: String!): ResendEmailDetail
+  salescueEntities(text: String!): SalescueEntitiesResult!
+  salescueHealth: SalescueHealth!
+  salescueIcp(icp: String!, prospect: String!): SalescueICPResult!
+  salescueIntent(text: String!): SalescueIntentResult!
+  salescueObjection(text: String!): SalescueObjectionResult!
+  salescueReply(text: String!, touchpoint: Int): SalescueReplyResult!
+  salescueScore(text: String!): SalescueScoreResult!
+  salescueSentiment(text: String!): SalescueSentimentResult!
+  salescueSpam(text: String!): SalescueSpamResult!
+  salescueSubject(subjects: [String!]!): SalescueSubjectResult!
+  salescueTriggers(text: String!): SalescueTriggersResult!
   """
   Semantic similarity search: find companies matching a natural language query
   """
@@ -1060,6 +1072,316 @@ type ResendEmailDetail {
   subject: String
   text: String
   to: [String!]!
+}
+
+type SalescueAnalyzeResult {
+  errors: [SalescueModuleError!]!
+  modulesRun: Int!
+  results: JSON!
+  timings: JSON!
+  totalTime: Float!
+}
+
+type SalescueAnomalyResult {
+  anomalyScore: Float!
+  anomalyType: String!
+  channelAttribution: JSON!
+  cosineSimilarity: Float!
+  isAnomalous: Boolean!
+  textPriorAdjustment: Float!
+  typeConfidence: Float!
+  zScore: Float!
+}
+
+type SalescueBanditAlternative {
+  sampledReward: Float!
+  subjectStyle: String!
+  template: String!
+  timing: String!
+}
+
+type SalescueBanditArm {
+  subjectStyle: String!
+  template: String!
+  timing: String!
+}
+
+type SalescueBanditResult {
+  alternatives: [SalescueBanditAlternative!]!
+  armIndex: Int!
+  bestArm: SalescueBanditArm!
+  expectedReward: Float!
+  explorationTemperature: Float!
+  sampledReward: Float!
+  totalArms: Int!
+}
+
+type SalescueCallResult {
+  action: String!
+  commitmentCount: Int!
+  commitments: [SalescueCommitment!]!
+  dealHealth: Int!
+  modelConfidence: Float!
+  momentum: String!
+  negatedCommitmentCount: Int!
+  turnScores: [Float!]!
+  turnUncertainties: [Float!]!
+  turningPoints: [SalescueTurningPoint!]!
+}
+
+type SalescueCoachingCard {
+  avoid: [String!]!
+  example: String!
+  framework: String!
+  steps: [String!]!
+}
+
+type SalescueCommitment {
+  negated: Boolean!
+  pattern: String!
+  speaker: String!
+  turn: Int!
+  type: String!
+}
+
+type SalescueEmailgenResult {
+  contextUsed: JSON!
+  email: String!
+  emailType: String!
+  hasCallToAction: Boolean!
+  promptTokens: Int!
+  wordCount: Int!
+}
+
+type SalescueEntitiesResult {
+  entities: [SalescueEntity!]!
+  neuralCount: Int!
+  regexCount: Int!
+  typesFound: [String!]!
+}
+
+type SalescueEntity {
+  confidence: Float!
+  endChar: Int
+  role: String!
+  roleScores: JSON!
+  source: String!
+  startChar: Int
+  text: String!
+  type: String!
+}
+
+type SalescueGraphResult {
+  edgeCount: Int
+  graphLabel: String!
+  graphScore: Float!
+  graphSignals: [SalescueGraphSignal!]!
+  labelConfidence: Float!
+  nodeCount: Int
+  note: String
+  similarCompanies: [SalescueSimilarCompany!]!
+}
+
+type SalescueGraphSignal {
+  strength: Float!
+  type: String!
+  with: String!
+}
+
+type SalescueHealth {
+  device: String!
+  moduleCount: Int!
+  modules: [String!]!
+  status: String!
+  version: String!
+}
+
+type SalescueICPDimensionFit {
+  distance: Float!
+  fit: Float
+  icpSpread: Float!
+  status: String!
+}
+
+type SalescueICPResult {
+  dealbreakers: [String!]!
+  dimensions: JSON!
+  missing: [String!]!
+  qualified: Boolean!
+  score: Float!
+}
+
+type SalescueIntentResult {
+  confidence: Float!
+  dataPoints: Int!
+  distribution: JSON!
+  stage: String!
+  trajectory: SalescueIntentTrajectory
+}
+
+type SalescueIntentTrajectory {
+  acceleration: Float!
+  currentIntensity: Float!
+  daysToPurchase: Int!
+  direction: String!
+  velocity: Float!
+}
+
+enum SalescueModule {
+  ANOMALY
+  BANDIT
+  CALL
+  EMAILGEN
+  ENTITIES
+  GRAPH
+  ICP
+  INTENT
+  OBJECTION
+  REPLY
+  SCORE
+  SENTIMENT
+  SPAM
+  SUBJECT
+  SURVIVAL
+  TRIGGERS
+}
+
+type SalescueModuleError {
+  error: String!
+  module: String!
+}
+
+type SalescueObjectionResult {
+  category: String!
+  categoryConfidence: Float!
+  coaching: SalescueCoachingCard!
+  objectionType: String!
+  severity: Float!
+  topTypes: JSON!
+  typeConfidence: Float!
+}
+
+type SalescueReplyEvidence {
+  label: String!
+  text: String!
+}
+
+type SalescueReplyResult {
+  active: JSON!
+  alternativeConfigs: Int!
+  configurationScore: Float!
+  evidence: [SalescueReplyEvidence!]!
+  primary: String!
+  scores: JSON!
+}
+
+type SalescueScoreCategories {
+  analytics: Float!
+  automation: Float!
+  engagement: Float!
+  enrichment: Float!
+  intent: Float!
+  outreach: Float!
+}
+
+type SalescueScoreResult {
+  categories: SalescueScoreCategories!
+  confidence: Float!
+  label: String!
+  nSignalsDetected: Int!
+  score: Int!
+  signals: [SalescueScoreSignal!]!
+}
+
+type SalescueScoreSignal {
+  attendedPositions: [Int!]!
+  attributionType: String!
+  category: String!
+  causalImpact: Float!
+  signal: String!
+  strength: Float!
+}
+
+type SalescueSentimentEvidence {
+  signal: String!
+  text: String!
+}
+
+type SalescueSentimentResult {
+  confidence: Float!
+  contextGate: Float!
+  evidence: [SalescueSentimentEvidence!]!
+  intent: String!
+  interactionWeight: Float!
+  interpretation: String
+  inverted: Boolean!
+  sentiment: String!
+}
+
+type SalescueSimilarCompany {
+  name: String!
+  similarity: Float!
+}
+
+type SalescueSpamResult {
+  category: String!
+  categoryConfidence: Float!
+  providerScores: JSON!
+  riskFactors: [String!]!
+  score: Float!
+}
+
+type SalescueSubjectRanking {
+  rank: Int!
+  score: Int!
+  subject: String!
+}
+
+type SalescueSubjectResult {
+  best: String!
+  ranking: [SalescueSubjectRanking!]!
+  worst: String!
+}
+
+type SalescueSurvivalResult {
+  medianDaysToConversion: Float!
+  pConvert30d: Float!
+  pConvert90d: Float!
+  riskConfidence: Float!
+  riskGroup: String!
+  survivalCurve: JSON!
+  weibullParams: JSON!
+}
+
+type SalescueTriggerEvent {
+  confidence: Float!
+  displacementCi: [Float!]!
+  displacementDays: Float!
+  displacementUncertainty: Float!
+  fresh: Boolean!
+  freshness: String!
+  temporalFeatures: SalescueTriggerTemporalFeatures!
+  type: String!
+}
+
+type SalescueTriggerTemporalFeatures {
+  pastSignal: Float!
+  recentSignal: Float!
+  todaySignal: Float!
+}
+
+type SalescueTriggersResult {
+  events: [SalescueTriggerEvent!]!
+  primary: SalescueTriggerEvent
+}
+
+type SalescueTurningPoint {
+  delta: Float!
+  direction: String!
+  probability: Float!
+  speaker: String!
+  turn: Int!
+  uncertainty: Float!
 }
 
 input ScheduleBatchEmailsInput {
