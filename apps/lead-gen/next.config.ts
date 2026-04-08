@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  serverExternalPackages: ["onnxruntime-node", "@huggingface/transformers"],
   outputFileTracingRoot: path.join(__dirname, "../.."),
   outputFileTracingIncludes: {
     "/api/emails/send": ["../../packages/resume/CV_Vadim_Nicolai.pdf"],
