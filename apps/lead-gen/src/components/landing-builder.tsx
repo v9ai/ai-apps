@@ -122,18 +122,20 @@ export function LandingBuilder() {
                   href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={flex({
-                    align: "center",
+                  className={css({
+                    display: "inline-flex",
+                    alignItems: "center",
                     gap: "1.5",
-                  })}
-                  style={{
-                    color: "var(--gray-9)",
-                    fontSize: "10px",
+                    color: "ui.tertiary",
+                    fontSize: "2xs",
                     textDecoration: "none",
-                    letterSpacing: "0.04em",
+                    letterSpacing: "wide",
                     textTransform: "lowercase",
-                    transition: "color 0.15s",
-                  }}
+                    transition: "color 150ms ease",
+                    _hover: {
+                      color: "ui.body",
+                    },
+                  })}
                 >
                   <GitHubLogoIcon width={12} height={12} />
                   view source
