@@ -28,26 +28,7 @@ impl HfClient {
     /// - `token`: optional HF bearer token for private repos / higher rate limits.
     /// - `concurrency`: max parallel HTTP requests (clamped 1..=64).
     pub fn new(token: Option<&str>, concurrency: usize) -> Result<Self, Error> {
-        let concurrency = concurrency.clamp(1, 64);
-        let mut headers = HeaderMap::new();
-        headers.insert(USER_AGENT, HeaderValue::from_static("hf/0.1"));
-        if let Some(t) = token {
-            headers.insert(
-                AUTHORIZATION,
-                HeaderValue::from_str(&format!("Bearer {t}"))?,
-            );
-        }
-        let http = reqwest::Client::builder()
-            .default_headers(headers)
-            .pool_max_idle_per_host(concurrency)
-            .build()
-            .map_err(Error::ClientBuild)?;
-        Ok(Self {
-            http,
-            concurrency,
-            api_base: HF_API_BASE.into(),
-            raw_base: HF_RAW_BASE.into(),
-        })
+        Self::build(token, concurrency, HF_API_BASE.into(), HF_RAW_BASE.into())
     }
 
     /// Convenience: read `HF_TOKEN` env var.
@@ -58,6 +39,15 @@ impl HfClient {
 
     /// Create a client with custom base URLs (for testing or self-hosted HF Hub).
     pub(crate) fn with_base_urls(
+        token: Option<&str>,
+        concurrency: usize,
+        api_base: String,
+        raw_base: String,
+    ) -> Result<Self, Error> {
+        Self::build(token, concurrency, api_base, raw_base)
+    }
+
+    fn build(
         token: Option<&str>,
         concurrency: usize,
         api_base: String,
@@ -93,6 +83,7 @@ impl HfClient {
         requests: &[FetchRequest],
     ) -> Vec<FetchResult<RepoInfo>> {
         let client = &self.http;
+        let api_base = &self.api_base;
         stream::iter(requests.iter().cloned())
             .map(|req| {
                 let client = client.clone();
@@ -153,9 +144,11 @@ impl HfClient {
         requests: &[FetchRequest],
     ) -> Vec<FetchResult<String>> {
         let client = &self.http;
+        let raw_base = &self.raw_base;
         stream::iter(requests.iter().cloned())
             .map(|req| {
                 let client = client.clone();
+                let raw_base = raw_base.clone();
                 async move {
                     let path = req.path.as_deref().unwrap_or("README.md");
                     let rev = req.revision.as_deref().unwrap_or("main");
@@ -163,12 +156,12 @@ impl HfClient {
                     let url = if prefix.is_empty() {
                         format!(
                             "{}/{}/resolve/{}/{}",
-                            HF_RAW_BASE, req.repo_id, rev, path
+                            raw_base, req.repo_id, rev, path
                         )
                     } else {
                         format!(
                             "{}/{}/{}/resolve/{}/{}",
-                            HF_RAW_BASE, prefix, req.repo_id, rev, path
+                            raw_base, prefix, req.repo_id, rev, path
                         )
                     };
                     debug!(repo = %req.repo_id, %path, "fetching raw file");
@@ -228,13 +221,15 @@ impl HfClient {
         requests: &[FetchRequest],
     ) -> Vec<FetchResult<Vec<SiblingFile>>> {
         let client = &self.http;
+        let api_base = &self.api_base;
         stream::iter(requests.iter().cloned())
             .map(|req| {
                 let client = client.clone();
+                let api_base = api_base.clone();
                 async move {
                     let url = format!(
                         "{}/{}/{}",
-                        HF_API_BASE,
+                        api_base,
                         req.repo_type.api_prefix(),
                         req.repo_id
                     );
@@ -287,7 +282,7 @@ impl HfClient {
 
         let mut next_url = Some(format!(
             "{}/{}?sort={}&direction={}&limit={}{}{}",
-            HF_API_BASE, prefix, opts.sort, opts.direction, limit, full_param, extra_params
+            self.api_base, prefix, opts.sort, opts.direction, limit, full_param, extra_params
         ));
 
         while let Some(url) = next_url.take() {
@@ -627,3 +622,325 @@ fn url_encode(s: &str) -> String {
 }
 
 const HEX: [u8; 16] = *b"0123456789ABCDEF";
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    // ── Pure function tests ────────────────────────────────────
+
+    #[test]
+    fn parse_next_link_basic() {
+        let header = r#"<https://huggingface.co/api/models?cursor=abc123>; rel="next""#;
+        assert_eq!(
+            parse_next_link(header),
+            Some("https://huggingface.co/api/models?cursor=abc123".into())
+        );
+    }
+
+    #[test]
+    fn parse_next_link_multiple_rels() {
+        let header = r#"<https://example.com/prev>; rel="prev", <https://example.com/next>; rel="next""#;
+        assert_eq!(
+            parse_next_link(header),
+            Some("https://example.com/next".into())
+        );
+    }
+
+    #[test]
+    fn parse_next_link_no_next() {
+        let header = r#"<https://example.com/prev>; rel="prev""#;
+        assert_eq!(parse_next_link(header), None);
+    }
+
+    #[test]
+    fn parse_next_link_empty() {
+        assert_eq!(parse_next_link(""), None);
+    }
+
+    #[test]
+    fn url_encode_spaces() {
+        assert_eq!(url_encode("hello world"), "hello+world");
+    }
+
+    #[test]
+    fn url_encode_special_chars() {
+        assert_eq!(url_encode("a&b=c#d"), "a%26b%3Dc%23d");
+    }
+
+    #[test]
+    fn url_encode_passthrough() {
+        let s = "abcXYZ012-_.~";
+        assert_eq!(url_encode(s), s);
+    }
+
+    #[test]
+    fn url_encode_unicode() {
+        // "é" is 0xC3 0xA9 in UTF-8
+        let encoded = url_encode("é");
+        assert_eq!(encoded, "%C3%A9");
+    }
+
+    // ── Constructor tests ──────────────────────────────────────
+
+    #[test]
+    fn new_without_token() {
+        let client = HfClient::new(None, 8).unwrap();
+        assert_eq!(client.concurrency, 8);
+        assert_eq!(client.api_base, HF_API_BASE);
+    }
+
+    #[test]
+    fn new_with_token() {
+        let client = HfClient::new(Some("hf_test_token"), 4).unwrap();
+        assert_eq!(client.concurrency, 4);
+    }
+
+    #[test]
+    fn new_clamps_concurrency_low() {
+        let client = HfClient::new(None, 0).unwrap();
+        assert_eq!(client.concurrency, 1);
+    }
+
+    #[test]
+    fn new_clamps_concurrency_high() {
+        let client = HfClient::new(None, 999).unwrap();
+        assert_eq!(client.concurrency, 64);
+    }
+
+    // ── HTTP mock tests ────────────────────────────────────────
+
+    fn mock_repo_json() -> serde_json::Value {
+        serde_json::json!({
+            "_id": "abc123",
+            "id": "meta-llama/Llama-3-8B",
+            "modelId": "meta-llama/Llama-3-8B",
+            "author": "meta-llama",
+            "lastModified": "2024-06-01T00:00:00.000Z",
+            "downloads": 5000000,
+            "likes": 12000,
+            "library_name": "transformers",
+            "pipeline_tag": "text-generation",
+            "tags": ["transformers", "pytorch"]
+        })
+    }
+
+    #[tokio::test]
+    async fn fetch_repo_info_success() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/models/meta-llama/Llama-3-8B"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(mock_repo_json()))
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let requests = vec![FetchRequest::model("meta-llama/Llama-3-8B")];
+        let results = client.fetch_repo_info(&requests).await;
+
+        assert_eq!(results.len(), 1);
+        assert!(results[0].is_ok());
+        if let FetchResult::Ok { data, .. } = &results[0] {
+            assert_eq!(data.author.as_deref(), Some("meta-llama"));
+            assert_eq!(data.downloads, Some(5000000));
+        }
+    }
+
+    #[tokio::test]
+    async fn fetch_repo_info_404() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/models/nonexistent/model"))
+            .respond_with(ResponseTemplate::new(404).set_body_string("not found"))
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let requests = vec![FetchRequest::model("nonexistent/model")];
+        let results = client.fetch_repo_info(&requests).await;
+
+        assert_eq!(results.len(), 1);
+        assert!(!results[0].is_ok());
+    }
+
+    #[tokio::test]
+    async fn fetch_repo_info_429() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/models/org/model"))
+            .respond_with(
+                ResponseTemplate::new(429)
+                    .insert_header("retry-after", "30"),
+            )
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let requests = vec![FetchRequest::model("org/model")];
+        let results = client.fetch_repo_info(&requests).await;
+
+        assert_eq!(results.len(), 1);
+        assert!(!results[0].is_ok());
+        if let FetchResult::Err { error, .. } = &results[0] {
+            let msg = error.to_string();
+            assert!(msg.contains("429"), "error should mention 429: {msg}");
+        }
+    }
+
+    #[tokio::test]
+    async fn fetch_model_cards_partial_failure() {
+        let server = MockServer::start().await;
+        // Model A succeeds
+        Mock::given(method("GET"))
+            .and(path("/org-a/model-a/resolve/main/README.md"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("# Model A\nGreat model."))
+            .mount(&server)
+            .await;
+        // Model B fails
+        Mock::given(method("GET"))
+            .and(path("/org-b/model-b/resolve/main/README.md"))
+            .respond_with(ResponseTemplate::new(404).set_body_string("not found"))
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let ids = vec!["org-a/model-a", "org-b/model-b"];
+        let cards = client.fetch_model_cards(&ids).await.unwrap();
+
+        assert_eq!(cards.len(), 1);
+        assert!(cards.contains_key("org-a/model-a"));
+        assert!(cards["org-a/model-a"].contains("Model A"));
+    }
+
+    #[tokio::test]
+    async fn list_repos_single_page() {
+        let server = MockServer::start().await;
+        let repos_json = serde_json::json!([mock_repo_json()]);
+
+        Mock::given(method("GET"))
+            .and(path("/models"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(repos_json))
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let opts = ListOptions {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: 1,
+            full: false,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        };
+        let repos = client.list_repos(&opts).await.unwrap();
+        assert_eq!(repos.len(), 1);
+        assert_eq!(repos[0].author.as_deref(), Some("meta-llama"));
+    }
+
+    #[tokio::test]
+    async fn list_repos_rate_limited() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/models"))
+            .respond_with(
+                ResponseTemplate::new(429)
+                    .insert_header("retry-after", "45"),
+            )
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let opts = ListOptions {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: 1,
+            full: false,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        };
+        let err = client.list_repos(&opts).await.unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("429"), "should be rate limited: {msg}");
+    }
+
+    #[tokio::test]
+    async fn list_repos_respects_max_pages() {
+        let server = MockServer::start().await;
+        let repos_json = serde_json::json!([mock_repo_json()]);
+
+        // Page 1: returns data + a Link header for page 2
+        Mock::given(method("GET"))
+            .and(path("/models"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(&repos_json)
+                    .insert_header(
+                        "link",
+                        &format!(r#"<{}/models?cursor=page2>; rel="next""#, server.uri()),
+                    ),
+            )
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let opts = ListOptions {
+            repo_type: RepoType::Model,
+            sort: "downloads".into(),
+            direction: "-1".into(),
+            limit: 100,
+            max_pages: 1,
+            full: false,
+            search: None,
+            author: None,
+            filter: None,
+            pipeline_tag_filter: None,
+            library_filter: None,
+        };
+        let repos = client.list_repos(&opts).await.unwrap();
+        // Should only have page 1 results since max_pages=1
+        assert_eq!(repos.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn list_repo_files_extracts_siblings() {
+        let server = MockServer::start().await;
+        let repo_json = serde_json::json!({
+            "id": "org/model",
+            "siblings": [
+                {"rfilename": "config.json", "size": 100},
+                {"rfilename": "model.safetensors", "size": 16000000000_u64}
+            ]
+        });
+
+        Mock::given(method("GET"))
+            .and(path("/models/org/model"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(repo_json))
+            .mount(&server)
+            .await;
+
+        let client = HfClient::with_base_urls(None, 4, server.uri(), server.uri()).unwrap();
+        let requests = vec![FetchRequest::model("org/model")];
+        let results = client.list_repo_files(&requests).await;
+
+        assert_eq!(results.len(), 1);
+        assert!(results[0].is_ok());
+        if let FetchResult::Ok { data, .. } = &results[0] {
+            assert_eq!(data.len(), 2);
+            assert_eq!(data[0].filename, "config.json");
+            assert_eq!(data[1].filename, "model.safetensors");
+        }
+    }
+}
