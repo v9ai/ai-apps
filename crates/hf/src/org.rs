@@ -516,7 +516,12 @@ impl<'a> OrgScanner<'a> {
                     .unwrap_or(text.len());
                 let url = &text[url_start..url_end];
                 if url.contains("arxiv.org/") {
-                    links.push(url.to_owned());
+                    // Ensure URL has a protocol prefix
+                    if url.starts_with("http://") || url.starts_with("https://") {
+                        links.push(url.to_owned());
+                    } else {
+                        links.push(format!("https://{url}"));
+                    }
                 }
                 search_from = url_end;
             }

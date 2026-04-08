@@ -575,6 +575,15 @@ async fn fetch_text(
     })?;
 
     let status = resp.status();
+    if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+        let retry = resp
+            .headers()
+            .get("retry-after")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(60);
+        return Err(Error::RateLimited { retry_after_secs: retry });
+    }
     if !status.is_success() {
         let body = resp.text().await.unwrap_or_default();
         return Err(Error::Api {
