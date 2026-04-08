@@ -348,7 +348,8 @@ impl ContactBatch {
             + icp.seniority_weight
             + icp.department_weight
             + icp.tech_weight
-            + icp.email_weight;
+            + icp.email_weight
+            + icp.hf_weight;
         let total_max = base_max + semantic_weight;
 
         for i in 0..n {
@@ -370,6 +371,9 @@ impl ContactBatch {
                 1 => icp.email_weight * 0.4,
                 _ => 0.0,
             };
+
+            // HF composite signal
+            score += self.hf_score[i] * icp.hf_weight;
 
             // Semantic ICP score as additive feature (captures soft signals keywords miss)
             score += self.semantic_icp_score[i] * semantic_weight;
@@ -486,23 +490,28 @@ impl Default for WelfordStats {
 }
 
 /// Logistic regression scorer with learned weights.
-/// Features (7 or 8):
-///   [0] industry_match    (binary)
-///   [1] employee_in_range (binary)
-///   [2] seniority_match   (binary)
-///   [3] department_match   (binary)
-///   [4] tech_overlap / 10  (0-1)
-///   [5] email_verified / 2 (0-1)
-///   [6] smooth_recency     (exp decay)
-///   [7] semantic_icp_score (cosine, optional — 0.0 if unavailable)
+/// Features (FEATURE_COUNT + 1 optional semantic):
+///   [0]  industry_match    (binary)
+///   [1]  employee_in_range (binary)
+///   [2]  seniority_match   (binary)
+///   [3]  department_match  (binary)
+///   [4]  tech_overlap / 10 (0-1)
+///   [5]  email_verified / 2(0-1)
+///   [6]  smooth_recency    (exp decay)
+///   [7]  hf_score          (0-1)
+///   [8]  hf_model_depth    (0-1)
+///   [9]  hf_training_depth (0-1)
+///   [10] hf_maturity       (0-1)
+///   [11] hf_research       (binary)
+///   [12] hf_sales_relevance(0-1)
+///   [+]  semantic_icp_score(cosine, optional — 0.0 if unavailable)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogisticScorer {
-    pub weights: [f32; 7],
+    pub weights: Vec<f32>,
     pub bias: f32,
-    pub feature_stats: [WelfordStats; 7],
+    pub feature_stats: Vec<WelfordStats>,
     pub trained: bool,
-    /// Optional 8th weight for semantic ICP score (from BGE embeddings).
-    /// Kept separate to maintain backward compatibility with 7-feature JSON files.
+    /// Optional extra weight for semantic ICP score (from BGE embeddings).
     #[serde(default)]
     pub semantic_weight: f32,
 }
@@ -510,9 +519,9 @@ pub struct LogisticScorer {
 impl LogisticScorer {
     pub fn new() -> Self {
         Self {
-            weights: [0.0; 7],
+            weights: vec![0.0; FEATURE_COUNT],
             bias: 0.0,
-            feature_stats: std::array::from_fn(|_| WelfordStats::new()),
+            feature_stats: (0..FEATURE_COUNT).map(|_| WelfordStats::new()).collect(),
             trained: false,
             semantic_weight: 0.0,
         }
@@ -521,11 +530,25 @@ impl LogisticScorer {
     /// Pre-trained weights calibrated for B2B lead scoring.
     pub fn default_pretrained() -> Self {
         Self {
-            weights: [0.8, 0.5, 0.8, 0.5, 0.3, 0.2, 0.3],
-            bias: -1.5,
-            feature_stats: std::array::from_fn(|_| WelfordStats::new()),
+            weights: vec![
+                0.8,  //  0: industry_match
+                0.5,  //  1: employee_in_range
+                0.8,  //  2: seniority_match
+                0.5,  //  3: department_match
+                0.3,  //  4: tech_norm
+                0.2,  //  5: email_norm
+                0.3,  //  6: smooth_recency
+                0.7,  //  7: hf_score — strong composite signal
+                0.4,  //  8: hf_model_depth — model publishing depth
+                0.5,  //  9: hf_training_depth — custom training = serious org
+                0.3,  // 10: hf_maturity — production models matter
+                0.6,  // 11: hf_research — papers/pretraining = deep ML
+                0.3,  // 12: hf_sales_relevance — sales models = potential customer
+            ],
+            bias: -1.8,
+            feature_stats: (0..FEATURE_COUNT).map(|_| WelfordStats::new()).collect(),
             trained: true,
-            semantic_weight: 0.4, // moderate weight for semantic signal
+            semantic_weight: 0.4,
         }
     }
 
@@ -541,8 +564,8 @@ impl LogisticScorer {
         (-0.015 * days as f32).exp()
     }
 
-    /// Extract a 7-feature vector from a ContactBatch at a given index.
-    pub fn extract_features(batch: &ContactBatch, idx: usize) -> [f32; 7] {
+    /// Extract a FEATURE_COUNT-element vector from a ContactBatch at a given index.
+    pub fn extract_features(batch: &ContactBatch, idx: usize) -> [f32; FEATURE_COUNT] {
         [
             batch.industry_match[idx] as f32,
             batch.employee_in_range[idx] as f32,
@@ -551,22 +574,31 @@ impl LogisticScorer {
             batch.tech_overlap[idx] as f32 / 10.0,
             batch.email_verified[idx] as f32 / 2.0,
             Self::smooth_recency(batch.recency_days[idx]),
+            // HF features
+            batch.hf_score[idx],
+            batch.hf_model_depth[idx],
+            batch.hf_training_depth[idx],
+            batch.hf_maturity[idx],
+            batch.hf_research[idx],
+            batch.hf_sales_relevance[idx],
         ]
     }
 
-    /// Score a single feature vector (7 base features).
-    pub fn score(&self, features: &[f32; 7]) -> f32 {
+    /// Score a single feature vector.
+    pub fn score(&self, features: &[f32; FEATURE_COUNT]) -> f32 {
         let mut dot = self.bias;
-        for i in 0..7 {
+        let n = self.weights.len().min(FEATURE_COUNT);
+        for i in 0..n {
             dot += self.weights[i] * features[i];
         }
         Self::sigmoid(dot)
     }
 
-    /// Score a feature vector with semantic ICP score (8th feature).
-    pub fn score_with_semantic(&self, features: &[f32; 7], semantic_score: f32) -> f32 {
+    /// Score a feature vector with semantic ICP score (extra feature).
+    pub fn score_with_semantic(&self, features: &[f32; FEATURE_COUNT], semantic_score: f32) -> f32 {
         let mut dot = self.bias;
-        for i in 0..7 {
+        let n = self.weights.len().min(FEATURE_COUNT);
+        for i in 0..n {
             dot += self.weights[i] * features[i];
         }
         dot += self.semantic_weight * semantic_score;
@@ -589,13 +621,19 @@ impl LogisticScorer {
     /// Train via stochastic gradient descent on labeled data.
     pub fn fit(
         &mut self,
-        features: &[[f32; 7]],
+        features: &[[f32; FEATURE_COUNT]],
         labels: &[f32],
         learning_rate: f32,
         epochs: usize,
     ) {
+        // Ensure weights/stats are sized correctly
+        self.weights.resize(FEATURE_COUNT, 0.0);
+        while self.feature_stats.len() < FEATURE_COUNT {
+            self.feature_stats.push(WelfordStats::new());
+        }
+
         for sample in features {
-            for j in 0..7 {
+            for j in 0..FEATURE_COUNT {
                 self.feature_stats[j].update(sample[j]);
             }
         }
@@ -605,7 +643,7 @@ impl LogisticScorer {
             for (x, &y) in features.iter().zip(labels.iter()) {
                 let pred = self.score(x);
                 let error = pred - y;
-                for j in 0..7 {
+                for j in 0..FEATURE_COUNT {
                     self.weights[j] -= lr * error * x[j];
                 }
                 self.bias -= lr * error;
@@ -618,11 +656,19 @@ impl LogisticScorer {
 
 impl LogisticScorer {
     /// Load a trained scorer from a JSON file, falling back to pretrained defaults.
+    /// If the loaded weights don't match FEATURE_COUNT, falls back to defaults.
     pub fn from_json(path: &std::path::Path) -> Self {
-        std::fs::read_to_string(path)
+        let loaded: Option<Self> = std::fs::read_to_string(path)
             .ok()
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_else(Self::default_pretrained)
+            .and_then(|s| serde_json::from_str(&s).ok());
+        match loaded {
+            Some(mut s) if s.weights.len() == FEATURE_COUNT => {
+                // Ensure stats are also the right length
+                s.feature_stats.resize_with(FEATURE_COUNT, WelfordStats::new);
+                s
+            }
+            _ => Self::default_pretrained(),
+        }
     }
 
     /// Persist the scorer to a JSON file.
@@ -650,10 +696,7 @@ impl ContactBatch {
             self.compute_scores();
             return;
         }
-        for i in 0..self.count {
-            let features = LogisticScorer::extract_features(self, i);
-            self.scores[i] = scorer.score(&features) * 100.0;
-        }
+        scorer.score_batch(self);
     }
 }
 
@@ -977,8 +1020,8 @@ mod tests {
     fn test_icp_profile_default_weights_sum() {
         let icp = IcpProfile::default();
         let total = icp.industry_weight + icp.employee_weight + icp.seniority_weight
-            + icp.department_weight + icp.tech_weight + icp.email_weight;
-        assert_eq!(total, 95.0);
+            + icp.department_weight + icp.tech_weight + icp.email_weight + icp.hf_weight;
+        assert_eq!(total, 110.0);
     }
 
     #[test]
@@ -1127,24 +1170,24 @@ mod tests {
     fn test_logistic_fit() {
         let mut scorer = LogisticScorer::new();
 
-        // 10 positive examples (all features high)
+        // 10 positive examples (all features high, including HF signals)
         // 10 negative examples (all features low)
         let mut features = Vec::new();
         let mut labels = Vec::new();
         for _ in 0..10 {
-            features.push([1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9]);
+            features.push([1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9, 0.8, 0.6, 0.7, 0.9, 1.0, 0.5]);
             labels.push(1.0);
         }
         for _ in 0..10 {
-            features.push([0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1]);
+            features.push([0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
             labels.push(0.0);
         }
 
         scorer.fit(&features, &labels, 0.5, 100);
         assert!(scorer.trained);
 
-        let pos_score = scorer.score(&[1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9]);
-        let neg_score = scorer.score(&[0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1]);
+        let pos_score = scorer.score(&[1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9, 0.8, 0.6, 0.7, 0.9, 1.0, 0.5]);
+        let neg_score = scorer.score(&[0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
         assert!(
             pos_score > neg_score,
             "pos={} neg={}",
@@ -1186,6 +1229,13 @@ mod tests {
         batch.tech_overlap[0] = 5;
         batch.email_verified[0] = 2;
         batch.recency_days[0] = 0;
+        // HF signals
+        batch.hf_score[0] = 0.75;
+        batch.hf_model_depth[0] = 0.6;
+        batch.hf_training_depth[0] = 0.8;
+        batch.hf_maturity[0] = 0.9;
+        batch.hf_research[0] = 1.0;
+        batch.hf_sales_relevance[0] = 0.33;
 
         let features = LogisticScorer::extract_features(&batch, 0);
         assert_eq!(features[0], 1.0); // industry
@@ -1195,6 +1245,13 @@ mod tests {
         assert!((features[4] - 0.5).abs() < 1e-6); // tech: 5/10
         assert!((features[5] - 1.0).abs() < 1e-6); // email: 2/2
         assert!((features[6] - 1.0).abs() < 1e-6); // recency: day 0 = 1.0
+        // HF features
+        assert!((features[7] - 0.75).abs() < 1e-6); // hf_score
+        assert!((features[8] - 0.6).abs() < 1e-6);  // hf_model_depth
+        assert!((features[9] - 0.8).abs() < 1e-6);  // hf_training_depth
+        assert!((features[10] - 0.9).abs() < 1e-6); // hf_maturity
+        assert!((features[11] - 1.0).abs() < 1e-6); // hf_research
+        assert!((features[12] - 0.33).abs() < 1e-6); // hf_sales_relevance
     }
 
     // ── IsotonicCalibrator tests ──
@@ -1312,5 +1369,146 @@ mod tests {
         batch.compute_scores();
         assert!(batch.scores[0] > batch.scores[1]);
         assert!(batch.scores[0] > 0.0);
+    }
+
+    // ── HfCompanySignals tests ──
+
+    #[test]
+    fn test_hf_signals_from_raw() {
+        let sig = HfCompanySignals::from_raw(0.72, 15, 4, 0.85, true, 3, 2);
+        assert!((sig.hf_score - 0.72).abs() < 1e-6);
+        assert!(sig.model_depth > 0.0 && sig.model_depth <= 1.0);
+        assert!((sig.training_depth - 0.8).abs() < 1e-6); // 4/5
+        assert!((sig.maturity - 0.85).abs() < 1e-6);
+        assert_eq!(sig.research, 1.0); // has_pretraining = true
+        assert!((sig.sales_relevance - (2.0 / 3.0)).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_hf_signals_zero() {
+        let sig = HfCompanySignals::from_raw(0.0, 0, 0, 0.0, false, 0, 0);
+        assert_eq!(sig.hf_score, 0.0);
+        assert_eq!(sig.model_depth, 0.0);
+        assert_eq!(sig.training_depth, 0.0);
+        assert_eq!(sig.maturity, 0.0);
+        assert_eq!(sig.research, 0.0);
+        assert_eq!(sig.sales_relevance, 0.0);
+    }
+
+    #[test]
+    fn test_hf_signals_clamped() {
+        let sig = HfCompanySignals::from_raw(1.5, 100, 20, 1.5, true, 100, 100);
+        assert_eq!(sig.hf_score, 1.0); // clamped
+        assert_eq!(sig.model_depth, 1.0); // clamped
+        assert_eq!(sig.training_depth, 1.0); // clamped
+        assert_eq!(sig.maturity, 1.0); // clamped
+        assert_eq!(sig.sales_relevance, 1.0); // clamped
+    }
+
+    #[test]
+    fn test_hf_signals_boost_score() {
+        let scorer = LogisticScorer::default_pretrained();
+        let matcher = IcpMatcher::default();
+
+        let mut batch = ContactBatch::new();
+        batch.count = 2;
+
+        // Same contact features for both
+        matcher.populate_slot(&mut batch, 0, "AI SaaS", 100, "CTO", "Engineering", "rust, python", "verified", 3);
+        matcher.populate_slot(&mut batch, 1, "AI SaaS", 100, "CTO", "Engineering", "rust, python", "verified", 3);
+
+        // Only slot 0 gets HF signals
+        let hf = HfCompanySignals::from_raw(0.85, 12, 4, 0.9, true, 2, 1);
+        batch.populate_hf_slot(0, &hf);
+        // Slot 1 has no HF signals (all zeros)
+
+        scorer.score_batch(&mut batch);
+        assert!(
+            batch.scores[0] > batch.scores[1],
+            "with_hf={} without_hf={}",
+            batch.scores[0],
+            batch.scores[1]
+        );
+    }
+
+    #[test]
+    fn test_hf_backward_compat_no_hf() {
+        // Contacts with zero HF signals should rank same as before
+        let scorer = LogisticScorer::default_pretrained();
+        let matcher = IcpMatcher::default();
+
+        let mut batch = ContactBatch::new();
+        batch.count = 2;
+
+        // Strong lead vs weak lead — no HF signals
+        matcher.populate_slot(&mut batch, 0, "AI SaaS", 100, "CTO", "Engineering", "rust, python", "verified", 3);
+        matcher.populate_slot(&mut batch, 1, "Mining", 5, "Intern", "Sales", "excel", "unknown", 365);
+
+        scorer.score_batch(&mut batch);
+        assert!(batch.scores[0] > batch.scores[1]);
+    }
+
+    #[test]
+    fn test_hf_maturity_ordering() {
+        let scorer = LogisticScorer::default_pretrained();
+        let matcher = IcpMatcher::default();
+
+        let mut batch = ContactBatch::new();
+        batch.count = 3;
+
+        // Same base features, different maturity levels
+        for i in 0..3 {
+            matcher.populate_slot(&mut batch, i, "AI", 100, "CTO", "Engineering", "python", "verified", 5);
+            batch.hf_score[i] = 0.7;
+            batch.hf_model_depth[i] = 0.5;
+            batch.hf_training_depth[i] = 0.5;
+            batch.hf_research[i] = 1.0;
+            batch.hf_sales_relevance[i] = 0.3;
+        }
+        batch.hf_maturity[0] = 1.0;  // Production
+        batch.hf_maturity[1] = 0.7;  // Moderate
+        batch.hf_maturity[2] = 0.15; // Trivial
+
+        scorer.score_batch(&mut batch);
+        assert!(batch.scores[0] > batch.scores[1], "prod={} mod={}", batch.scores[0], batch.scores[1]);
+        assert!(batch.scores[1] > batch.scores[2], "mod={} triv={}", batch.scores[1], batch.scores[2]);
+    }
+
+    #[test]
+    fn test_populate_hf_slot() {
+        let mut batch = ContactBatch::new();
+        batch.count = 1;
+        let hf = HfCompanySignals::from_raw(0.65, 8, 3, 0.7, false, 2, 1);
+        batch.populate_hf_slot(0, &hf);
+        assert!((batch.hf_score[0] - 0.65).abs() < 1e-6);
+        assert!(batch.hf_model_depth[0] > 0.0);
+        assert!((batch.hf_training_depth[0] - 0.6).abs() < 1e-6); // 3/5
+        assert!((batch.hf_maturity[0] - 0.7).abs() < 1e-6);
+        assert_eq!(batch.hf_research[0], 1.0); // arxiv_count=2 > 0
+        assert!((batch.hf_sales_relevance[0] - (1.0 / 3.0)).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_icp_scoring_with_hf_weight() {
+        let mut batch = ContactBatch::new();
+        batch.count = 2;
+
+        // Both have same base features (no ICP match at all)
+        batch.recency_days[0] = 30;
+        batch.recency_days[1] = 30;
+
+        // Only slot 0 has HF signal
+        batch.hf_score[0] = 0.9;
+
+        let icp = IcpProfile::default();
+        batch.compute_scores_with(&icp);
+
+        // Slot 0 should score higher because of HF contribution
+        assert!(
+            batch.scores[0] > batch.scores[1],
+            "with_hf={} without_hf={}",
+            batch.scores[0],
+            batch.scores[1]
+        );
     }
 }

@@ -364,6 +364,48 @@ a:hover svg { color: var(--colors-ui-heading) !important; }
 [data-pipeline-arrow="1"] { animation-delay: 0.6s; }
 [data-pipeline-arrow="2"] { animation-delay: 1.2s; }
 
+/* --- 4b. Pipeline connector arrows (desktop) --- */
+@keyframes connector-dash-flow {
+  0% { stroke-dashoffset: 12; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes connector-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.pipeline-connector {
+  opacity: 0;
+  animation: connector-fade-in 0.4s ease forwards;
+}
+.pipeline-connector line {
+  animation: connector-dash-flow 0.8s linear infinite;
+}
+
+/* --- 4c. Pipeline live-processing pulse --- */
+@keyframes pipeline-live-pulse {
+  0% { box-shadow: 0 0 0 0 var(--stage-accent); }
+  40% { box-shadow: 0 0 12px 3px var(--stage-accent); }
+  100% { box-shadow: 0 0 0 0 var(--stage-accent); }
+}
+.pipeline-stage-live {
+  animation: pipeline-live-pulse 1s ease-out forwards;
+}
+
+/* --- 4d. Pipeline data-flow label entrance --- */
+@keyframes flow-label-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pipeline-flow-label {
+  opacity: 0;
+  animation: flow-label-enter 0.3s ease forwards;
+}
+
+/* --- 4e. Extended pipeline card stagger (7 cards) --- */
+.pipeline-card-animated:nth-child(5) { animation-delay: 0.58s; }
+.pipeline-card-animated:nth-child(6) { animation-delay: 0.70s; }
+.pipeline-card-animated:nth-child(7) { animation-delay: 0.82s; }
+
 /* --- 5. Hero badge scan line + headline stagger --- */
 @keyframes badge-scan {
   0% { left: -30%; }
