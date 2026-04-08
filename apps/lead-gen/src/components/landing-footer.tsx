@@ -57,8 +57,10 @@ export function LandingFooter() {
           <div>
             <Link
               href="/"
-              className={flex({ align: "center", gap: "2", mb: "3" })}
-              style={{ textDecoration: "none" }}
+              className={cx(
+                flex({ align: "center", gap: "2", mb: "3" }),
+                css({ textDecoration: "none" }),
+              )}
             >
               <Image src="/logo.svg" alt="Agentic Lead Gen" width={100} height={22} />
             </Link>

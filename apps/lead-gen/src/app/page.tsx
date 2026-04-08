@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Box } from "@radix-ui/themes";
 import { css } from "styled-system/css";
 import { LandingNav } from "@/components/landing-nav";
 import { LandingHero } from "@/components/landing-hero";
@@ -49,7 +48,7 @@ const sectionDivider = css({
 
 export default function HomePage() {
   return (
-    <Box>
+    <div>
       <LandingNav />
       <LandingHero />
       <div className={sectionDivider} />

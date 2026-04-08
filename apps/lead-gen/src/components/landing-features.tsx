@@ -179,12 +179,11 @@ export function LandingFeatures() {
           ))}
         </div>
 
-        {/* -- post-features CTA block -- */}
+        {/* -- CTA block -- */}
         <div
           className={css({
             py: "6",
             px: "6",
-            mb: "6",
             border: "1px solid",
             borderColor: "accent.border",
             borderRadius: "0",
@@ -208,7 +207,7 @@ export function LandingFeatures() {
                   letterSpacing: "snug",
                 })}
               >
-                Ready to deploy Agentic Lead Gen?
+                Ready to deploy?
               </p>
               <p
                 className={css({
@@ -217,151 +216,17 @@ export function LandingFeatures() {
                   color: "ui.secondary",
                 })}
               >
-                Autonomous agents. 300 qualified leads per cycle. Fully local. 35 cited papers.
+                Autonomous agents. 300 qualified leads per cycle. Fully local.
               </p>
             </div>
             <div className={flex({ gap: "3", flexShrink: 0 })}>
-              <a
-                href="https://doi.org/10.5281/zenodo.lead-gen"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="https://github.com/nicolad/ai-apps/tree/main/apps/lead-gen#deploy"
                 className={button({ variant: "solid", size: "md" })}
               >
-                Read the paper
+                Deploy now
                 <ArrowRightIcon width={14} height={14} />
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* -- architecture layers tech stack -- */}
-        <div
-          id="stack"
-          className={css({ mb: "6", scrollMarginTop: "56px" })}
-        >
-          <p
-            className={css({
-              fontSize: "xs",
-              fontWeight: "medium",
-              mb: "3",
-              color: "ui.dim",
-              textTransform: "lowercase",
-            })}
-          >
-            architecture
-          </p>
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
-              gap: "3",
-            })}
-          >
-            {ARCHITECTURE_LAYERS.map((layer) => (
-              <div
-                key={layer.layer}
-                className={css({
-                  py: "3",
-                  px: "4",
-                  border: "1px solid",
-                  borderColor: "ui.border",
-                  borderRadius: "0",
-                  bg: "ui.surface",
-                })}
-              >
-                <p
-                  className={css({
-                    fontSize: "xs",
-                    fontWeight: "bold",
-                    color: "ui.heading",
-                    textTransform: "lowercase",
-                    letterSpacing: "wide",
-                  })}
-                >
-                  {layer.layer}
-                </p>
-                <p
-                  className={css({
-                    fontSize: "2xs",
-                    mt: "1",
-                    color: "ui.tertiary",
-                    letterSpacing: "normal",
-                    textTransform: "lowercase",
-                  })}
-                >
-                  {layer.role}
-                </p>
-                <div className={flex({ gap: "2", mt: "2", flexWrap: "wrap" })}>
-                  {layer.techs.map((tech) => (
-                    <span
-                      key={tech}
-                      className={badge({ variant: "pipeline", size: "sm" })}
-                    >
-                      {tech.toLowerCase()}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* -- open source callout -- */}
-        <div
-          className={css({
-            py: "4",
-            px: "5",
-            border: "1px solid",
-            borderColor: "status.positive",
-            borderRadius: "0",
-            bg: "transparent",
-          })}
-        >
-          <div
-            className={flex({
-              direction: { base: "column", sm: "row" },
-              align: { base: "start", sm: "center" },
-              justify: "space-between",
-              gap: "3",
-            })}
-          >
-            <span
-              className={css({
-                fontSize: "sm",
-                color: "ui.body",
-              })}
-            >
-              Agentic Lead Gen is fully open source — fork it, self-host it, extend the agents for your ICP
-            </span>
-            <div className={flex({ gap: "3", flexShrink: 0 })}>
-              <Link
-                href="/deploy"
-                className={button({ variant: "solidGreen", size: "sm" })}
-              >
-                Deploy locally
               </Link>
-              <a
-                href="/architecture"
-                className={css({
-                  display: "inline-flex",
-                  alignItems: "center",
-                  fontSize: "base",
-                  fontWeight: "medium",
-                  color: "ui.tertiary",
-                  textDecoration: "none",
-                  textTransform: "lowercase",
-                  letterSpacing: "snug",
-                  borderBottom: "1px solid",
-                  borderBottomColor: "ui.border",
-                  paddingBottom: "1px",
-                  transition: "color 150ms ease",
-                  _hover: {
-                    color: "ui.body",
-                  },
-                })}
-              >
-                Architecture docs
-              </a>
             </div>
           </div>
         </div>

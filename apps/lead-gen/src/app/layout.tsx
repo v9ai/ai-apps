@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import "@radix-ui/themes/styles.css";
 import "./globals.css";
-import { Theme, Flex } from "@radix-ui/themes";
 import { Providers } from "@/components/providers";
 import { SidebarProvider } from "@/components/sidebar-provider";
 import { Sidebar, MainContent } from "@/components/sidebar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Inter } from "next/font/google";
+import { css } from "styled-system/css";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,18 +30,16 @@ export default function RootLayout({
         <a href="#main-content" className="skip-to-content">
           skip to content
         </a>
-        <Theme appearance="dark">
-          <Providers>
-            <ErrorBoundary>
-              <SidebarProvider>
-                <Flex minHeight="100vh">
-                  <Sidebar />
-                  <MainContent>{children}</MainContent>
-                </Flex>
-              </SidebarProvider>
-            </ErrorBoundary>
-          </Providers>
-        </Theme>
+        <Providers>
+          <ErrorBoundary>
+            <SidebarProvider>
+              <div className={css({ display: "flex", minHeight: "100vh" })}>
+                <Sidebar />
+                <MainContent>{children}</MainContent>
+              </div>
+            </SidebarProvider>
+          </ErrorBoundary>
+        </Providers>
       </body>
     </html>
   );
