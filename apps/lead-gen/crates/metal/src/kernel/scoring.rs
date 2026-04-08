@@ -214,7 +214,7 @@ impl IcpProfile {
     }
 
     /// Return weights as an array (same order as LogisticScorer features, minus recency).
-    pub fn as_weights(&self) -> [f32; 6] {
+    pub fn as_weights(&self) -> [f32; 7] {
         [
             self.industry_weight,
             self.employee_weight,
@@ -222,6 +222,7 @@ impl IcpProfile {
             self.department_weight,
             self.tech_weight,
             self.email_weight,
+            self.hf_weight,
         ]
     }
 }
@@ -235,6 +236,7 @@ impl Default for IcpProfile {
             department_weight: 15.0,
             tech_weight: 10.0,
             email_weight: 5.0,
+            hf_weight: 15.0,
         }
     }
 }
@@ -300,7 +302,8 @@ impl ContactBatch {
             + icp.seniority_weight
             + icp.department_weight
             + icp.tech_weight
-            + icp.email_weight;
+            + icp.email_weight
+            + icp.hf_weight;
 
         for i in 0..n {
             let mut score: f32 = 0.0;
@@ -315,6 +318,8 @@ impl ContactBatch {
                 1 => icp.email_weight * 0.4,
                 _ => 0.0,
             };
+            // HF composite signal (0-1)
+            score += self.hf_score[i] * icp.hf_weight;
 
             // Normalize to 0-100
             let icp_fit = (score / max) * 100.0;
