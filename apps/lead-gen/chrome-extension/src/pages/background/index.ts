@@ -1547,6 +1547,69 @@ async function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
 
 const MAX_COMPANIES = 150;
 
+// Inject (or update) a floating status overlay on the current page.
+// Survives navigation because it's re-injected after each waitForTabLoad.
+function injectCrawlOverlay(
+  tabId: number,
+  status: {
+    saved: number;
+    skipped: number;
+    queued: number;
+    name: string;
+    phase: "saving" | "discovering" | "error";
+  },
+): Promise<void> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: (s: { saved: number; skipped: number; queued: number; name: string; phase: string }) => {
+        const ATTR = "data-lg-crawl-overlay";
+        let el = document.querySelector(`[${ATTR}]`) as HTMLDivElement | null;
+        if (!el) {
+          el = document.createElement("div");
+          el.setAttribute(ATTR, "true");
+          el.style.cssText = `
+            position:fixed; bottom:20px; right:20px; z-index:999999;
+            background:rgba(15,23,42,0.9); color:#fff; padding:10px 14px;
+            border-radius:8px; font:13px/1.4 -apple-system,sans-serif;
+            max-width:360px; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+            display:flex; align-items:center; gap:8px;
+            pointer-events:none;
+          `;
+          document.body.appendChild(el);
+        }
+        const dotColor = s.phase === "saving" ? "#22c55e"
+          : s.phase === "discovering" ? "#eab308" : "#ef4444";
+        el.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;flex-shrink:0;animation:lgpulse 1.2s ease-in-out infinite"></span><span>${s.saved} saved, ${s.skipped} dupes (${s.queued} queued) — ${s.name}</span>`;
+        if (!document.getElementById("lg-crawl-pulse-style")) {
+          const style = document.createElement("style");
+          style.id = "lg-crawl-pulse-style";
+          style.textContent = "@keyframes lgpulse{0%,100%{opacity:1}50%{opacity:.3}}";
+          document.head.appendChild(style);
+        }
+      },
+      args: [status],
+    })
+    .then(() => {})
+    .catch(() => {});
+}
+
+// Remove the crawl overlay from the page.
+function removeCrawlOverlay(tabId: number): Promise<void> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        document.querySelector("[data-lg-crawl-overlay]")?.remove();
+        document.getElementById("lg-crawl-pulse-style")?.remove();
+      },
+    })
+    .then(() => {})
+    .catch(() => {});
+}
+
 // Normalize a LinkedIn company URL to a canonical form for dedup.
 function normalizeCompanyUrl(url: string): string {
   return url.split("?")[0].replace(/\/$/, "").toLowerCase();
@@ -1633,9 +1696,11 @@ async function findRelatedCompanies(tabId: number) {
 
       // a) Navigate to /about/ and scrape company data
       const aboutUrl = url.replace(/\/$/, "") + "/about/";
+      const urlSlug = url.match(/\/company\/([^/]+)/)?.[1] || "loading...";
       await safeTabUpdate(tabId, { url: aboutUrl });
       await waitForTabLoad(tabId);
       await randomDelay(2000);
+      await injectCrawlOverlay(tabId, { saved, skipped, queued: queue.length, name: urlSlug, phase: "saving" });
 
       await clickSeeMore(tabId);
       await randomDelay(500);
@@ -1661,9 +1726,11 @@ async function findRelatedCompanies(tabId: number) {
         if (result > 0) {
           saved += result;
           console.log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${data.name} ✓ SAVED (queued: ${queue.length})`);
+          await injectCrawlOverlay(tabId, { saved, skipped, queued: queue.length, name: `✓ ${data.name}`, phase: "saving" });
         } else {
           skipped++;
           console.log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${data.name} ⊘ ALREADY EXISTS (queued: ${queue.length})`);
+          await injectCrawlOverlay(tabId, { saved, skipped, queued: queue.length, name: `⊘ ${data.name}`, phase: "saving" });
         }
 
         // c) Send progress (will only reach content script if on same origin)
@@ -1684,6 +1751,7 @@ async function findRelatedCompanies(tabId: number) {
         await safeTabUpdate(tabId, { url: mainUrl });
         await waitForTabLoad(tabId);
         await randomDelay(2000);
+        await injectCrawlOverlay(tabId, { saved, skipped, queued: queue.length, name: data?.name || urlSlug, phase: "discovering" });
 
         // Scroll to load lazy content
         for (let i = 0; i < 3; i++) {
@@ -1717,8 +1785,9 @@ async function findRelatedCompanies(tabId: number) {
     // ── After loop ─────────────────────────────────────────────────────
     console.log(`[FindRelated] Crawl complete. saved=${saved}, skipped=${skipped}, visited=${visited.size}, queue_remaining=${queue.length}`);
 
-    // Navigate back to original page
+    // Navigate back to original page and remove overlay
     if (await isTabAlive(tabId)) {
+      await removeCrawlOverlay(tabId);
       try {
         await safeTabUpdate(tabId, { url: returnUrl });
         await waitForTabLoad(tabId);
@@ -1737,6 +1806,9 @@ async function findRelatedCompanies(tabId: number) {
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[FindRelated] Unexpected error:", errMsg);
+    if (await isTabAlive(tabId)) {
+      await injectCrawlOverlay(tabId, { saved: 0, skipped: 0, queued: 0, name: errMsg.slice(0, 40), phase: "error" });
+    }
     await safeSendMessage(tabId, {
       action: "findRelatedError",
       error: errMsg,
