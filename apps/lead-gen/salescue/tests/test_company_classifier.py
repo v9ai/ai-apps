@@ -78,8 +78,16 @@ class TestNonStaffingDetection:
                 "OpenAI",
                 "AI research laboratory",
             ),
+            (
+                "Greenhouse Software",
+                "Applicant tracking system for growing companies",
+            ),
+            (
+                "Workday",
+                "Enterprise HR and finance cloud platform",
+            ),
         ],
-        ids=["stripe", "datadog", "openai"],
+        ids=["stripe", "datadog", "openai", "greenhouse", "workday"],
     )
     def test_non_staffing_companies(self, encoder_loaded, name, description):
         result = classify_company(name=name, description=description)
@@ -119,6 +127,20 @@ class TestParseSize:
 
     def test_no_digits(self):
         assert _parse_size("unknown") == 999999
+
+    @pytest.mark.parametrize(
+        "input_str",
+        ["Self-employed", "Myself only", "solo", "freelance"],
+        ids=["self-employed", "myself-only", "solo", "freelance"],
+    )
+    def test_self_employed(self, input_str):
+        assert _parse_size(input_str) == 1
+
+    def test_single_employee(self):
+        assert _parse_size("1 employee") == 1
+
+    def test_em_dash_range(self):
+        assert _parse_size("201—500 employees") == 500
 
 
 # ── 4. Geo detection ───────────────────────────────────────────────────────
@@ -324,8 +346,60 @@ class TestClassifierOutputShape:
         assert isinstance(result["semantic_score"], float)
         assert isinstance(result["keyword_score"], float)
 
+    def test_all_six_signal_keys(self, encoder_loaded):
+        result = classify_company(name="Acme Corp", description="We build software")
+        for key in ["semantic_score", "keyword_score", "name_score", "url_score", "industry_score"]:
+            assert key in result, f"Missing key: {key}"
+
     def test_confidence_range(self, encoder_loaded):
         result = classify_company(name="Acme Corp", description="Staffing agency")
         assert 0.0 <= result["confidence"] <= 1.0
         assert 0.0 <= result["semantic_score"] <= 1.0
         assert 0.0 <= result["keyword_score"] <= 1.0
+
+    def test_raw_score_present(self, encoder_loaded):
+        result = classify_company(name="Test Corp", description="Tech company")
+        assert "raw_score" in result
+        assert 0.0 <= result["raw_score"] <= 1.0
+
+
+# ── 7. Edge cases — HR tech vs actual staffing ──────────────────────────────
+
+
+class TestEdgeCases:
+    """Companies that share vocabulary with staffing but are products/platforms."""
+
+    def test_talentlms_not_staffing(self, encoder_loaded):
+        result = classify_company(
+            name="TalentLMS",
+            description="Learning management system for employee training and development",
+        )
+        assert result["is_staffing"] is False
+
+    def test_hirevue_not_staffing(self, encoder_loaded):
+        result = classify_company(
+            name="HireVue",
+            description="AI-powered video interviewing and assessment platform for hiring teams",
+        )
+        assert result["is_staffing"] is False
+
+    def test_minimal_input(self, encoder_loaded):
+        result = classify_company(name="Unknown")
+        assert isinstance(result["is_staffing"], bool)
+        assert isinstance(result["confidence"], float)
+
+    def test_industry_signal_staffing(self, encoder_loaded):
+        result = classify_company(
+            name="ABC Group",
+            description="Professional services",
+            industry="Staffing and Recruiting",
+        )
+        assert result["industry_score"] == 1.0
+
+    def test_industry_signal_anti(self, encoder_loaded):
+        result = classify_company(
+            name="XYZ Inc",
+            description="Building software",
+            industry="Computer Software",
+        )
+        assert result["industry_score"] == -0.3
