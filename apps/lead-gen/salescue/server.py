@@ -557,6 +557,177 @@ async def _update_company_tagged(
         await conn.close()
 
 
+# ── Batch company classifier ────────────────────────────────────────────────
+
+
+@app.post("/classify-companies")
+async def classify_companies_batch(req: CompanyBatchClassifyRequest):
+    """Classify multiple companies in one request.
+
+    Runs ML inference sequentially (fast after warmup), then batches all DB
+    updates into a single asyncpg connection instead of N separate ones.
+    """
+    import re
+    from .modules.company_classifier import classify_company as _classify
+
+    t0 = time.perf_counter()
+    results: list[dict[str, Any]] = []
+    db_updates: list[dict[str, Any]] = []
+
+    _IRRELEVANT_GEO_RE = re.compile(
+        r"\b(latam|latin america|africa|apac|asia|india|middle east|mena|philippines|nigeria|pakistan|south asia|southeast asia|eastern europe)\b",
+        re.IGNORECASE,
+    )
+
+    for company in req.companies:
+        # Prepend industry to description so the classifier can use it as a signal
+        description = (
+            f"{company.industry}. {company.description}"
+            if company.industry
+            else company.description
+        )
+
+        tc = time.perf_counter()
+        result = _classify(
+            name=company.name,
+            description=description,
+            website=company.website,
+            location=company.location,
+        )
+        company_elapsed = round(time.perf_counter() - tc, 4)
+
+        # Parse size — from explicit field or from description
+        size_str = company.size
+        if not size_str and company.description:
+            size_match = re.search(r"Size:\s*(.+?)(?:\n|$)", company.description)
+            if size_match:
+                size_str = size_match.group(1).strip()
+
+        employee_count = _parse_size(size_str)
+
+        # Geo relevance
+        geo_text = f"{company.name} {company.description} {company.location}"
+        is_irrelevant_geo = bool(_IRRELEVANT_GEO_RE.search(geo_text))
+
+        is_target = (
+            result["is_staffing"] and employee_count <= 200 and not is_irrelevant_geo
+        )
+        result["is_target"] = is_target
+        result["employee_count"] = employee_count
+        result["is_irrelevant_geo"] = is_irrelevant_geo
+
+        results.append({
+            "result": result,
+            "company_id": company.company_id,
+            "time_s": company_elapsed,
+        })
+
+        if result["is_staffing"]:
+            db_updates.append({
+                "company_id": company.company_id,
+                "confidence": result["confidence"],
+                "reasons": result["reasons"],
+                "is_target": is_target,
+            })
+
+    # Batch DB updates in a single connection
+    if db_updates:
+        await _update_companies_tagged_batch(db_updates)
+
+    total_elapsed = round(time.perf_counter() - t0, 4)
+    return {
+        "results": results,
+        "total": len(results),
+        "staffing_count": len(db_updates),
+        "time_s": total_elapsed,
+    }
+
+
+async def _update_companies_tagged_batch(
+    updates: list[dict[str, Any]],
+) -> None:
+    """Batch-update staffing companies in a single DB connection.
+
+    Each entry in *updates* has: company_id, confidence, reasons, is_target.
+    """
+    import os
+
+    db_url = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
+    if not db_url:
+        print(
+            f"[classify-companies] No DATABASE_URL — cannot update {len(updates)} companies"
+        )
+        return
+
+    try:
+        import asyncpg  # type: ignore[import-untyped]
+    except ImportError:
+        print(
+            f"[classify-companies] asyncpg not available — cannot update {len(updates)} companies"
+        )
+        return
+
+    import json
+
+    conn = await asyncpg.connect(db_url)
+    try:
+        for upd in updates:
+            company_id = upd["company_id"]
+            confidence = upd["confidence"]
+            reasons: list[str] = upd["reasons"]
+            is_target: bool = upd["is_target"]
+
+            if is_target:
+                row = await conn.fetchrow(
+                    "SELECT tags FROM companies WHERE id = $1", company_id
+                )
+                existing_tags: list[str] = []
+                if row and row["tags"]:
+                    try:
+                        existing_tags = json.loads(row["tags"])
+                    except (json.JSONDecodeError, TypeError):
+                        existing_tags = []
+                if "target-icp" not in existing_tags:
+                    existing_tags.append("target-icp")
+                await conn.execute(
+                    """UPDATE companies
+                       SET category = 'STAFFING',
+                           tags = $1,
+                           ai_classification_reason = $2,
+                           ai_classification_confidence = $3,
+                           updated_at = now()
+                     WHERE id = $4""",
+                    json.dumps(existing_tags),
+                    "; ".join(reasons),
+                    confidence,
+                    company_id,
+                )
+                print(
+                    f"[classify-companies] Tagged ICP target id={company_id} (confidence={confidence:.2f})"
+                )
+            else:
+                await conn.execute(
+                    """UPDATE companies
+                       SET category = 'STAFFING',
+                           ai_classification_reason = $1,
+                           ai_classification_confidence = $2,
+                           updated_at = now()
+                     WHERE id = $3""",
+                    "; ".join(reasons),
+                    confidence,
+                    company_id,
+                )
+                print(
+                    f"[classify-companies] Tagged staffing firm id={company_id} (confidence={confidence:.2f})"
+                )
+
+        print(
+            f"[classify-companies] Batch updated {len(updates)} companies in single connection"
+        )
+    finally:
+        await conn.close()
+
+
 # ── Batch analysis ───────────────────────────────────────────────────────────
 
 
