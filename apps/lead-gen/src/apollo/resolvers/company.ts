@@ -1043,6 +1043,7 @@ export const companyResolvers = {
             location: input.location ?? null,
             size: input.size ?? null,
             description: input.description ?? null,
+            industry: input.industry ?? null,
           }).returning({ id: companies.id });
           imported++;
 
@@ -1058,6 +1059,7 @@ export const companyResolvers = {
               website: input.website ?? "",
               location: input.location ?? "",
               size: input.size ?? "",
+              industry: input.industry ?? "",
             }),
           }).catch((err) => {
             console.warn(`[importCompanies] Classifier fire-and-forget failed for ${input.name}:`, err.message);
