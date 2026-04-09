@@ -31,7 +31,7 @@ export function Topbar({ lessonCount }: { lessonCount?: number }) {
   }, [onScroll]);
 
   return (
-    <div className={`yc-topbar${scrolled ? " yc-topbar--scrolled" : ""}`}>
+    <nav aria-label="Main navigation" className={`yc-topbar${scrolled ? " yc-topbar--scrolled" : ""}`}>
       <Link href="/">
         <span className="yc-topbar-logo" />
         AI ENGINEERING
@@ -64,7 +64,8 @@ export function Topbar({ lessonCount }: { lessonCount?: number }) {
       <div
         className="yc-topbar-progress"
         style={{ transform: `scaleX(${progress})` }}
+        aria-hidden="true"
       />
-    </div>
+    </nav>
   );
 }
