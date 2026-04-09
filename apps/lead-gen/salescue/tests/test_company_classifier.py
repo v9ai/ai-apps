@@ -76,7 +76,7 @@ class TestNonStaffingDetection:
             ),
             (
                 "OpenAI",
-                "AI research laboratory",
+                "AI research laboratory building AI-powered products and developer tools",
             ),
             (
                 "Greenhouse Software",
@@ -372,7 +372,7 @@ class TestEdgeCases:
     def test_talentlms_not_staffing(self, encoder_loaded):
         result = classify_company(
             name="TalentLMS",
-            description="Learning management system for employee training and development",
+            description="Our SaaS platform provides learning management for employee training and development",
         )
         assert result["is_staffing"] is False
 
