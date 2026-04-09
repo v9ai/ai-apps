@@ -338,6 +338,7 @@ input CompanyImportInput {
   location: String
   size: String
   description: String
+  industry: String
 }
 
 type ImportCompaniesResult {

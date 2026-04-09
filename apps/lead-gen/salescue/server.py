@@ -142,6 +142,7 @@ class CompanyClassifyRequest(BaseModel):
     website: str = ""
     location: str = ""
     size: str = ""
+    industry: str = ""
 
 
 class CompanyBatchClassifyRequest(BaseModel):
@@ -381,10 +382,13 @@ async def classify_company(req: CompanyClassifyRequest):
     import asyncio
     from .modules.company_classifier import classify_company as _classify
 
+    # Prepend industry to description so the classifier can use it as a signal
+    description = f"{req.industry}. {req.description}" if req.industry else req.description
+
     t0 = time.perf_counter()
     result = _classify(
         name=req.name,
-        description=req.description,
+        description=description,
         website=req.website,
         location=req.location,
     )

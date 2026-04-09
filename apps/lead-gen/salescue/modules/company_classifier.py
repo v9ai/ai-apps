@@ -100,36 +100,39 @@ ANTI_STAFFING_KEYWORDS = [
 ]
 
 # ── Cached prototype embeddings ─────────────────────────────────────────────
+# Embeddings are produced via backbone.encode_embeddings() which applies
+# centering + L2 normalization to break DeBERTa's anisotropy problem.
+# The centering vector is computed once from ALL prototypes (staffing +
+# non-staffing combined) so that the "common direction" is removed.
 
 _staffing_embeds: torch.Tensor | None = None
 _non_staffing_embeds: torch.Tensor | None = None
+_center: torch.Tensor | None = None
 
 
-def _mean_pool(enc: dict) -> torch.Tensor:
-    """Mean-pool the last hidden state using the attention mask. Returns [1, hidden]."""
-    last_hidden = enc["encoder_output"].last_hidden_state  # [1, seq, hidden]
-    mask = enc["attention_mask"].unsqueeze(-1).float()      # [1, seq, 1]
-    pooled = (last_hidden * mask).sum(dim=1) / mask.sum(dim=1)  # [1, hidden]
-    return pooled
+def _get_prototype_embeds() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Encode prototype sentences once with centering, cache for reuse.
 
-
-def _get_prototype_embeds() -> tuple[torch.Tensor, torch.Tensor]:
-    """Encode prototype sentences once, cache for reuse."""
-    global _staffing_embeds, _non_staffing_embeds
+    Returns:
+        (staffing_embeds, non_staffing_embeds, center) — staffing/non-staffing
+        are L2-normalized on the unit sphere; center is the raw centroid for
+        reuse when encoding new company texts.
+    """
+    global _staffing_embeds, _non_staffing_embeds, _center
     if _staffing_embeds is None:
-        staffing_vecs = []
-        for proto in STAFFING_PROTOTYPES:
-            enc = SharedEncoder.encode(proto)
-            staffing_vecs.append(_mean_pool(enc))
-        _staffing_embeds = torch.cat(staffing_vecs, dim=0)
+        # Compute centering vector from ALL prototypes combined
+        all_protos = STAFFING_PROTOTYPES + NON_STAFFING_PROTOTYPES
+        _center = SharedEncoder.compute_center(all_protos, max_length=256)
 
-        non_staffing_vecs = []
-        for proto in NON_STAFFING_PROTOTYPES:
-            enc = SharedEncoder.encode(proto)
-            non_staffing_vecs.append(_mean_pool(enc))
-        _non_staffing_embeds = torch.cat(non_staffing_vecs, dim=0)
+        # Encode each set with the shared center
+        _staffing_embeds = SharedEncoder.encode_embeddings(
+            STAFFING_PROTOTYPES, center=_center, max_length=256,
+        )
+        _non_staffing_embeds = SharedEncoder.encode_embeddings(
+            NON_STAFFING_PROTOTYPES, center=_center, max_length=256,
+        )
 
-    return _staffing_embeds, _non_staffing_embeds
+    return _staffing_embeds, _non_staffing_embeds, _center
 
 
 def classify_company(
@@ -163,11 +166,15 @@ def classify_company(
     reasons: list[str] = []
 
     # ── 1. Embedding-based semantic score ───────────────────────────────────
-    staffing_embeds, non_staffing_embeds = _get_prototype_embeds()
-    enc = SharedEncoder.encode(text, max_length=256)
-    company_embed = _mean_pool(enc)  # [1, hidden]
+    # Uses centered + L2-normalized embeddings from the backbone to get
+    # discriminative cosine similarities (not the ~0.95 anisotropic mush).
+    staffing_embeds, non_staffing_embeds, center = _get_prototype_embeds()
+    company_embed = SharedEncoder.encode_embeddings(
+        text, center=center, max_length=256,
+    )  # [1, hidden], L2-normalized
 
     # Cosine similarity against staffing and non-staffing prototypes
+    # Since both sides are L2-normalized, this is just a dot product.
     staffing_sims = F.cosine_similarity(company_embed, staffing_embeds)  # [N]
     non_staffing_sims = F.cosine_similarity(company_embed, non_staffing_embeds)  # [M]
 
