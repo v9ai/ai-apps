@@ -277,6 +277,9 @@ export type ComputeNextTouchScoresResult = {
 export type Contact = {
   __typename: 'Contact';
   aiProfile: Maybe<ContactAiProfile>;
+  authenticityFlags: Array<Scalars['String']['output']>;
+  authenticityScore: Maybe<Scalars['Float']['output']>;
+  authenticityVerdict: Maybe<Scalars['String']['output']>;
   authorityScore: Maybe<Scalars['Float']['output']>;
   bouncedEmails: Array<Scalars['String']['output']>;
   company: Maybe<Scalars['String']['output']>;
@@ -827,10 +830,12 @@ export type ImportCompanyWithContactsInput = {
   companyName: Scalars['String']['input'];
   contacts: Array<ImportContactInput>;
   linkedinUrl?: InputMaybe<Scalars['String']['input']>;
+  skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ImportContactInput = {
+  headline?: InputMaybe<Scalars['String']['input']>;
   linkedinUrl?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   workEmail?: InputMaybe<Scalars['String']['input']>;
@@ -1041,6 +1046,10 @@ export type Mutation = {
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
+  /** Run fake account detection on all contacts for a company, optionally filtered by skills. */
+  verifyCompanyContacts: VerifyCompanyContactsResult;
+  /** Run fake account detection on a single contact. Enriches LinkedIn + GitHub, then scores. */
+  verifyContactAuthenticity: VerifyAuthenticityResult;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -1402,6 +1411,17 @@ export type MutationUpsertLinkedInPostArgs = {
 
 export type MutationUpsertLinkedInPostsArgs = {
   inputs: Array<UpsertLinkedInPostInput>;
+};
+
+
+export type MutationVerifyCompanyContactsArgs = {
+  companyId: Scalars['Int']['input'];
+  skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+export type MutationVerifyContactAuthenticityArgs = {
+  contactId: Scalars['Int']['input'];
 };
 
 
@@ -2219,6 +2239,13 @@ export type SimilarPost = {
   similarity: Scalars['Float']['output'];
 };
 
+export type SkillMatchResult = {
+  __typename: 'SkillMatchResult';
+  claimedSkills: Array<Scalars['String']['output']>;
+  githubLanguages: Array<Scalars['String']['output']>;
+  matched: Scalars['Boolean']['output'];
+};
+
 export type SourceType =
   | 'BRAVE_SEARCH'
   | 'COMMONCRAWL'
@@ -2355,6 +2382,27 @@ export type UserSettingsInput = {
   dark_mode?: InputMaybe<Scalars['Boolean']['input']>;
   email_notifications?: InputMaybe<Scalars['Boolean']['input']>;
   excluded_companies?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type VerifyAuthenticityResult = {
+  __typename: 'VerifyAuthenticityResult';
+  authenticityScore: Scalars['Float']['output'];
+  contactId: Scalars['Int']['output'];
+  flags: Array<Scalars['String']['output']>;
+  recommendations: Array<Scalars['String']['output']>;
+  skillMatch: Maybe<SkillMatchResult>;
+  success: Scalars['Boolean']['output'];
+  verdict: Scalars['String']['output'];
+};
+
+export type VerifyCompanyContactsResult = {
+  __typename: 'VerifyCompanyContactsResult';
+  results: Array<VerifyAuthenticityResult>;
+  review: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  suspicious: Scalars['Int']['output'];
+  totalChecked: Scalars['Int']['output'];
+  verified: Scalars['Int']['output'];
 };
 
 export type VerifyEmailResult = {

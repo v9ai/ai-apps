@@ -8,7 +8,7 @@ import {
   type ContactEmail as DbContactEmail,
 } from "@/db/schema";
 import { resend } from "@/lib/resend";
-import { eq, and, like, or, count, desc, sql, max, inArray } from "drizzle-orm";
+import { eq, and, like, or, count, desc, sql, max, inArray, ilike } from "drizzle-orm";
 import { computeNextTouchScore } from "./reminders";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -24,7 +24,8 @@ import {
   inferEmailPattern,
   generateEmailFromPattern,
 } from "@/lib/email/verification";
-import { isAIContact, gatherAIContactProfile } from "@/lib/ai-contact-enrichment";
+import { isAIContact, gatherAIContactProfile, extractLinkedInOG, fetchGitHubProfile, searchGitHubByName } from "@/lib/ai-contact-enrichment";
+import { evaluateFakeAccount } from "@/lib/ml/fake-account-detector";
 
 // ─── ML Contact Classification ────────────────────────────────────────────────
 
@@ -441,6 +442,15 @@ const Contact = {
   },
   deletionFlaggedAt(parent: DbContact) {
     return parent.deletion_flagged_at ?? null;
+  },
+  authenticityVerdict(parent: DbContact) {
+    return parent.authenticity_verdict ?? null;
+  },
+  authenticityScore(parent: DbContact) {
+    return parent.authenticity_score ?? null;
+  },
+  authenticityFlags(parent: DbContact) {
+    return parseJsonArray(parent.authenticity_flags);
   },
 };
 
@@ -1760,6 +1770,197 @@ export const contactResolvers = {
         success: true,
         affected: ids.length,
         message: `Purged ${ids.length} contact(s)`,
+      };
+    },
+
+    async verifyContactAuthenticity(
+      _parent: unknown,
+      args: { contactId: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const [contact] = await context.db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.id, args.contactId))
+        .limit(1);
+
+      if (!contact) {
+        return {
+          success: false,
+          contactId: args.contactId,
+          verdict: "suspicious",
+          authenticityScore: 0,
+          flags: ["contact_not_found"],
+          recommendations: ["Contact not found in database"],
+          skillMatch: null,
+        };
+      }
+
+      // Parallel: LinkedIn OG + GitHub discovery
+      const [linkedinOG, githubResult] = await Promise.all([
+        contact.linkedin_url ? extractLinkedInOG(contact.linkedin_url) : Promise.resolve(null),
+        contact.github_handle
+          ? fetchGitHubProfile(contact.github_handle).then(p => ({
+              found: !!p,
+              topLanguages: p?.topLanguages ?? [],
+              login: contact.github_handle!,
+            }))
+          : searchGitHubByName(contact.first_name, contact.last_name).then(r => ({
+              found: !!r,
+              topLanguages: r?.topLanguages ?? [],
+              login: r?.login ?? null,
+            })),
+      ]);
+
+      // If we discovered a GitHub handle, save it
+      if (githubResult.login && !contact.github_handle) {
+        await context.db
+          .update(contacts)
+          .set({ github_handle: githubResult.login, updated_at: new Date().toISOString() })
+          .where(eq(contacts.id, contact.id));
+      }
+
+      const result = evaluateFakeAccount({
+        contact,
+        linkedinOG,
+        githubTopLanguages: githubResult.topLanguages,
+        githubFound: githubResult.found,
+        targetSkills: ["Python", "Rust"],
+      });
+
+      // Persist results
+      await context.db
+        .update(contacts)
+        .set({
+          authenticity_score: result.authenticityScore,
+          authenticity_verdict: result.verdict,
+          authenticity_flags: JSON.stringify(result.flags),
+          verified_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .where(eq(contacts.id, contact.id));
+
+      return {
+        success: true,
+        contactId: contact.id,
+        verdict: result.verdict,
+        authenticityScore: result.authenticityScore,
+        flags: result.flags,
+        recommendations: result.recommendations,
+        skillMatch: result.skillMatch,
+      };
+    },
+
+    async verifyCompanyContacts(
+      _parent: unknown,
+      args: { companyId: number; skillFilter?: string[] | null },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const conditions = [eq(contacts.company_id, args.companyId)];
+
+      // Optional skill filter on position/headline
+      if (args.skillFilter?.length) {
+        const skillConditions = args.skillFilter.map(s =>
+          ilike(contacts.position, `%${s}%`),
+        );
+        conditions.push(or(...skillConditions)!);
+      }
+
+      const rows = await context.db
+        .select()
+        .from(contacts)
+        .where(and(...conditions));
+
+      const results: Array<{
+        success: boolean;
+        contactId: number;
+        verdict: string;
+        authenticityScore: number;
+        flags: string[];
+        recommendations: string[];
+        skillMatch: { claimedSkills: string[]; githubLanguages: string[]; matched: boolean } | null;
+      }> = [];
+
+      // Process in batches of 3 to respect GitHub API rate limits
+      for (let i = 0; i < rows.length; i += 3) {
+        const batch = rows.slice(i, i + 3);
+        const batchResults = await Promise.all(
+          batch.map(async (contact) => {
+            const [linkedinOG, githubResult] = await Promise.all([
+              contact.linkedin_url ? extractLinkedInOG(contact.linkedin_url) : Promise.resolve(null),
+              contact.github_handle
+                ? fetchGitHubProfile(contact.github_handle).then(p => ({
+                    found: !!p,
+                    topLanguages: p?.topLanguages ?? [],
+                    login: contact.github_handle!,
+                  }))
+                : searchGitHubByName(contact.first_name, contact.last_name).then(r => ({
+                    found: !!r,
+                    topLanguages: r?.topLanguages ?? [],
+                    login: r?.login ?? null,
+                  })),
+            ]);
+
+            if (githubResult.login && !contact.github_handle) {
+              await context.db
+                .update(contacts)
+                .set({ github_handle: githubResult.login, updated_at: new Date().toISOString() })
+                .where(eq(contacts.id, contact.id));
+            }
+
+            const result = evaluateFakeAccount({
+              contact,
+              linkedinOG,
+              githubTopLanguages: githubResult.topLanguages,
+              githubFound: githubResult.found,
+              targetSkills: args.skillFilter ?? ["Python", "Rust"],
+              isRecruitingFirm: true,
+            });
+
+            await context.db
+              .update(contacts)
+              .set({
+                authenticity_score: result.authenticityScore,
+                authenticity_verdict: result.verdict,
+                authenticity_flags: JSON.stringify(result.flags),
+                verified_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .where(eq(contacts.id, contact.id));
+
+            return {
+              success: true,
+              contactId: contact.id,
+              verdict: result.verdict,
+              authenticityScore: result.authenticityScore,
+              flags: result.flags,
+              recommendations: result.recommendations,
+              skillMatch: result.skillMatch,
+            };
+          }),
+        );
+        results.push(...batchResults);
+      }
+
+      const verified = results.filter(r => r.verdict === "verified").length;
+      const review = results.filter(r => r.verdict === "review").length;
+      const suspicious = results.filter(r => r.verdict === "suspicious").length;
+
+      return {
+        success: true,
+        totalChecked: results.length,
+        verified,
+        review,
+        suspicious,
+        results,
       };
     },
   },

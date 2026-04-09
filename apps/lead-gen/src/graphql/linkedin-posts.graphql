@@ -1,0 +1,54 @@
+query GetLinkedInPosts($type: LinkedInPostType, $companyId: Int, $limit: Int, $offset: Int) {
+  linkedinPosts(type: $type, companyId: $companyId, limit: $limit, offset: $offset) {
+    id
+    type
+    url
+    companyId
+    contactId
+    title
+    content
+    authorName
+    authorUrl
+    location
+    employmentType
+    postedAt
+    scrapedAt
+    rawData
+    skills {
+      tag
+      label
+      confidence
+    }
+    analyzedAt
+    createdAt
+  }
+}
+
+query GetSimilarPosts($postId: Int!, $limit: Int, $minScore: Float) {
+  similarPosts(postId: $postId, limit: $limit, minScore: $minScore) {
+    post {
+      id
+      type
+      url
+      title
+      content
+      authorName
+      skills {
+        tag
+        label
+        confidence
+      }
+      analyzedAt
+    }
+    similarity
+  }
+}
+
+mutation AnalyzeLinkedInPosts($postIds: [Int!], $limit: Int) {
+  analyzeLinkedInPosts(postIds: $postIds, limit: $limit) {
+    success
+    analyzed
+    failed
+    errors
+  }
+}

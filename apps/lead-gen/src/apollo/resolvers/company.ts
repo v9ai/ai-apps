@@ -860,7 +860,17 @@ export const companyResolvers = {
         throw new Error("Forbidden");
       }
 
-      const { companyName, website, contacts: contactInputs } = args.input;
+      const { companyName, website, contacts: rawContactInputs, skillFilter } = args.input;
+
+      // Apply skill filter if provided (e.g. ["Python", "Rust"])
+      const contactInputs = skillFilter?.length
+        ? rawContactInputs.filter(c =>
+            skillFilter.some(s =>
+              (c.headline ?? "").toLowerCase().includes(s.toLowerCase()) ||
+              c.name.toLowerCase().includes(s.toLowerCase()),
+            ),
+          )
+        : rawContactInputs;
       // Normalize empty strings to null to avoid storing "" in the DB
       const linkedinUrl = args.input.linkedinUrl?.trim() || null;
       const errors: string[] = [];
@@ -982,6 +992,7 @@ export const companyResolvers = {
               linkedin_url: contactLinkedinUrl,
               company_id: companyRow.id,
               company: companyName,
+              position: input.headline?.trim() || null,
             });
             imported++;
           } catch (err) {

@@ -119,6 +119,55 @@ export async function fetchGitHubProfile(handle: string): Promise<GitHubProfile 
   }
 }
 
+// ─── GitHub search by name ───────────────────────────────────────────────────
+
+/**
+ * Search GitHub for a user by full name. Returns the best-matching login
+ * or null if nothing found. Uses the GitHub Search Users API.
+ */
+export async function searchGitHubByName(
+  firstName: string,
+  lastName: string,
+): Promise<{ login: string; topLanguages: string[] } | null> {
+  try {
+    const headers: Record<string, string> = { "User-Agent": "lead-gen-enrichment/1.0" };
+    const ghToken = process.env.GITHUB_TOKEN;
+    if (ghToken) headers["Authorization"] = `token ${ghToken}`;
+
+    const query = encodeURIComponent(`fullname:"${firstName} ${lastName}"`);
+    const res = await fetch(`https://api.github.com/search/users?q=${query}&per_page=3`, { headers });
+    if (!res.ok) return null;
+
+    const data = await res.json() as { total_count: number; items: Array<{ login: string }> };
+    if (!data.items?.length) return null;
+
+    const login = data.items[0].login;
+
+    // Fetch top languages from their repos
+    const reposRes = await fetch(
+      `https://api.github.com/users/${encodeURIComponent(login)}/repos?sort=stars&per_page=20`,
+      { headers },
+    );
+    if (!reposRes.ok) return { login, topLanguages: [] };
+
+    const repos = await reposRes.json();
+    if (!Array.isArray(repos)) return { login, topLanguages: [] };
+
+    const langCount: Record<string, number> = {};
+    for (const repo of repos) {
+      if (repo.language) langCount[repo.language] = (langCount[repo.language] ?? 0) + 1;
+    }
+    const topLanguages = Object.entries(langCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([lang]) => lang);
+
+    return { login, topLanguages };
+  } catch {
+    return null;
+  }
+}
+
 // ─── LinkedIn OG enrichment ───────────────────────────────────────────────────
 
 const GOOGLEBOT_UA = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
