@@ -873,11 +873,11 @@ async function browseCompanies(tabId: number) {
       break;
     }
     await waitForTabLoad(tabId);
-    await new Promise((r) => setTimeout(r, 2500));
+    await randomDelay(2500);
 
     // Click "See more" if present
     await clickSeeMore(tabId);
-    await new Promise((r) => setTimeout(r, 500));
+    await randomDelay(500);
 
     const data = await extractCompanyData(tabId);
     totalProcessed++;
@@ -905,7 +905,7 @@ async function browseCompanies(tabId: number) {
     }
 
     // Dwell
-    await new Promise((r) => setTimeout(r, 1500));
+    await randomDelay(1500);
   }
 
   // Save remaining
@@ -958,6 +958,8 @@ async function saveCompanyBatch(
 }
 
 // ── LinkedIn Company People Scraper ──────────────────────────────────
+
+let peopleCancelled = false;
 
 interface PersonCard {
   name: string;
@@ -1018,7 +1020,28 @@ function scrollPeoplePage(tabId: number): Promise<void> {
     .executeScript({
       target: { tabId },
       world: "MAIN",
-      func: () => window.scrollTo(0, document.body.scrollHeight),
+      func: () => {
+        // Incremental scroll to trigger lazy-loading at each viewport boundary.
+        // A single jump to bottom skips intermediate load triggers on LinkedIn.
+        return new Promise<void>((resolve) => {
+          const totalHeight = document.body.scrollHeight;
+          const viewportHeight = window.innerHeight;
+          let current = window.scrollY;
+          const step = viewportHeight * 0.7;
+
+          function doScroll() {
+            current = Math.min(current + step, totalHeight);
+            window.scrollTo({ top: current, behavior: "smooth" });
+            if (current < totalHeight) {
+              setTimeout(doScroll, 300 + Math.random() * 200);
+            } else {
+              resolve();
+            }
+          }
+
+          doScroll();
+        });
+      },
     })
     .then(() => undefined)
     .catch(() => undefined);
@@ -1076,7 +1099,7 @@ async function browsePeople(tabId: number, companyId: number) {
 
   await waitForTabLoad(tabId);
   // Extra wait for LinkedIn SPA to hydrate
-  await new Promise((r) => setTimeout(r, 3000));
+  await randomDelay(3000);
 
   const allCards: PersonCard[] = [];
   const seen = new Set<string>();
@@ -1084,7 +1107,7 @@ async function browsePeople(tabId: number, companyId: number) {
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
     await scrollPeoplePage(tabId);
-    await new Promise((r) => setTimeout(r, 1500));
+    await randomDelay(1500);
 
     const cards = await extractPeopleCards(tabId);
     let newCount = 0;
@@ -1103,7 +1126,7 @@ async function browsePeople(tabId: number, companyId: number) {
 
     const clickedMore = await clickShowMorePeople(tabId);
     if (clickedMore) {
-      await new Promise((r) => setTimeout(r, 2000));
+      await randomDelay(2000);
     } else if (newCount === 0) {
       // No new cards and no "show more" — we're done
       break;
@@ -1184,9 +1207,9 @@ async function importPeopleFromCurrentPage(
     const peopleUrl = companyLinkedinUrl.replace(/\/$/, "") + "/people/";
     await chrome.tabs.update(tabId, { url: peopleUrl });
     await waitForTabLoad(tabId);
-    await new Promise((r) => setTimeout(r, 3000));
+    await randomDelay(3000);
   } else {
-    await new Promise((r) => setTimeout(r, 2000));
+    await randomDelay(2000);
   }
 
   const allCards: PersonCard[] = [];
@@ -1195,7 +1218,7 @@ async function importPeopleFromCurrentPage(
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
     await scrollPeoplePage(tabId);
-    await new Promise((r) => setTimeout(r, 1500));
+    await randomDelay(1500);
 
     const cards = await extractPeopleCards(tabId);
     let newCount = 0;
@@ -1218,7 +1241,7 @@ async function importPeopleFromCurrentPage(
 
     const clickedMore = await clickShowMorePeople(tabId);
     if (clickedMore) {
-      await new Promise((r) => setTimeout(r, 2000));
+      await randomDelay(2000);
     } else if (newCount === 0) {
       break;
     }
@@ -1376,7 +1399,7 @@ async function findRelatedCompanies(tabId: number) {
   if (currentUrl.includes("/people") || currentUrl.includes("/about")) {
     await chrome.tabs.update(tabId, { url: mainUrl });
     await waitForTabLoad(tabId);
-    await new Promise((r) => setTimeout(r, 3000));
+    await randomDelay(3000);
   }
 
   // Scroll down to load "Similar pages" section
@@ -1385,7 +1408,7 @@ async function findRelatedCompanies(tabId: number) {
     world: "MAIN",
     func: () => window.scrollTo(0, document.body.scrollHeight),
   });
-  await new Promise((r) => setTimeout(r, 2000));
+  await randomDelay(2000);
 
   // Scroll again (LinkedIn lazy-loads)
   await chrome.scripting.executeScript({
@@ -1393,7 +1416,7 @@ async function findRelatedCompanies(tabId: number) {
     world: "MAIN",
     func: () => window.scrollTo(0, document.body.scrollHeight),
   });
-  await new Promise((r) => setTimeout(r, 2000));
+  await randomDelay(2000);
 
   const similarUrls = await extractSimilarCompanyUrls(tabId);
   console.log(`[FindRelated] Found ${similarUrls.length} similar companies`);
@@ -1427,10 +1450,10 @@ async function findRelatedCompanies(tabId: number) {
       break;
     }
     await waitForTabLoad(tabId);
-    await new Promise((r) => setTimeout(r, 2500));
+    await randomDelay(2500);
 
     await clickSeeMore(tabId);
-    await new Promise((r) => setTimeout(r, 500));
+    await randomDelay(500);
 
     const data = await extractCompanyData(tabId);
     if (data && data.name) {
@@ -1460,7 +1483,7 @@ async function findRelatedCompanies(tabId: number) {
       });
     } catch { /* tab navigated, content script gone */ }
 
-    await new Promise((r) => setTimeout(r, 1500));
+    await randomDelay(1500);
   }
 
   let saved = 0;
@@ -1477,7 +1500,7 @@ async function findRelatedCompanies(tabId: number) {
   console.log(`[FindRelated] Complete. Saved ${saved}/${similarUrls.length}`);
 
   // Wait for content script to re-inject after navigation back
-  await new Promise((r) => setTimeout(r, 3000));
+  await randomDelay(3000);
   try {
     await chrome.tabs.sendMessage(tabId, {
       action: "findRelatedDone",

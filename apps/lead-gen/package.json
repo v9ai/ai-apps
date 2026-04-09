@@ -8,6 +8,7 @@
     "dev:next": "next dev --webpack -p 3004",
     "dev:ext": "concurrently -n next,ext,ws -c blue,green,yellow \"next dev --webpack -p 3004\" \"pnpm --filter vite-web-extension dev\" \"tsx scripts/ext-reload-server.ts\"",
     "build": "next build --webpack",
+    "ext:build": "pnpm --filter vite-web-extension build",
     "start": "next start",
     "lint": "next lint",
     "demo:skills": "tsx scripts/demo-skills-in-production.ts",
