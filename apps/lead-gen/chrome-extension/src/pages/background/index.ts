@@ -1560,15 +1560,17 @@ function injectCrawlOverlay(
     filtered?: number;
     name: string;
     phase: "saving" | "discovering" | "error";
+    logText?: string;
   },
 ): Promise<void> {
   return chrome.scripting
     .executeScript({
       target: { tabId },
       world: "MAIN",
-      func: (s: { saved: number; skipped: number; queued: number; targets: number; filtered?: number; name: string; phase: string }) => {
+      func: (s: { saved: number; skipped: number; queued: number; targets: number; filtered?: number; name: string; phase: string; logText?: string }) => {
         const ATTR = "data-lg-crawl-overlay";
         const COPY_ATTR = "data-lg-crawl-copy";
+        const LOG_ATTR = "data-lg-crawl-log";
         let el = document.querySelector(`[${ATTR}]`) as HTMLDivElement | null;
         if (!el) {
           el = document.createElement("div");
@@ -1591,25 +1593,37 @@ function injectCrawlOverlay(
         const copyText = `FindRelated: ${s.saved} saved (${s.targets} targets), ${s.skipped} dupes, ${s.filtered ?? 0} filtered, ${s.queued} queued \u2014 ${s.name} [${s.phase}]`;
         el.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;flex-shrink:0;animation:lgpulse 1.2s ease-in-out infinite"></span><span style="user-select:text">${statusText}</span>`;
 
-        // Add or update copy button
-        let copyBtn = el.querySelector(`[${COPY_ATTR}]`) as HTMLButtonElement | null;
-        if (!copyBtn) {
-          copyBtn = document.createElement("button");
-          copyBtn.setAttribute(COPY_ATTR, "true");
-          copyBtn.style.cssText = "background:none;border:none;cursor:pointer;opacity:0.6;font-size:14px;padding:0;margin-left:4px;flex-shrink:0;line-height:1;";
-          copyBtn.textContent = "\u{1F4CB}";
-          copyBtn.addEventListener("mouseenter", () => { copyBtn!.style.opacity = "1"; });
-          copyBtn.addEventListener("mouseleave", () => { copyBtn!.style.opacity = "0.6"; });
-          copyBtn.addEventListener("click", () => {
-            const text = copyBtn!.getAttribute("data-copy-text") || "";
-            navigator.clipboard.writeText(text).then(() => {
-              copyBtn!.textContent = "\u2713";
-              setTimeout(() => { copyBtn!.textContent = "\u{1F4CB}"; }, 1000);
+        const btnStyle = "background:none;border:none;cursor:pointer;opacity:0.6;font-size:14px;padding:0;flex-shrink:0;line-height:1;";
+        function makeBtn(attr: string, icon: string, title: string, dataAttr: string): HTMLButtonElement {
+          let btn = el!.querySelector(`[${attr}]`) as HTMLButtonElement | null;
+          if (!btn) {
+            btn = document.createElement("button");
+            btn.setAttribute(attr, "true");
+            btn.style.cssText = btnStyle + "margin-left:4px;";
+            btn.textContent = icon;
+            btn.title = title;
+            btn.addEventListener("mouseenter", () => { btn!.style.opacity = "1"; });
+            btn.addEventListener("mouseleave", () => { btn!.style.opacity = "0.6"; });
+            btn.addEventListener("click", () => {
+              const text = btn!.getAttribute(dataAttr) || "";
+              navigator.clipboard.writeText(text).then(() => {
+                const orig = btn!.textContent;
+                btn!.textContent = "\u2713";
+                setTimeout(() => { btn!.textContent = orig; }, 1000);
+              });
             });
-          });
-          el.appendChild(copyBtn);
+            el!.appendChild(btn);
+          }
+          return btn;
         }
+
+        // Status copy button
+        const copyBtn = makeBtn(COPY_ATTR, "\u{1F4CB}", "Copy status", "data-copy-text");
         copyBtn.setAttribute("data-copy-text", copyText);
+
+        // Full log copy button
+        const logBtn = makeBtn(LOG_ATTR, "\u{1F4DC}", "Copy full crawl log", "data-log-text");
+        logBtn.setAttribute("data-log-text", s.logText || "");
 
         if (!document.getElementById("lg-crawl-pulse-style")) {
           const style = document.createElement("style");
@@ -1646,12 +1660,51 @@ function normalizeCompanyUrl(url: string): string {
   return url.split("?")[0].replace(/\/$/, "").toLowerCase();
 }
 
+function downloadCrawlLog(data: {
+  seedUrl: string;
+  companySlug: string;
+  stats: { saved: number; skipped: number; targets: number; filtered: number; visited: number; duration_ms: number };
+  entries: string[];
+}) {
+  const json = JSON.stringify({
+    timestamp: new Date().toISOString(),
+    seedUrl: data.seedUrl,
+    stats: data.stats,
+    entries: data.entries,
+  }, null, 2);
+  const dataUrl = "data:application/json;base64," + btoa(unescape(encodeURIComponent(json)));
+  const ts = new Date().toISOString().replace(/[:.]/g, "-");
+  chrome.downloads.download({
+    url: dataUrl,
+    filename: `crawl-log-${data.companySlug}-${ts}.json`,
+    saveAs: false,
+  });
+}
+
 async function findRelatedCompanies(tabId: number) {
-  console.log("[FindRelated] Starting BFS crawl...");
+  const crawlLog: string[] = [];
+  const crawlT0 = Date.now();
+  let crawlSlug = "unknown";
+  let crawlSeedUrl = "unknown";
+
+  function log(msg: string) {
+    crawlLog.push(`[${new Date().toISOString()}] ${msg}`);
+    console.log(msg);
+  }
+  function logWarn(msg: string) {
+    crawlLog.push(`[${new Date().toISOString()}] WARN: ${msg}`);
+    console.warn(msg);
+  }
+  function logError(msg: string) {
+    crawlLog.push(`[${new Date().toISOString()}] ERROR: ${msg}`);
+    console.error(msg);
+  }
+
+  log("[FindRelated] Starting BFS crawl...");
 
   try {
     if (!(await isTabAlive(tabId))) {
-      console.warn("[FindRelated] Tab no longer exists, aborting");
+      logWarn("[FindRelated] Tab no longer exists, aborting");
       return;
     }
 
@@ -1667,7 +1720,9 @@ async function findRelatedCompanies(tabId: number) {
     }
 
     const returnUrl = currentUrl;
-    const seedUrl = `https://www.linkedin.com/company/${companyMatch[1]}`;
+    crawlSlug = companyMatch[1];
+    const seedUrl = `https://www.linkedin.com/company/${crawlSlug}`;
+    crawlSeedUrl = seedUrl;
 
     // BFS state
     const visited = new Set<string>();
@@ -1706,7 +1761,7 @@ async function findRelatedCompanies(tabId: number) {
         queue.push(url);
       }
     }
-    console.log(`[FindRelated] Seeded queue with ${queue.length} companies from starting page`);
+    log(`[FindRelated] Seeded queue with ${queue.length} companies from starting page`);
 
     if (queue.length === 0) {
       await safeSendMessage(tabId, {
@@ -1721,7 +1776,7 @@ async function findRelatedCompanies(tabId: number) {
     // ── BFS loop ───────────────────────────────────────────────────────
     while (queue.length > 0 && (saved + skipped + filtered) < MAX_COMPANIES) {
       if (!(await isTabAlive(tabId))) {
-        console.warn("[FindRelated] Tab closed during BFS crawl, stopping");
+        logWarn("[FindRelated] Tab closed during BFS crawl, stopping");
         break;
       }
 
@@ -1733,7 +1788,7 @@ async function findRelatedCompanies(tabId: number) {
       await safeTabUpdate(tabId, { url: aboutUrl });
       await waitForTabLoad(tabId);
       await randomDelay(2000);
-      await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: urlSlug, phase: "saving" });
+      await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: urlSlug, phase: "saving", logText: crawlLog.join("\n") });
 
       await clickSeeMore(tabId);
       await randomDelay(500);
@@ -1744,8 +1799,8 @@ async function findRelatedCompanies(tabId: number) {
 
         if (!icp.target) {
           filtered++;
-          console.log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ⊘ ${data.name} — ${icp.reason} (queued: ${queue.length})`);
-          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name} [${icp.reason}]`, phase: "saving" });
+          log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ⊘ ${data.name} — ${icp.reason} (queued: ${queue.length})`);
+          await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name} [${icp.reason}]`, phase: "saving", logText: crawlLog.join("\n") });
         } else {
           // Build company object and save
           const company = {
@@ -1766,13 +1821,13 @@ async function findRelatedCompanies(tabId: number) {
           if (result > 0) {
             saved += result;
             targets++;
-            console.log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ✓ SAVED (queued: ${queue.length})`);
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ✓ ${data.name}`, phase: "saving" });
+            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ✓ SAVED (queued: ${queue.length})`);
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ✓ ${data.name}`, phase: "saving", logText: crawlLog.join("\n") });
           } else {
             skipped++;
             targets++;
-            console.log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ⊘ ALREADY EXISTS (queued: ${queue.length})`);
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ⊘ ${data.name}`, phase: "saving" });
+            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ⊘ ALREADY EXISTS (queued: ${queue.length})`);
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ⊘ ${data.name}`, phase: "saving", logText: crawlLog.join("\n") });
           }
         }
 
@@ -1796,7 +1851,7 @@ async function findRelatedCompanies(tabId: number) {
         await safeTabUpdate(tabId, { url: mainUrl });
         await waitForTabLoad(tabId);
         await randomDelay(2000);
-        await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: data?.name || urlSlug, phase: "discovering" });
+        await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: data?.name || urlSlug, phase: "discovering", logText: crawlLog.join("\n") });
 
         // Scroll to load lazy content
         for (let i = 0; i < 3; i++) {
@@ -1820,7 +1875,7 @@ async function findRelatedCompanies(tabId: number) {
           }
         }
         if (newCount > 0) {
-          console.log(`[FindRelated] ${data?.name || url} yielded ${newCount} new companies (queue: ${queue.length}, visited: ${visited.size})`);
+          log(`[FindRelated] ${data?.name || url} yielded ${newCount} new companies (queue: ${queue.length}, visited: ${visited.size})`);
         }
       }
 
@@ -1828,7 +1883,15 @@ async function findRelatedCompanies(tabId: number) {
     }
 
     // ── After loop ─────────────────────────────────────────────────────
-    console.log(`[FindRelated] Crawl complete. saved=${saved}, skipped=${skipped}, filtered=${filtered}, visited=${visited.size}, queue_remaining=${queue.length}`);
+    log(`[FindRelated] Crawl complete. saved=${saved}, skipped=${skipped}, filtered=${filtered}, visited=${visited.size}, queue_remaining=${queue.length}`);
+
+    // Download crawl log
+    downloadCrawlLog({
+      seedUrl: crawlSeedUrl,
+      companySlug: crawlSlug,
+      stats: { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0 },
+      entries: crawlLog,
+    });
 
     // Navigate back to original page and remove overlay
     if (await isTabAlive(tabId)) {
@@ -1837,7 +1900,7 @@ async function findRelatedCompanies(tabId: number) {
         await safeTabUpdate(tabId, { url: returnUrl });
         await waitForTabLoad(tabId);
       } catch {
-        console.warn("[FindRelated] Could not navigate back to original page");
+        logWarn("[FindRelated] Could not navigate back to original page");
       }
     }
 
@@ -1852,9 +1915,18 @@ async function findRelatedCompanies(tabId: number) {
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.error("[FindRelated] Unexpected error:", errMsg);
+    logError(`[FindRelated] Unexpected error: ${errMsg}`);
+
+    // Download crawl log even on error
+    downloadCrawlLog({
+      seedUrl: crawlSeedUrl,
+      companySlug: crawlSlug,
+      stats: { saved: 0, skipped: 0, targets: 0, filtered: 0, visited: 0, duration_ms: Date.now() - crawlT0 },
+      entries: crawlLog,
+    });
+
     if (await isTabAlive(tabId)) {
-      await injectCrawlOverlay(tabId, { saved: 0, skipped: 0, targets: 0, filtered: 0, queued: 0, name: errMsg.slice(0, 40), phase: "error" });
+      await injectCrawlOverlay(tabId, { saved: 0, skipped: 0, targets: 0, filtered: 0, queued: 0, name: errMsg.slice(0, 40), phase: "error", logText: crawlLog.join("\n") });
     }
     await safeSendMessage(tabId, {
       action: "findRelatedError",
