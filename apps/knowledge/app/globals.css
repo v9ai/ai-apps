@@ -1244,10 +1244,13 @@ body {
   line-height: 1.7;
   tab-size: 2;
 }
-.code-playground-reset {
-  position: absolute;
-  top: -2px;
-  right: 0;
+.code-playground-toolbar {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+.code-playground-toolbar button {
   padding: 2px 10px;
   font-size: 11px;
   font-family: var(--font-mono, monospace);
@@ -1256,11 +1259,46 @@ body {
   border: 1px solid var(--gray-5);
   border-radius: 4px;
   cursor: pointer;
-  z-index: 1;
 }
-.code-playground-reset:hover {
+.code-playground-toolbar button:hover {
   color: var(--gray-12);
   background: var(--gray-4);
+}
+.code-playground-challenge.active {
+  color: var(--violet-11);
+  background: var(--violet-3);
+  border-color: var(--violet-6);
+}
+/* callouts */
+.callout {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-left: 3px solid;
+  border-radius: 0 6px 6px 0;
+}
+.callout-speak {
+  border-left-color: var(--violet-8);
+  background: var(--violet-2);
+}
+.callout-warn {
+  border-left-color: #f59e0b;
+  background: rgba(245,158,11,0.06);
+}
+.callout-tip {
+  border-left-color: #3b82f6;
+  background: rgba(59,130,246,0.06);
+}
+/* timing badge */
+.timing-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--orange-11);
+  background: var(--orange-3);
+  border: 1px solid var(--orange-6);
+  border-radius: 6px;
 }
 .code-block-lang {
   margin-left: auto;
