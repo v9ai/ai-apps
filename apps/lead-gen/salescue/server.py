@@ -109,6 +109,7 @@ class CompanyClassifyRequest(BaseModel):
     description: str = ""
     website: str = ""
     location: str = ""
+    size: str = ""
 
 
 class AnalyzeRequest(BaseModel):
@@ -322,12 +323,24 @@ def graph(req: GraphRequest):
 # ── Company classifier (standalone — not an Engine module) ───────────────────
 
 
+def _parse_size(size: str) -> int:
+    """Parse LinkedIn size strings like '51-200 employees' → upper bound (200)."""
+    import re
+    m = re.match(r"(\d[\d,]*)\s*[-–]\s*(\d[\d,]*)", size)
+    if m:
+        return int(m.group(2).replace(",", ""))
+    m2 = re.search(r"(\d[\d,]+)", size)
+    if m2:
+        return int(m2.group(1).replace(",", ""))
+    return 999999  # unknown — don't flag
+
+
 @app.post("/classify-company")
 async def classify_company(req: CompanyClassifyRequest):
     """Classify whether a company is a staffing/recruitment firm.
 
     Called fire-and-forget by the GraphQL importCompanies resolver.
-    If staffing detected, updates the company in the DB directly.
+    If staffing detected, tags the company as an ICP target (does NOT block).
     """
     import asyncio
     from .modules.company_classifier import classify_company as _classify
@@ -341,12 +354,26 @@ async def classify_company(req: CompanyClassifyRequest):
     )
     elapsed = round(time.perf_counter() - t0, 4)
 
-    # If staffing detected, update DB asynchronously
+    # Parse size — from explicit field or from description
+    size_str = req.size
+    if not size_str and req.description:
+        import re
+        size_match = re.search(r"Size:\s*(.+?)(?:\n|$)", req.description)
+        if size_match:
+            size_str = size_match.group(1).strip()
+
+    employee_count = _parse_size(size_str)
+    is_target = result["is_staffing"] and employee_count <= 200
+    result["is_target"] = is_target
+    result["employee_count"] = employee_count
+
+    # If staffing detected, tag as ICP target (don't block)
     if result["is_staffing"]:
-        asyncio.create_task(_update_company_blocked(
+        asyncio.create_task(_update_company_tagged(
             company_id=req.company_id,
             confidence=result["confidence"],
             reasons=result["reasons"],
+            is_target=is_target,
         ))
 
     return {
@@ -356,49 +383,60 @@ async def classify_company(req: CompanyClassifyRequest):
     }
 
 
-async def _update_company_blocked(
+async def _update_company_tagged(
     company_id: int,
     confidence: float,
     reasons: list[str],
+    is_target: bool = False,
 ) -> None:
-    """Update the company as blocked staffing firm via direct DB call."""
+    """Tag a staffing company in the DB. If it's an ICP target (≤200 employees), add 'target-icp' tag."""
     import os
-    try:
-        import asyncpg  # type: ignore[import-untyped]
-    except ImportError:
-        # Fallback: call back via GraphQL mutation
-        import httpx
-        gql_url = os.environ.get("GRAPHQL_URL", "http://localhost:3000/api/graphql")
-        async with httpx.AsyncClient(timeout=10) as client:
-            await client.post(gql_url, json={
-                "query": """mutation BlockCompany($id: Int!) {
-                    blockCompany(id: $id) { id blocked }
-                }""",
-                "variables": {"id": company_id},
-            })
-            print(f"[classify-company] Blocked staffing firm id={company_id} via GraphQL (confidence={confidence:.2f})")
-        return
 
     db_url = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
     if not db_url:
         print(f"[classify-company] No DATABASE_URL — cannot update company {company_id}")
         return
 
+    try:
+        import asyncpg  # type: ignore[import-untyped]
+    except ImportError:
+        print(f"[classify-company] asyncpg not available — cannot update company {company_id}")
+        return
+
     conn = await asyncpg.connect(db_url)
     try:
-        await conn.execute(
-            """UPDATE companies
-               SET blocked = true,
-                   category = 'STAFFING',
-                   ai_classification_reason = $1,
-                   ai_classification_confidence = $2,
-                   updated_at = now()
-             WHERE id = $3""",
-            "; ".join(reasons),
-            confidence,
-            company_id,
-        )
-        print(f"[classify-company] Blocked staffing firm id={company_id} (confidence={confidence:.2f})")
+        # Append 'target-icp' to existing tags JSON array if this is a target
+        if is_target:
+            await conn.execute(
+                """UPDATE companies
+                   SET category = 'STAFFING',
+                       tags = CASE
+                         WHEN tags IS NULL THEN '["target-icp"]'::jsonb
+                         WHEN NOT tags @> '"target-icp"' THEN tags || '["target-icp"]'
+                         ELSE tags
+                       END,
+                       ai_classification_reason = $1,
+                       ai_classification_confidence = $2,
+                       updated_at = now()
+                 WHERE id = $3""",
+                "; ".join(reasons),
+                confidence,
+                company_id,
+            )
+            print(f"[classify-company] Tagged ICP target id={company_id} (confidence={confidence:.2f})")
+        else:
+            await conn.execute(
+                """UPDATE companies
+                   SET category = 'STAFFING',
+                       ai_classification_reason = $1,
+                       ai_classification_confidence = $2,
+                       updated_at = now()
+                 WHERE id = $3""",
+                "; ".join(reasons),
+                confidence,
+                company_id,
+            )
+            print(f"[classify-company] Tagged staffing firm id={company_id} (confidence={confidence:.2f})")
     finally:
         await conn.close()
 

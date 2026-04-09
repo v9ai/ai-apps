@@ -663,11 +663,13 @@ chrome.runtime.onMessage.addListener((message) => {
     const dupes = message.skipped || 0;
     const queued = message.queued ?? "?";
     const name = message.name || "";
-    findRelatedBtn.textContent = `${message.current} saved, ${dupes} dupes (${queued} queued) ${name}`.trim();
+    const tgt = message.targets ? ` (${message.targets} \u{1F3AF})` : "";
+    findRelatedBtn.textContent = `${message.current} saved${tgt}, ${dupes} dupes (${queued} queued) ${name}`.trim();
   }
   if (message.action === "findRelatedDone" && findRelatedBtn) {
     const dupes = message.skipped || 0;
-    findRelatedBtn.textContent = `Done! ${message.saved} new, ${dupes} dupes`;
+    const tgt = message.targets ? ` (${message.targets} \u{1F3AF})` : "";
+    findRelatedBtn.textContent = `Done! ${message.saved} new${tgt}, ${dupes} dupes`;
     findRelatedBtn.style.backgroundColor = "#16a34a";
     setTimeout(() => {
       if (findRelatedBtn) {
