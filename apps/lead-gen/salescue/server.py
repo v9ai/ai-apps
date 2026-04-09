@@ -405,13 +405,70 @@ async def classify_company(req: CompanyClassifyRequest):
 
     employee_count = _parse_size(size_str)
 
-    # Geo relevance: exclude firms focused on irrelevant regions
-    _IRRELEVANT_GEO_RE = re.compile(
-        r"\b(latam|latin america|africa|apac|asia|india|middle east|mena|philippines|nigeria|pakistan|south asia|southeast asia|eastern europe)\b",
-        re.IGNORECASE,
+    # Geo relevance: exclude firms *focused* on irrelevant regions.
+    # We split terms into strong signals (regional labels that imply focus)
+    # and weak signals (individual country names that may be incidental).
+    # Strong signal = instant flag.  Weak signals use a threshold: 2+ hits → flag.
+    # This avoids false-positives like "offices in 30 countries including India".
+
+    _STRONG_GEO_TERMS = (
+        # Regional / bloc labels — these almost always indicate focus
+        r"latam|latin america|sub-saharan|west africa|east africa|north africa"
+        r"|central america|south america|central asia|oceania"
+        r"|south asia|southeast asia|eastern europe"
+        r"|apac|mena|gcc|asean|mercosur|caricom"
+        r"|middle east"
     )
+    _WEAK_GEO_TERMS = (
+        # Individual countries — a single mention may be incidental
+        r"india|philippines|nigeria|pakistan|bangladesh|vietnam"
+        r"|indonesia|thailand|malaysia|myanmar|cambodia"
+        r"|kenya|ghana|ethiopia|tanzania|uganda"
+        r"|egypt|morocco|sri lanka"
+        r"|colombia|brazil|mexico|argentina|peru|chile"
+        r"|saudi arabia|united arab emirates|\buae\b|qatar|kuwait|bahrain|oman"
+    )
+
+    _STRONG_GEO_RE = re.compile(
+        rf"\b({_STRONG_GEO_TERMS})\b", re.IGNORECASE,
+    )
+    _WEAK_GEO_RE = re.compile(
+        rf"\b({_WEAK_GEO_TERMS})\b", re.IGNORECASE,
+    )
+    # "africa" alone is strong, but inside "EMEA" it includes Europe (relevant).
+    # Only flag EMEA when paired with an explicit Africa/Middle-East mention.
+    _EMEA_RE = re.compile(r"\bemea\b", re.IGNORECASE)
+    _AFRICA_OR_ME_RE = re.compile(
+        r"\b(africa|middle east|mena)\b", re.IGNORECASE,
+    )
+    # Standalone "africa" is strong — but exclude "south africa" which is relevant
+    _AFRICA_STANDALONE_RE = re.compile(r"\bafrica\b", re.IGNORECASE)
+    _SOUTH_AFRICA_RE = re.compile(r"\bsouth africa\b", re.IGNORECASE)
+
     geo_text = f"{req.name} {req.description} {req.location}"
-    is_irrelevant_geo = bool(_IRRELEVANT_GEO_RE.search(geo_text))
+
+    # --- evaluate geo signals ---
+    strong_hits = len(_STRONG_GEO_RE.findall(geo_text))
+
+    # "africa" needs special handling: don't count if every occurrence is
+    # part of "south africa" (South Africa is a relevant market).
+    africa_all = _AFRICA_STANDALONE_RE.findall(geo_text)
+    south_africa_all = _SOUTH_AFRICA_RE.findall(geo_text)
+    if africa_all and len(africa_all) <= len(south_africa_all):
+        # All "africa" mentions are inside "south africa" — not a signal.
+        # Remove the "africa" strong hits that came from "south africa".
+        strong_hits = max(0, strong_hits - len(south_africa_all))
+
+    weak_hits = len(_WEAK_GEO_RE.findall(geo_text))
+
+    # EMEA is only a signal when the text also mentions Africa / Middle East
+    emea_flag = bool(_EMEA_RE.search(geo_text)) and bool(
+        _AFRICA_OR_ME_RE.search(geo_text)
+    )
+    if emea_flag:
+        strong_hits += 1
+
+    is_irrelevant_geo = strong_hits >= 1 or weak_hits >= 2
 
     is_target = result["is_staffing"] and employee_count <= 200 and not is_irrelevant_geo
     result["is_target"] = is_target
