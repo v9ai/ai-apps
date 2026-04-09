@@ -5,6 +5,7 @@ import { Hero } from "@/components/hero";
 import { LearningPath } from "@/components/learning-path";
 import { Search } from "@/components/search";
 import { Footer } from "@/components/footer";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 export default async function HomePage() {
   const groups = await getGroupedLessons();
@@ -15,30 +16,37 @@ export default async function HomePage() {
   const readingHours = Math.round(allLessons.reduce((sum, l) => sum + l.readingTimeMin, 0) / 60);
   return (
     <div>
+      <a href="#lessons" className="skip-link">Skip to lessons</a>
       <Topbar lessonCount={total} />
 
       <Hero lessonCount={total} domainCount={catCount} wordCount={wordCount} readingHours={readingHours} />
 
-      <LearningPath groups={groups} />
+      <ScrollReveal>
+        <LearningPath groups={groups} />
+      </ScrollReveal>
 
-      {/* Research Collections */}
-      <section className="research-collections">
-        <h2 className="research-collections-title">RESEARCH COLLECTIONS</h2>
-        <div className="research-collections-grid">
-          <Link href="/kv-quant" className="cat-card" style={{ "--cat-from": "#f59e0b", "--cat-to": "#ef4444" } as React.CSSProperties}>
-            <div className="cat-card-header">
-              <span className="cat-card-icon">🗜️</span>
-              <span className="cat-card-name">KV-Cache Quantization</span>
+      <main>
+        {/* Research Collections */}
+        <ScrollReveal delay={100}>
+          <section className="research-collections">
+            <h2 className="research-collections-title">RESEARCH COLLECTIONS</h2>
+            <div className="research-collections-grid">
+              <Link href="/kv-quant" className="cat-card" style={{ "--cat-from": "#f59e0b", "--cat-to": "#ef4444" } as React.CSSProperties}>
+                <div className="cat-card-header">
+                  <span className="cat-card-icon">🗜️</span>
+                  <span className="cat-card-name">KV-Cache Quantization</span>
+                </div>
+                <p className="cat-card-desc">Research papers on quantizing key-value caches for efficient LLM inference — compression, pruning, and long-context methods.</p>
+              </Link>
             </div>
-            <p className="cat-card-desc">Research papers on quantizing key-value caches for efficient LLM inference — compression, pruning, and long-context methods.</p>
-          </Link>
-        </div>
-      </section>
+          </section>
+        </ScrollReveal>
 
-      {/* Search + Bento Grid */}
-      <div id="lessons">
-        <Search groups={groups} />
-      </div>
+        {/* Search + Bento Grid */}
+        <div id="lessons">
+          <Search groups={groups} />
+        </div>
+      </main>
 
       <Footer />
     </div>

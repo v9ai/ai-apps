@@ -80,7 +80,7 @@ export function CategoryGrid({ groups }: Props) {
 
   return (
     <>
-      <div className="cat-nav">
+      <div className="cat-nav" role="navigation" aria-label="Category navigation">
         {groups.map((g) => {
           const isActive = activeSlug === `cat-${g.meta.slug}`;
           return (

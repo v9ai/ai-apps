@@ -6,7 +6,7 @@ interface Props {
 
 export function LearningPath({ groups }: Props) {
   return (
-    <div className="learning-path">
+    <nav aria-label="Learning path" className="learning-path">
       <div className="learning-path-title">Learning Path</div>
       <div className="learning-path-track">
         {groups.map((g, i) => {
@@ -27,6 +27,6 @@ export function LearningPath({ groups }: Props) {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

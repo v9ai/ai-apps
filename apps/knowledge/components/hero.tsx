@@ -15,7 +15,7 @@ export function Hero({
     wordCount >= 1000 ? `${Math.round(wordCount / 1000)}K+` : String(wordCount);
 
   return (
-    <section className="hero">
+    <section className="hero" aria-label="Course overview">
       <div className="hero-glow" />
       <div className="hero-grid-bg" />
       <div className="hero-content">
