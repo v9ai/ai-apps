@@ -173,8 +173,11 @@ export const intentSignalResolvers = {
     async batchDetectIntent(
       _parent: unknown,
       args: { companyIds: number[] },
-      _context: GraphQLContext,
+      context: GraphQLContext,
     ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
       return {
         success: true,
         processed: args.companyIds.length,
@@ -183,7 +186,10 @@ export const intentSignalResolvers = {
       };
     },
 
-    async refreshIntentScores(_parent: unknown, _args: unknown, _context: GraphQLContext) {
+    async refreshIntentScores(_parent: unknown, _args: unknown, context: GraphQLContext) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
       // Refresh all company intent scores based on current signals with decay
       const allCompaniesWithSignals = await db
         .select({ company_id: intentSignals.company_id })
