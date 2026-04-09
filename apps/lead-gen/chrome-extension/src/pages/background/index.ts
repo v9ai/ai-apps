@@ -774,6 +774,48 @@ function extractCompanyData(tabId: number): Promise<CompanyData | null> {
         );
         const website = websiteLink?.href || "";
 
+        // Extract LinkedIn numeric company ID
+        let linkedinNumericId: string | null = null;
+
+        // Strategy 1: data-urn attributes
+        const urnEl = document.querySelector(
+          '[data-urn*="urn:li:fsd_company:"], [data-urn*="urn:li:company:"]'
+        );
+        if (urnEl) {
+          const urn = urnEl.getAttribute("data-urn") || "";
+          const m = urn.match(/urn:li:(?:fsd_)?company:(\d+)/);
+          if (m) linkedinNumericId = m[1];
+        }
+
+        // Strategy 2: embedded JSON in script tags
+        if (!linkedinNumericId) {
+          for (const script of document.querySelectorAll("script")) {
+            const t = script.textContent || "";
+            const m =
+              t.match(/"companyId"\s*:\s*(\d+)/) ||
+              t.match(/"objectUrn"\s*:\s*"urn:li:(?:fsd_)?company:(\d+)"/) ||
+              t.match(/urn:li:(?:fsd_)?company:(\d+)/);
+            if (m) {
+              linkedinNumericId = m[1];
+              break;
+            }
+          }
+        }
+
+        // Strategy 3: meta/link tags
+        if (!linkedinNumericId) {
+          for (const el of document.querySelectorAll(
+            'meta[content*="company"], link[href*="company"]'
+          )) {
+            const val = el.getAttribute("content") || el.getAttribute("href") || "";
+            const m = val.match(/company[:/](\d+)/);
+            if (m) {
+              linkedinNumericId = m[1];
+              break;
+            }
+          }
+        }
+
         return {
           name,
           website,
@@ -782,11 +824,61 @@ function extractCompanyData(tabId: number): Promise<CompanyData | null> {
           size,
           location,
           linkedinUrl: window.location.href.split("?")[0],
+          linkedinNumericId,
         };
       },
     })
     .then((results) => results?.[0]?.result ?? null)
     .catch(() => null);
+}
+
+/**
+ * Count remote job postings for a company by navigating to LinkedIn jobs search.
+ * Only called for ICP-matching companies to avoid unnecessary page loads.
+ */
+async function countRemoteJobs(
+  tabId: number,
+  numericId: string,
+): Promise<number> {
+  const jobsUrl = `https://www.linkedin.com/jobs/search/?f_C=${numericId}&f_WT=2&geoId=92000000`;
+
+  try {
+    await safeTabUpdate(tabId, { url: jobsUrl });
+    await waitForTabLoad(tabId);
+    await randomDelay(2000);
+
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        // Check for "no results" banner first
+        if (document.querySelector(".jobs-search-no-results-banner")) return 0;
+
+        // Try parsing "X results" text from header
+        const headerText =
+          document.querySelector(".jobs-search-results-list__subtitle")
+            ?.textContent?.trim() ||
+          document.querySelector(
+            ".jobs-search-results-list__title-heading h1+span"
+          )?.textContent?.trim() ||
+          "";
+        const countMatch = headerText.match(/([\d,]+)\s+results?/i);
+        if (countMatch) {
+          return parseInt(countMatch[1].replace(/,/g, ""), 10);
+        }
+
+        // Fallback: count job card elements
+        const cards = document.querySelectorAll(
+          ".job-card-container, .jobs-search-results__list-item, .jobs-search-results-list li, .scaffold-layout__list-item"
+        );
+        return cards.length;
+      },
+    });
+
+    return results?.[0]?.result ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 function extractNextPageUrl(tabId: number): Promise<string | null> {
@@ -1665,7 +1757,7 @@ function normalizeCompanyUrl(url: string): string {
 function downloadCrawlLog(data: {
   seedUrl: string;
   companySlug: string;
-  stats: { saved: number; skipped: number; targets: number; filtered: number; visited: number; duration_ms: number };
+  stats: { saved: number; skipped: number; targets: number; filtered: number; visited: number; duration_ms: number; totalRemoteJobs?: number };
   entries: string[];
 }) {
   const json = JSON.stringify({
@@ -1733,6 +1825,7 @@ async function findRelatedCompanies(tabId: number) {
     let skipped = 0;
     let filtered = 0;
     let targets = 0;
+    let totalRemoteJobs = 0;
 
     // Mark seed as visited (don't re-scrape the page we started on)
     visited.add(normalizeCompanyUrl(seedUrl));
@@ -1804,33 +1897,52 @@ async function findRelatedCompanies(tabId: number) {
           log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ⊘ ${data.name} — ${icp.reason} (queued: ${queue.length})`);
           await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name} [${icp.reason}]`, phase: "saving", logText: crawlLog.join("\n") });
         } else {
-          // Build company object and save
-          const company = {
-            name: data.name,
-            website: data.website || undefined,
-            linkedin_url: data.linkedinUrl || undefined,
-            description: [
-              data.description,
-              data.industry ? `Industry: ${data.industry}` : "",
-              data.size ? `Size: ${data.size}` : "",
-            ]
-              .filter(Boolean)
-              .join("\n") || undefined,
-            location: data.location || undefined,
-            industry: data.industry || undefined,
-          };
-
-          const result = await saveCompanyBatch([company]);
-          if (result > 0) {
-            saved += result;
-            targets++;
-            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ✓ SAVED (queued: ${queue.length})`);
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ✓ ${data.name}`, phase: "saving", logText: crawlLog.join("\n") });
+          // Check remote job postings for ICP-matching companies
+          let remoteJobCount = 0;
+          if (data.linkedinNumericId) {
+            log(`[FindRelated] Checking remote jobs for ${data.name} (ID: ${data.linkedinNumericId})...`);
+            remoteJobCount = await countRemoteJobs(tabId, data.linkedinNumericId);
+            log(`[FindRelated] ${data.name} — ${remoteJobCount} remote jobs found`);
+            totalRemoteJobs += remoteJobCount;
           } else {
-            skipped++;
-            targets++;
-            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ⊘ ALREADY EXISTS (queued: ${queue.length})`);
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ⊘ ${data.name}`, phase: "saving", logText: crawlLog.join("\n") });
+            log(`[FindRelated] No numeric ID for ${data.name}, skipping job count`);
+          }
+
+          // Filter: staffing firm with 0 remote jobs is a weak lead
+          if (remoteJobCount === 0 && data.linkedinNumericId) {
+            filtered++;
+            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ⊘ ${data.name} — no-remote-jobs (queued: ${queue.length})`);
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name} [no-remote-jobs]`, phase: "saving", logText: crawlLog.join("\n") });
+          } else {
+            // Build company object and save
+            const company = {
+              name: data.name,
+              website: data.website || undefined,
+              linkedin_url: data.linkedinUrl || undefined,
+              description: [
+                data.description,
+                data.industry ? `Industry: ${data.industry}` : "",
+                data.size ? `Size: ${data.size}` : "",
+                remoteJobCount > 0 ? `Remote Jobs: ${remoteJobCount}` : "",
+              ]
+                .filter(Boolean)
+                .join("\n") || undefined,
+              location: data.location || undefined,
+              industry: data.industry || undefined,
+            };
+
+            const result = await saveCompanyBatch([company]);
+            if (result > 0) {
+              saved += result;
+              targets++;
+              log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ✓ SAVED (${remoteJobCount} remote jobs, queued: ${queue.length})`);
+              await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ✓ ${data.name} (${remoteJobCount} remote)`, phase: "saving", logText: crawlLog.join("\n") });
+            } else {
+              skipped++;
+              targets++;
+              log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ⊘ ALREADY EXISTS (${remoteJobCount} remote jobs, queued: ${queue.length})`);
+              await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ⊘ ${data.name} (${remoteJobCount} remote)`, phase: "saving", logText: crawlLog.join("\n") });
+            }
           }
         }
 
@@ -1892,7 +2004,7 @@ async function findRelatedCompanies(tabId: number) {
     downloadCrawlLog({
       seedUrl: crawlSeedUrl,
       companySlug: crawlSlug,
-      stats: { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0 },
+      stats: { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0, totalRemoteJobs },
       entries: crawlLog,
     });
 
