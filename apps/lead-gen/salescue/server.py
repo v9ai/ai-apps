@@ -97,6 +97,12 @@ class GraphRequest(BaseModel):
     graph: Optional[dict[str, Any]] = None
 
 
+class SkillsRequest(BaseModel):
+    text: str
+    top_k: int = 10
+    threshold: float = 0.35
+
+
 class AnalyzeRequest(BaseModel):
     text: str
     modules: Optional[list[str]] = None
@@ -290,6 +296,11 @@ def emailgen(req: EmailgenRequest):
     if req.context:
         kwargs["context"] = req.context
     return _run_module("emailgen", req.text, **kwargs)
+
+
+@app.post("/skills")
+def skills(req: SkillsRequest):
+    return _run_module("skills", req.text, top_k=req.top_k, threshold=req.threshold)
 
 
 @app.post("/graph")

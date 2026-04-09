@@ -22,6 +22,7 @@ import type {
   ReplyResult,
   ScoreResult,
   SentimentResult,
+  SkillsResult,
   SpamResult,
   SubjectResult,
   SurvivalResult,
@@ -169,6 +170,18 @@ export async function emailgen(
   });
 }
 
+export async function skills(
+  text: string,
+  topK?: number,
+  threshold?: number,
+) {
+  return post<ModuleResponse<SkillsResult>>("/skills", {
+    text,
+    top_k: topK,
+    threshold,
+  });
+}
+
 export async function graph(
   text: string,
   graphData?: {
@@ -220,6 +233,7 @@ export const salescue = {
   anomaly,
   emailgen,
   graph,
+  skills,
   analyze,
   health,
 } as const;

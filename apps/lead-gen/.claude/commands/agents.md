@@ -26,6 +26,8 @@ Parse `$ARGUMENTS` and dispatch:
 | `codefix apply` | Codefix | Implement pending findings |
 | `codefix verify` | Codefix | Verify recent changes |
 | `codefix status` | Codefix | Show meta-state |
+| `logo [count] [target]` | Logo | Spawn N logo experts in parallel (default 10) |
+| `logo pick` | Logo | Compare generated variants, pick winner, deploy |
 | (empty / help) | — | Show this routing table |
 
 If `$ARGUMENTS` is empty, show the routing table and ask what to run.
@@ -340,3 +342,111 @@ Full execution details in `.claude/commands/codefix.md`.
 1. **Verification MANDATORY** after any write operation
 2. **Max 3 code changes + 2 skill evolutions per cycle**
 3. Phase detection: IMPROVEMENT / SATURATION / COLLAPSE_RISK
+
+---
+
+# Team: Logo
+
+Parallel logo design team. Spawns N expert agents (default 10), each with a unique design philosophy, to generate competing logo variants.
+
+## Agents
+
+```
+    ┌──────────┐  ┌──────────┐  ┌──────────┐       ┌──────────┐
+    │ Expert 1 │  │ Expert 2 │  │ Expert 3 │  ...  │ Expert N │
+    │minimalist│  │geometric │  │ neural   │       │ origami  │
+    └────┬─────┘  └────┬─────┘  └────┬─────┘       └────┬─────┘
+         └─────────────┼──────────────┼─────────────────┘
+                       ▼
+              ┌──────────────┐
+              │  Orchestrator│
+              │  (compare +  │
+              │   deploy)    │
+              └──────────────┘
+```
+
+| Agent | Skill | Design Philosophy |
+|---|---|---|
+| **Expert 1** | `logo-expert` | Minimalist — Stripe/Linear clean geometry |
+| **Expert 2** | `logo-expert` | Geometric — sacred geometry, mathematical precision |
+| **Expert 3** | `logo-expert` | Neural Network — interconnected nodes, AI visualization |
+| **Expert 4** | `logo-expert` | Funnel Flow — particle stream through abstract curves |
+| **Expert 5** | `logo-expert` | Constellation — star-map with connected dots |
+| **Expert 6** | `logo-expert` | Orbital/Atomic — agent satellites orbiting core |
+| **Expert 7** | `logo-expert` | Gradient Mesh — bold shape with rich gradient |
+| **Expert 8** | `logo-expert` | Isometric 3D — faceted pipeline in isometric view |
+| **Expert 9** | `logo-expert` | Waveform/Signal — noise-to-signal transformation |
+| **Expert 10** | `logo-expert` | Origami/Faceted — low-poly triangular facets |
+
+## Design Philosophies Pool
+
+When spawning, cycle through these philosophies. For N > 10, repeat with "remix" variants:
+
+```
+minimalist, geometric, neural, funnel, constellation,
+orbital, gradient, isometric, waveform, origami,
+typographic, brutalist, art-deco, bauhaus, glitch,
+vaporwave, botanical, topographic, circuit, crystalline
+```
+
+## Execution: `logo [count] [target]`
+
+```
+Step 1: Parse count (default 10) and target app (default: current app)
+Step 2: Read current logo from public/logo.svg
+Step 3: Read brand context from CLAUDE.md (name, purpose, audience)
+Step 4: Spawn N agents in PARALLEL, each with:
+        - Unique design_philosophy from the pool
+        - Same brand context and constraints
+        - Output: public/logo-v{N}-{philosophy}.svg
+Step 5: Wait for all agents to complete
+Step 6: List all generated variants with file sizes
+Step 7: Show comparison table: variant | philosophy | file size | key concept
+```
+
+## Execution: `logo pick`
+
+```
+Step 1: Glob public/logo-v*.svg — list all variants
+Step 2: Read each variant SVG
+Step 3: Score each on: scalability, concept clarity, color cohesion, SVG cleanliness, file size
+Step 4: Show ranked comparison table
+Step 5: PAUSE — let user pick the winner
+Step 6: Copy winner to public/logo.svg (backup old as public/logo-prev.svg)
+Step 7: Copy winner to logo.svg (root)
+Step 8: Show "deployed" confirmation
+```
+
+## Logo Agent Prompt Template
+
+```
+You are Logo Expert #{n} in a parallel design team.
+Your design philosophy: {philosophy}
+
+Read and follow: .claude/skills/logo-expert/SKILL.md
+Read current logo: {current_logo_path}
+
+Brand: {brand_name}
+Context: {brand_context}
+
+Write your logo to: {output_path}
+
+Requirements:
+- SVG, viewBox "0 0 300 140", dark background (#050515 to #0c0c25)
+- Must convey: {brand_keywords}
+- Must scale to 32x32 (favicon/collapsed sidebar)
+- No text/wordmark in SVG
+- Max 2-3 colors, max 2 filters
+- Prefix all IDs with "v{n}-" to avoid conflicts
+- Under 5KB file size
+
+Design, write, report your key decisions.
+```
+
+## Logo Rules
+
+1. **ALL experts run in PARALLEL** — never sequential
+2. **Each expert gets a UNIQUE philosophy** — no duplicates in a batch
+3. **User picks the winner** — never auto-deploy a logo
+4. **Backup before deploy** — always save previous logo as logo-prev.svg
+5. **No text in SVG** — wordmarks are handled by the UI components
