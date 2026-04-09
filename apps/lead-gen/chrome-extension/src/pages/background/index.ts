@@ -816,6 +816,14 @@ function extractCompanyData(tabId: number): Promise<CompanyData | null> {
           }
         }
 
+        // Diagnostic: which extraction strategy succeeded?
+        const strategyUsed = linkedinNumericId
+          ? (urnEl ? "data-urn" : "json-or-meta")
+          : "NONE";
+        console.log(
+          `[extractCompanyData] ${name} — numericId: ${linkedinNumericId ?? "NONE"} (strategy: ${strategyUsed})`
+        );
+
         return {
           name,
           website,
@@ -2008,7 +2016,7 @@ async function findRelatedCompanies(tabId: number) {
               log(`[FindRelated] ${data.name} — 🎯⚠️ UNCONFIRMED — no active remote jobs, needs recruiter post check`);
             }
           } else {
-            log(`[FindRelated] No numeric ID for ${data.name}, skipping job count`);
+            log(`[FindRelated] ⚠️⚠️ No numeric ID for ${data.name} — ALL 3 extraction strategies failed, SKIPPING remote job check`);
           }
 
           // Build company object and save (always save ICP targets regardless of job count)
