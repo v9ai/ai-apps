@@ -200,7 +200,7 @@ function InteractiveCodePlayground({ initialHtml, initialCss }: { initialHtml: s
 
   return (
     <Box mb="4" style={{ position: "relative" }}>
-      <Flex gap="1" justify="end" align="center" mb="1" wrap="wrap">
+      <Flex gap="2" justify="end" align="center" mb="2" wrap="wrap">
         <Button size="1" variant={mode === "css" ? "solid" : "soft"} color="violet" onClick={() => activate("css")}>
           CSS Challenge
         </Button>
