@@ -270,6 +270,17 @@ function PrepPageInner() {
                   );
                 }
 
+                if (lang === "html") {
+                  return (
+                    <Box mb="4">
+                      <div className="code-pair-grid">
+                        <CodePanel lang="html" code={rawText} />
+                        <LivePreviewPanel html={rawText} css="" />
+                      </div>
+                    </Box>
+                  );
+                }
+
                 return (
                   <Box mb="4">
                     <div className="code-block-wrapper">
