@@ -88,6 +88,10 @@ type Contact {
   deletionScore: Float
   deletionReasons: [String!]!
   deletionFlaggedAt: String
+  # Fake account detection
+  authenticityVerdict: String
+  authenticityScore: Float
+  authenticityFlags: [String!]!
   createdAt: String!
   updatedAt: String!
 }

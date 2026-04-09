@@ -304,12 +304,14 @@ input ImportCompanyWithContactsInput {
   website: String
   linkedinUrl: String
   contacts: [ImportContactInput!]!
+  skillFilter: [String!]
 }
 
 input ImportContactInput {
   name: String!
   linkedinUrl: String
   workEmail: String
+  headline: String
 }
 
 type ImportCompanyResult {

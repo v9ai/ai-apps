@@ -250,6 +250,11 @@ export const contacts = pgTable(
     deletion_score: real("deletion_score"),
     deletion_reasons: text("deletion_reasons"), // JSON array of reason strings
     deletion_flagged_at: text("deletion_flagged_at"),
+    // Fake account detection (populated by verifyContactAuthenticity mutation)
+    authenticity_score: real("authenticity_score"),
+    authenticity_verdict: text("authenticity_verdict"),
+    authenticity_flags: text("authenticity_flags"), // JSON array
+    verified_at: text("verified_at"),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),
