@@ -108,8 +108,6 @@ export type Company = {
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];
-  /** ML data quality assessment */
-  dataQuality: DataQualityScore;
   deep_analysis: Maybe<Scalars['String']['output']>;
   description: Maybe<Scalars['String']['output']>;
   email: Maybe<Scalars['String']['output']>;
@@ -117,8 +115,6 @@ export type Company = {
   facts: Array<CompanyFact>;
   facts_count: Scalars['Int']['output'];
   githubUrl: Maybe<Scalars['String']['output']>;
-  /** ICP similarity score via embeddings (0-1) */
-  icpSimilarity: Maybe<Scalars['Float']['output']>;
   id: Scalars['Int']['output'];
   industries: Array<Scalars['String']['output']>;
   industry: Maybe<Scalars['String']['output']>;
@@ -135,10 +131,6 @@ export type Company = {
   location: Maybe<Scalars['String']['output']>;
   logo_url: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
-  /** ML quality gate evaluation */
-  qualityGate: QualityGateResult;
-  /** ML-computed rank score (0-1) */
-  rankScore: Maybe<Scalars['Float']['output']>;
   score: Scalars['Float']['output'];
   score_reasons: Array<Scalars['String']['output']>;
   service_taxonomy: Array<Scalars['String']['output']>;
@@ -495,15 +487,6 @@ export type CreateReminderInput = {
   remindAt: Scalars['String']['input'];
 };
 
-export type DataQualityScore = {
-  __typename: 'DataQualityScore';
-  completeness: Scalars['Float']['output'];
-  composite: Scalars['Float']['output'];
-  freshness: Scalars['Float']['output'];
-  missingFields: Array<Scalars['String']['output']>;
-  staleFields: Array<Scalars['String']['output']>;
-};
-
 export type DeleteCampaignResult = {
   __typename: 'DeleteCampaignResult';
   message: Maybe<Scalars['String']['output']>;
@@ -767,14 +750,6 @@ export type GenerateEmailResult = {
   text: Scalars['String']['output'];
 };
 
-export type GenerateEmbeddingsResult = {
-  __typename: 'GenerateEmbeddingsResult';
-  errors: Array<Scalars['String']['output']>;
-  failed: Scalars['Int']['output'];
-  processed: Scalars['Int']['output'];
-  success: Scalars['Boolean']['output'];
-};
-
 export type GenerateReplyInput = {
   additionalDetails?: InputMaybe<Scalars['String']['input']>;
   includeCalendly?: InputMaybe<Scalars['Boolean']['input']>;
@@ -811,7 +786,6 @@ export type ImportCompanyResult = {
 export type ImportCompanyWithContactsInput = {
   companyName: Scalars['String']['input'];
   contacts: Array<ImportContactInput>;
-  linkedinUrl?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -921,14 +895,6 @@ export type LinkedInPostType =
   | 'job'
   | 'post';
 
-export type MlStats = {
-  __typename: 'MLStats';
-  companiesEmbedded: Scalars['Int']['output'];
-  lastEmbeddingAt: Maybe<Scalars['String']['output']>;
-  modelsAvailable: Array<Scalars['String']['output']>;
-  totalCompanies: Scalars['Int']['output'];
-};
-
 export type MarkRepliedResult = {
   __typename: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -985,8 +951,6 @@ export type Mutation = {
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   flagContactsForDeletion: BatchOperationResult;
-  /** Generate and store embeddings for companies missing them. Admin only. */
-  generateCompanyEmbeddings: GenerateEmbeddingsResult;
   generateEmail: GenerateEmailResult;
   generateReply: GenerateReplyResult;
   importCompanies: ImportCompaniesResult;
@@ -1002,7 +966,6 @@ export type Mutation = {
   previewEmail: EmailPreview;
   purgeDeletedContacts: BatchOperationResult;
   refreshIntentScores: RefreshIntentResult;
-  salescueAnalyze: SalescueAnalyzeResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   scoreContactsML: ScoreContactsMlResult;
@@ -1180,12 +1143,6 @@ export type MutationFlagContactsForDeletionArgs = {
 };
 
 
-export type MutationGenerateCompanyEmbeddingsArgs = {
-  batchSize?: InputMaybe<Scalars['Int']['input']>;
-  companyIds?: InputMaybe<Array<Scalars['Int']['input']>>;
-};
-
-
 export type MutationGenerateEmailArgs = {
   input: GenerateEmailInput;
 };
@@ -1265,12 +1222,6 @@ export type MutationPreviewEmailArgs = {
 
 export type MutationPurgeDeletedContactsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationSalescueAnalyzeArgs = {
-  modules?: InputMaybe<Array<SalescueModule>>;
-  text: Scalars['String']['input'];
 };
 
 
@@ -1392,21 +1343,11 @@ export type PreviewEmailInput = {
   subject: Scalars['String']['input'];
 };
 
-export type QualityGateResult = {
-  __typename: 'QualityGateResult';
-  adjustedScore: Scalars['Float']['output'];
-  flags: Array<Scalars['String']['output']>;
-  pass: Scalars['Boolean']['output'];
-  recommendations: Array<Scalars['String']['output']>;
-};
-
 export type Query = {
   __typename: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
   companies: CompaniesResponse;
   companiesByIntent: CompaniesResponse;
-  /** Find companies similar to a given company by ID */
-  companiesLike: Array<SimilarCompanyResult>;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
   company_facts: Array<CompanyFact>;
@@ -1428,28 +1369,9 @@ export type Query = {
   intentSignals: IntentSignalsResponse;
   linkedinPost: Maybe<LinkedInPost>;
   linkedinPosts: Array<LinkedInPost>;
-  /** ML model health and stats */
-  mlStats: MlStats;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
-  /** Next best companies to contact based on ML scoring */
-  recommendedCompanies: Array<RecommendedCompany>;
-  /** Best contacts to reach within a company */
-  recommendedContacts: Array<RankedContact>;
   resendEmail: Maybe<ResendEmailDetail>;
-  salescueEntities: SalescueEntitiesResult;
-  salescueHealth: SalescueHealth;
-  salescueIcp: SalescueIcpResult;
-  salescueIntent: SalescueIntentResult;
-  salescueObjection: SalescueObjectionResult;
-  salescueReply: SalescueReplyResult;
-  salescueScore: SalescueScoreResult;
-  salescueSentiment: SalescueSentimentResult;
-  salescueSpam: SalescueSpamResult;
-  salescueSubject: SalescueSubjectResult;
-  salescueTriggers: SalescueTriggersResult;
-  /** Semantic similarity search: find companies matching a natural language query */
-  similarCompanies: Array<SimilarCompanyResult>;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -1467,13 +1389,6 @@ export type QueryCompaniesByIntentArgs = {
   offset?: InputMaybe<Scalars['Int']['input']>;
   signalType?: InputMaybe<IntentSignalType>;
   threshold: Scalars['Float']['input'];
-};
-
-
-export type QueryCompaniesLikeArgs = {
-  companyId: Scalars['Int']['input'];
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  minScore?: InputMaybe<Scalars['Float']['input']>;
 };
 
 
@@ -1601,92 +1516,13 @@ export type QueryReceivedEmailsArgs = {
 };
 
 
-export type QueryRecommendedCompaniesArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  minScore?: InputMaybe<Scalars['Float']['input']>;
-};
-
-
-export type QueryRecommendedContactsArgs = {
-  companyId: Scalars['Int']['input'];
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryResendEmailArgs = {
   resendId: Scalars['String']['input'];
 };
 
 
-export type QuerySalescueEntitiesArgs = {
-  text: Scalars['String']['input'];
-};
-
-
-export type QuerySalescueIcpArgs = {
-  icp: Scalars['String']['input'];
-  prospect: Scalars['String']['input'];
-};
-
-
-export type QuerySalescueIntentArgs = {
-  text: Scalars['String']['input'];
-};
-
-
-export type QuerySalescueObjectionArgs = {
-  text: Scalars['String']['input'];
-};
-
-
-export type QuerySalescueReplyArgs = {
-  text: Scalars['String']['input'];
-  touchpoint?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QuerySalescueScoreArgs = {
-  text: Scalars['String']['input'];
-};
-
-
-export type QuerySalescueSentimentArgs = {
-  text: Scalars['String']['input'];
-};
-
-
-export type QuerySalescueSpamArgs = {
-  text: Scalars['String']['input'];
-};
-
-
-export type QuerySalescueSubjectArgs = {
-  subjects: Array<Scalars['String']['input']>;
-};
-
-
-export type QuerySalescueTriggersArgs = {
-  text: Scalars['String']['input'];
-};
-
-
-export type QuerySimilarCompaniesArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  minAiTier?: InputMaybe<Scalars['Int']['input']>;
-  minScore?: InputMaybe<Scalars['Float']['input']>;
-  query: Scalars['String']['input'];
-};
-
-
 export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
-};
-
-export type RankedContact = {
-  __typename: 'RankedContact';
-  contact: Contact;
-  rankScore: Scalars['Float']['output'];
-  reasons: Array<Scalars['String']['output']>;
 };
 
 export type ReceivedEmail = {
@@ -1719,13 +1555,6 @@ export type ReceivedEmailsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type RecommendedCompany = {
-  __typename: 'RecommendedCompany';
-  company: Company;
-  reasons: Array<Scalars['String']['output']>;
-  score: Scalars['Float']['output'];
-};
-
 export type RefreshIntentResult = {
   __typename: 'RefreshIntentResult';
   companiesUpdated: Scalars['Int']['output'];
@@ -1745,358 +1574,6 @@ export type ResendEmailDetail = {
   subject: Maybe<Scalars['String']['output']>;
   text: Maybe<Scalars['String']['output']>;
   to: Array<Scalars['String']['output']>;
-};
-
-export type SalescueAnalyzeResult = {
-  __typename: 'SalescueAnalyzeResult';
-  errors: Array<SalescueModuleError>;
-  modulesRun: Scalars['Int']['output'];
-  results: Scalars['JSON']['output'];
-  timings: Scalars['JSON']['output'];
-  totalTime: Scalars['Float']['output'];
-};
-
-export type SalescueAnomalyResult = {
-  __typename: 'SalescueAnomalyResult';
-  anomalyScore: Scalars['Float']['output'];
-  anomalyType: Scalars['String']['output'];
-  channelAttribution: Scalars['JSON']['output'];
-  cosineSimilarity: Scalars['Float']['output'];
-  isAnomalous: Scalars['Boolean']['output'];
-  textPriorAdjustment: Scalars['Float']['output'];
-  typeConfidence: Scalars['Float']['output'];
-  zScore: Scalars['Float']['output'];
-};
-
-export type SalescueBanditAlternative = {
-  __typename: 'SalescueBanditAlternative';
-  sampledReward: Scalars['Float']['output'];
-  subjectStyle: Scalars['String']['output'];
-  template: Scalars['String']['output'];
-  timing: Scalars['String']['output'];
-};
-
-export type SalescueBanditArm = {
-  __typename: 'SalescueBanditArm';
-  subjectStyle: Scalars['String']['output'];
-  template: Scalars['String']['output'];
-  timing: Scalars['String']['output'];
-};
-
-export type SalescueBanditResult = {
-  __typename: 'SalescueBanditResult';
-  alternatives: Array<SalescueBanditAlternative>;
-  armIndex: Scalars['Int']['output'];
-  bestArm: SalescueBanditArm;
-  expectedReward: Scalars['Float']['output'];
-  explorationTemperature: Scalars['Float']['output'];
-  sampledReward: Scalars['Float']['output'];
-  totalArms: Scalars['Int']['output'];
-};
-
-export type SalescueCallResult = {
-  __typename: 'SalescueCallResult';
-  action: Scalars['String']['output'];
-  commitmentCount: Scalars['Int']['output'];
-  commitments: Array<SalescueCommitment>;
-  dealHealth: Scalars['Int']['output'];
-  modelConfidence: Scalars['Float']['output'];
-  momentum: Scalars['String']['output'];
-  negatedCommitmentCount: Scalars['Int']['output'];
-  turnScores: Array<Scalars['Float']['output']>;
-  turnUncertainties: Array<Scalars['Float']['output']>;
-  turningPoints: Array<SalescueTurningPoint>;
-};
-
-export type SalescueCoachingCard = {
-  __typename: 'SalescueCoachingCard';
-  avoid: Array<Scalars['String']['output']>;
-  example: Scalars['String']['output'];
-  framework: Scalars['String']['output'];
-  steps: Array<Scalars['String']['output']>;
-};
-
-export type SalescueCommitment = {
-  __typename: 'SalescueCommitment';
-  negated: Scalars['Boolean']['output'];
-  pattern: Scalars['String']['output'];
-  speaker: Scalars['String']['output'];
-  turn: Scalars['Int']['output'];
-  type: Scalars['String']['output'];
-};
-
-export type SalescueEmailgenResult = {
-  __typename: 'SalescueEmailgenResult';
-  contextUsed: Scalars['JSON']['output'];
-  email: Scalars['String']['output'];
-  emailType: Scalars['String']['output'];
-  hasCallToAction: Scalars['Boolean']['output'];
-  promptTokens: Scalars['Int']['output'];
-  wordCount: Scalars['Int']['output'];
-};
-
-export type SalescueEntitiesResult = {
-  __typename: 'SalescueEntitiesResult';
-  entities: Array<SalescueEntity>;
-  neuralCount: Scalars['Int']['output'];
-  regexCount: Scalars['Int']['output'];
-  typesFound: Array<Scalars['String']['output']>;
-};
-
-export type SalescueEntity = {
-  __typename: 'SalescueEntity';
-  confidence: Scalars['Float']['output'];
-  endChar: Maybe<Scalars['Int']['output']>;
-  role: Scalars['String']['output'];
-  roleScores: Scalars['JSON']['output'];
-  source: Scalars['String']['output'];
-  startChar: Maybe<Scalars['Int']['output']>;
-  text: Scalars['String']['output'];
-  type: Scalars['String']['output'];
-};
-
-export type SalescueGraphResult = {
-  __typename: 'SalescueGraphResult';
-  edgeCount: Maybe<Scalars['Int']['output']>;
-  graphLabel: Scalars['String']['output'];
-  graphScore: Scalars['Float']['output'];
-  graphSignals: Array<SalescueGraphSignal>;
-  labelConfidence: Scalars['Float']['output'];
-  nodeCount: Maybe<Scalars['Int']['output']>;
-  note: Maybe<Scalars['String']['output']>;
-  similarCompanies: Array<SalescueSimilarCompany>;
-};
-
-export type SalescueGraphSignal = {
-  __typename: 'SalescueGraphSignal';
-  strength: Scalars['Float']['output'];
-  type: Scalars['String']['output'];
-  with: Scalars['String']['output'];
-};
-
-export type SalescueHealth = {
-  __typename: 'SalescueHealth';
-  device: Scalars['String']['output'];
-  moduleCount: Scalars['Int']['output'];
-  modules: Array<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  version: Scalars['String']['output'];
-};
-
-export type SalescueIcpDimensionFit = {
-  __typename: 'SalescueICPDimensionFit';
-  distance: Scalars['Float']['output'];
-  fit: Maybe<Scalars['Float']['output']>;
-  icpSpread: Scalars['Float']['output'];
-  status: Scalars['String']['output'];
-};
-
-export type SalescueIcpResult = {
-  __typename: 'SalescueICPResult';
-  dealbreakers: Array<Scalars['String']['output']>;
-  dimensions: Scalars['JSON']['output'];
-  missing: Array<Scalars['String']['output']>;
-  qualified: Scalars['Boolean']['output'];
-  score: Scalars['Float']['output'];
-};
-
-export type SalescueIntentResult = {
-  __typename: 'SalescueIntentResult';
-  confidence: Scalars['Float']['output'];
-  dataPoints: Scalars['Int']['output'];
-  distribution: Scalars['JSON']['output'];
-  stage: Scalars['String']['output'];
-  trajectory: Maybe<SalescueIntentTrajectory>;
-};
-
-export type SalescueIntentTrajectory = {
-  __typename: 'SalescueIntentTrajectory';
-  acceleration: Scalars['Float']['output'];
-  currentIntensity: Scalars['Float']['output'];
-  daysToPurchase: Scalars['Int']['output'];
-  direction: Scalars['String']['output'];
-  velocity: Scalars['Float']['output'];
-};
-
-export type SalescueModule =
-  | 'ANOMALY'
-  | 'BANDIT'
-  | 'CALL'
-  | 'EMAILGEN'
-  | 'ENTITIES'
-  | 'GRAPH'
-  | 'ICP'
-  | 'INTENT'
-  | 'OBJECTION'
-  | 'REPLY'
-  | 'SCORE'
-  | 'SENTIMENT'
-  | 'SPAM'
-  | 'SUBJECT'
-  | 'SURVIVAL'
-  | 'TRIGGERS';
-
-export type SalescueModuleError = {
-  __typename: 'SalescueModuleError';
-  error: Scalars['String']['output'];
-  module: Scalars['String']['output'];
-};
-
-export type SalescueObjectionResult = {
-  __typename: 'SalescueObjectionResult';
-  category: Scalars['String']['output'];
-  categoryConfidence: Scalars['Float']['output'];
-  coaching: SalescueCoachingCard;
-  objectionType: Scalars['String']['output'];
-  severity: Scalars['Float']['output'];
-  topTypes: Scalars['JSON']['output'];
-  typeConfidence: Scalars['Float']['output'];
-};
-
-export type SalescueReplyEvidence = {
-  __typename: 'SalescueReplyEvidence';
-  label: Scalars['String']['output'];
-  text: Scalars['String']['output'];
-};
-
-export type SalescueReplyResult = {
-  __typename: 'SalescueReplyResult';
-  active: Scalars['JSON']['output'];
-  alternativeConfigs: Scalars['Int']['output'];
-  configurationScore: Scalars['Float']['output'];
-  evidence: Array<SalescueReplyEvidence>;
-  primary: Scalars['String']['output'];
-  scores: Scalars['JSON']['output'];
-};
-
-export type SalescueScoreCategories = {
-  __typename: 'SalescueScoreCategories';
-  analytics: Scalars['Float']['output'];
-  automation: Scalars['Float']['output'];
-  engagement: Scalars['Float']['output'];
-  enrichment: Scalars['Float']['output'];
-  intent: Scalars['Float']['output'];
-  outreach: Scalars['Float']['output'];
-};
-
-export type SalescueScoreResult = {
-  __typename: 'SalescueScoreResult';
-  categories: SalescueScoreCategories;
-  confidence: Scalars['Float']['output'];
-  label: Scalars['String']['output'];
-  nSignalsDetected: Scalars['Int']['output'];
-  score: Scalars['Int']['output'];
-  signals: Array<SalescueScoreSignal>;
-};
-
-export type SalescueScoreSignal = {
-  __typename: 'SalescueScoreSignal';
-  attendedPositions: Array<Scalars['Int']['output']>;
-  attributionType: Scalars['String']['output'];
-  category: Scalars['String']['output'];
-  causalImpact: Scalars['Float']['output'];
-  signal: Scalars['String']['output'];
-  strength: Scalars['Float']['output'];
-};
-
-export type SalescueSentimentEvidence = {
-  __typename: 'SalescueSentimentEvidence';
-  signal: Scalars['String']['output'];
-  text: Scalars['String']['output'];
-};
-
-export type SalescueSentimentResult = {
-  __typename: 'SalescueSentimentResult';
-  confidence: Scalars['Float']['output'];
-  contextGate: Scalars['Float']['output'];
-  evidence: Array<SalescueSentimentEvidence>;
-  intent: Scalars['String']['output'];
-  interactionWeight: Scalars['Float']['output'];
-  interpretation: Maybe<Scalars['String']['output']>;
-  inverted: Scalars['Boolean']['output'];
-  sentiment: Scalars['String']['output'];
-};
-
-export type SalescueSimilarCompany = {
-  __typename: 'SalescueSimilarCompany';
-  name: Scalars['String']['output'];
-  similarity: Scalars['Float']['output'];
-};
-
-export type SalescueSpamResult = {
-  __typename: 'SalescueSpamResult';
-  aiRisk: Scalars['Float']['output'];
-  aspectScores: Scalars['JSON']['output'];
-  categoryScores: Scalars['JSON']['output'];
-  deliverability: Scalars['Int']['output'];
-  gateConfidence: Scalars['Float']['output'];
-  gateDecision: Scalars['String']['output'];
-  provider: Scalars['String']['output'];
-  providerScores: Scalars['JSON']['output'];
-  riskFactors: Array<Scalars['String']['output']>;
-  riskLevel: Scalars['String']['output'];
-  spamCategory: Scalars['String']['output'];
-  spamScore: Scalars['Float']['output'];
-};
-
-export type SalescueSubjectRanking = {
-  __typename: 'SalescueSubjectRanking';
-  rank: Scalars['Int']['output'];
-  score: Scalars['Int']['output'];
-  subject: Scalars['String']['output'];
-};
-
-export type SalescueSubjectResult = {
-  __typename: 'SalescueSubjectResult';
-  best: Scalars['String']['output'];
-  ranking: Array<SalescueSubjectRanking>;
-  worst: Scalars['String']['output'];
-};
-
-export type SalescueSurvivalResult = {
-  __typename: 'SalescueSurvivalResult';
-  medianDaysToConversion: Scalars['Float']['output'];
-  pConvert30d: Scalars['Float']['output'];
-  pConvert90d: Scalars['Float']['output'];
-  riskConfidence: Scalars['Float']['output'];
-  riskGroup: Scalars['String']['output'];
-  survivalCurve: Scalars['JSON']['output'];
-  weibullParams: Scalars['JSON']['output'];
-};
-
-export type SalescueTriggerEvent = {
-  __typename: 'SalescueTriggerEvent';
-  confidence: Scalars['Float']['output'];
-  displacementCi: Array<Scalars['Float']['output']>;
-  displacementDays: Scalars['Float']['output'];
-  displacementUncertainty: Scalars['Float']['output'];
-  fresh: Scalars['Boolean']['output'];
-  freshness: Scalars['String']['output'];
-  temporalFeatures: SalescueTriggerTemporalFeatures;
-  type: Scalars['String']['output'];
-};
-
-export type SalescueTriggerTemporalFeatures = {
-  __typename: 'SalescueTriggerTemporalFeatures';
-  pastSignal: Scalars['Float']['output'];
-  recentSignal: Scalars['Float']['output'];
-  todaySignal: Scalars['Float']['output'];
-};
-
-export type SalescueTriggersResult = {
-  __typename: 'SalescueTriggersResult';
-  events: Array<SalescueTriggerEvent>;
-  primary: Maybe<SalescueTriggerEvent>;
-};
-
-export type SalescueTurningPoint = {
-  __typename: 'SalescueTurningPoint';
-  delta: Scalars['Float']['output'];
-  direction: Scalars['String']['output'];
-  probability: Scalars['Float']['output'];
-  speaker: Scalars['String']['output'];
-  turn: Scalars['Int']['output'];
-  uncertainty: Scalars['Float']['output'];
 };
 
 export type ScheduleBatchEmailsInput = {
@@ -2173,12 +1650,6 @@ export type SignalTypeCount = {
   __typename: 'SignalTypeCount';
   count: Scalars['Int']['output'];
   signalType: IntentSignalType;
-};
-
-export type SimilarCompanyResult = {
-  __typename: 'SimilarCompanyResult';
-  company: Company;
-  similarity: Scalars['Float']['output'];
 };
 
 export type SourceType =

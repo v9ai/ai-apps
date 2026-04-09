@@ -1,6 +1,6 @@
 "use client";
 
-import { css } from "styled-system/css";
+import { Container, Flex } from "@radix-ui/themes";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useEffect, useState } from "react";
 
@@ -12,10 +12,10 @@ export default function SignInPage() {
   }, []);
 
   return (
-    <div className={css({ maxWidth: "520px", mx: "auto", px: "4", py: "8" })}>
-      <div className={css({ display: "flex", flexDirection: "column", gap: "6", alignItems: "center" })}>
+    <Container size="1" px="4" py="8">
+      <Flex direction="column" gap="6" align="center">
         <AuthDialog open={open} onOpenChange={setOpen} defaultMode="signin" />
-      </div>
-    </div>
+      </Flex>
+    </Container>
   );
 }

@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import { css } from "styled-system/css";
-import { Spinner } from "@/components/ui/Spinner";
+import { Container, Spinner, Flex } from "@radix-ui/themes";
 import { CampaignsClient } from "./campaigns-client";
 
 type Props = {
@@ -13,11 +12,11 @@ export default async function CompanyCampaignsPage({ params }: Props) {
   return (
     <Suspense
       fallback={
-        <div className={css({ maxWidth: "1200px", mx: "auto", p: "8" })}>
-          <div className={css({ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" })}>
-            <Spinner size={20} />
-          </div>
-        </div>
+        <Container size="4" p="8">
+          <Flex justify="center" align="center" style={{ minHeight: "400px" }}>
+            <Spinner size="3" />
+          </Flex>
+        </Container>
       }
     >
       <CampaignsClient companyKey={key} />

@@ -33,8 +33,7 @@ import {
   RefreshCw,
   Webhook,
 } from "lucide-react";
-import { css } from "styled-system/css";
-import { flex } from "styled-system/patterns";
+import { Badge, Flex, Heading, Text, Card, Code } from "@radix-ui/themes";
 import { LayersIcon } from "@radix-ui/react-icons";
 
 // ── Custom Node Components ───────────────────────────────────────────────────
@@ -238,7 +237,7 @@ const nodeDetails: Record<string, NodeDetail> = {
   },
   // Stage 2: Enrichment
   "fetch-site": {
-    description: "Fetches live website content for each unenriched company via the /api/companies/enhance route. Targets homepage, /about, /pricing, and /blog (if present) to maximize signal surface. Strips boilerplate (nav, footer, cookie banners) using CSS selector exclusions before passing to the extraction LLM — reducing prompt token count by 40\u201360% on average.",
+    description: "Fetches live website content for each unenriched company via the /api/companies/enhance route. Targets homepage, /about, /pricing, and /blog (if present) to maximize signal surface. Strips boilerplate (nav, footer, cookie banners) using CSS selector exclusions before passing to the extraction LLM — reducing prompt token count by 40–60% on average.",
     tech: [{ name: "HTTP fetch + cheerio" }, { name: "/api/companies/enhance" }, { name: "HTML boilerplate stripping" }, { name: "robots.txt compliance check" }],
     dataIn: "Company domain (enriched_at IS NULL queue)",
     dataOut: "Stripped website text: homepage + about + pricing sections",
@@ -254,7 +253,7 @@ const nodeDetails: Record<string, NodeDetail> = {
     color: "amber",
   },
   "ai-classify": {
-    description: "Zero-shot classification of each company into a fixed 3-tier AI taxonomy: not-AI, AI-first (AI as a product feature), or AI-native (AI as the core product). DeepSeek-V3 receives the extracted signals plus a few-shot exemplar set (3 per class) and returns a tier label with a calibrated confidence score (0\u20131). Low-confidence predictions (< 0.65) are flagged for manual review rather than auto-persisted.",
+    description: "Zero-shot classification of each company into a fixed 3-tier AI taxonomy: not-AI, AI-first (AI as a product feature), or AI-native (AI as the core product). DeepSeek-V3 receives the extracted signals plus a few-shot exemplar set (3 per class) and returns a tier label with a calibrated confidence score (0–1). Low-confidence predictions (< 0.65) are flagged for manual review rather than auto-persisted.",
     tech: [{ name: "DeepSeek-V3" }, { name: "zero-shot + few-shot classification" }, { name: "confidence calibration" }, { name: "Vercel AI SDK generateObject" }, { name: "LangSmith tracing" }],
     dataIn: "Extracted signals + company description",
     dataOut: "AI tier label + confidence score + classification rationale",
@@ -287,7 +286,7 @@ const nodeDetails: Record<string, NodeDetail> = {
     color: "cyan",
   },
   "confidence-gate": {
-    description: "Hard threshold filter applied to the ai_tier_classify confidence score before writing enriched fields to Neon. Per-tier thresholds: not-AI \u2265 0.65, AI-first \u2265 0.72, AI-native \u2265 0.80. Records below threshold are marked enrichment_status = 'low_confidence' and queued for re-enrichment with a higher-capability model on the next escalation pass.",
+    description: "Hard threshold filter applied to the ai_tier_classify confidence score before writing enriched fields to Neon. Per-tier thresholds: not-AI ≥ 0.65, AI-first ≥ 0.72, AI-native ≥ 0.80. Records below threshold are marked enrichment_status = 'low_confidence' and queued for re-enrichment with a higher-capability model on the next escalation pass.",
     tech: [{ name: "Confidence score" }, { name: "Multi-Model Routing" }, { name: "Drizzle ORM" }],
     dataIn: "AI tier label + confidence score from DeepSeek",
     dataOut: "Pass (write) or reject (re-queue for escalation)",
@@ -304,7 +303,7 @@ const nodeDetails: Record<string, NodeDetail> = {
   },
   // Stage 3: Lead Scoring
   "feature-extract": {
-    description: "Reads enriched company fields from Neon and assembles a fixed-dimension numeric feature vector per company. Dimensions cover: AI tier (ordinal 0\u20132), employee count bucket (log-scaled), funding stage (ordinal), tech stack overlap with ICP target stack (Jaccard coefficient), services overlap, domain age (years), and whether the company has an active ATS board. All continuous features are z-score normalized against the current batch before downstream similarity computation.",
+    description: "Reads enriched company fields from Neon and assembles a fixed-dimension numeric feature vector per company. Dimensions cover: AI tier (ordinal 0–2), employee count bucket (log-scaled), funding stage (ordinal), tech stack overlap with ICP target stack (Jaccard coefficient), services overlap, domain age (years), and whether the company has an active ATS board. All continuous features are z-score normalized against the current batch before downstream similarity computation.",
     tech: [{ name: "Drizzle ORM" }, { name: "z-score normalization" }, { name: "Jaccard similarity" }],
     dataIn: "Enriched company row (AI tier, tech stack, services, headcount, funding)",
     dataOut: "d-dimensional float32 feature vector per company",
@@ -312,26 +311,26 @@ const nodeDetails: Record<string, NodeDetail> = {
     color: "cyan",
   },
   "icp-similarity": {
-    description: "Computes cosine similarity between each company's feature vector and a pre-computed ICP centroid vector. The ICP centroid is the mean of feature vectors for all manually-confirmed ideal past targets. Cosine similarity is chosen over Euclidean distance because it is magnitude-invariant — company size differences do not dominate the signal. Output is a scalar in [\u22121, 1], stored as icp_score on the company row.",
+    description: "Computes cosine similarity between each company's feature vector and a pre-computed ICP centroid vector. The ICP centroid is the mean of feature vectors for all manually-confirmed ideal past targets. Cosine similarity is chosen over Euclidean distance because it is magnitude-invariant — company size differences do not dominate the signal. Output is a scalar in [−1, 1], stored as icp_score on the company row.",
     tech: [{ name: "Cosine similarity" }, { name: "ICP centroid vector" }, { name: "dot product / L2 norm" }],
     dataIn: "Company feature vector + ICP centroid vector",
-    dataOut: "icp_score \u2208 [\u22121, 1] per company",
+    dataOut: "icp_score ∈ [−1, 1] per company",
     insight: "The ICP centroid is recomputed each time a confirmed positive is added — scoring is always relative to the current definition of 'ideal', not a frozen snapshot from months ago.",
     color: "violet",
   },
   "rank-compute": {
-    description: "Combines icp_score with a recency signal (days since last enrichment, inverse-weighted) and a completeness score (fraction of enriched fields populated) into a composite lead score: 0.65 \u00d7 icp_score + 0.20 \u00d7 recency_weight + 0.15 \u00d7 completeness_ratio. The composite score is then converted to a within-batch percentile rank using ordinal ranking, making the threshold in the downstream filter stable regardless of absolute score drift.",
+    description: "Combines icp_score with a recency signal (days since last enrichment, inverse-weighted) and a completeness score (fraction of enriched fields populated) into a composite lead score: 0.65 × icp_score + 0.20 × recency_weight + 0.15 × completeness_ratio. The composite score is then converted to a within-batch percentile rank using ordinal ranking, making the threshold in the downstream filter stable regardless of absolute score drift.",
     tech: [{ name: "Weighted linear combination" }, { name: "Percentile rank (ordinal)" }, { name: "Recency decay" }],
     dataIn: "icp_score + enrichment timestamp + field completeness ratio",
-    dataOut: "composite_score + percentile_rank \u2208 [0, 100] per company",
+    dataOut: "composite_score + percentile_rank ∈ [0, 100] per company",
     insight: "Percentile ranking decouples the filter threshold from absolute score magnitude — setting 'keep top 40%' remains meaningful even as the ICP centroid shifts and raw scores change scale.",
     color: "purple",
   },
   "score-filter": {
-    description: "Hard threshold gate: only companies with percentile_rank \u2265 60 (top 40% of the current batch) advance to the contact pipeline. Filtered-out companies have their lead_score and percentile_rank persisted with pipeline_status = 'deprioritized' rather than deleted — enabling threshold re-evaluation without re-running scoring. The p60 cutoff is configurable via LEAD_SCORE_PERCENTILE_THRESHOLD env var.",
+    description: "Hard threshold gate: only companies with percentile_rank ≥ 60 (top 40% of the current batch) advance to the contact pipeline. Filtered-out companies have their lead_score and percentile_rank persisted with pipeline_status = 'deprioritized' rather than deleted — enabling threshold re-evaluation without re-running scoring. The p60 cutoff is configurable via LEAD_SCORE_PERCENTILE_THRESHOLD env var.",
     tech: [{ name: "Percentile threshold gate" }, { name: "Drizzle ORM upsert" }, { name: "LEAD_SCORE_PERCENTILE_THRESHOLD env" }],
     dataIn: "Scored companies with percentile_rank",
-    dataOut: "Qualified leads (percentile_rank \u2265 p60) \u2192 contact pipeline",
+    dataOut: "Qualified leads (percentile_rank ≥ p60) → contact pipeline",
     insight: "Persisting rejected scores instead of discarding them means you can lower the threshold retroactively and immediately surface companies that narrowly missed the cut — no re-scoring required.",
     color: "orange",
   },
@@ -356,7 +355,7 @@ const nodeDetails: Record<string, NodeDetail> = {
     description: "Generates candidate email addresses by combining the contact's name tokens with the company's MX-validated domain across all common B2B patterns (first.last@, flast@, first@, lastf@, firstlast@). Candidate ranking uses a pattern frequency prior derived from previously verified emails at the same domain — if first.last@ was valid for two prior contacts at the company, it gets rank-1 for all new contacts.",
     tech: [{ name: "Email pattern generator" }, { name: "MX record DNS lookup" }, { name: "domain-level pattern prior" }, { name: "SMTP RCPT TO probe (non-sending)" }],
     dataIn: "Contact name tokens + company domain",
-    dataOut: "Ranked candidate email list (2\u20135 per contact) with pattern-prior confidence",
+    dataOut: "Ranked candidate email list (2–5 per contact) with pattern-prior confidence",
     insight: "Domain-level pattern priors collapse the verification search space: once a company's dominant pattern is confirmed from 3+ contacts, subsequent contacts get a single top-ranked candidate instead of the full 5-candidate set.",
     color: "amber",
   },
@@ -370,7 +369,7 @@ const nodeDetails: Record<string, NodeDetail> = {
   },
   "neon-contacts": {
     description: "Persists verified contacts to the contacts table and associated addresses to contact_emails, linked by contact UUID. The contacts table holds identity fields; contact_emails holds per-address deliverability state. This 1:N split supports multiple verified emails per contact (work + personal) and tracks bounce history per address independently — a bounce on one address doesn't invalidate others.",
-    tech: [{ name: "Neon PostgreSQL" }, { name: "Drizzle ORM" }, { name: "contacts + contact_emails schema" }, { name: "FK: contacts.id \u2192 contact_emails.contact_id" }],
+    tech: [{ name: "Neon PostgreSQL" }, { name: "Drizzle ORM" }, { name: "contacts + contact_emails schema" }, { name: "FK: contacts.id → contact_emails.contact_id" }],
     dataIn: "Contact identity + verified emails with NeverBounce statuses",
     dataOut: "Persisted contact rows + contact_email rows with deliverability status",
     insight: "The 1:N contacts-to-emails schema enables per-address engagement tracking: open/click events are recorded against the specific email address, not the contact, enabling fine-grained deliverability scoring over time.",
@@ -382,7 +381,7 @@ const nodeDetails: Record<string, NodeDetail> = {
     tech: [{ name: "DeepSeek-V3" }, { name: "two-pass draft+refine pipeline" }, { name: "temperature 0.7 (draft) / 0.3 (refine)" }, { name: "Vercel AI SDK generateText" }, { name: "ComposeFromLinkedIn component" }],
     dataIn: "Contact LinkedIn URL + company deep_analysis + ICP score",
     dataOut: "Subject line + plain-text body + HTML body (spam-score checked)",
-    insight: "The refine pass targets a specific failure mode: at temperature 0.7 the draft pass produces natural-sounding content but reliably includes 2\u20133 formulaic opener phrases — a targeted removal prompt outperforms lowering temperature, which would also reduce the technical specificity of the body.",
+    insight: "The refine pass targets a specific failure mode: at temperature 0.7 the draft pass produces natural-sounding content but reliably includes 2–3 formulaic opener phrases — a targeted removal prompt outperforms lowering temperature, which would also reduce the technical specificity of the body.",
     color: "purple",
   },
   "batch-campaign": {
@@ -442,9 +441,9 @@ const enrichmentNodes: Node[] = [
   { id: "fetch-site", type: "agent", position: { x: 0, y: 40 }, data: { label: "fetch_website", sublabel: "Live HTML extraction", icon: Globe, color: "var(--blue-9)" } },
   { id: "extract-signals", type: "agent", position: { x: 250, y: 40 }, data: { label: "extract_signals", sublabel: "Services / tech / industry", icon: Zap, color: "var(--amber-9)" } },
   { id: "schema-constrain", type: "condition", position: { x: 490, y: 40 }, data: { label: "schema_constrain (Zod)", color: "var(--cyan-9)" } },
-  { id: "ai-classify", type: "agent", position: { x: 700, y: 0 }, data: { label: "ai_tier_classify", sublabel: "DeepSeek \u2014 not-AI / AI-first / AI-native", icon: Brain, color: "var(--purple-9)" } },
+  { id: "ai-classify", type: "agent", position: { x: 700, y: 0 }, data: { label: "ai_tier_classify", sublabel: "DeepSeek — not-AI / AI-first / AI-native", icon: Brain, color: "var(--purple-9)" } },
   { id: "deep-analysis", type: "agent", position: { x: 700, y: 90 }, data: { label: "deep_analysis", sublabel: "DeepSeek structured report", icon: Brain, color: "var(--purple-9)" } },
-  { id: "confidence-gate", type: "condition", position: { x: 960, y: 40 }, data: { label: "confidence_gate (\u2265 0.72)", color: "var(--orange-9)" } },
+  { id: "confidence-gate", type: "condition", position: { x: 960, y: 40 }, data: { label: "confidence_gate (≥ 0.72)", color: "var(--orange-9)" } },
   { id: "snapshot-archive", type: "dataStore", position: { x: 960, y: 130 }, data: { label: "company_snapshots", sublabel: "Drift archive", icon: BarChart3, color: "var(--teal-9)" } },
   { id: "neon-enriched", type: "dataStore", position: { x: 1190, y: 40 }, data: { label: "companies (enriched)", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
 ];
@@ -465,8 +464,8 @@ const enrichmentEdges: Edge[] = [
 const scoringNodes: Node[] = [
   { id: "feature-extract", type: "agent", position: { x: 0, y: 45 }, data: { label: "feature_extraction", sublabel: "Numeric vector from enriched fields", icon: Zap, color: "var(--cyan-9)" } },
   { id: "icp-similarity", type: "agent", position: { x: 270, y: 0 }, data: { label: "icp_similarity", sublabel: "Cosine sim against ICP centroid", icon: BarChart3, color: "var(--violet-9)" } },
-  { id: "rank-compute", type: "agent", position: { x: 270, y: 100 }, data: { label: "rank_computation", sublabel: "Percentile rank \u00b7 composite score", icon: Brain, color: "var(--purple-9)" } },
-  { id: "score-filter", type: "condition", position: { x: 530, y: 50 }, data: { label: "score \u2265 p60 threshold", color: "var(--orange-9)" } },
+  { id: "rank-compute", type: "agent", position: { x: 270, y: 100 }, data: { label: "rank_computation", sublabel: "Percentile rank · composite score", icon: Brain, color: "var(--purple-9)" } },
+  { id: "score-filter", type: "condition", position: { x: 530, y: 50 }, data: { label: "score ≥ p60 threshold", color: "var(--orange-9)" } },
   { id: "neon-scored", type: "dataStore", position: { x: 730, y: 50 }, data: { label: "companies (scored)", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
 ];
 
@@ -496,10 +495,10 @@ const contactEdges: Edge[] = [
 // ── Stage 5: Outreach Pipeline ───────────────────────────────────────────────
 
 const outreachNodes: Node[] = [
-  { id: "compose-linkedin", type: "agent", position: { x: 0, y: 50 }, data: { label: "compose_from_linkedin", sublabel: "Parallel research \u2192 draft \u2192 refine", icon: Brain, color: "var(--purple-9)" } },
+  { id: "compose-linkedin", type: "agent", position: { x: 0, y: 50 }, data: { label: "compose_from_linkedin", sublabel: "Parallel research → draft → refine", icon: Brain, color: "var(--purple-9)" } },
   { id: "batch-campaign", type: "agent", position: { x: 290, y: 0 }, data: { label: "batch_campaign", sublabel: "Sequences + delays", icon: Mail, color: "var(--amber-9)" } },
   { id: "resend-deliver", type: "agent", position: { x: 290, y: 100 }, data: { label: "resend_deliver", sublabel: "Resend API", icon: Zap, color: "var(--amber-9)" } },
-  { id: "webhook-inbound", type: "dataStore", position: { x: 560, y: 0 }, data: { label: "received_emails", sublabel: "Resend webhooks \u2192 Neon", icon: Webhook, color: "var(--blue-9)" } },
+  { id: "webhook-inbound", type: "dataStore", position: { x: 560, y: 0 }, data: { label: "received_emails", sublabel: "Resend webhooks → Neon", icon: Webhook, color: "var(--blue-9)" } },
   { id: "followup-schedule", type: "agent", position: { x: 560, y: 100 }, data: { label: "followup_schedule", sublabel: "Reply-aware scheduling", icon: RefreshCw, color: "var(--indigo-9)" } },
 ];
 
@@ -517,7 +516,7 @@ const stages = [
   {
     title: "company_discovery",
     graphName: "company_discovery",
-    description: "Three source types \u2014 Common Crawl CDX, live web search, and bulk CSV import \u2014 fan-in through a domain/slug dedup gate before persisting to Neon.",
+    description: "Three source types — Common Crawl CDX, live web search, and bulk CSV import — fan-in through a domain/slug dedup gate before persisting to Neon.",
     pattern: "Multi-source fan-in",
     nodes: discoveryNodes,
     edges: discoveryEdges,
@@ -526,7 +525,7 @@ const stages = [
   {
     title: "enrichment",
     graphName: "enrichment",
-    description: "Live website fetch \u2192 layered signal extraction \u2192 Zod validation gate \u2192 parallel DeepSeek calls for AI tier classification (not-AI / AI-first / AI-native, per-tier confidence thresholds) and deep analysis \u2192 confidence gate filters low-confidence results \u2192 enriched fields written back to companies table; snapshots archived for drift detection.",
+    description: "Live website fetch → layered signal extraction → Zod validation gate → parallel DeepSeek calls for AI tier classification (not-AI / AI-first / AI-native, per-tier confidence thresholds) and deep analysis → confidence gate filters low-confidence results → enriched fields written back to companies table; snapshots archived for drift detection.",
     pattern: "LLM-assisted classification",
     nodes: enrichmentNodes,
     edges: enrichmentEdges,
@@ -535,7 +534,7 @@ const stages = [
   {
     title: "lead_scoring",
     graphName: "lead_scoring",
-    description: "Enriched company fields are projected into a normalized feature vector, scored by cosine similarity against the ICP centroid, combined with recency and completeness signals into a composite percentile rank, then filtered at p60 \u2014 only the top 40% advance to contact discovery.",
+    description: "Enriched company fields are projected into a normalized feature vector, scored by cosine similarity against the ICP centroid, combined with recency and completeness signals into a composite percentile rank, then filtered at p60 — only the top 40% advance to contact discovery.",
     pattern: "Feature-based ranking",
     nodes: scoringNodes,
     edges: scoringEdges,
@@ -575,36 +574,34 @@ function NodeDetailPanel({ nodeId }: { nodeId: string }) {
   const sublabel = node?.data?.sublabel as string | undefined;
 
   return (
-    <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3", mt: "4", borderLeft: `3px solid var(--${detail.color}-9)`, background: "var(--gray-2)" })}>
-      <div className={flex({ direction: "column", gap: "3" })}>
-        <div className={flex({ align: "center", gap: "2", wrap: "wrap" })}>
-          <h2 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading" })}>
-            <code className={css({ fontFamily: "mono", fontSize: "sm", bg: "ui.surfaceRaised", px: "1" })}>{label}</code>
-          </h2>
-          {sublabel && <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>{sublabel}</span>}
-        </div>
-        <span className={css({ fontSize: "sm" })} style={{ lineHeight: 1.65, color: "var(--gray-11)" }}>{detail.description}</span>
-        <div className={flex({ gap: "2", wrap: "wrap" })}>
+    <Card mt="4" style={{ borderLeft: `3px solid var(--${detail.color}-9)`, background: "var(--gray-2)" }}>
+      <Flex direction="column" gap="3">
+        <Flex align="center" gap="2" wrap="wrap">
+          <Heading size="4"><Code>{label}</Code></Heading>
+          {sublabel && <Text size="1" color="gray">{sublabel}</Text>}
+        </Flex>
+        <Text size="2" style={{ lineHeight: 1.65, color: "var(--gray-11)" }}>{detail.description}</Text>
+        <Flex gap="2" wrap="wrap">
           {detail.tech.map((t) => (
-            <span key={t.name} className={css({ fontSize: "xs", fontWeight: "medium", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", textTransform: "lowercase" })}>{t.name}{t.version ? ` ${t.version}` : ""}</span>
+            <Badge key={t.name} variant="outline" size="1">{t.name}{t.version ? ` ${t.version}` : ""}</Badge>
           ))}
-        </div>
+        </Flex>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div className={flex({ direction: "column", gap: "1" })}>
-            <span className={css({ fontSize: "xs", fontWeight: "medium", color: "ui.tertiary", textTransform: "uppercase", letterSpacing: "0.06em" })}>Input</span>
-            <span className={css({ fontSize: "sm" })}>{detail.dataIn}</span>
-          </div>
-          <div className={flex({ direction: "column", gap: "1" })}>
-            <span className={css({ fontSize: "xs", fontWeight: "medium", color: "ui.tertiary", textTransform: "uppercase", letterSpacing: "0.06em" })}>Output</span>
-            <span className={css({ fontSize: "sm" })}>{detail.dataOut}</span>
-          </div>
+          <Flex direction="column" gap="1">
+            <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Input</Text>
+            <Text size="2">{detail.dataIn}</Text>
+          </Flex>
+          <Flex direction="column" gap="1">
+            <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Output</Text>
+            <Text size="2">{detail.dataOut}</Text>
+          </Flex>
         </div>
-        <div className={css({ bg: `var(--${detail.color}-2)`, border: `1px solid var(--${detail.color}-6)`, p: "3" })}>
-          <span className={css({ fontSize: "xs", fontWeight: "medium", color: "ui.tertiary", textTransform: "uppercase", letterSpacing: "0.06em" })}>Key Insight</span>
-          <p className={css({ fontSize: "sm", mt: "1" })} style={{ lineHeight: 1.6 }}>{detail.insight}</p>
-        </div>
-      </div>
-    </div>
+        <Card style={{ background: `var(--${detail.color}-2)`, border: `1px solid var(--${detail.color}-6)` }}>
+          <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Key Insight</Text>
+          <Text as="p" size="2" mt="1" style={{ lineHeight: 1.6 }}>{detail.insight}</Text>
+        </Card>
+      </Flex>
+    </Card>
   );
 }
 
@@ -662,22 +659,22 @@ function StageFlow({
 // ── Pipeline Stats Bar ───────────────────────────────────────────────────────
 
 const pipelineStats = [
-  { label: "5 stages", color: "violet" },
-  { label: "4 LLM calls", color: "purple" },
-  { label: "2-pass refinement", color: "amber" },
-  { label: "NeverBounce verified", color: "green" },
+  { label: "5 stages", color: "violet" as const },
+  { label: "4 LLM calls", color: "purple" as const },
+  { label: "2-pass refinement", color: "amber" as const },
+  { label: "NeverBounce verified", color: "green" as const },
 ];
 
 function PipelineStatsBar() {
   return (
-    <div className={flex({ align: "center", gap: "2", wrap: "wrap", mb: "5" })}>
+    <Flex align="center" gap="2" wrap="wrap" mb="5">
       {pipelineStats.map((stat) => (
-        <span key={stat.label} className={css({ fontSize: "xs", px: "2", py: "1", border: `1px solid var(--${stat.color}-9)`, color: `var(--${stat.color}-9)`, bg: `var(--${stat.color}-3)` })}
+        <Badge key={stat.label} color={stat.color} variant="soft" size="2"
           style={{ fontVariantNumeric: "tabular-nums", letterSpacing: "0.01em" }}>
           {stat.label}
-        </span>
+        </Badge>
       ))}
-    </div>
+    </Flex>
   );
 }
 
@@ -685,15 +682,15 @@ function PipelineStatsBar() {
 
 function NodeTypeLegend() {
   return (
-    <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3", mb: "5", background: "var(--gray-2)", borderStyle: "solid" })} style={{ border: "1px solid var(--gray-a4)" }}>
-      <div className={flex({ align: "center", gap: "2", mb: "2" })}>
+    <Card mb="5" style={{ background: "var(--gray-2)", border: "1px solid var(--gray-a4)" }}>
+      <Flex align="center" gap="2" mb="2">
         <BarChart3 size={13} style={{ color: "var(--gray-9)" }} />
-        <span className={css({ fontSize: "xs", fontWeight: "medium", color: "ui.tertiary", textTransform: "uppercase", letterSpacing: "0.07em" })}>
+        <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.07em" }}>
           Node Types
-        </span>
-      </div>
-      <div className={flex({ gap: "4", wrap: "wrap" })}>
-        <div className={flex({ align: "center", gap: "2" })}>
+        </Text>
+      </Flex>
+      <Flex gap="4" wrap="wrap">
+        <Flex align="center" gap="2">
           <div style={{
             width: 28, height: 20, borderRadius: 0,
             background: "color-mix(in srgb, var(--violet-9) 14%, var(--color-background))",
@@ -702,12 +699,12 @@ function NodeTypeLegend() {
           }}>
             <Brain size={10} style={{ color: "var(--violet-9)" }} />
           </div>
-          <div className={flex({ direction: "column", gap: "0" })}>
-            <span className={css({ fontSize: "xs", fontWeight: "medium" })}>agent</span>
-            <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>processing step</span>
-          </div>
-        </div>
-        <div className={flex({ align: "center", gap: "2" })}>
+          <Flex direction="column" gap="0">
+            <Text size="1" weight="medium">agent</Text>
+            <Text size="1" color="gray">processing step</Text>
+          </Flex>
+        </Flex>
+        <Flex align="center" gap="2">
           <div style={{
             width: 28, height: 20, borderRadius: 0,
             background: "color-mix(in srgb, var(--green-9) 10%, var(--color-background))",
@@ -716,12 +713,12 @@ function NodeTypeLegend() {
           }}>
             <Database size={10} style={{ color: "var(--green-9)" }} />
           </div>
-          <div className={flex({ direction: "column", gap: "0" })}>
-            <span className={css({ fontSize: "xs", fontWeight: "medium" })}>dataStore</span>
-            <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>persistence</span>
-          </div>
-        </div>
-        <div className={flex({ align: "center", gap: "2" })}>
+          <Flex direction="column" gap="0">
+            <Text size="1" weight="medium">dataStore</Text>
+            <Text size="1" color="gray">persistence</Text>
+          </Flex>
+        </Flex>
+        <Flex align="center" gap="2">
           <div style={{
             width: 28, height: 20, borderRadius: 0,
             background: "color-mix(in srgb, var(--orange-9) 16%, var(--color-background))",
@@ -730,13 +727,13 @@ function NodeTypeLegend() {
           }}>
             <Filter size={10} style={{ color: "var(--orange-9)" }} />
           </div>
-          <div className={flex({ direction: "column", gap: "0" })}>
-            <span className={css({ fontSize: "xs", fontWeight: "medium" })}>condition</span>
-            <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>routing / filter</span>
-          </div>
-        </div>
-      </div>
-    </div>
+          <Flex direction="column" gap="0">
+            <Text size="1" weight="medium">condition</Text>
+            <Text size="1" color="gray">routing / filter</Text>
+          </Flex>
+        </Flex>
+      </Flex>
+    </Card>
   );
 }
 
@@ -744,14 +741,14 @@ function NodeTypeLegend() {
 
 function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: string }) {
   return (
-    <div className={flex({ align: "center", justify: "center", direction: "column", gap: "1", py: "1" })}>
+    <Flex align="center" justify="center" direction="column" gap="1" py="1">
       <div style={{
         width: 2,
         height: 16,
         background: "linear-gradient(to bottom, var(--gray-a5), var(--gray-a7))",
         borderRadius: 0,
       }} />
-      <div className={flex({ align: "center", gap: "2" })}
+      <Flex align="center" gap="2"
         style={{
           padding: "3px 10px",
           borderRadius: 0,
@@ -760,19 +757,19 @@ function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: st
         }}
       >
         <Zap size={10} style={{ color: "var(--gray-9)" }} />
-        <span className={css({ fontSize: "xs", color: "ui.tertiary" })} style={{ whiteSpace: "nowrap" }}>
-          <code className={css({ fontFamily: "mono", fontSize: "xs", bg: "ui.surfaceRaised", px: "1" })}>{fromStage}</code>
-          <span style={{ margin: "0 4px", color: "var(--gray-7)" }}>{"\u2192"}</span>
-          <code className={css({ fontFamily: "mono", fontSize: "xs", bg: "ui.surfaceRaised", px: "1" })}>{toStage}</code>
-        </span>
-      </div>
+        <Text size="1" color="gray" style={{ whiteSpace: "nowrap" }}>
+          <Code size="1">{fromStage}</Code>
+          <span style={{ margin: "0 4px", color: "var(--gray-7)" }}>→</span>
+          <Code size="1">{toStage}</Code>
+        </Text>
+      </Flex>
       <div style={{
         width: 2,
         height: 16,
         background: "linear-gradient(to bottom, var(--gray-a7), var(--gray-a5))",
         borderRadius: 0,
       }} />
-    </div>
+    </Flex>
   );
 }
 
@@ -789,8 +786,8 @@ const stageConnectors: { fromStage: string; toStage: string }[] = [
 
 function EmptyDetailPanel() {
   return (
-    <div className={css({ bg: "ui.surface", border: "1px dashed", borderColor: "ui.border", p: "3", mt: "4", background: "var(--gray-2)" })}>
-      <div className={flex({ align: "center", justify: "center", direction: "column", gap: "3", py: "5" })}>
+    <Card mt="4" style={{ border: "1px dashed var(--gray-a6)", background: "var(--gray-2)" }}>
+      <Flex align="center" justify="center" direction="column" gap="3" py="5">
         <div style={{
           width: 40, height: 40, borderRadius: 0,
           background: "var(--gray-3)",
@@ -799,20 +796,20 @@ function EmptyDetailPanel() {
         }}>
           <Search size={18} style={{ color: "var(--gray-9)" }} />
         </div>
-        <div className={flex({ direction: "column", align: "center", gap: "1" })}>
-          <span className={css({ fontSize: "sm", fontWeight: "medium" })}>Click any node to inspect</span>
-          <span className={css({ fontSize: "xs", color: "ui.tertiary" })} style={{ textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
+        <Flex direction="column" align="center" gap="1">
+          <Text size="2" weight="medium">Click any node to inspect</Text>
+          <Text size="1" color="gray" style={{ textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
             Select a node in any stage diagram to see its description, tech stack, input/output shape, and design insight.
-          </span>
-        </div>
-        <div className={flex({ gap: "2" })}>
-          <span className={css({ fontSize: "xs", fontWeight: "medium", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", textTransform: "lowercase" })}>description</span>
-          <span className={css({ fontSize: "xs", fontWeight: "medium", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", textTransform: "lowercase" })}>tech stack</span>
-          <span className={css({ fontSize: "xs", fontWeight: "medium", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", textTransform: "lowercase" })}>input / output</span>
-          <span className={css({ fontSize: "xs", fontWeight: "medium", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", textTransform: "lowercase" })}>key insight</span>
-        </div>
-      </div>
-    </div>
+          </Text>
+        </Flex>
+        <Flex gap="2">
+          <Badge variant="outline" size="1" color="gray">description</Badge>
+          <Badge variant="outline" size="1" color="gray">tech stack</Badge>
+          <Badge variant="outline" size="1" color="gray">input / output</Badge>
+          <Badge variant="outline" size="1" color="gray">key insight</Badge>
+        </Flex>
+      </Flex>
+    </Card>
   );
 }
 
@@ -827,39 +824,39 @@ export function PipelineClient() {
 
   return (
     <div style={{ width: "100%", padding: "var(--space-4) var(--space-5)" }}>
-      <div className={flex({ align: "center", gap: "2", mb: "2" })}>
+      <Flex align="center" gap="2" mb="2">
         <LayersIcon width={22} height={22} style={{ color: "var(--violet-9)" }} />
-        <h1 className={css({ fontSize: "2xl", fontWeight: "bold", color: "ui.heading" })}>How It Works</h1>
-      </div>
-      <div className={flex({ align: "center", gap: "3", mb: "4" })}>
-        <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
-          5-stage B2B lead generation pipeline \u2014 from company discovery through AI-personalized outreach.
-        </span>
-      </div>
+        <Heading size="7">How It Works</Heading>
+      </Flex>
+      <Flex align="center" gap="3" mb="4">
+        <Text color="gray" size="2">
+          5-stage B2B lead generation pipeline — from company discovery through AI-personalized outreach.
+        </Text>
+      </Flex>
 
       <PipelineStatsBar />
 
-      <div className={flex({ align: "center", gap: "2", mb: "4" })}>
-        <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "blue.9", color: "blue.9", bg: "blue.3" })}>Interactive</span>
-        <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>Click a node for details. Drag to rearrange. Scroll to zoom.</span>
-      </div>
+      <Flex align="center" gap="2" mb="4">
+        <Badge color="blue" variant="soft" size="1">Interactive</Badge>
+        <Text size="1" color="gray">Click a node for details. Drag to rearrange. Scroll to zoom.</Text>
+      </Flex>
 
       <NodeTypeLegend />
 
-      <div className={flex({ direction: "column", gap: "0" })}>
+      <Flex direction="column" gap="0">
         {stages.map((stage, i) => (
           <div key={stage.title}>
             <div>
-              <div className={flex({ align: "baseline", gap: "3", mb: "2" })}>
-                <span className={css({ fontSize: "xs", px: "2", py: "1", bg: "ui.surfaceRaised", color: "ui.secondary", fontWeight: "bold" })} style={{ fontVariantNumeric: "tabular-nums" }}>
+              <Flex align="baseline" gap="3" mb="2">
+                <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
                   {i + 1}
-                </span>
-                <h2 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading" })} style={{ fontFamily: "var(--code-font-family, monospace)" }}>
+                </Badge>
+                <Heading size="4" style={{ fontFamily: "var(--code-font-family, monospace)" }}>
                   {stage.graphName}
-                </h2>
-                <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "violet.9", color: "violet.9", bg: "violet.3" })}>{stage.pattern}</span>
-              </div>
-              <p className={css({ fontSize: "sm", color: "ui.tertiary", mb: "3" })}>{stage.description}</p>
+                </Heading>
+                <Badge variant="soft" color="violet" size="1">{stage.pattern}</Badge>
+              </Flex>
+              <Text size="2" color="gray" mb="3" as="p">{stage.description}</Text>
               <StageFlow
                 nodes={stage.nodes}
                 edges={stage.edges}
@@ -875,7 +872,7 @@ export function PipelineClient() {
             )}
           </div>
         ))}
-      </div>
+      </Flex>
 
       {selectedNode ? <NodeDetailPanel nodeId={selectedNode} /> : <EmptyDetailPanel />}
     </div>

@@ -1,0 +1,11 @@
+mutation UpdateAffirmation($id: Int!, $input: UpdateAffirmationInput!) {
+  updateAffirmation(id: $id, input: $input) {
+    id
+    familyMemberId
+    text
+    category
+    isActive
+    createdAt
+    updatedAt
+  }
+}

@@ -26,8 +26,23 @@ import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
 import type { GetContactsQuery } from "@/__generated__/hooks";
-import { css } from "styled-system/css";
-import { flex } from "styled-system/patterns";
+import {
+  AlertDialog,
+  Badge,
+  Box,
+  Callout,
+  Card,
+  Code,
+  Container,
+  Dialog,
+  Flex,
+  Link as RadixLink,
+  Spinner,
+  TabNav,
+  Text,
+  TextArea,
+  TextField,
+} from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 import {
   ArrowLeftIcon,
@@ -57,39 +72,23 @@ type Contact = NonNullable<
   GetContactsQuery["contacts"]["contacts"]
 >[number];
 
-// --- Spinner helper ---
-function Spinner({ size = 16 }: { size?: number }) {
-  return (
-    <div
-      className={css({
-        border: "2px solid",
-        borderColor: "ui.border",
-        borderTopColor: "accent.primary",
-        borderRadius: "50%",
-        animation: "spin 0.6s linear infinite",
-      })}
-      style={{ width: size, height: size }}
-    />
-  );
-}
-
-/** Map seniority tier to badge style */
-function seniorityBadgeStyle(
+/** Map seniority tier to a Radix badge color */
+function seniorityColor(
   seniority: string | null | undefined,
-): { color: string; borderColor: string } {
+): "red" | "orange" | "yellow" | "blue" | "gray" {
   switch (seniority) {
     case "C-level":
     case "Founder":
-      return { color: "status.negative", borderColor: "status.negative" };
+      return "red";
     case "Partner":
     case "VP":
-      return { color: "status.warning", borderColor: "status.warning" };
+      return "orange";
     case "Director":
-      return { color: "status.warning", borderColor: "status.warning" };
+      return "yellow";
     case "Manager":
-      return { color: "accent.primary", borderColor: "accent.primary" };
+      return "blue";
     default:
-      return { color: "ui.secondary", borderColor: "ui.border" };
+      return "gray";
   }
 }
 
@@ -174,138 +173,130 @@ function GenerateEmailDialog({
   };
 
   return (
-    <>
-      <button
-        className={button({ variant: "ghost", size: "sm" })}
-        onClick={() => handleOpen(true)}
-      >
-        <MagicWandIcon />
-        Draft email
-      </button>
+    <Dialog.Root open={open} onOpenChange={handleOpen}>
+      <Dialog.Trigger>
+        <button className={button({ variant: "ghost", size: "sm" })}>
+          <MagicWandIcon />
+          Draft email
+        </button>
+      </Dialog.Trigger>
 
-      {open && (
-        <div
-          className={css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center" })}
-          onClick={() => handleOpen(false)}
-        >
-          <div
-            className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "540px", width: "90%", maxHeight: "85vh", overflowY: "auto" })}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "2" })}>Draft email to {recipientName}</h3>
-            {companyName && (
-              <p className={css({ fontSize: "sm", color: "ui.secondary", mb: "4" })}>
-                {contact.position ? `${contact.position} \u00b7 ` : ""}
-                {companyName}
-              </p>
+      <Dialog.Content maxWidth="540px">
+        <Dialog.Title>Draft email to {recipientName}</Dialog.Title>
+        {companyName && (
+          <Dialog.Description size="2" color="gray" mb="4">
+            {contact.position ? `${contact.position} · ` : ""}
+            {companyName}
+          </Dialog.Description>
+        )}
+
+        <Flex direction="column" gap="3">
+          <TextArea
+            placeholder="Special instructions (optional) — e.g. mention their recent open source work…"
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            rows={3}
+            disabled={isStreaming}
+          />
+
+          <Flex gap="2">
+            <button
+              className={button({ variant: "ghost" })}
+              onClick={handleGenerate}
+              disabled={isStreaming}
+            >
+              <MagicWandIcon />
+              {isStreaming ? "Generating…" : "Generate"}
+            </button>
+            {isStreaming && (
+              <button className={button({ variant: "ghost" })} onClick={stop}>
+                Stop
+              </button>
             )}
+            {content && !isStreaming && (
+              <button className={button({ variant: "ghost" })} onClick={reset}>
+                Regenerate
+              </button>
+            )}
+          </Flex>
 
-            <div className={flex({ direction: "column", gap: "3" })}>
-              <textarea
-                className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "2", width: "100%", outline: "none", resize: "vertical", minHeight: "80px", fontSize: "sm", _focus: { borderColor: "accent.primary" }, _placeholder: { color: "ui.tertiary" } })}
-                placeholder="Special instructions (optional) \u2014 e.g. mention their recent open source work\u2026"
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                rows={3}
-                disabled={isStreaming}
-              />
+          {error && (
+            <Callout.Root color="red" size="1">
+              <Callout.Icon>
+                <ExclamationTriangleIcon />
+              </Callout.Icon>
+              <Callout.Text>{error}</Callout.Text>
+            </Callout.Root>
+          )}
 
-              <div className={flex({ gap: "2" })}>
-                <button
-                  className={button({ variant: "ghost" })}
-                  onClick={handleGenerate}
-                  disabled={isStreaming}
-                >
-                  <MagicWandIcon />
-                  {isStreaming ? "Generating\u2026" : "Generate"}
-                </button>
-                {isStreaming && (
-                  <button className={button({ variant: "ghost" })} onClick={stop}>
-                    Stop
-                  </button>
-                )}
-                {content && !isStreaming && (
-                  <button className={button({ variant: "ghost" })} onClick={reset}>
-                    Regenerate
-                  </button>
-                )}
-              </div>
-
-              {error && (
-                <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "status.negative" })}>
-                  <div className={css({ flexShrink: 0 })}>
-                    <ExclamationTriangleIcon />
-                  </div>
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {isStreaming && partialContent && (
-                <div>
-                  <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
-                    Streaming\u2026
-                  </p>
-                  <div className={css({ overflowY: "auto", maxHeight: "200px" })}>
-                    <code
-                      className={css({ fontFamily: "mono", fontSize: "xs", bg: "ui.surfaceRaised", px: "1" })}
-                      style={{
-                        display: "block",
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
-                      {partialContent}
-                    </code>
-                  </div>
-                </div>
-              )}
-
-              {content && !isStreaming && (
-                <div
-                  className={css({ p: "3" })}
+          {isStreaming && partialContent && (
+            <Box>
+              <Text size="1" color="gray" mb="1" as="p">
+                Streaming…
+              </Text>
+              <Box overflow="auto" maxHeight="200px">
+                <Code
+                  size="1"
                   style={{
-                    background: "var(--green-2)",
+                    display: "block",
+                    whiteSpace: "pre-wrap",
                   }}
                 >
-                  <div className={flex({ justify: "space-between", align: "center" })} style={{ marginBottom: "8px" }}>
-                    <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" })}>
-                      <CheckIcon style={{ display: "inline", verticalAlign: "middle" }} />
-                      Generated
-                    </span>
-                    <button className={button({ variant: "ghost", size: "sm" })} onClick={handleCopy}>
-                      <CopyIcon />
-                      {copied ? "Copied!" : "Copy"}
-                    </button>
-                  </div>
+                  {partialContent}
+                </Code>
+              </Box>
+            </Box>
+          )}
 
-                  <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "bold", mb: "1" })}>
-                    SUBJECT
-                  </p>
-                  <p className={css({ fontSize: "sm", fontWeight: "medium", mb: "3" })}>
-                    {content.subject}
-                  </p>
+          {content && !isStreaming && (
+            <Box
+              p="3"
+              style={{
+                background: "var(--green-2)",
+                borderRadius: 0,
+              }}
+            >
+              <Flex justify="between" align="center" mb="2">
+                <Badge color="green" size="1">
+                  <CheckIcon />
+                  Generated
+                </Badge>
+                <button className={button({ variant: "ghost", size: "sm" })} onClick={handleCopy}>
+                  <CopyIcon />
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+              </Flex>
 
-                  <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "bold", mb: "1" })}>
-                    BODY
-                  </p>
-                  <p
-                    className={css({ fontSize: "sm" })}
-                    style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}
-                  >
-                    {content.body}
-                  </p>
-                </div>
-              )}
-            </div>
+              <Text size="1" color="gray" weight="bold" as="p" mb="1">
+                SUBJECT
+              </Text>
+              <Text size="2" weight="medium" as="p" mb="3">
+                {content.subject}
+              </Text>
 
-            <div className={flex({ justify: "flex-end" })} style={{ marginTop: "16px" }}>
-              <button className={button({ variant: "ghost" })} onClick={() => handleOpen(false)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+              <Text size="1" color="gray" weight="bold" as="p" mb="1">
+                BODY
+              </Text>
+              <Text
+                size="2"
+                as="p"
+                style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}
+              >
+                {content.body}
+              </Text>
+            </Box>
+          )}
+        </Flex>
+
+        <Flex justify="end" mt="4">
+          <Dialog.Close>
+            <button className={button({ variant: "ghost" })}>
+              Close
+            </button>
+          </Dialog.Close>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
@@ -334,21 +325,21 @@ function FindEmailButton({
   if (contact.emailVerified) return null;
 
   return (
-    <div className={flex({ direction: "column", align: "flex-end", gap: "1" })}>
+    <Flex direction="column" align="end" gap="1">
       <button
         className={button({ variant: "ghost", size: "sm" })}
         onClick={handleClick}
         disabled={loading}
       >
-        {loading ? <Spinner size={12} /> : <MagnifyingGlassIcon />}
+        {loading ? <Spinner size="1" /> : <MagnifyingGlassIcon />}
         Find email
       </button>
       {result && (
-        <span className={css({ fontSize: "xs", color: "ui.tertiary", maxWidth: "180px", textAlign: "right" })}>
+        <Text size="1" color="gray" maxWidth="180px" align="right">
           {result}
-        </span>
+        </Text>
       )}
-    </div>
+    </Flex>
   );
 }
 
@@ -408,128 +399,100 @@ function CreateContactDialog({
     }
   };
 
-  const inputStyle = css({
-    bg: "ui.surface",
-    border: "1px solid",
-    borderColor: "ui.border",
-    color: "ui.body",
-    p: "6px 10px",
-    width: "100%",
-    outline: "none",
-    fontSize: "sm",
-    _focus: { borderColor: "accent.primary" },
-    _placeholder: { color: "ui.tertiary" },
-  });
-
   return (
-    <>
-      <button
-        className={button({ variant: "solid", size: "md" })}
-        onClick={() => handleOpenChange(true)}
-      >
-        <PlusIcon />
-        Add contact
-      </button>
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Trigger>
+        <button className={button({ variant: "solid", size: "md" })}>
+          <PlusIcon />
+          Add contact
+        </button>
+      </Dialog.Trigger>
 
-      {open && (
-        <div
-          className={css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center" })}
-          onClick={() => handleOpenChange(false)}
-        >
-          <div
-            className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "440px", width: "90%" })}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "2" })}>Add contact</h3>
-            {companyName && (
-              <p className={css({ fontSize: "sm", color: "ui.secondary", mb: "4" })}>
-                {companyName}
-              </p>
-            )}
+      <Dialog.Content maxWidth="440px">
+        <Dialog.Title>Add contact</Dialog.Title>
+        {companyName && (
+          <Dialog.Description size="2" color="gray" mb="4">
+            {companyName}
+          </Dialog.Description>
+        )}
 
-            <div className={flex({ direction: "column", gap: "3" })}>
-              {error && (
-                <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "status.negative" })}>
-                  <div className={css({ flexShrink: 0 })}>
-                    <ExclamationTriangleIcon />
-                  </div>
-                  <span>{error}</span>
-                </div>
-              )}
+        <Flex direction="column" gap="3">
+          {error && (
+            <Callout.Root color="red" size="1">
+              <Callout.Icon>
+                <ExclamationTriangleIcon />
+              </Callout.Icon>
+              <Callout.Text>{error}</Callout.Text>
+            </Callout.Root>
+          )}
 
-              <div className={flex({ gap: "2" })}>
-                <div style={{ flex: 1 }}>
-                  <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>First name *</p>
-                  <input
-                    className={inputStyle}
-                    placeholder="First name"
-                    value={form.firstName}
-                    onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>Last name</p>
-                  <input
-                    className={inputStyle}
-                    placeholder="Last name"
-                    value={form.lastName}
-                    onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-                  />
-                </div>
-              </div>
+          <Flex gap="2">
+            <Box flexGrow="1">
+              <Text size="1" color="gray" mb="1" as="p">First name *</Text>
+              <TextField.Root
+                placeholder="First name"
+                value={form.firstName}
+                onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+              />
+            </Box>
+            <Box flexGrow="1">
+              <Text size="1" color="gray" mb="1" as="p">Last name</Text>
+              <TextField.Root
+                placeholder="Last name"
+                value={form.lastName}
+                onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+              />
+            </Box>
+          </Flex>
 
-              <div>
-                <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>Position</p>
-                <input
-                  className={inputStyle}
-                  placeholder="e.g. Engineering Manager"
-                  value={form.position}
-                  onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
-                />
-              </div>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">Position</Text>
+            <TextField.Root
+              placeholder="e.g. Engineering Manager"
+              value={form.position}
+              onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
+            />
+          </Box>
 
-              <div>
-                <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>Email</p>
-                <input
-                  className={inputStyle}
-                  type="email"
-                  placeholder="name@company.com"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                />
-              </div>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">Email</Text>
+            <TextField.Root
+              type="email"
+              placeholder="name@company.com"
+              value={form.email}
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            />
+          </Box>
 
-              <div>
-                <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>LinkedIn URL</p>
-                <input
-                  className={inputStyle}
-                  placeholder="https://linkedin.com/in/\u2026"
-                  value={form.linkedinUrl}
-                  onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
-                />
-              </div>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">LinkedIn URL</Text>
+            <TextField.Root
+              placeholder="https://linkedin.com/in/…"
+              value={form.linkedinUrl}
+              onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
+            />
+          </Box>
 
-              <div>
-                <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>Tags (comma-separated)</p>
-                <input
-                  className={inputStyle}
-                  placeholder="friend, vip, client"
-                  value={form.tags}
-                  onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
-                />
-              </div>
-            </div>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">Tags (comma-separated)</Text>
+            <TextField.Root
+              placeholder="friend, vip, client"
+              value={form.tags}
+              onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
+            />
+          </Box>
+        </Flex>
 
-            <div className={flex({ gap: "3", justify: "flex-end" })} style={{ marginTop: "16px" }}>
-              <button className={button({ variant: "ghost" })} onClick={() => handleOpenChange(false)}>Cancel</button>
-              <button className={button({ variant: "ghost" })} onClick={handleSubmit} disabled={loading}>
-                {loading ? "Saving\u2026" : "Create contact"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+        <Flex gap="3" mt="4" justify="end">
+          <Dialog.Close>
+            <button className={button({ variant: "ghost" })}>Cancel</button>
+          </Dialog.Close>
+          <button className={button({ variant: "ghost" })} onClick={handleSubmit} disabled={loading}>
+            {loading ? "Saving…" : "Create contact"}
+          </button>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
@@ -540,52 +503,42 @@ function DeleteContactButton({
   contact: Contact;
   onDeleted: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [deleteContact, { loading }] = useDeleteContactMutation();
 
   const handleDelete = useCallback(async () => {
     const { data } = await deleteContact({ variables: { id: contact.id } });
     if (data?.deleteContact?.success) {
-      setOpen(false);
       onDeleted();
     }
   }, [deleteContact, contact.id, onDeleted]);
 
   return (
-    <>
-      <button
-        className={button({ variant: "ghost", size: "sm" })}
-        onClick={() => setOpen(true)}
-      >
-        <TrashIcon />
-        Remove
-      </button>
-
-      {open && (
-        <div
-          className={css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center" })}
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "400px", width: "90%" })}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "2" })}>Remove contact</h3>
-            <p className={css({ fontSize: "sm", color: "ui.secondary" })}>
-              Remove {contact.firstName} {contact.lastName}? This cannot be undone.
-            </p>
-            <div className={flex({ gap: "3", justify: "flex-end" })} style={{ marginTop: "16px" }}>
-              <button className={button({ variant: "ghost" })} onClick={() => setOpen(false)}>
-                Cancel
-              </button>
-              <button className={button({ variant: "ghost" })} onClick={handleDelete} disabled={loading}>
-                {loading ? "Removing\u2026" : "Remove"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    <AlertDialog.Root>
+      <AlertDialog.Trigger>
+        <button className={button({ variant: "ghost", size: "sm" })}>
+          <TrashIcon />
+          Remove
+        </button>
+      </AlertDialog.Trigger>
+      <AlertDialog.Content maxWidth="400px">
+        <AlertDialog.Title>Remove contact</AlertDialog.Title>
+        <AlertDialog.Description size="2">
+          Remove {contact.firstName} {contact.lastName}? This cannot be undone.
+        </AlertDialog.Description>
+        <Flex gap="3" mt="4" justify="end">
+          <AlertDialog.Cancel>
+            <button className={button({ variant: "ghost" })}>
+              Cancel
+            </button>
+          </AlertDialog.Cancel>
+          <AlertDialog.Action>
+            <button className={button({ variant: "ghost" })} onClick={handleDelete} disabled={loading}>
+              {loading ? "Removing…" : "Remove"}
+            </button>
+          </AlertDialog.Action>
+        </Flex>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
   );
 }
 
@@ -656,7 +609,7 @@ export function CompanyContactsClient({
   // Inline tag editing state
   const [editingTagContactId, setEditingTagContactId] = useState<number | null>(null);
   const [newTagValue, setNewTagValue] = useState("");
-  // Local optimistic tag overrides: contactId -> tags array
+  // Local optimistic tag overrides: contactId → tags array
   const [localTags, setLocalTags] = useState<Record<number, string[]>>({});
   // Remind dialog state
   const [remindContactId, setRemindContactId] = useState<number | null>(null);
@@ -664,7 +617,7 @@ export function CompanyContactsClient({
   const [remindNote, setRemindNote] = useState("");
   const [remindRecurrence, setRemindRecurrence] = useState("none");
   const [remindStatus, setRemindStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
-  // Due reminders -- loaded for overdue badges
+  // Due reminders — loaded for overdue badges
   const { data: dueRemindersData } = useDueRemindersQuery({ skip: !isAdmin, fetchPolicy: "cache-and-network" });
   const dueContactIds = new Set(dueRemindersData?.dueReminders?.map((r) => r.contact.id) ?? []);
 
@@ -757,7 +710,7 @@ export function CompanyContactsClient({
       const res = result?.findCompanyEmails;
       if (res?.success) {
         const errSuffix = res.errors?.length
-          ? ` (${res.errors.length} errors: ${res.errors.slice(0, 3).join("; ")}${res.errors.length > 3 ? "\u2026" : ""})`
+          ? ` (${res.errors.length} errors: ${res.errors.slice(0, 3).join("; ")}${res.errors.length > 3 ? "…" : ""})`
           : "";
         setEmailDiscoveryStatus({ type: "success", message: res.message + errSuffix });
         await refetch();
@@ -858,50 +811,50 @@ export function CompanyContactsClient({
   // Admin guard
   if (!isAdmin) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "status.negative" })}>
-          <div className={css({ flexShrink: 0 })}>
+      <Container size="3" p="8">
+        <Callout.Root color="red">
+          <Callout.Icon>
             <ExclamationTriangleIcon />
-          </div>
-          <span>Access denied. Admin only.</span>
-        </div>
-      </div>
+          </Callout.Icon>
+          <Callout.Text>Access denied. Admin only.</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
   if (companyLoading) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={flex({ justify: "center" })}>
-          <Spinner size={24} />
-        </div>
-      </div>
+      <Container size="3" p="8">
+        <Flex justify="center">
+          <Spinner size="3" />
+        </Flex>
+      </Container>
     );
   }
 
   if (!company) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "ui.border" })}>
-          <div className={css({ flexShrink: 0 })}>
+      <Container size="3" p="8">
+        <Callout.Root color="gray">
+          <Callout.Icon>
             <InfoCircledIcon />
-          </div>
-          <span>Company not found.</span>
-        </div>
-      </div>
+          </Callout.Icon>
+          <Callout.Text>Company not found.</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
   if (contactsError) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "status.negative" })}>
-          <div className={css({ flexShrink: 0 })}>
+      <Container size="3" p="8">
+        <Callout.Root color="red">
+          <Callout.Icon>
             <ExclamationTriangleIcon />
-          </div>
-          <span>Failed to load contacts: {contactsError.message}</span>
-        </div>
-      </div>
+          </Callout.Icon>
+          <Callout.Text>Failed to load contacts: {contactsError.message}</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
@@ -926,101 +879,73 @@ export function CompanyContactsClient({
       email: c.email as string,
     }));
 
-  const tabLinkStyle = css({
-    px: "4",
-    py: "2",
-    fontSize: "sm",
-    color: "ui.tertiary",
-    fontWeight: "medium",
-    borderBottom: "2px solid transparent",
-    borderBottomColor: "transparent",
-    textDecoration: "none",
-    textTransform: "lowercase",
-  });
-
-  const tabLinkActiveStyle = css({
-    px: "4",
-    py: "2",
-    fontSize: "sm",
-    color: "ui.heading",
-    fontWeight: "semibold",
-    borderBottom: "2px solid",
-    borderBottomColor: "accent.primary",
-    textDecoration: "none",
-    textTransform: "lowercase",
-  });
-
-  const inputStyle = css({
-    bg: "ui.surface",
-    border: "1px solid",
-    borderColor: "ui.border",
-    color: "ui.body",
-    p: "6px 10px",
-    width: "100%",
-    outline: "none",
-    fontSize: "sm",
-    _focus: { borderColor: "accent.primary" },
-    _placeholder: { color: "ui.tertiary" },
-  });
-
   return (
-    <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "6" })}>
-      <div className={flex({ direction: "column", gap: "5" })}>
+    <Container size="3" p={{ initial: "4", md: "6" }}>
+      <Flex direction="column" gap="5">
         {/* Back link + header */}
-        <div>
+        <Box>
           <Link
             href={`/companies/${companyKey}`}
             style={{ textDecoration: "none" }}
           >
-            <div className={flex({ align: "center", gap: "1" })} style={{ marginBottom: "12px" }}>
+            <Flex align="center" gap="1" mb="3">
               <ArrowLeftIcon />
-              <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+              <Text size="2" color="gray">
                 {company.name}
-              </span>
-            </div>
+              </Text>
+            </Flex>
           </Link>
 
           {/* Tab navigation */}
-          <div className={css({ display: "flex", borderBottom: "1px solid", borderBottomColor: "ui.border", mb: "4" })}>
-            <Link href={`/companies/${companyKey}`} className={tabLinkStyle}>
-              Overview
-            </Link>
-            <Link href={`/companies/${companyKey}/contacts`} className={tabLinkActiveStyle}>
-              Contacts
-            </Link>
-            <Link href={`/companies/${companyKey}/emails`} className={tabLinkStyle}>
-              Emails
-            </Link>
-          </div>
-        </div>
+          <TabNav.Root mb="4">
+            <TabNav.Link asChild>
+              <Link href={`/companies/${companyKey}`}>Overview</Link>
+            </TabNav.Link>
+            <TabNav.Link asChild active>
+              <Link href={`/companies/${companyKey}/contacts`}>Contacts</Link>
+            </TabNav.Link>
+            <TabNav.Link asChild>
+              <Link href={`/companies/${companyKey}/emails`}>Emails</Link>
+            </TabNav.Link>
+          </TabNav.Root>
+        </Box>
 
         {/* Email discovery status */}
         {emailDiscoveryStatus && (
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: emailDiscoveryStatus.type === "success" ? "status.positive" : "status.negative" })}>
-            <div className={css({ flexShrink: 0 })}>
+          <Callout.Root
+            color={emailDiscoveryStatus.type === "success" ? "green" : "red"}
+            size="1"
+          >
+            <Callout.Icon>
               <InfoCircledIcon />
-            </div>
-            <span>{emailDiscoveryStatus.message}</span>
-          </div>
+            </Callout.Icon>
+            <Callout.Text>{emailDiscoveryStatus.message}</Callout.Text>
+          </Callout.Root>
         )}
 
         {/* ML scoring status */}
         {mlScoreStatus && (
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: mlScoreStatus.type === "success" ? "accent.primary" : "status.negative" })}>
-            <div className={css({ flexShrink: 0 })}>
+          <Callout.Root
+            color={mlScoreStatus.type === "success" ? "blue" : "red"}
+            size="1"
+          >
+            <Callout.Icon>
               <InfoCircledIcon />
-            </div>
-            <span>{mlScoreStatus.message}</span>
-          </div>
+            </Callout.Icon>
+            <Callout.Text>{mlScoreStatus.message}</Callout.Text>
+          </Callout.Root>
         )}
 
         {/* Streaming scheduler progress */}
         {(isStreaming || completion || schedulerError) && (
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: schedulerError ? "status.negative" : completion ? "status.positive" : "accent.primary" })}>
-            <div className={css({ flexShrink: 0 })}>
-              {isStreaming ? <Spinner size={12} /> : schedulerError ? <ExclamationTriangleIcon /> : <InfoCircledIcon />}
-            </div>
-            <span>
+          <Callout.Root
+            color={schedulerError ? "red" : completion ? "green" : "blue"}
+            size="1"
+          >
+            <Callout.Icon>
+              {isStreaming ? <Spinner size="1" /> : schedulerError ? <ExclamationTriangleIcon /> : <InfoCircledIcon />}
+            </Callout.Icon>
+            <Callout.Text>
               {completion
                 ? completion.message
                 : schedulerError
@@ -1028,25 +953,25 @@ export function CompanyContactsClient({
                   : progress.length > 0
                     ? progress[progress.length - 1].message
                     : "Starting scheduler..."}
-            </span>
+            </Callout.Text>
             {(completion || schedulerError) && (
-              <div className={css({ ml: "2", flexShrink: 0 })}>
+              <Box ml="2" flexShrink="0">
                 <button className={button({ variant: "ghost", size: "sm" })} onClick={resetScheduler}>
                   Dismiss
                 </button>
-              </div>
+              </Box>
             )}
-          </div>
+          </Callout.Root>
         )}
 
         {/* Toolbar */}
-        <div className={flex({ align: "center", justify: "space-between", gap: "3", wrap: "wrap" })}>
-          <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+        <Flex align="center" justify="between" gap="3" wrap="wrap">
+          <Text size="2" color="gray">
             {loading
-              ? "Loading\u2026"
+              ? "Loading…"
               : `${totalCount} contact${totalCount !== 1 ? "s" : ""}`}
-          </span>
-          <div className={flex({ gap: "2", align: "center", wrap: "wrap" })}>
+          </Text>
+          <Flex gap="2" align="center" wrap="wrap">
             <CreateContactDialog
               companyId={company.id}
               companyName={company.name}
@@ -1059,7 +984,7 @@ export function CompanyContactsClient({
               onClick={handleEnhanceAll}
               disabled={enhancing || applyingPattern}
             >
-              {enhancing ? <Spinner size={12} /> : <MagnifyingGlassIcon />}
+              {enhancing ? <Spinner size="1" /> : <MagnifyingGlassIcon />}
               Find emails for all
             </button>
             <button
@@ -1067,7 +992,7 @@ export function CompanyContactsClient({
               onClick={handleApplyPattern}
               disabled={applyingPattern || enhancing}
             >
-              {applyingPattern ? <Spinner size={12} /> : <UpdateIcon />}
+              {applyingPattern ? <Spinner size="1" /> : <UpdateIcon />}
               Apply pattern
             </button>
 
@@ -1076,7 +1001,7 @@ export function CompanyContactsClient({
               onClick={handleUnverifyAll}
               disabled={unverifying}
             >
-              {unverifying ? <Spinner size={12} /> : null}
+              {unverifying ? <Spinner size="1" /> : null}
               Unverify all
             </button>
 
@@ -1086,7 +1011,7 @@ export function CompanyContactsClient({
               disabled={scoringML}
               title="Classify each contact's seniority, department, and decision-maker status from their job title"
             >
-              {scoringML ? <Spinner size={12} /> : <MagicWandIcon />}
+              {scoringML ? <Spinner size="1" /> : <MagicWandIcon />}
               Score ML
             </button>
 
@@ -1096,7 +1021,7 @@ export function CompanyContactsClient({
               disabled={computingTouch}
               title="Compute next-touch urgency scores based on days since last email and authority score"
             >
-              {computingTouch ? <Spinner size={12} /> : <ClockIcon />}
+              {computingTouch ? <Spinner size="1" /> : <ClockIcon />}
               Touch scores
             </button>
 
@@ -1123,7 +1048,7 @@ export function CompanyContactsClient({
               onClick={() => company?.id && scheduleEmails(company.id)}
               disabled={isStreaming || !company?.id}
             >
-              {isStreaming ? <Spinner size={12} /> : <UpdateIcon />}
+              {isStreaming ? <Spinner size="1" /> : <UpdateIcon />}
               {isStreaming ? "Scheduling..." : "Schedule All"}
             </button>
             <button
@@ -1146,20 +1071,73 @@ export function CompanyContactsClient({
               }}
               disabled={merging}
             >
-              {merging ? <Spinner size={12} /> : null}
+              {merging ? <Spinner size="1" /> : null}
               Merge Duplicates
             </button>
 
             {/* LinkedIn import */}
-            <button
-              className={button({ variant: "ghost", size: "md" })}
-              onClick={() => setShowImport(true)}
+            <Dialog.Root
+              open={showImport}
+              onOpenChange={(open) => {
+                setShowImport(open);
+                if (!open) {
+                  setLinkedinHtml("");
+                  setImportStatus(null);
+                }
+              }}
             >
-              <LinkedInLogoIcon />
-              Import from LinkedIn
-            </button>
+              <Dialog.Trigger>
+                <button className={button({ variant: "ghost", size: "md" })}>
+                  <LinkedInLogoIcon />
+                  Import from LinkedIn
+                </button>
+              </Dialog.Trigger>
 
-            {/* One-click import via Chrome extension */}
+              <Dialog.Content maxWidth="520px">
+                <Dialog.Title>Import LinkedIn contacts</Dialog.Title>
+                <Dialog.Description size="2" color="gray" mb="4">
+                  Go to the company&apos;s LinkedIn page → People tab →
+                  right-click → View Page Source → copy all HTML → paste below.
+                </Dialog.Description>
+
+                {importStatus && (
+                  <Callout.Root
+                    color={importStatus.type === "success" ? "green" : "red"}
+                    mb="3"
+                  >
+                    <Callout.Icon>
+                      <InfoCircledIcon />
+                    </Callout.Icon>
+                    <Callout.Text>{importStatus.message}</Callout.Text>
+                  </Callout.Root>
+                )}
+
+                <TextArea
+                  size="1"
+                  placeholder="Paste LinkedIn page HTML here…"
+                  value={linkedinHtml}
+                  onChange={(e) => setLinkedinHtml(e.target.value)}
+                  rows={12}
+                />
+
+                <Flex gap="3" mt="4" justify="end">
+                  <Dialog.Close>
+                    <button className={button({ variant: "ghost" })}>
+                      Cancel
+                    </button>
+                  </Dialog.Close>
+                  <button
+                    className={button({ variant: "ghost" })}
+                    onClick={handleImportContacts}
+                    disabled={!linkedinHtml.trim() || importing}
+                  >
+                    {importing ? "Importing…" : "Import contacts"}
+                  </button>
+                </Flex>
+              </Dialog.Content>
+            </Dialog.Root>
+
+            {/* One-click import via Chrome extension — scrapes company /people/ page */}
             {company?.linkedin_url && (
               <button
                 className={button({ variant: "ghost", size: "md" })}
@@ -1169,7 +1147,7 @@ export function CompanyContactsClient({
                     company.linkedin_url!.replace(/\/?$/, "/") + "people/";
                   setLinkedinPeopleStatus({
                     type: "running",
-                    message: "Opening LinkedIn\u2026",
+                    message: "Opening LinkedIn…",
                   });
                   window.postMessage(
                     {
@@ -1184,166 +1162,172 @@ export function CompanyContactsClient({
               >
                 <LinkedInLogoIcon />
                 {linkedinPeopleStatus.type === "running"
-                  ? (linkedinPeopleStatus.message ?? "Importing\u2026")
+                  ? (linkedinPeopleStatus.message ?? "Importing…")
                   : linkedinPeopleStatus.type === "done"
                     ? linkedinPeopleStatus.message
                     : "Import People"}
               </button>
             )}
             {linkedinPeopleStatus.type === "error" && (
-              <span className={css({ fontSize: "xs", color: "status.negative" })}>
+              <Text size="1" color="red">
                 {linkedinPeopleStatus.message}
-              </span>
+              </Text>
             )}
 
-            <div style={{ width: 240 }}>
-              <div style={{ position: "relative" }}>
-                <input
-                  className={inputStyle}
-                  placeholder="Search contacts\u2026"
-                  value={search}
-                  onChange={(e) => handleSearch(e.target.value)}
-                />
-                <div style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", opacity: 0.5 }}>
+            <Box width="240px">
+              <TextField.Root
+                size="2"
+                placeholder="Search contacts…"
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+              >
+                <TextField.Slot>
                   <MagnifyingGlassIcon />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+                </TextField.Slot>
+              </TextField.Root>
+            </Box>
+          </Flex>
+        </Flex>
 
         {/* Contacts list */}
         {!loading && contactsList.length === 0 ? (
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "ui.border" })}>
-            <div className={css({ flexShrink: 0 })}>
+          <Callout.Root color="gray" variant="soft">
+            <Callout.Icon>
               <InfoCircledIcon />
-            </div>
-            <span>No contacts found.</span>
-          </div>
+            </Callout.Icon>
+            <Callout.Text>No contacts found.</Callout.Text>
+          </Callout.Root>
         ) : (
-          <div className={flex({ direction: "column", gap: "2" })}>
+          <Flex direction="column" gap="2">
             {contactsList.map((contact) => (
-              <div
+              <Card
                 key={contact.id}
-                className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", cursor: "pointer" })}
+                style={{ cursor: "pointer" }}
                 onClick={() => router.push(`/contacts/${contact.id}`)}
               >
-                <div className={css({ p: "3" })}>
-                  <div className={flex({ align: "flex-start", justify: "space-between", gap: "3", wrap: "wrap" })}>
-                    <div style={{ minWidth: 0 }}>
-                      <div className={flex({ align: "center", gap: "2", wrap: "wrap" })}>
-                        <span className={css({ fontSize: "base", fontWeight: "medium" })}>
+                <Box p="3">
+                  <Flex align="start" justify="between" gap="3" wrap="wrap">
+                    <Box minWidth="0">
+                      <Flex align="center" gap="2" wrap="wrap">
+                        <Text size="3" weight="medium">
                           {contact.firstName} {contact.lastName}
-                        </span>
+                        </Text>
                         {contact.emailVerified && (
-                          <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" })}>
+                          <Badge color="green" variant="soft" size="1">
                             verified
-                          </span>
+                          </Badge>
                         )}
                         {contact.email && !contact.emailVerified && contact.nbResult && (
-                          <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.warning", color: "status.warning" })}>
+                          <Badge color="orange" variant="soft" size="1">
                             {contact.nbResult}
-                          </span>
+                          </Badge>
                         )}
                         {contact.doNotContact && (
-                          <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.negative", color: "status.negative" })}>
+                          <Badge color="red" variant="soft" size="1">
                             do not contact
-                          </span>
+                          </Badge>
                         )}
                         {contact.isDecisionMaker && (
-                          <span className={css({ fontSize: "xs", px: "2", py: "1", bg: "status.positive", color: "white", fontWeight: "bold" })}>
+                          <Badge color="green" variant="solid" size="1">
                             DM
-                          </span>
+                          </Badge>
                         )}
                         {dueContactIds.has(contact.id) && (
-                          <span className={css({ fontSize: "xs", px: "2", py: "1", bg: "status.negative", color: "white", fontWeight: "bold" })}>
+                          <Badge color="red" variant="solid" size="1">
                             reminder due
-                          </span>
+                          </Badge>
                         )}
                         {!dueContactIds.has(contact.id) && (contact.nextTouchScore ?? 0) > 0.7 && (
-                          <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.warning", color: "status.warning" })}>
+                          <Badge color="orange" variant="soft" size="1">
                             follow up
-                          </span>
+                          </Badge>
                         )}
-                        {contact.seniority && (() => {
-                          const sStyle = seniorityBadgeStyle(contact.seniority);
-                          return (
-                            <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: sStyle.borderColor, color: sStyle.color })}>
-                              {contact.seniority}
-                            </span>
-                          );
-                        })()}
+                        {contact.seniority && (
+                          <Badge
+                            color={seniorityColor(contact.seniority)}
+                            variant="soft"
+                            size="1"
+                          >
+                            {contact.seniority}
+                          </Badge>
+                        )}
                         {contact.department && contact.department !== "Other" && (
-                          <span className={css({ fontSize: "xs", fontWeight: "medium", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", textTransform: "lowercase" })}>
+                          <Badge color="gray" variant="outline" size="1">
                             {contact.department}
-                          </span>
+                          </Badge>
                         )}
-                      </div>
+                      </Flex>
 
                       {contact.position && (
-                        <p className={css({ fontSize: "sm", color: "ui.secondary", mt: "1" })}>
+                        <Text size="2" color="gray" mt="1" as="p">
                           {contact.position}
                           {contact.authorityScore != null && contact.authorityScore > 0 && (
-                            <span className={css({ fontSize: "xs", color: "ui.tertiary", ml: "2" })}>
+                            <Text as="span" size="1" color="gray" ml="2">
                               {(contact.authorityScore * 100).toFixed(0)}%
-                            </span>
+                            </Text>
                           )}
                           {contact.lastContactedAt && (
-                            <span className={css({ fontSize: "xs", color: "ui.tertiary", ml: "2" })}>
-                              \u00b7 last: {Math.floor((Date.now() - new Date(contact.lastContactedAt).getTime()) / 86_400_000)}d ago
-                            </span>
+                            <Text as="span" size="1" color="gray" ml="2">
+                              · last: {Math.floor((Date.now() - new Date(contact.lastContactedAt).getTime()) / 86_400_000)}d ago
+                            </Text>
                           )}
-                        </p>
+                        </Text>
                       )}
 
-                      <div className={flex({ gap: "3", wrap: "wrap", align: "center" })} style={{ marginTop: "8px" }}>
+                      <Flex gap="3" mt="2" wrap="wrap" align="center">
                         {contact.email && (
-                          <div className={flex({ align: "center", gap: "1" })} onClick={(e) => e.stopPropagation()}>
-                            <EnvelopeClosedIcon style={{ color: "var(--colors-ui-tertiary)" }} />
-                            <a
+                          <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
+                            <EnvelopeClosedIcon color="gray" />
+                            <RadixLink
                               href={`mailto:${contact.email}`}
-                              className={css({ fontSize: "sm", color: "ui.secondary", textDecoration: "none", _hover: { textDecoration: "underline" } })}
+                              size="2"
+                              color="gray"
                             >
                               {contact.email}
-                            </a>
-                          </div>
+                            </RadixLink>
+                          </Flex>
                         )}
                         {contact.linkedinUrl && (
-                          <div className={flex({ align: "center", gap: "1" })} onClick={(e) => e.stopPropagation()}>
-                            <LinkedInLogoIcon style={{ color: "var(--colors-ui-tertiary)" }} />
-                            <a
+                          <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
+                            <LinkedInLogoIcon color="gray" />
+                            <RadixLink
                               href={contact.linkedinUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className={css({ fontSize: "sm", color: "ui.secondary", textDecoration: "none", _hover: { textDecoration: "underline" } })}
+                              size="2"
+                              color="gray"
                             >
-                              <span className={flex({ align: "center", gap: "1", display: "inline-flex" })}>
+                              <Flex as="span" align="center" gap="1">
                                 LinkedIn
                                 <ExternalLinkIcon />
-                              </span>
-                            </a>
-                          </div>
+                              </Flex>
+                            </RadixLink>
+                          </Flex>
                         )}
                         {contact.githubHandle && (
-                          <div className={flex({ align: "center", gap: "1" })} onClick={(e) => e.stopPropagation()}>
-                            <GitHubLogoIcon style={{ color: "var(--colors-ui-tertiary)" }} />
-                            <a
+                          <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
+                            <GitHubLogoIcon color="gray" />
+                            <RadixLink
                               href={`https://github.com/${contact.githubHandle}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className={css({ fontSize: "sm", color: "ui.secondary", textDecoration: "none", _hover: { textDecoration: "underline" } })}
+                              size="2"
+                              color="gray"
                             >
                               {contact.githubHandle}
-                            </a>
-                          </div>
+                            </RadixLink>
+                          </Flex>
                         )}
-                      </div>
+                      </Flex>
 
-                      <div className={flex({ gap: "1", wrap: "wrap", align: "center" })} style={{ marginTop: "8px" }} onClick={(e) => e.stopPropagation()}>
+                      <Flex gap="1" mt="2" wrap="wrap" align="center" onClick={(e) => e.stopPropagation()}>
                         {(localTags[contact.id] ?? contact.tags ?? []).map((tag) => (
-                          <span
+                          <Badge
                             key={tag}
-                            className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", cursor: "pointer" })}
+                            color="gray"
+                            variant="surface"
+                            size="1"
+                            style={{ cursor: "pointer" }}
                             title="Click to remove"
                             onClick={() => {
                               const next = (localTags[contact.id] ?? contact.tags ?? []).filter((t) => t !== tag);
@@ -1351,15 +1335,15 @@ export function CompanyContactsClient({
                               updateContact({ variables: { id: contact.id, input: { tags: next } } });
                             }}
                           >
-                            {tag} \u00d7
-                          </span>
+                            {tag} ×
+                          </Badge>
                         ))}
                         {editingTagContactId === contact.id ? (
-                          <input
-                            className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "2px 6px", fontSize: "xs", outline: "none", _focus: { borderColor: "accent.primary" } })}
+                          <TextField.Root
+                            size="1"
                             style={{ width: 100 }}
                             autoFocus
-                            placeholder="tag\u2026"
+                            placeholder="tag…"
                             value={newTagValue}
                             onChange={(e) => setNewTagValue(e.target.value)}
                             onKeyDown={(e) => {
@@ -1394,10 +1378,10 @@ export function CompanyContactsClient({
                             +
                           </button>
                         )}
-                      </div>
-                    </div>
+                      </Flex>
+                    </Box>
 
-                    <div className={flex({ direction: "column", align: "flex-end", gap: "2" })} style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                    <Flex direction="column" align="end" gap="2" flexShrink="0" onClick={(e) => e.stopPropagation()}>
                       {!contact.doNotContact && (
                         <GenerateEmailDialog
                           contact={contact}
@@ -1422,139 +1406,81 @@ export function CompanyContactsClient({
                         contact={contact}
                         onDeleted={refetch}
                       />
-                    </div>
-                  </div>
-                </div>
-              </div>
+                    </Flex>
+                  </Flex>
+                </Box>
+              </Card>
             ))}
-          </div>
+          </Flex>
         )}
-      </div>
-
-      {/* LinkedIn import dialog */}
-      {showImport && (
-        <div
-          className={css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center" })}
-          onClick={() => { setShowImport(false); setLinkedinHtml(""); setImportStatus(null); }}
-        >
-          <div
-            className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "520px", width: "90%" })}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "2" })}>Import LinkedIn contacts</h3>
-            <p className={css({ fontSize: "sm", color: "ui.secondary", mb: "4" })}>
-              Go to the company&apos;s LinkedIn page &rarr; People tab &rarr;
-              right-click &rarr; View Page Source &rarr; copy all HTML &rarr; paste below.
-            </p>
-
-            {importStatus && (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: importStatus.type === "success" ? "status.positive" : "status.negative", mb: "3" })}>
-                <div className={css({ flexShrink: 0 })}>
-                  <InfoCircledIcon />
-                </div>
-                <span>{importStatus.message}</span>
-              </div>
-            )}
-
-            <textarea
-              className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "2", width: "100%", outline: "none", resize: "vertical", minHeight: "120px", fontSize: "xs", _focus: { borderColor: "accent.primary" }, _placeholder: { color: "ui.tertiary" } })}
-              placeholder="Paste LinkedIn page HTML here\u2026"
-              value={linkedinHtml}
-              onChange={(e) => setLinkedinHtml(e.target.value)}
-              rows={12}
-            />
-
-            <div className={flex({ gap: "3", justify: "flex-end" })} style={{ marginTop: "16px" }}>
-              <button className={button({ variant: "ghost" })} onClick={() => { setShowImport(false); setLinkedinHtml(""); setImportStatus(null); }}>
-                Cancel
-              </button>
-              <button
-                className={button({ variant: "ghost" })}
-                onClick={handleImportContacts}
-                disabled={!linkedinHtml.trim() || importing}
-              >
-                {importing ? "Importing\u2026" : "Import contacts"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      </Flex>
       {/* Set Reminder dialog */}
-      {remindContactId !== null && (
-        <div
-          className={css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center" })}
-          onClick={() => setRemindContactId(null)}
-        >
-          <div
-            className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "400px", width: "90%" })}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "2" })}>Set reminder</h3>
-            <p className={css({ fontSize: "sm", color: "ui.secondary", mb: "4" })}>
-              Choose when to follow up with this contact.
-            </p>
+      <Dialog.Root open={remindContactId !== null} onOpenChange={(open) => { if (!open) setRemindContactId(null); }}>
+        <Dialog.Content maxWidth="400px">
+          <Dialog.Title>Set reminder</Dialog.Title>
+          <Dialog.Description size="2" color="gray" mb="4">
+            Choose when to follow up with this contact.
+          </Dialog.Description>
 
-            {remindStatus && (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: remindStatus.type === "success" ? "status.positive" : "status.negative", mb: "3" })}>
-                <div className={css({ flexShrink: 0 })}>
-                  <InfoCircledIcon />
-                </div>
-                <span>{remindStatus.message}</span>
-              </div>
-            )}
+          {remindStatus && (
+            <Callout.Root color={remindStatus.type === "success" ? "green" : "red"} mb="3" size="1">
+              <Callout.Icon><InfoCircledIcon /></Callout.Icon>
+              <Callout.Text>{remindStatus.message}</Callout.Text>
+            </Callout.Root>
+          )}
 
-            <div className={flex({ direction: "column", gap: "3" })}>
-              <div>
-                <p className={css({ fontSize: "sm", fontWeight: "medium", mb: "1" })}>Date</p>
-                <input
-                  type="date"
-                  value={remindDate}
-                  onChange={(e) => setRemindDate(e.target.value)}
-                  className={inputStyle}
-                />
-              </div>
+          <Flex direction="column" gap="3">
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="p">Date</Text>
+              <input
+                type="date"
+                value={remindDate}
+                onChange={(e) => setRemindDate(e.target.value)}
+                style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--gray-6)", background: "var(--color-background)", color: "var(--gray-12)", fontSize: 14 }}
+              />
+            </Box>
 
-              <div>
-                <p className={css({ fontSize: "sm", fontWeight: "medium", mb: "1" })}>Recurrence</p>
-                <select
-                  value={remindRecurrence}
-                  onChange={(e) => setRemindRecurrence(e.target.value)}
-                  className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", fontSize: "sm", outline: "none", cursor: "pointer", width: "100%", _focus: { borderColor: "accent.primary" } })}
-                >
-                  <option value="none">One-time</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="biweekly">Every 2 weeks</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-              </div>
-
-              <div>
-                <p className={css({ fontSize: "sm", fontWeight: "medium", mb: "1" })}>Note (optional)</p>
-                <textarea
-                  className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "2", width: "100%", outline: "none", resize: "vertical", minHeight: "80px", fontSize: "xs", _focus: { borderColor: "accent.primary" }, _placeholder: { color: "ui.tertiary" } })}
-                  placeholder="e.g. Follow up on proposal\u2026"
-                  value={remindNote}
-                  onChange={(e) => setRemindNote(e.target.value)}
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <div className={flex({ gap: "3", justify: "flex-end" })} style={{ marginTop: "16px" }}>
-              <button className={button({ variant: "ghost" })} onClick={() => setRemindContactId(null)}>Cancel</button>
-              <button
-                className={button({ variant: "solid" })}
-                onClick={handleCreateReminder}
-                disabled={!remindDate}
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="p">Recurrence</Text>
+              <select
+                value={remindRecurrence}
+                onChange={(e) => setRemindRecurrence(e.target.value)}
+                style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--gray-6)", background: "var(--color-background)", color: "var(--gray-12)", fontSize: 14 }}
               >
-                <CalendarIcon />
-                Set reminder
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <option value="none">One-time</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Every 2 weeks</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </Box>
+
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="p">Note (optional)</Text>
+              <TextArea
+                size="1"
+                placeholder="e.g. Follow up on proposal…"
+                value={remindNote}
+                onChange={(e) => setRemindNote(e.target.value)}
+                rows={3}
+              />
+            </Box>
+          </Flex>
+
+          <Flex gap="3" mt="4" justify="end">
+            <Dialog.Close>
+              <button className={button({ variant: "ghost" })}>Cancel</button>
+            </Dialog.Close>
+            <button
+              className={button({ variant: "solid" })}
+              onClick={handleCreateReminder}
+              disabled={!remindDate}
+            >
+              <CalendarIcon />
+              Set reminder
+            </button>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
 
       <BatchEmailModal
         open={batchEmailOpen}
@@ -1588,6 +1514,6 @@ export function CompanyContactsClient({
         }))}
         onSuccess={() => { refetch(); refetchEmails(); }}
       />
-    </div>
+    </Container>
   );
 }

@@ -15,8 +15,23 @@ import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
 import { button } from "@/recipes/button";
-import { css, cx } from "styled-system/css";
-import { flex } from "styled-system/patterns";
+import {
+  Badge,
+  Box,
+  Callout,
+  Card,
+  Code,
+  Container,
+  Dialog,
+  Flex,
+  Heading,
+  Link as RadixLink,
+  Separator,
+  Spinner,
+  Text,
+  TextArea,
+  TextField,
+} from "@radix-ui/themes";
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -137,182 +152,176 @@ function GenerateEmailDialog({
     }
   };
 
-  if (!open) {
-    return (
-      <button className={button({ variant: "ghost", size: "md" })} onClick={() => handleOpen(true)}>
-        <MagicWandIcon />
-        Draft email
-      </button>
-    );
-  }
-
   return (
-    <>
-      {/* Overlay */}
-      <div className={css({ position: "fixed", inset: "0", bg: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: "50" })} onClick={() => handleOpen(false)}>
-        <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "540px", width: "100%" })} onClick={(e) => e.stopPropagation()}>
-          <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "2" })}>
-            {step === "generate" ? "Draft email" : "Edit & send"} \u2014 {recipientName}
-          </h3>
-          {(contact.position || contact.company) && (
-            <p className={css({ fontSize: "sm", color: "ui.tertiary", mb: "4" })}>
-              {contact.position ?? ""}
-              {contact.position && contact.company ? " \u00b7 " : ""}
-              {contact.company ?? ""}
-            </p>
-          )}
+    <Dialog.Root open={open} onOpenChange={handleOpen}>
+      <Dialog.Trigger>
+        <button className={button({ variant: "ghost", size: "md" })}>
+          <MagicWandIcon />
+          Draft email
+        </button>
+      </Dialog.Trigger>
 
-          {/* ── Generate step ── */}
-          {step === "generate" && (
-            <div className={flex({ direction: "column", gap: "3" })}>
-              <textarea
-                className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", resize: "vertical", _focus: { borderColor: "accent.primary" } })}
-                placeholder="Special instructions (optional) \u2014 e.g. mention their recent open source work\u2026"
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                rows={3}
-                disabled={isStreaming}
-              />
+      <Dialog.Content maxWidth="540px">
+        <Dialog.Title>
+          {step === "generate" ? "Draft email" : "Edit & send"} — {recipientName}
+        </Dialog.Title>
+        {(contact.position || contact.company) && (
+          <Dialog.Description size="2" color="gray" mb="4">
+            {contact.position ?? ""}
+            {contact.position && contact.company ? " · " : ""}
+            {contact.company ?? ""}
+          </Dialog.Description>
+        )}
 
-              <div className={flex({ gap: "2" })}>
-                <button className={button({ variant: "ghost" })} onClick={handleGenerate} disabled={isStreaming}>
-                  <MagicWandIcon />
-                  {isStreaming ? "Generating\u2026" : "Generate"}
+        {/* ── Generate step ── */}
+        {step === "generate" && (
+          <Flex direction="column" gap="3">
+            <TextArea
+              placeholder="Special instructions (optional) — e.g. mention their recent open source work…"
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              rows={3}
+              disabled={isStreaming}
+            />
+
+            <Flex gap="2">
+              <button className={button({ variant: "ghost" })} onClick={handleGenerate} disabled={isStreaming}>
+                <MagicWandIcon />
+                {isStreaming ? "Generating…" : "Generate"}
+              </button>
+              {isStreaming && (
+                <button className={button({ variant: "ghost" })} onClick={stop}>
+                  Stop
                 </button>
-                {isStreaming && (
-                  <button className={button({ variant: "ghost" })} onClick={stop}>
-                    Stop
-                  </button>
-                )}
-                {content && !isStreaming && (
-                  <button className={button({ variant: "ghost" })} onClick={() => { reset(); setInstructions(""); }}>
-                    Regenerate
-                  </button>
-                )}
-              </div>
-
-              {error && (
-                <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.9", bg: "red.3" })}>
-                  <div className={css({ flexShrink: 0 })}><ExclamationTriangleIcon /></div>
-                  <span>{error}</span>
-                </div>
               )}
-
-              {isStreaming && partialContent && (
-                <div>
-                  <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>Streaming\u2026</p>
-                  <code className={css({ fontFamily: "mono", fontSize: "xs", bg: "ui.surfaceRaised", px: "1", display: "block", whiteSpace: "pre-wrap", maxHeight: "200px", overflow: "auto" })}>
-                    {partialContent}
-                  </code>
-                </div>
-              )}
-
               {content && !isStreaming && (
-                <div style={{ background: "var(--green-2)", borderRadius: 0, padding: "var(--space-3)" }}>
-                  <div className={flex({ justify: "space-between", align: "center", mb: "2" })}>
-                    <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" })}><CheckIcon /> Generated</span>
-                  </div>
-                  <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "bold", mb: "1" })}>SUBJECT</p>
-                  <p className={css({ fontSize: "sm", fontWeight: "medium", mb: "3" })}>{content.subject}</p>
-                  <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "bold", mb: "1" })}>BODY</p>
-                  <p className={css({ fontSize: "sm" })} style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}>{content.body}</p>
-                </div>
+                <button className={button({ variant: "ghost" })} onClick={() => { reset(); setInstructions(""); }}>
+                  Regenerate
+                </button>
               )}
+            </Flex>
 
-              <div className={flex({ align: "center", gap: "2" })}>
-                <input
-                  type="checkbox"
-                  id="includeResumeGenerate"
-                  checked={includeResume}
-                  onChange={(e) => setIncludeResume(e.target.checked)}
-                />
-                <label className={css({ fontSize: "sm" })} htmlFor="includeResumeGenerate">
-                  Include resume
-                </label>
-              </div>
+            {error && (
+              <Callout.Root color="red" size="1">
+                <Callout.Icon><ExclamationTriangleIcon /></Callout.Icon>
+                <Callout.Text>{error}</Callout.Text>
+              </Callout.Root>
+            )}
 
-              <div className={flex({ justify: "space-between", mt: "2" })}>
-                <button className={button({ variant: "ghost" })} onClick={() => handleOpen(false)}>Close</button>
-                {content && !isStreaming && (
-                  <button className={button({ variant: "ghost" })} onClick={handleProceedToEdit}>
-                    Edit & Send {"\u2192"}
+            {isStreaming && partialContent && (
+              <Box>
+                <Text size="1" color="gray" mb="1" as="p">Streaming…</Text>
+                <Code size="1" style={{ display: "block", whiteSpace: "pre-wrap", maxHeight: 200, overflow: "auto" }}>
+                  {partialContent}
+                </Code>
+              </Box>
+            )}
+
+            {content && !isStreaming && (
+              <Box style={{ background: "var(--green-2)", borderRadius: 0, padding: "var(--space-3)" }}>
+                <Flex justify="between" align="center" mb="2">
+                  <Badge color="green" size="1"><CheckIcon /> Generated</Badge>
+                </Flex>
+                <Text size="1" color="gray" weight="bold" as="p" mb="1">SUBJECT</Text>
+                <Text size="2" weight="medium" as="p" mb="3">{content.subject}</Text>
+                <Text size="1" color="gray" weight="bold" as="p" mb="1">BODY</Text>
+                <Text size="2" as="p" style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}>{content.body}</Text>
+              </Box>
+            )}
+
+            <Flex align="center" gap="2">
+              <input
+                type="checkbox"
+                id="includeResumeGenerate"
+                checked={includeResume}
+                onChange={(e) => setIncludeResume(e.target.checked)}
+              />
+              <Text size="2" as="label" htmlFor="includeResumeGenerate">
+                Include resume
+              </Text>
+            </Flex>
+
+            <Flex justify="between" mt="2">
+              <Dialog.Close>
+                <button className={button({ variant: "ghost" })}>Close</button>
+              </Dialog.Close>
+              {content && !isStreaming && (
+                <button className={button({ variant: "ghost" })} onClick={handleProceedToEdit}>
+                  Edit & Send →
+                </button>
+              )}
+            </Flex>
+          </Flex>
+        )}
+
+        {/* ── Edit & Send step ── */}
+        {step === "edit" && (
+          <Flex direction="column" gap="3">
+            <Box>
+              <Text size="1" color="gray" weight="medium" mb="1" as="p">Subject</Text>
+              <TextField.Root
+                value={editSubject}
+                onChange={(e) => setEditSubject(e.target.value)}
+              />
+            </Box>
+
+            <Box>
+              <Text size="1" color="gray" weight="medium" mb="1" as="p">Body</Text>
+              <TextArea
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value)}
+                rows={12}
+              />
+            </Box>
+
+            <Flex align="center" gap="2">
+              <input
+                type="checkbox"
+                id="includeResume"
+                checked={includeResume}
+                onChange={(e) => setIncludeResume(e.target.checked)}
+              />
+              <Text size="2" as="label" htmlFor="includeResume">
+                Include resume
+              </Text>
+            </Flex>
+
+            {sendResult && (
+              <Callout.Root color={sendResult.type === "success" ? "green" : "red"} size="1">
+                <Callout.Icon><InfoCircledIcon /></Callout.Icon>
+                <Callout.Text>{sendResult.message}</Callout.Text>
+              </Callout.Root>
+            )}
+
+            <Flex justify="between" gap="2" wrap="wrap">
+              <button className={button({ variant: "ghost" })} onClick={() => setStep("generate")}>
+                ← Back
+              </button>
+              <Flex gap="2">
+                <button className={button({ variant: "ghost" })} onClick={handleCopy}>
+                  <CopyIcon />
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+                {hasEmail ? (
+                  <button
+                    className={button({ variant: "solidGreen" })}
+                    onClick={handleSend}
+                    disabled={sending || !editSubject || !editBody}
+                  >
+                    <PaperPlaneIcon />
+                    Send
+                  </button>
+                ) : (
+                  <button className={button({ variant: "ghost" })} disabled>
+                    No email address
                   </button>
                 )}
-              </div>
-            </div>
-          )}
-
-          {/* ── Edit & Send step ── */}
-          {step === "edit" && (
-            <div className={flex({ direction: "column", gap: "3" })}>
-              <div>
-                <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>Subject</p>
-                <input
-                  className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })}
-                  value={editSubject}
-                  onChange={(e) => setEditSubject(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>Body</p>
-                <textarea
-                  className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", resize: "vertical", _focus: { borderColor: "accent.primary" } })}
-                  value={editBody}
-                  onChange={(e) => setEditBody(e.target.value)}
-                  rows={12}
-                />
-              </div>
-
-              <div className={flex({ align: "center", gap: "2" })}>
-                <input
-                  type="checkbox"
-                  id="includeResume"
-                  checked={includeResume}
-                  onChange={(e) => setIncludeResume(e.target.checked)}
-                />
-                <label className={css({ fontSize: "sm" })} htmlFor="includeResume">
-                  Include resume
-                </label>
-              </div>
-
-              {sendResult && (
-                <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: sendResult.type === "success" ? "status.positive" : "red.9", bg: sendResult.type === "success" ? "status.positiveDim" : "red.3" })}>
-                  <div className={css({ flexShrink: 0 })}><InfoCircledIcon /></div>
-                  <span>{sendResult.message}</span>
-                </div>
-              )}
-
-              <div className={flex({ justify: "space-between", gap: "2", wrap: "wrap" })}>
-                <button className={button({ variant: "ghost" })} onClick={() => setStep("generate")}>
-                  {"\u2190"} Back
-                </button>
-                <div className={flex({ gap: "2" })}>
-                  <button className={button({ variant: "ghost" })} onClick={handleCopy}>
-                    <CopyIcon />
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                  {hasEmail ? (
-                    <button
-                      className={button({ variant: "solidGreen" })}
-                      onClick={handleSend}
-                      disabled={sending || !editSubject || !editBody}
-                    >
-                      <PaperPlaneIcon />
-                      Send
-                    </button>
-                  ) : (
-                    <button className={button({ variant: "ghost" })} disabled>
-                      No email address
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+              </Flex>
+            </Flex>
+          </Flex>
+        )}
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
@@ -402,147 +411,141 @@ function EditContactDialog({
     }
   };
 
-  if (!open) {
-    return (
-      <button className={button({ variant: "ghost", size: "md" })} onClick={() => handleOpenChange(true)}>
-        <Pencil1Icon />
-        Edit
-      </button>
-    );
-  }
-
   return (
-    <div className={css({ position: "fixed", inset: "0", bg: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: "50" })} onClick={() => handleOpenChange(false)}>
-      <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "480px", width: "100%" })} onClick={(e) => e.stopPropagation()}>
-        <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "3" })}>Edit contact</h3>
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Trigger>
+        <button className={button({ variant: "ghost", size: "md" })}>
+          <Pencil1Icon />
+          Edit
+        </button>
+      </Dialog.Trigger>
 
-        <div className={flex({ direction: "column", gap: "3" })}>
+      <Dialog.Content maxWidth="480px">
+        <Dialog.Title>Edit contact</Dialog.Title>
+
+        <Flex direction="column" gap="3">
           {error && (
-            <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.9", bg: "red.3" })}>
-              <div className={css({ flexShrink: 0 })}><ExclamationTriangleIcon /></div>
-              <span>{error}</span>
-            </div>
+            <Callout.Root color="red" size="1">
+              <Callout.Icon>
+                <ExclamationTriangleIcon />
+              </Callout.Icon>
+              <Callout.Text>{error}</Callout.Text>
+            </Callout.Root>
           )}
 
-          <div className={flex({ gap: "2" })}>
-            <div style={{ flex: 1 }}>
-              <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
+          <Flex gap="2">
+            <Box style={{ flex: 1 }}>
+              <Text size="1" color="gray" mb="1" as="p">
                 First name *
-              </p>
-              <input
-                className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })}
+              </Text>
+              <TextField.Root
                 value={form.firstName}
                 onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
               />
-            </div>
-            <div style={{ flex: 1 }}>
-              <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
+            </Box>
+            <Box style={{ flex: 1 }}>
+              <Text size="1" color="gray" mb="1" as="p">
                 Last name
-              </p>
-              <input
-                className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })}
+              </Text>
+              <TextField.Root
                 value={form.lastName}
                 onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
               />
-            </div>
-          </div>
+            </Box>
+          </Flex>
 
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">
               Position
-            </p>
-            <input
-              className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })}
+            </Text>
+            <TextField.Root
               placeholder="e.g. Engineering Manager"
               value={form.position}
               onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
             />
-          </div>
+          </Box>
 
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">
               Email
-            </p>
-            <input
-              className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })}
+            </Text>
+            <TextField.Root
               type="email"
               placeholder="name@company.com"
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             />
-          </div>
+          </Box>
 
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">
               LinkedIn URL
-            </p>
-            <input
-              className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })}
-              placeholder="https://linkedin.com/in/\u2026"
+            </Text>
+            <TextField.Root
+              placeholder="https://linkedin.com/in/…"
               value={form.linkedinUrl}
               onChange={(e) => setForm((f) => ({ ...f, linkedinUrl: e.target.value }))}
             />
-          </div>
+          </Box>
 
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">
               GitHub handle
-            </p>
-            <input
-              className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })}
+            </Text>
+            <TextField.Root
               placeholder="username"
               value={form.githubHandle}
               onChange={(e) => setForm((f) => ({ ...f, githubHandle: e.target.value }))}
             />
-          </div>
+          </Box>
 
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">
               Telegram handle
-            </p>
-            <input
-              className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })}
+            </Text>
+            <TextField.Root
               placeholder="username"
               value={form.telegramHandle}
               onChange={(e) => setForm((f) => ({ ...f, telegramHandle: e.target.value }))}
             />
-          </div>
+          </Box>
 
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" mb="1" as="p">
               Tags (comma-separated)
-            </p>
-            <input
-              className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", width: "100%", outline: "none", _focus: { borderColor: "accent.primary" } })}
+            </Text>
+            <TextField.Root
               placeholder="recruiter, hiring-manager"
               value={form.tags}
               onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
             />
-          </div>
+          </Box>
 
-          <div className={flex({ align: "center", gap: "2" })}>
+          <Flex align="center" gap="2">
             <input
               type="checkbox"
               id="doNotContact"
               checked={form.doNotContact}
               onChange={(e) => setForm((f) => ({ ...f, doNotContact: e.target.checked }))}
             />
-            <label className={css({ fontSize: "sm" })} htmlFor="doNotContact">
+            <Text size="2" as="label" htmlFor="doNotContact">
               Do not contact
-            </label>
-          </div>
-        </div>
+            </Text>
+          </Flex>
+        </Flex>
 
-        <div className={flex({ gap: "3", mt: "4", justify: "end" })}>
-          <button className={button({ variant: "ghost" })} onClick={() => handleOpenChange(false)}>
-            Cancel
-          </button>
+        <Flex gap="3" mt="4" justify="end">
+          <Dialog.Close>
+            <button className={button({ variant: "ghost" })}>
+              Cancel
+            </button>
+          </Dialog.Close>
           <button className={button({ variant: "ghost" })} onClick={handleSubmit} disabled={loading}>
-            {loading ? "Saving\u2026" : "Save changes"}
+            {loading ? "Saving…" : "Save changes"}
           </button>
-        </div>
-      </div>
-    </div>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
@@ -575,40 +578,42 @@ function DeleteContactDialog({
     }
   };
 
-  if (!open) {
-    return (
-      <button className={button({ variant: "ghost", size: "md" })} onClick={() => setOpen(true)}>
-        <TrashIcon />
-        Delete
-      </button>
-    );
-  }
-
   return (
-    <div className={css({ position: "fixed", inset: "0", bg: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: "50" })} onClick={() => setOpen(false)}>
-      <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "400px", width: "100%" })} onClick={(e) => e.stopPropagation()}>
-        <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "2" })}>Delete {contactName}?</h3>
-        <p className={css({ fontSize: "sm", color: "ui.tertiary", mb: "4" })}>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger>
+        <button className={button({ variant: "ghost", size: "md" })}>
+          <TrashIcon />
+          Delete
+        </button>
+      </Dialog.Trigger>
+
+      <Dialog.Content maxWidth="400px">
+        <Dialog.Title>Delete {contactName}?</Dialog.Title>
+        <Dialog.Description size="2" color="gray" mb="4">
           This action cannot be undone.
-        </p>
+        </Dialog.Description>
 
         {error && (
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.9", bg: "red.3", mb: "3" })}>
-            <div className={css({ flexShrink: 0 })}><ExclamationTriangleIcon /></div>
-            <span>{error}</span>
-          </div>
+          <Callout.Root color="red" size="1" mb="3">
+            <Callout.Icon>
+              <ExclamationTriangleIcon />
+            </Callout.Icon>
+            <Callout.Text>{error}</Callout.Text>
+          </Callout.Root>
         )}
 
-        <div className={flex({ gap: "3", justify: "end" })}>
-          <button className={button({ variant: "ghost" })} onClick={() => setOpen(false)}>
-            Cancel
-          </button>
+        <Flex gap="3" justify="end">
+          <Dialog.Close>
+            <button className={button({ variant: "ghost" })}>
+              Cancel
+            </button>
+          </Dialog.Close>
           <button className={button({ variant: "solid" })} onClick={handleDelete} disabled={loading}>
-            {loading ? "Deleting\u2026" : "Delete"}
+            {loading ? "Deleting…" : "Delete"}
           </button>
-        </div>
-      </div>
-    </div>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
@@ -636,125 +641,122 @@ function EmailDetailDialog({ email }: { email: ContactEmailRow }) {
   const detail = data?.resendEmail;
 
   return (
-    <>
-      {/* Card trigger */}
-      <div
-        className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3", cursor: "pointer" })}
-        onClick={() => setOpen(true)}
-      >
-        <div className={css({ p: "3" })}>
-          <div className={flex({ justify: "space-between", align: "start", gap: "2", wrap: "wrap" })}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p className={css({ fontSize: "sm", fontWeight: "medium" })} style={{ wordBreak: "break-word" }}>
-                {email.subject}
-              </p>
-              <p className={css({ fontSize: "xs", color: "ui.tertiary", mt: "1" })}>
-                {email.sentAt
-                  ? new Date(email.sentAt).toLocaleString()
-                  : new Date(email.createdAt).toLocaleString()}
-              </p>
-            </div>
-            <span
-              className={css({
-                fontSize: "xs",
-                px: "2",
-                py: "1",
-                border: "1px solid",
-                borderColor: email.status === "delivered" ? "status.positive" : email.status === "bounced" ? "red.9" : "blue.9",
-                color: email.status === "delivered" ? "status.positive" : email.status === "bounced" ? "red.9" : "blue.9",
-                bg: email.status === "delivered" ? "status.positiveDim" : email.status === "bounced" ? "red.3" : "blue.3",
-              })}
-            >
-              {email.status}
-            </span>
-          </div>
-        </div>
-      </div>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger>
+        <Card style={{ cursor: "pointer" }}>
+          <Box p="3">
+            <Flex justify="between" align="start" gap="2" wrap="wrap">
+              <Box style={{ flex: 1, minWidth: 0 }}>
+                <Text size="2" weight="medium" as="p" style={{ wordBreak: "break-word" }}>
+                  {email.subject}
+                </Text>
+                <Text size="1" color="gray" as="p" mt="1">
+                  {email.sentAt
+                    ? new Date(email.sentAt).toLocaleString()
+                    : new Date(email.createdAt).toLocaleString()}
+                </Text>
+              </Box>
+              <Badge
+                color={
+                  email.status === "delivered"
+                    ? "green"
+                    : email.status === "bounced"
+                      ? "red"
+                      : "blue"
+                }
+                variant="soft"
+                size="1"
+              >
+                {email.status}
+              </Badge>
+            </Flex>
+          </Box>
+        </Card>
+      </Dialog.Trigger>
 
-      {/* Dialog overlay */}
-      {open && (
-        <div className={css({ position: "fixed", inset: "0", bg: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: "50" })} onClick={() => setOpen(false)}>
-          <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "580px", width: "100%" })} onClick={(e) => e.stopPropagation()}>
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "3" })}>{email.subject}</h3>
+      <Dialog.Content maxWidth="580px">
+        <Dialog.Title>{email.subject}</Dialog.Title>
 
-            {loading ? (
-              <div className={flex({ justify: "center", py: "6" })}>
-                <div className={css({ w: "16px", h: "16px", border: "2px solid", borderColor: "ui.border", borderTopColor: "accent.primary", borderRadius: "50%", animation: "spin 0.6s linear infinite" })} />
-              </div>
-            ) : detail ? (
-              <div className={flex({ direction: "column", gap: "3" })}>
-                {/* Meta */}
-                <div className={flex({ direction: "column", gap: "1" })}>
-                  <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                    <span className={css({ fontWeight: "medium" })}>From:</span> {detail.from}
-                  </span>
-                  <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                    <span className={css({ fontWeight: "medium" })}>To:</span> {detail.to.join(", ")}
-                  </span>
-                  {detail.cc && detail.cc.length > 0 && (
-                    <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                      <span className={css({ fontWeight: "medium" })}>CC:</span> {detail.cc.join(", ")}
-                    </span>
-                  )}
-                  <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                    <span className={css({ fontWeight: "medium" })}>Sent:</span>{" "}
-                    {new Date(detail.createdAt).toLocaleString()}
-                  </span>
-                  {detail.lastEvent && (
-                    <div className={flex({ align: "center", gap: "2" })}>
-                      <span className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium" })}>Status:</span>
-                      <span
-                        className={css({
-                          fontSize: "xs",
-                          px: "2",
-                          py: "1",
-                          border: "1px solid",
-                          borderColor: detail.lastEvent === "delivered" ? "status.positive" : detail.lastEvent === "bounced" ? "red.9" : detail.lastEvent === "opened" ? "teal.9" : "blue.9",
-                          color: detail.lastEvent === "delivered" ? "status.positive" : detail.lastEvent === "bounced" ? "red.9" : detail.lastEvent === "opened" ? "teal.9" : "blue.9",
-                          bg: detail.lastEvent === "delivered" ? "status.positiveDim" : detail.lastEvent === "bounced" ? "red.3" : detail.lastEvent === "opened" ? "teal.3" : "blue.3",
-                        })}
-                      >
-                        {detail.lastEvent}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
-
-                {/* Body */}
-                {detail.text ? (
-                  <div
-                    style={{
-                      background: "var(--gray-2)",
-                      borderRadius: 0,
-                      padding: "var(--space-4)",
-                      whiteSpace: "pre-wrap",
-                      lineHeight: "1.6",
-                      maxHeight: 400,
-                      overflow: "auto",
-                    }}
+        {loading ? (
+          <Flex justify="center" py="6">
+            <Spinner size="3" />
+          </Flex>
+        ) : detail ? (
+          <Flex direction="column" gap="3">
+            {/* Meta */}
+            <Flex direction="column" gap="1">
+              <Text size="1" color="gray">
+                <Text weight="medium">From:</Text> {detail.from}
+              </Text>
+              <Text size="1" color="gray">
+                <Text weight="medium">To:</Text> {detail.to.join(", ")}
+              </Text>
+              {detail.cc && detail.cc.length > 0 && (
+                <Text size="1" color="gray">
+                  <Text weight="medium">CC:</Text> {detail.cc.join(", ")}
+                </Text>
+              )}
+              <Text size="1" color="gray">
+                <Text weight="medium">Sent:</Text>{" "}
+                {new Date(detail.createdAt).toLocaleString()}
+              </Text>
+              {detail.lastEvent && (
+                <Flex align="center" gap="2">
+                  <Text size="1" color="gray" weight="medium">Status:</Text>
+                  <Badge
+                    color={
+                      detail.lastEvent === "delivered"
+                        ? "green"
+                        : detail.lastEvent === "bounced"
+                          ? "red"
+                          : detail.lastEvent === "opened"
+                            ? "teal"
+                            : "blue"
+                    }
+                    variant="soft"
+                    size="1"
                   >
-                    <span className={css({ fontSize: "sm" })}>{detail.text}</span>
-                  </div>
-                ) : (
-                  <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>No body content.</span>
-                )}
-              </div>
-            ) : (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.9", bg: "red.3" })}>
-                <div className={css({ flexShrink: 0 })}><ExclamationTriangleIcon /></div>
-                <span>Failed to load email from Resend.</span>
-              </div>
-            )}
+                    {detail.lastEvent}
+                  </Badge>
+                </Flex>
+              )}
+            </Flex>
 
-            <div className={flex({ justify: "end", mt: "4" })}>
-              <button className={button({ variant: "ghost" })} onClick={() => setOpen(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+            <Separator size="4" />
+
+            {/* Body */}
+            {detail.text ? (
+              <Box
+                style={{
+                  background: "var(--gray-2)",
+                  borderRadius: 0,
+                  padding: "var(--space-4)",
+                  whiteSpace: "pre-wrap",
+                  lineHeight: "1.6",
+                  maxHeight: 400,
+                  overflow: "auto",
+                }}
+              >
+                <Text size="2">{detail.text}</Text>
+              </Box>
+            ) : (
+              <Text size="2" color="gray">No body content.</Text>
+            )}
+          </Flex>
+        ) : (
+          <Callout.Root color="red" size="1">
+            <Callout.Icon><ExclamationTriangleIcon /></Callout.Icon>
+            <Callout.Text>Failed to load email from Resend.</Callout.Text>
+          </Callout.Root>
+        )}
+
+        <Flex justify="end" mt="4">
+          <Dialog.Close>
+            <button className={button({ variant: "ghost" })}>Close</button>
+          </Dialog.Close>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
@@ -812,325 +814,329 @@ export function ContactDetailClient({ contactId }: { contactId: number }) {
 
   if (!isAdmin) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.9", bg: "red.3" })}>
-          <div className={css({ flexShrink: 0 })}><ExclamationTriangleIcon /></div>
-          <span>Access denied. Admin only.</span>
-        </div>
-      </div>
+      <Container size="3" p="8">
+        <Callout.Root color="red">
+          <Callout.Icon>
+            <ExclamationTriangleIcon />
+          </Callout.Icon>
+          <Callout.Text>Access denied. Admin only.</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
   if (loading) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={flex({ justify: "center" })}>
-          <div className={css({ w: "16px", h: "16px", border: "2px solid", borderColor: "ui.border", borderTopColor: "accent.primary", borderRadius: "50%", animation: "spin 0.6s linear infinite" })} />
-        </div>
-      </div>
+      <Container size="3" p="8">
+        <Flex justify="center">
+          <Spinner size="3" />
+        </Flex>
+      </Container>
     );
   }
 
   if (!contact) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "ui.border", bg: "ui.surface" })}>
-          <div className={css({ flexShrink: 0 })}><InfoCircledIcon /></div>
-          <span>Contact not found.</span>
-        </div>
-      </div>
+      <Container size="3" p="8">
+        <Callout.Root color="gray">
+          <Callout.Icon>
+            <InfoCircledIcon />
+          </Callout.Icon>
+          <Callout.Text>Contact not found.</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
   const fullName = `${contact.firstName} ${contact.lastName}`.trim();
 
   return (
-    <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: { base: "4", md: "6" } })}>
-      <div className={flex({ direction: "column", gap: "5" })}>
+    <Container size="3" p={{ initial: "4", md: "6" }}>
+      <Flex direction="column" gap="5">
         {/* Back link */}
-        <div>
+        <Box>
           <Link href="/contacts" style={{ textDecoration: "none" }}>
-            <div className={flex({ align: "center", gap: "1", mb: "3" })}>
+            <Flex align="center" gap="1" mb="3">
               <ArrowLeftIcon />
-              <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+              <Text size="2" color="gray">
                 All contacts
-              </span>
-            </div>
+              </Text>
+            </Flex>
           </Link>
 
-          <div className={flex({ align: "center", justify: "space-between", wrap: "wrap", gap: "3" })}>
-            <div className={flex({ align: "center", gap: "3", wrap: "wrap" })}>
-              <h1 className={css({ fontSize: "2xl", fontWeight: "bold", color: "ui.heading" })}>{fullName}</h1>
+          <Flex align="center" justify="between" wrap="wrap" gap="3">
+            <Flex align="center" gap="3" wrap="wrap">
+              <Heading size="6">{fullName}</Heading>
               {contact.emailVerified && (
-                <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" })}>
+                <Badge color="green" variant="soft">
                   verified
-                </span>
+                </Badge>
               )}
               {contact.doNotContact && (
-                <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "red.9", color: "red.9", bg: "red.3" })}>
+                <Badge color="red" variant="soft">
                   do not contact
-                </span>
+                </Badge>
               )}
-            </div>
+            </Flex>
 
             {/* Header actions */}
-            <div className={flex({ gap: "2", wrap: "wrap" })}>
+            <Flex gap="2" wrap="wrap">
               <EditContactDialog contact={contact} onUpdated={() => refetch()} />
               <DeleteContactDialog
                 contactId={contact.id}
                 contactName={fullName}
                 onDeleted={() => router.push("/contacts")}
               />
-            </div>
-          </div>
-        </div>
+            </Flex>
+          </Flex>
+        </Box>
 
         {/* Find email result */}
         {findResult && (
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: findResult.type === "success" ? "status.positive" : "red.9", bg: findResult.type === "success" ? "status.positiveDim" : "red.3" })}>
-            <div className={css({ flexShrink: 0 })}><InfoCircledIcon /></div>
-            <span>{findResult.message}</span>
-          </div>
+          <Callout.Root color={findResult.type === "success" ? "green" : "red"} size="1">
+            <Callout.Icon>
+              <InfoCircledIcon />
+            </Callout.Icon>
+            <Callout.Text>{findResult.message}</Callout.Text>
+          </Callout.Root>
         )}
 
         {/* Main info card */}
-        <div className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "3" })}>
-          <div className={css({ p: "4" })}>
-            <div className={flex({ direction: "column", gap: "4" })}>
+        <Card>
+          <Box p="4">
+            <Flex direction="column" gap="4">
               {/* Position & Company */}
               {(contact.position || contact.company) && (
-                <div>
-                  <span className={css({ fontSize: "sm", color: "ui.tertiary", fontWeight: "medium" })}>
+                <Box>
+                  <Text size="2" color="gray" weight="medium">
                     Role
-                  </span>
-                  <p className={css({ fontSize: "md", mt: "1" })}>
+                  </Text>
+                  <Text size="3" as="p" mt="1">
                     {contact.position}
                     {contact.position && contact.company && " at "}
                     {contact.companyId ? (
-                      <Link href={`/companies/${contact.companyId}`} className={css({ color: "accent.primary", textDecoration: "underline" })}>
-                        {contact.company}
-                      </Link>
+                      <RadixLink asChild>
+                        <Link href={`/companies/${contact.companyId}`}>
+                          {contact.company}
+                        </Link>
+                      </RadixLink>
                     ) : (
                       contact.company
                     )}
-                  </p>
-                </div>
+                  </Text>
+                </Box>
               )}
 
-              <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
+              <Separator size="4" />
 
               {/* Primary email */}
-              <div>
-                <span className={css({ fontSize: "sm", color: "ui.tertiary", fontWeight: "medium" })}>
+              <Box>
+                <Text size="2" color="gray" weight="medium">
                   Email
-                </span>
+                </Text>
                 {contact.email ? (
-                  <div className={flex({ align: "center", gap: "2", mt: "1" })}>
+                  <Flex align="center" gap="2" mt="1">
                     <EnvelopeClosedIcon />
-                    <a href={`mailto:${contact.email}`} className={css({ color: "accent.primary", textDecoration: "underline", fontSize: "md" })}>
+                    <RadixLink href={`mailto:${contact.email}`} size="3">
                       {contact.email}
-                    </a>
+                    </RadixLink>
                     {contact.emailVerified && (
-                      <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" })}>
+                      <Badge color="green" variant="soft" size="1">
                         verified
-                      </span>
+                      </Badge>
                     )}
                     {!contact.emailVerified && contact.nbResult && (
-                      <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "orange.9", color: "orange.9", bg: "orange.3" })}>
+                      <Badge color="orange" variant="soft" size="1">
                         {contact.nbResult}
-                      </span>
+                      </Badge>
                     )}
-                  </div>
+                  </Flex>
                 ) : (
-                  <div className={flex({ align: "center", gap: "3", mt: "1" })}>
-                    <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+                  <Flex align="center" gap="3" mt="1">
+                    <Text size="2" color="gray">
                       No email
-                    </span>
+                    </Text>
                     <button
                       className={button({ variant: "ghost", size: "sm" })}
                       onClick={handleFindEmail}
                       disabled={finding}
                     >
-                      {finding ? (
-                        <div className={css({ w: "12px", h: "12px", border: "2px solid", borderColor: "ui.border", borderTopColor: "accent.primary", borderRadius: "50%", animation: "spin 0.6s linear infinite" })} />
-                      ) : (
-                        <MagnifyingGlassIcon />
-                      )}
+                      {finding ? <Spinner size="1" /> : <MagnifyingGlassIcon />}
                       Find email
                     </button>
-                  </div>
+                  </Flex>
                 )}
-              </div>
+              </Box>
 
               {/* Additional emails */}
               {contact.emails && contact.emails.length > 0 && (
-                <div>
-                  <span className={css({ fontSize: "sm", color: "ui.tertiary", fontWeight: "medium" })}>
+                <Box>
+                  <Text size="2" color="gray" weight="medium">
                     Additional emails
-                  </span>
-                  <div className={flex({ direction: "column", gap: "1", mt: "1" })}>
+                  </Text>
+                  <Flex direction="column" gap="1" mt="1">
                     {contact.emails.map((email) => (
-                      <a key={email} href={`mailto:${email}`} className={css({ color: "accent.primary", textDecoration: "underline", fontSize: "sm" })}>
+                      <RadixLink key={email} href={`mailto:${email}`} size="2">
                         {email}
-                      </a>
+                      </RadixLink>
                     ))}
-                  </div>
-                </div>
+                  </Flex>
+                </Box>
               )}
 
               {/* Bounced emails */}
               {contact.bouncedEmails && contact.bouncedEmails.length > 0 && (
-                <div>
-                  <span className={css({ fontSize: "sm", color: "ui.tertiary", fontWeight: "medium" })}>
+                <Box>
+                  <Text size="2" color="gray" weight="medium">
                     Bounced emails
-                  </span>
-                  <div className={flex({ direction: "column", gap: "1", mt: "1" })}>
+                  </Text>
+                  <Flex direction="column" gap="1" mt="1">
                     {contact.bouncedEmails.map((email) => (
-                      <span key={email} className={css({ fontSize: "sm", color: "red.9" })}>
+                      <Text key={email} size="2" color="red">
                         {email}
-                      </span>
+                      </Text>
                     ))}
-                  </div>
-                </div>
+                  </Flex>
+                </Box>
               )}
 
               {/* NeverBounce details */}
               {(contact.nbStatus || (contact.nbFlags && contact.nbFlags.length > 0) || contact.nbSuggestedCorrection) && (
-                <div>
-                  <span className={css({ fontSize: "sm", color: "ui.tertiary", fontWeight: "medium" })}>
+                <Box>
+                  <Text size="2" color="gray" weight="medium">
                     NeverBounce
-                  </span>
-                  <div className={flex({ direction: "column", gap: "1", mt: "1" })}>
+                  </Text>
+                  <Flex direction="column" gap="1" mt="1">
                     {contact.nbStatus && (
-                      <span className={css({ fontSize: "sm" })}>
+                      <Text size="2">
                         Status:{" "}
-                        <span
-                          className={css({
-                            fontSize: "xs",
-                            px: "2",
-                            py: "1",
-                            border: "1px solid",
-                            borderColor: contact.nbStatus === "valid" ? "status.positive" : contact.nbStatus === "invalid" ? "red.9" : "orange.9",
-                            color: contact.nbStatus === "valid" ? "status.positive" : contact.nbStatus === "invalid" ? "red.9" : "orange.9",
-                            bg: contact.nbStatus === "valid" ? "status.positiveDim" : contact.nbStatus === "invalid" ? "red.3" : "orange.3",
-                          })}
+                        <Badge
+                          color={
+                            contact.nbStatus === "valid"
+                              ? "green"
+                              : contact.nbStatus === "invalid"
+                                ? "red"
+                                : "orange"
+                          }
+                          variant="soft"
+                          size="1"
                         >
                           {contact.nbStatus}
-                        </span>
-                      </span>
+                        </Badge>
+                      </Text>
                     )}
                     {contact.nbFlags && contact.nbFlags.length > 0 && (
-                      <div className={flex({ gap: "1", wrap: "wrap" })}>
+                      <Flex gap="1" wrap="wrap">
                         {contact.nbFlags.map((flag) => (
-                          <span key={flag} className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", bg: "ui.surface" })}>
+                          <Badge key={flag} color="gray" variant="soft" size="1">
                             {flag}
-                          </span>
+                          </Badge>
                         ))}
-                      </div>
+                      </Flex>
                     )}
                     {contact.nbSuggestedCorrection && (
-                      <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+                      <Text size="2" color="gray">
                         Suggested:{" "}
-                        <a href={`mailto:${contact.nbSuggestedCorrection}`} className={css({ color: "accent.primary", textDecoration: "underline", fontSize: "sm" })}>
+                        <RadixLink href={`mailto:${contact.nbSuggestedCorrection}`} size="2">
                           {contact.nbSuggestedCorrection}
-                        </a>
-                      </span>
+                        </RadixLink>
+                      </Text>
                     )}
-                  </div>
-                </div>
+                  </Flex>
+                </Box>
               )}
 
-              <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
+              <Separator size="4" />
 
               {/* Social links */}
-              <div>
-                <span className={css({ fontSize: "sm", color: "ui.tertiary", fontWeight: "medium" })}>
+              <Box>
+                <Text size="2" color="gray" weight="medium">
                   Links
-                </span>
-                <div className={flex({ gap: "4", mt: "2", wrap: "wrap" })}>
+                </Text>
+                <Flex gap="4" mt="2" wrap="wrap">
                   {contact.linkedinUrl && (
-                    <div className={flex({ align: "center", gap: "1" })}>
+                    <Flex align="center" gap="1">
                       <LinkedInLogoIcon />
-                      <a
+                      <RadixLink
                         href={contact.linkedinUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={css({ color: "accent.primary", textDecoration: "underline", fontSize: "sm" })}
+                        size="2"
                       >
                         LinkedIn
-                        <ExternalLinkIcon style={{ marginLeft: 4, display: "inline" }} />
-                      </a>
-                    </div>
+                        <ExternalLinkIcon style={{ marginLeft: 4 }} />
+                      </RadixLink>
+                    </Flex>
                   )}
                   {contact.githubHandle && (
-                    <div className={flex({ align: "center", gap: "1" })}>
+                    <Flex align="center" gap="1">
                       <GitHubLogoIcon />
-                      <a
+                      <RadixLink
                         href={`https://github.com/${contact.githubHandle}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={css({ color: "accent.primary", textDecoration: "underline", fontSize: "sm" })}
+                        size="2"
                       >
                         {contact.githubHandle}
-                      </a>
-                    </div>
+                      </RadixLink>
+                    </Flex>
                   )}
                   {contact.telegramHandle && (
-                    <div className={flex({ align: "center", gap: "1" })}>
-                      <a
+                    <Flex align="center" gap="1">
+                      <RadixLink
                         href={`https://t.me/${contact.telegramHandle}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={css({ color: "accent.primary", textDecoration: "underline", fontSize: "sm" })}
+                        size="2"
                       >
                         @{contact.telegramHandle}
-                      </a>
-                    </div>
+                      </RadixLink>
+                    </Flex>
                   )}
                   {!contact.linkedinUrl && !contact.githubHandle && !contact.telegramHandle && (
-                    <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+                    <Text size="2" color="gray">
                       No links
-                    </span>
+                    </Text>
                   )}
-                </div>
-              </div>
+                </Flex>
+              </Box>
 
               {/* Tags */}
               {contact.tags && contact.tags.length > 0 && (
                 <>
-                  <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
-                  <div>
-                    <span className={css({ fontSize: "sm", color: "ui.tertiary", fontWeight: "medium" })}>
+                  <Separator size="4" />
+                  <Box>
+                    <Text size="2" color="gray" weight="medium">
                       Tags
-                    </span>
-                    <div className={flex({ gap: "1", mt: "2", wrap: "wrap" })}>
+                    </Text>
+                    <Flex gap="1" mt="2" wrap="wrap">
                       {contact.tags.map((tag) => (
-                        <span key={tag} className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "blue.9", color: "blue.9", bg: "blue.3" })}>
+                        <Badge key={tag} color="blue" variant="soft" size="1">
                           {tag}
-                        </span>
+                        </Badge>
                       ))}
-                    </div>
-                  </div>
+                    </Flex>
+                  </Box>
                 </>
               )}
 
-              <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
+              <Separator size="4" />
 
               {/* Metadata */}
-              <div className={flex({ gap: "4", wrap: "wrap" })}>
-                <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+              <Flex gap="4" wrap="wrap">
+                <Text size="1" color="gray">
                   Created: {new Date(contact.createdAt).toLocaleDateString()}
-                </span>
-                <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                </Text>
+                <Text size="1" color="gray">
                   Updated: {new Date(contact.updatedAt).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+                </Text>
+              </Flex>
+            </Flex>
+          </Box>
+        </Card>
 
         {/* Bottom actions */}
-        <div className={flex({ gap: "2", wrap: "wrap" })}>
+        <Flex gap="2" wrap="wrap">
           {contact.email && (
             <a href={`mailto:${contact.email}`} className={button({ variant: "ghost", size: "md" })}>
               <EnvelopeClosedIcon />
@@ -1139,43 +1145,39 @@ export function ContactDetailClient({ contactId }: { contactId: number }) {
           )}
           {!contact.email && (
             <button className={button({ variant: "ghost", size: "md" })} onClick={handleFindEmail} disabled={finding}>
-              {finding ? (
-                <div className={css({ w: "12px", h: "12px", border: "2px solid", borderColor: "ui.border", borderTopColor: "accent.primary", borderRadius: "50%", animation: "spin 0.6s linear infinite" })} />
-              ) : (
-                <MagnifyingGlassIcon />
-              )}
+              {finding ? <Spinner size="1" /> : <MagnifyingGlassIcon />}
               Find email
             </button>
           )}
           <GenerateEmailDialog contact={contact} onSent={() => refetchEmails()} />
-        </div>
+        </Flex>
 
         {/* Email History */}
-        <div>
-          <div className={flex({ align: "center", justify: "space-between", mb: "3" })}>
-            <h2 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading" })}>Email history</h2>
+        <Box>
+          <Flex align="center" justify="between" mb="3">
+            <Heading size="4">Email history</Heading>
             {emailsData?.contactEmails && emailsData.contactEmails.length > 0 && (
-              <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "blue.9", color: "blue.9", bg: "blue.3" })}>
+              <Badge color="blue" variant="soft">
                 {emailsData.contactEmails.length}
-              </span>
+              </Badge>
             )}
-          </div>
+          </Flex>
 
           {emailsLoading ? (
-            <div className={flex({ justify: "center", py: "4" })}>
-              <div className={css({ w: "14px", h: "14px", border: "2px solid", borderColor: "ui.border", borderTopColor: "accent.primary", borderRadius: "50%", animation: "spin 0.6s linear infinite" })} />
-            </div>
+            <Flex justify="center" py="4">
+              <Spinner size="2" />
+            </Flex>
           ) : !emailsData?.contactEmails || emailsData.contactEmails.length === 0 ? (
-            <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>No emails sent yet.</span>
+            <Text size="2" color="gray">No emails sent yet.</Text>
           ) : (
-            <div className={flex({ direction: "column", gap: "2" })}>
+            <Flex direction="column" gap="2">
               {emailsData.contactEmails.map((email) => (
                 <EmailDetailDialog key={email.id} email={email} />
               ))}
-            </div>
+            </Flex>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Flex>
+    </Container>
   );
 }

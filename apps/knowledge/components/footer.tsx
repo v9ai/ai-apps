@@ -1,38 +1,11 @@
 import Link from "next/link";
 import { CATEGORIES, CATEGORY_META } from "@/lib/articles";
 
-interface FooterProps {
-  lessonCount?: number;
-  domainCount?: number;
-  readingHours?: number;
-}
-
-export function Footer({ lessonCount, domainCount, readingHours }: FooterProps) {
+export function Footer() {
   const year = new Date().getFullYear();
 
   return (
     <footer className="site-footer">
-      <div className="footer-glow" aria-hidden="true" />
-      <div className="footer-top-line" aria-hidden="true" />
-
-      {/* Quick stats */}
-      {lessonCount != null && domainCount != null && readingHours != null && (
-        <div className="footer-stats">
-          <div className="footer-stat">
-            <span className="footer-stat-number">{lessonCount}</span>
-            <span className="footer-stat-label">Lessons</span>
-          </div>
-          <div className="footer-stat">
-            <span className="footer-stat-number">{domainCount}</span>
-            <span className="footer-stat-label">Domains</span>
-          </div>
-          <div className="footer-stat">
-            <span className="footer-stat-number">{readingHours}h</span>
-            <span className="footer-stat-label">Reading</span>
-          </div>
-        </div>
-      )}
-
       <div className="footer-cats">
         {CATEGORIES.map(([, , name]) => {
           const meta = CATEGORY_META[name];
@@ -50,8 +23,8 @@ export function Footer({ lessonCount, domainCount, readingHours }: FooterProps) 
       </div>
       <p className="footer-tagline">A deep-dive learning path for junior AI engineers — by Vadim Nicolai</p>
       <div className="footer-bottom">
-        <span>&copy; {year} All rights reserved.</span>
-        <span>Built with Next.js &amp; Radix UI</span>
+        <span>© {year} All rights reserved.</span>
+        <span>Built with Next.js & Radix UI</span>
       </div>
     </footer>
   );

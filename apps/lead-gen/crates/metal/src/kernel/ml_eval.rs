@@ -6,9 +6,7 @@
 //!
 //! Feature order (must match `LogisticScorer::extract_features`):
 //! `[industry_match, employee_in_range, seniority_match, department_match,
-//!   tech_norm, email_norm, recency_smooth,
-//!   hf_score, hf_model_depth, hf_training_depth, hf_maturity,
-//!   hf_research, hf_sales_relevance]`
+//!   tech_norm, email_norm, recency_smooth]`
 //!
 //! Enabled with the `kernel-eval` Cargo feature.
 
@@ -18,30 +16,7 @@ use std::path::Path;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use super::scoring::{LogisticScorer, FEATURE_COUNT};
-
-// ── Serde support for [f32; FEATURE_COUNT] ───────────────────────────────────
-//
-// Standard serde only derives Serialize/Deserialize for arrays up to 32 elements.
-// Since FEATURE_COUNT = 44, we provide a custom (de)serializer via a Vec<f32>
-// round-trip.  This is the canonical no-dependency approach.
-
-mod feature_array_serde {
-    use super::FEATURE_COUNT;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-    pub fn serialize<S: Serializer>(arr: &[f32; FEATURE_COUNT], s: S) -> Result<S::Ok, S::Error> {
-        arr.as_slice().serialize(s)
-    }
-
-    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<[f32; FEATURE_COUNT], D::Error> {
-        let v: Vec<f32> = Vec::deserialize(d)?;
-        v.try_into()
-            .map_err(|v: Vec<f32>| {
-                serde::de::Error::invalid_length(v.len(), &format!("{FEATURE_COUNT}").as_str())
-            })
-    }
-}
+use super::scoring::LogisticScorer;
 
 // ── Data types ────────────────────────────────────────────────────────────────
 
@@ -49,34 +24,34 @@ mod feature_array_serde {
 ///
 /// Each JSONL line must be a JSON object of this shape:
 /// ```json
-/// {"features": [1.0, ..., 0.0], "label": 1.0}
+/// {"features": [1.0, 1.0, 1.0, 1.0, 0.8, 1.0, 0.9], "label": 1.0}
 /// ```
-/// where `features` is a FEATURE_COUNT-element array (currently 44).
 ///
-/// `features` maps to the FEATURE_COUNT-element vector produced by
-/// `LogisticScorer::extract_features`.
+/// `features` maps to the 7-element vector produced by
+/// `LogisticScorer::extract_features`:
+/// `[industry_match, employee_in_range, seniority_match, department_match,
+///   tech_norm, email_norm, recency_smooth]`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LabeledSample {
-    /// FEATURE_COUNT-element feature vector.
-    #[serde(with = "feature_array_serde")]
-    pub features: [f32; FEATURE_COUNT],
+    /// 7-element feature vector.
+    pub features: [f32; 7],
     /// Ground-truth label: `1.0` = positive lead, `0.0` = negative.
     pub label: f32,
 }
 
 impl LabeledSample {
     /// Construct a sample directly from a feature vector and label.
-    pub fn new(features: [f32; FEATURE_COUNT], label: f32) -> Self {
+    pub fn new(features: [f32; 7], label: f32) -> Self {
         Self { features, label }
     }
 
     /// Convenience constructor for a positive-class sample (label = 1.0).
-    pub fn positive(features: [f32; FEATURE_COUNT]) -> Self {
+    pub fn positive(features: [f32; 7]) -> Self {
         Self::new(features, 1.0)
     }
 
     /// Convenience constructor for a negative-class sample (label = 0.0).
-    pub fn negative(features: [f32; FEATURE_COUNT]) -> Self {
+    pub fn negative(features: [f32; 7]) -> Self {
         Self::new(features, 0.0)
     }
 }
@@ -103,7 +78,7 @@ pub struct ScoringEval {
     /// Decision threshold used to binarize probabilities.
     pub threshold: f32,
     /// Learned weight vector copied from the scorer.
-    pub weights: Vec<f32>,
+    pub weights: [f32; 7],
     /// Learned bias term copied from the scorer.
     pub bias: f32,
 }
@@ -288,7 +263,7 @@ pub fn evaluate_scoring(
             sample_count: 0,
             positive_count: 0,
             threshold,
-            weights: scorer.weights.clone(),
+            weights: scorer.weights,
             bias: scorer.bias,
         };
     }
@@ -353,7 +328,7 @@ pub fn evaluate_scoring(
         sample_count: n,
         positive_count,
         threshold,
-        weights: scorer.weights.clone(),
+        weights: scorer.weights,
         bias: scorer.bias,
     }
 }
@@ -464,15 +439,13 @@ mod tests {
 
     // Helper: build a scorer whose decision boundary cleanly separates
     // all-ones features (positive) from all-zeros features (negative).
-    // dot([1..1], weights) + bias = 13*3.0 + (-19.5) = 19.5 → sigmoid ≈ 1.0
-    // dot([0..0], weights) + bias = 0.0 + (-19.5) = -19.5 → sigmoid ≈ 0.0
+    // dot([1..1], weights) + bias = 7*3.0 + (-10.5) = 10.5 → sigmoid ≈ 1.0
+    // dot([0..0], weights) + bias = 0.0 + (-10.5) = -10.5 → sigmoid ≈ 0.0
     fn perfect_scorer() -> LogisticScorer {
         LogisticScorer {
-            weights: vec![3.0; FEATURE_COUNT],
-            bias: -(FEATURE_COUNT as f32 * 3.0 / 2.0),
-            feature_stats: (0..FEATURE_COUNT)
-                .map(|_| super::super::scoring::WelfordStats::new())
-                .collect(),
+            weights: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0],
+            bias: -10.5,
+            feature_stats: std::array::from_fn(|_| super::super::scoring::WelfordStats::new()),
             trained: true,
             semantic_weight: 0.0,
         }
@@ -484,9 +457,9 @@ mod tests {
                 let pos = i % 2 == 0;
                 LabeledSample {
                     features: if pos {
-                        [1.0; FEATURE_COUNT]
+                        [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
                     } else {
-                        [0.0; FEATURE_COUNT]
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
                     },
                     label: if pos { 1.0 } else { 0.0 },
                 }
@@ -534,11 +507,9 @@ mod tests {
     #[test]
     fn test_random_classifier() {
         let scorer = LogisticScorer {
-            weights: vec![0.0; FEATURE_COUNT],
+            weights: [0.0; 7],
             bias: 0.0,
-            feature_stats: (0..FEATURE_COUNT)
-                .map(|_| super::super::scoring::WelfordStats::new())
-                .collect(),
+            feature_stats: std::array::from_fn(|_| super::super::scoring::WelfordStats::new()),
             trained: true,
             semantic_weight: 0.0,
         };
@@ -634,25 +605,18 @@ mod tests {
 
     // ── load_labels ───────────────────────────────────────────────────────────
 
-    /// Build a JSON features array string with `FEATURE_COUNT` elements, all set to `val`.
-    fn features_json(val: f32) -> String {
-        let vals: Vec<String> = (0..FEATURE_COUNT).map(|_| format!("{val}")).collect();
-        format!("[{}]", vals.join(","))
-    }
-
-    /// Build a JSONL line for a labeled sample with all features set to `val`.
-    fn sample_jsonl(val: f32, label: f32) -> String {
-        format!(r#"{{"features":{},"label":{}}}"#, features_json(val), label)
-    }
-
     // Well-formed JSONL with a blank line in the middle.
     #[test]
     fn test_load_labels() {
         use std::io::Write;
 
-        let line1 = sample_jsonl(1.0, 1.0);
-        let line2 = sample_jsonl(0.0, 0.0);
-        let jsonl = format!("{line1}\n\n{line2}\n");
+        let jsonl = concat!(
+            r#"{"features":[1.0,1.0,1.0,1.0,0.8,1.0,0.9],"label":1.0}"#,
+            "\n",
+            "\n",
+            r#"{"features":[0.0,0.0,0.0,0.0,0.0,0.0,0.0],"label":0.0}"#,
+            "\n",
+        );
 
         let mut tmp = tempfile::NamedTempFile::new().expect("tempfile");
         tmp.write_all(jsonl.as_bytes()).expect("write");
@@ -670,9 +634,13 @@ mod tests {
     fn test_load_labels_skips_bad_lines() {
         use std::io::Write;
 
-        let line1 = sample_jsonl(1.0, 1.0);
-        let line2 = sample_jsonl(0.0, 0.0);
-        let jsonl = format!("{line1}\nnot valid json\n{line2}\n");
+        let jsonl = concat!(
+            r#"{"features":[1.0,1.0,1.0,1.0,0.8,1.0,0.9],"label":1.0}"#,
+            "\n",
+            "not valid json\n",
+            r#"{"features":[0.0,0.0,0.0,0.0,0.0,0.0,0.0],"label":0.0}"#,
+            "\n",
+        );
 
         let mut tmp = tempfile::NamedTempFile::new().expect("tempfile");
         tmp.write_all(jsonl.as_bytes()).expect("write");
@@ -697,12 +665,14 @@ mod tests {
 
         let scorer = perfect_scorer();
 
-        let ones = features_json(1.0);
-        let zeros = features_json(0.0);
         let jsonl: String = (0..10)
             .map(|i| {
                 let pos = i % 2 == 0;
-                let feat = if pos { &ones } else { &zeros };
+                let feat = if pos {
+                    "[1.0,1.0,1.0,1.0,1.0,1.0,1.0]"
+                } else {
+                    "[0.0,0.0,0.0,0.0,0.0,0.0,0.0]"
+                };
                 let label = if pos { "1.0" } else { "0.0" };
                 format!(r#"{{"features":{},"label":{}}}"#, feat, label)
             })

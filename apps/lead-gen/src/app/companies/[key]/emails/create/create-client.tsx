@@ -11,9 +11,23 @@ import { ADMIN_EMAIL } from "@/lib/constants";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
 import { ComposeFromLinkedIn } from "@/components/admin/ComposeFromLinkedIn";
 import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
-import { css } from "styled-system/css";
-import { flex } from "styled-system/patterns";
 import { button } from "@/recipes/button";
+import {
+  Badge,
+  Box,
+  Callout,
+  Checkbox,
+  Code,
+  Container,
+  Flex,
+  Heading,
+  Select,
+  Spinner,
+  Tabs,
+  Text,
+  TextArea,
+  TextField,
+} from "@radix-ui/themes";
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -27,23 +41,7 @@ import {
   PersonIcon,
 } from "@radix-ui/react-icons";
 
-// --- Spinner helper ---
-function Spinner({ size = 16 }: { size?: number }) {
-  return (
-    <div
-      className={css({
-        border: "2px solid",
-        borderColor: "ui.border",
-        borderTopColor: "accent.primary",
-        borderRadius: "50%",
-        animation: "spin 0.6s linear infinite",
-      })}
-      style={{ width: size, height: size }}
-    />
-  );
-}
-
-// --- Inline Compose ---
+// ─── Inline Compose ──────────────────────────────────────────────────────────
 
 type Contact = NonNullable<
   NonNullable<ReturnType<typeof useGetContactsQuery>["data"]>["contacts"]
@@ -172,80 +170,67 @@ function InlineCompose({
     resetStream();
   };
 
-  const inputStyle = css({
-    bg: "ui.surface",
-    border: "1px solid",
-    borderColor: "ui.border",
-    color: "ui.body",
-    p: "6px 10px",
-    width: "100%",
-    outline: "none",
-    fontSize: "sm",
-    _focus: { borderColor: "accent.primary" },
-    _placeholder: { color: "ui.tertiary" },
-  });
-
   if (contactsLoading) {
     return (
-      <div className={flex({ justify: "center" })} style={{ padding: "24px 0" }}>
-        <Spinner />
-      </div>
+      <Flex justify="center" py="6">
+        <Spinner size="2" />
+      </Flex>
     );
   }
 
   if (contactsWithEmail.length === 0) {
     return (
-      <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "ui.border" })}>
-        <div className={css({ flexShrink: 0 })}>
+      <Callout.Root color="gray" variant="soft">
+        <Callout.Icon>
           <InfoCircledIcon />
-        </div>
-        <span>
+        </Callout.Icon>
+        <Callout.Text>
           No contacts with email addresses found for this company.
-        </span>
-      </div>
+        </Callout.Text>
+      </Callout.Root>
     );
   }
 
   return (
-    <div className={flex({ direction: "column", gap: "4" })}>
+    <Flex direction="column" gap="4">
       {step === "select" && (
         <>
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" weight="medium" mb="1" as="p">
               Contact
-            </p>
-            <select
-              className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", fontSize: "sm", outline: "none", cursor: "pointer", width: "100%", _focus: { borderColor: "accent.primary" } })}
+            </Text>
+            <Select.Root
               value={selectedContactId}
-              onChange={(e) => setSelectedContactId(e.target.value)}
+              onValueChange={setSelectedContactId}
             >
-              <option value="">Select a contact...</option>
-              {contactsWithEmail.map((c) => (
-                <option key={c.id} value={String(c.id)}>
-                  {[c.firstName, c.lastName].filter(Boolean).join(" ")}
-                  {c.position ? ` \u2014 ${c.position}` : ""} ({c.email})
-                </option>
-              ))}
-            </select>
-          </div>
+              <Select.Trigger placeholder="Select a contact..." style={{ width: "100%" }} />
+              <Select.Content>
+                {contactsWithEmail.map((c) => (
+                  <Select.Item key={c.id} value={String(c.id)}>
+                    {[c.firstName, c.lastName].filter(Boolean).join(" ")}
+                    {c.position ? ` — ${c.position}` : ""} ({c.email})
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
+          </Box>
 
           {selectedContact && (
             <>
-              <div>
-                <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
+              <Box>
+                <Text size="1" color="gray" weight="medium" mb="1" as="p">
                   Instructions (optional)
-                </p>
-                <textarea
-                  className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "2", width: "100%", outline: "none", resize: "vertical", minHeight: "80px", fontSize: "sm", _focus: { borderColor: "accent.primary" }, _placeholder: { color: "ui.tertiary" } })}
+                </Text>
+                <TextArea
                   placeholder="E.g. mention their work on open-source, ask about remote roles..."
                   value={instructions}
                   onChange={(e) => setInstructions(e.target.value)}
                   rows={3}
                   disabled={isStreaming}
                 />
-              </div>
+              </Box>
 
-              <div className={flex({ gap: "2" })}>
+              <Flex gap="2">
                 <button
                   className={button({ variant: "ghost" })}
                   onClick={handleGenerate}
@@ -267,24 +252,24 @@ function InlineCompose({
                     Regenerate
                   </button>
                 )}
-              </div>
+              </Flex>
 
               {streamError && (
-                <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "status.negative" })}>
-                  <div className={css({ flexShrink: 0 })}>
+                <Callout.Root color="red" size="1">
+                  <Callout.Icon>
                     <ExclamationTriangleIcon />
-                  </div>
-                  <span>{streamError}</span>
-                </div>
+                  </Callout.Icon>
+                  <Callout.Text>{streamError}</Callout.Text>
+                </Callout.Root>
               )}
 
               {isStreaming && partialContent && (
-                <div>
-                  <p className={css({ fontSize: "xs", color: "ui.tertiary", mb: "1" })}>
+                <Box>
+                  <Text size="1" color="gray" mb="1" as="p">
                     Streaming...
-                  </p>
-                  <code
-                    className={css({ fontFamily: "mono", fontSize: "xs", bg: "ui.surfaceRaised", px: "1" })}
+                  </Text>
+                  <Code
+                    size="1"
                     style={{
                       display: "block",
                       whiteSpace: "pre-wrap",
@@ -293,55 +278,58 @@ function InlineCompose({
                     }}
                   >
                     {partialContent}
-                  </code>
-                </div>
+                  </Code>
+                </Box>
               )}
 
               {content && !isStreaming && (
                 <>
-                  <div
+                  <Box
                     style={{
                       background: "var(--green-a2)",
+                      borderRadius: 0,
                       padding: "var(--space-4)",
                       border: "1px solid var(--green-a5)",
                     }}
                   >
-                    <div className={flex({ justify: "space-between", align: "center" })} style={{ marginBottom: "8px" }}>
-                      <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" })}>
-                        <CheckIcon style={{ display: "inline", verticalAlign: "middle" }} /> Generated
-                      </span>
-                    </div>
-                    <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "bold", mb: "1" })}>
+                    <Flex justify="between" align="center" mb="2">
+                      <Badge color="green" size="1">
+                        <CheckIcon /> Generated
+                      </Badge>
+                    </Flex>
+                    <Text size="1" color="gray" weight="bold" as="p" mb="1">
                       SUBJECT
-                    </p>
-                    <p className={css({ fontSize: "sm", fontWeight: "medium", mb: "3" })}>
+                    </Text>
+                    <Text size="2" weight="medium" as="p" mb="3">
                       {content.subject}
-                    </p>
-                    <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "bold", mb: "1" })}>
+                    </Text>
+                    <Text size="1" color="gray" weight="bold" as="p" mb="1">
                       BODY
-                    </p>
-                    <p
-                      className={css({ fontSize: "sm" })}
+                    </Text>
+                    <Text
+                      size="2"
+                      as="p"
                       style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}
                     >
                       {content.body}
-                    </p>
-                  </div>
+                    </Text>
+                  </Box>
 
-                  <label className={flex({ gap: "2", align: "center" })}>
-                    <input
-                      type="checkbox"
-                      checked={includeResume}
-                      onChange={(e) =>
-                        setIncludeResume(e.target.checked)
-                      }
-                    />
-                    <span className={css({ fontSize: "sm" })}>Attach resume</span>
-                  </label>
+                  <Flex asChild gap="2" align="center">
+                    <label>
+                      <Checkbox
+                        checked={includeResume}
+                        onCheckedChange={(checked) =>
+                          setIncludeResume(checked === true)
+                        }
+                      />
+                      <Text size="2">Attach resume</Text>
+                    </label>
+                  </Flex>
 
-                  <div className={flex({ justify: "flex-end" })}>
+                  <Flex justify="end">
                     <button className={button({ variant: "ghost" })} onClick={handleProceedToEdit}>Edit & Send</button>
-                  </div>
+                  </Flex>
                 </>
               )}
             </>
@@ -351,69 +339,71 @@ function InlineCompose({
 
       {step === "edit" && (
         <>
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" weight="medium" mb="1" as="p">
               To
-            </p>
-            <input className={inputStyle} value={selectedContact?.email ?? ""} disabled />
-          </div>
+            </Text>
+            <TextField.Root value={selectedContact?.email ?? ""} disabled />
+          </Box>
 
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" weight="medium" mb="1" as="p">
               Subject
-            </p>
-            <input
-              className={inputStyle}
+            </Text>
+            <TextField.Root
               value={editSubject}
               onChange={(e) => setEditSubject(e.target.value)}
             />
-          </div>
+          </Box>
 
-          <div>
-            <p className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium", mb: "1" })}>
+          <Box>
+            <Text size="1" color="gray" weight="medium" mb="1" as="p">
               Body
-            </p>
-            <textarea
-              className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "2", width: "100%", outline: "none", resize: "vertical", minHeight: "120px", fontSize: "sm", _focus: { borderColor: "accent.primary" } })}
+            </Text>
+            <TextArea
               value={editBody}
               onChange={(e) => setEditBody(e.target.value)}
               rows={12}
-              style={{ fontFamily: "inherit" }}
+              style={{ fontFamily: "var(--default-font-family)" }}
             />
-          </div>
+          </Box>
 
-          <label className={flex({ gap: "2", align: "center" })}>
-            <input
-              type="checkbox"
-              checked={includeResume}
-              onChange={(e) =>
-                setIncludeResume(e.target.checked)
-              }
-            />
-            <span className={css({ fontSize: "sm" })}>Attach resume</span>
-          </label>
+          <Flex asChild gap="2" align="center">
+            <label>
+              <Checkbox
+                checked={includeResume}
+                onCheckedChange={(checked) =>
+                  setIncludeResume(checked === true)
+                }
+              />
+              <Text size="2">Attach resume</Text>
+            </label>
+          </Flex>
 
           {sendResult && (
-            <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: sendResult.type === "success" ? "status.positive" : "status.negative" })}>
-              <div className={css({ flexShrink: 0 })}>
+            <Callout.Root
+              color={sendResult.type === "success" ? "green" : "red"}
+              size="1"
+            >
+              <Callout.Icon>
                 {sendResult.type === "success" ? (
                   <CheckIcon />
                 ) : (
                   <ExclamationTriangleIcon />
                 )}
-              </div>
-              <span>{sendResult.message}</span>
-            </div>
+              </Callout.Icon>
+              <Callout.Text>{sendResult.message}</Callout.Text>
+            </Callout.Root>
           )}
 
-          <div className={flex({ gap: "2", justify: "space-between" })}>
+          <Flex gap="2" justify="between">
             <button
               className={button({ variant: "ghost" })}
               onClick={() => setStep("select")}
             >
               Back
             </button>
-            <div className={flex({ gap: "2" })}>
+            <Flex gap="2">
               <button className={button({ variant: "ghost" })} onClick={handleCopy}>
                 {copied ? <CheckIcon /> : <CopyIcon />}
                 {copied ? "Copied" : "Copy"}
@@ -426,36 +416,39 @@ function InlineCompose({
                 <PaperPlaneIcon />
                 Send
               </button>
-            </div>
-          </div>
+            </Flex>
+          </Flex>
         </>
       )}
 
       {step === "sent" && (
         <>
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: sendResult?.type === "success" ? "status.positive" : "status.negative" })}>
-            <div className={css({ flexShrink: 0 })}>
+          <Callout.Root
+            color={sendResult?.type === "success" ? "green" : "red"}
+            size="2"
+          >
+            <Callout.Icon>
               {sendResult?.type === "success" ? (
                 <CheckIcon />
               ) : (
                 <ExclamationTriangleIcon />
               )}
-            </div>
-            <span>
+            </Callout.Icon>
+            <Callout.Text>
               {sendResult?.message ?? "Email sent successfully."}
-            </span>
-          </div>
+            </Callout.Text>
+          </Callout.Root>
 
           <button className={button({ variant: "ghost" })} onClick={handleReset}>
             Compose Another
           </button>
         </>
       )}
-    </div>
+    </Flex>
   );
 }
 
-// --- Main Component ---
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export function CreateEmailClient({
   companyKey,
@@ -464,7 +457,6 @@ export function CreateEmailClient({
 }) {
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
-  const [tab, setTab] = useState<"contact" | "linkedin" | "batch">("contact");
 
   const { data: companyData, loading: companyLoading } = useGetCompanyQuery({
     variables: { key: companyKey },
@@ -492,190 +484,185 @@ export function CreateEmailClient({
 
   if (!isAdmin) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "status.negative" })}>
-          <div className={css({ flexShrink: 0 })}>
+      <Container size="3" p="8">
+        <Callout.Root color="red">
+          <Callout.Icon>
             <ExclamationTriangleIcon />
-          </div>
-          <span>Access denied. Admin only.</span>
-        </div>
-      </div>
+          </Callout.Icon>
+          <Callout.Text>Access denied. Admin only.</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
   if (companyLoading) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={flex({ justify: "center" })}>
-          <Spinner size={24} />
-        </div>
-      </div>
+      <Container size="3" p="8">
+        <Flex justify="center">
+          <Spinner size="3" />
+        </Flex>
+      </Container>
     );
   }
 
   if (!company) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "ui.border" })}>
-          <div className={css({ flexShrink: 0 })}>
+      <Container size="3" p="8">
+        <Callout.Root color="gray">
+          <Callout.Icon>
             <InfoCircledIcon />
-          </div>
-          <span>Company not found.</span>
-        </div>
-      </div>
+          </Callout.Icon>
+          <Callout.Text>Company not found.</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
   const contactsWithEmail = contacts.filter((c) => c.email);
 
-  const tabButtonStyle = (value: string) =>
-    css({
-      px: "4",
-      py: "2",
-      fontSize: "sm",
-      color: tab === value ? "ui.heading" : "ui.tertiary",
-      fontWeight: tab === value ? "semibold" : "medium",
-      borderBottom: tab === value ? "2px solid" : "2px solid transparent",
-      borderBottomColor: tab === value ? "accent.primary" : "transparent",
-      bg: "transparent",
-      cursor: "pointer",
-      textTransform: "lowercase",
-      border: "none",
-      borderTop: "none",
-      borderLeft: "none",
-      borderRight: "none",
-    });
-
   return (
-    <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "6" })}>
-      <div className={flex({ direction: "column", gap: "5" })}>
+    <Container size="3" p={{ initial: "4", md: "6" }}>
+      <Flex direction="column" gap="5">
         {/* Header */}
-        <div>
+        <Box>
           <Link
             href={`/companies/${companyKey}/emails`}
             style={{ textDecoration: "none" }}
           >
-            <div className={flex({ align: "center", gap: "1" })} style={{ marginBottom: "12px" }}>
+            <Flex align="center" gap="1" mb="3">
               <ArrowLeftIcon />
-              <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+              <Text size="2" color="gray">
                 Emails
-              </span>
-            </div>
+              </Text>
+            </Flex>
           </Link>
-          <div className={flex({ align: "center", gap: "3" })}>
-            <h2 className={css({ fontSize: "2xl", fontWeight: "bold", color: "ui.heading" })}>Compose Email</h2>
-            <span className={css({ fontSize: "sm", fontWeight: "medium", px: "2", py: "1", border: "1px solid", borderColor: "ui.border", color: "ui.secondary" })}>
+          <Flex align="center" gap="3">
+            <Heading size="6">Compose Email</Heading>
+            <Badge color="gray" variant="soft" size="2">
               {company.name}
-            </span>
-          </div>
-        </div>
+            </Badge>
+          </Flex>
+        </Box>
 
         {/* Tabbed compose modes */}
-        <div>
-          <div className={css({ display: "flex", borderBottom: "1px solid", borderBottomColor: "ui.border" })}>
-            <button onClick={() => setTab("contact")} className={tabButtonStyle("contact")}>
-              <span className={flex({ align: "center", gap: "2", display: "inline-flex" })}>
+        <Tabs.Root defaultValue="contact">
+          <Tabs.List>
+            <Tabs.Trigger value="contact">
+              <Flex align="center" gap="2">
                 <PersonIcon />
-                <span>Contact</span>
+                <Text>Contact</Text>
                 {!contactsLoading && contactsWithEmail.length > 0 && (
-                  <span className={css({ fontSize: "xs", px: "2", py: "0.5", border: "1px solid", borderColor: "ui.border", color: "ui.secondary", minWidth: "20px", textAlign: "center" })}>
+                  <Badge
+                    color="gray"
+                    variant="soft"
+                    size="1"
+                    style={{ minWidth: 20, textAlign: "center" }}
+                  >
                     {contactsWithEmail.length}
-                  </span>
+                  </Badge>
                 )}
-              </span>
-            </button>
-            <button onClick={() => setTab("linkedin")} className={tabButtonStyle("linkedin")}>
-              <span className={flex({ align: "center", gap: "2", display: "inline-flex" })}>
+              </Flex>
+            </Tabs.Trigger>
+            <Tabs.Trigger value="linkedin">
+              <Flex align="center" gap="2">
                 <LinkedInLogoIcon />
-                <span>LinkedIn</span>
-              </span>
-            </button>
-            <button onClick={() => setTab("batch")} className={tabButtonStyle("batch")}>
-              <span className={flex({ align: "center", gap: "2", display: "inline-flex" })}>
+                <Text>LinkedIn</Text>
+              </Flex>
+            </Tabs.Trigger>
+            <Tabs.Trigger value="batch">
+              <Flex align="center" gap="2">
                 <EnvelopeClosedIcon />
-                <span>Batch</span>
+                <Text>Batch</Text>
                 {!contactsLoading && batchRecipients.length > 0 && (
-                  <span className={css({ fontSize: "xs", px: "2", py: "0.5", border: "1px solid", borderColor: "accent.border", color: "accent.primary", minWidth: "20px", textAlign: "center" })}>
+                  <Badge
+                    color="blue"
+                    variant="soft"
+                    size="1"
+                    style={{ minWidth: 20, textAlign: "center" }}
+                  >
                     {batchRecipients.length}
-                  </span>
+                  </Badge>
                 )}
-              </span>
-            </button>
-          </div>
+              </Flex>
+            </Tabs.Trigger>
+          </Tabs.List>
 
-          <div className={css({ pt: "5" })}>
-            {tab === "contact" && (
-              <div
+          <Box pt="5">
+            <Tabs.Content value="contact">
+              <Box
                 style={{
                   background: "var(--gray-a2)",
+                  borderRadius: 0,
                   padding: "var(--space-5)",
                   maxWidth: 640,
                 }}
               >
-                <p className={css({ fontSize: "sm", color: "ui.tertiary", mb: "4" })}>
+                <Text size="2" color="gray" mb="4" as="p">
                   Select a contact and generate a personalized email with AI.
-                </p>
+                </Text>
                 <InlineCompose
                   companyName={company.name}
                   contacts={contacts}
                   contactsLoading={contactsLoading}
                 />
-              </div>
-            )}
+              </Box>
+            </Tabs.Content>
 
-            {tab === "linkedin" && (
-              <div
+            <Tabs.Content value="linkedin">
+              <Box
                 style={{
                   background: "var(--gray-a2)",
+                  borderRadius: 0,
                   padding: "var(--space-5)",
                   maxWidth: 640,
                 }}
               >
-                <p className={css({ fontSize: "sm", color: "ui.tertiary", mb: "4" })}>
+                <Text size="2" color="gray" mb="4" as="p">
                   Extract content from a LinkedIn post and compose a personalized
                   outreach email.
-                </p>
+                </Text>
                 <ComposeFromLinkedIn defaultCompanyName={company.name} />
-              </div>
-            )}
+              </Box>
+            </Tabs.Content>
 
-            {tab === "batch" && (
-              <div
+            <Tabs.Content value="batch">
+              <Box
                 style={{
                   background: "var(--gray-a2)",
+                  borderRadius: 0,
                   padding: "var(--space-5)",
                   maxWidth: 640,
                 }}
               >
-                <p className={css({ fontSize: "sm", color: "ui.tertiary", mb: "4" })}>
+                <Text size="2" color="gray" mb="4" as="p">
                   Send a personalized email to all eligible contacts at once, with
                   optional business-day scheduling.
-                </p>
+                </Text>
                 {contactsLoading ? (
-                  <div className={flex({ justify: "center" })} style={{ padding: "24px 0" }}>
-                    <Spinner />
-                  </div>
+                  <Flex justify="center" py="6">
+                    <Spinner size="2" />
+                  </Flex>
                 ) : batchRecipients.length === 0 ? (
-                  <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "ui.border" })}>
-                    <div className={css({ flexShrink: 0 })}>
+                  <Callout.Root color="gray" variant="soft">
+                    <Callout.Icon>
                       <InfoCircledIcon />
-                    </div>
-                    <span>
+                    </Callout.Icon>
+                    <Callout.Text>
                       No eligible contacts with email addresses found.
-                    </span>
-                  </div>
+                    </Callout.Text>
+                  </Callout.Root>
                 ) : (
-                  <div className={flex({ direction: "column", gap: "4" })}>
-                    <div className={flex({ align: "center", gap: "2" })}>
+                  <Flex direction="column" gap="4">
+                    <Flex align="center" gap="2">
                       <PersonIcon />
-                      <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "accent.border", color: "accent.primary" })}>
+                      <Badge color="blue" variant="soft" size="2">
                         {batchRecipients.length} recipient
                         {batchRecipients.length === 1 ? "" : "s"}
-                      </span>
-                      <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                      </Badge>
+                      <Text size="1" color="gray">
                         eligible (have email, not on do-not-contact list)
-                      </span>
-                    </div>
+                      </Text>
+                    </Flex>
                     <button
                       className={button({ variant: "ghost" })}
                       onClick={() => setBatchEmailOpen(true)}
@@ -690,13 +677,13 @@ export function CreateEmailClient({
                       recipients={batchRecipients}
                       defaultUseScheduler
                     />
-                  </div>
+                  </Flex>
                 )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+              </Box>
+            </Tabs.Content>
+          </Box>
+        </Tabs.Root>
+      </Flex>
+    </Container>
   );
 }

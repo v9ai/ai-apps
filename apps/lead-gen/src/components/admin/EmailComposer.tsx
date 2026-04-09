@@ -1,7 +1,20 @@
 "use client";
 
 import { useState, useEffect, useId } from "react";
-import { css } from "styled-system/css";
+import {
+  Badge,
+  Box,
+  Callout,
+  Checkbox,
+  Dialog,
+  Flex,
+  Heading,
+  Separator,
+  Spinner,
+  Text,
+  TextArea,
+  TextField,
+} from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 import {
   CheckCircledIcon,
@@ -11,59 +24,6 @@ import {
   PaperPlaneIcon,
 } from "@radix-ui/react-icons";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
-
-// ── Reusable form styles ─────────────────────────────────────────────────────
-
-const inputStyles = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  color: "ui.body",
-  p: "6px 10px",
-  fontSize: "base",
-  width: "100%",
-  outline: "none",
-  fontFamily: "inherit",
-  borderRadius: "0",
-  _focus: { borderColor: "accent.primary" },
-  _placeholder: { color: "ui.tertiary" },
-});
-
-const textareaStyles = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  color: "ui.body",
-  p: "2",
-  fontSize: "base",
-  width: "100%",
-  outline: "none",
-  fontFamily: "inherit",
-  borderRadius: "0",
-  resize: "vertical",
-  minHeight: "120px",
-  _focus: { borderColor: "accent.primary" },
-  _placeholder: { color: "ui.tertiary" },
-});
-
-const labelStyles = css({
-  fontSize: "xs",
-  fontWeight: "medium",
-  color: "ui.tertiary",
-  mb: "1",
-  display: "block",
-});
-
-const spinnerStyles = css({
-  display: "inline-block",
-  width: "16px",
-  height: "16px",
-  border: "2px solid",
-  borderColor: "ui.border",
-  borderTopColor: "accent.primary",
-  borderRadius: "50%",
-  animation: "spin 0.6s linear infinite",
-});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -225,111 +185,73 @@ export function EmailComposer({
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
-  if (!open) return null;
-
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className={css({
-          position: "fixed",
-          inset: 0,
-          zIndex: 50,
-          bg: "rgba(10, 10, 15, 0.85)",
-          backdropFilter: "blur(12px)",
-        })}
-        onClick={() => handleOpenChange(false)}
-      />
-      {/* Panel */}
-      <div
-        className={css({
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          zIndex: 51,
-          bg: "ui.surface",
-          border: "1px solid",
-          borderColor: "ui.border",
-          width: "100%",
-          maxWidth: "620px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          p: "6",
-        })}
-      >
-        {/* Header */}
-        <div
-          className={css({
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            pb: "4",
-            mb: "4",
-            borderBottom: "1px solid",
-            borderBottomColor: "ui.border",
-          })}
-        >
-          <h2 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading" })}>
-            Compose Email
-          </h2>
-          <button
-            className={button({ variant: "ghost", size: "sm" })}
-            aria-label="Close dialog"
-            onClick={() => handleOpenChange(false)}
-          >
-            <Cross2Icon />
-          </button>
-        </div>
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Content maxWidth="620px" style={{ maxHeight: "90vh", overflowY: "auto" }}>
 
-        <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
+        {/* Header */}
+        <Flex justify="between" align="center" mb="4">
+          <Dialog.Title>
+            <Heading size="4">Compose Email</Heading>
+          </Dialog.Title>
+          <Dialog.Close>
+            <button className={button({ variant: "ghost", size: "sm" })} aria-label="Close dialog">
+              <Cross2Icon />
+            </button>
+          </Dialog.Close>
+        </Flex>
+
+        <Flex direction="column" gap="4">
 
           {/* To + Name row */}
-          <div className={css({ display: "flex", gap: "3" })}>
-            <div style={{ flex: "1 1 55%" }}>
-              <label className={labelStyles}>To (email)</label>
-              <input
-                className={inputStyles}
+          <Flex gap="3">
+            <Box style={{ flex: "1 1 55%" }}>
+              <Text as="label" size="1" color="gray" weight="medium" mb="1" style={{ display: "block" }}>
+                To (email)
+              </Text>
+              <TextField.Root
                 type="email"
                 placeholder="jane@company.com"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
                 disabled={hasSentSuccessfully}
               />
-            </div>
-            <div style={{ flex: "1 1 45%" }}>
-              <label className={labelStyles}>Name</label>
-              <input
-                className={inputStyles}
+            </Box>
+            <Box style={{ flex: "1 1 45%" }}>
+              <Text as="label" size="1" color="gray" weight="medium" mb="1" style={{ display: "block" }}>
+                Name
+              </Text>
+              <TextField.Root
                 placeholder="Jane Smith"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={hasSentSuccessfully}
               />
-            </div>
-          </div>
+            </Box>
+          </Flex>
 
           {/* Subject */}
-          <div>
-            <label className={labelStyles}>Subject</label>
-            <input
-              className={inputStyles}
+          <Box>
+            <Text as="label" size="1" color="gray" weight="medium" mb="1" style={{ display: "block" }}>
+              Subject
+            </Text>
+            <TextField.Root
               placeholder="Re: open roles at Acme"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               disabled={hasSentSuccessfully}
             />
-          </div>
+          </Box>
 
           {/* AI Generate row */}
-          <div className={css({ display: "flex", gap: "2", alignItems: "center" })}>
+          <Flex gap="2" align="center">
             <button
               className={button({ variant: "ghost" })}
               onClick={() => void handleGenerate()}
               disabled={isStreaming || hasSentSuccessfully}
             >
               <MagicWandIcon />
-              {isStreaming ? "Generating..." : "AI Generate"}
+              {isStreaming ? "Generating…" : "AI Generate"}
             </button>
 
             {isStreaming && (
@@ -339,23 +261,10 @@ export function EmailComposer({
             )}
 
             {content && !isStreaming && (
-              <span
-                className={css({
-                  fontSize: "xs",
-                  px: "2",
-                  py: "1",
-                  border: "1px solid",
-                  borderColor: "green.500/30",
-                  bg: "green.500/10",
-                  color: "ui.secondary",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "1",
-                })}
-              >
+              <Badge color="green" size="1" variant="soft">
                 <CheckCircledIcon />
                 Generated
-              </span>
+              </Badge>
             )}
 
             {content && !isStreaming && !hasSentSuccessfully && (
@@ -370,113 +279,104 @@ export function EmailComposer({
                 Regenerate
               </button>
             )}
-          </div>
+          </Flex>
 
-          {/* Streaming preview -- shown while generating */}
+          {/* Streaming preview — shown while generating */}
           {isStreaming && partialContent && (
-            <div
-              className={css({
-                bg: "accent.subtle",
-                p: "3",
-                maxHeight: "180px",
+            <Box
+              style={{
+                background: "var(--violet-a2)",
+                borderRadius: 0,
+                padding: "var(--space-3)",
+                maxHeight: 180,
                 overflow: "auto",
-              })}
+              }}
             >
-              <span className={css({ fontSize: "xs", color: "ui.tertiary", display: "block", mb: "1" })}>
-                Streaming...
-              </span>
-              <span
-                className={css({
-                  fontSize: "xs",
-                  fontFamily: "inherit",
+              <Text size="1" color="gray" mb="1" style={{ display: "block" }}>
+                Streaming…
+              </Text>
+              <Text
+                size="1"
+                style={{
+                  fontFamily: "var(--default-font-family)",
                   whiteSpace: "pre-wrap",
                   lineHeight: "1.5",
-                  color: "ui.body",
-                })}
+                }}
               >
                 {partialContent}
-              </span>
-            </div>
+              </Text>
+            </Box>
           )}
 
           {/* Stream error */}
           {streamError && (
-            <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.500/30", bg: "red.500/10" })}>
-              <ExclamationTriangleIcon />
-              <span className={css({ fontSize: "sm", color: "ui.body" })}>{streamError}</span>
-            </div>
+            <Callout.Root color="red" size="1">
+              <Callout.Icon>
+                <ExclamationTriangleIcon />
+              </Callout.Icon>
+              <Callout.Text>{streamError}</Callout.Text>
+            </Callout.Root>
           )}
 
-          <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
+          <Separator size="4" />
 
           {/* Body */}
-          <div>
-            <label className={labelStyles}>Body</label>
-            <textarea
-              className={textareaStyles}
-              placeholder={"Hey Jane,\n\nI came across your profile...\n\nThanks,\nVadim"}
+          <Box>
+            <Text as="label" size="1" color="gray" weight="medium" mb="1" style={{ display: "block" }}>
+              Body
+            </Text>
+            <TextArea
+              placeholder={"Hey Jane,\n\nI came across your profile…\n\nThanks,\nVadim"}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={12}
+              style={{ fontFamily: "var(--default-font-family)" }}
               disabled={hasSentSuccessfully}
             />
-          </div>
+          </Box>
 
           {/* Checkboxes */}
-          <div className={css({ display: "flex", flexDirection: "column", gap: "2" })}>
-            <label
-              htmlFor={resumeCheckId}
-              className={css({ display: "flex", gap: "2", alignItems: "center", cursor: "pointer" })}
-            >
-              <input
-                type="checkbox"
-                id={resumeCheckId}
-                checked={includeResume}
-                onChange={(e) => setIncludeResume(e.target.checked)}
-                disabled={hasSentSuccessfully}
-                className={css({ accentColor: "accent.primary" })}
-              />
-              <span className={css({ fontSize: "sm", color: "ui.body" })}>Include resume (PDF attachment)</span>
-            </label>
-            <label
-              htmlFor={calendlyCheckId}
-              className={css({ display: "flex", gap: "2", alignItems: "center", cursor: "pointer" })}
-            >
-              <input
-                type="checkbox"
-                id={calendlyCheckId}
-                checked={includeCalendly}
-                onChange={(e) => setIncludeCalendly(e.target.checked)}
-                disabled={hasSentSuccessfully}
-                className={css({ accentColor: "accent.primary" })}
-              />
-              <span className={css({ fontSize: "sm", color: "ui.body" })}>Include Calendly link in body</span>
-            </label>
-          </div>
+          <Flex direction="column" gap="2">
+            <Flex asChild gap="2" align="center">
+              <label htmlFor={resumeCheckId}>
+                <Checkbox
+                  id={resumeCheckId}
+                  checked={includeResume}
+                  onCheckedChange={(checked) => setIncludeResume(checked === true)}
+                  disabled={hasSentSuccessfully}
+                />
+                <Text size="2">Include resume (PDF attachment)</Text>
+              </label>
+            </Flex>
+            <Flex asChild gap="2" align="center">
+              <label htmlFor={calendlyCheckId}>
+                <Checkbox
+                  id={calendlyCheckId}
+                  checked={includeCalendly}
+                  onCheckedChange={(checked) => setIncludeCalendly(checked === true)}
+                  disabled={hasSentSuccessfully}
+                />
+                <Text size="2">Include Calendly link in body</Text>
+              </label>
+            </Flex>
+          </Flex>
 
           {/* Send result feedback */}
           {sendResult && (
-            <div
-              className={css({
-                display: "flex",
-                gap: "3",
-                p: "3",
-                border: "1px solid",
-                borderColor: sendResult.type === "success" ? "green.500/30" : "red.500/30",
-                bg: sendResult.type === "success" ? "green.500/10" : "red.500/10",
-              })}
-            >
-              {sendResult.type === "success" ? (
-                <CheckCircledIcon />
-              ) : (
-                <ExclamationTriangleIcon />
-              )}
-              <span className={css({ fontSize: "sm", color: "ui.body" })}>{sendResult.message}</span>
-            </div>
+            <Callout.Root color={sendResult.type === "success" ? "green" : "red"} size="1">
+              <Callout.Icon>
+                {sendResult.type === "success" ? (
+                  <CheckCircledIcon />
+                ) : (
+                  <ExclamationTriangleIcon />
+                )}
+              </Callout.Icon>
+              <Callout.Text>{sendResult.message}</Callout.Text>
+            </Callout.Root>
           )}
 
           {/* Footer actions */}
-          <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "3", mt: "1" })}>
+          <Flex justify="between" align="center" gap="3" mt="1">
             {hasSentSuccessfully ? (
               <>
                 <button
@@ -487,21 +387,17 @@ export function EmailComposer({
                 >
                   Compose Another
                 </button>
-                <button
-                  className={button({ variant: "solid" })}
-                  onClick={() => handleOpenChange(false)}
-                >
-                  Done
-                </button>
+                <Dialog.Close>
+                  <button className={button({ variant: "solid" })}>Done</button>
+                </Dialog.Close>
               </>
             ) : (
               <>
-                <button
-                  className={button({ variant: "ghost" })}
-                  onClick={() => handleOpenChange(false)}
-                >
-                  Cancel
-                </button>
+                <Dialog.Close>
+                  <button className={button({ variant: "ghost" })}>
+                    Cancel
+                  </button>
+                </Dialog.Close>
                 <button
                   className={button({ variant: "solid" })}
                   disabled={!canSend}
@@ -509,8 +405,8 @@ export function EmailComposer({
                 >
                   {sending ? (
                     <>
-                      <div className={spinnerStyles} />
-                      Sending...
+                      <Spinner size="1" />
+                      Sending…
                     </>
                   ) : (
                     <>
@@ -521,9 +417,9 @@ export function EmailComposer({
                 </button>
               </>
             )}
-          </div>
-        </div>
-      </div>
-    </>
+          </Flex>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
