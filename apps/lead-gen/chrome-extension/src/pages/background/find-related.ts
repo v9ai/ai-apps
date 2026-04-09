@@ -240,9 +240,9 @@ function injectCrawlOverlay(
         const dotColor = s.phase === "saving" ? "#22c55e"
           : s.phase === "discovering" ? "#eab308" : "#ef4444";
         const targetPart = s.targets > 0 ? ` (${s.targets} \u{1F3AF})` : "";
-        const filteredPart = s.filtered ? `, ${s.filtered} filtered` : "";
+        const filteredPart = s.filtered ? `, ${s.filtered} skipped` : "";
         const statusText = `${s.saved} saved${targetPart}, ${s.skipped} dupes${filteredPart} (${s.queued} queued) \u2014 ${s.name}`;
-        const copyText = `FindRelated: ${s.saved} saved (${s.targets} targets), ${s.skipped} dupes, ${s.filtered ?? 0} filtered, ${s.queued} queued \u2014 ${s.name} [${s.phase}]`;
+        const copyText = `FindRelated: ${s.saved} saved (${s.targets} targets), ${s.skipped} dupes, ${s.filtered ?? 0} skipped, ${s.queued} queued \u2014 ${s.name} [${s.phase}]`;
         el.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;flex-shrink:0;animation:lgpulse 1.2s ease-in-out infinite"></span><span style="user-select:text">${statusText}</span>`;
 
         const btnStyle = "background:none;border:none;cursor:pointer;opacity:0.6;font-size:14px;padding:0;flex-shrink:0;line-height:1;";
@@ -425,7 +425,9 @@ export async function findRelatedCompanies(tabId: number) {
     }
 
     // ── BFS loop ───────────────────────────────────────────────────────
-    while (queue.length > 0 && (saved + skipped + filtered) < MAX_COMPANIES) {
+    // Only saved + skipped (dupes) count toward MAX_COMPANIES.
+    // Non-recruitment companies are "filtered" and don't count — we want N recruitment companies.
+    while (queue.length > 0 && (saved + skipped) < MAX_COMPANIES) {
       if (!(await isTabAlive(tabId))) {
         logWarn("[FindRelated] Tab closed during BFS crawl, stopping");
         break;
@@ -439,7 +441,7 @@ export async function findRelatedCompanies(tabId: number) {
       await safeTabUpdate(tabId, { url: aboutUrl });
       await waitForTabLoad(tabId);
       await randomDelay(2000);
-      await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: urlSlug, phase: "saving", logText: crawlLog.join("\n") });
+      await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: urlSlug, phase: "saving", logText: crawlLog.join("\n") });
 
       await clickSeeMore(tabId);
       await randomDelay(500);
@@ -449,8 +451,9 @@ export async function findRelatedCompanies(tabId: number) {
         const icp = isICPTarget(data);
 
         if (!icp.target) {
+          // Not recruitment — skip saving but still discover related companies below
           filtered++;
-          log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ⊘ ${data.name} — ${icp.reason} (queued: ${queue.length})`);
+          log(`[FindRelated] SKIP ${data.name} — ${icp.reason} (industry: ${data.industry}) (queued: ${queue.length})`);
           await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name} [${icp.reason}]`, phase: "saving", logText: crawlLog.join("\n") });
         } else {
           // Check remote job postings for ICP-matching companies (boost signal, not a gate)
@@ -475,7 +478,7 @@ export async function findRelatedCompanies(tabId: number) {
             log(`[FindRelated] ⚠️⚠️ No numeric ID for ${data.name} — ALL 3 extraction strategies failed, SKIPPING remote job check`);
           }
 
-          // Build company object and save (always save ICP targets regardless of job count)
+          // Build company object and save
           const jobLabel = remoteJobCount > 0 ? `Remote Jobs: ${remoteJobCount}` : "";
           const company = {
             name: data.name,
@@ -506,12 +509,12 @@ export async function findRelatedCompanies(tabId: number) {
           if (result > 0) {
             saved += result;
             targets++;
-            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ${overlayName("✓")} SAVED (queued: ${queue.length})`);
+            log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${overlayName("✓")} SAVED (queued: ${queue.length})`);
             await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: overlayName("✓"), phase: "saving", logText: crawlLog.join("\n") });
           } else {
             skipped++;
             targets++;
-            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ${overlayName("⊘")} ALREADY EXISTS (queued: ${queue.length})`);
+            log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${overlayName("⊘")} ALREADY EXISTS (queued: ${queue.length})`);
             await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: overlayName("⊘"), phase: "saving", logText: crawlLog.join("\n") });
           }
         }
@@ -529,14 +532,14 @@ export async function findRelatedCompanies(tabId: number) {
         }).catch(() => {});
       }
 
-      // d) Discover new related companies from THIS page
+      // d) Discover new related companies from THIS page (always, even for non-recruitment)
       if ((saved + skipped) < MAX_COMPANIES && (await isTabAlive(tabId))) {
         // Navigate to main company page (strip /about/)
         const mainUrl = url.replace(/\/$/, "") + "/";
         await safeTabUpdate(tabId, { url: mainUrl });
         await waitForTabLoad(tabId);
         await randomDelay(2000);
-        await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: data?.name || urlSlug, phase: "discovering", logText: crawlLog.join("\n") });
+        await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data?.name || urlSlug, phase: "discovering", logText: crawlLog.join("\n") });
 
         // Scroll to load lazy content
         for (let i = 0; i < 3; i++) {
