@@ -200,45 +200,25 @@ function InteractiveCodePlayground({ initialHtml, initialCss }: { initialHtml: s
 
   return (
     <Box mb="4" style={{ position: "relative" }}>
-      <Flex gap="2" justify="end" mb="2" wrap="wrap">
-        <Button
-          size="3"
-          variant={mode === "css" ? "solid" : "soft"}
-          color="violet"
-          onClick={() => activate("css")}
-        >
+      <Flex gap="1" justify="end" align="center" mb="1" wrap="wrap">
+        <Button size="1" variant={mode === "css" ? "solid" : "soft"} color="violet" onClick={() => activate("css")}>
           CSS Challenge
         </Button>
-        <Button
-          size="3"
-          variant={mode === "html" ? "solid" : "soft"}
-          color="cyan"
-          onClick={() => activate("html")}
-        >
+        <Button size="1" variant={mode === "html" ? "solid" : "soft"} color="cyan" onClick={() => activate("html")}>
           HTML Challenge
         </Button>
-        <Button
-          size="3"
-          variant={mode === "full" ? "solid" : "soft"}
-          color="orange"
-          onClick={() => activate("full")}
-        >
+        <Button size="1" variant={mode === "full" ? "solid" : "soft"} color="orange" onClick={() => activate("full")}>
           Full Rebuild
         </Button>
-        <Button
-          size="3"
-          variant={mode === "debug" ? "solid" : "soft"}
-          color="crimson"
-          onClick={() => activate("debug")}
-        >
+        <Button size="1" variant={mode === "debug" ? "solid" : "soft"} color="crimson" onClick={() => activate("debug")}>
           Debug
         </Button>
         {mode !== "off" && (
-          <Button size="3" variant="outline" color="gray" onClick={() => setMode("off")}>
-            Show Solution
+          <Button size="1" variant="outline" color="gray" onClick={() => setMode("off")}>
+            Solution
           </Button>
         )}
-        <Button size="3" variant="ghost" color="gray" onClick={reset}>
+        <Button size="1" variant="ghost" color="gray" onClick={reset}>
           Reset
         </Button>
       </Flex>
