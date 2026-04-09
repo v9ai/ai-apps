@@ -1479,15 +1479,28 @@ function extractSidebarCompanyUrls(tabId: number): Promise<string[]> {
         for (const heading of headings) {
           const text = heading.textContent?.trim().toLowerCase() || "";
           if (keywords.some((kw) => text.includes(kw))) {
-            container = heading.closest("section") || heading.closest("aside") || heading.parentElement;
+            // Walk up from heading to find a container that has /company/ links
+            container = heading.closest("section") || heading.closest("aside");
+            if (!container) {
+              let el: Element | null = heading.parentElement;
+              while (el && el !== document.body) {
+                if (el.querySelector('a[href*="/company/"]')) {
+                  container = el;
+                  break;
+                }
+                el = el.parentElement;
+              }
+            }
             break;
           }
         }
         if (!container) {
           console.log("[FindRelated] No 'people also viewed' section found on page");
+          console.log("[FindRelated] All headings on page:");
+          headings.forEach((h) => console.log(`  <${h.tagName}> "${h.textContent?.trim().slice(0, 80)}"`));
           return [];
         }
-        console.log("[FindRelated] Found section container:", container.tagName);
+        console.log(`[FindRelated] Sidebar container: <${container.tagName}> class="${container.className?.toString().slice(0, 80)}"`);
 
         const links: string[] = [];
         container.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
