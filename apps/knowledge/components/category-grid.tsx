@@ -122,6 +122,7 @@ export function CategoryGrid({ groups }: Props) {
                 ))}
               </ul>
             )}
+            <div className="cat-card-divider" />
             {group.articles.map((lesson, j) => (
               <LessonCard key={lesson.slug} lesson={lesson} isFirst={j === 0} />
             ))}

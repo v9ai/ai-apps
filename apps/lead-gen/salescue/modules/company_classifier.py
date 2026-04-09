@@ -74,6 +74,14 @@ _staffing_embeds: torch.Tensor | None = None
 _non_staffing_embeds: torch.Tensor | None = None
 
 
+def _mean_pool(enc: dict) -> torch.Tensor:
+    """Mean-pool the last hidden state using the attention mask. Returns [1, hidden]."""
+    last_hidden = enc["encoder_output"].last_hidden_state  # [1, seq, hidden]
+    mask = enc["attention_mask"].unsqueeze(-1).float()      # [1, seq, 1]
+    pooled = (last_hidden * mask).sum(dim=1) / mask.sum(dim=1)  # [1, hidden]
+    return pooled
+
+
 def _get_prototype_embeds() -> tuple[torch.Tensor, torch.Tensor]:
     """Encode prototype sentences once, cache for reuse."""
     global _staffing_embeds, _non_staffing_embeds
@@ -81,13 +89,13 @@ def _get_prototype_embeds() -> tuple[torch.Tensor, torch.Tensor]:
         staffing_vecs = []
         for proto in STAFFING_PROTOTYPES:
             enc = SharedEncoder.encode(proto)
-            staffing_vecs.append(enc["pooled"])
+            staffing_vecs.append(_mean_pool(enc))
         _staffing_embeds = torch.cat(staffing_vecs, dim=0)
 
         non_staffing_vecs = []
         for proto in NON_STAFFING_PROTOTYPES:
             enc = SharedEncoder.encode(proto)
-            non_staffing_vecs.append(enc["pooled"])
+            non_staffing_vecs.append(_mean_pool(enc))
         _non_staffing_embeds = torch.cat(non_staffing_vecs, dim=0)
 
     return _staffing_embeds, _non_staffing_embeds
@@ -126,7 +134,7 @@ def classify_company(
     # ── 1. Embedding-based semantic score ───────────────────────────────────
     staffing_embeds, non_staffing_embeds = _get_prototype_embeds()
     enc = SharedEncoder.encode(text, max_length=256)
-    company_embed = enc["pooled"]  # [1, hidden]
+    company_embed = _mean_pool(enc)  # [1, hidden]
 
     # Cosine similarity against staffing and non-staffing prototypes
     staffing_sims = F.cosine_similarity(company_embed, staffing_embeds)  # [N]
@@ -181,7 +189,7 @@ def classify_company(
     composite = (semantic_score * 0.60) + (keyword_score * 0.25) + (industry_boost * 0.15)
     composite = max(0.0, min(1.0, composite))
 
-    is_staffing = composite >= 0.45
+    is_staffing = composite >= 0.38
 
     if not reasons:
         reasons.append("No significant staffing signals detected")

@@ -16,15 +16,13 @@ export function LearningPath({ groups }: Props) {
               key={g.category}
               href={`#cat-${g.meta.slug}`}
               className={`learning-path-node cat-${g.meta.slug}`}
+              data-step={i + 1}
             >
               <span className="learning-path-icon">{g.meta.icon}</span>
               <span className="learning-path-name">{g.category}</span>
               <span className="learning-path-meta">
                 {g.articles.length} lessons &middot; {totalMin}m
               </span>
-              {i < groups.length - 1 && (
-                <span className="learning-path-arrow" />
-              )}
             </a>
           );
         })}

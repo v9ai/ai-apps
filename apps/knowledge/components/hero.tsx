@@ -1,3 +1,5 @@
+import { AnimatedStats } from "./animated-stats";
+
 export function Hero({
   lessonCount,
   domainCount,
@@ -28,26 +30,15 @@ export function Hero({
           fine-tuning, prompting &amp; production AI systems. Built for junior
           engineers ready to go deep.
         </p>
-        <div className="hero-stats">
-          <div className="hero-stat">
-            <span className="hero-stat-number">{lessonCount}</span>
-            <span className="hero-stat-label">Lessons</span>
-          </div>
-          <div className="hero-stat">
-            <span className="hero-stat-number">{domainCount}</span>
-            <span className="hero-stat-label">Skill Areas</span>
-          </div>
-          <div className="hero-stat">
-            <span className="hero-stat-number">{readingHours}h</span>
-            <span className="hero-stat-label">Reading Time</span>
-          </div>
-          <div className="hero-stat">
-            <span className="hero-stat-number">{wordLabel}</span>
-            <span className="hero-stat-label">Words</span>
-          </div>
-        </div>
+        <AnimatedStats
+          lessonCount={lessonCount}
+          domainCount={domainCount}
+          readingHours={readingHours}
+          wordLabel={wordLabel}
+          wordCount={wordCount}
+        />
         <a href="#lessons" className="hero-cta">
-          Start Learning ↓
+          Start Learning <span className="hero-cta-arrow">↓</span>
         </a>
       </div>
       <div className="hero-bottom-line" />

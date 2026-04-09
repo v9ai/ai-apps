@@ -231,6 +231,7 @@ body {
   margin: 0 auto;
 }
 .hero-kicker {
+  display: inline-block;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -238,6 +239,10 @@ body {
   color: var(--accent-11);
   margin-top: 0;
   margin-bottom: 16px;
+  padding: 6px 16px;
+  border-radius: 99px;
+  border: 1px solid color-mix(in srgb, var(--accent-9) 25%, transparent);
+  background: color-mix(in srgb, var(--accent-9) 8%, transparent);
 }
 .hero-title-accent {
   background: linear-gradient(135deg, var(--accent-9), #06b6d4);
@@ -305,6 +310,13 @@ body {
 .hero-cta:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-9) 40%, transparent);
+}
+.hero-cta-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+.hero-cta:hover .hero-cta-arrow {
+  transform: translateY(3px);
 }
 .hero-bottom-line {
   position: absolute;
@@ -715,6 +727,18 @@ body {
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
+.cat-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cat-from), var(--cat-to));
+  border-radius: 0 0 2px 2px;
+  opacity: 0.7;
+  pointer-events: none;
+}
 .cat-card:hover::before { opacity: 0.2; }
 .cat-card:hover {
   border-color: color-mix(in srgb, var(--cat-from) 30%, transparent);
@@ -793,6 +817,13 @@ body {
   opacity: 0.6;
 }
 
+/* separator between header/outcomes and lesson list */
+.cat-card-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08) 30%, rgba(255, 255, 255, 0.08) 70%, transparent);
+  margin: 8px 0 10px;
+}
+
 /* article cards inside bento */
 .article-card {
   display: flex;
@@ -805,9 +836,10 @@ body {
     color-mix(in srgb, var(--cat-to) 3%, transparent)
   );
   border: 1px solid rgba(255, 255, 255, 0.04);
+  border-left: 3px solid transparent;
   text-decoration: none;
   color: inherit;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, border-left-color 0.25s ease;
   margin-bottom: 4px;
 }
 .article-card:hover {
@@ -816,15 +848,23 @@ body {
     color-mix(in srgb, var(--cat-to) 8%, transparent)
   );
   border-color: color-mix(in srgb, var(--cat-from) 25%, transparent);
+  border-left-color: var(--cat-from);
   box-shadow: 0 4px 16px color-mix(in srgb, var(--cat-from) 12%, transparent);
   transform: scale(1.01);
 }
 .article-card-num {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--gray-8);
+  color: var(--gray-9);
   font-variant-numeric: tabular-nums;
-  min-width: 22px;
+  min-width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cat-from) 10%, transparent);
+  flex-shrink: 0;
 }
 .article-card-title {
   font-size: 13px;
@@ -943,8 +983,16 @@ body {
   gap: 6px;
 }
 .cat-card-footer::before {
-  content: "\23F1";
-  font-size: 12px;
+  content: "";
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gray-7);
+  position: relative;
+  flex-shrink: 0;
+  background:
+    linear-gradient(to bottom, var(--gray-7), var(--gray-7)) no-repeat center 1.5px / 1.5px 4px,
+    linear-gradient(to right, var(--gray-7), var(--gray-7)) no-repeat center center / 3.5px 1.5px;
 }
 
 /* ================================================================
@@ -2215,9 +2263,25 @@ body {
   letter-spacing: 0.06em;
   color: var(--cat-from);
   background: color-mix(in srgb, var(--cat-from) 12%, transparent);
-  padding: 2px 6px;
+  padding: 2px 8px 2px 6px;
   border-radius: 4px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.article-card-start::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cat-from);
+  animation: start-pulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes start-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
 }
 
 /* ================================================================
