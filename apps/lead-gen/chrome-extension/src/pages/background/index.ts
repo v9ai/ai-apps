@@ -1565,6 +1565,7 @@ function injectCrawlOverlay(
       world: "MAIN",
       func: (s: { saved: number; skipped: number; queued: number; name: string; phase: string }) => {
         const ATTR = "data-lg-crawl-overlay";
+        const COPY_ATTR = "data-lg-crawl-copy";
         let el = document.querySelector(`[${ATTR}]`) as HTMLDivElement | null;
         if (!el) {
           el = document.createElement("div");
@@ -1575,13 +1576,36 @@ function injectCrawlOverlay(
             border-radius:8px; font:13px/1.4 -apple-system,sans-serif;
             max-width:360px; box-shadow:0 4px 12px rgba(0,0,0,0.3);
             display:flex; align-items:center; gap:8px;
-            pointer-events:none;
+            user-select:text;
           `;
           document.body.appendChild(el);
         }
         const dotColor = s.phase === "saving" ? "#22c55e"
           : s.phase === "discovering" ? "#eab308" : "#ef4444";
-        el.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;flex-shrink:0;animation:lgpulse 1.2s ease-in-out infinite"></span><span>${s.saved} saved, ${s.skipped} dupes (${s.queued} queued) — ${s.name}</span>`;
+        const statusText = `${s.saved} saved, ${s.skipped} dupes (${s.queued} queued) — ${s.name}`;
+        const copyText = `FindRelated: ${s.saved} saved, ${s.skipped} dupes, ${s.queued} queued — ${s.name} [${s.phase}]`;
+        el.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;flex-shrink:0;animation:lgpulse 1.2s ease-in-out infinite"></span><span style="user-select:text">${statusText}</span>`;
+
+        // Add or update copy button
+        let copyBtn = el.querySelector(`[${COPY_ATTR}]`) as HTMLButtonElement | null;
+        if (!copyBtn) {
+          copyBtn = document.createElement("button");
+          copyBtn.setAttribute(COPY_ATTR, "true");
+          copyBtn.style.cssText = "background:none;border:none;cursor:pointer;opacity:0.6;font-size:14px;padding:0;margin-left:4px;flex-shrink:0;line-height:1;";
+          copyBtn.textContent = "\u{1F4CB}";
+          copyBtn.addEventListener("mouseenter", () => { copyBtn!.style.opacity = "1"; });
+          copyBtn.addEventListener("mouseleave", () => { copyBtn!.style.opacity = "0.6"; });
+          copyBtn.addEventListener("click", () => {
+            const text = copyBtn!.getAttribute("data-copy-text") || "";
+            navigator.clipboard.writeText(text).then(() => {
+              copyBtn!.textContent = "\u2713";
+              setTimeout(() => { copyBtn!.textContent = "\u{1F4CB}"; }, 1000);
+            });
+          });
+          el.appendChild(copyBtn);
+        }
+        copyBtn.setAttribute("data-copy-text", copyText);
+
         if (!document.getElementById("lg-crawl-pulse-style")) {
           const style = document.createElement("style");
           style.id = "lg-crawl-pulse-style";
