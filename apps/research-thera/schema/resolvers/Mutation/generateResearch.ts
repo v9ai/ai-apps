@@ -323,11 +323,31 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
     const messages = result?.messages as
       | Array<{ content: string; type?: string }>
       | undefined;
+
+    console.log("[generateResearch] LangGraph response:", JSON.stringify({
+      messageCount: (messages as unknown[])?.length ?? 0,
+      messageTypes: messages?.map(m => m.type) ?? [],
+      keys: Object.keys(result ?? {}),
+    }));
+
     const lastAiMessage = messages
       ?.filter((m) => m.type === "ai" && m.content)
       .pop();
     const output = lastAiMessage?.content || "";
     const count = messages?.filter((m) => m.type === "ai").length ?? 0;
+
+    if (count === 0) {
+      console.error("[generateResearch] Agent returned no AI messages — LLM call likely failed");
+      await db.updateGenerationJob(jobId, {
+        status: "FAILED",
+        error: JSON.stringify({
+          message: "Research agent produced no results. The language model may be unavailable — please try again.",
+          code: "EMPTY_AGENT_RESPONSE",
+          details: `Raw message count: ${messages?.length ?? 0}, types: ${JSON.stringify(messages?.map(m => m.type) ?? [])}`,
+        }),
+      });
+      return;
+    }
 
     let evals: Record<string, number | string> | undefined;
     try {
@@ -336,10 +356,23 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       console.error("[generateResearch] Eval error:", evalErr);
     }
 
+    const noPapersSaved = evals && evals.error === "no papers found";
+    const finalStatus = noPapersSaved ? "FAILED" : "SUCCEEDED";
+
+    if (noPapersSaved) {
+      console.error("[generateResearch] Agent ran but no papers were persisted to DB");
+    }
+
     await db.updateGenerationJob(jobId, {
-      status: "SUCCEEDED",
+      status: finalStatus,
       progress: 100,
       result: JSON.stringify({ count, output, ...(evals ? { evals } : {}) }),
+      ...(noPapersSaved ? {
+        error: JSON.stringify({
+          message: "Research agent completed but found no suitable papers. Try rephrasing the journal entry or try again later.",
+          code: "NO_PAPERS_SAVED",
+        }),
+      } : {}),
     });
   }).catch(async (err) => {
     const message = err instanceof Error ? err.message : "LangGraph agent failed";
