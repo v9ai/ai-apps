@@ -41,21 +41,26 @@ function groupCodeBlocks(md: string): string {
   );
 }
 
-/** Extract inline style="" attrs into class-based CSS rules */
+/** Extract inline style="" attrs into class-based CSS rules (deduped) */
 function extractInlineStyles(html: string): { cleanHtml: string; css: string } | null {
   let counter = 0;
+  const styleToClass = new Map<string, string>();
   const rules: string[] = [];
 
   const cleanHtml = html.replace(/\s+style="([^"]*)"/g, (_, styleValue: string) => {
-    counter++;
-    const cls = `s${counter}`;
-    const props = styleValue
-      .split(";")
-      .map((s: string) => s.trim())
-      .filter(Boolean)
-      .map((s: string) => `  ${s};`)
-      .join("\n");
-    rules.push(`.${cls} {\n${props}\n}`);
+    let cls = styleToClass.get(styleValue);
+    if (!cls) {
+      counter++;
+      cls = `s${counter}`;
+      styleToClass.set(styleValue, cls);
+      const props = styleValue
+        .split(";")
+        .map((s: string) => s.trim())
+        .filter(Boolean)
+        .map((s: string) => `  ${s};`)
+        .join("\n");
+      rules.push(`.${cls} {\n${props}\n}`);
+    }
     return ` class="${cls}"`;
   });
 
@@ -300,7 +305,7 @@ function PrepPageInner() {
                         <div className="code-triple-grid">
                           <CodePanel lang="html" code={extracted.cleanHtml} />
                           <CodePanel lang="css" code={extracted.css} />
-                          <LivePreviewPanel html={extracted.cleanHtml} css={extracted.css} />
+                          <LivePreviewPanel html={rawText} css="" />
                         </div>
                       </Box>
                     );
