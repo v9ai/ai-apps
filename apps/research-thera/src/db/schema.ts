@@ -572,6 +572,21 @@ export const journalAnalyses = pgTable("journal_analyses", {
     .default(sql`NOW()`),
 });
 
+export const affirmations = pgTable("affirmations", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").notNull(),
+  userId: text("user_id").notNull(),
+  text: text("text").notNull(),
+  category: text("category").notNull().default("encouragement"), // gratitude, strength, encouragement, growth, self-worth
+  isActive: integer("is_active").notNull().default(1), // 1 = active, 0 = archived
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const familyMemberCharacteristics = pgTable("family_member_characteristics", {
   id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id").notNull(),

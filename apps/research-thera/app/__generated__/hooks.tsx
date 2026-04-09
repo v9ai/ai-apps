@@ -26,6 +26,26 @@ export type ActionableRecommendation = {
   title: Scalars['String']['output'];
 };
 
+export type Affirmation = {
+  __typename?: 'Affirmation';
+  category: AffirmationCategory;
+  createdAt: Scalars['String']['output'];
+  familyMemberId: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
+  isActive: Scalars['Boolean']['output'];
+  text: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
+export enum AffirmationCategory {
+  Encouragement = 'ENCOURAGEMENT',
+  Gratitude = 'GRATITUDE',
+  Growth = 'GROWTH',
+  SelfWorth = 'SELF_WORTH',
+  Strength = 'STRENGTH'
+}
+
 export type AudioAsset = {
   __typename?: 'AudioAsset';
   createdAt: Scalars['String']['output'];
@@ -240,6 +260,12 @@ export type ConvertJournalEntryToIssueInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CreateAffirmationInput = {
+  category?: InputMaybe<AffirmationCategory>;
+  familyMemberId: Scalars['Int']['input'];
+  text: Scalars['String']['input'];
+};
+
 export type CreateContactFeedbackInput = {
   contactId: Scalars['Int']['input'];
   content: Scalars['String']['input'];
@@ -383,6 +409,12 @@ export type DeepIssueAnalysis = {
   triggerIssue?: Maybe<Issue>;
   triggerIssueId?: Maybe<Scalars['Int']['output']>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type DeleteAffirmationResult = {
+  __typename?: 'DeleteAffirmationResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
 };
 
 export type DeleteBehaviorObservationResult = {
@@ -544,6 +576,7 @@ export type ExtractedIssue = {
 
 export type FamilyMember = {
   __typename?: 'FamilyMember';
+  affirmations: Array<Affirmation>;
   ageYears?: Maybe<Scalars['Int']['output']>;
   behaviorObservations: Array<BehaviorObservation>;
   bio?: Maybe<Scalars['String']['output']>;
@@ -907,6 +940,7 @@ export type Mutation = {
   checkNoteClaims: CheckNoteClaimsResult;
   convertIssueToGoal: Goal;
   convertJournalEntryToIssue: Issue;
+  createAffirmation: Affirmation;
   createContact: Contact;
   createContactFeedback: ContactFeedback;
   createConversation: Conversation;
@@ -921,6 +955,7 @@ export type Mutation = {
   createStory: Story;
   createSubGoal: Goal;
   createTeacherFeedback: TeacherFeedback;
+  deleteAffirmation: DeleteAffirmationResult;
   deleteBehaviorObservation: DeleteBehaviorObservationResult;
   deleteClaimCard: Scalars['Boolean']['output'];
   deleteContact: DeleteContactResult;
@@ -966,6 +1001,7 @@ export type Mutation = {
   unlinkIssues: UnlinkIssuesResult;
   unshareFamilyMember: Scalars['Boolean']['output'];
   unshareNote: Scalars['Boolean']['output'];
+  updateAffirmation: Affirmation;
   updateBehaviorObservation: BehaviorObservation;
   updateContact: Contact;
   updateContactFeedback: ContactFeedback;
@@ -1001,6 +1037,11 @@ export type MutationConvertIssueToGoalArgs = {
 export type MutationConvertJournalEntryToIssueArgs = {
   id: Scalars['Int']['input'];
   input: ConvertJournalEntryToIssueInput;
+};
+
+
+export type MutationCreateAffirmationArgs = {
+  input: CreateAffirmationInput;
 };
 
 
@@ -1075,6 +1116,11 @@ export type MutationCreateSubGoalArgs = {
 
 export type MutationCreateTeacherFeedbackArgs = {
   input: CreateTeacherFeedbackInput;
+};
+
+
+export type MutationDeleteAffirmationArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -1341,6 +1387,12 @@ export type MutationUnshareNoteArgs = {
 };
 
 
+export type MutationUpdateAffirmationArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateAffirmationInput;
+};
+
+
 export type MutationUpdateBehaviorObservationArgs = {
   id: Scalars['Int']['input'];
   input: UpdateBehaviorObservationInput;
@@ -1571,6 +1623,8 @@ export type PriorityRecommendation = {
 
 export type Query = {
   __typename?: 'Query';
+  affirmation?: Maybe<Affirmation>;
+  affirmations: Array<Affirmation>;
   allIssues: Array<Issue>;
   allNotes: Array<Note>;
   allStories: Array<Story>;
@@ -1613,6 +1667,16 @@ export type Query = {
   teacherFeedbacks: Array<TeacherFeedback>;
   therapeuticQuestions: Array<TherapeuticQuestion>;
   userSettings: UserSettings;
+};
+
+
+export type QueryAffirmationArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryAffirmationsArgs = {
+  familyMemberId: Scalars['Int']['input'];
 };
 
 
@@ -1993,6 +2057,12 @@ export type UnlinkIssuesResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type UpdateAffirmationInput = {
+  category?: InputMaybe<AffirmationCategory>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  text?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateBehaviorObservationInput = {
   context?: InputMaybe<Scalars['String']['input']>;
   frequency?: InputMaybe<Scalars['Int']['input']>;
@@ -2164,6 +2234,13 @@ export type ConvertJournalEntryToIssueMutationVariables = Exact<{
 
 export type ConvertJournalEntryToIssueMutation = { __typename?: 'Mutation', convertJournalEntryToIssue: { __typename?: 'Issue', id: number, journalEntryId?: number | null, feedbackId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } };
 
+export type CreateAffirmationMutationVariables = Exact<{
+  input: CreateAffirmationInput;
+}>;
+
+
+export type CreateAffirmationMutation = { __typename?: 'Mutation', createAffirmation: { __typename?: 'Affirmation', id: number, familyMemberId: number, text: string, category: AffirmationCategory, isActive: boolean, createdAt: string, updatedAt: string } };
+
 export type CreateContactMutationVariables = Exact<{
   input: CreateContactInput;
 }>;
@@ -2265,6 +2342,13 @@ export type CreateTeacherFeedbackMutationVariables = Exact<{
 
 
 export type CreateTeacherFeedbackMutation = { __typename?: 'Mutation', createTeacherFeedback: { __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string } };
+
+export type DeleteAffirmationMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteAffirmationMutation = { __typename?: 'Mutation', deleteAffirmation: { __typename?: 'DeleteAffirmationResult', success: boolean, message?: string | null } };
 
 export type DeleteBehaviorObservationMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2504,6 +2588,13 @@ export type GenerateTherapeuticQuestionsMutationVariables = Exact<{
 
 
 export type GenerateTherapeuticQuestionsMutation = { __typename?: 'Mutation', generateTherapeuticQuestions: { __typename?: 'GenerateQuestionsResult', success: boolean, message?: string | null, jobId?: string | null, questions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, journalEntryId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> } };
+
+export type GetAffirmationsQueryVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type GetAffirmationsQuery = { __typename?: 'Query', affirmations: Array<{ __typename?: 'Affirmation', id: number, familyMemberId: number, text: string, category: AffirmationCategory, isActive: boolean, createdAt: string, updatedAt: string }> };
 
 export type GetAllIssuesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2840,6 +2931,14 @@ export type UnshareFamilyMemberMutationVariables = Exact<{
 
 
 export type UnshareFamilyMemberMutation = { __typename?: 'Mutation', unshareFamilyMember: boolean };
+
+export type UpdateAffirmationMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  input: UpdateAffirmationInput;
+}>;
+
+
+export type UpdateAffirmationMutation = { __typename?: 'Mutation', updateAffirmation: { __typename?: 'Affirmation', id: number, familyMemberId: number, text: string, category: AffirmationCategory, isActive: boolean, createdAt: string, updatedAt: string } };
 
 export type UpdateBehaviorObservationMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3429,6 +3528,45 @@ export function useConvertJournalEntryToIssueMutation(baseOptions?: Apollo.Mutat
 export type ConvertJournalEntryToIssueMutationHookResult = ReturnType<typeof useConvertJournalEntryToIssueMutation>;
 export type ConvertJournalEntryToIssueMutationResult = Apollo.MutationResult<ConvertJournalEntryToIssueMutation>;
 export type ConvertJournalEntryToIssueMutationOptions = Apollo.BaseMutationOptions<ConvertJournalEntryToIssueMutation, ConvertJournalEntryToIssueMutationVariables>;
+export const CreateAffirmationDocument = gql`
+    mutation CreateAffirmation($input: CreateAffirmationInput!) {
+  createAffirmation(input: $input) {
+    id
+    familyMemberId
+    text
+    category
+    isActive
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type CreateAffirmationMutationFn = Apollo.MutationFunction<CreateAffirmationMutation, CreateAffirmationMutationVariables>;
+
+/**
+ * __useCreateAffirmationMutation__
+ *
+ * To run a mutation, you first call `useCreateAffirmationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateAffirmationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createAffirmationMutation, { data, loading, error }] = useCreateAffirmationMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateAffirmationMutation(baseOptions?: Apollo.MutationHookOptions<CreateAffirmationMutation, CreateAffirmationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateAffirmationMutation, CreateAffirmationMutationVariables>(CreateAffirmationDocument, options);
+      }
+export type CreateAffirmationMutationHookResult = ReturnType<typeof useCreateAffirmationMutation>;
+export type CreateAffirmationMutationResult = Apollo.MutationResult<CreateAffirmationMutation>;
+export type CreateAffirmationMutationOptions = Apollo.BaseMutationOptions<CreateAffirmationMutation, CreateAffirmationMutationVariables>;
 export const CreateContactDocument = gql`
     mutation CreateContact($input: CreateContactInput!) {
   createContact(input: $input) {
@@ -4034,6 +4172,40 @@ export function useCreateTeacherFeedbackMutation(baseOptions?: Apollo.MutationHo
 export type CreateTeacherFeedbackMutationHookResult = ReturnType<typeof useCreateTeacherFeedbackMutation>;
 export type CreateTeacherFeedbackMutationResult = Apollo.MutationResult<CreateTeacherFeedbackMutation>;
 export type CreateTeacherFeedbackMutationOptions = Apollo.BaseMutationOptions<CreateTeacherFeedbackMutation, CreateTeacherFeedbackMutationVariables>;
+export const DeleteAffirmationDocument = gql`
+    mutation DeleteAffirmation($id: Int!) {
+  deleteAffirmation(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteAffirmationMutationFn = Apollo.MutationFunction<DeleteAffirmationMutation, DeleteAffirmationMutationVariables>;
+
+/**
+ * __useDeleteAffirmationMutation__
+ *
+ * To run a mutation, you first call `useDeleteAffirmationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteAffirmationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteAffirmationMutation, { data, loading, error }] = useDeleteAffirmationMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteAffirmationMutation(baseOptions?: Apollo.MutationHookOptions<DeleteAffirmationMutation, DeleteAffirmationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteAffirmationMutation, DeleteAffirmationMutationVariables>(DeleteAffirmationDocument, options);
+      }
+export type DeleteAffirmationMutationHookResult = ReturnType<typeof useDeleteAffirmationMutation>;
+export type DeleteAffirmationMutationResult = Apollo.MutationResult<DeleteAffirmationMutation>;
+export type DeleteAffirmationMutationOptions = Apollo.BaseMutationOptions<DeleteAffirmationMutation, DeleteAffirmationMutationVariables>;
 export const DeleteBehaviorObservationDocument = gql`
     mutation DeleteBehaviorObservation($id: Int!) {
   deleteBehaviorObservation(id: $id) {
@@ -5229,6 +5401,55 @@ export function useGenerateTherapeuticQuestionsMutation(baseOptions?: Apollo.Mut
 export type GenerateTherapeuticQuestionsMutationHookResult = ReturnType<typeof useGenerateTherapeuticQuestionsMutation>;
 export type GenerateTherapeuticQuestionsMutationResult = Apollo.MutationResult<GenerateTherapeuticQuestionsMutation>;
 export type GenerateTherapeuticQuestionsMutationOptions = Apollo.BaseMutationOptions<GenerateTherapeuticQuestionsMutation, GenerateTherapeuticQuestionsMutationVariables>;
+export const GetAffirmationsDocument = gql`
+    query GetAffirmations($familyMemberId: Int!) {
+  affirmations(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    text
+    category
+    isActive
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetAffirmationsQuery__
+ *
+ * To run a query within a React component, call `useGetAffirmationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAffirmationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAffirmationsQuery({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGetAffirmationsQuery(baseOptions: Apollo.QueryHookOptions<GetAffirmationsQuery, GetAffirmationsQueryVariables> & ({ variables: GetAffirmationsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAffirmationsQuery, GetAffirmationsQueryVariables>(GetAffirmationsDocument, options);
+      }
+export function useGetAffirmationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAffirmationsQuery, GetAffirmationsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAffirmationsQuery, GetAffirmationsQueryVariables>(GetAffirmationsDocument, options);
+        }
+// @ts-ignore
+export function useGetAffirmationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAffirmationsQuery, GetAffirmationsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAffirmationsQuery, GetAffirmationsQueryVariables>;
+export function useGetAffirmationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAffirmationsQuery, GetAffirmationsQueryVariables>): Apollo.UseSuspenseQueryResult<GetAffirmationsQuery | undefined, GetAffirmationsQueryVariables>;
+export function useGetAffirmationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAffirmationsQuery, GetAffirmationsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAffirmationsQuery, GetAffirmationsQueryVariables>(GetAffirmationsDocument, options);
+        }
+export type GetAffirmationsQueryHookResult = ReturnType<typeof useGetAffirmationsQuery>;
+export type GetAffirmationsLazyQueryHookResult = ReturnType<typeof useGetAffirmationsLazyQuery>;
+export type GetAffirmationsSuspenseQueryHookResult = ReturnType<typeof useGetAffirmationsSuspenseQuery>;
+export type GetAffirmationsQueryResult = Apollo.QueryResult<GetAffirmationsQuery, GetAffirmationsQueryVariables>;
 export const GetAllIssuesDocument = gql`
     query GetAllIssues {
   allIssues {
@@ -8168,6 +8389,46 @@ export function useUnshareFamilyMemberMutation(baseOptions?: Apollo.MutationHook
 export type UnshareFamilyMemberMutationHookResult = ReturnType<typeof useUnshareFamilyMemberMutation>;
 export type UnshareFamilyMemberMutationResult = Apollo.MutationResult<UnshareFamilyMemberMutation>;
 export type UnshareFamilyMemberMutationOptions = Apollo.BaseMutationOptions<UnshareFamilyMemberMutation, UnshareFamilyMemberMutationVariables>;
+export const UpdateAffirmationDocument = gql`
+    mutation UpdateAffirmation($id: Int!, $input: UpdateAffirmationInput!) {
+  updateAffirmation(id: $id, input: $input) {
+    id
+    familyMemberId
+    text
+    category
+    isActive
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type UpdateAffirmationMutationFn = Apollo.MutationFunction<UpdateAffirmationMutation, UpdateAffirmationMutationVariables>;
+
+/**
+ * __useUpdateAffirmationMutation__
+ *
+ * To run a mutation, you first call `useUpdateAffirmationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateAffirmationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateAffirmationMutation, { data, loading, error }] = useUpdateAffirmationMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateAffirmationMutation(baseOptions?: Apollo.MutationHookOptions<UpdateAffirmationMutation, UpdateAffirmationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateAffirmationMutation, UpdateAffirmationMutationVariables>(UpdateAffirmationDocument, options);
+      }
+export type UpdateAffirmationMutationHookResult = ReturnType<typeof useUpdateAffirmationMutation>;
+export type UpdateAffirmationMutationResult = Apollo.MutationResult<UpdateAffirmationMutation>;
+export type UpdateAffirmationMutationOptions = Apollo.BaseMutationOptions<UpdateAffirmationMutation, UpdateAffirmationMutationVariables>;
 export const UpdateBehaviorObservationDocument = gql`
     mutation UpdateBehaviorObservation($id: Int!, $input: UpdateBehaviorObservationInput!) {
   updateBehaviorObservation(id: $id, input: $input) {
