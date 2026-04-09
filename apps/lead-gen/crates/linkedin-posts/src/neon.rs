@@ -110,6 +110,82 @@ pub async fn update_contact_authority(contact_id: i32, score: f32) -> Result<()>
     Ok(())
 }
 
+/// Fetch contact headlines (positions) for a given company_id.
+/// Returns (company_name, headlines).
+pub async fn fetch_company_people_headlines(
+    company_id: i32,
+) -> Result<(Option<String>, Vec<String>)> {
+    let client = connect_neon().await?;
+
+    // Fetch company name
+    let company_row = client
+        .query_opt(
+            "SELECT name FROM companies WHERE id = $1",
+            &[&company_id],
+        )
+        .await
+        .context("Failed to query company")?;
+    let company_name = company_row.map(|r| r.get::<_, String>("name"));
+
+    // Fetch contact positions/headlines
+    let rows = client
+        .query(
+            "SELECT position FROM contacts
+             WHERE company_id = $1 AND position IS NOT NULL AND position != ''
+             ORDER BY id",
+            &[&company_id],
+        )
+        .await
+        .context("Failed to query contacts for company")?;
+
+    let headlines: Vec<String> = rows
+        .iter()
+        .map(|row| row.get::<_, String>("position"))
+        .collect();
+
+    tracing::info!(
+        "Fetched {} headlines for company_id={} ({})",
+        headlines.len(),
+        company_id,
+        company_name.as_deref().unwrap_or("unknown"),
+    );
+
+    Ok((company_name, headlines))
+}
+
+/// Block a company and tag it as a recruitment agency.
+pub async fn block_recruitment_company(
+    company_id: i32,
+    reason: &str,
+) -> Result<()> {
+    let client = connect_neon().await?;
+
+    // Update blocked status, category, and append to tags
+    client
+        .execute(
+            "UPDATE companies
+             SET blocked = true,
+                 category = 'CONSULTANCY',
+                 tags = CASE
+                   WHEN tags IS NULL THEN '[\"recruitment-agency\"]'
+                   WHEN tags::text LIKE '%recruitment-agency%' THEN tags
+                   ELSE (tags::jsonb || '\"recruitment-agency\"')::text
+                 END,
+                 score_reasons = CASE
+                   WHEN score_reasons IS NULL THEN $2::text
+                   ELSE (score_reasons::jsonb || $2::jsonb)::text
+                 END,
+                 updated_at = now()::text
+             WHERE id = $1",
+            &[&company_id, &format!("[\"{}\"]", reason.replace('"', "'"))],
+        )
+        .await
+        .context("Failed to block recruitment company")?;
+
+    tracing::info!("Blocked company {} as recruitment agency", company_id);
+    Ok(())
+}
+
 fn root_certs() -> Arc<rustls::RootCertStore> {
     let mut roots = rustls::RootCertStore::empty();
     roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());

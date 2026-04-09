@@ -5,6 +5,7 @@ pub mod intent_scorer;
 pub mod models;
 pub mod neon;
 pub mod post_ner;
+pub mod recruitment;
 pub mod scoring;
 
 /// LanceDB path: $LANCE_DB_PATH or ~/.lance/linkedin

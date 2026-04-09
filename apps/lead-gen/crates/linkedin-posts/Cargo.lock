@@ -3159,6 +3159,7 @@ dependencies = [
  "chrono",
  "futures",
  "lancedb",
+ "regex",
  "rustls",
  "serde",
  "serde_json",

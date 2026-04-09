@@ -35,3 +35,4 @@ tokio-postgres = "0.7"
 tokio-postgres-rustls = "0.13"
 rustls = { version = "0.23", features = ["ring"] }
 webpki-roots = "1"
+regex = "1"

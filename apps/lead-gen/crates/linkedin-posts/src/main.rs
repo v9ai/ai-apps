@@ -8,12 +8,15 @@ use axum::{
 };
 use tower_http::cors::CorsLayer;
 
-use linkedin_posts::{authority, models, neon};
+use linkedin_posts::{authority, models, neon, recruitment};
 use linkedin_posts::db::PostsDb;
 use linkedin_posts::intent_scorer::PostIntentScorer;
 use linkedin_posts::models::{
     AddContactsRequest, AddJobPostsRequest, AddLikesRequest, AddPostsRequest, ClassifiedPostsQuery,
     ExportResponse, InsertResult, IntentDistribution, LikesQuery, StatsResponse, StoredPostLike,
+};
+use linkedin_posts::recruitment::{
+    DetectRecruitmentRequest, DetectRecruitmentResponse,
 };
 
 struct AppStateInner {
@@ -71,6 +74,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/posts/signals/{contact_id}", get(get_post_signals))
         .route("/posts/intents/distribution", get(get_intent_distribution))
         .route("/likes", post(add_likes).get(get_likes))
+        .route("/companies/detect-recruitment", post(detect_recruitment))
         .route("/scorer/reload", post(reload_scorer))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -360,6 +364,58 @@ async fn get_likes(
         .collect();
 
     Json(filtered)
+}
+
+/// POST /companies/detect-recruitment — detect if a company is a recruitment agency.
+///
+/// Accepts either `headlines` (direct from Chrome extension) or `company_id`
+/// (queries contacts from Neon DB). Returns detection result with recruiter
+/// ratio and optionally blocks the company.
+async fn detect_recruitment(
+    Json(req): Json<DetectRecruitmentRequest>,
+) -> Result<Json<DetectRecruitmentResponse>, (StatusCode, String)> {
+    let (headlines, company_name, company_id) = if let Some(ref hl) = req.headlines {
+        (hl.clone(), None, req.company_id)
+    } else if let Some(cid) = req.company_id {
+        let (name, hl) = neon::fetch_company_people_headlines(cid)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        (hl, name, Some(cid))
+    } else {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Provide either 'headlines' or 'company_id'".to_string(),
+        ));
+    };
+
+    let result = recruitment::detect_recruitment_company(&headlines, req.threshold);
+
+    let mut blocked = None;
+    if req.auto_block && result.is_recruitment_company {
+        if let Some(cid) = company_id {
+            match neon::block_recruitment_company(cid, &result.reason).await {
+                Ok(()) => blocked = Some(true),
+                Err(e) => {
+                    tracing::warn!("Failed to block company {}: {}", cid, e);
+                    blocked = Some(false);
+                }
+            }
+        }
+    }
+
+    tracing::info!(
+        "Recruitment detection: company_id={:?} name={:?} result={}  ratio={:.0}%",
+        company_id,
+        company_name,
+        result.is_recruitment_company,
+        result.recruiter_ratio * 100.0,
+    );
+
+    Ok(Json(DetectRecruitmentResponse {
+        result,
+        blocked,
+        company_name,
+    }))
 }
 
 /// POST /scorer/reload — hot-reload intent scorer weights from JSON file.
