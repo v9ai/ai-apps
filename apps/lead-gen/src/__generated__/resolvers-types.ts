@@ -111,6 +111,8 @@ export type Company = {
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];
+  /** ML data quality assessment */
+  dataQuality: DataQualityScore;
   deep_analysis: Maybe<Scalars['String']['output']>;
   description: Maybe<Scalars['String']['output']>;
   email: Maybe<Scalars['String']['output']>;
@@ -118,6 +120,8 @@ export type Company = {
   facts: Array<CompanyFact>;
   facts_count: Scalars['Int']['output'];
   githubUrl: Maybe<Scalars['String']['output']>;
+  /** ICP similarity score via embeddings (0-1) */
+  icpSimilarity: Maybe<Scalars['Float']['output']>;
   id: Scalars['Int']['output'];
   industries: Array<Scalars['String']['output']>;
   industry: Maybe<Scalars['String']['output']>;
@@ -134,6 +138,10 @@ export type Company = {
   location: Maybe<Scalars['String']['output']>;
   logo_url: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  /** ML quality gate evaluation */
+  qualityGate: QualityGateResult;
+  /** ML-computed rank score (0-1) */
+  rankScore: Maybe<Scalars['Float']['output']>;
   score: Scalars['Float']['output'];
   score_reasons: Array<Scalars['String']['output']>;
   service_taxonomy: Array<Scalars['String']['output']>;
@@ -490,6 +498,15 @@ export type CreateReminderInput = {
   remindAt: Scalars['String']['input'];
 };
 
+export type DataQualityScore = {
+  __typename?: 'DataQualityScore';
+  completeness: Scalars['Float']['output'];
+  composite: Scalars['Float']['output'];
+  freshness: Scalars['Float']['output'];
+  missingFields: Array<Scalars['String']['output']>;
+  staleFields: Array<Scalars['String']['output']>;
+};
+
 export type DeleteCampaignResult = {
   __typename?: 'DeleteCampaignResult';
   message: Maybe<Scalars['String']['output']>;
@@ -753,6 +770,14 @@ export type GenerateEmailResult = {
   text: Scalars['String']['output'];
 };
 
+export type GenerateEmbeddingsResult = {
+  __typename?: 'GenerateEmbeddingsResult';
+  errors: Array<Scalars['String']['output']>;
+  failed: Scalars['Int']['output'];
+  processed: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateReplyInput = {
   additionalDetails?: InputMaybe<Scalars['String']['input']>;
   includeCalendly?: InputMaybe<Scalars['Boolean']['input']>;
@@ -789,6 +814,7 @@ export type ImportCompanyResult = {
 export type ImportCompanyWithContactsInput = {
   companyName: Scalars['String']['input'];
   contacts: Array<ImportContactInput>;
+  linkedinUrl?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -898,6 +924,14 @@ export type LinkedInPostType =
   | 'job'
   | 'post';
 
+export type MlStats = {
+  __typename?: 'MLStats';
+  companiesEmbedded: Scalars['Int']['output'];
+  lastEmbeddingAt: Maybe<Scalars['String']['output']>;
+  modelsAvailable: Array<Scalars['String']['output']>;
+  totalCompanies: Scalars['Int']['output'];
+};
+
 export type MarkRepliedResult = {
   __typename?: 'MarkRepliedResult';
   message: Maybe<Scalars['String']['output']>;
@@ -954,6 +988,8 @@ export type Mutation = {
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   flagContactsForDeletion: BatchOperationResult;
+  /** Generate and store embeddings for companies missing them. Admin only. */
+  generateCompanyEmbeddings: GenerateEmbeddingsResult;
   generateEmail: GenerateEmailResult;
   generateReply: GenerateReplyResult;
   importCompanies: ImportCompaniesResult;
@@ -969,6 +1005,7 @@ export type Mutation = {
   previewEmail: EmailPreview;
   purgeDeletedContacts: BatchOperationResult;
   refreshIntentScores: RefreshIntentResult;
+  salescueAnalyze: SalescueAnalyzeResult;
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   scoreContactsML: ScoreContactsMlResult;
@@ -1146,6 +1183,12 @@ export type MutationFlagContactsForDeletionArgs = {
 };
 
 
+export type MutationGenerateCompanyEmbeddingsArgs = {
+  batchSize?: InputMaybe<Scalars['Int']['input']>;
+  companyIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+};
+
+
 export type MutationGenerateEmailArgs = {
   input: GenerateEmailInput;
 };
@@ -1225,6 +1268,12 @@ export type MutationPreviewEmailArgs = {
 
 export type MutationPurgeDeletedContactsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationSalescueAnalyzeArgs = {
+  modules?: InputMaybe<Array<SalescueModule>>;
+  text: Scalars['String']['input'];
 };
 
 
@@ -1346,11 +1395,21 @@ export type PreviewEmailInput = {
   subject: Scalars['String']['input'];
 };
 
+export type QualityGateResult = {
+  __typename?: 'QualityGateResult';
+  adjustedScore: Scalars['Float']['output'];
+  flags: Array<Scalars['String']['output']>;
+  pass: Scalars['Boolean']['output'];
+  recommendations: Array<Scalars['String']['output']>;
+};
+
 export type Query = {
   __typename?: 'Query';
   allCompanyTags: Array<Scalars['String']['output']>;
   companies: CompaniesResponse;
   companiesByIntent: CompaniesResponse;
+  /** Find companies similar to a given company by ID */
+  companiesLike: Array<SimilarCompanyResult>;
   company: Maybe<Company>;
   companyContactEmails: Array<CompanyContactEmail>;
   company_facts: Array<CompanyFact>;
@@ -1372,9 +1431,28 @@ export type Query = {
   intentSignals: IntentSignalsResponse;
   linkedinPost: Maybe<LinkedInPost>;
   linkedinPosts: Array<LinkedInPost>;
+  /** ML model health and stats */
+  mlStats: MlStats;
   receivedEmail: Maybe<ReceivedEmail>;
   receivedEmails: ReceivedEmailsResult;
+  /** Next best companies to contact based on ML scoring */
+  recommendedCompanies: Array<RecommendedCompany>;
+  /** Best contacts to reach within a company */
+  recommendedContacts: Array<RankedContact>;
   resendEmail: Maybe<ResendEmailDetail>;
+  salescueEntities: SalescueEntitiesResult;
+  salescueHealth: SalescueHealth;
+  salescueIcp: SalescueIcpResult;
+  salescueIntent: SalescueIntentResult;
+  salescueObjection: SalescueObjectionResult;
+  salescueReply: SalescueReplyResult;
+  salescueScore: SalescueScoreResult;
+  salescueSentiment: SalescueSentimentResult;
+  salescueSpam: SalescueSpamResult;
+  salescueSubject: SalescueSubjectResult;
+  salescueTriggers: SalescueTriggersResult;
+  /** Semantic similarity search: find companies matching a natural language query */
+  similarCompanies: Array<SimilarCompanyResult>;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -1392,6 +1470,13 @@ export type QueryCompaniesByIntentArgs = {
   offset?: InputMaybe<Scalars['Int']['input']>;
   signalType?: InputMaybe<IntentSignalType>;
   threshold: Scalars['Float']['input'];
+};
+
+
+export type QueryCompaniesLikeArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
 };
 
 
@@ -1519,13 +1604,92 @@ export type QueryReceivedEmailsArgs = {
 };
 
 
+export type QueryRecommendedCompaniesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type QueryRecommendedContactsArgs = {
+  companyId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryResendEmailArgs = {
   resendId: Scalars['String']['input'];
 };
 
 
+export type QuerySalescueEntitiesArgs = {
+  text: Scalars['String']['input'];
+};
+
+
+export type QuerySalescueIcpArgs = {
+  icp: Scalars['String']['input'];
+  prospect: Scalars['String']['input'];
+};
+
+
+export type QuerySalescueIntentArgs = {
+  text: Scalars['String']['input'];
+};
+
+
+export type QuerySalescueObjectionArgs = {
+  text: Scalars['String']['input'];
+};
+
+
+export type QuerySalescueReplyArgs = {
+  text: Scalars['String']['input'];
+  touchpoint?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QuerySalescueScoreArgs = {
+  text: Scalars['String']['input'];
+};
+
+
+export type QuerySalescueSentimentArgs = {
+  text: Scalars['String']['input'];
+};
+
+
+export type QuerySalescueSpamArgs = {
+  text: Scalars['String']['input'];
+};
+
+
+export type QuerySalescueSubjectArgs = {
+  subjects: Array<Scalars['String']['input']>;
+};
+
+
+export type QuerySalescueTriggersArgs = {
+  text: Scalars['String']['input'];
+};
+
+
+export type QuerySimilarCompaniesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minAiTier?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+  query: Scalars['String']['input'];
+};
+
+
 export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
+};
+
+export type RankedContact = {
+  __typename?: 'RankedContact';
+  contact: Contact;
+  rankScore: Scalars['Float']['output'];
+  reasons: Array<Scalars['String']['output']>;
 };
 
 export type ReceivedEmail = {
@@ -1558,6 +1722,13 @@ export type ReceivedEmailsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type RecommendedCompany = {
+  __typename?: 'RecommendedCompany';
+  company: Company;
+  reasons: Array<Scalars['String']['output']>;
+  score: Scalars['Float']['output'];
+};
+
 export type RefreshIntentResult = {
   __typename?: 'RefreshIntentResult';
   companiesUpdated: Scalars['Int']['output'];
@@ -1577,6 +1748,358 @@ export type ResendEmailDetail = {
   subject: Maybe<Scalars['String']['output']>;
   text: Maybe<Scalars['String']['output']>;
   to: Array<Scalars['String']['output']>;
+};
+
+export type SalescueAnalyzeResult = {
+  __typename?: 'SalescueAnalyzeResult';
+  errors: Array<SalescueModuleError>;
+  modulesRun: Scalars['Int']['output'];
+  results: Scalars['JSON']['output'];
+  timings: Scalars['JSON']['output'];
+  totalTime: Scalars['Float']['output'];
+};
+
+export type SalescueAnomalyResult = {
+  __typename?: 'SalescueAnomalyResult';
+  anomalyScore: Scalars['Float']['output'];
+  anomalyType: Scalars['String']['output'];
+  channelAttribution: Scalars['JSON']['output'];
+  cosineSimilarity: Scalars['Float']['output'];
+  isAnomalous: Scalars['Boolean']['output'];
+  textPriorAdjustment: Scalars['Float']['output'];
+  typeConfidence: Scalars['Float']['output'];
+  zScore: Scalars['Float']['output'];
+};
+
+export type SalescueBanditAlternative = {
+  __typename?: 'SalescueBanditAlternative';
+  sampledReward: Scalars['Float']['output'];
+  subjectStyle: Scalars['String']['output'];
+  template: Scalars['String']['output'];
+  timing: Scalars['String']['output'];
+};
+
+export type SalescueBanditArm = {
+  __typename?: 'SalescueBanditArm';
+  subjectStyle: Scalars['String']['output'];
+  template: Scalars['String']['output'];
+  timing: Scalars['String']['output'];
+};
+
+export type SalescueBanditResult = {
+  __typename?: 'SalescueBanditResult';
+  alternatives: Array<SalescueBanditAlternative>;
+  armIndex: Scalars['Int']['output'];
+  bestArm: SalescueBanditArm;
+  expectedReward: Scalars['Float']['output'];
+  explorationTemperature: Scalars['Float']['output'];
+  sampledReward: Scalars['Float']['output'];
+  totalArms: Scalars['Int']['output'];
+};
+
+export type SalescueCallResult = {
+  __typename?: 'SalescueCallResult';
+  action: Scalars['String']['output'];
+  commitmentCount: Scalars['Int']['output'];
+  commitments: Array<SalescueCommitment>;
+  dealHealth: Scalars['Int']['output'];
+  modelConfidence: Scalars['Float']['output'];
+  momentum: Scalars['String']['output'];
+  negatedCommitmentCount: Scalars['Int']['output'];
+  turnScores: Array<Scalars['Float']['output']>;
+  turnUncertainties: Array<Scalars['Float']['output']>;
+  turningPoints: Array<SalescueTurningPoint>;
+};
+
+export type SalescueCoachingCard = {
+  __typename?: 'SalescueCoachingCard';
+  avoid: Array<Scalars['String']['output']>;
+  example: Scalars['String']['output'];
+  framework: Scalars['String']['output'];
+  steps: Array<Scalars['String']['output']>;
+};
+
+export type SalescueCommitment = {
+  __typename?: 'SalescueCommitment';
+  negated: Scalars['Boolean']['output'];
+  pattern: Scalars['String']['output'];
+  speaker: Scalars['String']['output'];
+  turn: Scalars['Int']['output'];
+  type: Scalars['String']['output'];
+};
+
+export type SalescueEmailgenResult = {
+  __typename?: 'SalescueEmailgenResult';
+  contextUsed: Scalars['JSON']['output'];
+  email: Scalars['String']['output'];
+  emailType: Scalars['String']['output'];
+  hasCallToAction: Scalars['Boolean']['output'];
+  promptTokens: Scalars['Int']['output'];
+  wordCount: Scalars['Int']['output'];
+};
+
+export type SalescueEntitiesResult = {
+  __typename?: 'SalescueEntitiesResult';
+  entities: Array<SalescueEntity>;
+  neuralCount: Scalars['Int']['output'];
+  regexCount: Scalars['Int']['output'];
+  typesFound: Array<Scalars['String']['output']>;
+};
+
+export type SalescueEntity = {
+  __typename?: 'SalescueEntity';
+  confidence: Scalars['Float']['output'];
+  endChar: Maybe<Scalars['Int']['output']>;
+  role: Scalars['String']['output'];
+  roleScores: Scalars['JSON']['output'];
+  source: Scalars['String']['output'];
+  startChar: Maybe<Scalars['Int']['output']>;
+  text: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
+export type SalescueGraphResult = {
+  __typename?: 'SalescueGraphResult';
+  edgeCount: Maybe<Scalars['Int']['output']>;
+  graphLabel: Scalars['String']['output'];
+  graphScore: Scalars['Float']['output'];
+  graphSignals: Array<SalescueGraphSignal>;
+  labelConfidence: Scalars['Float']['output'];
+  nodeCount: Maybe<Scalars['Int']['output']>;
+  note: Maybe<Scalars['String']['output']>;
+  similarCompanies: Array<SalescueSimilarCompany>;
+};
+
+export type SalescueGraphSignal = {
+  __typename?: 'SalescueGraphSignal';
+  strength: Scalars['Float']['output'];
+  type: Scalars['String']['output'];
+  with: Scalars['String']['output'];
+};
+
+export type SalescueHealth = {
+  __typename?: 'SalescueHealth';
+  device: Scalars['String']['output'];
+  moduleCount: Scalars['Int']['output'];
+  modules: Array<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  version: Scalars['String']['output'];
+};
+
+export type SalescueIcpDimensionFit = {
+  __typename?: 'SalescueICPDimensionFit';
+  distance: Scalars['Float']['output'];
+  fit: Maybe<Scalars['Float']['output']>;
+  icpSpread: Scalars['Float']['output'];
+  status: Scalars['String']['output'];
+};
+
+export type SalescueIcpResult = {
+  __typename?: 'SalescueICPResult';
+  dealbreakers: Array<Scalars['String']['output']>;
+  dimensions: Scalars['JSON']['output'];
+  missing: Array<Scalars['String']['output']>;
+  qualified: Scalars['Boolean']['output'];
+  score: Scalars['Float']['output'];
+};
+
+export type SalescueIntentResult = {
+  __typename?: 'SalescueIntentResult';
+  confidence: Scalars['Float']['output'];
+  dataPoints: Scalars['Int']['output'];
+  distribution: Scalars['JSON']['output'];
+  stage: Scalars['String']['output'];
+  trajectory: Maybe<SalescueIntentTrajectory>;
+};
+
+export type SalescueIntentTrajectory = {
+  __typename?: 'SalescueIntentTrajectory';
+  acceleration: Scalars['Float']['output'];
+  currentIntensity: Scalars['Float']['output'];
+  daysToPurchase: Scalars['Int']['output'];
+  direction: Scalars['String']['output'];
+  velocity: Scalars['Float']['output'];
+};
+
+export type SalescueModule =
+  | 'ANOMALY'
+  | 'BANDIT'
+  | 'CALL'
+  | 'EMAILGEN'
+  | 'ENTITIES'
+  | 'GRAPH'
+  | 'ICP'
+  | 'INTENT'
+  | 'OBJECTION'
+  | 'REPLY'
+  | 'SCORE'
+  | 'SENTIMENT'
+  | 'SPAM'
+  | 'SUBJECT'
+  | 'SURVIVAL'
+  | 'TRIGGERS';
+
+export type SalescueModuleError = {
+  __typename?: 'SalescueModuleError';
+  error: Scalars['String']['output'];
+  module: Scalars['String']['output'];
+};
+
+export type SalescueObjectionResult = {
+  __typename?: 'SalescueObjectionResult';
+  category: Scalars['String']['output'];
+  categoryConfidence: Scalars['Float']['output'];
+  coaching: SalescueCoachingCard;
+  objectionType: Scalars['String']['output'];
+  severity: Scalars['Float']['output'];
+  topTypes: Scalars['JSON']['output'];
+  typeConfidence: Scalars['Float']['output'];
+};
+
+export type SalescueReplyEvidence = {
+  __typename?: 'SalescueReplyEvidence';
+  label: Scalars['String']['output'];
+  text: Scalars['String']['output'];
+};
+
+export type SalescueReplyResult = {
+  __typename?: 'SalescueReplyResult';
+  active: Scalars['JSON']['output'];
+  alternativeConfigs: Scalars['Int']['output'];
+  configurationScore: Scalars['Float']['output'];
+  evidence: Array<SalescueReplyEvidence>;
+  primary: Scalars['String']['output'];
+  scores: Scalars['JSON']['output'];
+};
+
+export type SalescueScoreCategories = {
+  __typename?: 'SalescueScoreCategories';
+  analytics: Scalars['Float']['output'];
+  automation: Scalars['Float']['output'];
+  engagement: Scalars['Float']['output'];
+  enrichment: Scalars['Float']['output'];
+  intent: Scalars['Float']['output'];
+  outreach: Scalars['Float']['output'];
+};
+
+export type SalescueScoreResult = {
+  __typename?: 'SalescueScoreResult';
+  categories: SalescueScoreCategories;
+  confidence: Scalars['Float']['output'];
+  label: Scalars['String']['output'];
+  nSignalsDetected: Scalars['Int']['output'];
+  score: Scalars['Int']['output'];
+  signals: Array<SalescueScoreSignal>;
+};
+
+export type SalescueScoreSignal = {
+  __typename?: 'SalescueScoreSignal';
+  attendedPositions: Array<Scalars['Int']['output']>;
+  attributionType: Scalars['String']['output'];
+  category: Scalars['String']['output'];
+  causalImpact: Scalars['Float']['output'];
+  signal: Scalars['String']['output'];
+  strength: Scalars['Float']['output'];
+};
+
+export type SalescueSentimentEvidence = {
+  __typename?: 'SalescueSentimentEvidence';
+  signal: Scalars['String']['output'];
+  text: Scalars['String']['output'];
+};
+
+export type SalescueSentimentResult = {
+  __typename?: 'SalescueSentimentResult';
+  confidence: Scalars['Float']['output'];
+  contextGate: Scalars['Float']['output'];
+  evidence: Array<SalescueSentimentEvidence>;
+  intent: Scalars['String']['output'];
+  interactionWeight: Scalars['Float']['output'];
+  interpretation: Maybe<Scalars['String']['output']>;
+  inverted: Scalars['Boolean']['output'];
+  sentiment: Scalars['String']['output'];
+};
+
+export type SalescueSimilarCompany = {
+  __typename?: 'SalescueSimilarCompany';
+  name: Scalars['String']['output'];
+  similarity: Scalars['Float']['output'];
+};
+
+export type SalescueSpamResult = {
+  __typename?: 'SalescueSpamResult';
+  aiRisk: Scalars['Float']['output'];
+  aspectScores: Scalars['JSON']['output'];
+  categoryScores: Scalars['JSON']['output'];
+  deliverability: Scalars['Int']['output'];
+  gateConfidence: Scalars['Float']['output'];
+  gateDecision: Scalars['String']['output'];
+  provider: Scalars['String']['output'];
+  providerScores: Scalars['JSON']['output'];
+  riskFactors: Array<Scalars['String']['output']>;
+  riskLevel: Scalars['String']['output'];
+  spamCategory: Scalars['String']['output'];
+  spamScore: Scalars['Float']['output'];
+};
+
+export type SalescueSubjectRanking = {
+  __typename?: 'SalescueSubjectRanking';
+  rank: Scalars['Int']['output'];
+  score: Scalars['Int']['output'];
+  subject: Scalars['String']['output'];
+};
+
+export type SalescueSubjectResult = {
+  __typename?: 'SalescueSubjectResult';
+  best: Scalars['String']['output'];
+  ranking: Array<SalescueSubjectRanking>;
+  worst: Scalars['String']['output'];
+};
+
+export type SalescueSurvivalResult = {
+  __typename?: 'SalescueSurvivalResult';
+  medianDaysToConversion: Scalars['Float']['output'];
+  pConvert30d: Scalars['Float']['output'];
+  pConvert90d: Scalars['Float']['output'];
+  riskConfidence: Scalars['Float']['output'];
+  riskGroup: Scalars['String']['output'];
+  survivalCurve: Scalars['JSON']['output'];
+  weibullParams: Scalars['JSON']['output'];
+};
+
+export type SalescueTriggerEvent = {
+  __typename?: 'SalescueTriggerEvent';
+  confidence: Scalars['Float']['output'];
+  displacementCi: Array<Scalars['Float']['output']>;
+  displacementDays: Scalars['Float']['output'];
+  displacementUncertainty: Scalars['Float']['output'];
+  fresh: Scalars['Boolean']['output'];
+  freshness: Scalars['String']['output'];
+  temporalFeatures: SalescueTriggerTemporalFeatures;
+  type: Scalars['String']['output'];
+};
+
+export type SalescueTriggerTemporalFeatures = {
+  __typename?: 'SalescueTriggerTemporalFeatures';
+  pastSignal: Scalars['Float']['output'];
+  recentSignal: Scalars['Float']['output'];
+  todaySignal: Scalars['Float']['output'];
+};
+
+export type SalescueTriggersResult = {
+  __typename?: 'SalescueTriggersResult';
+  events: Array<SalescueTriggerEvent>;
+  primary: Maybe<SalescueTriggerEvent>;
+};
+
+export type SalescueTurningPoint = {
+  __typename?: 'SalescueTurningPoint';
+  delta: Scalars['Float']['output'];
+  direction: Scalars['String']['output'];
+  probability: Scalars['Float']['output'];
+  speaker: Scalars['String']['output'];
+  turn: Scalars['Int']['output'];
+  uncertainty: Scalars['Float']['output'];
 };
 
 export type ScheduleBatchEmailsInput = {
@@ -1653,6 +2176,12 @@ export type SignalTypeCount = {
   __typename?: 'SignalTypeCount';
   count: Scalars['Int']['output'];
   signalType: IntentSignalType;
+};
+
+export type SimilarCompanyResult = {
+  __typename?: 'SimilarCompanyResult';
+  company: Company;
+  similarity: Scalars['Float']['output'];
 };
 
 export type SourceType =
@@ -1928,6 +2457,7 @@ export type ResolversTypes = {
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
   CreateEmailTemplateInput: ResolverTypeWrapper<Partial<CreateEmailTemplateInput>>;
   CreateReminderInput: ResolverTypeWrapper<Partial<CreateReminderInput>>;
+  DataQualityScore: ResolverTypeWrapper<Partial<DataQualityScore>>;
   DateTime: ResolverTypeWrapper<Partial<Scalars['DateTime']['output']>>;
   DeleteCampaignResult: ResolverTypeWrapper<Partial<DeleteCampaignResult>>;
   DeleteCompaniesResult: ResolverTypeWrapper<Partial<DeleteCompaniesResult>>;
@@ -1958,6 +2488,7 @@ export type ResolversTypes = {
   FollowUpEmailsResult: ResolverTypeWrapper<Partial<FollowUpEmailsResult>>;
   GenerateEmailInput: ResolverTypeWrapper<Partial<GenerateEmailInput>>;
   GenerateEmailResult: ResolverTypeWrapper<Partial<GenerateEmailResult>>;
+  GenerateEmbeddingsResult: ResolverTypeWrapper<Partial<GenerateEmbeddingsResult>>;
   GenerateReplyInput: ResolverTypeWrapper<Partial<GenerateReplyInput>>;
   GenerateReplyResult: ResolverTypeWrapper<Partial<GenerateReplyResult>>;
   ImportCompaniesResult: ResolverTypeWrapper<Partial<ImportCompaniesResult>>;
@@ -1975,16 +2506,57 @@ export type ResolversTypes = {
   JSON: ResolverTypeWrapper<Partial<Scalars['JSON']['output']>>;
   LinkedInPost: ResolverTypeWrapper<Partial<LinkedInPost>>;
   LinkedInPostType: ResolverTypeWrapper<Partial<LinkedInPostType>>;
+  MLStats: ResolverTypeWrapper<Partial<MlStats>>;
   MarkRepliedResult: ResolverTypeWrapper<Partial<MarkRepliedResult>>;
   MergeCompaniesResult: ResolverTypeWrapper<Partial<MergeCompaniesResult>>;
   MergeDuplicateContactsResult: ResolverTypeWrapper<Partial<MergeDuplicateContactsResult>>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   PreviewEmailInput: ResolverTypeWrapper<Partial<PreviewEmailInput>>;
+  QualityGateResult: ResolverTypeWrapper<Partial<QualityGateResult>>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  RankedContact: ResolverTypeWrapper<Partial<RankedContact>>;
   ReceivedEmail: ResolverTypeWrapper<Partial<ReceivedEmail>>;
   ReceivedEmailsResult: ResolverTypeWrapper<Partial<ReceivedEmailsResult>>;
+  RecommendedCompany: ResolverTypeWrapper<Partial<RecommendedCompany>>;
   RefreshIntentResult: ResolverTypeWrapper<Partial<RefreshIntentResult>>;
   ResendEmailDetail: ResolverTypeWrapper<Partial<ResendEmailDetail>>;
+  SalescueAnalyzeResult: ResolverTypeWrapper<Partial<SalescueAnalyzeResult>>;
+  SalescueAnomalyResult: ResolverTypeWrapper<Partial<SalescueAnomalyResult>>;
+  SalescueBanditAlternative: ResolverTypeWrapper<Partial<SalescueBanditAlternative>>;
+  SalescueBanditArm: ResolverTypeWrapper<Partial<SalescueBanditArm>>;
+  SalescueBanditResult: ResolverTypeWrapper<Partial<SalescueBanditResult>>;
+  SalescueCallResult: ResolverTypeWrapper<Partial<SalescueCallResult>>;
+  SalescueCoachingCard: ResolverTypeWrapper<Partial<SalescueCoachingCard>>;
+  SalescueCommitment: ResolverTypeWrapper<Partial<SalescueCommitment>>;
+  SalescueEmailgenResult: ResolverTypeWrapper<Partial<SalescueEmailgenResult>>;
+  SalescueEntitiesResult: ResolverTypeWrapper<Partial<SalescueEntitiesResult>>;
+  SalescueEntity: ResolverTypeWrapper<Partial<SalescueEntity>>;
+  SalescueGraphResult: ResolverTypeWrapper<Partial<SalescueGraphResult>>;
+  SalescueGraphSignal: ResolverTypeWrapper<Partial<SalescueGraphSignal>>;
+  SalescueHealth: ResolverTypeWrapper<Partial<SalescueHealth>>;
+  SalescueICPDimensionFit: ResolverTypeWrapper<Partial<SalescueIcpDimensionFit>>;
+  SalescueICPResult: ResolverTypeWrapper<Partial<SalescueIcpResult>>;
+  SalescueIntentResult: ResolverTypeWrapper<Partial<SalescueIntentResult>>;
+  SalescueIntentTrajectory: ResolverTypeWrapper<Partial<SalescueIntentTrajectory>>;
+  SalescueModule: ResolverTypeWrapper<Partial<SalescueModule>>;
+  SalescueModuleError: ResolverTypeWrapper<Partial<SalescueModuleError>>;
+  SalescueObjectionResult: ResolverTypeWrapper<Partial<SalescueObjectionResult>>;
+  SalescueReplyEvidence: ResolverTypeWrapper<Partial<SalescueReplyEvidence>>;
+  SalescueReplyResult: ResolverTypeWrapper<Partial<SalescueReplyResult>>;
+  SalescueScoreCategories: ResolverTypeWrapper<Partial<SalescueScoreCategories>>;
+  SalescueScoreResult: ResolverTypeWrapper<Partial<SalescueScoreResult>>;
+  SalescueScoreSignal: ResolverTypeWrapper<Partial<SalescueScoreSignal>>;
+  SalescueSentimentEvidence: ResolverTypeWrapper<Partial<SalescueSentimentEvidence>>;
+  SalescueSentimentResult: ResolverTypeWrapper<Partial<SalescueSentimentResult>>;
+  SalescueSimilarCompany: ResolverTypeWrapper<Partial<SalescueSimilarCompany>>;
+  SalescueSpamResult: ResolverTypeWrapper<Partial<SalescueSpamResult>>;
+  SalescueSubjectRanking: ResolverTypeWrapper<Partial<SalescueSubjectRanking>>;
+  SalescueSubjectResult: ResolverTypeWrapper<Partial<SalescueSubjectResult>>;
+  SalescueSurvivalResult: ResolverTypeWrapper<Partial<SalescueSurvivalResult>>;
+  SalescueTriggerEvent: ResolverTypeWrapper<Partial<SalescueTriggerEvent>>;
+  SalescueTriggerTemporalFeatures: ResolverTypeWrapper<Partial<SalescueTriggerTemporalFeatures>>;
+  SalescueTriggersResult: ResolverTypeWrapper<Partial<SalescueTriggersResult>>;
+  SalescueTurningPoint: ResolverTypeWrapper<Partial<SalescueTurningPoint>>;
   ScheduleBatchEmailsInput: ResolverTypeWrapper<Partial<ScheduleBatchEmailsInput>>;
   ScheduleBatchResult: ResolverTypeWrapper<Partial<ScheduleBatchResult>>;
   ScoreContactsMLResult: ResolverTypeWrapper<Partial<ScoreContactsMlResult>>;
@@ -1994,6 +2566,7 @@ export type ResolversTypes = {
   SendOutreachEmailInput: ResolverTypeWrapper<Partial<SendOutreachEmailInput>>;
   SendOutreachEmailResult: ResolverTypeWrapper<Partial<SendOutreachEmailResult>>;
   SignalTypeCount: ResolverTypeWrapper<Partial<SignalTypeCount>>;
+  SimilarCompanyResult: ResolverTypeWrapper<Partial<SimilarCompanyResult>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
@@ -2051,6 +2624,7 @@ export type ResolversParentTypes = {
   CreateContactInput: Partial<CreateContactInput>;
   CreateEmailTemplateInput: Partial<CreateEmailTemplateInput>;
   CreateReminderInput: Partial<CreateReminderInput>;
+  DataQualityScore: Partial<DataQualityScore>;
   DateTime: Partial<Scalars['DateTime']['output']>;
   DeleteCampaignResult: Partial<DeleteCampaignResult>;
   DeleteCompaniesResult: Partial<DeleteCompaniesResult>;
@@ -2080,6 +2654,7 @@ export type ResolversParentTypes = {
   FollowUpEmailsResult: Partial<FollowUpEmailsResult>;
   GenerateEmailInput: Partial<GenerateEmailInput>;
   GenerateEmailResult: Partial<GenerateEmailResult>;
+  GenerateEmbeddingsResult: Partial<GenerateEmbeddingsResult>;
   GenerateReplyInput: Partial<GenerateReplyInput>;
   GenerateReplyResult: Partial<GenerateReplyResult>;
   ImportCompaniesResult: Partial<ImportCompaniesResult>;
@@ -2095,16 +2670,56 @@ export type ResolversParentTypes = {
   IntentSignalsResponse: Partial<IntentSignalsResponse>;
   JSON: Partial<Scalars['JSON']['output']>;
   LinkedInPost: Partial<LinkedInPost>;
+  MLStats: Partial<MlStats>;
   MarkRepliedResult: Partial<MarkRepliedResult>;
   MergeCompaniesResult: Partial<MergeCompaniesResult>;
   MergeDuplicateContactsResult: Partial<MergeDuplicateContactsResult>;
   Mutation: Record<PropertyKey, never>;
   PreviewEmailInput: Partial<PreviewEmailInput>;
+  QualityGateResult: Partial<QualityGateResult>;
   Query: Record<PropertyKey, never>;
+  RankedContact: Partial<RankedContact>;
   ReceivedEmail: Partial<ReceivedEmail>;
   ReceivedEmailsResult: Partial<ReceivedEmailsResult>;
+  RecommendedCompany: Partial<RecommendedCompany>;
   RefreshIntentResult: Partial<RefreshIntentResult>;
   ResendEmailDetail: Partial<ResendEmailDetail>;
+  SalescueAnalyzeResult: Partial<SalescueAnalyzeResult>;
+  SalescueAnomalyResult: Partial<SalescueAnomalyResult>;
+  SalescueBanditAlternative: Partial<SalescueBanditAlternative>;
+  SalescueBanditArm: Partial<SalescueBanditArm>;
+  SalescueBanditResult: Partial<SalescueBanditResult>;
+  SalescueCallResult: Partial<SalescueCallResult>;
+  SalescueCoachingCard: Partial<SalescueCoachingCard>;
+  SalescueCommitment: Partial<SalescueCommitment>;
+  SalescueEmailgenResult: Partial<SalescueEmailgenResult>;
+  SalescueEntitiesResult: Partial<SalescueEntitiesResult>;
+  SalescueEntity: Partial<SalescueEntity>;
+  SalescueGraphResult: Partial<SalescueGraphResult>;
+  SalescueGraphSignal: Partial<SalescueGraphSignal>;
+  SalescueHealth: Partial<SalescueHealth>;
+  SalescueICPDimensionFit: Partial<SalescueIcpDimensionFit>;
+  SalescueICPResult: Partial<SalescueIcpResult>;
+  SalescueIntentResult: Partial<SalescueIntentResult>;
+  SalescueIntentTrajectory: Partial<SalescueIntentTrajectory>;
+  SalescueModuleError: Partial<SalescueModuleError>;
+  SalescueObjectionResult: Partial<SalescueObjectionResult>;
+  SalescueReplyEvidence: Partial<SalescueReplyEvidence>;
+  SalescueReplyResult: Partial<SalescueReplyResult>;
+  SalescueScoreCategories: Partial<SalescueScoreCategories>;
+  SalescueScoreResult: Partial<SalescueScoreResult>;
+  SalescueScoreSignal: Partial<SalescueScoreSignal>;
+  SalescueSentimentEvidence: Partial<SalescueSentimentEvidence>;
+  SalescueSentimentResult: Partial<SalescueSentimentResult>;
+  SalescueSimilarCompany: Partial<SalescueSimilarCompany>;
+  SalescueSpamResult: Partial<SalescueSpamResult>;
+  SalescueSubjectRanking: Partial<SalescueSubjectRanking>;
+  SalescueSubjectResult: Partial<SalescueSubjectResult>;
+  SalescueSurvivalResult: Partial<SalescueSurvivalResult>;
+  SalescueTriggerEvent: Partial<SalescueTriggerEvent>;
+  SalescueTriggerTemporalFeatures: Partial<SalescueTriggerTemporalFeatures>;
+  SalescueTriggersResult: Partial<SalescueTriggersResult>;
+  SalescueTurningPoint: Partial<SalescueTurningPoint>;
   ScheduleBatchEmailsInput: Partial<ScheduleBatchEmailsInput>;
   ScheduleBatchResult: Partial<ScheduleBatchResult>;
   ScoreContactsMLResult: Partial<ScoreContactsMlResult>;
@@ -2114,6 +2729,7 @@ export type ResolversParentTypes = {
   SendOutreachEmailInput: Partial<SendOutreachEmailInput>;
   SendOutreachEmailResult: Partial<SendOutreachEmailResult>;
   SignalTypeCount: Partial<SignalTypeCount>;
+  SimilarCompanyResult: Partial<SimilarCompanyResult>;
   String: Partial<Scalars['String']['output']>;
   SyncResendResult: Partial<SyncResendResult>;
   URL: Partial<Scalars['URL']['output']>;
@@ -2204,6 +2820,7 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   category?: Resolver<ResolversTypes['CompanyCategory'], ParentType, ContextType>;
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
   created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  dataQuality?: Resolver<ResolversTypes['DataQualityScore'], ParentType, ContextType>;
   deep_analysis?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2211,6 +2828,7 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, Partial<CompanyFactsArgs>>;
   facts_count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   githubUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  icpSimilarity?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   industries?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   industry?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2227,6 +2845,8 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   location?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   logo_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  qualityGate?: Resolver<ResolversTypes['QualityGateResult'], ParentType, ContextType>;
+  rankScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   score_reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   service_taxonomy?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2435,6 +3055,14 @@ export type ContactReminderWithContactResolvers<ContextType = GraphQLContext, Pa
 export type ContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactsResult'] = ResolversParentTypes['ContactsResult']> = {
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type DataQualityScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DataQualityScore'] = ResolversParentTypes['DataQualityScore']> = {
+  completeness?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  composite?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  freshness?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  missingFields?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  staleFields?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
@@ -2647,6 +3275,13 @@ export type GenerateEmailResultResolvers<ContextType = GraphQLContext, ParentTyp
   text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type GenerateEmbeddingsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateEmbeddingsResult'] = ResolversParentTypes['GenerateEmbeddingsResult']> = {
+  errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  processed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type GenerateReplyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateReplyResult'] = ResolversParentTypes['GenerateReplyResult']> = {
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2752,6 +3387,13 @@ export type LinkedInPostResolvers<ContextType = GraphQLContext, ParentType exten
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type MlStatsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MLStats'] = ResolversParentTypes['MLStats']> = {
+  companiesEmbedded?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  lastEmbeddingAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  modelsAvailable?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  totalCompanies?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export type MarkRepliedResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MarkRepliedResult'] = ResolversParentTypes['MarkRepliedResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2804,6 +3446,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   findCompanyEmails?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType, RequireFields<MutationFindCompanyEmailsArgs, 'companyId'>>;
   findContactEmail?: Resolver<ResolversTypes['FindContactEmailResult'], ParentType, ContextType, RequireFields<MutationFindContactEmailArgs, 'contactId'>>;
   flagContactsForDeletion?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationFlagContactsForDeletionArgs>>;
+  generateCompanyEmbeddings?: Resolver<ResolversTypes['GenerateEmbeddingsResult'], ParentType, ContextType, Partial<MutationGenerateCompanyEmbeddingsArgs>>;
   generateEmail?: Resolver<ResolversTypes['GenerateEmailResult'], ParentType, ContextType, RequireFields<MutationGenerateEmailArgs, 'input'>>;
   generateReply?: Resolver<ResolversTypes['GenerateReplyResult'], ParentType, ContextType, RequireFields<MutationGenerateReplyArgs, 'input'>>;
   importCompanies?: Resolver<ResolversTypes['ImportCompaniesResult'], ParentType, ContextType, RequireFields<MutationImportCompaniesArgs, 'companies'>>;
@@ -2819,6 +3462,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   previewEmail?: Resolver<ResolversTypes['EmailPreview'], ParentType, ContextType, RequireFields<MutationPreviewEmailArgs, 'input'>>;
   purgeDeletedContacts?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationPurgeDeletedContactsArgs>>;
   refreshIntentScores?: Resolver<ResolversTypes['RefreshIntentResult'], ParentType, ContextType>;
+  salescueAnalyze?: Resolver<ResolversTypes['SalescueAnalyzeResult'], ParentType, ContextType, RequireFields<MutationSalescueAnalyzeArgs, 'text'>>;
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
   scheduleFollowUpBatch?: Resolver<ResolversTypes['FollowUpBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleFollowUpBatchArgs, 'input'>>;
   scoreContactsML?: Resolver<ResolversTypes['ScoreContactsMLResult'], ParentType, ContextType, RequireFields<MutationScoreContactsMlArgs, 'companyId'>>;
@@ -2842,10 +3486,18 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
 };
 
+export type QualityGateResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['QualityGateResult'] = ResolversParentTypes['QualityGateResult']> = {
+  adjustedScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  flags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  pass?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  recommendations?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   allCompanyTags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   companies?: Resolver<ResolversTypes['CompaniesResponse'], ParentType, ContextType, Partial<QueryCompaniesArgs>>;
   companiesByIntent?: Resolver<ResolversTypes['CompaniesResponse'], ParentType, ContextType, RequireFields<QueryCompaniesByIntentArgs, 'threshold'>>;
+  companiesLike?: Resolver<Array<ResolversTypes['SimilarCompanyResult']>, ParentType, ContextType, RequireFields<QueryCompaniesLikeArgs, 'companyId'>>;
   company?: Resolver<Maybe<ResolversTypes['Company']>, ParentType, ContextType, Partial<QueryCompanyArgs>>;
   companyContactEmails?: Resolver<Array<ResolversTypes['CompanyContactEmail']>, ParentType, ContextType, RequireFields<QueryCompanyContactEmailsArgs, 'companyId'>>;
   company_facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, RequireFields<QueryCompany_FactsArgs, 'company_id'>>;
@@ -2867,10 +3519,31 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   intentSignals?: Resolver<ResolversTypes['IntentSignalsResponse'], ParentType, ContextType, RequireFields<QueryIntentSignalsArgs, 'companyId'>>;
   linkedinPost?: Resolver<Maybe<ResolversTypes['LinkedInPost']>, ParentType, ContextType, RequireFields<QueryLinkedinPostArgs, 'id'>>;
   linkedinPosts?: Resolver<Array<ResolversTypes['LinkedInPost']>, ParentType, ContextType, Partial<QueryLinkedinPostsArgs>>;
+  mlStats?: Resolver<ResolversTypes['MLStats'], ParentType, ContextType>;
   receivedEmail?: Resolver<Maybe<ResolversTypes['ReceivedEmail']>, ParentType, ContextType, RequireFields<QueryReceivedEmailArgs, 'id'>>;
   receivedEmails?: Resolver<ResolversTypes['ReceivedEmailsResult'], ParentType, ContextType, Partial<QueryReceivedEmailsArgs>>;
+  recommendedCompanies?: Resolver<Array<ResolversTypes['RecommendedCompany']>, ParentType, ContextType, Partial<QueryRecommendedCompaniesArgs>>;
+  recommendedContacts?: Resolver<Array<ResolversTypes['RankedContact']>, ParentType, ContextType, RequireFields<QueryRecommendedContactsArgs, 'companyId'>>;
   resendEmail?: Resolver<Maybe<ResolversTypes['ResendEmailDetail']>, ParentType, ContextType, RequireFields<QueryResendEmailArgs, 'resendId'>>;
+  salescueEntities?: Resolver<ResolversTypes['SalescueEntitiesResult'], ParentType, ContextType, RequireFields<QuerySalescueEntitiesArgs, 'text'>>;
+  salescueHealth?: Resolver<ResolversTypes['SalescueHealth'], ParentType, ContextType>;
+  salescueIcp?: Resolver<ResolversTypes['SalescueICPResult'], ParentType, ContextType, RequireFields<QuerySalescueIcpArgs, 'icp' | 'prospect'>>;
+  salescueIntent?: Resolver<ResolversTypes['SalescueIntentResult'], ParentType, ContextType, RequireFields<QuerySalescueIntentArgs, 'text'>>;
+  salescueObjection?: Resolver<ResolversTypes['SalescueObjectionResult'], ParentType, ContextType, RequireFields<QuerySalescueObjectionArgs, 'text'>>;
+  salescueReply?: Resolver<ResolversTypes['SalescueReplyResult'], ParentType, ContextType, RequireFields<QuerySalescueReplyArgs, 'text'>>;
+  salescueScore?: Resolver<ResolversTypes['SalescueScoreResult'], ParentType, ContextType, RequireFields<QuerySalescueScoreArgs, 'text'>>;
+  salescueSentiment?: Resolver<ResolversTypes['SalescueSentimentResult'], ParentType, ContextType, RequireFields<QuerySalescueSentimentArgs, 'text'>>;
+  salescueSpam?: Resolver<ResolversTypes['SalescueSpamResult'], ParentType, ContextType, RequireFields<QuerySalescueSpamArgs, 'text'>>;
+  salescueSubject?: Resolver<ResolversTypes['SalescueSubjectResult'], ParentType, ContextType, RequireFields<QuerySalescueSubjectArgs, 'subjects'>>;
+  salescueTriggers?: Resolver<ResolversTypes['SalescueTriggersResult'], ParentType, ContextType, RequireFields<QuerySalescueTriggersArgs, 'text'>>;
+  similarCompanies?: Resolver<Array<ResolversTypes['SimilarCompanyResult']>, ParentType, ContextType, RequireFields<QuerySimilarCompaniesArgs, 'query'>>;
   userSettings?: Resolver<Maybe<ResolversTypes['UserSettings']>, ParentType, ContextType, RequireFields<QueryUserSettingsArgs, 'userId'>>;
+};
+
+export type RankedContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RankedContact'] = ResolversParentTypes['RankedContact']> = {
+  contact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType>;
+  rankScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReceivedEmail'] = ResolversParentTypes['ReceivedEmail']> = {
@@ -2901,6 +3574,12 @@ export type ReceivedEmailsResultResolvers<ContextType = GraphQLContext, ParentTy
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
+export type RecommendedCompanyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RecommendedCompany'] = ResolversParentTypes['RecommendedCompany']> = {
+  company?: Resolver<ResolversTypes['Company'], ParentType, ContextType>;
+  reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
 export type RefreshIntentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RefreshIntentResult'] = ResolversParentTypes['RefreshIntentResult']> = {
   companiesUpdated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2918,6 +3597,304 @@ export type ResendEmailDetailResolvers<ContextType = GraphQLContext, ParentType 
   subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   to?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type SalescueAnalyzeResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueAnalyzeResult'] = ResolversParentTypes['SalescueAnalyzeResult']> = {
+  errors?: Resolver<Array<ResolversTypes['SalescueModuleError']>, ParentType, ContextType>;
+  modulesRun?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  results?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  timings?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  totalTime?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueAnomalyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueAnomalyResult'] = ResolversParentTypes['SalescueAnomalyResult']> = {
+  anomalyScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  anomalyType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  channelAttribution?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  cosineSimilarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  isAnomalous?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  textPriorAdjustment?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  typeConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  zScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueBanditAlternativeResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueBanditAlternative'] = ResolversParentTypes['SalescueBanditAlternative']> = {
+  sampledReward?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  subjectStyle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  template?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  timing?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueBanditArmResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueBanditArm'] = ResolversParentTypes['SalescueBanditArm']> = {
+  subjectStyle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  template?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  timing?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueBanditResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueBanditResult'] = ResolversParentTypes['SalescueBanditResult']> = {
+  alternatives?: Resolver<Array<ResolversTypes['SalescueBanditAlternative']>, ParentType, ContextType>;
+  armIndex?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  bestArm?: Resolver<ResolversTypes['SalescueBanditArm'], ParentType, ContextType>;
+  expectedReward?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  explorationTemperature?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  sampledReward?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  totalArms?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type SalescueCallResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueCallResult'] = ResolversParentTypes['SalescueCallResult']> = {
+  action?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  commitmentCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  commitments?: Resolver<Array<ResolversTypes['SalescueCommitment']>, ParentType, ContextType>;
+  dealHealth?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  modelConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  momentum?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  negatedCommitmentCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  turnScores?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
+  turnUncertainties?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
+  turningPoints?: Resolver<Array<ResolversTypes['SalescueTurningPoint']>, ParentType, ContextType>;
+};
+
+export type SalescueCoachingCardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueCoachingCard'] = ResolversParentTypes['SalescueCoachingCard']> = {
+  avoid?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  example?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  framework?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  steps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type SalescueCommitmentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueCommitment'] = ResolversParentTypes['SalescueCommitment']> = {
+  negated?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  pattern?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  speaker?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  turn?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueEmailgenResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueEmailgenResult'] = ResolversParentTypes['SalescueEmailgenResult']> = {
+  contextUsed?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  emailType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  hasCallToAction?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  promptTokens?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  wordCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type SalescueEntitiesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueEntitiesResult'] = ResolversParentTypes['SalescueEntitiesResult']> = {
+  entities?: Resolver<Array<ResolversTypes['SalescueEntity']>, ParentType, ContextType>;
+  neuralCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  regexCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  typesFound?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type SalescueEntityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueEntity'] = ResolversParentTypes['SalescueEntity']> = {
+  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  endChar?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  roleScores?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  source?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  startChar?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueGraphResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueGraphResult'] = ResolversParentTypes['SalescueGraphResult']> = {
+  edgeCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  graphLabel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  graphScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  graphSignals?: Resolver<Array<ResolversTypes['SalescueGraphSignal']>, ParentType, ContextType>;
+  labelConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  nodeCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  note?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  similarCompanies?: Resolver<Array<ResolversTypes['SalescueSimilarCompany']>, ParentType, ContextType>;
+};
+
+export type SalescueGraphSignalResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueGraphSignal'] = ResolversParentTypes['SalescueGraphSignal']> = {
+  strength?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  with?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueHealthResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueHealth'] = ResolversParentTypes['SalescueHealth']> = {
+  device?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  moduleCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  modules?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  version?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueIcpDimensionFitResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueICPDimensionFit'] = ResolversParentTypes['SalescueICPDimensionFit']> = {
+  distance?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  fit?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  icpSpread?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueIcpResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueICPResult'] = ResolversParentTypes['SalescueICPResult']> = {
+  dealbreakers?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  dimensions?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  missing?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  qualified?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueIntentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueIntentResult'] = ResolversParentTypes['SalescueIntentResult']> = {
+  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  dataPoints?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  distribution?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  stage?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  trajectory?: Resolver<Maybe<ResolversTypes['SalescueIntentTrajectory']>, ParentType, ContextType>;
+};
+
+export type SalescueIntentTrajectoryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueIntentTrajectory'] = ResolversParentTypes['SalescueIntentTrajectory']> = {
+  acceleration?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  currentIntensity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  daysToPurchase?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  direction?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  velocity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueModuleErrorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueModuleError'] = ResolversParentTypes['SalescueModuleError']> = {
+  error?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  module?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueObjectionResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueObjectionResult'] = ResolversParentTypes['SalescueObjectionResult']> = {
+  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  categoryConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  coaching?: Resolver<ResolversTypes['SalescueCoachingCard'], ParentType, ContextType>;
+  objectionType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  severity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  topTypes?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  typeConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueReplyEvidenceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueReplyEvidence'] = ResolversParentTypes['SalescueReplyEvidence']> = {
+  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueReplyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueReplyResult'] = ResolversParentTypes['SalescueReplyResult']> = {
+  active?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  alternativeConfigs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  configurationScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  evidence?: Resolver<Array<ResolversTypes['SalescueReplyEvidence']>, ParentType, ContextType>;
+  primary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  scores?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+};
+
+export type SalescueScoreCategoriesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueScoreCategories'] = ResolversParentTypes['SalescueScoreCategories']> = {
+  analytics?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  automation?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  engagement?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  enrichment?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  intent?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  outreach?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueScoreResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueScoreResult'] = ResolversParentTypes['SalescueScoreResult']> = {
+  categories?: Resolver<ResolversTypes['SalescueScoreCategories'], ParentType, ContextType>;
+  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  nSignalsDetected?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  signals?: Resolver<Array<ResolversTypes['SalescueScoreSignal']>, ParentType, ContextType>;
+};
+
+export type SalescueScoreSignalResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueScoreSignal'] = ResolversParentTypes['SalescueScoreSignal']> = {
+  attendedPositions?: Resolver<Array<ResolversTypes['Int']>, ParentType, ContextType>;
+  attributionType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  causalImpact?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  signal?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  strength?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueSentimentEvidenceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSentimentEvidence'] = ResolversParentTypes['SalescueSentimentEvidence']> = {
+  signal?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueSentimentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSentimentResult'] = ResolversParentTypes['SalescueSentimentResult']> = {
+  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  contextGate?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  evidence?: Resolver<Array<ResolversTypes['SalescueSentimentEvidence']>, ParentType, ContextType>;
+  intent?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  interactionWeight?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  interpretation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  inverted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  sentiment?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueSimilarCompanyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSimilarCompany'] = ResolversParentTypes['SalescueSimilarCompany']> = {
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueSpamResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSpamResult'] = ResolversParentTypes['SalescueSpamResult']> = {
+  aiRisk?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  aspectScores?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  categoryScores?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  deliverability?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  gateConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  gateDecision?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  provider?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  providerScores?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  riskFactors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  riskLevel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  spamCategory?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  spamScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueSubjectRankingResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSubjectRanking'] = ResolversParentTypes['SalescueSubjectRanking']> = {
+  rank?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueSubjectResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSubjectResult'] = ResolversParentTypes['SalescueSubjectResult']> = {
+  best?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  ranking?: Resolver<Array<ResolversTypes['SalescueSubjectRanking']>, ParentType, ContextType>;
+  worst?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueSurvivalResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSurvivalResult'] = ResolversParentTypes['SalescueSurvivalResult']> = {
+  medianDaysToConversion?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  pConvert30d?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  pConvert90d?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  riskConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  riskGroup?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  survivalCurve?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+  weibullParams?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
+};
+
+export type SalescueTriggerEventResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueTriggerEvent'] = ResolversParentTypes['SalescueTriggerEvent']> = {
+  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  displacementCi?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
+  displacementDays?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  displacementUncertainty?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  fresh?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  freshness?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  temporalFeatures?: Resolver<ResolversTypes['SalescueTriggerTemporalFeatures'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type SalescueTriggerTemporalFeaturesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueTriggerTemporalFeatures'] = ResolversParentTypes['SalescueTriggerTemporalFeatures']> = {
+  pastSignal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  recentSignal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  todaySignal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type SalescueTriggersResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueTriggersResult'] = ResolversParentTypes['SalescueTriggersResult']> = {
+  events?: Resolver<Array<ResolversTypes['SalescueTriggerEvent']>, ParentType, ContextType>;
+  primary?: Resolver<Maybe<ResolversTypes['SalescueTriggerEvent']>, ParentType, ContextType>;
+};
+
+export type SalescueTurningPointResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueTurningPoint'] = ResolversParentTypes['SalescueTurningPoint']> = {
+  delta?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  direction?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  probability?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  speaker?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  turn?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  uncertainty?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
 export type ScheduleBatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScheduleBatchResult'] = ResolversParentTypes['ScheduleBatchResult']> = {
@@ -2960,6 +3937,11 @@ export type SendOutreachEmailResultResolvers<ContextType = GraphQLContext, Paren
 export type SignalTypeCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SignalTypeCount'] = ResolversParentTypes['SignalTypeCount']> = {
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   signalType?: Resolver<ResolversTypes['IntentSignalType'], ParentType, ContextType>;
+};
+
+export type SimilarCompanyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SimilarCompanyResult'] = ResolversParentTypes['SimilarCompanyResult']> = {
+  company?: Resolver<ResolversTypes['Company'], ParentType, ContextType>;
+  similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
 export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SyncResendResult'] = ResolversParentTypes['SyncResendResult']> = {
@@ -3042,6 +4024,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ContactReminder?: ContactReminderResolvers<ContextType>;
   ContactReminderWithContact?: ContactReminderWithContactResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
+  DataQualityScore?: DataQualityScoreResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   DeleteCampaignResult?: DeleteCampaignResultResolvers<ContextType>;
   DeleteCompaniesResult?: DeleteCompaniesResultResolvers<ContextType>;
@@ -3067,6 +4050,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   FollowUpEmail?: FollowUpEmailResolvers<ContextType>;
   FollowUpEmailsResult?: FollowUpEmailsResultResolvers<ContextType>;
   GenerateEmailResult?: GenerateEmailResultResolvers<ContextType>;
+  GenerateEmbeddingsResult?: GenerateEmbeddingsResultResolvers<ContextType>;
   GenerateReplyResult?: GenerateReplyResultResolvers<ContextType>;
   ImportCompaniesResult?: ImportCompaniesResultResolvers<ContextType>;
   ImportCompanyResult?: ImportCompanyResultResolvers<ContextType>;
@@ -3078,21 +4062,62 @@ export type Resolvers<ContextType = GraphQLContext> = {
   IntentSignalsResponse?: IntentSignalsResponseResolvers<ContextType>;
   JSON?: GraphQLScalarType;
   LinkedInPost?: LinkedInPostResolvers<ContextType>;
+  MLStats?: MlStatsResolvers<ContextType>;
   MarkRepliedResult?: MarkRepliedResultResolvers<ContextType>;
   MergeCompaniesResult?: MergeCompaniesResultResolvers<ContextType>;
   MergeDuplicateContactsResult?: MergeDuplicateContactsResultResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
+  QualityGateResult?: QualityGateResultResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
+  RankedContact?: RankedContactResolvers<ContextType>;
   ReceivedEmail?: ReceivedEmailResolvers<ContextType>;
   ReceivedEmailsResult?: ReceivedEmailsResultResolvers<ContextType>;
+  RecommendedCompany?: RecommendedCompanyResolvers<ContextType>;
   RefreshIntentResult?: RefreshIntentResultResolvers<ContextType>;
   ResendEmailDetail?: ResendEmailDetailResolvers<ContextType>;
+  SalescueAnalyzeResult?: SalescueAnalyzeResultResolvers<ContextType>;
+  SalescueAnomalyResult?: SalescueAnomalyResultResolvers<ContextType>;
+  SalescueBanditAlternative?: SalescueBanditAlternativeResolvers<ContextType>;
+  SalescueBanditArm?: SalescueBanditArmResolvers<ContextType>;
+  SalescueBanditResult?: SalescueBanditResultResolvers<ContextType>;
+  SalescueCallResult?: SalescueCallResultResolvers<ContextType>;
+  SalescueCoachingCard?: SalescueCoachingCardResolvers<ContextType>;
+  SalescueCommitment?: SalescueCommitmentResolvers<ContextType>;
+  SalescueEmailgenResult?: SalescueEmailgenResultResolvers<ContextType>;
+  SalescueEntitiesResult?: SalescueEntitiesResultResolvers<ContextType>;
+  SalescueEntity?: SalescueEntityResolvers<ContextType>;
+  SalescueGraphResult?: SalescueGraphResultResolvers<ContextType>;
+  SalescueGraphSignal?: SalescueGraphSignalResolvers<ContextType>;
+  SalescueHealth?: SalescueHealthResolvers<ContextType>;
+  SalescueICPDimensionFit?: SalescueIcpDimensionFitResolvers<ContextType>;
+  SalescueICPResult?: SalescueIcpResultResolvers<ContextType>;
+  SalescueIntentResult?: SalescueIntentResultResolvers<ContextType>;
+  SalescueIntentTrajectory?: SalescueIntentTrajectoryResolvers<ContextType>;
+  SalescueModuleError?: SalescueModuleErrorResolvers<ContextType>;
+  SalescueObjectionResult?: SalescueObjectionResultResolvers<ContextType>;
+  SalescueReplyEvidence?: SalescueReplyEvidenceResolvers<ContextType>;
+  SalescueReplyResult?: SalescueReplyResultResolvers<ContextType>;
+  SalescueScoreCategories?: SalescueScoreCategoriesResolvers<ContextType>;
+  SalescueScoreResult?: SalescueScoreResultResolvers<ContextType>;
+  SalescueScoreSignal?: SalescueScoreSignalResolvers<ContextType>;
+  SalescueSentimentEvidence?: SalescueSentimentEvidenceResolvers<ContextType>;
+  SalescueSentimentResult?: SalescueSentimentResultResolvers<ContextType>;
+  SalescueSimilarCompany?: SalescueSimilarCompanyResolvers<ContextType>;
+  SalescueSpamResult?: SalescueSpamResultResolvers<ContextType>;
+  SalescueSubjectRanking?: SalescueSubjectRankingResolvers<ContextType>;
+  SalescueSubjectResult?: SalescueSubjectResultResolvers<ContextType>;
+  SalescueSurvivalResult?: SalescueSurvivalResultResolvers<ContextType>;
+  SalescueTriggerEvent?: SalescueTriggerEventResolvers<ContextType>;
+  SalescueTriggerTemporalFeatures?: SalescueTriggerTemporalFeaturesResolvers<ContextType>;
+  SalescueTriggersResult?: SalescueTriggersResultResolvers<ContextType>;
+  SalescueTurningPoint?: SalescueTurningPointResolvers<ContextType>;
   ScheduleBatchResult?: ScheduleBatchResultResolvers<ContextType>;
   ScoreContactsMLResult?: ScoreContactsMlResultResolvers<ContextType>;
   SendEmailResult?: SendEmailResultResolvers<ContextType>;
   SendNowResult?: SendNowResultResolvers<ContextType>;
   SendOutreachEmailResult?: SendOutreachEmailResultResolvers<ContextType>;
   SignalTypeCount?: SignalTypeCountResolvers<ContextType>;
+  SimilarCompanyResult?: SimilarCompanyResultResolvers<ContextType>;
   SyncResendResult?: SyncResendResultResolvers<ContextType>;
   URL?: GraphQLScalarType;
   UnverifyContactsResult?: UnverifyContactsResultResolvers<ContextType>;
