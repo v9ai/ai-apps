@@ -14,6 +14,8 @@ dependencies = [
     "protobuf>=4.0",
     "sentencepiece>=0.1.99",
     "tiktoken>=0.5",
+    "httpx>=0.27",
+    "asyncpg>=0.29",
 ]
 
 [project.optional-dependencies]
