@@ -250,32 +250,7 @@ function PrepPageInner() {
     }
   }, [params.id, router]);
 
-  if (loading) {
-    return (
-      <Box px={{ initial: "4", md: "8" }} py="8">
-        <Skeleton height="32px" mb="6" style={{ maxWidth: 300 }} />
-        <Skeleton height="600px" />
-      </Box>
-    );
-  }
-
-  if (error || !app) {
-    return (
-      <Box px={{ initial: "4", md: "8" }} py="8">
-        <Card>
-          <Flex direction="column" align="center" gap="4" p="6">
-            <Heading size="5">{error ? "Error" : "Not Found"}</Heading>
-            <Text color="gray">{error ?? "This application doesn\u2019t exist or you don\u2019t have access."}</Text>
-            <Button asChild>
-              <Link href="/applications">Back to Applications</Link>
-            </Button>
-          </Flex>
-        </Card>
-      </Box>
-    );
-  }
-
-  const content = app.aiInterviewQuestions;
+  const content = app?.aiInterviewQuestions;
   const processed = useMemo(() => content ? groupCodeBlocks(content) : null, [content]);
 
   const mdComponents = useMemo(() => ({
@@ -428,6 +403,31 @@ function PrepPageInner() {
     ),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as any, []);
+
+  if (loading) {
+    return (
+      <Box px={{ initial: "4", md: "8" }} py="8">
+        <Skeleton height="32px" mb="6" style={{ maxWidth: 300 }} />
+        <Skeleton height="600px" />
+      </Box>
+    );
+  }
+
+  if (error || !app) {
+    return (
+      <Box px={{ initial: "4", md: "8" }} py="8">
+        <Card>
+          <Flex direction="column" align="center" gap="4" p="6">
+            <Heading size="5">{error ? "Error" : "Not Found"}</Heading>
+            <Text color="gray">{error ?? "This application doesn\u2019t exist or you don\u2019t have access."}</Text>
+            <Button asChild>
+              <Link href="/applications">Back to Applications</Link>
+            </Button>
+          </Flex>
+        </Card>
+      </Box>
+    );
+  }
 
   return (
     <Box px={{ initial: "4", md: "8" }} py={{ initial: "4", md: "8" }}>
