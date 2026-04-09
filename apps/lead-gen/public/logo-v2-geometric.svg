@@ -1,0 +1,282 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 140" width="300" height="140">
+  <title>Agentic Lead Gen</title>
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#030712"/>
+      <stop offset="100%" stop-color="#0a0f1e"/>
+    </linearGradient>
+
+    <!-- Primary cyan gradient -->
+    <linearGradient id="cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
+
+    <!-- Electric blue gradient -->
+    <linearGradient id="blue" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+
+    <!-- Funnel gradient top to bottom -->
+    <linearGradient id="funnelGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#0ea5e9" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.25"/>
+    </linearGradient>
+
+    <!-- Convergence gradient for the central diamond -->
+    <linearGradient id="diamondGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.9"/>
+    </linearGradient>
+
+    <!-- Node glow -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft glow for the central form -->
+    <filter id="coreGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle outer glow -->
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Radial pulse for center -->
+    <radialGradient id="pulse" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#0ea5e9" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Clip for clean edges -->
+    <clipPath id="frame">
+      <rect width="300" height="140" rx="4"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <!-- Background -->
+    <rect width="300" height="140" fill="url(#bg)" rx="4"/>
+
+    <!-- Subtle grid pattern - mathematical precision -->
+    <!-- Golden ratio subdivisions: 300/1.618 ~ 185.4, 140/1.618 ~ 86.5 -->
+    <line x1="0" y1="86.5" x2="300" y2="86.5" stroke="#1e3a5f" stroke-width="0.3" opacity="0.12"/>
+    <line x1="0" y1="53.5" x2="300" y2="53.5" stroke="#1e3a5f" stroke-width="0.3" opacity="0.08"/>
+    <line x1="185.4" y1="0" x2="185.4" y2="140" stroke="#1e3a5f" stroke-width="0.3" opacity="0.12"/>
+    <line x1="114.6" y1="0" x2="114.6" y2="140" stroke="#1e3a5f" stroke-width="0.3" opacity="0.08"/>
+
+    <!-- ============================================ -->
+    <!-- SACRED GEOMETRY FUNNEL - Left side mark      -->
+    <!-- Center of mark: x=70, y=70                   -->
+    <!-- ============================================ -->
+
+    <!-- Outer hexagonal ring - represents the wide discovery net -->
+    <!-- Hexagon vertices at r=48 from center (70,70) -->
+    <polygon
+      points="118,70 94,111.7 46,111.7 22,70 46,28.3 94,28.3"
+      fill="none"
+      stroke="#0ea5e9"
+      stroke-width="0.6"
+      opacity="0.2"
+    />
+
+    <!-- Middle hexagonal ring - enrichment layer, r=36 -->
+    <polygon
+      points="106,70 88,101.2 52,101.2 34,70 52,38.8 88,38.8"
+      fill="none"
+      stroke="#0ea5e9"
+      stroke-width="0.5"
+      opacity="0.15"
+    />
+
+    <!-- Convergence funnel shape: wide top, narrow bottom -->
+    <!-- This is the core visual metaphor: leads converge -->
+    <path
+      d="M 38,32 L 102,32 L 82,108 L 58,108 Z"
+      fill="url(#funnelGrad)"
+      stroke="none"
+    />
+
+    <!-- Funnel edges - precise geometric lines -->
+    <line x1="38" y1="32" x2="58" y2="108" stroke="#06b6d4" stroke-width="1" opacity="0.5"/>
+    <line x1="102" y1="32" x2="82" y2="108" stroke="#06b6d4" stroke-width="1" opacity="0.5"/>
+    <line x1="38" y1="32" x2="102" y2="32" stroke="#06b6d4" stroke-width="0.8" opacity="0.35"/>
+    <line x1="58" y1="108" x2="82" y2="108" stroke="#06b6d4" stroke-width="1.2" opacity="0.7"/>
+
+    <!-- Horizontal tier lines inside funnel (pipeline stages) -->
+    <!-- Stage 1: Discovery (widest) y=32 already the top -->
+    <!-- Stage 2: Enrichment y=51 -->
+    <line x1="46.4" y1="51" x2="93.6" y2="51" stroke="#0ea5e9" stroke-width="0.6" opacity="0.3"/>
+    <!-- Stage 3: Contacts y=70 (golden center) -->
+    <line x1="54.8" y1="70" x2="85.2" y2="70" stroke="#0ea5e9" stroke-width="0.6" opacity="0.35"/>
+    <!-- Stage 4: Qualification y=89 -->
+    <line x1="63.2" y1="89" x2="76.8" y2="89" stroke="#0ea5e9" stroke-width="0.6" opacity="0.4"/>
+
+    <!-- Agent nodes - 5 autonomous agents as precise circles -->
+    <!-- Scattered across funnel stages, connected by thin lines -->
+
+    <!-- Agent 1: Discovery Scout - top left of funnel -->
+    <circle cx="46" cy="38" r="3.5" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity="0.8" filter="url(#glow)"/>
+    <circle cx="46" cy="38" r="1.2" fill="#22d3ee" opacity="0.9"/>
+
+    <!-- Agent 2: Enrichment - top right of funnel -->
+    <circle cx="94" cy="38" r="3.5" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity="0.8" filter="url(#glow)"/>
+    <circle cx="94" cy="38" r="1.2" fill="#22d3ee" opacity="0.9"/>
+
+    <!-- Agent 3: Contact Hunter - mid funnel -->
+    <circle cx="70" cy="57" r="3.5" fill="none" stroke="#38bdf8" stroke-width="1.2" opacity="0.8" filter="url(#glow)"/>
+    <circle cx="70" cy="57" r="1.2" fill="#38bdf8" opacity="0.9"/>
+
+    <!-- Agent 4: QA Auditor - lower funnel -->
+    <circle cx="62" cy="82" r="3" fill="none" stroke="#0ea5e9" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+    <circle cx="62" cy="82" r="1" fill="#0ea5e9" opacity="0.9"/>
+
+    <!-- Agent 5: Outreach - lower funnel -->
+    <circle cx="78" cy="82" r="3" fill="none" stroke="#0ea5e9" stroke-width="1" opacity="0.7" filter="url(#glow)"/>
+    <circle cx="78" cy="82" r="1" fill="#0ea5e9" opacity="0.9"/>
+
+    <!-- Inter-agent connection lines (neural network / mesh) -->
+    <line x1="46" y1="38" x2="70" y2="57" stroke="#22d3ee" stroke-width="0.5" opacity="0.25"/>
+    <line x1="94" y1="38" x2="70" y2="57" stroke="#22d3ee" stroke-width="0.5" opacity="0.25"/>
+    <line x1="70" y1="57" x2="62" y2="82" stroke="#0ea5e9" stroke-width="0.5" opacity="0.2"/>
+    <line x1="70" y1="57" x2="78" y2="82" stroke="#0ea5e9" stroke-width="0.5" opacity="0.2"/>
+    <line x1="62" y1="82" x2="78" y2="82" stroke="#0ea5e9" stroke-width="0.5" opacity="0.2"/>
+    <line x1="46" y1="38" x2="94" y2="38" stroke="#22d3ee" stroke-width="0.4" opacity="0.15"/>
+
+    <!-- Central AI "eye" / diamond - the intelligence core -->
+    <!-- Positioned at the golden ratio intersection -->
+    <g transform="translate(70, 70)" filter="url(#coreGlow)">
+      <!-- Pulsing radial -->
+      <circle r="14" fill="url(#pulse)"/>
+      <!-- Inner diamond (rotated square) - the AI core -->
+      <rect x="-6" y="-6" width="12" height="12" rx="1"
+        transform="rotate(45)"
+        fill="none"
+        stroke="#22d3ee"
+        stroke-width="1.5"
+        opacity="0.9"
+      />
+      <!-- Innermost point - the singularity -->
+      <circle r="2.5" fill="#22d3ee" opacity="1"/>
+    </g>
+
+    <!-- Output beam from funnel bottom - qualified leads emerge -->
+    <line x1="70" y1="108" x2="70" y2="128" stroke="#06b6d4" stroke-width="1.5" opacity="0.6" filter="url(#softGlow)"/>
+    <circle cx="70" cy="128" r="2.5" fill="#06b6d4" opacity="0.8" filter="url(#glow)"/>
+
+    <!-- Floating data particles entering the funnel top -->
+    <circle cx="42" cy="22" r="1.2" fill="#64748b" opacity="0.5"/>
+    <circle cx="55" cy="18" r="1" fill="#64748b" opacity="0.4"/>
+    <circle cx="70" cy="16" r="1.3" fill="#64748b" opacity="0.5"/>
+    <circle cx="85" cy="18" r="1" fill="#64748b" opacity="0.4"/>
+    <circle cx="98" cy="22" r="1.2" fill="#64748b" opacity="0.5"/>
+    <!-- Smaller scattered particles -->
+    <circle cx="48" cy="14" r="0.7" fill="#475569" opacity="0.3"/>
+    <circle cx="63" cy="12" r="0.8" fill="#475569" opacity="0.35"/>
+    <circle cx="77" cy="12" r="0.8" fill="#475569" opacity="0.35"/>
+    <circle cx="92" cy="14" r="0.7" fill="#475569" opacity="0.3"/>
+
+    <!-- ============================================ -->
+    <!-- TYPOGRAPHY - Right side                      -->
+    <!-- ============================================ -->
+
+    <!-- "AGENTIC" - Primary text, geometric weight -->
+    <text
+      x="136" y="62"
+      font-family="'SF Pro Display', 'Inter', 'Helvetica Neue', system-ui, sans-serif"
+      font-size="28"
+      font-weight="700"
+      letter-spacing="4"
+      fill="#e2e8f0"
+    >AGENTIC</text>
+
+    <!-- "LEAD GEN" - Secondary text, lighter -->
+    <text
+      x="136" y="88"
+      font-family="'SF Pro Display', 'Inter', 'Helvetica Neue', system-ui, sans-serif"
+      font-size="16"
+      font-weight="300"
+      letter-spacing="8"
+      fill="#64748b"
+    >LEAD GEN</text>
+
+    <!-- Thin geometric separator line between text lines -->
+    <line x1="136" y1="69" x2="210" y2="69" stroke="#0ea5e9" stroke-width="0.8" opacity="0.35"/>
+
+    <!-- Small geometric accent - three dots (ellipsis of precision) -->
+    <circle cx="136" cy="102" r="1.5" fill="#0ea5e9" opacity="0.5"/>
+    <circle cx="144" cy="102" r="1.5" fill="#0891b2" opacity="0.4"/>
+    <circle cx="152" cy="102" r="1.5" fill="#0e7490" opacity="0.3"/>
+
+    <!-- ============================================ -->
+    <!-- SACRED GEOMETRY ACCENTS                      -->
+    <!-- ============================================ -->
+
+    <!-- Golden spiral hint - top right corner -->
+    <path
+      d="M 270,10 Q 280,10 280,20"
+      fill="none"
+      stroke="#0ea5e9"
+      stroke-width="0.5"
+      opacity="0.15"
+    />
+    <path
+      d="M 264,10 Q 280,10 280,26"
+      fill="none"
+      stroke="#0ea5e9"
+      stroke-width="0.4"
+      opacity="0.1"
+    />
+    <path
+      d="M 258,10 Q 280,10 280,32"
+      fill="none"
+      stroke="#0ea5e9"
+      stroke-width="0.3"
+      opacity="0.08"
+    />
+
+    <!-- Fibonacci dot sequence along bottom -->
+    <!-- Spacing: 1, 1, 2, 3, 5, 8 pixels (scaled x3) -->
+    <circle cx="136" cy="125" r="0.6" fill="#334155" opacity="0.4"/>
+    <circle cx="139" cy="125" r="0.6" fill="#334155" opacity="0.4"/>
+    <circle cx="145" cy="125" r="0.6" fill="#334155" opacity="0.35"/>
+    <circle cx="154" cy="125" r="0.6" fill="#334155" opacity="0.3"/>
+    <circle cx="169" cy="125" r="0.6" fill="#334155" opacity="0.25"/>
+    <circle cx="193" cy="125" r="0.6" fill="#334155" opacity="0.2"/>
+
+    <!-- Vesica piscis outline hint - very subtle, bottom-left -->
+    <circle cx="25" cy="130" r="8" fill="none" stroke="#1e3a5f" stroke-width="0.3" opacity="0.1"/>
+    <circle cx="31" cy="130" r="8" fill="none" stroke="#1e3a5f" stroke-width="0.3" opacity="0.1"/>
+
+    <!-- Metatron's cube vertex dots - very subtle, top-right area -->
+    <circle cx="268" cy="48" r="0.8" fill="#1e3a5f" opacity="0.2"/>
+    <circle cx="280" cy="48" r="0.8" fill="#1e3a5f" opacity="0.2"/>
+    <circle cx="274" cy="38" r="0.8" fill="#1e3a5f" opacity="0.2"/>
+    <circle cx="274" cy="58" r="0.8" fill="#1e3a5f" opacity="0.2"/>
+    <line x1="268" y1="48" x2="280" y2="48" stroke="#1e3a5f" stroke-width="0.3" opacity="0.1"/>
+    <line x1="274" y1="38" x2="274" y2="58" stroke="#1e3a5f" stroke-width="0.3" opacity="0.1"/>
+    <line x1="268" y1="48" x2="274" y2="38" stroke="#1e3a5f" stroke-width="0.3" opacity="0.08"/>
+    <line x1="280" y1="48" x2="274" y2="38" stroke="#1e3a5f" stroke-width="0.3" opacity="0.08"/>
+    <line x1="268" y1="48" x2="274" y2="58" stroke="#1e3a5f" stroke-width="0.3" opacity="0.08"/>
+    <line x1="280" y1="48" x2="274" y2="58" stroke="#1e3a5f" stroke-width="0.3" opacity="0.08"/>
+  </g>
+</svg>

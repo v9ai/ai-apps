@@ -1,0 +1,258 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 140" width="300" height="140">
+  <title>Agentic Lead Gen</title>
+  <defs>
+    <!-- Deep space background gradient -->
+    <linearGradient id="cBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020210"/>
+      <stop offset="50%" stop-color="#060620"/>
+      <stop offset="100%" stop-color="#0a0a18"/>
+    </linearGradient>
+
+    <!-- Blue constellation line gradient -->
+    <linearGradient id="cLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a5fff" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="#3b8bff" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#1a5fff" stop-opacity="0.4"/>
+    </linearGradient>
+
+    <!-- Gold radial for the north star -->
+    <radialGradient id="cNorthStar" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffbe0"/>
+      <stop offset="30%" stop-color="#ffd866"/>
+      <stop offset="70%" stop-color="#ffb820" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ff9500" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Subtle nebula glow behind constellation -->
+    <radialGradient id="cNebula" cx="50%" cy="45%" r="45%">
+      <stop offset="0%" stop-color="#1a3a8a" stop-opacity="0.08"/>
+      <stop offset="60%" stop-color="#0d1f5a" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#020210" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Star glow filter -->
+    <filter id="cGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- North star intense glow -->
+    <filter id="cNorthGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="4" result="b1"/>
+      <feGaussianBlur stdDeviation="8" result="b2"/>
+      <feMerge>
+        <feMergeNode in="b2"/>
+        <feMergeNode in="b1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft node glow -->
+    <filter id="cNodeGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.5" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Faint background star twinkle -->
+    <filter id="cTwinkle" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="0.8" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- === BACKGROUND === -->
+  <rect width="300" height="140" fill="url(#cBg)" rx="4"/>
+
+  <!-- Nebula wash -->
+  <rect width="300" height="140" fill="url(#cNebula)" rx="4"/>
+
+  <!-- === DEEP BACKGROUND STARS (dust) === -->
+  <!-- Tiny specks for depth — scattered randomly -->
+  <circle cx="12" cy="8" r="0.4" fill="white" opacity="0.25"/>
+  <circle cx="38" cy="22" r="0.3" fill="white" opacity="0.18"/>
+  <circle cx="67" cy="6" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="95" cy="18" r="0.3" fill="white" opacity="0.2"/>
+  <circle cx="112" cy="132" r="0.4" fill="white" opacity="0.22"/>
+  <circle cx="135" cy="8" r="0.3" fill="white" opacity="0.15"/>
+  <circle cx="168" cy="135" r="0.4" fill="white" opacity="0.25"/>
+  <circle cx="195" cy="12" r="0.5" fill="white" opacity="0.28"/>
+  <circle cx="222" cy="130" r="0.3" fill="white" opacity="0.2"/>
+  <circle cx="248" cy="15" r="0.4" fill="white" opacity="0.25"/>
+  <circle cx="270" cy="28" r="0.3" fill="white" opacity="0.18"/>
+  <circle cx="288" cy="8" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="25" cy="52" r="0.3" fill="white" opacity="0.15"/>
+  <circle cx="52" cy="110" r="0.4" fill="white" opacity="0.2"/>
+  <circle cx="78" cy="38" r="0.3" fill="white" opacity="0.18"/>
+  <circle cx="160" cy="45" r="0.3" fill="white" opacity="0.15"/>
+  <circle cx="210" cy="55" r="0.4" fill="white" opacity="0.22"/>
+  <circle cx="240" cy="90" r="0.3" fill="white" opacity="0.18"/>
+  <circle cx="275" cy="105" r="0.4" fill="white" opacity="0.25"/>
+  <circle cx="8" cy="95" r="0.3" fill="white" opacity="0.15"/>
+  <circle cx="290" cy="60" r="0.35" fill="white" opacity="0.2"/>
+  <circle cx="42" cy="75" r="0.3" fill="white" opacity="0.15"/>
+  <circle cx="178" cy="10" r="0.35" fill="white" opacity="0.2"/>
+  <circle cx="255" cy="72" r="0.3" fill="white" opacity="0.16"/>
+
+  <!-- Mid-distance background stars (slightly brighter) -->
+  <circle cx="20" cy="28" r="0.6" fill="white" opacity="0.35" filter="url(#cTwinkle)"/>
+  <circle cx="58" cy="55" r="0.5" fill="white" opacity="0.3" filter="url(#cTwinkle)"/>
+  <circle cx="88" cy="125" r="0.6" fill="white" opacity="0.35" filter="url(#cTwinkle)"/>
+  <circle cx="148" cy="130" r="0.5" fill="white" opacity="0.28" filter="url(#cTwinkle)"/>
+  <circle cx="230" cy="18" r="0.6" fill="white" opacity="0.35" filter="url(#cTwinkle)"/>
+  <circle cx="265" cy="48" r="0.5" fill="white" opacity="0.3" filter="url(#cTwinkle)"/>
+  <circle cx="285" cy="118" r="0.6" fill="white" opacity="0.32" filter="url(#cTwinkle)"/>
+  <circle cx="15" cy="118" r="0.5" fill="white" opacity="0.28" filter="url(#cTwinkle)"/>
+
+  <!--
+    === CONSTELLATION: "A" / Arrow / Funnel shape ===
+
+    The constellation forms a stylized "A" that also reads as
+    an upward arrow or funnel converging to the north star apex.
+
+    Node layout (approximate "A" shape):
+
+    North Star (apex):       N  = (150, 18)
+
+    Upper shoulders:         A  = (108, 48)    B = (192, 48)
+
+    Crossbar left/right:     C  = (118, 72)    D = (182, 72)
+
+    Lower legs:              E  = (88, 110)    F = (212, 110)
+
+    Extra nodes (secondary leads scattered near the A):
+                             G  = (100, 28)    (near left shoulder, smaller)
+                             H  = (200, 32)    (near right shoulder, smaller)
+                             I  = (130, 95)    (inner, near crossbar)
+                             J  = (170, 95)    (inner, near crossbar)
+                             K  = (72, 120)    (outer left foot)
+                             L  = (228, 118)   (outer right foot)
+  -->
+
+  <!-- === CONSTELLATION LINES (blue, thin) === -->
+  <!-- Left leg: E -> A -> N (apex) -->
+  <line x1="88" y1="110" x2="108" y2="48" stroke="#2a6fff" stroke-width="0.8" opacity="0.55"/>
+  <line x1="108" y1="48" x2="150" y2="18" stroke="#3b8bff" stroke-width="1" opacity="0.65"/>
+
+  <!-- Right leg: F -> B -> N (apex) -->
+  <line x1="212" y1="110" x2="192" y2="48" stroke="#2a6fff" stroke-width="0.8" opacity="0.55"/>
+  <line x1="192" y1="48" x2="150" y2="18" stroke="#3b8bff" stroke-width="1" opacity="0.65"/>
+
+  <!-- Crossbar: C -> D -->
+  <line x1="118" y1="72" x2="182" y2="72" stroke="#2a6fff" stroke-width="0.7" opacity="0.5"/>
+
+  <!-- Crossbar to shoulders: A-C, B-D -->
+  <line x1="108" y1="48" x2="118" y2="72" stroke="#2266dd" stroke-width="0.6" opacity="0.4"/>
+  <line x1="192" y1="48" x2="182" y2="72" stroke="#2266dd" stroke-width="0.6" opacity="0.4"/>
+
+  <!-- Crossbar to legs: C-E, D-F -->
+  <line x1="118" y1="72" x2="88" y2="110" stroke="#2266dd" stroke-width="0.6" opacity="0.35"/>
+  <line x1="182" y1="72" x2="212" y2="110" stroke="#2266dd" stroke-width="0.6" opacity="0.35"/>
+
+  <!-- Secondary connections (fainter, showing the network) -->
+  <!-- G to A -->
+  <line x1="100" y1="28" x2="108" y2="48" stroke="#1a5fff" stroke-width="0.5" opacity="0.3"/>
+  <!-- G to N -->
+  <line x1="100" y1="28" x2="150" y2="18" stroke="#1a5fff" stroke-width="0.5" opacity="0.25"/>
+  <!-- H to B -->
+  <line x1="200" y1="32" x2="192" y2="48" stroke="#1a5fff" stroke-width="0.5" opacity="0.3"/>
+  <!-- H to N -->
+  <line x1="200" y1="32" x2="150" y2="18" stroke="#1a5fff" stroke-width="0.5" opacity="0.25"/>
+  <!-- I to C -->
+  <line x1="130" y1="95" x2="118" y2="72" stroke="#1a5fff" stroke-width="0.5" opacity="0.28"/>
+  <!-- I to D -->
+  <line x1="130" y1="95" x2="182" y2="72" stroke="#1a5fff" stroke-width="0.4" opacity="0.2"/>
+  <!-- J to D -->
+  <line x1="170" y1="95" x2="182" y2="72" stroke="#1a5fff" stroke-width="0.5" opacity="0.28"/>
+  <!-- J to C -->
+  <line x1="170" y1="95" x2="118" y2="72" stroke="#1a5fff" stroke-width="0.4" opacity="0.2"/>
+  <!-- I to J (inner crossbar echo) -->
+  <line x1="130" y1="95" x2="170" y2="95" stroke="#1a5fff" stroke-width="0.4" opacity="0.22"/>
+  <!-- I to E -->
+  <line x1="130" y1="95" x2="88" y2="110" stroke="#1a5fff" stroke-width="0.4" opacity="0.2"/>
+  <!-- J to F -->
+  <line x1="170" y1="95" x2="212" y2="110" stroke="#1a5fff" stroke-width="0.4" opacity="0.2"/>
+  <!-- K to E (outer extension) -->
+  <line x1="72" y1="120" x2="88" y2="110" stroke="#1a5fff" stroke-width="0.4" opacity="0.22"/>
+  <!-- L to F (outer extension) -->
+  <line x1="228" y1="118" x2="212" y2="110" stroke="#1a5fff" stroke-width="0.4" opacity="0.22"/>
+
+  <!-- === NORTH STAR (the ideal lead) === -->
+  <!-- Outer halo -->
+  <circle cx="150" cy="18" r="12" fill="url(#cNorthStar)" opacity="0.35"/>
+  <!-- Mid glow -->
+  <circle cx="150" cy="18" r="6" fill="#ffd866" opacity="0.25" filter="url(#cNorthGlow)"/>
+  <!-- Core -->
+  <circle cx="150" cy="18" r="2.8" fill="#fff5d0" opacity="0.95" filter="url(#cNorthGlow)"/>
+  <!-- Cross-flare (4-point star effect) -->
+  <line x1="142" y1="18" x2="158" y2="18" stroke="#ffd866" stroke-width="0.5" opacity="0.4"/>
+  <line x1="150" y1="10" x2="150" y2="26" stroke="#ffd866" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- === PRIMARY CONSTELLATION NODES (shoulders, crossbar, legs) === -->
+  <!-- A: Left shoulder -->
+  <circle cx="108" cy="48" r="2.2" fill="#dde5ff" opacity="0.9" filter="url(#cNodeGlow)"/>
+  <!-- B: Right shoulder -->
+  <circle cx="192" cy="48" r="2.2" fill="#dde5ff" opacity="0.9" filter="url(#cNodeGlow)"/>
+  <!-- C: Crossbar left -->
+  <circle cx="118" cy="72" r="1.8" fill="#c8d8ff" opacity="0.8" filter="url(#cNodeGlow)"/>
+  <!-- D: Crossbar right -->
+  <circle cx="182" cy="72" r="1.8" fill="#c8d8ff" opacity="0.8" filter="url(#cNodeGlow)"/>
+  <!-- E: Left foot -->
+  <circle cx="88" cy="110" r="2" fill="#b8c8ee" opacity="0.75" filter="url(#cNodeGlow)"/>
+  <!-- F: Right foot -->
+  <circle cx="212" cy="110" r="2" fill="#b8c8ee" opacity="0.75" filter="url(#cNodeGlow)"/>
+
+  <!-- === SECONDARY NODES (smaller, dimmer) === -->
+  <!-- G: Near left shoulder -->
+  <circle cx="100" cy="28" r="1.2" fill="#aabbdd" opacity="0.55" filter="url(#cTwinkle)"/>
+  <!-- H: Near right shoulder -->
+  <circle cx="200" cy="32" r="1.2" fill="#aabbdd" opacity="0.55" filter="url(#cTwinkle)"/>
+  <!-- I: Inner left -->
+  <circle cx="130" cy="95" r="1.3" fill="#99aacc" opacity="0.5" filter="url(#cTwinkle)"/>
+  <!-- J: Inner right -->
+  <circle cx="170" cy="95" r="1.3" fill="#99aacc" opacity="0.5" filter="url(#cTwinkle)"/>
+  <!-- K: Outer left foot -->
+  <circle cx="72" cy="120" r="1" fill="#8899bb" opacity="0.4" filter="url(#cTwinkle)"/>
+  <!-- L: Outer right foot -->
+  <circle cx="228" cy="118" r="1" fill="#8899bb" opacity="0.4" filter="url(#cTwinkle)"/>
+
+  <!-- === UNCONNECTED PERIPHERAL LEADS (companies not yet in the constellation) === -->
+  <!-- These float near the "A" but aren't connected — potential leads -->
+  <circle cx="60" cy="65" r="0.9" fill="#7788aa" opacity="0.35"/>
+  <circle cx="68" cy="85" r="0.7" fill="#7788aa" opacity="0.28"/>
+  <circle cx="242" cy="62" r="0.9" fill="#7788aa" opacity="0.35"/>
+  <circle cx="235" cy="88" r="0.7" fill="#7788aa" opacity="0.28"/>
+  <circle cx="150" cy="118" r="0.8" fill="#7788aa" opacity="0.3"/>
+  <circle cx="140" cy="55" r="0.7" fill="#7788aa" opacity="0.25"/>
+  <circle cx="162" cy="58" r="0.7" fill="#7788aa" opacity="0.25"/>
+
+  <!-- === SUBTLE "SCANNING" ARCS (AI agent tracing connections) === -->
+  <!-- Faint dashed arc from a peripheral lead toward the constellation -->
+  <path d="M 60,65 Q 75,55 100,28" stroke="#3366cc" stroke-width="0.4" fill="none" opacity="0.18" stroke-dasharray="2,3"/>
+  <path d="M 242,62 Q 225,50 200,32" stroke="#3366cc" stroke-width="0.4" fill="none" opacity="0.18" stroke-dasharray="2,3"/>
+  <path d="M 150,118 Q 148,105 130,95" stroke="#3366cc" stroke-width="0.3" fill="none" opacity="0.15" stroke-dasharray="2,3"/>
+
+  <!-- === COORDINATE GRID HINTS (star chart aesthetic) === -->
+  <!-- Very faint grid lines suggesting a star chart -->
+  <line x1="0" y1="70" x2="300" y2="70" stroke="#334488" stroke-width="0.2" opacity="0.06"/>
+  <line x1="150" y1="0" x2="150" y2="140" stroke="#334488" stroke-width="0.2" opacity="0.06"/>
+  <!-- Faint circle around north star (like a celestial marker) -->
+  <circle cx="150" cy="18" r="18" stroke="#4466aa" stroke-width="0.3" fill="none" opacity="0.1"/>
+  <circle cx="150" cy="18" r="28" stroke="#334488" stroke-width="0.2" fill="none" opacity="0.05"/>
+
+  <!-- Small tick marks on the grid (chart feel) -->
+  <line x1="50" y1="69" x2="50" y2="71" stroke="#334488" stroke-width="0.3" opacity="0.08"/>
+  <line x1="100" y1="69" x2="100" y2="71" stroke="#334488" stroke-width="0.3" opacity="0.08"/>
+  <line x1="200" y1="69" x2="200" y2="71" stroke="#334488" stroke-width="0.3" opacity="0.08"/>
+  <line x1="250" y1="69" x2="250" y2="71" stroke="#334488" stroke-width="0.3" opacity="0.08"/>
+  <line x1="149" y1="35" x2="151" y2="35" stroke="#334488" stroke-width="0.3" opacity="0.06"/>
+  <line x1="149" y1="105" x2="151" y2="105" stroke="#334488" stroke-width="0.3" opacity="0.06"/>
+</svg>

@@ -1368,13 +1368,13 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
       func: () => {
         const links: string[] = [];
 
-        // LinkedIn "Similar pages" section — find by heading text
+        // LinkedIn "Similar pages" / "Pages people also viewed" section — find by heading text
         const sections = document.querySelectorAll("section");
         let similarSection: Element | null = null;
         for (const section of sections) {
           const heading = section.querySelector("h2, h3");
           const text = heading?.textContent?.trim().toLowerCase() || "";
-          if (text.includes("similar pages") || text.includes("affiliated")) {
+          if (text.includes("similar pages") || text.includes("affiliated") || text.includes("people also viewed")) {
             similarSection = section;
             break;
           }
@@ -1386,7 +1386,7 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
           if (aside) {
             const heading = aside.querySelector("h2, h3");
             const text = heading?.textContent?.toLowerCase() || "";
-            if (text.includes("similar") || text.includes("affiliated")) {
+            if (text.includes("similar") || text.includes("affiliated") || text.includes("people also viewed")) {
               similarSection = aside;
             }
           }
@@ -1436,7 +1436,7 @@ async function findRelatedCompanies(tabId: number) {
       return;
     }
 
-    // Navigate to main company page to find "Similar pages"
+    // Navigate to main company page to find "Pages people also viewed"
     const mainUrl = `https://www.linkedin.com/company/${companyMatch[1]}/`;
     if (currentUrl.includes("/people") || currentUrl.includes("/about")) {
       await safeTabUpdate(tabId, { url: mainUrl });
@@ -1444,7 +1444,7 @@ async function findRelatedCompanies(tabId: number) {
       await randomDelay(4000);
     }
 
-    // Scroll down progressively to load "Similar pages" section
+    // Scroll down progressively to load "Pages people also viewed" section
     // LinkedIn lazy-loads content — scroll in steps with increasing waits
     for (let scrollAttempt = 0; scrollAttempt < 3; scrollAttempt++) {
       if (!(await isTabAlive(tabId))) {
