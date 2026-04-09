@@ -13,7 +13,6 @@ import {
   GitHubLogoIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
-import Image from "next/image";
 import { button } from "@/recipes/button";
 import { cx } from "styled-system/css";
 
@@ -148,15 +147,15 @@ export function LandingNav() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
             >
-              <Image src="/logo.svg" alt="Agentic Lead Gen" width={100} height={22} priority />
               <span
                 className={css({
-                  display: { base: "none", md: "inline" },
-                  fontSize: "2xs",
-                  color: "ui.dim",
+                  fontSize: "sm",
+                  fontWeight: "bold",
+                  color: "accent.primary",
+                  letterSpacing: "-0.02em",
                 })}
               >
-                / agentic lead gen
+                agentic lead gen
               </span>
             </Link>
 

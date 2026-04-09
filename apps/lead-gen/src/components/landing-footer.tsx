@@ -5,7 +5,6 @@ import { button } from "@/recipes/button";
 import { flex, grid, container } from "styled-system/patterns";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
-import Image from "next/image";
 
 const FOOTER_SECTIONS = [
   {
@@ -60,7 +59,16 @@ export function LandingFooter() {
               className={flex({ align: "center", gap: "2", mb: "3" })}
               style={{ textDecoration: "none" }}
             >
-              <Image src="/logo.svg" alt="Agentic Lead Gen" width={100} height={22} />
+              <span
+                className={css({
+                  fontSize: "sm",
+                  fontWeight: "bold",
+                  color: "accent.primary",
+                  letterSpacing: "-0.02em",
+                })}
+              >
+                agentic lead gen
+              </span>
             </Link>
             <p
               className={css({

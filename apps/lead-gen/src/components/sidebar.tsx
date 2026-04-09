@@ -9,7 +9,6 @@ import {
   DoubleArrowLeftIcon,
   DoubleArrowRightIcon,
 } from "@radix-ui/react-icons";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { css } from "styled-system/css";
@@ -60,11 +59,11 @@ export function Sidebar() {
       <nav>
         {/* logo */}
         <Flex asChild align="center" justify="center" style={{ paddingLeft: collapsed ? 0 : 10, overflow: "hidden" }}>
-        <Link href="/">
+        <Link href="/" style={{ textDecoration: "none" }}>
           {collapsed ? (
-            <Image src="/logo.svg" alt="Agentic Lead Gen" width={32} height={32} priority style={{ objectFit: "contain" }} />
+            <Text size="4" weight="bold" style={{ color: "var(--accent-11)", letterSpacing: "-0.02em" }}>A</Text>
           ) : (
-            <Image src="/logo.svg" alt="Agentic Lead Gen" width={160} height={36} priority />
+            <Text size="3" weight="bold" style={{ color: "var(--accent-11)", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>agentic lead gen</Text>
           )}
         </Link>
         </Flex>
