@@ -1,0 +1,32 @@
+extend type Mutation {
+  """Run fake account detection on a single contact. Enriches LinkedIn + GitHub, then scores."""
+  verifyContactAuthenticity(contactId: Int!): VerifyAuthenticityResult!
+
+  """Run fake account detection on all contacts for a company, optionally filtered by skills."""
+  verifyCompanyContacts(companyId: Int!, skillFilter: [String!]): VerifyCompanyContactsResult!
+}
+
+type VerifyAuthenticityResult {
+  success: Boolean!
+  contactId: Int!
+  verdict: String!
+  authenticityScore: Float!
+  flags: [String!]!
+  recommendations: [String!]!
+  skillMatch: SkillMatchResult
+}
+
+type SkillMatchResult {
+  claimedSkills: [String!]!
+  githubLanguages: [String!]!
+  matched: Boolean!
+}
+
+type VerifyCompanyContactsResult {
+  success: Boolean!
+  totalChecked: Int!
+  verified: Int!
+  review: Int!
+  suspicious: Int!
+  results: [VerifyAuthenticityResult!]!
+}

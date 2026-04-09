@@ -1060,18 +1060,28 @@ function clickShowMorePeople(tabId: number): Promise<boolean> {
       target: { tabId },
       world: "MAIN",
       func: () => {
-        const btn = Array.from(
-          document.querySelectorAll<HTMLButtonElement>("button")
-        ).find((b) => {
-          const text = b.textContent?.trim().toLowerCase() || "";
+        const el = Array.from(
+          document.querySelectorAll<HTMLElement>("button, a")
+        ).find((el) => {
+          const text = el.textContent?.trim().toLowerCase() || "";
+          // Skip navigation links that leave the people page
+          if (el.tagName === "A") {
+            const href = (el as HTMLAnchorElement).href || "";
+            if (href.includes("/search/results/")) return false;
+          }
           return (
             text.includes("show more results") ||
             text.includes("show more") ||
+            text.includes("show all") ||
+            text.includes("see all") ||
             text.includes("load more")
           );
         });
-        if (btn && !btn.disabled) {
-          btn.click();
+        if (el) {
+          if (el.tagName === "BUTTON" && (el as HTMLButtonElement).disabled) {
+            return false;
+          }
+          el.click();
           return true;
         }
         return false;
