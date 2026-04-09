@@ -361,15 +361,30 @@ def graph(req: GraphRequest):
 
 
 def _parse_size(size: str) -> int:
-    """Parse LinkedIn size strings like '51-200 employees' → upper bound (200)."""
+    """Parse LinkedIn size strings → upper bound integer.
+
+    Supported formats:
+      "51-200 employees" → 200    "2-10" → 10
+      "10,001+ employees" → 10001 "501-1,000" → 1000
+      "1 employee" → 1            "Self-employed" → 1
+      "Myself only" → 1           "" → 999999
+    """
     import re
-    m = re.match(r"(\d[\d,]*)\s*[-–]\s*(\d[\d,]*)", size)
+    s = size.strip()
+    if not s:
+        return 999999
+    if re.search(r"\b(self-employed|myself only|solo|freelance)\b", s, re.IGNORECASE):
+        return 1
+    m = re.match(r"(\d[\d,]*)\s*[-–—]\s*(\d[\d,]*)", s)
     if m:
         return int(m.group(2).replace(",", ""))
-    m2 = re.search(r"(\d[\d,]+)", size)
+    m2 = re.search(r"(\d[\d,]*)\+", s)
     if m2:
         return int(m2.group(1).replace(",", ""))
-    return 999999  # unknown — don't flag
+    m3 = re.search(r"(\d[\d,]*)", s)
+    if m3:
+        return int(m3.group(1).replace(",", ""))
+    return 999999
 
 
 @app.post("/classify-company")
@@ -382,15 +397,13 @@ async def classify_company(req: CompanyClassifyRequest):
     import asyncio
     from .modules.company_classifier import classify_company as _classify
 
-    # Prepend industry to description so the classifier can use it as a signal
-    description = f"{req.industry}. {req.description}" if req.industry else req.description
-
     t0 = time.perf_counter()
     result = _classify(
         name=req.name,
-        description=description,
+        description=req.description,
         website=req.website,
         location=req.location,
+        industry=req.industry,
     )
     elapsed = round(time.perf_counter() - t0, 4)
 
@@ -580,19 +593,13 @@ async def classify_companies_batch(req: CompanyBatchClassifyRequest):
     )
 
     for company in req.companies:
-        # Prepend industry to description so the classifier can use it as a signal
-        description = (
-            f"{company.industry}. {company.description}"
-            if company.industry
-            else company.description
-        )
-
         tc = time.perf_counter()
         result = _classify(
             name=company.name,
-            description=description,
+            description=company.description,
             website=company.website,
             location=company.location,
+            industry=company.industry,
         )
         company_elapsed = round(time.perf_counter() - tc, 4)
 
