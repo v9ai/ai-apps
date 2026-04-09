@@ -256,22 +256,22 @@ export const companyResolvers = {
             conditions.push(gte(companies.ai_tier, args.filter.min_ai_tier));
           }
         }
-        let query = context.db.select().from(companies);
+        let query = context.db.select().from(companies).$dynamic();
 
         if (conditions.length > 0) {
-          query = query.where(and(...conditions)!) as any;
+          query = query.where(and(...conditions)!);
         }
 
         // Order by
         const orderBy = args.order_by ?? "SCORE_DESC";
         if (orderBy === "NAME_ASC") {
-          query = query.orderBy(asc(companies.name)) as any;
+          query = query.orderBy(asc(companies.name));
         } else if (orderBy === "SCORE_DESC") {
-          query = query.orderBy(desc(companies.score)) as any;
+          query = query.orderBy(desc(companies.score));
         } else if (orderBy === "UPDATED_AT_DESC") {
-          query = query.orderBy(desc(companies.updated_at)) as any;
+          query = query.orderBy(desc(companies.updated_at));
         } else if (orderBy === "CREATED_AT_DESC") {
-          query = query.orderBy(desc(companies.created_at)) as any;
+          query = query.orderBy(desc(companies.created_at));
         }
 
         let allResults = await query;
@@ -315,12 +315,12 @@ export const companyResolvers = {
           return null;
         }
 
-        let query = context.db.select().from(companies);
+        let query = context.db.select().from(companies).$dynamic();
 
         if (args.id) {
-          query = query.where(eq(companies.id, args.id)) as any;
+          query = query.where(eq(companies.id, args.id));
         } else if (args.key) {
-          query = query.where(eq(companies.key, args.key)) as any;
+          query = query.where(eq(companies.key, args.key));
         }
 
         const [result] = await query.limit(1);

@@ -4,6 +4,7 @@
  */
 
 import { salescue } from "@/lib/salescue/client";
+import { isAdminEmail } from "@/lib/admin";
 import type { GraphQLContext } from "../context";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -266,8 +267,11 @@ export const salescueResolvers = {
     async salescueAnalyze(
       _parent: unknown,
       args: { text: string; modules?: string[] },
-      _context: GraphQLContext,
+      context: GraphQLContext,
     ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
       const moduleNames = args.modules?.map((m) => m.toLowerCase()) ?? undefined;
       const res = await salescue.analyze(
         args.text,

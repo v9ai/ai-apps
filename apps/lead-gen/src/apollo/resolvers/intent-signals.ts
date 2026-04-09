@@ -1,7 +1,9 @@
 import { eq, and, desc, gte, count, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { companies, intentSignals } from "@/db/schema";
+import type { IntentSignal, Company } from "@/db/schema";
 import type { GraphQLContext } from "../context";
+import { isAdminEmail } from "@/lib/admin";
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -70,7 +72,7 @@ export const intentSignalResolvers = {
       const conditions = [eq(intentSignals.company_id, args.companyId)];
       const dbSignalType = mapSignalTypeToDb(args.signalType);
       if (dbSignalType) {
-        conditions.push(eq(intentSignals.signal_type, dbSignalType as any));
+        conditions.push(eq(intentSignals.signal_type, dbSignalType as IntentSignal["signal_type"]));
       }
 
       const [signals, countResult] = await Promise.all([
@@ -193,10 +195,10 @@ export const intentSignalResolvers = {
           .where(eq(intentSignals.company_id, company_id));
 
         const score = computeIntentScore(signals);
-        const topSignal = signals.reduce((best, s) => {
+        const topSignal = signals.reduce<(IntentSignal & { eff: number }) | null>((best, s) => {
           const eff = s.confidence * computeFreshness(s.detected_at, s.decay_days);
           return eff > (best?.eff ?? 0) ? { ...s, eff } : best;
-        }, null as any);
+        }, null);
 
         await db
           .update(companies)
