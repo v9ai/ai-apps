@@ -1,5 +1,6 @@
 // Background service worker
 import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts, runUnifiedPipeline, scrapeRecruiterPosts } from "../../services/post-scraper";
+import { type CompanyData, isICPTarget, parseLinkedInSize } from "../../lib/icp-filter";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -678,15 +679,7 @@ async function browseProfiles(
 
 let companyCancelled = false;
 
-interface CompanyData {
-  name: string;
-  website: string;
-  description: string;
-  industry: string;
-  size: string;
-  location: string;
-  linkedinUrl: string;
-}
+// CompanyData imported from ../../lib/icp-filter
 
 function extractCompanyUrls(tabId: number): Promise<string[]> {
   return chrome.scripting
@@ -819,6 +812,7 @@ function extractNextPageUrl(tabId: number): Promise<string | null> {
 async function browseCompanies(tabId: number) {
   companyCancelled = false;
   let saved = 0;
+  let filtered = 0;
   let totalProcessed = 0;
   let page = 1;
   const allCompanyUrls: string[] = [];
@@ -890,6 +884,13 @@ async function browseCompanies(tabId: number) {
     totalProcessed++;
 
     if (data && data.name) {
+      const icp = isICPTarget(data);
+      if (!icp.target) {
+        filtered++;
+        console.log(`[BrowseCompanies] SKIP: ${data.name} (${icp.reason}) | ${data.industry} | ${data.size}`);
+        continue;
+      }
+
       batch.push({
         name: data.name,
         website: data.website || undefined,
@@ -926,7 +927,7 @@ async function browseCompanies(tabId: number) {
   await waitForTabLoad(tabId);
 
   console.log(
-    `[BrowseCompanies] Complete. Saved ${saved}/${totalProcessed} companies from ${page} page(s).`,
+    `[BrowseCompanies] Complete. Saved ${saved}/${totalProcessed} companies (${filtered} filtered) from ${page} page(s).`,
   );
 }
 
@@ -1636,14 +1637,7 @@ function removeCrawlOverlay(tabId: number): Promise<void> {
     .catch(() => {});
 }
 
-// Parse LinkedIn size strings like "51-200 employees" → upper bound (200).
-function parseLinkedInSize(size: string): number {
-  const range = size.match(/(\d[\d,]*)\s*[-–]\s*(\d[\d,]*)/);
-  if (range) return parseInt(range[2].replace(/,/g, ""), 10);
-  const single = size.match(/(\d[\d,]+)/);
-  if (single) return parseInt(single[1].replace(/,/g, ""), 10);
-  return Infinity; // unknown — don't flag
-}
+// parseLinkedInSize imported from ../../lib/icp-filter
 
 // Normalize a LinkedIn company URL to a canonical form for dedup.
 function normalizeCompanyUrl(url: string): string {
@@ -1678,6 +1672,7 @@ async function findRelatedCompanies(tabId: number) {
     const queue: string[] = [];
     let saved = 0;
     let skipped = 0;
+    let filtered = 0;
     let targets = 0;
 
     // Mark seed as visited (don't re-scrape the page we started on)
@@ -1722,7 +1717,7 @@ async function findRelatedCompanies(tabId: number) {
     }
 
     // ── BFS loop ───────────────────────────────────────────────────────
-    while (queue.length > 0 && (saved + skipped) < MAX_COMPANIES) {
+    while (queue.length > 0 && (saved + skipped + filtered) < MAX_COMPANIES) {
       if (!(await isTabAlive(tabId))) {
         console.warn("[FindRelated] Tab closed during BFS crawl, stopping");
         break;
