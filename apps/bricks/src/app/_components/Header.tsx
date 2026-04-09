@@ -104,6 +104,7 @@ export function Header() {
                 { label: "Analyze", href: "/" },
                 { label: "My Parts", href: "/my-parts" },
                 { label: "Want List", href: "/want-list" },
+                { label: "Stores", href: "/stores" },
                 { label: "Scripts", href: "/scripts" },
                 { label: "Favorites", href: "/favorites" },
                 { label: "Firmware", href: "/firmware" },
