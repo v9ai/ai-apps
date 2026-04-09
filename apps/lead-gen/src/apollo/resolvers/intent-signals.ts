@@ -156,8 +156,11 @@ export const intentSignalResolvers = {
     async detectIntentSignals(
       _parent: unknown,
       args: { companyId: number },
-      _context: GraphQLContext,
+      context: GraphQLContext,
     ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
       // For now, return a stub — actual detection happens via the CLI/script
       return {
         success: true,
