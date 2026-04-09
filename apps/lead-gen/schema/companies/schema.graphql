@@ -336,6 +336,7 @@ input CompanyImportInput {
   email: String
   linkedin_url: String
   location: String
+  size: String
   description: String
 }
 

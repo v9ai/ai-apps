@@ -8,7 +8,9 @@ Usage:
 from __future__ import annotations
 
 import json
+import logging
 import time
+from contextlib import asynccontextmanager
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
@@ -23,10 +25,40 @@ from .validation import (
     validate_subjects,
 )
 
+logger = logging.getLogger("salescue")
+
+
+# ── Startup warmup ──────────────────────────────────────────────────────────
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Preload DeBERTa model and prototype embeddings on startup."""
+    from .modules.company_classifier import _get_prototype_embeds
+
+    t0 = time.perf_counter()
+
+    # 1. Load model weights + tokenizer into memory
+    SharedEncoder.load()
+
+    # 2. Dummy encode to JIT-compile any MPS/CUDA kernels
+    SharedEncoder.encode("warmup")
+
+    # 3. Pre-compute staffing/non-staffing prototype embeddings
+    _get_prototype_embeds()
+
+    elapsed = round(time.perf_counter() - t0, 1)
+    logger.info(f"Model loaded in {elapsed}s")
+    print(f"[salescue] Model loaded in {elapsed}s")
+
+    yield
+
+
 app = FastAPI(
     title="SalesCue",
     version="0.3.0",
     description="Sales intelligence API — 16 ML modules for lead scoring, intent, spam, sentiment, and more.",
+    lifespan=lifespan,
 )
 
 # ── Lazy engine singleton ────────────────────────────────────────────────────

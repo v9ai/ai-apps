@@ -36,6 +36,14 @@ STAFFING_PROTOTYPES = [
     "Recruitment process outsourcing and managed staffing services",
     "Body leasing and IT staff augmentation for technology companies",
     "Connecting top talent with leading employers worldwide",
+    "We specialize in IT staff augmentation and technology talent placement",
+    "Global outsourcing and managed workforce solutions for enterprises",
+    "Our agency provides temporary workers, seasonal employees, and on-demand labor",
+    "Professional recruiting services for healthcare, finance, and engineering sectors",
+    "Employer of record and payroll outsourcing for international hiring",
+    "We match skilled contractors with project-based opportunities worldwide",
+    "Talent acquisition as a service — embedded recruiters in your hiring team",
+    "On-demand staffing platform connecting businesses with pre-vetted freelancers",
 ]
 
 NON_STAFFING_PROTOTYPES = [
@@ -44,6 +52,13 @@ NON_STAFFING_PROTOTYPES = [
     "We provide custom software development and consulting services",
     "Open source developer tools and infrastructure platform",
     "Cloud computing and data analytics solutions provider",
+    "We develop machine learning infrastructure and AI deployment tools",
+    "Our cybersecurity platform protects enterprise networks from threats",
+    "Fintech company building payment processing and banking APIs",
+    "Healthcare technology company with electronic medical records platform",
+    "E-commerce platform helping merchants sell products online",
+    "Developer tools company building CI/CD pipelines and DevOps automation",
+    "EdTech platform offering online courses and learning management",
 ]
 
 # ── Keyword signals (boost/penalize the embedding score) ────────────────────
@@ -53,6 +68,12 @@ STRONG_STAFFING_KEYWORDS = [
     "talent acquisition firm", "employment agency", "temp agency",
     "body leasing", "staff augmentation provider", "placement agency",
     "job board", "hiring platform", "recruitment consultancy",
+    "talent agency", "manpower", "workforce", "outsourcing agency",
+    "personnel agency", "BPO staffing", "contingent workforce",
+    "managed services provider MSP", "vendor management",
+    "employer of record", "EOR", "PEO", "professional employer organization",
+    "outplacement", "onshore staffing", "offshore staffing",
+    "nearshore staffing", "IT outsourcing", "resourcing",
 ]
 
 MODERATE_STAFFING_KEYWORDS = [
@@ -60,12 +81,22 @@ MODERATE_STAFFING_KEYWORDS = [
     "contract staffing", "temp-to-hire", "direct placement", "RPO",
     "managed staffing", "talent pool", "candidate sourcing",
     "executive search", "career services",
+    "talent marketplace", "talent network", "hiring solutions",
+    "job matching", "freelance marketplace", "gig platform",
+    "on-demand talent", "flexible workforce", "skill-based hiring",
+    "recruitment technology", "applicant tracking",
+    "HR tech for staffing", "people operations outsourcing",
 ]
 
 ANTI_STAFFING_KEYWORDS = [
     "our product", "our platform", "we build", "our software",
     "saas", "open source", "developer tools", "AI-powered",
     "machine learning platform", "founded by engineers",
+    "our API", "our SDK", "infrastructure", "data platform",
+    "analytics platform", "cloud platform", "developer experience",
+    "engineering team", "R&D", "research lab", "open-source",
+    "self-hosted", "on-premise", "our customers use",
+    "built for developers", "ML platform", "AI research",
 ]
 
 # ── Cached prototype embeddings ─────────────────────────────────────────────
