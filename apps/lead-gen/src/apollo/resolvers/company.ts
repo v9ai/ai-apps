@@ -1044,6 +1044,17 @@ export const companyResolvers = {
             size: input.size ?? null,
             description: input.description ?? null,
             industry: input.industry ?? null,
+          }).onConflictDoUpdate({
+            target: companies.key,
+            set: {
+              website: sql`COALESCE(${companies.website}, excluded.website)`,
+              linkedin_url: sql`COALESCE(${companies.linkedin_url}, excluded.linkedin_url)`,
+              description: sql`COALESCE(${companies.description}, excluded.description)`,
+              location: sql`COALESCE(${companies.location}, excluded.location)`,
+              industry: sql`COALESCE(${companies.industry}, excluded.industry)`,
+              size: sql`COALESCE(${companies.size}, excluded.size)`,
+              updated_at: sql`now()::text`,
+            },
           }).returning({ id: companies.id });
           imported++;
 
