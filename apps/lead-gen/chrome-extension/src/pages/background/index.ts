@@ -1367,34 +1367,27 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
       world: "MAIN",
       func: () => {
         const links: string[] = [];
+        const keywords = ["people also viewed", "similar pages", "affiliated"];
 
-        // LinkedIn "Similar pages" / "Pages people also viewed" section — find by heading text
-        const sections = document.querySelectorAll("section");
-        let similarSection: Element | null = null;
-        for (const section of sections) {
-          const heading = section.querySelector("h2, h3");
-          const text = heading?.textContent?.trim().toLowerCase() || "";
-          if (text.includes("similar pages") || text.includes("affiliated") || text.includes("people also viewed")) {
-            similarSection = section;
+        // LinkedIn wraps this section in <div>, <section>, or <aside> — don't
+        // assume a specific container tag. Instead, find the heading first, then
+        // walk up to the nearest container that holds company links.
+        let container: Element | null = null;
+
+        // Search all heading-level elements for the target text
+        const headings = document.querySelectorAll("h1, h2, h3, h4, [role='heading']");
+        for (const heading of headings) {
+          const text = heading.textContent?.trim().toLowerCase() || "";
+          if (keywords.some((kw) => text.includes(kw))) {
+            // Walk up to the nearest section/aside/div container that holds links
+            container = heading.closest("section") || heading.closest("aside") || heading.parentElement;
             break;
           }
         }
 
-        // Fallback: check aside area
-        if (!similarSection) {
-          const aside = document.querySelector("aside");
-          if (aside) {
-            const heading = aside.querySelector("h2, h3");
-            const text = heading?.textContent?.toLowerCase() || "";
-            if (text.includes("similar") || text.includes("affiliated") || text.includes("people also viewed")) {
-              similarSection = aside;
-            }
-          }
-        }
+        if (!container) return links;
 
-        if (!similarSection) return links;
-
-        similarSection
+        container
           .querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]')
           .forEach((a) => {
             try {
