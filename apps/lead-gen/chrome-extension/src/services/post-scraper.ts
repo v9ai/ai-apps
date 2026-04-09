@@ -1151,6 +1151,144 @@ export async function scrapeAllPosts(tabId: number): Promise<void> {
   );
 }
 
+// ── Recruiter-only post scraping ──
+
+async function fetchRecruiterContacts(): Promise<ScrapedContact[]> {
+  const res = await fetch(`${RUST_SERVER}/contacts/recruiters`);
+  if (!res.ok) throw new Error(`Failed to fetch recruiter contacts: ${res.status}`);
+
+  const contacts: Array<{
+    id: number;
+    first_name: string;
+    last_name: string;
+    linkedin_url: string;
+    company: string | null;
+    position: string | null;
+  }> = await res.json();
+
+  const mapped = contacts.map((c) => ({
+    id: c.id,
+    firstName: c.first_name,
+    lastName: c.last_name,
+    linkedinUrl: c.linkedin_url,
+    company: c.company,
+    position: c.position,
+  }));
+
+  console.log(`[RecruiterScraper] Fetched ${mapped.length} recruiter contacts`);
+  return mapped;
+}
+
+export async function scrapeRecruiterPosts(tabId: number): Promise<void> {
+  postsCancelled = false;
+
+  const healthy = await checkServerHealth();
+  if (!healthy) {
+    sendProgress({ error: "Rust server not running on localhost:9876" });
+    return;
+  }
+
+  sendProgress({ phase: "recruiter-posts", status: "Fetching recruiter contacts..." });
+
+  let contacts: ScrapedContact[];
+  try {
+    contacts = await fetchRecruiterContacts();
+  } catch (err) {
+    sendProgress({ error: `Failed to fetch recruiters: ${err instanceof Error ? err.message : String(err)}` });
+    return;
+  }
+
+  if (contacts.length === 0) {
+    sendProgress({ error: "No recruiter contacts found in DB" });
+    return;
+  }
+
+  sendProgress({ phase: "recruiter-posts", status: `Found ${contacts.length} recruiters` });
+
+  let totalPosts = 0;
+  let totalFiltered = 0;
+
+  for (let i = 0; i < contacts.length; i++) {
+    if (postsCancelled) break;
+
+    const contact = contacts[i];
+    const name = `${contact.firstName} ${contact.lastName}`.trim();
+    const baseUrl = contact.linkedinUrl.replace(/\/$/, "");
+
+    console.log(
+      `[RecruiterScraper] ${i + 1}/${contacts.length}: ${name} (${contact.position ?? "?"}) — ${contact.linkedinUrl}`,
+    );
+
+    sendProgress({
+      phase: "recruiter-posts",
+      current: i + 1,
+      total: contacts.length,
+      contactName: `${name} — ${contact.position ?? ""}`,
+      postsFound: totalPosts,
+      postsFiltered: totalFiltered,
+    });
+
+    const activityUrl = baseUrl + "/recent-activity/all/";
+    try {
+      await chrome.tabs.update(tabId, { url: activityUrl });
+    } catch {
+      console.warn(`[RecruiterScraper] Tab closed, aborting`);
+      break;
+    }
+    await waitForTabLoad(tabId);
+    await sleep(3000);
+
+    try {
+      const tabInfo = await chrome.tabs.get(tabId);
+      if (!tabInfo.url?.includes("linkedin.com/in/")) {
+        console.warn(`[RecruiterScraper] Redirected away for ${name}, skipping`);
+        await randomDelay(5000, 8000);
+        continue;
+      }
+    } catch {
+      break;
+    }
+
+    let posts: ScrapedPost[] = [];
+    try {
+      posts = await scrollAndExtract(tabId);
+    } catch (err) {
+      console.warn(`[RecruiterScraper] Extraction failed for ${name}:`, err);
+    }
+
+    if (posts.length > 0) {
+      try {
+        const { inserted, filtered } = await postPosts(contact.id, posts);
+        totalPosts += inserted;
+        totalFiltered += filtered;
+        console.log(
+          `[RecruiterScraper] ${name}: ${inserted} kept, ${filtered} filtered (${posts.length} scraped)`,
+        );
+      } catch (err) {
+        console.error(`[RecruiterScraper] Failed to save posts for ${name}:`, err);
+      }
+    } else {
+      console.log(`[RecruiterScraper] ${name}: no posts found`);
+    }
+
+    // Rate limiting delay (shorter since targeted)
+    if (i < contacts.length - 1) {
+      await randomDelay(8000, 12000);
+    }
+  }
+
+  sendProgress({
+    done: true,
+    totalContacts: contacts.length,
+    totalPosts,
+    totalFiltered,
+  });
+
+  console.log(
+    `[RecruiterScraper] Complete. ${totalPosts} posts kept, ${totalFiltered} filtered from ${contacts.length} recruiters.`,
+  );
+}
+
 // ── Unified pipeline: jobs + connections + import + posts + companies ──
 
 export async function runUnifiedPipeline(tabId: number, searchUrl: string): Promise<void> {

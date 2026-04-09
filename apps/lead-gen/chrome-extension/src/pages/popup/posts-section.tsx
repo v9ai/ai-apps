@@ -4,7 +4,7 @@ import { Stack, Group, Button, Text, Alert, Badge, Progress } from "@mantine/cor
 const SEARCH_URL =
   "https://www.linkedin.com/search/results/content/?keywords=react%20AI%20ML%20fully%20remote%20contract&origin=FACETED_SEARCH&sortBy=%5B%22relevance%22%5D&datePosted=%5B%22past-week%22%5D";
 
-type Phase = "jobs" | "connections" | "import" | "posts" | "companies" | null;
+type Phase = "jobs" | "connections" | "import" | "posts" | "companies" | "recruiter-posts" | null;
 
 const PHASE_LABELS: Record<string, string> = {
   jobs: "1/5 Jobs",
@@ -12,6 +12,7 @@ const PHASE_LABELS: Record<string, string> = {
   import: "3/5 Import",
   posts: "4/5 Posts",
   companies: "5/5 Companies",
+  "recruiter-posts": "Recruiters",
 };
 
 export default function PostsSection() {
@@ -111,6 +112,28 @@ export default function PostsSection() {
     }
   };
 
+  const handleRecruiterScrape = async () => {
+    setLoading(true);
+    setPhase("recruiter-posts");
+    setStatus("Starting recruiter scrape...");
+    setProgress(null);
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: "startRecruiterScraping",
+      });
+      if (!response.success) {
+        setStatus(response.error || "Failed to start");
+        setLoading(false);
+        setPhase(null);
+      }
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "Error");
+      setLoading(false);
+      setPhase(null);
+    }
+  };
+
   const handleStop = async () => {
     await chrome.runtime.sendMessage({ action: "stopPostScraping" });
     setStatus("Stopped");
@@ -158,6 +181,14 @@ export default function PostsSection() {
           size="sm"
         >
           {loading ? "Scraping..." : "Scrape"}
+        </Button>
+        <Button
+          onClick={handleRecruiterScrape}
+          disabled={loading}
+          color="violet"
+          size="sm"
+        >
+          {loading && phase === "recruiter-posts" ? "Scraping..." : "Recruiters"}
         </Button>
         {loading && (
           <Button onClick={handleStop} color="red" size="sm">
