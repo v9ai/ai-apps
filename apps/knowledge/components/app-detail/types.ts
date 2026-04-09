@@ -16,6 +16,7 @@ export interface AppData {
   jobDescription: string | null;
   aiInterviewQuestions: string | null;
   aiTechStack: string | null;
+  aiInterviewers: string | null;
   techDismissedTags: string | null;
   appliedAt: string | null;
   createdAt: string;

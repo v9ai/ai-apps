@@ -11,7 +11,7 @@ import { TechStackTab } from "@/components/app-detail/TechStackTab";
 import { InterviewPrepTab } from "@/components/app-detail/InterviewPrepTab";
 import type { AppData } from "@/components/app-detail/types";
 
-const TAB_VALUES = ["description", "tech", "prep", "notes"] as const;
+const TAB_VALUES = ["description", "tech", "prep", "interviewers", "notes"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 function ApplicationDetailInner() {
@@ -52,6 +52,10 @@ function ApplicationDetailInner() {
     (tab: string) => {
       if (tab === "prep") {
         router.push(`/applications/${params.id}/prep`);
+        return;
+      }
+      if (tab === "interviewers") {
+        router.push(`/applications/${params.id}/interviewers`);
         return;
       }
       if (tab === "notes") {
@@ -144,10 +148,16 @@ function ApplicationDetailInner() {
               <span className="tab-shortcut-hint">3</span>
             </Flex>
           </Tabs.Trigger>
+          <Tabs.Trigger value="interviewers">
+            <Flex direction="column" align="center" gap="0">
+              <Text>Interviewers</Text>
+              <span className="tab-shortcut-hint">4</span>
+            </Flex>
+          </Tabs.Trigger>
           <Tabs.Trigger value="notes">
             <Flex direction="column" align="center" gap="0">
               <Text>Notes</Text>
-              <span className="tab-shortcut-hint">4</span>
+              <span className="tab-shortcut-hint">5</span>
             </Flex>
           </Tabs.Trigger>
         </Tabs.List>

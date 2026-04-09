@@ -41,9 +41,16 @@ function NotesPageInner() {
 
   const handleTabChange = useCallback(
     (tab: string) => {
-      if (tab !== "notes") {
-        router.push(`/applications/${params.id}?tab=${tab}`);
+      if (tab === "notes") return;
+      if (tab === "prep") {
+        router.push(`/applications/${params.id}/prep`);
+        return;
       }
+      if (tab === "interviewers") {
+        router.push(`/applications/${params.id}/interviewers`);
+        return;
+      }
+      router.push(`/applications/${params.id}?tab=${tab}`);
     },
     [router, params.id],
   );
@@ -106,10 +113,22 @@ function NotesPageInner() {
               <span className="tab-shortcut-hint">2</span>
             </Flex>
           </Tabs.Trigger>
+          <Tabs.Trigger value="prep">
+            <Flex direction="column" align="center" gap="0">
+              <Text>Prep</Text>
+              <span className="tab-shortcut-hint">3</span>
+            </Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="interviewers">
+            <Flex direction="column" align="center" gap="0">
+              <Text>Interviewers</Text>
+              <span className="tab-shortcut-hint">4</span>
+            </Flex>
+          </Tabs.Trigger>
           <Tabs.Trigger value="notes">
             <Flex direction="column" align="center" gap="0">
               <Text>Notes</Text>
-              <span className="tab-shortcut-hint">3</span>
+              <span className="tab-shortcut-hint">5</span>
             </Flex>
           </Tabs.Trigger>
         </Tabs.List>

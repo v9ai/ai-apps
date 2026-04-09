@@ -44,7 +44,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const [session, { id }] = await Promise.all([getSession(), params]);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
-  const { company, position, url, status, slug, notes, appliedAt, jobDescription, aiInterviewQuestions, aiTechStack, techDismissedTags } = body;
+  const { company, position, url, status, slug, notes, appliedAt, jobDescription, aiInterviewQuestions, aiTechStack, aiInterviewers, techDismissedTags } = body;
 
   const [row] = await db
     .update(applications)
@@ -58,6 +58,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       ...(jobDescription !== undefined && { jobDescription }),
       ...(aiInterviewQuestions !== undefined && { aiInterviewQuestions }),
       ...(aiTechStack !== undefined && { aiTechStack }),
+      ...(aiInterviewers !== undefined && { aiInterviewers }),
       ...(techDismissedTags !== undefined && { techDismissedTags }),
       ...(appliedAt !== undefined && { appliedAt: appliedAt ? new Date(appliedAt) : null }),
       updatedAt: new Date(),
