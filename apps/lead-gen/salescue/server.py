@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import re
 import time
 from contextlib import asynccontextmanager
 from typing import Any, Optional
@@ -159,6 +161,59 @@ class BanditUpdateRequest(BaseModel):
     arm_index: int
     reward: float
     structured_features: Optional[list[float]] = None
+
+
+# ── Module-level geo regex (reused by single + batch classify) ──────────────
+
+_STRONG_GEO_TERMS = (
+    r"latam|latin america|sub-saharan|west africa|east africa|north africa"
+    r"|central america|south america|central asia|oceania"
+    r"|south asia|southeast asia|eastern europe"
+    r"|apac|mena|gcc|asean|mercosur|caricom"
+    r"|middle east"
+)
+_WEAK_GEO_TERMS = (
+    r"asia|india|philippines|nigeria|pakistan|bangladesh|vietnam"
+    r"|indonesia|thailand|malaysia|myanmar|cambodia"
+    r"|kenya|ghana|ethiopia|tanzania|uganda"
+    r"|egypt|morocco|sri lanka"
+    r"|colombia|brazil|mexico|argentina|peru|chile"
+    r"|saudi arabia|united arab emirates|\buae\b|qatar|kuwait|bahrain|oman"
+)
+_STRONG_GEO_RE = re.compile(rf"\b({_STRONG_GEO_TERMS})\b", re.IGNORECASE)
+_WEAK_GEO_RE = re.compile(rf"\b({_WEAK_GEO_TERMS})\b", re.IGNORECASE)
+_EMEA_RE = re.compile(r"\bemea\b", re.IGNORECASE)
+_AFRICA_OR_ME_RE = re.compile(r"\b(africa|middle east|mena)\b", re.IGNORECASE)
+_AFRICA_STANDALONE_RE = re.compile(r"\bafrica\b", re.IGNORECASE)
+_SOUTH_AFRICA_RE = re.compile(r"\bsouth africa\b", re.IGNORECASE)
+
+
+def _get_db_url() -> str:
+    """Return the database URL from environment, or empty string."""
+    return os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
+
+
+def _check_geo_irrelevance(geo_text: str) -> bool:
+    """Check if text indicates irrelevant geographic focus."""
+    strong_hits = len(_STRONG_GEO_RE.findall(geo_text))
+
+    # "africa" needs special handling: don't count if every occurrence is
+    # part of "south africa" (South Africa is a relevant market).
+    africa_all = _AFRICA_STANDALONE_RE.findall(geo_text)
+    south_africa_all = _SOUTH_AFRICA_RE.findall(geo_text)
+    if africa_all and len(africa_all) <= len(south_africa_all):
+        strong_hits = max(0, strong_hits - len(south_africa_all))
+
+    weak_hits = len(_WEAK_GEO_RE.findall(geo_text))
+
+    # EMEA is only a signal when the text also mentions Africa / Middle East
+    emea_flag = bool(_EMEA_RE.search(geo_text)) and bool(
+        _AFRICA_OR_ME_RE.search(geo_text)
+    )
+    if emea_flag:
+        strong_hits += 1
+
+    return strong_hits >= 1 or weak_hits >= 2
 
 
 # ── Helper ───────────────────────────────────────────────────────────────────
@@ -407,8 +462,6 @@ async def classify_company(req: CompanyClassifyRequest):
     )
     elapsed = round(time.perf_counter() - t0, 4)
 
-    import re
-
     # Parse size — from explicit field or from description
     size_str = req.size
     if not size_str and req.description:
@@ -418,70 +471,8 @@ async def classify_company(req: CompanyClassifyRequest):
 
     employee_count = _parse_size(size_str)
 
-    # Geo relevance: exclude firms *focused* on irrelevant regions.
-    # We split terms into strong signals (regional labels that imply focus)
-    # and weak signals (individual country names that may be incidental).
-    # Strong signal = instant flag.  Weak signals use a threshold: 2+ hits → flag.
-    # This avoids false-positives like "offices in 30 countries including India".
-
-    _STRONG_GEO_TERMS = (
-        # Regional / bloc labels — these almost always indicate focus
-        r"latam|latin america|sub-saharan|west africa|east africa|north africa"
-        r"|central america|south america|central asia|oceania"
-        r"|south asia|southeast asia|eastern europe"
-        r"|apac|mena|gcc|asean|mercosur|caricom"
-        r"|middle east"
-    )
-    _WEAK_GEO_TERMS = (
-        # Individual countries / ambiguous regions — a single mention may be incidental
-        r"asia|india|philippines|nigeria|pakistan|bangladesh|vietnam"
-        r"|indonesia|thailand|malaysia|myanmar|cambodia"
-        r"|kenya|ghana|ethiopia|tanzania|uganda"
-        r"|egypt|morocco|sri lanka"
-        r"|colombia|brazil|mexico|argentina|peru|chile"
-        r"|saudi arabia|united arab emirates|\buae\b|qatar|kuwait|bahrain|oman"
-    )
-
-    _STRONG_GEO_RE = re.compile(
-        rf"\b({_STRONG_GEO_TERMS})\b", re.IGNORECASE,
-    )
-    _WEAK_GEO_RE = re.compile(
-        rf"\b({_WEAK_GEO_TERMS})\b", re.IGNORECASE,
-    )
-    # "africa" alone is strong, but inside "EMEA" it includes Europe (relevant).
-    # Only flag EMEA when paired with an explicit Africa/Middle-East mention.
-    _EMEA_RE = re.compile(r"\bemea\b", re.IGNORECASE)
-    _AFRICA_OR_ME_RE = re.compile(
-        r"\b(africa|middle east|mena)\b", re.IGNORECASE,
-    )
-    # Standalone "africa" is strong — but exclude "south africa" which is relevant
-    _AFRICA_STANDALONE_RE = re.compile(r"\bafrica\b", re.IGNORECASE)
-    _SOUTH_AFRICA_RE = re.compile(r"\bsouth africa\b", re.IGNORECASE)
-
     geo_text = f"{req.name} {req.description} {req.location}"
-
-    # --- evaluate geo signals ---
-    strong_hits = len(_STRONG_GEO_RE.findall(geo_text))
-
-    # "africa" needs special handling: don't count if every occurrence is
-    # part of "south africa" (South Africa is a relevant market).
-    africa_all = _AFRICA_STANDALONE_RE.findall(geo_text)
-    south_africa_all = _SOUTH_AFRICA_RE.findall(geo_text)
-    if africa_all and len(africa_all) <= len(south_africa_all):
-        # All "africa" mentions are inside "south africa" — not a signal.
-        # Remove the "africa" strong hits that came from "south africa".
-        strong_hits = max(0, strong_hits - len(south_africa_all))
-
-    weak_hits = len(_WEAK_GEO_RE.findall(geo_text))
-
-    # EMEA is only a signal when the text also mentions Africa / Middle East
-    emea_flag = bool(_EMEA_RE.search(geo_text)) and bool(
-        _AFRICA_OR_ME_RE.search(geo_text)
-    )
-    if emea_flag:
-        strong_hits += 1
-
-    is_irrelevant_geo = strong_hits >= 1 or weak_hits >= 2
+    is_irrelevant_geo = _check_geo_irrelevance(geo_text)
 
     is_target = result["is_staffing"] and employee_count <= 200 and not is_irrelevant_geo
     result["is_target"] = is_target
@@ -511,9 +502,7 @@ async def _update_company_tagged(
     is_target: bool = False,
 ) -> None:
     """Tag a staffing company in the DB. If it's an ICP target (≤200 employees), add 'target-icp' tag."""
-    import os
-
-    db_url = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
+    db_url = _get_db_url()
     if not db_url:
         print(f"[classify-company] No DATABASE_URL — cannot update company {company_id}")
         return
@@ -580,17 +569,11 @@ async def classify_companies_batch(req: CompanyBatchClassifyRequest):
     Runs ML inference sequentially (fast after warmup), then batches all DB
     updates into a single asyncpg connection instead of N separate ones.
     """
-    import re
     from .modules.company_classifier import classify_company as _classify
 
     t0 = time.perf_counter()
     results: list[dict[str, Any]] = []
     db_updates: list[dict[str, Any]] = []
-
-    _IRRELEVANT_GEO_RE = re.compile(
-        r"\b(latam|latin america|africa|apac|asia|india|middle east|mena|philippines|nigeria|pakistan|south asia|southeast asia|eastern europe)\b",
-        re.IGNORECASE,
-    )
 
     for company in req.companies:
         tc = time.perf_counter()
@@ -612,9 +595,8 @@ async def classify_companies_batch(req: CompanyBatchClassifyRequest):
 
         employee_count = _parse_size(size_str)
 
-        # Geo relevance
         geo_text = f"{company.name} {company.description} {company.location}"
-        is_irrelevant_geo = bool(_IRRELEVANT_GEO_RE.search(geo_text))
+        is_irrelevant_geo = _check_geo_irrelevance(geo_text)
 
         is_target = (
             result["is_staffing"] and employee_count <= 200 and not is_irrelevant_geo
@@ -657,9 +639,7 @@ async def _update_companies_tagged_batch(
 
     Each entry in *updates* has: company_id, confidence, reasons, is_target.
     """
-    import os
-
-    db_url = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
+    db_url = _get_db_url()
     if not db_url:
         print(
             f"[classify-companies] No DATABASE_URL — cannot update {len(updates)} companies"
@@ -731,6 +711,331 @@ async def _update_companies_tagged_batch(
         print(
             f"[classify-companies] Batch updated {len(updates)} companies in single connection"
         )
+    finally:
+        await conn.close()
+
+
+# ── Classify from DB + stats + dashboard ────────────────────────────────────
+
+_dashboard_cache: dict[str, Any] = {}
+_dashboard_cache_ts: float = 0.0
+
+
+class ClassifyBatchFromDBRequest(BaseModel):
+    limit: int = 50
+
+
+@app.post("/classify-batch")
+async def classify_batch_from_db(req: ClassifyBatchFromDBRequest):
+    """Pull unclassified companies from DB, run classifier, update results."""
+    from .modules.company_classifier import classify_company as _classify
+
+    db_url = _get_db_url()
+    if not db_url:
+        raise HTTPException(status_code=500, detail="No DATABASE_URL configured")
+
+    try:
+        import asyncpg
+    except ImportError:
+        raise HTTPException(status_code=500, detail="asyncpg not installed")
+
+    conn = await asyncpg.connect(db_url)
+    try:
+        rows = await conn.fetch(
+            """SELECT id, name, description, website, location, industry, size
+               FROM companies
+               WHERE category = 'UNKNOWN' AND ai_classification_confidence = 0
+               LIMIT $1""",
+            req.limit,
+        )
+    finally:
+        await conn.close()
+
+    if not rows:
+        return {"classified": 0, "staffing": 0, "targets": 0, "message": "No unclassified companies"}
+
+    t0 = time.perf_counter()
+    db_updates: list[dict[str, Any]] = []
+    classified = 0
+    staffing_count = 0
+    target_count = 0
+
+    for row in rows:
+        result = _classify(
+            name=row["name"] or "",
+            description=row["description"] or "",
+            website=row["website"] or "",
+            location=row["location"] or "",
+            industry=row["industry"] or "",
+        )
+
+        size_str = row["size"] or ""
+        employee_count = _parse_size(size_str)
+        geo_text = f"{row['name'] or ''} {row['description'] or ''} {row['location'] or ''}"
+        is_irrelevant_geo = _check_geo_irrelevance(geo_text)
+        is_target = result["is_staffing"] and employee_count <= 200 and not is_irrelevant_geo
+
+        classified += 1
+        if result["is_staffing"]:
+            staffing_count += 1
+            if is_target:
+                target_count += 1
+            db_updates.append({
+                "company_id": row["id"],
+                "confidence": result["confidence"],
+                "reasons": result["reasons"],
+                "is_target": is_target,
+            })
+        else:
+            # Update non-staffing companies with confidence so they don't get re-processed
+            db_updates.append({
+                "company_id": row["id"],
+                "confidence": result["confidence"],
+                "reasons": result["reasons"],
+                "is_target": False,
+                "is_non_staffing": True,
+            })
+
+    # Batch DB updates
+    if db_updates:
+        await _update_classify_batch_results(db_updates)
+
+    elapsed = round(time.perf_counter() - t0, 4)
+    return {
+        "classified": classified,
+        "staffing": staffing_count,
+        "targets": target_count,
+        "time_s": elapsed,
+    }
+
+
+async def _update_classify_batch_results(updates: list[dict[str, Any]]) -> None:
+    """Update companies with classification results (both staffing and non-staffing)."""
+    db_url = _get_db_url()
+    if not db_url:
+        return
+
+    try:
+        import asyncpg
+    except ImportError:
+        return
+
+    conn = await asyncpg.connect(db_url)
+    try:
+        for upd in updates:
+            company_id = upd["company_id"]
+            confidence = upd["confidence"]
+            reasons: list[str] = upd["reasons"]
+
+            if upd.get("is_non_staffing"):
+                await conn.execute(
+                    """UPDATE companies
+                       SET ai_classification_reason = $1,
+                           ai_classification_confidence = $2,
+                           updated_at = now()
+                     WHERE id = $3""",
+                    "; ".join(reasons),
+                    confidence,
+                    company_id,
+                )
+            elif upd["is_target"]:
+                row = await conn.fetchrow("SELECT tags FROM companies WHERE id = $1", company_id)
+                existing_tags: list[str] = []
+                if row and row["tags"]:
+                    try:
+                        existing_tags = json.loads(row["tags"])
+                    except (json.JSONDecodeError, TypeError):
+                        existing_tags = []
+                if "target-icp" not in existing_tags:
+                    existing_tags.append("target-icp")
+                await conn.execute(
+                    """UPDATE companies
+                       SET category = 'STAFFING', tags = $1,
+                           ai_classification_reason = $2,
+                           ai_classification_confidence = $3,
+                           updated_at = now()
+                     WHERE id = $4""",
+                    json.dumps(existing_tags),
+                    "; ".join(reasons),
+                    confidence,
+                    company_id,
+                )
+            else:
+                await conn.execute(
+                    """UPDATE companies
+                       SET category = 'STAFFING',
+                           ai_classification_reason = $1,
+                           ai_classification_confidence = $2,
+                           updated_at = now()
+                     WHERE id = $3""",
+                    "; ".join(reasons),
+                    confidence,
+                    company_id,
+                )
+        print(f"[classify-batch] Updated {len(updates)} companies")
+    finally:
+        await conn.close()
+
+
+@app.get("/classify-stats")
+async def classify_stats():
+    """Return counts of classified/unclassified/staffing/target companies."""
+    db_url = _get_db_url()
+    if not db_url:
+        raise HTTPException(status_code=500, detail="No DATABASE_URL configured")
+
+    try:
+        import asyncpg
+    except ImportError:
+        raise HTTPException(status_code=500, detail="asyncpg not installed")
+
+    conn = await asyncpg.connect(db_url)
+    try:
+        row = await conn.fetchrow("""
+            SELECT
+                count(*) AS total,
+                count(*) FILTER (WHERE ai_classification_confidence > 0) AS classified,
+                count(*) FILTER (WHERE ai_classification_confidence = 0) AS unclassified,
+                count(*) FILTER (WHERE category = 'STAFFING') AS staffing,
+                count(*) FILTER (WHERE tags LIKE '%target-icp%') AS targets
+            FROM companies
+        """)
+        return {
+            "total": row["total"],
+            "classified": row["classified"],
+            "unclassified": row["unclassified"],
+            "staffing": row["staffing"],
+            "targets": row["targets"],
+        }
+    finally:
+        await conn.close()
+
+
+@app.get("/dashboard")
+async def dashboard():
+    """Category breakdown, confidence distribution, recent classifications (30s cache)."""
+    global _dashboard_cache, _dashboard_cache_ts
+
+    if time.time() - _dashboard_cache_ts < 30 and _dashboard_cache:
+        return _dashboard_cache
+
+    db_url = _get_db_url()
+    if not db_url:
+        raise HTTPException(status_code=500, detail="No DATABASE_URL configured")
+
+    try:
+        import asyncpg
+    except ImportError:
+        raise HTTPException(status_code=500, detail="asyncpg not installed")
+
+    conn = await asyncpg.connect(db_url)
+    try:
+        # Category breakdown
+        categories = await conn.fetch("""
+            SELECT category, count(*) AS cnt FROM companies GROUP BY category ORDER BY cnt DESC
+        """)
+
+        # Confidence distribution (bucketed)
+        confidence_dist = await conn.fetch("""
+            SELECT
+                CASE
+                    WHEN ai_classification_confidence = 0 THEN 'unclassified'
+                    WHEN ai_classification_confidence < 0.3 THEN 'low (0-0.3)'
+                    WHEN ai_classification_confidence < 0.7 THEN 'medium (0.3-0.7)'
+                    ELSE 'high (0.7-1.0)'
+                END AS bucket,
+                count(*) AS cnt
+            FROM companies
+            GROUP BY bucket ORDER BY bucket
+        """)
+
+        # Recent classifications
+        recent = await conn.fetch("""
+            SELECT id, name, category, ai_classification_confidence, ai_classification_reason, updated_at
+            FROM companies
+            WHERE ai_classification_confidence > 0
+            ORDER BY updated_at DESC LIMIT 20
+        """)
+
+        # Target count
+        targets = await conn.fetchval(
+            "SELECT count(*) FROM companies WHERE tags LIKE '%target-icp%'"
+        )
+
+        result = {
+            "categories": [{"category": r["category"], "count": r["cnt"]} for r in categories],
+            "confidence_distribution": [{"bucket": r["bucket"], "count": r["cnt"]} for r in confidence_dist],
+            "recent_classifications": [
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "category": r["category"],
+                    "confidence": float(r["ai_classification_confidence"]) if r["ai_classification_confidence"] else 0,
+                    "reason": r["ai_classification_reason"],
+                    "updated_at": str(r["updated_at"]) if r["updated_at"] else None,
+                }
+                for r in recent
+            ],
+            "target_count": targets,
+        }
+
+        _dashboard_cache = result
+        _dashboard_cache_ts = time.time()
+        return result
+    finally:
+        await conn.close()
+
+
+@app.get("/dashboard/misclassified")
+async def dashboard_misclassified():
+    """Likely false positives and false negatives for review."""
+    db_url = _get_db_url()
+    if not db_url:
+        raise HTTPException(status_code=500, detail="No DATABASE_URL configured")
+
+    try:
+        import asyncpg
+    except ImportError:
+        raise HTTPException(status_code=500, detail="asyncpg not installed")
+
+    conn = await asyncpg.connect(db_url)
+    try:
+        # Likely false positives: STAFFING but low confidence
+        false_positives = await conn.fetch("""
+            SELECT id, name, category, ai_classification_confidence, ai_classification_reason
+            FROM companies
+            WHERE category = 'STAFFING' AND ai_classification_confidence > 0 AND ai_classification_confidence < 0.6
+            ORDER BY ai_classification_confidence ASC LIMIT 20
+        """)
+
+        # Likely false negatives: UNKNOWN but name contains staffing keywords
+        false_negatives = await conn.fetch("""
+            SELECT id, name, category, ai_classification_confidence, description
+            FROM companies
+            WHERE category = 'UNKNOWN'
+              AND (name ILIKE '%staffing%' OR name ILIKE '%recruit%' OR name ILIKE '%talent%' OR name ILIKE '%hiring%')
+            ORDER BY name LIMIT 20
+        """)
+
+        return {
+            "likely_false_positives": [
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "confidence": float(r["ai_classification_confidence"]),
+                    "reason": r["ai_classification_reason"],
+                }
+                for r in false_positives
+            ],
+            "likely_false_negatives": [
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "description": (r["description"] or "")[:200],
+                }
+                for r in false_negatives
+            ],
+        }
     finally:
         await conn.close()
 

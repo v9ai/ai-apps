@@ -1432,6 +1432,7 @@ body {
 .live-preview-wrapper iframe {
   flex: 1;
   min-height: 200px;
+  background: var(--gray-1);
   border: none;
   background: #ffffff;
 }
@@ -1481,12 +1482,12 @@ body {
   background: var(--violet-2);
 }
 .callout-warn {
-  border-left-color: #f59e0b;
-  background: rgba(245,158,11,0.06);
+  border-left-color: var(--orange-8);
+  background: var(--orange-2);
 }
 .callout-tip {
-  border-left-color: #3b82f6;
-  background: rgba(59,130,246,0.06);
+  border-left-color: var(--blue-8);
+  background: var(--blue-2);
 }
 /* timing badge */
 .timing-badge {
