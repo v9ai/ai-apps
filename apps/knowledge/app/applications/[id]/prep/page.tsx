@@ -218,7 +218,7 @@ function InteractiveCodePlayground({ initialHtml, initialCss }: { initialHtml: s
             Solution
           </Button>
         )}
-        <Button size="2" variant="ghost" color="gray" onClick={reset}>
+        <Button size="3" variant="ghost" color="gray" onClick={reset}>
           Reset
         </Button>
       </Flex>
