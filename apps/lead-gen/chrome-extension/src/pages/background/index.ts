@@ -1748,9 +1748,9 @@ async function findRelatedCompanies(tabId: number) {
           [data.industry, data.description, data.name].join(" "),
         );
         const isSmall = parseLinkedInSize(data.size || "") <= 200;
-        const IRRELEVANT_GEO_RE = /\b(latam|latin america|africa|apac|middle east|mena|india[- ]only|india[- ]focused|india[- ]based|southeast asia|south asia|china[- ]focused|china[- ]only|nearshore|offshore)\b/i;
+        const IRRELEVANT_GEO_RE = /\b(latam|latin america|africa|apac|asia|india|middle east|mena|philippines|nigeria|pakistan|south asia|southeast asia|eastern europe)\b/i;
         const isIrrelevantGeo = IRRELEVANT_GEO_RE.test(
-          [data.name, data.description, data.location].join(" "),
+          [data.name, data.description, data.industry].join(" "),
         );
         const isTarget = isRecruitment && isSmall && !isIrrelevantGeo;
         if (isRecruitment && isSmall && isIrrelevantGeo) {
