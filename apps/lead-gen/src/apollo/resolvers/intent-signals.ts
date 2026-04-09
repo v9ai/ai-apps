@@ -1,7 +1,7 @@
 import { eq, and, desc, gte, count, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { companies, intentSignals } from "@/db/schema";
-import type { GraphQLContext } from "../../context";
+import type { GraphQLContext } from "../context";
 
 // ── Helpers ────────────────────────────────────────────────────
 

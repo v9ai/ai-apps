@@ -29,6 +29,15 @@ if (import.meta.env.DEV) {
 // ── GraphQL config (shared module) ───────────────────────────────────
 import { gqlRequest, GRAPHQL_URL } from "../../services/graphql";
 
+// ── Randomised delay to avoid bot detection ────────────────────────
+// LinkedIn fingerprints automation by detecting constant timing.
+// Always jitter delays by +/-30% to mimic human variance.
+function randomDelay(baseMs: number): Promise<void> {
+  const jitter = baseMs * 0.3;
+  const ms = baseMs + Math.floor(Math.random() * jitter * 2 - jitter);
+  return new Promise((r) => setTimeout(r, Math.max(200, ms)));
+}
+
 // ── Service worker keepAlive ─────────────────────────────────────────
 // MV3 service workers can be terminated after ~30s of inactivity.
 // Keep-alive prevents Chrome from killing the worker during long operations
@@ -374,29 +383,88 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
+// ── Tab Safety Helpers ──────────────────────────────────────────────
+
+async function isTabAlive(tabId: number): Promise<boolean> {
+  try {
+    await chrome.tabs.get(tabId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function safeTabUpdate(tabId: number, props: chrome.tabs.UpdateProperties): Promise<void> {
+  if (!(await isTabAlive(tabId))) {
+    throw new Error(`Tab ${tabId} was closed`);
+  }
+  await chrome.tabs.update(tabId, props);
+}
+
+async function safeSendMessage(tabId: number, message: Record<string, unknown>): Promise<void> {
+  try {
+    if (await isTabAlive(tabId)) {
+      await chrome.tabs.sendMessage(tabId, message);
+    }
+  } catch {
+    // Content script not available (tab navigated, closed, or script not injected)
+  }
+}
+
 // ── Profile Browsing Engine ──────────────────────────────────────────
 
 let browseCancelled = false;
 
-function waitForTabLoad(tabId: number): Promise<void> {
-  return new Promise((resolve) => {
+function waitForTabLoad(tabId: number, timeoutMs = 20000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      chrome.tabs.onUpdated.removeListener(listener);
+      chrome.tabs.onRemoved.removeListener(removedListener);
+      if (timeoutId !== null) clearTimeout(timeoutId);
+    };
+
+    const settle = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error) reject(error);
+      else resolve();
+    };
+
     const listener = (
       updatedTabId: number,
       changeInfo: { status?: string },
     ) => {
       if (updatedTabId === tabId && changeInfo.status === "complete") {
-        chrome.tabs.onUpdated.removeListener(listener);
-        if (timeoutId !== null) clearTimeout(timeoutId);
-        resolve();
+        settle();
       }
     };
-    chrome.tabs.onUpdated.addListener(listener);
-    // Timeout after 15s in case page never fully loads
-    timeoutId = setTimeout(() => {
-      chrome.tabs.onUpdated.removeListener(listener);
-      resolve();
-    }, 15000);
+
+    const removedListener = (removedTabId: number) => {
+      if (removedTabId === tabId) {
+        settle(new Error(`Tab ${tabId} was closed during navigation`));
+      }
+    };
+
+    // Check if tab is already complete before attaching listener (race condition fix)
+    chrome.tabs.get(tabId).then((tab) => {
+      if (tab.status === "complete") {
+        settle();
+      } else {
+        chrome.tabs.onUpdated.addListener(listener);
+        chrome.tabs.onRemoved.addListener(removedListener);
+        // Timeout in case page never fully loads
+        timeoutId = setTimeout(() => {
+          console.warn(`[waitForTabLoad] Timeout after ${timeoutMs}ms for tab ${tabId}`);
+          settle();
+        }, timeoutMs);
+      }
+    }).catch(() => {
+      settle(new Error(`Tab ${tabId} does not exist`));
+    });
   });
 }
 
@@ -518,13 +586,13 @@ async function browseProfiles(
     await waitForTabLoad(tabId);
 
     // Wait for LinkedIn SPA content to render
-    await new Promise((r) => setTimeout(r, 2500));
+    await randomDelay(2500);
 
     // Expand "See more" sections
     const expanded = await clickSeeMore(tabId);
     if (expanded > 0) {
       console.log(`[BrowseProfiles] Clicked ${expanded} "See more" button(s)`);
-      await new Promise((r) => setTimeout(r, 800));
+      await randomDelay(800);
     }
 
     // Extract profile data
