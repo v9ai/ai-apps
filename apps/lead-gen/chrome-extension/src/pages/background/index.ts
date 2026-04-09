@@ -1365,43 +1365,78 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
     .executeScript({
       target: { tabId },
       world: "MAIN",
-      func: () => {
-        const links: string[] = [];
+      func: async () => {
         const keywords = ["people also viewed", "similar pages", "affiliated"];
 
-        // LinkedIn wraps this section in <div>, <section>, or <aside> — don't
-        // assume a specific container tag. Instead, find the heading first, then
-        // walk up to the nearest container that holds company links.
+        // Find the "Pages people also viewed" section heading
         let container: Element | null = null;
-
-        // Search all heading-level elements for the target text
         const headings = document.querySelectorAll("h1, h2, h3, h4, [role='heading']");
         for (const heading of headings) {
           const text = heading.textContent?.trim().toLowerCase() || "";
           if (keywords.some((kw) => text.includes(kw))) {
-            // Walk up to the nearest section/aside/div container that holds links
             container = heading.closest("section") || heading.closest("aside") || heading.parentElement;
             break;
           }
         }
+        if (!container) return [];
 
-        if (!container) return links;
-
-        container
-          .querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]')
-          .forEach((a) => {
+        function extractCompanyLinks(root: Element): string[] {
+          const links: string[] = [];
+          root.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
             try {
               const href = a.href.split("?")[0].replace(/\/$/, "");
               const parsed = new URL(href);
               const match = parsed.pathname.match(/^\/company\/([^/]+)$/);
-              if (match && !links.includes(href)) {
-                links.push(href);
-              }
-            } catch {
-              // Skip malformed URLs
-            }
+              if (match && !links.includes(href)) links.push(href);
+            } catch { /* skip malformed URLs */ }
           });
-        return links;
+          return links;
+        }
+
+        // Try clicking "Show all" to open the modal with the full list
+        const showAllBtn = Array.from(
+          container.querySelectorAll<HTMLElement>("a, button")
+        ).find((el) => {
+          const text = el.textContent?.trim().toLowerCase() || "";
+          return text.includes("show all") || text.includes("see all");
+        });
+
+        if (showAllBtn) {
+          showAllBtn.click();
+
+          // Poll for modal/dialog to appear (up to 5s)
+          let modal: Element | null = null;
+          for (let i = 0; i < 10; i++) {
+            await new Promise((r) => setTimeout(r, 500));
+            modal =
+              document.querySelector('[role="dialog"]') ||
+              document.querySelector(".artdeco-modal");
+            if (modal) break;
+          }
+
+          if (modal) {
+            // Scroll inside modal to load all lazy-loaded results
+            const scrollable = modal.querySelector(".artdeco-modal__content") || modal;
+            for (let i = 0; i < 3; i++) {
+              (scrollable as HTMLElement).scrollTop = (scrollable as HTMLElement).scrollHeight;
+              await new Promise((r) => setTimeout(r, 800));
+            }
+
+            const links = extractCompanyLinks(modal);
+
+            // Close modal
+            const dismiss =
+              modal.querySelector<HTMLElement>(".artdeco-modal__dismiss") ||
+              modal.querySelector<HTMLElement>('button[aria-label="Dismiss"]') ||
+              modal.querySelector<HTMLElement>('button[aria-label="Close"]');
+            if (dismiss) dismiss.click();
+
+            if (links.length > 0) return links;
+          }
+        }
+
+        // Fallback: scrape from sidebar (only ~3-4 visible)
+        return extractCompanyLinks(container);
       },
     })
     .then((results) => (results?.[0]?.result as string[]) ?? [])
