@@ -35,7 +35,6 @@ export function Footer() {
                   key={name}
                   href={`/#cat-${meta.slug}`}
                   className="footer-cat-link"
-                  aria-label={name}
                 >
                   <span>{meta.icon}</span> {name}
                 </Link>
