@@ -172,11 +172,273 @@ export function extractCompanyData(tabId: number): Promise<CompanyData | null> {
 /**
  * Count remote job postings for a company by navigating to LinkedIn jobs search.
  * Only called for ICP-matching companies to avoid unnecessary page loads.
+ * Uses DOM scraping as primary strategy with Voyager API as fallback.
  */
 export interface RemoteJobsResult {
   count: number;
   status: "ok" | "no-results" | "no-selectors" | "login-wall" | "error";
-  method?: "header" | "cards" | "none";
+  method?: "header" | "cards" | "voyager" | "none";
+}
+
+interface DOMScrapeResult extends RemoteJobsResult {
+  diagnostics: {
+    url: string;
+    selectorsFound: string[];
+    headerText: string | null;
+    cardCount: number;
+    jobLinkCount: number;
+    htmlSnippet: string | null;
+  };
+}
+
+async function scrapeJobCountFromDOM(tabId: number): Promise<DOMScrapeResult> {
+  // Poll for job-related content to appear (up to 8s)
+  const selectorReady = await chrome.scripting.executeScript({
+    target: { tabId },
+    world: "MAIN",
+    func: () => {
+      return new Promise<boolean>((resolve) => {
+        const selectors = [
+          // Original selectors
+          ".jobs-search-no-results-banner",
+          ".jobs-search-results-list",
+          ".scaffold-layout__list",
+          "[data-job-id]",
+          ".job-card-container",
+          ".jobs-search-results-list__subtitle",
+          // Wildcard class selectors (survive renames)
+          "[class*='jobs-search-no-results']",
+          "[class*='jobs-search-results']",
+          "[class*='job-card']",
+          // ARIA-based (most stable across redesigns)
+          "[aria-label*='job'][role='list']",
+          "[aria-label*='Jobs']",
+          // Data attribute patterns
+          "[data-entity-urn*='jobPosting']",
+          "[data-view-name*='job']",
+          // Structural: any job view link in main content
+          "main a[href*='/jobs/view/']",
+        ];
+        let attempts = 0;
+        const poll = () => {
+          for (const sel of selectors) {
+            if (document.querySelector(sel)) { resolve(true); return; }
+          }
+          if (++attempts < 16) setTimeout(poll, 500);
+          else resolve(false);
+        };
+        poll();
+      });
+    },
+  });
+
+  const ready = selectorReady?.[0]?.result ?? false;
+  if (!ready) {
+    await randomDelay(2000);
+  }
+
+  const results = await chrome.scripting.executeScript({
+    target: { tabId },
+    world: "MAIN",
+    func: (): DOMScrapeResult => {
+      const url = window.location.href;
+      const selectorsFound: string[] = [];
+
+      // Detect login wall / redirect
+      if (url.includes("/login") || url.includes("/authwall") || url.includes("/checkpoint")) {
+        return {
+          count: 0, status: "login-wall", method: "none",
+          diagnostics: { url, selectorsFound, headerText: null, cardCount: 0, jobLinkCount: 0, htmlSnippet: null },
+        };
+      }
+
+      // Check for "no results" banner (multiple generations)
+      const noResultsSelectors = [
+        ".jobs-search-no-results-banner",
+        "[class*='jobs-search-no-results']",
+        "[class*='no-results']",
+      ];
+      for (const sel of noResultsSelectors) {
+        if (document.querySelector(sel)) selectorsFound.push(sel);
+      }
+      // Text-based fallback
+      const noResultsTextEl = Array.from(document.querySelectorAll("main h2, main h3, main p")).find(
+        (el) => /no (matching )?jobs|0 results/i.test(el.textContent || "")
+      );
+      if (selectorsFound.length > 0 || noResultsTextEl) {
+        return {
+          count: 0, status: "no-results", method: "none",
+          diagnostics: {
+            url, selectorsFound,
+            headerText: noResultsTextEl?.textContent?.trim() || null,
+            cardCount: 0, jobLinkCount: 0, htmlSnippet: null,
+          },
+        };
+      }
+
+      // Strategy 1: Parse "X results" text from header
+      const headerCandidates = [
+        ".jobs-search-results-list__subtitle",
+        ".jobs-search-results-list__title-heading h1+span",
+        ".jobs-search-results-list__title-heading small",
+        "[class*='jobs-search'] h1+span",
+        "[class*='jobs-search'] h1+small",
+        "[class*='jobs-search-results'] [class*='subtitle']",
+        "[class*='jobs-search-results'] [class*='count']",
+        "[class*='results-context-header']",
+        "header small",
+        "header span",
+      ];
+      let headerText = "";
+      for (const sel of headerCandidates) {
+        const el = document.querySelector(sel);
+        const t = el?.textContent?.trim() || "";
+        if (/([\d,]+)\s+results?/i.test(t) || /showing\s+([\d,]+)/i.test(t) || /([\d,]+)\s+jobs?/i.test(t)) {
+          headerText = t;
+          selectorsFound.push(sel);
+          break;
+        }
+      }
+      // Text scan fallback: any element in top 300px with a count pattern
+      if (!headerText) {
+        const candidates = document.querySelectorAll("main span, main small, main p, main div");
+        for (const el of candidates) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top > 300) continue;
+          const t = el.textContent?.trim() || "";
+          if (/^([\d,]+)\s+results?$/i.test(t) || /^showing\s+([\d,]+)/i.test(t) || /^([\d,]+)\s+jobs?$/i.test(t)) {
+            headerText = t;
+            selectorsFound.push("text-scan");
+            break;
+          }
+        }
+      }
+
+      const countMatch =
+        headerText.match(/([\d,]+)\s+results?/i) ||
+        headerText.match(/showing\s+([\d,]+)/i) ||
+        headerText.match(/([\d,]+)\s+jobs?/i);
+      if (countMatch) {
+        return {
+          count: parseInt(countMatch[1].replace(/,/g, ""), 10),
+          status: "ok", method: "header",
+          diagnostics: { url, selectorsFound, headerText, cardCount: 0, jobLinkCount: 0, htmlSnippet: null },
+        };
+      }
+
+      // Strategy 2: Count job card elements (multiple selector generations)
+      const cardSelectors = [
+        "[data-job-id]",
+        ".job-card-container",
+        ".jobs-search-results__list-item",
+        ".scaffold-layout__list-item",
+        ".jobs-search-results-list li",
+        "[class*='job-card-container']",
+        "[class*='job-card']",
+        "[data-entity-urn*='jobPosting']",
+        "[data-view-name*='job-card']",
+        "li[class*='jobs-search']",
+      ];
+      const cards = document.querySelectorAll(cardSelectors.join(", "));
+      for (const sel of cardSelectors) {
+        if (document.querySelector(sel)) selectorsFound.push(sel);
+      }
+      if (cards.length > 0) {
+        return {
+          count: cards.length, status: "ok", method: "cards",
+          diagnostics: { url, selectorsFound, headerText: headerText || null, cardCount: cards.length, jobLinkCount: 0, htmlSnippet: null },
+        };
+      }
+
+      // Strategy 3: Count unique /jobs/view/ links (most stable signal)
+      const jobLinks = new Set<string>();
+      document.querySelectorAll<HTMLAnchorElement>('main a[href*="/jobs/view/"]').forEach((a) => {
+        const id = a.href.match(/\/jobs\/view\/(\d+)/)?.[1];
+        if (id) jobLinks.add(id);
+      });
+      if (jobLinks.size > 0) {
+        selectorsFound.push("a[href*='/jobs/view/']");
+        return {
+          count: jobLinks.size, status: "ok", method: "cards",
+          diagnostics: { url, selectorsFound, headerText: headerText || null, cardCount: 0, jobLinkCount: jobLinks.size, htmlSnippet: null },
+        };
+      }
+
+      // Nothing matched — capture HTML snippet for debugging
+      const mainEl = document.querySelector("main");
+      const htmlSnippet = mainEl?.innerHTML?.substring(0, 2000) || document.body.innerHTML.substring(0, 2000);
+
+      return {
+        count: 0, status: "no-selectors", method: "none",
+        diagnostics: { url, selectorsFound, headerText: headerText || null, cardCount: 0, jobLinkCount: 0, htmlSnippet },
+      };
+    },
+  });
+
+  return results?.[0]?.result ?? {
+    count: 0, status: "error", method: "none",
+    diagnostics: { url: "", selectorsFound: [], headerText: null, cardCount: 0, jobLinkCount: 0, htmlSnippet: null },
+  };
+}
+
+/**
+ * Read LinkedIn CSRF token from the JSESSIONID cookie.
+ * Same pattern as connection-scraper.ts.
+ */
+async function getLinkedInCsrfToken(): Promise<string> {
+  const cookie = await chrome.cookies.get({
+    url: "https://www.linkedin.com",
+    name: "JSESSIONID",
+  });
+  if (!cookie?.value) {
+    throw new Error("Not logged into LinkedIn — JSESSIONID cookie not found");
+  }
+  return cookie.value.replace(/^"|"$/g, "");
+}
+
+/**
+ * Voyager API fallback for counting remote jobs.
+ * Uses LinkedIn's internal API which is stable across DOM changes.
+ */
+async function countRemoteJobsViaVoyager(
+  numericId: string,
+): Promise<{ count: number; error: string | null }> {
+  try {
+    const csrfToken = await getLinkedInCsrfToken();
+
+    const url = new URL("https://www.linkedin.com/voyager/api/voyagerJobsDashJobCards");
+    url.searchParams.set("decorationId", "com.linkedin.voyager.dash.deco.jobs.search.JobSearchCardsCollection-227");
+    url.searchParams.set("count", "1");
+    url.searchParams.set("q", "jobSearch");
+    url.searchParams.set("query", `(origin:JOB_SEARCH_PAGE_JOB_FILTER,selectedFilters:(company:List(${numericId}),workplaceType:List(2)),spellCorrectionEnabled:true)`);
+    url.searchParams.set("locationUnion", "(geoId:92000000)");
+    url.searchParams.set("start", "0");
+
+    const res = await fetch(url.toString(), {
+      headers: {
+        "csrf-token": csrfToken,
+        "x-restli-protocol-version": "2.0.0",
+        Accept: "application/vnd.linkedin.normalized+json+2.1",
+      },
+      credentials: "include",
+    });
+
+    if (res.status === 401 || res.status === 403) {
+      return { count: 0, error: `Auth error: ${res.status}` };
+    }
+    if (res.status === 429) {
+      return { count: 0, error: "Rate limited (429)" };
+    }
+    if (!res.ok) {
+      return { count: 0, error: `HTTP ${res.status}` };
+    }
+
+    const data = await res.json();
+    const total = data?.paging?.total ?? data?.data?.paging?.total ?? 0;
+    return { count: total, error: null };
+  } catch (err) {
+    return { count: 0, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 export async function countRemoteJobs(
@@ -189,99 +451,48 @@ export async function countRemoteJobs(
     await safeTabUpdate(tabId, { url: jobsUrl });
     await waitForTabLoad(tabId);
 
-    // Poll for job-related content to appear (up to 8s), instead of fixed delay
-    const selectorReady = await chrome.scripting.executeScript({
-      target: { tabId },
-      world: "MAIN",
-      func: () => {
-        return new Promise<boolean>((resolve) => {
-          const selectors = [
-            ".jobs-search-no-results-banner",
-            ".jobs-search-results-list",
-            ".scaffold-layout__list",
-            "[data-job-id]",
-            ".job-card-container",
-            ".jobs-search-results-list__subtitle",
-          ];
-          let attempts = 0;
-          const poll = () => {
-            for (const sel of selectors) {
-              if (document.querySelector(sel)) { resolve(true); return; }
-            }
-            if (++attempts < 16) setTimeout(poll, 500);
-            else resolve(false);
-          };
-          poll();
-        });
-      },
-    });
+    // ── Step 1: DOM scraping (primary) ──
+    const domResult = await scrapeJobCountFromDOM(tabId);
 
-    const ready = selectorReady?.[0]?.result ?? false;
-    if (!ready) {
-      // Extra delay as last resort
-      await randomDelay(2000);
+    // Log diagnostics
+    const d = domResult.diagnostics;
+    console.log(`[countRemoteJobs] DOM: status=${domResult.status} count=${domResult.count} method=${domResult.method}`);
+    console.log(`[countRemoteJobs]   URL: ${d.url}`);
+    console.log(`[countRemoteJobs]   Selectors found: [${d.selectorsFound.join(", ")}]`);
+    if (d.headerText) console.log(`[countRemoteJobs]   Header text: "${d.headerText}"`);
+    if (d.cardCount) console.log(`[countRemoteJobs]   Card count: ${d.cardCount}`);
+    if (d.jobLinkCount) console.log(`[countRemoteJobs]   Job link count: ${d.jobLinkCount}`);
+    if (d.htmlSnippet && domResult.status === "no-selectors") {
+      console.log(`[countRemoteJobs]   HTML snippet: ${d.htmlSnippet.substring(0, 500)}`);
     }
 
-    const results = await chrome.scripting.executeScript({
-      target: { tabId },
-      world: "MAIN",
-      func: (): RemoteJobsResult => {
-        const url = window.location.href;
+    // If DOM scraping succeeded or found genuine no-results, return
+    if (domResult.status === "ok" || domResult.status === "no-results") {
+      return domResult;
+    }
 
-        // Detect login wall / redirect
-        if (url.includes("/login") || url.includes("/authwall") || url.includes("/checkpoint")) {
-          return { count: 0, status: "login-wall", method: "none" };
-        }
+    // Login wall — Voyager won't help either
+    if (domResult.status === "login-wall") {
+      return domResult;
+    }
 
-        // Check for "no results" banner
-        if (document.querySelector(".jobs-search-no-results-banner")) {
-          return { count: 0, status: "no-results", method: "none" };
-        }
+    // ── Step 2: Voyager API fallback (for "no-selectors" case) ──
+    console.log(`[countRemoteJobs] DOM returned "${domResult.status}" — trying Voyager API fallback...`);
+    const voyagerResult = await countRemoteJobsViaVoyager(numericId);
 
-        // Strategy 1: Parse "X results" text from header
-        const headerText =
-          document.querySelector(".jobs-search-results-list__subtitle")
-            ?.textContent?.trim() ||
-          document.querySelector(
-            ".jobs-search-results-list__title-heading h1+span"
-          )?.textContent?.trim() ||
-          // Newer LinkedIn layouts
-          document.querySelector(".jobs-search-results-list__title-heading small")
-            ?.textContent?.trim() ||
-          document.querySelector("[class*='jobs-search'] h1+span, [class*='jobs-search'] h1+small")
-            ?.textContent?.trim() ||
-          "";
-        const countMatch = headerText.match(/([\d,]+)\s+results?/i);
-        if (countMatch) {
-          return {
-            count: parseInt(countMatch[1].replace(/,/g, ""), 10),
-            status: "ok",
-            method: "header",
-          };
-        }
+    if (voyagerResult.error) {
+      console.log(`[countRemoteJobs] Voyager fallback failed: ${voyagerResult.error}`);
+      return domResult;
+    }
 
-        // Strategy 2: Count job card elements (multiple selector generations)
-        const cards = document.querySelectorAll(
-          [
-            "[data-job-id]",
-            ".job-card-container",
-            ".jobs-search-results__list-item",
-            ".scaffold-layout__list-item",
-            ".jobs-search-results-list li",
-            "[class*='job-card-container']",
-          ].join(", ")
-        );
-        if (cards.length > 0) {
-          return { count: cards.length, status: "ok", method: "cards" };
-        }
-
-        // Nothing matched
-        return { count: 0, status: "no-selectors", method: "none" };
-      },
-    });
-
-    return results?.[0]?.result ?? { count: 0, status: "error", method: "none" };
-  } catch {
+    console.log(`[countRemoteJobs] Voyager fallback succeeded: ${voyagerResult.count} jobs`);
+    return {
+      count: voyagerResult.count,
+      status: voyagerResult.count > 0 ? "ok" : "no-results",
+      method: "voyager",
+    };
+  } catch (err) {
+    console.error(`[countRemoteJobs] Unexpected error:`, err);
     return { count: 0, status: "error", method: "none" };
   }
 }
