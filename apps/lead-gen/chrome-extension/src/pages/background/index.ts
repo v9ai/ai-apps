@@ -1897,52 +1897,54 @@ async function findRelatedCompanies(tabId: number) {
           log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ⊘ ${data.name} — ${icp.reason} (queued: ${queue.length})`);
           await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name} [${icp.reason}]`, phase: "saving", logText: crawlLog.join("\n") });
         } else {
-          // Check remote job postings for ICP-matching companies
-          let remoteJobCount = 0;
+          // Check remote job postings for ICP-matching companies (boost signal, not a gate)
+          let remoteJobCount = -1; // -1 = not checked
           if (data.linkedinNumericId) {
             log(`[FindRelated] Checking remote jobs for ${data.name} (ID: ${data.linkedinNumericId})...`);
             remoteJobCount = await countRemoteJobs(tabId, data.linkedinNumericId);
-            log(`[FindRelated] ${data.name} — ${remoteJobCount} remote jobs found`);
-            totalRemoteJobs += remoteJobCount;
+            totalRemoteJobs += Math.max(0, remoteJobCount);
+            if (remoteJobCount > 0) {
+              log(`[FindRelated] ${data.name} — 🎯✅ CONFIRMED — ${remoteJobCount} active remote jobs`);
+            } else {
+              log(`[FindRelated] ${data.name} — 🎯⚠️ UNCONFIRMED — no active remote jobs, needs recruiter post check`);
+            }
           } else {
             log(`[FindRelated] No numeric ID for ${data.name}, skipping job count`);
           }
 
-          // Filter: staffing firm with 0 remote jobs is a weak lead
-          if (remoteJobCount === 0 && data.linkedinNumericId) {
-            filtered++;
-            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ⊘ ${data.name} — no-remote-jobs (queued: ${queue.length})`);
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name} [no-remote-jobs]`, phase: "saving", logText: crawlLog.join("\n") });
-          } else {
-            // Build company object and save
-            const company = {
-              name: data.name,
-              website: data.website || undefined,
-              linkedin_url: data.linkedinUrl || undefined,
-              description: [
-                data.description,
-                data.industry ? `Industry: ${data.industry}` : "",
-                data.size ? `Size: ${data.size}` : "",
-                remoteJobCount > 0 ? `Remote Jobs: ${remoteJobCount}` : "",
-              ]
-                .filter(Boolean)
-                .join("\n") || undefined,
-              location: data.location || undefined,
-              industry: data.industry || undefined,
-            };
+          // Build company object and save (always save ICP targets regardless of job count)
+          const jobLabel = remoteJobCount > 0 ? `Remote Jobs: ${remoteJobCount}` : "";
+          const company = {
+            name: data.name,
+            website: data.website || undefined,
+            linkedin_url: data.linkedinUrl || undefined,
+            description: [
+              data.description,
+              data.industry ? `Industry: ${data.industry}` : "",
+              data.size ? `Size: ${data.size}` : "",
+              jobLabel,
+            ]
+              .filter(Boolean)
+              .join("\n") || undefined,
+            location: data.location || undefined,
+            industry: data.industry || undefined,
+          };
 
-            const result = await saveCompanyBatch([company]);
-            if (result > 0) {
-              saved += result;
-              targets++;
-              log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ✓ SAVED (${remoteJobCount} remote jobs, queued: ${queue.length})`);
-              await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ✓ ${data.name} (${remoteJobCount} remote)`, phase: "saving", logText: crawlLog.join("\n") });
-            } else {
-              skipped++;
-              targets++;
-              log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: 🎯 ${data.name} ⊘ ALREADY EXISTS (${remoteJobCount} remote jobs, queued: ${queue.length})`);
-              await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `🎯 ⊘ ${data.name} (${remoteJobCount} remote)`, phase: "saving", logText: crawlLog.join("\n") });
-            }
+          const overlayJobText = remoteJobCount > 0 ? `${remoteJobCount} jobs` : remoteJobCount === 0 ? "0 jobs ⚠️" : "";
+          const overlayName = (suffix: string) =>
+            overlayJobText ? `🎯 ${suffix} ${data.name} (${overlayJobText})` : `🎯 ${suffix} ${data.name}`;
+
+          const result = await saveCompanyBatch([company]);
+          if (result > 0) {
+            saved += result;
+            targets++;
+            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ${overlayName("✓")} SAVED (queued: ${queue.length})`);
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: overlayName("✓"), phase: "saving", logText: crawlLog.join("\n") });
+          } else {
+            skipped++;
+            targets++;
+            log(`[FindRelated] ${saved + skipped + filtered}/${MAX_COMPANIES}: ${overlayName("⊘")} ALREADY EXISTS (queued: ${queue.length})`);
+            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: overlayName("⊘"), phase: "saving", logText: crawlLog.join("\n") });
           }
         }
 
