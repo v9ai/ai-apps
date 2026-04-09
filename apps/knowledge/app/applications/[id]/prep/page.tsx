@@ -43,7 +43,7 @@ function groupCodeBlocks(md: string): string {
 
 function CodePanel({ lang, code }: { lang: string; code: string }) {
   return (
-    <div className="code-block-wrapper" style={{ flex: 1, minWidth: 0 }}>
+    <div className="code-block-wrapper">
       <div className="code-block-bar">
         <div className="code-block-dots"><span /><span /><span /></div>
         <span className="code-block-lang">{langLabel(lang)}</span>
