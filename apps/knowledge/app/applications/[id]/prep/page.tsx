@@ -55,6 +55,24 @@ function CodePanel({ lang, code }: { lang: string; code: string }) {
   );
 }
 
+function LivePreviewPanel({ html, css }: { html: string; css: string }) {
+  const srcdoc = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#1a1a1a;padding:16px}
+${css}</style></head><body>${html}</body></html>`;
+
+  return (
+    <div className="code-block-wrapper live-preview-wrapper">
+      <div className="code-block-bar">
+        <div className="code-block-dots"><span /><span /><span /></div>
+        <span className="code-block-lang">Preview</span>
+      </div>
+      <iframe srcDoc={srcdoc} sandbox="" title="Live preview" />
+    </div>
+  );
+}
+
 function PrepPageInner() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -221,6 +239,26 @@ function PrepPageInner() {
                     const lines = part.split("\n");
                     return { lang: lines[0], code: lines.slice(1).join("\n") };
                   });
+
+                  const isHtmlCss =
+                    blocks.length === 2 &&
+                    blocks.some((b) => b.lang.toLowerCase() === "html") &&
+                    blocks.some((b) => b.lang.toLowerCase() === "css");
+
+                  if (isHtmlCss) {
+                    const htmlBlock = blocks.find((b) => b.lang.toLowerCase() === "html")!;
+                    const cssBlock = blocks.find((b) => b.lang.toLowerCase() === "css")!;
+                    return (
+                      <Box mb="4">
+                        <div className="code-triple-grid">
+                          <CodePanel lang={htmlBlock.lang} code={htmlBlock.code} />
+                          <CodePanel lang={cssBlock.lang} code={cssBlock.code} />
+                          <LivePreviewPanel html={htmlBlock.code} css={cssBlock.code} />
+                        </div>
+                      </Box>
+                    );
+                  }
+
                   return (
                     <Box mb="4">
                       <div className="code-pair-grid">
