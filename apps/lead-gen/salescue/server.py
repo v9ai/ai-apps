@@ -103,6 +103,14 @@ class SkillsRequest(BaseModel):
     threshold: float = 0.35
 
 
+class CompanyClassifyRequest(BaseModel):
+    company_id: int
+    name: str
+    description: str = ""
+    website: str = ""
+    location: str = ""
+
+
 class AnalyzeRequest(BaseModel):
     text: str
     modules: Optional[list[str]] = None
@@ -309,6 +317,90 @@ def graph(req: GraphRequest):
     if req.graph:
         kwargs["graph"] = req.graph
     return _run_module("graph", req.text, **kwargs)
+
+
+# ── Company classifier (standalone — not an Engine module) ───────────────────
+
+
+@app.post("/classify-company")
+async def classify_company(req: CompanyClassifyRequest):
+    """Classify whether a company is a staffing/recruitment firm.
+
+    Called fire-and-forget by the GraphQL importCompanies resolver.
+    If staffing detected, updates the company in the DB directly.
+    """
+    import asyncio
+    from .modules.company_classifier import classify_company as _classify
+
+    t0 = time.perf_counter()
+    result = _classify(
+        name=req.name,
+        description=req.description,
+        website=req.website,
+        location=req.location,
+    )
+    elapsed = round(time.perf_counter() - t0, 4)
+
+    # If staffing detected, update DB asynchronously
+    if result["is_staffing"]:
+        asyncio.create_task(_update_company_blocked(
+            company_id=req.company_id,
+            confidence=result["confidence"],
+            reasons=result["reasons"],
+        ))
+
+    return {
+        "result": result,
+        "company_id": req.company_id,
+        "time_s": elapsed,
+    }
+
+
+async def _update_company_blocked(
+    company_id: int,
+    confidence: float,
+    reasons: list[str],
+) -> None:
+    """Update the company as blocked staffing firm via direct DB call."""
+    import os
+    try:
+        import asyncpg  # type: ignore[import-untyped]
+    except ImportError:
+        # Fallback: call back via GraphQL mutation
+        import httpx
+        gql_url = os.environ.get("GRAPHQL_URL", "http://localhost:3000/api/graphql")
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post(gql_url, json={
+                "query": """mutation BlockCompany($id: Int!) {
+                    blockCompany(id: $id) { id blocked }
+                }""",
+                "variables": {"id": company_id},
+            })
+            print(f"[classify-company] Blocked staffing firm id={company_id} via GraphQL (confidence={confidence:.2f})")
+        return
+
+    db_url = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL", "")
+    if not db_url:
+        print(f"[classify-company] No DATABASE_URL — cannot update company {company_id}")
+        return
+
+    conn = await asyncpg.connect(db_url)
+    try:
+        await conn.execute(
+            """UPDATE companies
+               SET blocked = true,
+                   category = 'STAFFING',
+                   ai_classification_reason = $1,
+                   ai_classification_confidence = $2,
+                   updated_at = now()
+             WHERE id = $3""",
+            "; ".join(reasons),
+            confidence,
+            company_id,
+        )
+        print(f"[classify-company] Blocked staffing firm id={company_id} (confidence={confidence:.2f})")
+    finally:
+        await conn.close()
 
 
 # ── Batch analysis ───────────────────────────────────────────────────────────
