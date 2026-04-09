@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useCallback, type KeyboardEvent, type ChangeEvent } from "react";
 import type { ReactElement } from "react";
 import {
   Heading,
@@ -97,6 +97,73 @@ ${css}</style></head><body>${html}</body></html>`;
       </div>
       <iframe srcDoc={srcdoc} sandbox="allow-same-origin" title="Live preview" />
     </div>
+  );
+}
+
+function useDebouncedValue<T>(value: T, ms: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), ms);
+    return () => clearTimeout(id);
+  }, [value, ms]);
+  return debounced;
+}
+
+function EditableCodePanel({ lang, value, onChange }: { lang: string; value: string; onChange: (v: string) => void }) {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const ta = e.currentTarget;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const updated = value.substring(0, start) + "  " + value.substring(end);
+      onChange(updated);
+      requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = start + 2; });
+    }
+  }, [value, onChange]);
+
+  return (
+    <div className="code-block-wrapper">
+      <div className="code-block-bar">
+        <div className="code-block-dots"><span /><span /><span /></div>
+        <span className="code-block-lang">{langLabel(lang)}</span>
+      </div>
+      <textarea
+        className="code-playground-textarea"
+        value={value}
+        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        rows={Math.max(4, value.split("\n").length)}
+        spellCheck={false}
+        wrap="off"
+      />
+    </div>
+  );
+}
+
+function InteractiveCodePlayground({ initialHtml, initialCss }: { initialHtml: string; initialCss: string }) {
+  const [html, setHtml] = useState(initialHtml);
+  const [css, setCss] = useState(initialCss);
+  const debouncedHtml = useDebouncedValue(html, 200);
+  const debouncedCss = useDebouncedValue(css, 200);
+  const dirty = html !== initialHtml || css !== initialCss;
+
+  return (
+    <Box mb="4" style={{ position: "relative" }}>
+      {dirty && (
+        <button
+          className="code-playground-reset"
+          onClick={() => { setHtml(initialHtml); setCss(initialCss); }}
+        >
+          Reset
+        </button>
+      )}
+      <div className="code-triple-grid">
+        <EditableCodePanel lang="html" value={html} onChange={setHtml} />
+        <EditableCodePanel lang="css" value={css} onChange={setCss} />
+        <LivePreviewPanel html={debouncedHtml} css={debouncedCss} />
+      </div>
+    </Box>
   );
 }
 
@@ -275,15 +342,7 @@ function PrepPageInner() {
                   if (isHtmlCss) {
                     const htmlBlock = blocks.find((b) => b.lang.toLowerCase() === "html")!;
                     const cssBlock = blocks.find((b) => b.lang.toLowerCase() === "css")!;
-                    return (
-                      <Box mb="4">
-                        <div className="code-triple-grid">
-                          <CodePanel lang={htmlBlock.lang} code={htmlBlock.code} />
-                          <CodePanel lang={cssBlock.lang} code={cssBlock.code} />
-                          <LivePreviewPanel html={htmlBlock.code} css={cssBlock.code} />
-                        </div>
-                      </Box>
-                    );
+                    return <InteractiveCodePlayground initialHtml={htmlBlock.code} initialCss={cssBlock.code} />;
                   }
 
                   return (
@@ -300,15 +359,7 @@ function PrepPageInner() {
                 if (lang === "html") {
                   const extracted = extractInlineStyles(rawText);
                   if (extracted) {
-                    return (
-                      <Box mb="4">
-                        <div className="code-triple-grid">
-                          <CodePanel lang="html" code={extracted.cleanHtml} />
-                          <CodePanel lang="css" code={extracted.css} />
-                          <LivePreviewPanel html={rawText} css="" />
-                        </div>
-                      </Box>
-                    );
+                    return <InteractiveCodePlayground initialHtml={extracted.cleanHtml} initialCss={extracted.css} />;
                   }
                   return (
                     <Box mb="4">
