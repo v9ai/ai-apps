@@ -184,6 +184,32 @@ async function postPosts(
 
   if (!res.ok) throw new Error(`Server error: ${res.status}`);
   const data = await res.json();
+
+  // Dual-write to Neon for TechWolf analysis pipeline
+  try {
+    const inputs = posts
+      .filter((p) => p.post_url)
+      .map((p) => ({
+        url: p.post_url!,
+        type: "post" as const,
+        contactId,
+        content: p.post_text || null,
+        authorName: p.author_name || null,
+        authorUrl: p.author_url || null,
+        postedAt: p.posted_date || null,
+      }));
+    if (inputs.length > 0) {
+      await gqlRequest(
+        `mutation UpsertPostsToNeon($inputs: [UpsertLinkedInPostInput!]!) {
+          upsertLinkedInPosts(inputs: $inputs) { success }
+        }`,
+        { inputs },
+      );
+    }
+  } catch {
+    // Non-critical: Rust server is primary store
+  }
+
   return { inserted: data.inserted, filtered: data.filtered || 0 };
 }
 

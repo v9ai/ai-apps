@@ -280,6 +280,9 @@ export type ComputeNextTouchScoresResult = {
 export type Contact = {
   __typename?: 'Contact';
   aiProfile: Maybe<ContactAiProfile>;
+  authenticityFlags: Array<Scalars['String']['output']>;
+  authenticityScore: Maybe<Scalars['Float']['output']>;
+  authenticityVerdict: Maybe<Scalars['String']['output']>;
   authorityScore: Maybe<Scalars['Float']['output']>;
   bouncedEmails: Array<Scalars['String']['output']>;
   company: Maybe<Scalars['String']['output']>;
@@ -830,10 +833,12 @@ export type ImportCompanyWithContactsInput = {
   companyName: Scalars['String']['input'];
   contacts: Array<ImportContactInput>;
   linkedinUrl?: InputMaybe<Scalars['String']['input']>;
+  skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ImportContactInput = {
+  headline?: InputMaybe<Scalars['String']['input']>;
   linkedinUrl?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   workEmail?: InputMaybe<Scalars['String']['input']>;
@@ -1044,6 +1049,10 @@ export type Mutation = {
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
+  /** Run fake account detection on all contacts for a company, optionally filtered by skills. */
+  verifyCompanyContacts: VerifyCompanyContactsResult;
+  /** Run fake account detection on a single contact. Enriches LinkedIn + GitHub, then scores. */
+  verifyContactAuthenticity: VerifyAuthenticityResult;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -1405,6 +1414,17 @@ export type MutationUpsertLinkedInPostArgs = {
 
 export type MutationUpsertLinkedInPostsArgs = {
   inputs: Array<UpsertLinkedInPostInput>;
+};
+
+
+export type MutationVerifyCompanyContactsArgs = {
+  companyId: Scalars['Int']['input'];
+  skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+export type MutationVerifyContactAuthenticityArgs = {
+  contactId: Scalars['Int']['input'];
 };
 
 
@@ -2222,6 +2242,13 @@ export type SimilarPost = {
   similarity: Scalars['Float']['output'];
 };
 
+export type SkillMatchResult = {
+  __typename?: 'SkillMatchResult';
+  claimedSkills: Array<Scalars['String']['output']>;
+  githubLanguages: Array<Scalars['String']['output']>;
+  matched: Scalars['Boolean']['output'];
+};
+
 export type SourceType =
   | 'BRAVE_SEARCH'
   | 'COMMONCRAWL'
@@ -2358,6 +2385,27 @@ export type UserSettingsInput = {
   dark_mode?: InputMaybe<Scalars['Boolean']['input']>;
   email_notifications?: InputMaybe<Scalars['Boolean']['input']>;
   excluded_companies?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type VerifyAuthenticityResult = {
+  __typename?: 'VerifyAuthenticityResult';
+  authenticityScore: Scalars['Float']['output'];
+  contactId: Scalars['Int']['output'];
+  flags: Array<Scalars['String']['output']>;
+  recommendations: Array<Scalars['String']['output']>;
+  skillMatch: Maybe<SkillMatchResult>;
+  success: Scalars['Boolean']['output'];
+  verdict: Scalars['String']['output'];
+};
+
+export type VerifyCompanyContactsResult = {
+  __typename?: 'VerifyCompanyContactsResult';
+  results: Array<VerifyAuthenticityResult>;
+  review: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  suspicious: Scalars['Int']['output'];
+  totalChecked: Scalars['Int']['output'];
+  verified: Scalars['Int']['output'];
 };
 
 export type VerifyEmailResult = {
@@ -2608,6 +2656,7 @@ export type ResolversTypes = {
   SignalTypeCount: ResolverTypeWrapper<Partial<SignalTypeCount>>;
   SimilarCompanyResult: ResolverTypeWrapper<Partial<SimilarCompanyResult>>;
   SimilarPost: ResolverTypeWrapper<Partial<SimilarPost>>;
+  SkillMatchResult: ResolverTypeWrapper<Partial<SkillMatchResult>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
@@ -2623,6 +2672,8 @@ export type ResolversTypes = {
   UpsertLinkedInPostsResult: ResolverTypeWrapper<Partial<UpsertLinkedInPostsResult>>;
   UserSettings: ResolverTypeWrapper<Partial<UserSettings>>;
   UserSettingsInput: ResolverTypeWrapper<Partial<UserSettingsInput>>;
+  VerifyAuthenticityResult: ResolverTypeWrapper<Partial<VerifyAuthenticityResult>>;
+  VerifyCompanyContactsResult: ResolverTypeWrapper<Partial<VerifyCompanyContactsResult>>;
   VerifyEmailResult: ResolverTypeWrapper<Partial<VerifyEmailResult>>;
   WarcPointer: ResolverTypeWrapper<Partial<WarcPointer>>;
   WarcPointerInput: ResolverTypeWrapper<Partial<WarcPointerInput>>;
@@ -2774,6 +2825,7 @@ export type ResolversParentTypes = {
   SignalTypeCount: Partial<SignalTypeCount>;
   SimilarCompanyResult: Partial<SimilarCompanyResult>;
   SimilarPost: Partial<SimilarPost>;
+  SkillMatchResult: Partial<SkillMatchResult>;
   String: Partial<Scalars['String']['output']>;
   SyncResendResult: Partial<SyncResendResult>;
   URL: Partial<Scalars['URL']['output']>;
@@ -2788,6 +2840,8 @@ export type ResolversParentTypes = {
   UpsertLinkedInPostsResult: Partial<UpsertLinkedInPostsResult>;
   UserSettings: Partial<UserSettings>;
   UserSettingsInput: Partial<UserSettingsInput>;
+  VerifyAuthenticityResult: Partial<VerifyAuthenticityResult>;
+  VerifyCompanyContactsResult: Partial<VerifyCompanyContactsResult>;
   VerifyEmailResult: Partial<VerifyEmailResult>;
   WarcPointer: Partial<WarcPointer>;
   WarcPointerInput: Partial<WarcPointerInput>;
@@ -2974,6 +3028,9 @@ export type ComputeNextTouchScoresResultResolvers<ContextType = GraphQLContext, 
 
 export type ContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Contact'] = ResolversParentTypes['Contact']> = {
   aiProfile?: Resolver<Maybe<ResolversTypes['ContactAIProfile']>, ParentType, ContextType>;
+  authenticityFlags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  authenticityScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  authenticityVerdict?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   authorityScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   bouncedEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3543,6 +3600,8 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   upsertLinkedInPost?: Resolver<ResolversTypes['LinkedInPost'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostArgs, 'input'>>;
   upsertLinkedInPosts?: Resolver<ResolversTypes['UpsertLinkedInPostsResult'], ParentType, ContextType, RequireFields<MutationUpsertLinkedInPostsArgs, 'inputs'>>;
+  verifyCompanyContacts?: Resolver<ResolversTypes['VerifyCompanyContactsResult'], ParentType, ContextType, RequireFields<MutationVerifyCompanyContactsArgs, 'companyId'>>;
+  verifyContactAuthenticity?: Resolver<ResolversTypes['VerifyAuthenticityResult'], ParentType, ContextType, RequireFields<MutationVerifyContactAuthenticityArgs, 'contactId'>>;
   verifyContactEmail?: Resolver<ResolversTypes['VerifyEmailResult'], ParentType, ContextType, RequireFields<MutationVerifyContactEmailArgs, 'contactId'>>;
 };
 
@@ -4010,6 +4069,12 @@ export type SimilarPostResolvers<ContextType = GraphQLContext, ParentType extend
   similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
+export type SkillMatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillMatchResult'] = ResolversParentTypes['SkillMatchResult']> = {
+  claimedSkills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  githubLanguages?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  matched?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SyncResendResult'] = ResolversParentTypes['SyncResendResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   skippedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -4047,6 +4112,25 @@ export type UserSettingsResolvers<ContextType = GraphQLContext, ParentType exten
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   updated_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   user_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type VerifyAuthenticityResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VerifyAuthenticityResult'] = ResolversParentTypes['VerifyAuthenticityResult']> = {
+  authenticityScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  flags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  recommendations?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  skillMatch?: Resolver<Maybe<ResolversTypes['SkillMatchResult']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  verdict?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type VerifyCompanyContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VerifyCompanyContactsResult'] = ResolversParentTypes['VerifyCompanyContactsResult']> = {
+  results?: Resolver<Array<ResolversTypes['VerifyAuthenticityResult']>, ParentType, ContextType>;
+  review?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  suspicious?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalChecked?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  verified?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
 export type VerifyEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VerifyEmailResult'] = ResolversParentTypes['VerifyEmailResult']> = {
@@ -4187,12 +4271,15 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SignalTypeCount?: SignalTypeCountResolvers<ContextType>;
   SimilarCompanyResult?: SimilarCompanyResultResolvers<ContextType>;
   SimilarPost?: SimilarPostResolvers<ContextType>;
+  SkillMatchResult?: SkillMatchResultResolvers<ContextType>;
   SyncResendResult?: SyncResendResultResolvers<ContextType>;
   URL?: GraphQLScalarType;
   UnverifyContactsResult?: UnverifyContactsResultResolvers<ContextType>;
   Upload?: GraphQLScalarType;
   UpsertLinkedInPostsResult?: UpsertLinkedInPostsResultResolvers<ContextType>;
   UserSettings?: UserSettingsResolvers<ContextType>;
+  VerifyAuthenticityResult?: VerifyAuthenticityResultResolvers<ContextType>;
+  VerifyCompanyContactsResult?: VerifyCompanyContactsResultResolvers<ContextType>;
   VerifyEmailResult?: VerifyEmailResultResolvers<ContextType>;
   WarcPointer?: WarcPointerResolvers<ContextType>;
 };

@@ -237,6 +237,9 @@ type ComputeNextTouchScoresResult {
 
 type Contact {
   aiProfile: ContactAIProfile
+  authenticityFlags: [String!]!
+  authenticityScore: Float
+  authenticityVerdict: String
   authorityScore: Float
   bouncedEmails: [String!]!
   company: String
@@ -755,10 +758,12 @@ input ImportCompanyWithContactsInput {
   companyName: String!
   contacts: [ImportContactInput!]!
   linkedinUrl: String
+  skillFilter: [String!]
   website: String
 }
 
 input ImportContactInput {
+  headline: String
   linkedinUrl: String
   name: String!
   workEmail: String
@@ -961,6 +966,14 @@ type Mutation {
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   upsertLinkedInPost(input: UpsertLinkedInPostInput!): LinkedInPost!
   upsertLinkedInPosts(inputs: [UpsertLinkedInPostInput!]!): UpsertLinkedInPostsResult!
+  """
+  Run fake account detection on all contacts for a company, optionally filtered by skills.
+  """
+  verifyCompanyContacts(companyId: Int!, skillFilter: [String!]): VerifyCompanyContactsResult!
+  """
+  Run fake account detection on a single contact. Enriches LinkedIn + GitHub, then scores.
+  """
+  verifyContactAuthenticity(contactId: Int!): VerifyAuthenticityResult!
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
 }
 
@@ -1489,6 +1502,12 @@ type SimilarPost {
   similarity: Float!
 }
 
+type SkillMatchResult {
+  claimedSkills: [String!]!
+  githubLanguages: [String!]!
+  matched: Boolean!
+}
+
 enum SourceType {
   BRAVE_SEARCH
   COMMONCRAWL
@@ -1626,6 +1645,25 @@ input UserSettingsInput {
   dark_mode: Boolean
   email_notifications: Boolean
   excluded_companies: [String!]
+}
+
+type VerifyAuthenticityResult {
+  authenticityScore: Float!
+  contactId: Int!
+  flags: [String!]!
+  recommendations: [String!]!
+  skillMatch: SkillMatchResult
+  success: Boolean!
+  verdict: String!
+}
+
+type VerifyCompanyContactsResult {
+  results: [VerifyAuthenticityResult!]!
+  review: Int!
+  success: Boolean!
+  suspicious: Int!
+  totalChecked: Int!
+  verified: Int!
 }
 
 type VerifyEmailResult {

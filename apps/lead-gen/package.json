@@ -65,7 +65,8 @@
     "remark-gfm": "^4.0.1",
     "resend": "^6.9.2",
     "ulid": "^3.0.2",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "@huggingface/transformers": "^3.8.0"
   },
   "devDependencies": {
     "@eddeee888/gcg-typescript-resolver-files": "^0.15.0",

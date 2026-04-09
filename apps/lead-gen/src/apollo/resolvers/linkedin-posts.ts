@@ -91,11 +91,12 @@ export const linkedinPostResolvers = {
         if (!embRow?.emb) return [];
 
         const vecLiteral = `[${(embRow.emb as number[]).join(",")}]`;
+        const vecParam = sql.raw(`'${vecLiteral}'::vector`);
 
         const results = await context.db
           .select({
             post: linkedinPosts,
-            similarity: sql<number>`1 - (job_embedding <=> ${vecLiteral}::vector)`.as("similarity"),
+            similarity: sql<number>`1 - (job_embedding <=> ${vecParam})`.as("similarity"),
           })
           .from(linkedinPosts)
           .where(
@@ -104,7 +105,7 @@ export const linkedinPostResolvers = {
               sql`${linkedinPosts.id} != ${args.postId}`,
             ),
           )
-          .orderBy(sql`job_embedding <=> ${vecLiteral}::vector`)
+          .orderBy(sql`job_embedding <=> ${vecParam}`)
           .limit(limit);
 
         return results

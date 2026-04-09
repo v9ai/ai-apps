@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChatBubbleIcon,
   EnvelopeClosedIcon,
   PersonIcon,
 } from "@radix-ui/react-icons";
@@ -31,6 +32,13 @@ export function AdminNav() {
         <Flex align="center" gap="2">
           <EnvelopeClosedIcon width={14} height={14} />
           emails
+        </Flex>
+      </NavLink>
+
+      <NavLink href="/admin/linkedin-posts" title="LinkedIn Posts">
+        <Flex align="center" gap="2">
+          <ChatBubbleIcon width={14} height={14} />
+          posts
         </Flex>
       </NavLink>
     </>

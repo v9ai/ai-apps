@@ -1308,6 +1308,7 @@ async function importPeopleFromCurrentPage(
       name: card.name,
       linkedinUrl: card.linkedinUrl,
       workEmail: null,
+      headline: card.headline || null,
     }));
 
     const result = await gqlRequest(

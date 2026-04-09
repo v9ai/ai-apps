@@ -280,6 +280,9 @@ export type ComputeNextTouchScoresResult = {
 export type Contact = {
   __typename?: 'Contact';
   aiProfile: Maybe<ContactAiProfile>;
+  authenticityFlags: Array<Scalars['String']['output']>;
+  authenticityScore: Maybe<Scalars['Float']['output']>;
+  authenticityVerdict: Maybe<Scalars['String']['output']>;
   authorityScore: Maybe<Scalars['Float']['output']>;
   bouncedEmails: Array<Scalars['String']['output']>;
   company: Maybe<Scalars['String']['output']>;
@@ -830,10 +833,12 @@ export type ImportCompanyWithContactsInput = {
   companyName: Scalars['String']['input'];
   contacts: Array<ImportContactInput>;
   linkedinUrl?: InputMaybe<Scalars['String']['input']>;
+  skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ImportContactInput = {
+  headline?: InputMaybe<Scalars['String']['input']>;
   linkedinUrl?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   workEmail?: InputMaybe<Scalars['String']['input']>;
@@ -1044,6 +1049,10 @@ export type Mutation = {
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
+  /** Run fake account detection on all contacts for a company, optionally filtered by skills. */
+  verifyCompanyContacts: VerifyCompanyContactsResult;
+  /** Run fake account detection on a single contact. Enriches LinkedIn + GitHub, then scores. */
+  verifyContactAuthenticity: VerifyAuthenticityResult;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -1405,6 +1414,17 @@ export type MutationUpsertLinkedInPostArgs = {
 
 export type MutationUpsertLinkedInPostsArgs = {
   inputs: Array<UpsertLinkedInPostInput>;
+};
+
+
+export type MutationVerifyCompanyContactsArgs = {
+  companyId: Scalars['Int']['input'];
+  skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+export type MutationVerifyContactAuthenticityArgs = {
+  contactId: Scalars['Int']['input'];
 };
 
 
@@ -2222,6 +2242,13 @@ export type SimilarPost = {
   similarity: Scalars['Float']['output'];
 };
 
+export type SkillMatchResult = {
+  __typename?: 'SkillMatchResult';
+  claimedSkills: Array<Scalars['String']['output']>;
+  githubLanguages: Array<Scalars['String']['output']>;
+  matched: Scalars['Boolean']['output'];
+};
+
 export type SourceType =
   | 'BRAVE_SEARCH'
   | 'COMMONCRAWL'
@@ -2358,6 +2385,27 @@ export type UserSettingsInput = {
   dark_mode?: InputMaybe<Scalars['Boolean']['input']>;
   email_notifications?: InputMaybe<Scalars['Boolean']['input']>;
   excluded_companies?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type VerifyAuthenticityResult = {
+  __typename?: 'VerifyAuthenticityResult';
+  authenticityScore: Scalars['Float']['output'];
+  contactId: Scalars['Int']['output'];
+  flags: Array<Scalars['String']['output']>;
+  recommendations: Array<Scalars['String']['output']>;
+  skillMatch: Maybe<SkillMatchResult>;
+  success: Scalars['Boolean']['output'];
+  verdict: Scalars['String']['output'];
+};
+
+export type VerifyCompanyContactsResult = {
+  __typename?: 'VerifyCompanyContactsResult';
+  results: Array<VerifyAuthenticityResult>;
+  review: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  suspicious: Scalars['Int']['output'];
+  totalChecked: Scalars['Int']['output'];
+  verified: Scalars['Int']['output'];
 };
 
 export type VerifyEmailResult = {
@@ -2889,6 +2937,33 @@ export type DeleteEmailTemplateMutationVariables = Exact<{
 
 
 export type DeleteEmailTemplateMutation = { __typename?: 'Mutation', deleteEmailTemplate: { __typename?: 'DeleteEmailTemplateResult', success: boolean, message: string | null } };
+
+export type GetLinkedInPostsQueryVariables = Exact<{
+  type?: InputMaybe<LinkedInPostType>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetLinkedInPostsQuery = { __typename?: 'Query', linkedinPosts: Array<{ __typename?: 'LinkedInPost', id: number, type: LinkedInPostType, url: string, companyId: number | null, contactId: number | null, title: string | null, content: string | null, authorName: string | null, authorUrl: string | null, location: string | null, employmentType: string | null, postedAt: string | null, scrapedAt: string, rawData: any | null, analyzedAt: string | null, createdAt: string, skills: Array<{ __typename?: 'ExtractedSkill', tag: string, label: string, confidence: number }> | null }> };
+
+export type GetSimilarPostsQueryVariables = Exact<{
+  postId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+}>;
+
+
+export type GetSimilarPostsQuery = { __typename?: 'Query', similarPosts: Array<{ __typename?: 'SimilarPost', similarity: number, post: { __typename?: 'LinkedInPost', id: number, type: LinkedInPostType, url: string, title: string | null, content: string | null, authorName: string | null, analyzedAt: string | null, skills: Array<{ __typename?: 'ExtractedSkill', tag: string, label: string, confidence: number }> | null } }> };
+
+export type AnalyzeLinkedInPostsMutationVariables = Exact<{
+  postIds?: InputMaybe<Array<Scalars['Int']['input']> | Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type AnalyzeLinkedInPostsMutation = { __typename?: 'Mutation', analyzeLinkedInPosts: { __typename?: 'AnalyzePostsResult', success: boolean, analyzed: number, failed: number, errors: Array<string> } };
 
 export type DueRemindersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5831,6 +5906,173 @@ export function useDeleteEmailTemplateMutation(baseOptions?: Apollo.MutationHook
 export type DeleteEmailTemplateMutationHookResult = ReturnType<typeof useDeleteEmailTemplateMutation>;
 export type DeleteEmailTemplateMutationResult = Apollo.MutationResult<DeleteEmailTemplateMutation>;
 export type DeleteEmailTemplateMutationOptions = Apollo.BaseMutationOptions<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>;
+export const GetLinkedInPostsDocument = gql`
+    query GetLinkedInPosts($type: LinkedInPostType, $companyId: Int, $limit: Int, $offset: Int) {
+  linkedinPosts(
+    type: $type
+    companyId: $companyId
+    limit: $limit
+    offset: $offset
+  ) {
+    id
+    type
+    url
+    companyId
+    contactId
+    title
+    content
+    authorName
+    authorUrl
+    location
+    employmentType
+    postedAt
+    scrapedAt
+    rawData
+    skills {
+      tag
+      label
+      confidence
+    }
+    analyzedAt
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useGetLinkedInPostsQuery__
+ *
+ * To run a query within a React component, call `useGetLinkedInPostsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLinkedInPostsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLinkedInPostsQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *      companyId: // value for 'companyId'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGetLinkedInPostsQuery(baseOptions?: Apollo.QueryHookOptions<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>(GetLinkedInPostsDocument, options);
+      }
+export function useGetLinkedInPostsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>(GetLinkedInPostsDocument, options);
+        }
+// @ts-ignore
+export function useGetLinkedInPostsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>): Apollo.UseSuspenseQueryResult<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>;
+export function useGetLinkedInPostsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>): Apollo.UseSuspenseQueryResult<GetLinkedInPostsQuery | undefined, GetLinkedInPostsQueryVariables>;
+export function useGetLinkedInPostsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>(GetLinkedInPostsDocument, options);
+        }
+export type GetLinkedInPostsQueryHookResult = ReturnType<typeof useGetLinkedInPostsQuery>;
+export type GetLinkedInPostsLazyQueryHookResult = ReturnType<typeof useGetLinkedInPostsLazyQuery>;
+export type GetLinkedInPostsSuspenseQueryHookResult = ReturnType<typeof useGetLinkedInPostsSuspenseQuery>;
+export type GetLinkedInPostsQueryResult = Apollo.QueryResult<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>;
+export const GetSimilarPostsDocument = gql`
+    query GetSimilarPosts($postId: Int!, $limit: Int, $minScore: Float) {
+  similarPosts(postId: $postId, limit: $limit, minScore: $minScore) {
+    post {
+      id
+      type
+      url
+      title
+      content
+      authorName
+      skills {
+        tag
+        label
+        confidence
+      }
+      analyzedAt
+    }
+    similarity
+  }
+}
+    `;
+
+/**
+ * __useGetSimilarPostsQuery__
+ *
+ * To run a query within a React component, call `useGetSimilarPostsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSimilarPostsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSimilarPostsQuery({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *      limit: // value for 'limit'
+ *      minScore: // value for 'minScore'
+ *   },
+ * });
+ */
+export function useGetSimilarPostsQuery(baseOptions: Apollo.QueryHookOptions<GetSimilarPostsQuery, GetSimilarPostsQueryVariables> & ({ variables: GetSimilarPostsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>(GetSimilarPostsDocument, options);
+      }
+export function useGetSimilarPostsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>(GetSimilarPostsDocument, options);
+        }
+// @ts-ignore
+export function useGetSimilarPostsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>;
+export function useGetSimilarPostsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>): Apollo.UseSuspenseQueryResult<GetSimilarPostsQuery | undefined, GetSimilarPostsQueryVariables>;
+export function useGetSimilarPostsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>(GetSimilarPostsDocument, options);
+        }
+export type GetSimilarPostsQueryHookResult = ReturnType<typeof useGetSimilarPostsQuery>;
+export type GetSimilarPostsLazyQueryHookResult = ReturnType<typeof useGetSimilarPostsLazyQuery>;
+export type GetSimilarPostsSuspenseQueryHookResult = ReturnType<typeof useGetSimilarPostsSuspenseQuery>;
+export type GetSimilarPostsQueryResult = Apollo.QueryResult<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>;
+export const AnalyzeLinkedInPostsDocument = gql`
+    mutation AnalyzeLinkedInPosts($postIds: [Int!], $limit: Int) {
+  analyzeLinkedInPosts(postIds: $postIds, limit: $limit) {
+    success
+    analyzed
+    failed
+    errors
+  }
+}
+    `;
+export type AnalyzeLinkedInPostsMutationFn = Apollo.MutationFunction<AnalyzeLinkedInPostsMutation, AnalyzeLinkedInPostsMutationVariables>;
+
+/**
+ * __useAnalyzeLinkedInPostsMutation__
+ *
+ * To run a mutation, you first call `useAnalyzeLinkedInPostsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAnalyzeLinkedInPostsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [analyzeLinkedInPostsMutation, { data, loading, error }] = useAnalyzeLinkedInPostsMutation({
+ *   variables: {
+ *      postIds: // value for 'postIds'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useAnalyzeLinkedInPostsMutation(baseOptions?: Apollo.MutationHookOptions<AnalyzeLinkedInPostsMutation, AnalyzeLinkedInPostsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AnalyzeLinkedInPostsMutation, AnalyzeLinkedInPostsMutationVariables>(AnalyzeLinkedInPostsDocument, options);
+      }
+export type AnalyzeLinkedInPostsMutationHookResult = ReturnType<typeof useAnalyzeLinkedInPostsMutation>;
+export type AnalyzeLinkedInPostsMutationResult = Apollo.MutationResult<AnalyzeLinkedInPostsMutation>;
+export type AnalyzeLinkedInPostsMutationOptions = Apollo.BaseMutationOptions<AnalyzeLinkedInPostsMutation, AnalyzeLinkedInPostsMutationVariables>;
 export const DueRemindersDocument = gql`
     query DueReminders {
   dueReminders {

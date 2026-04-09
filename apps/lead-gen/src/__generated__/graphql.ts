@@ -279,6 +279,9 @@ export type ComputeNextTouchScoresResult = {
 export type Contact = {
   __typename: 'Contact';
   aiProfile: Maybe<ContactAiProfile>;
+  authenticityFlags: Array<Scalars['String']['output']>;
+  authenticityScore: Maybe<Scalars['Float']['output']>;
+  authenticityVerdict: Maybe<Scalars['String']['output']>;
   authorityScore: Maybe<Scalars['Float']['output']>;
   bouncedEmails: Array<Scalars['String']['output']>;
   company: Maybe<Scalars['String']['output']>;
@@ -829,10 +832,12 @@ export type ImportCompanyWithContactsInput = {
   companyName: Scalars['String']['input'];
   contacts: Array<ImportContactInput>;
   linkedinUrl?: InputMaybe<Scalars['String']['input']>;
+  skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ImportContactInput = {
+  headline?: InputMaybe<Scalars['String']['input']>;
   linkedinUrl?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   workEmail?: InputMaybe<Scalars['String']['input']>;
@@ -1043,6 +1048,10 @@ export type Mutation = {
   updateUserSettings: UserSettings;
   upsertLinkedInPost: LinkedInPost;
   upsertLinkedInPosts: UpsertLinkedInPostsResult;
+  /** Run fake account detection on all contacts for a company, optionally filtered by skills. */
+  verifyCompanyContacts: VerifyCompanyContactsResult;
+  /** Run fake account detection on a single contact. Enriches LinkedIn + GitHub, then scores. */
+  verifyContactAuthenticity: VerifyAuthenticityResult;
   verifyContactEmail: VerifyEmailResult;
 };
 
@@ -1404,6 +1413,17 @@ export type MutationUpsertLinkedInPostArgs = {
 
 export type MutationUpsertLinkedInPostsArgs = {
   inputs: Array<UpsertLinkedInPostInput>;
+};
+
+
+export type MutationVerifyCompanyContactsArgs = {
+  companyId: Scalars['Int']['input'];
+  skillFilter?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+export type MutationVerifyContactAuthenticityArgs = {
+  contactId: Scalars['Int']['input'];
 };
 
 
@@ -2221,6 +2241,13 @@ export type SimilarPost = {
   similarity: Scalars['Float']['output'];
 };
 
+export type SkillMatchResult = {
+  __typename: 'SkillMatchResult';
+  claimedSkills: Array<Scalars['String']['output']>;
+  githubLanguages: Array<Scalars['String']['output']>;
+  matched: Scalars['Boolean']['output'];
+};
+
 export type SourceType =
   | 'BRAVE_SEARCH'
   | 'COMMONCRAWL'
@@ -2357,6 +2384,27 @@ export type UserSettingsInput = {
   dark_mode?: InputMaybe<Scalars['Boolean']['input']>;
   email_notifications?: InputMaybe<Scalars['Boolean']['input']>;
   excluded_companies?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type VerifyAuthenticityResult = {
+  __typename: 'VerifyAuthenticityResult';
+  authenticityScore: Scalars['Float']['output'];
+  contactId: Scalars['Int']['output'];
+  flags: Array<Scalars['String']['output']>;
+  recommendations: Array<Scalars['String']['output']>;
+  skillMatch: Maybe<SkillMatchResult>;
+  success: Scalars['Boolean']['output'];
+  verdict: Scalars['String']['output'];
+};
+
+export type VerifyCompanyContactsResult = {
+  __typename: 'VerifyCompanyContactsResult';
+  results: Array<VerifyAuthenticityResult>;
+  review: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  suspicious: Scalars['Int']['output'];
+  totalChecked: Scalars['Int']['output'];
+  verified: Scalars['Int']['output'];
 };
 
 export type VerifyEmailResult = {
@@ -2928,6 +2976,33 @@ export type DeleteEmailTemplateMutationVariables = Exact<{
 
 export type DeleteEmailTemplateMutation = { __typename: 'Mutation', deleteEmailTemplate: { __typename: 'DeleteEmailTemplateResult', success: boolean, message: string | null } };
 
+export type GetLinkedInPostsQueryVariables = Exact<{
+  type?: InputMaybe<LinkedInPostType>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetLinkedInPostsQuery = { __typename: 'Query', linkedinPosts: Array<{ __typename: 'LinkedInPost', id: number, type: LinkedInPostType, url: string, companyId: number | null, contactId: number | null, title: string | null, content: string | null, authorName: string | null, authorUrl: string | null, location: string | null, employmentType: string | null, postedAt: string | null, scrapedAt: string, rawData: any | null, analyzedAt: string | null, createdAt: string, skills: Array<{ __typename: 'ExtractedSkill', tag: string, label: string, confidence: number }> | null }> };
+
+export type GetSimilarPostsQueryVariables = Exact<{
+  postId: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+}>;
+
+
+export type GetSimilarPostsQuery = { __typename: 'Query', similarPosts: Array<{ __typename: 'SimilarPost', similarity: number, post: { __typename: 'LinkedInPost', id: number, type: LinkedInPostType, url: string, title: string | null, content: string | null, authorName: string | null, analyzedAt: string | null, skills: Array<{ __typename: 'ExtractedSkill', tag: string, label: string, confidence: number }> | null } }> };
+
+export type AnalyzeLinkedInPostsMutationVariables = Exact<{
+  postIds?: InputMaybe<Array<Scalars['Int']['input']> | Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type AnalyzeLinkedInPostsMutation = { __typename: 'Mutation', analyzeLinkedInPosts: { __typename: 'AnalyzePostsResult', success: boolean, analyzed: number, failed: number, errors: Array<string> } };
+
 export type DueRemindersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -3054,6 +3129,9 @@ export const GetEmailTemplateDocument = {"kind":"Document","definitions":[{"kind
 export const CreateEmailTemplateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateEmailTemplate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateEmailTemplateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createEmailTemplate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<CreateEmailTemplateMutation, CreateEmailTemplateMutationVariables>;
 export const UpdateEmailTemplateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateEmailTemplate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateEmailTemplateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateEmailTemplate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<UpdateEmailTemplateMutation, UpdateEmailTemplateMutationVariables>;
 export const DeleteEmailTemplateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteEmailTemplate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteEmailTemplate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>;
+export const GetLinkedInPostsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLinkedInPosts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"type"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"LinkedInPostType"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"linkedinPosts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"type"},"value":{"kind":"Variable","name":{"kind":"Name","value":"type"}}},{"kind":"Argument","name":{"kind":"Name","value":"companyId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"companyId"}},{"kind":"Field","name":{"kind":"Name","value":"contactId"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"authorUrl"}},{"kind":"Field","name":{"kind":"Name","value":"location"}},{"kind":"Field","name":{"kind":"Name","value":"employmentType"}},{"kind":"Field","name":{"kind":"Name","value":"postedAt"}},{"kind":"Field","name":{"kind":"Name","value":"scrapedAt"}},{"kind":"Field","name":{"kind":"Name","value":"rawData"}},{"kind":"Field","name":{"kind":"Name","value":"skills"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tag"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"confidence"}}]}},{"kind":"Field","name":{"kind":"Name","value":"analyzedAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<GetLinkedInPostsQuery, GetLinkedInPostsQueryVariables>;
+export const GetSimilarPostsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSimilarPosts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"postId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"minScore"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"similarPosts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"postId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"postId"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"minScore"},"value":{"kind":"Variable","name":{"kind":"Name","value":"minScore"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"post"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"skills"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tag"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"confidence"}}]}},{"kind":"Field","name":{"kind":"Name","value":"analyzedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"similarity"}}]}}]}}]} as unknown as DocumentNode<GetSimilarPostsQuery, GetSimilarPostsQueryVariables>;
+export const AnalyzeLinkedInPostsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AnalyzeLinkedInPosts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"postIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"analyzeLinkedInPosts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"postIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"postIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"analyzed"}},{"kind":"Field","name":{"kind":"Name","value":"failed"}},{"kind":"Field","name":{"kind":"Name","value":"errors"}}]}}]}}]} as unknown as DocumentNode<AnalyzeLinkedInPostsMutation, AnalyzeLinkedInPostsMutationVariables>;
 export const DueRemindersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"DueReminders"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"dueReminders"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"reminder"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"contactId"}},{"kind":"Field","name":{"kind":"Name","value":"remindAt"}},{"kind":"Field","name":{"kind":"Name","value":"recurrence"}},{"kind":"Field","name":{"kind":"Name","value":"note"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"snoozedUntil"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"contact"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"position"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}}]}}]}}]}}]} as unknown as DocumentNode<DueRemindersQuery, DueRemindersQueryVariables>;
 export const ContactRemindersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ContactReminders"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"contactId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"contactReminders"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"contactId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"contactId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"contactId"}},{"kind":"Field","name":{"kind":"Name","value":"remindAt"}},{"kind":"Field","name":{"kind":"Name","value":"recurrence"}},{"kind":"Field","name":{"kind":"Name","value":"note"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"snoozedUntil"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<ContactRemindersQuery, ContactRemindersQueryVariables>;
 export const CreateReminderDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateReminder"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateReminderInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createReminder"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"contactId"}},{"kind":"Field","name":{"kind":"Name","value":"remindAt"}},{"kind":"Field","name":{"kind":"Name","value":"recurrence"}},{"kind":"Field","name":{"kind":"Name","value":"note"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<CreateReminderMutation, CreateReminderMutationVariables>;
