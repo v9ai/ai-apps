@@ -29,6 +29,14 @@ export type AnalyzeCompanyResponse = {
   success: Scalars['Boolean']['output'];
 };
 
+export type AnalyzePostsResult = {
+  __typename: 'AnalyzePostsResult';
+  analyzed: Scalars['Int']['output'];
+  errors: Array<Scalars['String']['output']>;
+  failed: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type ApplyEmailPatternResult = {
   __typename: 'ApplyEmailPatternResult';
   contacts: Array<Contact>;
@@ -697,6 +705,13 @@ export type ExtractMethod =
   | 'LLM'
   | 'META';
 
+export type ExtractedSkill = {
+  __typename: 'ExtractedSkill';
+  confidence: Scalars['Float']['output'];
+  label: Scalars['String']['output'];
+  tag: Scalars['String']['output'];
+};
+
 export type FindCompanyResult = {
   __typename: 'FindCompanyResult';
   company: Maybe<Company>;
@@ -902,6 +917,7 @@ export type IntentSignalsResponse = {
 
 export type LinkedInPost = {
   __typename: 'LinkedInPost';
+  analyzedAt: Maybe<Scalars['String']['output']>;
   authorName: Maybe<Scalars['String']['output']>;
   authorUrl: Maybe<Scalars['String']['output']>;
   companyId: Maybe<Scalars['Int']['output']>;
@@ -914,6 +930,7 @@ export type LinkedInPost = {
   postedAt: Maybe<Scalars['String']['output']>;
   rawData: Maybe<Scalars['JSON']['output']>;
   scrapedAt: Scalars['String']['output'];
+  skills: Maybe<Array<ExtractedSkill>>;
   title: Maybe<Scalars['String']['output']>;
   type: LinkedInPostType;
   url: Scalars['String']['output'];
@@ -957,6 +974,7 @@ export type Mutation = {
   __typename: 'Mutation';
   add_company_facts: Array<CompanyFact>;
   analyzeCompany: AnalyzeCompanyResponse;
+  analyzeLinkedInPosts: AnalyzePostsResult;
   applyEmailPattern: ApplyEmailPatternResult;
   archiveEmail: ArchiveEmailResult;
   batchDetectIntent: BatchDetectIntentResult;
@@ -1038,6 +1056,12 @@ export type MutationAdd_Company_FactsArgs = {
 export type MutationAnalyzeCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationAnalyzeLinkedInPostsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  postIds?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
 
@@ -1452,6 +1476,7 @@ export type Query = {
   salescueTriggers: SalescueTriggersResult;
   /** Semantic similarity search: find companies matching a natural language query */
   similarCompanies: Array<SimilarCompanyResult>;
+  similarPosts: Array<SimilarPost>;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -1677,6 +1702,13 @@ export type QuerySimilarCompaniesArgs = {
   minAiTier?: InputMaybe<Scalars['Int']['input']>;
   minScore?: InputMaybe<Scalars['Float']['input']>;
   query: Scalars['String']['input'];
+};
+
+
+export type QuerySimilarPostsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+  postId: Scalars['Int']['input'];
 };
 
 
@@ -2180,6 +2212,12 @@ export type SignalTypeCount = {
 export type SimilarCompanyResult = {
   __typename: 'SimilarCompanyResult';
   company: Company;
+  similarity: Scalars['Float']['output'];
+};
+
+export type SimilarPost = {
+  __typename: 'SimilarPost';
+  post: LinkedInPost;
   similarity: Scalars['Float']['output'];
 };
 

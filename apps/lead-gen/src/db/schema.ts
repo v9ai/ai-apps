@@ -495,6 +495,11 @@ export const linkedinPosts = pgTable(
 
     raw_data: text("raw_data"),          // JSON blob for anything extra
 
+    // TechWolf model analysis (JobBERT-v2 + ConTeXT skill extraction)
+    skills: text("skills"),              // JSON array of ExtractedSkill[]
+    analyzed_at: text("analyzed_at"),    // ISO timestamp of last TechWolf analysis
+    // job_embedding vector(768) added via migration — accessed with raw SQL
+
     created_at: text("created_at").notNull().default(sql`now()::text`),
   },
   (table) => [
