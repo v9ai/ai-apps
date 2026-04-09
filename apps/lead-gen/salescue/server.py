@@ -144,6 +144,10 @@ class CompanyClassifyRequest(BaseModel):
     size: str = ""
 
 
+class CompanyBatchClassifyRequest(BaseModel):
+    companies: list[CompanyClassifyRequest]
+
+
 class AnalyzeRequest(BaseModel):
     text: str
     modules: Optional[list[str]] = None
