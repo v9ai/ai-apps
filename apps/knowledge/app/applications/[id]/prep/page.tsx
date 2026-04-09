@@ -279,9 +279,19 @@ function PrepPageInner() {
         if (/narration|say this|say:|what to say|your script|prioritization script/.test(l))
           return <div className="callout callout-speak"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
         if (/common mistake/.test(l))
-          return <div className="callout callout-warn"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
+          return (
+            <details className="callout callout-warn callout-expand">
+              <summary>{first}</summary>
+              <Text as="p" size="2" style={{ lineHeight: 1.8 }}>{kids.slice(1)}</Text>
+            </details>
+          );
         if (/if they ask|why this/.test(l))
-          return <div className="callout callout-tip"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
+          return (
+            <details className="callout callout-tip callout-expand">
+              <summary>{first}</summary>
+              <Text as="p" size="2" style={{ lineHeight: 1.8 }}>{kids.slice(1)}</Text>
+            </details>
+          );
         if (/⏱|target:/.test(l))
           return <div className="timing-badge">{children}</div>;
       }

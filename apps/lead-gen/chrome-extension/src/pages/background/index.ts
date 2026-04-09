@@ -906,6 +906,7 @@ async function browseCompanies(tabId: number) {
   let saved = 0;
   let filtered = 0;
   let totalProcessed = 0;
+  let totalRemoteJobs = 0;
   let page = 1;
   const allCompanyUrls: string[] = [];
   const returnUrl = (await chrome.tabs.get(tabId)).url || "";
