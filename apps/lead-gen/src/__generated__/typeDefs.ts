@@ -201,6 +201,7 @@ input CompanyFilterInput {
 input CompanyImportInput {
   description: String
   email: String
+  industry: String
   linkedin_url: String
   location: String
   name: String!
