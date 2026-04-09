@@ -9,6 +9,9 @@ import type {
   Company as DbCompany,
   CompanyFact as DbCompanyFact,
   CompanySnapshot as DbCompanySnapshot,
+  NewCompany,
+  NewCompanyFact,
+  NewCompanySnapshot,
 } from "@/db/schema";
 import { eq, and, or, like, ilike, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
@@ -248,11 +251,11 @@ export const companyResolvers = {
             conditions.push(eq(companies.category, args.filter.category));
           }
 
-          if (args.filter.min_score !== undefined) {
+          if (args.filter.min_score != null) {
             conditions.push(gte(companies.score, args.filter.min_score));
           }
 
-          if (args.filter.min_ai_tier !== undefined && args.filter.min_ai_tier !== null) {
+          if (args.filter.min_ai_tier != null) {
             conditions.push(gte(companies.ai_tier, args.filter.min_ai_tier));
           }
         }
@@ -456,13 +459,13 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
-        const insertData: Record<string, unknown> = { ...args.input };
+        const insertData = { ...args.input } as NewCompany;
 
         // Validate category enum
         if (args.input.category) {
           const validCategories = ["CONSULTANCY", "UNKNOWN"];
           const category = args.input.category.toUpperCase();
-          insertData.category = validCategories.includes(category) ? category : "UNKNOWN";
+          insertData.category = validCategories.includes(category) ? category as NewCompany["category"] : "UNKNOWN";
         }
 
         // Stringify JSON fields
@@ -599,7 +602,7 @@ export const companyResolvers = {
         const insertedFacts = [];
 
         for (const fact of args.facts) {
-          const insertData: Record<string, unknown> = {
+          const insertData = {
             company_id: args.company_id,
             field: fact.field,
             value_text: fact.value_text,
@@ -619,7 +622,7 @@ export const companyResolvers = {
             warc_offset: fact.evidence.warc?.offset,
             warc_length: fact.evidence.warc?.length,
             warc_digest: fact.evidence.warc?.digest,
-          };
+          } as NewCompanyFact;
 
           if (fact.value_json) {
             insertData.value_json = JSON.stringify(fact.value_json);
@@ -656,7 +659,7 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
-        const insertData: Record<string, unknown> = {
+        const insertData = {
           company_id: args.company_id,
           source_url: args.source_url,
           crawl_id: args.crawl_id,
@@ -674,7 +677,7 @@ export const companyResolvers = {
           warc_offset: args.evidence.warc?.offset,
           warc_length: args.evidence.warc?.length,
           warc_digest: args.evidence.warc?.digest,
-        };
+        } as NewCompanySnapshot;
 
         if (args.jsonld) {
           insertData.jsonld = JSON.stringify(args.jsonld);
