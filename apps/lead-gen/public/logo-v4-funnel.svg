@@ -1,0 +1,222 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 140" width="300" height="140">
+  <title>Agentic Lead Gen</title>
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#040812"/>
+      <stop offset="50%" stop-color="#0a1028"/>
+      <stop offset="100%" stop-color="#060e1e"/>
+    </linearGradient>
+
+    <!-- Funnel interior fill -->
+    <linearGradient id="funnelFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#182858" stop-opacity="0.08"/>
+      <stop offset="35%" stop-color="#1e3470" stop-opacity="0.20"/>
+      <stop offset="70%" stop-color="#1a2e60" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#142040" stop-opacity="0.05"/>
+    </linearGradient>
+
+    <!-- Funnel left edge -->
+    <linearGradient id="edgeL" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5a80d0" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#3a60b0" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#2a4890" stop-opacity="0.35"/>
+    </linearGradient>
+
+    <!-- Funnel right edge -->
+    <linearGradient id="edgeR" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6890d8" stop-opacity="0.75"/>
+      <stop offset="50%" stop-color="#4570b8" stop-opacity="0.50"/>
+      <stop offset="100%" stop-color="#2a4890" stop-opacity="0.30"/>
+    </linearGradient>
+
+    <!-- Neck-to-output transition -->
+    <linearGradient id="neckGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4080d0" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="#8090a0" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#c0a040" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <filter id="strong" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <filter id="tiny" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="140" fill="url(#bg)" rx="6"/>
+
+  <!-- Subtle depth lines -->
+  <line x1="0" y1="46" x2="300" y2="46" stroke="#2040a0" stroke-width="0.2" opacity="0.06"/>
+  <line x1="0" y1="92" x2="300" y2="92" stroke="#2040a0" stroke-width="0.2" opacity="0.06"/>
+
+  <!-- ======================================== -->
+  <!-- FUNNEL — abstract converging curves      -->
+  <!-- ======================================== -->
+
+  <!-- Funnel interior fill (closed shape) -->
+  <path d="M 78,20 Q 100,22 112,30 Q 122,40 126,55 L 127,95 Q 127,110 125,112 Q 123,110 123,95 L 124,55 Q 128,40 138,30 Q 150,22 172,20 Z"
+        fill="url(#funnelFill)" opacity="0.6"/>
+
+  <!-- Left funnel curve -->
+  <path d="M 72,18 Q 98,20 112,30 Q 124,42 127,60 L 128,95 Q 128,108 125,112"
+        fill="none" stroke="url(#edgeL)" stroke-width="1.6" stroke-linecap="round" filter="url(#soft)"/>
+
+  <!-- Right funnel curve -->
+  <path d="M 178,18 Q 152,20 138,30 Q 126,42 123,60 L 122,95 Q 122,108 125,112"
+        fill="none" stroke="url(#edgeR)" stroke-width="1.6" stroke-linecap="round" filter="url(#soft)"/>
+
+  <!-- Wide rim arc at top -->
+  <path d="M 66,19 Q 90,13 125,13 Q 160,13 184,19"
+        fill="none" stroke="#5a80d0" stroke-width="1.0" opacity="0.45" filter="url(#tiny)"/>
+
+  <!-- Narrow neck glow -->
+  <ellipse cx="125" cy="112" rx="6" ry="1.5" fill="#3060c0" opacity="0.20" filter="url(#soft)"/>
+
+  <!-- Neck vertical line (subtle) -->
+  <line x1="125" y1="112" x2="125" y2="120" stroke="url(#neckGrad)" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- ======================================== -->
+  <!-- PARTICLES — 8 layers, far to near        -->
+  <!-- ======================================== -->
+
+  <!-- L1: Deep space (tiny, faint, scattered wide) -->
+  <circle cx="35"  cy="6"   r="1.0" fill="#2848a0" opacity="0.18"/>
+  <circle cx="62"  cy="3"   r="0.8" fill="#3050a8" opacity="0.15"/>
+  <circle cx="98"  cy="2"   r="0.9" fill="#3858b0" opacity="0.17"/>
+  <circle cx="125" cy="1"   r="0.7" fill="#3050a8" opacity="0.14"/>
+  <circle cx="152" cy="2"   r="0.9" fill="#3858b0" opacity="0.17"/>
+  <circle cx="188" cy="3"   r="0.8" fill="#3050a8" opacity="0.15"/>
+  <circle cx="215" cy="6"   r="1.0" fill="#2848a0" opacity="0.18"/>
+
+  <!-- L2: Outer approach (small, dim, wide spread) -->
+  <circle cx="45"  cy="11"  r="1.4" fill="#3860b8" opacity="0.28" filter="url(#tiny)"/>
+  <circle cx="78"  cy="8"   r="1.2" fill="#4070c0" opacity="0.32" filter="url(#tiny)"/>
+  <circle cx="108" cy="6"   r="1.3" fill="#4575c5" opacity="0.30"/>
+  <circle cx="142" cy="6"   r="1.3" fill="#4575c5" opacity="0.30"/>
+  <circle cx="172" cy="8"   r="1.2" fill="#4070c0" opacity="0.32" filter="url(#tiny)"/>
+  <circle cx="205" cy="11"  r="1.4" fill="#3860b8" opacity="0.28" filter="url(#tiny)"/>
+  <circle cx="52"  cy="18"  r="1.1" fill="#4878c8" opacity="0.25"/>
+  <circle cx="198" cy="18"  r="1.1" fill="#4878c8" opacity="0.25"/>
+
+  <!-- L3: Mid approach (growing, converging inward) -->
+  <circle cx="58"  cy="16"  r="1.8" fill="#4880d0" opacity="0.42" filter="url(#tiny)"/>
+  <circle cx="88"  cy="12"  r="1.9" fill="#5090e0" opacity="0.48" filter="url(#soft)"/>
+  <circle cx="112" cy="10"  r="1.7" fill="#5898e8" opacity="0.45" filter="url(#tiny)"/>
+  <circle cx="138" cy="10"  r="1.7" fill="#5898e8" opacity="0.45" filter="url(#tiny)"/>
+  <circle cx="162" cy="12"  r="1.9" fill="#5090e0" opacity="0.48" filter="url(#soft)"/>
+  <circle cx="192" cy="16"  r="1.8" fill="#4880d0" opacity="0.42" filter="url(#tiny)"/>
+
+  <!-- L4: Near approach (brighter, clearly converging) -->
+  <circle cx="68"  cy="18"  r="2.0" fill="#5898e8" opacity="0.55" filter="url(#soft)"/>
+  <circle cx="95"  cy="15"  r="2.2" fill="#60a0f0" opacity="0.62" filter="url(#soft)"/>
+  <circle cx="118" cy="14"  r="2.0" fill="#68a8f8" opacity="0.58" filter="url(#soft)"/>
+  <circle cx="132" cy="14"  r="2.0" fill="#68a8f8" opacity="0.58" filter="url(#soft)"/>
+  <circle cx="155" cy="15"  r="2.2" fill="#60a0f0" opacity="0.62" filter="url(#soft)"/>
+  <circle cx="182" cy="18"  r="2.0" fill="#5898e8" opacity="0.55" filter="url(#soft)"/>
+
+  <!-- L5: Entering funnel mouth (bright, tight) -->
+  <circle cx="82"  cy="21"  r="2.2" fill="#68a8f8" opacity="0.68" filter="url(#glow)"/>
+  <circle cx="102" cy="19"  r="2.4" fill="#70b0ff" opacity="0.72" filter="url(#glow)"/>
+  <circle cx="125" cy="18"  r="2.6" fill="#78b8ff" opacity="0.78" filter="url(#glow)"/>
+  <circle cx="148" cy="19"  r="2.4" fill="#70b0ff" opacity="0.72" filter="url(#glow)"/>
+  <circle cx="168" cy="21"  r="2.2" fill="#68a8f8" opacity="0.68" filter="url(#glow)"/>
+
+  <!-- L6: Inside funnel — narrowing -->
+  <circle cx="95"  cy="28"  r="2.0" fill="#78b8ff" opacity="0.62" filter="url(#soft)"/>
+  <circle cx="112" cy="25"  r="2.3" fill="#80c0ff" opacity="0.70" filter="url(#glow)"/>
+  <circle cx="125" cy="24"  r="2.5" fill="#88c8ff" opacity="0.75" filter="url(#glow)"/>
+  <circle cx="138" cy="25"  r="2.3" fill="#80c0ff" opacity="0.70" filter="url(#glow)"/>
+  <circle cx="155" cy="28"  r="2.0" fill="#78b8ff" opacity="0.62" filter="url(#soft)"/>
+
+  <!-- L7: Deep in funnel — clustering tight -->
+  <circle cx="112" cy="36"  r="2.0" fill="#88c8ff" opacity="0.60" filter="url(#soft)"/>
+  <circle cx="125" cy="33"  r="2.6" fill="#90d0ff" opacity="0.78" filter="url(#glow)"/>
+  <circle cx="138" cy="36"  r="2.0" fill="#88c8ff" opacity="0.60" filter="url(#soft)"/>
+
+  <!-- L8: Funnel throat — nearly merged -->
+  <circle cx="121" cy="48"  r="1.8" fill="#98d4ff" opacity="0.60" filter="url(#soft)"/>
+  <circle cx="125" cy="44"  r="2.8" fill="#a0dcff" opacity="0.82" filter="url(#glow)"/>
+  <circle cx="129" cy="48"  r="1.8" fill="#98d4ff" opacity="0.60" filter="url(#soft)"/>
+
+  <!-- ======================================== -->
+  <!-- TRANSITION — blue to gold (single file)  -->
+  <!-- ======================================== -->
+
+  <circle cx="125" cy="58"  r="2.5" fill="#a8d8ff" opacity="0.72" filter="url(#glow)"/>
+  <circle cx="125" cy="68"  r="2.3" fill="#b8d0e8" opacity="0.68" filter="url(#glow)"/>
+  <circle cx="125" cy="77"  r="2.2" fill="#d0c888" opacity="0.72" filter="url(#soft)"/>
+  <circle cx="125" cy="85"  r="2.3" fill="#e0b850" opacity="0.78" filter="url(#glow)"/>
+  <circle cx="125" cy="93"  r="2.5" fill="#e8b030" opacity="0.82" filter="url(#glow)"/>
+  <circle cx="125" cy="101" r="2.6" fill="#f0a820" opacity="0.88" filter="url(#glow)"/>
+
+  <!-- ======================================== -->
+  <!-- OUTPUT — the brilliant golden lead       -->
+  <!-- ======================================== -->
+
+  <!-- Outer aura -->
+  <ellipse cx="125" cy="126" rx="20" ry="11" fill="#c08000" opacity="0.06" filter="url(#strong)"/>
+  <ellipse cx="125" cy="126" rx="13" ry="7" fill="#e0a010" opacity="0.10" filter="url(#glow)"/>
+
+  <!-- Drop from neck -->
+  <line x1="125" y1="108" x2="125" y2="120" stroke="#f0b830" stroke-width="2.2" opacity="0.65" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- The lead: layered golden dot -->
+  <circle cx="125" cy="126" r="5.5" fill="#e0a010" opacity="0.28" filter="url(#strong)"/>
+  <circle cx="125" cy="126" r="3.8" fill="#f0b830" opacity="0.75" filter="url(#glow)"/>
+  <circle cx="125" cy="126" r="2.2" fill="#ffd060" opacity="0.95"/>
+  <circle cx="125" cy="126" r="1.0" fill="#fff8e0" opacity="1"/>
+
+  <!-- Subtle rays -->
+  <line x1="125" y1="119" x2="125" y2="116" stroke="#f0c040" stroke-width="0.7" opacity="0.35"/>
+  <line x1="131" y1="123" x2="134" y2="121" stroke="#f0c040" stroke-width="0.5" opacity="0.25"/>
+  <line x1="119" y1="123" x2="116" y2="121" stroke="#f0c040" stroke-width="0.5" opacity="0.25"/>
+  <line x1="133" y1="127" x2="137" y2="128" stroke="#f0c040" stroke-width="0.4" opacity="0.18"/>
+  <line x1="117" y1="127" x2="113" y2="128" stroke="#f0c040" stroke-width="0.4" opacity="0.18"/>
+  <line x1="125" y1="133" x2="125" y2="136" stroke="#f0c040" stroke-width="0.5" opacity="0.20"/>
+
+  <!-- ======================================== -->
+  <!-- TEXT                                      -->
+  <!-- ======================================== -->
+
+  <text x="222" y="57" font-family="'SF Pro Display','Inter',system-ui,-apple-system,sans-serif"
+        font-size="16" font-weight="600" letter-spacing="0.3" fill="#d0e0f8" opacity="0.92">
+    Agentic
+  </text>
+  <text x="222" y="77" font-family="'SF Pro Display','Inter',system-ui,-apple-system,sans-serif"
+        font-size="15" font-weight="300" letter-spacing="1.8" fill="#8898b8" opacity="0.75">
+    Lead Gen
+  </text>
+
+  <text x="222" y="96" font-family="'SF Pro Display','Inter',system-ui,-apple-system,sans-serif"
+        font-size="6.5" font-weight="400" letter-spacing="2.8" fill="#506080" opacity="0.50">
+    AI PIPELINE
+  </text>
+
+  <!-- Accent line -->
+  <line x1="222" y1="102" x2="290" y2="102" stroke="#3060c0" stroke-width="0.4" opacity="0.25"/>
+
+  <!-- Ambient dust -->
+  <circle cx="14"  cy="10"  r="0.6" fill="#3868b0" opacity="0.15"/>
+  <circle cx="290" cy="10"  r="0.5" fill="#3868b0" opacity="0.12"/>
+  <circle cx="290" cy="130" r="0.6" fill="#3868b0" opacity="0.14"/>
+  <circle cx="14"  cy="130" r="0.5" fill="#3868b0" opacity="0.10"/>
+  <circle cx="38"  cy="115" r="0.5" fill="#3060a0" opacity="0.08"/>
+  <circle cx="215" cy="132" r="0.5" fill="#3060a0" opacity="0.08"/>
+</svg>

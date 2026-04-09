@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 140" width="300" height="140">
+  <title>Agentic Lead Gen</title>
+  <defs>
+    <!-- Dark background -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#05050e"/>
+      <stop offset="100%" stop-color="#0a0a1c"/>
+    </linearGradient>
+
+    <!-- Primary gradient: deep purple -> indigo -> electric blue -> cyan -> teal -->
+    <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7b2fbe"/>
+      <stop offset="22%" stop-color="#6d28d9"/>
+      <stop offset="42%" stop-color="#4f46e5"/>
+      <stop offset="58%" stop-color="#2563eb"/>
+      <stop offset="75%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+
+    <!-- Upper-left facet: brighter, more purple -->
+    <linearGradient id="facetTL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+
+    <!-- Upper-right facet: blue range -->
+    <linearGradient id="facetTR" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="50%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+
+    <!-- Lower-left facet: blue -> cyan -->
+    <linearGradient id="facetBL" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d9488"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+
+    <!-- Lower-right facet: deeper, more teal -->
+    <linearGradient id="facetBR" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#065f46"/>
+      <stop offset="40%" stop-color="#0d9488"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+
+    <!-- Inner ring gradient -->
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="30%" stop-color="#818cf8"/>
+      <stop offset="60%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#2dd4bf"/>
+    </linearGradient>
+
+    <!-- Ambient radial glow -->
+    <radialGradient id="ambientGlow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.18"/>
+      <stop offset="40%" stop-color="#3b82f6" stop-opacity="0.08"/>
+      <stop offset="70%" stop-color="#06b6d4" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#05050e" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Top sheen for glassy dimensionality -->
+    <radialGradient id="sheen" cx="38%" cy="30%" r="45%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.22"/>
+      <stop offset="35%" stop-color="white" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Bottom shadow for grounding -->
+    <radialGradient id="bottomShadow" cx="50%" cy="85%" r="40%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Outer glow filter -->
+    <filter id="glow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="0 0 0 0 0.30
+                0 0 0 0 0.25
+                0 0 0 0 0.90
+                0 0 0 0.45 0" result="colorBlur"/>
+      <feMerge>
+        <feMergeNode in="colorBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft glow for inner elements -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Diamond clip path for contained effects -->
+    <clipPath id="outerClip">
+      <path d="M150,10 L224,70 L150,130 L76,70 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="140" fill="url(#bg)" rx="4"/>
+
+  <!-- Subtle star dust -->
+  <circle cx="28" cy="18" r="0.6" fill="white" opacity="0.35"/>
+  <circle cx="62" cy="8" r="0.4" fill="white" opacity="0.25"/>
+  <circle cx="245" cy="15" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="275" cy="32" r="0.6" fill="white" opacity="0.35"/>
+  <circle cx="22" cy="120" r="0.5" fill="white" opacity="0.25"/>
+  <circle cx="280" cy="118" r="0.5" fill="white" opacity="0.3"/>
+
+  <!-- Ambient glow behind the mark -->
+  <ellipse cx="150" cy="72" rx="100" ry="75" fill="url(#ambientGlow)"/>
+
+  <!-- Bottom grounding shadow -->
+  <ellipse cx="150" cy="128" rx="55" ry="10" fill="url(#bottomShadow)"/>
+
+  <!-- ============ MAIN DIAMOND MARK ============ -->
+  <g filter="url(#glow)">
+
+    <!-- Outer diamond: 4 faceted triangles for dimensional gradient -->
+    <!-- Top-left facet -->
+    <path d="M150,10 L76,70 L150,70 Z" fill="url(#facetTL)"/>
+    <!-- Top-right facet -->
+    <path d="M150,10 L224,70 L150,70 Z" fill="url(#facetTR)"/>
+    <!-- Bottom-left facet -->
+    <path d="M76,70 L150,130 L150,70 Z" fill="url(#facetBL)"/>
+    <!-- Bottom-right facet -->
+    <path d="M150,70 L224,70 L150,130 Z" fill="url(#facetBR)"/>
+
+    <!-- Facet edge lines (very subtle, white) for gem-cut feel -->
+    <line x1="76" y1="70" x2="224" y2="70" stroke="white" stroke-width="0.4" opacity="0.12"/>
+    <line x1="150" y1="10" x2="150" y2="130" stroke="white" stroke-width="0.4" opacity="0.08"/>
+
+    <!-- Middle ring diamond: glowing inner band -->
+    <path d="M150,34 L186,70 L150,106 L114,70 Z"
+          fill="none" stroke="url(#ringGrad)" stroke-width="2.5" opacity="0.7"
+          filter="url(#softGlow)"/>
+
+    <!-- Inner void diamond: dark cutout for depth -->
+    <path d="M150,44 L178,70 L150,96 L122,70 Z" fill="#08081a" opacity="0.85"/>
+
+    <!-- Inner accent diamond: small bright core -->
+    <path d="M150,54 L168,70 L150,86 L132,70 Z" fill="url(#ringGrad)" opacity="0.35"/>
+
+    <!-- Core void: deepest cutout -->
+    <path d="M150,60 L160,70 L150,80 L140,70 Z" fill="#05050e" opacity="0.95"/>
+
+    <!-- Glass sheen overlay across entire outer diamond -->
+    <path d="M150,10 L224,70 L150,130 L76,70 Z" fill="url(#sheen)"/>
+  </g>
+
+  <!-- Edge highlights: top edges catch light -->
+  <line x1="113" y1="40" x2="150" y2="10" stroke="white" stroke-width="0.7" opacity="0.3" stroke-linecap="round"/>
+  <line x1="150" y1="10" x2="187" y2="40" stroke="white" stroke-width="0.5" opacity="0.18" stroke-linecap="round"/>
+
+  <!-- Apex sparkle -->
+  <circle cx="150" cy="10" r="2.5" fill="white" opacity="0.7" filter="url(#softGlow)"/>
+  <circle cx="150" cy="10" r="5" fill="white" opacity="0.1"/>
+
+  <!-- Bottom vertex subtle glow -->
+  <circle cx="150" cy="130" r="2" fill="#0d9488" opacity="0.4" filter="url(#softGlow)"/>
+</svg>

@@ -1210,7 +1210,12 @@ body {
   border: none;
   background: #ffffff;
 }
-.code-block-wrapper { position: relative; }
+.code-block-wrapper {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
 .code-block-bar {
   display: flex;
   align-items: center;
