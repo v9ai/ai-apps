@@ -179,6 +179,8 @@ _WEAK_GEO_TERMS = (
     r"|egypt|morocco|sri lanka"
     r"|colombia|brazil|mexico|argentina|peru|chile"
     r"|saudi arabia|united arab emirates|\buae\b|qatar|kuwait|bahrain|oman"
+    r"|delhi|new delhi|mumbai|bangalore|bengaluru|hyderabad|chennai"
+    r"|pune|gurugram|gurgaon|noida|kolkata|ahmedabad"
 )
 _STRONG_GEO_RE = re.compile(rf"\b({_STRONG_GEO_TERMS})\b", re.IGNORECASE)
 _WEAK_GEO_RE = re.compile(rf"\b({_WEAK_GEO_TERMS})\b", re.IGNORECASE)
