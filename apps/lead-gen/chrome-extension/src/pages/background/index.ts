@@ -1743,12 +1743,19 @@ async function findRelatedCompanies(tabId: number) {
 
       const data = await extractCompanyData(tabId);
       if (data && data.name) {
-        // Detect ICP target: recruitment/staffing firm with ≤200 employees
+        // Detect ICP target: recruitment/staffing firm with ≤200 employees, relevant geo
         const isRecruitment = /staffing|recruit|talent|headhunt|placement|hiring platform/i.test(
           [data.industry, data.description, data.name].join(" "),
         );
         const isSmall = parseLinkedInSize(data.size || "") <= 200;
-        const isTarget = isRecruitment && isSmall;
+        const IRRELEVANT_GEO_RE = /\b(latam|latin america|africa|apac|middle east|mena|india[- ]only|india[- ]focused|india[- ]based|southeast asia|south asia|china[- ]focused|china[- ]only|nearshore|offshore)\b/i;
+        const isIrrelevantGeo = IRRELEVANT_GEO_RE.test(
+          [data.name, data.description, data.location].join(" "),
+        );
+        const isTarget = isRecruitment && isSmall && !isIrrelevantGeo;
+        if (isRecruitment && isSmall && isIrrelevantGeo) {
+          console.log(`[FindRelated] ${data.name} — recruitment ≤200 but irrelevant geo, skipping target flag`);
+        }
         const targetPrefix = isTarget ? "\u{1F3AF} " : "";
 
         // b) Build company object and save immediately

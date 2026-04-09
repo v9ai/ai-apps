@@ -354,18 +354,29 @@ async def classify_company(req: CompanyClassifyRequest):
     )
     elapsed = round(time.perf_counter() - t0, 4)
 
+    import re
+
     # Parse size — from explicit field or from description
     size_str = req.size
     if not size_str and req.description:
-        import re
         size_match = re.search(r"Size:\s*(.+?)(?:\n|$)", req.description)
         if size_match:
             size_str = size_match.group(1).strip()
 
     employee_count = _parse_size(size_str)
-    is_target = result["is_staffing"] and employee_count <= 200
+
+    # Geo relevance: exclude firms focused on irrelevant regions
+    _IRRELEVANT_GEO_RE = re.compile(
+        r"\b(latam|latin america|africa|apac|middle east|mena|india[- ]only|india[- ]focused|india[- ]based|southeast asia|south asia|china[- ]focused|china[- ]only|nearshore|offshore)\b",
+        re.IGNORECASE,
+    )
+    geo_text = f"{req.name} {req.description} {req.location}"
+    is_irrelevant_geo = bool(_IRRELEVANT_GEO_RE.search(geo_text))
+
+    is_target = result["is_staffing"] and employee_count <= 200 and not is_irrelevant_geo
     result["is_target"] = is_target
     result["employee_count"] = employee_count
+    result["is_irrelevant_geo"] = is_irrelevant_geo
 
     # If staffing detected, tag as ICP target (don't block)
     if result["is_staffing"]:
