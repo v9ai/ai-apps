@@ -66,6 +66,58 @@ let dismissQueue: HTMLButtonElement[] = [];
 let dismissTimer: ReturnType<typeof setTimeout> | null = null;
 const queuedButtons = new WeakSet<HTMLButtonElement>();
 
+// ── Extension context lifecycle ────────────────────────────────────
+/** Returns false once the extension has been reloaded/updated. */
+function isExtensionAlive(): boolean {
+  return !!chrome.runtime?.id;
+}
+
+/** Registry of active MutationObservers for bulk teardown. */
+const _observers: MutationObserver[] = [];
+/** Registry of interval IDs for bulk teardown. */
+const _intervals: ReturnType<typeof setInterval>[] = [];
+
+/** One-shot teardown: disconnect observers, clear timers, drain queues. */
+function teardownIfDead(): boolean {
+  if (isExtensionAlive()) return false;
+
+  console.warn("[LG] Extension context invalidated — tearing down content script.");
+
+  for (const obs of _observers) obs.disconnect();
+  _observers.length = 0;
+
+  for (const id of _intervals) clearInterval(id);
+  _intervals.length = 0;
+
+  if (dismissTimer) clearTimeout(dismissTimer);
+  dismissTimer = null;
+  dismissQueue = [];
+
+  return true;
+}
+
+/** Safe wrapper: only calls chrome.runtime.sendMessage when context is alive. */
+function safeSendMessage(
+  message: unknown,
+  callback?: (response: any) => void,
+): void {
+  if (teardownIfDead()) {
+    callback?.(undefined);
+    return;
+  }
+  chrome.runtime.sendMessage(message, (response) => {
+    if (chrome.runtime.lastError) {
+      const msg = chrome.runtime.lastError.message || "";
+      if (msg.includes("Extension context invalidated")) {
+        teardownIfDead();
+        callback?.(undefined);
+        return;
+      }
+    }
+    callback?.(response);
+  });
+}
+
 function queueDismiss(card: Element, btn: HTMLButtonElement) {
   if (queuedButtons.has(btn)) return;
   if (dismissQueue.length >= MAX_DISMISS_QUEUE) return;
@@ -78,6 +130,7 @@ function queueDismiss(card: Element, btn: HTMLButtonElement) {
 }
 
 function processQueue() {
+  if (teardownIfDead()) return;
   if (dismissQueue.length === 0) {
     dismissTimer = null;
     return;
@@ -135,10 +188,12 @@ function observeLinkedInHelpers() {
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const obs = new MutationObserver(() => {
+    if (teardownIfDead()) return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(injectLinkedInHelpers, 500);
   });
   obs.observe(document.body, { childList: true, subtree: true });
+  _observers.push(obs);
 }
 
 observeLinkedInHelpers();
@@ -219,18 +274,13 @@ function createSendEmailButton(): HTMLButtonElement {
     btn.textContent = "Sending...";
     btn.disabled = true;
 
-    chrome.runtime.sendMessage(
+    safeSendMessage(
       { action: "sendEmailFromPost", postData },
       (response) => {
-        if (chrome.runtime.lastError) {
-          console.error("[LG] Send email error:", chrome.runtime.lastError.message);
-          btn.textContent = "Error";
-          btn.style.backgroundColor = "#ef4444";
+        if (!response) {
+          btn.textContent = "Send Email";
+          btn.style.backgroundColor = "#0a66c2";
           btn.disabled = false;
-          setTimeout(() => {
-            btn.textContent = "Send Email";
-            btn.style.backgroundColor = "#0a66c2";
-          }, 2000);
           return;
         }
         if (response?.success) {
@@ -288,10 +338,12 @@ function observeSendEmailButton() {
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const obs = new MutationObserver(() => {
+    if (teardownIfDead()) return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(injectSendEmailButton, 500);
   });
   obs.observe(document.body, { childList: true, subtree: true });
+  _observers.push(obs);
 }
 
 observeSendEmailButton();
@@ -303,14 +355,10 @@ const CONNECT_ALL_BTN_ATTR = "data-lg-connect-all-btn";
 // Click element in page's main world via background script (bypasses CSP + content script isolation)
 function mainWorldClick(selector: string): Promise<boolean> {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage(
+    safeSendMessage(
       { action: "clickInMainWorld", selector },
       (response) => {
-        if (chrome.runtime.lastError) {
-          console.log("[ConnectAll] mainWorldClick error:", chrome.runtime.lastError.message);
-          resolve(false);
-          return;
-        }
+        if (!response) { resolve(false); return; }
         console.log("[ConnectAll] mainWorldClick result:", selector, response);
         resolve(response?.clicked ?? false);
       },
@@ -495,10 +543,12 @@ function observeConnectAllButton() {
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const obs = new MutationObserver(() => {
+    if (teardownIfDead()) return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(injectConnectAllButton, 1000);
   });
   obs.observe(document.body, { childList: true, subtree: true });
+  _observers.push(obs);
 }
 
 observeConnectAllButton();
@@ -571,12 +621,12 @@ function createBrowseProfilesButton(): HTMLButtonElement {
     btn.textContent = `Starting (${profiles.length})...`;
     btn.style.backgroundColor = "#5b21b6";
 
-    chrome.runtime.sendMessage({
+    safeSendMessage({
       action: "startProfileBrowsing",
       profiles,
       returnUrl: window.location.href,
     }, (response) => {
-      if (chrome.runtime.lastError || !response?.success) {
+      if (!response?.success) {
         btn.textContent = "Error";
         btn.style.backgroundColor = "#dc2626";
         setTimeout(() => {
@@ -608,16 +658,19 @@ function observeBrowseProfilesButton() {
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const obs = new MutationObserver(() => {
+    if (teardownIfDead()) return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(injectBrowseProfilesButton, 1000);
   });
   obs.observe(document.body, { childList: true, subtree: true });
+  _observers.push(obs);
 }
 
 observeBrowseProfilesButton();
 
 // Listen for progress updates from background script
 chrome.runtime.onMessage.addListener((message) => {
+  if (!isExtensionAlive()) return;
   if (message.action === "browseProgress" && browseProfilesBtn) {
     browseProfilesBtn.textContent = `${message.current}/${message.total} ${message.name || ""}`.trim();
   }
@@ -782,14 +835,14 @@ function createImportPeopleButton(): HTMLButtonElement {
     btn.disabled = true;
     btn.textContent = "Starting...";
 
-    chrome.runtime.sendMessage(
+    safeSendMessage(
       {
         action: "importPeopleFromCompanyPage",
         companyName: companyInfo.name,
         companyLinkedinUrl: companyInfo.linkedinUrl,
       },
       (response) => {
-        if (chrome.runtime.lastError || !response?.success) {
+        if (!response?.success) {
           btn.textContent = "Error";
           btn.style.backgroundColor = "#dc2626";
           setTimeout(() => {
@@ -841,10 +894,10 @@ function createFindRelatedButton(): HTMLButtonElement {
     btn.disabled = true;
     btn.textContent = "Searching...";
 
-    chrome.runtime.sendMessage(
+    safeSendMessage(
       { action: "findRelatedCompanies" },
       (response) => {
-        if (chrome.runtime.lastError || !response?.success) {
+        if (!response?.success) {
           btn.textContent = "Error";
           btn.style.backgroundColor = "#dc2626";
           setTimeout(() => {
@@ -912,15 +965,18 @@ function observeCompanyButtons() {
   // Single MutationObserver for both buttons (avoids duplicate observers)
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   companyButtonsObserver = new MutationObserver(() => {
+    if (teardownIfDead()) return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(syncCompanyButtons, 1000);
   });
   companyButtonsObserver.observe(document.body, { childList: true, subtree: true });
+  _observers.push(companyButtonsObserver);
 
   // LinkedIn SPA navigation uses pushState/replaceState — listen for URL changes
   // to detect navigation between company pages or away from company pages.
   let lastUrl = window.location.href;
   const urlCheckInterval = setInterval(() => {
+    if (teardownIfDead()) return;
     if (window.location.href !== lastUrl) {
       lastUrl = window.location.href;
       syncCompanyButtons();
@@ -934,6 +990,7 @@ function observeCompanyButtons() {
       }
     }
   }, 1000);
+  _intervals.push(urlCheckInterval);
 }
 
 observeCompanyButtons();
@@ -1218,6 +1275,7 @@ function clickSecondJobPost() {
 
 // Listen for messages from popup — only respond on relevant sites
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!isExtensionAlive()) return false;
   if (message.action === "ping") {
     sendResponse({ ok: true });
     return true;
@@ -1267,7 +1325,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
 
         // Send progress update
-        chrome.runtime.sendMessage({
+        safeSendMessage({
           action: "paginationProgress",
           currentPage: startPage,
           totalPages,
@@ -1296,7 +1354,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           actualPagesScraped++;
 
           // Send progress update
-          chrome.runtime.sendMessage({
+          safeSendMessage({
             action: "paginationProgress",
             currentPage: page,
             totalPages,
