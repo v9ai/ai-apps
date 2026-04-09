@@ -775,7 +775,7 @@ function extractCompanyData(tabId: number): Promise<CompanyData | null> {
         const website = websiteLink?.href || "";
 
         // Extract LinkedIn numeric company ID
-        let linkedinNumericId: string | null = null;
+        let linkedinNumericId: string | undefined;
 
         // Strategy 1: data-urn attributes
         const urnEl = document.querySelector(
@@ -836,48 +836,116 @@ function extractCompanyData(tabId: number): Promise<CompanyData | null> {
  * Count remote job postings for a company by navigating to LinkedIn jobs search.
  * Only called for ICP-matching companies to avoid unnecessary page loads.
  */
+interface RemoteJobsResult {
+  count: number;
+  status: "ok" | "no-results" | "no-selectors" | "login-wall" | "error";
+  method?: "header" | "cards" | "none";
+}
+
 async function countRemoteJobs(
   tabId: number,
   numericId: string,
-): Promise<number> {
+): Promise<RemoteJobsResult> {
   const jobsUrl = `https://www.linkedin.com/jobs/search/?f_C=${numericId}&f_WT=2&geoId=92000000`;
 
   try {
     await safeTabUpdate(tabId, { url: jobsUrl });
     await waitForTabLoad(tabId);
-    await randomDelay(2000);
+
+    // Poll for job-related content to appear (up to 8s), instead of fixed delay
+    const selectorReady = await chrome.scripting.executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        return new Promise<boolean>((resolve) => {
+          const selectors = [
+            ".jobs-search-no-results-banner",
+            ".jobs-search-results-list",
+            ".scaffold-layout__list",
+            "[data-job-id]",
+            ".job-card-container",
+            ".jobs-search-results-list__subtitle",
+          ];
+          let attempts = 0;
+          const poll = () => {
+            for (const sel of selectors) {
+              if (document.querySelector(sel)) { resolve(true); return; }
+            }
+            if (++attempts < 16) setTimeout(poll, 500);
+            else resolve(false);
+          };
+          poll();
+        });
+      },
+    });
+
+    const ready = selectorReady?.[0]?.result ?? false;
+    if (!ready) {
+      // Extra delay as last resort
+      await randomDelay(2000);
+    }
 
     const results = await chrome.scripting.executeScript({
       target: { tabId },
       world: "MAIN",
-      func: () => {
-        // Check for "no results" banner first
-        if (document.querySelector(".jobs-search-no-results-banner")) return 0;
+      func: (): RemoteJobsResult => {
+        const url = window.location.href;
 
-        // Try parsing "X results" text from header
+        // Detect login wall / redirect
+        if (url.includes("/login") || url.includes("/authwall") || url.includes("/checkpoint")) {
+          return { count: 0, status: "login-wall", method: "none" };
+        }
+
+        // Check for "no results" banner
+        if (document.querySelector(".jobs-search-no-results-banner")) {
+          return { count: 0, status: "no-results", method: "none" };
+        }
+
+        // Strategy 1: Parse "X results" text from header
         const headerText =
           document.querySelector(".jobs-search-results-list__subtitle")
             ?.textContent?.trim() ||
           document.querySelector(
             ".jobs-search-results-list__title-heading h1+span"
           )?.textContent?.trim() ||
+          // Newer LinkedIn layouts
+          document.querySelector(".jobs-search-results-list__title-heading small")
+            ?.textContent?.trim() ||
+          document.querySelector("[class*='jobs-search'] h1+span, [class*='jobs-search'] h1+small")
+            ?.textContent?.trim() ||
           "";
         const countMatch = headerText.match(/([\d,]+)\s+results?/i);
         if (countMatch) {
-          return parseInt(countMatch[1].replace(/,/g, ""), 10);
+          return {
+            count: parseInt(countMatch[1].replace(/,/g, ""), 10),
+            status: "ok",
+            method: "header",
+          };
         }
 
-        // Fallback: count job card elements
+        // Strategy 2: Count job card elements (multiple selector generations)
         const cards = document.querySelectorAll(
-          ".job-card-container, .jobs-search-results__list-item, .jobs-search-results-list li, .scaffold-layout__list-item"
+          [
+            "[data-job-id]",
+            ".job-card-container",
+            ".jobs-search-results__list-item",
+            ".scaffold-layout__list-item",
+            ".jobs-search-results-list li",
+            "[class*='job-card-container']",
+          ].join(", ")
         );
-        return cards.length;
+        if (cards.length > 0) {
+          return { count: cards.length, status: "ok", method: "cards" };
+        }
+
+        // Nothing matched
+        return { count: 0, status: "no-selectors", method: "none" };
       },
     });
 
-    return results?.[0]?.result ?? 0;
+    return results?.[0]?.result ?? { count: 0, status: "error", method: "none" };
   } catch {
-    return 0;
+    return { count: 0, status: "error", method: "none" };
   }
 }
 
@@ -950,6 +1018,7 @@ async function browseCompanies(tabId: number) {
     linkedin_url?: string;
     description?: string;
     location?: string;
+    industry?: string;
   }> = [];
 
   for (let i = 0; i < allCompanyUrls.length; i++) {
@@ -988,10 +1057,15 @@ async function browseCompanies(tabId: number) {
       let remoteJobCount = -1;
       if (data.linkedinNumericId) {
         console.log(`[BrowseCompanies] Checking remote jobs for ${data.name} (ID: ${data.linkedinNumericId})...`);
-        remoteJobCount = await countRemoteJobs(tabId, data.linkedinNumericId);
+        const jobResult = await countRemoteJobs(tabId, data.linkedinNumericId);
+        remoteJobCount = jobResult.count;
         totalRemoteJobs += Math.max(0, remoteJobCount);
-        if (remoteJobCount > 0) {
-          console.log(`[BrowseCompanies] ${data.name} — 🎯✅ CONFIRMED — ${remoteJobCount} active remote jobs`);
+        if (jobResult.status === "login-wall") {
+          console.log(`[BrowseCompanies] ${data.name} — ⛔ LOGIN WALL — cannot check remote jobs`);
+        } else if (jobResult.status === "no-selectors") {
+          console.log(`[BrowseCompanies] ${data.name} — ⚠️ NO SELECTORS MATCHED — LinkedIn DOM may have changed`);
+        } else if (remoteJobCount > 0) {
+          console.log(`[BrowseCompanies] ${data.name} — 🎯✅ CONFIRMED — ${remoteJobCount} active remote jobs (via ${jobResult.method})`);
         } else {
           console.log(`[BrowseCompanies] ${data.name} — 🎯⚠️ UNCONFIRMED — no active remote jobs`);
         }
@@ -1917,12 +1991,19 @@ async function findRelatedCompanies(tabId: number) {
         } else {
           // Check remote job postings for ICP-matching companies (boost signal, not a gate)
           let remoteJobCount = -1; // -1 = not checked
+          let jobStatus: RemoteJobsResult["status"] = "ok";
           if (data.linkedinNumericId) {
             log(`[FindRelated] Checking remote jobs for ${data.name} (ID: ${data.linkedinNumericId})...`);
-            remoteJobCount = await countRemoteJobs(tabId, data.linkedinNumericId);
+            const jobResult = await countRemoteJobs(tabId, data.linkedinNumericId);
+            remoteJobCount = jobResult.count;
+            jobStatus = jobResult.status;
             totalRemoteJobs += Math.max(0, remoteJobCount);
-            if (remoteJobCount > 0) {
-              log(`[FindRelated] ${data.name} — 🎯✅ CONFIRMED — ${remoteJobCount} active remote jobs`);
+            if (jobResult.status === "login-wall") {
+              log(`[FindRelated] ${data.name} — ⛔ LOGIN WALL — cannot check remote jobs`);
+            } else if (jobResult.status === "no-selectors") {
+              log(`[FindRelated] ${data.name} — ⚠️ NO SELECTORS MATCHED — LinkedIn DOM may have changed`);
+            } else if (remoteJobCount > 0) {
+              log(`[FindRelated] ${data.name} — 🎯✅ CONFIRMED — ${remoteJobCount} active remote jobs (via ${jobResult.method})`);
             } else {
               log(`[FindRelated] ${data.name} — 🎯⚠️ UNCONFIRMED — no active remote jobs, needs recruiter post check`);
             }
@@ -1948,7 +2029,12 @@ async function findRelatedCompanies(tabId: number) {
             industry: data.industry || undefined,
           };
 
-          const overlayJobText = remoteJobCount > 0 ? `${remoteJobCount} jobs` : remoteJobCount === 0 ? "0 jobs ⚠️" : "";
+          const overlayJobText = remoteJobCount > 0
+            ? `${remoteJobCount} jobs`
+            : jobStatus === "login-wall" ? "⛔ login"
+            : jobStatus === "no-selectors" ? "⚠️ DOM?"
+            : remoteJobCount === 0 ? "0 jobs ⚠️"
+            : "";
           const overlayName = (suffix: string) =>
             overlayJobText ? `🎯 ${suffix} ${data.name} (${overlayJobText})` : `🎯 ${suffix} ${data.name}`;
 
