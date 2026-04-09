@@ -741,6 +741,7 @@ type ImportCompanyResult {
 input ImportCompanyWithContactsInput {
   companyName: String!
   contacts: [ImportContactInput!]!
+  linkedinUrl: String
   website: String
 }
 

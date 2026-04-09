@@ -302,6 +302,7 @@ type DeleteCompaniesResult {
 input ImportCompanyWithContactsInput {
   companyName: String!
   website: String
+  linkedinUrl: String
   contacts: [ImportContactInput!]!
 }
 

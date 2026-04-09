@@ -315,6 +315,36 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Import People from Company Page (triggered by content script button) ──
+  if (message.action === "importPeopleFromCompanyPage") {
+    const { companyName, companyLinkedinUrl } = message as {
+      companyName: string;
+      companyLinkedinUrl: string;
+    };
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+    startKeepAlive();
+    importPeopleFromCurrentPage(tabId, companyName, companyLinkedinUrl).finally(stopKeepAlive);
+    return true;
+  }
+
+  // ── Find Related/Similar Companies ──
+  if (message.action === "findRelatedCompanies") {
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+    startKeepAlive();
+    findRelatedCompanies(tabId).finally(stopKeepAlive);
+    return true;
+  }
+
   return false;
 });
 
@@ -1042,4 +1072,323 @@ async function browsePeople(tabId: number, companyId: number) {
     console.error("[BrowsePeople] Import error:", errMsg);
     await notifyWebApp("peopleScrapeError", { error: errMsg });
   }
+}
+
+// ── Import People from Current Company Page ─────────────────────────
+
+async function importPeopleFromCurrentPage(
+  tabId: number,
+  companyName: string,
+  companyLinkedinUrl: string,
+) {
+  console.log(`[ImportPeople] Starting for "${companyName}" on tab ${tabId}`);
+
+  // Ensure we're on the /people/ page
+  const tab = await chrome.tabs.get(tabId);
+  const currentUrl = tab.url || "";
+  if (!currentUrl.includes("/people")) {
+    const peopleUrl = companyLinkedinUrl.replace(/\/$/, "") + "/people/";
+    await chrome.tabs.update(tabId, { url: peopleUrl });
+    await waitForTabLoad(tabId);
+    await new Promise((r) => setTimeout(r, 3000));
+  } else {
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+
+  const allCards: PersonCard[] = [];
+  const seen = new Set<string>();
+  const MAX_ROUNDS = 15;
+
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    await scrollPeoplePage(tabId);
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const cards = await extractPeopleCards(tabId);
+    let newCount = 0;
+    for (const card of cards) {
+      if (!seen.has(card.linkedinUrl)) {
+        seen.add(card.linkedinUrl);
+        allCards.push(card);
+        newCount++;
+      }
+    }
+
+    console.log(`[ImportPeople] Round ${round + 1}: +${newCount} new (total ${allCards.length})`);
+
+    try {
+      await chrome.tabs.sendMessage(tabId, {
+        action: "importPeopleProgress",
+        message: `Collecting... ${allCards.length} found`,
+      });
+    } catch { /* content script may not be ready */ }
+
+    const clickedMore = await clickShowMorePeople(tabId);
+    if (clickedMore) {
+      await new Promise((r) => setTimeout(r, 2000));
+    } else if (newCount === 0) {
+      break;
+    }
+  }
+
+  if (allCards.length === 0) {
+    try {
+      await chrome.tabs.sendMessage(tabId, {
+        action: "importPeopleError",
+        error: "No people found. Make sure you are logged in.",
+      });
+    } catch { /* ignore */ }
+    return;
+  }
+
+  console.log(`[ImportPeople] Collected ${allCards.length} people — importing...`);
+
+  try {
+    await chrome.tabs.sendMessage(tabId, {
+      action: "importPeopleProgress",
+      message: `Importing ${allCards.length} contacts...`,
+    });
+  } catch { /* ignore */ }
+
+  const contactInputs = allCards.map((card) => ({
+    name: card.name,
+    linkedinUrl: card.linkedinUrl,
+    workEmail: null,
+  }));
+
+  try {
+    const result = await gqlRequest(
+      `mutation ImportCompanyWithContacts($input: ImportCompanyWithContactsInput!) {
+        importCompanyWithContacts(input: $input) {
+          success
+          company { id name }
+          contactsImported
+          contactsSkipped
+          errors
+        }
+      }`,
+      {
+        input: {
+          companyName,
+          linkedinUrl: companyLinkedinUrl,
+          website: null,
+          contacts: contactInputs,
+        },
+      },
+    );
+
+    const res = result.data?.importCompanyWithContacts;
+    if (res?.success) {
+      console.log(`[ImportPeople] Imported ${res.contactsImported}, skipped ${res.contactsSkipped}`);
+      try {
+        await chrome.tabs.sendMessage(tabId, {
+          action: "importPeopleDone",
+          imported: res.contactsImported,
+          skipped: res.contactsSkipped,
+          companyId: res.company?.id,
+        });
+      } catch { /* ignore */ }
+    } else {
+      const errMsg = res?.errors?.[0] || result.errors?.[0]?.message || "Import failed";
+      console.error("[ImportPeople] Error:", errMsg);
+      try {
+        await chrome.tabs.sendMessage(tabId, {
+          action: "importPeopleError",
+          error: errMsg,
+        });
+      } catch { /* ignore */ }
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[ImportPeople] Import error:", errMsg);
+    try {
+      await chrome.tabs.sendMessage(tabId, {
+        action: "importPeopleError",
+        error: errMsg,
+      });
+    } catch { /* ignore */ }
+  }
+}
+
+// ── Find Related/Similar Companies ──────────────────────────────────
+
+function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const links: string[] = [];
+
+        // LinkedIn "Similar pages" section — find by heading text
+        const sections = document.querySelectorAll("section");
+        let similarSection: Element | null = null;
+        for (const section of sections) {
+          const heading = section.querySelector("h2, h3");
+          const text = heading?.textContent?.trim().toLowerCase() || "";
+          if (text.includes("similar pages") || text.includes("affiliated")) {
+            similarSection = section;
+            break;
+          }
+        }
+
+        // Fallback: check aside area
+        if (!similarSection) {
+          const aside = document.querySelector("aside");
+          if (aside) {
+            const heading = aside.querySelector("h2, h3");
+            const text = heading?.textContent?.toLowerCase() || "";
+            if (text.includes("similar") || text.includes("affiliated")) {
+              similarSection = aside;
+            }
+          }
+        }
+
+        if (!similarSection) return links;
+
+        similarSection
+          .querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]')
+          .forEach((a) => {
+            const href = a.href.split("?")[0].replace(/\/$/, "");
+            const match = new URL(href).pathname.match(/^\/company\/([^/]+)$/);
+            if (match && !links.includes(href)) {
+              links.push(href);
+            }
+          });
+        return links;
+      },
+    })
+    .then((results) => (results?.[0]?.result as string[]) ?? [])
+    .catch(() => []);
+}
+
+async function findRelatedCompanies(tabId: number) {
+  console.log("[FindRelated] Starting...");
+
+  const tab = await chrome.tabs.get(tabId);
+  const currentUrl = tab.url || "";
+  const companyMatch = currentUrl.match(/\/company\/([^/]+)/);
+  if (!companyMatch) {
+    try {
+      await chrome.tabs.sendMessage(tabId, {
+        action: "findRelatedError",
+        error: "Not on a company page",
+      });
+    } catch { /* ignore */ }
+    return;
+  }
+
+  // Navigate to main company page to find "Similar pages"
+  const mainUrl = `https://www.linkedin.com/company/${companyMatch[1]}/`;
+  if (currentUrl.includes("/people") || currentUrl.includes("/about")) {
+    await chrome.tabs.update(tabId, { url: mainUrl });
+    await waitForTabLoad(tabId);
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+
+  // Scroll down to load "Similar pages" section
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    world: "MAIN",
+    func: () => window.scrollTo(0, document.body.scrollHeight),
+  });
+  await new Promise((r) => setTimeout(r, 2000));
+
+  // Scroll again (LinkedIn lazy-loads)
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    world: "MAIN",
+    func: () => window.scrollTo(0, document.body.scrollHeight),
+  });
+  await new Promise((r) => setTimeout(r, 2000));
+
+  const similarUrls = await extractSimilarCompanyUrls(tabId);
+  console.log(`[FindRelated] Found ${similarUrls.length} similar companies`);
+
+  if (similarUrls.length === 0) {
+    try {
+      await chrome.tabs.sendMessage(tabId, {
+        action: "findRelatedDone",
+        found: 0,
+        saved: 0,
+      });
+    } catch { /* ignore */ }
+    return;
+  }
+
+  const batch: Array<{
+    name: string;
+    website?: string;
+    linkedin_url?: string;
+    description?: string;
+    location?: string;
+  }> = [];
+
+  const returnUrl = currentUrl;
+
+  for (let i = 0; i < similarUrls.length; i++) {
+    const aboutUrl = similarUrls[i].replace(/\/$/, "") + "/about/";
+    try {
+      await chrome.tabs.update(tabId, { url: aboutUrl });
+    } catch {
+      break;
+    }
+    await waitForTabLoad(tabId);
+    await new Promise((r) => setTimeout(r, 2500));
+
+    await clickSeeMore(tabId);
+    await new Promise((r) => setTimeout(r, 500));
+
+    const data = await extractCompanyData(tabId);
+    if (data && data.name) {
+      batch.push({
+        name: data.name,
+        website: data.website || undefined,
+        linkedin_url: data.linkedinUrl || undefined,
+        description: [
+          data.description,
+          data.industry ? `Industry: ${data.industry}` : "",
+          data.size ? `Size: ${data.size}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n") || undefined,
+        location: data.location || undefined,
+      });
+
+      console.log(`[FindRelated] ${i + 1}/${similarUrls.length}: ${data.name}`);
+    }
+
+    try {
+      await chrome.tabs.sendMessage(tabId, {
+        action: "findRelatedProgress",
+        current: i + 1,
+        total: similarUrls.length,
+        name: data?.name || "Unknown",
+      });
+    } catch { /* tab navigated, content script gone */ }
+
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+
+  let saved = 0;
+  if (batch.length > 0) {
+    saved = await saveCompanyBatch(batch);
+  }
+
+  // Navigate back
+  try {
+    await chrome.tabs.update(tabId, { url: returnUrl });
+    await waitForTabLoad(tabId);
+  } catch { /* ignore */ }
+
+  console.log(`[FindRelated] Complete. Saved ${saved}/${similarUrls.length}`);
+
+  // Wait for content script to re-inject after navigation back
+  await new Promise((r) => setTimeout(r, 3000));
+  try {
+    await chrome.tabs.sendMessage(tabId, {
+      action: "findRelatedDone",
+      found: similarUrls.length,
+      saved,
+    });
+  } catch { /* ignore */ }
 }
