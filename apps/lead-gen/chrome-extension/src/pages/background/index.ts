@@ -939,6 +939,7 @@ async function saveCompanyBatch(
     linkedin_url?: string;
     description?: string;
     location?: string;
+    industry?: string;
   }>,
 ): Promise<number> {
   try {
