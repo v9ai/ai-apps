@@ -189,7 +189,7 @@ def _get_prototype_embeds() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
 # ── Scoring helpers ────────────────────────────────────────────────────────
 
 
-def _calibrate_score(raw: float, k: float = 12.0, midpoint: float = 0.38) -> float:
+def _calibrate_score(raw: float, k: float = 12.0, midpoint: float = 0.33) -> float:
     """Sigmoid calibration: maps clustered raw scores to spread-out probabilities."""
     return 1.0 / (1.0 + math.exp(-k * (raw - midpoint)))
 
