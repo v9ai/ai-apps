@@ -1,5 +1,5 @@
 import { linkedinPosts, type LinkedInPost as DbLinkedInPost } from "@/db/schema";
-import { eq, and, sql, type SQL } from "drizzle-orm";
+import { eq, and, sql, isNull, type SQL } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -14,6 +14,8 @@ const LinkedInPost = {
   postedAt:       (p: DbLinkedInPost) => p.posted_at ?? null,
   scrapedAt:      (p: DbLinkedInPost) => p.scraped_at,
   rawData:        (p: DbLinkedInPost) => p.raw_data ? JSON.parse(p.raw_data) : null,
+  skills:         (p: DbLinkedInPost) => p.skills ? JSON.parse(p.skills) : null,
+  analyzedAt:     (p: DbLinkedInPost) => p.analyzed_at ?? null,
   createdAt:      (p: DbLinkedInPost) => p.created_at,
 };
 
@@ -60,6 +62,57 @@ export const linkedinPostResolvers = {
         .offset(offset);
 
       return rows;
+    },
+
+    async similarPosts(
+      _parent: unknown,
+      args: { postId: number; limit?: number | null; minScore?: number | null },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId) throw new Error("Unauthorized");
+
+      const limit = args.limit ?? 10;
+      const minScore = args.minScore ?? 0.3;
+
+      try {
+        const [source] = await context.db
+          .select()
+          .from(linkedinPosts)
+          .where(eq(linkedinPosts.id, args.postId))
+          .limit(1);
+
+        if (!source) return [];
+
+        // Read the job_embedding via raw SQL (vector column not in Drizzle schema)
+        const embResult = await context.db.execute(
+          sql`SELECT job_embedding as emb FROM linkedin_posts WHERE id = ${args.postId} AND job_embedding IS NOT NULL`,
+        );
+        const embRow = embResult.rows?.[0] as { emb: number[] } | undefined;
+        if (!embRow?.emb) return [];
+
+        const vecLiteral = `[${(embRow.emb as number[]).join(",")}]`;
+
+        const results = await context.db
+          .select({
+            post: linkedinPosts,
+            similarity: sql<number>`1 - (job_embedding <=> ${vecLiteral}::vector)`.as("similarity"),
+          })
+          .from(linkedinPosts)
+          .where(
+            and(
+              sql`job_embedding IS NOT NULL`,
+              sql`${linkedinPosts.id} != ${args.postId}`,
+            ),
+          )
+          .orderBy(sql`job_embedding <=> ${vecLiteral}::vector`)
+          .limit(limit);
+
+        return results
+          .filter((r) => r.similarity >= minScore)
+          .map((r) => ({ post: r.post, similarity: r.similarity }));
+      } catch {
+        return [];
+      }
     },
   },
 
@@ -219,6 +272,81 @@ export const linkedinPostResolvers = {
         .delete(linkedinPosts)
         .where(eq(linkedinPosts.id, args.id));
       return true;
+    },
+
+    async analyzeLinkedInPosts(
+      _parent: unknown,
+      args: { postIds?: number[] | null; limit?: number | null },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      let analyzed = 0;
+      let failed = 0;
+      const errors: string[] = [];
+
+      try {
+        const { analyzePostBatch } = await import("@/ml/post-analyzer");
+
+        // Fetch target posts: by IDs or un-analyzed posts
+        const targetPosts = args.postIds?.length
+          ? await context.db
+              .select()
+              .from(linkedinPosts)
+              .where(sql`${linkedinPosts.id} = ANY(${args.postIds})`)
+          : await context.db
+              .select()
+              .from(linkedinPosts)
+              .where(isNull(linkedinPosts.analyzed_at))
+              .limit(Math.min(args.limit ?? 50, 200));
+
+        // Filter to posts with content
+        const postsWithContent = targetPosts.filter(
+          (p) => p.content && p.content.trim().length > 10,
+        );
+
+        if (postsWithContent.length === 0) {
+          return { success: true, analyzed: 0, failed: 0, errors: [] };
+        }
+
+        // Batch analyze
+        const results = await analyzePostBatch(
+          postsWithContent.map((p) => ({ id: p.id, content: p.content! })),
+        );
+
+        // Update DB in chunks of 20
+        const CHUNK = 20;
+        const entries = Array.from(results.entries());
+        for (let i = 0; i < entries.length; i += CHUNK) {
+          const chunk = entries.slice(i, i + CHUNK);
+          for (const [postId, analysis] of chunk) {
+            try {
+              const vecLiteral = `[${analysis.jobEmbedding.join(",")}]`;
+              await context.db.execute(
+                sql`UPDATE linkedin_posts SET
+                  skills = ${JSON.stringify(analysis.skills)},
+                  analyzed_at = ${analysis.analyzedAt},
+                  job_embedding = ${sql.raw(`'${vecLiteral}'::vector`)}
+                WHERE id = ${postId}`,
+              );
+              analyzed++;
+            } catch (err) {
+              failed++;
+              errors.push(
+                `Post ${postId}: ${err instanceof Error ? err.message : String(err)}`,
+              );
+            }
+          }
+        }
+      } catch (err) {
+        errors.push(
+          `Analysis init failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+
+      return { success: failed === 0, analyzed, failed, errors };
     },
   },
 };

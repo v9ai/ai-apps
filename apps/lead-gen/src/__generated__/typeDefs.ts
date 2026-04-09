@@ -14,6 +14,13 @@ type AnalyzeCompanyResponse {
   success: Boolean!
 }
 
+type AnalyzePostsResult {
+  analyzed: Int!
+  errors: [String!]!
+  failed: Int!
+  success: Boolean!
+}
+
 type ApplyEmailPatternResult {
   contacts: [Contact!]!
   contactsUpdated: Int!
@@ -635,6 +642,12 @@ enum ExtractMethod {
   META
 }
 
+type ExtractedSkill {
+  confidence: Float!
+  label: String!
+  tag: String!
+}
+
 type FindCompanyResult {
   company: Company
   found: Boolean!
@@ -826,6 +839,7 @@ type IntentSignalsResponse {
 scalar JSON
 
 type LinkedInPost {
+  analyzedAt: String
   authorName: String
   authorUrl: String
   companyId: Int
@@ -838,6 +852,7 @@ type LinkedInPost {
   postedAt: String
   rawData: JSON
   scrapedAt: String!
+  skills: [ExtractedSkill!]
   title: String
   type: LinkedInPostType!
   url: String!
@@ -877,6 +892,7 @@ type MergeDuplicateContactsResult {
 type Mutation {
   add_company_facts(company_id: Int!, facts: [CompanyFactInput!]!): [CompanyFact!]!
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
+  analyzeLinkedInPosts(limit: Int, postIds: [Int!]): AnalyzePostsResult!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   archiveEmail(id: Int!): ArchiveEmailResult!
   batchDetectIntent(companyIds: [Int!]!): BatchDetectIntentResult!
@@ -1013,6 +1029,7 @@ type Query {
   Semantic similarity search: find companies matching a natural language query
   """
   similarCompanies(limit: Int, minAiTier: Int, minScore: Float, query: String!): [SimilarCompanyResult!]!
+  similarPosts(limit: Int, minScore: Float, postId: Int!): [SimilarPost!]!
   userSettings(userId: String!): UserSettings
 }
 
@@ -1464,6 +1481,11 @@ type SignalTypeCount {
 
 type SimilarCompanyResult {
   company: Company!
+  similarity: Float!
+}
+
+type SimilarPost {
+  post: LinkedInPost!
   similarity: Float!
 }
 
