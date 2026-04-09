@@ -13,11 +13,12 @@ export interface CompanyData {
   size: string;
   location: string;
   linkedinUrl: string;
+  linkedinNumericId?: string;
 }
 
 export interface ICPResult {
   target: boolean;
-  reason?: "not-recruitment" | "too-large" | "irrelevant-geo";
+  reason?: "not-recruitment" | "too-large" | "irrelevant-geo" | "no-remote-jobs";
 }
 
 // Parse LinkedIn size strings like "51-200 employees" → upper bound (200).
