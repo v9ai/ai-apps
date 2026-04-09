@@ -10,7 +10,7 @@ import type {
   CompanyFact as DbCompanyFact,
   CompanySnapshot as DbCompanySnapshot,
 } from "@/db/schema";
-import { eq, and, or, like, asc, desc, gte, inArray, sql } from "drizzle-orm";
+import { eq, and, or, like, ilike, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import type {
@@ -860,7 +860,9 @@ export const companyResolvers = {
         throw new Error("Forbidden");
       }
 
-      const { companyName, website, linkedinUrl, contacts: contactInputs } = args.input;
+      const { companyName, website, contacts: contactInputs } = args.input;
+      // Normalize empty strings to null to avoid storing "" in the DB
+      const linkedinUrl = args.input.linkedinUrl?.trim() || null;
       const errors: string[] = [];
 
       try {
@@ -877,10 +879,11 @@ export const companyResolvers = {
         }
 
         if (!companyRow) {
+          // Use Drizzle ilike() instead of raw sql`lower(...)` for type-safe case-insensitive match
           const byName = await context.db
             .select()
             .from(companies)
-            .where(sql`lower(${companies.name}) = ${companyName.toLowerCase()}`)
+            .where(ilike(companies.name, companyName.trim()))
             .limit(1);
           companyRow = byName[0];
         }
@@ -900,18 +903,38 @@ export const companyResolvers = {
             companyRow = updated;
           }
         } else {
-          // Create new company
+          // Create new company — use onConflictDoUpdate on unique `key` to handle race conditions
+          // where two concurrent requests try to insert the same company
           const key = companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
           const [created] = await context.db
             .insert(companies)
             .values({
               key,
               name: companyName,
-              website: website ?? null,
-              linkedin_url: linkedinUrl ?? null,
+              website: website || null,
+              linkedin_url: linkedinUrl,
+            })
+            .onConflictDoUpdate({
+              target: companies.key,
+              set: {
+                // On conflict, fill in missing fields without overwriting existing data
+                website: sql`COALESCE(${companies.website}, excluded.website)`,
+                linkedin_url: sql`COALESCE(${companies.linkedin_url}, excluded.linkedin_url)`,
+                updated_at: sql`now()::text`,
+              },
             })
             .returning();
           companyRow = created;
+        }
+
+        if (!companyRow) {
+          return {
+            success: false,
+            company: null,
+            contactsImported: 0,
+            contactsSkipped: 0,
+            errors: ["Failed to create or find company"],
+          };
         }
 
         let imported = 0;
@@ -923,25 +946,29 @@ export const companyResolvers = {
             const parts = input.name.trim().split(/\s+/);
             const firstName = parts[0] || input.name;
             const lastName = parts.slice(1).join(" ") || "";
+            // Normalize empty strings to null
+            const contactLinkedinUrl = input.linkedinUrl?.trim() || null;
+            const contactEmail = input.workEmail?.trim() || null;
 
             // Check for duplicates by linkedinUrl or (firstName + lastName + companyId)
-            if (input.linkedinUrl) {
+            if (contactLinkedinUrl) {
               const dupByLinkedin = await context.db
                 .select({ id: contacts.id })
                 .from(contacts)
-                .where(eq(contacts.linkedin_url, input.linkedinUrl))
+                .where(eq(contacts.linkedin_url, contactLinkedinUrl))
                 .limit(1);
               if (dupByLinkedin[0]) { skipped++; continue; }
             }
 
+            // Use Drizzle ilike() instead of raw sql`lower(...)` for type-safe case-insensitive match
             const dupByName = await context.db
               .select({ id: contacts.id })
               .from(contacts)
               .where(
                 and(
-                  sql`lower(${contacts.first_name}) = ${firstName.toLowerCase()}`,
-                  sql`lower(${contacts.last_name}) = ${lastName.toLowerCase()}`,
-                  eq(contacts.company_id, companyRow!.id),
+                  ilike(contacts.first_name, firstName),
+                  ilike(contacts.last_name, lastName),
+                  eq(contacts.company_id, companyRow.id),
                 ),
               )
               .limit(1);
@@ -951,9 +978,9 @@ export const companyResolvers = {
             await context.db.insert(contacts).values({
               first_name: firstName,
               last_name: lastName,
-              email: input.workEmail ?? null,
-              linkedin_url: input.linkedinUrl ?? null,
-              company_id: companyRow!.id,
+              email: contactEmail,
+              linkedin_url: contactLinkedinUrl,
+              company_id: companyRow.id,
               company: companyName,
             });
             imported++;
