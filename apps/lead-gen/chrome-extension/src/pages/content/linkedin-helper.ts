@@ -686,10 +686,21 @@ chrome.runtime.onMessage.addListener((message) => {
   }
 });
 
-// ── Import People Button (LinkedIn Company Pages) ───────────────────
+// ── Company Page Floating Buttons (Import People + Find Related) ────
+//
+// LinkedIn uses pushState for SPA navigation (e.g. /company/foo -> /company/bar
+// or /company/foo -> /feed/). A single MutationObserver + URL polling handles:
+//   1. Injecting buttons when arriving on a company page
+//   2. Removing buttons when navigating away
+//   3. Cleaning up stale buttons when navigating between company pages
+//   4. Disconnecting the observer if the hostname changes (unlikely but safe)
 
 const IMPORT_PEOPLE_BTN_ATTR = "data-lg-import-people-btn";
+const FIND_RELATED_BTN_ATTR = "data-lg-find-related-btn";
 let importPeopleBtn: HTMLButtonElement | null = null;
+let findRelatedBtn: HTMLButtonElement | null = null;
+let companyButtonsObserver: MutationObserver | null = null;
+let lastKnownCompanySlug: string | null = null;
 
 function extractCompanyInfoFromPage(): { name: string; linkedinUrl: string } {
   const nameEl =
@@ -704,6 +715,20 @@ function extractCompanyInfoFromPage(): { name: string; linkedinUrl: string } {
     : window.location.href.split("?")[0];
 
   return { name, linkedinUrl };
+}
+
+/** Get the company slug from current URL, or null if not on a company page */
+function getCompanySlug(): string | null {
+  const match = window.location.pathname.match(/^\/company\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
+function removeCompanyButtons() {
+  // Remove all buttons from DOM (handles duplicates too)
+  document.querySelectorAll(`[${IMPORT_PEOPLE_BTN_ATTR}]`).forEach((el) => el.remove());
+  document.querySelectorAll(`[${FIND_RELATED_BTN_ATTR}]`).forEach((el) => el.remove());
+  importPeopleBtn = null;
+  findRelatedBtn = null;
 }
 
 function createImportPeopleButton(): HTMLButtonElement {
@@ -769,38 +794,8 @@ function createImportPeopleButton(): HTMLButtonElement {
     );
   });
 
-  importPeopleBtn = btn;
   return btn;
 }
-
-function injectImportPeopleButton() {
-  if (!window.location.hostname.includes("linkedin.com")) return;
-  if (!/^\/company\/[^/]+/.test(window.location.pathname)) return;
-  if (document.querySelector(`[${IMPORT_PEOPLE_BTN_ATTR}]`)) return;
-
-  document.body.appendChild(createImportPeopleButton());
-}
-
-function observeImportPeopleButton() {
-  if (!window.location.hostname.includes("linkedin.com")) return;
-  if (!/^\/company\/[^/]+/.test(window.location.pathname)) return;
-
-  setTimeout(injectImportPeopleButton, 1500);
-
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  const obs = new MutationObserver(() => {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(injectImportPeopleButton, 1000);
-  });
-  obs.observe(document.body, { childList: true, subtree: true });
-}
-
-observeImportPeopleButton();
-
-// ── Find Related Companies Button (LinkedIn Company Pages) ──────────
-
-const FIND_RELATED_BTN_ATTR = "data-lg-find-related-btn";
-let findRelatedBtn: HTMLButtonElement | null = null;
 
 function createFindRelatedButton(): HTMLButtonElement {
   const btn = document.createElement("button");
@@ -854,33 +849,86 @@ function createFindRelatedButton(): HTMLButtonElement {
     );
   });
 
-  findRelatedBtn = btn;
   return btn;
 }
 
-function injectFindRelatedButton() {
-  if (!window.location.hostname.includes("linkedin.com")) return;
-  if (!/^\/company\/[^/]+/.test(window.location.pathname)) return;
-  if (document.querySelector(`[${FIND_RELATED_BTN_ATTR}]`)) return;
+/**
+ * Synchronize floating buttons with current URL state.
+ * - On company pages: inject buttons if missing, or replace if slug changed
+ * - On non-company pages: remove any stale buttons
+ */
+function syncCompanyButtons() {
+  if (!window.location.hostname.includes("linkedin.com")) {
+    removeCompanyButtons();
+    return;
+  }
 
-  document.body.appendChild(createFindRelatedButton());
+  const slug = getCompanySlug();
+
+  if (!slug) {
+    // Not on a company page — remove buttons if they exist
+    if (importPeopleBtn || findRelatedBtn) {
+      removeCompanyButtons();
+      lastKnownCompanySlug = null;
+    }
+    return;
+  }
+
+  // On a company page — check if we need to (re)inject
+  if (slug !== lastKnownCompanySlug) {
+    // Company changed (SPA navigation between companies) — remove old buttons
+    removeCompanyButtons();
+    lastKnownCompanySlug = slug;
+  }
+
+  // Inject buttons if not present
+  if (!document.querySelector(`[${IMPORT_PEOPLE_BTN_ATTR}]`)) {
+    const ipBtn = createImportPeopleButton();
+    document.body.appendChild(ipBtn);
+    importPeopleBtn = ipBtn;
+  }
+
+  if (!document.querySelector(`[${FIND_RELATED_BTN_ATTR}]`)) {
+    const frBtn = createFindRelatedButton();
+    document.body.appendChild(frBtn);
+    findRelatedBtn = frBtn;
+  }
 }
 
-function observeFindRelatedButton() {
+function observeCompanyButtons() {
   if (!window.location.hostname.includes("linkedin.com")) return;
-  if (!/^\/company\/[^/]+/.test(window.location.pathname)) return;
 
-  setTimeout(injectFindRelatedButton, 1500);
+  // Initial injection after a short delay for page hydration
+  setTimeout(syncCompanyButtons, 1500);
 
+  // Single MutationObserver for both buttons (avoids duplicate observers)
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  const obs = new MutationObserver(() => {
+  companyButtonsObserver = new MutationObserver(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(injectFindRelatedButton, 1000);
+    debounceTimer = setTimeout(syncCompanyButtons, 1000);
   });
-  obs.observe(document.body, { childList: true, subtree: true });
+  companyButtonsObserver.observe(document.body, { childList: true, subtree: true });
+
+  // LinkedIn SPA navigation uses pushState/replaceState — listen for URL changes
+  // to detect navigation between company pages or away from company pages.
+  let lastUrl = window.location.href;
+  const urlCheckInterval = setInterval(() => {
+    if (window.location.href !== lastUrl) {
+      lastUrl = window.location.href;
+      syncCompanyButtons();
+    }
+    // Disconnect observer if we're no longer on LinkedIn (shouldn't happen, but safe)
+    if (!window.location.hostname.includes("linkedin.com")) {
+      clearInterval(urlCheckInterval);
+      if (companyButtonsObserver) {
+        companyButtonsObserver.disconnect();
+        companyButtonsObserver = null;
+      }
+    }
+  }, 1000);
 }
 
-observeFindRelatedButton();
+observeCompanyButtons();
 
 function clickSalaryMetadata() {
   document.querySelectorAll(".job-card-container").forEach((jobCard) => {
