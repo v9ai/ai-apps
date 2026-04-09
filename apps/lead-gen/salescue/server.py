@@ -414,22 +414,30 @@ async def _update_company_tagged(
         print(f"[classify-company] asyncpg not available — cannot update company {company_id}")
         return
 
+    import json
+
     conn = await asyncpg.connect(db_url)
     try:
-        # Append 'target-icp' to existing tags JSON array if this is a target
         if is_target:
+            # tags is a text column storing a JSON array string
+            row = await conn.fetchrow("SELECT tags FROM companies WHERE id = $1", company_id)
+            existing_tags: list[str] = []
+            if row and row["tags"]:
+                try:
+                    existing_tags = json.loads(row["tags"])
+                except (json.JSONDecodeError, TypeError):
+                    existing_tags = []
+            if "target-icp" not in existing_tags:
+                existing_tags.append("target-icp")
             await conn.execute(
                 """UPDATE companies
                    SET category = 'STAFFING',
-                       tags = CASE
-                         WHEN tags IS NULL THEN '["target-icp"]'::jsonb
-                         WHEN NOT tags @> '"target-icp"' THEN tags || '["target-icp"]'
-                         ELSE tags
-                       END,
-                       ai_classification_reason = $1,
-                       ai_classification_confidence = $2,
+                       tags = $1,
+                       ai_classification_reason = $2,
+                       ai_classification_confidence = $3,
                        updated_at = now()
-                 WHERE id = $3""",
+                 WHERE id = $4""",
+                json.dumps(existing_tags),
                 "; ".join(reasons),
                 confidence,
                 company_id,

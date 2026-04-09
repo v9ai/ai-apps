@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { GroupedLessons, DifficultyLevel } from "@/lib/articles";
 import type { SearchResult } from "@/lib/data";
@@ -35,12 +36,26 @@ const DIFFICULTY_FILTERS: { value: DifficultyLevel | "all"; label: string }[] = 
   { value: "advanced", label: "Advanced" },
 ];
 
+const SEARCH_SUGGESTIONS = [
+  "transformers",
+  "RAG",
+  "agents",
+  "fine-tuning",
+  "evals",
+  "RLHF",
+  "embeddings",
+  "prompt engineering",
+];
+
 export function Search({ groups }: Props) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [diffFilter, setDiffFilter] = useState<DifficultyLevel | "all">("all");
   const [isDeepSearch, setIsDeepSearch] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [inputFocused, setInputFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -63,6 +78,11 @@ export function Search({ groups }: Props) {
       }))
       .filter((g) => g.articles.length > 0);
   }, [groups, diffFilter]);
+
+  // Reset focused index when results change
+  useEffect(() => {
+    setFocusedIndex(-1);
+  }, [results]);
 
   // Cmd+K / Ctrl+K to focus
   useEffect(() => {
@@ -101,7 +121,31 @@ export function Search({ groups }: Props) {
   function handleClear() {
     setQuery("");
     setResults([]);
+    setFocusedIndex(-1);
     inputRef.current?.focus();
+  }
+
+  function handleSuggestionClick(suggestion: string) {
+    setQuery(suggestion);
+    clearTimeout(timerRef.current);
+    doSearch(suggestion);
+    inputRef.current?.focus();
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (results.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev + 1) % results.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev <= 0 ? results.length - 1 : prev - 1));
+    } else if (e.key === "Enter" && focusedIndex >= 0) {
+      e.preventDefault();
+      const r = results[focusedIndex];
+      const meta = r.lessonSlug ? lessonLookup.get(r.lessonSlug) : undefined;
+      router.push(meta?.url ?? `/${r.lessonSlug}`);
+    }
   }
 
   const hasQuery = query.trim().length >= 2;
@@ -116,6 +160,9 @@ export function Search({ groups }: Props) {
           placeholder={isDeepSearch ? "Deep search with AI embeddings..." : "Search lessons, topics, concepts..."}
           value={query}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
         />
         <button
           className={`yc-search-mode${isDeepSearch ? " yc-search-mode--active" : ""}`}
@@ -141,6 +188,23 @@ export function Search({ groups }: Props) {
         )}
       </div>
 
+      {!hasQuery && inputFocused && (
+        <div className="search-suggestions">
+          {SEARCH_SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              className="search-suggestion-pill"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSuggestionClick(s);
+              }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
       {!hasQuery && (
         <div className="difficulty-filter">
           {DIFFICULTY_FILTERS.map((f) => (
@@ -165,19 +229,42 @@ export function Search({ groups }: Props) {
         <div className="search-results" aria-live="polite">
           {searching && results.length === 0 && (
             <div className="search-loading">
-              <div className="search-loading-bar" />
-              <div className="search-loading-bar" />
-              <div className="search-loading-bar" />
+              <div className="search-skeleton-card">
+                <div className="search-skeleton-header" />
+                <div className="search-skeleton-line" />
+                <div className="search-skeleton-line search-skeleton-line--short" />
+              </div>
+              <div className="search-skeleton-card">
+                <div className="search-skeleton-header" />
+                <div className="search-skeleton-line" />
+                <div className="search-skeleton-line search-skeleton-line--short" />
+              </div>
+              <div className="search-skeleton-card">
+                <div className="search-skeleton-header" />
+                <div className="search-skeleton-line" />
+                <div className="search-skeleton-line search-skeleton-line--short" />
+              </div>
+              <div className="search-skeleton-card">
+                <div className="search-skeleton-header" />
+                <div className="search-skeleton-line" />
+                <div className="search-skeleton-line search-skeleton-line--short" />
+              </div>
             </div>
           )}
           {!searching && results.length === 0 && (
             <div className="no-results" role="status">
-              <div className="no-results-icon">🔍</div>
-              <div className="no-results-title">No results found</div>
+              <div className="no-results-icon">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                  <circle cx="22" cy="22" r="14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity="0.35" />
+                  <line x1="32" y1="32" x2="42" y2="42" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity="0.35" />
+                  <line x1="16" y1="22" x2="28" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.25" />
+                </svg>
+              </div>
+              <div className="no-results-title">Nothing matched your search</div>
               <div className="no-results-hint">
                 {!isDeepSearch
-                  ? "No keyword matches — try Deep search for semantic / conceptual queries"
-                  : "Try different keywords or a shorter query"}
+                  ? "No keyword hits — Deep search understands meaning, not just words"
+                  : "Try rephrasing or broadening your query"}
               </div>
               {!isDeepSearch && (
                 <button
@@ -202,7 +289,7 @@ export function Search({ groups }: Props) {
               <Link
                 key={`${r.resultType}-${r.title}-${i}`}
                 href={meta?.url ?? `/${r.lessonSlug}`}
-                className={`search-result-card${meta ? ` cat-${meta.catSlug}` : ""}`}
+                className={`search-result-card${meta ? ` cat-${meta.catSlug}` : ""}${i === focusedIndex ? " search-result-card--focused" : ""}`}
               >
                 <div className="search-result-header">
                   <span className="badge-pill badge-pill--glass search-result-type">
