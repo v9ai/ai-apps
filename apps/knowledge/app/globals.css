@@ -1489,31 +1489,6 @@ body {
   border-left-color: var(--blue-8);
   background: var(--blue-2);
 }
-/* expandable callouts */
-details.callout-expand {
-  cursor: pointer;
-}
-details.callout-expand > summary {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: var(--font-size-2);
-  user-select: none;
-}
-details.callout-expand > summary::-webkit-details-marker { display: none; }
-details.callout-expand > summary::before {
-  content: "▸";
-  font-size: 12px;
-  transition: transform 0.15s ease;
-}
-details.callout-expand[open] > summary::before {
-  transform: rotate(90deg);
-}
-details.callout-expand > p {
-  margin-top: 8px;
-}
 /* timing badge */
 .timing-badge {
   display: inline-block;

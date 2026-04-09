@@ -77,7 +77,7 @@ async function getApiSecret(): Promise<string | null> {
  * Insert jobs via app API
  */
 export async function insertJobs(
-  jobs: JobInput[],
+  jobs: (JobInput | NormalizedJobInput)[],
 ): Promise<InsertJobsResponse> {
   try {
     console.log(`[Job Inserter] Inserting ${jobs.length} jobs...`);
@@ -213,16 +213,17 @@ export interface NormalizedJobInput {
 export function normalizeJobInput(job: RawJobInput): NormalizedJobInput {
   // Extract company key from URL or use company name
   let companyKey = job.company || "unknown";
+  const jobUrl = job.url || "";
 
   // Check if this is a CRM internal URL (localhost or known CRM domains)
   // Format: /jobs/<id-or-slug>?company=<company>&source=<source>
-  const crmUrlMatch = job.url?.match(
+  const crmUrlMatch = jobUrl.match(
     /(?:localhost:\d+|lead-gen|127\.0\.0\.1:\d+)\/jobs\/([^?]+)/,
   );
 
   if (crmUrlMatch) {
     // Parse query params from CRM URL
-    const urlObj = new URL(job.url);
+    const urlObj = new URL(jobUrl);
     const sourceParam = urlObj.searchParams.get("source");
     const companyParam = urlObj.searchParams.get("company");
     const slug = decodeURIComponent(crmUrlMatch[1]);
@@ -232,7 +233,7 @@ export function normalizeJobInput(job: RawJobInput): NormalizedJobInput {
       sourceKind: sourceParam || job.sourceType || "other",
       companyKey: companyParam || companyKey,
       title: job.title,
-      url: job.url,
+      url: jobUrl,
       location: job.location || undefined,
       description: job.description || undefined,
       postedAt: job.publishedDate || job.postedAt || undefined,
@@ -241,7 +242,7 @@ export function normalizeJobInput(job: RawJobInput): NormalizedJobInput {
   }
 
   // Try to extract company from URL or use company name
-  if (job.url) {
+  if (jobUrl) {
     if (job.company) {
       // Slugify company name
       companyKey = job.company.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -252,14 +253,14 @@ export function normalizeJobInput(job: RawJobInput): NormalizedJobInput {
   const sourceKind = job.sourceType || "other";
 
   // Extract external ID from URL
-  let externalId = job.guid || job.id || job.url;
+  const externalId = job.guid || job.id || jobUrl;
 
   return {
     externalId: externalId,
     sourceKind: sourceKind,
     companyKey: companyKey,
     title: job.title,
-    url: job.url,
+    url: jobUrl,
     location: job.location || undefined,
     description: job.description || undefined,
     postedAt: job.publishedDate || job.postedAt || undefined,
