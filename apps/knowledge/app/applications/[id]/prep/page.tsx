@@ -200,25 +200,25 @@ function InteractiveCodePlayground({ initialHtml, initialCss }: { initialHtml: s
 
   return (
     <Box mb="4" style={{ position: "relative" }}>
-      <Flex gap="2" justify="end" align="center" mb="2" wrap="wrap">
-        <Button size="1" variant={mode === "css" ? "solid" : "soft"} color="violet" onClick={() => activate("css")}>
+      <Flex gap="3" justify="end" align="center" mb="3" wrap="wrap">
+        <Button size="2" variant={mode === "css" ? "solid" : "soft"} color="violet" onClick={() => activate("css")}>
           CSS Challenge
         </Button>
-        <Button size="1" variant={mode === "html" ? "solid" : "soft"} color="cyan" onClick={() => activate("html")}>
+        <Button size="2" variant={mode === "html" ? "solid" : "soft"} color="cyan" onClick={() => activate("html")}>
           HTML Challenge
         </Button>
-        <Button size="1" variant={mode === "full" ? "solid" : "soft"} color="orange" onClick={() => activate("full")}>
+        <Button size="2" variant={mode === "full" ? "solid" : "soft"} color="orange" onClick={() => activate("full")}>
           Full Rebuild
         </Button>
-        <Button size="1" variant={mode === "debug" ? "solid" : "soft"} color="crimson" onClick={() => activate("debug")}>
+        <Button size="2" variant={mode === "debug" ? "solid" : "soft"} color="crimson" onClick={() => activate("debug")}>
           Debug
         </Button>
         {mode !== "off" && (
-          <Button size="1" variant="outline" color="gray" onClick={() => setMode("off")}>
+          <Button size="2" variant="outline" color="gray" onClick={() => setMode("off")}>
             Solution
           </Button>
         )}
-        <Button size="1" variant="ghost" color="gray" onClick={reset}>
+        <Button size="2" variant="ghost" color="gray" onClick={reset}>
           Reset
         </Button>
       </Flex>
@@ -484,7 +484,7 @@ function PrepPageInner() {
         <Card style={{ borderLeft: "3px solid var(--violet-6)", borderRadius: 0 }}>
           <Flex direction="column" align="center" justify="center" gap="3" py="8">
             <Text size="2" color="gray">No study plan generated yet.</Text>
-            <Text size="1" color="gray">
+            <Text size="2" color="gray">
               Add a job description first, then generate prep from the application detail page.
             </Text>
             <Button size="2" variant="soft" asChild>
