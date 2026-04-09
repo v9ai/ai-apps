@@ -12,7 +12,6 @@ high even without exact keyword matches.
 
 from __future__ import annotations
 
-import os
 import re
 from typing import Any
 
