@@ -30,6 +30,14 @@ export type AnalyzeCompanyResponse = {
   success: Scalars['Boolean']['output'];
 };
 
+export type AnalyzePostsResult = {
+  __typename?: 'AnalyzePostsResult';
+  analyzed: Scalars['Int']['output'];
+  errors: Array<Scalars['String']['output']>;
+  failed: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type ApplyEmailPatternResult = {
   __typename?: 'ApplyEmailPatternResult';
   contacts: Array<Contact>;
@@ -698,6 +706,13 @@ export type ExtractMethod =
   | 'LLM'
   | 'META';
 
+export type ExtractedSkill = {
+  __typename?: 'ExtractedSkill';
+  confidence: Scalars['Float']['output'];
+  label: Scalars['String']['output'];
+  tag: Scalars['String']['output'];
+};
+
 export type FindCompanyResult = {
   __typename?: 'FindCompanyResult';
   company: Maybe<Company>;
@@ -903,6 +918,7 @@ export type IntentSignalsResponse = {
 
 export type LinkedInPost = {
   __typename?: 'LinkedInPost';
+  analyzedAt: Maybe<Scalars['String']['output']>;
   authorName: Maybe<Scalars['String']['output']>;
   authorUrl: Maybe<Scalars['String']['output']>;
   companyId: Maybe<Scalars['Int']['output']>;
@@ -915,6 +931,7 @@ export type LinkedInPost = {
   postedAt: Maybe<Scalars['String']['output']>;
   rawData: Maybe<Scalars['JSON']['output']>;
   scrapedAt: Scalars['String']['output'];
+  skills: Maybe<Array<ExtractedSkill>>;
   title: Maybe<Scalars['String']['output']>;
   type: LinkedInPostType;
   url: Scalars['String']['output'];
@@ -958,6 +975,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   add_company_facts: Array<CompanyFact>;
   analyzeCompany: AnalyzeCompanyResponse;
+  analyzeLinkedInPosts: AnalyzePostsResult;
   applyEmailPattern: ApplyEmailPatternResult;
   archiveEmail: ArchiveEmailResult;
   batchDetectIntent: BatchDetectIntentResult;
@@ -1039,6 +1057,12 @@ export type MutationAdd_Company_FactsArgs = {
 export type MutationAnalyzeCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationAnalyzeLinkedInPostsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  postIds?: InputMaybe<Array<Scalars['Int']['input']>>;
 };
 
 
@@ -1453,6 +1477,7 @@ export type Query = {
   salescueTriggers: SalescueTriggersResult;
   /** Semantic similarity search: find companies matching a natural language query */
   similarCompanies: Array<SimilarCompanyResult>;
+  similarPosts: Array<SimilarPost>;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -1678,6 +1703,13 @@ export type QuerySimilarCompaniesArgs = {
   minAiTier?: InputMaybe<Scalars['Int']['input']>;
   minScore?: InputMaybe<Scalars['Float']['input']>;
   query: Scalars['String']['input'];
+};
+
+
+export type QuerySimilarPostsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minScore?: InputMaybe<Scalars['Float']['input']>;
+  postId: Scalars['Int']['input'];
 };
 
 
@@ -2184,6 +2216,12 @@ export type SimilarCompanyResult = {
   similarity: Scalars['Float']['output'];
 };
 
+export type SimilarPost = {
+  __typename?: 'SimilarPost';
+  post: LinkedInPost;
+  similarity: Scalars['Float']['output'];
+};
+
 export type SourceType =
   | 'BRAVE_SEARCH'
   | 'COMMONCRAWL'
@@ -2421,6 +2459,7 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
   AnalyzeCompanyResponse: ResolverTypeWrapper<Partial<AnalyzeCompanyResponse>>;
+  AnalyzePostsResult: ResolverTypeWrapper<Partial<AnalyzePostsResult>>;
   ApplyEmailPatternResult: ResolverTypeWrapper<Partial<ApplyEmailPatternResult>>;
   ArchiveEmailResult: ResolverTypeWrapper<Partial<ArchiveEmailResult>>;
   BatchDetectIntentResult: ResolverTypeWrapper<Partial<BatchDetectIntentResult>>;
@@ -2479,6 +2518,7 @@ export type ResolversTypes = {
   Evidence: ResolverTypeWrapper<Partial<Evidence>>;
   EvidenceInput: ResolverTypeWrapper<Partial<EvidenceInput>>;
   ExtractMethod: ResolverTypeWrapper<Partial<ExtractMethod>>;
+  ExtractedSkill: ResolverTypeWrapper<Partial<ExtractedSkill>>;
   FindCompanyResult: ResolverTypeWrapper<Partial<FindCompanyResult>>;
   FindContactEmailResult: ResolverTypeWrapper<Partial<FindContactEmailResult>>;
   Float: ResolverTypeWrapper<Partial<Scalars['Float']['output']>>;
@@ -2567,6 +2607,7 @@ export type ResolversTypes = {
   SendOutreachEmailResult: ResolverTypeWrapper<Partial<SendOutreachEmailResult>>;
   SignalTypeCount: ResolverTypeWrapper<Partial<SignalTypeCount>>;
   SimilarCompanyResult: ResolverTypeWrapper<Partial<SimilarCompanyResult>>;
+  SimilarPost: ResolverTypeWrapper<Partial<SimilarPost>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
@@ -2590,6 +2631,7 @@ export type ResolversTypes = {
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
   AnalyzeCompanyResponse: Partial<AnalyzeCompanyResponse>;
+  AnalyzePostsResult: Partial<AnalyzePostsResult>;
   ApplyEmailPatternResult: Partial<ApplyEmailPatternResult>;
   ArchiveEmailResult: Partial<ArchiveEmailResult>;
   BatchDetectIntentResult: Partial<BatchDetectIntentResult>;
@@ -2645,6 +2687,7 @@ export type ResolversParentTypes = {
   EnrichAIContactsBulkResult: Partial<EnrichAiContactsBulkResult>;
   Evidence: Partial<Evidence>;
   EvidenceInput: Partial<EvidenceInput>;
+  ExtractedSkill: Partial<ExtractedSkill>;
   FindCompanyResult: Partial<FindCompanyResult>;
   FindContactEmailResult: Partial<FindContactEmailResult>;
   Float: Partial<Scalars['Float']['output']>;
@@ -2730,6 +2773,7 @@ export type ResolversParentTypes = {
   SendOutreachEmailResult: Partial<SendOutreachEmailResult>;
   SignalTypeCount: Partial<SignalTypeCount>;
   SimilarCompanyResult: Partial<SimilarCompanyResult>;
+  SimilarPost: Partial<SimilarPost>;
   String: Partial<Scalars['String']['output']>;
   SyncResendResult: Partial<SyncResendResult>;
   URL: Partial<Scalars['URL']['output']>;
@@ -2753,6 +2797,13 @@ export type AnalyzeCompanyResponseResolvers<ContextType = GraphQLContext, Parent
   companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type AnalyzePostsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AnalyzePostsResult'] = ResolversParentTypes['AnalyzePostsResult']> = {
+  analyzed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
@@ -3226,6 +3277,12 @@ export type EvidenceResolvers<ContextType = GraphQLContext, ParentType extends R
   warc?: Resolver<Maybe<ResolversTypes['WarcPointer']>, ParentType, ContextType>;
 };
 
+export type ExtractedSkillResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ExtractedSkill'] = ResolversParentTypes['ExtractedSkill']> = {
+  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tag?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type FindCompanyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FindCompanyResult'] = ResolversParentTypes['FindCompanyResult']> = {
   company?: Resolver<Maybe<ResolversTypes['Company']>, ParentType, ContextType>;
   found?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -3370,6 +3427,7 @@ export interface JsonScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes
 }
 
 export type LinkedInPostResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LinkedInPost'] = ResolversParentTypes['LinkedInPost']> = {
+  analyzedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   authorName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   authorUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -3382,6 +3440,7 @@ export type LinkedInPostResolvers<ContextType = GraphQLContext, ParentType exten
   postedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   rawData?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   scrapedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  skills?: Resolver<Maybe<Array<ResolversTypes['ExtractedSkill']>>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['LinkedInPostType'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3416,6 +3475,7 @@ export type MergeDuplicateContactsResultResolvers<ContextType = GraphQLContext, 
 export type MutationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   add_company_facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, RequireFields<MutationAdd_Company_FactsArgs, 'company_id' | 'facts'>>;
   analyzeCompany?: Resolver<ResolversTypes['AnalyzeCompanyResponse'], ParentType, ContextType, Partial<MutationAnalyzeCompanyArgs>>;
+  analyzeLinkedInPosts?: Resolver<ResolversTypes['AnalyzePostsResult'], ParentType, ContextType, Partial<MutationAnalyzeLinkedInPostsArgs>>;
   applyEmailPattern?: Resolver<ResolversTypes['ApplyEmailPatternResult'], ParentType, ContextType, RequireFields<MutationApplyEmailPatternArgs, 'companyId'>>;
   archiveEmail?: Resolver<ResolversTypes['ArchiveEmailResult'], ParentType, ContextType, RequireFields<MutationArchiveEmailArgs, 'id'>>;
   batchDetectIntent?: Resolver<ResolversTypes['BatchDetectIntentResult'], ParentType, ContextType, RequireFields<MutationBatchDetectIntentArgs, 'companyIds'>>;
@@ -3537,6 +3597,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   salescueSubject?: Resolver<ResolversTypes['SalescueSubjectResult'], ParentType, ContextType, RequireFields<QuerySalescueSubjectArgs, 'subjects'>>;
   salescueTriggers?: Resolver<ResolversTypes['SalescueTriggersResult'], ParentType, ContextType, RequireFields<QuerySalescueTriggersArgs, 'text'>>;
   similarCompanies?: Resolver<Array<ResolversTypes['SimilarCompanyResult']>, ParentType, ContextType, RequireFields<QuerySimilarCompaniesArgs, 'query'>>;
+  similarPosts?: Resolver<Array<ResolversTypes['SimilarPost']>, ParentType, ContextType, RequireFields<QuerySimilarPostsArgs, 'postId'>>;
   userSettings?: Resolver<Maybe<ResolversTypes['UserSettings']>, ParentType, ContextType, RequireFields<QueryUserSettingsArgs, 'userId'>>;
 };
 
@@ -3944,6 +4005,11 @@ export type SimilarCompanyResultResolvers<ContextType = GraphQLContext, ParentTy
   similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
+export type SimilarPostResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SimilarPost'] = ResolversParentTypes['SimilarPost']> = {
+  post?: Resolver<ResolversTypes['LinkedInPost'], ParentType, ContextType>;
+  similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
 export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SyncResendResult'] = ResolversParentTypes['SyncResendResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   skippedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -4001,6 +4067,7 @@ export type WarcPointerResolvers<ContextType = GraphQLContext, ParentType extend
 
 export type Resolvers<ContextType = GraphQLContext> = {
   AnalyzeCompanyResponse?: AnalyzeCompanyResponseResolvers<ContextType>;
+  AnalyzePostsResult?: AnalyzePostsResultResolvers<ContextType>;
   ApplyEmailPatternResult?: ApplyEmailPatternResultResolvers<ContextType>;
   ArchiveEmailResult?: ArchiveEmailResultResolvers<ContextType>;
   BatchDetectIntentResult?: BatchDetectIntentResultResolvers<ContextType>;
@@ -4044,6 +4111,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   EnrichAIContactResult?: EnrichAiContactResultResolvers<ContextType>;
   EnrichAIContactsBulkResult?: EnrichAiContactsBulkResultResolvers<ContextType>;
   Evidence?: EvidenceResolvers<ContextType>;
+  ExtractedSkill?: ExtractedSkillResolvers<ContextType>;
   FindCompanyResult?: FindCompanyResultResolvers<ContextType>;
   FindContactEmailResult?: FindContactEmailResultResolvers<ContextType>;
   FollowUpBatchResult?: FollowUpBatchResultResolvers<ContextType>;
@@ -4118,6 +4186,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SendOutreachEmailResult?: SendOutreachEmailResultResolvers<ContextType>;
   SignalTypeCount?: SignalTypeCountResolvers<ContextType>;
   SimilarCompanyResult?: SimilarCompanyResultResolvers<ContextType>;
+  SimilarPost?: SimilarPostResolvers<ContextType>;
   SyncResendResult?: SyncResendResultResolvers<ContextType>;
   URL?: GraphQLScalarType;
   UnverifyContactsResult?: UnverifyContactsResultResolvers<ContextType>;
