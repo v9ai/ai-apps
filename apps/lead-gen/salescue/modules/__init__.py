@@ -24,6 +24,7 @@ from .survival import DeepSurvivalMachine, RISK_GROUPS
 from .anomaly import SignalAnomalyDetector, ANOMALY_TYPES, SIGNAL_CHANNELS
 from .bandit import OutreachBandit, TEMPLATES, TIMINGS, SUBJECT_STYLES
 from .graph import CompanyGraphScorer, EDGE_TYPES, GRAPH_LABELS
+from .skills import SkillExtractor
 
 MODULE_CLASSES = {
     "score": LeadScorer,
@@ -42,6 +43,7 @@ MODULE_CLASSES = {
     "anomaly": SignalAnomalyDetector,
     "bandit": OutreachBandit,
     "graph": CompanyGraphScorer,
+    "skills": SkillExtractor,
 }
 
 __all__ = [
@@ -64,5 +66,6 @@ __all__ = [
     "SignalAnomalyDetector", "ANOMALY_TYPES", "SIGNAL_CHANNELS",
     "OutreachBandit", "TEMPLATES", "TIMINGS", "SUBJECT_STYLES",
     "CompanyGraphScorer", "EDGE_TYPES", "GRAPH_LABELS",
+    "SkillExtractor",
     "MODULE_CLASSES",
 ]

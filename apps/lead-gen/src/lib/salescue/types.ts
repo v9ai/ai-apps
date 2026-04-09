@@ -461,6 +461,19 @@ export interface GraphResult {
   note?: string;
 }
 
+// ── Skills ──────────────────────────────────────────────────────────────────
+
+export interface SkillMatch {
+  tag: string;
+  label: string;
+  confidence: number;
+}
+
+export interface SkillsResult {
+  skills: SkillMatch[];
+  skill_count: number;
+}
+
 // ── Engine ───────────────────────────────────────────────────────────────────
 
 export type ModuleName =
@@ -479,7 +492,8 @@ export type ModuleName =
   | "call"
   | "anomaly"
   | "emailgen"
-  | "graph";
+  | "graph"
+  | "skills";
 
 export interface ModuleResponse<T = unknown> {
   result: T;

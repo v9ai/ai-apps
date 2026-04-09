@@ -1,4 +1,4 @@
-use candle_core::{Device, Tensor};
+use candle_core::{Device, Tensor, D};
 use candle_nn::VarBuilder;
 use candle_transformers::models::bert::{BertModel, Config as BertConfig};
 use hf_hub::{api::sync::Api, Repo, RepoType};
@@ -69,7 +69,11 @@ impl EmbeddingModel {
         let (_batch, seq_len, _hidden) = embeddings.dims3()?;
         let mean = (embeddings.sum(1)? / (seq_len as f64))?;
 
-        Ok(mean)
+        // L2 normalization — cosine similarity on normalized vectors = dot product
+        let norm = mean.sqr()?.sum_keepdim(D::Minus1)?.sqrt()?;
+        let normalized = mean.broadcast_div(&norm.clamp(1e-12, f64::MAX)?)?;
+
+        Ok(normalized)
     }
 
     pub fn embed_one(&self, text: &str) -> Result<Vec<f32>> {
