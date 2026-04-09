@@ -1378,7 +1378,11 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
             break;
           }
         }
-        if (!container) return [];
+        if (!container) {
+          console.log("[FindRelated] No 'people also viewed' section found on page");
+          return [];
+        }
+        console.log("[FindRelated] Found section container:", container.tagName);
 
         function extractCompanyLinks(root: Element): string[] {
           const links: string[] = [];
@@ -1402,6 +1406,7 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
         });
 
         if (showAllBtn) {
+          console.log("[FindRelated] Found 'Show all' button, clicking...");
           showAllBtn.click();
 
           // Poll for modal/dialog to appear (up to 5s)
@@ -1415,6 +1420,7 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
           }
 
           if (modal) {
+            console.log("[FindRelated] Modal opened, scrolling to load all results...");
             // Scroll inside modal to load all lazy-loaded results
             const scrollable = modal.querySelector(".artdeco-modal__content") || modal;
             for (let i = 0; i < 3; i++) {
@@ -1423,20 +1429,33 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
             }
 
             const links = extractCompanyLinks(modal);
+            console.log(`[FindRelated] Modal: extracted ${links.length} company links`);
 
             // Close modal
             const dismiss =
               modal.querySelector<HTMLElement>(".artdeco-modal__dismiss") ||
               modal.querySelector<HTMLElement>('button[aria-label="Dismiss"]') ||
               modal.querySelector<HTMLElement>('button[aria-label="Close"]');
-            if (dismiss) dismiss.click();
+            if (dismiss) {
+              dismiss.click();
+              console.log("[FindRelated] Modal dismissed");
+            } else {
+              console.warn("[FindRelated] No dismiss button found on modal");
+            }
 
             if (links.length > 0) return links;
+            console.warn("[FindRelated] Modal had 0 links, falling back to sidebar");
+          } else {
+            console.warn("[FindRelated] Modal did not open after 5s, falling back to sidebar");
           }
+        } else {
+          console.log("[FindRelated] No 'Show all' button found, using sidebar only");
         }
 
         // Fallback: scrape from sidebar (only ~3-4 visible)
-        return extractCompanyLinks(container);
+        const sidebarLinks = extractCompanyLinks(container);
+        console.log(`[FindRelated] Sidebar fallback: extracted ${sidebarLinks.length} company links`);
+        return sidebarLinks;
       },
     })
     .then((results) => (results?.[0]?.result as string[]) ?? [])
