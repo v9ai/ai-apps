@@ -420,8 +420,8 @@ async def classify_company(req: CompanyClassifyRequest):
         r"|middle east"
     )
     _WEAK_GEO_TERMS = (
-        # Individual countries — a single mention may be incidental
-        r"india|philippines|nigeria|pakistan|bangladesh|vietnam"
+        # Individual countries / ambiguous regions — a single mention may be incidental
+        r"asia|india|philippines|nigeria|pakistan|bangladesh|vietnam"
         r"|indonesia|thailand|malaysia|myanmar|cambodia"
         r"|kenya|ghana|ethiopia|tanzania|uganda"
         r"|egypt|morocco|sri lanka"
