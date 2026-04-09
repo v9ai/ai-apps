@@ -40,6 +40,7 @@
         "https://*.linkedin.com/jobs/*",
         "https://*.linkedin.com/feed/*",
         "https://*.linkedin.com/search/*",
+        "https://*.linkedin.com/company/*",
         "https://*.google.com/search*"
       ],
       "js": ["src/pages/content/index.tsx"],
