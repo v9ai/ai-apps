@@ -238,11 +238,9 @@ function InteractiveCodePlayground({ initialHtml, initialCss }: { initialHtml: s
             Show Solution
           </Button>
         )}
-        {(dirty || mode !== "off") && (
-          <Button size="3" variant="ghost" color="gray" onClick={reset}>
-            Reset
-          </Button>
-        )}
+        <Button size="3" variant="ghost" color="gray" onClick={reset}>
+          Reset
+        </Button>
       </Flex>
       <div className="code-triple-grid">
         <EditableCodePanel lang="html" value={activeHtml} onChange={setActiveHtml} />
