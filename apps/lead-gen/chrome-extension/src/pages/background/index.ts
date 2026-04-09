@@ -380,6 +380,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Stop People Scraping (browsePeople / importPeopleFromCurrentPage) ──
+  if (message.action === "stopPeopleScraping") {
+    peopleCancelled = true;
+    sendResponse({ success: true });
+    return true;
+  }
+
   return false;
 });
 
@@ -1095,6 +1102,7 @@ async function notifyWebApp(action: string, data: Record<string, unknown>) {
 }
 
 async function browsePeople(tabId: number, companyId: number) {
+  peopleCancelled = false;
   console.log(`[BrowsePeople] Starting for companyId=${companyId}, tab=${tabId}`);
 
   await waitForTabLoad(tabId);
@@ -1107,6 +1115,8 @@ async function browsePeople(tabId: number, companyId: number) {
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
     await scrollPeoplePage(tabId);
+    if (peopleCancelled) break;
+
     await randomDelay(1500);
 
     const cards = await extractPeopleCards(tabId);
@@ -1200,79 +1210,96 @@ async function importPeopleFromCurrentPage(
 ) {
   console.log(`[ImportPeople] Starting for "${companyName}" on tab ${tabId}`);
 
-  // Ensure we're on the /people/ page
-  const tab = await chrome.tabs.get(tabId);
-  const currentUrl = tab.url || "";
-  if (!currentUrl.includes("/people")) {
-    const peopleUrl = companyLinkedinUrl.replace(/\/$/, "") + "/people/";
-    await chrome.tabs.update(tabId, { url: peopleUrl });
-    await waitForTabLoad(tabId);
-    await randomDelay(3000);
-  } else {
-    await randomDelay(2000);
-  }
-
-  const allCards: PersonCard[] = [];
-  const seen = new Set<string>();
-  const MAX_ROUNDS = 15;
-
-  for (let round = 0; round < MAX_ROUNDS; round++) {
-    await scrollPeoplePage(tabId);
-    await randomDelay(1500);
-
-    const cards = await extractPeopleCards(tabId);
-    let newCount = 0;
-    for (const card of cards) {
-      if (!seen.has(card.linkedinUrl)) {
-        seen.add(card.linkedinUrl);
-        allCards.push(card);
-        newCount++;
-      }
+  try {
+    // Verify tab is still alive before starting
+    if (!(await isTabAlive(tabId))) {
+      console.warn("[ImportPeople] Tab no longer exists, aborting");
+      return;
     }
 
-    console.log(`[ImportPeople] Round ${round + 1}: +${newCount} new (total ${allCards.length})`);
+    // Ensure we're on the /people/ page
+    const tab = await chrome.tabs.get(tabId);
+    const currentUrl = tab.url || "";
+    if (!currentUrl.includes("/people")) {
+      const peopleUrl = companyLinkedinUrl.replace(/\/$/, "") + "/people/";
+      await safeTabUpdate(tabId, { url: peopleUrl });
+      await waitForTabLoad(tabId);
+      // LinkedIn SPA needs extra time to hydrate the people list
+      await randomDelay(4000);
+    } else {
+      await randomDelay(2500);
+    }
 
-    try {
-      await chrome.tabs.sendMessage(tabId, {
+    peopleCancelled = false;
+    const allCards: PersonCard[] = [];
+    const seen = new Set<string>();
+    const MAX_ROUNDS = 15;
+    let consecutiveEmptyRounds = 0;
+
+    for (let round = 0; round < MAX_ROUNDS; round++) {
+      if (peopleCancelled) break;
+
+      // Check tab still exists each round
+      if (!(await isTabAlive(tabId))) {
+        console.warn("[ImportPeople] Tab closed during scrape, aborting");
+        return;
+      }
+
+      await scrollPeoplePage(tabId);
+      await randomDelay(2000);
+
+      const cards = await extractPeopleCards(tabId);
+      let newCount = 0;
+      for (const card of cards) {
+        if (card.linkedinUrl && !seen.has(card.linkedinUrl)) {
+          seen.add(card.linkedinUrl);
+          allCards.push(card);
+          newCount++;
+        }
+      }
+
+      console.log(`[ImportPeople] Round ${round + 1}: +${newCount} new (total ${allCards.length})`);
+
+      await safeSendMessage(tabId, {
         action: "importPeopleProgress",
         message: `Collecting... ${allCards.length} found`,
       });
-    } catch { /* content script may not be ready */ }
 
-    const clickedMore = await clickShowMorePeople(tabId);
-    if (clickedMore) {
-      await randomDelay(2000);
-    } else if (newCount === 0) {
-      break;
+      const clickedMore = await clickShowMorePeople(tabId);
+      if (clickedMore) {
+        consecutiveEmptyRounds = 0;
+        await randomDelay(2500);
+      } else if (newCount === 0) {
+        consecutiveEmptyRounds++;
+        // Break after 2 consecutive empty rounds to handle slow loading
+        if (consecutiveEmptyRounds >= 2) break;
+        await randomDelay(1500);
+      } else {
+        consecutiveEmptyRounds = 0;
+      }
     }
-  }
 
-  if (allCards.length === 0) {
-    try {
-      await chrome.tabs.sendMessage(tabId, {
+    if (allCards.length === 0) {
+      await safeSendMessage(tabId, {
         action: "importPeopleError",
         error: "No people found. Make sure you are logged in.",
       });
-    } catch { /* ignore */ }
-    return;
-  }
+      return;
+    }
 
-  console.log(`[ImportPeople] Collected ${allCards.length} people — importing...`);
+    console.log(`[ImportPeople] Collected ${allCards.length} people — importing...`);
 
-  try {
-    await chrome.tabs.sendMessage(tabId, {
+    await safeSendMessage(tabId, {
       action: "importPeopleProgress",
       message: `Importing ${allCards.length} contacts...`,
     });
-  } catch { /* ignore */ }
 
-  const contactInputs = allCards.map((card) => ({
-    name: card.name,
-    linkedinUrl: card.linkedinUrl,
-    workEmail: null,
-  }));
+    const contactInputs = allCards.map((card) => ({
+      name: card.name,
+      linkedinUrl: card.linkedinUrl,
+      workEmail: null,
+    }));
 
-  try {
     const result = await gqlRequest(
       `mutation ImportCompanyWithContacts($input: ImportCompanyWithContactsInput!) {
         importCompanyWithContacts(input: $input) {
@@ -1296,33 +1323,27 @@ async function importPeopleFromCurrentPage(
     const res = result.data?.importCompanyWithContacts;
     if (res?.success) {
       console.log(`[ImportPeople] Imported ${res.contactsImported}, skipped ${res.contactsSkipped}`);
-      try {
-        await chrome.tabs.sendMessage(tabId, {
-          action: "importPeopleDone",
-          imported: res.contactsImported,
-          skipped: res.contactsSkipped,
-          companyId: res.company?.id,
-        });
-      } catch { /* ignore */ }
+      await safeSendMessage(tabId, {
+        action: "importPeopleDone",
+        imported: res.contactsImported,
+        skipped: res.contactsSkipped,
+        companyId: res.company?.id,
+      });
     } else {
       const errMsg = res?.errors?.[0] || result.errors?.[0]?.message || "Import failed";
       console.error("[ImportPeople] Error:", errMsg);
-      try {
-        await chrome.tabs.sendMessage(tabId, {
-          action: "importPeopleError",
-          error: errMsg,
-        });
-      } catch { /* ignore */ }
-    }
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    console.error("[ImportPeople] Import error:", errMsg);
-    try {
-      await chrome.tabs.sendMessage(tabId, {
+      await safeSendMessage(tabId, {
         action: "importPeopleError",
         error: errMsg,
       });
-    } catch { /* ignore */ }
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[ImportPeople] Unexpected error:", errMsg);
+    await safeSendMessage(tabId, {
+      action: "importPeopleError",
+      error: errMsg,
+    });
   }
 }
 
@@ -1365,10 +1386,15 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
         similarSection
           .querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]')
           .forEach((a) => {
-            const href = a.href.split("?")[0].replace(/\/$/, "");
-            const match = new URL(href).pathname.match(/^\/company\/([^/]+)$/);
-            if (match && !links.includes(href)) {
-              links.push(href);
+            try {
+              const href = a.href.split("?")[0].replace(/\/$/, "");
+              const parsed = new URL(href);
+              const match = parsed.pathname.match(/^\/company\/([^/]+)$/);
+              if (match && !links.includes(href)) {
+                links.push(href);
+              }
+            } catch {
+              // Skip malformed URLs
             }
           });
         return links;
@@ -1381,131 +1407,139 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
 async function findRelatedCompanies(tabId: number) {
   console.log("[FindRelated] Starting...");
 
-  const tab = await chrome.tabs.get(tabId);
-  const currentUrl = tab.url || "";
-  const companyMatch = currentUrl.match(/\/company\/([^/]+)/);
-  if (!companyMatch) {
-    try {
-      await chrome.tabs.sendMessage(tabId, {
+  try {
+    // Verify tab exists before starting
+    if (!(await isTabAlive(tabId))) {
+      console.warn("[FindRelated] Tab no longer exists, aborting");
+      return;
+    }
+
+    const tab = await chrome.tabs.get(tabId);
+    const currentUrl = tab.url || "";
+    const companyMatch = currentUrl.match(/\/company\/([^/]+)/);
+    if (!companyMatch) {
+      await safeSendMessage(tabId, {
         action: "findRelatedError",
         error: "Not on a company page",
       });
-    } catch { /* ignore */ }
-    return;
-  }
+      return;
+    }
 
-  // Navigate to main company page to find "Similar pages"
-  const mainUrl = `https://www.linkedin.com/company/${companyMatch[1]}/`;
-  if (currentUrl.includes("/people") || currentUrl.includes("/about")) {
-    await chrome.tabs.update(tabId, { url: mainUrl });
-    await waitForTabLoad(tabId);
-    await randomDelay(3000);
-  }
+    // Navigate to main company page to find "Similar pages"
+    const mainUrl = `https://www.linkedin.com/company/${companyMatch[1]}/`;
+    if (currentUrl.includes("/people") || currentUrl.includes("/about")) {
+      await safeTabUpdate(tabId, { url: mainUrl });
+      await waitForTabLoad(tabId);
+      await randomDelay(4000);
+    }
 
-  // Scroll down to load "Similar pages" section
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    world: "MAIN",
-    func: () => window.scrollTo(0, document.body.scrollHeight),
-  });
-  await randomDelay(2000);
+    // Scroll down progressively to load "Similar pages" section
+    // LinkedIn lazy-loads content — scroll in steps with increasing waits
+    for (let scrollAttempt = 0; scrollAttempt < 3; scrollAttempt++) {
+      if (!(await isTabAlive(tabId))) {
+        console.warn("[FindRelated] Tab closed during scrolling, aborting");
+        return;
+      }
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        world: "MAIN",
+        func: () => window.scrollTo(0, document.body.scrollHeight),
+      }).catch(() => {});
+      await randomDelay(2500);
+    }
 
-  // Scroll again (LinkedIn lazy-loads)
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    world: "MAIN",
-    func: () => window.scrollTo(0, document.body.scrollHeight),
-  });
-  await randomDelay(2000);
+    const similarUrls = await extractSimilarCompanyUrls(tabId);
+    console.log(`[FindRelated] Found ${similarUrls.length} similar companies`);
 
-  const similarUrls = await extractSimilarCompanyUrls(tabId);
-  console.log(`[FindRelated] Found ${similarUrls.length} similar companies`);
-
-  if (similarUrls.length === 0) {
-    try {
-      await chrome.tabs.sendMessage(tabId, {
+    if (similarUrls.length === 0) {
+      await safeSendMessage(tabId, {
         action: "findRelatedDone",
         found: 0,
         saved: 0,
       });
-    } catch { /* ignore */ }
-    return;
-  }
-
-  const batch: Array<{
-    name: string;
-    website?: string;
-    linkedin_url?: string;
-    description?: string;
-    location?: string;
-  }> = [];
-
-  const returnUrl = currentUrl;
-
-  for (let i = 0; i < similarUrls.length; i++) {
-    const aboutUrl = similarUrls[i].replace(/\/$/, "") + "/about/";
-    try {
-      await chrome.tabs.update(tabId, { url: aboutUrl });
-    } catch {
-      break;
-    }
-    await waitForTabLoad(tabId);
-    await randomDelay(2500);
-
-    await clickSeeMore(tabId);
-    await randomDelay(500);
-
-    const data = await extractCompanyData(tabId);
-    if (data && data.name) {
-      batch.push({
-        name: data.name,
-        website: data.website || undefined,
-        linkedin_url: data.linkedinUrl || undefined,
-        description: [
-          data.description,
-          data.industry ? `Industry: ${data.industry}` : "",
-          data.size ? `Size: ${data.size}` : "",
-        ]
-          .filter(Boolean)
-          .join("\n") || undefined,
-        location: data.location || undefined,
-      });
-
-      console.log(`[FindRelated] ${i + 1}/${similarUrls.length}: ${data.name}`);
+      return;
     }
 
-    try {
-      await chrome.tabs.sendMessage(tabId, {
-        action: "findRelatedProgress",
-        current: i + 1,
-        total: similarUrls.length,
-        name: data?.name || "Unknown",
-      });
-    } catch { /* tab navigated, content script gone */ }
+    const batch: Array<{
+      name: string;
+      website?: string;
+      linkedin_url?: string;
+      description?: string;
+      location?: string;
+    }> = [];
 
-    await randomDelay(1500);
-  }
+    const returnUrl = currentUrl;
 
-  let saved = 0;
-  if (batch.length > 0) {
-    saved = await saveCompanyBatch(batch);
-  }
+    for (let i = 0; i < similarUrls.length; i++) {
+      // Check tab still exists before each navigation
+      if (!(await isTabAlive(tabId))) {
+        console.warn("[FindRelated] Tab closed during company scraping, aborting");
+        break;
+      }
 
-  // Navigate back
-  try {
-    await chrome.tabs.update(tabId, { url: returnUrl });
-    await waitForTabLoad(tabId);
-  } catch { /* ignore */ }
+      const aboutUrl = similarUrls[i].replace(/\/$/, "") + "/about/";
+      await safeTabUpdate(tabId, { url: aboutUrl });
+      await waitForTabLoad(tabId);
+      await randomDelay(3000);
 
-  console.log(`[FindRelated] Complete. Saved ${saved}/${similarUrls.length}`);
+      await clickSeeMore(tabId);
+      await randomDelay(500);
 
-  // Wait for content script to re-inject after navigation back
-  await randomDelay(3000);
-  try {
-    await chrome.tabs.sendMessage(tabId, {
+      const data = await extractCompanyData(tabId);
+      if (data && data.name) {
+        batch.push({
+          name: data.name,
+          website: data.website || undefined,
+          linkedin_url: data.linkedinUrl || undefined,
+          description: [
+            data.description,
+            data.industry ? `Industry: ${data.industry}` : "",
+            data.size ? `Size: ${data.size}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n") || undefined,
+          location: data.location || undefined,
+        });
+
+        console.log(`[FindRelated] ${i + 1}/${similarUrls.length}: ${data.name}`);
+      }
+
+      // Progress messages will fail (content script gone after navigation) — expected.
+      // The final "done" message after navigating back is what matters.
+
+      await randomDelay(1500);
+    }
+
+    let saved = 0;
+    if (batch.length > 0) {
+      saved = await saveCompanyBatch(batch);
+    }
+
+    // Navigate back to original page
+    if (await isTabAlive(tabId)) {
+      try {
+        await safeTabUpdate(tabId, { url: returnUrl });
+        await waitForTabLoad(tabId);
+      } catch {
+        console.warn("[FindRelated] Could not navigate back to original page");
+      }
+    }
+
+    console.log(`[FindRelated] Complete. Saved ${saved}/${similarUrls.length}`);
+
+    // Wait for content script to re-inject after navigation back, then send result
+    await randomDelay(4000);
+    await safeSendMessage(tabId, {
       action: "findRelatedDone",
       found: similarUrls.length,
       saved,
     });
-  } catch { /* ignore */ }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[FindRelated] Unexpected error:", errMsg);
+    await safeSendMessage(tabId, {
+      action: "findRelatedError",
+      error: errMsg,
+    });
+  }
 }
