@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback, type KeyboardEvent, type ChangeEvent } from "react";
+import { Suspense, useState, useEffect, useCallback, useMemo, memo, type KeyboardEvent, type ChangeEvent } from "react";
 import type { ReactElement } from "react";
 import {
   Heading,
@@ -18,6 +18,8 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { AppData } from "@/components/app-detail/types";
+
+const remarkPlugins = [remarkGfm];
 
 const LANG_LABELS: Record<string, string> = {
   jsx: "React", tsx: "React", react: "React",
@@ -68,11 +70,11 @@ function extractInlineStyles(html: string): { cleanHtml: string; css: string } |
   return { cleanHtml, css: rules.join("\n\n") };
 }
 
-function CodePanel({ lang, code }: { lang: string; code: string }) {
+const CodePanel = memo(function CodePanel({ lang, code }: { lang: string; code: string }) {
   return (
     <div className="code-block-wrapper">
       <div className="code-block-bar">
-        <div className="code-block-dots"><span /><span /><span /></div>
+        <div className="code-block-dots" aria-hidden="true"><span /><span /><span /></div>
         <span className="code-block-lang">{langLabel(lang)}</span>
       </div>
       <pre style={{ margin: 0, padding: 16, overflowX: "auto", fontSize: "var(--font-size-1)", fontFamily: "var(--font-mono, monospace)", lineHeight: 1.7, backgroundColor: "var(--gray-2)" }}>
@@ -80,25 +82,25 @@ function CodePanel({ lang, code }: { lang: string; code: string }) {
       </pre>
     </div>
   );
-}
+});
 
-function LivePreviewPanel({ html, css }: { html: string; css: string }) {
-  const srcdoc = `<!DOCTYPE html>
+const LivePreviewPanel = memo(function LivePreviewPanel({ html, css }: { html: string; css: string }) {
+  const srcdoc = useMemo(() => `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fff;color:#1a1a1a;padding:16px}
-${css}</style></head><body>${html}</body></html>`;
+${css}</style></head><body>${html}</body></html>`, [html, css]);
 
   return (
     <div className="code-block-wrapper live-preview-wrapper">
       <div className="code-block-bar">
-        <div className="code-block-dots"><span /><span /><span /></div>
+        <div className="code-block-dots" aria-hidden="true"><span /><span /><span /></div>
         <span className="code-block-lang">Preview</span>
       </div>
-      <iframe srcDoc={srcdoc} sandbox="allow-same-origin" title="Live preview" />
+      <iframe srcDoc={srcdoc} sandbox="allow-same-origin" title="Live preview" aria-label="Live preview of the code" />
     </div>
   );
-}
+});
 
 function useDebouncedValue<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -109,7 +111,7 @@ function useDebouncedValue<T>(value: T, ms: number): T {
   return debounced;
 }
 
-function EditableCodePanel({ lang, value, onChange }: { lang: string; value: string; onChange: (v: string) => void }) {
+const EditableCodePanel = memo(function EditableCodePanel({ lang, value, onChange }: { lang: string; value: string; onChange: (v: string) => void }) {
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Tab") {
       e.preventDefault();
@@ -122,10 +124,12 @@ function EditableCodePanel({ lang, value, onChange }: { lang: string; value: str
     }
   }, [value, onChange]);
 
+  const rows = useMemo(() => Math.max(4, value.split("\n").length), [value]);
+
   return (
     <div className="code-block-wrapper">
       <div className="code-block-bar">
-        <div className="code-block-dots"><span /><span /><span /></div>
+        <div className="code-block-dots" aria-hidden="true"><span /><span /><span /></div>
         <span className="code-block-lang">{langLabel(lang)}</span>
       </div>
       <textarea
@@ -133,26 +137,16 @@ function EditableCodePanel({ lang, value, onChange }: { lang: string; value: str
         value={value}
         onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        rows={Math.max(4, value.split("\n").length)}
+        rows={rows}
         spellCheck={false}
         wrap="off"
+        aria-label={`Editable ${langLabel(lang)} code`}
       />
     </div>
   );
-}
+});
 
 type ChallengeMode = "off" | "css" | "html" | "full" | "debug";
-
-function shuffleProperties(cssText: string): string {
-  return cssText.replace(/\{([^}]+)\}/g, (_, block: string) => {
-    const props = block.split(";").map((s: string) => s.trim()).filter(Boolean);
-    for (let i = props.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [props[i], props[j]] = [props[j], props[i]];
-    }
-    return `{\n  ${props.join(";\n  ")};\n}`;
-  });
-}
 
 function breakCss(cssText: string): string {
   const lines = cssText.split("\n");
@@ -282,7 +276,158 @@ function PrepPageInner() {
   }
 
   const content = app.aiInterviewQuestions;
-  const processed = content ? groupCodeBlocks(content) : null;
+  const processed = useMemo(() => content ? groupCodeBlocks(content) : null, [content]);
+
+  const mdComponents = useMemo(() => ({
+    h1: ({ children }: { children: React.ReactNode }) => (
+      <Heading size="6" mb="3" mt="6" style={{ color: "var(--violet-11)" }}>{children}</Heading>
+    ),
+    h2: ({ children }: { children: React.ReactNode }) => (
+      <Box mt="6" mb="3" pt="5" style={{ borderTop: "2px solid var(--violet-4)" }}>
+        <Heading size="5" style={{ color: "var(--violet-11)" }}>{children}</Heading>
+      </Box>
+    ),
+    h3: ({ children }: { children: React.ReactNode }) => (
+      <Box mt="5" mb="2" p="3" style={{ backgroundColor: "var(--violet-2)", borderLeft: "3px solid var(--violet-8)", borderRadius: 0 }}>
+        <Heading size="4">{children}</Heading>
+      </Box>
+    ),
+    h4: ({ children }: { children: React.ReactNode }) => (
+      <Heading size="3" mt="4" mb="2">{children}</Heading>
+    ),
+    p: ({ children }: { children: React.ReactNode }) => {
+      const kids = Array.isArray(children) ? children : [children];
+      const first = kids[0] as ReactElement<{ children?: string }> | undefined;
+      const bold = typeof first === "object" && first?.props?.children;
+      if (typeof bold === "string") {
+        const l = bold.toLowerCase();
+        if (/narration|say this|say:|what to say|your script|prioritization script/.test(l))
+          return <div className="callout callout-speak"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
+        if (/common mistake/.test(l))
+          return <div className="callout callout-warn"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
+        if (/if they ask|why this/.test(l))
+          return <div className="callout callout-tip"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
+        if (/⏱|target:/.test(l))
+          return <div className="timing-badge">{children}</div>;
+      }
+      return <Text as="p" size="2" mb="3" style={{ lineHeight: 1.8 }}>{children}</Text>;
+    },
+    strong: ({ children }: { children: React.ReactNode }) => (
+      <strong style={{ fontWeight: 600 }}>{children}</strong>
+    ),
+    em: ({ children }: { children: React.ReactNode }) => <em>{children}</em>,
+    ul: ({ children }: { children: React.ReactNode }) => (
+      <ul style={{ paddingLeft: 20, lineHeight: 1.9, marginBottom: 16 }}>{children}</ul>
+    ),
+    ol: ({ children }: { children: React.ReactNode }) => (
+      <ol style={{ paddingLeft: 20, lineHeight: 1.9, marginBottom: 16 }}>{children}</ol>
+    ),
+    li: ({ children }: { children: React.ReactNode }) => (
+      <li style={{ lineHeight: 1.8, marginBottom: 6, fontSize: "var(--font-size-2)" }}>{children}</li>
+    ),
+    blockquote: ({ children }: { children: React.ReactNode }) => (
+      <Box mb="4" pl="4" py="2" style={{ borderLeft: "3px solid var(--violet-6)", backgroundColor: "var(--violet-2)", borderRadius: "0 var(--radius-2) var(--radius-2) 0" }}>
+        {children}
+      </Box>
+    ),
+    table: ({ children }: { children: React.ReactNode }) => (
+      <Box mb="4" style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "var(--font-size-2)" }}>
+          {children}
+        </table>
+      </Box>
+    ),
+    thead: ({ children }: { children: React.ReactNode }) => (
+      <thead style={{ backgroundColor: "var(--violet-2)" }}>{children}</thead>
+    ),
+    th: ({ children }: { children: React.ReactNode }) => (
+      <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid var(--violet-6)" }}>{children}</th>
+    ),
+    td: ({ children }: { children: React.ReactNode }) => (
+      <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--gray-4)" }}>{children}</td>
+    ),
+    pre: ({ children }: { children: React.ReactNode }) => {
+      let lang = "";
+      let rawText = "";
+      const codeEl = children as ReactElement<{ className?: string; children?: string }>;
+      if (codeEl?.props) {
+        const match = codeEl.props.className?.match(/language-(\w+)/);
+        if (match) lang = match[1];
+        rawText = String(codeEl.props.children || "").replace(/\n$/, "");
+      }
+
+      if (lang === "codepair") {
+        const parts = rawText.split("\n====CODESPLIT====\n");
+        const blocks = parts.map((part) => {
+          const lines = part.split("\n");
+          return { lang: lines[0], code: lines.slice(1).join("\n") };
+        });
+
+        const isHtmlCss =
+          blocks.length === 2 &&
+          blocks.some((b) => b.lang.toLowerCase() === "html") &&
+          blocks.some((b) => b.lang.toLowerCase() === "css");
+
+        if (isHtmlCss) {
+          const htmlBlock = blocks.find((b) => b.lang.toLowerCase() === "html")!;
+          const cssBlock = blocks.find((b) => b.lang.toLowerCase() === "css")!;
+          return <InteractiveCodePlayground initialHtml={htmlBlock.code} initialCss={cssBlock.code} />;
+        }
+
+        return (
+          <Box mb="4">
+            <div className="code-pair-grid">
+              {blocks.map((block, i) => (
+                <CodePanel key={i} lang={block.lang} code={block.code} />
+              ))}
+            </div>
+          </Box>
+        );
+      }
+
+      if (lang === "html") {
+        const extracted = extractInlineStyles(rawText);
+        if (extracted) {
+          return <InteractiveCodePlayground initialHtml={extracted.cleanHtml} initialCss={extracted.css} />;
+        }
+        return (
+          <Box mb="4">
+            <div className="code-pair-grid">
+              <CodePanel lang="html" code={rawText} />
+              <LivePreviewPanel html={rawText} css="" />
+            </div>
+          </Box>
+        );
+      }
+
+      return (
+        <Box mb="4">
+          <div className="code-block-wrapper">
+            <div className="code-block-bar">
+              <div className="code-block-dots" aria-hidden="true"><span /><span /><span /></div>
+              {lang && <span className="code-block-lang">{langLabel(lang)}</span>}
+            </div>
+            <pre style={{ margin: 0, padding: 16, overflowX: "auto", fontSize: "var(--font-size-1)", fontFamily: "var(--font-mono, monospace)", lineHeight: 1.7, backgroundColor: "var(--gray-2)" }}>
+              {children}
+            </pre>
+          </div>
+        </Box>
+      );
+    },
+    code: ({ children, className }: { children: React.ReactNode; className?: string }) => {
+      const isBlock = className?.includes("language-");
+      if (isBlock) return <code>{children}</code>;
+      return (
+        <code style={{ backgroundColor: "var(--violet-3)", padding: "2px 6px", borderRadius: "var(--radius-1)", fontSize: "0.9em", fontFamily: "var(--font-mono, monospace)" }}>
+          {children}
+        </code>
+      );
+    },
+    hr: () => (
+      <Box my="6" style={{ borderTop: "2px solid var(--gray-4)" }} />
+    ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }) as any, []);
 
   return (
     <Box px={{ initial: "4", md: "8" }} py={{ initial: "4", md: "8" }}>
@@ -326,156 +471,8 @@ function PrepPageInner() {
       {processed ? (
         <Box className="interview-prep-md">
           <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              h1: ({ children }) => (
-                <Heading size="6" mb="3" mt="6" style={{ color: "var(--violet-11)" }}>{children}</Heading>
-              ),
-              h2: ({ children }) => (
-                <Box mt="6" mb="3" pt="5" style={{ borderTop: "2px solid var(--violet-4)" }}>
-                  <Heading size="5" style={{ color: "var(--violet-11)" }}>{children}</Heading>
-                </Box>
-              ),
-              h3: ({ children }) => (
-                <Box mt="5" mb="2" p="3" style={{ backgroundColor: "var(--violet-2)", borderLeft: "3px solid var(--violet-8)", borderRadius: 0 }}>
-                  <Heading size="4">{children}</Heading>
-                </Box>
-              ),
-              h4: ({ children }) => (
-                <Heading size="3" mt="4" mb="2">{children}</Heading>
-              ),
-              p: ({ children }) => {
-                const kids = Array.isArray(children) ? children : [children];
-                const first = kids[0] as ReactElement<{ children?: string }> | undefined;
-                const bold = typeof first === "object" && first?.props?.children;
-                if (typeof bold === "string") {
-                  const l = bold.toLowerCase();
-                  if (/narration|say this|say:|what to say|your script|prioritization script/.test(l))
-                    return <div className="callout callout-speak"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
-                  if (/common mistake/.test(l))
-                    return <div className="callout callout-warn"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
-                  if (/if they ask|why this/.test(l))
-                    return <div className="callout callout-tip"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
-                  if (/⏱|target:/.test(l))
-                    return <div className="timing-badge">{children}</div>;
-                }
-                return <Text as="p" size="2" mb="3" style={{ lineHeight: 1.8 }}>{children}</Text>;
-              },
-              strong: ({ children }) => (
-                <strong style={{ fontWeight: 600 }}>{children}</strong>
-              ),
-              em: ({ children }) => <em>{children}</em>,
-              ul: ({ children }) => (
-                <ul style={{ paddingLeft: 20, lineHeight: 1.9, marginBottom: 16 }}>{children}</ul>
-              ),
-              ol: ({ children }) => (
-                <ol style={{ paddingLeft: 20, lineHeight: 1.9, marginBottom: 16 }}>{children}</ol>
-              ),
-              li: ({ children }) => (
-                <li style={{ lineHeight: 1.8, marginBottom: 6, fontSize: "var(--font-size-2)" }}>{children}</li>
-              ),
-              blockquote: ({ children }) => (
-                <Box mb="4" pl="4" py="2" style={{ borderLeft: "3px solid var(--violet-6)", backgroundColor: "var(--violet-2)", borderRadius: "0 var(--radius-2) var(--radius-2) 0" }}>
-                  {children}
-                </Box>
-              ),
-              table: ({ children }) => (
-                <Box mb="4" style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "var(--font-size-2)" }}>
-                    {children}
-                  </table>
-                </Box>
-              ),
-              thead: ({ children }) => (
-                <thead style={{ backgroundColor: "var(--violet-2)" }}>{children}</thead>
-              ),
-              th: ({ children }) => (
-                <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid var(--violet-6)" }}>{children}</th>
-              ),
-              td: ({ children }) => (
-                <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--gray-4)" }}>{children}</td>
-              ),
-              pre: ({ children }) => {
-                let lang = "";
-                let rawText = "";
-                const codeEl = children as ReactElement<{ className?: string; children?: string }>;
-                if (codeEl?.props) {
-                  const match = codeEl.props.className?.match(/language-(\w+)/);
-                  if (match) lang = match[1];
-                  rawText = String(codeEl.props.children || "").replace(/\n$/, "");
-                }
-
-                if (lang === "codepair") {
-                  const parts = rawText.split("\n====CODESPLIT====\n");
-                  const blocks = parts.map((part) => {
-                    const lines = part.split("\n");
-                    return { lang: lines[0], code: lines.slice(1).join("\n") };
-                  });
-
-                  const isHtmlCss =
-                    blocks.length === 2 &&
-                    blocks.some((b) => b.lang.toLowerCase() === "html") &&
-                    blocks.some((b) => b.lang.toLowerCase() === "css");
-
-                  if (isHtmlCss) {
-                    const htmlBlock = blocks.find((b) => b.lang.toLowerCase() === "html")!;
-                    const cssBlock = blocks.find((b) => b.lang.toLowerCase() === "css")!;
-                    return <InteractiveCodePlayground initialHtml={htmlBlock.code} initialCss={cssBlock.code} />;
-                  }
-
-                  return (
-                    <Box mb="4">
-                      <div className="code-pair-grid">
-                        {blocks.map((block, i) => (
-                          <CodePanel key={i} lang={block.lang} code={block.code} />
-                        ))}
-                      </div>
-                    </Box>
-                  );
-                }
-
-                if (lang === "html") {
-                  const extracted = extractInlineStyles(rawText);
-                  if (extracted) {
-                    return <InteractiveCodePlayground initialHtml={extracted.cleanHtml} initialCss={extracted.css} />;
-                  }
-                  return (
-                    <Box mb="4">
-                      <div className="code-pair-grid">
-                        <CodePanel lang="html" code={rawText} />
-                        <LivePreviewPanel html={rawText} css="" />
-                      </div>
-                    </Box>
-                  );
-                }
-
-                return (
-                  <Box mb="4">
-                    <div className="code-block-wrapper">
-                      <div className="code-block-bar">
-                        <div className="code-block-dots"><span /><span /><span /></div>
-                        {lang && <span className="code-block-lang">{langLabel(lang)}</span>}
-                      </div>
-                      <pre style={{ margin: 0, padding: 16, overflowX: "auto", fontSize: "var(--font-size-1)", fontFamily: "var(--font-mono, monospace)", lineHeight: 1.7, backgroundColor: "var(--gray-2)" }}>
-                        {children}
-                      </pre>
-                    </div>
-                  </Box>
-                );
-              },
-              code: ({ children, className }) => {
-                const isBlock = className?.includes("language-");
-                if (isBlock) return <code>{children}</code>;
-                return (
-                  <code style={{ backgroundColor: "var(--violet-3)", padding: "2px 6px", borderRadius: "var(--radius-1)", fontSize: "0.9em", fontFamily: "var(--font-mono, monospace)" }}>
-                    {children}
-                  </code>
-                );
-              },
-              hr: () => (
-                <Box my="6" style={{ borderTop: "2px solid var(--gray-4)" }} />
-              ),
-            }}
+            remarkPlugins={remarkPlugins}
+            components={mdComponents}
           >
             {processed}
           </ReactMarkdown>

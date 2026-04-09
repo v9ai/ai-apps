@@ -13,7 +13,7 @@ import re
 import pytest
 
 from salescue.modules.company_classifier import classify_company
-from salescue.server import _parse_size, app
+from salescue.server import _parse_size, _check_geo_irrelevance, app
 
 
 # ── 1. Clear staffing companies ─────────────────────────────────────────────
@@ -37,8 +37,16 @@ class TestStaffingDetection:
                 "Robert Half",
                 "Temporary and permanent staffing",
             ),
+            (
+                "Hays plc",
+                "Specialist recruitment agency connecting people with the right jobs",
+            ),
+            (
+                "Randstad",
+                "Staffing, recruitment, and workforce solutions provider",
+            ),
         ],
-        ids=["tech-recruit", "manpower-group", "robert-half"],
+        ids=["tech-recruit", "manpower-group", "robert-half", "hays", "randstad"],
     )
     def test_staffing_companies(self, encoder_loaded, name, description):
         result = classify_company(name=name, description=description)
@@ -116,39 +124,41 @@ class TestParseSize:
 # ── 4. Geo detection ───────────────────────────────────────────────────────
 
 
-# Replicate the regex from server.py so we test the same pattern
-_IRRELEVANT_GEO_RE = re.compile(
-    r"\b(latam|latin america|africa|apac|asia|india|middle east|mena|philippines|nigeria|pakistan|south asia|southeast asia|eastern europe)\b",
-    re.IGNORECASE,
-)
-
-
 class TestGeoDetection:
-    """Test irrelevant-geo regex filtering."""
+    """Test _check_geo_irrelevance from server.py module-level function."""
 
     @pytest.mark.parametrize(
         "text",
         [
-            "Mumbai, India",
             "LATAM staffing solutions",
-            "Offices in Philippines and Nigeria",
             "Southeast Asia talent network",
             "Middle East recruitment firm",
             "Eastern Europe outsourcing",
+            "APAC region operations",
+            "MENA staffing group",
         ],
-        ids=[
-            "india",
-            "latam",
-            "philippines-nigeria",
-            "southeast-asia",
-            "middle-east",
-            "eastern-europe",
-        ],
+        ids=["latam", "southeast-asia", "middle-east", "eastern-europe", "apac", "mena"],
     )
-    def test_irrelevant_geo_detected(self, text):
-        assert _IRRELEVANT_GEO_RE.search(text) is not None, (
-            f"Expected irrelevant geo match for: {text}"
+    def test_irrelevant_geo_strong_signals(self, text):
+        assert _check_geo_irrelevance(text) is True, (
+            f"Expected irrelevant geo for strong signal: {text}"
         )
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Offices in Philippines and Nigeria",
+            "India and Pakistan operations",
+        ],
+        ids=["philippines-nigeria", "india-pakistan"],
+    )
+    def test_irrelevant_geo_weak_threshold(self, text):
+        assert _check_geo_irrelevance(text) is True, (
+            f"Expected irrelevant geo for 2+ weak signals: {text}"
+        )
+
+    def test_single_weak_signal_not_flagged(self):
+        assert _check_geo_irrelevance("One office in India") is False
 
     @pytest.mark.parametrize(
         "text",
@@ -158,13 +168,17 @@ class TestGeoDetection:
             "Berlin, Germany",
             "Toronto, Canada",
             "Amsterdam, Netherlands",
+            "EU and Europe offices",
         ],
-        ids=["sf", "london", "berlin", "toronto", "amsterdam"],
+        ids=["sf", "london", "berlin", "toronto", "amsterdam", "eu-europe"],
     )
     def test_relevant_geo_not_flagged(self, text):
-        assert _IRRELEVANT_GEO_RE.search(text) is None, (
+        assert _check_geo_irrelevance(text) is False, (
             f"Should NOT flag as irrelevant geo: {text}"
         )
+
+    def test_south_africa_not_flagged(self):
+        assert _check_geo_irrelevance("Cape Town, South Africa") is False
 
 
 # ── 5. is_target composite logic ───────────────────────────────────────────

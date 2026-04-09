@@ -22,9 +22,12 @@ export interface ICPResult {
 
 // Parse LinkedIn size strings like "51-200 employees" → upper bound (200).
 export function parseLinkedInSize(size: string): number {
-  const range = size.match(/(\d[\d,]*)\s*[-–]\s*(\d[\d,]*)/);
+  if (/\b(self-employed|myself only|solo|freelance)\b/i.test(size)) return 1;
+  const range = size.match(/(\d[\d,]*)\s*[-–—]\s*(\d[\d,]*)/);
   if (range) return parseInt(range[2].replace(/,/g, ""), 10);
-  const single = size.match(/(\d[\d,]+)/);
+  const plus = size.match(/(\d[\d,]*)\+/);
+  if (plus) return parseInt(plus[1].replace(/,/g, ""), 10);
+  const single = size.match(/(\d[\d,]*)/);
   if (single) return parseInt(single[1].replace(/,/g, ""), 10);
   return Infinity; // unknown — don't flag
 }
