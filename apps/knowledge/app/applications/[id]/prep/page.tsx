@@ -68,7 +68,7 @@ ${css}</style></head><body>${html}</body></html>`;
         <div className="code-block-dots"><span /><span /><span /></div>
         <span className="code-block-lang">Preview</span>
       </div>
-      <iframe srcDoc={srcdoc} sandbox="" title="Live preview" />
+      <iframe srcDoc={srcdoc} sandbox="allow-same-origin" title="Live preview" />
     </div>
   );
 }
