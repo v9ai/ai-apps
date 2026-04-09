@@ -173,7 +173,10 @@ export type CompanySnapshotsArgs = {
 };
 
 export type CompanyCategory =
+  | 'AGENCY'
   | 'CONSULTANCY'
+  | 'PRODUCT'
+  | 'STAFFING'
   | 'UNKNOWN';
 
 export type CompanyContactEmail = {

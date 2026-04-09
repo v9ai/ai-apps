@@ -1555,6 +1555,7 @@ function injectCrawlOverlay(
     saved: number;
     skipped: number;
     queued: number;
+    targets: number;
     name: string;
     phase: "saving" | "discovering" | "error";
   },
@@ -1563,7 +1564,7 @@ function injectCrawlOverlay(
     .executeScript({
       target: { tabId },
       world: "MAIN",
-      func: (s: { saved: number; skipped: number; queued: number; name: string; phase: string }) => {
+      func: (s: { saved: number; skipped: number; queued: number; targets: number; name: string; phase: string }) => {
         const ATTR = "data-lg-crawl-overlay";
         const COPY_ATTR = "data-lg-crawl-copy";
         let el = document.querySelector(`[${ATTR}]`) as HTMLDivElement | null;
@@ -1574,7 +1575,7 @@ function injectCrawlOverlay(
             position:fixed; bottom:20px; right:20px; z-index:999999;
             background:rgba(15,23,42,0.9); color:#fff; padding:10px 14px;
             border-radius:8px; font:13px/1.4 -apple-system,sans-serif;
-            max-width:360px; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+            max-width:400px; box-shadow:0 4px 12px rgba(0,0,0,0.3);
             display:flex; align-items:center; gap:8px;
             user-select:text;
           `;
@@ -1582,8 +1583,9 @@ function injectCrawlOverlay(
         }
         const dotColor = s.phase === "saving" ? "#22c55e"
           : s.phase === "discovering" ? "#eab308" : "#ef4444";
-        const statusText = `${s.saved} saved, ${s.skipped} dupes (${s.queued} queued) — ${s.name}`;
-        const copyText = `FindRelated: ${s.saved} saved, ${s.skipped} dupes, ${s.queued} queued — ${s.name} [${s.phase}]`;
+        const targetPart = s.targets > 0 ? ` (${s.targets} \u{1F3AF})` : "";
+        const statusText = `${s.saved} saved${targetPart}, ${s.skipped} dupes (${s.queued} queued) \u2014 ${s.name}`;
+        const copyText = `FindRelated: ${s.saved} saved (${s.targets} targets), ${s.skipped} dupes, ${s.queued} queued \u2014 ${s.name} [${s.phase}]`;
         el.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;flex-shrink:0;animation:lgpulse 1.2s ease-in-out infinite"></span><span style="user-select:text">${statusText}</span>`;
 
         // Add or update copy button
@@ -1676,6 +1678,7 @@ async function findRelatedCompanies(tabId: number) {
     const queue: string[] = [];
     let saved = 0;
     let skipped = 0;
+    let targets = 0;
 
     // Mark seed as visited (don't re-scrape the page we started on)
     visited.add(normalizeCompanyUrl(seedUrl));
@@ -1733,13 +1736,21 @@ async function findRelatedCompanies(tabId: number) {
       await safeTabUpdate(tabId, { url: aboutUrl });
       await waitForTabLoad(tabId);
       await randomDelay(2000);
-      await injectCrawlOverlay(tabId, { saved, skipped, queued: queue.length, name: urlSlug, phase: "saving" });
+      await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: urlSlug, phase: "saving" });
 
       await clickSeeMore(tabId);
       await randomDelay(500);
 
       const data = await extractCompanyData(tabId);
       if (data && data.name) {
+        // Detect ICP target: recruitment/staffing firm with ≤200 employees
+        const isRecruitment = /staffing|recruit|talent|headhunt|placement|hiring platform/i.test(
+          [data.industry, data.description, data.name].join(" "),
+        );
+        const isSmall = parseLinkedInSize(data.size || "") <= 200;
+        const isTarget = isRecruitment && isSmall;
+        const targetPrefix = isTarget ? "\u{1F3AF} " : "";
+
         // b) Build company object and save immediately
         const company = {
           name: data.name,
@@ -1758,12 +1769,14 @@ async function findRelatedCompanies(tabId: number) {
         const result = await saveCompanyBatch([company]);
         if (result > 0) {
           saved += result;
-          console.log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${data.name} ✓ SAVED (queued: ${queue.length})`);
-          await injectCrawlOverlay(tabId, { saved, skipped, queued: queue.length, name: `✓ ${data.name}`, phase: "saving" });
+          if (isTarget) targets++;
+          console.log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${targetPrefix}${data.name} ✓ SAVED (queued: ${queue.length})`);
+          await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: `${targetPrefix}✓ ${data.name}`, phase: "saving" });
         } else {
           skipped++;
-          console.log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${data.name} ⊘ ALREADY EXISTS (queued: ${queue.length})`);
-          await injectCrawlOverlay(tabId, { saved, skipped, queued: queue.length, name: `⊘ ${data.name}`, phase: "saving" });
+          if (isTarget) targets++;
+          console.log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${targetPrefix}${data.name} ⊘ ALREADY EXISTS (queued: ${queue.length})`);
+          await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: `${targetPrefix}⊘ ${data.name}`, phase: "saving" });
         }
 
         // c) Send progress (will only reach content script if on same origin)
@@ -1774,6 +1787,7 @@ async function findRelatedCompanies(tabId: number) {
           name: data.name,
           queued: queue.length,
           skipped,
+          targets,
         }).catch(() => {});
       }
 
@@ -1784,7 +1798,7 @@ async function findRelatedCompanies(tabId: number) {
         await safeTabUpdate(tabId, { url: mainUrl });
         await waitForTabLoad(tabId);
         await randomDelay(2000);
-        await injectCrawlOverlay(tabId, { saved, skipped, queued: queue.length, name: data?.name || urlSlug, phase: "discovering" });
+        await injectCrawlOverlay(tabId, { saved, skipped, targets, queued: queue.length, name: data?.name || urlSlug, phase: "discovering" });
 
         // Scroll to load lazy content
         for (let i = 0; i < 3; i++) {
@@ -1834,13 +1848,14 @@ async function findRelatedCompanies(tabId: number) {
       action: "findRelatedDone",
       saved,
       skipped,
+      targets,
       found: visited.size - 1, // exclude seed
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[FindRelated] Unexpected error:", errMsg);
     if (await isTabAlive(tabId)) {
-      await injectCrawlOverlay(tabId, { saved: 0, skipped: 0, queued: 0, name: errMsg.slice(0, 40), phase: "error" });
+      await injectCrawlOverlay(tabId, { saved: 0, skipped: 0, targets: 0, queued: 0, name: errMsg.slice(0, 40), phase: "error" });
     }
     await safeSendMessage(tabId, {
       action: "findRelatedError",

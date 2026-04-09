@@ -56,6 +56,9 @@ extend type Mutation {
 
 enum CompanyCategory {
   CONSULTANCY
+  STAFFING
+  AGENCY
+  PRODUCT
   UNKNOWN
 }
 
