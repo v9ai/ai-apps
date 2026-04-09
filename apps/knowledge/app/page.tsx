@@ -48,7 +48,7 @@ export default async function HomePage() {
         </div>
       </main>
 
-      <Footer />
+      <Footer wordCount={wordCount} />
     </div>
   );
 }

@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { CATEGORIES, CATEGORY_META } from "@/lib/articles";
 
-export function Footer() {
+export function Footer({ wordCount }: { wordCount?: number }) {
   const year = new Date().getFullYear();
   const lessonCount = CATEGORIES.reduce((sum, [lo, hi]) => sum + (hi - lo + 1), 0);
   const categoryCount = CATEGORIES.length;
+  const wordLabel = wordCount && wordCount >= 1000
+    ? `${Math.round(wordCount / 1000)}K+`
+    : wordCount ? String(wordCount) : "451K+";
 
   return (
     <footer className="site-footer">
@@ -56,7 +59,7 @@ export function Footer() {
               <span className="footer-stat-label">Skill Areas</span>
             </li>
             <li className="footer-stat">
-              <span className="footer-stat-value">451K+</span>
+              <span className="footer-stat-value">{wordLabel}</span>
               <span className="footer-stat-label">Words</span>
             </li>
           </ul>
