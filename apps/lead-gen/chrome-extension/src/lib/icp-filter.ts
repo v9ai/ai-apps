@@ -54,6 +54,7 @@ const REGION_LOCKED_PATTERNS: RegExp[] = [
   /apac\s+(?:staffing|recruitment|sourcing|only)/i,
   /southeast\s+asia\s+(?:talent|staffing|sourcing|recruitment)/i,
   /china\s+(?:recruitment|staffing|sourcing|only|focused)/i,
+  /\b(?:delhi|new delhi|mumbai|bangalore|bengaluru|hyderabad|chennai|pune|gurugram|gurgaon|noida|kolkata|ahmedabad)\b/i,
 ];
 
 function isIrrelevantGeo(text: string): boolean {
@@ -61,7 +62,7 @@ function isIrrelevantGeo(text: string): boolean {
 }
 
 export function isICPTarget(data: CompanyData): ICPResult {
-  const text = [data.industry, data.description, data.name].join(" ");
+  const text = [data.industry, data.description, data.name, data.location].join(" ");
 
   if (!RECRUITMENT_RE.test(text)) {
     return { target: false, reason: "not-recruitment" };
