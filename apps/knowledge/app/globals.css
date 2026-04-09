@@ -1244,31 +1244,6 @@ body {
   line-height: 1.7;
   tab-size: 2;
 }
-.code-playground-toolbar {
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-  margin-bottom: 6px;
-}
-.code-playground-toolbar button {
-  padding: 6px 16px;
-  font-size: 13px;
-  font-family: var(--font-mono, monospace);
-  color: var(--gray-9);
-  background: var(--gray-3);
-  border: 1px solid var(--gray-5);
-  border-radius: 4px;
-  cursor: pointer;
-}
-.code-playground-toolbar button:hover {
-  color: var(--gray-12);
-  background: var(--gray-4);
-}
-.code-playground-challenge.active {
-  color: var(--violet-11);
-  background: var(--violet-3);
-  border-color: var(--violet-6);
-}
 /* callouts */
 .callout {
   padding: 12px 16px;

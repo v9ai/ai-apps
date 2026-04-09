@@ -141,39 +141,111 @@ function EditableCodePanel({ lang, value, onChange }: { lang: string; value: str
   );
 }
 
+type ChallengeMode = "off" | "css" | "html" | "full" | "debug";
+
+function shuffleProperties(cssText: string): string {
+  return cssText.replace(/\{([^}]+)\}/g, (_, block: string) => {
+    const props = block.split(";").map((s: string) => s.trim()).filter(Boolean);
+    for (let i = props.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [props[i], props[j]] = [props[j], props[i]];
+    }
+    return `{\n  ${props.join(";\n  ")};\n}`;
+  });
+}
+
+function breakCss(cssText: string): string {
+  const lines = cssText.split("\n");
+  const propLines = lines.reduce<number[]>((acc, line, i) => {
+    if (/^\s+\S+\s*:/.test(line) && !/[{}]/.test(line)) acc.push(i);
+    return acc;
+  }, []);
+  if (propLines.length === 0) return cssText;
+  const count = Math.max(1, Math.floor(propLines.length * 0.3));
+  const picked = propLines.sort(() => Math.random() - 0.5).slice(0, count);
+  const result = [...lines];
+  for (const idx of picked) {
+    const match = result[idx].match(/^(\s*)(\S+\s*:\s*)(.+?)(;?\s*)$/);
+    if (match) result[idx] = `${match[1]}${match[2]}/* ??? */;`;
+  }
+  return result.join("\n");
+}
+
 function InteractiveCodePlayground({ initialHtml, initialCss }: { initialHtml: string; initialCss: string }) {
   const [html, setHtml] = useState(initialHtml);
   const [css, setCss] = useState(initialCss);
-  const [challenge, setChallenge] = useState(false);
+  const [mode, setMode] = useState<ChallengeMode>("off");
+  const [challengeHtml, setChallengeHtml] = useState("");
   const [challengeCss, setChallengeCss] = useState("");
 
-  const activeCss = challenge ? challengeCss : css;
-  const setActiveCss = challenge ? setChallengeCss : setCss;
+  const activeHtml = mode === "html" || mode === "full" ? challengeHtml : html;
+  const activeCss = mode === "css" || mode === "full" || mode === "debug" ? challengeCss : css;
+  const setActiveHtml = mode === "html" || mode === "full" ? setChallengeHtml : setHtml;
+  const setActiveCss = mode === "css" || mode === "full" || mode === "debug" ? setChallengeCss : setCss;
 
-  const debouncedHtml = useDebouncedValue(html, 200);
+  const debouncedHtml = useDebouncedValue(activeHtml, 200);
   const debouncedCss = useDebouncedValue(activeCss, 200);
   const dirty = html !== initialHtml || css !== initialCss;
 
+  const activate = (next: ChallengeMode) => {
+    if (mode === next) { setMode("off"); return; }
+    setMode(next);
+    if (next === "css") { setChallengeHtml(html); setChallengeCss(""); }
+    else if (next === "html") { setChallengeHtml(""); setChallengeCss(css); }
+    else if (next === "full") { setChallengeHtml(""); setChallengeCss(""); }
+    else if (next === "debug") { setChallengeHtml(html); setChallengeCss(breakCss(initialCss)); }
+  };
+
+  const reset = () => { setHtml(initialHtml); setCss(initialCss); setMode("off"); setChallengeHtml(""); setChallengeCss(""); };
+
   return (
     <Box mb="4" style={{ position: "relative" }}>
-      <div className="code-playground-toolbar">
-        <button
-          className={`code-playground-challenge ${challenge ? "active" : ""}`}
-          onClick={() => setChallenge((c) => !c)}
+      <Flex gap="2" justify="end" mb="2" wrap="wrap">
+        <Button
+          size="3"
+          variant={mode === "css" ? "solid" : "soft"}
+          color="violet"
+          onClick={() => activate("css")}
         >
-          {challenge ? "Solution" : "Challenge"}
-        </button>
-        {(dirty || challenge) && (
-          <button
-            className="code-playground-reset"
-            onClick={() => { setHtml(initialHtml); setCss(initialCss); setChallenge(false); setChallengeCss(""); }}
-          >
-            Reset
-          </button>
+          CSS Challenge
+        </Button>
+        <Button
+          size="3"
+          variant={mode === "html" ? "solid" : "soft"}
+          color="cyan"
+          onClick={() => activate("html")}
+        >
+          HTML Challenge
+        </Button>
+        <Button
+          size="3"
+          variant={mode === "full" ? "solid" : "soft"}
+          color="orange"
+          onClick={() => activate("full")}
+        >
+          Full Rebuild
+        </Button>
+        <Button
+          size="3"
+          variant={mode === "debug" ? "solid" : "soft"}
+          color="crimson"
+          onClick={() => activate("debug")}
+        >
+          Debug
+        </Button>
+        {mode !== "off" && (
+          <Button size="3" variant="outline" color="gray" onClick={() => setMode("off")}>
+            Show Solution
+          </Button>
         )}
-      </div>
+        {(dirty || mode !== "off") && (
+          <Button size="3" variant="ghost" color="gray" onClick={reset}>
+            Reset
+          </Button>
+        )}
+      </Flex>
       <div className="code-triple-grid">
-        <EditableCodePanel lang="html" value={html} onChange={setHtml} />
+        <EditableCodePanel lang="html" value={activeHtml} onChange={setActiveHtml} />
         <EditableCodePanel lang="css" value={activeCss} onChange={setActiveCss} />
         <LivePreviewPanel html={debouncedHtml} css={debouncedCss} />
       </div>
