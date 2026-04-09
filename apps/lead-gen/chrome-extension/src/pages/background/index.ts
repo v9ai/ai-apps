@@ -899,6 +899,7 @@ async function browseCompanies(tabId: number) {
           .filter(Boolean)
           .join("\n") || undefined,
         location: data.location || undefined,
+        industry: data.industry || undefined,
       });
 
       console.log(
@@ -1815,6 +1816,7 @@ async function findRelatedCompanies(tabId: number) {
               .filter(Boolean)
               .join("\n") || undefined,
             location: data.location || undefined,
+            industry: data.industry || undefined,
           };
 
           const result = await saveCompanyBatch([company]);
