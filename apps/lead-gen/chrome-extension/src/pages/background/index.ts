@@ -1373,8 +1373,24 @@ function clickShowAllSimilar(tabId: number): Promise<boolean> {
         for (const heading of headings) {
           const text = heading.textContent?.trim().toLowerCase() || "";
           if (keywords.some((kw) => text.includes(kw))) {
-            const container = heading.closest("section") || heading.closest("aside") || heading.parentElement;
+            // Walk up from heading to find a container with a "Show all" link
+            let container: Element | null = heading.closest("section") || heading.closest("aside");
+            if (!container) {
+              let el: Element | null = heading.parentElement;
+              while (el && el !== document.body) {
+                const hasBtn = Array.from(el.querySelectorAll<HTMLElement>("a, button")).some((b) => {
+                  const t = b.textContent?.trim().toLowerCase() || "";
+                  return t.includes("show all") || t.includes("see all");
+                });
+                if (hasBtn || el.querySelector('a[href*="/company/"]')) {
+                  container = el;
+                  break;
+                }
+                el = el.parentElement;
+              }
+            }
             if (!container) continue;
+            console.log(`[FindRelated] Container for 'Show all': <${container.tagName}> class="${container.className?.toString().slice(0, 80)}"`);
             const btn = Array.from(container.querySelectorAll<HTMLElement>("a, button")).find((el) => {
               const t = el.textContent?.trim().toLowerCase() || "";
               return t.includes("show all") || t.includes("see all");
