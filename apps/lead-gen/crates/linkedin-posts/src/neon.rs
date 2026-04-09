@@ -110,6 +110,54 @@ pub async fn update_contact_authority(contact_id: i32, score: f32) -> Result<()>
     Ok(())
 }
 
+/// Fetch contacts whose position matches recruiter-related keywords.
+pub async fn fetch_recruiter_contacts() -> Result<Vec<Contact>> {
+    let client = connect_neon().await?;
+
+    let rows = client
+        .query(
+            "SELECT id, first_name, last_name, linkedin_url, company, position
+             FROM contacts
+             WHERE linkedin_url IS NOT NULL AND linkedin_url != ''
+               AND position IS NOT NULL
+               AND (
+                 position ILIKE '%recruiter%'
+                 OR position ILIKE '%recruiting%'
+                 OR position ILIKE '%recruitment%'
+                 OR position ILIKE '%talent acqui%'
+                 OR position ILIKE '%headhunt%'
+                 OR position ILIKE '%staffing%'
+                 OR position ILIKE '%sourcer%'
+                 OR position ILIKE '%sourcing%'
+                 OR position ILIKE '%talent partner%'
+                 OR position ILIKE '%talent scout%'
+                 OR position ILIKE '%talent specialist%'
+                 OR position ILIKE '%placement%'
+               )
+             ORDER BY id",
+            &[],
+        )
+        .await
+        .context("Failed to query recruiter contacts")?;
+
+    let now = chrono::Utc::now().to_rfc3339();
+    let contacts: Vec<Contact> = rows
+        .iter()
+        .map(|row| Contact {
+            id: row.get::<_, i32>("id"),
+            first_name: row.get::<_, String>("first_name"),
+            last_name: row.get::<_, String>("last_name"),
+            linkedin_url: row.get::<_, String>("linkedin_url"),
+            company: row.get::<_, Option<String>>("company"),
+            position: row.get::<_, Option<String>>("position"),
+            scraped_at: now.clone(),
+        })
+        .collect();
+
+    tracing::info!("Fetched {} recruiter contacts from Neon", contacts.len());
+    Ok(contacts)
+}
+
 fn root_certs() -> Arc<rustls::RootCertStore> {
     let mut roots = rustls::RootCertStore::empty();
     roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
