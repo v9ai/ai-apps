@@ -491,29 +491,6 @@ impl<'a> OrgScanner<'a> {
             }
         }
 
-        // Detect deployment-format files (GGUF, ONNX, MLX) — indicate production usage
-        let deployment_extensions: &[(&str, &str)] = &[
-            (".gguf", "GGUF quantized model file"),
-            (".onnx", "ONNX exported model"),
-        ];
-        for (ext, evidence) in deployment_extensions {
-            if filenames.iter().any(|f| f.ends_with(ext)) {
-                signals.push(TrainingSignal {
-                    repo_id: repo_id.to_owned(),
-                    signal_type: TrainingSignalType::CustomArchitecture,
-                    evidence: evidence.to_string(),
-                });
-            }
-        }
-        // MLX-converted models (filenames like mlx_model.safetensors, mlx_lm/)
-        if filenames.iter().any(|f| f.starts_with("mlx") || f.contains("/mlx")) {
-            signals.push(TrainingSignal {
-                repo_id: repo_id.to_owned(),
-                signal_type: TrainingSignalType::CustomArchitecture,
-                evidence: "MLX-converted model files".to_string(),
-            });
-        }
-
         signals
     }
 
@@ -539,12 +516,7 @@ impl<'a> OrgScanner<'a> {
                     .unwrap_or(text.len());
                 let url = &text[url_start..url_end];
                 if url.contains("arxiv.org/") {
-                    // Ensure URL has a protocol prefix
-                    if url.starts_with("http://") || url.starts_with("https://") {
-                        links.push(url.to_owned());
-                    } else {
-                        links.push(format!("https://{url}"));
-                    }
+                    links.push(url.to_owned());
                 }
                 search_from = url_end;
             }
@@ -631,7 +603,7 @@ impl<'a> OrgScanner<'a> {
             // General sales mention (exclude "salesforce" — they publish general AI
             // research, not sales-specific models; only flag smaller sales platforms)
             (
-                &["hubspot", "gong.io", "outreach.io", "apollo.io", "6sense", "zoominfo", "clearbit", "lusha"],
+                &["salesloft", "hubspot", "gong.io", "outreach.io", "apollo.io"],
                 SalesCategory::General,
                 "sales platform brand",
             ),
@@ -1064,31 +1036,6 @@ mod tests {
     }
 
     #[test]
-    fn extract_arxiv_without_protocol() {
-        // Regression: bare "arxiv.org/abs/..." without https:// should get protocol added
-        let text = "See the arxiv.org/abs/2301.12345 paper for details.";
-        let links = OrgScanner::extract_arxiv_links(text);
-        assert_eq!(links.len(), 1);
-        assert_eq!(links[0], "https://arxiv.org/abs/2301.12345");
-    }
-
-    #[test]
-    fn extract_arxiv_pdf_link() {
-        let text = "Download at https://arxiv.org/pdf/2301.12345";
-        let links = OrgScanner::extract_arxiv_links(text);
-        assert_eq!(links.len(), 1);
-        assert!(links[0].contains("arxiv.org/pdf/2301.12345"));
-    }
-
-    #[test]
-    fn extract_arxiv_markdown_link() {
-        let text = "Based on [this paper](https://arxiv.org/abs/2401.54321) and others.";
-        let links = OrgScanner::extract_arxiv_links(text);
-        assert_eq!(links.len(), 1);
-        assert_eq!(links[0], "https://arxiv.org/abs/2401.54321");
-    }
-
-    #[test]
     fn extract_arxiv_dedup() {
         let text = "arXiv:2301.12345 and https://arxiv.org/abs/2301.12345";
         let links = OrgScanner::extract_arxiv_links(text);
@@ -1471,7 +1418,7 @@ mod tests {
     fn detect_generic_dataset_from_repo_name() {
         let readme = "# Model Card\n\n[More Information Needed]\n";
         assert_eq!(
-            OrgScanner::detect_generic_dataset(readme, None, "acme-ai/llama3-8b-instruct-ultrafeedback-kto"),
+            OrgScanner::detect_generic_dataset(readme, None, "salesloft/llama3-8b-instruct-ultrafeedback-kto"),
             Some("UltraFeedback".into())
         );
     }
@@ -1514,7 +1461,7 @@ mod tests {
 
         let readme = "# Model Card\n\n- **Developed by:** [More Information Needed]\n- **Model type:** [More Information Needed]\n## Uses\n[More Information Needed]\n## Training\n[More Information Needed]\n";
         let maturity = OrgScanner::assess_model_maturity(
-            "acme-ai/model",
+            "salesloft/model",
             &repo,
             Some(readme),
             &[],
@@ -1620,13 +1567,13 @@ mod tests {
     }
 
     #[test]
-    fn trivial_cookbook_scenario() {
-        // Simulate a trivial cookbook model:
+    fn salesloft_scenario() {
+        // Simulate the exact SalesLoft case from the issue:
         // 1 model, 0 downloads, boilerplate README, LlamaFactory+KTO+UltraFeedback
         let mut repo = make_dummy_repo();
         repo.downloads = Some(0);
         repo.likes = Some(0);
-        repo.repo_id = Some("acme-ai/llama3-8b-instruct-ultrafeedback-kto".into());
+        repo.repo_id = Some("salesloft/llama3-8b-instruct-ultrafeedback-kto".into());
         repo.created_at = Some("2024-06-21T00:00:00.000Z".into());
         repo.last_modified = Some("2024-06-21T00:00:00.000Z".into());
 
@@ -1674,7 +1621,7 @@ tags:
 "#;
 
         let maturity = OrgScanner::assess_model_maturity(
-            "acme-ai/llama3-8b-instruct-ultrafeedback-kto",
+            "salesloft/llama3-8b-instruct-ultrafeedback-kto",
             &repo,
             Some(boilerplate_readme),
             &[],
@@ -1682,7 +1629,7 @@ tags:
         );
 
         assert_eq!(maturity.effort_level, EffortLevel::Trivial,
-            "Trivial cookbook model should be classified as Trivial, got {:?}", maturity.effort_level);
+            "SalesLoft model should be classified as Trivial, got {:?}", maturity.effort_level);
         assert!(maturity.boilerplate_ratio > 0.5);
         assert_eq!(maturity.downloads, 0);
         assert_eq!(maturity.generic_dataset.as_deref(), Some("UltraFeedback"));
@@ -1778,7 +1725,7 @@ tags:
 
     #[test]
     fn sales_general_from_platform_brand() {
-        let signals = OrgScanner::detect_sales_signals("hubspot/some-model", "", &[]);
+        let signals = OrgScanner::detect_sales_signals("salesloft/some-model", "", &[]);
         assert_eq!(signals.len(), 1);
         assert_eq!(signals[0].category, SalesCategory::General);
     }
@@ -1799,47 +1746,6 @@ tags:
         let readme = "We trained a BERT model on Wikipedia for NER.";
         let signals = OrgScanner::detect_sales_signals("org/bert-ner", readme, &["ner".into()]);
         assert!(signals.is_empty());
-    }
-
-    #[test]
-    fn file_signals_gguf() {
-        let siblings = vec![
-            SiblingFile { filename: "model-q4_k_m.gguf".into(), size: Some(4_000_000_000) },
-        ];
-        let signals = OrgScanner::parse_file_signals("org/model", &siblings);
-        assert!(signals.iter().any(|s| s.evidence.contains("GGUF")), "should detect GGUF file");
-    }
-
-    #[test]
-    fn file_signals_onnx() {
-        let siblings = vec![
-            SiblingFile { filename: "model.onnx".into(), size: Some(500_000_000) },
-        ];
-        let signals = OrgScanner::parse_file_signals("org/model", &siblings);
-        assert!(signals.iter().any(|s| s.evidence.contains("ONNX")), "should detect ONNX file");
-    }
-
-    #[test]
-    fn file_signals_mlx() {
-        let siblings = vec![
-            SiblingFile { filename: "mlx_model.safetensors".into(), size: Some(1_000_000_000) },
-        ];
-        let signals = OrgScanner::parse_file_signals("org/model", &siblings);
-        assert!(signals.iter().any(|s| s.evidence.contains("MLX")), "should detect MLX file");
-    }
-
-    #[test]
-    fn sales_brand_zoominfo() {
-        let signals = OrgScanner::detect_sales_signals("zoominfo/some-model", "", &[]);
-        assert_eq!(signals.len(), 1);
-        assert_eq!(signals[0].category, SalesCategory::General);
-    }
-
-    #[test]
-    fn sales_brand_clearbit() {
-        let signals = OrgScanner::detect_sales_signals("clearbit/enrichment-model", "", &[]);
-        assert_eq!(signals.len(), 1);
-        assert_eq!(signals[0].category, SalesCategory::General);
     }
 
     fn make_dummy_repo() -> RepoInfo {

@@ -143,6 +143,10 @@ type Query {
   # Habits
   habits(status: String, familyMemberId: Int): [Habit!]!
   habit(id: Int!): Habit
+
+  # Affirmations
+  affirmations(familyMemberId: Int!): [Affirmation!]!
+  affirmation(id: Int!): Affirmation
 }
 
 type Mutation {
@@ -279,6 +283,11 @@ type Mutation {
   deleteHabitLog(id: Int!): Boolean!
   generateHabitsForFamilyMember(familyMemberId: Int!, count: Int): GenerateHabitsResult!
   generateHabitsFromIssue(issueId: Int!, count: Int): GenerateHabitsResult!
+
+  # Affirmations
+  createAffirmation(input: CreateAffirmationInput!): Affirmation!
+  updateAffirmation(id: Int!, input: UpdateAffirmationInput!): Affirmation!
+  deleteAffirmation(id: Int!): DeleteAffirmationResult!
 }
 
 type Subscription {
@@ -853,6 +862,7 @@ type FamilyMember {
   teacherFeedbacks: [TeacherFeedback!]!
   issues: [Issue!]!
   relationships: [Relationship!]!
+  affirmations: [Affirmation!]!
 }
 
 input CreateFamilyMemberInput {
@@ -897,6 +907,46 @@ type FamilyMemberShare {
   role: FamilyMemberShareRole!
   createdAt: String!
   createdBy: String!
+}
+
+# ============================================
+# Affirmations
+# ============================================
+
+type Affirmation {
+  id: Int!
+  familyMemberId: Int!
+  userId: String!
+  text: String!
+  category: AffirmationCategory!
+  isActive: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+enum AffirmationCategory {
+  GRATITUDE
+  STRENGTH
+  ENCOURAGEMENT
+  GROWTH
+  SELF_WORTH
+}
+
+input CreateAffirmationInput {
+  familyMemberId: Int!
+  text: String!
+  category: AffirmationCategory
+}
+
+input UpdateAffirmationInput {
+  text: String
+  category: AffirmationCategory
+  isActive: Boolean
+}
+
+type DeleteAffirmationResult {
+  success: Boolean!
+  message: String
 }
 
 type AudioMetadata {

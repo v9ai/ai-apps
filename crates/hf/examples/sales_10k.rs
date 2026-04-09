@@ -1,6 +1,6 @@
 //! Search HF for sales-adjacent models — debug output to understand landscape.
 
-use hf::{HfClient, OrgScanner};
+use hf::{HfClient, OrgScanner, SalesCategory};
 use std::collections::HashMap;
 
 const QUERIES: &[&str] = &[

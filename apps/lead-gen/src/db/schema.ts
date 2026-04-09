@@ -1,21 +1,5 @@
-import { pgTable, text, integer, real, index, uniqueIndex, serial, boolean, customType } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, index, uniqueIndex, serial, boolean } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
-
-// pgvector vector type (requires CREATE EXTENSION vector on Neon)
-const vector = customType<{ data: number[]; dpiverType: string }>({
-  dataType() {
-    return "vector(384)";
-  },
-  fromDriver(value: unknown): number[] {
-    if (typeof value === "string") {
-      return value.replace(/[\[\]]/g, "").split(",").map(Number);
-    }
-    return value as number[];
-  },
-  toDriver(value: number[]): string {
-    return `[${value.join(",")}]`;
-  },
-});
 
 // Re-export Better Auth tables (user, session, account, verification)
 export { user, session, account, verification } from "@ai-apps/auth/schema";
@@ -85,23 +69,6 @@ export const companies = pgTable("companies", {
   intent_score_updated_at: text("intent_score_updated_at"),
   intent_signals_count: integer("intent_signals_count").notNull().default(0),
   intent_top_signal: text("intent_top_signal"), // JSON of strongest current signal
-
-  // ML: pgvector embedding (384-dim BGE-small-en-v1.5)
-  embedding: vector("embedding"),
-
-  // ML: Ranking & scoring
-  rank_score: real("rank_score").default(0),
-  rank_score_version: text("rank_score_version"),
-  data_quality_score: real("data_quality_score"),
-  anomaly_score: real("anomaly_score"),
-
-  // ML: Graph embeddings
-  graph_embedding: text("graph_embedding"), // JSON f64[128]
-  graph_cluster_id: integer("graph_cluster_id"),
-  graph_intent_boost: real("graph_intent_boost").default(0),
-
-  // ML: Collaborative filtering factors
-  cf_factors: text("cf_factors"), // JSON f32[64]
 
   // Common Crawl / last-seen metadata
   last_seen_crawl_id: text("last_seen_crawl_id"),
@@ -592,152 +559,6 @@ export const intentSignals = pgTable(
 
 export type IntentSignal = typeof intentSignals.$inferSelect;
 export type NewIntentSignal = typeof intentSignals.$inferInsert;
-
-// ---------------------------------------------------------------------------
-// ML Tables
-// ---------------------------------------------------------------------------
-
-// Extracted Entities (NER-extracted structured entities linked to companies)
-export const extractedEntities = pgTable(
-  "extracted_entities",
-  {
-    id: serial("id").primaryKey(),
-    company_id: integer("company_id").references(() => companies.id, { onDelete: "cascade" }),
-    contact_id: integer("contact_id").references(() => contacts.id, { onDelete: "set null" }),
-    entity_type: text("entity_type").notNull(), // funding_amount, team_size, technology, person_name, etc.
-    entity_text: text("entity_text").notNull(),
-    normalized_value: text("normalized_value"),
-    source_url: text("source_url"),
-    model_id: text("model_id").notNull(), // gliner-medium-v2.1, bert-base-NER, pattern
-    confidence: real("confidence").notNull(),
-    relation_type: text("relation_type"), // works_at, has_title, funded_by, uses_tech
-    related_entity_id: integer("related_entity_id"),
-    created_at: text("created_at").notNull().default(sql`now()::text`),
-  },
-  (table) => [
-    index("idx_extracted_entities_company").on(table.company_id, table.entity_type),
-    index("idx_extracted_entities_type").on(table.entity_type),
-  ],
-);
-
-export type ExtractedEntity = typeof extractedEntities.$inferSelect;
-export type NewExtractedEntity = typeof extractedEntities.$inferInsert;
-
-// Company Similarities (precomputed top-N similar pairs)
-export const companySimilarities = pgTable(
-  "company_similarities",
-  {
-    company_id: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
-    similar_company_id: integer("similar_company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
-    cosine_sim: real("cosine_sim").notNull(),
-    feature_score: real("feature_score").notNull(),
-    combined_score: real("combined_score").notNull(),
-    computed_at: text("computed_at").notNull().default(sql`now()::text`),
-  },
-  (table) => [
-    index("idx_company_sim_by_company").on(table.company_id),
-  ],
-);
-
-// Send Time Statistics (for Thompson Sampling)
-export const sendTimeStats = pgTable(
-  "send_time_stats",
-  {
-    id: serial("id").primaryKey(),
-    hour_utc: integer("hour_utc").notNull(),
-    day_of_week: integer("day_of_week").notNull(),
-    seniority: text("seniority"),
-    industry: text("industry"),
-    sends: integer("sends").notNull().default(0),
-    opens: integer("opens").notNull().default(0),
-    replies: integer("replies").notNull().default(0),
-    updated_at: text("updated_at").notNull().default(sql`now()::text`),
-  },
-  (table) => [
-    uniqueIndex("idx_send_time_stats_slot").on(table.hour_utc, table.day_of_week, table.seniority, table.industry),
-  ],
-);
-
-// Lead Temperature (Hawkes process scoring per contact)
-export const leadTemperature = pgTable(
-  "lead_temperature",
-  {
-    id: serial("id").primaryKey(),
-    contact_id: integer("contact_id").notNull().references(() => contacts.id, { onDelete: "cascade" }),
-    temperature: real("temperature").notNull(),
-    intensity: real("intensity").notNull(),
-    trend: text("trend"), // heating, cooling, cold, hot
-    event_count: integer("event_count").notNull().default(0),
-    last_event_at: text("last_event_at"),
-    computed_at: text("computed_at").notNull().default(sql`now()::text`),
-  },
-  (table) => [
-    index("idx_lead_temperature_contact").on(table.contact_id),
-  ],
-);
-
-// Weekly Engagement Statistics (for seasonal patterns / DFT)
-export const weeklyEngagementStats = pgTable(
-  "weekly_engagement_stats",
-  {
-    id: serial("id").primaryKey(),
-    week_start: text("week_start").notNull(),
-    sends: integer("sends").notNull().default(0),
-    delivered: integer("delivered").notNull().default(0),
-    opens: integer("opens").notNull().default(0),
-    clicks: integer("clicks").notNull().default(0),
-    replies: integer("replies").notNull().default(0),
-    bounces: integer("bounces").notNull().default(0),
-    industry: text("industry"),
-    seniority: text("seniority"),
-    created_at: text("created_at").notNull().default(sql`now()::text`),
-  },
-  (table) => [
-    uniqueIndex("idx_weekly_stats_week_segment").on(table.week_start, table.industry, table.seniority),
-  ],
-);
-
-// ML Predictions Cache (TTL-based)
-export const mlPredictions = pgTable(
-  "ml_predictions",
-  {
-    id: serial("id").primaryKey(),
-    entity_type: text("entity_type").notNull(), // contact, company
-    entity_id: integer("entity_id").notNull(),
-    model_name: text("model_name").notNull(),
-    model_version: text("model_version").notNull(),
-    prediction_json: text("prediction_json").notNull(),
-    confidence: real("confidence"),
-    expires_at: text("expires_at").notNull(),
-    computed_at: text("computed_at").notNull().default(sql`now()::text`),
-  },
-  (table) => [
-    index("idx_ml_predictions_entity").on(table.entity_type, table.entity_id, table.model_name),
-  ],
-);
-
-// Feature Drift (statistical summaries per feature per time window)
-export const featureDrift = pgTable(
-  "feature_drift",
-  {
-    id: serial("id").primaryKey(),
-    feature_name: text("feature_name").notNull(),
-    window_start: text("window_start").notNull(),
-    window_end: text("window_end").notNull(),
-    count: integer("count").notNull(),
-    mean: real("mean"),
-    stddev: real("stddev"),
-    p50: real("p50"),
-    psi: real("psi"),
-    ks_statistic: real("ks_statistic"),
-    ks_p_value: real("ks_p_value"),
-    drift_detected: boolean("drift_detected").notNull().default(false),
-    computed_at: text("computed_at").notNull().default(sql`now()::text`),
-  },
-  (table) => [
-    index("idx_feature_drift_feature_window").on(table.feature_name, table.window_start),
-  ],
-);
 
 // ---------------------------------------------------------------------------
 // Drizzle relations() declarations

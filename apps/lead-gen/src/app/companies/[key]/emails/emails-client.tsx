@@ -14,9 +14,20 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { css } from "styled-system/css";
-import { flex } from "styled-system/patterns";
 import { button } from "@/recipes/button";
+import {
+  Badge,
+  Box,
+  Callout,
+  Card,
+  Container,
+  Dialog,
+  Flex,
+  Select,
+  Separator,
+  Spinner,
+  Text,
+} from "@radix-ui/themes";
 import {
   ArrowLeftIcon,
   ExclamationTriangleIcon,
@@ -31,39 +42,21 @@ import {
 import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
 import { GenerateAndSendBatchEmailModal } from "@/components/admin/GenerateAndSendBatchEmailModal";
 
-const statusBadgeStyle: Record<string, { color: string; borderColor: string; bg: string }> = {
-  sent: { color: "status.positive", borderColor: "status.positive", bg: "status.positiveDim" },
-  delivered: { color: "status.positive", borderColor: "status.positive", bg: "status.positiveDim" },
-  opened: { color: "status.positive", borderColor: "status.positive", bg: "status.positiveDim" },
-  clicked: { color: "status.positive", borderColor: "status.positive", bg: "status.positiveDim" },
-  bounced: { color: "status.negative", borderColor: "status.negative", bg: "transparent" },
-  complained: { color: "status.negative", borderColor: "status.negative", bg: "transparent" },
-  failed: { color: "status.negative", borderColor: "status.negative", bg: "transparent" },
-  queued: { color: "accent.primary", borderColor: "accent.primary", bg: "transparent" },
-  scheduled: { color: "accent.primary", borderColor: "accent.primary", bg: "transparent" },
+const statusColor: Record<string, "green" | "red" | "blue" | "gray"> = {
+  sent: "green",
+  delivered: "green",
+  opened: "green",
+  clicked: "green",
+  bounced: "red",
+  complained: "red",
+  failed: "red",
+  queued: "blue",
+  scheduled: "blue",
 };
-
-const defaultBadgeStyle = { color: "ui.secondary", borderColor: "ui.border", bg: "transparent" };
 
 type StatusFilter = "all" | "delivered" | "bounced" | "sent" | "scheduled";
 
-// --- Spinner helper ---
-function Spinner({ size = 16 }: { size?: number }) {
-  return (
-    <div
-      className={css({
-        border: "2px solid",
-        borderColor: "ui.border",
-        borderTopColor: "accent.primary",
-        borderRadius: "50%",
-        animation: "spin 0.6s linear infinite",
-      })}
-      style={{ width: size, height: size }}
-    />
-  );
-}
-
-// --- Email Row Type ---
+// ─── Email Row Type ───────────────────────────────────────────────────────────
 
 type CompanyEmailRow = {
   id: number;
@@ -84,7 +77,7 @@ type CompanyEmailRow = {
   followupStatus?: string | null;
 };
 
-// --- Sequence Badge ---
+// ─── Sequence Badge ───────────────────────────────────────────────────────────
 
 function SequenceBadge({
   sequenceType,
@@ -103,13 +96,13 @@ function SequenceBadge({
         : sequenceType ?? "Email";
 
   return (
-    <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "accent.border", color: "accent.primary" })}>
+    <Badge color="purple" variant="soft" size="1">
       {label}
-    </span>
+    </Badge>
   );
 }
 
-// --- Email Detail Dialog ---
+// ─── Email Detail Dialog ─────────────────────────────────────────────────────
 
 function EmailDetailDialog({
   email,
@@ -176,219 +169,223 @@ function EmailDetailDialog({
     }
   }
 
-  const style = statusBadgeStyle[email.status] ?? defaultBadgeStyle;
-
   return (
-    <>
-      {/* Card trigger */}
-      <div
-        className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", cursor: "pointer" })}
-        onClick={() => setOpen(true)}
-      >
-        <div className={css({ p: "3" })}>
-          <div className={flex({ justify: "space-between", align: "flex-start", gap: "2", wrap: "wrap" })}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p className={css({ fontSize: "sm", fontWeight: "medium", wordBreak: "break-word" })}>
-                {email.subject}
-              </p>
-              <div className={flex({ gap: "2", align: "center", wrap: "wrap" })} style={{ marginTop: "4px" }}>
-                <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                  {contactName}
-                  {email.contactPosition
-                    ? ` \u00b7 ${email.contactPosition}`
-                    : ""}
-                </span>
-                {email.scheduledAt ? (
-                  <span className={css({ fontSize: "xs", color: "accent.primary" })}>
-                    Scheduled:{" "}
-                    {new Date(email.scheduledAt).toLocaleString()}
-                  </span>
-                ) : (
-                  <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                    {email.sentAt
-                      ? new Date(email.sentAt).toLocaleString()
-                      : new Date(email.createdAt).toLocaleString()}
-                  </span>
-                )}
-              </div>
-              <div className={flex({ gap: "2", align: "center", wrap: "wrap" })} style={{ marginTop: "4px" }}>
-                <SequenceBadge
-                  sequenceType={email.sequenceType}
-                  sequenceNumber={email.sequenceNumber}
-                />
-                {email.replyReceived && (
-                  <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" })}>
-                    Replied
-                  </span>
-                )}
-              </div>
-            </div>
-            <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: style.borderColor, color: style.color, bg: style.bg })}>
-              {email.status}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Dialog overlay */}
-      {open && (
-        <div
-          className={css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center" })}
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "580px", width: "90%", maxHeight: "85vh", overflowY: "auto" })}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "3" })}>{email.subject}</h3>
-
-            {loading ? (
-              <div className={flex({ justify: "center" })} style={{ padding: "24px 0" }}>
-                <Spinner size={24} />
-              </div>
-            ) : detail ? (
-              <div className={flex({ direction: "column", gap: "3" })}>
-                <div className={flex({ direction: "column", gap: "1" })}>
-                  <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                    <span className={css({ fontWeight: "medium" })}>From:</span> {detail.from}
-                  </span>
-                  <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                    <span className={css({ fontWeight: "medium" })}>To:</span> {detail.to.join(", ")}
-                  </span>
-                  {detail.cc && detail.cc.length > 0 && (
-                    <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                      <span className={css({ fontWeight: "medium" })}>CC:</span> {detail.cc.join(", ")}
-                    </span>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger>
+        <Card style={{ cursor: "pointer" }}>
+          <Box p="3">
+            <Flex justify="between" align="start" gap="2" wrap="wrap">
+              <Box style={{ flex: 1, minWidth: 0 }}>
+                <Text
+                  size="2"
+                  weight="medium"
+                  as="p"
+                  style={{ wordBreak: "break-word" }}
+                >
+                  {email.subject}
+                </Text>
+                <Flex gap="2" align="center" wrap="wrap" mt="1">
+                  <Text size="1" color="gray">
+                    {contactName}
+                    {email.contactPosition
+                      ? ` · ${email.contactPosition}`
+                      : ""}
+                  </Text>
+                  {email.scheduledAt ? (
+                    <Text size="1" color="blue">
+                      Scheduled:{" "}
+                      {new Date(email.scheduledAt).toLocaleString()}
+                    </Text>
+                  ) : (
+                    <Text size="1" color="gray">
+                      {email.sentAt
+                        ? new Date(email.sentAt).toLocaleString()
+                        : new Date(email.createdAt).toLocaleString()}
+                    </Text>
                   )}
-                  <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
-                    <span className={css({ fontWeight: "medium" })}>Sent:</span>{" "}
-                    {new Date(detail.createdAt).toLocaleString()}
-                  </span>
-                  {detail.scheduledAt && (
-                    <span className={css({ fontSize: "xs", color: "accent.primary" })}>
-                      <span className={css({ fontWeight: "medium" })}>Scheduled for:</span>{" "}
-                      {new Date(detail.scheduledAt).toLocaleString()}
-                    </span>
-                  )}
-                  {detail.lastEvent && (
-                    <div className={flex({ align: "center", gap: "2" })}>
-                      <span className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium" })}>
-                        Status:
-                      </span>
-                      {(() => {
-                        const evtStyle =
-                          detail.lastEvent === "delivered" ? { color: "status.positive", borderColor: "status.positive", bg: "status.positiveDim" }
-                          : detail.lastEvent === "bounced" ? { color: "status.negative", borderColor: "status.negative", bg: "transparent" }
-                          : detail.lastEvent === "opened" ? { color: "status.positive", borderColor: "status.positive", bg: "status.positiveDim" }
-                          : { color: "accent.primary", borderColor: "accent.primary", bg: "transparent" };
-                        return (
-                          <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: evtStyle.borderColor, color: evtStyle.color, bg: evtStyle.bg })}>
-                            {detail.lastEvent}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  )}
+                </Flex>
+                <Flex gap="2" align="center" wrap="wrap" mt="1">
+                  <SequenceBadge
+                    sequenceType={email.sequenceType}
+                    sequenceNumber={email.sequenceNumber}
+                  />
                   {email.replyReceived && (
-                    <div className={flex({ align: "center", gap: "2" })}>
-                      <span className={css({ fontSize: "xs", px: "2", py: "1", border: "1px solid", borderColor: "status.positive", color: "status.positive", bg: "status.positiveDim" })}>
-                        Replied
-                      </span>
-                    </div>
+                    <Badge color="green" variant="soft" size="1">
+                      Replied
+                    </Badge>
                   )}
-                  {(email.sequenceType || email.sequenceNumber) && (
-                    <div className={flex({ align: "center", gap: "2" })}>
-                      <span className={css({ fontSize: "xs", color: "ui.tertiary", fontWeight: "medium" })}>
-                        Sequence:
-                      </span>
-                      <SequenceBadge
-                        sequenceType={email.sequenceType}
-                        sequenceNumber={email.sequenceNumber}
-                      />
-                    </div>
-                  )}
-                </div>
+                </Flex>
+              </Box>
+              <Badge
+                color={statusColor[email.status] ?? "gray"}
+                variant="soft"
+                size="1"
+              >
+                {email.status}
+              </Badge>
+            </Flex>
+          </Box>
+        </Card>
+      </Dialog.Trigger>
 
-                <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
+      <Dialog.Content maxWidth="580px">
+        <Dialog.Title>{email.subject}</Dialog.Title>
 
-                {detail.text ? (
-                  <div
-                    className={css({ bg: "ui.surfaceRaised", p: "4" })}
-                    style={{
-                      whiteSpace: "pre-wrap",
-                      lineHeight: "1.6",
-                      maxHeight: 400,
-                      overflow: "auto",
-                    }}
+        {loading ? (
+          <Flex justify="center" py="6">
+            <Spinner size="3" />
+          </Flex>
+        ) : detail ? (
+          <Flex direction="column" gap="3">
+            <Flex direction="column" gap="1">
+              <Text size="1" color="gray">
+                <Text weight="medium">From:</Text> {detail.from}
+              </Text>
+              <Text size="1" color="gray">
+                <Text weight="medium">To:</Text> {detail.to.join(", ")}
+              </Text>
+              {detail.cc && detail.cc.length > 0 && (
+                <Text size="1" color="gray">
+                  <Text weight="medium">CC:</Text> {detail.cc.join(", ")}
+                </Text>
+              )}
+              <Text size="1" color="gray">
+                <Text weight="medium">Sent:</Text>{" "}
+                {new Date(detail.createdAt).toLocaleString()}
+              </Text>
+              {detail.scheduledAt && (
+                <Text size="1" color="blue">
+                  <Text weight="medium">Scheduled for:</Text>{" "}
+                  {new Date(detail.scheduledAt).toLocaleString()}
+                </Text>
+              )}
+              {detail.lastEvent && (
+                <Flex align="center" gap="2">
+                  <Text size="1" color="gray" weight="medium">
+                    Status:
+                  </Text>
+                  <Badge
+                    color={
+                      detail.lastEvent === "delivered"
+                        ? "green"
+                        : detail.lastEvent === "bounced"
+                          ? "red"
+                          : detail.lastEvent === "opened"
+                            ? "teal"
+                            : "blue"
+                    }
+                    variant="soft"
+                    size="1"
                   >
-                    <span className={css({ fontSize: "sm" })}>{detail.text}</span>
-                  </div>
-                ) : (
-                  <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
-                    No body content.
-                  </span>
-                )}
+                    {detail.lastEvent}
+                  </Badge>
+                </Flex>
+              )}
+              {email.replyReceived && (
+                <Flex align="center" gap="2">
+                  <Badge color="green" variant="soft" size="1">
+                    Replied
+                  </Badge>
+                </Flex>
+              )}
+              {(email.sequenceType || email.sequenceNumber) && (
+                <Flex align="center" gap="2">
+                  <Text size="1" color="gray" weight="medium">
+                    Sequence:
+                  </Text>
+                  <SequenceBadge
+                    sequenceType={email.sequenceType}
+                    sequenceNumber={email.sequenceNumber}
+                  />
+                </Flex>
+              )}
+            </Flex>
 
-                {/* Scheduled email actions */}
-                {isScheduled && (
-                  <>
-                    <hr className={css({ border: "none", borderTop: "1px solid", borderTopColor: "ui.border", my: "3" })} />
-                    <div className={flex({ gap: "2", wrap: "wrap" })}>
-                      <button
-                        className={button({ variant: "ghost", size: "sm" })}
-                        onClick={handleSendNow}
-                        disabled={sendingNow || cancellingEmail}
-                      >
-                        {sendingNow ? <Spinner size={12} /> : null}
-                        Send Now
-                      </button>
-                      <button
-                        className={button({ variant: "ghost", size: "sm" })}
-                        onClick={handleCancelEmail}
-                        disabled={sendingNow || cancellingEmail}
-                      >
-                        {cancellingEmail ? <Spinner size={12} /> : null}
-                        Cancel
-                      </button>
-                    </div>
-                  </>
-                )}
+            <Separator size="4" />
 
-                {actionResult && (
-                  <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: actionResult.success ? "status.positive" : "status.negative" })}>
-                    <div className={css({ flexShrink: 0 })}>
-                      {actionResult.success ? (
-                        <InfoCircledIcon />
-                      ) : (
-                        <ExclamationTriangleIcon />
-                      )}
-                    </div>
-                    <span>{actionResult.message}</span>
-                  </div>
-                )}
-              </div>
+            {detail.text ? (
+              <Box
+                style={{
+                  background: "var(--gray-2)",
+                  borderRadius: 0,
+                  padding: "var(--space-4)",
+                  whiteSpace: "pre-wrap",
+                  lineHeight: "1.6",
+                  maxHeight: 400,
+                  overflow: "auto",
+                }}
+              >
+                <Text size="2">{detail.text}</Text>
+              </Box>
             ) : (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "status.negative" })}>
-                <div className={css({ flexShrink: 0 })}>
-                  <ExclamationTriangleIcon />
-                </div>
-                <span>Failed to load email from Resend.</span>
-              </div>
+              <Text size="2" color="gray">
+                No body content.
+              </Text>
             )}
 
-            <div className={flex({ justify: "flex-end" })} style={{ marginTop: "16px" }}>
-              <button className={button({ variant: "ghost" })} onClick={() => setOpen(false)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+            {/* Scheduled email actions */}
+            {isScheduled && (
+              <>
+                <Separator size="4" />
+                <Flex gap="2" wrap="wrap">
+                  <button
+                    className={button({ variant: "ghost", size: "sm" })}
+                    onClick={handleSendNow}
+                    disabled={sendingNow || cancellingEmail}
+                  >
+                    {sendingNow ? <Spinner size="1" /> : null}
+                    Send Now
+                  </button>
+                  <button
+                    className={button({ variant: "ghost", size: "sm" })}
+                    onClick={handleCancelEmail}
+                    disabled={sendingNow || cancellingEmail}
+                  >
+                    {cancellingEmail ? <Spinner size="1" /> : null}
+                    Cancel
+                  </button>
+                </Flex>
+              </>
+            )}
+
+            {actionResult && (
+              <Callout.Root
+                color={actionResult.success ? "green" : "red"}
+                size="1"
+              >
+                <Callout.Icon>
+                  {actionResult.success ? (
+                    <InfoCircledIcon />
+                  ) : (
+                    <ExclamationTriangleIcon />
+                  )}
+                </Callout.Icon>
+                <Callout.Text>{actionResult.message}</Callout.Text>
+              </Callout.Root>
+            )}
+          </Flex>
+        ) : (
+          <Callout.Root color="red" size="1">
+            <Callout.Icon>
+              <ExclamationTriangleIcon />
+            </Callout.Icon>
+            <Callout.Text>Failed to load email from Resend.</Callout.Text>
+          </Callout.Root>
+        )}
+
+        <Flex justify="end" mt="4">
+          <Dialog.Close>
+            <button className={button({ variant: "ghost" })}>
+              Close
+            </button>
+          </Dialog.Close>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
-// --- Cancel All Scheduled Dialog ---
+// ─── Cancel All Scheduled Dialog ─────────────────────────────────────────────
 
 function CancelAllDialog({
   companyId,
@@ -424,66 +421,61 @@ function CancelAllDialog({
   }
 
   return (
-    <>
-      <button
-        className={button({ variant: "ghost", size: "sm" })}
-        onClick={() => setOpen(true)}
-      >
-        <TrashIcon />
-        Cancel Scheduled
-      </button>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger>
+        <button className={button({ variant: "ghost", size: "sm" })}>
+          <TrashIcon />
+          Cancel Scheduled
+        </button>
+      </Dialog.Trigger>
 
-      {open && (
-        <div
-          className={css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center" })}
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", p: "5", maxWidth: "420px", width: "90%" })}
-            onClick={(e) => e.stopPropagation()}
+      <Dialog.Content maxWidth="420px">
+        <Dialog.Title>Cancel All Scheduled Emails?</Dialog.Title>
+        <Dialog.Description size="2" color="gray">
+          This will cancel all scheduled emails for this company that have not
+          yet been sent. This action cannot be undone.
+        </Dialog.Description>
+
+        {result && (
+          <Callout.Root
+            color={result.success ? "green" : "red"}
+            size="1"
+            mt="3"
           >
-            <h3 className={css({ fontSize: "lg", fontWeight: "bold", color: "ui.heading", mb: "2" })}>Cancel All Scheduled Emails?</h3>
-            <p className={css({ fontSize: "sm", color: "ui.secondary", mb: "3" })}>
-              This will cancel all scheduled emails for this company that have not
-              yet been sent. This action cannot be undone.
-            </p>
-
-            {result && (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: result.success ? "status.positive" : "status.negative", mb: "3" })}>
-                <div className={css({ flexShrink: 0 })}>
-                  {result.success ? (
-                    <InfoCircledIcon />
-                  ) : (
-                    <ExclamationTriangleIcon />
-                  )}
-                </div>
-                <span>{result.message}</span>
-              </div>
-            )}
-
-            <div className={flex({ gap: "2", justify: "flex-end" })} style={{ marginTop: "16px" }}>
-              <button className={button({ variant: "ghost" })} disabled={loading} onClick={() => setOpen(false)}>
-                {result ? "Close" : "Cancel"}
-              </button>
-              {!result && (
-                <button
-                  className={button({ variant: "solid" })}
-                  onClick={handleConfirm}
-                  disabled={loading}
-                >
-                  {loading ? <Spinner size={12} /> : null}
-                  Confirm Cancel All
-                </button>
+            <Callout.Icon>
+              {result.success ? (
+                <InfoCircledIcon />
+              ) : (
+                <ExclamationTriangleIcon />
               )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+            </Callout.Icon>
+            <Callout.Text>{result.message}</Callout.Text>
+          </Callout.Root>
+        )}
+
+        <Flex gap="2" justify="end" mt="4">
+          <Dialog.Close>
+            <button className={button({ variant: "ghost" })} disabled={loading}>
+              {result ? "Close" : "Cancel"}
+            </button>
+          </Dialog.Close>
+          {!result && (
+            <button
+              className={button({ variant: "solid" })}
+              onClick={handleConfirm}
+              disabled={loading}
+            >
+              {loading ? <Spinner size="1" /> : null}
+              Confirm Cancel All
+            </button>
+          )}
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
-// --- Main Component ---
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export function CompanyEmailsClient({
   companyKey,
@@ -559,101 +551,79 @@ export function CompanyEmailsClient({
 
   if (!isAdmin) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "status.negative" })}>
-          <div className={css({ flexShrink: 0 })}>
+      <Container size="3" p="8">
+        <Callout.Root color="red">
+          <Callout.Icon>
             <ExclamationTriangleIcon />
-          </div>
-          <span>Access denied. Admin only.</span>
-        </div>
-      </div>
+          </Callout.Icon>
+          <Callout.Text>Access denied. Admin only.</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
   if (companyLoading) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={flex({ justify: "center" })}>
-          <Spinner size={24} />
-        </div>
-      </div>
+      <Container size="3" p="8">
+        <Flex justify="center">
+          <Spinner size="3" />
+        </Flex>
+      </Container>
     );
   }
 
   if (!company) {
     return (
-      <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "8" })}>
-        <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "ui.border" })}>
-          <div className={css({ flexShrink: 0 })}>
+      <Container size="3" p="8">
+        <Callout.Root color="gray">
+          <Callout.Icon>
             <InfoCircledIcon />
-          </div>
-          <span>Company not found.</span>
-        </div>
-      </div>
+          </Callout.Icon>
+          <Callout.Text>Company not found.</Callout.Text>
+        </Callout.Root>
+      </Container>
     );
   }
 
-  const tabLinkStyle = css({
-    px: "4",
-    py: "2",
-    fontSize: "sm",
-    color: "ui.tertiary",
-    fontWeight: "medium",
-    borderBottom: "2px solid transparent",
-    borderBottomColor: "transparent",
-    textDecoration: "none",
-    textTransform: "lowercase",
-  });
-
-  const tabLinkActiveStyle = css({
-    px: "4",
-    py: "2",
-    fontSize: "sm",
-    color: "ui.heading",
-    fontWeight: "semibold",
-    borderBottom: "2px solid",
-    borderBottomColor: "accent.primary",
-    textDecoration: "none",
-    textTransform: "lowercase",
-  });
-
   return (
-    <div className={css({ maxWidth: "1200px", mx: "auto", px: "4", py: "6" })}>
-      <div className={flex({ direction: "column", gap: "5" })}>
+    <Container size="3" p={{ initial: "4", md: "6" }}>
+      <Flex direction="column" gap="5">
         {/* Header */}
-        <div>
+        <Box>
           <Link
             href={`/companies/${companyKey}`}
             style={{ textDecoration: "none" }}
           >
-            <div className={flex({ align: "center", gap: "1" })} style={{ marginBottom: "12px" }}>
+            <Flex align="center" gap="1" mb="3">
               <ArrowLeftIcon />
-              <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+              <Text size="2" color="gray">
                 {company.name}
-              </span>
-            </div>
+              </Text>
+            </Flex>
           </Link>
 
           {/* Tab navigation */}
-          <div className={css({ display: "flex", borderBottom: "1px solid", borderBottomColor: "ui.border", mb: "4" })}>
-            <Link href={`/companies/${companyKey}`} className={tabLinkStyle}>
-              Overview
-            </Link>
-            <Link href={`/companies/${companyKey}/contacts`} className={tabLinkStyle}>
-              Contacts
-            </Link>
-            <Link href={`/companies/${companyKey}/emails`} className={tabLinkActiveStyle}>
-              Emails
-            </Link>
+          <div className="rt-TabsRoot" style={{ marginBottom: "var(--space-4)" }}>
+            <div className="rt-TabsList" style={{ display: "flex", gap: 0 }}>
+              <Link href={`/companies/${companyKey}`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
+                Overview
+              </Link>
+              <Link href={`/companies/${companyKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
+                Contacts
+              </Link>
+              <Link href={`/companies/${companyKey}/emails`} className="rt-reset rt-TabsTrigger" data-state="active" style={{ textDecoration: "none" }}>
+                Emails
+              </Link>
+            </div>
           </div>
-        </div>
+        </Box>
 
         {/* Toolbar */}
-        <div className={flex({ align: "center", gap: "3", wrap: "wrap" })}>
-          <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+        <Flex align="center" gap="3" wrap="wrap">
+          <Text size="2" color="gray">
             {companyEmails.length} email
             {companyEmails.length !== 1 ? "s" : ""}
-          </span>
+          </Text>
           <Link
             href={`/companies/${companyKey}/emails/create`}
             className={button({ variant: "ghost", size: "sm" })}
@@ -666,7 +636,7 @@ export function CompanyEmailsClient({
             onClick={handleSyncResend}
             disabled={syncing}
           >
-            {syncing ? <Spinner size={12} /> : <UpdateIcon />}
+            {syncing ? <Spinner size="1" /> : <UpdateIcon />}
             Sync Resend
           </button>
           {scheduledCount > 0 && (
@@ -691,58 +661,60 @@ export function CompanyEmailsClient({
             <PaperPlaneIcon />
             Send Batch ({batchEmailRecipients.length})
           </button>
-        </div>
+        </Flex>
 
         {/* Sync result feedback */}
         {syncResult && (
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "accent.border", bg: "accent.subtle" })}>
-            <div className={css({ flexShrink: 0 })}>
+          <Callout.Root color="blue" size="1" variant="soft">
+            <Callout.Icon>
               <InfoCircledIcon />
-            </div>
-            <span>{syncResult}</span>
-          </div>
+            </Callout.Icon>
+            <Callout.Text>{syncResult}</Callout.Text>
+          </Callout.Root>
         )}
 
         {/* Email list */}
         {emailsError ? (
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "status.negative" })}>
-            <div className={css({ flexShrink: 0 })}>
+          <Callout.Root color="red" variant="soft">
+            <Callout.Icon>
               <ExclamationTriangleIcon />
-            </div>
-            <span>
+            </Callout.Icon>
+            <Callout.Text>
               Failed to load emails: {emailsError.message}
-            </span>
-          </div>
+            </Callout.Text>
+          </Callout.Root>
         ) : emailsLoading ? (
-          <div className={flex({ justify: "center" })}>
-            <Spinner size={24} />
-          </div>
+          <Flex justify="center">
+            <Spinner size="3" />
+          </Flex>
         ) : companyEmails.length === 0 ? (
-          <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "ui.border" })}>
-            <div className={css({ flexShrink: 0 })}>
+          <Callout.Root color="gray" variant="soft">
+            <Callout.Icon>
               <InfoCircledIcon />
-            </div>
-            <span>
+            </Callout.Icon>
+            <Callout.Text>
               No emails sent to contacts at this company yet.
-            </span>
-          </div>
+            </Callout.Text>
+          </Callout.Root>
         ) : (
-          <div className={flex({ direction: "column", gap: "3" })}>
+          <Flex direction="column" gap="3">
             {/* Filters */}
-            <div className={flex({ align: "center", gap: "2", wrap: "wrap" })}>
-              <select
-                className={css({ bg: "ui.surface", border: "1px solid", borderColor: "ui.border", color: "ui.body", p: "6px 10px", fontSize: "sm", outline: "none", cursor: "pointer", _focus: { borderColor: "accent.primary" } })}
+            <Flex align="center" gap="2" wrap="wrap">
+              <Select.Root
                 value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value as StatusFilter)
+                onValueChange={(v) =>
+                  setStatusFilter(v as StatusFilter)
                 }
               >
-                <option value="all">All statuses</option>
-                <option value="delivered">Delivered</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="bounced">Bounced</option>
-                <option value="sent">Sent</option>
-              </select>
+                <Select.Trigger variant="soft" />
+                <Select.Content>
+                  <Select.Item value="all">All statuses</Select.Item>
+                  <Select.Item value="delivered">Delivered</Select.Item>
+                  <Select.Item value="scheduled">Scheduled</Select.Item>
+                  <Select.Item value="bounced">Bounced</Select.Item>
+                  <Select.Item value="sent">Sent</Select.Item>
+                </Select.Content>
+              </Select.Root>
               <button
                 className={button({ variant: "ghost", size: "sm" })}
                 onClick={() => refetchEmails()}
@@ -751,14 +723,14 @@ export function CompanyEmailsClient({
                 Refresh
               </button>
               {statusFilter !== "all" && (
-                <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                <Text size="1" color="gray">
                   {filteredEmails.length} of {companyEmails.length}
-                </span>
+                </Text>
               )}
-            </div>
+            </Flex>
 
             {/* Email cards */}
-            <div className={flex({ direction: "column", gap: "2" })}>
+            <Flex direction="column" gap="2">
               {filteredEmails.map((email) => (
                 <EmailDetailDialog
                   key={email.id}
@@ -783,10 +755,10 @@ export function CompanyEmailsClient({
                   onRefetch={() => void refetchEmails()}
                 />
               ))}
-            </div>
-          </div>
+            </Flex>
+          </Flex>
         )}
-      </div>
+      </Flex>
 
       <BatchEmailModal open={batchEmailOpen} onOpenChange={setBatchEmailOpen} recipients={batchEmailRecipients} />
       <GenerateAndSendBatchEmailModal
@@ -797,6 +769,6 @@ export function CompanyEmailsClient({
         contacts={generateBatchContacts}
         onSuccess={() => void refetchEmails()}
       />
-    </div>
+    </Container>
   );
 }

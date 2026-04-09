@@ -733,6 +733,26 @@ function FamilyMemberContent() {
         </Flex>
       </Card>
 
+      {/* Affirmations */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <Flex justify="between" align="center">
+            <Heading size="4">Affirmations</Heading>
+            <Button
+              variant="soft"
+              size="2"
+              onClick={() => router.push(`/family/${memberSlugOrId}/affirmations`)}
+            >
+              View All
+            </Button>
+          </Flex>
+          <Separator size="4" />
+          <Text size="2" color="gray">
+            Positive affirmations to encourage and support {member.firstName}.
+          </Text>
+        </Flex>
+      </Card>
+
       {/* Teacher Feedback */}
       <Card>
         <Flex direction="column" gap="3" p="4">

@@ -1,7 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { css } from "styled-system/css";
+import {
+  Badge,
+  Box,
+  Callout,
+  Card,
+  Dialog,
+  Flex,
+  Heading,
+  Spinner,
+  Text,
+  TextArea,
+  TextField,
+} from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 import {
   Cross2Icon,
@@ -16,70 +28,6 @@ import {
   useUpdateCampaignMutation,
   useLaunchEmailCampaignMutation,
 } from "@/__generated__/hooks";
-
-// ── Reusable form styles ─────────────────────────────────────────────────────
-
-const inputStyles = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  color: "ui.body",
-  p: "6px 10px",
-  fontSize: "base",
-  width: "100%",
-  outline: "none",
-  fontFamily: "inherit",
-  borderRadius: "0",
-  _focus: { borderColor: "accent.primary" },
-  _placeholder: { color: "ui.tertiary" },
-});
-
-const textareaStyles = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  color: "ui.body",
-  p: "2",
-  fontSize: "base",
-  width: "100%",
-  outline: "none",
-  fontFamily: "inherit",
-  borderRadius: "0",
-  resize: "vertical",
-  minHeight: "80px",
-  _focus: { borderColor: "accent.primary" },
-  _placeholder: { color: "ui.tertiary" },
-});
-
-const labelStyles = css({
-  fontSize: "sm",
-  fontWeight: "medium",
-  color: "ui.secondary",
-  mb: "1",
-  display: "block",
-});
-
-const spinnerStyles = css({
-  display: "inline-block",
-  width: "16px",
-  height: "16px",
-  border: "2px solid",
-  borderColor: "ui.border",
-  borderTopColor: "accent.primary",
-  borderRadius: "50%",
-  animation: "spin 0.6s linear infinite",
-});
-
-const spinnerLargeStyles = css({
-  display: "inline-block",
-  width: "32px",
-  height: "32px",
-  border: "3px solid",
-  borderColor: "ui.border",
-  borderTopColor: "accent.primary",
-  borderRadius: "50%",
-  animation: "spin 0.6s linear infinite",
-});
 
 interface EditCampaignDialogProps {
   campaignId: string;
@@ -220,128 +168,98 @@ export function EditCampaignDialog({
     }
   };
 
-  if (!open) return null;
-
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className={css({
-          position: "fixed",
-          inset: 0,
-          zIndex: 50,
-          bg: "rgba(10, 10, 15, 0.85)",
-          backdropFilter: "blur(12px)",
-        })}
-        onClick={() => onOpenChange(false)}
-      />
-      {/* Panel */}
-      <div
-        className={css({
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          zIndex: 51,
-          bg: "ui.surface",
-          border: "1px solid",
-          borderColor: "ui.border",
-          width: "100%",
-          maxWidth: "650px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          p: "6",
-        })}
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Content
+        maxWidth="650px"
+        style={{ maxHeight: "90vh", overflowY: "auto" }}
       >
-        {/* Header */}
-        <div
-          className={css({
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            pb: "4",
-            mb: "4",
-            borderBottom: "1px solid",
-            borderBottomColor: "ui.border",
-          })}
-        >
-          <h2 className={css({ fontSize: "xl", fontWeight: "bold", color: "ui.heading" })}>
-            Edit Campaign
-          </h2>
-          <button
-            className={button({ variant: "ghost", size: "sm" })}
-            aria-label="Close"
-            onClick={() => onOpenChange(false)}
-          >
-            <Cross2Icon />
-          </button>
-        </div>
+        <Flex justify="between" align="center" mb="4">
+          <Dialog.Title>
+            <Heading size="5">Edit Campaign</Heading>
+          </Dialog.Title>
+          <Dialog.Close>
+            <button className={button({ variant: "ghost", size: "sm" })}>
+              <Cross2Icon />
+            </button>
+          </Dialog.Close>
+        </Flex>
 
         {loading ? (
-          <div className={css({ display: "flex", justifyContent: "center", py: "8" })}>
-            <div className={spinnerLargeStyles} />
-          </div>
+          <Flex justify="center" py="8">
+            <Spinner size="3" />
+          </Flex>
         ) : (
-          <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
+          <Flex direction="column" gap="4">
             {success && (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "green.500/30", bg: "green.500/10" })}>
-                <CheckCircledIcon />
-                <span className={css({ fontSize: "sm", color: "ui.body" })}>{success}</span>
-              </div>
+              <Callout.Root color="green" size="1">
+                <Callout.Icon>
+                  <CheckCircledIcon />
+                </Callout.Icon>
+                <Callout.Text>{success}</Callout.Text>
+              </Callout.Root>
             )}
             {error && (
-              <div className={css({ display: "flex", gap: "3", p: "3", border: "1px solid", borderColor: "red.500/30", bg: "red.500/10" })}>
-                <ExclamationTriangleIcon />
-                <span className={css({ fontSize: "sm", color: "ui.body" })}>{error}</span>
-              </div>
+              <Callout.Root color="red" size="1">
+                <Callout.Icon>
+                  <ExclamationTriangleIcon />
+                </Callout.Icon>
+                <Callout.Text>{error}</Callout.Text>
+              </Callout.Root>
             )}
 
             {/* Campaign Name */}
-            <div>
-              <label className={labelStyles}>Campaign Name</label>
-              <input
-                className={inputStyles}
+            <Box>
+              <Text size="2" weight="medium" mb="1">
+                Campaign Name
+              </Text>
+              <TextField.Root
                 value={campaignName}
                 onChange={(e) => setCampaignName(e.target.value)}
                 placeholder="Campaign name"
+                size="2"
               />
-            </div>
+            </Box>
 
             {/* Status */}
             {data?.emailCampaign && (
-              <div className={css({ display: "flex", gap: "2", alignItems: "center" })}>
-                <span className={css({ fontSize: "sm", color: "ui.tertiary" })}>
+              <Flex gap="2" align="center">
+                <Text size="2" color="gray">
                   Status:
-                </span>
-                <span
-                  className={css({
-                    fontSize: "xs",
-                    px: "2",
-                    py: "1",
-                    border: "1px solid",
-                    borderColor: "ui.border",
-                    color: "ui.secondary",
-                  })}
+                </Text>
+                <Badge
+                  color={
+                    data.emailCampaign.status === "completed"
+                      ? "green"
+                      : data.emailCampaign.status === "running"
+                        ? "orange"
+                        : data.emailCampaign.status === "draft"
+                          ? "gray"
+                          : "red"
+                  }
+                  size="1"
                 >
                   {data.emailCampaign.status}
-                </span>
-                <span className={css({ fontSize: "xs", color: "ui.tertiary" })}>
+                </Badge>
+                <Text size="1" color="gray">
                   Sent: {data.emailCampaign.emailsSent}/
                   {data.emailCampaign.totalRecipients}
-                </span>
-              </div>
+                </Text>
+              </Flex>
             )}
 
             {/* Recipients */}
-            <div>
-              <label className={labelStyles}>Recipients</label>
-              <div className={css({ display: "flex", gap: "2", alignItems: "center" })}>
-                <div style={{ flex: 1 }}>
-                  <input
-                    className={inputStyles}
+            <Box>
+              <Text size="2" weight="medium" mb="1">
+                Recipients
+              </Text>
+              <Flex gap="2" align="center">
+                <Box style={{ flex: 1 }}>
+                  <TextField.Root
                     value={recipientInput}
                     onChange={(e) => setRecipientInput(e.target.value)}
                     placeholder="Enter email address"
+                    size="2"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -349,7 +267,7 @@ export function EditCampaignDialog({
                       }
                     }}
                   />
-                </div>
+                </Box>
                 <button
                   className={button({ variant: "ghost", size: "md" })}
                   onClick={handleAddRecipient}
@@ -357,24 +275,11 @@ export function EditCampaignDialog({
                 >
                   <PlusIcon />
                 </button>
-              </div>
+              </Flex>
               {recipients.length > 0 && (
-                <div className={css({ display: "flex", gap: "1", flexWrap: "wrap", mt: "2" })}>
+                <Flex gap="1" wrap="wrap" mt="2">
                   {recipients.map((email) => (
-                    <span
-                      key={email}
-                      className={css({
-                        fontSize: "xs",
-                        px: "2",
-                        py: "1",
-                        border: "1px solid",
-                        borderColor: "ui.border",
-                        color: "ui.secondary",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "1",
-                      })}
-                    >
+                    <Badge key={email} color="gray" variant="soft" size="2">
                       {email}
                       <button
                         className={button({ variant: "ghost", size: "sm" })}
@@ -383,32 +288,34 @@ export function EditCampaignDialog({
                       >
                         <Cross2Icon />
                       </button>
-                    </span>
+                    </Badge>
                   ))}
-                </div>
+                </Flex>
               )}
-            </div>
+            </Box>
 
             {/* Email Sequence */}
-            <div>
-              <label className={labelStyles}>Email Sequence</label>
-              <div className={css({ display: "flex", flexDirection: "column", gap: "2" })}>
-                <input
-                  className={inputStyles}
+            <Box>
+              <Text size="2" weight="medium" mb="1">
+                Email Sequence
+              </Text>
+              <Flex direction="column" gap="2">
+                <TextField.Root
                   value={subjectInput}
                   onChange={(e) => setSubjectInput(e.target.value)}
                   placeholder="Subject"
+                  size="2"
                 />
-                <div className={css({ display: "flex", gap: "2" })}>
-                  <div style={{ flex: 1 }}>
-                    <textarea
-                      className={textareaStyles}
+                <Flex gap="2">
+                  <Box style={{ flex: 1 }}>
+                    <TextArea
                       value={bodyInput}
                       onChange={(e) => setBodyInput(e.target.value)}
                       placeholder="Body"
                       rows={3}
+                      size="2"
                     />
-                  </div>
+                  </Box>
                   <button
                     className={button({ variant: "ghost", size: "md" })}
                     onClick={handleAddEmail}
@@ -416,47 +323,42 @@ export function EditCampaignDialog({
                   >
                     <PlusIcon />
                   </button>
-                </div>
-              </div>
+                </Flex>
+              </Flex>
               {emails.length > 0 && (
-                <div className={css({ display: "flex", flexDirection: "column", gap: "1", mt: "2" })}>
+                <Flex direction="column" gap="1" mt="2">
                   {emails.map((email, i) => (
-                    <div
-                      key={`${i}-${email.subject}`}
-                      className={css({
-                        border: "1px solid",
-                        borderColor: "ui.border",
-                        p: "3",
-                      })}
-                    >
-                      <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "2" })}>
-                        <div style={{ flex: 1 }}>
-                          <span className={css({ fontSize: "sm", fontWeight: "medium", color: "ui.body" })}>
+                    <Card key={`${i}-${email.subject}`} size="1">
+                      <Flex justify="between" align="start" gap="2">
+                        <Box style={{ flex: 1 }}>
+                          <Text size="2" weight="medium">
                             {email.subject}
-                          </span>
-                          <span
-                            className={css({ fontSize: "xs", color: "ui.tertiary", whiteSpace: "pre-wrap", display: "block" })}
+                          </Text>
+                          <Text
+                            size="1"
+                            color="gray"
+                            style={{ whiteSpace: "pre-wrap" }}
                           >
                             {email.body.substring(0, 100)}
                             {email.body.length > 100 ? "..." : ""}
-                          </span>
-                        </div>
+                          </Text>
+                        </Box>
                         <button
                           className={button({ variant: "ghost", size: "sm" })}
                           onClick={() => handleRemoveEmail(i)}
                         >
                           <Cross2Icon />
                         </button>
-                      </div>
-                    </div>
+                      </Flex>
+                    </Card>
                   ))}
-                </div>
+                </Flex>
               )}
-            </div>
+            </Box>
 
             {/* Actions */}
-            <div className={css({ display: "flex", justifyContent: "space-between", mt: "2" })}>
-              <div className={css({ display: "flex", gap: "2" })}>
+            <Flex justify="between" mt="2">
+              <Flex gap="2">
                 {data?.emailCampaign?.status === "draft" && (
                   <button
                     className={button({ variant: "solidGreen" })}
@@ -465,7 +367,7 @@ export function EditCampaignDialog({
                   >
                     {launching ? (
                       <>
-                        <div className={spinnerStyles} /> Launching...
+                        <Spinner size="1" /> Launching...
                       </>
                     ) : (
                       "Launch Campaign"
@@ -478,14 +380,13 @@ export function EditCampaignDialog({
                     <StopIcon /> Stop
                   </button>
                 )}
-              </div>
-              <div className={css({ display: "flex", gap: "2" })}>
-                <button
-                  className={button({ variant: "ghost" })}
-                  onClick={() => onOpenChange(false)}
-                >
-                  Cancel
-                </button>
+              </Flex>
+              <Flex gap="2">
+                <Dialog.Close>
+                  <button className={button({ variant: "ghost" })}>
+                    Cancel
+                  </button>
+                </Dialog.Close>
                 <button
                   className={button({ variant: "ghost" })}
                   onClick={handleSave}
@@ -493,7 +394,7 @@ export function EditCampaignDialog({
                 >
                   {updating ? (
                     <>
-                      <div className={spinnerStyles} /> Saving...
+                      <Spinner size="1" /> Saving...
                     </>
                   ) : (
                     <>
@@ -501,11 +402,11 @@ export function EditCampaignDialog({
                     </>
                   )}
                 </button>
-              </div>
-            </div>
-          </div>
+              </Flex>
+            </Flex>
+          </Flex>
         )}
-      </div>
-    </>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

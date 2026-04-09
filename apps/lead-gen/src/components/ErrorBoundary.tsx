@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { css } from "styled-system/css";
+import { Box, Container, Heading, Text } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 
 interface Props {
@@ -17,10 +17,10 @@ interface State {
 
 /**
  * Error Boundary Component
- *
+ * 
  * Catches JavaScript errors anywhere in the component tree,
  * logs those errors, and displays a fallback UI instead of crashing the app.
- *
+ * 
  * Usage:
  * <ErrorBoundary fallback={<CustomFallback />}>
  *   <YourComponent />
@@ -38,10 +38,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("[ErrorBoundary] Uncaught error:", error, errorInfo);
-
+    
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
-
+    
     // Log to error reporting service (e.g., Sentry, LogRocket)
     // You can integrate your preferred error tracking here
   }
@@ -59,29 +59,19 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className={css({ maxWidth: "640px", mx: "auto", px: "4", py: "6" })}>
-          <div
-            role="alert"
-            className={css({
-              p: "4",
-              border: "1px solid",
-              borderColor: "status.negative",
-              bg: "ui.surface",
-            })}
-          >
-            <h2 className={css({ fontSize: "xl", fontWeight: "semibold", color: "ui.heading", mb: "2" })}>
-              Something went wrong
-            </h2>
-            <p className={css({ fontSize: "sm", color: "ui.body", mb: "3" })}>
+        <Container size="2" style={{ padding: "24px" }}>
+          <Box role="alert" p="4" style={{ borderRadius: 0, border: "1px solid var(--red-6)", backgroundColor: "var(--red-2)" }}>
+            <Heading size="5" mb="2">Something went wrong</Heading>
+            <Text size="2" as="p" mb="3">
               {this.state.error?.message || "An unexpected error occurred"}
-            </p>
-            <div className={css({ mt: "4" })}>
+            </Text>
+            <Box style={{ marginTop: "16px" }}>
               <button className={button({ variant: "solid" })} onClick={this.reset}>
                 Try again
               </button>
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Container>
       );
     }
 
@@ -91,7 +81,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
 /**
  * Higher-Order Component wrapper for ErrorBoundary
- *
+ * 
  * Usage:
  * const ProtectedComponent = withErrorBoundary(YourComponent);
  */

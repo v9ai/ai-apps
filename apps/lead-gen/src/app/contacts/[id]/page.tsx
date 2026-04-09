@@ -1,6 +1,6 @@
 import { ContactDetailClient } from "./contact-detail-client";
 import { Suspense } from "react";
-import { css } from "styled-system/css";
+import { Container, Text } from "@radix-ui/themes";
 
 export default async function ContactDetailPage({
   params,
@@ -11,9 +11,9 @@ export default async function ContactDetailPage({
   return (
     <Suspense
       fallback={
-        <div className={css({ maxWidth: "768px", mx: "auto", p: "8" })}>
-          <span className={css({ color: "ui.secondary" })}>Loading...</span>
-        </div>
+        <Container size="3" p="8">
+          <Text color="gray">Loading...</Text>
+        </Container>
       }
     >
       <ContactDetailClient contactId={parseInt(id)} />

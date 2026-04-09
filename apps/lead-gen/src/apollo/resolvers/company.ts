@@ -860,41 +860,26 @@ export const companyResolvers = {
         throw new Error("Forbidden");
       }
 
-      const { companyName, website, linkedinUrl, contacts: contactInputs } = args.input;
+      const { companyName, website, contacts: contactInputs } = args.input;
       const errors: string[] = [];
 
       try {
-        // Upsert company: find by linkedin_url first (most reliable), then by name
+        // Upsert company: find by name (case-insensitive) or create
         let companyRow: typeof companies.$inferSelect | undefined;
 
-        if (linkedinUrl) {
-          const byUrl = await context.db
-            .select()
-            .from(companies)
-            .where(eq(companies.linkedin_url, linkedinUrl))
-            .limit(1);
-          companyRow = byUrl[0];
-        }
+        const existing = await context.db
+          .select()
+          .from(companies)
+          .where(sql`lower(${companies.name}) = ${companyName.toLowerCase()}`)
+          .limit(1);
 
-        if (!companyRow) {
-          const byName = await context.db
-            .select()
-            .from(companies)
-            .where(sql`lower(${companies.name}) = ${companyName.toLowerCase()}`)
-            .limit(1);
-          companyRow = byName[0];
-        }
-
-        if (companyRow) {
-          // Update missing fields
-          const updates: Record<string, unknown> = {};
-          if (!companyRow.website && website) updates.website = website;
-          if (!companyRow.linkedin_url && linkedinUrl) updates.linkedin_url = linkedinUrl;
-          if (Object.keys(updates).length > 0) {
-            updates.updated_at = new Date().toISOString();
+        if (existing[0]) {
+          companyRow = existing[0];
+          // Update website if missing
+          if (!companyRow.website && website) {
             const [updated] = await context.db
               .update(companies)
-              .set(updates)
+              .set({ website, updated_at: new Date().toISOString() })
               .where(eq(companies.id, companyRow.id))
               .returning();
             companyRow = updated;
@@ -908,7 +893,6 @@ export const companyResolvers = {
               key,
               name: companyName,
               website: website ?? null,
-              linkedin_url: linkedinUrl ?? null,
             })
             .returning();
           companyRow = created;

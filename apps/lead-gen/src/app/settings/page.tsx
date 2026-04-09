@@ -1,6 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Container,
+  Heading,
+  Text,
+  Flex,
+  Card,
+  TextField,
+  Badge,
+  Dialog,
+  Callout,
+} from "@radix-ui/themes";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import {
@@ -26,42 +37,6 @@ interface ToastState {
   type: "success" | "error";
 }
 
-const container = css({ maxWidth: "768px", mx: "auto", px: "8", py: "6" });
-const flexCol = css({ display: "flex", flexDirection: "column" });
-const card = css({
-  border: "1px solid",
-  borderColor: "ui.border",
-  borderRadius: "lg",
-  p: "6",
-  bg: "ui.subtle",
-});
-const chipBadge = css({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "1",
-  px: "2",
-  py: "0.5",
-  borderRadius: "sm",
-  fontSize: "sm",
-  fontWeight: "medium",
-  color: "var(--red-11)",
-  bg: "var(--red-a3)",
-  pr: "1",
-});
-const inputStyle = css({
-  width: "100%",
-  px: "3",
-  py: "2",
-  fontSize: "sm",
-  border: "1px solid",
-  borderColor: "ui.border",
-  borderRadius: "md",
-  bg: "transparent",
-  color: "ui.primary",
-  _placeholder: { color: "ui.tertiary" },
-  _focus: { outline: "2px solid", outlineColor: "accent.primary", outlineOffset: "-1px" },
-});
-
 function SettingsPageContent() {
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -79,7 +54,6 @@ function SettingsPageContent() {
   });
 
   const excludedCompaniesInputRef = useRef<HTMLInputElement>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const {
     data,
@@ -99,14 +73,6 @@ function SettingsPageContent() {
       setInitialExcludedCompanies(excluded);
     }
   }, [data]);
-
-  useEffect(() => {
-    if (showDiscardDialog) {
-      dialogRef.current?.showModal();
-    } else {
-      dialogRef.current?.close();
-    }
-  }, [showDiscardDialog]);
 
   const hasUnsavedChanges = useCallback(
     () =>
@@ -196,68 +162,69 @@ function SettingsPageContent() {
 
   if (loading || settingsLoading) {
     return (
-      <div className={container}>
-        <span className={css({ color: "ui.primary" })}>Loading...</span>
-      </div>
+      <Container size="3" px="8" py="6">
+        <Text>Loading...</Text>
+      </Container>
     );
   }
 
   if (!user) {
     return (
-      <div className={container}>
-        <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
-          <h1 className={css({ fontSize: "2xl", fontWeight: "bold" })}>Settings</h1>
-          <span>You must be signed in to access settings.</span>
+      <Container size="3" px="8" py="6">
+        <Flex direction="column" gap="4">
+          <Heading size="8">Settings</Heading>
+          <Text>You must be signed in to access settings.</Text>
           <Link href="/" className={button({ variant: "solid" })}>
             Go to Home
           </Link>
-        </div>
-      </div>
+        </Flex>
+      </Container>
     );
   }
 
   return (
-    <div className={container}>
-      <div className={css({ display: "flex", flexDirection: "column", gap: "6" })}>
+    <Container size="3" px="8" py="6">
+      <Flex direction="column" gap="6">
         {/* Breadcrumb */}
-        <div className={css({ display: "flex", alignItems: "center", gap: "2" })}>
+        <Flex align="center" gap="2">
           <Link href="/" style={{ textDecoration: "none" }} className={css({ color: "ui.secondary" })}>
-            <span className={css({ fontSize: "md", fontWeight: "medium" })}>Home</span>
+            <Text size="3" weight="medium">Home</Text>
           </Link>
           <ChevronRightIcon className={css({ color: "ui.tertiary" })} />
-          <span className={css({ fontSize: "md", fontWeight: "medium" })}>Settings</span>
-        </div>
+          <Text size="3" weight="medium">Settings</Text>
+        </Flex>
 
         {/* Excluded Companies */}
-        <div className={card}>
-          <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
-            <div className={css({ display: "flex", flexDirection: "column", gap: "1" })}>
-              <h2 className={css({ fontSize: "xl", fontWeight: "bold" })}>Excluded Companies</h2>
-              <span className={css({ fontSize: "sm", color: "ui.secondary" })}>
+        <Card size="3">
+          <Flex direction="column" gap="4">
+            <Flex direction="column" gap="1">
+              <Heading size="5">Excluded Companies</Heading>
+              <Text size="2" color="gray">
                 Companies hidden from outreach and company listings
-              </span>
-            </div>
+              </Text>
+            </Flex>
 
-            <div className={css({ display: "flex", flexDirection: "column", gap: "2" })}>
+            <Flex direction="column" gap="2">
               {excludedCompaniesChips.length > 0 && (
-                <div className={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+                <Flex gap="2" wrap="wrap">
                   {excludedCompaniesChips.map((company) => (
-                    <span key={company} className={chipBadge}>
-                      {company}
-                      <Cross2Icon
-                        style={{ cursor: "pointer", width: "14px", height: "14px" }}
-                        onClick={() =>
-                          setExcludedCompaniesChips(excludedCompaniesChips.filter((c) => c !== company))
-                        }
-                      />
-                    </span>
+                    <Badge key={company} size="2" variant="soft" color="red" style={{ paddingRight: "4px" }}>
+                      <Flex align="center" gap="1">
+                        {company}
+                        <Cross2Icon
+                          style={{ cursor: "pointer", width: "14px", height: "14px" }}
+                          onClick={() =>
+                            setExcludedCompaniesChips(excludedCompaniesChips.filter((c) => c !== company))
+                          }
+                        />
+                      </Flex>
+                    </Badge>
                   ))}
-                </div>
+                </Flex>
               )}
 
-              <input
+              <TextField.Root
                 ref={excludedCompaniesInputRef}
-                className={inputStyle}
                 placeholder="company-name, another-company, etc."
                 value={excludedCompaniesInput}
                 onChange={(e) => setExcludedCompaniesInput(e.target.value)}
@@ -267,27 +234,27 @@ function SettingsPageContent() {
                 }}
               />
 
-              <span className={css({ fontSize: "xs", color: "ui.secondary" })}>
-                Press Enter or comma to add -- Backspace to remove
-              </span>
-            </div>
+              <Text size="1" color="gray">
+                Press Enter or comma to add • Backspace to remove
+              </Text>
+            </Flex>
 
             {excludedCompaniesChips.length === 0 && (
-              <div className={css({ display: "flex", alignItems: "center", gap: "2", p: "3", borderRadius: "md", bg: "var(--gray-a3)", color: "var(--gray-11)", fontSize: "sm" })}>
-                <InfoCircledIcon />
-                <span>No companies excluded yet</span>
-              </div>
+              <Callout.Root color="gray" size="1">
+                <Callout.Icon><InfoCircledIcon /></Callout.Icon>
+                <Callout.Text>No companies excluded yet</Callout.Text>
+              </Callout.Root>
             )}
-          </div>
-        </div>
+          </Flex>
+        </Card>
 
         {/* Action Buttons */}
-        <div className={css({ display: "flex", justifyContent: "flex-end", gap: "3", alignItems: "center" })}>
+        <Flex justify="end" gap="3" align="center">
           {saveStatus === "saved" && (
-            <div className={css({ display: "flex", alignItems: "center", gap: "2", color: "status.positive" })}>
+            <Flex align="center" gap="2" className={css({ color: "status.positive" })}>
               <CheckIcon />
-              <span className={css({ fontSize: "sm", fontWeight: "medium" })}>Saved</span>
-            </div>
+              <Text size="2" weight="medium">Saved</Text>
+            </Flex>
           )}
 
           <button className={button({ variant: "ghost" })} onClick={handleCancel}>
@@ -303,40 +270,28 @@ function SettingsPageContent() {
           </button>
 
           {hasUnsavedChanges() && saveStatus === "idle" && (
-            <span className={css({ fontSize: "xs", color: "ui.secondary" })}>Cmd+Enter to save</span>
+            <Text size="1" color="gray">⌘↵ to save</Text>
           )}
-        </div>
-      </div>
+        </Flex>
+      </Flex>
 
       {/* Discard Dialog */}
-      <dialog
-        ref={dialogRef}
-        className={css({
-          maxWidth: "450px",
-          width: "90%",
-          p: "6",
-          borderRadius: "lg",
-          border: "1px solid",
-          borderColor: "ui.border",
-          bg: "ui.background",
-          color: "ui.primary",
-          _backdrop: { bg: "rgba(0, 0, 0, 0.5)" },
-        })}
-        onClose={() => setShowDiscardDialog(false)}
-      >
-        <h3 className={css({ fontSize: "lg", fontWeight: "bold", mb: "2" })}>Discard changes?</h3>
-        <p className={css({ fontSize: "sm", color: "ui.secondary", mb: "4" })}>
-          You have unsaved changes. Are you sure you want to discard them?
-        </p>
-        <div className={css({ display: "flex", gap: "3", justifyContent: "flex-end", mt: "4" })}>
-          <button className={button({ variant: "ghost" })} onClick={() => setShowDiscardDialog(false)}>
-            Keep editing
-          </button>
-          <button className={button({ variant: "solid" })} onClick={handleDiscard}>
-            Discard changes
-          </button>
-        </div>
-      </dialog>
+      <Dialog.Root open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <Dialog.Content style={{ maxWidth: 450 }} aria-describedby="discard-description">
+          <Dialog.Title>Discard changes?</Dialog.Title>
+          <Dialog.Description id="discard-description" size="2" mb="4">
+            You have unsaved changes. Are you sure you want to discard them?
+          </Dialog.Description>
+          <Flex gap="3" mt="4" justify="end">
+            <Dialog.Close>
+              <button className={button({ variant: "ghost" })}>Keep editing</button>
+            </Dialog.Close>
+            <button className={button({ variant: "solid" })} onClick={handleDiscard}>
+              Discard changes
+            </button>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Toast */}
       {toast.show && (
@@ -353,13 +308,13 @@ function SettingsPageContent() {
             zIndex: 1000,
           }}
         >
-          <div className={css({ display: "flex", alignItems: "center", gap: "2" })}>
+          <Flex align="center" gap="2">
             {toast.type === "success" && <CheckIcon />}
-            <span className={css({ fontSize: "sm", fontWeight: "medium" })}>{toast.message}</span>
-          </div>
+            <Text size="2" weight="medium">{toast.message}</Text>
+          </Flex>
         </div>
       )}
-    </div>
+    </Container>
   );
 }
 

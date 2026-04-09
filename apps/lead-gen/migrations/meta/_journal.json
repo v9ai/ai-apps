@@ -64,13 +64,6 @@
       "when": 1775123371995,
       "tag": "0008_normal_odin",
       "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1775660271907,
-      "tag": "0009_blue_fantastic_four",
-      "breakpoints": true
     }
   ]
 }

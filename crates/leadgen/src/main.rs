@@ -7,7 +7,6 @@ mod email;
 mod entity_resolution;
 mod eval;
 mod extraction;
-pub mod gh;
 mod jobs;
 mod llm;
 mod matching;

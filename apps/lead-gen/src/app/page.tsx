@@ -1,29 +1,35 @@
 import type { Metadata } from "next";
+import { Box } from "@radix-ui/themes";
 import { css } from "styled-system/css";
 import { LandingNav } from "@/components/landing-nav";
 import { LandingHero } from "@/components/landing-hero";
 import { LandingPipeline } from "@/components/landing-pipeline";
+
 import { LandingFeatures } from "@/components/landing-features";
-import { LandingArchitecture } from "@/components/landing-architecture";
+import { LandingBuilder } from "@/components/landing-builder";
 import { LandingClosing } from "@/components/landing-closing";
 import { LandingFooter } from "@/components/landing-footer";
 import { LandingMetrics } from "@/components/landing-metrics";
 
 /**
- * B2B lead generation landing page — narrative arc: hook → how → proof → why → architecture → action.
+ * B2B lead generation landing page — narrative arc: what → how → proof → why → action.
  *
- * 1. Hero:         Value prop eyebrow + headline + subheadline + CTAs
- * 2. Pipeline:     7-module visualization (static cards, no ReactFlow)
- * 3. Metrics:      8-metric benchmark grid + builder attribution
- * 4. Features:     Differentiators — RL crawling, ensemble scoring, local-first
- * 5. Architecture: Tech stack layers + open source callout
- * 6. Closing:      Final CTA + email capture
+ * 1. Hero:     Local-first B2B lead gen value prop + pipeline stats + CTA pair
+ * 2. Pipeline: 7-module visualization (crawl → extract → resolve → score → report → evaluate)
+ * 3. Metrics:  8-metric benchmark grid with scroll-triggered count-up animations
+ * 4. Builder:  Human element — "built by" with mission context
+ * 5. Features: Differentiators — RL crawling, ensemble scoring, local-first privacy
+ * 6. Closing:  Decision point — deploy locally CTA + research updates signup
+ *
+ * Navigation:
+ * - LandingNav: sticky header with scroll progress + section anchors
+ * - LandingFooter: sitemap + manifesto + back-to-top
  */
 
 export const metadata: Metadata = {
   title: "Agentic Lead Gen — Autonomous B2B Lead Generation Pipeline",
   description:
-    "Autonomous AI agents discover, enrich, score, and deliver qualified B2B leads end-to-end. Open-source, local-first, $1,500/year vs $13,200 cloud.",
+    "Autonomous AI agents discover, enrich, score, and deliver qualified B2B leads end-to-end. Open-source, local-first, $1,500/year vs $13,200 cloud. 35 cited papers.",
   keywords: ["B2B lead generation", "autonomous AI agents", "local-first CRM", "agentic pipeline"],
   openGraph: {
     title: "Agentic Lead Gen — Autonomous B2B Lead Generation Pipeline",
@@ -41,31 +47,19 @@ const sectionDivider = css({
   my: { base: "10", lg: "14" },
 });
 
-const interstitial = css({
-  textAlign: "center",
-  py: { base: "6", lg: "8" },
-  fontSize: "sm",
-  color: "ui.tertiary",
-  letterSpacing: "snug",
-});
-
 export default function HomePage() {
   return (
-    <div>
+    <Box>
       <LandingNav />
       <LandingHero />
       <div className={sectionDivider} />
       <LandingPipeline />
-      <p className={interstitial}>
-        Seven modules. Zero cloud dependencies. Here are the numbers.
-      </p>
       <LandingMetrics />
+      <LandingBuilder />
       <div className={sectionDivider} />
       <LandingFeatures />
-      <div className={sectionDivider} />
-      <LandingArchitecture />
       <LandingClosing />
       <LandingFooter />
-    </div>
+    </Box>
   );
 }
