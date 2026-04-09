@@ -113,29 +113,31 @@ export function ApplicationHeader({ app, isAdmin, onUpdate, onSlugChange }: Appl
             {displayTitle.length > 40 ? displayTitle.slice(0, 40) + "\u2026" : displayTitle}
           </Text>
         </Flex>
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            <IconButton size="2" variant="ghost" color="gray">
-              <DotsHorizontalIcon />
-            </IconButton>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content size="1">
-            <DropdownMenu.Item onClick={() => {
-              setPositionValue(app.position);
-              setCompanyValue(app.company);
-              setUrlValue(app.url ?? "");
-              setSlugValue(app.slug);
-              setAppSaveError(null);
-              setEditingApp(true);
-            }}>
-              <Pencil1Icon /> Edit application
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator />
-            <DropdownMenu.Item color="red" onClick={() => setDeleteDialogOpen(true)}>
-              <TrashIcon /> Delete application
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+        {isAdmin && (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <IconButton size="2" variant="ghost" color="gray">
+                <DotsHorizontalIcon />
+              </IconButton>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content size="1">
+              <DropdownMenu.Item onClick={() => {
+                setPositionValue(app.position);
+                setCompanyValue(app.company);
+                setUrlValue(app.url ?? "");
+                setSlugValue(app.slug);
+                setAppSaveError(null);
+                setEditingApp(true);
+              }}>
+                <Pencil1Icon /> Edit application
+              </DropdownMenu.Item>
+              <DropdownMenu.Separator />
+              <DropdownMenu.Item color="red" onClick={() => setDeleteDialogOpen(true)}>
+                <TrashIcon /> Delete application
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+        )}
       </Flex>
 
       {/* Delete confirmation dialog */}
@@ -238,7 +240,7 @@ export function ApplicationHeader({ app, isAdmin, onUpdate, onSlugChange }: Appl
                 <Text size="1">Job posting</Text>
                 <ExternalLinkIcon width={12} height={12} />
               </a>
-            ) : (
+            ) : isAdmin ? (
               <Button
                 size="1"
                 variant="ghost"
@@ -253,7 +255,7 @@ export function ApplicationHeader({ app, isAdmin, onUpdate, onSlugChange }: Appl
               >
                 + Add job URL
               </Button>
-            )}
+            ) : null}
           </Flex>
         </Box>
       </Flex>
