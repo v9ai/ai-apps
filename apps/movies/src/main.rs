@@ -13,6 +13,37 @@ use std::sync::Arc;
 const MOVIE: &str = "The Little Mermaid";
 const EMBED_URL: &str = "http://localhost:9999/embed";
 const MIN_IMDB: f64 = 6.5;
+const TOP_K: usize = 80;
+
+struct SearchAngle {
+    label: &'static str,
+    focus: &'static str,
+    count: usize,
+}
+
+const SEARCH_ANGLES: &[SearchAngle] = &[
+    SearchAngle {
+        label: "animated-family",
+        focus: "animated films, family movies, musical films, fairy-tale adaptations, \
+                and Disney/Pixar-style animation. Prioritize movies with animal/creature \
+                protagonists, underwater or magical settings, and coming-of-age journeys",
+        count: 35,
+    },
+    SearchAngle {
+        label: "romance-drama",
+        focus: "romantic films, forbidden love stories, drama with parent-child conflict, \
+                stories about sacrifice for love, belonging vs. identity, and films where \
+                characters cross between two worlds (social classes, cultures, realms)",
+        count: 30,
+    },
+    SearchAngle {
+        label: "adventure-fantasy",
+        focus: "fantasy adventure films, hero's journey narratives, magical transformation \
+                stories, quest narratives, films with mythological or supernatural elements, \
+                and adventure stories with strong emotional cores",
+        count: 30,
+    },
+];
 
 // ── Embed server types ────────────────────────────────────────────────────────
 
@@ -81,15 +112,17 @@ async fn search_platform(
     platform: String,
     movie: String,
     profile: String,
+    focus: String,
+    count: usize,
 ) -> Result<Vec<String>> {
     let req = build_request(
         &DeepSeekModel::Chat,
         vec![deepseek::types::user_msg(&format!(
             "Based on this movie profile for \"{movie}\":\n{profile}\n\n\
-             List 20-25 movies currently available on {platform} that are thematically similar.\n\
-             Focus on: animated/family, adventure, transformation/coming-of-age, romance, \
-             parent-child conflict, magic/fantasy.\n\
-             Do NOT include \"{movie}\" itself.\n\n\
+             List {count} movies currently available on {platform} that are similar.\n\
+             Focus specifically on: {focus}.\n\
+             Do NOT include \"{movie}\" itself.\n\
+             Include hidden gems alongside popular titles.\n\n\
              For each: Title (Year) - brief thematic description (1-2 sentences).\n\
              Format as numbered list. Be exhaustive."
         ))],
@@ -224,9 +257,17 @@ fn extract_json_array(text: &str) -> Result<Vec<MovieResult>> {
 }
 
 fn normalize_title(s: &str) -> String {
-    let re = Regex::new(r"(?i)^(the|a|an)\s+").unwrap();
-    re.replace(&s.to_lowercase().trim().to_string(), "")
-        .to_string()
+    let s = s.to_lowercase();
+    let s = s.trim();
+    // Strip trailing year suffixes like "(2023)"
+    let s = Regex::new(r"\s*\(\d{4}\)\s*$").unwrap().replace(s, "");
+    // Strip leading articles
+    let s = Regex::new(r"^(the|a|an)\s+").unwrap().replace(&s, "");
+    // Remove punctuation, collapse whitespace
+    let s: String = s.chars()
+        .map(|c| if c.is_alphanumeric() || c == ' ' { c } else { ' ' })
+        .collect();
+    s.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 // ── Main pipeline ─────────────────────────────────────────────────────────────
@@ -242,23 +283,47 @@ async fn main() -> Result<()> {
     let profile = analyze_movie(&client, MOVIE).await?;
     println!("  Profile: {:.120}…", profile.replace('\n', " "));
 
-    // 2. Search Netflix + Disney+ in parallel
-    println!("▸ Searching candidates…");
-    let (netflix, disney) = tokio::try_join!(
-        search_platform(Arc::clone(&client), "Netflix".into(), MOVIE.into(), profile.clone()),
-        search_platform(Arc::clone(&client), "Disney+".into(), MOVIE.into(), profile.clone()),
-    )?;
-    println!("  Netflix: {}  Disney+: {}", netflix.len(), disney.len());
+    // 2. Search Netflix + Disney+ across multiple angles in parallel
+    println!("▸ Searching candidates across {} angles…", SEARCH_ANGLES.len());
+    let mut search_futures = Vec::new();
+    for angle in SEARCH_ANGLES {
+        for platform in &["Netflix", "Disney+"] {
+            let c = Arc::clone(&client);
+            let p = platform.to_string();
+            let m = MOVIE.to_string();
+            let pr = profile.clone();
+            let f = angle.focus.to_string();
+            let cnt = angle.count;
+            let lbl = angle.label;
+            search_futures.push(async move {
+                let results = search_platform(c, p.clone(), m, pr, f, cnt).await?;
+                Ok::<_, anyhow::Error>((p, lbl.to_string(), results))
+            });
+        }
+    }
+    let search_results = futures::future::try_join_all(search_futures).await?;
+
+    // Merge + early-dedup by rough title
+    let mut candidates: Vec<(String, String)> = Vec::new();
+    let mut seen_rough: HashSet<String> = HashSet::new();
+    for (platform, label, items) in &search_results {
+        let mut added = 0;
+        for item in items {
+            let rough = normalize_title(
+                item.split(" - ").next().unwrap_or(item)
+                    .split('(').next().unwrap_or(item),
+            );
+            if seen_rough.insert(rough) {
+                candidates.push((platform.clone(), item.clone()));
+                added += 1;
+            }
+        }
+        println!("  {platform}/{label}: {added}/{} unique", items.len());
+    }
+    println!("  Total unique candidates: {}", candidates.len());
 
     // 3. Embed profile + all candidates
-    println!("▸ Embedding candidates…");
-    let mut candidates: Vec<(String, String)> = Vec::new();
-    for c in &netflix {
-        candidates.push(("Netflix".into(), c.clone()));
-    }
-    for c in &disney {
-        candidates.push(("Disney+".into(), c.clone()));
-    }
+    println!("▸ Embedding {} candidates…", candidates.len());
 
     let texts: Vec<String> = std::iter::once(profile.clone())
         .chain(candidates.iter().map(|(_, t)| t.clone()))
@@ -267,19 +332,19 @@ async fn main() -> Result<()> {
     let mut embeddings = embed_texts(texts).await?;
     let profile_embed = embeddings.remove(0); // first = profile
 
-    // 4. Rank by cosine similarity, take top 40
+    // 4. Rank by cosine similarity, take top K
     let mut ranked: Vec<(usize, f64)> = embeddings
         .iter()
         .enumerate()
         .map(|(i, e)| (i, cosine_sim(&profile_embed, e)))
         .collect();
     ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-    let top40: Vec<(usize, f64)> = ranked.into_iter().take(40).collect();
-    println!("  Top-40 selected (similarity range: {:.3}–{:.3})", top40.last().unwrap().1, top40.first().unwrap().1);
+    let top_k: Vec<(usize, f64)> = ranked.into_iter().take(TOP_K).collect();
+    println!("  Top-{TOP_K} selected (similarity range: {:.3}–{:.3})", top_k.last().unwrap().1, top_k.first().unwrap().1);
 
-    // 5. Refine in batches of 10
+    // 5. Refine in batches of 15
     println!("▸ Refining with DeepSeek…");
-    let batch_data: Vec<(&str, &str, f64)> = top40
+    let batch_data: Vec<(&str, &str, f64)> = top_k
         .iter()
         .map(|(i, score)| {
             let (platform, text) = &candidates[*i];
@@ -288,7 +353,7 @@ async fn main() -> Result<()> {
         .collect();
 
     let mut all_results: Vec<MovieResult> = Vec::new();
-    for (idx, chunk) in batch_data.chunks(10).enumerate() {
+    for (idx, chunk) in batch_data.chunks(15).enumerate() {
         match refine_batch(&client, chunk, MOVIE).await {
             Ok(mut batch) => {
                 println!("  Batch {}: {} → {} structured", idx + 1, chunk.len(), batch.len());
