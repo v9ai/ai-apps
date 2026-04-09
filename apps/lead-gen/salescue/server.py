@@ -367,7 +367,7 @@ async def classify_company(req: CompanyClassifyRequest):
 
     # Geo relevance: exclude firms focused on irrelevant regions
     _IRRELEVANT_GEO_RE = re.compile(
-        r"\b(latam|latin america|africa|apac|middle east|mena|india[- ]only|india[- ]focused|india[- ]based|southeast asia|south asia|china[- ]focused|china[- ]only|nearshore|offshore)\b",
+        r"\b(latam|latin america|africa|apac|asia|india|middle east|mena|philippines|nigeria|pakistan|south asia|southeast asia|eastern europe)\b",
         re.IGNORECASE,
     )
     geo_text = f"{req.name} {req.description} {req.location}"
