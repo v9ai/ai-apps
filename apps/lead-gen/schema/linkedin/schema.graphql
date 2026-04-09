@@ -1,12 +1,14 @@
 extend type Query {
   linkedinPost(id: Int!): LinkedInPost
   linkedinPosts(type: LinkedInPostType, companyId: Int, limit: Int, offset: Int): [LinkedInPost!]!
+  similarPosts(postId: Int!, limit: Int, minScore: Float): [SimilarPost!]!
 }
 
 extend type Mutation {
   upsertLinkedInPost(input: UpsertLinkedInPostInput!): LinkedInPost!
   upsertLinkedInPosts(inputs: [UpsertLinkedInPostInput!]!): UpsertLinkedInPostsResult!
   deleteLinkedInPost(id: Int!): Boolean!
+  analyzeLinkedInPosts(postIds: [Int!], limit: Int): AnalyzePostsResult!
 }
 
 type UpsertLinkedInPostsResult {
@@ -14,6 +16,24 @@ type UpsertLinkedInPostsResult {
   inserted: Int!
   updated: Int!
   errors: [String!]!
+}
+
+type AnalyzePostsResult {
+  success: Boolean!
+  analyzed: Int!
+  failed: Int!
+  errors: [String!]!
+}
+
+type SimilarPost {
+  post: LinkedInPost!
+  similarity: Float!
+}
+
+type ExtractedSkill {
+  tag: String!
+  label: String!
+  confidence: Float!
 }
 
 enum LinkedInPostType {
@@ -36,6 +56,8 @@ type LinkedInPost {
   postedAt: String
   scrapedAt: String!
   rawData: JSON
+  skills: [ExtractedSkill!]
+  analyzedAt: String
   createdAt: String!
 }
 

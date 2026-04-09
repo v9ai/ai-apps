@@ -57,3 +57,20 @@ export {
   type CompanyInput,
   type OutcomeMap,
 } from "./template-recommender";
+
+export {
+  embedPost,
+  embedPostBatch,
+  JOB_EMBEDDING_DIM,
+} from "./post-embedder";
+
+export {
+  extractSkills,
+  type ExtractedSkill,
+} from "./skill-extractor";
+
+export {
+  analyzePost,
+  analyzePostBatch,
+  type PostAnalysis,
+} from "./post-analyzer";
