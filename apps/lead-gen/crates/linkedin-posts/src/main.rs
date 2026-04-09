@@ -62,6 +62,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         // Original routes
         .route("/contacts", get(get_contacts).post(add_contacts))
+        .route("/contacts/recruiters", get(get_recruiter_contacts))
         .route("/posts", post(add_posts))
         .route("/jobs", post(add_job_posts))
         .route("/stats", get(stats))
@@ -100,6 +101,21 @@ async fn get_contacts(
     // Cache in LanceDB
     if let Err(e) = state.db.add_contacts(&contacts).await {
         tracing::warn!("Failed to cache contacts in LanceDB: {}", e);
+    }
+
+    Ok(Json(contacts))
+}
+
+async fn get_recruiter_contacts(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<models::Contact>>, (StatusCode, String)> {
+    let contacts = neon::fetch_recruiter_contacts()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Cache in LanceDB
+    if let Err(e) = state.db.add_contacts(&contacts).await {
+        tracing::warn!("Failed to cache recruiter contacts in LanceDB: {}", e);
     }
 
     Ok(Json(contacts))
