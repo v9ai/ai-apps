@@ -13,6 +13,7 @@ import type {
 import { eq, and, or, like, ilike, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
+import { classifyCompany } from "@/ml/company-classifier";
 import type {
   QueryCompaniesArgs,
   QueryCompanyArgs,
@@ -1034,7 +1035,7 @@ export const companyResolvers = {
       for (const input of args.companies) {
         try {
           const key = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-          await context.db.insert(companies).values({
+          const [inserted] = await context.db.insert(companies).values({
             key,
             name: input.name,
             website: input.website ?? null,
@@ -1042,8 +1043,25 @@ export const companyResolvers = {
             linkedin_url: input.linkedin_url ?? null,
             location: input.location ?? null,
             description: input.description ?? null,
-          });
+          }).returning({ id: companies.id });
           imported++;
+
+          // Classify and auto-block recruitment/staffing firms
+          const classText = [input.name, input.description].filter(Boolean).join(" ");
+          const classification = await classifyCompany(classText);
+          if (classification.category === "Staffing and recruitment agency" && classification.confidence >= 0.3) {
+            await context.db
+              .update(companies)
+              .set({
+                blocked: true,
+                category: "STAFFING",
+                ai_classification_reason: classification.reasons.join("; "),
+                ai_classification_confidence: classification.confidence,
+                updated_at: new Date().toISOString(),
+              })
+              .where(eq(companies.id, inserted.id));
+            console.log(`[importCompanies] Auto-blocked staffing firm: ${input.name} (confidence: ${classification.confidence.toFixed(2)})`);
+          }
         } catch (err) {
           errors.push(`${input.name}: ${err instanceof Error ? err.message : String(err)}`);
         }
