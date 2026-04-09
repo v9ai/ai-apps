@@ -646,7 +646,7 @@ async function browseProfiles(
     }
 
     // Dwell — remaining time up to ~5s total (already spent ~2.5s waiting for render)
-    await new Promise((r) => setTimeout(r, 2500));
+    await randomDelay(2500);
   }
 
   // Navigate back to search results
@@ -654,7 +654,7 @@ async function browseProfiles(
   await waitForTabLoad(tabId);
 
   // Wait for content script to re-inject, then send done message
-  await new Promise((r) => setTimeout(r, 2000));
+  await randomDelay(2000);
   try {
     await chrome.tabs.sendMessage(tabId, {
       action: "browseDone",
@@ -822,7 +822,7 @@ async function browseCompanies(tabId: number) {
 
   while (!companyCancelled) {
     // Wait for page content to render
-    await new Promise((r) => setTimeout(r, 2000));
+    await randomDelay(2000);
 
     // Scroll to bottom to load all results
     await chrome.scripting.executeScript({
@@ -830,7 +830,7 @@ async function browseCompanies(tabId: number) {
       world: "MAIN",
       func: () => window.scrollTo(0, document.body.scrollHeight),
     });
-    await new Promise((r) => setTimeout(r, 1500));
+    await randomDelay(1500);
 
     const urls = await extractCompanyUrls(tabId);
     const newUrls = urls.filter((u) => !allCompanyUrls.includes(u));
@@ -844,7 +844,7 @@ async function browseCompanies(tabId: number) {
 
     page++;
     await waitForTabLoad(tabId);
-    await new Promise((r) => setTimeout(r, 2000));
+    await randomDelay(2000);
   }
 
   console.log(`[BrowseCompanies] Phase 2: Visiting ${allCompanyUrls.length} companies...`);
