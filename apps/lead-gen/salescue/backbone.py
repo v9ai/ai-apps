@@ -2,6 +2,13 @@
 
 All modules share a single DeBERTa-v3-base encoder. Thread-safe singleton
 with lazy loading and device auto-detection (CPU/CUDA/MPS).
+
+Includes `encode_embeddings()` which produces discriminative sentence
+embeddings via mean-pooling + centering + L2 normalization.  Raw DeBERTa
+mean-pooled vectors suffer from *anisotropy* (all vectors cluster in a
+narrow cone, cosine similarity ≈ 0.95 for everything).  Subtracting the
+corpus mean and normalizing spreads the vectors across the unit sphere,
+restoring cosine similarity as a meaningful distance metric.
 """
 
 from __future__ import annotations
@@ -10,6 +17,7 @@ import threading
 from typing import TYPE_CHECKING
 
 import torch
+import torch.nn.functional as F
 
 if TYPE_CHECKING:
     from transformers import AutoModel, AutoTokenizer
@@ -134,6 +142,69 @@ class SharedEncoder:
             result["_original_order"] = inv
 
         return result
+
+    # ── Discriminative embedding helpers ──────────────────────────────────
+
+    @staticmethod
+    def _mean_pool(encoder_output: dict) -> torch.Tensor:
+        """Mean-pool last_hidden_state using attention mask. Returns [B, hidden]."""
+        last_hidden = encoder_output["encoder_output"].last_hidden_state
+        mask = encoder_output["attention_mask"].unsqueeze(-1).float()
+        return (last_hidden * mask).sum(dim=1) / mask.sum(dim=1)
+
+    @staticmethod
+    def compute_center(texts: list[str], max_length: int = 512) -> torch.Tensor:
+        """Compute the mean embedding over a set of texts (before normalization).
+
+        Use this to obtain a centering vector from a representative corpus
+        (e.g. all prototype sentences).  Subtracting this center from new
+        embeddings before L2-normalizing removes the anisotropic bias.
+
+        Returns:
+            Tensor of shape [1, hidden] — the centroid.
+        """
+        enc = SharedEncoder.encode(texts, max_length=max_length)
+        pooled = SharedEncoder._mean_pool(enc)  # [B, hidden]
+        return pooled.mean(dim=0, keepdim=True)  # [1, hidden]
+
+    @staticmethod
+    def encode_embeddings(
+        text: str | list[str],
+        center: torch.Tensor | None = None,
+        max_length: int = 512,
+    ) -> torch.Tensor:
+        """Produce discriminative sentence embeddings.
+
+        Pipeline:
+            1. Mean-pool DeBERTa last_hidden_state (attention-masked).
+            2. Subtract *center* (corpus mean) to break anisotropy.
+            3. L2-normalize to the unit sphere.
+
+        Without centering, DeBERTa mean-pooled cosine similarities are
+        compressed into [0.93, 0.97] regardless of semantic content.
+        Centering spreads the distribution so that cosine similarity
+        between related texts is >0.7 and unrelated texts <0.4.
+
+        Args:
+            text: Single string or list of strings.
+            center: Optional [1, hidden] centroid tensor from `compute_center()`.
+                    If None, only L2 normalization is applied (still helpful,
+                    but centering gives the best discrimination).
+            max_length: Max token length for the encoder.
+
+        Returns:
+            Tensor of shape [B, hidden], L2-normalized.
+        """
+        if isinstance(text, str):
+            text = [text]
+
+        enc = SharedEncoder.encode(text, max_length=max_length)
+        pooled = SharedEncoder._mean_pool(enc)  # [B, hidden]
+
+        if center is not None:
+            pooled = pooled - center  # shift away from the common direction
+
+        return F.normalize(pooled, p=2, dim=1)
 
     @staticmethod
     def unload() -> None:

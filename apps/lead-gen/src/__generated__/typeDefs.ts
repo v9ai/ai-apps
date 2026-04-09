@@ -204,6 +204,7 @@ input CompanyImportInput {
   linkedin_url: String
   location: String
   name: String!
+  size: String
   website: String
 }
 
