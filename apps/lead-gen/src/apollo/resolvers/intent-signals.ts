@@ -231,25 +231,25 @@ export const intentSignalResolvers = {
   },
 
   IntentSignal: {
-    companyId: (parent: any) => parent.company_id,
-    signalType: (parent: any) => parent.signal_type?.toUpperCase(),
-    sourceType: (parent: any) => parent.source_type,
-    sourceUrl: (parent: any) => parent.source_url,
-    rawText: (parent: any) => parent.raw_text,
-    evidence: (parent: any) => safeJsonParse(parent.evidence, []),
-    detectedAt: (parent: any) => parent.detected_at,
-    decaysAt: (parent: any) => parent.decays_at,
-    decayDays: (parent: any) => parent.decay_days,
-    freshness: (parent: any) => computeFreshness(parent.detected_at, parent.decay_days),
-    modelVersion: (parent: any) => parent.model_version,
-    createdAt: (parent: any) => parent.created_at,
+    companyId: (parent: IntentSignal) => parent.company_id,
+    signalType: (parent: IntentSignal) => parent.signal_type?.toUpperCase(),
+    sourceType: (parent: IntentSignal) => parent.source_type,
+    sourceUrl: (parent: IntentSignal) => parent.source_url,
+    rawText: (parent: IntentSignal) => parent.raw_text,
+    evidence: (parent: IntentSignal) => safeJsonParse(parent.evidence, []),
+    detectedAt: (parent: IntentSignal) => parent.detected_at,
+    decaysAt: (parent: IntentSignal) => parent.decays_at,
+    decayDays: (parent: IntentSignal) => parent.decay_days,
+    freshness: (parent: IntentSignal) => computeFreshness(parent.detected_at, parent.decay_days),
+    modelVersion: (parent: IntentSignal) => parent.model_version,
+    createdAt: (parent: IntentSignal) => parent.created_at,
   },
 
   Company: {
-    intentScore: (parent: any) => parent.intent_score ?? 0,
-    intentScoreUpdatedAt: (parent: any) => parent.intent_score_updated_at,
-    intentSignalsCount: (parent: any) => parent.intent_signals_count ?? 0,
-    async intentScoreDetails(parent: any) {
+    intentScore: (parent: Company) => parent.intent_score ?? 0,
+    intentScoreUpdatedAt: (parent: Company) => parent.intent_score_updated_at,
+    intentSignalsCount: (parent: Company) => parent.intent_signals_count ?? 0,
+    async intentScoreDetails(parent: Company) {
       const signals = await db
         .select()
         .from(intentSignals)
