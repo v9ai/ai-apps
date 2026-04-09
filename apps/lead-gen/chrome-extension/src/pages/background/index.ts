@@ -1601,15 +1601,8 @@ async function findRelatedCompanies(tabId: number) {
       return;
     }
 
-    const batch: Array<{
-      name: string;
-      website?: string;
-      linkedin_url?: string;
-      description?: string;
-      location?: string;
-    }> = [];
-
     const returnUrl = currentUrl;
+    let saved = 0;
 
     for (let i = 0; i < similarUrls.length; i++) {
       // Check tab still exists before each navigation
@@ -1628,7 +1621,7 @@ async function findRelatedCompanies(tabId: number) {
 
       const data = await extractCompanyData(tabId);
       if (data && data.name) {
-        batch.push({
+        const company = {
           name: data.name,
           website: data.website || undefined,
           linkedin_url: data.linkedinUrl || undefined,
@@ -1640,20 +1633,14 @@ async function findRelatedCompanies(tabId: number) {
             .filter(Boolean)
             .join("\n") || undefined,
           location: data.location || undefined,
-        });
+        };
 
-        console.log(`[FindRelated] ${i + 1}/${similarUrls.length}: ${data.name}`);
+        const result = await saveCompanyBatch([company]);
+        saved += result;
+        console.log(`[FindRelated] ${i + 1}/${similarUrls.length}: ${data.name} (saved: ${saved})`);
       }
 
-      // Progress messages will fail (content script gone after navigation) — expected.
-      // The final "done" message after navigating back is what matters.
-
       await randomDelay(1500);
-    }
-
-    let saved = 0;
-    if (batch.length > 0) {
-      saved = await saveCompanyBatch(batch);
     }
 
     // Navigate back to original page
