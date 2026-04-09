@@ -92,6 +92,17 @@ export const savedVideos = pgTable("saved_videos", {
   unique().on(t.userId, t.videoId),
 ]);
 
+export const favoriteStores = pgTable("favorite_stores", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  storeName: text("store_name").notNull(),
+  url: text("url").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique().on(t.userId, t.url),
+]);
+
 export const partMocsCache = pgTable("part_mocs_cache", {
   id: serial("id").primaryKey(),
   partNum: text("part_num").notNull().unique(),
