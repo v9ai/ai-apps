@@ -1360,15 +1360,104 @@ async function importPeopleFromCurrentPage(
 
 // ── Find Related/Similar Companies ──────────────────────────────────
 
-function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
+// Click "Show all" in the "Pages people also viewed" section (if present).
+// Returns true if the button was found and clicked.
+function clickShowAllSimilar(tabId: number): Promise<boolean> {
   return chrome.scripting
     .executeScript({
       target: { tabId },
       world: "MAIN",
-      func: async () => {
+      func: () => {
         const keywords = ["people also viewed", "similar pages", "affiliated"];
+        const headings = document.querySelectorAll("h1, h2, h3, h4, [role='heading']");
+        for (const heading of headings) {
+          const text = heading.textContent?.trim().toLowerCase() || "";
+          if (keywords.some((kw) => text.includes(kw))) {
+            const container = heading.closest("section") || heading.closest("aside") || heading.parentElement;
+            if (!container) continue;
+            const btn = Array.from(container.querySelectorAll<HTMLElement>("a, button")).find((el) => {
+              const t = el.textContent?.trim().toLowerCase() || "";
+              return t.includes("show all") || t.includes("see all");
+            });
+            if (btn) {
+              console.log("[FindRelated] Found 'Show all' button, clicking:", btn.textContent?.trim());
+              btn.click();
+              return true;
+            }
+          }
+        }
+        return false;
+      },
+    })
+    .then((res) => (res?.[0]?.result as boolean) ?? false)
+    .catch((err) => {
+      console.error("[FindRelated] clickShowAllSimilar error:", err);
+      return false;
+    });
+}
 
-        // Find the "Pages people also viewed" section heading
+// Check if a modal/dialog is open and scrape company links from it, then close it.
+// Returns the links found, or empty array if no modal.
+function scrapeModalCompanyUrls(tabId: number): Promise<string[]> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const modal =
+          document.querySelector('[role="dialog"]') ||
+          document.querySelector(".artdeco-modal");
+        if (!modal) {
+          console.log("[FindRelated] No modal found on page");
+          return [];
+        }
+
+        // Scroll modal content to trigger lazy-loading
+        const scrollable = modal.querySelector(".artdeco-modal__content") || modal;
+        (scrollable as HTMLElement).scrollTop = (scrollable as HTMLElement).scrollHeight;
+
+        const links: string[] = [];
+        modal.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
+          try {
+            const href = a.href.split("?")[0].replace(/\/$/, "");
+            const parsed = new URL(href);
+            const match = parsed.pathname.match(/^\/company\/([^/]+)$/);
+            if (match && !links.includes(href)) links.push(href);
+          } catch { /* skip malformed URLs */ }
+        });
+
+        console.log(`[FindRelated] Modal: found ${links.length} company links`);
+
+        // Close modal
+        const dismiss =
+          modal.querySelector<HTMLElement>(".artdeco-modal__dismiss") ||
+          modal.querySelector<HTMLElement>('button[aria-label="Dismiss"]') ||
+          modal.querySelector<HTMLElement>('button[aria-label="Close"]');
+        if (dismiss) {
+          dismiss.click();
+          console.log("[FindRelated] Modal dismissed");
+        } else {
+          console.warn("[FindRelated] No dismiss button found on modal");
+        }
+
+        return links;
+      },
+    })
+    .then((res) => (res?.[0]?.result as string[]) ?? [])
+    .catch((err) => {
+      console.error("[FindRelated] scrapeModalCompanyUrls error:", err);
+      return [];
+    });
+}
+
+// Extract company URLs from the "Pages people also viewed" sidebar (fallback).
+function extractSidebarCompanyUrls(tabId: number): Promise<string[]> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const keywords = ["people also viewed", "similar pages", "affiliated"];
         let container: Element | null = null;
         const headings = document.querySelectorAll("h1, h2, h3, h4, [role='heading']");
         for (const heading of headings) {
@@ -1384,82 +1473,47 @@ function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
         }
         console.log("[FindRelated] Found section container:", container.tagName);
 
-        function extractCompanyLinks(root: Element): string[] {
-          const links: string[] = [];
-          root.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
-            try {
-              const href = a.href.split("?")[0].replace(/\/$/, "");
-              const parsed = new URL(href);
-              const match = parsed.pathname.match(/^\/company\/([^/]+)$/);
-              if (match && !links.includes(href)) links.push(href);
-            } catch { /* skip malformed URLs */ }
-          });
-          return links;
-        }
-
-        // Try clicking "Show all" to open the modal with the full list
-        const showAllBtn = Array.from(
-          container.querySelectorAll<HTMLElement>("a, button")
-        ).find((el) => {
-          const text = el.textContent?.trim().toLowerCase() || "";
-          return text.includes("show all") || text.includes("see all");
+        const links: string[] = [];
+        container.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
+          try {
+            const href = a.href.split("?")[0].replace(/\/$/, "");
+            const parsed = new URL(href);
+            const match = parsed.pathname.match(/^\/company\/([^/]+)$/);
+            if (match && !links.includes(href)) links.push(href);
+          } catch { /* skip malformed URLs */ }
         });
-
-        if (showAllBtn) {
-          console.log("[FindRelated] Found 'Show all' button, clicking...");
-          showAllBtn.click();
-
-          // Poll for modal/dialog to appear (up to 5s)
-          let modal: Element | null = null;
-          for (let i = 0; i < 10; i++) {
-            await new Promise((r) => setTimeout(r, 500));
-            modal =
-              document.querySelector('[role="dialog"]') ||
-              document.querySelector(".artdeco-modal");
-            if (modal) break;
-          }
-
-          if (modal) {
-            console.log("[FindRelated] Modal opened, scrolling to load all results...");
-            // Scroll inside modal to load all lazy-loaded results
-            const scrollable = modal.querySelector(".artdeco-modal__content") || modal;
-            for (let i = 0; i < 3; i++) {
-              (scrollable as HTMLElement).scrollTop = (scrollable as HTMLElement).scrollHeight;
-              await new Promise((r) => setTimeout(r, 800));
-            }
-
-            const links = extractCompanyLinks(modal);
-            console.log(`[FindRelated] Modal: extracted ${links.length} company links`);
-
-            // Close modal
-            const dismiss =
-              modal.querySelector<HTMLElement>(".artdeco-modal__dismiss") ||
-              modal.querySelector<HTMLElement>('button[aria-label="Dismiss"]') ||
-              modal.querySelector<HTMLElement>('button[aria-label="Close"]');
-            if (dismiss) {
-              dismiss.click();
-              console.log("[FindRelated] Modal dismissed");
-            } else {
-              console.warn("[FindRelated] No dismiss button found on modal");
-            }
-
-            if (links.length > 0) return links;
-            console.warn("[FindRelated] Modal had 0 links, falling back to sidebar");
-          } else {
-            console.warn("[FindRelated] Modal did not open after 5s, falling back to sidebar");
-          }
-        } else {
-          console.log("[FindRelated] No 'Show all' button found, using sidebar only");
-        }
-
-        // Fallback: scrape from sidebar (only ~3-4 visible)
-        const sidebarLinks = extractCompanyLinks(container);
-        console.log(`[FindRelated] Sidebar fallback: extracted ${sidebarLinks.length} company links`);
-        return sidebarLinks;
+        console.log(`[FindRelated] Sidebar: found ${links.length} company links`);
+        return links;
       },
     })
-    .then((results) => (results?.[0]?.result as string[]) ?? [])
-    .catch(() => []);
+    .then((res) => (res?.[0]?.result as string[]) ?? [])
+    .catch((err) => {
+      console.error("[FindRelated] extractSidebarCompanyUrls error:", err);
+      return [];
+    });
+}
+
+// Orchestrate: try modal first (click "Show all" → wait → scrape), fall back to sidebar.
+async function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
+  const clicked = await clickShowAllSimilar(tabId);
+
+  if (clicked) {
+    console.log("[FindRelated] 'Show all' clicked, waiting for modal...");
+    // Poll for modal to open — each attempt is a separate sync executeScript
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await randomDelay(1000);
+      const modalLinks = await scrapeModalCompanyUrls(tabId);
+      if (modalLinks.length > 0) {
+        console.log(`[FindRelated] Modal yielded ${modalLinks.length} companies`);
+        return modalLinks;
+      }
+    }
+    console.warn("[FindRelated] Modal had 0 links after 5 attempts, falling back to sidebar");
+  } else {
+    console.log("[FindRelated] No 'Show all' button, using sidebar");
+  }
+
+  return extractSidebarCompanyUrls(tabId);
 }
 
 async function findRelatedCompanies(tabId: number) {
