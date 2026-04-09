@@ -984,11 +984,28 @@ async function browseCompanies(tabId: number) {
         continue;
       }
 
+      // Check remote job postings (boost signal, not a gate)
+      let remoteJobCount = -1;
+      if (data.linkedinNumericId) {
+        console.log(`[BrowseCompanies] Checking remote jobs for ${data.name} (ID: ${data.linkedinNumericId})...`);
+        remoteJobCount = await countRemoteJobs(tabId, data.linkedinNumericId);
+        totalRemoteJobs += Math.max(0, remoteJobCount);
+        if (remoteJobCount > 0) {
+          console.log(`[BrowseCompanies] ${data.name} — 🎯✅ CONFIRMED — ${remoteJobCount} active remote jobs`);
+        } else {
+          console.log(`[BrowseCompanies] ${data.name} — 🎯⚠️ UNCONFIRMED — no active remote jobs`);
+        }
+      } else {
+        console.log(`[BrowseCompanies] No numeric ID for ${data.name}, skipping job count`);
+      }
+
+      const jobLabel = remoteJobCount > 0 ? `Remote Jobs: ${remoteJobCount}` : "";
+
       batch.push({
         name: data.name,
         website: data.website || undefined,
         linkedin_url: data.linkedinUrl || undefined,
-        description: [data.description, data.industry ? `Industry: ${data.industry}` : "", data.size ? `Size: ${data.size}` : ""]
+        description: [data.description, data.industry ? `Industry: ${data.industry}` : "", data.size ? `Size: ${data.size}` : "", jobLabel]
           .filter(Boolean)
           .join("\n") || undefined,
         location: data.location || undefined,
@@ -1021,7 +1038,7 @@ async function browseCompanies(tabId: number) {
   await waitForTabLoad(tabId);
 
   console.log(
-    `[BrowseCompanies] Complete. Saved ${saved}/${totalProcessed} companies (${filtered} filtered) from ${page} page(s).`,
+    `[BrowseCompanies] Complete. Saved ${saved}/${totalProcessed} companies (${filtered} filtered, ${totalRemoteJobs} remote jobs found) from ${page} page(s).`,
   );
 }
 
