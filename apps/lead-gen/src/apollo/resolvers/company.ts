@@ -13,7 +13,6 @@ import type {
 import { eq, and, or, like, ilike, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
-import { classifyCompany } from "@/ml/company-classifier";
 import type {
   QueryCompaniesArgs,
   QueryCompanyArgs,
@@ -1046,22 +1045,21 @@ export const companyResolvers = {
           }).returning({ id: companies.id });
           imported++;
 
-          // Classify and auto-block recruitment/staffing firms
-          const classText = [input.name, input.description].filter(Boolean).join(" ");
-          const classification = await classifyCompany(classText);
-          if (classification.category === "Staffing and recruitment agency" && classification.confidence >= 0.3) {
-            await context.db
-              .update(companies)
-              .set({
-                blocked: true,
-                category: "STAFFING",
-                ai_classification_reason: classification.reasons.join("; "),
-                ai_classification_confidence: classification.confidence,
-                updated_at: new Date().toISOString(),
-              })
-              .where(eq(companies.id, inserted.id));
-            console.log(`[importCompanies] Auto-blocked staffing firm: ${input.name} (confidence: ${classification.confidence.toFixed(2)})`);
-          }
+          // Fire-and-forget: send to SalesCue classifier for staffing detection
+          const salescueUrl = process.env.SALESCUE_URL || "http://localhost:8000";
+          fetch(`${salescueUrl}/classify-company`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              company_id: inserted.id,
+              name: input.name,
+              description: input.description ?? "",
+              website: input.website ?? "",
+              location: input.location ?? "",
+            }),
+          }).catch((err) => {
+            console.warn(`[importCompanies] Classifier fire-and-forget failed for ${input.name}:`, err.message);
+          });
         } catch (err) {
           errors.push(`${input.name}: ${err instanceof Error ? err.message : String(err)}`);
         }

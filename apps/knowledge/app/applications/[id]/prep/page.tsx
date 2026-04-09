@@ -144,23 +144,37 @@ function EditableCodePanel({ lang, value, onChange }: { lang: string; value: str
 function InteractiveCodePlayground({ initialHtml, initialCss }: { initialHtml: string; initialCss: string }) {
   const [html, setHtml] = useState(initialHtml);
   const [css, setCss] = useState(initialCss);
+  const [challenge, setChallenge] = useState(false);
+  const [challengeCss, setChallengeCss] = useState("");
+
+  const activeCss = challenge ? challengeCss : css;
+  const setActiveCss = challenge ? setChallengeCss : setCss;
+
   const debouncedHtml = useDebouncedValue(html, 200);
-  const debouncedCss = useDebouncedValue(css, 200);
+  const debouncedCss = useDebouncedValue(activeCss, 200);
   const dirty = html !== initialHtml || css !== initialCss;
 
   return (
     <Box mb="4" style={{ position: "relative" }}>
-      {dirty && (
+      <div className="code-playground-toolbar">
         <button
-          className="code-playground-reset"
-          onClick={() => { setHtml(initialHtml); setCss(initialCss); }}
+          className={`code-playground-challenge ${challenge ? "active" : ""}`}
+          onClick={() => setChallenge((c) => !c)}
         >
-          Reset
+          {challenge ? "Solution" : "Challenge"}
         </button>
-      )}
+        {(dirty || challenge) && (
+          <button
+            className="code-playground-reset"
+            onClick={() => { setHtml(initialHtml); setCss(initialCss); setChallenge(false); setChallengeCss(""); }}
+          >
+            Reset
+          </button>
+        )}
+      </div>
       <div className="code-triple-grid">
         <EditableCodePanel lang="html" value={html} onChange={setHtml} />
-        <EditableCodePanel lang="css" value={css} onChange={setCss} />
+        <EditableCodePanel lang="css" value={activeCss} onChange={setActiveCss} />
         <LivePreviewPanel html={debouncedHtml} css={debouncedCss} />
       </div>
     </Box>
@@ -280,9 +294,23 @@ function PrepPageInner() {
               h4: ({ children }) => (
                 <Heading size="3" mt="4" mb="2">{children}</Heading>
               ),
-              p: ({ children }) => (
-                <Text as="p" size="2" mb="3" style={{ lineHeight: 1.8 }}>{children}</Text>
-              ),
+              p: ({ children }) => {
+                const kids = Array.isArray(children) ? children : [children];
+                const first = kids[0] as ReactElement<{ children?: string }> | undefined;
+                const bold = typeof first === "object" && first?.props?.children;
+                if (typeof bold === "string") {
+                  const l = bold.toLowerCase();
+                  if (/narration|say this|say:|what to say|your script|prioritization script/.test(l))
+                    return <div className="callout callout-speak"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
+                  if (/common mistake/.test(l))
+                    return <div className="callout callout-warn"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
+                  if (/if they ask|why this/.test(l))
+                    return <div className="callout callout-tip"><Text as="p" size="2" style={{ lineHeight: 1.8 }}>{children}</Text></div>;
+                  if (/⏱|target:/.test(l))
+                    return <div className="timing-badge">{children}</div>;
+                }
+                return <Text as="p" size="2" mb="3" style={{ lineHeight: 1.8 }}>{children}</Text>;
+              },
               strong: ({ children }) => (
                 <strong style={{ fontWeight: 600 }}>{children}</strong>
               ),
