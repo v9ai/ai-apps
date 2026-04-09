@@ -2974,6 +2974,82 @@ export async function addConversationMessage({
 }
 
 // ============================================
+// Affirmations
+// ============================================
+
+export async function listAffirmations(familyMemberId: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM affirmations WHERE family_member_id = ${familyMemberId} AND user_id = ${userId} ORDER BY created_at DESC`;
+  return rows.map((row) => ({
+    id: row.id as number,
+    familyMemberId: row.family_member_id as number,
+    userId: row.user_id as string,
+    text: row.text as string,
+    category: row.category as string,
+    isActive: (row.is_active as number) === 1,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }));
+}
+
+export async function getAffirmation(id: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM affirmations WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: row.id as number,
+    familyMemberId: row.family_member_id as number,
+    userId: row.user_id as string,
+    text: row.text as string,
+    category: row.category as string,
+    isActive: (row.is_active as number) === 1,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function createAffirmation(input: {
+  familyMemberId: number;
+  userId: string;
+  text: string;
+  category?: string;
+}) {
+  const rows = await neonSql`
+    INSERT INTO affirmations (family_member_id, user_id, text, category)
+    VALUES (
+      ${input.familyMemberId},
+      ${input.userId},
+      ${input.text},
+      ${input.category ?? "encouragement"}
+    )
+    RETURNING id
+  `;
+  return rows[0].id as number;
+}
+
+export async function updateAffirmation(
+  id: number,
+  userId: string,
+  input: {
+    text?: string | null;
+    category?: string | null;
+    isActive?: boolean | null;
+  },
+) {
+  await neonSql`
+    UPDATE affirmations SET
+      text = COALESCE(${input.text ?? null}, text),
+      category = COALESCE(${input.category ?? null}, category),
+      is_active = COALESCE(${input.isActive != null ? (input.isActive ? 1 : 0) : null}, is_active),
+      updated_at = NOW()
+    WHERE id = ${id} AND user_id = ${userId}
+  `;
+}
+
+export async function deleteAffirmation(id: number, userId: string) {
+  await neonSql`DELETE FROM affirmations WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+// ============================================
 // Namespace export
 // ============================================
 
@@ -3122,5 +3198,11 @@ export const db = {
   listConversationsForIssue,
   deleteConversation,
   addConversationMessage,
+  // Affirmations
+  listAffirmations,
+  getAffirmation,
+  createAffirmation,
+  updateAffirmation,
+  deleteAffirmation,
 };
 

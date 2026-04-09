@@ -1,5 +1,5 @@
 import type { FamilyMemberResolvers } from "./../types.generated";
-import { listGoals, getFamilyMemberShares, getBehaviorObservationsForFamilyMember, getTeacherFeedbacksForFamilyMember, getIssuesForFamilyMember, getRelationshipsForPerson } from "@/src/db";
+import { listGoals, getFamilyMemberShares, getBehaviorObservationsForFamilyMember, getTeacherFeedbacksForFamilyMember, getIssuesForFamilyMember, getRelationshipsForPerson, listAffirmations } from "@/src/db";
 
 export const FamilyMember: FamilyMemberResolvers = {
   goals: async (parent, _args, _ctx) => {
@@ -98,5 +98,14 @@ export const FamilyMember: FamilyMemberResolvers = {
       updatedAt: item.updatedAt,
       related: item.related ? { ...item.related, type: item.related.type as any } : null,
     })) as any;
+  },
+  affirmations: async (parent, _args, ctx) => {
+    const userEmail = ctx.userEmail;
+    if (!userEmail) return [];
+    const items = await listAffirmations(parent.id, userEmail);
+    return items.map((item) => ({
+      ...item,
+      category: item.category.toUpperCase() as any,
+    }));
   },
 };

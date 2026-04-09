@@ -1,0 +1,6 @@
+mutation DeleteAffirmation($id: Int!) {
+  deleteAffirmation(id: $id) {
+    success
+    message
+  }
+}

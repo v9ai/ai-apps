@@ -1,0 +1,11 @@
+query GetAffirmations($familyMemberId: Int!) {
+  affirmations(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    text
+    category
+    isActive
+    createdAt
+    updatedAt
+  }
+}

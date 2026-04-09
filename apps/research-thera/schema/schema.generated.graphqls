@@ -6,6 +6,25 @@ type ActionableRecommendation {
   title: String!
 }
 
+type Affirmation {
+  category: AffirmationCategory!
+  createdAt: String!
+  familyMemberId: Int!
+  id: Int!
+  isActive: Boolean!
+  text: String!
+  updatedAt: String!
+  userId: String!
+}
+
+enum AffirmationCategory {
+  ENCOURAGEMENT
+  GRATITUDE
+  GROWTH
+  SELF_WORTH
+  STRENGTH
+}
+
 type AudioAsset {
   createdAt: String!
   createdBy: String!
@@ -205,6 +224,12 @@ input ConvertJournalEntryToIssueInput {
   title: String
 }
 
+input CreateAffirmationInput {
+  category: AffirmationCategory
+  familyMemberId: Int!
+  text: String!
+}
+
 input CreateContactFeedbackInput {
   contactId: Int!
   content: String!
@@ -348,6 +373,11 @@ type DeepIssueAnalysis {
   updatedAt: String!
 }
 
+type DeleteAffirmationResult {
+  message: String
+  success: Boolean!
+}
+
 type DeleteBehaviorObservationResult {
   message: String
   success: Boolean!
@@ -484,6 +514,7 @@ type ExtractedIssue {
 }
 
 type FamilyMember {
+  affirmations: [Affirmation!]!
   ageYears: Int
   behaviorObservations(goalId: Int): [BehaviorObservation!]!
   bio: String
@@ -818,6 +849,7 @@ type Mutation {
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
   convertIssueToGoal(id: Int!, input: CreateGoalInput!): Goal!
   convertJournalEntryToIssue(id: Int!, input: ConvertJournalEntryToIssueInput!): Issue!
+  createAffirmation(input: CreateAffirmationInput!): Affirmation!
   createContact(input: CreateContactInput!): Contact!
   createContactFeedback(input: CreateContactFeedbackInput!): ContactFeedback!
   createConversation(issueId: Int!, message: String!): Conversation!
@@ -832,6 +864,7 @@ type Mutation {
   createStory(input: CreateStoryInput!): Story!
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
   createTeacherFeedback(input: CreateTeacherFeedbackInput!): TeacherFeedback!
+  deleteAffirmation(id: Int!): DeleteAffirmationResult!
   deleteBehaviorObservation(id: Int!): DeleteBehaviorObservationResult!
   deleteClaimCard(id: ID!): Boolean!
   deleteContact(id: Int!): DeleteContactResult!
@@ -877,6 +910,7 @@ type Mutation {
   unlinkIssues(issueId: Int!, linkedIssueId: Int!): UnlinkIssuesResult!
   unshareFamilyMember(email: String!, familyMemberId: Int!): Boolean!
   unshareNote(email: String!, noteId: Int!): Boolean!
+  updateAffirmation(id: Int!, input: UpdateAffirmationInput!): Affirmation!
   updateBehaviorObservation(id: Int!, input: UpdateBehaviorObservationInput!): BehaviorObservation!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
   updateContactFeedback(id: Int!, input: UpdateContactFeedbackInput!): ContactFeedback!
@@ -1036,6 +1070,8 @@ type PriorityRecommendation {
 }
 
 type Query {
+  affirmation(id: Int!): Affirmation
+  affirmations(familyMemberId: Int!): [Affirmation!]!
   allIssues: [Issue!]!
   allNotes: [Note!]!
   allStories: [Story!]!
@@ -1244,6 +1280,12 @@ type UnlinkContactResult {
 
 type UnlinkIssuesResult {
   success: Boolean!
+}
+
+input UpdateAffirmationInput {
+  category: AffirmationCategory
+  isActive: Boolean
+  text: String
 }
 
 input UpdateBehaviorObservationInput {

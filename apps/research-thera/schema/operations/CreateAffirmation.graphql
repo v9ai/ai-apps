@@ -1,0 +1,11 @@
+mutation CreateAffirmation($input: CreateAffirmationInput!) {
+  createAffirmation(input: $input) {
+    id
+    familyMemberId
+    text
+    category
+    isActive
+    createdAt
+    updatedAt
+  }
+}
