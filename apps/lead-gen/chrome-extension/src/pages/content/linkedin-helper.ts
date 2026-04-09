@@ -660,10 +660,14 @@ chrome.runtime.onMessage.addListener((message) => {
 
   // Find Related progress
   if (message.action === "findRelatedProgress" && findRelatedBtn) {
-    findRelatedBtn.textContent = `${message.current}/${message.total} ${message.name || ""}`.trim();
+    const dupes = message.skipped || 0;
+    const queued = message.queued ?? "?";
+    const name = message.name || "";
+    findRelatedBtn.textContent = `${message.current} saved, ${dupes} dupes (${queued} queued) ${name}`.trim();
   }
   if (message.action === "findRelatedDone" && findRelatedBtn) {
-    findRelatedBtn.textContent = `Done! ${message.saved} saved`;
+    const dupes = message.skipped || 0;
+    findRelatedBtn.textContent = `Done! ${message.saved} new, ${dupes} dupes`;
     findRelatedBtn.style.backgroundColor = "#16a34a";
     setTimeout(() => {
       if (findRelatedBtn) {

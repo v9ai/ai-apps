@@ -1545,30 +1545,7 @@ async function extractSimilarCompanyUrls(tabId: number): Promise<string[]> {
   return extractSidebarCompanyUrls(tabId);
 }
 
-const FIND_RELATED_MAX_CAP = 150;
-
-// Scroll a page to trigger lazy-loading of the "Pages people also viewed" section.
-async function scrollToLoadRelated(tabId: number): Promise<void> {
-  for (let i = 0; i < 3; i++) {
-    if (!(await isTabAlive(tabId))) return;
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      world: "MAIN",
-      func: () => window.scrollTo(0, document.body.scrollHeight),
-    }).catch(() => {});
-    await randomDelay(2500);
-  }
-}
-
-// Navigate to a company's main page and extract similar company URLs.
-async function discoverRelatedFrom(tabId: number, companyUrl: string): Promise<string[]> {
-  const mainUrl = companyUrl.replace(/\/(about|people)\/?$/, "/");
-  await safeTabUpdate(tabId, { url: mainUrl });
-  await waitForTabLoad(tabId);
-  await randomDelay(3000);
-  await scrollToLoadRelated(tabId);
-  return extractSimilarCompanyUrls(tabId);
-}
+const MAX_COMPANIES = 150;
 
 // Normalize a LinkedIn company URL to a canonical form for dedup.
 function normalizeCompanyUrl(url: string): string {
@@ -1602,19 +1579,30 @@ async function findRelatedCompanies(tabId: number) {
     const visited = new Set<string>();
     const queue: string[] = [];
     let saved = 0;
+    let skipped = 0;
 
-    // Mark seed as visited (don't scrape the page we're already on)
+    // Mark seed as visited (don't re-scrape the page we started on)
     visited.add(normalizeCompanyUrl(seedUrl));
 
-    // Seed the queue: discover related from the current page
+    // ── Seed phase ─────────────────────────────────────────────────────
     if (currentUrl.includes("/people") || currentUrl.includes("/about")) {
       await safeTabUpdate(tabId, { url: seedUrl + "/" });
       await waitForTabLoad(tabId);
       await randomDelay(4000);
     }
-    await scrollToLoadRelated(tabId);
-    const seedUrls = await extractSimilarCompanyUrls(tabId);
 
+    // Scroll to load lazy content
+    for (let i = 0; i < 3; i++) {
+      if (!(await isTabAlive(tabId))) return;
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        world: "MAIN",
+        func: () => window.scrollTo(0, document.body.scrollHeight),
+      }).catch(() => {});
+      await randomDelay(2500);
+    }
+
+    const seedUrls = await extractSimilarCompanyUrls(tabId);
     for (const url of seedUrls) {
       const norm = normalizeCompanyUrl(url);
       if (!visited.has(norm)) {
@@ -1622,19 +1610,20 @@ async function findRelatedCompanies(tabId: number) {
         queue.push(url);
       }
     }
-    console.log(`[FindRelated] Seed page yielded ${queue.length} companies (queue: ${queue.length})`);
+    console.log(`[FindRelated] Seeded queue with ${queue.length} companies from starting page`);
 
     if (queue.length === 0) {
       await safeSendMessage(tabId, {
         action: "findRelatedDone",
-        found: 0,
         saved: 0,
+        skipped: 0,
+        found: 0,
       });
       return;
     }
 
-    // BFS loop
-    while (queue.length > 0 && saved < FIND_RELATED_MAX_CAP) {
+    // ── BFS loop ───────────────────────────────────────────────────────
+    while (queue.length > 0 && (saved + skipped) < MAX_COMPANIES) {
       if (!(await isTabAlive(tabId))) {
         console.warn("[FindRelated] Tab closed during BFS crawl, stopping");
         break;
@@ -1642,17 +1631,18 @@ async function findRelatedCompanies(tabId: number) {
 
       const url = queue.shift()!;
 
-      // 1. Navigate to /about/ and scrape company data
+      // a) Navigate to /about/ and scrape company data
       const aboutUrl = url.replace(/\/$/, "") + "/about/";
       await safeTabUpdate(tabId, { url: aboutUrl });
       await waitForTabLoad(tabId);
-      await randomDelay(3000);
+      await randomDelay(2000);
 
       await clickSeeMore(tabId);
       await randomDelay(500);
 
       const data = await extractCompanyData(tabId);
       if (data && data.name) {
+        // b) Build company object and save immediately
         const company = {
           name: data.name,
           website: data.website || undefined,
@@ -1668,29 +1658,64 @@ async function findRelatedCompanies(tabId: number) {
         };
 
         const result = await saveCompanyBatch([company]);
-        saved += result;
-        console.log(`[FindRelated] ${saved}/${FIND_RELATED_MAX_CAP} saved: ${data.name} (${queue.length} queued)`);
+        if (result > 0) {
+          saved += result;
+          console.log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${data.name} ✓ SAVED (queued: ${queue.length})`);
+        } else {
+          skipped++;
+          console.log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${data.name} ⊘ ALREADY EXISTS (queued: ${queue.length})`);
+        }
+
+        // c) Send progress (will only reach content script if on same origin)
+        safeSendMessage(tabId, {
+          action: "findRelatedProgress",
+          current: saved,
+          total: MAX_COMPANIES,
+          name: data.name,
+          queued: queue.length,
+          skipped,
+        }).catch(() => {});
       }
 
-      await randomDelay(1500);
+      // d) Discover new related companies from THIS page
+      if ((saved + skipped) < MAX_COMPANIES && (await isTabAlive(tabId))) {
+        // Navigate to main company page (strip /about/)
+        const mainUrl = url.replace(/\/$/, "") + "/";
+        await safeTabUpdate(tabId, { url: mainUrl });
+        await waitForTabLoad(tabId);
+        await randomDelay(2000);
 
-      // 2. Discover new related companies from this page
-      if (saved < FIND_RELATED_MAX_CAP && (await isTabAlive(tabId))) {
-        const newUrls = await discoverRelatedFrom(tabId, url);
-        let added = 0;
+        // Scroll to load lazy content
+        for (let i = 0; i < 3; i++) {
+          if (!(await isTabAlive(tabId))) break;
+          await chrome.scripting.executeScript({
+            target: { tabId },
+            world: "MAIN",
+            func: () => window.scrollTo(0, document.body.scrollHeight),
+          }).catch(() => {});
+          await randomDelay(2500);
+        }
+
+        const newUrls = await extractSimilarCompanyUrls(tabId);
+        let newCount = 0;
         for (const newUrl of newUrls) {
           const norm = normalizeCompanyUrl(newUrl);
           if (!visited.has(norm)) {
             visited.add(norm);
             queue.push(newUrl);
-            added++;
+            newCount++;
           }
         }
-        if (added > 0) {
-          console.log(`[FindRelated] ${data?.name || url} yielded ${added} new companies (queue: ${queue.length})`);
+        if (newCount > 0) {
+          console.log(`[FindRelated] ${data?.name || url} yielded ${newCount} new companies (queue: ${queue.length}, visited: ${visited.size})`);
         }
       }
+
+      await randomDelay(1500);
     }
+
+    // ── After loop ─────────────────────────────────────────────────────
+    console.log(`[FindRelated] Crawl complete. saved=${saved}, skipped=${skipped}, visited=${visited.size}, queue_remaining=${queue.length}`);
 
     // Navigate back to original page
     if (await isTabAlive(tabId)) {
@@ -1702,13 +1727,12 @@ async function findRelatedCompanies(tabId: number) {
       }
     }
 
-    console.log(`[FindRelated] BFS complete. Saved ${saved}, visited ${visited.size}, remaining queue: ${queue.length}`);
-
     await randomDelay(4000);
     await safeSendMessage(tabId, {
       action: "findRelatedDone",
-      found: visited.size - 1, // exclude seed
       saved,
+      skipped,
+      found: visited.size - 1, // exclude seed
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
