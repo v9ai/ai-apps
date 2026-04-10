@@ -7,6 +7,11 @@ import {
   companySnapshots,
   userSettings,
   contacts,
+  contactEmails,
+  emailCampaigns,
+  linkedinPosts,
+  intentSignals,
+  receivedEmails,
 } from "@/db/schema";
 import type {
   Company,
@@ -14,6 +19,11 @@ import type {
   CompanySnapshot,
   UserSettings,
   Contact,
+  ContactEmail,
+  EmailCampaign,
+  LinkedInPost,
+  IntentSignal,
+  ReceivedEmail,
 } from "@/db/schema";
 
 const BATCH_SIZE = 100;

@@ -6,16 +6,29 @@
 import { salescue } from "@/lib/salescue/client";
 import { isAdminEmail } from "@/lib/admin";
 import type { GraphQLContext } from "../context";
+import type {
+  ScoreResult,
+  IntentResult,
+  ReplyResult,
+  SentimentResult,
+  TriggersResult,
+  TriggerDetection,
+  ICPResult,
+  SpamResult,
+  ObjectionResult,
+  EntitiesResult,
+  SubjectResult,
+} from "@/lib/salescue/types";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Map snake_case Python result to camelCase GraphQL fields */
-function mapScoreResult(r: Record<string, unknown>) {
+function mapScoreResult(r: ScoreResult) {
   return {
     label: r.label,
     score: r.score,
     confidence: r.confidence,
-    signals: (r.signals as Array<Record<string, unknown>>).map((s) => ({
+    signals: r.signals.map((s) => ({
       signal: s.signal,
       category: s.category,
       strength: s.strength,
@@ -28,26 +41,25 @@ function mapScoreResult(r: Record<string, unknown>) {
   };
 }
 
-function mapIntentResult(r: Record<string, unknown>) {
-  const traj = r.trajectory as Record<string, unknown> | null;
+function mapIntentResult(r: IntentResult) {
   return {
     stage: r.stage,
     confidence: r.confidence,
     distribution: r.distribution,
-    trajectory: traj
+    trajectory: r.trajectory
       ? {
-          daysToPurchase: traj.days_to_purchase,
-          direction: traj.direction,
-          velocity: traj.velocity,
-          acceleration: traj.acceleration,
-          currentIntensity: traj.current_intensity,
+          daysToPurchase: r.trajectory.days_to_purchase,
+          direction: r.trajectory.direction,
+          velocity: r.trajectory.velocity,
+          acceleration: r.trajectory.acceleration,
+          currentIntensity: r.trajectory.current_intensity,
         }
       : null,
     dataPoints: r.data_points,
   };
 }
 
-function mapReplyResult(r: Record<string, unknown>) {
+function mapReplyResult(r: ReplyResult) {
   return {
     active: r.active,
     scores: r.scores,
@@ -58,7 +70,7 @@ function mapReplyResult(r: Record<string, unknown>) {
   };
 }
 
-function mapSentimentResult(r: Record<string, unknown>) {
+function mapSentimentResult(r: SentimentResult) {
   return {
     sentiment: r.sentiment,
     intent: r.intent,
@@ -71,8 +83,8 @@ function mapSentimentResult(r: Record<string, unknown>) {
   };
 }
 
-function mapTriggersResult(r: Record<string, unknown>) {
-  const mapEvent = (e: Record<string, unknown>) => ({
+function mapTriggersResult(r: TriggersResult) {
+  const mapEvent = (e: TriggerDetection) => ({
     type: e.type,
     confidence: e.confidence,
     freshness: e.freshness,
@@ -81,18 +93,18 @@ function mapTriggersResult(r: Record<string, unknown>) {
     displacementCi: e.displacement_ci,
     displacementUncertainty: e.displacement_uncertainty,
     temporalFeatures: {
-      todaySignal: (e.temporal_features as Record<string, unknown>).today_signal,
-      recentSignal: (e.temporal_features as Record<string, unknown>).recent_signal,
-      pastSignal: (e.temporal_features as Record<string, unknown>).past_signal,
+      todaySignal: e.temporal_features.today_signal,
+      recentSignal: e.temporal_features.recent_signal,
+      pastSignal: e.temporal_features.past_signal,
     },
   });
   return {
-    events: (r.events as Array<Record<string, unknown>>).map(mapEvent),
-    primary: r.primary ? mapEvent(r.primary as Record<string, unknown>) : null,
+    events: r.events.map(mapEvent),
+    primary: r.primary ? mapEvent(r.primary) : null,
   };
 }
 
-function mapIcpResult(r: Record<string, unknown>) {
+function mapIcpResult(r: ICPResult) {
   return {
     score: r.score,
     qualified: r.qualified,
@@ -102,7 +114,7 @@ function mapIcpResult(r: Record<string, unknown>) {
   };
 }
 
-function mapSpamResult(r: Record<string, unknown>) {
+function mapSpamResult(r: SpamResult) {
   return {
     spamScore: r.spam_score,
     spamCategory: r.spam_category,
@@ -119,7 +131,7 @@ function mapSpamResult(r: Record<string, unknown>) {
   };
 }
 
-function mapObjectionResult(r: Record<string, unknown>) {
+function mapObjectionResult(r: ObjectionResult) {
   return {
     category: r.category,
     categoryConfidence: r.category_confidence,
@@ -131,9 +143,9 @@ function mapObjectionResult(r: Record<string, unknown>) {
   };
 }
 
-function mapEntitiesResult(r: Record<string, unknown>) {
+function mapEntitiesResult(r: EntitiesResult) {
   return {
-    entities: (r.entities as Array<Record<string, unknown>>).map((e) => ({
+    entities: r.entities.map((e) => ({
       type: e.type,
       text: e.text,
       confidence: e.confidence,
@@ -149,7 +161,7 @@ function mapEntitiesResult(r: Record<string, unknown>) {
   };
 }
 
-function mapSubjectResult(r: Record<string, unknown>) {
+function mapSubjectResult(r: SubjectResult) {
   return {
     ranking: r.ranking,
     best: r.best,
@@ -178,7 +190,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.score(args.text);
-      return mapScoreResult(res.result as unknown as Record<string, unknown>);
+      return mapScoreResult(res.result);
     },
 
     async salescueIntent(
@@ -187,7 +199,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.intent(args.text);
-      return mapIntentResult(res.result as unknown as Record<string, unknown>);
+      return mapIntentResult(res.result);
     },
 
     async salescueReply(
@@ -196,7 +208,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.reply(args.text, args.touchpoint ?? undefined);
-      return mapReplyResult(res.result as unknown as Record<string, unknown>);
+      return mapReplyResult(res.result);
     },
 
     async salescueSentiment(
@@ -205,7 +217,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.sentiment(args.text);
-      return mapSentimentResult(res.result as unknown as Record<string, unknown>);
+      return mapSentimentResult(res.result);
     },
 
     async salescueTriggers(
@@ -214,7 +226,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.triggers(args.text);
-      return mapTriggersResult(res.result as unknown as Record<string, unknown>);
+      return mapTriggersResult(res.result);
     },
 
     async salescueIcp(
@@ -223,7 +235,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.icp(args.icp, args.prospect);
-      return mapIcpResult(res.result as unknown as Record<string, unknown>);
+      return mapIcpResult(res.result);
     },
 
     async salescueSpam(
@@ -232,7 +244,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.spam(args.text);
-      return mapSpamResult(res.result as unknown as Record<string, unknown>);
+      return mapSpamResult(res.result);
     },
 
     async salescueObjection(
@@ -241,7 +253,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.objection(args.text);
-      return mapObjectionResult(res.result as unknown as Record<string, unknown>);
+      return mapObjectionResult(res.result);
     },
 
     async salescueEntities(
@@ -250,7 +262,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.entities(args.text);
-      return mapEntitiesResult(res.result as unknown as Record<string, unknown>);
+      return mapEntitiesResult(res.result);
     },
 
     async salescueSubject(
@@ -259,7 +271,7 @@ export const salescueResolvers = {
       _context: GraphQLContext,
     ) {
       const res = await salescue.subject(args.subjects);
-      return mapSubjectResult(res.result as unknown as Record<string, unknown>);
+      return mapSubjectResult(res.result);
     },
   },
 
