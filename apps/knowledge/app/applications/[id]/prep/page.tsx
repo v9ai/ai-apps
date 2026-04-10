@@ -427,7 +427,8 @@ function PrepPageInner() {
         if (isHtmlCss) {
           const htmlBlock = blocks.find((b) => b.lang.toLowerCase() === "html")!;
           const cssBlock = blocks.find((b) => b.lang.toLowerCase() === "css")!;
-          return <InteractiveCodePlayground initialHtml={htmlBlock.code} initialCss={cssBlock.code} />;
+          const renamed = semanticRenameClasses(htmlBlock.code, cssBlock.code);
+          return <InteractiveCodePlayground initialHtml={renamed.html} initialCss={renamed.css} />;
         }
 
         return (
@@ -444,7 +445,8 @@ function PrepPageInner() {
       if (lang === "html") {
         const extracted = extractInlineStyles(rawText);
         if (extracted) {
-          return <InteractiveCodePlayground initialHtml={extracted.cleanHtml} initialCss={extracted.css} />;
+          const renamed = semanticRenameClasses(extracted.cleanHtml, extracted.css);
+          return <InteractiveCodePlayground initialHtml={renamed.html} initialCss={renamed.css} />;
         }
         return (
           <Box mb="4">

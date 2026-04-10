@@ -301,6 +301,7 @@ async fn main() -> anyhow::Result<()> {
                         &star.login,
                         threshold,
                         &format!("cpn:star/{repo_full}"),
+                        true, // starred an Anthropic/Claude ecosystem repo
                     )
                     .await
                     {
@@ -536,6 +537,7 @@ async fn process_user(
     login: &str,
     threshold: f32,
     source_tag: &str,
+    starred_anthropic: bool,
 ) -> Option<u32> {
     if !seen.insert(login.to_string()) {
         return None;
@@ -561,7 +563,7 @@ async fn process_user(
         user.blog.as_deref().unwrap_or(""),
     );
     let skills = extract_skills(&skill_text);
-    let fitness = compute_partner_fitness(&user, &skills);
+    let fitness = compute_partner_fitness(&user, &skills, starred_anthropic);
 
     if fitness.score < threshold {
         return Some(0);
