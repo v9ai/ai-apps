@@ -120,11 +120,10 @@ static CONSULTING_COMPANIES: &[&str] = &[
     "ey",
     "pwc",
     "ibm consulting",
-    "hashicorp",
-    "datastax",
-    "snowflake",
-    "databricks",
-    "datadog",
+    "xebia",
+    "futurice",
+    "nordcloud",
+    "datatonic",
 ];
 
 /// Result of partner fitness scoring.
@@ -161,7 +160,8 @@ pub fn extract_archetypes(text: &str) -> Vec<&'static str> {
 /// Compute partner fitness score for a GitHub user.
 ///
 /// `skills` should come from `crate::skills::extract_skills()`.
-pub fn compute_partner_fitness(user: &GhUser, skills: &[&str]) -> PartnerFitness {
+/// `starred_anthropic` — true if the user was discovered via stargazing an Anthropic/Claude repo.
+pub fn compute_partner_fitness(user: &GhUser, skills: &[&str], starred_anthropic: bool) -> PartnerFitness {
     // Build combined text for archetype matching
     let mut text = String::new();
     if let Some(ref bio) = user.bio {
@@ -230,11 +230,19 @@ pub fn compute_partner_fitness(user: &GhUser, skills: &[&str]) -> PartnerFitness
         .any(|c| company_lower.contains(c));
     let consulting_boost: f32 = if is_consulting_company { 0.15 } else { 0.0 };
 
+    // ── Anthropic stargazer boost (highest signal) ──────────────────────────
+    // A consulting employee who starred anthropic-sdk-python scores much higher
+    // than someone with "solution architect" in bio and no Anthropic signal.
+    let star_boost: f32 = if starred_anthropic { 0.30 } else { 0.0 };
+
     // ── Composite score ─────────────────────────────────────────────────────
-    let raw = archetype_score * 0.35
-        + ai_depth * 0.25
-        + seniority_signal * 0.20
-        + engagement_readiness * 0.20
+    // Weights: star(0.30) + archetype(0.25) + ai(0.20) + seniority(0.15)
+    //        + engagement(0.10) + consulting(0.15)
+    let raw = star_boost
+        + archetype_score * 0.25
+        + ai_depth * 0.20
+        + seniority_signal * 0.15
+        + engagement_readiness * 0.10
         + consulting_boost;
     let score = raw.min(1.0);
 
@@ -242,6 +250,7 @@ pub fn compute_partner_fitness(user: &GhUser, skills: &[&str]) -> PartnerFitness
         score,
         archetypes,
         is_consulting_company,
+        starred_anthropic,
         seniority_signal,
         ai_depth,
         engagement_readiness,
@@ -284,8 +293,8 @@ mod tests {
             Some("Amazon Web Services"),
         );
         let skills = vec!["llm", "rag", "python"];
-        let fitness = compute_partner_fitness(&user, &skills);
-        assert!(fitness.score > 0.5, "expected > 0.5, got {}", fitness.score);
+        let fitness = compute_partner_fitness(&user, &skills, false);
+        assert!(fitness.score > 0.4, "expected > 0.4, got {}", fitness.score);
         assert!(fitness.archetypes.contains(&"solution-architect"));
     }
 
@@ -296,8 +305,8 @@ mod tests {
             Some("Deloitte"),
         );
         let skills = vec!["llm", "mlops"];
-        let fitness = compute_partner_fitness(&user, &skills);
-        assert!(fitness.score > 0.5);
+        let fitness = compute_partner_fitness(&user, &skills, false);
+        assert!(fitness.score > 0.4);
         assert!(fitness.is_consulting_company);
         assert!(fitness.archetypes.contains(&"technical-consultant"));
     }
@@ -305,9 +314,41 @@ mod tests {
     #[test]
     fn empty_bio_scores_low() {
         let user = make_user(None, None);
-        let fitness = compute_partner_fitness(&user, &[]);
+        let fitness = compute_partner_fitness(&user, &[], false);
         assert!(fitness.score < 0.3, "expected < 0.3, got {}", fitness.score);
         assert!(fitness.archetypes.is_empty());
+    }
+
+    #[test]
+    fn stargazer_boost_outweighs_archetype() {
+        // A generic user who starred an Anthropic repo should outscore
+        // an architect without the stargazer signal.
+        let user = make_user(Some("Software engineer"), None);
+        let starred = compute_partner_fitness(&user, &[], true);
+        let architect = compute_partner_fitness(
+            &make_user(Some("Solutions Architect"), None),
+            &[],
+            false,
+        );
+        assert!(
+            starred.score > architect.score,
+            "starred ({:.2}) should beat architect ({:.2})",
+            starred.score,
+            architect.score,
+        );
+        assert!(starred.starred_anthropic);
+    }
+
+    #[test]
+    fn consulting_stargazer_scores_highest() {
+        let user = make_user(
+            Some("Technical Consultant — AI/ML"),
+            Some("Deloitte"),
+        );
+        let fitness = compute_partner_fitness(&user, &["llm", "rag"], true);
+        assert!(fitness.score > 0.7, "expected > 0.7, got {}", fitness.score);
+        assert!(fitness.starred_anthropic);
+        assert!(fitness.is_consulting_company);
     }
 
     #[test]
