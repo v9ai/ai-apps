@@ -45,6 +45,14 @@ pub struct GhContributor {
     pub contributions: u32,
 }
 
+/// Minimal user stub — shared shape returned by stargazers, org members,
+/// and other endpoints that list users without extra fields.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GhUserStub {
+    pub login: String,
+    pub id: u64,
+}
+
 /// Full GitHub user profile from `/users/{login}`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct GhUser {

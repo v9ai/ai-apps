@@ -208,6 +208,54 @@ impl GhClient {
         self.get_url(&url).await
     }
 
+    /// List stargazers of a repo (login + id).
+    /// Paginated — call with increasing `page` until empty.
+    pub async fn repo_stargazers(
+        &self,
+        owner: &str,
+        repo: &str,
+        per_page: u8,
+        page: u32,
+    ) -> Result<Vec<GhUserStub>> {
+        self.get(&format!(
+            "/repos/{owner}/{repo}/stargazers?per_page={per_page}&page={page}"
+        ))
+        .await
+    }
+
+    /// List public members of a GitHub org (login + id).
+    /// Paginated — call with increasing `page` until empty.
+    pub async fn org_members(
+        &self,
+        org: &str,
+        per_page: u8,
+        page: u32,
+    ) -> Result<Vec<GhUserStub>> {
+        self.get(&format!(
+            "/orgs/{org}/members?per_page={per_page}&page={page}"
+        ))
+        .await
+    }
+
+    /// Search repos by free-form query string.
+    /// Returns repo items — use `repo.full_name` to get the owner.
+    pub async fn search_repos_query(
+        &self,
+        q: &str,
+        sort: Option<&str>,
+        per_page: u8,
+        page: u32,
+    ) -> Result<SearchReposResponse> {
+        let mut url = format!(
+            "{BASE_URL}/search/repositories?q={}&per_page={per_page}&page={page}",
+            urlencoding(q),
+        );
+        if let Some(s) = sort {
+            url.push_str(&format!("&sort={s}"));
+        }
+        self.get_url(&url).await
+    }
+
     /// Search repos by topic + optional language.
     pub async fn search_repos(
         &self,
