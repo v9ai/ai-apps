@@ -376,31 +376,34 @@ class LeadScorer(BaseModule):
         self.log_var_class = nn.Parameter(torch.zeros(1))
         self.log_var_regress = nn.Parameter(torch.zeros(1))
 
-    def process(self, encoded, text, **kwargs):
-        encoder_output = encoded["encoder_output"]
-        tokens = encoder_output.last_hidden_state  # (B, seq, hidden)
+    def _forward_batch(self, tokens):
+        """Shared forward pass for both single and batch inference.
 
-        # Multi-scale signal detection
+        Args:
+            tokens: (B, seq, hidden) encoder output last_hidden_state
+
+        Returns:
+            Tuple of (strengths, attn_weights, effects, cat_scores, logits, score, probs)
+            all with batch dimension B.
+        """
         signal_embeds, strengths, attn_weights = self.detector(tokens)
-
-        # Signal interaction graph
         enhanced = self.interaction(signal_embeds, strengths)
-
-        # Causal effects
         effects = self.attribution.estimate_causal_effects(enhanced, strengths)
-
-        # Category sub-scores
         cat_scores = self.category_head(enhanced)
-
-        # Global score from interaction-enhanced signals
         flat = enhanced.reshape(enhanced.shape[0], -1)
         h = self.score_proj(flat)
-
         logits = self.class_out(h)
         score = self.regress_out(h) * 100
         probs = logits.softmax(-1)
+        return strengths, attn_weights, effects, cat_scores, logits, score, probs
 
-        score_val = score.item()
+    def _format_result(self, strengths, attn_weights, effects, cat_scores, score, probs, idx):
+        """Format a single result dict from batch tensors at the given index.
+
+        Args:
+            idx: Batch index to extract results for.
+        """
+        score_val = score[idx].item()
         if score_val >= self.THRESHOLDS[0]:
             label = self.LABELS[0]
         elif score_val >= self.THRESHOLDS[1]:
@@ -410,36 +413,70 @@ class LeadScorer(BaseModule):
         else:
             label = self.LABELS[3]
 
-        # Build causal evidence
         signals = []
         for i in range(N_SIGNALS):
-            s = strengths[0, i].item()
+            s = strengths[idx, i].item()
             if s > 0.15:
-                top_token_idx = attn_weights[0, i].topk(min(3, attn_weights.shape[-1])).indices.tolist()
+                top_token_idx = attn_weights[idx, i].topk(
+                    min(3, attn_weights.shape[-1])
+                ).indices.tolist()
                 signals.append({
                     "signal": SIGNAL_NAMES[i],
                     "category": SIGNAL_CATEGORIES[i],
                     "strength": round(s, 3),
-                    "causal_impact": round(effects[0, i].item() * 100, 1),
+                    "causal_impact": round(effects[idx, i].item() * 100, 1),
                     "attended_positions": top_token_idx,
                     "attribution_type": "causal_interventional",
                 })
 
         signals.sort(key=lambda x: -abs(x["causal_impact"]))
 
-        # Category breakdown
         categories = {}
         for j, cat in enumerate(SIGNAL_TAXONOMY):
-            categories[cat] = round(cat_scores[0, j].item(), 1)
+            categories[cat] = round(cat_scores[idx, j].item(), 1)
 
         return {
             "label": label,
             "score": round(score_val),
-            "confidence": round(probs.max().item(), 3),
-            "signals": signals[:8],  # top 8 causal signals
+            "confidence": round(probs[idx].max().item(), 3),
+            "signals": signals[:8],
             "categories": categories,
             "n_signals_detected": sum(1 for s in signals if s["strength"] > 0.15),
         }
+
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
+        tokens = encoder_output.last_hidden_state  # (B, seq, hidden)
+
+        strengths, attn_weights, effects, cat_scores, logits, score, probs = (
+            self._forward_batch(tokens)
+        )
+
+        return self._format_result(
+            strengths, attn_weights, effects, cat_scores, score, probs, idx=0
+        )
+
+    def process_batch(self, batch_encoded, texts, **kwargs):
+        """True vectorized batch scoring — single forward pass for all items.
+
+        The detector, interaction graph, attribution engine, category head,
+        and scoring MLP all operate on the full (B, seq, hidden) tensor
+        in one pass. Only the result formatting loops per item.
+        """
+        encoder_output = batch_encoded["encoder_output"]
+        tokens = encoder_output.last_hidden_state  # (B, seq, hidden)
+
+        strengths, attn_weights, effects, cat_scores, logits, score, probs = (
+            self._forward_batch(tokens)
+        )
+
+        B = tokens.shape[0]
+        return [
+            self._format_result(
+                strengths, attn_weights, effects, cat_scores, score, probs, idx=i
+            )
+            for i in range(B)
+        ]
 
     def compute_loss(self, logits, score, true_label, true_score, effects, true_effects,
                      tokens, attn_weights, cat_scores, true_cat_scores, epoch):

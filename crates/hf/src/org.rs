@@ -2164,7 +2164,7 @@ tags:
 
         let mut dataset = make_dummy_repo();
         dataset.repo_id = Some("org/skill-extraction-data".into());
-        dataset.tags = Some(vec!["task_categories:token-classification".into()]);
+        dataset.tags = Some(vec!["token-classification".into()]);
 
         let profile = OrgProfile {
             org_name: "testorg".into(),

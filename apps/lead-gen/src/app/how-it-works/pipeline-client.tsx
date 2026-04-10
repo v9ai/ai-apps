@@ -751,7 +751,7 @@ function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: st
       <Flex align="center" gap="2"
         style={{
           padding: "3px 10px",
-          borderRadius: 0,
+          borderRadius: 4,
           background: "var(--gray-3)",
           border: "1px solid var(--gray-a5)",
         }}
@@ -767,7 +767,7 @@ function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: st
         width: 2,
         height: 16,
         background: "linear-gradient(to bottom, var(--gray-a7), var(--gray-a5))",
-        borderRadius: 0,
+        borderRadius: 4,
       }} />
     </Flex>
   );
@@ -789,7 +789,7 @@ function EmptyDetailPanel() {
     <Card mt="4" style={{ border: "1px dashed var(--gray-a6)", background: "var(--gray-2)" }}>
       <Flex align="center" justify="center" direction="column" gap="3" py="5">
         <div style={{
-          width: 40, height: 40, borderRadius: 0,
+          width: 40, height: 40, borderRadius: 6,
           background: "var(--gray-3)",
           border: "1px solid var(--gray-a5)",
           display: "flex", alignItems: "center", justifyContent: "center",

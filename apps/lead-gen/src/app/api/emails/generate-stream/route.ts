@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 import { checkIsAdmin } from "@/lib/admin";
-import { composeEmail } from "@/lib/langgraph-client";
+import { buildBatchPrompt, parseJsonContent } from "@/lib/email/prompt-builder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,17 @@ interface EmailGenerationRequest {
   companyName?: string;
   instructions?: string;
   linkedinPostContent?: string;
+}
+
+function getDeepSeekClient(): OpenAI {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    throw new Error("DEEPSEEK_API_KEY not set");
+  }
+  return new OpenAI({
+    apiKey,
+    baseURL: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -26,32 +38,66 @@ export async function POST(request: NextRequest) {
   try {
     const input: EmailGenerationRequest = await request.json();
 
+    const prompt = buildBatchPrompt({
+      companyName: input.companyName,
+      instructions: input.instructions,
+    });
+
+    const systemPrompt = input.recipientContext
+      ? `You are an email composer. Recipient: ${input.recipientName}. Context: ${input.recipientContext}${input.linkedinPostContent ? `\nLinkedIn post: ${input.linkedinPostContent}` : ""}`
+      : `You are an email composer. Recipient: ${input.recipientName}.${input.linkedinPostContent ? `\nLinkedIn post: ${input.linkedinPostContent}` : ""}`;
+
+    const client = getDeepSeekClient();
+    const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+
+    const completion = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 1024,
+      stream: true,
+    });
+
     const encoder = new TextEncoder();
+    let accumulated = "";
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const result = await composeEmail({
-            recipientName: input.recipientName,
-            companyName: input.companyName,
-            instructions: input.instructions,
-            recipientContext: input.recipientContext,
-            linkedinPostContent: input.linkedinPostContent,
-          });
+          for await (const chunk of completion) {
+            const delta = chunk.choices?.[0]?.delta?.content;
+            if (delta) {
+              accumulated += delta;
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({ type: "chunk", content: delta, accumulated })}\n\n`,
+                ),
+              );
+            }
+          }
 
-          // Send the complete result as SSE chunks to maintain API compatibility
-          const jsonStr = JSON.stringify(result);
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ type: "chunk", content: jsonStr, accumulated: jsonStr })}\n\n`,
-            ),
-          );
-
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ type: "complete", data: result })}\n\n`,
-            ),
-          );
+          // Parse the accumulated JSON response into structured email content
+          const parsed = parseJsonContent(accumulated);
+          if (parsed) {
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({ type: "complete", data: parsed })}\n\n`,
+              ),
+            );
+          } else {
+            // Fallback: send raw accumulated text as body
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  type: "complete",
+                  data: { subject: "Generated Email", body: accumulated },
+                })}\n\n`,
+              ),
+            );
+          }
 
           controller.close();
         } catch (error) {
