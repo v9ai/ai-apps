@@ -8,7 +8,7 @@ export function HowItWorksClient() {
     <HowItWorks
       papers={papers}
       title="How It Works"
-      subtitle={"A privacy-first health intelligence platform built with Next.js 15, PostgreSQL, and local LLMs for longitudinal biomarker analysis and AI-powered Q&A"}
+      subtitle={"An autonomous B2B lead generation pipeline built with Next.js, Rust, and local AI embeddings"}
       stats={researchStats}
       agents={pipelineAgents}
       story={story}

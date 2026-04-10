@@ -380,6 +380,9 @@ importers:
       '@ai-apps/resume':
         specifier: workspace:*
         version: link:../../packages/resume
+      '@ai-apps/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@apollo/client':
         specifier: ^3.14.0
         version: 3.14.0(@types/react@19.2.14)(graphql-ws@6.0.7(graphql@16.13.1)(ws@8.20.0))(graphql@16.13.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -543,9 +546,6 @@ importers:
       '@vanilla-extract/vite-plugin':
         specifier: ^5.1.4
         version: 5.1.4(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.0)(tsx@4.21.0)(vite@7.3.1(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(yaml@2.8.2)
-      better-sqlite3:
-        specifier: ^12.6.2
-        version: 12.6.2
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1

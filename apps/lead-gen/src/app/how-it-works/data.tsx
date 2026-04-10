@@ -1,265 +1,362 @@
-interface Paper {
-  slug: string;
-  number: number;
-  title: string;
-  category: string;
-  wordCount: number;
-  readingTimeMin: number;
-  authors?: string;
-  year?: number;
-  venue?: string;
-  finding?: string;
-  relevance?: string;
-  url?: string;
-  categoryColor?: string;
-}
+import type { Paper, PipelineAgent, Stat, TechnicalDetail, ExtraSection } from "@ai-apps/ui/how-it-works";
 
-interface PipelineAgent {
-  name: string;
-  description: string;
-  researchBasis?: string;
-}
-
-interface Stat {
-  number: string;
-  label: string;
-  source?: string;
-}
-
-// ── Technical Foundations ──────────────────────────────────────────
+// ─── Technical Foundations ──────────────────────────────────────────
 
 export const papers: Paper[] = [
   {
-    slug: "nextjs-app-router",
+    slug: "nextjs-15",
     number: 1,
-    title: "Next.js 16 App Router",
+    title: "Next.js 15",
     category: "Frontend",
     wordCount: 0,
     readingTimeMin: 2,
     authors: "Vercel",
-    year: 2025,
-    finding:
-      "React 19 Server Components execute on the server by default, reducing client bundle size and enabling direct async data access without client-side waterfalls. Layouts and pages are streamed via Suspense boundaries, and the App Router colocates route handlers, metadata, and loading states per segment.",
-    relevance:
-      "Powers all UI — company listings, contact management, email campaign dashboards, and admin pages. Server Components fetch from the GraphQL API without exposing credentials to the browser; Client Components are used only where interactivity is required (forms, modals, real-time status).",
-    url: "https://nextjs.org/docs/app",
+    year: 2024,
+    finding: "React framework with App Router for server-side rendering, static generation, and API routes",
+    relevance: "Used for the entire web application, with server components (e.g., src/app/admin/contacts/page.tsx) and client components for interactive parts like CompanyContactsClient",
+    url: "https://nextjs.org/docs",
     categoryColor: "var(--blue-9)",
   },
   {
     slug: "postgresql-neon",
     number: 2,
-    title: "PostgreSQL with Neon",
+    title: "PostgreSQL (Neon)",
     category: "Database",
     wordCount: 0,
-    readingTimeMin: 3,
+    readingTimeMin: 2,
     authors: "Neon",
     year: 2024,
-    finding:
-      "Serverless PostgreSQL that separates compute from storage, enabling instant branching, scale-to-zero cold starts, and connection pooling via the @neondatabase/serverless driver optimised for HTTP/WebSocket transport in edge and serverless runtimes where persistent TCP connections are unavailable.",
-    relevance:
-      "Stores the entire lead-gen dataset — companies, contacts, contact_emails, email_campaigns, email_templates, company_facts, company_snapshots, and received_emails. All queries run through Drizzle ORM over the Neon HTTP driver; indexes on ai_tier and company_id columns keep paginated filtering fast.",
-    url: "https://neon.tech",
+    finding: "Serverless PostgreSQL with branching and auto-scaling capabilities",
+    relevance: "Stores core data like companies and contacts via Drizzle ORM schema (src/db/schema.ts), with tables companies and contacts for lead management",
+    url: "https://neon.tech/docs",
     categoryColor: "var(--green-9)",
   },
   {
-    slug: "drizzle-orm",
+    slug: "better-auth",
+    number: 3,
+    title: "Better Auth",
+    category: "Authentication",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "AI Apps",
+    year: 2024,
+    finding: "Authentication library with server-side session management and email/password support",
+    relevance: "Handles user authentication via @ai-apps/auth, with server-side checks in checkIsAdmin() (src/lib/admin.ts) for admin routes",
+    url: "https://github.com/ai-apps/auth",
+    categoryColor: "var(--purple-9)",
+  },
+  {
+    slug: "openai-gpt",
     number: 4,
+    title: "OpenAI GPT",
+    category: "AI/LLM",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "OpenAI",
+    year: 2024,
+    finding: "Large language model for natural language understanding and generation",
+    relevance: "Used in contact enrichment via src/lib/ai-contact-enrichment.ts and intent detection via analyzeLinkedInPosts mutation",
+    url: "https://platform.openai.com/docs",
+    categoryColor: "var(--amber-9)",
+  },
+  {
+    slug: "candle-rust",
+    number: 5,
+    title: "Candle (Rust)",
+    category: "AI/LLM",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Hugging Face",
+    year: 2024,
+    finding: "Rust ML framework for efficient, local model inference with Metal acceleration",
+    relevance: "Powers the local embedding server on port 9998, generating JobBERT-v2 embeddings for lead scoring and similarity search",
+    url: "https://github.com/huggingface/candle",
+    categoryColor: "var(--amber-9)",
+  },
+  {
+    slug: "drizzle-orm",
+    number: 6,
     title: "Drizzle ORM",
     category: "Database",
     wordCount: 0,
     readingTimeMin: 2,
     authors: "Drizzle Team",
     year: 2024,
-    finding:
-      "TypeScript-first SQL query builder that infers full column-level types from the schema definition, making runtime type mismatches impossible. The query builder compiles to plain SQL with zero runtime overhead, supports inArray, sql template helpers, and the hasMore pagination trick (fetch limit+1, no COUNT) for single-query pagination.",
-    relevance:
-      "Defines the canonical schema in src/db/schema.ts — all tables, indexes, and relations. Every GraphQL resolver queries via Drizzle; migrations are generated with pnpm db:generate and applied with pnpm db:migrate. Raw SQL strings in resolvers are explicitly prohibited to keep type safety intact.",
-    url: "https://orm.drizzle.team",
+    finding: "TypeScript ORM with schema migrations and type-safe queries",
+    relevance: "Manages database schema in src/db/schema.ts, defining tables like companies and contacts with relationships and indexes",
+    url: "https://orm.drizzle.team/docs",
     categoryColor: "var(--green-9)",
   },
   {
-    slug: "better-auth",
-    number: 5,
-    title: "Better Auth",
-    category: "Authentication",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Better Auth",
-    year: 2024,
-    finding:
-      "Self-hosted authentication library with a Drizzle adapter that writes session and account rows directly into the application's PostgreSQL database. Provides email/password credential flows, session token rotation, and a plugin architecture for OAuth providers — no third-party auth SaaS dependency.",
-    relevance:
-      "Handles sign-in and sign-up via the shared @ai-apps/auth package. The GraphQLContext carries userId and userEmail extracted from the session token on every request. Admin-gated mutations call isAdminEmail() — resolvers throw Forbidden before touching the DB if the check fails.",
-    url: "https://www.better-auth.com",
-    categoryColor: "var(--purple-9)",
-  },
-  {
-    slug: "deepseek-llm",
-    number: 6,
-    title: "DeepSeek LLM",
-    category: "AI/LLM",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "DeepSeek",
-    year: 2024,
-    finding:
-      "Mixture-of-Experts architecture with 671B total parameters (37B active per forward pass), trained with multi-token prediction and Group Relative Policy Optimisation. Delivers GPT-4-class reasoning at roughly 10x lower cost per token, making it viable for high-volume structured extraction tasks where per-call economics matter.",
-    relevance:
-      "Runs company deep-analysis and AI-tier classification (not AI / AI-first / AI-native) with confidence scores, service extraction, and tech-stack inference from live website HTML. Also drives the ComposeFromLinkedIn component for AI-drafted personalised outreach. Routed through OpenRouter for fallback and model switching.",
-    url: "https://platform.deepseek.com",
-    categoryColor: "var(--amber-9)",
-  },
-  {
-    slug: "graphql-codegen",
+    slug: "graphql-apollo",
     number: 7,
-    title: "GraphQL Code Generator",
+    title: "GraphQL (Apollo)",
     category: "API",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "The Guild",
+    authors: "Apollo",
     year: 2024,
-    finding:
-      "Static analysis tool that parses GraphQL SDL schemas and operation documents to emit TypeScript: resolver type signatures, scalar mappings, and React Apollo hooks with full generic inference. The client preset also enforces fragment co-location and masked fragment types to prevent over-fetching at compile time.",
-    relevance:
-      "After every schema change (pnpm codegen), regenerates src/__generated__/ — typed hooks like useGetContactsQuery and useCreateContactMutation consumed by UI components, plus resolver types like QueryJobsArgs and CompanyResolvers used by Apollo Server resolvers. Editing generated files is prohibited; the type contract is enforced at codegen time.",
-    url: "https://the-guild.dev/graphql/codegen",
+    finding: "Query language for APIs with a single endpoint and generated types",
+    relevance: "Used for data fetching via queries like GetContacts and mutations like CreateDraftCampaign, with hooks in admin components",
+    url: "https://www.apollographql.com/docs",
     categoryColor: "var(--orange-9)",
   },
   {
-    slug: "vercel-ai-sdk",
+    slug: "inngest",
     number: 8,
-    title: "Vercel AI SDK",
+    title: "Inngest",
+    category: "Infrastructure",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Inngest",
+    year: 2024,
+    finding: "Background job processing with event-driven scheduling and retries",
+    relevance: "Orchestrates pipeline tasks like data ingestion and email sending, triggered by events from scripts and mutations",
+    url: "https://www.inngest.com/docs",
+    categoryColor: "var(--red-9)",
+  },
+  {
+    slug: "resend",
+    number: 9,
+    title: "Resend",
+    category: "API",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Resend",
+    year: 2024,
+    finding: "Email API with React components and webhook support for tracking",
+    relevance: "Sends personalized emails via mutations like useCreateDraftCampaignMutation, with webhook validation for email events",
+    url: "https://resend.com/docs",
+    categoryColor: "var(--orange-9)",
+  },
+  {
+    slug: "jobbert-v2",
+    number: 10,
+    title: "JobBERT-v2",
     category: "AI/LLM",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Vercel",
-    year: 2025,
-    finding:
-      "Provider-agnostic TypeScript SDK that unifies streaming text generation, structured object generation (generateObject with Zod schemas), and tool-call orchestration across OpenAI, Anthropic, and OpenRouter. Uses the AI Data Stream Protocol for incremental UI updates and exposes useChat/useCompletion React hooks backed by ReadableStream.",
-    relevance:
-      "Used across src/agents/ and src/anthropic/ for all LLM calls — company enrichment, the SQL agent (text-to-sql route), the admin agent, and the strategy enforcer. generateObject with Zod schemas constrains model output to the exact shape expected by GraphQL resolvers, eliminating post-hoc JSON parsing errors.",
-    url: "https://sdk.vercel.ai",
+    authors: "TechWolf",
+    year: 2024,
+    finding: "BERT model fine-tuned for job and company embeddings",
+    relevance: "Generates embeddings via Candle server for semantic search in useGetSimilarPostsLazyQuery and lead scoring based on distance",
+    url: "https://huggingface.co/techwolf/jobbert-v2",
     categoryColor: "var(--amber-9)",
   },
   {
-    slug: "neverbounce",
-    number: 9,
-    title: "NeverBounce",
-    category: "Verification",
+    slug: "radix-ui",
+    number: 11,
+    title: "Radix UI",
+    category: "Frontend",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "ZoomInfo / NeverBounce",
+    authors: "Radix UI",
     year: 2024,
-    finding:
-      "Real-time email verification API that performs SMTP handshake simulation, MX record resolution, disposable domain detection, and catch-all server classification without sending an actual email. Returns a verdict of valid / invalid / disposable / catchall / unknown with a numeric confidence score.",
-    relevance:
-      "Called during the contact discovery stage before any outreach is attempted. Unverified or invalid emails are flagged in the contact_emails table; only contacts with a passing NeverBounce verdict enter the campaign queue. This keeps bounce rates below the thresholds that trigger sending-domain reputation penalties with Resend.",
-    url: "https://neverbounce.com",
-    categoryColor: "var(--teal-9)",
+    finding: "Unstyled, accessible component primitives for building UIs",
+    relevance: "Used in components like BatchEmailModal and EditCampaignDialog for consistent, interactive UI elements",
+    url: "https://www.radix-ui.com/docs",
+    categoryColor: "var(--blue-9)",
   },
   {
-    slug: "apollo-server-5",
-    number: 10,
-    title: "Apollo Server 5",
-    category: "API",
+    slug: "vanilla-extract",
+    number: 12,
+    title: "Vanilla Extract",
+    category: "Frontend",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Apollo GraphQL",
+    authors: "Vanilla Extract",
     year: 2024,
-    finding:
-      "HTTP-framework-agnostic GraphQL server with a standalone fetch-based handler, incremental delivery support, and a plugin API for request lifecycle hooks. DataLoader integration batches and caches field-level DB lookups per request tick, collapsing N+1 query patterns into a single batched SELECT regardless of how many parent objects appear in the response.",
-    relevance:
-      "Serves the /api/graphql route used by every UI component and external script. Context is constructed per request — db, userId, userEmail, and loaders (DataLoaders for companies, contacts, jobSkills). DataLoaders are mandatory for field resolvers: context.loaders.company.load(id) instead of direct db.select() prevents one SELECT per row in lists.",
-    url: "https://www.apollographql.com/docs/apollo-server",
-    categoryColor: "var(--orange-9)",
+    finding: "CSS-in-JS library with zero-runtime styles and TypeScript support",
+    relevance: "Styles the application with Next.js plugin, providing type-safe CSS for components like LandingPipeline",
+    url: "https://vanilla-extract.style/docs",
+    categoryColor: "var(--blue-9)",
   },
 ];
 
-// ── Key Metrics ───────────────────────────────────────────────────
+// ─── Key Metrics ───────────────────────────────────────────────────
 
 export const researchStats: Stat[] = [
   {
     number: "7",
-    label: "Extraction methods per company: JSON-LD, meta tags, DOM heuristics, and LLM — each with a per-field confidence score stored in company_facts",
-    source: "ExtractMethod enum: JSONLD | META | DOM | HEURISTIC | LLM",
+    label: "Pipeline modules visualized in LandingPipeline component",
+    source: "Component analysis",
   },
   {
-    number: "3-tier",
-    label: "AI classification taxonomy with calibrated confidence (0–1 real): not-AI → AI-first → AI-native — fixed labels prevent category drift across enrichment runs",
-    source: "ai_tier integer + ai_classification_confidence real column",
+    number: "0..1",
+    label: "Lead fit score range stored in companies.score column",
+    source: "Database schema (src/db/schema.ts)",
   },
   {
-    number: "4+",
-    label: "Candidate email addresses generated per contact via domain-pattern synthesis (first.last@, f.last@, first@, last@), then filtered to verified by NeverBounce with status: valid | invalid | catch-all | unknown",
-    source: "contact_emails table + NeverBounce API",
+    number: "9998",
+    label: "Port for local Candle embedding server",
+    source: "Embedding server configuration",
   },
   {
-    number: "2-pass",
-    label: "LLM email generation: parallel research on contact + company context feeds a draft pass, then a refinement pass strips AI artifacts before send — correlated end-to-end via Resend message IDs and webhook reply events",
-    source: "ComposeFromLinkedIn + Resend webhooks → received_emails",
+    number: "50",
+    label: "Page size for paginated admin tables (PAGE_SIZE constant)",
+    source: "src/app/admin/contacts/page.tsx",
+  },
+  {
+    number: "3",
+    label: "AI tier levels: 0=not AI, 1=ai_first, 2=ai_native",
+    source: "Database schema (companies.ai_tier)",
+  },
+  {
+    number: "300ms",
+    label: "Debounce delay for search input in admin contacts",
+    source: "src/app/admin/contacts/page.tsx debounce pattern",
+  },
+  {
+    number: "8am UTC",
+    label: "Default send time for business-day scheduled emails",
+    source: "src/lib/business-days.ts",
   },
 ];
 
-// ── Pipeline Stages ───────────────────────────────────────────────
+// ─── Pipeline Stages ───────────────────────────────────────────────
 
 export const pipelineAgents: PipelineAgent[] = [
   {
     name: "Company Discovery",
-    description: "Three ingestion paths fan-in to a single deduplication gate: Common Crawl CDX index queries (pre-crawled archive, no rate-limit pressure), live web search + HTTP fetch for recently-founded companies absent from the archive, and bulk JSON import via /api/companies/bulk-import for seeding from existing prospect lists. Deduplication keys on the canonical domain after URL normalization (strip www, trailing slash). Net-new records land in the companies table with a unique key slug, last_seen_crawl_id, and capture_timestamp for provenance.",
-    researchBasis: "Multi-source fan-in with domain-keyed entity resolution",
+    description: "The pipeline begins with a Rust-based web crawler (crates/agentic-search) that discovers tech companies via commands like cargo run --release -- --root ../.. discover --output discovery.json. This outputs raw company data to src/app/stack/discovery.json, which includes domains and initial metadata. The crawler uses Brave Search API for web discovery, targeting AI and tech sectors based on configured queries. This step ensures a broad input of potential leads for enrichment.",
+    researchBasis: "Rust for performance, Brave Search API for web data",
+    codeSnippet: "cargo run --release -- --root ../.. discover --output discovery.json",
+    dataFlow: "Web queries \u2192 Rust crawler \u2192 JSON file (discovery.json)",
   },
   {
-    name: "Enrichment & AI Classification",
-    description: "Live website content is fetched per company and passed through a layered extraction stack — JSON-LD structured data first, then HTML meta tags, then DOM heuristics, then LLM extraction as a fallback — each producing evidence records in company_facts with a per-field confidence score (real, 0–1) and a source_type + method provenance label. Extracted signals (services, industries, tech stack) feed two parallel DeepSeek calls: a 3-class AI tier classifier (not-AI / AI-first / AI-native) that returns a confidence score and classification rationale, and a deep analysis generator that produces a structured Markdown report covering technical maturity, product focus, and outreach talking points. Both outputs are Zod-schema-constrained before DB write.",
-    researchBasis: "Layered extraction cascade (JSONLD → META → DOM → HEURISTIC → LLM) with Zod-constrained structured output and calibrated confidence scores",
+    name: "Profile Enrichment",
+    description: "TypeScript scripts (e.g., scripts/scrape-linkedin-people.ts) enrich company profiles by scraping LinkedIn for contacts and posts. The Rust crate linkedin-posts (cargo run --bin linkedin-posts) handles real-time post monitoring, while scripts fetch GitHub data via src/lib/ai-contact-enrichment.ts. This step uses regex patterns (e.g., AI_TAG_RE) to detect AI professionals and fetches repos with AI_GITHUB_TOPICS. Data is validated with NeverBounce for emails and stored temporarily for processing.",
+    researchBasis: "LinkedIn scraping, GitHub API, regex detection",
+    codeSnippet: "const AI_TAG_RE = /\\b(ai|ml|llm|nlp)\\b/i;",
+    dataFlow: "LinkedIn/GitHub APIs \u2192 TypeScript scripts \u2192 enriched contact objects",
   },
   {
-    name: "Contact Discovery & Verification",
-    description: "Contact records are anchored to a LinkedIn profile URL, which serves as the canonical dedup key across all create and upsert operations. Email discovery synthesizes 2–5 candidate addresses per contact by combining the contact's name with the company's canonical_domain across common enterprise patterns (first.last@, f.last@, first@, last@). All candidates are submitted to NeverBounce for deliverability verification, returning a status (valid / invalid / catch-all / unknown), nb_execution_time_ms, and a suggested correction when available. Invalid addresses are stored in bounced_emails on the contact row rather than discarded — preventing re-verification of known-bad addresses and building a contact-level bounce history.",
-    researchBasis: "Pattern-based email synthesis + NeverBounce API verification with persistent bounce history",
+    name: "AI Embedding Generation",
+    description: "A local Candle embedding server (port 9998) generates JobBERT-v2 embeddings for company descriptions and posts. This uses the Rust ML framework with Metal acceleration for efficiency, avoiding cloud API costs. Embeddings are computed via batch processing, often triggered by Inngest jobs, and stored for semantic search. The embeddings enable similarity queries (useGetSimilarPostsLazyQuery) and contribute to lead scoring based on cosine distance.",
+    researchBasis: "Candle framework, JobBERT-v2 model",
+    codeSnippet: "Embedding server on http://localhost:9998",
+    dataFlow: "Text data \u2192 Candle server \u2192 vector embeddings",
   },
   {
-    name: "Email Outreach",
-    description: "ComposeFromLinkedIn runs parallel research — contact LinkedIn profile plus enriched company context — before calling DeepSeek in two sequential passes: a draft pass that produces subject line, plain-text body, and HTML, then a refinement pass that strips LLM-artifact phrasing and adjusts tone. Batch campaigns are defined as email_campaign records with a JSON sequence array and delay_days config. Each send hits the Resend API and stores the returned message ID for webhook correlation. Reply tracking is webhook-driven: Resend posts delivery events to the inbound handler, which updates reply_received and pauses the follow-up sequence for that contact thread.",
-    researchBasis: "Two-pass LLM generation with Resend message ID correlation and webhook-driven reply detection",
+    name: "Data Storage & Scoring",
+    description: "Enriched data is stored in PostgreSQL via Drizzle ORM, with tables like companies and contacts defined in src/db/schema.ts. An ensemble scoring system combines multiple signals: AI tier (from regex detection), intent (from analyzeLinkedInPosts mutation), GitHub activity, and embedding similarity. Scores are computed server-side and stored in the companies.score column (0..1), with reasons tracked in JSON arrays. This step ensures leads are ranked by relevance.",
+    researchBasis: "PostgreSQL, Drizzle ORM, ensemble learning",
+    codeSnippet: "score REAL DEFAULT 0.5, ai_tier INTEGER DEFAULT 0",
+    dataFlow: "Enriched data \u2192 Drizzle ORM \u2192 PostgreSQL tables with scores",
   },
   {
-    name: "Inbound & Follow-ups",
-    description: "Resend webhooks deliver inbound replies and delivery events to the received_emails table with full payload storage. Each event is correlated to its outbound contact_email record via the Resend message ID, updating reply_received_at and setting followup_status to completed on reply. Follow-up scheduling reads send history plus reply status for each contact to compute the next send time from the campaign's delay_days config, skipping contacts who have replied or are marked do_not_contact. The sequence_type column (initial / followup_1 / followup_2 / followup_3) and parent_email_id form a linked-list thread structure for full conversation context.",
-    researchBasis: "Event-driven reply correlation via Resend message IDs with reply-aware sequence state machine",
+    name: "Email Campaign Delivery",
+    description: "Scored leads are delivered via personalized email campaigns using Resend. Mutations like useCreateDraftCampaignMutation create campaigns, which are scheduled with business-day logic from src/lib/business-days.ts (skips weekends, sets 8am UTC). The system uses Resend webhooks for tracking and sends emails via POST /api/emails/send. Admin can monitor campaigns in src/app/admin/contacts/page.tsx with real-time updates.",
+    researchBasis: "Resend API, business scheduling",
+    codeSnippet: "export function getNextBusinessDay(offset: number, options: GetNextBusinessDayOptions = {}): Date",
+    dataFlow: "Scored leads \u2192 Resend mutations \u2192 scheduled emails \u2192 recipient inboxes",
   },
 ];
 
-// ── Narrative ─────────────────────────────────────────────────────
+// ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "The pipeline ingests companies from three sources — Common Crawl CDX, live web fetch, and bulk import — deduplicating on canonical domain before writing to Neon PostgreSQL. Each company is enriched through a layered extraction stack (JSON-LD → meta → DOM → LLM fallback), with every extracted field stored as a company_facts evidence record carrying a source type, extraction method, and per-field confidence score. Two parallel DeepSeek calls produce a 3-class AI tier classification (not-AI / AI-first / AI-native) with a calibrated confidence float, and a structured deep analysis report — both Zod-constrained before DB write. On the contact side, email candidates are synthesized from name-plus-domain patterns, verified through NeverBounce, and stored with full bounce history to prevent re-verification. Outreach uses a two-pass LLM generation flow (draft → refine) anchored to the contact's LinkedIn profile and the enriched company context, then delivers via Resend with message-ID-correlated webhook reply tracking and a reply-aware follow-up state machine.";
+  "The system starts by discovering tech companies via a Rust-based web crawler (crates/agentic-search) that outputs to discovery.json. TypeScript scripts (scripts/scrape-linkedin-people.ts) then enrich LinkedIn profiles, while a Candle embedding server generates JobBERT-v2 embeddings for semantic analysis. Enriched data is stored in PostgreSQL via Drizzle ORM, scored using an ensemble of AI tier, intent, and GitHub signals, and finally delivered as personalized email campaigns via Resend, scheduled with business-day logic from src/lib/business-days.ts.";
 
-// ── Deep-Dive Sections ────────────────────────────────────────────
+// ─── Deep-Dive Sections ────────────────────────────────────────────
 
-export const extraSections: { heading: string; content: string }[] = [
+export const extraSections: ExtraSection[] = [
   {
     heading: "System Architecture",
-    content: "Next.js 16 App Router with React 19 Server Components for the frontend. All application queries go through an Apollo Server 5 GraphQL API at /api/graphql, with Drizzle ORM as the query builder over Neon PostgreSQL. DataLoaders in the Apollo context prevent N+1 on relational fields (contacts → company, contact_emails → contact). The /api/companies/bulk-import and /api/companies/enhance REST routes handle admin data operations outside the GraphQL surface, both guarded by isAdminEmail() session checks. Vercel routes are capped at 60s max duration.",
+    content: "The application uses a monorepo with Next.js 15 as the main framework, Rust crates for performance-critical tasks (crawling, embeddings), and shared workspace packages like @ai-apps/auth. Server components handle data fetching (e.g., src/app/admin/contacts/page.tsx), while client components manage interactivity (e.g., CompanyContactsClient). The architecture emphasizes local-first AI with Candle embeddings, GraphQL for API communication, and Inngest for background job orchestration. Key decisions include Rust for web crawling to improve speed and reduce cloud dependencies.",
   },
   {
-    heading: "Evidence-Based Data Model",
-    content: "The companies golden record is built from a two-table evidence store. company_facts holds per-field observations: each row records the field name, value_json/value_text, a confidence score (real 0–1), source_type (COMMONCRAWL / LIVE_FETCH / MANUAL / PARTNER), extraction method (JSONLD / META / DOM / HEURISTIC / LLM), extractor_version, and a WARC pointer (filename, offset, length, digest) for reproducibility. company_snapshots stores the raw HTML text sample, parsed JSON-LD, and full extractor output per crawl, keyed on (company_id, content_hash) to deduplicate re-crawls of unchanged pages.",
+    heading: "Database Design",
+    content: "PostgreSQL (via Neon) stores all lead data with a schema defined in src/db/schema.ts. Core tables include companies (with columns like key, score, ai_tier) and contacts (with ai_profile JSONB). Relationships are 1:N from companies to contacts, linkedin_posts, and email_campaigns. Indexes on companies(key) and companies(score) optimize lookups and sorting. The design supports golden record resolution via canonical_domain to deduplicate companies and a blocklist via companies.blocked to exclude irrelevant entries from the pipeline.",
   },
   {
-    heading: "Zod-Constrained LLM Outputs",
-    content: "All LLM outputs that write to the DB pass through Zod schemas before persistence. The AI tier classifier output is validated against a fixed 3-value enum (0 = not-AI, 1 = AI-first, 2 = AI-native) with a confidence real and a classification reason string. Skill extraction validates each tag against the taxonomy, enforces SkillLevel (required / preferred / nice), and caps arrays at 30 skills — preventing taxonomy drift across enrichment runs. Company category is validated against a 7-value enum (CONSULTANCY / AGENCY / STAFFING / DIRECTORY / PRODUCT / OTHER / UNKNOWN) at the resolver layer with a fallback to OTHER for unrecognized values.",
+    heading: "Security & Auth",
+    content: "Authentication is handled by Better Auth (@ai-apps/auth) with email/password, using server-side session validation via auth.api.getSession(). Admin routes are protected by checkIsAdmin() in src/lib/admin.ts, which checks against ADMIN_EMAIL. Environment variables (e.g., BETTER_AUTH_SECRET, API keys) are stored in .env.local. Webhook endpoints validate secrets (e.g., Resend webhook secret), and rate limiting is inferred for external APIs. The system includes a dev bypass via NEXT_PUBLIC_ADMIN_EMAIL for easier testing.",
   },
   {
-    heading: "Contact Identity & Bounce Tracking",
-    content: "The LinkedIn profile URL is the canonical entity key for contacts — all upserts, dedup checks, and outreach lookups key on linkedin_url, indexed via idx_contacts_linkedin_url. Email verification state is stored at two levels: the contact row holds nb_status, nb_result, nb_flags (JSON array), nb_suggested_correction, nb_execution_time_ms, and email_verified boolean for the primary email; the bounced_emails JSON array on the contact accumulates all historically invalid addresses to prevent redundant NeverBounce calls. do_not_contact is a boolean flag that outreach queries must filter on — it is checked in resolver logic before any campaign send.",
+    heading: "Deployment & Infrastructure",
+    content: "The app is deployed on Vercel (implied by Next.js), with PostgreSQL hosted on Neon for serverless scaling. Background jobs use Inngest for event-driven processing, likely with scheduled crons for data ingestion. Rust services (crates/) are built with Cargo and integrated via npm scripts (e.g., pnpm linkedin:people). The local Candle embedding server runs on port 9998, possibly containerized for production. Environment configuration includes keys for OpenAI, DeepSeek, Resend, and other external services, managed through Vercel environment variables.",
   },
   {
-    heading: "Outreach Sequence State Machine",
-    content: "Each sent email is a contact_emails row with a sequence_type (initial / followup_1 / followup_2 / followup_3), a sequence_number, and a parent_email_id foreign key forming a thread chain. followup_status (pending / completed) and reply_received boolean are updated by the Resend webhook handler when a reply or delivery event arrives, correlated via the Resend message ID stored on the row. Email campaigns define their sequence as a JSON array of step configs and a delay_days JSON array. The follow-up scheduler reads both arrays along with the contact's reply status to compute next send time, skipping any contact where reply_received = true or do_not_contact = true.",
+    heading: "AI Integration",
+    content: "AI is integrated via multiple providers: OpenAI GPT for contact enrichment and intent detection, DeepSeek as a fallback LLM, and local JobBERT-v2 embeddings via Candle. The system uses regex and topic-based detection in src/lib/ai-contact-enrichment.ts to identify AI contacts. Embeddings enable semantic search through useGetSimilarPostsLazyQuery for lead similarity. LangChain and LlamaIndex packages are included for potential RAG workflows, though primary retrieval uses vector search with hybrid keyword filtering. Ensemble scoring combines AI signals into a final lead score.",
   },
   {
-    heading: "Deployment & Observability",
-    content: "Deployed on Vercel with serverless functions capped at 60s. Neon PostgreSQL provides serverless branching — branch-per-migration-test workflow supported via pnpm db:generate + pnpm db:migrate. Resend handles transactional email delivery with webhook-based event callbacks stored in received_emails. LangSmith tracing is wired to DeepSeek enrichment calls for prompt-level observability. The strategy enforcer (src/agents/strategy-enforcer.ts) validates staged changes against the Two-Layer Model — blocking commits that add raw LLM calls without Zod schema constraints or that bypass the eval-first accuracy bar.",
+    heading: "Pipeline Orchestration",
+    content: "The lead generation pipeline is orchestrated through a combination of scheduled scripts and background jobs. Rust crates (agentic-search, linkedin-posts) handle discovery and scraping, outputting to JSON files. TypeScript scripts (e.g., scripts/scrape-linkedin-people.ts) process and enrich data, triggered by Inngest events or manual runs. The Candle server batches embedding generation, and scores are computed server-side. Email campaigns are scheduled via business-day logic in src/lib/business-days.ts, with Resend handling delivery and tracking. The LandingPipeline component visualizes this 7-step flow for monitoring.",
+  },
+  {
+    heading: "Frontend Patterns",
+    content: "The frontend uses React 18+ with Server Components for data fetching and Client Components for interactivity. Radix UI provides unstyled primitives for modals and dialogs (e.g., BatchEmailModal), styled with Vanilla Extract and Panda CSS. State management leverages React hooks and providers (CompaniesProvider). Key patterns include search debouncing in admin tables (300ms delay), pagination with PAGE_SIZE=50, and real-time updates via GraphQL cache-and-network policy. The UI is designed for admin efficiency with bulk operations and detailed lead views.",
+  },
+  {
+    heading: "Performance Optimizations",
+    content: "Performance is optimized through Rust for CPU-intensive tasks (crawling, embeddings), local AI inference to avoid cloud latency, and efficient database queries with Drizzle ORM and indexes. The frontend uses Suspense boundaries for lazy loading, debounced search to reduce GraphQL calls, and pagination to limit data transfer. The embedding server leverages Metal acceleration on macOS. Background jobs via Inngest ensure non-blocking operations, and business-day scheduling reduces email send failures. The hybrid stack balances speed (Rust) with developer productivity (TypeScript).",
+  },
+];
+
+// ─── Technical Details ────────────────────────────────────────────
+
+export const technicalDetails: TechnicalDetail[] = [
+  {
+    type: "table",
+    heading: "Core Database Tables",
+    description: "Key PostgreSQL tables managed by Drizzle ORM in src/db/schema.ts",
+    items: [
+    {
+      label: "companies",
+      value: "Stores company data with scores and AI tiers",
+      metadata: {"columns": "id, key, name, canonical_domain, category, score, ai_tier, blocked"},
+    },
+    {
+      label: "contacts",
+      value: "Stores contact details with AI profile JSON",
+      metadata: {"columns": "id, company_id, email, linkedin_url, department, tags, ai_profile"},
+    },
+    {
+      label: "linkedin_posts",
+      value: "Stores scraped LinkedIn content for intent analysis",
+      metadata: {"inferred": "Referenced by useGetLinkedInPostsQuery"},
+    },
+    {
+      label: "email_campaigns",
+      value: "Manages email outreach campaigns",
+      metadata: {"inferred": "Referenced by useCreateDraftCampaignMutation"},
+    },
+    ],
+  },
+  {
+    type: "diagram",
+    heading: "System Architecture Diagram",
+    description: "High-level flow of data through the hybrid Rust/TypeScript pipeline",
+    code: "Input Sources \u2192 Rust Crawlers (agentic-search, linkedin-posts) \u2192 TypeScript Scripts (scrape-linkedin-people.ts) \u2192 Candle Embedding Server \u2192 PostgreSQL Database \u2192 GraphQL API \u2192 Next.js Frontend \u2192 Resend Emails",
+  },
+  {
+    type: "code",
+    heading: "Admin Gate Pattern",
+    description: "Server-side function to protect admin routes using Better Auth",
+    code: "export async function checkIsAdmin(): Promise<{\n  isAdmin: boolean;\n  userId: string | null;\n  userEmail: string | null;\n}> {\n  const session = await auth.api.getSession({ headers: await headers() });\n  return {\n    isAdmin: session?.user.email === ADMIN_EMAIL,\n    userId: session?.user.id,\n    userEmail: session?.user.email,\n  };\n}",
+  },
+  {
+    type: "card-grid",
+    heading: "AI Detection Strategies",
+    description: "Methods used to identify AI-related contacts and companies",
+    items: [
+    {
+      label: "Regex Pattern",
+      value: "AI_TAG_RE for contact tags and departments",
+      metadata: {"pattern": "/\\b(ai|ml|llm|nlp|deep[- ]?learning|machine[- ]?learning|data[- ]?science)\\b/i"},
+    },
+    {
+      label: "GitHub Topics",
+      value: "Set of 20+ AI-related topics (e.g., machine-learning, llm)",
+      metadata: {"example": "AI_GITHUB_TOPICS = new Set([\"machine-learning\", \"deep-learning\"])"},
+    },
+    {
+      label: "Embedding Similarity",
+      value: "JobBERT-v2 embeddings for semantic company matching",
+      metadata: {"use": "useGetSimilarPostsLazyQuery"},
+    },
+    ],
   },
 ];
