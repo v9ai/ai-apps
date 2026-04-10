@@ -671,6 +671,23 @@ impl BPlusTree {
             if sibling == 0 {
                 break;
             }
+
+            // Prefetch next sibling's header + keys before traversal
+            #[cfg(target_arch = "aarch64")]
+            {
+                let sib_ptr = self.page_ptr(sibling);
+                unsafe { core::arch::aarch64::_prefetch(sib_ptr as *const i8, 0, 3); }
+                unsafe { core::arch::aarch64::_prefetch(sib_ptr.add(64) as *const i8, 0, 3); }
+            }
+            #[cfg(target_arch = "x86_64")]
+            {
+                let sib_ptr = self.page_ptr(sibling);
+                unsafe {
+                    core::arch::x86_64::_mm_prefetch(sib_ptr as *const i8, core::arch::x86_64::_MM_HINT_T0);
+                    core::arch::x86_64::_mm_prefetch(sib_ptr.add(64) as *const i8, core::arch::x86_64::_MM_HINT_T0);
+                }
+            }
+
             leaf = sibling;
         }
 

@@ -45,6 +45,9 @@ export const receivedEmailResolvers = {
       args: { limit?: number; offset?: number; archived?: boolean; classification?: string },
       context: GraphQLContext,
     ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
       const limit = Math.min(args.limit ?? 50, 200);
       const offset = args.offset ?? 0;
 
@@ -83,6 +86,9 @@ export const receivedEmailResolvers = {
       args: { id: number },
       context: GraphQLContext,
     ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
       const rows = await context.db
         .select()
         .from(receivedEmails)

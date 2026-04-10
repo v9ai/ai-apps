@@ -837,4 +837,178 @@ mod tests {
         assert!((on_disk.scoring.f1 - report.scoring.f1).abs() < 1e-6);
         assert!(!on_disk.timestamp.is_empty());
     }
+
+    // ── auc_roc (public API) ─────────────────────────────────────────────────
+
+    #[test]
+    fn test_auc_roc_perfect_ranking() {
+        let scores = vec![0.95, 0.85, 0.75, 0.30, 0.20, 0.10];
+        let labels = vec![true, true, true, false, false, false];
+        let auc = auc_roc(&scores, &labels);
+        assert!(
+            (auc - 1.0).abs() < 1e-5,
+            "perfect ranking should give AUC = 1.0, got {auc:.6}"
+        );
+    }
+
+    #[test]
+    fn test_auc_roc_worst_ranking() {
+        let scores = vec![0.95, 0.85, 0.75, 0.30, 0.20, 0.10];
+        let labels = vec![false, false, false, true, true, true];
+        let auc = auc_roc(&scores, &labels);
+        assert!(auc < 0.05, "inverted ranking should give AUC near 0, got {auc:.6}");
+    }
+
+    #[test]
+    fn test_auc_roc_random_ranking() {
+        // Interleaved: should be near 0.5.
+        let scores = vec![0.9, 0.8, 0.7, 0.6, 0.5, 0.4];
+        let labels = vec![true, false, true, false, true, false];
+        let auc = auc_roc(&scores, &labels);
+        assert!(
+            auc >= 0.3 && auc <= 0.8,
+            "interleaved ranking AUC should be near 0.5, got {auc:.6}"
+        );
+    }
+
+    #[test]
+    fn test_auc_roc_all_same_class() {
+        let scores = vec![0.9, 0.8, 0.7];
+        let labels = vec![true, true, true];
+        assert!((auc_roc(&scores, &labels) - 0.5).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_auc_roc_empty() {
+        assert!((auc_roc(&[], &[]) - 0.5).abs() < 1e-5);
+    }
+
+    // ── log_loss ─────────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_log_loss_perfect_predictions() {
+        // Near-perfect predictions should yield very low loss.
+        let predictions = vec![0.999, 0.999, 0.001, 0.001];
+        let labels = vec![true, true, false, false];
+        let loss = log_loss(&predictions, &labels);
+        assert!(loss < 0.01, "perfect predictions should have near-zero loss, got {loss}");
+    }
+
+    #[test]
+    fn test_log_loss_worst_predictions() {
+        // Completely wrong predictions should yield high loss.
+        let predictions = vec![0.001, 0.001, 0.999, 0.999];
+        let labels = vec![true, true, false, false];
+        let loss = log_loss(&predictions, &labels);
+        assert!(loss > 5.0, "worst predictions should have high loss, got {loss}");
+    }
+
+    #[test]
+    fn test_log_loss_uniform_predictions() {
+        // p=0.5 for all => loss = -ln(0.5) = ln(2) ~ 0.693
+        let predictions = vec![0.5, 0.5, 0.5, 0.5];
+        let labels = vec![true, false, true, false];
+        let loss = log_loss(&predictions, &labels);
+        assert!(
+            (loss - 0.6931).abs() < 0.01,
+            "uniform 0.5 predictions should give loss ~ln(2), got {loss}"
+        );
+    }
+
+    #[test]
+    fn test_log_loss_empty() {
+        assert_eq!(log_loss(&[], &[]), 0.0);
+    }
+
+    #[test]
+    fn test_log_loss_clamping() {
+        // Exact 0.0 and 1.0 should not panic (clamped internally).
+        let predictions = vec![0.0, 1.0];
+        let labels = vec![false, true];
+        let loss = log_loss(&predictions, &labels);
+        assert!(loss.is_finite(), "log_loss should handle 0.0/1.0 via clamping");
+        assert!(loss < 0.1, "correct 0/1 predictions should have low loss, got {loss}");
+    }
+
+    // ── stratified_split ─────────────────────────────────────────────────────
+
+    #[test]
+    fn test_stratified_split_preserves_ratio() {
+        // 30 positives, 70 negatives => 70/30 split at 0.8 ratio.
+        let mut labels = vec![true; 30];
+        labels.extend(vec![false; 70]);
+
+        let (train, test) = stratified_split(&labels, 0.8);
+
+        // All indices accounted for.
+        assert_eq!(train.len() + test.len(), 100);
+
+        // Check class ratios in train set.
+        let train_pos = train.iter().filter(|&&i| labels[i]).count();
+        let train_neg = train.iter().filter(|&&i| !labels[i]).count();
+
+        // 80% of 30 positives = 24, 80% of 70 negatives = 56
+        assert!(
+            (train_pos as f32 - 24.0).abs() <= 1.0,
+            "expected ~24 positive in train, got {train_pos}"
+        );
+        assert!(
+            (train_neg as f32 - 56.0).abs() <= 1.0,
+            "expected ~56 negative in train, got {train_neg}"
+        );
+    }
+
+    #[test]
+    fn test_stratified_split_no_overlap() {
+        let labels = vec![true, false, true, false, true, false, true, false, true, false];
+        let (train, test) = stratified_split(&labels, 0.6);
+
+        // No index should appear in both sets.
+        for &t in &train {
+            assert!(!test.contains(&t), "index {t} in both train and test");
+        }
+
+        // All indices covered.
+        let mut all: Vec<usize> = train.iter().chain(test.iter()).copied().collect();
+        all.sort();
+        let expected: Vec<usize> = (0..10).collect();
+        assert_eq!(all, expected);
+    }
+
+    #[test]
+    fn test_stratified_split_sorted_indices() {
+        let labels = vec![true, false, true, true, false, false, true, false];
+        let (train, test) = stratified_split(&labels, 0.5);
+
+        // Both should be sorted.
+        for w in train.windows(2) {
+            assert!(w[0] < w[1], "train indices should be sorted");
+        }
+        for w in test.windows(2) {
+            assert!(w[0] < w[1], "test indices should be sorted");
+        }
+    }
+
+    #[test]
+    fn test_stratified_split_all_one_class() {
+        let labels = vec![true; 10];
+        let (train, test) = stratified_split(&labels, 0.7);
+        assert_eq!(train.len() + test.len(), 10);
+        // 70% of 10 = 7
+        assert_eq!(train.len(), 7);
+        assert_eq!(test.len(), 3);
+    }
+
+    #[test]
+    fn test_stratified_split_small_dataset() {
+        // 2 positives, 1 negative at 0.5 ratio.
+        let labels = vec![true, true, false];
+        let (train, test) = stratified_split(&labels, 0.5);
+        assert_eq!(train.len() + test.len(), 3);
+        // At least 1 of each class in train (due to rounding + min(1)).
+        let train_pos = train.iter().filter(|&&i| labels[i]).count();
+        let train_neg = train.iter().filter(|&&i| !labels[i]).count();
+        assert!(train_pos >= 1, "should have at least 1 positive in train");
+        assert!(train_neg >= 1, "should have at least 1 negative in train");
+    }
 }
