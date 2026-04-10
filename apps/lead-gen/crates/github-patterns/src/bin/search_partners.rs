@@ -683,6 +683,8 @@ async fn hydrate_batch(
         .copied()
         .collect();
 
+    info!("  hydrate_batch: {} logins in, {} fresh (not in seen={})", logins.len(), fresh.len(), seen.len());
+
     if fresh.is_empty() {
         return vec![];
     }
@@ -724,6 +726,8 @@ async fn hydrate_batch(
         all_users.extend(users);
     }
 
+    info!("  hydrate_batch: {} fetched from GraphQL", all_users.len());
+
     // Score and filter
     let src = source_tag
         .strip_prefix("cpn:")
@@ -731,10 +735,14 @@ async fn hydrate_batch(
         .unwrap_or("unknown");
 
     let mut records = Vec::new();
+    let mut eu_count = 0u32;
+    let mut above_threshold = 0u32;
+    let mut hobbyist_filtered = 0u32;
     for user in all_users {
         if !is_eu_location(user.location.as_deref()) {
             continue;
         }
+        eu_count += 1;
 
         let skill_text = format!(
             "{} {} {}",
@@ -747,13 +755,14 @@ async fn hydrate_batch(
 
         // Skip pure hobbyist stargazers
         if starred_anthropic && fitness.archetypes.is_empty() && !fitness.is_consulting_company {
-            info!("  skip {}: stargazer but no archetype or consulting signal", user.login);
+            hobbyist_filtered += 1;
             continue;
         }
 
         if fitness.score < threshold {
             continue;
         }
+        above_threshold += 1;
 
         info!(
             "  ✓ {} ({:.2}) [{}] @ {} — {}",
@@ -785,6 +794,9 @@ async fn hydrate_batch(
             extra_tags: tags,
         });
     }
+
+    info!("  hydrate_batch: {} EU, {} above threshold, {} hobbyist-filtered → {} stored",
+        eu_count, above_threshold, hobbyist_filtered, records.len());
 
     records
 }
