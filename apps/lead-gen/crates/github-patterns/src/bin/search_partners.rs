@@ -304,6 +304,17 @@ static AI_REPOS: &[&str] = &[
     "crewAIInc/crewAI",
 ];
 
+/// Check if a location string matches any EU/UK location (case-insensitive substring).
+fn is_eu_location(location: Option<&str>) -> bool {
+    let loc = match location {
+        Some(l) if !l.is_empty() => l.to_lowercase(),
+        _ => return false,
+    };
+    EU_LOCATIONS
+        .iter()
+        .any(|eu| loc.contains(&eu.to_lowercase()))
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
@@ -315,20 +326,24 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let db_path = std::env::var("LANCE_DB_PATH").unwrap_or_else(|_| "./contributors.lance".into());
-    let mode = std::env::var("SEARCH_MODE").unwrap_or_else(|_| "search".into());
+    let mode = std::env::var("SEARCH_MODE").unwrap_or_else(|_| "all".into());
     let top_n: usize = std::env::var("TOP_N")
         .ok()
         .and_then(|s| s.parse().ok())
-        .unwrap_or(50);
+        .unwrap_or(100);
     let threshold: f32 = std::env::var("PARTNER_THRESHOLD")
         .ok()
         .and_then(|s| s.parse().ok())
-        .unwrap_or(0.3);
+        .unwrap_or(0.25);
     let per_page: u8 = std::env::var("MAX_RESULTS_PER_QUERY")
         .ok()
         .and_then(|s| s.parse().ok())
-        .unwrap_or(30)
+        .unwrap_or(100)
         .min(100);
+    let max_pages: u32 = std::env::var("MAX_PAGES")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(3);
 
     if mode == "top" {
         info!("opening LanceDB at {db_path}");
@@ -347,95 +362,324 @@ async fn main() -> anyhow::Result<()> {
     let mut stored_count = 0u32;
     let mut total_searched = 0u32;
 
-    for (keywords, location) in SEARCH_MATRIX {
-        let query = format!("{keywords} type:user location:{location}");
-        info!("searching: {query}");
+    // ── Pass 1: User search ─────────────────────────────────────────────────
+    if matches!(mode.as_str(), "all" | "search") {
+        info!(
+            "═══ PASS 1: User bio/profile search ({} queries) ═══",
+            SEARCH_MATRIX.len()
+        );
 
-        let results = match gh
-            .search_users(&query, Some("followers"), Some("desc"), per_page, 1)
-            .await
-        {
-            Ok(r) => r,
-            Err(e) => {
-                warn!("search failed for \"{query}\": {e}");
-                // Rate-limit cooldown
-                tokio::time::sleep(Duration::from_secs(5)).await;
-                continue;
+        for (keywords, location) in SEARCH_MATRIX {
+            let query = format!("{keywords} type:user location:{location}");
+
+            for page in 1..=max_pages {
+                if page > 1 {
+                    info!("  page {page} for: {query}");
+                } else {
+                    info!("searching: {query}");
+                }
+
+                let results = match gh
+                    .search_users(&query, Some("followers"), Some("desc"), per_page, page)
+                    .await
+                {
+                    Ok(r) => r,
+                    Err(e) => {
+                        warn!("search failed for \"{query}\" page {page}: {e}");
+                        tokio::time::sleep(Duration::from_secs(5)).await;
+                        break; // stop paginating on error
+                    }
+                };
+
+                let fetched = results.items.len();
+                if page == 1 {
+                    info!(
+                        "  → {total} total (fetched {fetched})",
+                        total = results.total_count
+                    );
+                }
+
+                if fetched == 0 {
+                    break; // no more pages
+                }
+
+                for item in &results.items {
+                    total_searched += 1;
+                    if let Some(count) = process_user(
+                        &gh,
+                        &mut db,
+                        &mut seen_logins,
+                        &item.login,
+                        threshold,
+                        &format!("cpn:search/{location}"),
+                    )
+                    .await
+                    {
+                        stored_count += count;
+                    }
+                }
+
+                // Stop paginating if we got fewer than a full page
+                if fetched < per_page as usize {
+                    break;
+                }
+
+                // Rate limit between pages
+                tokio::time::sleep(Duration::from_secs(2)).await;
             }
-        };
+
+            // Cooldown between queries (search API: 30 req/min)
+            tokio::time::sleep(Duration::from_millis(2200)).await;
+        }
+
+        info!("pass 1 done — searched {total_searched}, stored {stored_count}");
+    }
+
+    // ── Pass 2: Consulting org members ──────────────────────────────────────
+    if matches!(mode.as_str(), "all" | "orgs") {
+        info!(
+            "═══ PASS 2: Consulting org member scrape ({} orgs) ═══",
+            CONSULTING_ORGS.len()
+        );
+        let pass2_start = stored_count;
+
+        for org_login in CONSULTING_ORGS {
+            info!("scraping org: {org_login}");
+
+            // Get org members (public) — paginate
+            for page in 1..=5u32 {
+                let url_path = format!("/orgs/{org_login}/members?per_page=100&page={page}");
+                let members: Vec<github_patterns::SearchUserItem> = match gh
+                    .search_users(
+                        &format!("org:{org_login} type:user"),
+                        Some("followers"),
+                        Some("desc"),
+                        100,
+                        page,
+                    )
+                    .await
+                {
+                    Ok(r) => r.items,
+                    Err(e) => {
+                        warn!("  org search failed for {org_login}: {e}");
+                        tokio::time::sleep(Duration::from_secs(3)).await;
+                        break;
+                    }
+                };
+
+                if members.is_empty() {
+                    break;
+                }
+
+                info!("  page {page}: {} members", members.len());
+
+                for member in &members {
+                    total_searched += 1;
+                    if let Some(count) = process_user(
+                        &gh,
+                        &mut db,
+                        &mut seen_logins,
+                        &member.login,
+                        threshold,
+                        &format!("cpn:org/{org_login}"),
+                    )
+                    .await
+                    {
+                        stored_count += count;
+                    }
+                }
+
+                if members.len() < 100 {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_secs(2)).await;
+            }
+
+            tokio::time::sleep(Duration::from_secs(2)).await;
+        }
 
         info!(
-            "  → {total} results (fetched {n})",
-            total = results.total_count,
-            n = results.items.len()
+            "pass 2 done — {} new from org scrape",
+            stored_count - pass2_start
         );
-        total_searched += results.items.len() as u32;
+    }
 
-        for item in &results.items {
-            if !seen_logins.insert(item.login.clone()) {
-                continue; // already processed
-            }
+    // ── Pass 3: AI repo contributors ────────────────────────────────────────
+    if matches!(mode.as_str(), "all" | "repos") {
+        info!(
+            "═══ PASS 3: AI repo contributor scrape ({} repos) ═══",
+            AI_REPOS.len()
+        );
+        let pass3_start = stored_count;
 
-            // Hydrate full profile
-            let user = match gh.get_user(&item.login).await {
-                Ok(u) => u,
+        for repo_full in AI_REPOS {
+            let (owner, repo) = match repo_full.split_once('/') {
+                Some(pair) => pair,
+                None => continue,
+            };
+
+            info!("scraping contributors: {repo_full}");
+
+            let contributors = match gh.repo_contributors(owner, repo).await {
+                Ok(c) => c,
                 Err(e) => {
-                    warn!("  skipping {}: {e}", item.login);
+                    warn!("  failed for {repo_full}: {e}");
+                    tokio::time::sleep(Duration::from_secs(3)).await;
                     continue;
                 }
             };
 
-            // Build skill text and extract
-            let skill_text = format!(
-                "{} {} {}",
-                user.bio.as_deref().unwrap_or(""),
-                user.company.as_deref().unwrap_or(""),
-                user.blog.as_deref().unwrap_or(""),
-            );
-            let skills = extract_skills(&skill_text);
-            let fitness = compute_partner_fitness(&user, &skills);
+            info!("  {} contributors", contributors.len());
 
-            if fitness.score < threshold {
-                continue;
+            // Only process top contributors (by commit count)
+            let top_contribs: Vec<_> = contributors.into_iter().take(50).collect();
+
+            for contrib in &top_contribs {
+                if github_patterns::contributors::is_bot(&contrib.login) {
+                    continue;
+                }
+
+                total_searched += 1;
+
+                // Process — but for repo contributors we do an EU filter after hydration
+                if seen_logins.contains(&contrib.login) {
+                    continue;
+                }
+
+                let user = match gh.get_user(&contrib.login).await {
+                    Ok(u) => u,
+                    Err(e) => {
+                        warn!("  skipping {}: {e}", contrib.login);
+                        continue;
+                    }
+                };
+
+                // EU/UK location filter for repo contributors
+                if !is_eu_location(user.location.as_deref()) {
+                    seen_logins.insert(contrib.login.clone());
+                    continue;
+                }
+
+                seen_logins.insert(contrib.login.clone());
+
+                let skill_text = format!(
+                    "{} {} {} {}",
+                    user.bio.as_deref().unwrap_or(""),
+                    user.company.as_deref().unwrap_or(""),
+                    user.blog.as_deref().unwrap_or(""),
+                    repo_full,
+                );
+                let skills = extract_skills(&skill_text);
+                let fitness = compute_partner_fitness(&user, &skills);
+
+                if fitness.score < threshold {
+                    continue;
+                }
+
+                info!(
+                    "  ✓ {} (score={:.2}, archetypes=[{}], company={}, location={})",
+                    user.login,
+                    fitness.score,
+                    fitness.archetypes.join(", "),
+                    user.company.as_deref().unwrap_or("?"),
+                    user.location.as_deref().unwrap_or("?"),
+                );
+
+                let record = ContributorRecord {
+                    user,
+                    repos: vec![RepoContrib {
+                        repo: repo_full.to_string(),
+                        contributions: contrib.contributions,
+                    }],
+                    total_contributions: contrib.contributions,
+                };
+
+                match db.insert(std::slice::from_ref(&record)).await {
+                    Ok(_) => stored_count += 1,
+                    Err(e) => warn!("  LanceDB insert failed for {}: {e}", contrib.login),
+                }
+
+                tokio::time::sleep(Duration::from_millis(170)).await;
             }
 
-            info!(
-                "  ✓ {} (score={:.2}, archetypes=[{}], company={}, location={})",
-                user.login,
-                fitness.score,
-                fitness.archetypes.join(", "),
-                user.company.as_deref().unwrap_or("?"),
-                user.location.as_deref().unwrap_or("?"),
-            );
-
-            // Build ContributorRecord for LanceDB storage
-            let record = ContributorRecord {
-                user: user.clone(),
-                repos: vec![RepoContrib {
-                    repo: format!("cpn:partner-search/{location}"),
-                    contributions: 0,
-                }],
-                total_contributions: 0,
-            };
-
-            match db.insert(std::slice::from_ref(&record)).await {
-                Ok(_) => stored_count += 1,
-                Err(e) => warn!("  LanceDB insert failed for {}: {e}", user.login),
-            }
-
-            // Rate limit: GitHub Search API allows 30 req/min for authenticated users
-            tokio::time::sleep(Duration::from_millis(250)).await;
+            tokio::time::sleep(Duration::from_secs(1)).await;
         }
 
-        // Cooldown between search queries (search API: 30 req/min)
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        info!(
+            "pass 3 done — {} new from repo contributors",
+            stored_count - pass3_start
+        );
     }
 
-    info!("search complete — searched {total_searched}, stored {stored_count} (threshold={threshold})");
+    info!(
+        "══ ALL DONE — searched {total_searched}, stored {stored_count} (threshold={threshold}) ══"
+    );
 
     print_top_partners(&db, top_n).await?;
 
     Ok(())
+}
+
+/// Hydrate a GitHub login, score for partner fitness, and store if above threshold.
+/// Returns Some(1) if stored, Some(0) if below threshold, None if skipped/error.
+async fn process_user(
+    gh: &GhClient,
+    db: &mut ContributorsDb,
+    seen: &mut HashSet<String>,
+    login: &str,
+    threshold: f32,
+    source_tag: &str,
+) -> Option<u32> {
+    if !seen.insert(login.to_string()) {
+        return None; // already processed
+    }
+
+    let user = match gh.get_user(login).await {
+        Ok(u) => u,
+        Err(e) => {
+            warn!("  skipping {login}: {e}");
+            return None;
+        }
+    };
+
+    let skill_text = format!(
+        "{} {} {}",
+        user.bio.as_deref().unwrap_or(""),
+        user.company.as_deref().unwrap_or(""),
+        user.blog.as_deref().unwrap_or(""),
+    );
+    let skills = extract_skills(&skill_text);
+    let fitness = compute_partner_fitness(&user, &skills);
+
+    if fitness.score < threshold {
+        return Some(0);
+    }
+
+    info!(
+        "  ✓ {} (score={:.2}, archetypes=[{}], company={}, location={})",
+        user.login,
+        fitness.score,
+        fitness.archetypes.join(", "),
+        user.company.as_deref().unwrap_or("?"),
+        user.location.as_deref().unwrap_or("?"),
+    );
+
+    let record = ContributorRecord {
+        user: user.clone(),
+        repos: vec![RepoContrib {
+            repo: source_tag.to_string(),
+            contributions: 0,
+        }],
+        total_contributions: 0,
+    };
+
+    match db.insert(std::slice::from_ref(&record)).await {
+        Ok(_) => Some(1),
+        Err(e) => {
+            warn!("  LanceDB insert failed for {}: {e}", user.login);
+            Some(0)
+        }
+    }
 }
 
 fn star_to_user(star: &RisingStar) -> github_patterns::GhUser {
