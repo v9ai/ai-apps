@@ -1981,6 +1981,7 @@ dependencies = [
  "base64",
  "candle",
  "chrono",
+ "csv",
  "dotenvy",
  "futures",
  "lancedb",

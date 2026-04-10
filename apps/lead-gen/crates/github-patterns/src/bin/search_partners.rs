@@ -655,6 +655,7 @@ async fn main() -> anyhow::Result<()> {
     info!("══ ALL DONE — searched {searched}, stored {stored} (threshold={threshold}) ══");
 
     print_top_partners(&db, top_n).await?;
+    export_partners_csv(&db, top_n).await?;
 
     Ok(())
 }
@@ -912,6 +913,105 @@ async fn print_top_partners(db: &ContributorsDb, n: usize) -> anyhow::Result<()>
     println!(
         "╚════════════════════════════════════════════════════════════════════════════════════╝"
     );
+
+    Ok(())
+}
+
+async fn export_partners_csv(db: &ContributorsDb, n: usize) -> anyhow::Result<()> {
+    let stars = db.top_rising(n * 3).await?;
+    if stars.is_empty() {
+        info!("no candidates to export");
+        return Ok(());
+    }
+
+    // Score and collect candidates with emails
+    let mut rows: Vec<(
+        usize,   // rank
+        String,  // login
+        String,  // name
+        String,  // email
+        String,  // company
+        String,  // location
+        f32,     // score
+        String,  // archetypes
+        String,  // source
+        bool,    // starred
+        String,  // github_url
+        String,  // bio
+    )> = Vec::new();
+
+    let mut all_scored: Vec<(&RisingStar, PartnerFitness, String, bool)> = Vec::new();
+
+    for star in &stars {
+        let user = star_to_user(star);
+        let skill_text = format!(
+            "{} {}",
+            user.bio.as_deref().unwrap_or(""),
+            user.company.as_deref().unwrap_or(""),
+        );
+        let skills = extract_skills(&skill_text);
+        let starred = star.skills.iter().any(|s| s == "cpn:starred");
+        let source = star.skills.iter()
+            .find_map(|s| s.strip_prefix("cpn:src:"))
+            .unwrap_or("?")
+            .to_string();
+        let fitness = compute_partner_fitness(&user, &skills, starred);
+        all_scored.push((star, fitness, source, starred));
+    }
+
+    all_scored.sort_by(|a, b| b.1.score.partial_cmp(&a.1.score).unwrap());
+
+    let mut rank = 0usize;
+    for (star, fitness, source, starred) in &all_scored {
+        let email = match &star.email {
+            Some(e) if !e.is_empty() => e.clone(),
+            _ => continue,
+        };
+        rank += 1;
+        rows.push((
+            rank,
+            star.login.clone(),
+            star.name.clone().unwrap_or_default(),
+            email,
+            star.company.clone().unwrap_or_default(),
+            star.location.clone().unwrap_or_default(),
+            fitness.score,
+            if fitness.archetypes.is_empty() {
+                String::new()
+            } else {
+                fitness.archetypes.join(", ")
+            },
+            source.clone(),
+            *starred,
+            star.html_url.clone(),
+            star.bio.clone().unwrap_or_default(),
+        ));
+    }
+
+    let path = "partners_export.csv";
+    let mut wtr = csv::Writer::from_path(path)?;
+    wtr.write_record(["rank", "login", "name", "email", "company", "location",
+                       "score", "archetypes", "source", "starred", "github_url", "bio"])?;
+
+    for r in &rows {
+        wtr.write_record(&[
+            r.0.to_string(),
+            r.1.clone(),
+            r.2.clone(),
+            r.3.clone(),
+            r.4.clone(),
+            r.5.clone(),
+            format!("{:.3}", r.6),
+            r.7.clone(),
+            r.8.clone(),
+            if r.9 { "yes".to_string() } else { "no".to_string() },
+            r.10.clone(),
+            r.11.clone(),
+        ])?;
+    }
+
+    wtr.flush()?;
+    info!("exported {}/{} emailable candidates to {path}", rows.len(), all_scored.len());
 
     Ok(())
 }
