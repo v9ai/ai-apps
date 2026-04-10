@@ -275,6 +275,12 @@ async fn main() -> anyhow::Result<()> {
         "anthropic language:python stars:>5",
         "claude-ai language:python stars:>3",
         "anthropic language:typescript stars:>5",
+        "langchain anthropic language:python stars:>2",
+        "claude language:python stars:>5",
+        "anthropic language:jupyter-notebook stars:>2",
+        "anthropic api language:python stars:>3",
+        "claude-3 language:python stars:>2",
+        "anthropic language:go stars:>3",
     ];
     info!("═══ PASS 0: SDK dependency users ({} queries) ═══", SDK_QUERIES.len());
     {
