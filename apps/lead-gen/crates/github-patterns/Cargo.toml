@@ -7,7 +7,7 @@ description = "GitHub API client for detecting lead-gen signals: AI adoption, te
 [features]
 default  = ["client"]
 client   = ["dep:reqwest", "dep:tokio", "dep:anyhow"]
-search   = ["client"]
+search   = ["client", "dep:csv"]
 patterns = ["client", "dep:futures", "dep:toml"]
 # Local BERT semantic scoring via candle — no cloud, runs on Metal / CPU
 embed    = ["patterns", "dep:candle"]
@@ -44,6 +44,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = tr
 lancedb     = { version = "0.27", optional = true }
 arrow-array = { version = "57", optional = true }
 arrow-schema = { version = "57", optional = true }
+csv          = { version = "1", optional = true }
 
 [[bin]]
 name = "scan_orgs"
