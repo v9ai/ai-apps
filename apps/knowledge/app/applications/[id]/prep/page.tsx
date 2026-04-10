@@ -109,8 +109,6 @@ function inferClassName(
 
 /** Expand single-line CSS rules into formatted multi-line blocks */
 function formatCss(css: string): string {
-  // Already multi-line (has rule with property on its own line)
-  if (/\n\s+\S+\s*:/.test(css)) return css;
   return css.replace(/([^{}]*)\{([^}]*)\}/g, (_, selector, body) => {
     const props = body.split(";").map((s: string) => s.trim()).filter(Boolean);
     return `${selector.trim()} {\n${props.map((p: string) => `  ${p};`).join("\n")}\n}`;
