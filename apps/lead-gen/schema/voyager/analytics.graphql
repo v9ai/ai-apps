@@ -1,0 +1,296 @@
+# ── Voyager Job Market Analytics ──────────────────────────────────────
+# 10 analytics capabilities for remote job market intelligence.
+# All data derived from linkedin_posts, voyager_job_counts,
+# and voyager_snapshots tables.
+
+# ── 1. Daily Job Count Tracking ──────────────────────────────────────
+
+type DailyJobCount {
+  date: String!
+  query: String!
+  totalJobs: Int!
+  remoteJobs: Int!
+  newJobs24h: Int!
+  remoteRatio: Float!
+}
+
+type JobCountTrend {
+  query: String!
+  period: String!
+  dataPoints: [DailyJobCount!]!
+  avgDailyRemote: Float!
+  trend: String!
+  growthRate: Float!
+}
+
+# ── 2. Company Hiring Velocity ───────────────────────────────────────
+
+type CompanyVelocity {
+  companyId: Int!
+  companyName: String!
+  companyKey: String!
+  jobsPostedThisWeek: Int!
+  jobsPostedLastWeek: Int!
+  velocityDelta: Int!
+  velocityTrend: String!
+  remoteJobsPercent: Float!
+  rollingAvgWeekly: Float!
+}
+
+# ── 3. Growth Report (Industry & Region) ─────────────────────────────
+
+type IndustryGrowth {
+  industry: String!
+  currentCount: Int!
+  previousCount: Int!
+  growthRate: Float!
+  remoteRatio: Float!
+}
+
+type RegionGrowth {
+  location: String!
+  currentCount: Int!
+  previousCount: Int!
+  growthRate: Float!
+  remoteCount: Int!
+}
+
+type GrowthReport {
+  period: String!
+  byIndustry: [IndustryGrowth!]!
+  byRegion: [RegionGrowth!]!
+  overallGrowthRate: Float!
+}
+
+# ── 4. Salary Trends ─────────────────────────────────────────────────
+
+type SalaryBand {
+  min: Float!
+  max: Float!
+  median: Float!
+  p25: Float!
+  p75: Float!
+  currency: String!
+  sampleCount: Int!
+}
+
+type SalaryRegionBreakdown {
+  region: String!
+  band: SalaryBand!
+}
+
+type SalarySeniorityBreakdown {
+  level: String!
+  band: SalaryBand!
+}
+
+type SalaryTrend {
+  query: String!
+  period: String!
+  currentBand: SalaryBand!
+  previousBand: SalaryBand!
+  medianDelta: Float!
+  trend: String!
+  byRegion: [SalaryRegionBreakdown!]!
+  bySeniority: [SalarySeniorityBreakdown!]!
+}
+
+# ── 5. Skills Demand ─────────────────────────────────────────────────
+
+type SkillDemand {
+  skill: String!
+  escoLabel: String
+  count: Int!
+  pctOfTotal: Float!
+  avgConfidence: Float!
+  trend: String!
+  weeksInTop20: Int!
+}
+
+type SkillsDemandReport {
+  query: String!
+  period: String!
+  totalJobsAnalyzed: Int!
+  topSkills: [SkillDemand!]!
+  emergingSkills: [SkillDemand!]!
+  decliningSkills: [SkillDemand!]!
+}
+
+# ── 6. Time-to-Fill ──────────────────────────────────────────────────
+
+type TimeToFillEstimate {
+  avgDays: Float!
+  medianDays: Float!
+  p90Days: Float!
+  sampleSize: Int!
+}
+
+type TimeToFillIndustry {
+  industry: String!
+  estimate: TimeToFillEstimate!
+}
+
+type TimeToFillSeniority {
+  level: String!
+  estimate: TimeToFillEstimate!
+}
+
+type TimeToFillRemoteComparison {
+  remote: TimeToFillEstimate!
+  onsite: TimeToFillEstimate!
+}
+
+type TimeToFillReport {
+  overall: TimeToFillEstimate!
+  byIndustry: [TimeToFillIndustry!]!
+  bySeniority: [TimeToFillSeniority!]!
+  byRemoteVsOnsite: TimeToFillRemoteComparison!
+}
+
+# ── 7. Repost Analysis ───────────────────────────────────────────────
+
+type RepostSignal {
+  jobUrl: String!
+  jobTitle: String!
+  companyName: String!
+  repostCount: Int!
+  firstSeenDate: String!
+  lastSeenDate: String!
+  daysSinceFirst: Float!
+  isHardToFill: Boolean!
+}
+
+type RepostReport {
+  totalJobsTracked: Int!
+  repostedJobs: Int!
+  repostRate: Float!
+  hardToFillJobs: [RepostSignal!]!
+  avgRepostCount: Float!
+  avgDaysOpen: Float!
+}
+
+# ── 8. Competitive Analysis ──────────────────────────────────────────
+
+type CompetitorProfile {
+  companyId: Int!
+  companyName: String!
+  companyKey: String!
+  totalOpenings: Int!
+  remoteOpenings: Int!
+  remotePercent: Float!
+  aiMlOpenings: Int!
+  hiringVelocity: Float!
+  topSkillsSought: [String!]!
+  avgSalaryMidpoint: Float
+  rank: Int!
+}
+
+type CompetitiveReport {
+  period: String!
+  topHirers: [CompetitorProfile!]!
+  fastestGrowing: [CompetitorProfile!]!
+  newEntrants: [CompetitorProfile!]!
+}
+
+# ── 9. Emerging Roles ────────────────────────────────────────────────
+
+type EmergingRole {
+  title: String!
+  normalizedTitle: String!
+  firstSeenDate: String!
+  count: Int!
+  weekOverWeekGrowth: Float!
+  topCompanies: [String!]!
+  topSkills: [String!]!
+  avgSalaryMidpoint: Float
+  isNovel: Boolean!
+}
+
+type EmergingRolesReport {
+  period: String!
+  novelTitles: [EmergingRole!]!
+  surging: [EmergingRole!]!
+  declining: [EmergingRole!]!
+}
+
+# ── 10. Geographic Arbitrage ─────────────────────────────────────────
+
+type ArbitrageOpportunity {
+  jobTitle: String!
+  companyName: String!
+  jobUrl: String!
+  postedLocation: String!
+  salaryMin: Float!
+  salaryMax: Float!
+  salaryMedian: Float!
+  currency: String!
+  salaryPercentile: Float!
+  salaryPremium: Float!
+  isHighSalaryRegionPay: Boolean!
+}
+
+type ArbitrageRegion {
+  region: String!
+  avgPremium: Float!
+  count: Int!
+}
+
+type ArbitrageReport {
+  totalOpportunities: Int!
+  topOpportunities: [ArbitrageOpportunity!]!
+  byRegion: [ArbitrageRegion!]!
+}
+
+# ── Full Dashboard ───────────────────────────────────────────────────
+
+type VoyagerAnalyticsDashboard {
+  query: String!
+  generatedAt: String!
+  jobCounts: JobCountTrend!
+  hiringVelocity: [CompanyVelocity!]!
+  growthReport: GrowthReport!
+  salaryTrends: SalaryTrend!
+  skillsDemand: SkillsDemandReport!
+  timeToFill: TimeToFillReport!
+  repostAnalysis: RepostReport!
+  competitiveAnalysis: CompetitiveReport!
+  emergingRoles: EmergingRolesReport!
+  arbitrage: ArbitrageReport!
+}
+
+# ── Queries ──────────────────────────────────────────────────────────
+
+extend type Query {
+  """Full analytics dashboard — runs all 10 metrics in parallel."""
+  voyagerAnalyticsDashboard(query: String): VoyagerAnalyticsDashboard!
+
+  """1. Daily remote job count tracking by query/keyword."""
+  voyagerJobCountTrend(query: String!, period: String): JobCountTrend!
+
+  """2. Company hiring velocity detection (jobs posted per week)."""
+  voyagerHiringVelocity(limit: Int): [CompanyVelocity!]!
+
+  """3. Remote job growth rate by industry and region."""
+  voyagerGrowthReport(period: String): GrowthReport!
+
+  """4. Salary trend analysis for remote roles."""
+  voyagerSalaryTrends(query: String, period: String): SalaryTrend!
+
+  """5. Skills demand tracking (most requested skills in remote AI/ML jobs)."""
+  voyagerSkillsDemand(query: String, period: String): SkillsDemandReport!
+
+  """6. Time-to-fill estimation (how long jobs stay open)."""
+  voyagerTimeToFill: TimeToFillReport!
+
+  """7. Repost frequency analysis (indicator of hard-to-fill roles)."""
+  voyagerRepostAnalysis: RepostReport!
+
+  """8. Competitive analysis (most aggressive remote hirers)."""
+  voyagerCompetitiveAnalysis(period: String): CompetitiveReport!
+
+  """9. Emerging role detection (new job titles appearing)."""
+  voyagerEmergingRoles(period: String): EmergingRolesReport!
+
+  """10. Geographic arbitrage opportunities (remote roles with high-salary-region pay)."""
+  voyagerArbitrage(minPremiumPercent: Float): ArbitrageReport!
+}

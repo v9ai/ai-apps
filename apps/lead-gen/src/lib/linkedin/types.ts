@@ -103,7 +103,10 @@ export class VoyagerError extends Error {
       cause?: Error;
     },
   ) {
-    super(message, { cause: opts?.cause });
+    super(message);
+    if (opts?.cause) {
+      this.cause = opts.cause;
+    }
     this.name = "VoyagerError";
     this.code = code;
     this.statusCode = opts?.statusCode;

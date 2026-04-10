@@ -227,6 +227,18 @@ function jobTypeToParam(
   return arr.map((v) => map[v]).filter(Boolean).join(",");
 }
 
+/** Extract salary text from a Voyager job card entity. */
+function extractSalaryText(entity: Record<string, unknown>): string | undefined {
+  const insights = entity.salaryInsights as Record<string, unknown> | undefined;
+  if (insights) {
+    const breakdown = insights.compensationBreakdown as Array<Record<string, unknown>> | undefined;
+    if (breakdown?.[0]?.description) {
+      return breakdown[0].description as string;
+    }
+  }
+  return (entity.formattedSalary as string) ?? undefined;
+}
+
 // ── LRU Cache ──────────────────────────────────────────────────────────────
 
 class LRUCache {
@@ -256,9 +268,9 @@ class LRUCache {
   set<T>(key: string, data: T, ttlMs: number): void {
     // Evict oldest if at capacity
     if (this.map.size >= this.maxEntries) {
-      const oldest = this.map.keys().next().value;
-      if (oldest !== undefined) {
-        this.map.delete(oldest);
+      const first = this.map.keys().next();
+      if (!first.done) {
+        this.map.delete(first.value);
       }
     }
     this.map.set(key, { data, cachedAt: Date.now(), ttlMs });
@@ -457,13 +469,13 @@ export class VoyagerClient {
   private emit(event: VoyagerEvent): void {
     const listeners = this.listeners.get(event.type);
     if (listeners) {
-      for (const listener of listeners) {
+      listeners.forEach((listener) => {
         try {
           listener(event);
         } catch {
           // Swallow listener errors to prevent disrupting the client
         }
-      }
+      });
     }
   }
 
@@ -819,8 +831,9 @@ export class VoyagerClient {
    */
   private parseJobSearchResponse(raw: Record<string, unknown>): VoyagerJobSearchPage {
     const included = (raw.included ?? []) as Array<Record<string, unknown>>;
-    const paging = (raw.paging ?? raw.data?.paging ?? {}) as Record<string, unknown>;
-    const metadata = (raw.metadata ?? raw.data?.metadata ?? {}) as Record<string, unknown>;
+    const rawData = (raw.data ?? {}) as Record<string, unknown>;
+    const paging = (raw.paging ?? rawData.paging ?? {}) as Record<string, unknown>;
+    const metadata = (raw.metadata ?? rawData.metadata ?? {}) as Record<string, unknown>;
 
     const jobs: VoyagerJobCard[] = [];
 
@@ -868,10 +881,9 @@ export class VoyagerClient {
           listedAt: listedAt ? new Date(listedAt).toISOString() : undefined,
           listedAtMs: repostedAt ?? listedAt,
           easyApply: entity.applyMethod
-            ? (entity.applyMethod as Record<string, unknown>)["$type"]?.toString().includes("EasyApply") ?? false
+            ? ((entity.applyMethod as Record<string, unknown>)["$type"]?.toString().includes("EasyApply") || false)
             : undefined,
-          salary: (entity.salaryInsights?.compensationBreakdown?.[0]?.description ??
-            entity.formattedSalary) as string | undefined,
+          salary: extractSalaryText(entity),
         });
       }
     }
@@ -1023,7 +1035,7 @@ export class VoyagerClient {
     const nameSource = profileEntity ?? hirerEntity;
     const firstName = (nameSource.firstName ?? "") as string;
     const lastName = (nameSource.lastName ?? "") as string;
-    const name = `${firstName} ${lastName}`.trim() || (nameSource.name as string) ?? "";
+    const name = `${firstName} ${lastName}`.trim() || ((nameSource.name as string) ?? "");
 
     return {
       memberUrn: (profileEntity?.entityUrn ?? hirerEntity.entityUrn) as string | undefined,
