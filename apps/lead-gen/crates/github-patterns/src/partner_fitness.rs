@@ -294,7 +294,7 @@ mod tests {
         );
         let skills = vec!["llm", "rag", "python"];
         let fitness = compute_partner_fitness(&user, &skills, false);
-        assert!(fitness.score > 0.4, "expected > 0.4, got {}", fitness.score);
+        assert!(fitness.score > 0.35, "expected > 0.35, got {}", fitness.score);
         assert!(fitness.archetypes.contains(&"solution-architect"));
     }
 

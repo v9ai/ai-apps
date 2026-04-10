@@ -13,7 +13,6 @@
 ///   LANCE_DB_PATH             LanceDB directory (default: ./contributors.lance)
 ///   PARTNER_THRESHOLD         Min fitness score to store (default: 0.20)
 ///   TOP_N                     Top candidates to display (default: 100)
-///   SEARCH_MODE               "all" (default) | "stars" | "orgs" | "repos" | "bios" | "top"
 ///   MAX_PAGES                 Max pages per paginated call (default: 5)
 use std::collections::HashSet;
 use std::time::Duration;
@@ -24,7 +23,7 @@ use github_patterns::{
     contributors::{is_bot, ContributorRecord, ContributorsDb, RepoContrib, RisingStar},
     partner_fitness::{compute_partner_fitness, PartnerFitness},
     skills::extract_skills,
-    GhClient,
+    GhClient, GhError,
 };
 
 // ── EU + UK locations (substring matched, case-insensitive) ──────────────────
@@ -209,6 +208,29 @@ static BIO_SEARCH: &[(&str, &str)] = &[
     ("CTO AI", "Netherlands"),
 ];
 
+// ── Batch insert config ─────────────────────────────────────────────────────
+
+const BATCH_SIZE: usize = 50;
+
+async fn flush_batch(db: &mut ContributorsDb, batch: &mut Vec<ContributorRecord>) -> u32 {
+    if batch.is_empty() {
+        return 0;
+    }
+    let n = batch.len();
+    match db.insert(batch).await {
+        Ok(inserted) => {
+            info!("  flushed batch: {inserted} of {n} inserted");
+            batch.clear();
+            inserted as u32
+        }
+        Err(e) => {
+            warn!("  batch insert failed ({n} records): {e}");
+            batch.clear();
+            0
+        }
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[tokio::main]
@@ -222,7 +244,6 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let db_path = std::env::var("LANCE_DB_PATH").unwrap_or_else(|_| "./contributors.lance".into());
-    let mode = std::env::var("SEARCH_MODE").unwrap_or_else(|_| "all".into());
     let top_n: usize = std::env::var("TOP_N")
         .ok()
         .and_then(|s| s.parse().ok())
@@ -235,13 +256,6 @@ async fn main() -> anyhow::Result<()> {
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(5);
-
-    if mode == "top" {
-        info!("opening LanceDB at {db_path}");
-        let db = ContributorsDb::open(&db_path).await?;
-        print_top_partners(&db, top_n).await?;
-        return Ok(());
-    }
 
     let gh = GhClient::from_env()?;
     info!("GitHub client ready");
@@ -256,13 +270,14 @@ async fn main() -> anyhow::Result<()> {
     // ═══════════════════════════════════════════════════════════════════════
     // PASS 1: Stargazers of Anthropic & key AI repos
     // ═══════════════════════════════════════════════════════════════════════
-    if matches!(mode.as_str(), "all" | "stars") {
-        info!(
-            "═══ PASS 1: Stargazers ({} repos, up to {} pages each) ═══",
-            STARGAZER_REPOS.len(),
-            max_pages
-        );
+    info!(
+        "═══ PASS 1: Stargazers ({} repos, up to {} pages each) ═══",
+        STARGAZER_REPOS.len(),
+        max_pages
+    );
+    {
         let pass_start = stored;
+        let mut batch: Vec<ContributorRecord> = Vec::with_capacity(BATCH_SIZE);
 
         for repo_full in STARGAZER_REPOS {
             let (owner, repo) = match repo_full.split_once('/') {
@@ -294,18 +309,20 @@ async fn main() -> anyhow::Result<()> {
                     }
                     searched += 1;
 
-                    if let Some(n) = process_user(
+                    if let Some(record) = hydrate_user(
                         &gh,
-                        &mut db,
                         &mut seen,
                         &star.login,
                         threshold,
                         &format!("cpn:star/{repo_full}"),
-                        true, // starred an Anthropic/Claude ecosystem repo
+                        true,
                     )
                     .await
                     {
-                        stored += n;
+                        batch.push(record);
+                        if batch.len() >= BATCH_SIZE {
+                            stored += flush_batch(&mut db, &mut batch).await;
+                        }
                     }
                 }
 
@@ -313,13 +330,13 @@ async fn main() -> anyhow::Result<()> {
                     break;
                 }
 
-                // Stargazers use core API rate limit (5000/hr), be gentle
                 tokio::time::sleep(Duration::from_millis(500)).await;
             }
 
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
 
+        stored += flush_batch(&mut db, &mut batch).await;
         info!(
             "pass 1 done — {} new from stargazers (searched {searched})",
             stored - pass_start
@@ -329,9 +346,10 @@ async fn main() -> anyhow::Result<()> {
     // ═══════════════════════════════════════════════════════════════════════
     // PASS 2: Org members of consulting / SI / AI companies
     // ═══════════════════════════════════════════════════════════════════════
-    if matches!(mode.as_str(), "all" | "orgs") {
-        info!("═══ PASS 2: Org members ({} orgs) ═══", ORG_MEMBERS.len());
+    info!("═══ PASS 2: Org members ({} orgs) ═══", ORG_MEMBERS.len());
+    {
         let pass_start = stored;
+        let mut batch: Vec<ContributorRecord> = Vec::with_capacity(BATCH_SIZE);
 
         for org in ORG_MEMBERS {
             info!("org members: {org}");
@@ -340,7 +358,6 @@ async fn main() -> anyhow::Result<()> {
                 let members = match gh.org_members(org, 100, page).await {
                     Ok(m) => m,
                     Err(e) => {
-                        // 404 = org doesn't exist or members are private
                         if format!("{e}").contains("404") || format!("{e}").contains("NotFound") {
                             info!("  {org}: members not public, skipping");
                         } else {
@@ -362,9 +379,8 @@ async fn main() -> anyhow::Result<()> {
                     }
                     searched += 1;
 
-                    if let Some(n) = process_user(
+                    if let Some(record) = hydrate_user(
                         &gh,
-                        &mut db,
                         &mut seen,
                         &member.login,
                         threshold,
@@ -373,7 +389,10 @@ async fn main() -> anyhow::Result<()> {
                     )
                     .await
                     {
-                        stored += n;
+                        batch.push(record);
+                        if batch.len() >= BATCH_SIZE {
+                            stored += flush_batch(&mut db, &mut batch).await;
+                        }
                     }
                 }
 
@@ -387,18 +406,20 @@ async fn main() -> anyhow::Result<()> {
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
 
+        stored += flush_batch(&mut db, &mut batch).await;
         info!("pass 2 done — {} new from org members", stored - pass_start);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
     // PASS 3: Repo search → owner profiles
     // ═══════════════════════════════════════════════════════════════════════
-    if matches!(mode.as_str(), "all" | "repos") {
-        info!(
-            "═══ PASS 3: Repo search ({} queries) ═══",
-            REPO_SEARCH_QUERIES.len()
-        );
+    info!(
+        "═══ PASS 3: Repo search ({} queries) ═══",
+        REPO_SEARCH_QUERIES.len()
+    );
+    {
         let pass_start = stored;
+        let mut batch: Vec<ContributorRecord> = Vec::with_capacity(BATCH_SIZE);
 
         for query in REPO_SEARCH_QUERIES {
             info!("repo search: {query}");
@@ -421,7 +442,6 @@ async fn main() -> anyhow::Result<()> {
                     break;
                 }
 
-                // Extract unique owners from repos
                 let mut repo_owners: Vec<String> = Vec::new();
                 for repo in &results.items {
                     let owner = repo.full_name.split('/').next().unwrap_or("").to_string();
@@ -439,9 +459,8 @@ async fn main() -> anyhow::Result<()> {
                 for owner_login in &repo_owners {
                     searched += 1;
 
-                    if let Some(n) = process_user(
+                    if let Some(record) = hydrate_user(
                         &gh,
-                        &mut db,
                         &mut seen,
                         owner_login,
                         threshold,
@@ -450,7 +469,10 @@ async fn main() -> anyhow::Result<()> {
                     )
                     .await
                     {
-                        stored += n;
+                        batch.push(record);
+                        if batch.len() >= BATCH_SIZE {
+                            stored += flush_batch(&mut db, &mut batch).await;
+                        }
                     }
                 }
 
@@ -458,25 +480,26 @@ async fn main() -> anyhow::Result<()> {
                     break;
                 }
 
-                // Search API: 30 req/min
                 tokio::time::sleep(Duration::from_secs(2)).await;
             }
 
             tokio::time::sleep(Duration::from_secs(2)).await;
         }
 
+        stored += flush_batch(&mut db, &mut batch).await;
         info!("pass 3 done — {} new from repo search", stored - pass_start);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
     // PASS 4: User bio search (supplementary)
     // ═══════════════════════════════════════════════════════════════════════
-    if matches!(mode.as_str(), "all" | "bios") {
-        info!(
-            "═══ PASS 4: User bio search ({} queries) ═══",
-            BIO_SEARCH.len()
-        );
+    info!(
+        "═══ PASS 4: User bio search ({} queries) ═══",
+        BIO_SEARCH.len()
+    );
+    {
         let pass_start = stored;
+        let mut batch: Vec<ContributorRecord> = Vec::with_capacity(BATCH_SIZE);
 
         for (keywords, location) in BIO_SEARCH {
             let query = format!("{keywords} type:user location:{location}");
@@ -499,9 +522,8 @@ async fn main() -> anyhow::Result<()> {
             for item in &results.items {
                 searched += 1;
 
-                if let Some(n) = process_user(
+                if let Some(record) = hydrate_user(
                     &gh,
-                    &mut db,
                     &mut seen,
                     &item.login,
                     threshold,
@@ -510,14 +532,17 @@ async fn main() -> anyhow::Result<()> {
                 )
                 .await
                 {
-                    stored += n;
+                    batch.push(record);
+                    if batch.len() >= BATCH_SIZE {
+                        stored += flush_batch(&mut db, &mut batch).await;
+                    }
                 }
             }
 
-            // Search API rate limit
             tokio::time::sleep(Duration::from_secs(2)).await;
         }
 
+        stored += flush_batch(&mut db, &mut batch).await;
         info!("pass 4 done — {} new from bio search", stored - pass_start);
     }
 
@@ -529,25 +554,51 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-// ── Shared: hydrate, score, store ────────────────────────────────────────────
+// ── Shared: hydrate and score ────────────────────────────────────────────────
 
-/// Hydrate a GitHub user, apply EU filter, score partner fitness, store if above threshold.
-/// Returns Some(1) if stored, Some(0) if filtered/below threshold, None if already seen or error.
-async fn process_user(
+/// Hydrate a GitHub user, apply EU filter, score partner fitness.
+/// Returns `Some(record)` if above threshold, `None` if filtered/below threshold/already seen/error.
+///
+/// On rate-limit errors: waits until the GitHub reset time and retries once,
+/// instead of silently skipping the user.
+async fn hydrate_user(
     gh: &GhClient,
-    db: &mut ContributorsDb,
     seen: &mut HashSet<String>,
     login: &str,
     threshold: f32,
     source_tag: &str,
     starred_anthropic: bool,
-) -> Option<u32> {
+) -> Option<ContributorRecord> {
     if !seen.insert(login.to_string()) {
         return None;
     }
 
     let user = match gh.get_user(login).await {
         Ok(u) => u,
+        Err(GhError::RateLimit { reset_at }) => {
+            // Wait until the GitHub rate limit resets instead of skipping
+            if let Ok(reset_ts) = reset_at.parse::<i64>() {
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64;
+                let wait_secs = (reset_ts - now + 2).max(1) as u64;
+                warn!("  rate-limited on {login}, waiting {wait_secs}s until reset");
+                tokio::time::sleep(Duration::from_secs(wait_secs)).await;
+            } else {
+                warn!("  rate-limited on {login}, unparseable reset={reset_at}, waiting 60s");
+                tokio::time::sleep(Duration::from_secs(60)).await;
+            }
+            // Retry once
+            match gh.get_user(login).await {
+                Ok(u) => u,
+                Err(e) => {
+                    warn!("  skip {login} after rate-limit retry: {e}");
+                    seen.remove(login);
+                    return None;
+                }
+            }
+        }
         Err(e) => {
             warn!("  skip {login}: {e}");
             return None;
@@ -556,7 +607,7 @@ async fn process_user(
 
     // EU/UK location filter
     if !is_eu_location(user.location.as_deref()) {
-        return Some(0);
+        return None;
     }
 
     let skill_text = format!(
@@ -569,7 +620,7 @@ async fn process_user(
     let fitness = compute_partner_fitness(&user, &skills, starred_anthropic);
 
     if fitness.score < threshold {
-        return Some(0);
+        return None;
     }
 
     info!(
@@ -585,22 +636,19 @@ async fn process_user(
         user.location.as_deref().unwrap_or("?"),
     );
 
-    let record = ContributorRecord {
+    Some(ContributorRecord {
         user,
         repos: vec![RepoContrib {
             repo: source_tag.to_string(),
             contributions: 0,
         }],
         total_contributions: 0,
-    };
-
-    match db.insert(std::slice::from_ref(&record)).await {
-        Ok(_) => Some(1),
-        Err(e) => {
-            warn!("  db insert fail {login}: {e}");
-            Some(0)
-        }
-    }
+        extra_tags: if starred_anthropic {
+            vec!["cpn:starred".into()]
+        } else {
+            vec![]
+        },
+    })
 }
 
 // ── Display ──────────────────────────────────────────────────────────────────
@@ -650,9 +698,8 @@ async fn print_top_partners(db: &ContributorsDb, n: usize) -> anyhow::Result<()>
             user.company.as_deref().unwrap_or(""),
         );
         let skills = extract_skills(&skill_text);
-        // We don't have source_tag in RisingStar, so we can't determine starred_anthropic here.
-        // Default to false — the print_top_partners view is a re-ranking approximation.
-        let fitness = compute_partner_fitness(&user, &skills, false);
+        let starred = star.skills.iter().any(|s| s == "cpn:starred");
+        let fitness = compute_partner_fitness(&user, &skills, starred);
 
         scored.push((
             star.login.clone(),

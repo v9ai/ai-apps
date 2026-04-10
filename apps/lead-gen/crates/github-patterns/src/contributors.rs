@@ -32,6 +32,8 @@ pub struct ContributorRecord {
     /// All AI repos this person was seen contributing to.
     pub repos: Vec<RepoContrib>,
     pub total_contributions: u32,
+    /// Extra tags merged into skills_json at insert time (e.g. "cpn:starred").
+    pub extra_tags: Vec<String>,
 }
 
 /// Weights for each score component: (density, novelty, breadth, activity, obscurity).
@@ -252,6 +254,7 @@ impl ContributorsDb {
             .collect();
 
         // Skills extraction (always computed — pure keyword matching, negligible cost)
+        // Caller-supplied extra_tags (e.g. "cpn:starred") are merged in.
         let skills_jsons: Vec<String> = new
             .iter()
             .zip(repos_jsons.iter())
@@ -261,7 +264,16 @@ impl ContributorsDb {
                     r.user.company.as_deref(),
                     repos_json,
                 );
-                serde_json::to_string(&crate::skills::extract_skills(&text))
+                let mut skills: Vec<String> = crate::skills::extract_skills(&text)
+                    .into_iter()
+                    .map(|s| s.to_string())
+                    .collect();
+                for tag in &r.extra_tags {
+                    if !skills.contains(tag) {
+                        skills.push(tag.clone());
+                    }
+                }
+                serde_json::to_string(&skills)
                     .unwrap_or_else(|_| "[]".to_string())
             })
             .collect();
@@ -763,6 +775,7 @@ mod tests {
             user: make_user(followers, public_repos, age_days),
             repos,
             total_contributions: contributions,
+            extra_tags: vec![],
         }
     }
 
