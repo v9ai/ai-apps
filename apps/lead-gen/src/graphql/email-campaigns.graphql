@@ -151,6 +151,11 @@ query GetReceivedEmail($id: Int!) {
     attachments
     receivedAt
     archivedAt
+    classification
+    classificationConfidence
+    classifiedAt
+    matchedContactId
+    matchedOutboundId
     createdAt
     updatedAt
   }
