@@ -163,6 +163,18 @@ async fn flush_batch(db: &mut ContributorsDb, batch: &mut Vec<ContributorRecord>
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Truncate a string to at most `max` bytes on a char boundary, avoiding UTF-8 panics.
+fn trunc(s: &str, max: usize) -> &str {
+    if s.len() <= max {
+        return s;
+    }
+    let mut end = max;
+    while end > 0 && !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    &s[..end]
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
@@ -844,15 +856,15 @@ async fn print_top_partners(db: &ContributorsDb, n: usize) -> anyhow::Result<()>
         println!(
             "║ {:<4} {:<22} {:<6.2} {:<5} {:<2} {:<22} {:<18} ║",
             i + 1,
-            &display_name[..display_name.len().min(22)],
+            trunc(display_name, 22),
             fitness.score,
-            &source[..source.len().min(5)],
+            trunc(source, 5),
             star_icon,
-            &archetypes_str[..archetypes_str.len().min(22)],
-            &display_company[..display_company.len().min(18)],
+            trunc(&archetypes_str, 22),
+            trunc(display_company, 18),
         );
         if !location.is_empty() {
-            println!("║      └─ {:<71} ║", &location[..location.len().min(71)]);
+            println!("║      └─ {:<71} ║", trunc(&location, 71));
         }
     }
 
