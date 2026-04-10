@@ -267,13 +267,13 @@ impl GhClient {
             return Ok(vec![]);
         }
         // Build aliased GraphQL query: u0: user(login:"x") { ... }, u1: ...
-        // NOTE: `email` field requires `user:email` or `read:user` scope — omitted
-        // to avoid entire-query failure when token lacks that scope.
+        // NOTE: `email` field requires `user:email` or `read:user` scope on the PAT.
         let fields = r#"login
             id: databaseId
             url
             avatarUrl
             name
+            email
             bio
             company
             location
@@ -487,12 +487,12 @@ impl GhClient {
     /// Returns up to 100 members with full user data — no separate hydration needed.
     /// Falls back to empty vec on 403 (org members hidden) or other errors.
     pub async fn get_org_members_graphql(&self, org: &str) -> Result<Vec<GhUser>> {
-        // NOTE: `email` omitted — requires `user:email` / `read:user` scope
         let fields = r#"login
             id: databaseId
             url
             avatarUrl
             name
+            email
             bio
             company
             location
