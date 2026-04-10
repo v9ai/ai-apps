@@ -1013,6 +1013,321 @@ impl<'a> OrgScanner<'a> {
 
         score.min(1.0)
     }
+
+    // ── Organization similarity ────────────────────────────────────
+
+    /// Extract a fingerprint from an already-scanned `OrgProfile`.
+    pub fn fingerprint(profile: &OrgProfile) -> OrgFingerprint {
+        let pipeline_tags: HashSet<String> = profile
+            .pipeline_tags
+            .iter()
+            .map(|(tag, _)| tag.clone())
+            .collect();
+
+        let libraries: HashSet<String> = profile
+            .libraries_used
+            .iter()
+            .map(|(lib, _)| lib.clone())
+            .collect();
+
+        let mut domain_tags = HashSet::new();
+        for repo in profile.models.iter().chain(profile.datasets.iter()) {
+            if let Some(tags) = &repo.tags {
+                for tag in tags {
+                    if is_domain_tag(tag) {
+                        domain_tags.insert(tag.clone());
+                    }
+                }
+            }
+        }
+
+        let mut dataset_keywords = HashSet::new();
+        for ds in &profile.datasets {
+            if let Some(repo_id) = &ds.repo_id {
+                if let Some(name) = repo_id.split('/').nth(1) {
+                    for part in name.split(['-', '_']) {
+                        if part.len() > 2 {
+                            dataset_keywords.insert(part.to_lowercase());
+                        }
+                    }
+                }
+            }
+            if let Some(tags) = &ds.tags {
+                for tag in tags {
+                    if is_domain_tag(tag) {
+                        dataset_keywords.insert(tag.clone());
+                    }
+                }
+            }
+        }
+
+        OrgFingerprint {
+            org_name: profile.org_name.clone(),
+            pipeline_tags,
+            libraries,
+            domain_tags,
+            dataset_keywords,
+        }
+    }
+
+    /// Find HF organizations similar to the given org profile.
+    ///
+    /// Searches by pipeline tags, libraries, domain tags, and dataset
+    /// keywords, then aggregates and ranks candidates by weighted Jaccard
+    /// similarity.
+    pub async fn find_similar_orgs(
+        &self,
+        profile: &OrgProfile,
+        opts: &SimilarOrgOptions,
+    ) -> Result<Vec<SimilarOrg>, Error> {
+        let fingerprint = Self::fingerprint(profile);
+        let limit = opts.per_query_limit;
+
+        let mut exclude: HashSet<String> = opts
+            .exclude_orgs
+            .iter()
+            .map(|s| s.to_lowercase())
+            .collect();
+        exclude.insert(profile.org_name.to_lowercase());
+
+        // Phase 1: Fire search queries
+        let mut all_results: Vec<(String, Vec<RepoInfo>)> = Vec::new();
+
+        // By pipeline_tag
+        for tag in &fingerprint.pipeline_tags {
+            let repos = self.client.list_by_pipeline(tag, limit).await.unwrap_or_default();
+            tracing::debug!(tag, count = repos.len(), "pipeline search");
+            all_results.push((format!("pipeline:{tag}"), repos));
+        }
+
+        // By library
+        for lib in &fingerprint.libraries {
+            let repos = self.client.list_by_library(lib, limit).await.unwrap_or_default();
+            tracing::debug!(lib, count = repos.len(), "library search");
+            all_results.push((format!("library:{lib}"), repos));
+        }
+
+        // By top domain tags (cap at 5)
+        let top_domain_tags: Vec<&String> = fingerprint.domain_tags.iter().take(5).collect();
+        for tag in &top_domain_tags {
+            let repos = self
+                .client
+                .list_repos(&ListOptions {
+                    repo_type: RepoType::Model,
+                    sort: "downloads".into(),
+                    direction: "-1".into(),
+                    limit: 100,
+                    max_pages: (limit / 100).max(1),
+                    full: true,
+                    search: None,
+                    author: None,
+                    filter: Some(vec![tag.to_string()]),
+                    pipeline_tag_filter: None,
+                    library_filter: None,
+                })
+                .await
+                .unwrap_or_default();
+            tracing::debug!(tag, count = repos.len(), "tag search");
+            all_results.push((format!("tag:{tag}"), repos));
+        }
+
+        // By dataset keywords (cap at 3)
+        let ds_keywords: Vec<&String> = fingerprint.dataset_keywords.iter().take(3).collect();
+        for kw in &ds_keywords {
+            let repos = self
+                .client
+                .list_repos(&ListOptions {
+                    repo_type: RepoType::Dataset,
+                    sort: "downloads".into(),
+                    direction: "-1".into(),
+                    limit: 100,
+                    max_pages: (limit / 100).max(1),
+                    full: true,
+                    search: Some(kw.to_string()),
+                    author: None,
+                    filter: None,
+                    pipeline_tag_filter: None,
+                    library_filter: None,
+                })
+                .await
+                .unwrap_or_default();
+            tracing::debug!(kw, count = repos.len(), "dataset keyword search");
+            all_results.push((format!("dataset:{kw}"), repos));
+        }
+
+        // Phase 2: Aggregate by org
+        let mut org_map: HashMap<String, (Vec<RepoInfo>, HashSet<String>)> = HashMap::new();
+
+        for (query_label, repos) in &all_results {
+            for repo in repos {
+                let author = match &repo.author {
+                    Some(a) => a.to_lowercase(),
+                    None => continue,
+                };
+                if exclude.contains(&author) {
+                    continue;
+                }
+                let entry = org_map
+                    .entry(author)
+                    .or_insert_with(|| (Vec::new(), HashSet::new()));
+                entry.1.insert(query_label.clone());
+                // Deduplicate repos by repo_id
+                let repo_id = repo.repo_id.as_deref().unwrap_or("");
+                if !entry.0.iter().any(|r| r.repo_id.as_deref() == Some(repo_id)) {
+                    entry.0.push(repo.clone());
+                }
+            }
+        }
+
+        // Phase 3: Score each candidate
+        let total_queries = all_results.len();
+        let mut candidates: Vec<SimilarOrg> = Vec::new();
+
+        for (org_name, (repos, query_labels)) in org_map {
+            let mut cand_pipelines: HashSet<String> = HashSet::new();
+            let mut cand_libraries: HashSet<String> = HashSet::new();
+            let mut cand_domain_tags: HashSet<String> = HashSet::new();
+            let mut model_count = 0usize;
+            let mut dataset_count = 0usize;
+            let mut total_downloads = 0u64;
+            let mut total_likes = 0u64;
+
+            for repo in &repos {
+                total_downloads += repo.downloads.unwrap_or(0);
+                total_likes += repo.likes.unwrap_or(0);
+
+                if repo.pipeline_tag.is_some() || repo.library.is_some() {
+                    model_count += 1;
+                } else {
+                    dataset_count += 1;
+                }
+
+                if let Some(tag) = &repo.pipeline_tag {
+                    cand_pipelines.insert(tag.clone());
+                }
+                if let Some(lib) = &repo.library {
+                    cand_libraries.insert(lib.clone());
+                }
+                if let Some(tags) = &repo.tags {
+                    for t in tags {
+                        if is_domain_tag(t) {
+                            cand_domain_tags.insert(t.clone());
+                        }
+                    }
+                }
+            }
+
+            let pipeline_sim = jaccard(&fingerprint.pipeline_tags, &cand_pipelines);
+            let library_sim = jaccard(&fingerprint.libraries, &cand_libraries);
+            let tag_sim = jaccard(&fingerprint.domain_tags, &cand_domain_tags);
+            let query_hit_ratio = query_labels.len() as f32 / total_queries.max(1) as f32;
+
+            let similarity_score =
+                0.35 * pipeline_sim + 0.20 * library_sim + 0.25 * tag_sim + 0.20 * query_hit_ratio;
+
+            if similarity_score < opts.min_score || total_downloads < opts.min_downloads {
+                continue;
+            }
+
+            let shared_pipeline_tags: Vec<String> = fingerprint
+                .pipeline_tags
+                .intersection(&cand_pipelines)
+                .cloned()
+                .collect();
+            let shared_libraries: Vec<String> = fingerprint
+                .libraries
+                .intersection(&cand_libraries)
+                .cloned()
+                .collect();
+            let shared_domain_tags: Vec<String> = fingerprint
+                .domain_tags
+                .intersection(&cand_domain_tags)
+                .cloned()
+                .collect();
+
+            candidates.push(SimilarOrg {
+                org_name,
+                similarity_score,
+                model_count,
+                dataset_count,
+                total_downloads,
+                total_likes,
+                shared_pipeline_tags,
+                shared_libraries,
+                shared_domain_tags,
+                query_hits: query_labels.len(),
+                repos,
+            });
+        }
+
+        candidates.sort_by(|a, b| {
+            b.similarity_score
+                .partial_cmp(&a.similarity_score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| b.total_downloads.cmp(&a.total_downloads))
+        });
+
+        candidates.truncate(opts.max_results);
+        Ok(candidates)
+    }
+}
+
+// ── Similarity helpers ─────────────────────────────────────────────
+
+/// Tags to exclude from fingerprinting — appear on millions of repos.
+const NOISE_TAG_PREFIXES: &[&str] = &[
+    "license:",
+    "region:",
+    "language:",
+    "arxiv:",
+    "doi:",
+    "co2_eq",
+    "autotrain",
+    "endpoints_compatible",
+    "has_space",
+    "infinity_compatible",
+];
+
+const NOISE_TAGS: &[&str] = &[
+    "transformers",
+    "pytorch",
+    "tf",
+    "jax",
+    "safetensors",
+    "onnx",
+    "openvino",
+    "rust",
+    "tensorboard",
+    "text",
+    "en",
+    "generated_from_trainer",
+    "model-index",
+    "evaluation",
+];
+
+fn is_domain_tag(tag: &str) -> bool {
+    let lower = tag.to_lowercase();
+    if NOISE_TAG_PREFIXES.iter().any(|p| lower.starts_with(p)) {
+        return false;
+    }
+    if NOISE_TAGS.iter().any(|n| lower == *n) {
+        return false;
+    }
+    // Skip bare dataset references
+    if lower.starts_with("dataset:") {
+        return false;
+    }
+    true
+}
+
+/// Jaccard similarity: |A n B| / |A u B|, 0.0 if both empty.
+fn jaccard(a: &HashSet<String>, b: &HashSet<String>) -> f32 {
+    if a.is_empty() && b.is_empty() {
+        return 0.0;
+    }
+    let intersection = a.intersection(b).count() as f32;
+    let union_size = a.union(b).count() as f32;
+    intersection / union_size
 }
 
 #[cfg(test)]

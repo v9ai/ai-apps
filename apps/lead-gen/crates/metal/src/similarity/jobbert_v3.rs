@@ -425,9 +425,9 @@ impl JobBertV3Embedder {
         )?;
 
         // Create ort tensor views from ndarray arrays (zero-copy borrow)
-        let ids_tensor = TensorRef::from_array_view(&input_ids_array).map_err(ort_err)?;
-        let mask_tensor = TensorRef::from_array_view(&attention_mask_array).map_err(ort_err)?;
-        let type_tensor = TensorRef::from_array_view(&token_type_ids_array).map_err(ort_err)?;
+        let ids_tensor = TensorRef::<i64>::from_array_view(&input_ids_array).map_err(ort_err)?;
+        let mask_tensor = TensorRef::<i64>::from_array_view(&attention_mask_array).map_err(ort_err)?;
+        let type_tensor = TensorRef::<i64>::from_array_view(&token_type_ids_array).map_err(ort_err)?;
 
         let inputs = ort::inputs![
             "input_ids" => ids_tensor,

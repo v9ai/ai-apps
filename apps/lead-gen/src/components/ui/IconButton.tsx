@@ -35,7 +35,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
             width: s.wh,
             height: s.wh,
             fontSize: s.fontSize,
-            borderRadius: "0",
+            borderRadius: "md",
             boxShadow: "none",
             cursor: "pointer",
             transition:

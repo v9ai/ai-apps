@@ -5,7 +5,7 @@ export const badge = cva({
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",
-    borderRadius: "0",
+    borderRadius: "sm",
     border: "1px solid",
     borderColor: "ui.border",
     background: "transparent",

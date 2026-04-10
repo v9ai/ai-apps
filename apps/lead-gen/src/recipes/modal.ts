@@ -18,7 +18,7 @@ export const dialog = cva({
     bg: "ui.surface",
     border: "1px solid",
     borderColor: "ui.border",
-    borderRadius: "0",
+    borderRadius: "xl",
     width: "100%",
     maxHeight: "85vh",
     overflowY: "auto",

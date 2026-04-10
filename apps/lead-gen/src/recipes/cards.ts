@@ -6,6 +6,7 @@ export const pipelineCard = cva({
     border: "1px solid",
     borderColor: "ui.border",
     p: "5",
+    borderRadius: "lg",
     transition: "background 150ms ease, border-color 150ms ease",
     _hover: {
       bg: "ui.surfaceHover",
@@ -23,6 +24,7 @@ export const iconHolder = cva({
     bg: "ui.surfaceRaised",
     border: "1px solid",
     borderColor: "ui.border",
+    borderRadius: "md",
     color: "accent.primary",
   },
   variants: {
@@ -49,7 +51,7 @@ export const featureCard = cva({
     bg: "ui.surface",
     border: "1px solid",
     borderColor: "ui.border",
-    borderRadius: "0",
+    borderRadius: "lg",
     transition: "background 150ms ease, border-color 150ms ease",
     _hover: {
       bg: "ui.surfaceHover",
@@ -102,7 +104,7 @@ export const metricCard = cva({
     bg: "ui.surface",
     border: "1px solid",
     borderColor: "ui.border",
-    borderRadius: "0",
+    borderRadius: "lg",
     textAlign: "center",
     transition: "background 150ms ease, border-color 150ms ease",
     _hover: {
@@ -172,7 +174,7 @@ export const glassCard = cva({
     WebkitBackdropFilter: "blur(12px)",
     border: "1px solid",
     borderColor: "whiteAlpha.10",
-    borderRadius: "0",
+    borderRadius: "lg",
     transition: "background 150ms ease, border-color 150ms ease",
     _hover: {
       bg: "whiteAlpha.8",

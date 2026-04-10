@@ -16,7 +16,7 @@ const baseStyle = css({
   alignItems: "center",
   fontWeight: "medium",
   letterSpacing: "normal",
-  borderRadius: "editorial",
+  borderRadius: "sm",
   border: "1px solid",
   whiteSpace: "nowrap",
   lineHeight: "none",
