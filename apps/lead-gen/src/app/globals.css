@@ -288,6 +288,11 @@ nav a.active {
   line-height: 1 !important;
 }
 
+/* full-width containers */
+.rt-ContainerInner {
+  max-width: 100% !important;
+}
+
 /* flatten text fields */
 .rt-TextFieldRoot,
 .rt-TextFieldInput {

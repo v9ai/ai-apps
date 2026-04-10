@@ -149,7 +149,7 @@ export function LandingNav() {
           style={{ WebkitBackdropFilter: "blur(20px) saturate(1.4)" }}
         >
           <div
-            className={container({ maxW: "breakpoint-lg" })}
+            className={container({})}
             style={{ padding: "0 20px" }}
           >
             <div

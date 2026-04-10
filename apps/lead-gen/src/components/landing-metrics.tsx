@@ -405,7 +405,7 @@ export function LandingMetrics() {
         scrollMarginTop: "56px",
       })}
     >
-      <div className={container({ maxW: "breakpoint-lg" })}>
+      <div className={container({})}>
         {/* --- section header --- */}
         <div
           className={flex({ align: "center", gap: "2", mb: "2" })}

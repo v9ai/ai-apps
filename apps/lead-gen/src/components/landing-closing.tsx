@@ -63,7 +63,7 @@ export function LandingClosing() {
         })}
       />
 
-      <div className={container({ maxW: "breakpoint-lg" })}>
+      <div className={container({})}>
         {/* ---- Gradient-bordered CTA card ---- */}
         <div
           className={css({

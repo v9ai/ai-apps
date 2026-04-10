@@ -3,7 +3,6 @@
 import {
   Box,
   Flex,
-  Container,
   Heading,
   Text,
   Grid,
@@ -12,7 +11,7 @@ import {
 } from "@radix-ui/themes";
 import Link from "next/link";
 import { css, cx } from "styled-system/css";
-import { flex } from "styled-system/patterns";
+import { flex, container } from "styled-system/patterns";
 import { button } from "@/recipes/button";
 import {
   ArrowRightIcon,
@@ -296,7 +295,7 @@ const ARCHITECTURE_LAYERS = [
 export function LandingFeatures() {
   return (
     <Section size="2" id="features" style={{ scrollMarginTop: 56 }}>
-      <Container size="3">
+      <div className={container({})}>
         {/* -- section heading -- */}
         <Box mt="2" mb="7">
           <Text
@@ -517,7 +516,7 @@ export function LandingFeatures() {
             </div>
           </Flex>
         </Box>
-      </Container>
+      </div>
     </Section>
   );
 }
