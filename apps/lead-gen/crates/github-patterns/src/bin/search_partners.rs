@@ -337,6 +337,10 @@ async fn main() -> anyhow::Result<()> {
         );
     }
 
+    // Collect stargazer logins so later passes can skip them (already stored
+    // with starred_anthropic=true and the correct boosted score).
+    let _stargazer_logins: HashSet<String> = seen.clone();
+
     // ═══════════════════════════════════════════════════════════════════════
     // PASS 2: Org members of consulting / SI / AI companies
     // ═══════════════════════════════════════════════════════════════════════

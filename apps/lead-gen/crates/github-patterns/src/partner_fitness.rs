@@ -79,21 +79,6 @@ static ARCHETYPE_TAXONOMY: &[(&str, &[&str])] = &[
             "cto",
         ],
     ),
-    (
-        "partner-signals",
-        &[
-            "partner",
-            "channel",
-            "alliance",
-            "ecosystem",
-            "anthropic",
-            "openai partner",
-            "aws partner",
-            "gcp partner",
-            "azure partner",
-            "claude",
-        ],
-    ),
 ];
 
 /// Companies known for consulting/delivery/SI work — boost when company matches.
