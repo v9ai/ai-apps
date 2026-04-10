@@ -1,17 +1,12 @@
 rank,login,name,email,company,location,score,archetypes,source,starred,github_url,bio
 1,tfriedel,Thomas Friedel,thomas.friedel@gmail.com,PEAT,Berlin,0.479,ai-engineer,sdk,yes,https://github.com/tfriedel,Machine Learning Engineer
-2,TuanaCelik,Tuana Çelik,tuanacelik95@gmail.com,@run-llama,"Amsterdam, NL",0.471,,sdk,yes,https://github.com/TuanaCelik,DevRel @ LlamaIndex
-3,steipete,Peter Steinberger,peter@steipete.me,Full-Time Open-Sourcerer,Vienna & London,0.336,,sdk,yes,https://github.com/steipete,"Came back from retirement to mess with AI. Clawdfather @OpenClaw
-
-Previously: Founder of @PSPDFKit."
-4,hjanuschka,Helmut Januschka,helmut@januschka.com,,Vienna/Austria,0.268,,sdk,yes,https://github.com/hjanuschka,🤖
-5,daaain,Daniel Demmel,hello@danieldemmel.me,@twistco,"London, United Kingdom",0.247,,sdk,yes,https://github.com/daaain,"Full stack SWE @twistco, ex @team-blaze @ustwo, ♥ open source, degrowth activist, minimalist, flexitarian, @zzuuu's husband, dad of 2, neurodivergent, 🇭🇺&🇬🇧"
-6,solatis,Leon Mergen,leon@solatis.com,,"Driebergen-Rijsenburg, The Netherlands",0.241,,sdk,yes,https://github.com/solatis,Writer of code. Builder of things. Enjoyer of life.
-7,m98,Mohammad Kermani,98kermani@gmail.com,@findhotel,Netherlands,0.240,,sdk,yes,https://github.com/m98, 
-8,barryceelen,Barry Ceelen,b@rryceelen.com,,Berlin,0.232,,sdk,yes,https://github.com/barryceelen,"wp_die( '<pre>' . var_export( 'Howdy!', true ) . '</pre>' );"
-9,cheahjs,Jun Siang Cheah,me@jscheah.me,,United Kingdom,0.224,,sdk,yes,https://github.com/cheahjs,
-10,evandempsey,Evan Dempsey,evandempsey@gmail.com,,Dublin,0.207,,sdk,yes,https://github.com/evandempsey,
-11,gianluigilopardo,Gianluigi Lopardo,gianluigilopardo@gmail.com,European Central Bank,Frankfurt am Main,0.196,,sdk,yes,https://github.com/gianluigilopardo,Research Analyst @european-central-bank 
-12,aspekts,Marcus Kamuntu,home@aspekts.dev,@Yarn-Development,"London, UK",0.193,,sdk,yes,https://github.com/aspekts,"FS Dev, Student &
+2,hjanuschka,Helmut Januschka,helmut@januschka.com,,Vienna/Austria,0.268,,sdk,yes,https://github.com/hjanuschka,🤖
+3,daaain,Daniel Demmel,hello@danieldemmel.me,@twistco,"London, United Kingdom",0.247,,sdk,yes,https://github.com/daaain,"Full stack SWE @twistco, ex @team-blaze @ustwo, ♥ open source, degrowth activist, minimalist, flexitarian, @zzuuu's husband, dad of 2, neurodivergent, 🇭🇺&🇬🇧"
+4,solatis,Leon Mergen,leon@solatis.com,,"Driebergen-Rijsenburg, The Netherlands",0.241,,sdk,yes,https://github.com/solatis,Writer of code. Builder of things. Enjoyer of life.
+5,m98,Mohammad Kermani,98kermani@gmail.com,@findhotel,Netherlands,0.240,,sdk,yes,https://github.com/m98, 
+6,barryceelen,Barry Ceelen,b@rryceelen.com,,Berlin,0.232,,sdk,yes,https://github.com/barryceelen,"wp_die( '<pre>' . var_export( 'Howdy!', true ) . '</pre>' );"
+7,cheahjs,Jun Siang Cheah,me@jscheah.me,,United Kingdom,0.224,,sdk,yes,https://github.com/cheahjs,
+8,evandempsey,Evan Dempsey,evandempsey@gmail.com,,Dublin,0.207,,sdk,yes,https://github.com/evandempsey,
+9,aspekts,Marcus Kamuntu,home@aspekts.dev,@Yarn-Development,"London, UK",0.193,,sdk,yes,https://github.com/aspekts,"FS Dev, Student &
 CEO of @Yarn-Development
 "
