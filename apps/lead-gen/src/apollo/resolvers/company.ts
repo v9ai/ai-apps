@@ -17,6 +17,15 @@ import type { PgUpdateSetSource } from "drizzle-orm/pg-core/query-builders/updat
 
 /** Typed update object for companies table — matches what Drizzle's .set() accepts */
 type CompanyUpdate = PgUpdateSetSource<typeof companies>;
+
+/** Strip null values from a GraphQL input to match Drizzle's update type (which doesn't accept null) */
+function stripNulls<T extends Record<string, unknown>>(obj: T): { [K in keyof T]: Exclude<T[K], null> } {
+  const result = { ...obj };
+  for (const key of Object.keys(result)) {
+    if (result[key] === null) delete result[key];
+  }
+  return result as { [K in keyof T]: Exclude<T[K], null> };
+}
 import { eq, and, or, like, ilike, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
