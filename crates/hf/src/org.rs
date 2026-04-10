@@ -2133,6 +2133,12 @@ tags:
         assert!(!is_domain_tag("transformers"));
         assert!(!is_domain_tag("generated_from_trainer"));
         assert!(!is_domain_tag("dataset:squad"));
+        assert!(!is_domain_tag("size_categories:10K<n<100K"));
+        assert!(!is_domain_tag("format:parquet"));
+        assert!(!is_domain_tag("modality:text"));
+        assert!(!is_domain_tag("library:datasets"));
+        assert!(!is_domain_tag("task_categories:text-classification"));
+        assert!(!is_domain_tag("base_model:sentence-transformers/all-mpnet-base-v2"));
     }
 
     #[test]

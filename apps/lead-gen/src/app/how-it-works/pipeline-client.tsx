@@ -746,7 +746,7 @@ function StageConnector({ fromStage, toStage }: { fromStage: string; toStage: st
         width: 2,
         height: 16,
         background: "linear-gradient(to bottom, var(--gray-a5), var(--gray-a7))",
-        borderRadius: 0,
+        borderRadius: 4,
       }} />
       <Flex align="center" gap="2"
         style={{
