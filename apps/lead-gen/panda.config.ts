@@ -304,14 +304,37 @@ export default defineConfig({
         },
 
         durations: {
+          fastest: { value: "100ms" },
           fast: { value: "150ms" },
           normal: { value: "300ms" },
           slow: { value: "400ms" },
+          slower: { value: "600ms" },
+          slowest: { value: "1000ms" },
         },
 
         easings: {
           smooth: { value: "cubic-bezier(0.25, 0.46, 0.45, 0.94)" },
           expoOut: { value: "cubic-bezier(0.16, 1, 0.30, 1)" },
+          linear: { value: "linear" },
+          easeIn: { value: "cubic-bezier(0.4, 0, 1, 0.5)" },
+          easeOut: { value: "cubic-bezier(0, 0, 0.2, 1)" },
+          easeInOut: { value: "cubic-bezier(0.4, 0, 0.2, 1)" },
+          spring: { value: "cubic-bezier(0.34, 1.56, 0.64, 1)" },
+          bounce: { value: "cubic-bezier(0.34, 1.56, 0.64, 1)" },
+        },
+
+        animations: {
+          fadeIn: { value: "fadeIn 300ms cubic-bezier(0, 0, 0.2, 1) forwards" },
+          fadeOut: { value: "fadeOut 200ms ease forwards" },
+          slideUp: { value: "slideUp 300ms cubic-bezier(0.16, 1, 0.30, 1) forwards" },
+          slideDown: { value: "slideDown 300ms cubic-bezier(0.16, 1, 0.30, 1) forwards" },
+          slideLeft: { value: "slideLeft 300ms cubic-bezier(0.16, 1, 0.30, 1) forwards" },
+          slideRight: { value: "slideRight 300ms cubic-bezier(0.16, 1, 0.30, 1) forwards" },
+          scaleIn: { value: "scaleIn 200ms cubic-bezier(0.16, 1, 0.30, 1) forwards" },
+          scaleOut: { value: "scaleOut 150ms ease forwards" },
+          spin: { value: "spin 1s linear infinite" },
+          pulse: { value: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" },
+          ping: { value: "ping 1s cubic-bezier(0, 0, 0.2, 1) infinite" },
         },
 
         opacity: {

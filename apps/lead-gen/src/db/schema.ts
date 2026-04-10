@@ -512,6 +512,17 @@ export const linkedinPosts = pgTable(
     analyzed_at: text("analyzed_at"),    // ISO timestamp of last TechWolf analysis
     // job_embedding vector(768) added via migration — accessed with raw SQL
 
+    // --- Voyager API fields ---
+    voyager_urn: text("voyager_urn"),                       // LinkedIn URN e.g. urn:li:fsd_jobPosting:12345
+    voyager_workplace_type: text("voyager_workplace_type"), // "remote" | "hybrid" | "on-site"
+    voyager_salary_min: integer("voyager_salary_min"),
+    voyager_salary_max: integer("voyager_salary_max"),
+    voyager_salary_currency: text("voyager_salary_currency"), // ISO 4217: "USD", "EUR", etc.
+    voyager_apply_url: text("voyager_apply_url"),            // external apply URL
+    voyager_poster_urn: text("voyager_poster_urn"),          // URN of the person who posted
+    voyager_listed_at: text("voyager_listed_at"),            // epoch ms or ISO when LinkedIn listed it
+    voyager_reposted: boolean("voyager_reposted").default(false),
+
     created_at: text("created_at").notNull().default(sql`now()::text`),
   },
   (table) => [
@@ -519,6 +530,8 @@ export const linkedinPosts = pgTable(
     index("idx_linkedin_posts_type").on(table.type),
     index("idx_linkedin_posts_company_id").on(table.company_id),
     index("idx_linkedin_posts_contact_id").on(table.contact_id),
+    uniqueIndex("idx_linkedin_posts_voyager_urn").on(table.voyager_urn),
+    index("idx_linkedin_posts_workplace_type").on(table.voyager_workplace_type),
   ],
 );
 
