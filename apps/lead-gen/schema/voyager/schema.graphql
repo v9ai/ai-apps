@@ -1,0 +1,162 @@
+# ── LinkedIn Voyager API Integration ──────────────────────────────────
+# Server-side proxy for Voyager endpoints: job search, job counts,
+# remote-work metrics. Data is stored in linkedin_posts (type='job')
+# and feeds intent_signals (signal_type='hiring_intent').
+
+# ── Types ─────────────────────────────────────────────────────────────
+
+"""A single job card returned by the Voyager jobSearch endpoint."""
+type VoyagerJobCard {
+  """LinkedIn job posting URN (e.g. urn:li:fsd_jobPosting:1234567890)"""
+  urn: String!
+  """Job title from Voyager payload"""
+  title: String!
+  """Company name (denormalized from Voyager)"""
+  companyName: String
+  """Company LinkedIn numeric ID (for cross-referencing)"""
+  companyNumericId: String
+  """Location string from Voyager"""
+  location: String
+  """Workplace type: 1=on-site, 2=remote, 3=hybrid"""
+  workplaceType: Int
+  """Employment type from Voyager (full-time, contract, etc.)"""
+  employmentType: String
+  """When posted (ISO timestamp, derived from listedAt epoch)"""
+  postedAt: String
+  """LinkedIn canonical URL for this job"""
+  url: String!
+  """If stored locally, the linkedin_posts.id"""
+  linkedInPostId: Int
+}
+
+"""Paginated result from a Voyager job search."""
+type VoyagerJobSearchResult {
+  jobs: [VoyagerJobCard!]!
+  totalCount: Int!
+  """Whether more pages exist beyond the returned window"""
+  hasMore: Boolean!
+}
+
+"""Remote job count for a single company (via Voyager jobCards endpoint)."""
+type VoyagerCompanyJobCount {
+  companyId: Int!
+  companyName: String!
+  companyNumericId: String!
+  remoteJobCount: Int!
+  """'ok' | 'auth_error' | 'rate_limited' | 'error'"""
+  status: String!
+  fetchedAt: String!
+}
+
+"""Aggregate remote-work metrics derived from Voyager job data."""
+type VoyagerRemoteMetrics {
+  """Total remote jobs found across queried companies"""
+  totalRemoteJobs: Int!
+  """Number of companies that have at least 1 remote posting"""
+  companiesWithRemoteJobs: Int!
+  """Number of companies queried"""
+  companiesQueried: Int!
+  """Top companies by remote job count"""
+  topCompanies: [VoyagerCompanyJobCount!]!
+  """When this metrics snapshot was computed"""
+  computedAt: String!
+}
+
+"""Result of a syncVoyagerJobs mutation."""
+type SyncVoyagerJobsResult {
+  success: Boolean!
+  """Jobs upserted into linkedin_posts"""
+  upserted: Int!
+  """Intent signals created from job discoveries"""
+  intentSignalsCreated: Int!
+  """Companies matched or newly created"""
+  companiesMatched: Int!
+  errors: [String!]!
+}
+
+"""Result of a countRemoteVoyagerJobs mutation."""
+type CountRemoteVoyagerJobsResult {
+  success: Boolean!
+  counts: [VoyagerCompanyJobCount!]!
+  errors: [String!]!
+}
+
+# ── Inputs ────────────────────────────────────────────────────────────
+
+input VoyagerJobSearchInput {
+  """Company LinkedIn numeric IDs to filter by"""
+  companyIds: [String!]
+  """Free-text keyword query"""
+  keywords: String
+  """Geographic region ID (92000000 = Worldwide)"""
+  geoId: String
+  """Workplace type filter: 1=on-site, 2=remote, 3=hybrid"""
+  workplaceType: Int
+  """Maximum results to return (capped at 100 server-side)"""
+  limit: Int
+  """Pagination offset"""
+  offset: Int
+}
+
+input SyncVoyagerJobsInput {
+  """Company LinkedIn numeric IDs to sync jobs for"""
+  companyNumericIds: [String!]!
+  """Only sync remote jobs (workplaceType=2). Default true."""
+  remoteOnly: Boolean
+  """Create intent_signals for hiring_intent. Default true."""
+  createIntentSignals: Boolean
+  """Link to existing companies by linkedin_url match. Default true."""
+  matchCompanies: Boolean
+}
+
+input CountRemoteVoyagerJobsInput {
+  """Company LinkedIn numeric IDs to count remote jobs for"""
+  companyNumericIds: [String!]!
+}
+
+# ── Queries ───────────────────────────────────────────────────────────
+
+extend type Query {
+  """
+  Search LinkedIn jobs via Voyager API proxy.
+  Requires CSRF token forwarded from an authenticated LinkedIn session.
+  Results are NOT persisted — use syncVoyagerJobs to store.
+  """
+  voyagerJobSearch(input: VoyagerJobSearchInput!): VoyagerJobSearchResult!
+
+  """
+  Get cached remote job counts per company.
+  Reads from the most recent countRemoteVoyagerJobs result stored in DB,
+  NOT a live Voyager call. Use the mutation to refresh.
+  """
+  voyagerRemoteJobCounts(companyIds: [Int!]!): [VoyagerCompanyJobCount!]!
+
+  """
+  Get all Voyager-sourced jobs for a specific company.
+  Reads from linkedin_posts where type='job' and raw_data contains voyager metadata.
+  """
+  voyagerCompanyJobs(companyId: Int!, limit: Int, offset: Int): [LinkedInPost!]!
+
+  """
+  Aggregate remote-work metrics across all companies with Voyager data.
+  """
+  voyagerRemoteMetrics(minRemoteJobs: Int): VoyagerRemoteMetrics!
+}
+
+# ── Mutations ─────────────────────────────────────────────────────────
+
+extend type Mutation {
+  """
+  Fetch jobs from Voyager API and upsert into linkedin_posts (type='job').
+  Optionally creates intent_signals (hiring_intent) for each company with postings.
+  Admin only.
+  """
+  syncVoyagerJobs(input: SyncVoyagerJobsInput!): SyncVoyagerJobsResult!
+
+  """
+  Count remote jobs for a batch of companies via Voyager API.
+  Stores counts as company metadata (for voyagerRemoteJobCounts query).
+  Admin only.
+  """
+  countRemoteVoyagerJobs(input: CountRemoteVoyagerJobsInput!): CountRemoteVoyagerJobsResult!
+}

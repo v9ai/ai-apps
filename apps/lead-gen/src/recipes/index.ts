@@ -29,3 +29,4 @@ export {
 export { sheetOverlay, sheet, sheetHeader, sheetBody, sheetFooter } from "./sheet";
 export { accordionRoot, accordionItem, accordionTrigger, accordionContent, accordionIcon } from "./accordion";
 export { cardGroup, surfaceLevel } from "./card-group";
+export { animate, transition, stagger } from "./motion";
