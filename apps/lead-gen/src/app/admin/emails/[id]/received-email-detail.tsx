@@ -218,6 +218,10 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
             ? email.subject
             : `Re: ${email.subject || ""}`
         }
+        replyContext={
+          `Replying to email from ${email.fromEmail || "unknown"} with subject "${email.subject || ""}". ` +
+          `Original message:\n\n${email.textContent || "(no text content)"}`
+        }
       />
     </Container>
   );
