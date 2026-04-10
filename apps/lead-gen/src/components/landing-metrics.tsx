@@ -310,10 +310,6 @@ function MetricCard({
           ? { opacity: 1, transform: "translateY(0)" }
           : {}),
         transitionDelay: visible ? staggerDelay : "0s",
-        /* subtle glow on hover via box-shadow */
-        ...(hero
-          ? {}
-          : {}),
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLDivElement).style.boxShadow =
