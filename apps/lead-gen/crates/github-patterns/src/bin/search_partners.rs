@@ -488,7 +488,7 @@ async fn main() -> anyhow::Result<()> {
     // PASS 3: Repo search → owner profiles
     // ═══════════════════════════════════════════════════════════════════════
     info!(
-        "═══ PASS 3: Repo search ({} queries) ═══",
+        "═══ PASS 3: Repo search ({} queries) ═══  [stored so far: {stored}]",
         REPO_SEARCH_QUERIES.len()
     );
     {
@@ -559,7 +559,7 @@ async fn main() -> anyhow::Result<()> {
     // PASS 4: User bio search (supplementary)
     // ═══════════════════════════════════════════════════════════════════════
     info!(
-        "═══ PASS 4: User bio search ({} queries) ═══",
+        "═══ PASS 4: User bio search ({} queries) ═══  [stored so far: {stored}]",
         BIO_SEARCH.len()
     );
     {
