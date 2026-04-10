@@ -352,6 +352,8 @@ function PrepPageInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const scrollKey = `prep-scroll-${params.id}`;
+
   useEffect(() => {
     if (params.id) {
       fetch(`/api/applications/${params.id}`)
@@ -368,6 +370,27 @@ function PrepPageInner() {
         .finally(() => setLoading(false));
     }
   }, [params.id, router]);
+
+  // Restore scroll position after content renders
+  useEffect(() => {
+    if (!loading && app) {
+      const saved = sessionStorage.getItem(scrollKey);
+      if (saved) window.scrollTo(0, parseInt(saved, 10));
+    }
+  }, [loading, app, scrollKey]);
+
+  // Persist scroll position on scroll
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        sessionStorage.setItem(scrollKey, String(window.scrollY));
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
+  }, [scrollKey]);
 
   const content = app?.aiInterviewQuestions;
   const processed = useMemo(() => content ? groupCodeBlocks(content) : null, [content]);
