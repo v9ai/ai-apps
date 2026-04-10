@@ -26,6 +26,10 @@ import {
 } from "@/lib/email/verification";
 import { isAIContact, gatherAIContactProfile, extractLinkedInOG, fetchGitHubProfile, searchGitHubByName } from "@/lib/ai-contact-enrichment";
 import { evaluateFakeAccount } from "@/lib/ml/fake-account-detector";
+import type { PgUpdateSetSource } from "drizzle-orm/pg-core/query-builders/update";
+
+/** Typed update object for contacts table — matches what Drizzle's .set() accepts */
+type ContactUpdate = PgUpdateSetSource<typeof contacts>;
 
 // ─── ML Contact Classification ────────────────────────────────────────────────
 
@@ -636,7 +640,7 @@ export const contactResolvers = {
         throw new Error("Forbidden");
       }
       const { firstName, lastName, emails, tags, doNotContact, ...rest } = args.input;
-      const patch: Partial<typeof contacts.$inferInsert> = { ...rest };
+      const patch: ContactUpdate = { ...rest };
       if (firstName !== undefined) patch.first_name = firstName;
       if (lastName !== undefined) patch.last_name = lastName;
       if (emails !== undefined) patch.emails = JSON.stringify(emails);
