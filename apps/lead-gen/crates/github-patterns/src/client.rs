@@ -181,6 +181,33 @@ impl GhClient {
         self.get(&format!("/users/{login}")).await
     }
 
+    /// Search GitHub users by query string.
+    ///
+    /// The `q` parameter supports GitHub qualifiers:
+    ///   `type:user`, `location:Berlin`, `language:python`,
+    ///   `followers:>100`, `repos:>10`, `created:>2020-01-01`,
+    ///   plus free-text matching against username, bio, email, and name.
+    pub async fn search_users(
+        &self,
+        q: &str,
+        sort: Option<&str>,
+        order: Option<&str>,
+        per_page: u8,
+        page: u32,
+    ) -> Result<SearchUsersResponse> {
+        let mut url = format!(
+            "{BASE_URL}/search/users?q={}&per_page={per_page}&page={page}",
+            urlencoding(q),
+        );
+        if let Some(s) = sort {
+            url.push_str(&format!("&sort={s}"));
+        }
+        if let Some(o) = order {
+            url.push_str(&format!("&order={o}"));
+        }
+        self.get_url(&url).await
+    }
+
     /// Search repos by topic + optional language.
     pub async fn search_repos(
         &self,

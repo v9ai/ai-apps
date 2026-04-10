@@ -3,11 +3,13 @@ import {
   Container,
   Head,
   Html,
+  Img,
   Link,
   Section,
   Text,
 } from "@react-email/components";
 import React from "react";
+import { LOGO_ALT, LOGO_BASE64, LOGO_HEIGHT, LOGO_WIDTH } from "./logo";
 
 export interface SignatureConfig {
   name: string;
@@ -17,6 +19,9 @@ export interface SignatureConfig {
   calendly: string;
   linkedin: string;
   github: string;
+  /** Optional hosted logo URL — overrides the default base64-encoded SVG wordmark.
+   *  Use for Outlook desktop compatibility (e.g. "https://vadim.blog/logo.png"). */
+  logoUrl?: string;
 }
 
 export const vadimSignatureConfig: SignatureConfig = {
@@ -36,9 +41,9 @@ const styles = {
     padding: "0",
     margin: "0",
   },
-  divider: {
-    borderTop: "2px solid #0066cc",
-    marginBottom: "12px",
+  logo: {
+    display: "block" as const,
+    marginBottom: "8px",
   },
   name: {
     fontSize: "16px",
@@ -89,7 +94,13 @@ export function EmailSignature(config: SignatureConfig): React.ReactElement {
       <Body style={{ backgroundColor: "#ffffff", margin: "0", padding: "0" }}>
         <Container style={styles.container}>
           <Section>
-            <div style={styles.divider} />
+            <Img
+              src={config.logoUrl ?? LOGO_BASE64}
+              alt={LOGO_ALT}
+              width={LOGO_WIDTH}
+              height={LOGO_HEIGHT}
+              style={styles.logo}
+            />
             <Text style={styles.name}>{config.name}</Text>
             <Text style={styles.title}>Software Engineer</Text>
             <Text style={styles.contactRow}>

@@ -13,6 +13,10 @@ pub mod readme;
 #[cfg(feature = "patterns")]
 pub mod patterns;
 
+/// Partner staffing fitness scoring — delivery leads, architects, consultants.
+#[cfg(feature = "search")]
+pub mod partner_fitness;
+
 /// Local BERT semantic scorer — no cloud required.
 /// Load once with `EmbedScorer::new()`, reuse across orgs.
 #[cfg(feature = "embed")]
@@ -50,3 +54,6 @@ pub use patterns::analyse_org;
 
 #[cfg(feature = "embed")]
 pub use embed::EmbedScorer;
+
+#[cfg(feature = "search")]
+pub use partner_fitness::{compute_partner_fitness, extract_archetypes, PartnerFitness};

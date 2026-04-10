@@ -60,5 +60,10 @@ name = "export_contributors"
 path = "src/bin/export_contributors.rs"
 required-features = ["lance", "neon"]
 
+[[bin]]
+name = "search_partners"
+path = "src/bin/search_partners.rs"
+required-features = ["search", "lance"]
+
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
