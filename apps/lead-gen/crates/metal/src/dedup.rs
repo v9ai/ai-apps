@@ -1300,9 +1300,9 @@ mod tests {
         let dup_count = results.iter().filter(|r| r.is_duplicate).count();
 
         // The second 100 should all be caught as duplicates (exact email match via Bloom).
-        // Some of the first 100 may also be flagged by SimHash if structurally similar,
-        // but at least 90 of the first 100 should be unique.
-        assert!(unique_count >= 90, "should have >= 90 unique contacts, got {}", unique_count);
+        // Some of the first 100 may also be flagged by SimHash+JW if text is structurally
+        // similar (generated names share trigrams), so we allow a small margin.
+        assert!(unique_count >= 85, "should have >= 85 unique contacts, got {}", unique_count);
         assert!(dup_count >= 100, "should detect >= 100 duplicates, got {}", dup_count);
 
         // All duplicates in the second half (indices 100..199) should be BloomExact

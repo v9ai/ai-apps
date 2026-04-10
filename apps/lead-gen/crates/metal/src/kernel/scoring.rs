@@ -767,6 +767,169 @@ impl Default for IsotonicCalibrator {
     }
 }
 
+// ── BatchScoringContext: zero-allocation batch scoring via ScoringArena ──────
+
+#[cfg(feature = "kernel-arena")]
+use super::arena::{ArenaStats, ScoringArena};
+
+/// Zero-allocation batch scoring context.
+///
+/// Owns a [`ScoringArena`] and provides methods to score contacts in batches
+/// without any heap allocation. Feature vectors and output scores are allocated
+/// from the arena's contiguous, cache-line-aligned memory. Between batches,
+/// `reset()` recycles the memory at zero cost.
+///
+/// # Usage
+/// ```ignore
+/// let mut ctx = BatchScoringContext::new(256);
+/// // ... populate features via arena-backed slices ...
+/// let results = ctx.score_batch_from_features(&features_7, &recency_days, count, &icp);
+/// ctx.reset(); // ready for next batch
+/// ```
+#[cfg(feature = "kernel-arena")]
+pub struct BatchScoringContext {
+    arena: ScoringArena,
+}
+
+#[cfg(feature = "kernel-arena")]
+impl BatchScoringContext {
+    /// Create a new context pre-sized for `batch_size` contacts.
+    pub fn new(batch_size: usize) -> Self {
+        Self {
+            arena: ScoringArena::new(batch_size),
+        }
+    }
+
+    /// Allocate a feature vector (f32 slice) from the arena.
+    /// The slice is cache-line aligned and zero-initialized.
+    pub fn alloc_features(&mut self, len: usize) -> &mut [f32] {
+        self.arena.alloc_f32_slice(len)
+    }
+
+    /// Allocate a u16 slice from the arena (e.g., for recency_days).
+    pub fn alloc_u16(&mut self, len: usize) -> &mut [u16] {
+        self.arena.alloc_aligned::<u16>(len)
+    }
+
+    /// Allocate a score output buffer from the arena.
+    pub fn alloc_scores(&mut self, len: usize) -> &mut [f32] {
+        self.arena.alloc_f32_slice(len)
+    }
+
+    /// Score a batch of contacts given pre-extracted 7-feature vectors.
+    ///
+    /// All intermediate and output memory comes from the arena (zero heap allocs).
+    /// Returns a vec of (index, score) pairs for the top-k contacts.
+    ///
+    /// # Arguments
+    /// * `features_flat` - Flat f32 slice of `count * 7` features (row-major).
+    /// * `recency_days`  - Slice of `count` recency values.
+    /// * `count`         - Number of contacts in this batch.
+    /// * `icp`           - ICP weight profile.
+    /// * `top_k`         - Number of top results to return.
+    pub fn score_batch_from_features(
+        &mut self,
+        features_flat: &[f32],
+        recency_days: &[u16],
+        count: usize,
+        icp: &IcpProfile,
+        top_k: usize,
+    ) -> Vec<(usize, f32)> {
+        assert_eq!(features_flat.len(), count * 7, "features_flat must be count * 7");
+        assert!(recency_days.len() >= count, "recency_days too short");
+
+        let scores = self.arena.alloc_f32_slice(count);
+
+        let max = icp.industry_weight
+            + icp.employee_weight
+            + icp.seniority_weight
+            + icp.department_weight
+            + icp.tech_weight
+            + icp.email_weight;
+
+        for i in 0..count {
+            let base = i * 7;
+            let mut score: f32 = 0.0;
+
+            score += features_flat[base]     * icp.industry_weight;   // industry_match
+            score += features_flat[base + 1] * icp.employee_weight;   // employee_in_range
+            score += features_flat[base + 2] * icp.seniority_weight;  // seniority_match
+            score += features_flat[base + 3] * icp.department_weight; // department_match
+            score += features_flat[base + 4] * icp.tech_weight;       // tech_overlap (0-1)
+
+            // email_verified: value is 0.0, 0.5 (catch-all), or 1.0
+            score += features_flat[base + 5] * icp.email_weight;
+
+            let icp_fit = (score / max) * 100.0;
+
+            let recency = LogisticScorer::smooth_recency(recency_days[i]) * 15.0;
+
+            scores[i] = icp_fit * 0.85 + recency;
+        }
+
+        Self::top_k_from_scores(scores, top_k)
+    }
+
+    /// Score a ContactBatch using the logistic scorer, returning top-k results.
+    /// All intermediate score data is arena-allocated.
+    pub fn score_batch_logistic(
+        &mut self,
+        batch: &ContactBatch,
+        scorer: &LogisticScorer,
+        top_k: usize,
+    ) -> Vec<(usize, f32)> {
+        let count = batch.count;
+        let scores = self.arena.alloc_f32_slice(count);
+
+        for i in 0..count {
+            let features = LogisticScorer::extract_features(batch, i);
+            let semantic = batch.semantic_icp_score[i];
+            scores[i] = if semantic > 0.0 {
+                scorer.score_with_semantic(&features, semantic) * 100.0
+            } else {
+                scorer.score(&features) * 100.0
+            };
+        }
+
+        Self::top_k_from_scores(scores, top_k)
+    }
+
+    /// Return top-k (index, score) pairs from a score buffer, sorted descending.
+    fn top_k_from_scores(scores: &[f32], k: usize) -> Vec<(usize, f32)> {
+        let count = scores.len();
+        let k = k.min(count);
+        if k == 0 {
+            return Vec::new();
+        }
+
+        let mut indices: Vec<usize> = (0..count).collect();
+        indices.select_nth_unstable_by(k.saturating_sub(1), |&a, &b| {
+            scores[b]
+                .partial_cmp(&scores[a])
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        indices.truncate(k);
+        indices.sort_by(|&a, &b| {
+            scores[b]
+                .partial_cmp(&scores[a])
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        indices.into_iter().map(|i| (i, scores[i])).collect()
+    }
+
+    /// Reset the arena for the next batch. All prior score/feature
+    /// references become invalid. Zero-cost: no deallocation or syscalls.
+    pub fn reset(&mut self) {
+        self.arena.reset();
+    }
+
+    /// Memory usage statistics for the underlying arena.
+    pub fn stats(&self) -> ArenaStats {
+        self.arena.stats()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

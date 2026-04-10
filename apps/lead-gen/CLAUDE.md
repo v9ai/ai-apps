@@ -150,10 +150,6 @@ Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Aut
 
 ### Dead code
 - `scripts/ingest-jobs.ts` still documents Turso env vars in its help text (stale).
-- `@libsql/client` and `drizzle-orm/d1` are likely unused and can be removed from `package.json`.
-
-### Dependencies
-- `@libsql/client` and `drizzle-orm/d1` are likely unused — remove from `package.json`.
 
 ---
 
