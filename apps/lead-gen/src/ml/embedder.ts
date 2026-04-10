@@ -167,6 +167,17 @@ export function cosineSimilarity(a: number[], b: number[]): number {
  * Processes in chunks to bound peak memory. Reuses the singleton
  * tokenizer/pipeline instance and avoids intermediate `number[]` allocations.
  *
+ * Arena optimization: output buffers are acquired from the module-level
+ * EmbeddingArena pool instead of being freshly allocated per embedding.
+ * The caller takes ownership of these buffers. On subsequent calls, if
+ * previous results have been consumed and released back to the arena
+ * via `releaseEmbeddings()`, those buffers are reused — eliminating
+ * allocation storms during repeated batch operations.
+ *
+ * For callers that hold results long-term: the buffers are standard
+ * Float32Arrays and work normally even without explicit release. The arena
+ * simply won't reclaim them, falling back to fresh allocation as needed.
+ *
  * @param texts  - Array of raw text strings to embed.
  * @param options.chunkSize - Texts per inference batch (default 32).
  */
@@ -182,6 +193,10 @@ export async function embedBatchOptimized(
   // Pre-allocate output array (no push/resize)
   const results = new Array<Float32Array>(texts.length);
 
+  // Warm up arena so we have enough pooled buffers for the entire batch.
+  // This front-loads allocation before the hot loop.
+  embeddingArena.warmUp(texts.length);
+
   for (let i = 0; i < texts.length; i += chunkSize) {
     const end = Math.min(i + chunkSize, texts.length);
     const chunk = texts.slice(i, end);
@@ -190,15 +205,37 @@ export async function embedBatchOptimized(
     const output = await pipe(chunk, { pooling: "mean", normalize: true });
     const flat: Float32Array = output.data as Float32Array;
 
-    // Slice directly from the flat Float32Array — no Array.from() conversion
+    // Copy each embedding from the flat pipeline output into an arena buffer.
+    // subarray() creates a view (no copy), then set() does a single memcpy.
+    // This replaces flat.slice() which allocates a new ArrayBuffer each time.
     for (let j = 0; j < chunkLen; j++) {
       const offset = j * EMBEDDING_DIM;
-      // Float32Array.slice returns a new Float32Array (typed copy, no GC overhead)
-      results[i + j] = flat.slice(offset, offset + EMBEDDING_DIM);
+      const buf = embeddingArena.acquire();
+      buf.set(flat.subarray(offset, offset + EMBEDDING_DIM));
+      results[i + j] = buf;
     }
   }
 
   return results;
+}
+
+/**
+ * Return embedding buffers to the arena pool for reuse.
+ *
+ * Call this after you've consumed the results from `embedBatchOptimized()`
+ * (e.g., after storing to DB or computing similarities). This allows the
+ * arena to recycle buffers on subsequent batch calls, reducing GC pressure
+ * in tight loops.
+ *
+ * Safe to call with buffers not from the arena — wrong-sized buffers are
+ * silently ignored.
+ *
+ * @param embeddings - Float32Array buffers previously returned by embedBatchOptimized.
+ */
+export function releaseEmbeddings(embeddings: Float32Array[]): void {
+  for (const buf of embeddings) {
+    embeddingArena.release(buf);
+  }
 }
 
 // ============================================================================

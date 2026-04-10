@@ -156,6 +156,9 @@ export function sigmoidFast(x: number): number {
 /**
  * Score a company against the ICP using a hand-tuned weighted sum.
  *
+ * Optimization: uses indexed FEATURE_KEYS + WEIGHTS_F32 instead of
+ * Record property lookup per feature, reducing dynamic dispatch overhead.
+ *
  * @returns score (0..1) and human-readable reasons for top contributors.
  */
 export function scoreICP(
@@ -164,8 +167,9 @@ export function scoreICP(
   let raw = BIAS;
   const contributions: { name: string; value: number }[] = [];
 
-  for (const key of FEATURE_KEYS) {
-    const contribution = WEIGHTS[key] * features[key];
+  for (let i = 0; i < NUM_FEATURES; i++) {
+    const key = FEATURE_KEYS[i]!;
+    const contribution = WEIGHTS_F32[i]! * features[key];
     raw += contribution;
     if (Math.abs(contribution) >= 0.02) {
       contributions.push({ name: key, value: contribution });
@@ -318,15 +322,31 @@ export function scoreIcpBatch(
   const scores = new Float32Array(batchSize);
   const allReasons: string[][] = [];
 
-  // Contributions buffer reused per row
+  // Optimization: pre-allocate reusable buffers outside the row loop to
+  // eliminate per-row allocations. The contribs, significantContribs, and
+  // sigToFeature arrays are reused for each row.
   const contribs = new Float32Array(NUM_FEATURES);
+  const significantContribs = new Float32Array(NUM_FEATURES);
+  const sigToFeature = new Int32Array(NUM_FEATURES);
 
   for (let row = 0; row < batchSize; row++) {
     const rowOffset = row * NUM_FEATURES;
     let raw = BIAS;
 
-    // Dot product + capture per-feature contributions
-    for (let j = 0; j < NUM_FEATURES; j++) {
+    // Dot product + capture per-feature contributions — 4-way unrolled
+    let j = 0;
+    for (; j + 3 < NUM_FEATURES; j += 4) {
+      const c0 = matrix[rowOffset + j]! * WEIGHTS_F32[j]!;
+      const c1 = matrix[rowOffset + j + 1]! * WEIGHTS_F32[j + 1]!;
+      const c2 = matrix[rowOffset + j + 2]! * WEIGHTS_F32[j + 2]!;
+      const c3 = matrix[rowOffset + j + 3]! * WEIGHTS_F32[j + 3]!;
+      contribs[j] = c0;
+      contribs[j + 1] = c1;
+      contribs[j + 2] = c2;
+      contribs[j + 3] = c3;
+      raw += c0 + c1 + c2 + c3;
+    }
+    for (; j < NUM_FEATURES; j++) {
       const c = matrix[rowOffset + j]! * WEIGHTS_F32[j]!;
       contribs[j] = c;
       raw += c;
@@ -336,20 +356,13 @@ export function scoreIcpBatch(
 
     // Partial sort: find top-5 contributions by absolute value
     // Only consider features with |contribution| >= 0.02
-    const significantContribs = new Float32Array(NUM_FEATURES);
+    // Optimization: single pass builds both significant values and feature index mapping
     let sigCount = 0;
-    for (let j = 0; j < NUM_FEATURES; j++) {
+    for (j = 0; j < NUM_FEATURES; j++) {
       if (Math.abs(contribs[j]!) >= 0.02) {
         significantContribs[sigCount] = contribs[j]!;
+        sigToFeature[sigCount] = j;
         sigCount++;
-      }
-    }
-
-    // Build mapping from significant index back to feature index
-    const sigToFeature: number[] = [];
-    for (let j = 0; j < NUM_FEATURES; j++) {
-      if (Math.abs(contribs[j]!) >= 0.02) {
-        sigToFeature.push(j);
       }
     }
 

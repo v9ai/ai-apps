@@ -572,7 +572,7 @@ export const contactMutations = {
         .where(eq(contacts.company_id, args.companyId));
 
       const verifiedContacts = companyContacts.filter(
-        (c) => (c.email_verified === true || (c.email_verified as unknown) === 1) && c.email,
+        (c) => c.email_verified && c.email,
       );
 
       if (verifiedContacts.length === 0) {
@@ -614,7 +614,7 @@ export const contactMutations = {
       }
 
       const contactsToProcess = companyContacts.filter((c) => {
-        if (c.email_verified === true || (c.email_verified as unknown) === 1) return false;
+        if (c.email_verified) return false;
         if (!c.first_name) return false;
         return !!c.last_name;
       });
@@ -941,8 +941,10 @@ export const contactMutations = {
 
       const summaryMap = new Map(emailSummaries.map((s) => [s.contact_id, s]));
       const msPerDay = 86_400_000;
+      const now = new Date().toISOString();
 
-      for (const contact of rows) {
+      // Compute scores, then batch-update in a single query (eliminates N+1 UPDATE)
+      const touchUpdates = rows.map((contact) => {
         const summary = summaryMap.get(contact.id);
         const hasReply = summary?.any_reply ?? false;
         const lastSent = summary?.last_sent_at ?? null;
@@ -950,13 +952,20 @@ export const contactMutations = {
           ? Math.floor((Date.now() - new Date(lastSent).getTime()) / msPerDay)
           : null;
         const touchScore = computeNextTouchScore(contact.authority_score ?? 0.1, daysSince, hasReply);
+        return { id: contact.id, touchScore, lastSent };
+      });
 
-        // TODO: use DataLoader -- this issues one UPDATE per contact (N+1); batch with a single UPDATE ... WHERE id IN (...)
-        await context.db
-          .update(contacts)
-          .set({ next_touch_score: touchScore, last_contacted_at: lastSent, updated_at: new Date().toISOString() })
-          .where(eq(contacts.id, contact.id));
-      }
+      const touchScoreCases = touchUpdates.map((u) => sql`WHEN ${contacts.id} = ${u.id} THEN ${u.touchScore}`);
+      const lastContactedCases = touchUpdates.map((u) => sql`WHEN ${contacts.id} = ${u.id} THEN ${u.lastSent}`);
+
+      await context.db
+        .update(contacts)
+        .set({
+          next_touch_score: sql`CASE ${sql.join(touchScoreCases, sql` `)} END`,
+          last_contacted_at: sql`CASE ${sql.join(lastContactedCases, sql` `)} END`,
+          updated_at: now,
+        })
+        .where(inArray(contacts.id, contactIds));
     }
 
     return {
