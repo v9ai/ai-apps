@@ -28,6 +28,8 @@ const batchIdx = args.indexOf("--batch-size");
 const batchSize = batchIdx !== -1 ? parseInt(args[batchIdx + 1], 10) : 50;
 const delayIdx = args.indexOf("--delay");
 const delayMs = delayIdx !== -1 ? parseInt(args[delayIdx + 1], 10) : 2000;
+const scheduleIdx = args.indexOf("--schedule-minutes");
+const scheduleMinutes = scheduleIdx !== -1 ? parseInt(args[scheduleIdx + 1], 10) : 0;
 
 // ── CSV types ───────────────────────────────────────────────────
 
@@ -126,37 +128,19 @@ async function main() {
     return;
   }
 
-  // ── Preview first 3 ────────────────────────────────────────────
-  for (const row of rows.slice(0, 3)) {
-    const { subject, text } = buildEmail(row);
-    console.log(`─── ${row.email} ───`);
-    console.log(`Subject: ${subject}`);
-    console.log(text);
-    console.log();
-  }
-
-  // ── 10-minute safety countdown ─────────────────────────────────
-  let aborted = false;
-  const onSigint = () => {
-    aborted = true;
-    console.log("\n\n  Aborted. No emails were sent.\n");
-    process.exit(0);
-  };
-  process.on("SIGINT", onSigint);
-
-  console.log("  Starting 10-minute safety countdown. Press Ctrl+C to abort.\n");
-  for (let min = 10; min > 0; min--) {
-    console.log(`  Sending in ${min} minute${min > 1 ? "s" : ""}...`);
-    await sleep(60_000);
-    if (aborted) return;
-  }
-  process.removeListener("SIGINT", onSigint);
-
-  console.log("\n  Countdown complete. Sending...\n");
-
   const resend = new Resend(apiKey);
+  let scheduled = 0;
   let sent = 0;
   let failed = 0;
+
+  const scheduledAt =
+    scheduleMinutes > 0
+      ? new Date(Date.now() + scheduleMinutes * 60_000).toISOString()
+      : undefined;
+
+  if (scheduledAt) {
+    console.log(`  Scheduled for: ${scheduledAt} (${scheduleMinutes} min from now)\n`);
+  }
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
@@ -169,13 +153,20 @@ async function main() {
           to: row.email.trim(),
           subject,
           text,
+          scheduledAt,
         });
-        sent++;
-        process.stdout.write(`  [${sent + failed}/${rows.length}] ✓ ${row.email}\n`);
+        if (scheduledAt) {
+          scheduled++;
+          process.stdout.write(`  [${scheduled + failed}/${rows.length}] ⏱ ${row.email} → ${scheduledAt}\n`);
+        } else {
+          sent++;
+          process.stdout.write(`  [${sent + failed}/${rows.length}] ✓ ${row.email}\n`);
+        }
       } catch (err) {
         failed++;
+        const total = (scheduledAt ? scheduled : sent) + failed;
         process.stdout.write(
-          `  [${sent + failed}/${rows.length}] ✗ ${row.email} — ${err instanceof Error ? err.message : err}\n`,
+          `  [${total}/${rows.length}] ✗ ${row.email} — ${err instanceof Error ? err.message : err}\n`,
         );
       }
     }
@@ -185,7 +176,11 @@ async function main() {
     }
   }
 
-  console.log(`\n  Done: ${sent} sent, ${failed} failed, ${rows.length} total\n`);
+  if (scheduledAt) {
+    console.log(`\n  Done: ${scheduled} scheduled for ${scheduledAt}, ${failed} failed, ${rows.length} total\n`);
+  } else {
+    console.log(`\n  Done: ${sent} sent, ${failed} failed, ${rows.length} total\n`);
+  }
 }
 
 main().catch((err) => {
