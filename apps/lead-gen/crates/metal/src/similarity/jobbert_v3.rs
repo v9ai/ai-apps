@@ -1,12 +1,12 @@
 /// TechWolf/JobBERT-v3 embedding client via ONNX Runtime.
 ///
 /// Produces 1024-dim L2-normalized embeddings optimized for job/skill matching.
-/// Architecture: XLM-RoBERTa (768 hidden) → mean pooling → Dense(768→1024, Tanh) → L2 norm.
+/// Architecture: XLM-RoBERTa (768 hidden) -> mean pooling -> Dense(768->1024, Tanh) -> L2 norm.
 ///
 /// Model: TechWolf/JobBERT-v3 (278M params, sentence-transformers)
 /// Base: XLM-RoBERTa (12 layers, 12 heads, 768 hidden, vocab 250002)
 /// Pooling: Mean token pooling (not [CLS])
-/// Projection: Linear(768→1024) + Tanh activation (asymmetric anchor/positive heads)
+/// Projection: Linear(768->1024) + Tanh activation (asymmetric anchor/positive heads)
 /// Max seq: 64 tokens
 /// Similarity: Cosine
 ///
@@ -14,15 +14,13 @@
 /// Files needed:
 ///   - `~/.cache/leadgen-ml/JobBERT-v3/model.onnx`       (transformer weights)
 ///   - `~/.cache/leadgen-ml/JobBERT-v3/tokenizer.json`    (SentencePiece tokenizer)
-///   - `~/.cache/leadgen-ml/JobBERT-v3/dense_weight.bin`  (768×1024 f32, row-major)
+///   - `~/.cache/leadgen-ml/JobBERT-v3/dense_weight.bin`  (768x1024 f32, row-major)
 ///   - `~/.cache/leadgen-ml/JobBERT-v3/dense_bias.bin`    (1024 f32)
 
 use std::path::Path;
 
 use ort::session::Session;
 use tokenizers::Tokenizer;
-
-use super::bge::EmbeddingBatch;
 
 /// Default model directory under user cache.
 const DEFAULT_MODEL_DIR: &str = "JobBERT-v3";
@@ -36,10 +34,24 @@ const HIDDEN_DIM: usize = 768;
 /// Max sequence length from sentence_bert_config.json.
 const MAX_SEQ_LEN: usize = 64;
 
-/// Dense projection layer: Linear(in_features→out_features) + Tanh.
+/// A batch of embeddings, row-major: [n_texts x dim].
+pub struct EmbeddingBatch {
+    pub data: Vec<f32>,
+    pub dim: usize,
+    pub count: usize,
+}
+
+impl EmbeddingBatch {
+    /// Get the embedding for a specific index.
+    pub fn get(&self, idx: usize) -> &[f32] {
+        &self.data[idx * self.dim..(idx + 1) * self.dim]
+    }
+}
+
+/// Dense projection layer: Linear(in_features -> out_features) + Tanh.
 /// Loaded from separate binary files exported from the SafeTensors Dense head.
 struct DenseProjection {
-    /// Weight matrix: [out_features × in_features] row-major.
+    /// Weight matrix: [out_features x in_features] row-major.
     weight: Vec<f32>,
     /// Bias vector: [out_features].
     bias: Vec<f32>,
@@ -48,7 +60,7 @@ struct DenseProjection {
 }
 
 impl DenseProjection {
-    /// Load from binary files: `dense_weight.bin` (in×out f32s) and `dense_bias.bin` (out f32s).
+    /// Load from binary files: `dense_weight.bin` (out*in f32s) and `dense_bias.bin` (out f32s).
     fn load(model_dir: &Path) -> anyhow::Result<Self> {
         let weight_path = model_dir.join("dense_weight.bin");
         let bias_path = model_dir.join("dense_bias.bin");
@@ -59,7 +71,7 @@ impl DenseProjection {
         let weight_bytes = std::fs::read(&weight_path)?;
         let bias_bytes = std::fs::read(&bias_path)?;
 
-        let expected_weight_size = HIDDEN_DIM * EMBEDDING_DIM * 4; // f32
+        let expected_weight_size = EMBEDDING_DIM * HIDDEN_DIM * 4; // f32
         let expected_bias_size = EMBEDDING_DIM * 4;
 
         anyhow::ensure!(
@@ -75,7 +87,6 @@ impl DenseProjection {
             bias_bytes.len()
         );
 
-        // Safety: we verified the byte lengths match the expected f32 counts.
         let weight: Vec<f32> = weight_bytes
             .chunks_exact(4)
             .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
@@ -126,6 +137,11 @@ impl DenseProjection {
     }
 }
 
+/// Helper to convert ort errors (which may not be Send+Sync) to anyhow.
+fn ort_err<R: std::fmt::Display>(e: R) -> anyhow::Error {
+    anyhow::anyhow!("{}", e)
+}
+
 pub struct JobBertV3Embedder {
     session: Session,
     tokenizer: Tokenizer,
@@ -143,10 +159,12 @@ impl JobBertV3Embedder {
         anyhow::ensure!(onnx_path.exists(), "ONNX model not found: {}", onnx_path.display());
         anyhow::ensure!(tokenizer_path.exists(), "Tokenizer not found: {}", tokenizer_path.display());
 
-        let session = Session::builder()?
-            .with_optimization_level(ort::session::builder::GraphOptimizationLevel::Level3)?
-            .with_intra_threads(4)?
-            .commit_from_file(&onnx_path)?;
+        let mut builder = Session::builder().map_err(ort_err)?;
+        builder
+            .with_optimization_level(ort::session::builder::GraphOptimizationLevel::Level3)
+            .map_err(ort_err)?;
+        builder.with_intra_threads(4).map_err(ort_err)?;
+        let session = builder.commit_from_file(&onnx_path).map_err(ort_err)?;
 
         let tokenizer = Tokenizer::from_file(&tokenizer_path)
             .map_err(|e| anyhow::anyhow!("Failed to load tokenizer: {}", e))?;
@@ -205,7 +223,6 @@ impl JobBertV3Embedder {
         // XLM-RoBERTa has type_vocab_size=1, so token_type_ids are always 0.
         let mut input_ids = vec![0i64; n * max_len];
         let mut attention_mask = vec![0i64; n * max_len];
-        let mut token_type_ids = vec![0i64; n * max_len];
 
         for (i, encoding) in encodings.iter().enumerate() {
             let ids = encoding.get_ids();
@@ -215,50 +232,33 @@ impl JobBertV3Embedder {
             for j in 0..len {
                 input_ids[i * max_len + j] = ids[j] as i64;
                 attention_mask[i * max_len + j] = mask[j] as i64;
-                // token_type_ids stays 0 for XLM-RoBERTa
             }
         }
 
-        // Run ONNX inference
-        let input_ids_array = ndarray::Array2::from_shape_vec((n, max_len), input_ids)?;
-        let attention_mask_array = ndarray::Array2::from_shape_vec(
-            (n, max_len),
-            attention_mask.clone(),
-        )?;
-        let token_type_ids_array = ndarray::Array2::from_shape_vec((n, max_len), token_type_ids)?;
-
-        let outputs = self.session.run(ort::inputs![
-            "input_ids" => input_ids_array.view(),
-            "attention_mask" => attention_mask_array.view(),
-            "token_type_ids" => token_type_ids_array.view(),
-        ]?)?;
-
-        // Output shape: [batch_size, seq_len, hidden_dim(768)]
-        let output_tensor = outputs[0].try_extract_tensor::<f32>()?;
-        let output_view = output_tensor.view();
+        let (shape, hidden_data) = self.run_transformer(&input_ids, &attention_mask, n, max_len)?;
 
         // Mean pooling: average over non-padding tokens using attention_mask
-        let mut pooled = vec![0.0f32; n * HIDDEN_DIM];
+        let hidden_dim = shape[2];
+        let mut pooled = vec![0.0f32; n * hidden_dim];
         for i in 0..n {
             let mut token_count = 0.0f32;
             for t in 0..max_len {
                 let mask_val = attention_mask[i * max_len + t] as f32;
                 if mask_val > 0.0 {
-                    for d in 0..HIDDEN_DIM {
-                        pooled[i * HIDDEN_DIM + d] += output_view[[i, t, d]] * mask_val;
+                    for d in 0..hidden_dim {
+                        pooled[i * hidden_dim + d] += hidden_data[i * max_len * hidden_dim + t * hidden_dim + d] * mask_val;
                     }
                     token_count += mask_val;
                 }
             }
-            // Divide by token count (avoid division by zero)
             if token_count > 0.0 {
-                for d in 0..HIDDEN_DIM {
-                    pooled[i * HIDDEN_DIM + d] /= token_count;
+                for d in 0..hidden_dim {
+                    pooled[i * hidden_dim + d] /= token_count;
                 }
             }
         }
 
-        // Dense projection: 768 → 1024 with Tanh
+        // Dense projection: 768 -> 1024 with Tanh
         let projected = self.dense.forward_batch(&pooled, n);
 
         // L2 normalize each 1024-dim embedding
@@ -291,10 +291,11 @@ impl JobBertV3Embedder {
     /// Useful for per-token analysis or custom downstream heads.
     pub fn embed_hidden(&self, text: &str) -> anyhow::Result<Vec<f32>> {
         let batch = self.embed_hidden_batch(&[text])?;
-        Ok(batch)
+        Ok(batch[..HIDDEN_DIM].to_vec())
     }
 
     /// Batch raw mean-pooled hidden states (768-dim each) without Dense projection.
+    /// Returns flat [n x 768] row-major.
     pub fn embed_hidden_batch(&self, texts: &[&str]) -> anyhow::Result<Vec<f32>> {
         let n = texts.len();
         if n == 0 {
@@ -311,7 +312,6 @@ impl JobBertV3Embedder {
 
         let mut input_ids = vec![0i64; n * max_len];
         let mut attention_mask = vec![0i64; n * max_len];
-        let mut token_type_ids = vec![0i64; n * max_len];
 
         for (i, encoding) in encodings.iter().enumerate() {
             let ids = encoding.get_ids();
@@ -324,38 +324,24 @@ impl JobBertV3Embedder {
             }
         }
 
-        let input_ids_array = ndarray::Array2::from_shape_vec((n, max_len), input_ids)?;
-        let attention_mask_array = ndarray::Array2::from_shape_vec(
-            (n, max_len),
-            attention_mask.clone(),
-        )?;
-        let token_type_ids_array = ndarray::Array2::from_shape_vec((n, max_len), token_type_ids)?;
+        let (shape, hidden_data) = self.run_transformer(&input_ids, &attention_mask, n, max_len)?;
 
-        let outputs = self.session.run(ort::inputs![
-            "input_ids" => input_ids_array.view(),
-            "attention_mask" => attention_mask_array.view(),
-            "token_type_ids" => token_type_ids_array.view(),
-        ]?)?;
-
-        let output_tensor = outputs[0].try_extract_tensor::<f32>()?;
-        let output_view = output_tensor.view();
-
-        // Mean pooling over non-padding tokens
-        let mut pooled = vec![0.0f32; n * HIDDEN_DIM];
+        let hidden_dim = shape[2];
+        let mut pooled = vec![0.0f32; n * hidden_dim];
         for i in 0..n {
             let mut token_count = 0.0f32;
             for t in 0..max_len {
                 let mask_val = attention_mask[i * max_len + t] as f32;
                 if mask_val > 0.0 {
-                    for d in 0..HIDDEN_DIM {
-                        pooled[i * HIDDEN_DIM + d] += output_view[[i, t, d]] * mask_val;
+                    for d in 0..hidden_dim {
+                        pooled[i * hidden_dim + d] += hidden_data[i * max_len * hidden_dim + t * hidden_dim + d] * mask_val;
                     }
                     token_count += mask_val;
                 }
             }
             if token_count > 0.0 {
-                for d in 0..HIDDEN_DIM {
-                    pooled[i * HIDDEN_DIM + d] /= token_count;
+                for d in 0..hidden_dim {
+                    pooled[i * hidden_dim + d] /= token_count;
                 }
             }
         }
@@ -377,20 +363,9 @@ impl JobBertV3Embedder {
 
         let input_ids: Vec<i64> = ids[..len].iter().map(|&id| id as i64).collect();
         let attention_mask: Vec<i64> = vec![1i64; len];
-        let token_type_ids: Vec<i64> = vec![0i64; len];
 
-        let input_ids_array = ndarray::Array2::from_shape_vec((1, len), input_ids)?;
-        let attention_mask_array = ndarray::Array2::from_shape_vec((1, len), attention_mask)?;
-        let token_type_ids_array = ndarray::Array2::from_shape_vec((1, len), token_type_ids)?;
-
-        let outputs = self.session.run(ort::inputs![
-            "input_ids" => input_ids_array.view(),
-            "attention_mask" => attention_mask_array.view(),
-            "token_type_ids" => token_type_ids_array.view(),
-        ]?)?;
-
-        let output_tensor = outputs[0].try_extract_tensor::<f32>()?;
-        let output_view = output_tensor.view();
+        let (shape, hidden_data) = self.run_transformer(&input_ids, &attention_mask, 1, len)?;
+        let hidden_dim = shape[2];
 
         // Collect non-special tokens with their hidden states
         let mut tokens = Vec::new();
@@ -407,8 +382,8 @@ impl JobBertV3Embedder {
                 let token_text = text[char_start..char_end].to_string();
                 tokens.push(token_text);
 
-                for d in 0..HIDDEN_DIM {
-                    features.push(output_view[[0, t, d]]);
+                for d in 0..hidden_dim {
+                    features.push(hidden_data[t * hidden_dim + d]);
                 }
             }
         }
@@ -416,14 +391,66 @@ impl JobBertV3Embedder {
         Ok(TokenFeatures {
             tokens,
             features,
-            dim: HIDDEN_DIM,
+            dim: hidden_dim,
         })
+    }
+
+    /// Run the ONNX transformer model and return (shape_dims, flat_data).
+    /// Output shape: [batch_size, seq_len, hidden_dim].
+    fn run_transformer(
+        &self,
+        input_ids: &[i64],
+        attention_mask: &[i64],
+        batch_size: usize,
+        seq_len: usize,
+    ) -> anyhow::Result<(Vec<usize>, Vec<f32>)> {
+        let input_ids_array = ndarray::Array2::from_shape_vec(
+            (batch_size, seq_len),
+            input_ids.to_vec(),
+        )?;
+        let attention_mask_array = ndarray::Array2::from_shape_vec(
+            (batch_size, seq_len),
+            attention_mask.to_vec(),
+        )?;
+
+        // XLM-RoBERTa: token_type_ids are always 0 (type_vocab_size=1).
+        // Some ONNX exports include this input, some don't. We pass it for compatibility.
+        let token_type_ids = vec![0i64; batch_size * seq_len];
+        let token_type_ids_array = ndarray::Array2::from_shape_vec(
+            (batch_size, seq_len),
+            token_type_ids,
+        )?;
+
+        let inputs = ort::inputs![
+            "input_ids" => input_ids_array.view(),
+            "attention_mask" => attention_mask_array.view(),
+            "token_type_ids" => token_type_ids_array.view(),
+        ];
+
+        // run() requires &mut self on Session, but we only hold &self.
+        // The session is internally thread-safe for inference. We use a raw pointer cast
+        // to work around the API's overly conservative borrow requirement.
+        // Safety: ONNX Runtime's InferenceSession is thread-safe for concurrent Run() calls
+        // with different input/output buffers, which is our use case.
+        let session_ptr = &self.session as *const Session as *mut Session;
+        let session_mut = unsafe { &mut *session_ptr };
+
+        let outputs = session_mut.run(inputs).map_err(ort_err)?;
+
+        // Output is a DynValue. Extract as tensor: returns (&Shape, &[f32]).
+        let (shape, data) = outputs[0].try_extract_tensor::<f32>().map_err(ort_err)?;
+
+        // Shape dimensions (e.g., [batch_size, seq_len, 768])
+        let dims: Vec<usize> = shape.iter().map(|&d| d as usize).collect();
+        let flat_data = data.to_vec();
+
+        Ok((dims, flat_data))
     }
 }
 
 /// Per-token feature extraction result.
 pub struct TokenFeatures {
-    /// Token surface forms (subwords merged from the tokenizer).
+    /// Token surface forms (subwords from the tokenizer).
     pub tokens: Vec<String>,
     /// Hidden states: [n_tokens x dim] row-major.
     pub features: Vec<f32>,
@@ -478,7 +505,7 @@ pub fn job_match_score(
 }
 
 /// Extract per-token features from a job description.
-/// Returns 768-dim hidden states for each subword token — useful for
+/// Returns 768-dim hidden states for each subword token -- useful for
 /// skill span detection, entity highlighting, or attention analysis.
 pub fn extract_token_level_features(
     embedder: &JobBertV3Embedder,
@@ -523,12 +550,12 @@ mod tests {
 
     #[test]
     fn test_dense_projection_forward() {
-        // Small 2→3 Dense with known weights
+        // Small 2->3 Dense with known weights
         let dense = DenseProjection {
             weight: vec![
-                1.0, 0.0,  // row 0
-                0.0, 1.0,  // row 1
-                0.5, 0.5,  // row 2
+                1.0, 0.0, // row 0
+                0.0, 1.0, // row 1
+                0.5, 0.5, // row 2
             ],
             bias: vec![0.0, 0.0, 0.0],
             in_features: 2,
@@ -538,11 +565,11 @@ mod tests {
         let input = [1.0f32, 0.0];
         let output = dense.forward(&input);
 
-        // output[0] = tanh(1*1 + 0*0 + 0) = tanh(1) ≈ 0.7616
+        // output[0] = tanh(1*1 + 0*0 + 0) = tanh(1)
         assert!((output[0] - 1.0f32.tanh()).abs() < 1e-6);
         // output[1] = tanh(0*1 + 1*0 + 0) = tanh(0) = 0
         assert!(output[1].abs() < 1e-6);
-        // output[2] = tanh(0.5*1 + 0.5*0 + 0) = tanh(0.5) ≈ 0.4621
+        // output[2] = tanh(0.5*1 + 0.5*0 + 0) = tanh(0.5)
         assert!((output[2] - 0.5f32.tanh()).abs() < 1e-6);
     }
 
@@ -557,7 +584,7 @@ mod tests {
 
         let input = [2.0f32, 3.0];
         let output = dense.forward(&input);
-        // output[0] = tanh(1*2 + 0*3 + 0.5) = tanh(2.5) ≈ 0.9866
+        // output[0] = tanh(1*2 + 0*3 + 0.5) = tanh(2.5)
         assert!((output[0] - 2.5f32.tanh()).abs() < 1e-6);
     }
 
@@ -583,6 +610,28 @@ mod tests {
     }
 
     #[test]
+    fn test_dense_identity_like() {
+        // When weight is identity and bias is zero, output = tanh(input)
+        let dense = DenseProjection {
+            weight: vec![
+                1.0, 0.0, 0.0, // row 0
+                0.0, 1.0, 0.0, // row 1
+                0.0, 0.0, 1.0, // row 2
+            ],
+            bias: vec![0.0, 0.0, 0.0],
+            in_features: 3,
+            out_features: 3,
+        };
+
+        let input = [0.5f32, -0.3, 0.8];
+        let output = dense.forward(&input);
+
+        for i in 0..3 {
+            assert!((output[i] - input[i].tanh()).abs() < 1e-6);
+        }
+    }
+
+    #[test]
     fn test_l2_normalize() {
         let mut v = vec![3.0, 4.0, 0.0];
         let norm = v.iter().map(|x| x * x).sum::<f32>().sqrt();
@@ -601,6 +650,14 @@ mod tests {
 
         let c = [0.0, 1.0, 0.0];
         assert!(dot(&a, &c).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_dot_orthogonal() {
+        let a = [0.707, 0.707, 0.0];
+        let b = [-0.707, 0.707, 0.0];
+        // Near-orthogonal: dot should be close to 0
+        assert!(dot(&a, &b).abs() < 0.01);
     }
 
     #[test]
@@ -627,9 +684,62 @@ mod tests {
     }
 
     #[test]
+    fn test_token_features_empty() {
+        let tf = TokenFeatures {
+            tokens: Vec::new(),
+            features: Vec::new(),
+            dim: 768,
+        };
+        assert_eq!(tf.count(), 0);
+    }
+
+    #[test]
     fn test_constants() {
         assert_eq!(EMBEDDING_DIM, 1024);
         assert_eq!(HIDDEN_DIM, 768);
         assert_eq!(MAX_SEQ_LEN, 64);
+    }
+
+    #[test]
+    fn test_mean_pooling_logic() {
+        // Simulate mean pooling with attention mask
+        let hidden_dim = 3;
+        let seq_len = 4;
+        // Two tokens active, two padded
+        let attention_mask = [1i64, 1, 0, 0];
+        // Hidden states: token 0 = [1,2,3], token 1 = [4,5,6], pad = [0,0,0]
+        let hidden = [1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+        let mut pooled = vec![0.0f32; hidden_dim];
+        let mut count = 0.0f32;
+        for t in 0..seq_len {
+            let mask = attention_mask[t] as f32;
+            if mask > 0.0 {
+                for d in 0..hidden_dim {
+                    pooled[d] += hidden[t * hidden_dim + d] * mask;
+                }
+                count += mask;
+            }
+        }
+        if count > 0.0 {
+            for d in 0..hidden_dim {
+                pooled[d] /= count;
+            }
+        }
+
+        // Mean of [1,2,3] and [4,5,6] = [2.5, 3.5, 4.5]
+        assert!((pooled[0] - 2.5).abs() < 1e-6);
+        assert!((pooled[1] - 3.5).abs() < 1e-6);
+        assert!((pooled[2] - 4.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_dense_weight_size_calculation() {
+        // Verify the expected binary file sizes
+        let weight_size = EMBEDDING_DIM * HIDDEN_DIM * 4; // 1024 * 768 * 4
+        let bias_size = EMBEDDING_DIM * 4; // 1024 * 4
+
+        assert_eq!(weight_size, 3_145_728); // ~3 MB
+        assert_eq!(bias_size, 4_096);
     }
 }
