@@ -87,6 +87,25 @@ pub struct SearchReposResponse {
     pub items: Vec<GhRepo>,
 }
 
+/// GitHub Search Users API response (`GET /search/users`).
+#[derive(Debug, Clone, Deserialize)]
+pub struct SearchUsersResponse {
+    pub total_count: u32,
+    pub incomplete_results: bool,
+    pub items: Vec<SearchUserItem>,
+}
+
+/// Abbreviated user from search results (not the full profile — call `get_user` to hydrate).
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchUserItem {
+    pub login: String,
+    pub id: u64,
+    pub html_url: String,
+    pub avatar_url: String,
+    /// Relevance score assigned by GitHub.
+    pub score: f64,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct GhApiError {
     pub message: String,

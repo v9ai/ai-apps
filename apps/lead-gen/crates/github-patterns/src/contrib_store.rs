@@ -22,6 +22,21 @@ fn infer_position(bio: Option<&str>) -> Option<&'static str> {
     let bio = bio?.to_lowercase();
     if bio.contains("founder") || bio.contains("ceo") || bio.contains("cto") {
         Some("Founder")
+    } else if bio.contains("solution architect") || bio.contains("solutions architect")
+        || bio.contains("enterprise architect") || bio.contains("cloud architect")
+        || bio.contains("technical architect")
+    {
+        Some("Architect")
+    } else if bio.contains("consultant") || bio.contains("consulting")
+        || bio.contains("advisory")
+    {
+        Some("Consultant")
+    } else if bio.contains("delivery lead") || bio.contains("delivery manager")
+        || bio.contains("program manager") || bio.contains("engagement manager")
+    {
+        Some("Delivery Lead")
+    } else if bio.contains("director") || bio.contains("vp ") || bio.contains("head of") {
+        Some("Director")
     } else if bio.contains("researcher") || bio.contains("research scientist") || bio.contains("research engineer") {
         Some("Researcher")
     } else if bio.contains("scientist") || bio.contains("data scientist") {
