@@ -211,16 +211,18 @@ pub fn compute_partner_fitness(user: &GhUser, skills: &[&str]) -> PartnerFitness
         days_since_update < 90
     };
 
-    let readiness_signals = [has_email, is_hireable, has_blog, has_twitter, recently_active];
+    let readiness_signals = [
+        has_email,
+        is_hireable,
+        has_blog,
+        has_twitter,
+        recently_active,
+    ];
     let engagement_readiness =
         readiness_signals.iter().filter(|&&s| s).count() as f32 / readiness_signals.len() as f32;
 
     // ── Consulting company boost ────────────────────────────────────────────
-    let company_lower = user
-        .company
-        .as_deref()
-        .unwrap_or("")
-        .to_lowercase();
+    let company_lower = user.company.as_deref().unwrap_or("").to_lowercase();
     let is_consulting_company = CONSULTING_COMPANIES
         .iter()
         .any(|c| company_lower.contains(c));
