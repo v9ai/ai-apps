@@ -18,7 +18,14 @@ export {
   embedQuery,
   embedDocument,
   embedBatch,
+  embedBatchOptimized,
+  releaseEmbeddings,
   cosineSimilarity,
+  cosineSimilarityTyped,
+  cosineSimilarityBatch,
+  quantizeEmbedding,
+  quantizeScale,
+  dequantizeEmbedding,
 } from "./embedder";
 
 export {

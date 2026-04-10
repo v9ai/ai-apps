@@ -355,6 +355,39 @@ export default defineConfig({
     },
   },
 
+  globalCss: {
+    ":root": {
+      "--transitions-fast": "all 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "--transitions-normal":
+        "all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "--transitions-slow": "all 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "--transitions-colors":
+        "color 150ms ease, background-color 150ms ease, border-color 150ms ease",
+      "--transitions-transform":
+        "transform 300ms cubic-bezier(0.16, 1, 0.30, 1)",
+      "--transitions-opacity": "opacity 200ms ease",
+    },
+  },
+
+  utilities: {
+    extend: {
+      transition: {
+        className: "transition",
+        values: {
+          fast: "var(--transitions-fast)",
+          normal: "var(--transitions-normal)",
+          slow: "var(--transitions-slow)",
+          colors: "var(--transitions-colors)",
+          transform: "var(--transitions-transform)",
+          opacity: "var(--transitions-opacity)",
+        },
+        transform(value: string) {
+          return { transition: value };
+        },
+      },
+    },
+  },
+
   outdir: "styled-system",
   jsxFramework: "react",
 });

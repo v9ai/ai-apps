@@ -15,7 +15,10 @@ export {
   embedQuery,
   embedDocument,
   embedBatch,
+  embedBatchOptimized,
+  releaseEmbeddings,
   cosineSimilarity,
+  cosineSimilarityTyped,
   EMBEDDING_DIM,
 } from "@/ml/embedder";
 

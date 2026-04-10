@@ -19,7 +19,7 @@ function mapTemplate(row: typeof emailTemplates.$inferSelect) {
     textContent: row.text_content ?? null,
     tags: parseJsonArray(row.tags),
     variables: parseJsonArray(row.variables),
-    isActive: (row.is_active as unknown) === 1 || row.is_active === true,
+    isActive: row.is_active ?? false,
     userId: row.user_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
