@@ -7,6 +7,8 @@
  * fine-tuned with online learning as labeled data arrives.
  */
 
+import { FEATURE_COUNT, type LeadFeatureVector, FEATURE_NAMES, packBatchFloat32 } from "./feature-vector";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -15,6 +17,20 @@ export interface LeadRankerWeights {
   /** 42-element weight vector (one per feature in LeadFeatureVector order) */
   weights: number[];
   /** Intercept / bias term */
+  bias: number;
+}
+
+/**
+ * INT8 quantized representation of ranker weights for fast batch scoring.
+ * Quantization: int8_val = round(weight / scale), where scale = max(|weights|) / 127.
+ * De-quantization happens once per batch via the scale factor.
+ */
+export interface QuantizedWeights {
+  /** 42-element INT8 weight vector (values in [-127, 127]) */
+  int8Weights: Int8Array;
+  /** Scale factor: real_weight ~= int8_val * scale */
+  scale: number;
+  /** Bias (kept in FP32 — single scalar, no benefit from quantization) */
   bias: number;
 }
 

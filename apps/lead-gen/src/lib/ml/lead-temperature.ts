@@ -67,6 +67,48 @@ const DEFAULT_PARAMS: HawkesParams = {
 const MS_PER_DAY = 86_400_000;
 
 // ---------------------------------------------------------------------------
+// Exponential decay lookup table (LUT)
+// ---------------------------------------------------------------------------
+// Pre-compute exp(-x) for x in [0, DECAY_LUT_MAX_X] with 1024 entries.
+// Index mapping: idx = floor(x / DECAY_LUT_MAX_X * (DECAY_LUT_SIZE - 1))
+// This avoids per-event Math.exp() calls in the hot path.
+
+const DECAY_LUT_SIZE = 1024;
+const DECAY_LUT_MAX_X = 50; // exp(-50) ~ 1.9e-22, effectively zero
+const DECAY_LUT = new Float32Array(DECAY_LUT_SIZE);
+const DECAY_LUT_SCALE = (DECAY_LUT_SIZE - 1) / DECAY_LUT_MAX_X;
+
+for (let i = 0; i < DECAY_LUT_SIZE; i++) {
+  DECAY_LUT[i] = Math.exp(-(i / DECAY_LUT_SCALE));
+}
+
+/** Fast exp(-x) approximation via LUT with linear interpolation. */
+function expDecayLUT(x: number): number {
+  if (x <= 0) return 1;
+  if (x >= DECAY_LUT_MAX_X) return 0;
+  const fidx = x * DECAY_LUT_SCALE;
+  const lo = fidx | 0; // floor via bitwise OR
+  const frac = fidx - lo;
+  // Linear interpolation between adjacent LUT entries
+  return DECAY_LUT[lo] + frac * (DECAY_LUT[lo + 1] - DECAY_LUT[lo]);
+}
+
+// ---------------------------------------------------------------------------
+// Time-of-day sinusoidal effect table (24 entries, one per hour)
+// ---------------------------------------------------------------------------
+// Models circadian engagement pattern: peak at ~10am, trough at ~3am.
+// γ(h) = 1 + A * sin(2π(h - φ)/24) where A=0.15, φ=4 (peak at 10am)
+
+const TOD_TABLE_SIZE = 24;
+const TOD_AMPLITUDE = 0.15;
+const TOD_PHASE = 4; // shift so sin peaks at hour 10 (6 + 4)
+const TOD_TABLE = new Float32Array(TOD_TABLE_SIZE);
+
+for (let h = 0; h < TOD_TABLE_SIZE; h++) {
+  TOD_TABLE[h] = 1 + TOD_AMPLITUDE * Math.sin((2 * Math.PI * (h - TOD_PHASE)) / 24);
+}
+
+// ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
