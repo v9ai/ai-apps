@@ -4,6 +4,313 @@ use std::path::Path;
 use super::scoring::*;
 use super::ml_eval::*;
 
+// ── Momentum SGD ─────────────────────────────────────────────────────────────
+
+/// Momentum-based stochastic gradient descent optimizer.
+///
+/// Performs fused momentum update + L2 regularization in a single pass:
+/// `v = momentum * v - lr * (grad + l2_lambda * w); w += v`
+#[derive(Debug, Clone)]
+pub struct MomentumSGD {
+    pub weights: Vec<f32>,
+    pub velocity: Vec<f32>,
+    pub lr: f32,
+    pub momentum: f32,
+    pub l2_lambda: f32,
+}
+
+impl MomentumSGD {
+    /// Create a new MomentumSGD optimizer with the given dimension and hyperparameters.
+    pub fn new(dim: usize, lr: f32, momentum: f32, l2_lambda: f32) -> Self {
+        Self {
+            weights: vec![0.0; dim],
+            velocity: vec![0.0; dim],
+            lr,
+            momentum,
+            l2_lambda,
+        }
+    }
+
+    /// Create from existing weights.
+    pub fn from_weights(weights: Vec<f32>, lr: f32, momentum: f32, l2_lambda: f32) -> Self {
+        let dim = weights.len();
+        Self {
+            weights,
+            velocity: vec![0.0; dim],
+            lr,
+            momentum,
+            l2_lambda,
+        }
+    }
+
+    /// Perform a single fused momentum + L2 regularization step.
+    ///
+    /// For each dimension i:
+    ///   v[i] = momentum * v[i] - lr * (grad[i] + l2_lambda * w[i])
+    ///   w[i] += v[i]
+    #[inline(always)]
+    pub fn step(&mut self, gradients: &[f32]) {
+        debug_assert_eq!(
+            gradients.len(),
+            self.weights.len(),
+            "gradient dimension must match weight dimension"
+        );
+        let n = self.weights.len();
+        let lr = self.lr;
+        let mom = self.momentum;
+        let l2 = self.l2_lambda;
+
+        // Process in chunks of 4 for auto-vectorization.
+        let chunks = n / 4;
+        for c in 0..chunks {
+            let base = c * 4;
+            let g0 = gradients[base];
+            let g1 = gradients[base + 1];
+            let g2 = gradients[base + 2];
+            let g3 = gradients[base + 3];
+
+            let w0 = self.weights[base];
+            let w1 = self.weights[base + 1];
+            let w2 = self.weights[base + 2];
+            let w3 = self.weights[base + 3];
+
+            let v0 = mom * self.velocity[base] - lr * (g0 + l2 * w0);
+            let v1 = mom * self.velocity[base + 1] - lr * (g1 + l2 * w1);
+            let v2 = mom * self.velocity[base + 2] - lr * (g2 + l2 * w2);
+            let v3 = mom * self.velocity[base + 3] - lr * (g3 + l2 * w3);
+
+            self.velocity[base] = v0;
+            self.velocity[base + 1] = v1;
+            self.velocity[base + 2] = v2;
+            self.velocity[base + 3] = v3;
+
+            self.weights[base] = w0 + v0;
+            self.weights[base + 1] = w1 + v1;
+            self.weights[base + 2] = w2 + v2;
+            self.weights[base + 3] = w3 + v3;
+        }
+
+        // Handle remaining elements.
+        for i in (chunks * 4)..n {
+            let v = mom * self.velocity[i] - lr * (gradients[i] + l2 * self.weights[i]);
+            self.velocity[i] = v;
+            self.weights[i] += v;
+        }
+    }
+}
+
+// ── Adam Optimizer ───────────────────────────────────────────────────────────
+
+/// Adam optimizer with bias correction (Kingma & Ba, 2015).
+///
+/// Maintains per-parameter first and second moment estimates for adaptive
+/// learning rates.  Includes bias correction for the initial time steps.
+#[derive(Debug, Clone)]
+pub struct AdamOptimizer {
+    pub weights: Vec<f32>,
+    /// First moment estimate (exponential moving average of gradients).
+    pub m: Vec<f32>,
+    /// Second moment estimate (exponential moving average of squared gradients).
+    pub v: Vec<f32>,
+    pub lr: f32,
+    pub beta1: f32,
+    pub beta2: f32,
+    pub epsilon: f32,
+    pub t: u64,
+}
+
+impl AdamOptimizer {
+    /// Create a new Adam optimizer with the given dimension and hyperparameters.
+    pub fn new(dim: usize, lr: f32, beta1: f32, beta2: f32, epsilon: f32) -> Self {
+        Self {
+            weights: vec![0.0; dim],
+            m: vec![0.0; dim],
+            v: vec![0.0; dim],
+            lr,
+            beta1,
+            beta2,
+            epsilon,
+            t: 0,
+        }
+    }
+
+    /// Create from existing weights with standard Adam defaults (beta1=0.9, beta2=0.999, eps=1e-8).
+    pub fn from_weights(weights: Vec<f32>, lr: f32) -> Self {
+        let dim = weights.len();
+        Self {
+            weights,
+            m: vec![0.0; dim],
+            v: vec![0.0; dim],
+            lr,
+            beta1: 0.9,
+            beta2: 0.999,
+            epsilon: 1e-8,
+            t: 0,
+        }
+    }
+
+    /// Perform a single Adam step with bias correction.
+    ///
+    /// m_hat = m / (1 - beta1^t)
+    /// v_hat = v / (1 - beta2^t)
+    /// w -= lr * m_hat / (sqrt(v_hat) + epsilon)
+    #[inline(always)]
+    pub fn adam_step(&mut self, gradients: &[f32]) {
+        debug_assert_eq!(
+            gradients.len(),
+            self.weights.len(),
+            "gradient dimension must match weight dimension"
+        );
+        self.t += 1;
+        let n = self.weights.len();
+        let beta1 = self.beta1;
+        let beta2 = self.beta2;
+        let lr = self.lr;
+        let eps = self.epsilon;
+
+        // Bias correction denominators.
+        let bc1 = 1.0 - beta1.powi(self.t as i32);
+        let bc2 = 1.0 - beta2.powi(self.t as i32);
+
+        // Process in chunks of 4 for auto-vectorization.
+        let chunks = n / 4;
+        for c in 0..chunks {
+            let base = c * 4;
+
+            // Unrolled: update moments and weights for 4 elements.
+            for offset in 0..4 {
+                let idx = base + offset;
+                let g = gradients[idx];
+
+                // Update biased first moment estimate.
+                self.m[idx] = beta1 * self.m[idx] + (1.0 - beta1) * g;
+                // Update biased second moment estimate.
+                self.v[idx] = beta2 * self.v[idx] + (1.0 - beta2) * g * g;
+
+                // Bias-corrected estimates.
+                let m_hat = self.m[idx] / bc1;
+                let v_hat = self.v[idx] / bc2;
+
+                self.weights[idx] -= lr * m_hat / (v_hat.sqrt() + eps);
+            }
+        }
+
+        // Handle remaining elements.
+        for i in (chunks * 4)..n {
+            let g = gradients[i];
+            self.m[i] = beta1 * self.m[i] + (1.0 - beta1) * g;
+            self.v[i] = beta2 * self.v[i] + (1.0 - beta2) * g * g;
+
+            let m_hat = self.m[i] / bc1;
+            let v_hat = self.v[i] / bc2;
+
+            self.weights[i] -= lr * m_hat / (v_hat.sqrt() + eps);
+        }
+    }
+}
+
+// ── Batch gradient computation ───────────────────────────────────────────────
+
+/// Compute the average gradient over a mini-batch using logistic (cross-entropy) loss.
+///
+/// For each sample `(x, y)`, the per-sample gradient is `(sigmoid(w . x) - y) * x`.
+/// Returns the mean gradient over all samples in the batch.
+///
+/// The inner dot-product loop is unrolled 4x for auto-vectorization.
+#[inline(always)]
+pub fn compute_gradients_batch(
+    features: &[&[f32]],
+    labels: &[f32],
+    weights: &[f32],
+) -> Vec<f32> {
+    assert_eq!(features.len(), labels.len(), "features and labels must have equal length");
+    assert!(!features.is_empty(), "batch must not be empty");
+
+    let dim = weights.len();
+    let mut grad = vec![0.0f32; dim];
+    let batch_size = features.len();
+
+    for (x, &y) in features.iter().zip(labels.iter()) {
+        debug_assert_eq!(x.len(), dim, "feature dimension must match weight dimension");
+
+        // Compute dot product with 4x unrolling.
+        let mut dot = 0.0f32;
+        let chunks = dim / 4;
+        for c in 0..chunks {
+            let base = c * 4;
+            let acc0 = weights[base] * x[base];
+            let acc1 = weights[base + 1] * x[base + 1];
+            let acc2 = weights[base + 2] * x[base + 2];
+            let acc3 = weights[base + 3] * x[base + 3];
+            dot += (acc0 + acc1) + (acc2 + acc3);
+        }
+        for i in (chunks * 4)..dim {
+            dot += weights[i] * x[i];
+        }
+
+        // Logistic loss gradient: error = sigmoid(dot) - y
+        let pred = LogisticScorer::sigmoid(dot);
+        let error = pred - y;
+
+        // Accumulate gradient with 4x unrolling.
+        for c in 0..chunks {
+            let base = c * 4;
+            grad[base] += error * x[base];
+            grad[base + 1] += error * x[base + 1];
+            grad[base + 2] += error * x[base + 2];
+            grad[base + 3] += error * x[base + 3];
+        }
+        for i in (chunks * 4)..dim {
+            grad[i] += error * x[i];
+        }
+    }
+
+    // Average over batch.
+    let inv_n = 1.0 / batch_size as f32;
+    for g in grad.iter_mut() {
+        *g *= inv_n;
+    }
+
+    grad
+}
+
+// ── Gradient clipping ────────────────────────────────────────────────────────
+
+/// Clip gradients by global L2 norm.
+///
+/// If `||gradients||_2 > max_norm`, scales all gradients by `max_norm / ||gradients||_2`.
+/// Modifies the gradient vector in place.
+pub fn clip_gradients(gradients: &mut [f32], max_norm: f32) {
+    debug_assert!(max_norm > 0.0, "max_norm must be positive");
+    let mut norm_sq = 0.0f32;
+    for &g in gradients.iter() {
+        norm_sq += g * g;
+    }
+    let norm = norm_sq.sqrt();
+    if norm > max_norm {
+        let scale = max_norm / norm;
+        for g in gradients.iter_mut() {
+            *g *= scale;
+        }
+    }
+}
+
+// ── Learning rate scheduling ─────────────────────────────────────────────────
+
+/// Cosine annealing learning rate schedule.
+///
+/// Returns `initial_lr * 0.5 * (1 + cos(pi * step / total_steps))`.
+/// At step 0 returns `initial_lr`; at step `total_steps` returns ~0.
+/// Clamps to `[0, initial_lr]`.
+pub fn cosine_annealing(initial_lr: f32, step: u64, total_steps: u64) -> f32 {
+    if total_steps == 0 {
+        return initial_lr;
+    }
+    let progress = (step as f64 / total_steps as f64).min(1.0);
+    let lr = initial_lr as f64 * 0.5 * (1.0 + (std::f64::consts::PI * progress).cos());
+    (lr as f32).max(0.0)
+}
+
 // ── Optimization result ───────────────────────────────────────────────────────
 
 /// Full record of an optimization run: best ICP weights, learned logistic

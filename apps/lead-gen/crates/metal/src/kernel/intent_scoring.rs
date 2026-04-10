@@ -1,4 +1,278 @@
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
+
+// ── SIMD / Vectorized Batch Scoring ────────────────────────────────────────────
+
+/// Pre-computed exponential decay look-up tables.
+/// Index by day offset (0..255). Value = exp(-ln(2) * day / half_life).
+/// Avoids repeated transcendental function calls in the hot scoring loop.
+pub struct DecayLuts {
+    /// Half-life = 30 days (HiringIntent, ProductLaunch)
+    pub decay_30: [f32; 256],
+    /// Half-life = 60 days (TechAdoption, LeadershipChange)
+    pub decay_60: [f32; 256],
+    /// Half-life = 90 days (BudgetCycle)
+    pub decay_90: [f32; 256],
+}
+
+/// Category weights packed as a 6-element array for SIMD consumption.
+/// Order: hiring, tech, growth, budget, leadership, product.
+pub struct CategoryWeights {
+    pub w: [f32; 6],
+    pub total: f32,
+}
+
+impl CategoryWeights {
+    pub fn from_intent_weights(iw: &IntentWeights) -> Self {
+        let w = [
+            iw.hiring_intent,
+            iw.tech_adoption,
+            iw.growth_signal,
+            iw.budget_cycle,
+            iw.leadership_change,
+            iw.product_launch,
+        ];
+        Self { w, total: w.iter().sum() }
+    }
+}
+
+/// Schraudolph fast exp approximation (IEEE 754 bit-level manipulation).
+/// Accurate to ~4% relative error for x in [-87, 88].
+/// Used as fallback when day offset exceeds LUT range (> 255 days).
+#[inline(always)]
+pub fn fast_exp_approx(x: f32) -> f32 {
+    // Constants: 2^23 / ln(2) ≈ 12102203.16, and bias 127 * 2^23 = 1065353216
+    const A: f32 = 12102203.16_f32;
+    const B: f32 = 1065353216.0_f32; // 127 << 23
+    const CLAMP_LO: f32 = -87.0;
+    const CLAMP_HI: f32 = 88.0;
+    let x = x.clamp(CLAMP_LO, CLAMP_HI);
+    let bits = (A * x + B) as i32;
+    f32::from_bits(bits as u32)
+}
+
+fn build_decay_lut(half_life: f32) -> [f32; 256] {
+    let k = std::f32::consts::LN_2 / half_life;
+    let mut lut = [0.0f32; 256];
+    for day in 0..256 {
+        lut[day] = (-k * day as f32).exp();
+    }
+    lut
+}
+
+/// Initialize decay LUTs. Called once, cached globally.
+pub fn init_decay_luts() -> &'static DecayLuts {
+    static LUTS: OnceLock<DecayLuts> = OnceLock::new();
+    LUTS.get_or_init(|| DecayLuts {
+        decay_30: build_decay_lut(30.0),
+        decay_60: build_decay_lut(60.0),
+        decay_90: build_decay_lut(90.0),
+    })
+}
+
+impl DecayLuts {
+    /// Look up decay factor for a given day offset and half-life.
+    /// Falls back to fast_exp_approx for days >= 256.
+    #[inline(always)]
+    pub fn lookup(&self, days: u16, half_life: u16) -> f32 {
+        let lut = match half_life {
+            30 => &self.decay_30,
+            60 => &self.decay_60,
+            90 => &self.decay_90,
+            _ => {
+                // Arbitrary half-life: use fast approximation
+                let k = std::f32::consts::LN_2 / half_life as f32;
+                return fast_exp_approx(-k * days as f32);
+            }
+        };
+        if (days as usize) < 256 {
+            lut[days as usize]
+        } else {
+            let k = std::f32::consts::LN_2 / half_life as f32;
+            fast_exp_approx(-k * days as f32)
+        }
+    }
+}
+
+/// Fused batch scoring: processes all 256 companies in a single vectorized pass.
+///
+/// For each company slot i (0..batch.count), computes:
+///   score[i] = sum_over_categories(signal_strength[cat][i] * weight[cat]) / total_weight * 100
+///
+/// The inner loop is structured for LLVM auto-vectorization:
+/// - 4x unrolled accumulation
+/// - Contiguous f32 array reads (SoA layout)
+/// - No branches in the hot path
+///
+/// On aarch64 with NEON, this compiles to fused multiply-accumulate (FMLA) instructions.
+pub fn score_intent_batch_simd(
+    batch: &IntentBatch,
+    weights: &CategoryWeights,
+    _decay_luts: &DecayLuts,
+) -> [f32; 256] {
+    let mut out = [0.0f32; 256];
+    if weights.total == 0.0 || batch.count == 0 {
+        return out;
+    }
+
+    let inv_total = 100.0 / weights.total;
+    let n = batch.count.min(256);
+
+    // Process 4 companies at a time for instruction-level parallelism.
+    // LLVM will map this to NEON FMLA on aarch64 or SSE/AVX FMA on x86.
+    let chunks = n / 4;
+    let remainder = n % 4;
+
+    for chunk in 0..chunks {
+        let base = chunk * 4;
+
+        // Unrolled 4x: accumulate weighted scores
+        let mut acc0 = 0.0f32;
+        let mut acc1 = 0.0f32;
+        let mut acc2 = 0.0f32;
+        let mut acc3 = 0.0f32;
+
+        // Category 0: hiring
+        acc0 += batch.hiring_score[base]     * weights.w[0];
+        acc1 += batch.hiring_score[base + 1] * weights.w[0];
+        acc2 += batch.hiring_score[base + 2] * weights.w[0];
+        acc3 += batch.hiring_score[base + 3] * weights.w[0];
+
+        // Category 1: tech
+        acc0 += batch.tech_score[base]     * weights.w[1];
+        acc1 += batch.tech_score[base + 1] * weights.w[1];
+        acc2 += batch.tech_score[base + 2] * weights.w[1];
+        acc3 += batch.tech_score[base + 3] * weights.w[1];
+
+        // Category 2: growth
+        acc0 += batch.growth_score[base]     * weights.w[2];
+        acc1 += batch.growth_score[base + 1] * weights.w[2];
+        acc2 += batch.growth_score[base + 2] * weights.w[2];
+        acc3 += batch.growth_score[base + 3] * weights.w[2];
+
+        // Category 3: budget
+        acc0 += batch.budget_score[base]     * weights.w[3];
+        acc1 += batch.budget_score[base + 1] * weights.w[3];
+        acc2 += batch.budget_score[base + 2] * weights.w[3];
+        acc3 += batch.budget_score[base + 3] * weights.w[3];
+
+        // Category 4: leadership
+        acc0 += batch.leadership_score[base]     * weights.w[4];
+        acc1 += batch.leadership_score[base + 1] * weights.w[4];
+        acc2 += batch.leadership_score[base + 2] * weights.w[4];
+        acc3 += batch.leadership_score[base + 3] * weights.w[4];
+
+        // Category 5: product
+        acc0 += batch.product_score[base]     * weights.w[5];
+        acc1 += batch.product_score[base + 1] * weights.w[5];
+        acc2 += batch.product_score[base + 2] * weights.w[5];
+        acc3 += batch.product_score[base + 3] * weights.w[5];
+
+        out[base]     = acc0 * inv_total;
+        out[base + 1] = acc1 * inv_total;
+        out[base + 2] = acc2 * inv_total;
+        out[base + 3] = acc3 * inv_total;
+    }
+
+    // Handle remainder (0-3 companies)
+    let rem_base = chunks * 4;
+    for i in 0..remainder {
+        let idx = rem_base + i;
+        let acc = batch.hiring_score[idx]     * weights.w[0]
+                + batch.tech_score[idx]        * weights.w[1]
+                + batch.growth_score[idx]      * weights.w[2]
+                + batch.budget_score[idx]      * weights.w[3]
+                + batch.leadership_score[idx]  * weights.w[4]
+                + batch.product_score[idx]     * weights.w[5];
+        out[idx] = acc * inv_total;
+    }
+
+    out
+}
+
+/// aarch64 NEON intrinsics path for batch scoring.
+/// Uses 128-bit SIMD registers (float32x4_t) for 4-wide multiply-accumulate.
+#[cfg(target_arch = "aarch64")]
+pub fn score_intent_batch_neon(
+    batch: &IntentBatch,
+    weights: &CategoryWeights,
+    _decay_luts: &DecayLuts,
+) -> [f32; 256] {
+    use std::arch::aarch64::*;
+
+    let mut out = [0.0f32; 256];
+    if weights.total == 0.0 || batch.count == 0 {
+        return out;
+    }
+
+    let inv_total = 100.0 / weights.total;
+    let n = batch.count.min(256);
+    let chunks = n / 4;
+
+    unsafe {
+        let v_inv = vdupq_n_f32(inv_total);
+        let w0 = vdupq_n_f32(weights.w[0]);
+        let w1 = vdupq_n_f32(weights.w[1]);
+        let w2 = vdupq_n_f32(weights.w[2]);
+        let w3 = vdupq_n_f32(weights.w[3]);
+        let w4 = vdupq_n_f32(weights.w[4]);
+        let w5 = vdupq_n_f32(weights.w[5]);
+
+        for chunk in 0..chunks {
+            let base = chunk * 4;
+
+            // Load 4 floats from each signal array
+            let h = vld1q_f32(batch.hiring_score.as_ptr().add(base));
+            let t = vld1q_f32(batch.tech_score.as_ptr().add(base));
+            let g = vld1q_f32(batch.growth_score.as_ptr().add(base));
+            let b = vld1q_f32(batch.budget_score.as_ptr().add(base));
+            let l = vld1q_f32(batch.leadership_score.as_ptr().add(base));
+            let p = vld1q_f32(batch.product_score.as_ptr().add(base));
+
+            // Fused multiply-accumulate: acc = h*w0 + t*w1 + g*w2 + b*w3 + l*w4 + p*w5
+            let mut acc = vmulq_f32(h, w0);
+            acc = vfmaq_f32(acc, t, w1);
+            acc = vfmaq_f32(acc, g, w2);
+            acc = vfmaq_f32(acc, b, w3);
+            acc = vfmaq_f32(acc, l, w4);
+            acc = vfmaq_f32(acc, p, w5);
+
+            // Normalize: score = acc * (100 / total_weight)
+            let result = vmulq_f32(acc, v_inv);
+            vst1q_f32(out.as_mut_ptr().add(base), result);
+        }
+    }
+
+    // Scalar remainder
+    let rem_base = chunks * 4;
+    for idx in rem_base..n {
+        let acc = batch.hiring_score[idx]     * weights.w[0]
+                + batch.tech_score[idx]        * weights.w[1]
+                + batch.growth_score[idx]      * weights.w[2]
+                + batch.budget_score[idx]      * weights.w[3]
+                + batch.leadership_score[idx]  * weights.w[4]
+                + batch.product_score[idx]     * weights.w[5];
+        out[idx] = acc * inv_total;
+    }
+
+    out
+}
+
+/// Dispatch to best available SIMD path.
+pub fn score_intent_batch_best(
+    batch: &IntentBatch,
+    weights: &CategoryWeights,
+    decay_luts: &DecayLuts,
+) -> [f32; 256] {
+    #[cfg(target_arch = "aarch64")]
+    {
+        score_intent_batch_neon(batch, weights, decay_luts)
+    }
+    #[cfg(not(target_arch = "aarch64"))]
+    {
+        score_intent_batch_simd(batch, weights, decay_luts)
+    }
+}
 
 /// The 6 intent signal categories.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -172,6 +446,44 @@ impl IntentBatch {
 
             self.intent_scores[i] = (weighted / total_weight) * 100.0;
         }
+    }
+
+    /// Aggregate signals using pre-computed decay LUTs (avoids exp() calls).
+    pub fn aggregate_signals_lut(&mut self, idx: usize, signals: &[IntentSignal], luts: &DecayLuts) {
+        self.hiring_score[idx] = 0.0;
+        self.tech_score[idx] = 0.0;
+        self.growth_score[idx] = 0.0;
+        self.budget_score[idx] = 0.0;
+        self.leadership_score[idx] = 0.0;
+        self.product_score[idx] = 0.0;
+        self.signal_count[idx] = signals.len() as u16;
+
+        for signal in signals {
+            let freshness = luts.lookup(signal.detected_at_days, signal.decay_days);
+            let effective = signal.confidence * freshness;
+
+            let slot = match signal.signal_type {
+                SignalType::HiringIntent => &mut self.hiring_score[idx],
+                SignalType::TechAdoption => &mut self.tech_score[idx],
+                SignalType::GrowthSignal => &mut self.growth_score[idx],
+                SignalType::BudgetCycle => &mut self.budget_score[idx],
+                SignalType::LeadershipChange => &mut self.leadership_score[idx],
+                SignalType::ProductLaunch => &mut self.product_score[idx],
+            };
+
+            if effective > *slot {
+                *slot = effective;
+            }
+        }
+    }
+
+    /// Compute scores using the SIMD-optimized fused path.
+    /// Dispatches to NEON intrinsics on aarch64, 4x-unrolled scalar otherwise.
+    pub fn compute_scores_simd(&mut self, weights: &IntentWeights) {
+        let cw = CategoryWeights::from_intent_weights(weights);
+        let luts = init_decay_luts();
+        let scores = score_intent_batch_best(self, &cw, luts);
+        self.intent_scores = scores;
     }
 
     /// Return indices sorted by intent score descending.

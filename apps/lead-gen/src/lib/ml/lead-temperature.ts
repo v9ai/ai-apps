@@ -108,6 +108,9 @@ for (let h = 0; h < TOD_TABLE_SIZE; h++) {
   TOD_TABLE[h] = 1 + TOD_AMPLITUDE * Math.sin((2 * Math.PI * (h - TOD_PHASE)) / 24);
 }
 
+// Export LUT constants for testing / external consumers
+export { DECAY_LUT, DECAY_LUT_SIZE, DECAY_LUT_MAX_X, TOD_TABLE, expDecayLUT };
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -280,6 +283,125 @@ export function computeLeadTemperature(
   }
 
   return { temperature, intensity, trend };
+}
+
+/**
+ * Compute the engagement temperature with time-of-day modulation.
+ *
+ * Extends the base temperature with a circadian effect: leads contacted
+ * during peak engagement hours (mid-morning) get a slight boost, while
+ * those contacted at off-hours get a slight penalty. Uses the pre-computed
+ * sinusoidal TOD_TABLE.
+ *
+ * @param events  Array of engagement events.
+ * @param now     Reference time in ms (defaults to Date.now()).
+ * @param params  Hawkes process parameters.
+ * @param hourUTC Current hour (0-23) in UTC for time-of-day effect.
+ */
+export function computeLeadTemperatureWithTOD(
+  events: EngagementEvent[],
+  now: number = Date.now(),
+  params: HawkesParams = DEFAULT_PARAMS,
+  hourUTC: number = new Date(now).getUTCHours(),
+): LeadTemperature {
+  const base = computeLeadTemperature(events, now, params);
+  const todModifier = TOD_TABLE[Math.min(23, Math.max(0, hourUTC | 0))];
+  const modulated = Math.max(0, Math.min(1, base.temperature * todModifier));
+  return { ...base, temperature: modulated };
+}
+
+/**
+ * Batch-compute temperature scores for multiple leads in a single pass.
+ *
+ * Uses the recursive O(n) Hawkes formulation and LUT-based exp() to avoid
+ * redundant computation. Returns a Float32Array of temperature scores (0-1),
+ * one per lead.
+ *
+ * @param leadEvents Array of event arrays, one per lead. Each inner array
+ *                   need not be pre-sorted.
+ * @param now        Reference time in ms (defaults to Date.now()).
+ * @param params     Hawkes process parameters (shared across all leads).
+ * @returns Float32Array of length leadEvents.length with temperature scores.
+ */
+export function computeTemperatureBatch(
+  leadEvents: EngagementEvent[][],
+  now: number = Date.now(),
+  params: HawkesParams = DEFAULT_PARAMS,
+): Float32Array {
+  const count = leadEvents.length;
+  const result = new Float32Array(count);
+
+  for (let i = 0; i < count; i++) {
+    const events = leadEvents[i];
+    if (!events || events.length === 0) {
+      // temperature = 1 - exp(-mu) for empty leads
+      result[i] = 1 - expDecayLUT(params.mu);
+      continue;
+    }
+
+    // Sort events by timestamp for the recursive formulation
+    const sorted = events.length <= 1
+      ? events
+      : [...events].sort((a, b) => a.timestamp - b.timestamp);
+
+    // Use the O(n) recursive intensity computation
+    const [intensity] = hawkesIntensityRecursive(sorted, now, params);
+
+    // Map intensity to [0, 1] temperature via saturating exponential
+    result[i] = 1 - expDecayLUT(intensity);
+  }
+
+  return result;
+}
+
+/**
+ * Batch-compute temperature scores with full trend information.
+ *
+ * Like `computeTemperatureBatch` but returns full LeadTemperature objects
+ * including trend labels, using the recursive formulation that computes
+ * both current and 3-day-ago intensities in a single O(n) pass.
+ *
+ * @param leadEvents Array of event arrays, one per lead.
+ * @param now        Reference time in ms.
+ * @param params     Hawkes process parameters.
+ */
+export function computeTemperatureBatchFull(
+  leadEvents: EngagementEvent[][],
+  now: number = Date.now(),
+  params: HawkesParams = DEFAULT_PARAMS,
+): LeadTemperature[] {
+  const count = leadEvents.length;
+  const results: LeadTemperature[] = new Array(count);
+
+  for (let i = 0; i < count; i++) {
+    const events = leadEvents[i];
+    if (!events || events.length === 0) {
+      results[i] = { temperature: 0, intensity: params.mu, trend: "cold" };
+      continue;
+    }
+
+    const sorted = events.length <= 1
+      ? events
+      : [...events].sort((a, b) => a.timestamp - b.timestamp);
+
+    const [intensity, pastIntensity] = hawkesIntensityRecursive(sorted, now, params);
+    const temperature = 1 - expDecayLUT(intensity);
+
+    let trend: TemperatureTrend;
+    if (temperature > 0.7) {
+      trend = "hot";
+    } else if (intensity > pastIntensity * 1.15) {
+      trend = "heating";
+    } else if (temperature < 0.1) {
+      trend = "cold";
+    } else {
+      trend = "cooling";
+    }
+
+    results[i] = { temperature, intensity, trend };
+  }
+
+  return results;
 }
 
 /**

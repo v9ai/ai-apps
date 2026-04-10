@@ -6,21 +6,19 @@ interface DividerProps extends HTMLAttributes<HTMLDivElement> {
   spacing?: "sm" | "md" | "lg" | "xl";
 }
 
-const spacingMap: Record<NonNullable<DividerProps["spacing"]>, string> = {
-  sm: "4",
-  md: "8",
-  lg: "10",
-  xl: "14",
-};
+const baseStyle = css({
+  width: "100%",
+  height: "1px",
+  background:
+    "linear-gradient(90deg, transparent 0%, {colors.ui.border} 30%, {colors.accent.primary}/30 50%, {colors.ui.border} 70%, transparent 100%)",
+});
 
-const baseStyle = (spacing: NonNullable<DividerProps["spacing"]>) =>
-  css({
-    width: "100%",
-    height: "1px",
-    background:
-      "linear-gradient(90deg, transparent 0%, {colors.ui.border} 30%, {colors.accent.primary}/30 50%, {colors.ui.border} 70%, transparent 100%)",
-    my: { base: spacingMap[spacing], lg: spacing === "xl" ? "14" : spacingMap[spacing] },
-  });
+const spacingStyles: Record<NonNullable<DividerProps["spacing"]>, string> = {
+  sm: css({ my: "4" }),
+  md: css({ my: "8" }),
+  lg: css({ my: { base: "10", lg: "10" } }),
+  xl: css({ my: { base: "10", lg: "14" } }),
+};
 
 export const Divider = forwardRef<HTMLDivElement, DividerProps>(
   ({ spacing = "lg", className, ...rest }, ref) => {
@@ -28,7 +26,7 @@ export const Divider = forwardRef<HTMLDivElement, DividerProps>(
       <div
         ref={ref}
         role="separator"
-        className={cx(baseStyle(spacing), className)}
+        className={cx(baseStyle, spacingStyles[spacing], className)}
         {...rest}
       />
     );
