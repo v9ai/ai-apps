@@ -353,6 +353,7 @@ function PrepPageInner() {
   const [error, setError] = useState<string | null>(null);
 
   const scrollKey = `prep-scroll-${params.id}`;
+  console.log("[scroll] scrollKey:", scrollKey, "params.id:", params.id);
 
   useEffect(() => {
     if (params.id) {
@@ -373,31 +374,40 @@ function PrepPageInner() {
 
   // Restore scroll position after content renders
   useEffect(() => {
+    console.log("[scroll:restore] effect fired — loading:", loading, "app:", !!app);
     if (!loading && app) {
       const saved = localStorage.getItem(scrollKey);
+      console.log("[scroll:restore] saved value:", saved, "key:", scrollKey);
+      console.log("[scroll:restore] all prep keys:", Object.keys(localStorage).filter(k => k.startsWith("prep-")));
       if (saved) {
         const y = parseInt(saved, 10);
-        // Defer until after React commits the markdown DOM
+        console.log("[scroll:restore] will scrollTo y:", y, "doc height:", document.documentElement.scrollHeight);
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
+            console.log("[scroll:restore] executing scrollTo", y, "doc height now:", document.documentElement.scrollHeight);
             window.scrollTo(0, y);
+            console.log("[scroll:restore] after scrollTo, actual scrollY:", window.scrollY);
           });
         });
+      } else {
+        console.log("[scroll:restore] no saved position found");
       }
     }
   }, [loading, app, scrollKey]);
 
   // Persist scroll position on scroll
   useEffect(() => {
+    console.log("[scroll:save] listener mounted, key:", scrollKey);
     let raf = 0;
     const onScroll = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
+        console.log("[scroll:save] saving scrollY:", window.scrollY);
         localStorage.setItem(scrollKey, String(window.scrollY));
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
+    return () => { console.log("[scroll:save] listener unmounted"); window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
   }, [scrollKey]);
 
   const content = app?.aiInterviewQuestions;
