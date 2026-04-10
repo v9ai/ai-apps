@@ -79,7 +79,7 @@ function buildEmail(row: PartnerRow) {
 
 ${sig} — you'd be a strong fit for this.
 
-Anthropic is launching the Claude Partner Network for teams deploying Claude to enterprise. I'm putting together the first training cohort — Anthropic is opening the partner training path next week and I'm looking for people to go through it together.
+Anthropic is launching the Claude Partner Network for teams deploying Claude to enterprise. Karl Kadon (Head of Partner Experience, Anthropic) is opening the partner training path next week. I'm putting together the first training cohort and looking for people to go through it together.
 
 Want me to send you the details?
 
