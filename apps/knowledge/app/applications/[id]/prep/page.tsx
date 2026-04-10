@@ -34,12 +34,16 @@ function langLabel(lang: string): string {
   return LANG_LABELS[lang.toLowerCase()] || lang.toUpperCase();
 }
 
-/** Merge consecutive fenced code blocks into a single `codepair` block */
+/** Merge consecutive fenced code blocks into a single `codepair` block.
+ *  Uses negative lookahead to prevent content capture from crossing ``` boundaries. */
 function groupCodeBlocks(md: string): string {
-  return md.replace(
-    /```(\w+)\n([\s\S]*?)```\n{1,3}```(\w+)\n([\s\S]*?)```/g,
-    (_, l1, c1, l2, c2) =>
-      `\`\`\`codepair\n${l1}\n${c1.trimEnd()}\n====CODESPLIT====\n${l2}\n${c2.trimEnd()}\n\`\`\``,
+  const fence = "((?:(?!```)(?:.|\\n))*?)";
+  const re = new RegExp(
+    "```(\\w+)\\n" + fence + "```\\n{1,3}```(\\w+)\\n" + fence + "```",
+    "g",
+  );
+  return md.replace(re, (_, l1, c1, l2, c2) =>
+    `\`\`\`codepair\n${l1}\n${c1.trimEnd()}\n====CODESPLIT====\n${l2}\n${c2.trimEnd()}\n\`\`\``,
   );
 }
 

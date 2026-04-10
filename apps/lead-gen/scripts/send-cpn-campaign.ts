@@ -55,7 +55,7 @@ function firstName(row: PartnerRow): string {
 }
 
 function signal(row: PartnerRow): string {
-  const company = row.company?.trim();
+  const company = row.company?.trim().replace(/^@/, "");
   if (company) return `Saw your work at ${company}`;
 
   const archetypes = row.archetypes?.trim();
