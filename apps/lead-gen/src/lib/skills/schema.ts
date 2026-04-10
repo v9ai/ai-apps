@@ -13,6 +13,7 @@ export const jobSkillSchema = z.object({
   level: SkillLevel,
   confidence: z.number().min(0).max(1),
   evidence: z.string().min(1),
+  escoLabel: z.string().optional(),
 });
 
 export const jobSkillsOutputSchema = z.object({

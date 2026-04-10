@@ -158,3 +158,94 @@ export const SKILL_TAXONOMY: Record<string, string> = {
 
 /** Set of all canonical skill tags. */
 export const SKILL_TAGS = new Set(Object.keys(SKILL_TAXONOMY));
+
+/**
+ * ESCO (European Skills, Competences, Qualifications and Occupations) URI mappings.
+ * Maps internal skill tags to their ESCO v1.1.0 equivalents.
+ * Used for eval benchmarking against TechWolf datasets and EU labor market interop.
+ *
+ * URI format: http://data.europa.eu/esco/skill/<id>
+ * Labels match ESCO preferred terms.
+ */
+export const ESCO_SKILL_MAP: Record<string, { label: string; uri?: string }> = {
+  // Programming Languages
+  javascript: { label: "JavaScript" },
+  typescript: { label: "TypeScript" },
+  python: { label: "Python (computer programming)" },
+  java: { label: "Java (computer programming)" },
+  csharp: { label: "C#" },
+  ruby: { label: "Ruby (computer programming)" },
+  php: { label: "PHP" },
+  go: { label: "Go (computer programming)" },
+  rust: { label: "Rust (computer programming)" },
+  swift: { label: "Swift (programming language)" },
+  kotlin: { label: "Kotlin (computer programming)" },
+  scala: { label: "Scala" },
+
+  // Frontend
+  react: { label: "React.js" },
+  vue: { label: "Vue.js" },
+  angular: { label: "AngularJS" },
+  nextjs: { label: "Next.js" },
+
+  // Backend
+  nodejs: { label: "Node.js" },
+  django: { label: "Django (web framework)" },
+  flask: { label: "Flask (web framework)" },
+  fastapi: { label: "FastAPI" },
+  "spring-boot": { label: "Spring Boot" },
+
+  // Databases
+  postgresql: { label: "PostgreSQL" },
+  mysql: { label: "MySQL" },
+  mongodb: { label: "MongoDB" },
+  redis: { label: "Redis" },
+  elasticsearch: { label: "Elasticsearch" },
+  sql: { label: "use structured query language" },
+
+  // Cloud & DevOps
+  aws: { label: "Amazon Web Services" },
+  gcp: { label: "Google Cloud Platform" },
+  azure: { label: "Microsoft Azure" },
+  docker: { label: "use Docker" },
+  kubernetes: { label: "Kubernetes" },
+  terraform: { label: "Terraform" },
+  ansible: { label: "Ansible" },
+  "ci-cd": { label: "continuous integration" },
+
+  // Architecture
+  microservices: { label: "microservices architecture" },
+  "rest-api": { label: "representational state transfer" },
+  graphql: { label: "GraphQL" },
+
+  // Tools
+  git: { label: "use Git" },
+  linux: { label: "Linux" },
+  agile: { label: "agile project management" },
+
+  // Data Science & ML
+  "machine-learning": { label: "machine learning" },
+  "deep-learning": { label: "deep learning" },
+  tensorflow: { label: "TensorFlow" },
+  pytorch: { label: "PyTorch" },
+  pandas: { label: "pandas (software)" },
+  numpy: { label: "NumPy" },
+  scikit: { label: "scikit-learn" },
+  nlp: { label: "natural language processing" },
+  "computer-vision": { label: "computer vision" },
+
+  // AI / LLM / GenAI
+  llm: { label: "large language models" },
+  embeddings: { label: "word embeddings" },
+  transformers: { label: "transformer architecture" },
+  mlops: { label: "machine learning operations" },
+  huggingface: { label: "Hugging Face" },
+};
+
+/** Set of tags that have ESCO mappings. */
+export const ESCO_MAPPED_TAGS = new Set(Object.keys(ESCO_SKILL_MAP));
+
+/** Reverse lookup: ESCO label (lowercased) → internal tag. */
+export const ESCO_LABEL_TO_TAG: Record<string, string> = Object.fromEntries(
+  Object.entries(ESCO_SKILL_MAP).map(([tag, { label }]) => [label.toLowerCase(), tag])
+);
