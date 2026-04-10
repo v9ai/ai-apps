@@ -6,7 +6,7 @@ export const button = cva({
     alignItems: "center",
     gap: "2",
     cursor: "pointer",
-    borderRadius: "0",
+    borderRadius: "md",
     boxShadow: "none",
     textTransform: "lowercase",
     letterSpacing: "normal",

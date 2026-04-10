@@ -405,6 +405,8 @@ impl JobBertV3Embedder {
         batch_size: usize,
         seq_len: usize,
     ) -> anyhow::Result<(Vec<usize>, Vec<f32>)> {
+        use ort::value::TensorRef;
+
         let input_ids_array = ndarray::Array2::from_shape_vec(
             (batch_size, seq_len),
             input_ids.to_vec(),
@@ -422,10 +424,15 @@ impl JobBertV3Embedder {
             token_type_ids,
         )?;
 
+        // Create ort tensor views from ndarray arrays (zero-copy borrow)
+        let ids_tensor = TensorRef::from_array_view(&input_ids_array).map_err(ort_err)?;
+        let mask_tensor = TensorRef::from_array_view(&attention_mask_array).map_err(ort_err)?;
+        let type_tensor = TensorRef::from_array_view(&token_type_ids_array).map_err(ort_err)?;
+
         let inputs = ort::inputs![
-            "input_ids" => input_ids_array.view(),
-            "attention_mask" => attention_mask_array.view(),
-            "token_type_ids" => token_type_ids_array.view(),
+            "input_ids" => ids_tensor,
+            "attention_mask" => mask_tensor,
+            "token_type_ids" => type_tensor,
         ];
 
         // run() requires &mut self on Session, but we only hold &self.
