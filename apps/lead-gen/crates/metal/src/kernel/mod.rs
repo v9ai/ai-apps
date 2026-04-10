@@ -47,4 +47,4 @@ pub mod ner;
 pub mod skill_extraction;
 
 #[cfg(feature = "kernel-techwolf")]
-pub mod esco;
+pub mod techwolf;

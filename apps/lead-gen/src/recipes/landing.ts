@@ -242,7 +242,7 @@ export const statCard = cva({
     bg: "ui.surface",
     border: "1px solid",
     borderColor: "ui.border",
-    borderRadius: "0",
+    borderRadius: "lg",
     transition: "background 150ms ease, border-color 150ms ease",
     _hover: {
       bg: "ui.surfaceHover",
@@ -303,7 +303,7 @@ export const trustBadge = cva({
     bg: "whiteAlpha.5",
     border: "1px solid",
     borderColor: "ui.border",
-    borderRadius: "0",
+    borderRadius: "sm",
     fontSize: "xs",
     fontWeight: "medium",
     color: "ui.secondary",

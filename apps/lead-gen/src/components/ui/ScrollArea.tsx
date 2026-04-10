@@ -35,7 +35,7 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
             },
             "&::-webkit-scrollbar-thumb": {
               background: "ui.border",
-              borderRadius: "0",
+              borderRadius: "full",
               _hover: {
                 background: "ui.borderHover",
               },

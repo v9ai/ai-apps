@@ -6,7 +6,7 @@ export const callout = cva({
     gap: "3",
     padding: "3",
     border: "1px solid",
-    borderRadius: "0",
+    borderRadius: "md",
     fontSize: "sm",
     lineHeight: "normal",
   },

@@ -36,7 +36,7 @@ export const panel = cva({
     bg: "ui.surface",
     border: "1px solid",
     borderColor: "ui.border",
-    borderRadius: "0",
+    borderRadius: "lg",
     padding: "3",
   },
   variants: {
