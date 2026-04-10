@@ -347,7 +347,7 @@ export function LandingClosing() {
                         fontSize: "sm",
                         letterSpacing: "normal",
                         outline: "none",
-                        borderRadius: "0",
+                        borderRadius: "6px",
                         transition:
                           "border-color 150ms ease, box-shadow 150ms ease",
                         _placeholder: {

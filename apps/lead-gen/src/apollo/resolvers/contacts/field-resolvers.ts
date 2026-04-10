@@ -3,6 +3,9 @@
  *
  * These handle camelCase mapping, JSON parsing, and computed fields
  * for the Contact, ContactEmail, and CompanyContactEmail GraphQL types.
+ *
+ * JSON fields are memoized per parent object via a WeakMap so that
+ * multiple field resolvers accessing the same row never re-parse.
  */
 
 import type {
@@ -13,6 +16,33 @@ import type {
 import type { GraphQLContext } from "../../context";
 import { parseJsonArray } from "./classification";
 
+// ── Per-object JSON parse cache (WeakMap → auto-GC, zero leak) ──────
+const jsonCache = new WeakMap<object, Map<string, unknown>>();
+
+function cachedParseArray(parent: object, key: string, raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  let cache = jsonCache.get(parent);
+  if (!cache) { cache = new Map(); jsonCache.set(parent, cache); }
+  if (cache.has(key)) return cache.get(key) as string[];
+  const parsed = parseJsonArray(raw);
+  cache.set(key, parsed);
+  return parsed;
+}
+
+function cachedParse<T>(parent: object, key: string, raw: string | null | undefined, fallback: T): T {
+  if (raw == null) return fallback;
+  let cache = jsonCache.get(parent);
+  if (!cache) { cache = new Map(); jsonCache.set(parent, cache); }
+  if (cache.has(key)) return cache.get(key) as T;
+  try {
+    const parsed = JSON.parse(raw) as T;
+    cache.set(key, parsed);
+    return parsed;
+  } catch {
+    return fallback;
+  }
+}
+
 // Joined row type returned by companyContactEmails query
 type DbCompanyContactEmailRow = DbContactEmail & {
   contact_first_name: string;
@@ -22,16 +52,16 @@ type DbCompanyContactEmailRow = DbContactEmail & {
 
 export const Contact = {
   emails(parent: DbContact) {
-    return parseJsonArray(parent.emails);
+    return cachedParseArray(parent, "emails", parent.emails);
   },
   bouncedEmails(parent: DbContact) {
-    return parseJsonArray(parent.bounced_emails);
+    return cachedParseArray(parent, "bounced_emails", parent.bounced_emails);
   },
   nbFlags(parent: DbContact) {
-    return parseJsonArray(parent.nb_flags);
+    return cachedParseArray(parent, "nb_flags", parent.nb_flags);
   },
   tags(parent: DbContact) {
-    return parseJsonArray(parent.tags);
+    return cachedParseArray(parent, "tags", parent.tags);
   },
   firstName(parent: DbContact) {
     return parent.first_name;
@@ -64,10 +94,10 @@ export const Contact = {
     return parent.nb_execution_time_ms ?? null;
   },
   emailVerified(parent: DbContact) {
-    return (parent.email_verified as unknown) === 1 || parent.email_verified === true;
+    return parent.email_verified ?? false;
   },
   doNotContact(parent: DbContact) {
-    return (parent.do_not_contact as unknown) === 1 || parent.do_not_contact === true;
+    return parent.do_not_contact ?? false;
   },
   githubHandle(parent: DbContact) {
     return parent.github_handle ?? null;
@@ -89,14 +119,13 @@ export const Contact = {
     return parent.department ?? null;
   },
   isDecisionMaker(parent: DbContact) {
-    return (parent.is_decision_maker as unknown) === true ||
-           (parent.is_decision_maker as unknown) === 1;
+    return parent.is_decision_maker ?? false;
   },
   authorityScore(parent: DbContact) {
     return parent.authority_score ?? 0.0;
   },
   dmReasons(parent: DbContact) {
-    return parseJsonArray(parent.dm_reasons);
+    return cachedParseArray(parent, "dm_reasons", parent.dm_reasons);
   },
   nextTouchScore(parent: DbContact) {
     return parent.next_touch_score ?? 0.0;
@@ -106,41 +135,38 @@ export const Contact = {
   },
   aiProfile(parent: DbContact) {
     if (!parent.ai_profile) return null;
-    try {
-      const raw = JSON.parse(parent.ai_profile);
-      return {
-        trigger: raw.trigger,
-        enrichedAt: raw.enriched_at,
-        linkedinHeadline: raw.linkedin_headline ?? null,
-        linkedinBio: raw.linkedin_bio ?? null,
-        githubBio: raw.github_bio ?? null,
-        githubTopLanguages: raw.github_top_languages ?? [],
-        githubAiRepos: (raw.github_ai_repos ?? []).map((r: any) => ({
-          name: r.name,
-          description: r.description ?? null,
-          stars: r.stars,
-          topics: r.topics ?? [],
-        })),
-        githubTotalStars: raw.github_total_stars ?? 0,
-        specialization: raw.specialization ?? null,
-        skills: raw.skills ?? [],
-        researchAreas: raw.research_areas ?? [],
-        experienceLevel: raw.experience_level ?? "unknown",
-        synthesisConfidence: raw.synthesis_confidence ?? 0,
-        synthesisRationale: raw.synthesis_rationale ?? null,
-      };
-    } catch {
-      return null;
-    }
+    const raw = cachedParse<Record<string, unknown>>(parent, "ai_profile", parent.ai_profile, null as unknown as Record<string, unknown>);
+    if (!raw) return null;
+    return {
+      trigger: raw.trigger,
+      enrichedAt: raw.enriched_at,
+      linkedinHeadline: raw.linkedin_headline ?? null,
+      linkedinBio: raw.linkedin_bio ?? null,
+      githubBio: raw.github_bio ?? null,
+      githubTopLanguages: (raw.github_top_languages as string[]) ?? [],
+      githubAiRepos: ((raw.github_ai_repos as any[]) ?? []).map((r: any) => ({
+        name: r.name,
+        description: r.description ?? null,
+        stars: r.stars,
+        topics: r.topics ?? [],
+      })),
+      githubTotalStars: raw.github_total_stars ?? 0,
+      specialization: raw.specialization ?? null,
+      skills: raw.skills ?? [],
+      researchAreas: raw.research_areas ?? [],
+      experienceLevel: raw.experience_level ?? "unknown",
+      synthesisConfidence: raw.synthesis_confidence ?? 0,
+      synthesisRationale: raw.synthesis_rationale ?? null,
+    };
   },
   toBeDeleted(parent: DbContact) {
-    return (parent.to_be_deleted as unknown) === true || (parent.to_be_deleted as unknown) === 1;
+    return parent.to_be_deleted ?? false;
   },
   deletionScore(parent: DbContact) {
     return parent.deletion_score ?? null;
   },
   deletionReasons(parent: DbContact) {
-    return parseJsonArray(parent.deletion_reasons);
+    return cachedParseArray(parent, "deletion_reasons", parent.deletion_reasons);
   },
   deletionFlaggedAt(parent: DbContact) {
     return parent.deletion_flagged_at ?? null;
@@ -152,7 +178,7 @@ export const Contact = {
     return parent.authenticity_score ?? null;
   },
   authenticityFlags(parent: DbContact) {
-    return parseJsonArray(parent.authenticity_flags);
+    return cachedParseArray(parent, "authenticity_flags", parent.authenticity_flags);
   },
 };
 
@@ -167,7 +193,7 @@ export const ContactEmailField = {
   contactId: (parent: DbContactEmail) => parent.contact_id,
   resendId: (parent: DbContactEmail) => parent.resend_id,
   fromEmail: (parent: DbContactEmail) => parent.from_email,
-  toEmails: (parent: DbContactEmail) => parseJsonArray(parent.to_emails),
+  toEmails: (parent: DbContactEmail) => cachedParseArray(parent, "to_emails", parent.to_emails),
   textContent: (parent: DbContactEmail) => parent.text_content ?? null,
   sentAt: (parent: DbContactEmail) => parent.sent_at ?? null,
   scheduledAt: (parent: DbContactEmail) => parent.scheduled_at ?? null,
@@ -178,17 +204,16 @@ export const ContactEmailField = {
   parentEmailId: (parent: DbContactEmail) => parent.parent_email_id ?? null,
   sequenceType: (parent: DbContactEmail) => parent.sequence_type ?? null,
   sequenceNumber: (parent: DbContactEmail) => parent.sequence_number ?? null,
-  replyReceived: (parent: DbContactEmail) =>
-    (parent.reply_received as unknown) === 1 || parent.reply_received === true,
+  replyReceived: (parent: DbContactEmail) => parent.reply_received ?? false,
   replyReceivedAt: (parent: DbContactEmail) => parent.reply_received_at ?? null,
   followupStatus: (parent: DbContactEmail) => parent.followup_status ?? null,
   companyId: (parent: DbContactEmail) => parent.company_id ?? null,
-  ccEmails: (parent: DbContactEmail) => parseJsonArray(parent.cc_emails),
-  replyToEmails: (parent: DbContactEmail) => parseJsonArray(parent.reply_to_emails),
+  ccEmails: (parent: DbContactEmail) => cachedParseArray(parent, "cc_emails", parent.cc_emails),
+  replyToEmails: (parent: DbContactEmail) => cachedParseArray(parent, "reply_to_emails", parent.reply_to_emails),
   htmlContent: (parent: DbContactEmail) => parent.html_content ?? null,
-  attachments: (parent: DbContactEmail) => parent.attachments ? JSON.parse(parent.attachments) : [],
-  tags: (parent: DbContactEmail) => parseJsonArray(parent.tags),
-  headers: (parent: DbContactEmail) => parent.headers ? JSON.parse(parent.headers) : [],
+  attachments: (parent: DbContactEmail) => cachedParse(parent, "attachments", parent.attachments, []),
+  tags: (parent: DbContactEmail) => cachedParseArray(parent, "tags", parent.tags),
+  headers: (parent: DbContactEmail) => cachedParse(parent, "headers", parent.headers, []),
   idempotencyKey: (parent: DbContactEmail) => parent.idempotency_key ?? null,
   createdAt: (parent: DbContactEmail) => parent.created_at,
   updatedAt: (parent: DbContactEmail) => parent.updated_at,
@@ -198,7 +223,7 @@ export const CompanyContactEmailField = {
   contactId: (parent: DbCompanyContactEmailRow) => parent.contact_id,
   resendId: (parent: DbCompanyContactEmailRow) => parent.resend_id,
   fromEmail: (parent: DbCompanyContactEmailRow) => parent.from_email,
-  toEmails: (parent: DbCompanyContactEmailRow) => parseJsonArray(parent.to_emails),
+  toEmails: (parent: DbCompanyContactEmailRow) => cachedParseArray(parent, "to_emails", parent.to_emails),
   textContent: (parent: DbCompanyContactEmailRow) => parent.text_content ?? null,
   sentAt: (parent: DbCompanyContactEmailRow) => parent.sent_at ?? null,
   scheduledAt: (parent: DbCompanyContactEmailRow) => parent.scheduled_at ?? null,
@@ -208,8 +233,7 @@ export const CompanyContactEmailField = {
   errorMessage: (parent: DbCompanyContactEmailRow) => parent.error_message ?? null,
   sequenceType: (parent: DbCompanyContactEmailRow) => parent.sequence_type ?? null,
   sequenceNumber: (parent: DbCompanyContactEmailRow) => parent.sequence_number ?? null,
-  replyReceived: (parent: DbCompanyContactEmailRow) =>
-    (parent.reply_received as unknown) === 1 || parent.reply_received === true,
+  replyReceived: (parent: DbCompanyContactEmailRow) => parent.reply_received ?? false,
   followupStatus: (parent: DbCompanyContactEmailRow) => parent.followup_status ?? null,
   createdAt: (parent: DbCompanyContactEmailRow) => parent.created_at,
   updatedAt: (parent: DbCompanyContactEmailRow) => parent.updated_at,

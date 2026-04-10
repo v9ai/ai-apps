@@ -441,6 +441,35 @@ async function countRemoteJobsViaVoyager(
   }
 }
 
+/**
+ * Voyager-first remote job counting — avoids tab navigation entirely when Voyager works.
+ * Used by find-related BFS crawl where tab navigation is expensive (doubles per-company time).
+ * Falls back to full DOM scraping only if Voyager fails.
+ */
+export async function countRemoteJobsVoyagerFirst(
+  tabId: number,
+  numericId: string,
+): Promise<RemoteJobsResult> {
+  try {
+    // Try Voyager API first (no navigation needed)
+    const voyagerResult = await countRemoteJobsViaVoyager(numericId);
+    if (!voyagerResult.error) {
+      console.log(`[countRemoteJobs] Voyager-first succeeded: ${voyagerResult.count} jobs`);
+      return {
+        count: voyagerResult.count,
+        status: voyagerResult.count > 0 ? "ok" : "no-results",
+        method: "voyager",
+      };
+    }
+    console.log(`[countRemoteJobs] Voyager-first failed (${voyagerResult.error}), falling back to DOM...`);
+  } catch (err) {
+    console.log(`[countRemoteJobs] Voyager-first threw: ${err}, falling back to DOM...`);
+  }
+
+  // Fallback to full DOM scraping (navigates the tab)
+  return countRemoteJobs(tabId, numericId);
+}
+
 export async function countRemoteJobs(
   tabId: number,
   numericId: string,

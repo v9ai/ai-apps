@@ -39,7 +39,7 @@ export function MarkdownContent({ content }: { content: string }) {
         key={key++}
         style={{
           background: "var(--gray-3)",
-          borderRadius: 0,
+          borderRadius: 6,
           padding: "12px 16px",
           overflowX: "auto",
           marginBlock: "4px",

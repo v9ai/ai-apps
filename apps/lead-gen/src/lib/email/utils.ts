@@ -2,7 +2,7 @@
  * Email utilities — personalization, bounce checking, send+save.
  */
 
-import { eq, and, or } from "drizzle-orm";
+import { eq, and, or, sql, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, contactEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";
@@ -16,20 +16,22 @@ export async function isEmailBounced(
   email: string,
 ): Promise<{ isBounced: boolean; contactId?: number }> {
   try {
-    // TODO: N+1 — loads ALL contacts to scan bounced_emails; replace with a direct
-    // WHERE bounced_emails LIKE '%email%' or a dedicated bounced_emails lookup table.
-    const allContacts = await db.select().from(contacts);
+    // Use SQL-level jsonb containment check instead of loading all contacts.
+    // The bounced_emails column is text storing a JSON array, so we cast to jsonb
+    // and use the @> operator for an exact match within the array.
+    const [match] = await db
+      .select({ id: contacts.id })
+      .from(contacts)
+      .where(
+        and(
+          isNotNull(contacts.bounced_emails),
+          sql`${contacts.bounced_emails}::jsonb @> ${JSON.stringify([email])}::jsonb`,
+        ),
+      )
+      .limit(1);
 
-    for (const contact of allContacts) {
-      if (!contact.bounced_emails) continue;
-      try {
-        const bounced: string[] = JSON.parse(contact.bounced_emails);
-        if (bounced.includes(email)) {
-          return { isBounced: true, contactId: contact.id };
-        }
-      } catch {
-        // skip parse errors
-      }
+    if (match) {
+      return { isBounced: true, contactId: match.id };
     }
 
     return { isBounced: false };

@@ -10,6 +10,7 @@ import {
   contacts,
   contactEmails,
 } from "@/db/schema";
+import type { PgUpdateSetSource } from "drizzle-orm/pg-core/query-builders/update";
 import type {
   NewCompany,
   NewCompanyFact,

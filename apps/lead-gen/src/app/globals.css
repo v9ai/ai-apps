@@ -163,8 +163,8 @@ nav a.active {
   padding: 4px 12px;
   cursor: pointer;
   transition: background 0.15s;
-  /* flat — no border-radius, no shadow */
-  border-radius: 0;
+  /* flat — no shadow */
+  border-radius: 6px;
   box-shadow: none;
 }
 .yc-cta:hover {
@@ -179,7 +179,7 @@ nav a.active {
   text-transform: lowercase;
   padding: 4px 12px;
   cursor: pointer;
-  border-radius: 0;
+  border-radius: 6px;
   box-shadow: none;
   transition:
     background 0.15s,
@@ -201,7 +201,7 @@ nav a.active {
   border: 1px solid var(--gray-6);
   background: transparent;
   color: var(--gray-11);
-  border-radius: 0;
+  border-radius: 4px;
 }
 .yc-badge--orange {
   border-color: var(--accent-9);
@@ -216,7 +216,7 @@ nav a.active {
 .yc-panel {
   background: var(--gray-2);
   border: 1px solid var(--gray-6);
-  border-radius: 0;
+  border-radius: 8px;
   box-shadow: none;
   padding: 12px;
 }
@@ -227,7 +227,7 @@ nav a.active {
   border: 1px solid var(--gray-6);
   color: var(--gray-12);
   padding: 6px 10px;
-  border-radius: 0;
+  border-radius: 6px;
   outline: none;
   width: 100%;
 }
@@ -408,12 +408,12 @@ nav a.active {
   font-family: var(--font-mono, monospace);
   font-size: 0.875em;
   background: var(--gray-3);
-  border-radius: 0;
+  border-radius: 2px;
   padding: 1px 5px;
 }
 .deep-dive-content pre {
   background: var(--gray-3);
-  border-radius: 0;
+  border-radius: 6px;
   padding: 0.75em 1em;
   overflow-x: auto;
   margin-bottom: 0.75em;
@@ -941,7 +941,7 @@ nav a.active {
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  border-radius: 0;
+  border-radius: 6px;
   outline: none;
 }
 .skip-to-content:focus {

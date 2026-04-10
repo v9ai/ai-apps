@@ -90,7 +90,7 @@ const features: FeatureItem[] = [
 /* ------------------------------------------------------------------ */
 
 const badgeStyle: React.CSSProperties = {
-  borderRadius: 0,
+  borderRadius: 4,
   textTransform: "lowercase" as const,
 };
 
@@ -359,7 +359,7 @@ export function LandingFeatures() {
           mb="6"
           style={{
             border: "1px solid var(--indigo-7)",
-            borderRadius: 0,
+            borderRadius: 8,
             background: "rgba(62, 99, 221, 0.04)",
           }}
         >
@@ -420,7 +420,7 @@ export function LandingFeatures() {
                 px="4"
                 style={{
                   border: "1px solid var(--gray-6)",
-                  borderRadius: 0,
+                  borderRadius: 6,
                   background: "var(--gray-2)",
                 }}
               >
@@ -473,7 +473,7 @@ export function LandingFeatures() {
           px="5"
           style={{
             border: "1px solid var(--green-9)",
-            borderRadius: 0,
+            borderRadius: 8,
             background: "transparent",
           }}
         >

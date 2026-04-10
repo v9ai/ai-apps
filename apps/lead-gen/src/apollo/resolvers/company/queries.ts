@@ -53,7 +53,24 @@ export const companyQueries = {
         if (args.filter.min_ai_tier != null) {
           conditions.push(gte(companies.ai_tier, args.filter.min_ai_tier));
         }
+
+        // Push service_taxonomy_any filter to SQL (jsonb overlap)
+        if (
+          args.filter.service_taxonomy_any &&
+          args.filter.service_taxonomy_any.length > 0
+        ) {
+          const values = args.filter.service_taxonomy_any.map(
+            (v) => sql`${v}`,
+          );
+          conditions.push(
+            sql`${companies.service_taxonomy}::jsonb ?| array[${sql.join(values, sql.raw(","))}]`,
+          );
+        }
       }
+
+      const limit = args.limit ?? 50;
+      const offset = args.offset ?? 0;
+
       let query = context.db.select().from(companies).$dynamic();
 
       if (conditions.length > 0) {
@@ -72,26 +89,18 @@ export const companyQueries = {
         query = query.orderBy(desc(companies.created_at));
       }
 
-      let allResults = await query;
+      // Count total matches at the DB level (single aggregate, no full scan)
+      const countQuery = context.db
+        .select({ count: sql<number>`count(*)` })
+        .from(companies)
+        .$dynamic();
+      const countConditions = [...conditions];
+      const [{ count: totalCount }] = countConditions.length > 0
+        ? await countQuery.where(and(...countConditions)!)
+        : await countQuery;
 
-      // Post-filter for service_taxonomy_any
-      if (
-        args.filter?.service_taxonomy_any &&
-        args.filter.service_taxonomy_any.length > 0
-      ) {
-        allResults = allResults.filter((c) => {
-          if (!c.service_taxonomy) return false;
-          const taxonomies = JSON.parse(c.service_taxonomy);
-          return args.filter!.service_taxonomy_any!.some((t) =>
-            taxonomies.includes(t),
-          );
-        });
-      }
-
-      const totalCount = allResults.length;
-      const limit = args.limit ?? 50;
-      const offset = args.offset ?? 0;
-      const paginatedCompanies = allResults.slice(offset, offset + limit);
+      // Pagination pushed to SQL
+      const paginatedCompanies = await query.limit(limit).offset(offset);
 
       return {
         companies: paginatedCompanies,

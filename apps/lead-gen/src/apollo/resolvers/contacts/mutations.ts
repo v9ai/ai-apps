@@ -28,6 +28,19 @@ import {
 import { isAIContact, gatherAIContactProfile, extractLinkedInOG, fetchGitHubProfile, searchGitHubByName } from "@/lib/ai-contact-enrichment";
 import { evaluateFakeAccount } from "@/lib/ml/fake-account-detector";
 import { classifyContact, computeDeletionScore, parseJsonArray } from "./classification";
+import type { PgUpdateSetSource } from "drizzle-orm/pg-core/query-builders/update";
+
+/** Typed update object for contacts table */
+type ContactUpdate = PgUpdateSetSource<typeof contacts>;
+
+/** Strip null values from a GraphQL input to match Drizzle's update type */
+function stripNulls<T extends Record<string, unknown>>(obj: T): { [K in keyof T]: Exclude<T[K], null> } {
+  const result = { ...obj };
+  for (const key of Object.keys(result)) {
+    if (result[key] === null) delete result[key];
+  }
+  return result as { [K in keyof T]: Exclude<T[K], null> };
+}
 
 /** Guard that throws a GraphQLError if the caller is not an authenticated admin. */
 function requireAdmin(context: GraphQLContext): void {
@@ -78,12 +91,12 @@ export const contactMutations = {
   ) {
     requireAdmin(context);
     const { firstName, lastName, emails, tags, doNotContact, ...rest } = args.input;
-    const patch: Record<string, unknown> = { ...rest };
-    if (firstName !== undefined) patch.first_name = firstName;
-    if (lastName !== undefined) patch.last_name = lastName;
-    if (emails !== undefined) patch.emails = JSON.stringify(emails);
-    if (tags !== undefined) patch.tags = JSON.stringify(tags);
-    if (doNotContact !== undefined) patch.do_not_contact = doNotContact;
+    const patch: ContactUpdate = stripNulls({ ...rest });
+    if (firstName != null) patch.first_name = firstName;
+    if (lastName != null) patch.last_name = lastName;
+    if (emails != null) patch.emails = JSON.stringify(emails);
+    if (tags != null) patch.tags = JSON.stringify(tags);
+    if (doNotContact != null) patch.do_not_contact = doNotContact;
     // Re-classify whenever position changes
     if (args.input.position !== undefined) {
       const mlClassification = classifyContact(args.input.position);

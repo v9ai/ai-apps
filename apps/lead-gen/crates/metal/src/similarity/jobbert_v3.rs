@@ -143,7 +143,7 @@ fn ort_err<R: std::fmt::Display>(e: R) -> anyhow::Error {
 }
 
 pub struct JobBertV3Embedder {
-    session: Session,
+    session: parking_lot::Mutex<Session>,
     tokenizer: Tokenizer,
     dense: DenseProjection,
     dim: usize,
@@ -173,7 +173,7 @@ impl JobBertV3Embedder {
         let dense = DenseProjection::load(model_dir)?;
 
         Ok(Self {
-            session,
+            session: parking_lot::Mutex::new(session),
             tokenizer,
             dense,
             dim: EMBEDDING_DIM,
@@ -424,15 +424,8 @@ impl JobBertV3Embedder {
             "token_type_ids" => type_tensor,
         ];
 
-        // run() requires &mut self on Session, but we only hold &self.
-        // The session is internally thread-safe for inference. We use a raw pointer cast
-        // to work around the API's overly conservative borrow requirement.
-        // Safety: ONNX Runtime's InferenceSession is thread-safe for concurrent Run() calls
-        // with different input/output buffers, which is our use case.
-        let session_ptr = &self.session as *const Session as *mut Session;
-        let session_mut = unsafe { &mut *session_ptr };
-
-        let outputs = session_mut.run(inputs).map_err(ort_err)?;
+        let mut session = self.session.lock();
+        let outputs = session.run(inputs).map_err(ort_err)?;
 
         // Output is a DynValue. Extract as tensor: returns (&Shape, &[f32]).
         let (shape, data) = outputs[0].try_extract_tensor::<f32>().map_err(ort_err)?;

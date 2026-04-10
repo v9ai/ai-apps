@@ -233,7 +233,7 @@ export function BatchEmailModal({
                   mt="2"
                   style={{
                     background: "var(--gray-a2)",
-                    borderRadius: 0,
+                    borderRadius: 6,
                     padding: "var(--space-2)",
                   }}
                 >
@@ -382,7 +382,7 @@ export function BatchEmailModal({
                 <Box
                   style={{
                     background: "var(--gray-a2)",
-                    borderRadius: 0,
+                    borderRadius: 6,
                     padding: "var(--space-2)",
                     fontSize: "var(--font-size-1)",
                     whiteSpace: "pre-wrap",
