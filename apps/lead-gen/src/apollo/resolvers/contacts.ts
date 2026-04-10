@@ -31,6 +31,15 @@ import type { PgUpdateSetSource } from "drizzle-orm/pg-core/query-builders/updat
 /** Typed update object for contacts table — matches what Drizzle's .set() accepts */
 type ContactUpdate = PgUpdateSetSource<typeof contacts>;
 
+/** Strip null values from a GraphQL input to match Drizzle's update type (which doesn't accept null) */
+function stripNulls<T extends Record<string, unknown>>(obj: T): { [K in keyof T]: Exclude<T[K], null> } {
+  const result = { ...obj };
+  for (const key of Object.keys(result)) {
+    if (result[key] === null) delete result[key];
+  }
+  return result as { [K in keyof T]: Exclude<T[K], null> };
+}
+
 // ─── ML Contact Classification ────────────────────────────────────────────────
 
 interface ContactClassification {

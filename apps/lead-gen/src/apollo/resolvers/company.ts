@@ -523,7 +523,7 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
-        const updateData: CompanyUpdate = { ...args.input };
+        const updateData: CompanyUpdate = stripNulls({ ...args.input });
 
         // Validate category enum
         if (args.input.category) {
