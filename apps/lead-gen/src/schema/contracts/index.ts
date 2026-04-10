@@ -33,3 +33,31 @@ export {
   JobSkillsOutput,
   JobInsertPayload,
 } from "./messages";
+
+export type {
+  VoyagerSkill,
+  VoyagerSkillAssessment,
+  VoyagerSkillMatchResponse,
+  VoyagerSalary,
+  VoyagerBenefits,
+  VoyagerBenefitEntry,
+  VoyagerJobPosting,
+  LinkedInUrn,
+  VoyagerPaging,
+} from "./voyager-job-metadata";
+
+export {
+  VoyagerSeniorityLevel,
+  VoyagerEmploymentType,
+  SENIORITY_LEVEL_LABELS,
+  EMPLOYMENT_TYPE_LABELS,
+  VOYAGER_JOB_FUNCTIONS,
+  VOYAGER_INDUSTRY_CODES,
+  VOYAGER_SKILL_ID_TO_TAG,
+  TAG_TO_VOYAGER_SKILL_ID,
+  voyagerSkillToTag,
+  voyagerSkillToEsco,
+  voyagerSkillsToJobSkills,
+  voyagerSeniorityToDbSeniority,
+  voyagerEmploymentTypeToDb,
+} from "./voyager-job-metadata";

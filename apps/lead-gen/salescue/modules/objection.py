@@ -203,44 +203,77 @@ class ObjectionPreClassifier(BaseModule):
             nn.Linear(64, 1), nn.Sigmoid(),
         )
 
-    def process(self, encoded, text, **kwargs):
-        encoder_output = encoded["encoder_output"]
-        cls = encoder_output.last_hidden_state[:, 0]
+    def _forward_batch(self, cls):
+        """Batched forward pass through all heads.
 
-        # 3-way category
-        cat_logits = self.category_head(cls)
+        Args:
+            cls: (B, hidden) CLS embeddings.
+
+        Returns:
+            cat_probs: (B, n_categories)
+            type_probs: (B, n_types)
+            severities: (B, 1)
+        """
+        cat_logits = self.category_head(cls)       # (B, n_categories)
         cat_probs = cat_logits.softmax(dim=-1)
-        category_idx = cat_probs.argmax(dim=-1).item()
+
+        type_logits = self.type_head(cls)          # (B, n_types)
+        type_probs = type_logits.softmax(dim=-1)
+
+        severities = self.severity_head(cls)       # (B, 1)
+
+        return cat_probs, type_probs, severities
+
+    def _format_result(self, cat_probs, type_probs, severities, idx):
+        """Format a single result from batch tensors at the given index."""
+        category_idx = cat_probs[idx].argmax(dim=-1).item()
         category = OBJECTION_CATEGORIES[category_idx]
 
-        # objection type
-        type_logits = self.type_head(cls)
-        type_probs = type_logits.softmax(dim=-1)
-        type_idx = type_probs.argmax(dim=-1).item()
+        type_idx = type_probs[idx].argmax(dim=-1).item()
         objection_type = OBJECTION_TYPES[type_idx]
 
-        # severity
-        severity = self.severity_head(cls).item()
-
-        # get coaching card
+        severity = severities[idx].item()
         card = COACHING_CARDS.get(objection_type, {})
 
         return {
             "category": category,
-            "category_confidence": round(cat_probs[0, category_idx].item(), 3),
+            "category_confidence": round(cat_probs[idx, category_idx].item(), 3),
             "category_distribution": {
-                c: round(cat_probs[0, i].item(), 3)
+                c: round(cat_probs[idx, i].item(), 3)
                 for i, c in enumerate(OBJECTION_CATEGORIES)
             },
             "objection_type": objection_type,
-            "type_confidence": round(type_probs[0, type_idx].item(), 3),
+            "type_confidence": round(type_probs[idx, type_idx].item(), 3),
             "severity": round(severity, 3),
             "coaching": card,
             "top_types": [
-                {"type": OBJECTION_TYPES[i], "score": round(type_probs[0, i].item(), 3)}
-                for i in type_probs[0].topk(3).indices.tolist()
+                {"type": OBJECTION_TYPES[i], "score": round(type_probs[idx, i].item(), 3)}
+                for i in type_probs[idx].topk(3).indices.tolist()
             ],
         }
+
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
+        cls = encoder_output.last_hidden_state[:, 0]
+
+        cat_probs, type_probs, severities = self._forward_batch(cls)
+
+        return self._format_result(cat_probs, type_probs, severities, idx=0)
+
+    def process_batch(self, batch_encoded, texts, **kwargs):
+        """Vectorized batch objection classification.
+
+        All three heads (category, type, severity) run on the full
+        (B, hidden) CLS tensor in one pass.
+        """
+        cls = batch_encoded["encoder_output"].last_hidden_state[:, 0]
+        cat_probs, type_probs, severities = self._forward_batch(cls)
+
+        B = cls.shape[0]
+        return [
+            self._format_result(cat_probs, type_probs, severities, idx=i)
+            for i in range(B)
+        ]
 
     def compute_loss(self, cat_logits, type_logits, true_category, true_type):
         loss_cat = F.cross_entropy(cat_logits, true_category)

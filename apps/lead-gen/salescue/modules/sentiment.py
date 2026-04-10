@@ -114,42 +114,45 @@ class DisentangledSentimentIntentHead(BaseModule):
         # evidence extractor for inversion explanations
         self.evidence_proj = nn.Linear(hidden, 64)
 
-    def process(self, encoded, text, **kwargs):
-        encoder_output = encoded["encoder_output"]
-        cls = encoder_output.last_hidden_state[:, 0]
+    def _forward_batch(self, cls):
+        """Batched forward pass through projection + classification heads.
 
-        # project to disentangled representations
-        sent_repr = self.sentiment_proj(cls)
-        intent_repr = self.intent_proj(cls)
+        Args:
+            cls: (B, hidden) CLS embeddings.
 
-        # classify independently
-        s_logits = self.sentiment_head(sent_repr)
-        i_logits = self.intent_head(intent_repr)
+        Returns:
+            sent_repr, intent_repr, s_probs, i_logits, gates
+        """
+        sent_repr = self.sentiment_proj(cls)   # (B, sent_dim)
+        intent_repr = self.intent_proj(cls)    # (B, intent_dim)
+
+        s_logits = self.sentiment_head(sent_repr)  # (B, n_sentiments)
+        i_logits = self.intent_head(intent_repr)   # (B, n_intents)
 
         s_probs = s_logits.softmax(-1)
-        i_probs = i_logits.softmax(-1)
+        gates = self.context_gate(cls).squeeze(-1)  # (B,)
 
-        sentiment_idx = s_probs.argmax(-1).item()
-        intent_idx = i_probs.argmax(-1).item()
+        return sent_repr, intent_repr, s_probs, i_logits, gates
 
-        # interaction check
+    def _format_result(self, sent_repr, intent_repr, s_probs, i_logits, gate, text, idx):
+        """Format a single result from batch tensors at the given index."""
+        sentiment_idx = s_probs[idx].argmax(-1).item()
+        intent_idx = i_logits[idx].argmax(-1).item()
+
         interaction_weight = self.interaction_weights[sentiment_idx, intent_idx]
+        gate_val = gate[idx].item() if gate.dim() > 0 else gate.item()
 
-        gate = self.context_gate(cls).item()
-
-        # apply interaction correction to intent logits
-        correction = torch.zeros_like(i_logits)
-        correction[0, intent_idx] = interaction_weight * gate
-        i_logits_corrected = i_logits + correction
+        correction = torch.zeros_like(i_logits[idx:idx+1])
+        correction[0, intent_idx] = interaction_weight * gate_val
+        i_logits_corrected = i_logits[idx:idx+1] + correction
         i_probs_corrected = i_logits_corrected.softmax(-1)
 
-        sentiment = SENTIMENTS[s_probs.argmax(-1).item()]
-        intent = INTENTS[i_probs_corrected.argmax(-1).item()]
+        sentiment = SENTIMENTS[s_probs[idx].argmax(-1).item()]
         intent_idx_final = i_probs_corrected.argmax(-1).item()
+        intent = INTENTS[intent_idx_final]
 
         inverted = (sentiment_idx in NEGATIVE_SENTIMENTS and intent_idx_final in STRONG_INTENTS)
-
-        confidence = min(s_probs.max().item(), i_probs_corrected.max().item())
+        confidence = min(s_probs[idx].max().item(), i_probs_corrected.max().item())
 
         evidence = []
         interpretation = None
@@ -183,7 +186,7 @@ class DisentangledSentimentIntentHead(BaseModule):
                 f"Negative sentiment ({sentiment}) masks {intent} buying intent. "
                 f"Disentangled analysis: sentiment and intent representations are "
                 f"independent (MI \u2248 0), but the interaction module detects inversion "
-                f"pattern with weight {interaction_weight:.2f} (gate: {gate:.2f}). "
+                f"pattern with weight {interaction_weight:.2f} (gate: {gate_val:.2f}). "
                 f"Prospect is actively dissatisfied \u2014 prioritize."
             )
 
@@ -193,14 +196,38 @@ class DisentangledSentimentIntentHead(BaseModule):
             "confidence": round(confidence, 3),
             "inverted": inverted,
             "interaction_weight": round(interaction_weight.item(), 3),
-            "context_gate": round(gate, 3),
+            "context_gate": round(gate_val, 3),
             "disentanglement": {
-                "sentiment_repr_norm": round(sent_repr.norm().item(), 3),
-                "intent_repr_norm": round(intent_repr.norm().item(), 3),
+                "sentiment_repr_norm": round(sent_repr[idx].norm().item(), 3),
+                "intent_repr_norm": round(intent_repr[idx].norm().item(), 3),
             },
             "evidence": evidence,
             "interpretation": interpretation,
         }
+
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
+        cls = encoder_output.last_hidden_state[:, 0]
+
+        sent_repr, intent_repr, s_probs, i_logits, gates = self._forward_batch(cls)
+
+        return self._format_result(sent_repr, intent_repr, s_probs, i_logits, gates, text, idx=0)
+
+    def process_batch(self, batch_encoded, texts, **kwargs):
+        """Vectorized batch sentiment-intent analysis.
+
+        Both projection MLPs, classification heads, and context gates run
+        on the full (B, hidden) CLS tensor in one pass. Only interaction
+        correction and evidence extraction loop per item.
+        """
+        cls = batch_encoded["encoder_output"].last_hidden_state[:, 0]  # (B, hidden)
+        sent_repr, intent_repr, s_probs, i_logits, gates = self._forward_batch(cls)
+
+        B = cls.shape[0]
+        return [
+            self._format_result(sent_repr, intent_repr, s_probs, i_logits, gates, texts[i], idx=i)
+            for i in range(B)
+        ]
 
     def _extract_intent_evidence(self, tokens, intent_repr):
         """Find which tokens contribute most to intent despite negative sentiment."""

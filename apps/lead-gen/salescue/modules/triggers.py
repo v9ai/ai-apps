@@ -58,40 +58,49 @@ class TemporalDisplacementModel(BaseModule):
             nn.Softplus(),
         )
 
-    def process(self, encoded, text, **kwargs):
-        encoder_output = encoded["encoder_output"]
-        tokens = encoder_output.last_hidden_state  # (B, seq, hidden)
-        cls = tokens[:, 0]
+    def _forward_batch(self, tokens):
+        """Batched forward pass through event and displacement heads.
 
-        # detect events
-        event_logits = self.event_head(cls)
+        Args:
+            tokens: (B, seq, hidden) encoder output.
+
+        Returns:
+            event_probs: (B, n_events) sigmoid probabilities
+            temporal_summaries: (B, 5) max-pooled temporal features
+            mu: (B, n_events) displacement means
+            sigma: (B, n_events) displacement stds
+        """
+        cls = tokens[:, 0]  # (B, hidden)
+        B = tokens.shape[0]
+
+        # Event detection (batched)
+        event_logits = self.event_head(cls)    # (B, n_events)
         event_probs = event_logits.sigmoid()
 
-        # extract temporal features from token level
-        temporal_logits = self.temporal_tagger(tokens[0])  # (seq, 5)
+        # Temporal tagging (batched)
+        temporal_logits = self.temporal_tagger(tokens)  # (B, seq, 5)
         temporal_probs = temporal_logits.softmax(dim=-1)
+        temporal_summaries = temporal_probs.max(dim=1).values  # (B, 5)
 
-        # aggregate temporal signal: max-pool each category across sequence
-        temporal_summary = temporal_probs.max(dim=0).values  # (5,)
-
-        # predict displacement distribution per event
-        disp_input = torch.cat([cls, temporal_summary.unsqueeze(0)], dim=-1)
-        mu = self.displacement_mu(disp_input).clamp(-10, 10)  # prevent exp overflow
+        # Displacement distribution (batched)
+        disp_input = torch.cat([cls, temporal_summaries], dim=-1)  # (B, hidden+5)
+        mu = self.displacement_mu(disp_input).clamp(-10, 10)
         sigma = self.displacement_sigma(disp_input) + 0.1
 
+        return event_probs, temporal_summaries, mu, sigma
+
+    def _format_result(self, event_probs, temporal_summary, mu, sigma, idx):
+        """Format a single result dict from batch tensors at the given index."""
         events = []
         for i, event_name in enumerate(EVENTS):
-            prob = event_probs[0, i].item()
+            prob = event_probs[idx, i].item()
             if prob < 0.5:
                 continue
 
-            mu_i = mu[0, i].item()
-            sigma_i = sigma[0, i].item()
+            mu_i = mu[idx, i].item()
+            sigma_i = sigma[idx, i].item()
 
-            # E[displacement] = exp(mu + sigma^2/2) for log-normal
-            expected_displacement = math.exp(min(mu_i + sigma_i ** 2 / 2, 20))  # cap at ~485M days
-
-            # 90% confidence interval
+            expected_displacement = math.exp(min(mu_i + sigma_i ** 2 / 2, 20))
             lower = math.exp(min(mu_i - 1.645 * sigma_i, 20))
             upper = math.exp(min(mu_i + 1.645 * sigma_i, 20))
 
@@ -111,9 +120,9 @@ class TemporalDisplacementModel(BaseModule):
                 "displacement_ci": [round(lower, 1), round(upper, 1)],
                 "displacement_uncertainty": round(sigma_i, 3),
                 "temporal_features": {
-                    "today_signal": round(temporal_summary[0].item(), 3),
-                    "recent_signal": round(temporal_summary[1].item(), 3),
-                    "past_signal": round(temporal_summary[2].item(), 3),
+                    "today_signal": round(temporal_summary[idx, 0].item(), 3),
+                    "recent_signal": round(temporal_summary[idx, 1].item(), 3),
+                    "past_signal": round(temporal_summary[idx, 2].item(), 3),
                 },
             })
 
@@ -121,6 +130,29 @@ class TemporalDisplacementModel(BaseModule):
         primary = next((e for e in events if e["fresh"]), events[0] if events else None)
 
         return {"events": events, "primary": primary}
+
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
+        tokens = encoder_output.last_hidden_state  # (B, seq, hidden)
+
+        event_probs, temporal_summaries, mu, sigma = self._forward_batch(tokens)
+
+        return self._format_result(event_probs, temporal_summaries, mu, sigma, idx=0)
+
+    def process_batch(self, batch_encoded, texts, **kwargs):
+        """Vectorized batch trigger detection.
+
+        All MLPs (event_head, temporal_tagger, displacement_mu/sigma) run
+        on the full (B, seq, hidden) tensor in one pass.
+        """
+        tokens = batch_encoded["encoder_output"].last_hidden_state
+        event_probs, temporal_summaries, mu, sigma = self._forward_batch(tokens)
+
+        B = tokens.shape[0]
+        return [
+            self._format_result(event_probs, temporal_summaries, mu, sigma, idx=i)
+            for i in range(B)
+        ]
 
     def compute_loss(self, mu, sigma, true_displacement_days):
         """

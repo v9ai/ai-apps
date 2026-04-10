@@ -669,6 +669,50 @@ export const voyagerSyncLog = pgTable(
 export type VoyagerSyncLog = typeof voyagerSyncLog.$inferSelect;
 export type NewVoyagerSyncLog = typeof voyagerSyncLog.$inferInsert;
 
+// Voyager Analytics Snapshots (daily aggregated market intelligence)
+export const voyagerSnapshots = pgTable(
+  "voyager_snapshots",
+  {
+    id: serial("id").primaryKey(),
+
+    // Snapshot identity
+    snapshot_date: text("snapshot_date").notNull(),  // YYYY-MM-DD
+    query: text("query").notNull(),                  // search query / keyword
+
+    // Core counts
+    total_jobs: integer("total_jobs").notNull().default(0),
+    remote_jobs: integer("remote_jobs").notNull().default(0),
+    new_jobs_24h: integer("new_jobs_24h").notNull().default(0),
+    reposted_jobs: integer("reposted_jobs").notNull().default(0),
+
+    // Aggregated metrics (JSON)
+    top_companies: text("top_companies"),             // JSON: { name, count, velocity }[]
+    top_skills: text("top_skills"),                   // JSON: { skill, count, pctOfTotal }[]
+    salary_data: text("salary_data"),                 // JSON: { min, max, median, currency, count }
+    location_breakdown: text("location_breakdown"),   // JSON: { location, count, avgSalary? }[]
+    industry_breakdown: text("industry_breakdown"),   // JSON: { industry, count, growthRate? }[]
+    employment_types: text("employment_types"),       // JSON: { type, count }[]
+    emerging_titles: text("emerging_titles"),         // JSON: { title, count, isNew }[]
+    repost_analysis: text("repost_analysis"),         // JSON: { jobUrl, repostCount, daysSinceFirst }[]
+    time_to_fill: text("time_to_fill"),              // JSON: { avgDays, medianDays, byIndustry }
+
+    // Raw Voyager response metadata
+    voyager_request_id: text("voyager_request_id"),
+    raw_metadata: text("raw_metadata"),              // JSON blob for debugging
+
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`now()::text`),
+  },
+  (table) => [
+    uniqueIndex("idx_voyager_snapshots_date_query").on(table.snapshot_date, table.query),
+    index("idx_voyager_snapshots_date").on(table.snapshot_date),
+  ],
+);
+
+export type VoyagerSnapshot = typeof voyagerSnapshots.$inferSelect;
+export type NewVoyagerSnapshot = typeof voyagerSnapshots.$inferInsert;
+
 // ---------------------------------------------------------------------------
 // Drizzle relations() declarations
 // ---------------------------------------------------------------------------
@@ -744,3 +788,5 @@ export const voyagerJobCountsRelations = relations(voyagerJobCounts, ({ one }) =
     references: [companies.id],
   }),
 }));
+
+export const voyagerSnapshotsRelations = relations(voyagerSnapshots, () => ({}));
