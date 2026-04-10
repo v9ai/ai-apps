@@ -187,32 +187,11 @@ static REPO_SEARCH_QUERIES: &[&str] = &[
     "model context protocol",
 ];
 
-// ── Pass 4: User bio search (supplementary) ─────────────────────────────────
-// (keyword, location) — kept lean, only high-value combinations.
+// ── Pass 4: User bio search (minor supplement) ──────────────────────────────
+// Only queries that returned results in prior runs. ~15 queries.
 
 static BIO_SEARCH: &[(&str, &str)] = &[
-    // Anthropic / Claude mentions in bio
-    ("anthropic", "Germany"),
-    ("anthropic", "United Kingdom"),
-    ("anthropic", "Netherlands"),
-    ("anthropic", "France"),
-    ("anthropic", "Switzerland"),
-    ("anthropic", "Sweden"),
-    ("anthropic", "Ireland"),
-    ("anthropic", "Spain"),
-    ("anthropic", "Poland"),
-    ("anthropic", "Denmark"),
-    ("anthropic", "Italy"),
-    ("claude AI", "Germany"),
-    ("claude AI", "United Kingdom"),
-    ("claude AI", "France"),
-    ("claude AI", "Netherlands"),
-    // Consulting company names in bio (catches employees who list company)
-    ("consultant AI", "Germany"),
-    ("consultant AI", "United Kingdom"),
-    ("consultant AI", "Netherlands"),
-    ("consultant AI", "France"),
-    ("consultant AI", "Switzerland"),
+    // "solution architect" — the one archetype that actually appears in GitHub bios
     ("\"solution architect\"", "Germany"),
     ("\"solution architect\"", "United Kingdom"),
     ("\"solution architect\"", "Netherlands"),
