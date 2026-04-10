@@ -107,11 +107,21 @@ function inferClassName(
   return count === 1 ? base : `${base}-${count}`;
 }
 
-/** If HTML is plain text (no tags) but CSS has .sN classes, wrap lines in <div> elements */
+/** Expand single-line CSS rules into formatted multi-line blocks */
+function formatCss(css: string): string {
+  // Already multi-line (has rule with property on its own line)
+  if (/\n\s+\S+\s*:/.test(css)) return css;
+  return css.replace(/([^{}]*)\{([^}]*)\}/g, (_, selector, body) => {
+    const props = body.split(";").map((s: string) => s.trim()).filter(Boolean);
+    return `${selector.trim()} {\n${props.map((p: string) => `  ${p};`).join("\n")}\n}`;
+  }).replace(/\}\s*\./g, "}\n\n.");
+}
+
+/** If HTML is plain text (no tags) but CSS has class selectors, wrap lines in <div> elements */
 function scaffoldHtmlFromCss(html: string, css: string): { html: string; css: string } {
   if (/<\w/.test(html)) return { html, css };
 
-  const classRe = /\.(s\d+)\s*\{([^}]*)\}/g;
+  const classRe = /\.([a-zA-Z][\w-]*)\s*\{([^}]*)\}/g;
   const classes: { name: string; props: string }[] = [];
   let m;
   while ((m = classRe.exec(css)) !== null) {
@@ -455,7 +465,8 @@ function PrepPageInner() {
         if (isHtmlCss) {
           const htmlBlock = blocks.find((b) => b.lang.toLowerCase() === "html")!;
           const cssBlock = blocks.find((b) => b.lang.toLowerCase() === "css")!;
-          const scaffolded = scaffoldHtmlFromCss(htmlBlock.code, cssBlock.code);
+          const formatted = formatCss(cssBlock.code);
+          const scaffolded = scaffoldHtmlFromCss(htmlBlock.code, formatted);
           const renamed = semanticRenameClasses(scaffolded.html, scaffolded.css);
           return <InteractiveCodePlayground initialHtml={renamed.html} initialCss={renamed.css} />;
         }
@@ -474,7 +485,8 @@ function PrepPageInner() {
       if (lang === "html") {
         const extracted = extractInlineStyles(rawText);
         if (extracted) {
-          const renamed = semanticRenameClasses(extracted.cleanHtml, extracted.css);
+          const formatted = formatCss(extracted.css);
+          const renamed = semanticRenameClasses(extracted.cleanHtml, formatted);
           return <InteractiveCodePlayground initialHtml={renamed.html} initialCss={renamed.css} />;
         }
         return (
