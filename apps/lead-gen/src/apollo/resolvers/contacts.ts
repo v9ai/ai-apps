@@ -255,8 +255,8 @@ function computeDeletionScore(
   }
 
   // Factor 6 — DNC flag (0.08)
-  const isDnc = (contact.do_not_contact as unknown) === true || (contact.do_not_contact as unknown) === 1;
-  if (isDnc) {
+  // Drizzle/Neon returns real booleans for boolean columns
+  if (contact.do_not_contact) {
     score += 0.08;
     reasons.push("Marked do-not-contact");
   }
@@ -362,10 +362,10 @@ const Contact = {
     return parent.nb_execution_time_ms ?? null;
   },
   emailVerified(parent: DbContact) {
-    return (parent.email_verified as unknown) === 1 || parent.email_verified === true;
+    return parent.email_verified ?? false;
   },
   doNotContact(parent: DbContact) {
-    return (parent.do_not_contact as unknown) === 1 || parent.do_not_contact === true;
+    return parent.do_not_contact ?? false;
   },
   githubHandle(parent: DbContact) {
     return parent.github_handle ?? null;
@@ -387,8 +387,7 @@ const Contact = {
     return parent.department ?? null;
   },
   isDecisionMaker(parent: DbContact) {
-    return (parent.is_decision_maker as unknown) === true ||
-           (parent.is_decision_maker as unknown) === 1;
+    return parent.is_decision_maker ?? false;
   },
   authorityScore(parent: DbContact) {
     return parent.authority_score ?? 0.0;

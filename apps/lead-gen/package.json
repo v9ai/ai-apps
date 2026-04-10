@@ -87,7 +87,6 @@
     "@vanilla-extract/integration": "^8.0.7",
     "@vanilla-extract/next-plugin": "^2.4.17",
     "@vanilla-extract/vite-plugin": "^5.1.4",
-    "better-sqlite3": "^12.6.2",
     "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.37.0",

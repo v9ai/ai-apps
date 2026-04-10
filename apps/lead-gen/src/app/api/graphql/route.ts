@@ -172,12 +172,17 @@ async function getRateLimitIdentifier(request: NextRequest): Promise<string> {
   return `ip:${ip}`;
 }
 
+export async function OPTIONS(request: NextRequest) {
+  const response = new NextResponse(null, { status: 204 });
+  return withCorsHeaders(response, request);
+}
+
 export async function GET(request: NextRequest) {
   const identifier = await getRateLimitIdentifier(request);
   const rateLimit = checkRateLimit(identifier);
 
   if (!rateLimit.allowed) {
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         error: "Rate limit exceeded",
         message: `Too many requests. Please try again after ${new Date(rateLimit.resetTime).toISOString()}`
@@ -191,9 +196,11 @@ export async function GET(request: NextRequest) {
         },
       }
     );
+    return withCorsHeaders(response, request);
   }
 
-  return handler(request);
+  const response = await handler(request);
+  return withCorsHeaders(response as NextResponse, request);
 }
 
 export async function POST(request: NextRequest) {
@@ -201,7 +208,7 @@ export async function POST(request: NextRequest) {
   const rateLimit = checkRateLimit(identifier);
 
   if (!rateLimit.allowed) {
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         error: "Rate limit exceeded",
         message: `Too many requests. Please try again after ${new Date(rateLimit.resetTime).toISOString()}`
@@ -215,7 +222,9 @@ export async function POST(request: NextRequest) {
         },
       }
     );
+    return withCorsHeaders(response, request);
   }
 
-  return handler(request);
+  const response = await handler(request);
+  return withCorsHeaders(response as NextResponse, request);
 }
