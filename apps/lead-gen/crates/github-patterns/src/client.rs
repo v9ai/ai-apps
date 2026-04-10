@@ -332,30 +332,50 @@ impl GhClient {
 
         // Check for top-level errors
         if let Some(errors) = json.get("errors") {
-            // If ALL entries errored, treat as failure; otherwise partial success
+            let err_str = serde_json::to_string(errors).unwrap_or_default();
+            tracing::warn!("GraphQL errors ({} logins): {}", logins.len(), &err_str[..err_str.len().min(300)]);
             if json.get("data").is_none() {
-                return Err(GhError::Other(format!(
-                    "GraphQL errors: {}",
-                    serde_json::to_string(errors).unwrap_or_default()
-                )));
+                return Err(GhError::Other(format!("GraphQL errors: {err_str}")));
             }
         }
 
         let data = match json.get("data") {
             Some(d) => d,
-            None => return Ok(vec![]),
+            None => {
+                tracing::warn!("GraphQL response has no 'data' field for {} logins", logins.len());
+                return Ok(vec![]);
+            }
         };
 
         let mut users = Vec::with_capacity(logins.len());
+        let mut null_count = 0u32;
+        let mut missing_count = 0u32;
+        let mut parse_fail = 0u32;
         for i in 0..logins.len() {
             let key = format!("u{i}");
             if let Some(node) = data.get(&key) {
                 if node.is_null() {
-                    continue; // user doesn't exist
+                    null_count += 1;
+                    continue;
                 }
                 if let Some(user) = graphql_node_to_user(node) {
                     users.push(user);
+                } else {
+                    parse_fail += 1;
                 }
+            } else {
+                missing_count += 1;
+            }
+        }
+        if users.is_empty() && logins.len() > 5 {
+            tracing::warn!(
+                "get_users_graphql: 0/{} users parsed (null={null_count}, missing={missing_count}, parse_fail={parse_fail})",
+                logins.len()
+            );
+            // Log first few data keys for debugging
+            if let Some(obj) = data.as_object() {
+                let keys: Vec<&String> = obj.keys().take(5).collect();
+                tracing::warn!("  data keys sample: {:?}, total keys: {}", keys, obj.len());
             }
         }
 
