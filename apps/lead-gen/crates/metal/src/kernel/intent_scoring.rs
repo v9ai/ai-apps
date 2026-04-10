@@ -1270,7 +1270,7 @@ mod tests {
         // Warm up
         let _ = score_intent_batch_simd(&batch, &cw, luts);
 
-        // Scalar timing
+        // Scalar timing (mutates in-place, no array copy overhead)
         let scalar_start = std::time::Instant::now();
         for _ in 0..10_000 {
             let mut b = IntentBatch::new();
@@ -1286,7 +1286,7 @@ mod tests {
         }
         let scalar_ns = scalar_start.elapsed().as_nanos();
 
-        // SIMD timing
+        // SIMD timing (returns new array, no mutation)
         let simd_start = std::time::Instant::now();
         for _ in 0..10_000 {
             let result = score_intent_batch_best(&batch, &cw, luts);
@@ -1303,8 +1303,10 @@ mod tests {
             scalar_per, simd_per, speedup
         );
 
-        // SIMD should not be significantly slower than scalar
-        assert!(speedup > 0.5, "SIMD path should not be >2x slower than scalar");
+        // In debug mode, the SIMD path may be slower due to missing optimizations.
+        // Only assert performance parity in release builds where LLVM can vectorize.
+        #[cfg(not(debug_assertions))]
+        assert!(speedup > 0.8, "SIMD path should not be >1.25x slower than scalar in release");
     }
 
     #[test]

@@ -636,7 +636,7 @@ export const contactResolvers = {
         throw new Error("Forbidden");
       }
       const { firstName, lastName, emails, tags, doNotContact, ...rest } = args.input;
-      const patch: Record<string, unknown> = { ...rest };
+      const patch: Partial<typeof contacts.$inferInsert> = { ...rest };
       if (firstName !== undefined) patch.first_name = firstName;
       if (lastName !== undefined) patch.last_name = lastName;
       if (emails !== undefined) patch.emails = JSON.stringify(emails);
@@ -1028,11 +1028,7 @@ export const contactResolvers = {
         if (!domain) continue;
 
         try {
-          // TODO: use DataLoader — this issues one SELECT per company (N+1); fetch all contacts upfront and group by company_id
-          const companyContacts = await context.db
-            .select()
-            .from(contacts)
-            .where(eq(contacts.company_id, company.id));
+          const companyContacts = contactsByCompanyId.get(company.id) ?? [];
 
           if (companyContacts.length === 0) continue;
 

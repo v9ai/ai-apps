@@ -279,10 +279,9 @@ export function optimizeBatch(
   }
 
   // For each group, Thompson-sample once and assign to all members
-  for (const [groupKey, indices] of groupMap) {
+  groupMap.forEach((indices, groupKey) => {
     const senBucket = groupKey & 7;
     const tzIdx = (groupKey >> 3);
-    const tzOffset = tzIdx + TZ_OFFSET_MIN;
 
     // Use per-recipient stats if the first member has them, else global
     const stats = recipients[indices[0]].stats ?? globalStats;
@@ -297,8 +296,7 @@ export function optimizeBatch(
     for (let dow = dowStart; dow < dowEnd; dow++) {
       for (let utcHour = 0; utcHour < 24; utcHour++) {
         // Look up local hour from pre-computed table
-        const oiIdx = tzIdx; // tzIdx = clampedTz - TZ_OFFSET_MIN
-        const localHour = LOCAL_HOUR_TABLE[utcHour * TZ_OFFSET_COUNT + oiIdx];
+        const localHour = LOCAL_HOUR_TABLE[utcHour * TZ_OFFSET_COUNT + tzIdx];
 
         // Check business-hour eligibility from mask
         if (!BUSINESS_HOUR_MASK[dow * 24 + localHour]) continue;
@@ -321,10 +319,10 @@ export function optimizeBatch(
     }
 
     // Assign the same hour to all recipients in this group
-    for (const idx of indices) {
-      result[idx] = bestHour;
+    for (let j = 0; j < indices.length; j++) {
+      result[indices[j]] = bestHour;
     }
-  }
+  });
 
   return result;
 }

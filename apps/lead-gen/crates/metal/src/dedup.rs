@@ -1305,14 +1305,24 @@ mod tests {
         assert!(unique_count >= 85, "should have >= 85 unique contacts, got {}", unique_count);
         assert!(dup_count >= 100, "should detect >= 100 duplicates, got {}", dup_count);
 
-        // All duplicates in the second half (indices 100..199) should be BloomExact
+        // All contacts in the second half should be detected as duplicates
+        let dups_in_second_half = results[100..].iter().filter(|r| r.is_duplicate).count();
+        assert_eq!(
+            dups_in_second_half, 100,
+            "all second-half contacts should be duplicates, got {}",
+            dups_in_second_half
+        );
+
+        // Most second-half duplicates should be BloomExact (exact email match).
+        // A few may be SimHash/JW if their first-half counterpart was itself flagged
+        // as a SimHash dup and never registered in the Bloom filter.
         let bloom_exact_in_second_half = results[100..]
             .iter()
             .filter(|r| r.is_duplicate && r.detection_stage == DedupStage::BloomExact)
             .count();
-        assert_eq!(
-            bloom_exact_in_second_half, 100,
-            "all second-half duplicates should be Bloom-detected, got {}",
+        assert!(
+            bloom_exact_in_second_half >= 85,
+            "most second-half duplicates should be Bloom-detected, got {}",
             bloom_exact_in_second_half
         );
     }
