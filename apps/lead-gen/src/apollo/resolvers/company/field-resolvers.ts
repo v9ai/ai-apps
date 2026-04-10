@@ -1,5 +1,8 @@
 /**
  * Company, CompanyFact, CompanySnapshot, and Evidence field resolvers.
+ *
+ * JSON fields are memoized per parent object via a WeakMap so that
+ * multiple field resolvers accessing the same row never re-parse.
  */
 
 import type {
@@ -9,6 +12,33 @@ import type {
 } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { safeJsonParse } from "./utils";
+
+// ── Per-object JSON parse cache (WeakMap → auto-GC, zero leak) ──────
+const jsonCache = new WeakMap<object, Map<string, unknown>>();
+
+function cachedSafeJsonParse<T>(parent: object, key: string, raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  let cache = jsonCache.get(parent);
+  if (!cache) { cache = new Map(); jsonCache.set(parent, cache); }
+  if (cache.has(key)) return cache.get(key) as T;
+  const parsed = safeJsonParse<T>(raw, fallback);
+  cache.set(key, parsed);
+  return parsed;
+}
+
+function cachedParse<T>(parent: object, key: string, raw: string | null | undefined, fallback: T): T {
+  if (raw == null) return fallback;
+  let cache = jsonCache.get(parent);
+  if (!cache) { cache = new Map(); jsonCache.set(parent, cache); }
+  if (cache.has(key)) return cache.get(key) as T;
+  try {
+    const parsed = JSON.parse(raw) as T;
+    cache.set(key, parsed);
+    return parsed;
+  } catch {
+    return fallback;
+  }
+}
 
 export const CompanyField = {
   ai_tier(parent: DbCompany) {
@@ -29,31 +59,31 @@ export const CompanyField = {
     const category = parent.category?.toUpperCase() || "UNKNOWN";
     return validCategories.includes(category) ? category : "UNKNOWN";
   },
-  // Parse JSON fields with proper error handling
+  // Parse JSON fields with memoized caching
   tags(parent: DbCompany) {
-    return safeJsonParse(parent.tags, []);
+    return cachedSafeJsonParse(parent, "tags", parent.tags, []);
   },
   services(parent: DbCompany) {
     if (!parent.services) return [];
-    const parsed = safeJsonParse<string[] | null>(parent.services, null);
+    const parsed = cachedSafeJsonParse<string[] | null>(parent, "services", parent.services, null);
     if (parsed !== null) return parsed;
     // Fallback: plain comma-separated string
     return parent.services.split(',').map((s: string) => s.trim()).filter(Boolean);
   },
   service_taxonomy(parent: DbCompany) {
-    return safeJsonParse(parent.service_taxonomy, []);
+    return cachedSafeJsonParse(parent, "service_taxonomy", parent.service_taxonomy, []);
   },
   industries(parent: DbCompany) {
-    return safeJsonParse(parent.industries, []);
+    return cachedSafeJsonParse(parent, "industries", parent.industries, []);
   },
   score_reasons(parent: DbCompany) {
-    return safeJsonParse(parent.score_reasons, []);
+    return cachedSafeJsonParse(parent, "score_reasons", parent.score_reasons, []);
   },
   email(parent: DbCompany) {
     return parent.email ?? null;
   },
   emailsList(parent: DbCompany) {
-    return safeJsonParse(parent.emails, []);
+    return cachedSafeJsonParse(parent, "emails", parent.emails, []);
   },
   githubUrl(parent: DbCompany) {
     return parent.github_url ?? null;
@@ -123,12 +153,10 @@ export const EvidenceField = {
 
 export const CompanyFactField = {
   value_json(parent: DbCompanyFact) {
-    return parent.value_json ? JSON.parse(parent.value_json) : null;
+    return cachedParse(parent, "value_json", parent.value_json, null);
   },
   normalized_value(parent: DbCompanyFact) {
-    return parent.normalized_value
-      ? JSON.parse(parent.normalized_value)
-      : null;
+    return cachedParse(parent, "normalized_value", parent.normalized_value, null);
   },
   evidence(parent: DbCompanyFact) {
     return {

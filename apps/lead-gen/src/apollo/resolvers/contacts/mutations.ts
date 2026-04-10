@@ -885,21 +885,9 @@ export const contactMutations = {
       dmReasons: string[];
     }> = [];
 
-    // TODO: use DataLoader -- this issues one UPDATE per contact (N+1); batch with a single UPDATE ... WHERE id IN (...)
-    for (const contact of rows) {
+    // Classify all contacts first, then batch-update in a single query
+    const classifications = rows.map((contact) => {
       const cls = classifyContact(contact.position);
-      await context.db
-        .update(contacts)
-        .set({
-          seniority: cls.seniority,
-          department: cls.department,
-          is_decision_maker: cls.isDecisionMaker,
-          authority_score: cls.authorityScore,
-          dm_reasons: JSON.stringify(cls.dmReasons),
-          updated_at: new Date().toISOString(),
-        })
-        .where(eq(contacts.id, contact.id));
-
       results.push({
         contactId: contact.id,
         seniority: cls.seniority,
@@ -908,6 +896,31 @@ export const contactMutations = {
         authorityScore: cls.authorityScore,
         dmReasons: cls.dmReasons,
       });
+      return { id: contact.id, cls };
+    });
+
+    if (classifications.length > 0) {
+      const now = new Date().toISOString();
+      const classIds = classifications.map((c) => c.id);
+
+      // Build CASE expressions for each column
+      const seniorityCases = classifications.map((c) => sql`WHEN ${contacts.id} = ${c.id} THEN ${c.cls.seniority}`);
+      const departmentCases = classifications.map((c) => sql`WHEN ${contacts.id} = ${c.id} THEN ${c.cls.department}`);
+      const isDmCases = classifications.map((c) => sql`WHEN ${contacts.id} = ${c.id} THEN ${c.cls.isDecisionMaker}`);
+      const authScoreCases = classifications.map((c) => sql`WHEN ${contacts.id} = ${c.id} THEN ${c.cls.authorityScore}`);
+      const dmReasonsCases = classifications.map((c) => sql`WHEN ${contacts.id} = ${c.id} THEN ${JSON.stringify(c.cls.dmReasons)}`);
+
+      await context.db
+        .update(contacts)
+        .set({
+          seniority: sql`CASE ${sql.join(seniorityCases, sql` `)} END`,
+          department: sql`CASE ${sql.join(departmentCases, sql` `)} END`,
+          is_decision_maker: sql`CASE ${sql.join(isDmCases, sql` `)} END`,
+          authority_score: sql`CASE ${sql.join(authScoreCases, sql` `)} END`,
+          dm_reasons: sql`CASE ${sql.join(dmReasonsCases, sql` `)} END`,
+          updated_at: now,
+        })
+        .where(inArray(contacts.id, classIds));
     }
 
     const decisionMakersFound = results.filter(r => r.isDecisionMaker).length;

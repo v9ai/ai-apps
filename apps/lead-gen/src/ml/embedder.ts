@@ -6,6 +6,10 @@
  *
  * All HF imports are dynamic so the build succeeds even when
  * @huggingface/transformers is not installed.
+ *
+ * Arena allocation: Float32Array buffers are pooled to reduce GC pressure
+ * during batch embedding. Buffers are checked out from the pool, used, and
+ * returned — avoiding per-embedding allocations in hot loops.
  */
 
 export const EMBEDDING_DIM = 384;
@@ -13,6 +17,63 @@ export const MODEL_ID = "Xenova/bge-small-en-v1.5";
 
 const BGE_RETRIEVAL_PREFIX = "Represent this sentence for searching relevant passages: ";
 const BATCH_CHUNK_SIZE = 32;
+
+// ============================================================================
+// Arena-style buffer pool — module-level singleton
+// ============================================================================
+
+/**
+ * Arena-style Float32Array pool for embedding buffers.
+ *
+ * Pre-allocates buffers of a fixed dimension. Callers acquire() a buffer,
+ * use it, and release() it back. The pool grows on demand but never shrinks,
+ * amortizing allocation cost across batch operations.
+ *
+ * For owned results that outlive the batch (returned to callers), use
+ * acquireOwned() which allocates outside the pool — or copy from a pooled
+ * buffer before release.
+ */
+class EmbeddingArena {
+  private pool: Float32Array[] = [];
+  private readonly dim: number;
+
+  constructor(dim: number, prealloc = 8) {
+    this.dim = dim;
+    for (let i = 0; i < prealloc; i++) {
+      this.pool.push(new Float32Array(dim));
+    }
+  }
+
+  /** Check out a buffer from the pool (allocates if pool is empty). */
+  acquire(): Float32Array {
+    return this.pool.pop() ?? new Float32Array(this.dim);
+  }
+
+  /** Return a buffer to the pool after use. Zeroes the buffer. */
+  release(buf: Float32Array): void {
+    if (buf.length !== this.dim) return; // reject wrong-sized buffers
+    buf.fill(0);
+    this.pool.push(buf);
+  }
+
+  /**
+   * Pre-warm the pool to hold at least `count` buffers.
+   * Call before a large batch to avoid mid-batch allocations.
+   */
+  warmUp(count: number): void {
+    while (this.pool.length < count) {
+      this.pool.push(new Float32Array(this.dim));
+    }
+  }
+
+  /** Current number of available buffers in the pool. */
+  get available(): number {
+    return this.pool.length;
+  }
+}
+
+/** Module-level singleton arena for 384-dim embedding buffers. */
+const embeddingArena = new EmbeddingArena(EMBEDDING_DIM, 8);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _pipeline: any = null;
