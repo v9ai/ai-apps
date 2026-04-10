@@ -192,23 +192,45 @@ export function scoreICP(
  * The feature vector is quantized to int8 on-the-fly, dot-producted against
  * the pre-quantized weight vector, then dequantized back to float.
  *
+ * Optimization: 4-way unrolled loops for both absmax scan and dot product
+ * to help V8's turbofan generate better machine code for small vectors.
+ *
  * @param features - Float32Array of length NUM_FEATURES (same order as FEATURE_KEYS)
  * @returns score (0..1)
  */
 export function scoreIcpQuantized(features: Float32Array): number {
-  // Find feature scale factor
+  // Find feature scale factor — unrolled 4-way
   let fMax = 0;
-  for (let i = 0; i < NUM_FEATURES; i++) {
+  let i = 0;
+  for (; i + 3 < NUM_FEATURES; i += 4) {
+    const a0 = Math.abs(features[i]!);
+    const a1 = Math.abs(features[i + 1]!);
+    const a2 = Math.abs(features[i + 2]!);
+    const a3 = Math.abs(features[i + 3]!);
+    const m01 = a0 > a1 ? a0 : a1;
+    const m23 = a2 > a3 ? a2 : a3;
+    const m = m01 > m23 ? m01 : m23;
+    if (m > fMax) fMax = m;
+  }
+  for (; i < NUM_FEATURES; i++) {
     const a = Math.abs(features[i]!);
     if (a > fMax) fMax = a;
   }
   const featureScale = fMax > 0 ? fMax / 127 : 1;
+  const invFeatureScale = 1 / featureScale;
 
-  // Integer dot product
+  // Integer dot product — unrolled 4-way
   let acc = 0;
-  for (let i = 0; i < NUM_FEATURES; i++) {
-    const qi = Math.round(features[i]! / featureScale); // quantize feature to int8 range
-    acc += WEIGHTS_INT8[i]! * qi;
+  i = 0;
+  for (; i + 3 < NUM_FEATURES; i += 4) {
+    acc +=
+      WEIGHTS_INT8[i]! * Math.round(features[i]! * invFeatureScale) +
+      WEIGHTS_INT8[i + 1]! * Math.round(features[i + 1]! * invFeatureScale) +
+      WEIGHTS_INT8[i + 2]! * Math.round(features[i + 2]! * invFeatureScale) +
+      WEIGHTS_INT8[i + 3]! * Math.round(features[i + 3]! * invFeatureScale);
+  }
+  for (; i < NUM_FEATURES; i++) {
+    acc += WEIGHTS_INT8[i]! * Math.round(features[i]! * invFeatureScale);
   }
 
   // Dequantize: acc * weightScale * featureScale + BIAS

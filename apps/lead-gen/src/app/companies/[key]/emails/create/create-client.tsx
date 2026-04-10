@@ -629,7 +629,7 @@ export function CreateEmailClient({
               <Box
                 style={{
                   background: "var(--gray-a2)",
-                  borderRadius: 0,
+                  borderRadius: 6,
                   padding: "var(--space-5)",
                   maxWidth: 640,
                 }}

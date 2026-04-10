@@ -222,6 +222,58 @@ export default defineConfig({
           smooth: { value: "cubic-bezier(0.25, 0.46, 0.45, 0.94)" },
           expoOut: { value: "cubic-bezier(0.16, 1, 0.30, 1)" },
         },
+
+        opacity: {
+          0: { value: "0" },
+          5: { value: "0.05" },
+          10: { value: "0.10" },
+          15: { value: "0.15" },
+          20: { value: "0.20" },
+          25: { value: "0.25" },
+          30: { value: "0.30" },
+          40: { value: "0.40" },
+          50: { value: "0.50" },
+          60: { value: "0.60" },
+          70: { value: "0.70" },
+          80: { value: "0.80" },
+          90: { value: "0.90" },
+          95: { value: "0.95" },
+          100: { value: "1" },
+        },
+
+        aspectRatios: {
+          square: { value: "1 / 1" },
+          landscape: { value: "16 / 9" },
+          portrait: { value: "9 / 16" },
+          wide: { value: "21 / 9" },
+          photo: { value: "4 / 3" },
+          golden: { value: "1.618 / 1" },
+        },
+
+        transitions: {
+          fast: { value: "all 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94)" },
+          normal: { value: "all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)" },
+          slow: { value: "all 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94)" },
+          colors: { value: "color 150ms ease, background-color 150ms ease, border-color 150ms ease" },
+          transform: { value: "transform 300ms cubic-bezier(0.16, 1, 0.30, 1)" },
+          opacity: { value: "opacity 200ms ease" },
+        },
+
+        blurs: {
+          none: { value: "0" },
+          sm: { value: "4px" },
+          md: { value: "8px" },
+          lg: { value: "12px" },
+          xl: { value: "24px" },
+          "2xl": { value: "40px" },
+        },
+
+        borders: {
+          subtle: { value: "1px solid #2C2C2F" },
+          default: { value: "1px solid #2C2C2F" },
+          accent: { value: "1px solid rgba(62, 99, 221, 0.30)" },
+          focus: { value: "2px solid #3E63DD" },
+        },
       },
     },
   },
