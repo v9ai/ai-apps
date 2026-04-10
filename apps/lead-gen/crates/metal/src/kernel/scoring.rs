@@ -1583,4 +1583,140 @@ mod tests {
         batch.compute_scores_logistic_fast(&scorer);
         assert!(batch.scores[0] > batch.scores[1], "logistic_fast: 0={} 1={}", batch.scores[0], batch.scores[1]);
     }
+
+    // ── BatchScoringContext tests ──
+
+    #[cfg(feature = "kernel-arena")]
+    mod batch_scoring_ctx {
+        use super::*;
+
+        #[test]
+        fn test_batch_scoring_context_new() {
+            let ctx = BatchScoringContext::new(256);
+            let stats = ctx.stats();
+            assert_eq!(stats.bytes_used, 0);
+            assert_eq!(stats.allocation_count, 0);
+        }
+
+        #[test]
+        fn test_batch_scoring_context_alloc_features() {
+            let mut ctx = BatchScoringContext::new(64);
+            let features = ctx.alloc_features(64 * 7);
+            assert_eq!(features.len(), 64 * 7);
+            // Zero-initialized
+            assert!(features.iter().all(|&v| v == 0.0));
+
+            let scores = ctx.alloc_scores(64);
+            assert_eq!(scores.len(), 64);
+        }
+
+        #[test]
+        fn test_batch_scoring_context_score_from_features() {
+            let mut ctx = BatchScoringContext::new(32);
+            let icp = IcpProfile::default();
+
+            let count = 3;
+            // Build 7-feature vectors row-major:
+            //   [industry, employee, seniority, department, tech(0-1), email(0-1), _pad]
+            // The 7th slot is unused by score_batch_from_features
+            // (it uses smooth_recency from recency_days directly).
+            let features_flat: Vec<f32> = vec![
+                // Contact 0: perfect match
+                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0,
+                // Contact 1: partial match
+                1.0, 0.0, 1.0, 0.0, 0.5, 0.5, 0.0,
+                // Contact 2: no match
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            ];
+            let recency_days: Vec<u16> = vec![1, 30, 365];
+
+            let results = ctx.score_batch_from_features(
+                &features_flat, &recency_days, count, &icp, 3,
+            );
+
+            assert_eq!(results.len(), 3);
+            // Scores should be descending
+            assert!(results[0].1 > results[1].1, "0={} 1={}", results[0].1, results[1].1);
+            assert!(results[1].1 > results[2].1, "1={} 2={}", results[1].1, results[2].1);
+            // Perfect match should score high
+            assert!(results[0].1 > 90.0, "perfect score={}", results[0].1);
+        }
+
+        #[test]
+        fn test_batch_scoring_context_logistic() {
+            let mut ctx = BatchScoringContext::new(32);
+            let scorer = LogisticScorer::default_pretrained();
+            let matcher = IcpMatcher::default();
+
+            let mut batch = ContactBatch::new();
+            batch.count = 3;
+            matcher.populate_slot(&mut batch, 0, "AI SaaS", 100, "CTO", "Engineering", "rust, python, pytorch", "verified", 1);
+            matcher.populate_slot(&mut batch, 1, "AI", 200, "Manager", "Data", "python", "catch-all", 30);
+            matcher.populate_slot(&mut batch, 2, "Mining", 5, "Intern", "Sales", "excel", "unknown", 365);
+
+            let results = ctx.score_batch_logistic(&batch, &scorer, 2);
+            assert_eq!(results.len(), 2);
+            // Top result should be the strong lead (index 0)
+            assert_eq!(results[0].0, 0, "expected strong lead first, got idx={}", results[0].0);
+            assert!(results[0].1 > results[1].1);
+        }
+
+        #[test]
+        fn test_batch_scoring_context_reset_reuse() {
+            let mut ctx = BatchScoringContext::new(32);
+            let icp = IcpProfile::default();
+
+            for batch_num in 0..5u32 {
+                let count = 4;
+                let mut features = vec![0.0f32; count * 7];
+                let recency_days = vec![5u16; count];
+
+                // Vary features per batch
+                for i in 0..count {
+                    features[i * 7] = ((batch_num + i as u32) % 2) as f32;
+                }
+
+                let results = ctx.score_batch_from_features(
+                    &features, &recency_days, count, &icp, 2,
+                );
+                assert_eq!(results.len(), 2);
+                ctx.reset();
+            }
+
+            let stats = ctx.stats();
+            assert_eq!(stats.bytes_used, 0);
+            assert_eq!(stats.allocation_count, 5); // 1 alloc per batch (scores)
+        }
+
+        #[test]
+        fn test_batch_scoring_context_top_k_from_scores() {
+            let scores = vec![10.0, 90.0, 30.0, 70.0, 50.0];
+            let top3 = BatchScoringContext::top_k_from_scores(&scores, 3);
+            assert_eq!(top3.len(), 3);
+            assert_eq!(top3[0].0, 1); // 90
+            assert_eq!(top3[1].0, 3); // 70
+            assert_eq!(top3[2].0, 4); // 50
+        }
+
+        #[test]
+        fn test_batch_scoring_context_top_k_empty() {
+            let scores: Vec<f32> = vec![];
+            let results = BatchScoringContext::top_k_from_scores(&scores, 5);
+            assert!(results.is_empty());
+        }
+
+        #[test]
+        fn test_batch_scoring_context_stats() {
+            let mut ctx = BatchScoringContext::new(64);
+            let _ = ctx.alloc_features(128);
+            let stats = ctx.stats();
+            assert!(stats.bytes_used > 0);
+            assert_eq!(stats.allocation_count, 1);
+
+            ctx.reset();
+            let stats = ctx.stats();
+            assert_eq!(stats.bytes_used, 0);
+            assert!(stats.peak_bytes_used > 0);
+        }
+    }
 }

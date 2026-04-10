@@ -84,7 +84,10 @@ export const companies = pgTable("companies", {
   updated_at: text("updated_at")
     .notNull()
     .default(sql`now()::text`),
-});
+}, (table) => ({
+  createdAtIdx: index("idx_companies_created_at").on(table.created_at),
+  updatedAtIdx: index("idx_companies_updated_at").on(table.updated_at),
+}));
 
 export type Company = typeof companies.$inferSelect;
 export type NewCompany = typeof companies.$inferInsert;
@@ -356,6 +359,7 @@ export const contactEmails = pgTable(
     resendIdIdx: index("idx_contact_emails_resend_id").on(table.resend_id),
     statusIdx: index("idx_contact_emails_status").on(table.status),
     companyIdIdx: index("idx_contact_emails_company_id").on(table.company_id),
+    parentEmailIdIdx: index("idx_contact_emails_parent_email_id").on(table.parent_email_id),
   }),
 );
 
