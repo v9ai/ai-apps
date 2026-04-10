@@ -6,7 +6,7 @@
  * and provides utility functions.
  */
 
-import { SKILL_TAXONOMY } from "@/schema/contracts/skill-taxonomy";
+import { SKILL_TAXONOMY, ESCO_SKILL_MAP, ESCO_LABEL_TO_TAG } from "@/schema/contracts/skill-taxonomy";
 
 /** Maps skill tags to human-readable labels. */
 export const SKILL_LABELS: Record<string, string> = SKILL_TAXONOMY;
@@ -27,3 +27,20 @@ export function formatConfidence(
   if (confidence == null) return "";
   return `${(confidence * 100).toFixed(0)}%`;
 }
+
+/**
+ * Get the ESCO label for an internal skill tag.
+ * Returns undefined if no ESCO mapping exists.
+ */
+export function getEscoLabel(tag: string): string | undefined {
+  return ESCO_SKILL_MAP[tag]?.label;
+}
+
+/**
+ * Look up internal tag from an ESCO label (case-insensitive).
+ */
+export function tagFromEscoLabel(escoLabel: string): string | undefined {
+  return ESCO_LABEL_TO_TAG[escoLabel.toLowerCase()];
+}
+
+export { ESCO_SKILL_MAP, ESCO_LABEL_TO_TAG };

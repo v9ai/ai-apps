@@ -159,11 +159,12 @@ impl JobBertV3Embedder {
         anyhow::ensure!(onnx_path.exists(), "ONNX model not found: {}", onnx_path.display());
         anyhow::ensure!(tokenizer_path.exists(), "Tokenizer not found: {}", tokenizer_path.display());
 
-        let mut builder = Session::builder().map_err(ort_err)?;
-        builder
+        let mut builder = Session::builder()
+            .map_err(ort_err)?
             .with_optimization_level(ort::session::builder::GraphOptimizationLevel::Level3)
+            .map_err(ort_err)?
+            .with_intra_threads(4)
             .map_err(ort_err)?;
-        builder.with_intra_threads(4).map_err(ort_err)?;
         let session = builder.commit_from_file(&onnx_path).map_err(ort_err)?;
 
         let tokenizer = Tokenizer::from_file(&tokenizer_path)
