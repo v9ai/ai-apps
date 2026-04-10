@@ -523,34 +523,37 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
-        const updateData: CompanyUpdate = stripNulls({ ...args.input });
+        // Destructure array/JSON fields that need stringifying before DB insert
+        const { tags, services, service_taxonomy, industries, score_reasons, emails, category, ...scalarFields } = args.input;
+        const updateData: CompanyUpdate = stripNulls({ ...scalarFields });
 
         // Validate category enum
-        if (args.input.category) {
+        if (category) {
           const validCategories = ["CONSULTANCY", "STAFFING", "AGENCY", "PRODUCT", "UNKNOWN"] as const;
-          const category = args.input.category.toUpperCase();
-          updateData.category = (validCategories as readonly string[]).includes(category)
-            ? (category as typeof validCategories[number])
+          const upper = category.toUpperCase();
+          updateData.category = (validCategories as readonly string[]).includes(upper)
+            ? (upper as typeof validCategories[number])
             : "UNKNOWN";
         }
 
         // Stringify JSON fields
-        if (args.input.tags) {
-          updateData.tags = JSON.stringify(args.input.tags);
+        if (tags) {
+          updateData.tags = JSON.stringify(tags);
         }
-        if (args.input.services) {
-          updateData.services = JSON.stringify(args.input.services);
+        if (services) {
+          updateData.services = JSON.stringify(services);
         }
-        if (args.input.service_taxonomy) {
-          updateData.service_taxonomy = JSON.stringify(
-            args.input.service_taxonomy,
-          );
+        if (service_taxonomy) {
+          updateData.service_taxonomy = JSON.stringify(service_taxonomy);
         }
-        if (args.input.industries) {
-          updateData.industries = JSON.stringify(args.input.industries);
+        if (industries) {
+          updateData.industries = JSON.stringify(industries);
         }
-        if (args.input.score_reasons) {
-          updateData.score_reasons = JSON.stringify(args.input.score_reasons);
+        if (score_reasons) {
+          updateData.score_reasons = JSON.stringify(score_reasons);
+        }
+        if (emails) {
+          updateData.emails = JSON.stringify(emails);
         }
 
         updateData.updated_at = new Date().toISOString();

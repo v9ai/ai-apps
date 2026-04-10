@@ -649,12 +649,12 @@ export const contactResolvers = {
         throw new Error("Forbidden");
       }
       const { firstName, lastName, emails, tags, doNotContact, ...rest } = args.input;
-      const patch: ContactUpdate = { ...rest };
-      if (firstName !== undefined) patch.first_name = firstName;
-      if (lastName !== undefined) patch.last_name = lastName;
-      if (emails !== undefined) patch.emails = JSON.stringify(emails);
-      if (tags !== undefined) patch.tags = JSON.stringify(tags);
-      if (doNotContact !== undefined) patch.do_not_contact = doNotContact;
+      const patch: ContactUpdate = stripNulls({ ...rest });
+      if (firstName != null) patch.first_name = firstName;
+      if (lastName != null) patch.last_name = lastName;
+      if (emails != null) patch.emails = JSON.stringify(emails);
+      if (tags != null) patch.tags = JSON.stringify(tags);
+      if (doNotContact != null) patch.do_not_contact = doNotContact;
       // Re-classify whenever position changes
       if (args.input.position !== undefined) {
         const mlClassification = classifyContact(args.input.position);
