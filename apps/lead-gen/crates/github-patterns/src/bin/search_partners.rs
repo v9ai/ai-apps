@@ -6,7 +6,7 @@
 ///   3. **Repo search** — repos mentioning claude/anthropic/langchain → owner profiles
 ///   4. **User bio search** — supplementary keyword search (lowest signal, broadest net)
 ///
-/// All passes filter to EU + UK locations and score via partner_fitness.
+/// All passes score via partner_fitness (no location filter — global search).
 ///
 /// Environment variables:
 ///   GITHUB_TOKEN              GitHub PAT (required)
@@ -25,102 +25,6 @@ use github_patterns::{
     skills::extract_skills,
     GhClient, GhError,
 };
-
-// ── EU + UK locations (substring matched, case-insensitive) ──────────────────
-
-static EU_LOCATIONS: &[&str] = &[
-    "germany",
-    "united kingdom",
-    "uk",
-    "england",
-    "scotland",
-    "london",
-    "berlin",
-    "munich",
-    "amsterdam",
-    "netherlands",
-    "holland",
-    "france",
-    "paris",
-    "sweden",
-    "stockholm",
-    "ireland",
-    "dublin",
-    "spain",
-    "madrid",
-    "barcelona",
-    "poland",
-    "warsaw",
-    "krakow",
-    "wroclaw",
-    "romania",
-    "bucharest",
-    "switzerland",
-    "zurich",
-    "geneva",
-    "austria",
-    "vienna",
-    "belgium",
-    "brussels",
-    "denmark",
-    "copenhagen",
-    "finland",
-    "helsinki",
-    "portugal",
-    "lisbon",
-    "norway",
-    "oslo",
-    "czech",
-    "prague",
-    "italy",
-    "milan",
-    "rome",
-    "greece",
-    "athens",
-    "estonia",
-    "tallinn",
-    "lithuania",
-    "vilnius",
-    "latvia",
-    "riga",
-    "croatia",
-    "zagreb",
-    "bulgaria",
-    "sofia",
-    "hungary",
-    "budapest",
-    "luxembourg",
-    "düsseldorf",
-    "hamburg",
-    "frankfurt",
-    "cologne",
-    "stuttgart",
-    "dortmund",
-    "leeds",
-    "manchester",
-    "bristol",
-    "edinburgh",
-    "cambridge",
-    "oxford",
-    "lyon",
-    "toulouse",
-    "rotterdam",
-    "utrecht",
-    "eindhoven",
-    "gothenburg",
-    "malmö",
-    "helsinki",
-    "porto",
-    "lisbon",
-];
-
-fn is_eu_location(location: Option<&str>) -> bool {
-    let loc = match location {
-        Some(l) if !l.is_empty() => l.to_lowercase(),
-        _ => return false,
-    };
-    EU_LOCATIONS.iter().any(|eu| loc.contains(eu))
-}
 
 // ── Pass 1: Stargazer repos (highest intent) ────────────────────────────────
 
@@ -190,7 +94,7 @@ static REPO_SEARCH_QUERIES: &[&str] = &[
 // Only queries that returned results in prior runs. ~15 queries.
 
 static BIO_SEARCH: &[(&str, &str)] = &[
-    // "solution architect" — the one archetype that actually appears in GitHub bios
+    // Solution architects — EU
     ("\"solution architect\"", "Germany"),
     ("\"solution architect\"", "United Kingdom"),
     ("\"solution architect\"", "Netherlands"),
@@ -198,14 +102,40 @@ static BIO_SEARCH: &[(&str, &str)] = &[
     ("\"solution architect\"", "Switzerland"),
     ("\"solutions architect\"", "Germany"),
     ("\"solutions architect\"", "United Kingdom"),
-    // Senior AI roles
+    // Solution architects — global
+    ("\"solution architect\" AI", "United States"),
+    ("\"solution architect\" AI", "India"),
+    ("\"solution architect\" AI", "Canada"),
+    ("\"solution architect\" AI", "Australia"),
+    ("\"solution architect\" AI", "Brazil"),
+    // AI/ML engineers — global
+    ("\"AI engineer\"", "United States"),
+    ("\"AI engineer\"", "India"),
+    ("\"AI engineer\"", "Canada"),
+    ("\"ML engineer\"", "United States"),
+    ("\"ML engineer\"", "India"),
+    // Cloud architects — global
+    ("\"cloud architect\"", "United States"),
+    ("\"cloud architect\"", "India"),
+    // Senior AI roles — EU
     ("\"staff engineer\" AI", "Germany"),
     ("\"staff engineer\" AI", "United Kingdom"),
     ("\"principal engineer\" AI", "Germany"),
     ("\"principal engineer\" AI", "United Kingdom"),
+    // Senior AI roles — global
+    ("\"staff engineer\" AI", "United States"),
+    ("\"staff engineer\" AI", "India"),
+    ("\"technical consultant\" AI", "United States"),
+    ("\"data architect\"", "United States"),
+    // CTOs — global
     ("CTO AI", "Germany"),
     ("CTO AI", "United Kingdom"),
     ("CTO AI", "Netherlands"),
+    ("CTO AI", "United States"),
+    ("CTO AI", "India"),
+    // Machine learning engineers — global
+    ("\"machine learning engineer\"", "United States"),
+    ("\"machine learning engineer\"", "India"),
 ];
 
 // ── Batch insert config ─────────────────────────────────────────────────────
@@ -248,7 +178,7 @@ async fn main() -> anyhow::Result<()> {
     let top_n: usize = std::env::var("TOP_N")
         .ok()
         .and_then(|s| s.parse().ok())
-        .unwrap_or(100);
+        .unwrap_or(1000);
     let threshold: f32 = std::env::var("PARTNER_THRESHOLD")
         .ok()
         .and_then(|s| s.parse().ok())
@@ -281,6 +211,18 @@ async fn main() -> anyhow::Result<()> {
         "anthropic api language:python stars:>3",
         "claude-3 language:python stars:>2",
         "anthropic language:go stars:>3",
+        "anthropic language:ruby stars:>2",
+        "anthropic language:java stars:>3",
+        "claude api language:python stars:>2",
+        "anthropic language:rust stars:>2",
+        "openai anthropic language:python stars:>3",
+        "claude language:typescript stars:>3",
+        "claude language:jupyter-notebook stars:>1",
+        "anthropic langchain language:python stars:>1",
+        "claude-3 language:typescript stars:>2",
+        "anthropic agent language:python stars:>2",
+        "mcp server language:typescript stars:>2",
+        "mcp server language:python stars:>2",
     ];
     info!("═══ PASS 0: SDK dependency users ({} queries) ═══", SDK_QUERIES.len());
     {
@@ -309,9 +251,7 @@ async fn main() -> anyhow::Result<()> {
                 }
                 searched += 1;
 
-                if !is_eu_location(user.location.as_deref()) {
-                    continue;
-                }
+
 
                 let skill_text = format!(
                     "{} {} {}",
@@ -380,7 +320,7 @@ async fn main() -> anyhow::Result<()> {
 
             // Cap stargazer pages at 2 — low yield (~1%) after hobbyist filter,
             // and passes 2-4 need the remaining time budget.
-            for page in 1..=max_pages.min(2) {
+            for page in 1..=max_pages.min(5) {
                 let stars = match gh.repo_stargazers(owner, repo, 100, page).await {
                     Ok(s) => s,
                     Err(e) => {
@@ -486,9 +426,7 @@ async fn main() -> anyhow::Result<()> {
                 }
                 searched += 1;
 
-                if !is_eu_location(user.location.as_deref()) {
-                    continue;
-                }
+
 
                 let skill_text = format!(
                     "{} {} {}",
@@ -739,9 +677,6 @@ async fn hydrate_batch(
     let mut above_threshold = 0u32;
     let mut hobbyist_filtered = 0u32;
     for user in all_users {
-        if !is_eu_location(user.location.as_deref()) {
-            continue;
-        }
         eu_count += 1;
 
         let skill_text = format!(
