@@ -369,6 +369,7 @@ async fn main() -> anyhow::Result<()> {
                         &member.login,
                         threshold,
                         &format!("cpn:org/{org}"),
+                        false,
                     )
                     .await
                     {
@@ -445,6 +446,7 @@ async fn main() -> anyhow::Result<()> {
                         owner_login,
                         threshold,
                         &format!("cpn:repo-search/{query}"),
+                        false,
                     )
                     .await
                     {
