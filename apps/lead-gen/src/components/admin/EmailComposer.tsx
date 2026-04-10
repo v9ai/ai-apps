@@ -35,6 +35,8 @@ export interface EmailComposerProps {
   name?: string;
   companyName?: string;
   subject?: string;
+  /** Original email text for reply context — passed to AI generation */
+  replyContext?: string;
   onSuccess?: () => void;
 }
 
@@ -54,6 +56,7 @@ export function EmailComposer({
   name: nameProp = "",
   companyName = "",
   subject: subjectProp = "",
+  replyContext,
   onSuccess,
 }: EmailComposerProps) {
   // Form fields
@@ -125,6 +128,7 @@ export function EmailComposer({
     await generate({
       recipientName: name.trim() || "there",
       companyName: companyName.trim() || undefined,
+      recipientContext: replyContext || undefined,
     });
   }
 
