@@ -464,7 +464,7 @@ export function CompaniesList() {
           mb="2"
           style={{
             background: "var(--accent-2)",
-            borderRadius: 0,
+            borderRadius: 8,
             border: "1px solid var(--accent-6)",
           }}
         >
@@ -533,7 +533,7 @@ export function CompaniesList() {
                   height: 24,
                   objectFit: "contain",
                   marginRight: 10,
-                  borderRadius: 0,
+                  borderRadius: 4,
                   flexShrink: 0,
                 }}
               />

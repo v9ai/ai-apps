@@ -88,7 +88,7 @@ export function CompanySelect({ value, onChange, placeholder = "Select company..
                   }}
                   style={{
                     padding: "6px 8px",
-                    borderRadius: 0,
+                    borderRadius: 4,
                     cursor: "pointer",
                     backgroundColor: company.id === value ? "var(--accent-3)" : undefined,
                   }}
