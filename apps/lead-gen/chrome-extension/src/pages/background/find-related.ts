@@ -8,15 +8,26 @@ import {
   isTabAlive,
   safeTabUpdate,
   safeSendMessage,
+  scrollToBottom,
 } from "./tab-utils";
 import {
   extractCompanyData,
   countRemoteJobs,
+  countRemoteJobsVoyagerFirst,
   saveCompanyBatch,
   type RemoteJobsResult,
 } from "./company-browsing";
 
 const MAX_COMPANIES = 150;
+const SAVE_BATCH_SIZE = 10;
+const MAX_LOG_LINES_IN_OVERLAY = 80;
+
+// ── Cancellation ────────────────────────────────────────────────────
+let findRelatedCancelled = false;
+
+export function setFindRelatedCancelled(value: boolean) {
+  findRelatedCancelled = value;
+}
 
 // Click "Show all" in the "Pages people also viewed" section (if present).
 function clickShowAllSimilar(tabId: number): Promise<boolean> {
@@ -84,9 +95,14 @@ function scrapeModalCompanyUrls(tabId: number): Promise<string[]> {
           return [];
         }
 
-        // Scroll modal content to trigger lazy-loading
+        // Scroll modal content incrementally to trigger lazy-loading
         const scrollable = modal.querySelector(".artdeco-modal__content") || modal;
-        (scrollable as HTMLElement).scrollTop = (scrollable as HTMLElement).scrollHeight;
+        const el = scrollable as HTMLElement;
+        const step = 500;
+        for (let pos = 0; pos < el.scrollHeight; pos += step) {
+          el.scrollTop = pos;
+        }
+        el.scrollTop = el.scrollHeight;
 
         const links: string[] = [];
         modal.querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]').forEach((a) => {
@@ -215,6 +231,11 @@ function injectCrawlOverlay(
     logText?: string;
   },
 ): Promise<void> {
+  // Cap log text to last N lines to avoid passing megabytes to DOM
+  const cappedLog = status.logText
+    ? status.logText.split("\n").slice(-MAX_LOG_LINES_IN_OVERLAY).join("\n")
+    : "";
+
   return chrome.scripting
     .executeScript({
       target: { tabId },
@@ -284,7 +305,7 @@ function injectCrawlOverlay(
           document.head.appendChild(style);
         }
       },
-      args: [status],
+      args: [{ ...status, logText: cappedLog }],
     })
     .then(() => {})
     .catch(() => {});
@@ -313,7 +334,7 @@ function normalizeCompanyUrl(url: string): string {
 function downloadCrawlLog(data: {
   seedUrl: string;
   companySlug: string;
-  stats: { saved: number; skipped: number; targets: number; filtered: number; visited: number; duration_ms: number; totalRemoteJobs?: number };
+  stats: { saved: number; skipped: number; targets: number; filtered: number; visited: number; duration_ms: number; totalRemoteJobs?: number; cancelled?: boolean };
   entries: string[];
 }) {
   const json = JSON.stringify({
@@ -331,7 +352,36 @@ function downloadCrawlLog(data: {
   });
 }
 
+/** Build the company payload for saving — shared between find-related and browse-companies. */
+function buildCompanyPayload(data: {
+  name: string;
+  website: string;
+  description: string;
+  industry: string;
+  size: string;
+  location: string;
+  linkedinUrl: string;
+}, remoteJobCount: number) {
+  const jobLabel = remoteJobCount > 0 ? `Remote Jobs: ${remoteJobCount}` : "";
+  return {
+    name: data.name,
+    website: data.website || undefined,
+    linkedin_url: data.linkedinUrl || undefined,
+    description: [
+      data.description,
+      data.industry ? `Industry: ${data.industry}` : "",
+      data.size ? `Size: ${data.size}` : "",
+      jobLabel,
+    ]
+      .filter(Boolean)
+      .join("\n") || undefined,
+    location: data.location || undefined,
+    industry: data.industry || undefined,
+  };
+}
+
 export async function findRelatedCompanies(tabId: number) {
+  findRelatedCancelled = false;
   const crawlLog: string[] = [];
   const crawlT0 = Date.now();
   let crawlSlug = "unknown";
@@ -383,6 +433,22 @@ export async function findRelatedCompanies(tabId: number) {
     let targets = 0;
     let totalRemoteJobs = 0;
 
+    // Batch accumulator
+    const pendingBatch: Array<{
+      name: string;
+      website?: string;
+      linkedin_url?: string;
+      description?: string;
+      location?: string;
+      industry?: string;
+    }> = [];
+
+    async function flushBatch(): Promise<number> {
+      if (pendingBatch.length === 0) return 0;
+      const batch = pendingBatch.splice(0);
+      return saveCompanyBatch(batch);
+    }
+
     // Mark seed as visited (don't re-scrape the page we started on)
     visited.add(normalizeCompanyUrl(seedUrl));
 
@@ -394,15 +460,7 @@ export async function findRelatedCompanies(tabId: number) {
     }
 
     // Scroll to load lazy content
-    for (let i = 0; i < 3; i++) {
-      if (!(await isTabAlive(tabId))) return;
-      await chrome.scripting.executeScript({
-        target: { tabId },
-        world: "MAIN",
-        func: () => window.scrollTo(0, document.body.scrollHeight),
-      }).catch(() => {});
-      await randomDelay(2500);
-    }
+    await scrollToBottom(tabId, 3, 2500);
 
     const seedUrls = await extractSimilarCompanyUrls(tabId);
     for (const url of seedUrls) {
@@ -428,6 +486,15 @@ export async function findRelatedCompanies(tabId: number) {
     // Only saved + skipped (dupes) count toward MAX_COMPANIES.
     // Non-recruitment companies are "filtered" and don't count — we want N recruitment companies.
     while (queue.length > 0 && (saved + skipped) < MAX_COMPANIES) {
+      // ── Cancellation check ──
+      if (findRelatedCancelled) {
+        log("[FindRelated] Cancelled by user");
+        // Flush remaining batch
+        const flushed = await flushBatch();
+        saved += flushed;
+        break;
+      }
+
       if (!(await isTabAlive(tabId))) {
         logWarn("[FindRelated] Tab closed during BFS crawl, stopping");
         break;
@@ -435,7 +502,7 @@ export async function findRelatedCompanies(tabId: number) {
 
       const url = queue.shift()!;
 
-      // a) Navigate to /about/ and scrape company data
+      // a) Navigate to /about/ — scrape company data AND discover related companies
       const aboutUrl = url.replace(/\/$/, "") + "/about/";
       const urlSlug = url.match(/\/company\/([^/]+)/)?.[1] || "loading...";
       await safeTabUpdate(tabId, { url: aboutUrl });
@@ -456,12 +523,12 @@ export async function findRelatedCompanies(tabId: number) {
           log(`[FindRelated] SKIP ${data.name} — ${icp.reason} (industry: ${data.industry}) (queued: ${queue.length})`);
           await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: `⊘ ${data.name} [${icp.reason}]`, phase: "saving", logText: crawlLog.join("\n") });
         } else {
-          // Check remote job postings for ICP-matching companies (boost signal, not a gate)
-          let remoteJobCount = -1; // -1 = not checked
+          // Check remote jobs via Voyager API first (no tab navigation needed)
+          let remoteJobCount = -1;
           let jobStatus: RemoteJobsResult["status"] = "ok";
           if (data.linkedinNumericId) {
             log(`[FindRelated] Checking remote jobs for ${data.name} (ID: ${data.linkedinNumericId})...`);
-            const jobResult = await countRemoteJobs(tabId, data.linkedinNumericId);
+            const jobResult = await countRemoteJobsVoyagerFirst(tabId, data.linkedinNumericId);
             remoteJobCount = jobResult.count;
             jobStatus = jobResult.status;
             totalRemoteJobs += Math.max(0, remoteJobCount);
@@ -478,23 +545,8 @@ export async function findRelatedCompanies(tabId: number) {
             log(`[FindRelated] ⚠️⚠️ No numeric ID for ${data.name} — ALL 3 extraction strategies failed, SKIPPING remote job check`);
           }
 
-          // Build company object and save
-          const jobLabel = remoteJobCount > 0 ? `Remote Jobs: ${remoteJobCount}` : "";
-          const company = {
-            name: data.name,
-            website: data.website || undefined,
-            linkedin_url: data.linkedinUrl || undefined,
-            description: [
-              data.description,
-              data.industry ? `Industry: ${data.industry}` : "",
-              data.size ? `Size: ${data.size}` : "",
-              jobLabel,
-            ]
-              .filter(Boolean)
-              .join("\n") || undefined,
-            location: data.location || undefined,
-            industry: data.industry || undefined,
-          };
+          // Build company object and add to batch
+          const company = buildCompanyPayload(data, Math.max(0, remoteJobCount));
 
           const overlayJobText = remoteJobCount > 0
             ? `${remoteJobCount} jobs`
@@ -505,54 +557,57 @@ export async function findRelatedCompanies(tabId: number) {
           const overlayName = (suffix: string) =>
             overlayJobText ? `🎯 ${suffix} ${data.name} (${overlayJobText})` : `🎯 ${suffix} ${data.name}`;
 
-          const result = await saveCompanyBatch([company]);
-          if (result > 0) {
-            saved += result;
-            targets++;
-            log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${overlayName("✓")} SAVED (queued: ${queue.length})`);
+          pendingBatch.push(company);
+
+          // Flush batch when it reaches SAVE_BATCH_SIZE
+          if (pendingBatch.length >= SAVE_BATCH_SIZE) {
+            const batchResult = await flushBatch();
+            const newSaved = batchResult;
+            const newSkipped = SAVE_BATCH_SIZE - batchResult;
+            saved += newSaved;
+            skipped += newSkipped;
+            targets += SAVE_BATCH_SIZE;
+            log(`[FindRelated] Batch flushed: ${newSaved} saved, ${newSkipped} dupes (total: ${saved}/${MAX_COMPANIES})`);
             await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: overlayName("✓"), phase: "saving", logText: crawlLog.join("\n") });
           } else {
-            skipped++;
-            targets++;
-            log(`[FindRelated] ${saved + skipped}/${MAX_COMPANIES}: ${overlayName("⊘")} ALREADY EXISTS (queued: ${queue.length})`);
-            await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: overlayName("⊘"), phase: "saving", logText: crawlLog.join("\n") });
+            // Optimistic display — show as pending
+            await injectCrawlOverlay(tabId, { saved, skipped, targets: targets + 1, filtered, queued: queue.length, name: overlayName("…"), phase: "saving", logText: crawlLog.join("\n") });
           }
         }
 
         // Send progress (will only reach content script if on same origin)
         safeSendMessage(tabId, {
           action: "findRelatedProgress",
-          current: saved,
+          current: saved + pendingBatch.length,
           total: MAX_COMPANIES,
           name: data.name,
           queued: queue.length,
           skipped,
-          targets,
+          targets: targets + pendingBatch.length,
           filtered,
         }).catch(() => {});
       }
 
-      // d) Discover new related companies from THIS page (always, even for non-recruitment)
-      if ((saved + skipped) < MAX_COMPANIES && (await isTabAlive(tabId))) {
-        // Navigate to main company page (strip /about/)
-        const mainUrl = url.replace(/\/$/, "") + "/";
-        await safeTabUpdate(tabId, { url: mainUrl });
-        await waitForTabLoad(tabId);
-        await randomDelay(2000);
+      // d) Discover new related companies from THIS page (the /about/ page)
+      //    Try sidebar/modal extraction here first to avoid navigating to main page
+      if ((saved + skipped + pendingBatch.length) < MAX_COMPANIES && (await isTabAlive(tabId)) && !findRelatedCancelled) {
         await injectCrawlOverlay(tabId, { saved, skipped, targets, filtered, queued: queue.length, name: data?.name || urlSlug, phase: "discovering", logText: crawlLog.join("\n") });
 
-        // Scroll to load lazy content
-        for (let i = 0; i < 3; i++) {
-          if (!(await isTabAlive(tabId))) break;
-          await chrome.scripting.executeScript({
-            target: { tabId },
-            world: "MAIN",
-            func: () => window.scrollTo(0, document.body.scrollHeight),
-          }).catch(() => {});
-          await randomDelay(2500);
+        // Scroll to load lazy content on /about/ page
+        await scrollToBottom(tabId, 2, 2000);
+
+        let newUrls = await extractSimilarCompanyUrls(tabId);
+
+        // If /about/ page had no related companies, try main page as fallback
+        if (newUrls.length === 0) {
+          const mainUrl = url.replace(/\/$/, "") + "/";
+          await safeTabUpdate(tabId, { url: mainUrl });
+          await waitForTabLoad(tabId);
+          await randomDelay(2000);
+          await scrollToBottom(tabId, 3, 2500);
+          newUrls = await extractSimilarCompanyUrls(tabId);
         }
 
-        const newUrls = await extractSimilarCompanyUrls(tabId);
         let newCount = 0;
         for (const newUrl of newUrls) {
           const norm = normalizeCompanyUrl(newUrl);
@@ -570,14 +625,25 @@ export async function findRelatedCompanies(tabId: number) {
       await randomDelay(1500);
     }
 
+    // ── Flush remaining batch ─────────────────────────────────────────
+    if (pendingBatch.length > 0) {
+      const remaining = pendingBatch.length;
+      const batchResult = await flushBatch();
+      saved += batchResult;
+      skipped += (remaining - batchResult);
+      targets += remaining;
+      log(`[FindRelated] Final batch flushed: ${batchResult} saved, ${remaining - batchResult} dupes`);
+    }
+
     // ── After loop ─────────────────────────────────────────────────────
-    log(`[FindRelated] Crawl complete. saved=${saved}, skipped=${skipped}, filtered=${filtered}, visited=${visited.size}, queue_remaining=${queue.length}`);
+    const wasCancelled = findRelatedCancelled;
+    log(`[FindRelated] Crawl ${wasCancelled ? "cancelled" : "complete"}. saved=${saved}, skipped=${skipped}, filtered=${filtered}, visited=${visited.size}, queue_remaining=${queue.length}`);
 
     // Download crawl log
     downloadCrawlLog({
       seedUrl: crawlSeedUrl,
       companySlug: crawlSlug,
-      stats: { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0, totalRemoteJobs },
+      stats: { saved, skipped, targets, filtered, visited: visited.size, duration_ms: Date.now() - crawlT0, totalRemoteJobs, cancelled: wasCancelled },
       entries: crawlLog,
     });
 
@@ -600,6 +666,7 @@ export async function findRelatedCompanies(tabId: number) {
       filtered,
       targets,
       found: visited.size - 1, // exclude seed
+      cancelled: wasCancelled,
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);

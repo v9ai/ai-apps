@@ -5,7 +5,7 @@ import { startKeepAlive, stopKeepAlive } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled } from "./profile-browsing";
 import { browseCompanies, setCompanyCancelled } from "./company-browsing";
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
-import { findRelatedCompanies } from "./find-related";
+import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {

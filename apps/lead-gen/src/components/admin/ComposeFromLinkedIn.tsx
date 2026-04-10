@@ -418,7 +418,7 @@ export function ComposeFromLinkedIn({
                 style={{
                   background: "var(--green-a2)",
                   border: "1px solid var(--green-a5)",
-                  borderRadius: 0,
+                  borderRadius: 6,
                   padding: "var(--space-3)",
                 }}
               >

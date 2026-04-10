@@ -290,7 +290,7 @@ export function GenerateAndSendBatchEmailModal({
                       key={email.contactId}
                       style={{
                         border: "1px solid var(--gray-a5)",
-                        borderRadius: 0,
+                        borderRadius: 6,
                         padding: "var(--space-3)",
                       }}
                     >

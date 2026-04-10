@@ -45,12 +45,123 @@ function createApolloClient() {
                 };
               },
             },
+            companies: {
+              keyArgs: ["filter", "order_by"],
+              merge(existing, incoming, { args }) {
+                if (!incoming) return existing;
+                if (!existing || !args?.offset) {
+                  return incoming;
+                }
+                return {
+                  ...incoming,
+                  companies: [...existing.companies, ...incoming.companies],
+                };
+              },
+            },
+            contacts: {
+              keyArgs: ["companyId", "search"],
+              merge(existing, incoming, { args }) {
+                if (!incoming) return existing;
+                if (!existing || !args?.offset) {
+                  return incoming;
+                }
+                return {
+                  ...incoming,
+                  contacts: [...existing.contacts, ...incoming.contacts],
+                };
+              },
+            },
+            emailCampaigns: {
+              keyArgs: ["status"],
+              merge(existing, incoming, { args }) {
+                if (!incoming) return existing;
+                if (!existing || !args?.offset) {
+                  return incoming;
+                }
+                return {
+                  ...incoming,
+                  campaigns: [...existing.campaigns, ...incoming.campaigns],
+                };
+              },
+            },
+            emailTemplates: {
+              keyArgs: ["category"],
+              merge(existing, incoming, { args }) {
+                if (!incoming) return existing;
+                if (!existing || !args?.offset) {
+                  return incoming;
+                }
+                return {
+                  ...incoming,
+                  templates: [...existing.templates, ...incoming.templates],
+                };
+              },
+            },
+            receivedEmails: {
+              keyArgs: ["archived", "classification"],
+              merge(existing, incoming, { args }) {
+                if (!incoming) return existing;
+                if (!existing || !args?.offset) {
+                  return incoming;
+                }
+                return {
+                  ...incoming,
+                  emails: [...existing.emails, ...incoming.emails],
+                };
+              },
+            },
+            emailsNeedingFollowUp: {
+              keyArgs: false,
+              merge(existing, incoming, { args }) {
+                if (!incoming) return existing;
+                if (!existing || !args?.offset) {
+                  return incoming;
+                }
+                return {
+                  ...incoming,
+                  emails: [...existing.emails, ...incoming.emails],
+                };
+              },
+            },
           },
         },
         Job: {
           keyFields: ["id"],
         },
         Company: {
+          keyFields: ["id"],
+        },
+        Contact: {
+          keyFields: ["id"],
+        },
+        EmailCampaign: {
+          keyFields: ["id"],
+        },
+        EmailTemplate: {
+          keyFields: ["id"],
+        },
+        ReceivedEmail: {
+          keyFields: ["id"],
+        },
+        CompanyFact: {
+          keyFields: ["id"],
+        },
+        CompanySnapshot: {
+          keyFields: ["id"],
+        },
+        IntentSignal: {
+          keyFields: ["id"],
+        },
+        LinkedInPost: {
+          keyFields: ["id"],
+        },
+        UserSettings: {
+          keyFields: ["id"],
+        },
+        ContactEmail: {
+          keyFields: ["id"],
+        },
+        FollowUpEmail: {
           keyFields: ["id"],
         },
       },

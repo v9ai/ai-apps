@@ -119,12 +119,18 @@ export const WEIGHTS_INT8 = new Int8Array(
 const WEIGHTS_F32 = new Float32Array(FEATURE_KEYS.map((k) => WEIGHTS[k]));
 
 // ── Sigmoid look-up table with linear interpolation ─────────────────────
-// Maps input range [-8, 8] to sigmoid values. 256 entries.
-const SIGMOID_LUT_SIZE = 256;
+// Optimization: expanded from 256 to 1024 entries to reduce interpolation
+// error (~16x lower max error) and eliminate branch misprediction from
+// coarse-grained LUT misses. Float64Array gives better precision for the
+// pre-computed values; the LUT lookup itself is still fast since 1024
+// entries fit comfortably in L1 cache (~8KB).
+const SIGMOID_LUT_SIZE = 1024;
 const SIGMOID_LUT_MIN = -8;
 const SIGMOID_LUT_MAX = 8;
 const SIGMOID_LUT_RANGE = SIGMOID_LUT_MAX - SIGMOID_LUT_MIN;
-export const SIGMOID_LUT = new Float32Array(SIGMOID_LUT_SIZE);
+// Pre-compute scale factor once to avoid division in hot path
+const SIGMOID_LUT_INV_RANGE = (SIGMOID_LUT_SIZE - 1) / SIGMOID_LUT_RANGE;
+export const SIGMOID_LUT = new Float64Array(SIGMOID_LUT_SIZE);
 for (let i = 0; i < SIGMOID_LUT_SIZE; i++) {
   const x = SIGMOID_LUT_MIN + (i / (SIGMOID_LUT_SIZE - 1)) * SIGMOID_LUT_RANGE;
   SIGMOID_LUT[i] = 1 / (1 + Math.exp(-x));
@@ -133,15 +139,18 @@ for (let i = 0; i < SIGMOID_LUT_SIZE; i++) {
 /**
  * Fast sigmoid using LUT with linear interpolation.
  * For inputs outside [-8, 8], clamps to 0 or 1.
+ *
+ * Optimization: pre-computed inverse range avoids division per call;
+ * 1024 entries means interpolation frac is small, reducing error.
  */
 export function sigmoidFast(x: number): number {
-  if (x <= SIGMOID_LUT_MIN) return SIGMOID_LUT[0]!;
-  if (x >= SIGMOID_LUT_MAX) return SIGMOID_LUT[SIGMOID_LUT_SIZE - 1]!;
-  const t = ((x - SIGMOID_LUT_MIN) / SIGMOID_LUT_RANGE) * (SIGMOID_LUT_SIZE - 1);
+  if (x <= SIGMOID_LUT_MIN) return 0;
+  if (x >= SIGMOID_LUT_MAX) return 1;
+  const t = (x - SIGMOID_LUT_MIN) * SIGMOID_LUT_INV_RANGE;
   const idx = t | 0; // floor via bitwise OR
   const frac = t - idx;
   // Linear interpolation between adjacent LUT entries
-  return SIGMOID_LUT[idx]! * (1 - frac) + SIGMOID_LUT[idx + 1]! * frac;
+  return SIGMOID_LUT[idx]! + frac * (SIGMOID_LUT[idx + 1]! - SIGMOID_LUT[idx]!);
 }
 
 /**

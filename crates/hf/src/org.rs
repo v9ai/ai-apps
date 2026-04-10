@@ -2087,4 +2087,108 @@ tags:
             extra: serde_json::Value::Null,
         }
     }
+
+    // ── Similarity helper tests ────────────────────────────────────
+
+    #[test]
+    fn jaccard_identical_sets() {
+        let a: HashSet<String> = ["a", "b"].iter().map(|s| s.to_string()).collect();
+        assert!((jaccard(&a, &a) - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn jaccard_disjoint_sets() {
+        let a: HashSet<String> = ["a", "b"].iter().map(|s| s.to_string()).collect();
+        let b: HashSet<String> = ["c", "d"].iter().map(|s| s.to_string()).collect();
+        assert!((jaccard(&a, &b)).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn jaccard_empty_sets() {
+        let empty: HashSet<String> = HashSet::new();
+        assert!((jaccard(&empty, &empty)).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn jaccard_partial_overlap() {
+        let a: HashSet<String> = ["a", "b", "c"].iter().map(|s| s.to_string()).collect();
+        let b: HashSet<String> = ["b", "c", "d"].iter().map(|s| s.to_string()).collect();
+        // intersection = {b,c} = 2, union = {a,b,c,d} = 4 => 0.5
+        assert!((jaccard(&a, &b) - 0.5).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn is_domain_tag_filters_noise() {
+        assert!(!is_domain_tag("license:mit"));
+        assert!(!is_domain_tag("region:us"));
+        assert!(!is_domain_tag("language:en"));
+        assert!(!is_domain_tag("arxiv:2301.12345"));
+        assert!(!is_domain_tag("safetensors"));
+        assert!(!is_domain_tag("pytorch"));
+        assert!(!is_domain_tag("transformers"));
+        assert!(!is_domain_tag("generated_from_trainer"));
+        assert!(!is_domain_tag("dataset:squad"));
+    }
+
+    #[test]
+    fn is_domain_tag_keeps_domain_tags() {
+        assert!(is_domain_tag("sentence-transformers"));
+        assert!(is_domain_tag("skill-extraction"));
+        assert!(is_domain_tag("ner"));
+        assert!(is_domain_tag("bert"));
+        assert!(is_domain_tag("feature-extraction"));
+    }
+
+    #[test]
+    fn fingerprint_extracts_correctly() {
+        let mut repo = make_dummy_repo();
+        repo.pipeline_tag = Some("sentence-similarity".into());
+        repo.library = Some("sentence-transformers".into());
+        repo.tags = Some(vec![
+            "sentence-transformers".into(),
+            "license:mit".into(),
+            "skill-extraction".into(),
+            "pytorch".into(),
+        ]);
+
+        let mut dataset = make_dummy_repo();
+        dataset.repo_id = Some("org/skill-extraction-data".into());
+        dataset.tags = Some(vec!["task_categories:token-classification".into()]);
+
+        let profile = OrgProfile {
+            org_name: "testorg".into(),
+            models: vec![repo],
+            datasets: vec![dataset],
+            spaces: vec![],
+            total_downloads: 1000,
+            libraries_used: vec![("sentence-transformers".into(), 1)],
+            pipeline_tags: vec![("sentence-similarity".into(), 1)],
+            training_signals: vec![],
+            arxiv_links: vec![],
+            model_configs: HashMap::new(),
+            model_maturity: vec![],
+            sales_signals: vec![],
+        };
+
+        let fp = OrgScanner::fingerprint(&profile);
+        assert_eq!(fp.org_name, "testorg");
+        assert!(fp.pipeline_tags.contains("sentence-similarity"));
+        assert!(fp.libraries.contains("sentence-transformers"));
+        assert!(fp.domain_tags.contains("skill-extraction"));
+        assert!(fp.domain_tags.contains("sentence-transformers"));
+        assert!(!fp.domain_tags.contains("license:mit"));
+        assert!(!fp.domain_tags.contains("pytorch"));
+        assert!(fp.dataset_keywords.contains("skill"));
+        assert!(fp.dataset_keywords.contains("extraction"));
+    }
+
+    #[test]
+    fn similar_org_options_defaults() {
+        let opts = SimilarOrgOptions::default();
+        assert_eq!(opts.per_query_limit, 200);
+        assert_eq!(opts.max_results, 50);
+        assert!((opts.min_score - 0.05).abs() < f32::EPSILON);
+        assert_eq!(opts.min_downloads, 100);
+        assert!(opts.exclude_orgs.is_empty());
+    }
 }

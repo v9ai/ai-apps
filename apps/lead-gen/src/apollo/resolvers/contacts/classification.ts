@@ -235,8 +235,8 @@ export function computeDeletionScore(
   }
 
   // Factor 6 -- DNC flag (0.08)
-  const isDnc = (contact.do_not_contact as unknown) === true || (contact.do_not_contact as unknown) === 1;
-  if (isDnc) {
+  // Drizzle/Neon returns real booleans for boolean columns
+  if (contact.do_not_contact) {
     score += 0.08;
     reasons.push("Marked do-not-contact");
   }
