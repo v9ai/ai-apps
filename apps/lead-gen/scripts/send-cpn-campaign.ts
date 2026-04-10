@@ -125,6 +125,34 @@ async function main() {
     return;
   }
 
+  // ── Preview first 3 ────────────────────────────────────────────
+  for (const row of rows.slice(0, 3)) {
+    const { subject, text } = buildEmail(row);
+    console.log(`─── ${row.email} ───`);
+    console.log(`Subject: ${subject}`);
+    console.log(text);
+    console.log();
+  }
+
+  // ── 10-minute safety countdown ─────────────────────────────────
+  let aborted = false;
+  const onSigint = () => {
+    aborted = true;
+    console.log("\n\n  Aborted. No emails were sent.\n");
+    process.exit(0);
+  };
+  process.on("SIGINT", onSigint);
+
+  console.log("  Starting 10-minute safety countdown. Press Ctrl+C to abort.\n");
+  for (let min = 10; min > 0; min--) {
+    console.log(`  Sending in ${min} minute${min > 1 ? "s" : ""}...`);
+    await sleep(60_000);
+    if (aborted) return;
+  }
+  process.removeListener("SIGINT", onSigint);
+
+  console.log("\n  Countdown complete. Sending...\n");
+
   const resend = new Resend(apiKey);
   let sent = 0;
   let failed = 0;
