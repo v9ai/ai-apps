@@ -70,6 +70,87 @@ function extractInlineStyles(html: string): { cleanHtml: string; css: string } |
   return { cleanHtml, css: rules.join("\n\n") };
 }
 
+const SEMANTIC_TAGS = new Set([
+  "nav", "aside", "main", "header", "footer", "section", "article",
+  "form", "button", "table", "thead", "tbody", "ul", "ol", "li",
+  "a", "label", "input", "textarea", "select", "blockquote",
+]);
+
+function inferClassName(
+  tag: string,
+  style: string,
+  text: string,
+  counters: Map<string, number>,
+): string {
+  const clean = text.trim().replace(/[^a-zA-Z0-9 ]/g, "").trim();
+  const words = clean.split(/\s+/).filter(Boolean);
+  let base: string;
+
+  if (clean.length >= 2 && words.length <= 3 && /^[a-zA-Z]/.test(clean)) {
+    base = clean.toLowerCase().replace(/\s+/g, "-");
+  } else if (tag !== "div" && tag !== "span" && SEMANTIC_TAGS.has(tag)) {
+    base = tag;
+  } else if (clean.length === 1 && /^[a-zA-Z]$/.test(clean)) {
+    base = `item-${clean.toLowerCase()}`;
+  } else {
+    const s = style.toLowerCase();
+    if (/display\s*:\s*grid/.test(s)) base = "grid";
+    else if (/display\s*:\s*flex/.test(s)) base = "container";
+    else if (/position\s*:\s*fixed/.test(s)) base = "overlay";
+    else if (/position\s*:\s*absolute/.test(s)) base = "badge";
+    else if (s.includes("border") && s.includes("border-radius") && s.includes("padding")) base = "card";
+    else base = "box";
+  }
+
+  const count = (counters.get(base) || 0) + 1;
+  counters.set(base, count);
+  return count === 1 ? base : `${base}-${count}`;
+}
+
+/** Rename generic sN class names to meaningful semantic names */
+function semanticRenameClasses(html: string, css: string): { html: string; css: string } {
+  if (!/\.s\d+\b/.test(css)) return { html, css };
+
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  const scanRe = /\.(s\d+)\b/g;
+  let m;
+  while ((m = scanRe.exec(css)) !== null) {
+    if (!seen.has(m[1])) { seen.add(m[1]); ordered.push(m[1]); }
+  }
+  if (ordered.length === 0) return { html, css };
+
+  const nameMap = new Map<string, string>();
+  const counters = new Map<string, number>();
+
+  for (const cls of ordered) {
+    const htmlRe = new RegExp(`<(\\w+)[^>]*\\bclass="${cls}"[^>]*>([^<]*)`, "s");
+    const htmlMatch = htmlRe.exec(html);
+    const tag = htmlMatch?.[1] || "div";
+    const text = htmlMatch?.[2] || "";
+
+    const cssBlockRe = new RegExp(`\\.${cls}\\s*\\{([^}]*)\\}`, "s");
+    const cssMatch = cssBlockRe.exec(css);
+    const styleText = cssMatch?.[1] || "";
+
+    nameMap.set(cls, inferClassName(tag, styleText, text, counters));
+  }
+
+  const renamedCss = css.replace(/\.s(\d+)\b/g, (match, num: string) => {
+    const name = nameMap.get(`s${num}`);
+    return name ? `.${name}` : match;
+  });
+
+  const renamedHtml = html.replace(/class="([^"]*)"/g, (match, classValue: string) => {
+    const renamed = classValue.replace(/\bs(\d+)\b/g, (_: string, num: string) => {
+      return nameMap.get(`s${num}`) || `s${num}`;
+    });
+    return `class="${renamed}"`;
+  });
+
+  return { html: renamedHtml, css: renamedCss };
+}
+
 const CodePanel = memo(function CodePanel({ lang, code }: { lang: string; code: string }) {
   return (
     <div className="code-block-wrapper">

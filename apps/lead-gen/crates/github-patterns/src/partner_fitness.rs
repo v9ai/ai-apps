@@ -136,6 +136,8 @@ pub struct PartnerFitness {
     pub archetypes: Vec<&'static str>,
     /// Whether the user's company matches a known consulting/SI firm.
     pub is_consulting_company: bool,
+    /// Whether the user starred an Anthropic / Claude ecosystem repo.
+    pub starred_anthropic: bool,
     /// 0.0–1.0 seniority signal from account metrics.
     pub seniority_signal: f32,
     /// 0.0–1.0 AI depth from skill tag overlap.
