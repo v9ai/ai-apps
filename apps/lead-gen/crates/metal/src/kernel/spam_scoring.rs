@@ -25,6 +25,13 @@ pub struct KeywordMatch {
     pub length: usize,
 }
 
+/// An output entry: a pattern that terminates at a given node.
+#[derive(Clone, Copy)]
+struct AcOutput {
+    pattern_idx: u32,
+    pattern_len: u16,
+}
+
 /// Trie node for the Aho-Corasick automaton.
 #[derive(Clone)]
 struct AcNode {
@@ -32,10 +39,10 @@ struct AcNode {
     children: [u32; 256],
     /// Failure link: node to jump to on mismatch (like KMP for tries).
     fail: u32,
-    /// If this node terminates a pattern, stores (pattern_idx, pattern_len).
-    /// Uses u32::MAX as sentinel for "no output".
-    output_pattern_idx: u32,
-    output_pattern_len: u16,
+    /// All patterns that terminate at this node (supports duplicate strings
+    /// inserted with different pattern indices, e.g. "urgent" in both
+    /// SPAM_KEYWORDS and URGENCY_KEYWORDS).
+    outputs: Vec<AcOutput>,
     /// Dictionary suffix link: next node in the chain that also has output.
     dict_suffix: u32,
 }
@@ -45,15 +52,14 @@ impl AcNode {
         Self {
             children: [u32::MAX; 256],
             fail: 0,
-            output_pattern_idx: u32::MAX,
-            output_pattern_len: 0,
+            outputs: Vec::new(),
             dict_suffix: u32::MAX,
         }
     }
 
     #[inline]
     fn has_output(&self) -> bool {
-        self.output_pattern_idx != u32::MAX
+        !self.outputs.is_empty()
     }
 }
 
@@ -101,9 +107,11 @@ pub fn build_keyword_automaton(patterns: &[&str]) -> SpamKeywordAutomaton {
                 current = child;
             }
         }
-        // Mark terminal node with pattern info.
-        nodes[current as usize].output_pattern_idx = pat_idx as u32;
-        nodes[current as usize].output_pattern_len = pattern.len() as u16;
+        // Mark terminal node with pattern info (supports multiple patterns per node).
+        nodes[current as usize].outputs.push(AcOutput {
+            pattern_idx: pat_idx as u32,
+            pattern_len: pattern.len() as u16,
+        });
     }
 
     // Phase 2: Build failure links via BFS (breadth-first from root children).

@@ -33,6 +33,9 @@ export const emailTemplateResolvers = {
       args: { category?: string; limit?: number; offset?: number },
       context: GraphQLContext,
     ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
       const limit = Math.min(args.limit ?? 50, 200);
       const offset = args.offset ?? 0;
 
@@ -58,6 +61,9 @@ export const emailTemplateResolvers = {
     },
 
     async emailTemplate(_parent: unknown, args: { id: number }, context: GraphQLContext) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
       const rows = await context.db
         .select()
         .from(emailTemplates)

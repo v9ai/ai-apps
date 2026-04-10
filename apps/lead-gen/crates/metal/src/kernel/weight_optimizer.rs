@@ -868,4 +868,251 @@ mod tests {
         save_result(&result, &nested).expect("save_result with nested dirs");
         assert!(nested.exists(), "JSON file should exist after save");
     }
+
+    // ── MomentumSGD ──────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_momentum_sgd_step_moves_weights() {
+        let mut opt = MomentumSGD::new(7, 0.1, 0.9, 0.0);
+        let grad = vec![1.0, -1.0, 0.5, -0.5, 0.2, -0.2, 0.0];
+        opt.step(&grad);
+
+        // Weights should have moved in the opposite direction of gradients.
+        assert!(opt.weights[0] < 0.0, "w[0] should be negative after positive gradient");
+        assert!(opt.weights[1] > 0.0, "w[1] should be positive after negative gradient");
+        assert!((opt.weights[6] - 0.0).abs() < 1e-9, "w[6] should stay at 0 with zero gradient");
+    }
+
+    #[test]
+    fn test_momentum_sgd_velocity_accumulates() {
+        let mut opt = MomentumSGD::new(4, 0.1, 0.9, 0.0);
+        let grad = vec![1.0; 4];
+
+        opt.step(&grad);
+        let v_after_1 = opt.velocity.clone();
+        opt.step(&grad);
+
+        // After two steps with constant gradient, velocity magnitude should increase.
+        for i in 0..4 {
+            assert!(
+                opt.velocity[i].abs() > v_after_1[i].abs(),
+                "velocity[{i}] should grow with consistent gradient direction"
+            );
+        }
+    }
+
+    #[test]
+    fn test_momentum_sgd_l2_regularization() {
+        // Start with large weights, zero gradient — L2 should pull them toward zero.
+        let mut opt = MomentumSGD::from_weights(vec![10.0; 4], 0.1, 0.0, 0.01);
+        let grad = vec![0.0; 4];
+        opt.step(&grad);
+
+        for i in 0..4 {
+            assert!(
+                opt.weights[i] < 10.0,
+                "L2 regularization should shrink weights"
+            );
+        }
+    }
+
+    #[test]
+    fn test_momentum_sgd_from_weights() {
+        let w = vec![1.0, 2.0, 3.0];
+        let opt = MomentumSGD::from_weights(w.clone(), 0.01, 0.9, 1e-4);
+        assert_eq!(opt.weights, w);
+        assert_eq!(opt.velocity.len(), 3);
+        assert!(opt.velocity.iter().all(|&v| v == 0.0));
+    }
+
+    // ── AdamOptimizer ────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_adam_step_moves_weights() {
+        let mut opt = AdamOptimizer::new(7, 0.001, 0.9, 0.999, 1e-8);
+        let grad = vec![1.0, -1.0, 0.5, -0.5, 0.2, -0.2, 0.0];
+        opt.adam_step(&grad);
+
+        assert_eq!(opt.t, 1);
+        assert!(opt.weights[0] < 0.0, "w[0] should decrease with positive gradient");
+        assert!(opt.weights[1] > 0.0, "w[1] should increase with negative gradient");
+    }
+
+    #[test]
+    fn test_adam_bias_correction() {
+        let mut opt = AdamOptimizer::new(2, 0.01, 0.9, 0.999, 1e-8);
+        let grad = vec![1.0, 1.0];
+
+        // First step: bias correction is large (t=1, bc1 = 0.1, bc2 = 0.001).
+        opt.adam_step(&grad);
+        let w_after_1 = opt.weights.clone();
+
+        // Multiple steps: bias correction becomes smaller.
+        for _ in 0..100 {
+            opt.adam_step(&grad);
+        }
+
+        // After many constant-gradient steps, the optimizer should have made
+        // meaningful progress.
+        assert!(
+            opt.weights[0] < w_after_1[0],
+            "Adam should continue moving weights with consistent gradient"
+        );
+    }
+
+    #[test]
+    fn test_adam_from_weights() {
+        let w = vec![0.5, -0.3, 1.2];
+        let opt = AdamOptimizer::from_weights(w.clone(), 0.001);
+        assert_eq!(opt.weights, w);
+        assert_eq!(opt.beta1, 0.9);
+        assert_eq!(opt.beta2, 0.999);
+        assert_eq!(opt.t, 0);
+    }
+
+    #[test]
+    fn test_adam_converges_on_quadratic() {
+        // Minimize f(x) = 0.5 * x^2 => grad = x, optimum at x = 0.
+        let mut opt = AdamOptimizer::new(1, 0.1, 0.9, 0.999, 1e-8);
+        opt.weights[0] = 5.0;
+
+        for _ in 0..500 {
+            let grad = vec![opt.weights[0]]; // gradient of 0.5 * x^2
+            opt.adam_step(&grad);
+        }
+
+        assert!(
+            opt.weights[0].abs() < 0.1,
+            "Adam should converge near 0, got {}",
+            opt.weights[0]
+        );
+    }
+
+    // ── compute_gradients_batch ──────────────────────────────────────────────
+
+    #[test]
+    fn test_compute_gradients_batch_single_sample() {
+        let weights = vec![0.0; 7];
+        let features: Vec<[f32; 7]> = vec![[1.0; 7]];
+        let labels = vec![1.0];
+        let refs: Vec<&[f32]> = features.iter().map(|f| f.as_slice()).collect();
+
+        let grad = compute_gradients_batch(&refs, &labels, &weights);
+        assert_eq!(grad.len(), 7);
+
+        // sigmoid(0) = 0.5, error = 0.5 - 1.0 = -0.5, grad = -0.5 * 1.0 = -0.5
+        for &g in &grad {
+            assert!((g - (-0.5)).abs() < 1e-5, "expected gradient -0.5, got {g}");
+        }
+    }
+
+    #[test]
+    fn test_compute_gradients_batch_averages() {
+        let weights = vec![0.0; 2];
+        // Two samples with opposite gradients should partially cancel.
+        let f1 = [1.0f32, 0.0];
+        let f2 = [0.0f32, 1.0];
+        let features: Vec<&[f32]> = vec![f1.as_slice(), f2.as_slice()];
+        let labels = vec![1.0, 0.0];
+
+        let grad = compute_gradients_batch(&features, &labels, &weights);
+        assert_eq!(grad.len(), 2);
+        // sigmoid(0) = 0.5 for both.
+        // Sample 1: error = -0.5, grad = [-0.5, 0.0]
+        // Sample 2: error = 0.5, grad = [0.0, 0.5]
+        // Average: [-0.25, 0.25]
+        assert!((grad[0] - (-0.25)).abs() < 1e-5);
+        assert!((grad[1] - 0.25).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_compute_gradients_batch_zero_at_optimum() {
+        // If weights produce exactly correct predictions, gradient should be ~0.
+        // For perfectly separable data with large-magnitude weights, predictions
+        // are near 0 or 1, so error is ~0.
+        let weights = vec![10.0, 10.0];
+        let f_pos = [1.0f32, 1.0]; // dot = 20 => sigmoid ~ 1.0
+        let f_neg = [-1.0f32, -1.0]; // dot = -20 => sigmoid ~ 0.0
+        let features: Vec<&[f32]> = vec![f_pos.as_slice(), f_neg.as_slice()];
+        let labels = vec![1.0, 0.0];
+
+        let grad = compute_gradients_batch(&features, &labels, &weights);
+        for &g in &grad {
+            assert!(g.abs() < 1e-4, "gradient should be near zero at optimum, got {g}");
+        }
+    }
+
+    // ── clip_gradients ───────────────────────────────────────────────────────
+
+    #[test]
+    fn test_clip_gradients_within_norm() {
+        let mut grad = vec![0.1, -0.1, 0.05];
+        let original = grad.clone();
+        clip_gradients(&mut grad, 1.0);
+        // Norm is well below 1.0, so no clipping should happen.
+        for (g, o) in grad.iter().zip(original.iter()) {
+            assert!((g - o).abs() < 1e-9);
+        }
+    }
+
+    #[test]
+    fn test_clip_gradients_exceeds_norm() {
+        let mut grad = vec![3.0, 4.0]; // norm = 5.0
+        clip_gradients(&mut grad, 1.0);
+
+        let norm: f32 = grad.iter().map(|g| g * g).sum::<f32>().sqrt();
+        assert!(
+            (norm - 1.0).abs() < 1e-5,
+            "clipped norm should be 1.0, got {norm}"
+        );
+        // Direction should be preserved: 3/5 and 4/5.
+        assert!((grad[0] - 0.6).abs() < 1e-5);
+        assert!((grad[1] - 0.8).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_clip_gradients_zero_vector() {
+        let mut grad = vec![0.0, 0.0, 0.0];
+        clip_gradients(&mut grad, 1.0);
+        assert!(grad.iter().all(|&g| g == 0.0));
+    }
+
+    // ── cosine_annealing ─────────────────────────────────────────────────────
+
+    #[test]
+    fn test_cosine_annealing_start() {
+        let lr = cosine_annealing(0.1, 0, 100);
+        assert!((lr - 0.1).abs() < 1e-6, "at step 0, lr should equal initial_lr");
+    }
+
+    #[test]
+    fn test_cosine_annealing_end() {
+        let lr = cosine_annealing(0.1, 100, 100);
+        assert!(lr.abs() < 1e-6, "at step == total_steps, lr should be ~0");
+    }
+
+    #[test]
+    fn test_cosine_annealing_midpoint() {
+        let lr = cosine_annealing(0.1, 50, 100);
+        // At midpoint: cos(pi/2) = 0, so lr = 0.1 * 0.5 * (1 + 0) = 0.05
+        assert!((lr - 0.05).abs() < 1e-5, "at midpoint, lr should be half initial, got {lr}");
+    }
+
+    #[test]
+    fn test_cosine_annealing_monotonic_decrease() {
+        let total = 200u64;
+        let mut prev = cosine_annealing(1.0, 0, total);
+        for step in 1..=total {
+            let lr = cosine_annealing(1.0, step, total);
+            assert!(lr <= prev + 1e-7, "lr should monotonically decrease");
+            prev = lr;
+        }
+    }
+
+    #[test]
+    fn test_cosine_annealing_zero_total_steps() {
+        // Edge case: total_steps = 0 should return initial_lr.
+        let lr = cosine_annealing(0.5, 0, 0);
+        assert!((lr - 0.5).abs() < 1e-6);
+    }
 }

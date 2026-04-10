@@ -1007,4 +1007,330 @@ mod tests {
         let sim_ortho = prototypes.cosine_similarity(SignalType::TechAdoption, &embedding);
         assert!(sim_ortho.abs() < 1e-6, "should be 0.0 for orthogonal");
     }
+
+    // ── Decay LUT tests ────────────────────────────────────────────────────
+
+    #[test]
+    fn test_decay_luts_init() {
+        let luts = init_decay_luts();
+        // Day 0 should always be 1.0
+        assert!((luts.decay_30[0] - 1.0).abs() < 1e-6);
+        assert!((luts.decay_60[0] - 1.0).abs() < 1e-6);
+        assert!((luts.decay_90[0] - 1.0).abs() < 1e-6);
+        // At half-life, value should be ~0.5
+        assert!((luts.decay_30[30] - 0.5).abs() < 0.01, "decay_30[30] = {}", luts.decay_30[30]);
+        assert!((luts.decay_60[60] - 0.5).abs() < 0.01, "decay_60[60] = {}", luts.decay_60[60]);
+        assert!((luts.decay_90[90] - 0.5).abs() < 0.01, "decay_90[90] = {}", luts.decay_90[90]);
+    }
+
+    #[test]
+    fn test_decay_lut_matches_signal_freshness() {
+        let luts = init_decay_luts();
+        // LUT values should match signal_freshness() within f32 precision
+        for day in [0u16, 1, 5, 15, 29, 30, 60, 90, 120, 200, 255] {
+            let lut_val = luts.lookup(day, 30);
+            let ref_val = signal_freshness(day, 30);
+            assert!((lut_val - ref_val).abs() < 1e-5,
+                "day={day}: lut={lut_val} vs ref={ref_val}");
+        }
+    }
+
+    #[test]
+    fn test_decay_lut_arbitrary_halflife() {
+        let luts = init_decay_luts();
+        // Half-life 45 is not pre-computed; should fall back to fast_exp_approx
+        let val = luts.lookup(45, 45);
+        let ref_val = signal_freshness(45, 45);
+        assert!((val - ref_val).abs() < 0.05,
+            "arbitrary half-life: got {val}, expected ~{ref_val}");
+    }
+
+    #[test]
+    fn test_decay_lut_beyond_256() {
+        let luts = init_decay_luts();
+        let val = luts.lookup(300, 30);
+        let ref_val = signal_freshness(300, 30);
+        // fast_exp_approx is approximate, allow 5% relative error
+        let rel_err = if ref_val.abs() > 1e-10 { (val - ref_val).abs() / ref_val } else { val.abs() };
+        assert!(rel_err < 0.05 || val.abs() < 1e-6,
+            "day=300: got {val}, expected ~{ref_val}, rel_err={rel_err}");
+    }
+
+    // ── fast_exp_approx tests ──────────────────────────────────────────────
+
+    #[test]
+    fn test_fast_exp_approx_zero() {
+        let val = fast_exp_approx(0.0);
+        assert!((val - 1.0).abs() < 0.05, "exp(0) should be ~1.0, got {val}");
+    }
+
+    #[test]
+    fn test_fast_exp_approx_negative() {
+        let val = fast_exp_approx(-1.0);
+        let expected = (-1.0f32).exp();
+        let rel_err = (val - expected).abs() / expected;
+        assert!(rel_err < 0.05, "exp(-1): got {val}, expected {expected}, rel_err={rel_err}");
+    }
+
+    #[test]
+    fn test_fast_exp_approx_clamps() {
+        // Should not panic or produce NaN/Inf
+        let lo = fast_exp_approx(-100.0);
+        let hi = fast_exp_approx(100.0);
+        assert!(lo.is_finite(), "clamped low should be finite");
+        assert!(hi.is_finite(), "clamped high should be finite");
+        assert!(lo >= 0.0);
+    }
+
+    // ── SIMD batch scoring tests ───────────────────────────────────────────
+
+    #[test]
+    fn test_score_intent_batch_simd_matches_scalar() {
+        let mut batch = IntentBatch::new();
+        batch.count = 8;
+
+        // Fill with deterministic test data
+        for i in 0..8 {
+            batch.hiring_score[i] = 0.1 * (i + 1) as f32;
+            batch.tech_score[i] = 0.05 * (i + 1) as f32;
+            batch.growth_score[i] = 0.08 * (i + 1) as f32;
+            batch.budget_score[i] = 0.03 * (i + 1) as f32;
+            batch.leadership_score[i] = 0.02 * (i + 1) as f32;
+            batch.product_score[i] = 0.01 * (i + 1) as f32;
+        }
+
+        let weights = IntentWeights::default();
+
+        // Scalar path
+        let mut scalar_batch = IntentBatch::new();
+        scalar_batch.count = 8;
+        scalar_batch.hiring_score = batch.hiring_score;
+        scalar_batch.tech_score = batch.tech_score;
+        scalar_batch.growth_score = batch.growth_score;
+        scalar_batch.budget_score = batch.budget_score;
+        scalar_batch.leadership_score = batch.leadership_score;
+        scalar_batch.product_score = batch.product_score;
+        scalar_batch.compute_scores(&weights);
+
+        // SIMD path
+        let cw = CategoryWeights::from_intent_weights(&weights);
+        let luts = init_decay_luts();
+        let simd_scores = score_intent_batch_simd(&batch, &cw, luts);
+
+        for i in 0..8 {
+            assert!((simd_scores[i] - scalar_batch.intent_scores[i]).abs() < 1e-4,
+                "slot {i}: simd={} scalar={}", simd_scores[i], scalar_batch.intent_scores[i]);
+        }
+    }
+
+    #[test]
+    fn test_score_intent_batch_simd_full_256() {
+        let mut batch = IntentBatch::new();
+        batch.count = 256;
+        for i in 0..256 {
+            let t = i as f32 / 256.0;
+            batch.hiring_score[i] = t;
+            batch.tech_score[i] = 1.0 - t;
+            batch.growth_score[i] = t * 0.5;
+            batch.budget_score[i] = (1.0 - t) * 0.3;
+            batch.leadership_score[i] = t * 0.1;
+            batch.product_score[i] = 0.05;
+        }
+
+        let weights = IntentWeights::default();
+        let cw = CategoryWeights::from_intent_weights(&weights);
+        let luts = init_decay_luts();
+        let scores = score_intent_batch_simd(&batch, &cw, luts);
+
+        // Verify all scores are in valid range
+        for i in 0..256 {
+            assert!(scores[i] >= 0.0 && scores[i] <= 100.0,
+                "slot {i}: score {} out of range", scores[i]);
+        }
+    }
+
+    #[test]
+    fn test_score_intent_batch_simd_remainder() {
+        // Non-multiple-of-4 count to exercise remainder path
+        let mut batch = IntentBatch::new();
+        batch.count = 7; // 4 + 3 remainder
+        for i in 0..7 {
+            batch.hiring_score[i] = 0.5;
+            batch.tech_score[i] = 0.5;
+            batch.growth_score[i] = 0.5;
+            batch.budget_score[i] = 0.5;
+            batch.leadership_score[i] = 0.5;
+            batch.product_score[i] = 0.5;
+        }
+
+        let weights = IntentWeights::default();
+        let cw = CategoryWeights::from_intent_weights(&weights);
+        let luts = init_decay_luts();
+        let scores = score_intent_batch_simd(&batch, &cw, luts);
+
+        // All active slots should have equal scores (all inputs identical)
+        for i in 0..7 {
+            assert!((scores[i] - scores[0]).abs() < 1e-6,
+                "slot {i}: {} != slot 0: {}", scores[i], scores[0]);
+        }
+        // Score should be 50.0 (all signals = 0.5, weighted average = 0.5, * 100 = 50)
+        assert!((scores[0] - 50.0).abs() < 0.01, "expected 50.0, got {}", scores[0]);
+    }
+
+    #[test]
+    fn test_score_intent_batch_best_dispatch() {
+        // Verify best-dispatch produces same results as portable SIMD
+        let mut batch = IntentBatch::new();
+        batch.count = 4;
+        batch.hiring_score[0] = 0.9;
+        batch.tech_score[1] = 0.8;
+        batch.growth_score[2] = 0.7;
+        batch.budget_score[3] = 0.6;
+
+        let weights = IntentWeights::default();
+        let cw = CategoryWeights::from_intent_weights(&weights);
+        let luts = init_decay_luts();
+        let best = score_intent_batch_best(&batch, &cw, luts);
+        let portable = score_intent_batch_simd(&batch, &cw, luts);
+
+        for i in 0..4 {
+            assert!((best[i] - portable[i]).abs() < 1e-4,
+                "slot {i}: best={} portable={}", best[i], portable[i]);
+        }
+    }
+
+    #[test]
+    fn test_aggregate_signals_lut_matches_original() {
+        let signals = vec![
+            IntentSignal { signal_type: SignalType::HiringIntent, confidence: 0.9, detected_at_days: 5, decay_days: 30 },
+            IntentSignal { signal_type: SignalType::TechAdoption, confidence: 0.8, detected_at_days: 20, decay_days: 60 },
+            IntentSignal { signal_type: SignalType::BudgetCycle, confidence: 0.7, detected_at_days: 45, decay_days: 90 },
+        ];
+
+        let mut batch_orig = IntentBatch::new();
+        batch_orig.count = 1;
+        batch_orig.aggregate_signals(0, &signals);
+
+        let mut batch_lut = IntentBatch::new();
+        batch_lut.count = 1;
+        let luts = init_decay_luts();
+        batch_lut.aggregate_signals_lut(0, &signals, luts);
+
+        // Should match within f32 precision (LUT uses same exp() at init)
+        assert!((batch_lut.hiring_score[0] - batch_orig.hiring_score[0]).abs() < 1e-5,
+            "hiring: lut={} orig={}", batch_lut.hiring_score[0], batch_orig.hiring_score[0]);
+        assert!((batch_lut.tech_score[0] - batch_orig.tech_score[0]).abs() < 1e-5,
+            "tech: lut={} orig={}", batch_lut.tech_score[0], batch_orig.tech_score[0]);
+        assert!((batch_lut.budget_score[0] - batch_orig.budget_score[0]).abs() < 1e-5,
+            "budget: lut={} orig={}", batch_lut.budget_score[0], batch_orig.budget_score[0]);
+    }
+
+    #[test]
+    fn test_compute_scores_simd_method() {
+        let mut batch = IntentBatch::new();
+        batch.count = 4;
+        for i in 0..4 {
+            batch.hiring_score[i] = 0.8;
+            batch.tech_score[i] = 0.6;
+            batch.growth_score[i] = 0.4;
+            batch.budget_score[i] = 0.3;
+            batch.leadership_score[i] = 0.2;
+            batch.product_score[i] = 0.1;
+        }
+
+        batch.compute_scores_simd(&IntentWeights::default());
+        for i in 0..4 {
+            assert!(batch.intent_scores[i] > 0.0 && batch.intent_scores[i] <= 100.0,
+                "slot {i}: score {} invalid", batch.intent_scores[i]);
+        }
+    }
+
+    // ── Benchmark-style tests (cargo test -- --nocapture) ──────────────────
+
+    #[test]
+    fn bench_scalar_vs_simd_256() {
+        let mut batch = IntentBatch::new();
+        batch.count = 256;
+        for i in 0..256 {
+            let t = i as f32 / 256.0;
+            batch.hiring_score[i] = t * 0.9;
+            batch.tech_score[i] = (1.0 - t) * 0.8;
+            batch.growth_score[i] = t * 0.5;
+            batch.budget_score[i] = 0.3;
+            batch.leadership_score[i] = t * 0.1;
+            batch.product_score[i] = 0.05;
+        }
+
+        let weights = IntentWeights::default();
+        let cw = CategoryWeights::from_intent_weights(&weights);
+        let luts = init_decay_luts();
+
+        // Warm up
+        let _ = score_intent_batch_simd(&batch, &cw, luts);
+
+        // Scalar timing
+        let scalar_start = std::time::Instant::now();
+        for _ in 0..10_000 {
+            let mut b = IntentBatch::new();
+            b.count = 256;
+            b.hiring_score = batch.hiring_score;
+            b.tech_score = batch.tech_score;
+            b.growth_score = batch.growth_score;
+            b.budget_score = batch.budget_score;
+            b.leadership_score = batch.leadership_score;
+            b.product_score = batch.product_score;
+            b.compute_scores(&weights);
+            std::hint::black_box(&b.intent_scores);
+        }
+        let scalar_ns = scalar_start.elapsed().as_nanos();
+
+        // SIMD timing
+        let simd_start = std::time::Instant::now();
+        for _ in 0..10_000 {
+            let result = score_intent_batch_best(&batch, &cw, luts);
+            std::hint::black_box(&result);
+        }
+        let simd_ns = simd_start.elapsed().as_nanos();
+
+        let scalar_per = scalar_ns / 10_000;
+        let simd_per = simd_ns / 10_000;
+        let speedup = scalar_ns as f64 / simd_ns.max(1) as f64;
+
+        eprintln!(
+            "[bench] 256-company intent scoring x10000:\n  scalar: {}ns/iter\n  simd:   {}ns/iter\n  speedup: {:.2}x",
+            scalar_per, simd_per, speedup
+        );
+
+        // SIMD should not be significantly slower than scalar
+        assert!(speedup > 0.5, "SIMD path should not be >2x slower than scalar");
+    }
+
+    #[test]
+    fn bench_lut_vs_exp_freshness() {
+        let luts = init_decay_luts();
+
+        // LUT path
+        let lut_start = std::time::Instant::now();
+        for _ in 0..100_000 {
+            for day in 0..256u16 {
+                std::hint::black_box(luts.lookup(day, 30));
+            }
+        }
+        let lut_ns = lut_start.elapsed().as_nanos();
+
+        // exp() path
+        let exp_start = std::time::Instant::now();
+        for _ in 0..100_000 {
+            for day in 0..256u16 {
+                std::hint::black_box(signal_freshness(day, 30));
+            }
+        }
+        let exp_ns = exp_start.elapsed().as_nanos();
+
+        let speedup = exp_ns as f64 / lut_ns.max(1) as f64;
+        eprintln!(
+            "[bench] 256 decay lookups x100000:\n  exp():  {}ns total\n  LUT:   {}ns total\n  speedup: {:.2}x",
+            exp_ns, lut_ns, speedup
+        );
+    }
 }

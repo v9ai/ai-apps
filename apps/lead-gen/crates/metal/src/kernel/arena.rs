@@ -475,4 +475,167 @@ mod tests {
         arena.copy_str("three");
         assert_eq!(arena.alloc_count(), 3);
     }
+
+    #[test]
+    fn test_arena_stats() {
+        let arena = Arena::new(4096);
+        let s = arena.stats();
+        assert_eq!(s.bytes_used, 0);
+        assert_eq!(s.bytes_capacity, 4096);
+        assert_eq!(s.bytes_available, 4096);
+        assert_eq!(s.allocation_count, 0);
+        assert_eq!(s.peak_bytes_used, 0);
+
+        arena.copy_str("hello");
+        let s = arena.stats();
+        assert!(s.bytes_used > 0);
+        assert_eq!(s.allocation_count, 1);
+        assert_eq!(s.peak_bytes_used, s.bytes_used);
+    }
+
+    // ── ScoringArena tests ──────────────────────────────────────────────
+
+    #[test]
+    fn test_scoring_arena_new() {
+        let arena = ScoringArena::new(256);
+        assert_eq!(arena.batch_size(), 256);
+        assert_eq!(arena.used(), 0);
+        assert!(arena.capacity() > 0);
+        // Capacity should be at least 256 * 64 bytes (feature vectors)
+        assert!(arena.capacity() >= 256 * FEATURE_VECTOR_BYTES);
+    }
+
+    #[test]
+    fn test_scoring_arena_alloc_f32_slice() {
+        let mut arena = ScoringArena::new(64);
+        let slice = arena.alloc_f32_slice(128);
+        assert_eq!(slice.len(), 128);
+
+        // Should be zero-initialized
+        for &v in slice.iter() {
+            assert_eq!(v, 0.0);
+        }
+
+        // Write and read back
+        slice[0] = 1.0;
+        slice[127] = 42.0;
+        assert_eq!(slice[0], 1.0);
+        assert_eq!(slice[127], 42.0);
+
+        // Pointer should be 64-byte aligned
+        let ptr = slice.as_ptr() as usize;
+        assert_eq!(ptr % 64, 0, "f32 slice not 64-byte aligned: ptr=0x{:x}", ptr);
+    }
+
+    #[test]
+    fn test_scoring_arena_alloc_aligned() {
+        let mut arena = ScoringArena::new(64);
+
+        let u32s: &mut [u32] = arena.alloc_aligned(64);
+        assert_eq!(u32s.len(), 64);
+        // Zero-initialized
+        assert!(u32s.iter().all(|&v| v == 0));
+        // 64-byte aligned
+        let ptr = u32s.as_ptr() as usize;
+        assert_eq!(ptr % 64, 0, "u32 slice not cache-line aligned");
+
+        let f64s: &mut [f64] = arena.alloc_aligned(16);
+        assert_eq!(f64s.len(), 16);
+        let ptr = f64s.as_ptr() as usize;
+        assert_eq!(ptr % 64, 0, "f64 slice not cache-line aligned");
+    }
+
+    #[test]
+    fn test_scoring_arena_reset() {
+        let mut arena = ScoringArena::new(64);
+
+        let _ = arena.alloc_f32_slice(128);
+        assert!(arena.used() > 0);
+        let used_before = arena.used();
+
+        arena.reset();
+        assert_eq!(arena.used(), 0);
+        assert_eq!(arena.remaining(), arena.capacity());
+
+        // Can allocate again in the same space
+        let _ = arena.alloc_f32_slice(128);
+        assert!(arena.used() > 0);
+        // Same amount of memory used
+        assert_eq!(arena.used(), used_before);
+    }
+
+    #[test]
+    fn test_scoring_arena_stats() {
+        let mut arena = ScoringArena::new(64);
+        let s0 = arena.stats();
+        assert_eq!(s0.bytes_used, 0);
+        assert_eq!(s0.allocation_count, 0);
+
+        let _ = arena.alloc_f32_slice(64);
+        let s1 = arena.stats();
+        assert!(s1.bytes_used > 0);
+        assert_eq!(s1.allocation_count, 1);
+        assert_eq!(s1.peak_bytes_used, s1.bytes_used);
+
+        let _ = arena.alloc_f32_slice(32);
+        let s2 = arena.stats();
+        assert_eq!(s2.allocation_count, 2);
+        assert!(s2.bytes_used > s1.bytes_used);
+
+        arena.reset();
+        let s3 = arena.stats();
+        assert_eq!(s3.bytes_used, 0);
+        // Peak should NOT decrease after reset
+        assert_eq!(s3.peak_bytes_used, s2.peak_bytes_used);
+        // Alloc count persists
+        assert_eq!(s3.allocation_count, 2);
+    }
+
+    #[test]
+    fn test_scoring_arena_multiple_batches() {
+        let mut arena = ScoringArena::new(32);
+
+        for batch in 0..5 {
+            let features = arena.alloc_f32_slice(32 * 7); // 7 features per contact
+            let scores = arena.alloc_f32_slice(32); // output scores
+
+            // Simulate scoring
+            for i in 0..32 {
+                let base = i * 7;
+                features[base] = (batch * 32 + i) as f32;
+                scores[i] = features[base] * 0.5;
+            }
+
+            // Verify last batch's data is correct
+            assert_eq!(scores[0], (batch * 32) as f32 * 0.5);
+            assert_eq!(scores[31], (batch * 32 + 31) as f32 * 0.5);
+
+            arena.reset();
+        }
+
+        let stats = arena.stats();
+        assert_eq!(stats.bytes_used, 0);
+        assert_eq!(stats.allocation_count, 10); // 2 allocs per batch * 5 batches
+    }
+
+    #[test]
+    #[should_panic(expected = "ScoringArena OOM")]
+    fn test_scoring_arena_oom() {
+        let mut arena = ScoringArena::new(4); // tiny arena
+        // Try to allocate way more than capacity
+        let _ = arena.alloc_f32_slice(1_000_000);
+    }
+
+    #[test]
+    fn test_scoring_arena_alignment_guarantee() {
+        let mut arena = ScoringArena::new(64);
+
+        // Allocate a small odd-sized chunk first to misalign the offset
+        let _ = arena.alloc_aligned::<u8>(3);
+
+        // Next allocation should still be 64-byte aligned
+        let slice = arena.alloc_f32_slice(16);
+        let ptr = slice.as_ptr() as usize;
+        assert_eq!(ptr % 64, 0, "alignment broken after odd-sized alloc");
+    }
 }
