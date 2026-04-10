@@ -56,33 +56,37 @@ function firstName(row: PartnerRow): string {
 
 function signal(row: PartnerRow): string {
   const company = row.company?.trim().replace(/^@/, "");
-  if (company) return `Saw your work at ${company}`;
+  if (company) return `Saw ${company} is working with Claude`;
 
   const archetypes = row.archetypes?.trim();
   if (archetypes) {
     const first = archetypes.split(",")[0].trim().replace(/-/g, " ");
-    return `Saw your ${first} work on GitHub`;
+    return `Your ${first} work on GitHub caught my eye`;
   }
 
-  return "Saw your projects on GitHub";
+  return "Noticed you're active in the Claude SDK ecosystem";
 }
 
 function buildEmail(row: PartnerRow) {
   const first = firstName(row);
   const sig = signal(row);
 
-  const subject = "Joining Anthropic's partner network?";
+  const subject = `Claude Partner Network — ${first}`;
 
   const text = `Hi ${first},
 
-${sig} — thought you might want in on this.
+${sig} — you'd be a strong fit for this.
 
-Anthropic is standing up their Claude Partner Network for teams delivering Claude to enterprise. I've been accepted and am building the first training cohort. Karl Kadon (Head of Partner Experience, Anthropic) is opening the training path next week.
+Anthropic is launching the Claude Partner Network for teams deploying Claude to enterprise. I'm putting together the first training cohort — partners get early API access, direct Anthropic engineering support, and a referral pipeline to their enterprise clients.
 
-Interested?
+Want me to send you the details?
 
 Vadim Nicolai
-vadim.blog`;
+vadim.blog
+
+—
+You received this because your email is public on GitHub.
+Reply "unsubscribe" to opt out.`;
 
   return { subject, text };
 }
@@ -164,7 +168,11 @@ async function main() {
       const { subject, text } = buildEmail(row);
       try {
         await resend.emails.send({
-          from: "Vadim Nicolai <contact@vadim.blog>",
+          from: "Vadim Nicolai <vadim@vadim.blog>",
+          headers: {
+            "List-Unsubscribe": "<mailto:vadim@vadim.blog?subject=unsubscribe>",
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
           to: row.email.trim(),
           subject,
           text,
