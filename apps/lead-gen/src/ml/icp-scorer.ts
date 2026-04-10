@@ -104,6 +104,46 @@ const WEIGHTS: Record<keyof ICPFeatures, number> = {
 
 const BIAS = 0.10; // baseline score
 
+// ── Feature key ordering (stable, used by typed-array paths) ────────────
+const FEATURE_KEYS: (keyof ICPFeatures)[] = Object.keys(WEIGHTS) as (keyof ICPFeatures)[];
+const NUM_FEATURES = FEATURE_KEYS.length;
+
+// ── INT8 quantized weights ──────────────────────────────────────────────
+// Scale: max(|w|) maps to 127. Dequantize: float_w ≈ int8_w * WEIGHT_SCALE
+const _absMax = Math.max(...FEATURE_KEYS.map((k) => Math.abs(WEIGHTS[k])));
+export const WEIGHT_SCALE = _absMax / 127;
+export const WEIGHTS_INT8 = new Int8Array(
+  FEATURE_KEYS.map((k) => Math.round(WEIGHTS[k] / WEIGHT_SCALE)),
+);
+// Pre-compute float32 weight vector for batch path
+const WEIGHTS_F32 = new Float32Array(FEATURE_KEYS.map((k) => WEIGHTS[k]));
+
+// ── Sigmoid look-up table with linear interpolation ─────────────────────
+// Maps input range [-8, 8] to sigmoid values. 256 entries.
+const SIGMOID_LUT_SIZE = 256;
+const SIGMOID_LUT_MIN = -8;
+const SIGMOID_LUT_MAX = 8;
+const SIGMOID_LUT_RANGE = SIGMOID_LUT_MAX - SIGMOID_LUT_MIN;
+export const SIGMOID_LUT = new Float32Array(SIGMOID_LUT_SIZE);
+for (let i = 0; i < SIGMOID_LUT_SIZE; i++) {
+  const x = SIGMOID_LUT_MIN + (i / (SIGMOID_LUT_SIZE - 1)) * SIGMOID_LUT_RANGE;
+  SIGMOID_LUT[i] = 1 / (1 + Math.exp(-x));
+}
+
+/**
+ * Fast sigmoid using LUT with linear interpolation.
+ * For inputs outside [-8, 8], clamps to 0 or 1.
+ */
+export function sigmoidFast(x: number): number {
+  if (x <= SIGMOID_LUT_MIN) return SIGMOID_LUT[0]!;
+  if (x >= SIGMOID_LUT_MAX) return SIGMOID_LUT[SIGMOID_LUT_SIZE - 1]!;
+  const t = ((x - SIGMOID_LUT_MIN) / SIGMOID_LUT_RANGE) * (SIGMOID_LUT_SIZE - 1);
+  const idx = t | 0; // floor via bitwise OR
+  const frac = t - idx;
+  // Linear interpolation between adjacent LUT entries
+  return SIGMOID_LUT[idx]! * (1 - frac) + SIGMOID_LUT[idx + 1]! * frac;
+}
+
 /**
  * Score a company against the ICP using a hand-tuned weighted sum.
  *
@@ -115,7 +155,7 @@ export function scoreICP(
   let raw = BIAS;
   const contributions: { name: string; value: number }[] = [];
 
-  for (const key of Object.keys(WEIGHTS) as (keyof ICPFeatures)[]) {
+  for (const key of FEATURE_KEYS) {
     const contribution = WEIGHTS[key] * features[key];
     raw += contribution;
     if (Math.abs(contribution) >= 0.02) {
@@ -133,4 +173,165 @@ export function scoreICP(
   });
 
   return { score: Math.round(score * 1000) / 1000, reasons };
+}
+
+// ── INT8 quantized scoring ──────────────────────────────────────────────
+
+/**
+ * Score ICP using INT8 quantized weights for faster integer dot product.
+ *
+ * The feature vector is quantized to int8 on-the-fly, dot-producted against
+ * the pre-quantized weight vector, then dequantized back to float.
+ *
+ * @param features - Float32Array of length NUM_FEATURES (same order as FEATURE_KEYS)
+ * @returns score (0..1)
+ */
+export function scoreIcpQuantized(features: Float32Array): number {
+  // Find feature scale factor
+  let fMax = 0;
+  for (let i = 0; i < NUM_FEATURES; i++) {
+    const a = Math.abs(features[i]!);
+    if (a > fMax) fMax = a;
+  }
+  const featureScale = fMax > 0 ? fMax / 127 : 1;
+
+  // Integer dot product
+  let acc = 0;
+  for (let i = 0; i < NUM_FEATURES; i++) {
+    const qi = Math.round(features[i]! / featureScale); // quantize feature to int8 range
+    acc += WEIGHTS_INT8[i]! * qi;
+  }
+
+  // Dequantize: acc * weightScale * featureScale + BIAS
+  const raw = acc * WEIGHT_SCALE * featureScale + BIAS;
+  return Math.round(Math.max(0, Math.min(1, raw)) * 1000) / 1000;
+}
+
+// ── Batch scoring ───────────────────────────────────────────────────────
+
+/** Minimal company feature input for batch scoring */
+export type CompanyFeatures = ICPFeatures;
+
+/**
+ * Extract feature vector into a Float32Array row (same order as FEATURE_KEYS).
+ */
+function featuresToFloat32(f: ICPFeatures, out: Float32Array, offset: number): void {
+  for (let i = 0; i < NUM_FEATURES; i++) {
+    out[offset + i] = f[FEATURE_KEYS[i]!];
+  }
+}
+
+/**
+ * Partial-sort helper: find top-k indices by absolute value (descending).
+ * Uses a selection algorithm (partial insertion sort) instead of full sort.
+ * Returns indices into the contributions array.
+ */
+function topKIndices(
+  values: Float32Array,
+  k: number,
+): number[] {
+  const n = values.length;
+  if (n <= k) {
+    // Return all indices sorted by |value| descending
+    const indices = Array.from({ length: n }, (_, i) => i);
+    indices.sort((a, b) => Math.abs(values[b]!) - Math.abs(values[a]!));
+    return indices;
+  }
+
+  // Maintain a min-heap of size k (by absolute value)
+  // Simple approach: keep a sorted array of k smallest-abs top entries
+  const top: { idx: number; absVal: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    const av = Math.abs(values[i]!);
+    if (top.length < k) {
+      top.push({ idx: i, absVal: av });
+      // Bubble up to maintain min at position 0
+      if (top.length === k) {
+        top.sort((a, b) => a.absVal - b.absVal);
+      }
+    } else if (av > top[0]!.absVal) {
+      top[0] = { idx: i, absVal: av };
+      // Re-sort to keep min at [0] — k is small (5) so this is fast
+      top.sort((a, b) => a.absVal - b.absVal);
+    }
+  }
+
+  // Return sorted descending by absolute value
+  top.sort((a, b) => b.absVal - a.absVal);
+  return top.map((t) => t.idx);
+}
+
+/**
+ * Batch-score multiple companies against the ICP.
+ *
+ * Extracts features into a contiguous Float32Array matrix, then performs
+ * batch matrix-vector multiplication against the weight vector.
+ *
+ * @returns scores (Float32Array, length = companies.length) and reasons per company
+ */
+export function scoreIcpBatch(
+  companies: CompanyFeatures[],
+): { scores: Float32Array; reasons: string[][] } {
+  const batchSize = companies.length;
+  if (batchSize === 0) {
+    return { scores: new Float32Array(0), reasons: [] };
+  }
+
+  // Build contiguous feature matrix: batchSize x NUM_FEATURES
+  const matrix = new Float32Array(batchSize * NUM_FEATURES);
+  for (let row = 0; row < batchSize; row++) {
+    featuresToFloat32(companies[row]!, matrix, row * NUM_FEATURES);
+  }
+
+  // Batch dot product: scores[i] = matrix[i] . WEIGHTS_F32 + BIAS
+  const scores = new Float32Array(batchSize);
+  const allReasons: string[][] = [];
+
+  // Contributions buffer reused per row
+  const contribs = new Float32Array(NUM_FEATURES);
+
+  for (let row = 0; row < batchSize; row++) {
+    const rowOffset = row * NUM_FEATURES;
+    let raw = BIAS;
+
+    // Dot product + capture per-feature contributions
+    for (let j = 0; j < NUM_FEATURES; j++) {
+      const c = matrix[rowOffset + j]! * WEIGHTS_F32[j]!;
+      contribs[j] = c;
+      raw += c;
+    }
+
+    scores[row] = Math.round(Math.max(0, Math.min(1, raw)) * 1000) / 1000;
+
+    // Partial sort: find top-5 contributions by absolute value
+    // Only consider features with |contribution| >= 0.02
+    const significantContribs = new Float32Array(NUM_FEATURES);
+    let sigCount = 0;
+    for (let j = 0; j < NUM_FEATURES; j++) {
+      if (Math.abs(contribs[j]!) >= 0.02) {
+        significantContribs[sigCount] = contribs[j]!;
+        sigCount++;
+      }
+    }
+
+    // Build mapping from significant index back to feature index
+    const sigToFeature: number[] = [];
+    for (let j = 0; j < NUM_FEATURES; j++) {
+      if (Math.abs(contribs[j]!) >= 0.02) {
+        sigToFeature.push(j);
+      }
+    }
+
+    const topIdx = topKIndices(significantContribs.subarray(0, sigCount), 5);
+    const reasons: string[] = [];
+    for (const si of topIdx) {
+      const fi = sigToFeature[si]!;
+      const val = contribs[fi]!;
+      const dir = val > 0 ? "+" : "";
+      reasons.push(`${FEATURE_KEYS[fi]}: ${dir}${(val * 100).toFixed(1)}%`);
+    }
+    allReasons.push(reasons);
+  }
+
+  return { scores, reasons: allReasons };
 }

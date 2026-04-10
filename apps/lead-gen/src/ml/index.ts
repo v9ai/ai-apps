@@ -30,7 +30,15 @@ export {
   VERTICAL_LABELS,
   AI_TIER_LABELS,
   classifyCompany,
+  classifyCompanyLegacy,
+  classifyCompanyFast,
+  classifyBatch,
+  AhoCorasickAutomaton,
+  TrieNode,
   type CompanyClassification,
+  type FastClassificationResult,
+  type ClassificationResult,
+  type CompanyInput as ClassifierCompanyInput,
 } from "./company-classifier";
 
 export {
@@ -41,12 +49,23 @@ export {
 export {
   extractICPFeatures,
   scoreICP,
+  scoreIcpQuantized,
+  scoreIcpBatch,
+  sigmoidFast,
+  WEIGHTS_INT8,
+  WEIGHT_SCALE,
+  SIGMOID_LUT,
   type ICPFeatures,
+  type CompanyFeatures,
 } from "./icp-scorer";
 
 export {
   scoreContact,
+  scoreContactQuantized,
   rankContacts,
+  rankContactsBatch,
+  CONTACT_WEIGHTS_INT8,
+  CONTACT_WEIGHT_SCALE,
   type ContactRankFeatures,
 } from "./contact-ranker";
 

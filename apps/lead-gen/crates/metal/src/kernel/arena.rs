@@ -1,6 +1,16 @@
 use memmap2::MmapMut;
 use std::cell::Cell;
 
+/// Memory statistics for arena allocators.
+#[derive(Debug, Clone, Copy)]
+pub struct ArenaStats {
+    pub bytes_used: usize,
+    pub bytes_available: usize,
+    pub bytes_capacity: usize,
+    pub allocation_count: u64,
+    pub peak_bytes_used: usize,
+}
+
 /// Arena allocator backed by anonymous mmap'd pages.
 /// Allocations are pointer bumps — O(1). Entire arena freed at once via `reset()`.
 /// No individual deallocation — perfect for request-scoped/batch-scoped data.
@@ -148,10 +158,202 @@ impl Arena {
     pub fn base_ptr(&self) -> *const u8 {
         self.mmap.as_ptr()
     }
+
+    /// Return a snapshot of memory usage statistics.
+    pub fn stats(&self) -> ArenaStats {
+        ArenaStats {
+            bytes_used: self.offset.get(),
+            bytes_available: self.capacity - self.offset.get(),
+            bytes_capacity: self.capacity,
+            allocation_count: self.alloc_count.get(),
+            peak_bytes_used: self.peak.get(),
+        }
+    }
 }
 
 // Safety: Arena uses Cell (not thread-safe by design).
 // For multi-threaded use, wrap in per-thread instances.
+
+// ── ScoringArena: cache-line-aligned arena for batch scoring ────────────────
+
+/// Number of f32 features per contact in the scoring pipeline.
+/// 7 base features + 1 semantic + 1 score output = 9 f32s per contact.
+const FEATURE_VECTOR_F32S: usize = 9;
+
+/// Bytes per feature vector (9 f32s = 36 bytes, padded to 64 for cache-line alignment).
+const FEATURE_VECTOR_BYTES: usize = 64; // one cache line per vector
+
+/// Cache-line-aligned block header for the scoring arena's backing memory.
+/// Forces the mmap region to start on a 64-byte boundary when embedded in a struct.
+#[repr(C, align(64))]
+struct AlignedBlock {
+    _align: [u8; 0],
+}
+
+/// Specialized arena allocator for batch contact scoring.
+///
+/// Pre-allocates a contiguous, cache-line-aligned memory region sized for
+/// `batch_size` feature vectors. All allocations are bump-pointer — O(1).
+/// `reset()` recycles the memory without deallocation (zero-cost reuse between batches).
+///
+/// Layout guarantees:
+/// - Backing memory is 64-byte aligned (cache-line boundary on Apple M1/M2).
+/// - Each `alloc_f32_slice` / `alloc_aligned` returns pointers aligned to the
+///   requested type's natural alignment (or 64 bytes for f32 slices).
+pub struct ScoringArena {
+    mmap: MmapMut,
+    capacity: usize,
+    offset: usize,
+    peak: usize,
+    alloc_count: u64,
+    batch_size: usize,
+}
+
+impl ScoringArena {
+    /// Create a new scoring arena pre-sized for `batch_size` feature vectors.
+    /// Each vector occupies `FEATURE_VECTOR_BYTES` (64) bytes — one cache line.
+    /// An additional 10% headroom is allocated for auxiliary scratch space.
+    pub fn new(batch_size: usize) -> Self {
+        let vectors_bytes = batch_size * FEATURE_VECTOR_BYTES;
+        // 10% headroom for auxiliary allocations (indices, temp buffers)
+        let headroom = vectors_bytes / 10;
+        let total = vectors_bytes + headroom;
+        let total_aligned = (total + 4095) & !4095; // page-align
+
+        let mmap = MmapMut::map_anon(total_aligned).expect("scoring arena mmap failed");
+
+        Self {
+            mmap,
+            capacity: total_aligned,
+            offset: 0,
+            peak: 0,
+            alloc_count: 0,
+            batch_size,
+        }
+    }
+
+    /// Allocate a mutable `&mut [f32]` slice of `len` elements from the arena.
+    /// The returned slice is 64-byte (cache-line) aligned and zero-initialized.
+    ///
+    /// # Panics
+    /// Panics if the arena cannot satisfy the allocation.
+    #[inline(always)]
+    pub fn alloc_f32_slice(&mut self, len: usize) -> &mut [f32] {
+        let size = len * std::mem::size_of::<f32>();
+        let align = 64; // cache-line align for NEON auto-vectorization
+
+        let aligned = (self.offset + align - 1) & !(align - 1);
+        let new_offset = aligned + size;
+
+        if new_offset > self.capacity {
+            panic!(
+                "ScoringArena OOM: requested {} f32s ({} bytes) at offset {}, capacity {}",
+                len, size, self.offset, self.capacity
+            );
+        }
+
+        let ptr = unsafe { self.mmap.as_ptr().add(aligned) as *mut f32 };
+
+        // Zero-initialize
+        unsafe {
+            std::ptr::write_bytes(ptr, 0, len);
+        }
+
+        self.offset = new_offset;
+        if new_offset > self.peak {
+            self.peak = new_offset;
+        }
+        self.alloc_count += 1;
+
+        unsafe { std::slice::from_raw_parts_mut(ptr, len) }
+    }
+
+    /// Allocate a mutable slice of `count` elements of type `T`, aligned to
+    /// `max(align_of::<T>(), 64)` bytes (cache-line minimum).
+    ///
+    /// Compile-time alignment check: `T` must not require alignment greater than
+    /// 64 bytes (a reasonable upper bound for scoring data types).
+    ///
+    /// # Panics
+    /// Panics if the arena cannot satisfy the allocation.
+    #[inline(always)]
+    pub fn alloc_aligned<T>(&mut self, count: usize) -> &mut [T] {
+        // Compile-time alignment assertion (monomorphized per T).
+        const { assert!(std::mem::align_of::<AlignedBlock>() == 64) };
+
+        let t_align = std::mem::align_of::<T>();
+        let align = t_align.max(64); // at least cache-line aligned
+        let size = std::mem::size_of::<T>() * count;
+
+        let aligned = (self.offset + align - 1) & !(align - 1);
+        let new_offset = aligned + size;
+
+        if new_offset > self.capacity {
+            panic!(
+                "ScoringArena OOM: requested {} x {} ({} bytes) at offset {}, capacity {}",
+                count,
+                std::any::type_name::<T>(),
+                size,
+                self.offset,
+                self.capacity
+            );
+        }
+
+        let ptr = unsafe { self.mmap.as_ptr().add(aligned) as *mut T };
+
+        // Zero-initialize the allocation
+        unsafe {
+            std::ptr::write_bytes(ptr as *mut u8, 0, size);
+        }
+
+        self.offset = new_offset;
+        if new_offset > self.peak {
+            self.peak = new_offset;
+        }
+        self.alloc_count += 1;
+
+        unsafe { std::slice::from_raw_parts_mut(ptr, count) }
+    }
+
+    /// Reset the bump pointer to zero — all prior allocations become invalid.
+    /// The underlying mmap is retained, so the next batch reuses the same
+    /// physical pages (zero-cost reuse, no syscall overhead).
+    #[inline(always)]
+    pub fn reset(&mut self) {
+        self.offset = 0;
+    }
+
+    /// Return a snapshot of memory usage statistics.
+    pub fn stats(&self) -> ArenaStats {
+        ArenaStats {
+            bytes_used: self.offset,
+            bytes_available: self.capacity - self.offset,
+            bytes_capacity: self.capacity,
+            allocation_count: self.alloc_count,
+            peak_bytes_used: self.peak,
+        }
+    }
+
+    /// The batch size this arena was sized for.
+    pub fn batch_size(&self) -> usize {
+        self.batch_size
+    }
+
+    /// Bytes currently allocated.
+    pub fn used(&self) -> usize {
+        self.offset
+    }
+
+    /// Bytes remaining.
+    pub fn remaining(&self) -> usize {
+        self.capacity - self.offset
+    }
+
+    /// Total capacity in bytes.
+    pub fn capacity(&self) -> usize {
+        self.capacity
+    }
+}
 
 #[cfg(test)]
 mod tests {

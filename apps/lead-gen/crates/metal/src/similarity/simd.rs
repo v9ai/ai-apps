@@ -158,6 +158,228 @@ fn naive_search(text: &[u8], pattern: &[u8]) -> Option<usize> {
 }
 
 // ============================================================================
+// NEON SIMD dot product and L2 norm — explicit intrinsics for M1 Apple Silicon
+// ============================================================================
+
+/// Dot product of two FP32 slices using NEON SIMD.
+/// Processes 16 floats per iteration (4 x float32x4 FMA).
+/// Falls back to scalar on non-aarch64 targets.
+#[inline]
+pub fn dot_product_f32(a: &[f32], b: &[f32]) -> f32 {
+    assert_eq!(a.len(), b.len(), "dot product: length mismatch");
+    #[cfg(target_arch = "aarch64")]
+    {
+        return unsafe { dot_product_f32_neon(a, b) };
+    }
+    #[allow(unreachable_code)]
+    dot_product_f32_scalar(a, b)
+}
+
+/// L2 norm of an FP32 slice using NEON SIMD.
+/// sqrt(sum(v_i^2)) with 16-wide accumulation.
+#[inline]
+pub fn l2_norm_f32(v: &[f32]) -> f32 {
+    #[cfg(target_arch = "aarch64")]
+    {
+        return unsafe { l2_norm_f32_neon(v) };
+    }
+    #[allow(unreachable_code)]
+    l2_norm_f32_scalar(v)
+}
+
+/// Cosine similarity between two FP32 vectors using NEON SIMD.
+/// Computes dot(a,b) / (||a|| * ||b||) in a single fused pass.
+#[inline]
+pub fn cosine_sim_f32(a: &[f32], b: &[f32]) -> f32 {
+    assert_eq!(a.len(), b.len(), "cosine_sim_f32: length mismatch");
+    #[cfg(target_arch = "aarch64")]
+    {
+        return unsafe { cosine_sim_f32_neon(a, b) };
+    }
+    #[allow(unreachable_code)]
+    cosine_sim_f32_scalar(a, b)
+}
+
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+unsafe fn dot_product_f32_neon(a: &[f32], b: &[f32]) -> f32 {
+    use core::arch::aarch64::*;
+
+    let len = a.len();
+    let mut acc0 = vdupq_n_f32(0.0);
+    let mut acc1 = vdupq_n_f32(0.0);
+    let mut acc2 = vdupq_n_f32(0.0);
+    let mut acc3 = vdupq_n_f32(0.0);
+    let mut i = 0;
+
+    // 16 floats per iteration (4 x float32x4)
+    while i + 16 <= len {
+        let a0 = vld1q_f32(a.as_ptr().add(i));
+        let a1 = vld1q_f32(a.as_ptr().add(i + 4));
+        let a2 = vld1q_f32(a.as_ptr().add(i + 8));
+        let a3 = vld1q_f32(a.as_ptr().add(i + 12));
+
+        let b0 = vld1q_f32(b.as_ptr().add(i));
+        let b1 = vld1q_f32(b.as_ptr().add(i + 4));
+        let b2 = vld1q_f32(b.as_ptr().add(i + 8));
+        let b3 = vld1q_f32(b.as_ptr().add(i + 12));
+
+        acc0 = vfmaq_f32(acc0, a0, b0);
+        acc1 = vfmaq_f32(acc1, a1, b1);
+        acc2 = vfmaq_f32(acc2, a2, b2);
+        acc3 = vfmaq_f32(acc3, a3, b3);
+
+        i += 16;
+    }
+
+    // Combine 4 accumulators
+    let sum01 = vaddq_f32(acc0, acc1);
+    let sum23 = vaddq_f32(acc2, acc3);
+    let sum_all = vaddq_f32(sum01, sum23);
+    let mut result = vaddvq_f32(sum_all);
+
+    // Scalar tail
+    while i < len {
+        result += a[i] * b[i];
+        i += 1;
+    }
+
+    result
+}
+
+/// Scalar dot product fallback.
+pub fn dot_product_f32_scalar(a: &[f32], b: &[f32]) -> f32 {
+    a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()
+}
+
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+unsafe fn l2_norm_f32_neon(v: &[f32]) -> f32 {
+    use core::arch::aarch64::*;
+
+    let len = v.len();
+    let mut acc0 = vdupq_n_f32(0.0);
+    let mut acc1 = vdupq_n_f32(0.0);
+    let mut acc2 = vdupq_n_f32(0.0);
+    let mut acc3 = vdupq_n_f32(0.0);
+    let mut i = 0;
+
+    while i + 16 <= len {
+        let v0 = vld1q_f32(v.as_ptr().add(i));
+        let v1 = vld1q_f32(v.as_ptr().add(i + 4));
+        let v2 = vld1q_f32(v.as_ptr().add(i + 8));
+        let v3 = vld1q_f32(v.as_ptr().add(i + 12));
+
+        acc0 = vfmaq_f32(acc0, v0, v0);
+        acc1 = vfmaq_f32(acc1, v1, v1);
+        acc2 = vfmaq_f32(acc2, v2, v2);
+        acc3 = vfmaq_f32(acc3, v3, v3);
+
+        i += 16;
+    }
+
+    let sum01 = vaddq_f32(acc0, acc1);
+    let sum23 = vaddq_f32(acc2, acc3);
+    let sum_all = vaddq_f32(sum01, sum23);
+    let mut norm_sq = vaddvq_f32(sum_all);
+
+    while i < len {
+        norm_sq += v[i] * v[i];
+        i += 1;
+    }
+
+    norm_sq.sqrt()
+}
+
+/// Scalar L2 norm fallback.
+pub fn l2_norm_f32_scalar(v: &[f32]) -> f32 {
+    v.iter().map(|x| x * x).sum::<f32>().sqrt()
+}
+
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+unsafe fn cosine_sim_f32_neon(a: &[f32], b: &[f32]) -> f32 {
+    use core::arch::aarch64::*;
+
+    let len = a.len();
+    let mut dot_acc0 = vdupq_n_f32(0.0);
+    let mut dot_acc1 = vdupq_n_f32(0.0);
+    let mut dot_acc2 = vdupq_n_f32(0.0);
+    let mut dot_acc3 = vdupq_n_f32(0.0);
+    let mut norm_a0 = vdupq_n_f32(0.0);
+    let mut norm_a1 = vdupq_n_f32(0.0);
+    let mut norm_b0 = vdupq_n_f32(0.0);
+    let mut norm_b1 = vdupq_n_f32(0.0);
+    let mut i = 0;
+
+    // Fused pass: dot product + both norms simultaneously.
+    // 16 floats per iteration, 8 accumulators for ILP.
+    while i + 16 <= len {
+        let a0 = vld1q_f32(a.as_ptr().add(i));
+        let a1 = vld1q_f32(a.as_ptr().add(i + 4));
+        let a2 = vld1q_f32(a.as_ptr().add(i + 8));
+        let a3 = vld1q_f32(a.as_ptr().add(i + 12));
+
+        let b0 = vld1q_f32(b.as_ptr().add(i));
+        let b1 = vld1q_f32(b.as_ptr().add(i + 4));
+        let b2 = vld1q_f32(b.as_ptr().add(i + 8));
+        let b3 = vld1q_f32(b.as_ptr().add(i + 12));
+
+        // dot(a, b)
+        dot_acc0 = vfmaq_f32(dot_acc0, a0, b0);
+        dot_acc1 = vfmaq_f32(dot_acc1, a1, b1);
+        dot_acc2 = vfmaq_f32(dot_acc2, a2, b2);
+        dot_acc3 = vfmaq_f32(dot_acc3, a3, b3);
+
+        // ||a||^2 (use pairs of accumulators to reduce dependency chains)
+        norm_a0 = vfmaq_f32(norm_a0, a0, a0);
+        norm_a0 = vfmaq_f32(norm_a0, a1, a1);
+        norm_a1 = vfmaq_f32(norm_a1, a2, a2);
+        norm_a1 = vfmaq_f32(norm_a1, a3, a3);
+
+        // ||b||^2
+        norm_b0 = vfmaq_f32(norm_b0, b0, b0);
+        norm_b0 = vfmaq_f32(norm_b0, b1, b1);
+        norm_b1 = vfmaq_f32(norm_b1, b2, b2);
+        norm_b1 = vfmaq_f32(norm_b1, b3, b3);
+
+        i += 16;
+    }
+
+    // Horizontal reductions
+    let dot_01 = vaddq_f32(dot_acc0, dot_acc1);
+    let dot_23 = vaddq_f32(dot_acc2, dot_acc3);
+    let mut dot_total = vaddvq_f32(vaddq_f32(dot_01, dot_23));
+    let mut norm_a_sq = vaddvq_f32(vaddq_f32(norm_a0, norm_a1));
+    let mut norm_b_sq = vaddvq_f32(vaddq_f32(norm_b0, norm_b1));
+
+    // Scalar tail
+    while i < len {
+        dot_total += a[i] * b[i];
+        norm_a_sq += a[i] * a[i];
+        norm_b_sq += b[i] * b[i];
+        i += 1;
+    }
+
+    let denom = norm_a_sq.sqrt() * norm_b_sq.sqrt();
+    if denom < 1e-10 { 0.0 } else { dot_total / denom }
+}
+
+/// Scalar cosine similarity fallback.
+pub fn cosine_sim_f32_scalar(a: &[f32], b: &[f32]) -> f32 {
+    let mut dot = 0.0f32;
+    let mut norm_a = 0.0f32;
+    let mut norm_b = 0.0f32;
+    for i in 0..a.len() {
+        dot += a[i] * b[i];
+        norm_a += a[i] * a[i];
+        norm_b += b[i] * b[i];
+    }
+    let denom = norm_a.sqrt() * norm_b.sqrt();
+    if denom < 1e-10 { 0.0 } else { dot / denom }
+}
+
+// ============================================================================
 // INT8 quantized cosine similarity — NEON SIMD on aarch64, scalar fallback
 // ============================================================================
 
@@ -379,5 +601,68 @@ mod tests {
         let query_norm = 2.0; // sqrt(4) = 2
         let sim = cosine_sim_int8_scalar(&query, &quant, 1.0 / 128.0, 0.0, query_norm, 4);
         assert!(sim > 0.99, "expected ~1.0, got {sim}");
+    }
+
+    #[test]
+    fn test_dot_product_f32_basic() {
+        let a = vec![1.0, 2.0, 3.0, 4.0];
+        let b = vec![5.0, 6.0, 7.0, 8.0];
+        let result = dot_product_f32(&a, &b);
+        let expected = 1.0 * 5.0 + 2.0 * 6.0 + 3.0 * 7.0 + 4.0 * 8.0; // 70.0
+        assert!((result - expected).abs() < 1e-5, "expected {expected}, got {result}");
+    }
+
+    #[test]
+    fn test_dot_product_f32_384dim() {
+        // Simulate BGE-small dimension (384)
+        let a: Vec<f32> = (0..384).map(|i| (i as f32) / 384.0).collect();
+        let b: Vec<f32> = (0..384).map(|i| 1.0 - (i as f32) / 384.0).collect();
+        let result = dot_product_f32(&a, &b);
+        let expected = dot_product_f32_scalar(&a, &b);
+        assert!((result - expected).abs() < 1e-3, "SIMD={result} vs scalar={expected}");
+    }
+
+    #[test]
+    fn test_l2_norm_f32_unit() {
+        let v = vec![3.0, 4.0];
+        let norm = l2_norm_f32(&v);
+        assert!((norm - 5.0).abs() < 1e-5, "expected 5.0, got {norm}");
+    }
+
+    #[test]
+    fn test_l2_norm_f32_384dim() {
+        let v: Vec<f32> = (0..384).map(|i| (i as f32) / 384.0).collect();
+        let result = l2_norm_f32(&v);
+        let expected = l2_norm_f32_scalar(&v);
+        assert!((result - expected).abs() < 1e-3, "SIMD={result} vs scalar={expected}");
+    }
+
+    #[test]
+    fn test_cosine_sim_f32_identical() {
+        let a: Vec<f32> = (0..384).map(|i| (i as f32) / 384.0).collect();
+        let sim = cosine_sim_f32(&a, &a);
+        assert!(sim > 0.999, "self-similarity should be ~1.0, got {sim}");
+    }
+
+    #[test]
+    fn test_cosine_sim_f32_orthogonal() {
+        let mut a = vec![0.0f32; 384];
+        let mut b = vec![0.0f32; 384];
+        a[0] = 1.0; // unit vector along dim 0
+        b[1] = 1.0; // unit vector along dim 1
+        let sim = cosine_sim_f32(&a, &b);
+        assert!(sim.abs() < 1e-5, "orthogonal vectors should have ~0 similarity, got {sim}");
+    }
+
+    #[test]
+    fn test_cosine_sim_f32_vs_scalar() {
+        let a: Vec<f32> = (0..384).map(|i| ((i * 7 + 3) as f32).sin()).collect();
+        let b: Vec<f32> = (0..384).map(|i| ((i * 11 + 5) as f32).cos()).collect();
+        let simd_result = cosine_sim_f32(&a, &b);
+        let scalar_result = cosine_sim_f32_scalar(&a, &b);
+        assert!(
+            (simd_result - scalar_result).abs() < 1e-4,
+            "SIMD={simd_result} vs scalar={scalar_result}"
+        );
     }
 }

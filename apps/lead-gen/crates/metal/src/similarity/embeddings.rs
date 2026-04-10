@@ -1,5 +1,7 @@
 use parking_lot::RwLock;
 
+use super::simd;
+
 /// In-memory embedding store with brute-force cosine similarity.
 /// Flat buffer layout for cache-friendly M1 access (fits in 8MB SLC at INT8).
 pub struct EmbeddingStore {
@@ -25,6 +27,7 @@ impl EmbeddingStore {
     }
 
     /// Brute-force top-K cosine similarity. Returns (id, score) descending.
+    /// Uses explicit NEON SIMD dot product and L2 norm on aarch64.
     pub fn top_k(&self, query: &[f32], k: usize) -> Vec<(u32, f32)> {
         assert_eq!(query.len(), self.dim);
 
@@ -33,15 +36,15 @@ impl EmbeddingStore {
         let n = ids.len();
         if n == 0 { return Vec::new(); }
 
-        let q_norm = dot(query, query).sqrt();
+        let q_norm = simd::l2_norm_f32(query);
         if q_norm == 0.0 { return Vec::new(); }
 
         let mut scores: Vec<(u32, f32)> = Vec::with_capacity(n);
         for i in 0..n {
             let start = i * self.dim;
             let candidate = &data[start..start + self.dim];
-            let d = dot(query, candidate);
-            let c_norm = dot(candidate, candidate).sqrt();
+            let d = simd::dot_product_f32(query, candidate);
+            let c_norm = simd::l2_norm_f32(candidate);
             let sim = if c_norm > 0.0 { d / (q_norm * c_norm) } else { 0.0 };
             scores.push((ids[i], sim));
         }
@@ -66,12 +69,6 @@ impl EmbeddingStore {
     pub fn is_empty(&self) -> bool {
         self.ids.read().is_empty()
     }
-}
-
-/// Dot product — auto-vectorized by LLVM to NEON on M1.
-#[inline]
-fn dot(a: &[f32], b: &[f32]) -> f32 {
-    a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()
 }
 
 /// INT8 quantized embedding store — 4x memory reduction over FP32.
@@ -109,6 +106,7 @@ impl QuantizedEmbeddingStore {
     }
 
     /// Brute-force top-K cosine similarity with fused dequant+dot.
+    /// Uses NEON SIMD for query norm computation on aarch64.
     pub fn top_k(&self, query: &[f32], k: usize) -> Vec<(u32, f32)> {
         assert_eq!(query.len(), self.dim);
 
@@ -119,7 +117,7 @@ impl QuantizedEmbeddingStore {
         let n = ids.len();
         if n == 0 { return Vec::new(); }
 
-        let q_norm = dot(query, query).sqrt();
+        let q_norm = simd::l2_norm_f32(query);
         if q_norm == 0.0 { return Vec::new(); }
 
         let mut scores: Vec<(u32, f32)> = Vec::with_capacity(n);

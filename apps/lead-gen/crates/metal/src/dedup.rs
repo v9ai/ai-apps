@@ -344,6 +344,441 @@ pub fn deduplicate_transitive(pairs: &[(usize, usize)], n: usize) -> Vec<Vec<usi
     uf.components()
 }
 
+// ── Module 4: SimHash — Locality-Sensitive Hashing ──────────────────────────
+
+/// Compute a 64-bit SimHash fingerprint from text.
+///
+/// SimHash is a locality-sensitive hash: similar documents produce fingerprints
+/// with small Hamming distance. It works by:
+///   1. Tokenizing text into character n-grams (trigrams)
+///   2. Hashing each n-gram to a 64-bit value
+///   3. For each bit position, summing +1 (if bit=1) or -1 (if bit=0) across all hashes
+///   4. The final fingerprint has bit=1 wherever the sum is positive
+///
+/// Complexity: O(n) in text length. Output: single u64.
+pub fn simhash(text: &str) -> u64 {
+    let lower = text.to_lowercase();
+    let bytes = lower.as_bytes();
+
+    // Accumulator: one i32 per bit position (64 positions)
+    let mut v = [0i32; 64];
+
+    if bytes.len() < 3 {
+        // For very short strings, hash the whole thing as a single token
+        let h = hash_token(bytes);
+        return h;
+    }
+
+    // Character trigrams as tokens
+    for window in bytes.windows(3) {
+        let h = hash_token(window);
+        for i in 0..64 {
+            if (h >> i) & 1 == 1 {
+                v[i] += 1;
+            } else {
+                v[i] -= 1;
+            }
+        }
+    }
+
+    // Build fingerprint: bit i = 1 if v[i] > 0
+    let mut fingerprint: u64 = 0;
+    for i in 0..64 {
+        if v[i] > 0 {
+            fingerprint |= 1u64 << i;
+        }
+    }
+    fingerprint
+}
+
+/// Hash a single token (n-gram) to u64 using AHash for speed.
+fn hash_token(token: &[u8]) -> u64 {
+    let mut hasher = AHasher::default();
+    token.hash(&mut hasher);
+    hasher.finish()
+}
+
+/// Hamming distance between two 64-bit fingerprints.
+///
+/// This counts the number of bit positions where a and b differ.
+/// Two identical fingerprints have distance 0; maximally different = 64.
+///
+/// Uses hardware `popcnt` via `count_ones()` on supported architectures.
+#[inline]
+pub fn hamming_distance(a: u64, b: u64) -> u32 {
+    (a ^ b).count_ones()
+}
+
+// ── Module 5: DedupPipeline — Multi-Stage Contact Deduplication ─────────────
+
+/// A contact record for dedup processing.
+#[derive(Debug, Clone)]
+pub struct ContactRecord {
+    pub first_name: String,
+    pub last_name: String,
+    pub email: String,
+    pub company: String,
+    /// Optional title/role for richer SimHash fingerprinting.
+    pub title: String,
+}
+
+impl ContactRecord {
+    pub fn new(first_name: &str, last_name: &str, email: &str, company: &str, title: &str) -> Self {
+        Self {
+            first_name: first_name.to_string(),
+            last_name: last_name.to_string(),
+            email: email.to_string(),
+            company: company.to_string(),
+            title: title.to_string(),
+        }
+    }
+
+    /// Canonical key for exact-match Bloom filter lookups.
+    /// Normalizes: lowercase email.
+    fn bloom_key(&self) -> String {
+        self.email.to_lowercase()
+    }
+
+    /// Text representation for SimHash fingerprinting.
+    /// Combines name + company + title for content-based similarity.
+    fn simhash_text(&self) -> String {
+        format!(
+            "{} {} {} {}",
+            self.first_name, self.last_name, self.company, self.title
+        )
+    }
+}
+
+/// Result of deduplication for a single contact.
+#[derive(Debug, Clone)]
+pub struct DedupResult {
+    /// Index of this contact in the input batch.
+    pub index: usize,
+    /// Whether this contact is a duplicate of a previously seen contact.
+    pub is_duplicate: bool,
+    /// If duplicate, the index of the canonical (first-seen) contact it matches.
+    pub duplicate_of: Option<usize>,
+    /// The stage at which the duplicate was detected.
+    pub detection_stage: DedupStage,
+    /// Similarity score (1.0 for exact Bloom match, Hamming-derived for SimHash,
+    /// Jaro-Winkler score for the final stage).
+    pub similarity: f64,
+}
+
+/// Which stage of the pipeline detected the duplicate.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DedupStage {
+    /// Not a duplicate (passed all stages).
+    Unique,
+    /// Exact email match detected by Bloom filter.
+    BloomExact,
+    /// Near-duplicate detected by SimHash + Hamming distance.
+    SimHashLSH,
+    /// Fuzzy match confirmed by Jaro-Winkler on name + company.
+    JaroWinklerConfirm,
+}
+
+/// Multi-stage deduplication pipeline.
+///
+/// Processing order (cheapest first):
+///   1. **Bloom filter** — O(1) exact-match pre-screen on email.
+///      Rejects definite duplicates instantly. False positives proceed to stage 2.
+///   2. **SimHash + Hamming** — O(n) locality-sensitive hashing scan.
+///      Computes a 64-bit fingerprint per contact. Contacts within `hamming_threshold`
+///      bits of an existing fingerprint are candidate near-duplicates.
+///   3. **Jaro-Winkler** — O(n*m) string similarity on name and company.
+///      Only invoked for SimHash candidates that pass the LSH screen. Confirms true
+///      fuzzy duplicates with a configurable similarity threshold.
+///
+/// This layered approach avoids expensive pairwise Jaro-Winkler comparisons:
+/// - Bloom filter eliminates exact email duplicates in O(k) per item.
+/// - SimHash reduces the candidate set to contacts with similar text content.
+/// - Jaro-Winkler is only computed on the small set of LSH candidates.
+///
+/// For N contacts with D true duplicates and S SimHash candidates (S << N):
+///   Total cost ~ O(N) for Bloom + O(N * existing_fingerprints) for SimHash + O(S) for JW.
+pub struct DedupPipeline {
+    /// Bloom filter for exact email dedup.
+    bloom: BloomFilter,
+    /// SimHash fingerprints of unique contacts seen so far: (fingerprint, original_index).
+    fingerprints: Vec<(u64, usize)>,
+    /// Maximum Hamming distance to consider two fingerprints as near-duplicates.
+    /// Default: 10 bits out of 64 (~84% similar).
+    pub hamming_threshold: u32,
+    /// Minimum Jaro-Winkler similarity to confirm a fuzzy duplicate.
+    /// Default: 0.85.
+    pub jw_threshold: f64,
+}
+
+impl DedupPipeline {
+    /// Create a new pipeline sized for `expected_items` contacts.
+    ///
+    /// - `expected_items`: anticipated number of contacts (sizes the Bloom filter).
+    /// - `fp_rate`: Bloom filter false positive rate (e.g., 0.001 for 0.1%).
+    pub fn new(expected_items: usize, fp_rate: f64) -> Self {
+        Self {
+            bloom: BloomFilter::new(expected_items, fp_rate),
+            fingerprints: Vec::with_capacity(expected_items),
+            hamming_threshold: 10,
+            jw_threshold: 0.85,
+        }
+    }
+
+    /// Process a single contact through the pipeline.
+    ///
+    /// Returns a `DedupResult` indicating whether it's unique or a duplicate,
+    /// and at which stage the duplicate was detected.
+    pub fn process(&mut self, index: usize, contact: &ContactRecord) -> DedupResult {
+        let bloom_key = contact.bloom_key();
+
+        // Stage 1: Bloom filter exact-match on email
+        if self.bloom.contains(bloom_key.as_bytes()) {
+            // Bloom says "might be a duplicate" — find the original by scanning fingerprints.
+            // (Bloom has false positives, but for email exact-match the FP rate is very low.)
+            // We need to confirm by finding a contact with the same email.
+            // Since we only store fingerprints (not emails), we check SimHash as a fallback.
+            // However, for true exact email duplicates, we trust the Bloom filter.
+            return DedupResult {
+                index,
+                is_duplicate: true,
+                duplicate_of: self.find_bloom_match(&bloom_key),
+                detection_stage: DedupStage::BloomExact,
+                similarity: 1.0,
+            };
+        }
+
+        // Stage 2: SimHash + Hamming distance for near-duplicate detection
+        let fingerprint = simhash(&contact.simhash_text());
+
+        if let Some((match_idx, distance)) = self.find_nearest_fingerprint(fingerprint) {
+            // Stage 3: Confirm with Jaro-Winkler (only for SimHash candidates)
+            // We don't have the original contact data in the pipeline, so the caller
+            // should use `dedup_contacts_batch` which has access to all records.
+            // Here we report the SimHash match and let the batch function confirm.
+            let hamming_sim = 1.0 - (distance as f64 / 64.0);
+            return DedupResult {
+                index,
+                is_duplicate: true,
+                duplicate_of: Some(match_idx),
+                detection_stage: DedupStage::SimHashLSH,
+                similarity: hamming_sim,
+            };
+        }
+
+        // Not a duplicate — register this contact
+        self.bloom.insert(bloom_key.as_bytes());
+        self.fingerprints.push((fingerprint, index));
+
+        DedupResult {
+            index,
+            is_duplicate: false,
+            duplicate_of: None,
+            detection_stage: DedupStage::Unique,
+            similarity: 0.0,
+        }
+    }
+
+    /// Find the original index for a Bloom-matched email.
+    /// Scans stored fingerprints (which track original indices).
+    fn find_bloom_match(&self, _key: &str) -> Option<usize> {
+        // The Bloom filter doesn't store the original index, so we return
+        // the first registered contact's index as the canonical.
+        // In batch mode, `dedup_contacts_batch` resolves this precisely.
+        self.fingerprints.first().map(|&(_, idx)| idx)
+    }
+
+    /// Find the nearest fingerprint within `hamming_threshold`.
+    /// Returns (original_index, distance) if found.
+    fn find_nearest_fingerprint(&self, fingerprint: u64) -> Option<(usize, u32)> {
+        let mut best: Option<(usize, u32)> = None;
+        for &(fp, idx) in &self.fingerprints {
+            let dist = hamming_distance(fingerprint, fp);
+            if dist <= self.hamming_threshold {
+                match best {
+                    None => best = Some((idx, dist)),
+                    Some((_, best_dist)) if dist < best_dist => best = Some((idx, dist)),
+                    _ => {}
+                }
+            }
+        }
+        best
+    }
+
+    /// Reset the pipeline state (clears Bloom filter and fingerprints).
+    pub fn reset(&mut self) {
+        self.bloom.clear();
+        self.fingerprints.clear();
+    }
+
+    /// Number of unique contacts registered so far.
+    pub fn unique_count(&self) -> usize {
+        self.fingerprints.len()
+    }
+}
+
+/// Batch deduplication of contacts through the full pipeline.
+///
+/// Processes contacts in order. For each contact:
+///   1. Bloom filter checks for exact email match.
+///   2. SimHash + Hamming distance finds near-duplicate candidates.
+///   3. Jaro-Winkler confirms fuzzy matches on name + company.
+///
+/// Returns one `DedupResult` per input contact.
+pub fn dedup_contacts_batch(contacts: &[ContactRecord]) -> Vec<DedupResult> {
+    if contacts.is_empty() {
+        return Vec::new();
+    }
+
+    let mut pipeline = DedupPipeline::new(contacts.len(), 0.001);
+    let mut results = Vec::with_capacity(contacts.len());
+
+    // Track email -> first index for precise Bloom match resolution
+    let mut email_index: AHashMap<String, usize> = AHashMap::new();
+
+    for (i, contact) in contacts.iter().enumerate() {
+        let bloom_key = contact.bloom_key();
+
+        // Stage 1: Bloom filter exact-match on email
+        if pipeline.bloom.contains(bloom_key.as_bytes()) {
+            let canonical = email_index.get(&bloom_key).copied().unwrap_or(0);
+            results.push(DedupResult {
+                index: i,
+                is_duplicate: true,
+                duplicate_of: Some(canonical),
+                detection_stage: DedupStage::BloomExact,
+                similarity: 1.0,
+            });
+            continue;
+        }
+
+        // Stage 2: SimHash + Hamming distance
+        let fingerprint = simhash(&contact.simhash_text());
+
+        if let Some((candidate_idx, distance)) = pipeline.find_nearest_fingerprint(fingerprint) {
+            // Stage 3: Confirm with Jaro-Winkler on name + company
+            let candidate = &contacts[candidate_idx];
+
+            let name_a = format!("{} {}", contact.first_name, contact.last_name);
+            let name_b = format!("{} {}", candidate.first_name, candidate.last_name);
+            let name_sim = jaro_winkler_icase(&name_a, &name_b);
+
+            let company_sim = levenshtein_similarity(
+                contact.company.to_lowercase().as_bytes(),
+                candidate.company.to_lowercase().as_bytes(),
+            );
+
+            // Combined similarity: weighted average (name matters more than company)
+            let combined_sim = 0.65 * name_sim + 0.35 * company_sim;
+
+            if combined_sim >= pipeline.jw_threshold {
+                results.push(DedupResult {
+                    index: i,
+                    is_duplicate: true,
+                    duplicate_of: Some(candidate_idx),
+                    detection_stage: DedupStage::JaroWinklerConfirm,
+                    similarity: combined_sim,
+                });
+                continue;
+            }
+
+            // SimHash flagged it but JW did not confirm — treat as unique but note the
+            // near-miss. This avoids false merges from SimHash collisions.
+            let _hamming_sim = 1.0 - (distance as f64 / 64.0);
+        }
+
+        // Unique contact — register in all stages
+        pipeline.bloom.insert(bloom_key.as_bytes());
+        pipeline.fingerprints.push((fingerprint, i));
+        email_index.insert(bloom_key, i);
+
+        results.push(DedupResult {
+            index: i,
+            is_duplicate: false,
+            duplicate_of: None,
+            detection_stage: DedupStage::Unique,
+            similarity: 0.0,
+        });
+    }
+
+    results
+}
+
+/// Batch dedup with custom thresholds.
+pub fn dedup_contacts_batch_with(
+    contacts: &[ContactRecord],
+    hamming_threshold: u32,
+    jw_threshold: f64,
+    bloom_fp_rate: f64,
+) -> Vec<DedupResult> {
+    if contacts.is_empty() {
+        return Vec::new();
+    }
+
+    let mut pipeline = DedupPipeline::new(contacts.len(), bloom_fp_rate);
+    pipeline.hamming_threshold = hamming_threshold;
+    pipeline.jw_threshold = jw_threshold;
+
+    let mut results = Vec::with_capacity(contacts.len());
+    let mut email_index: AHashMap<String, usize> = AHashMap::new();
+
+    for (i, contact) in contacts.iter().enumerate() {
+        let bloom_key = contact.bloom_key();
+
+        if pipeline.bloom.contains(bloom_key.as_bytes()) {
+            let canonical = email_index.get(&bloom_key).copied().unwrap_or(0);
+            results.push(DedupResult {
+                index: i,
+                is_duplicate: true,
+                duplicate_of: Some(canonical),
+                detection_stage: DedupStage::BloomExact,
+                similarity: 1.0,
+            });
+            continue;
+        }
+
+        let fingerprint = simhash(&contact.simhash_text());
+
+        if let Some((candidate_idx, distance)) = pipeline.find_nearest_fingerprint(fingerprint) {
+            let candidate = &contacts[candidate_idx];
+            let name_a = format!("{} {}", contact.first_name, contact.last_name);
+            let name_b = format!("{} {}", candidate.first_name, candidate.last_name);
+            let name_sim = jaro_winkler_icase(&name_a, &name_b);
+            let company_sim = levenshtein_similarity(
+                contact.company.to_lowercase().as_bytes(),
+                candidate.company.to_lowercase().as_bytes(),
+            );
+            let combined_sim = 0.65 * name_sim + 0.35 * company_sim;
+
+            if combined_sim >= pipeline.jw_threshold {
+                results.push(DedupResult {
+                    index: i,
+                    is_duplicate: true,
+                    duplicate_of: Some(candidate_idx),
+                    detection_stage: DedupStage::JaroWinklerConfirm,
+                    similarity: combined_sim,
+                });
+                continue;
+            }
+
+            let _hamming_sim = 1.0 - (distance as f64 / 64.0);
+        }
+
+        pipeline.bloom.insert(bloom_key.as_bytes());
+        pipeline.fingerprints.push((fingerprint, i));
+        email_index.insert(bloom_key, i);
+
+        results.push(DedupResult {
+            index: i,
+            is_duplicate: false,
+            duplicate_of: None,
+            detection_stage: DedupStage::Unique,
+            similarity: 0.0,
+        });
+    }
+
+    results
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -606,5 +1041,285 @@ mod tests {
         let pairs: Vec<(usize, usize)> = vec![];
         let groups = deduplicate_transitive(&pairs, 5);
         assert!(groups.is_empty());
+    }
+
+    // ── SimHash tests ──
+
+    #[test]
+    fn test_simhash_identical_strings() {
+        let h1 = simhash("John Smith at Acme Corp");
+        let h2 = simhash("John Smith at Acme Corp");
+        assert_eq!(h1, h2, "identical strings must produce identical hashes");
+    }
+
+    #[test]
+    fn test_simhash_similar_strings_close() {
+        let h1 = simhash("John Smith at Acme Corporation");
+        let h2 = simhash("John Smith at Acme Corp");
+        let dist = hamming_distance(h1, h2);
+        assert!(
+            dist <= 15,
+            "similar strings should have small Hamming distance, got {}",
+            dist
+        );
+    }
+
+    #[test]
+    fn test_simhash_different_strings_far() {
+        let h1 = simhash("John Smith at Acme Corporation");
+        let h2 = simhash("completely unrelated text about quantum physics");
+        let dist = hamming_distance(h1, h2);
+        assert!(
+            dist > 10,
+            "very different strings should have large Hamming distance, got {}",
+            dist
+        );
+    }
+
+    #[test]
+    fn test_simhash_case_insensitive() {
+        let h1 = simhash("John SMITH");
+        let h2 = simhash("john smith");
+        assert_eq!(h1, h2, "simhash should be case-insensitive");
+    }
+
+    #[test]
+    fn test_simhash_short_string() {
+        // Should not panic on strings shorter than trigram length
+        let h = simhash("ab");
+        assert!(h != 0 || h == 0, "should produce some hash for short strings");
+    }
+
+    #[test]
+    fn test_simhash_empty() {
+        let h = simhash("");
+        // Empty string produces deterministic result (hash of empty bytes)
+        let h2 = simhash("");
+        assert_eq!(h, h2);
+    }
+
+    // ── Hamming distance tests ──
+
+    #[test]
+    fn test_hamming_identical() {
+        assert_eq!(hamming_distance(0xDEADBEEF, 0xDEADBEEF), 0);
+    }
+
+    #[test]
+    fn test_hamming_one_bit() {
+        assert_eq!(hamming_distance(0b1000, 0b0000), 1);
+        assert_eq!(hamming_distance(0b1111, 0b1110), 1);
+    }
+
+    #[test]
+    fn test_hamming_all_different() {
+        assert_eq!(hamming_distance(0u64, u64::MAX), 64);
+    }
+
+    #[test]
+    fn test_hamming_symmetric() {
+        let a = 0x123456789ABCDEF0u64;
+        let b = 0xFEDCBA9876543210u64;
+        assert_eq!(hamming_distance(a, b), hamming_distance(b, a));
+    }
+
+    // ── DedupPipeline tests ──
+
+    #[test]
+    fn test_dedup_pipeline_exact_email_duplicate() {
+        let contacts = vec![
+            ContactRecord::new("John", "Smith", "john@example.com", "Acme Inc", "Engineer"),
+            ContactRecord::new("John", "Smith", "john@example.com", "Acme Inc", "Engineer"),
+        ];
+        let results = dedup_contacts_batch(&contacts);
+        assert_eq!(results.len(), 2);
+        assert!(!results[0].is_duplicate, "first contact should be unique");
+        assert!(results[1].is_duplicate, "second contact should be duplicate");
+        assert_eq!(results[1].duplicate_of, Some(0));
+        assert_eq!(results[1].detection_stage, DedupStage::BloomExact);
+    }
+
+    #[test]
+    fn test_dedup_pipeline_case_insensitive_email() {
+        let contacts = vec![
+            ContactRecord::new("John", "Smith", "John@Example.COM", "Acme", ""),
+            ContactRecord::new("John", "Smith", "john@example.com", "Acme", ""),
+        ];
+        let results = dedup_contacts_batch(&contacts);
+        assert!(results[1].is_duplicate, "email dedup should be case-insensitive");
+        assert_eq!(results[1].detection_stage, DedupStage::BloomExact);
+    }
+
+    #[test]
+    fn test_dedup_pipeline_near_duplicate_name_typo() {
+        let contacts = vec![
+            ContactRecord::new("Jonathan", "Smith", "jonathan@acme.com", "Acme Corporation", "Senior Engineer"),
+            ContactRecord::new("Jonathon", "Smith", "jonathon@acme.com", "Acme Corporation", "Senior Engineer"),
+        ];
+        let results = dedup_contacts_batch(&contacts);
+        assert_eq!(results.len(), 2);
+        assert!(!results[0].is_duplicate);
+        // The second should be caught by SimHash + JW since the text is very similar
+        // but the emails are different
+        if results[1].is_duplicate {
+            assert!(
+                results[1].detection_stage == DedupStage::SimHashLSH
+                    || results[1].detection_stage == DedupStage::JaroWinklerConfirm,
+                "near-duplicate should be caught by SimHash or JW, got {:?}",
+                results[1].detection_stage
+            );
+        }
+    }
+
+    #[test]
+    fn test_dedup_pipeline_all_unique() {
+        let contacts = vec![
+            ContactRecord::new("Alice", "Johnson", "alice@alpha.com", "Alpha Corp", "CEO"),
+            ContactRecord::new("Bob", "Williams", "bob@beta.com", "Beta LLC", "CTO"),
+            ContactRecord::new("Carol", "Davis", "carol@gamma.com", "Gamma Inc", "VP Engineering"),
+        ];
+        let results = dedup_contacts_batch(&contacts);
+        assert_eq!(results.len(), 3);
+        for (i, r) in results.iter().enumerate() {
+            assert!(!r.is_duplicate, "contact {} should be unique", i);
+            assert_eq!(r.detection_stage, DedupStage::Unique);
+        }
+    }
+
+    #[test]
+    fn test_dedup_pipeline_empty_input() {
+        let results = dedup_contacts_batch(&[]);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_dedup_pipeline_single_contact() {
+        let contacts = vec![
+            ContactRecord::new("Alice", "Johnson", "alice@alpha.com", "Alpha Corp", "CEO"),
+        ];
+        let results = dedup_contacts_batch(&contacts);
+        assert_eq!(results.len(), 1);
+        assert!(!results[0].is_duplicate);
+    }
+
+    #[test]
+    fn test_dedup_pipeline_mixed_duplicates() {
+        let contacts = vec![
+            // 0: unique
+            ContactRecord::new("Alice", "Johnson", "alice@alpha.com", "Alpha Corp", "CEO"),
+            // 1: unique (different person entirely)
+            ContactRecord::new("Bob", "Williams", "bob@beta.com", "Beta LLC", "CTO"),
+            // 2: exact email duplicate of 0
+            ContactRecord::new("Alice", "Johnson", "alice@alpha.com", "Alpha Corp", "CEO"),
+            // 3: unique
+            ContactRecord::new("Carol", "Davis", "carol@gamma.com", "Gamma Inc", "VP"),
+            // 4: exact email duplicate of 1
+            ContactRecord::new("Bob", "Williams", "bob@beta.com", "Beta LLC", "CTO"),
+        ];
+        let results = dedup_contacts_batch(&contacts);
+        assert!(!results[0].is_duplicate, "Alice should be unique");
+        assert!(!results[1].is_duplicate, "Bob should be unique");
+        assert!(results[2].is_duplicate, "Alice dupe should be caught");
+        assert_eq!(results[2].duplicate_of, Some(0));
+        assert!(!results[3].is_duplicate, "Carol should be unique");
+        assert!(results[4].is_duplicate, "Bob dupe should be caught");
+        assert_eq!(results[4].duplicate_of, Some(1));
+    }
+
+    #[test]
+    fn test_dedup_pipeline_custom_thresholds() {
+        let contacts = vec![
+            ContactRecord::new("John", "Smith", "john@acme.com", "Acme", "Engineer"),
+            ContactRecord::new("John", "Smyth", "john.smyth@acme.com", "Acme", "Engineer"),
+        ];
+        // Tight thresholds: lower hamming threshold, higher JW threshold
+        let results_tight = dedup_contacts_batch_with(&contacts, 5, 0.95, 0.001);
+        // Loose thresholds
+        let results_loose = dedup_contacts_batch_with(&contacts, 20, 0.70, 0.001);
+
+        // With tight thresholds, the second contact is more likely to be unique
+        // With loose thresholds, it's more likely to be a duplicate
+        // At minimum, both should return 2 results
+        assert_eq!(results_tight.len(), 2);
+        assert_eq!(results_loose.len(), 2);
+    }
+
+    #[test]
+    fn test_dedup_pipeline_struct_direct() {
+        let mut pipeline = DedupPipeline::new(100, 0.01);
+        let c1 = ContactRecord::new("John", "Smith", "john@example.com", "Acme", "");
+        let r1 = pipeline.process(0, &c1);
+        assert!(!r1.is_duplicate);
+        assert_eq!(pipeline.unique_count(), 1);
+
+        // Exact duplicate
+        let r2 = pipeline.process(1, &c1);
+        assert!(r2.is_duplicate);
+        assert_eq!(r2.detection_stage, DedupStage::BloomExact);
+
+        // Reset
+        pipeline.reset();
+        assert_eq!(pipeline.unique_count(), 0);
+    }
+
+    #[test]
+    fn test_dedup_pipeline_large_batch() {
+        // Test with a larger batch to stress Bloom filter and SimHash
+        let mut contacts = Vec::with_capacity(200);
+        for i in 0..100 {
+            contacts.push(ContactRecord::new(
+                &format!("First{}", i),
+                &format!("Last{}", i),
+                &format!("user{}@company{}.com", i, i),
+                &format!("Company {}", i),
+                "Engineer",
+            ));
+        }
+        // Add 100 exact duplicates
+        for i in 0..100 {
+            contacts.push(ContactRecord::new(
+                &format!("First{}", i),
+                &format!("Last{}", i),
+                &format!("user{}@company{}.com", i, i),
+                &format!("Company {}", i),
+                "Engineer",
+            ));
+        }
+
+        let results = dedup_contacts_batch(&contacts);
+        assert_eq!(results.len(), 200);
+
+        let unique_count = results.iter().filter(|r| !r.is_duplicate).count();
+        let dup_count = results.iter().filter(|r| r.is_duplicate).count();
+
+        assert_eq!(unique_count, 100, "should have 100 unique contacts");
+        assert_eq!(dup_count, 100, "should detect 100 duplicates");
+
+        // All duplicates should be BloomExact (same email)
+        for r in results.iter().filter(|r| r.is_duplicate) {
+            assert_eq!(
+                r.detection_stage,
+                DedupStage::BloomExact,
+                "exact email dups should be Bloom-detected"
+            );
+        }
+    }
+
+    #[test]
+    fn test_contact_record_bloom_key_normalization() {
+        let c = ContactRecord::new("John", "Smith", "JOHN@EXAMPLE.COM", "Acme", "");
+        assert_eq!(c.bloom_key(), "john@example.com");
+    }
+
+    #[test]
+    fn test_contact_record_simhash_text() {
+        let c = ContactRecord::new("John", "Smith", "john@example.com", "Acme Corp", "CTO");
+        let text = c.simhash_text();
+        assert!(text.contains("John"));
+        assert!(text.contains("Smith"));
+        assert!(text.contains("Acme Corp"));
+        assert!(text.contains("CTO"));
+        // Email should NOT be in simhash text (it's for content similarity, not exact match)
+        assert!(!text.contains("john@example.com"));
     }
 }

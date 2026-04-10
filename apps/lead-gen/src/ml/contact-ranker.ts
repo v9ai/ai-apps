@@ -51,6 +51,20 @@ const WEIGHTS: Record<keyof ContactRankFeatures, number> = {
 
 const BIAS = 0.05;
 
+// ── Feature key ordering (stable, used by typed-array paths) ────────────
+const CONTACT_FEATURE_KEYS: (keyof ContactRankFeatures)[] = Object.keys(WEIGHTS) as (keyof ContactRankFeatures)[];
+const NUM_CONTACT_FEATURES = CONTACT_FEATURE_KEYS.length;
+
+// ── INT8 quantized weights ──────────────────────────────────────────────
+// Scale: max(|w|) maps to 127. Dequantize: float_w ≈ int8_w * CONTACT_WEIGHT_SCALE
+const _contactAbsMax = Math.max(...CONTACT_FEATURE_KEYS.map((k) => Math.abs(WEIGHTS[k])));
+export const CONTACT_WEIGHT_SCALE = _contactAbsMax / 127;
+export const CONTACT_WEIGHTS_INT8 = new Int8Array(
+  CONTACT_FEATURE_KEYS.map((k) => Math.round(WEIGHTS[k] / CONTACT_WEIGHT_SCALE)),
+);
+// Pre-compute float32 weight vector for batch path
+const CONTACT_WEIGHTS_F32 = new Float32Array(CONTACT_FEATURE_KEYS.map((k) => WEIGHTS[k]));
+
 function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
 }
@@ -62,9 +76,33 @@ function sigmoid(x: number): number {
  */
 export function scoreContact(features: ContactRankFeatures): number {
   let logit = BIAS;
-  for (const key of Object.keys(WEIGHTS) as (keyof ContactRankFeatures)[]) {
+  for (const key of CONTACT_FEATURE_KEYS) {
     logit += WEIGHTS[key] * features[key];
   }
+  return Math.round(sigmoid(logit) * 1000) / 1000;
+}
+
+/**
+ * Score a single contact using INT8 quantized weights.
+ *
+ * @param features - Float32Array of length NUM_CONTACT_FEATURES (same order as CONTACT_FEATURE_KEYS)
+ * @returns score (0..1) via sigmoid
+ */
+export function scoreContactQuantized(features: Float32Array): number {
+  let fMax = 0;
+  for (let i = 0; i < NUM_CONTACT_FEATURES; i++) {
+    const a = Math.abs(features[i]!);
+    if (a > fMax) fMax = a;
+  }
+  const featureScale = fMax > 0 ? fMax / 127 : 1;
+
+  let acc = 0;
+  for (let i = 0; i < NUM_CONTACT_FEATURES; i++) {
+    const qi = Math.round(features[i]! / featureScale);
+    acc += CONTACT_WEIGHTS_INT8[i]! * qi;
+  }
+
+  const logit = acc * CONTACT_WEIGHT_SCALE * featureScale + BIAS;
   return Math.round(sigmoid(logit) * 1000) / 1000;
 }
 
@@ -82,7 +120,7 @@ export function rankContacts(
 
       // Build reasons from top contributing features
       const contributions: { name: string; value: number }[] = [];
-      for (const key of Object.keys(WEIGHTS) as (keyof ContactRankFeatures)[]) {
+      for (const key of CONTACT_FEATURE_KEYS) {
         const c = WEIGHTS[key] * features[key];
         if (Math.abs(c) >= 0.02) {
           contributions.push({ name: key, value: c });
@@ -97,4 +135,43 @@ export function rankContacts(
       return { id, score, reasons };
     })
     .sort((a, b) => b.score - a.score);
+}
+
+// ── Batch scoring ───────────────────────────────────────────────────────
+
+/**
+ * Batch-score contacts using typed arrays for cache-friendly memory access.
+ *
+ * Extracts all contact features into a contiguous Float32Array matrix,
+ * then performs batch matrix-vector multiplication with sigmoid activation.
+ *
+ * @param contacts - Array of ContactRankFeatures objects
+ * @returns Float32Array of scores (same order as input), values in (0..1)
+ */
+export function rankContactsBatch(contacts: ContactRankFeatures[]): Float32Array {
+  const batchSize = contacts.length;
+  if (batchSize === 0) return new Float32Array(0);
+
+  // Build contiguous feature matrix: batchSize x NUM_CONTACT_FEATURES
+  const matrix = new Float32Array(batchSize * NUM_CONTACT_FEATURES);
+  for (let row = 0; row < batchSize; row++) {
+    const f = contacts[row]!;
+    const offset = row * NUM_CONTACT_FEATURES;
+    for (let j = 0; j < NUM_CONTACT_FEATURES; j++) {
+      matrix[offset + j] = f[CONTACT_FEATURE_KEYS[j]!];
+    }
+  }
+
+  // Batch dot product: scores[i] = sigmoid(matrix[i] . WEIGHTS + BIAS)
+  const scores = new Float32Array(batchSize);
+  for (let row = 0; row < batchSize; row++) {
+    const offset = row * NUM_CONTACT_FEATURES;
+    let logit = BIAS;
+    for (let j = 0; j < NUM_CONTACT_FEATURES; j++) {
+      logit += matrix[offset + j]! * CONTACT_WEIGHTS_F32[j]!;
+    }
+    scores[row] = Math.round(sigmoid(logit) * 1000) / 1000;
+  }
+
+  return scores;
 }
