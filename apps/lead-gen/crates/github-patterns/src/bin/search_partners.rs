@@ -150,36 +150,24 @@ static STARGAZER_REPOS: &[&str] = &[
 // ── Pass 2: Consulting / SI / AI org GitHub logins ──────────────────────────
 
 static ORG_MEMBERS: &[&str] = &[
-    // Big consulting / SI
+    // Consulting / SI firms with public GitHub orgs
     "thoughtworks",
     "epam",
     "globant",
     "capgemini",
     "publicissapient",
     "cognizant",
+    "Accenture",
     "avanade",
     "slalom",
     "xebia",
     "futurice",
-    "reaktor",
-    // AI-native consultancies & labs
-    "datatonic",
     "nordcloud",
     "quantiphi",
-    // AI infrastructure companies (partner-adjacent)
-    "databricks",
-    "snowflakedb",
-    "elastic",
-    "hashicorp",
-    "datadog",
-    // AI model companies (practitioners pool)
-    "huggingface",
-    "mistralai",
-    "cohere-ai",
-    "deepmind",
-    "stability-ai",
-    "alaboriai",
-    "aleph-alpha",
+    "datatonic",
+    "deloitte",
+    "mckinsey",
+    "KPMG",
 ];
 
 // ── Pass 3: Repo search queries ─────────────────────────────────────────────
