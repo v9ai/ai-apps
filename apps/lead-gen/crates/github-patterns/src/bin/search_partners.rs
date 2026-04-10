@@ -175,6 +175,15 @@ fn trunc(s: &str, max: usize) -> &str {
     &s[..end]
 }
 
+/// Capitalize a GitHub login for use as a display name fallback.
+fn capitalize_login(login: &str) -> String {
+    let mut chars = login.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+    }
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
@@ -929,7 +938,9 @@ async fn export_partners_csv(db: &ContributorsDb, n: usize) -> anyhow::Result<()
         rows.push((
             rank,
             star.login.clone(),
-            star.name.clone().unwrap_or_default(),
+            star.name.clone()
+                .filter(|n| !n.is_empty())
+                .unwrap_or_else(|| capitalize_login(&star.login)),
             email,
             star.company.clone().unwrap_or_default(),
             star.location.clone().unwrap_or_default(),
