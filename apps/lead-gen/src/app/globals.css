@@ -242,7 +242,6 @@ nav a.active {
 
 /* kill rounded corners on all Radix cards */
 .rt-Card {
-  border-radius: 0 !important;
   box-shadow: none !important;
   border: 1px solid var(--gray-6) !important;
   background: var(--gray-2) !important;
@@ -253,7 +252,6 @@ nav a.active {
 
 /* kill rounded corners on buttons */
 .rt-Button {
-  border-radius: 0 !important;
   box-shadow: none !important;
   text-transform: lowercase !important;
   letter-spacing: 0.04em !important;

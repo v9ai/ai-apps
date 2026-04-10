@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
       // Default error UI
       return (
         <Container size="2" style={{ padding: "24px" }}>
-          <Box role="alert" p="4" style={{ borderRadius: 0, border: "1px solid var(--red-6)", backgroundColor: "var(--red-2)" }}>
+          <Box role="alert" p="4" style={{ borderRadius: 8, border: "1px solid var(--red-6)", backgroundColor: "var(--red-2)" }}>
             <Heading size="5" mb="2">Something went wrong</Heading>
             <Text size="2" as="p" mb="3">
               {this.state.error?.message || "An unexpected error occurred"}

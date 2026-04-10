@@ -62,7 +62,7 @@ export function CompanySelect({ value, onChange, placeholder = "Select company..
                       setOpen(false);
                     }
                   }}
-                  style={{ padding: "6px 8px", borderRadius: 0, cursor: "pointer" }}
+                  style={{ padding: "6px 8px", borderRadius: 4, cursor: "pointer" }}
                   className="hover:bg-gray-100"
                 >
                   <Text size="2" color="gray">Clear selection</Text>
