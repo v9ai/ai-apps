@@ -514,13 +514,15 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
-        const updateData: Partial<typeof companies.$inferInsert> = { ...args.input };
+        const updateData: CompanyUpdate = { ...args.input };
 
         // Validate category enum
         if (args.input.category) {
-          const validCategories = ["CONSULTANCY", "UNKNOWN"];
+          const validCategories = ["CONSULTANCY", "STAFFING", "AGENCY", "PRODUCT", "UNKNOWN"] as const;
           const category = args.input.category.toUpperCase();
-          updateData.category = validCategories.includes(category) ? category : "UNKNOWN";
+          updateData.category = (validCategories as readonly string[]).includes(category)
+            ? (category as typeof validCategories[number])
+            : "UNKNOWN";
         }
 
         // Stringify JSON fields
