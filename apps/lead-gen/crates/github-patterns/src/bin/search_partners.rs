@@ -269,6 +269,89 @@ async fn main() -> anyhow::Result<()> {
     let mut searched = 0u32;
 
     // ═══════════════════════════════════════════════════════════════════════
+    // PASS 0: Anthropic SDK dependency users (highest signal — production code)
+    // ═══════════════════════════════════════════════════════════════════════
+    static SDK_QUERIES: &[&str] = &[
+        "anthropic language:python stars:>5",
+        "claude-ai language:python stars:>3",
+        "anthropic language:typescript stars:>5",
+    ];
+    info!("═══ PASS 0: SDK dependency users ({} queries) ═══", SDK_QUERIES.len());
+    {
+        let pass_start = stored;
+        let mut batch: Vec<ContributorRecord> = Vec::with_capacity(BATCH_SIZE);
+
+        for query in SDK_QUERIES {
+            info!("sdk repos: {query}");
+
+            let users = match gh.search_repos_with_owners_graphql(query, 100).await {
+                Ok(u) => u,
+                Err(e) => {
+                    warn!("  sdk search failed for \"{query}\": {e}");
+                    continue;
+                }
+            };
+
+            info!("  → {} unique user-owned repo owners", users.len());
+
+            // Score directly — users are already fully hydrated from GraphQL
+            let source_tag = format!("cpn:sdk/{query}");
+            let src = "sdk";
+            for user in users {
+                if is_bot(&user.login) || !seen.insert(user.login.clone()) {
+                    continue;
+                }
+                searched += 1;
+
+                if !is_eu_location(user.location.as_deref()) {
+                    continue;
+                }
+
+                let skill_text = format!(
+                    "{} {} {}",
+                    user.bio.as_deref().unwrap_or(""),
+                    user.company.as_deref().unwrap_or(""),
+                    user.blog.as_deref().unwrap_or(""),
+                );
+                let skills = extract_skills(&skill_text);
+                let fitness = compute_partner_fitness(&user, &skills, true);
+
+                if fitness.score < threshold {
+                    continue;
+                }
+
+                info!(
+                    "  ✓ {} ({:.2}) [{}] @ {} — {}",
+                    user.login,
+                    fitness.score,
+                    if fitness.archetypes.is_empty() { "general" } else { fitness.archetypes[0] },
+                    user.company.as_deref().unwrap_or("—"),
+                    user.location.as_deref().unwrap_or("?"),
+                );
+
+                let mut tags = vec!["cpn:starred".into()];
+                tags.push(format!("cpn:src:{src}"));
+
+                batch.push(ContributorRecord {
+                    user,
+                    repos: vec![RepoContrib { repo: source_tag.clone(), contributions: 0 }],
+                    total_contributions: 0,
+                    extra_tags: tags,
+                });
+
+                if batch.len() >= BATCH_SIZE {
+                    stored += flush_batch(&mut db, &mut batch).await;
+                }
+            }
+
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+
+        stored += flush_batch(&mut db, &mut batch).await;
+        info!("pass 0 done — {} new from SDK users (searched {searched})", stored - pass_start);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // PASS 1: Stargazers of Anthropic & key AI repos
     // ═══════════════════════════════════════════════════════════════════════
     info!(
@@ -350,49 +433,94 @@ async fn main() -> anyhow::Result<()> {
         for org in ORG_MEMBERS {
             info!("org members: {org}");
 
-            for page in 1..=max_pages {
-                let members = match gh.org_members(org, 100, page).await {
-                    Ok(m) => m,
-                    Err(e) => {
-                        if format!("{e}").contains("404") || format!("{e}").contains("NotFound") {
-                            info!("  {org}: members not public, skipping");
-                        } else {
-                            warn!("  org_members failed for {org} page {page}: {e}");
+            // Try pure GraphQL first (full profiles in one query)
+            let users = match gh.get_org_members_graphql(org).await {
+                Ok(u) if !u.is_empty() => {
+                    info!("  GraphQL: {} members", u.len());
+                    u
+                }
+                Ok(_) => {
+                    info!("  {org}: no public members via GraphQL");
+                    vec![]
+                }
+                Err(e) => {
+                    // Fallback to REST list + GraphQL hydrate
+                    info!("  {org}: GraphQL failed ({e}), falling back to REST");
+                    let mut fallback_users = Vec::new();
+                    for page in 1..=max_pages {
+                        let members = match gh.org_members(org, 100, page).await {
+                            Ok(m) => m,
+                            Err(e2) => {
+                                if format!("{e2}").contains("404") || format!("{e2}").contains("NotFound") {
+                                    info!("  {org}: members not public, skipping");
+                                } else {
+                                    warn!("  org_members REST failed for {org}: {e2}");
+                                }
+                                break;
+                            }
+                        };
+                        if members.is_empty() { break; }
+                        let logins: Vec<&str> = members.iter().map(|m| m.login.as_str()).collect();
+                        if let Ok(hydrated) = gh.get_users_graphql(&logins).await {
+                            fallback_users.extend(hydrated);
                         }
-                        break;
+                        if members.len() < 100 { break; }
                     }
-                };
+                    fallback_users
+                }
+            };
 
-                if members.is_empty() {
-                    break;
+            // Score and filter the fully-hydrated users
+            let source_tag = format!("cpn:org/{org}");
+            let src = "org";
+            for user in users {
+                if is_bot(&user.login) || !seen.insert(user.login.clone()) {
+                    continue;
+                }
+                searched += 1;
+
+                if !is_eu_location(user.location.as_deref()) {
+                    continue;
                 }
 
-                info!("  page {page}: {} members", members.len());
+                let skill_text = format!(
+                    "{} {} {}",
+                    user.bio.as_deref().unwrap_or(""),
+                    user.company.as_deref().unwrap_or(""),
+                    user.blog.as_deref().unwrap_or(""),
+                );
+                let skills = extract_skills(&skill_text);
+                let fitness = compute_partner_fitness(&user, &skills, false);
 
-                let page_logins: Vec<&str> = members
-                    .iter()
-                    .filter(|m| !is_bot(&m.login))
-                    .map(|m| m.login.as_str())
-                    .collect();
-                searched += page_logins.len() as u32;
+                if fitness.score < threshold {
+                    continue;
+                }
 
-                let source_tag = format!("cpn:org/{org}");
-                let records = hydrate_batch(
-                    &gh, &mut seen, &page_logins, threshold, &source_tag, false,
-                ).await;
-                batch.extend(records);
+                info!(
+                    "  ✓ {} ({:.2}) [{}] @ {} — {}",
+                    user.login,
+                    fitness.score,
+                    if fitness.archetypes.is_empty() { "general" } else { fitness.archetypes[0] },
+                    user.company.as_deref().unwrap_or("—"),
+                    user.location.as_deref().unwrap_or("?"),
+                );
+
+                let mut tags: Vec<String> = Vec::new();
+                tags.push(format!("cpn:src:{src}"));
+
+                batch.push(ContributorRecord {
+                    user,
+                    repos: vec![RepoContrib { repo: source_tag.clone(), contributions: 0 }],
+                    total_contributions: 0,
+                    extra_tags: tags,
+                });
+
                 if batch.len() >= BATCH_SIZE {
                     stored += flush_batch(&mut db, &mut batch).await;
                 }
-
-                if members.len() < 100 {
-                    break;
-                }
-
-                tokio::time::sleep(Duration::from_millis(500)).await;
             }
 
-            tokio::time::sleep(Duration::from_secs(1)).await;
+            tokio::time::sleep(Duration::from_millis(500)).await;
         }
 
         stored += flush_batch(&mut db, &mut batch).await;

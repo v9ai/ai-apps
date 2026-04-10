@@ -362,6 +362,194 @@ impl GhClient {
         Ok(users)
     }
 
+    /// Search repos by query and return fully-hydrated owner profiles (users only).
+    /// Org-owned repos are filtered out (owner is not a User). This is ideal for
+    /// finding individual developers who built production code with a given SDK.
+    pub async fn search_repos_with_owners_graphql(
+        &self,
+        query: &str,
+        count: u32,
+    ) -> Result<Vec<GhUser>> {
+        let fields = r#"login
+                id: databaseId
+                url
+                avatarUrl
+                name
+                email
+                bio
+                company
+                location
+                websiteUrl
+                twitterUsername
+                repositories(privacy: PUBLIC) { totalCount }
+                gists(privacy: PUBLIC) { totalCount }
+                followers { totalCount }
+                following { totalCount }
+                isHireable
+                createdAt
+                updatedAt"#;
+
+        let gql = format!(
+            r#"query {{ search(query: "{}", type: REPOSITORY, first: {}) {{ nodes {{ ... on Repository {{ nameWithOwner owner {{ ... on User {{ {} }} }} }} }} }} }}"#,
+            query.replace('"', r#"\""#),
+            count.min(100),
+            fields,
+        );
+
+        let body = serde_json::json!({ "query": gql });
+
+        let resp = self
+            .inner
+            .post("https://api.github.com/graphql")
+            .bearer_auth(&self.token)
+            .json(&body)
+            .send()
+            .await
+            .map_err(GhError::Http)?;
+
+        let status = resp.status().as_u16();
+        if status == 403 {
+            let reset = resp
+                .headers()
+                .get("x-ratelimit-reset")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("unknown")
+                .to_string();
+            return Err(GhError::RateLimit { reset_at: reset });
+        }
+        if !resp.status().is_success() {
+            let body_text = resp.text().await.unwrap_or_default();
+            return Err(GhError::Api { status, message: body_text });
+        }
+
+        let json: serde_json::Value = resp.json().await.map_err(GhError::Http)?;
+
+        if let Some(errors) = json.get("errors") {
+            if json.get("data").is_none() {
+                return Err(GhError::Other(format!(
+                    "GraphQL errors: {}",
+                    serde_json::to_string(errors).unwrap_or_default()
+                )));
+            }
+        }
+
+        let nodes = json
+            .get("data")
+            .and_then(|d| d.get("search"))
+            .and_then(|s| s.get("nodes"))
+            .and_then(|n| n.as_array());
+
+        let nodes = match nodes {
+            Some(n) => n,
+            None => return Ok(vec![]),
+        };
+
+        let mut users = Vec::new();
+        let mut seen_logins = std::collections::HashSet::new();
+        for node in nodes {
+            // owner is null for org-owned repos (User spread doesn't match)
+            let owner = match node.get("owner") {
+                Some(o) if !o.is_null() && o.get("login").is_some() => o,
+                _ => continue,
+            };
+            if let Some(user) = graphql_node_to_user(owner) {
+                if seen_logins.insert(user.login.clone()) {
+                    users.push(user);
+                }
+            }
+        }
+
+        Ok(users)
+    }
+
+    /// Fetch full profiles of org members in a single GraphQL query.
+    /// Returns up to 100 members with full user data — no separate hydration needed.
+    /// Falls back to empty vec on 403 (org members hidden) or other errors.
+    pub async fn get_org_members_graphql(&self, org: &str) -> Result<Vec<GhUser>> {
+        let fields = r#"login
+            id: databaseId
+            url
+            avatarUrl
+            name
+            email
+            bio
+            company
+            location
+            websiteUrl
+            twitterUsername
+            repositories(privacy: PUBLIC) { totalCount }
+            gists(privacy: PUBLIC) { totalCount }
+            followers { totalCount }
+            following { totalCount }
+            isHireable
+            createdAt
+            updatedAt"#;
+
+        let query = format!(
+            r#"query {{ organization(login: "{}") {{ membersWithRole(first: 100) {{ nodes {{ {} }} }} }} }}"#,
+            org.replace('"', r#"\""#),
+            fields,
+        );
+
+        let body = serde_json::json!({ "query": query });
+
+        let resp = self
+            .inner
+            .post("https://api.github.com/graphql")
+            .bearer_auth(&self.token)
+            .json(&body)
+            .send()
+            .await
+            .map_err(GhError::Http)?;
+
+        let status = resp.status().as_u16();
+        if status == 403 {
+            let reset = resp
+                .headers()
+                .get("x-ratelimit-reset")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("unknown")
+                .to_string();
+            return Err(GhError::RateLimit { reset_at: reset });
+        }
+        if !resp.status().is_success() {
+            let body_text = resp.text().await.unwrap_or_default();
+            return Err(GhError::Api { status, message: body_text });
+        }
+
+        let json: serde_json::Value = resp.json().await.map_err(GhError::Http)?;
+
+        // GraphQL returns errors for hidden orgs / permission issues
+        if let Some(errors) = json.get("errors") {
+            let msg = serde_json::to_string(errors).unwrap_or_default();
+            if msg.contains("not found") || msg.contains("visible") {
+                return Ok(vec![]); // org members not public
+            }
+            if json.get("data").and_then(|d| d.get("organization")).map_or(true, |o| o.is_null()) {
+                return Err(GhError::Other(format!("GraphQL errors: {msg}")));
+            }
+        }
+
+        let nodes = json
+            .get("data")
+            .and_then(|d| d.get("organization"))
+            .and_then(|o| o.get("membersWithRole"))
+            .and_then(|m| m.get("nodes"))
+            .and_then(|n| n.as_array());
+
+        let nodes = match nodes {
+            Some(n) => n,
+            None => return Ok(vec![]),
+        };
+
+        let users: Vec<GhUser> = nodes
+            .iter()
+            .filter_map(|node| graphql_node_to_user(node))
+            .collect();
+
+        Ok(users)
+    }
+
     /// Search repos by topic + optional language.
     pub async fn search_repos(
         &self,
@@ -387,7 +575,8 @@ fn graphql_node_to_user(node: &serde_json::Value) -> Option<GhUser> {
     use chrono::{DateTime, Utc};
 
     let login = node.get("login")?.as_str()?.to_string();
-    let id = node.get("id")?.as_u64()?;
+    // "id" when aliased (get_users_graphql), "databaseId" when direct
+    let id = node.get("id").or_else(|| node.get("databaseId")).and_then(|v| v.as_u64()).unwrap_or(0);
     let url = node.get("url")?.as_str()?.to_string();
     let avatar_url = node
         .get("avatarUrl")
