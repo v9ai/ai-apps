@@ -209,8 +209,50 @@ export function inferEmailPattern(
 // NeverBounce Client
 // ============================================================================
 
-const verificationCache = new Map<string, VerificationOutcome>();
+/** Cache entry with TTL tracking */
+interface CacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
+/** TTL = 1 hour for verification results */
+const CACHE_TTL_MS = 60 * 60 * 1000;
+
+const verificationCache = new Map<string, CacheEntry<VerificationOutcome>>();
 const domainPatternCache = new Map<string, EmailPattern>();
+
+/** Get a cached value, returning undefined if expired or missing */
+function getCached(key: string): VerificationOutcome | undefined {
+  const entry = verificationCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) {
+    verificationCache.delete(key);
+    return undefined;
+  }
+  return entry.value;
+}
+
+/** Set a cached value with TTL */
+function setCached(key: string, value: VerificationOutcome): void {
+  verificationCache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+/** Evict expired entries (called periodically to prevent unbounded growth) */
+function evictExpired(): void {
+  const now = Date.now();
+  for (const [key, entry] of verificationCache) {
+    if (now > entry.expiresAt) {
+      verificationCache.delete(key);
+    }
+  }
+}
+
+// Run eviction every 10 minutes to keep memory bounded
+const evictionInterval = setInterval(evictExpired, 10 * 60 * 1000);
+// Allow Node.js to exit cleanly without waiting for the timer
+if (typeof evictionInterval === "object" && "unref" in evictionInterval) {
+  evictionInterval.unref();
+}
 
 export class NeverBounceClient {
   private apiKey: string;
@@ -263,8 +305,9 @@ export class NeverBounceClient {
   async verifyEmail(email: string, useCache = true): Promise<VerificationOutcome> {
     const normalizedEmail = email.toLowerCase().trim();
 
-    if (useCache && verificationCache.has(normalizedEmail)) {
-      return verificationCache.get(normalizedEmail)!;
+    if (useCache) {
+      const cached = getCached(normalizedEmail);
+      if (cached) return cached;
     }
 
     if (!this.isValidEmailFormat(normalizedEmail)) {

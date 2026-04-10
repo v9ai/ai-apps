@@ -50,6 +50,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 
+  // Start resume file read immediately (parallelized with JSON parsing)
+  const resumeReadPromise = readFile(RESUME_PATH).catch(() => null);
+
   let input: SendEmailRequest;
   try {
     input = (await request.json()) as SendEmailRequest;
@@ -69,12 +72,11 @@ export async function POST(request: NextRequest) {
 
   const attachments = [];
   if (includeResume) {
-    try {
-      const content = await readFile(RESUME_PATH);
-      attachments.push({ filename: "Vadim_Nicolai_CV.pdf", content });
-    } catch {
+    const content = await resumeReadPromise;
+    if (!content) {
       return NextResponse.json({ success: false, error: "Resume file not found" }, { status: 500 });
     }
+    attachments.push({ filename: "Vadim_Nicolai_CV.pdf", content });
   }
 
   let result: Awaited<ReturnType<typeof resend.instance.send>>;

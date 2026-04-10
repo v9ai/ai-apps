@@ -65,19 +65,47 @@ export const CONTACT_WEIGHTS_INT8 = new Int8Array(
 // Pre-compute float32 weight vector for batch path
 const CONTACT_WEIGHTS_F32 = new Float32Array(CONTACT_FEATURE_KEYS.map((k) => WEIGHTS[k]));
 
+// ── Sigmoid LUT for fast batch scoring ─────────────────────────────────
+// Optimization: 1024-entry Float64Array LUT avoids Math.exp() per contact
+// in batch scoring paths. Range [-8, 8] covers typical logit outputs for
+// 12-feature contact scoring. Pre-computed inverse range eliminates division.
+const SIGMOID_LUT_SIZE = 1024;
+const SIGMOID_LUT_MIN = -8;
+const SIGMOID_LUT_MAX = 8;
+const SIGMOID_LUT_RANGE = SIGMOID_LUT_MAX - SIGMOID_LUT_MIN;
+const SIGMOID_LUT_INV_RANGE = (SIGMOID_LUT_SIZE - 1) / SIGMOID_LUT_RANGE;
+const SIGMOID_LUT = new Float64Array(SIGMOID_LUT_SIZE);
+for (let _i = 0; _i < SIGMOID_LUT_SIZE; _i++) {
+  const _x = SIGMOID_LUT_MIN + (_i / (SIGMOID_LUT_SIZE - 1)) * SIGMOID_LUT_RANGE;
+  SIGMOID_LUT[_i] = 1 / (1 + Math.exp(-_x));
+}
+
 function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
+}
+
+/** Fast sigmoid via LUT with linear interpolation for batch paths. */
+function sigmoidFast(x: number): number {
+  if (x <= SIGMOID_LUT_MIN) return 0;
+  if (x >= SIGMOID_LUT_MAX) return 1;
+  const t = (x - SIGMOID_LUT_MIN) * SIGMOID_LUT_INV_RANGE;
+  const idx = t | 0;
+  const frac = t - idx;
+  return SIGMOID_LUT[idx]! + frac * (SIGMOID_LUT[idx + 1]! - SIGMOID_LUT[idx]!);
 }
 
 /**
  * Score a single contact for outreach priority.
  *
+ * Optimization: uses indexed CONTACT_WEIGHTS_F32 instead of Record property
+ * lookup per feature, reducing dynamic dispatch overhead.
+ *
  * @returns A score between 0 and 1 (higher = better outreach target).
  */
 export function scoreContact(features: ContactRankFeatures): number {
   let logit = BIAS;
-  for (const key of CONTACT_FEATURE_KEYS) {
-    logit += WEIGHTS[key] * features[key];
+  for (let i = 0; i < NUM_CONTACT_FEATURES; i++) {
+    logit += CONTACT_WEIGHTS_F32[i]! * features[CONTACT_FEATURE_KEYS[i]!];
   }
   return Math.round(sigmoid(logit) * 1000) / 1000;
 }
