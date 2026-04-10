@@ -236,7 +236,7 @@ async fn main() -> anyhow::Result<()> {
         "mcp server language:typescript stars:>2",
         "mcp server language:python stars:>2",
     ];
-    info!("═══ PASS 0: SDK dependency users ({} queries) ═══", SDK_QUERIES.len());
+    info!("═══ PASS 0: SDK dependency users ({} queries) ═══  [stored so far: {stored}]", SDK_QUERIES.len());
     {
         let pass_start = stored;
         let mut batch: Vec<ContributorRecord> = Vec::with_capacity(BATCH_SIZE);
@@ -314,7 +314,7 @@ async fn main() -> anyhow::Result<()> {
     // PASS 1: Stargazers of Anthropic & key AI repos
     // ═══════════════════════════════════════════════════════════════════════
     info!(
-        "═══ PASS 1: Stargazers ({} repos, up to {} pages each) ═══",
+        "═══ PASS 1: Stargazers ({} repos, up to {} pages each) ═══  [stored so far: {stored}]",
         STARGAZER_REPOS.len(),
         max_pages
     );
@@ -384,7 +384,7 @@ async fn main() -> anyhow::Result<()> {
     // ═══════════════════════════════════════════════════════════════════════
     // PASS 2: Org members of consulting / SI / AI companies
     // ═══════════════════════════════════════════════════════════════════════
-    info!("═══ PASS 2: Org members ({} orgs) ═══", ORG_MEMBERS.len());
+    info!("═══ PASS 2: Org members ({} orgs) ═══  [stored so far: {stored}]", ORG_MEMBERS.len());
     {
         let pass_start = stored;
         let mut batch: Vec<ContributorRecord> = Vec::with_capacity(BATCH_SIZE);
