@@ -281,7 +281,6 @@ nav a.active {
 
 /* flatten badges */
 .rt-Badge {
-  border-radius: 0 !important;
   font-size: 11px !important;
   font-weight: 500 !important;
   letter-spacing: 0.02em !important;
@@ -292,7 +291,6 @@ nav a.active {
 /* flatten text fields */
 .rt-TextFieldRoot,
 .rt-TextFieldInput {
-  border-radius: 0 !important;
 }
 .rt-TextFieldInput:focus {
   box-shadow: none !important;

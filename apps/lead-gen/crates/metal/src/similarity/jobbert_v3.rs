@@ -407,27 +407,16 @@ impl JobBertV3Embedder {
     ) -> anyhow::Result<(Vec<usize>, Vec<f32>)> {
         use ort::value::TensorRef;
 
-        let input_ids_array = ndarray::Array2::from_shape_vec(
-            (batch_size, seq_len),
-            input_ids.to_vec(),
-        )?;
-        let attention_mask_array = ndarray::Array2::from_shape_vec(
-            (batch_size, seq_len),
-            attention_mask.to_vec(),
-        )?;
-
         // XLM-RoBERTa: token_type_ids are always 0 (type_vocab_size=1).
         // Some ONNX exports include this input, some don't. We pass it for compatibility.
         let token_type_ids = vec![0i64; batch_size * seq_len];
-        let token_type_ids_array = ndarray::Array2::from_shape_vec(
-            (batch_size, seq_len),
-            token_type_ids,
-        )?;
 
-        // Create ort tensor views from ndarray arrays (zero-copy borrow)
-        let ids_tensor = TensorRef::<i64>::from_array_view(&input_ids_array).map_err(ort_err)?;
-        let mask_tensor = TensorRef::<i64>::from_array_view(&attention_mask_array).map_err(ort_err)?;
-        let type_tensor = TensorRef::<i64>::from_array_view(&token_type_ids_array).map_err(ort_err)?;
+        // Create ort tensor views using (shape, &[T]) tuple API (zero-copy borrow).
+        // The shape is [batch_size, seq_len] as a Vec<usize>.
+        let shape = vec![batch_size, seq_len];
+        let ids_tensor = TensorRef::<i64>::from_array_view((shape.clone(), input_ids)).map_err(ort_err)?;
+        let mask_tensor = TensorRef::<i64>::from_array_view((shape.clone(), attention_mask)).map_err(ort_err)?;
+        let type_tensor = TensorRef::<i64>::from_array_view((shape, token_type_ids.as_slice())).map_err(ort_err)?;
 
         let inputs = ort::inputs![
             "input_ids" => ids_tensor,
