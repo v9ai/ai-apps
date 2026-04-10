@@ -88,6 +88,34 @@ function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
 }
 
+// ── Sigmoid LUT for fast batch scoring ─────────────────────────────────
+// Optimization: 1024-entry Float64Array LUT avoids Math.exp() per email
+// in batch scoring. Range [-10, 10] covers bounce prediction logit range
+// (max weight magnitude ~3.0 x 20 features). Pre-computed at module load.
+const SIGMOID_LUT_SIZE = 1024;
+const SIGMOID_LUT_MIN = -10;
+const SIGMOID_LUT_MAX = 10;
+const SIGMOID_LUT_RANGE = SIGMOID_LUT_MAX - SIGMOID_LUT_MIN;
+const SIGMOID_LUT_INV_RANGE = (SIGMOID_LUT_SIZE - 1) / SIGMOID_LUT_RANGE;
+const SIGMOID_LUT = new Float64Array(SIGMOID_LUT_SIZE);
+for (let _i = 0; _i < SIGMOID_LUT_SIZE; _i++) {
+  const _x = SIGMOID_LUT_MIN + (_i / (SIGMOID_LUT_SIZE - 1)) * SIGMOID_LUT_RANGE;
+  SIGMOID_LUT[_i] = 1 / (1 + Math.exp(-_x));
+}
+
+/** Fast sigmoid via LUT with linear interpolation for batch paths. */
+function sigmoidFast(x: number): number {
+  if (x <= SIGMOID_LUT_MIN) return 0;
+  if (x >= SIGMOID_LUT_MAX) return 1;
+  const t = (x - SIGMOID_LUT_MIN) * SIGMOID_LUT_INV_RANGE;
+  const idx = t | 0;
+  const frac = t - idx;
+  return SIGMOID_LUT[idx]! + frac * (SIGMOID_LUT[idx + 1]! - SIGMOID_LUT[idx]!);
+}
+
+/** Number of bounce prediction features. */
+const NUM_BOUNCE_FEATURES = 20;
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -129,6 +157,9 @@ export function createDefaultBounceWeights(): BouncePredictorWeights {
 /**
  * Predict the bounce probability for a single email address.
  *
+ * Optimization: 4-way unrolled dot product for the 20-feature vector
+ * (20 / 4 = 5 full iterations, 0 remainder).
+ *
  * @param features 20-element numeric feature vector (see BOUNCE_FEATURE_NAMES).
  * @param weights  Model weights (use createDefaultBounceWeights for baseline).
  */
@@ -138,20 +169,106 @@ export function predictBounce(
 ): BouncePrediction {
   let z = weights.bias;
   const n = Math.min(features.length, weights.weights.length);
-  for (let i = 0; i < n; i++) {
-    z += weights.weights[i] * features[i];
+  const w = weights.weights;
+
+  // 4-way unrolled dot product
+  let i = 0;
+  for (; i + 3 < n; i += 4) {
+    z +=
+      w[i] * features[i] +
+      w[i + 1] * features[i + 1] +
+      w[i + 2] * features[i + 2] +
+      w[i + 3] * features[i + 3];
+  }
+  for (; i < n; i++) {
+    z += w[i] * features[i];
   }
 
   const probability = sigmoid(z);
 
-  let risk: BounceRisk;
-  if (probability < 0.15) {
-    risk = "low";
-  } else if (probability < 0.5) {
-    risk = "medium";
-  } else {
-    risk = "high";
-  }
+  const risk: BounceRisk = probability < 0.15 ? "low"
+    : probability < 0.5 ? "medium"
+    : "high";
 
   return { probability, risk };
+}
+
+// ---------------------------------------------------------------------------
+// Batch scoring
+// ---------------------------------------------------------------------------
+
+/**
+ * Batch predict bounce probability for multiple email addresses.
+ *
+ * Packs all features into a contiguous Float64Array and uses the sigmoid
+ * LUT for fast activation. Returns a Float64Array of probabilities and a
+ * parallel array of risk categories.
+ *
+ * Optimizations:
+ * - Contiguous Float64Array matrix for cache-friendly memory access
+ * - 4-way unrolled dot product (20 features = 5 full iterations)
+ * - Pre-packed Float64Array weights avoids repeated number[] indexing
+ * - Sigmoid LUT instead of Math.exp() per email
+ * - Pre-allocated output arrays
+ *
+ * @param featureBatch Array of 20-element feature vectors.
+ * @param weights Model weights.
+ * @returns { probabilities, risks } parallel arrays.
+ */
+export function predictBounceBatch(
+  featureBatch: number[][],
+  weights: BouncePredictorWeights,
+): { probabilities: Float64Array; risks: BounceRisk[] } {
+  const batchSize = featureBatch.length;
+  if (batchSize === 0) {
+    return { probabilities: new Float64Array(0), risks: [] };
+  }
+
+  // Pack weights into Float64Array once
+  const wLen = Math.min(weights.weights.length, NUM_BOUNCE_FEATURES);
+  const w = new Float64Array(NUM_BOUNCE_FEATURES);
+  for (let i = 0; i < wLen; i++) {
+    w[i] = weights.weights[i];
+  }
+  const bias = weights.bias;
+
+  // Pack features into contiguous Float64Array (row-major)
+  const matrix = new Float64Array(batchSize * NUM_BOUNCE_FEATURES);
+  for (let row = 0; row < batchSize; row++) {
+    const src = featureBatch[row];
+    const base = row * NUM_BOUNCE_FEATURES;
+    const srcLen = Math.min(src.length, NUM_BOUNCE_FEATURES);
+    for (let j = 0; j < srcLen; j++) {
+      matrix[base + j] = src[j];
+    }
+    // Remaining features stay 0 (Float64Array is zero-initialized)
+  }
+
+  // Batch dot product with sigmoid LUT
+  const probabilities = new Float64Array(batchSize);
+  const risks: BounceRisk[] = new Array(batchSize);
+
+  for (let row = 0; row < batchSize; row++) {
+    const base = row * NUM_BOUNCE_FEATURES;
+    let z = bias;
+
+    // 4-way unrolled dot product
+    let j = 0;
+    for (; j + 3 < NUM_BOUNCE_FEATURES; j += 4) {
+      z +=
+        w[j] * matrix[base + j] +
+        w[j + 1] * matrix[base + j + 1] +
+        w[j + 2] * matrix[base + j + 2] +
+        w[j + 3] * matrix[base + j + 3];
+    }
+    for (; j < NUM_BOUNCE_FEATURES; j++) {
+      z += w[j] * matrix[base + j];
+    }
+
+    const prob = sigmoidFast(z);
+    probabilities[row] = prob;
+    risks[row] = prob < 0.15 ? "low" : prob < 0.5 ? "medium" : "high";
+  }
+
+  return { probabilities, risks };
 }
