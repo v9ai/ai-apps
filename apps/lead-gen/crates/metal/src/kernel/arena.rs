@@ -596,14 +596,23 @@ mod tests {
         let mut arena = ScoringArena::new(32);
 
         for batch in 0..5 {
-            let features = arena.alloc_f32_slice(32 * 7); // 7 features per contact
+            // Allocate features, populate, then drop the borrow before the next alloc.
+            let features_ptr: *mut f32;
+            {
+                let features = arena.alloc_f32_slice(32 * 7); // 7 features per contact
+                for i in 0..32 {
+                    let base = i * 7;
+                    features[base] = (batch * 32 + i) as f32;
+                }
+                features_ptr = features.as_mut_ptr();
+            }
+
             let scores = arena.alloc_f32_slice(32); // output scores
 
-            // Simulate scoring
+            // Simulate scoring: read features through raw pointer (borrow released).
             for i in 0..32 {
                 let base = i * 7;
-                features[base] = (batch * 32 + i) as f32;
-                scores[i] = features[base] * 0.5;
+                scores[i] = unsafe { *features_ptr.add(base) } * 0.5;
             }
 
             // Verify last batch's data is correct

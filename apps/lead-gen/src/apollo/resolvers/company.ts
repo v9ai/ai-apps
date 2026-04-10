@@ -13,6 +13,9 @@ import type {
   NewCompanyFact,
   NewCompanySnapshot,
 } from "@/db/schema";
+
+/** Partial update type for companies — accepts null for nullable columns (matches GraphQL InputMaybe) */
+type CompanyUpdate = Partial<Record<keyof typeof companies.$inferInsert, typeof companies.$inferInsert[keyof typeof companies.$inferInsert] | null>>;
 import { eq, and, or, like, ilike, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
