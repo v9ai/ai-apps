@@ -163,24 +163,33 @@ class ReplyHead(BaseModule):
         # position encoding for touchpoint context
         self.position_embed = nn.Embedding(10, 8)
 
-    def process(self, encoded, text, **kwargs):
-        encoder_output = encoded["encoder_output"]
-        input_ids = encoded["input_ids"]
-        _, tokenizer = SharedEncoder.load()
-        touchpoint = kwargs.get("touchpoint", 0)
-        tokens = encoder_output.last_hidden_state
-        seq_len = tokens.shape[1]
+    def _compute_unary_logits(self, tokens, touchpoint=0):
+        """Batched unary logit computation.
 
+        Args:
+            tokens: (B, seq, hidden) from encoder
+            touchpoint: int, touchpoint index
+
+        Returns:
+            (B, n_labels) unary logits after max-pooling.
+        """
+        seq_len = tokens.shape[1]
         pos = self.position_embed(
             torch.tensor([min(touchpoint, 9)]).to(tokens.device)
-        ).unsqueeze(1).expand(-1, seq_len, -1)
+        ).unsqueeze(1).expand(tokens.shape[0], seq_len, -1)
 
-        # unary label scores from token relevance
         relevance = self.token_scorer(torch.cat([tokens, pos], dim=-1)).sigmoid()
-        unary_logits = relevance.max(dim=1).values  # (B, n_labels) — max pool per label
+        return relevance.max(dim=1).values  # (B, n_labels)
 
-        # CRF decoding: find best label configuration respecting constraints
-        top_configs = self.crf.decode(unary_logits)
+    def _decode_single(self, tokens_i, input_ids_i, unary_logits_i, tokenizer, seq_len):
+        """CRF decode and evidence extraction for a single item.
+
+        Args:
+            tokens_i: (1, seq, hidden)
+            input_ids_i: (1, seq)
+            unary_logits_i: (1, n_labels)
+        """
+        top_configs = self.crf.decode(unary_logits_i)
         best_config = top_configs[0][1]
 
         active = {}
@@ -190,30 +199,70 @@ class ReplyHead(BaseModule):
             active[label] = is_active
 
             if is_active:
-                s_scores = self.start_pointer(tokens[0, :, :])[:, i]
-                e_scores = self.end_pointer(tokens[0, :, :])[:, i]
+                s_scores = self.start_pointer(tokens_i[0, :, :])[:, i]
+                e_scores = self.end_pointer(tokens_i[0, :, :])[:, i]
 
                 best_start = s_scores[1:-1].argmax().item() + 1
                 valid_ends = e_scores[best_start:min(best_start + 30, seq_len - 1)]
                 if len(valid_ends) > 0:
                     best_end = best_start + valid_ends.argmax().item() + 1
                     span_text = tokenizer.decode(
-                        input_ids[0, best_start:best_end], skip_special_tokens=True
+                        input_ids_i[0, best_start:best_end], skip_special_tokens=True
                     ).strip()
                     if span_text:
                         evidence.append({"label": label, "text": span_text})
 
         primary = max(
-            [(l, unary_logits[0, i].item()) for i, l in enumerate(LABELS) if active.get(l)],
+            [(l, unary_logits_i[0, j].item()) for j, l in enumerate(LABELS) if active.get(l)],
             key=lambda x: x[1],
             default=("none", 0),
         )[0]
 
         return {
             "active": active,
-            "scores": {l: round(unary_logits[0, i].item(), 3) for i, l in enumerate(LABELS)},
+            "scores": {l: round(unary_logits_i[0, j].item(), 3) for j, l in enumerate(LABELS)},
             "evidence": evidence,
             "primary": primary,
             "configuration_score": round(top_configs[0][0], 3),
             "alternative_configs": len([c for c in top_configs if c[0] > top_configs[0][0] - 1.0]),
         }
+
+    def process(self, encoded, text, **kwargs):
+        encoder_output = encoded["encoder_output"]
+        input_ids = encoded["input_ids"]
+        _, tokenizer = SharedEncoder.load()
+        touchpoint = kwargs.get("touchpoint", 0)
+        tokens = encoder_output.last_hidden_state
+        seq_len = tokens.shape[1]
+
+        unary_logits = self._compute_unary_logits(tokens, touchpoint)
+
+        return self._decode_single(
+            tokens, input_ids, unary_logits, tokenizer, seq_len
+        )
+
+    def process_batch(self, batch_encoded, texts, **kwargs):
+        """Batch reply classification.
+
+        The token_scorer MLP and position embedding run on the full
+        (B, seq, hidden) tensor in one pass. CRF decoding and evidence
+        extraction loop per item (CRF enumeration is already fast at 2^10).
+        """
+        encoder_output = batch_encoded["encoder_output"]
+        input_ids = batch_encoded["input_ids"]
+        _, tokenizer = SharedEncoder.load()
+        touchpoint = kwargs.get("touchpoint", 0)
+        tokens = encoder_output.last_hidden_state  # (B, seq, hidden)
+        B, seq_len = tokens.shape[0], tokens.shape[1]
+
+        # Batched MLP forward pass
+        unary_logits = self._compute_unary_logits(tokens, touchpoint)  # (B, n_labels)
+
+        # CRF decode per item (2^10 enumeration, negligible cost)
+        results = []
+        for i in range(B):
+            results.append(self._decode_single(
+                tokens[i:i+1], input_ids[i:i+1],
+                unary_logits[i:i+1], tokenizer, seq_len
+            ))
+        return results

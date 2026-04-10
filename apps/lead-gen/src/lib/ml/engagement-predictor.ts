@@ -349,6 +349,9 @@ function featureToArray(f: EngagementFeature): number[] {
   ];
 }
 
+/** Number of features in the engagement vector. */
+const NUM_ENGAGEMENT_FEATURES = 12;
+
 /**
  * Batch predict engagement probabilities for multiple leads.
  *
@@ -356,11 +359,12 @@ function featureToArray(f: EngagementFeature): number[] {
  * Returns a Float32Array of length `features.length * 3` laid out as
  * [pOpen_0, pReply_0, confidence_0, pOpen_1, pReply_1, confidence_1, ...].
  *
- * This is ~3-5x faster than calling predictEngagement() in a loop for
- * large batches because:
+ * Optimizations over a naive loop:
  * - Stump traversal is done once per stump across all samples (stump-major)
+ * - Features packed into contiguous Float64Array for cache-friendly access
+ * - 4-way unrolled inner sample loop for better V8 optimization
  * - Sigmoid uses the pre-computed LUT instead of Math.exp()
- * - No intermediate object allocations
+ * - No intermediate object allocations (pre-allocated typed arrays)
  *
  * @param model    Trained ensemble model.
  * @param features Array of engagement feature structs.
@@ -375,10 +379,25 @@ export function predictBatch(
 
   if (n === 0) return result;
 
-  // Pre-convert features to flat array-of-arrays for index access
-  const featureArrays: number[][] = new Array(n);
+  // Optimization: pack features into contiguous Float64Array (row-major) instead
+  // of array-of-arrays. This avoids n array allocations and gives the stump
+  // traversal loop sequential memory access per feature index.
+  const featureMatrix = new Float64Array(n * NUM_ENGAGEMENT_FEATURES);
   for (let i = 0; i < n; i++) {
-    featureArrays[i] = featureToArray(features[i]);
+    const f = features[i];
+    const base = i * NUM_ENGAGEMENT_FEATURES;
+    featureMatrix[base]     = f.authorityScore;
+    featureMatrix[base + 1] = f.daysSinceLastEmail;
+    featureMatrix[base + 2] = f.totalEmailsSent;
+    featureMatrix[base + 3] = f.openRate;
+    featureMatrix[base + 4] = f.replyRate;
+    featureMatrix[base + 5] = f.sequenceNumber;
+    featureMatrix[base + 6] = f.intentScore;
+    featureMatrix[base + 7] = f.leadTemperature;
+    featureMatrix[base + 8] = f.hourSin;
+    featureMatrix[base + 9] = f.hourCos;
+    featureMatrix[base + 10] = f.companyAiTier;
+    featureMatrix[base + 11] = f.emailVerified;
   }
 
   // Accumulate log-odds in typed arrays (stump-major order for cache locality)
@@ -394,23 +413,73 @@ export function predictBatch(
     const thr = stump.threshold;
     const leftVal = stump.leftValue;
     const rightVal = stump.rightValue;
+    const lrLeft = lr * leftVal;
+    const lrRight = lr * rightVal;
+    const lrLeftHalf = lrLeft * 0.5;
+    const lrRightHalf = lrRight * 0.5;
+    const leftPositive = leftVal > 0 ? 1 : 0;
+    const rightPositive = rightVal > 0 ? 1 : 0;
 
-    for (let i = 0; i < n; i++) {
-      const pred = featureArrays[i][fIdx] <= thr ? leftVal : rightVal;
-      logOddsOpen[i] += lr * pred;
-      logOddsReply[i] += lr * pred * 0.5;
-      if (pred > 0) positiveVotes[i]++;
+    // Optimization: 4-way unrolled inner loop to help V8 optimize.
+    // Pre-compute lr * pred and lr * pred * 0.5 outside the branch.
+    let i = 0;
+    for (; i + 3 < n; i += 4) {
+      const b0 = i * NUM_ENGAGEMENT_FEATURES + fIdx;
+      const b1 = (i + 1) * NUM_ENGAGEMENT_FEATURES + fIdx;
+      const b2 = (i + 2) * NUM_ENGAGEMENT_FEATURES + fIdx;
+      const b3 = (i + 3) * NUM_ENGAGEMENT_FEATURES + fIdx;
+      const isLeft0 = featureMatrix[b0] <= thr;
+      const isLeft1 = featureMatrix[b1] <= thr;
+      const isLeft2 = featureMatrix[b2] <= thr;
+      const isLeft3 = featureMatrix[b3] <= thr;
+      logOddsOpen[i]     += isLeft0 ? lrLeft : lrRight;
+      logOddsOpen[i + 1] += isLeft1 ? lrLeft : lrRight;
+      logOddsOpen[i + 2] += isLeft2 ? lrLeft : lrRight;
+      logOddsOpen[i + 3] += isLeft3 ? lrLeft : lrRight;
+      logOddsReply[i]     += isLeft0 ? lrLeftHalf : lrRightHalf;
+      logOddsReply[i + 1] += isLeft1 ? lrLeftHalf : lrRightHalf;
+      logOddsReply[i + 2] += isLeft2 ? lrLeftHalf : lrRightHalf;
+      logOddsReply[i + 3] += isLeft3 ? lrLeftHalf : lrRightHalf;
+      positiveVotes[i]     += isLeft0 ? leftPositive : rightPositive;
+      positiveVotes[i + 1] += isLeft1 ? leftPositive : rightPositive;
+      positiveVotes[i + 2] += isLeft2 ? leftPositive : rightPositive;
+      positiveVotes[i + 3] += isLeft3 ? leftPositive : rightPositive;
+    }
+    for (; i < n; i++) {
+      const bIdx = i * NUM_ENGAGEMENT_FEATURES + fIdx;
+      const isLeft = featureMatrix[bIdx] <= thr;
+      logOddsOpen[i] += isLeft ? lrLeft : lrRight;
+      logOddsReply[i] += isLeft ? lrLeftHalf : lrRightHalf;
+      positiveVotes[i] += isLeft ? leftPositive : rightPositive;
     }
   }
 
   // Convert to probabilities using sigmoid LUT
+  // Optimization: pre-compute invTotal once; batch 4 samples at a time
   const total = numStumps || 1;
-  for (let i = 0; i < n; i++) {
+  const invTotal = 1 / total;
+  let i = 0;
+  for (; i + 3 < n; i += 4) {
+    for (let k = 0; k < 4; k++) {
+      const idx = i + k;
+      const pOpen = sigmoidLUT(logOddsOpen[idx]);
+      const pReply = sigmoidLUT(logOddsReply[idx]);
+      const posV = positiveVotes[idx];
+      const agreement = Math.max(posV, total - posV) * invTotal;
+      const confidence = 0.5 + (agreement - 0.5);
+
+      const base = idx * 3;
+      result[base] = Math.max(0, Math.min(1, pOpen));
+      result[base + 1] = Math.max(0, Math.min(1, pReply));
+      result[base + 2] = Math.max(0, Math.min(1, confidence));
+    }
+  }
+  for (; i < n; i++) {
     const pOpen = sigmoidLUT(logOddsOpen[i]);
     const pReply = sigmoidLUT(logOddsReply[i]);
     const posV = positiveVotes[i];
-    const agreement = Math.max(posV, total - posV) / total;
-    const confidence = 0.5 + 0.5 * (agreement - 0.5) / 0.5;
+    const agreement = Math.max(posV, total - posV) * invTotal;
+    const confidence = 0.5 + (agreement - 0.5);
 
     const base = i * 3;
     result[base] = Math.max(0, Math.min(1, pOpen));

@@ -109,6 +109,43 @@ class NeuralHawkesIntentPredictor(BaseModule):
         event_history = kwargs.get("event_history")
         return self._predict(cls_embed, event_history)
 
+    def process_batch(self, batch_encoded, texts, **kwargs):
+        """Vectorized batch intent prediction.
+
+        For the common case (no event history), the stage_head MLP runs
+        on the full (B, hidden) CLS tensor in a single forward pass.
+        """
+        encoder_output = batch_encoded["encoder_output"]
+        cls_all = encoder_output.last_hidden_state[:, 0]  # (B, hidden)
+        event_history = kwargs.get("event_history")
+
+        # Fast path: no event history — fully vectorized stage classification
+        if event_history is None or len(event_history) == 0:
+            logits = self.stage_head(cls_all)  # (B, n_stages)
+            probs = logits.softmax(-1)         # (B, n_stages)
+            stage_idxs = probs.argmax(-1)      # (B,)
+
+            B = cls_all.shape[0]
+            results = []
+            for i in range(B):
+                results.append({
+                    "stage": STAGES[stage_idxs[i].item()],
+                    "confidence": round(probs[i].max().item(), 3),
+                    "distribution": {
+                        s: round(probs[i, j].item(), 3) for j, s in enumerate(STAGES)
+                    },
+                    "trajectory": None,
+                    "data_points": 0,
+                })
+            return results
+
+        # Slow path: event history — sequential CT-LSTM, fall back to per-item
+        from ..base import _slice_encoded
+        return [
+            self.process(_slice_encoded(batch_encoded, i), texts[i], **kwargs)
+            for i in range(cls_all.shape[0])
+        ]
+
     def _predict(self, cls_embed, event_history=None):
         """
         cls_embed: (B, hidden) from shared encoder for the current signal

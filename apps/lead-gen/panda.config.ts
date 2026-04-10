@@ -259,6 +259,11 @@ export default defineConfig({
           elevated: { value: "0 4px 16px rgba(0, 0, 0, 0.4)" },
           glow: { value: "0 0 24px rgba(62, 99, 221, 0.15)" },
           glowStrong: { value: "0 0 48px rgba(62, 99, 221, 0.25)" },
+          "elevation.0": { value: "none" },
+          "elevation.1": { value: "0 1px 2px rgba(0, 0, 0, 0.24)" },
+          "elevation.2": { value: "0 2px 8px rgba(0, 0, 0, 0.32)" },
+          "elevation.3": { value: "0 4px 16px rgba(0, 0, 0, 0.40)" },
+          "elevation.4": { value: "0 8px 32px rgba(0, 0, 0, 0.48)" },
         },
 
         zIndex: {
