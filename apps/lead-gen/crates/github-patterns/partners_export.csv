@@ -1,12 +1,176 @@
 rank,login,name,email,company,location,score,archetypes,source,starred,github_url,bio
-1,tfriedel,Thomas Friedel,thomas.friedel@gmail.com,PEAT,Berlin,0.479,ai-engineer,sdk,yes,https://github.com/tfriedel,Machine Learning Engineer
-2,hjanuschka,Helmut Januschka,helmut@januschka.com,,Vienna/Austria,0.268,,sdk,yes,https://github.com/hjanuschka,🤖
-3,daaain,Daniel Demmel,hello@danieldemmel.me,@twistco,"London, United Kingdom",0.247,,sdk,yes,https://github.com/daaain,"Full stack SWE @twistco, ex @team-blaze @ustwo, ♥ open source, degrowth activist, minimalist, flexitarian, @zzuuu's husband, dad of 2, neurodivergent, 🇭🇺&🇬🇧"
-4,solatis,Leon Mergen,leon@solatis.com,,"Driebergen-Rijsenburg, The Netherlands",0.241,,sdk,yes,https://github.com/solatis,Writer of code. Builder of things. Enjoyer of life.
-5,m98,Mohammad Kermani,98kermani@gmail.com,@findhotel,Netherlands,0.240,,sdk,yes,https://github.com/m98, 
-6,barryceelen,Barry Ceelen,b@rryceelen.com,,Berlin,0.232,,sdk,yes,https://github.com/barryceelen,"wp_die( '<pre>' . var_export( 'Howdy!', true ) . '</pre>' );"
-7,cheahjs,Jun Siang Cheah,me@jscheah.me,,United Kingdom,0.224,,sdk,yes,https://github.com/cheahjs,
-8,evandempsey,Evan Dempsey,evandempsey@gmail.com,,Dublin,0.207,,sdk,yes,https://github.com/evandempsey,
-9,aspekts,Marcus Kamuntu,home@aspekts.dev,@Yarn-Development,"London, UK",0.193,,sdk,yes,https://github.com/aspekts,"FS Dev, Student &
+1,tayzlor,Graham Taylor,graham.x.taylor@capgemini.com,Capgemini,"London, United Kingdom",0.496,staff-engineer,org,no,https://github.com/tayzlor,"Senior Director, Head of Applied Innovation @ Capgemini."
+2,petersiemen,Peter Siemen,mail@petersiemen.net,"CTO, Founder, Machine Learning Specialist","Berlin, Germany",0.493,"ai-engineer, solution-architect, staff-engineer, technical-consultant",bio,no,https://github.com/petersiemen,"Hi, I'm Peter - AWS Solutions Architect, Machine Learning Engineer, Interim CTO, DevOps Consultant, Software Engineer.
+
+I am available for freelance projects."
+3,tfriedel,Thomas Friedel,thomas.friedel@gmail.com,PEAT,Berlin,0.479,ai-engineer,sdk,yes,https://github.com/tfriedel,Machine Learning Engineer
+4,cliftonc,Clifton Cunningham,clifton.cunningham@gmail.com,GuideMode,"Den Haag, Netherlands",0.442,"staff-engineer, technical-consultant",bio,no,https://github.com/cliftonc,CTO / CPO / Data & AI Advisory
+5,roycornelissen,Roy Cornelissen,roy_cornelissen@hotmail.com,@xebia,Netherlands,0.438,solution-architect,bio,no,https://github.com/roycornelissen,Cloud Solution Architect @Xebia
+6,Addono,Adriaan Knapen,hi@aknapen.nl,@EPAM,"Munich, Germany",0.436,solution-architect,bio,no,https://github.com/Addono,Hey! I'm a solution architect working with AI+cloud. Always interested in fiddling around with cool tech! Reach out if you've something you need help with ☺️✌️
+7,D1no,Dino Scheidt,github@din.ooo,,"Berlin, Germany",0.405,"ai-engineer, staff-engineer",bio,no,https://github.com/D1no,"There's no place like 127.0.0.1
+
+[CTO, AI Engineer, Hobby Full-Stack Designer, Dad Joke Lover]"
+8,btrice,Moussa AIDARA,msaidara@gmail.com,@Novactive,Paris | France,0.401,"solution-architect, technical-consultant",bio,no,https://github.com/btrice,Software Engineer | Salesforce Solution Architect | Consultant ECM 
+9,waleko,Alexander Kovrigin,inbox@alexkovrigin.me,@JetBrains,"Bremen, Germany",0.399,staff-engineer,star,yes,https://github.com/waleko,ML at JetBrains Research | Master's Student at Constructor University
+10,arieel-ost,Arielle Ostankova,arieel89@gmail.com,Liltra.com & consulting,Germany,0.398,"staff-engineer, technical-consultant",bio,no,https://github.com/arieel-ost,"Software as an Art.
+Creating professional software for 20+ years as developer, freelancer, manager and CTO. 
+Focused on scalable AI apps."
+11,jontybrook,Jonty Brook,me@jontyb.co.uk,@nexus-regen ,"London, UK",0.396,staff-engineer,star,yes,https://github.com/jontybrook,CTO at @nexus-regen 
+12,cbezenco,Christian Bezençon,cbezenco@microsoft.com,Microsoft,"Aubonne, Switzerland",0.383,"solution-architect, technical-consultant",bio,no,https://github.com/cbezenco,"Joined Microsoft in 2001. working as Infra and Sec consultant, technical account manager and Nestle global ATS until 2019 and now a Cloud Solution Architect."
+13,ebarault,Eric Barault,eric.barault@gmail.com,Helyo,"France, World",0.380,"solution-architect, staff-engineer",bio,no,https://github.com/ebarault,"Helyo - CEO, Solution Architect (6y),            
+Carbip - Co-founder & CTO (2y),
+Orange - Solution Architect (13y),
+Gemalto - Security Expert (1y)"
+14,EtienneLescot,Etienne Lescot,etiennelescot@gmail.com,,"Rennes, France",0.355,"solution-architect, staff-engineer",repo-search,no,https://github.com/EtienneLescot,"AI Architect & Fractional CTO. Building scalable SaaS architectures & Low-latency Voice AI systems.
+
+🛠 Stack: Python, FastAPI, Kubernetes, AWS, WebRTC (LiveK"
+15,KoenZomers,Koen Zomers,koen@zomers.eu,Microsoft,The Netherlands,0.347,solution-architect,bio,no,https://github.com/KoenZomers,Cloud Solution Architect at Microsoft. All my contributions are based on my own efforts and are not related to or supported by Microsoft.
+16,jessehouwing,Jesse Houwing,jesse.houwing@gmail.com,@xebia ,"Amersfoort, The Netherlands",0.336,,org,no,https://github.com/jessehouwing,"GitHub Trainer, Microsoft MVP, Microsoft ALM Ranger, Microsoft Community contributor, Scrum.org Professional Scrum Trainer and Phoenix Project Game facilitator"
+17,carinahappuchcodezone,Caren Owuor,carinahappuch@gmail.com,Adidas,"Amsterdam, Netherlands",0.332,solution-architect,bio,no,https://github.com/carinahappuchcodezone,"Software Solutions Architect
+Writer/Fashionista/Traveller
+I speak and breathe Python but Java is BAE.
+May the code be with you"
+18,amolenaar,Arjan Molenaar,gaphor@gmail.com,Xebia b.v.,"Amsterdam area, The Netherlands",0.330,,org,no,https://github.com/amolenaar,I do something with computers.
+19,SalemSaiid,Salem,salem.said.ing@gmail.com,,"France, Paris",0.328,solution-architect,bio,no,https://github.com/SalemSaiid,"Senior Web Engineer | Fullstack JS, PHP & Python | Node.js, NestJS, Angular, Symfony, DevOps
+Solution Architect | Expert in High-Performance & Scalable Web App"
+20,janwillies,Jan Willies,jan@willies.info,@Accenture ,Berlin,0.324,,org,no,https://github.com/janwillies,
+21,mvanholsteijn,Mark van Holsteijn,mvanholsteijn@xebia.com,Xebia Cloud,"Hilversum, The  Netherlands",0.323,,org,no,https://github.com/mvanholsteijn,
+22,jodli,Jan-Olaf Becker,jobst87@gmail.com,@PaesslerAG,"Nuremberg, Germany",0.321,solution-architect,bio,no,https://github.com/jodli,"Open Source Enthusiast | C++, .Net, Rust, JavaScript, whatever... | Solution Architect @PaesslerAG "
+23,laurentkempe,Laurent Kempé,laurent.kempe@techheadbrothers.com,@TechHeadBrothers @Innoveo ,"Illzach, France",0.321,solution-architect,bio,no,https://github.com/laurentkempe,"Team Leader & Distinguished Solution Architect with a passion for shipping high-quality products by empowering development teams and culture |
+🎗️Microsoft MVP"
+24,Tieske,Thijs Schreijer,thijs@thijsschreijer.nl,@Kong ,Netherlands,0.321,solution-architect,bio,no,https://github.com/Tieske,Senior Solutions Architect
+25,sadra,Sadra Amlashi,amlashi.sadra@gmail.com,Jumbo,Netherlands,0.319,solution-architect,bio,no,https://github.com/sadra,"Software Solution Architect · AWS Certified Developer · Backend Engineer
+Author of “5 SOLID Principles” book, verified author by 
+@Goodreads"
+26,upeter,Urs,upeter@xebia.com,Xebia BV,Netherlands,0.319,,org,no,https://github.com/upeter,
+27,FabianScheidt,Fabian Scheidt,mail@fabian-scheidt.com,Accenture Industry X,"Aachen, Germany",0.310,,org,no,https://github.com/FabianScheidt,
+28,webmemo-code,Walter Schärer,walter@webmemo.ch,Webmemo Consulting,"Zurich, Switzerland",0.310,"solution-architect, technical-consultant",bio,no,https://github.com/webmemo-code,AI marketing manager & solutions architect. Vibe coder.
+29,teremterem,Oleksandr Tereshchenko,toporok@gmail.com,,Ukraine,0.309,,repo-search,no,https://github.com/teremterem,"Generative AI expert with 20+ years of software engineering experience, specializing in LLMs, prompt engineering, multi-agent systems and NLP."
+30,keesschollaart81,Kees Schollaart,keesschollaart81@hotmail.com,@visionintelligence,"Netherlands, Amsterdam",0.306,staff-engineer,bio,no,https://github.com/keesschollaart81,CTO of Vision Intelligence.ai
+31,falko,Falko Menge,falko.menge@camunda.com,Camunda Services GmbH (@camunda),"Berlin, Germany",0.304,solution-architect,bio,no,https://github.com/falko,Senior Principle Solution Architect and Open Standards Ambassador at @camunda
+32,trungung,Trung Ung,ungkientrung@gmail.com,Nordcloud,Helsinki,0.303,,org,no,https://github.com/trungung,"I'm a fullstack developer with 5 years of experience in building modern web applications that are scalable, maintainable, and feel great to use."
+33,sorskoot,Sorskoot,mental_c@hotmail.com,,Netherlands,0.301,solution-architect,bio,no,https://github.com/sorskoot,Senior XR Solutions Architect 🥽 LiveCoder 🌷 WebXR / WebVR❤
+34,tHeStRyNg,tHeStRyng,info@algorithmic.one,∆LGORITHMIC & EPOCH,Switzerland,0.297,solution-architect,bio,no,https://github.com/tHeStRyNg,"- Senior DevOps Engineer
+- CSA - Cloud Solutions Architect
+- Linux Trickster
+- Game Developer Unreal Engine
+- 2D PixelArt Fan
+- Python, C++, Bash Shell"
+35,ykuijs,Yorick Kuijs,ykuijs@hotmail.com,@Microsoft,The Netherlands,0.295,solution-architect,bio,no,https://github.com/ykuijs,SharePoint/Microsoft 365 Cloud Solution Architect
+36,DominikPieper,Dominik Pieper,dominik@pieper.io,Conciso GmbH (@conciso),Germany,0.293,solution-architect,bio,no,https://github.com/DominikPieper,Topic Lead Frontend & Solution Architect at Conciso | Nx champion | Nxext plugin author
+37,JustinGuese,Justin Güse,guese.justin@gmail.com,DataFortress.cloud,"Augsburg, Germany",0.290,solution-architect,bio,no,https://github.com/JustinGuese,"Data Engineer / Cloud Solution Architect / K8s, www.datafortress.cloud"
+38,johannesboyne,Johannes Boyne,johannes@boyne.de,@dataqcompany,Germany,0.290,staff-engineer,bio,no,https://github.com/johannesboyne,"Co-Founder & CTO DQC.ai 
+Data Q Company"
+39,remarcmij,Jim Cramer,remarcmij@gmail.com,,"Amstelveen, The Netherlands",0.289,solution-architect,bio,no,https://github.com/remarcmij,Retired IT Solutions Architect.
+40,mohlcyber,Martin Ohl,Martin.Ohl@ohl-net.eu,@PaloAltoNetworks,Netherlands,0.289,solution-architect,bio,no,https://github.com/mohlcyber,Working as Cortex EMEA Senior Solutions Architect EMEA at Palo Alto Networks
+41,dominpn,Dominik Krystkowiak,dominik.krystkowiak@gmail.com,@nordcloud,Poland,0.289,,org,no,https://github.com/dominpn,
+42,mehmetbaykar,Mehmet Baykar,baykarapps@gmail.com,,Spain,0.289,staff-engineer,repo-search,no,https://github.com/mehmetbaykar,Mobile Platform Tech Lead
+43,rickvdbosch,Rick van den Bosch,rickvdbosch@outlook.com,@microsoft,The Netherlands,0.289,solution-architect,bio,no,https://github.com/rickvdbosch,Proud husband & father of 2 awesome boys | Senior Cloud Solution Architect | Speaker | Helping customers build great software on Azure @microsoft
+44,hollanderbart,Bart den Hollander,hollanderbart@gmail.com,Xebia,"Boskoop, The Netherlands",0.288,,org,no,https://github.com/hollanderbart,
+45,tuxtof,Christophe Jauffret,christophe.jauffret@nutanix.com,@nutanix ,France,0.288,solution-architect,bio,no,https://github.com/tuxtof,"More hacker than developer but always ready to contribute.
+
+Principal Solutions Architect - Cloud Native Solutions at Nutanix"
+46,jmezach,Jonathan Mezach,jonathan.mezach@rr-wfm.com,@rr-wfm,Netherlands,0.288,solution-architect,bio,no,https://github.com/jmezach,"Solution Architect at R&R WFM in Veenendaal, The Netherlands. Passionate about .NET and helping development teams achieve more by improving their experience."
+47,utsabk,Utsab Kharel,kharelutsab@gmail.com,@nordcloud,"Helsinki, Finland",0.286,,org,no,https://github.com/utsabk,"Cloud Developer
+"
+48,stex,Stefan Exner,stex@stex.codes,,"Hamburg, Germany",0.285,solution-architect,bio,no,https://github.com/stex,"Digital Solution Architect. Loves Ruby, Music and occasionally making dumb voices."
+49,nicorikken,Nico Rikken,nico@nicorikken.eu,@Alliander @alliander-opensource @fsfe,"Arnhem, the Netherlands",0.285,solution-architect,bio,no,https://github.com/nicorikken,"NL 🇳🇱 Country Coordinator @ FSFE | Solution Architect, Open Source Ambassador @ Alliander N.V. 🔌🔥 | I like contribution to the Free Software community 🤝 "
+50,mathifonseca,Mathi Fonseca,mathifonseca@gmail.com,,"Berlin, Germany",0.285,solution-architect,bio,no,https://github.com/mathifonseca,"Previously Solutions Architect at @payrails, @deliveryhero and @pedidosya. Collaborator in many @grails projects."
+51,ewinnington,Eric Winnington,eric.in.the.net@gmail.com,@axpogroup,Switzerland,0.285,solution-architect,bio,no,https://github.com/ewinnington,"Solution Architect,
+Energy optimisation & Trading"
+52,BorntraegerMarc,Marc Bornträger,marc.borntraeger@gmail.com,AWS,"Zürich, Switzerland",0.285,solution-architect,bio,no,https://github.com/BorntraegerMarc,Solutions Architect
+53,atournayre,Aurélien Tournayre,aurelien.tournayre@gmail.com,,"Montpellier, France",0.284,staff-engineer,repo-search,no,https://github.com/atournayre,"🔵, Back End Developer, @symfony  :heart:, @rectorphp :heart:,  
+:bug: fixer (creator sometimes 🤫), :camera:, member of @afup, godfather of 15 🐝 "
+54,gjrtimmer,Gerrit Timmer,gjr.timmer@gmail.com,ENOVATION,"The Randstad Area, Netherlands",0.283,solution-architect,bio,no,https://github.com/gjrtimmer,Solution Architect within Medical IT
+55,JGrotex,Jörg Grote,joerg@grote-online.de,,"Düsseldorf, Germany",0.283,solution-architect,bio,no,https://github.com/JGrotex,Data & Technology - Senior Manager / Senior Solutions Architect
+56,hoesler,Christoph Hösler,christoph.hoesler@gmail.com,@inovex,Germany,0.283,solution-architect,bio,no,https://github.com/hoesler,Full Stack Data Scientist and Solution Architect @inovex
+57,danvaida,Dan Vaida,me@danvaida.com,Freelancer,"Berlin, Germany",0.282,solution-architect,bio,no,https://github.com/danvaida,Freelance DevOps Engineer and Solutions Architect.
+58,aliouba,BA Aliou,alioubafr@gmail.com,,France,0.282,solution-architect,bio,no,https://github.com/aliouba,"Technology enthusiast, Solution architect, Kubernetes, DevOpS, Golang"
+59,peterkracik,Peter Kracik,peter@kracik.sk,@parkside-it,"Basel, Switzerland",0.282,solution-architect,bio,no,https://github.com/peterkracik,Solution Architect & Cloud Expert
+60,steflight,AGOUME KOUFANA INGRID STEPHANE,agoumekoufanas@gmail.com,Société générale,France,0.282,solution-architect,bio,no,https://github.com/steflight,Solution Architect & DevOps
+61,rajeev921,Rajeev Ranjan,rajeev.cse.imps@gmail.com,,"Munich, Germany",0.282,staff-engineer,bio,no,https://github.com/rajeev921,Staff Engineer @ Autonomous Driving 5 & Robotics @ AI
+62,Tony-Kara,Tony Kara,eniolaanthony@gmail.com,,Germany,0.282,staff-engineer,bio,no,https://github.com/Tony-Kara,"CTO / Senior iOS dev, aiming for iOS and ML/AI Valhalla. "
+63,matthieugi,Matthieu Girard,matthieugirard@outlook.com,Microsoft,"Paris, France",0.281,solution-architect,bio,no,https://github.com/matthieugi,Cloud Solution Architect @ Microsoft
+64,saberkan,Salahddine ABERKAN,salahddine.aberkan@gmail.com,GitLab,France,0.281,solution-architect,bio,no,https://github.com/saberkan,Solutions Architect
+65,remcoeissing,Remco Eissing,remco.eissing@live.com,@Microsoft,The Netherlands,0.281,solution-architect,bio,no,https://github.com/remcoeissing,Cloud Solution Architect with @microsoft
+66,sarubhai,Saurav Mitra,saurav.karate@gmail.com,DWBI.org,"Berlin, Germany",0.281,solution-architect,bio,no,https://github.com/sarubhai,"Solutions Architect | Data Architect | Business Intelligence Expert |
+
+https://www.linkedin.com/in/dataguru-saurav/"
+67,ItsKarthikSekar,Karthik Sekar,hi@karthiksekar.dev,,Netherlands,0.281,solution-architect,bio,no,https://github.com/ItsKarthikSekar,Cloud Solutions Architect | DevOps Leader | Mentor
+68,dbrumann,Denis Brumann,dbrumann@gmail.com,,"Cologne, Germany",0.281,solution-architect,bio,no,https://github.com/dbrumann,"I am a Solutions Architect and former co-organizer of Symfony User Groups Berlin & Cologne.
+
+I sometimes give talks, workshops and contribute to FOSS."
+69,cogfor,Rene Nederhand,rene@primed.io,PrimedIO,"Groningen, Netherlands",0.281,solution-architect,bio,no,https://github.com/cogfor,Data Solutions Architect & Partner @ PrimedIO 
+70,Angel-Asensio,Angel Asensio,angel.asensio@gmail.com,@starburstdata ,"Berlin, Germany",0.281,solution-architect,bio,no,https://github.com/Angel-Asensio,Solutions Architect
+71,avmgan,Velmurugan Arjunan,avmgan@gmail.com,RWS plc,"Netherlands, Amsterdam",0.279,solution-architect,bio,no,https://github.com/avmgan,Principal Solutions Architect
+72,amtir,Akram M'Tir,akram.mtir@gmail.com,,Switzerland,0.279,solution-architect,bio,no,https://github.com/amtir,"I’m a Software Engineer and Solution Architect with a passion for creating innovative solutions across web, desktop, and embedded systems."
+73,csrakowski,Christiaan Rakowski,cs.rakowski@gmail.com,XXImo Holding,Netherlands,0.279,solution-architect,bio,no,https://github.com/csrakowski,Solutions Architect at XXImo Holding
+74,umitkacar,umitkacar,kacarumit.phd@gmail.com,Istanbul Technical University,"London, United Kingdom",0.278,ai-engineer,repo-search,no,https://github.com/umitkacar,"Senior AI/ML Researcher & Engineer | Agentic AI | 
+Swarm AI Agent"
+75,juandelaoliva,Juan de la Oliva,juandelaoliva1@gmail.com,Cocomore AG,"Frankfurt, Germany.",0.277,solution-architect,bio,no,https://github.com/juandelaoliva,Solutions Architect and digital strategy and Drupal enthusiast. I'm passionate about harnessing technology to create meaningful impact in the business world
+76,pierreg256,Pierre Gilot,pierre.gilot@me.com,@microsoft,"Paris, France",0.276,solution-architect,bio,no,https://github.com/pierreg256,Cloud Solutions Architect at Microsoft. Opinions are my own.
+77,iamdevvalecha,Dev Valecha,devvalecha07@gmail.com,flink,"Berlin, Germany",0.276,solution-architect,bio,no,https://github.com/iamdevvalecha,"Software Engineer || Solving Technology's People Problem || Open Source || AWS solutions architect.
+"
+78,smoell,Sascha Möllering,smoell@amazon.de,Amazon Web Services EMEA SARL,"Munich, Germany",0.275,solution-architect,bio,no,https://github.com/smoell,"
+    Solutions Architect @ AWS. JVM, Docker, AWS Cloud. It's always day one. 
+"
+79,petericebear,Peter Steenbergen,psteenbergen@gmail.com,3WS,"Gieten, Netherlands",0.274,solution-architect,bio,no,https://github.com/petericebear,"Search & GenAI Specialist @elastic, Elastic Certified Engineer, Certified Laravel Developer. Principal Solutions Architect"
+80,egemengulpinar,Egemen Gulpinar,egemengulpinar@gmail.com,LIVAD Technologies Inc.,Bielefeld / Germany,0.273,solution-architect,bio,no,https://github.com/egemengulpinar,"👨‍💻AI Solutions Architect @livadstream
+📚 Bielefeld University IIS M.Sc.
+🔭 Automation |  Data  | Cloud 
+
+🎓Bradford University & MEU"
+81,luigilink,Jean-Cyril Drouhin,jcdrouhin@yahoo.fr,Microsoft,France,0.273,solution-architect,bio,no,https://github.com/luigilink,"Jean-Cyril is a Cloud Solution Architect @Microsoft. His areas of specialty include PowerShell, DSC and SharePoint."
+82,HaaLeo,Leo Hanisch,HaaLeo@mail.de,@Siemens,"Munich, Germany",0.273,solution-architect,bio,no,https://github.com/HaaLeo,Full time AWS solutions architect @siemens. Free time open-source enthusiast. 
+83,dev-mansonthomas,Thomas Manson,dev.mansonthomas@gmail.com,Redis,"Paris, France",0.272,solution-architect,bio,no,https://github.com/dev-mansonthomas,"Solution Architect @ Redis.io
+I'm also a volunteer at the RedCross since 2003.
+I'm building software for the RedCross on my spare time."
+84,mmatiaschek,Markus Matiaschek,mmatiaschek@gmail.com,@ZeroHungerAI ,"Würzburg, Germany",0.270,solution-architect,bio,no,https://github.com/mmatiaschek,"IT Solution Architect, Father, Innovator, Child Growth Monitor Product Owner, Doing my best to help end child malnutrition."
+85,hjanuschka,Helmut Januschka,helmut@januschka.com,,Vienna/Austria,0.268,,sdk,yes,https://github.com/hjanuschka,🤖
+86,mousamax,Mousa Abdelmaksoud,mousamax101@gmail.com,@familymind ,"Munich, Germany",0.267,staff-engineer,bio,no,https://github.com/mousamax,"Co-founder and CTO of familymind.ai
+M.Sc. Computer Science at TUM.
+Interested in startups and entrepreneurship."
+87,portepa,Porte Pierre-Antoine,porte.pierreantoine@gmail.com,,"Paris, France",0.267,solution-architect,bio,no,https://github.com/portepa,Solutions Architect
+88,RajaPradhan,Raja Pradhan,rajapradhan08@gmail.com,,"Berlin, Germany",0.267,solution-architect,bio,no,https://github.com/RajaPradhan,Data Science | Gen AI | Technical Lead | Software Architect | AWS Certified Solutions Architect
+89,maxruby,Maximiliano Suster,mxsstr93@gmail.com,Miltenyi Biotec,"Düsseldorf, Germany",0.264,solution-architect,bio,no,https://github.com/maxruby,Lead AI Solutions Architect
+90,Nicocovi,Nicolas Corpancho Villasana,info@nicolascorpanchovillasana.com,Storm Reply,"Munich, Germany",0.264,solution-architect,bio,no,https://github.com/Nicocovi,"AWS Solutions Architect,
+Manager"
+91,DomenicDev,Domenic Cassisi,domenic.cassisi@web.de,Teciem,France,0.264,solution-architect,bio,no,https://github.com/DomenicDev,Software and Solutions Architect Enthusiast
+92,rokkanen,Stéphane ROKKANEN,srokkanen@hotmail.com,Freelance,FRANCE,0.261,solution-architect,bio,no,https://github.com/rokkanen,"🇫🇷 Lead Solutions Architect | AI, Integration, Web, Mobile"
+93,DavydeVries,Davy de Vries,davy@prepr.io,Prepr.io,Belgium / The Netherlands,0.261,solution-architect,bio,no,https://github.com/DavydeVries,Solution Architect / Backend Developer @ Prepr.io
+94,crmne,Carmine Paolino,carmine@paolino.me,@plenty-hq ,"Berlin, Germany",0.259,,repo-search,no,https://github.com/crmne,"Building Chat with Work, RubyLLM and more. Co-founded @freshflowai. Tech enthusiast, music producer, and photographer."
+95,nalbert9,Badji,nalbert9@hotmail.fr,,"Paris, France",0.258,solution-architect,bio,no,https://github.com/nalbert9,Solutions Architect
+96,ndywicki,Nicolas Dywicki,nicolas.dywicki@gmail.com,,"Normandie, France",0.258,solution-architect,bio,no,https://github.com/ndywicki,"Solution Architect, Team Leader"
+97,lucbocahut,Luc Bocahut,lucbocahut@gmail.com,@XRPL-Commons ,"Paris, France",0.257,solution-architect,bio,no,https://github.com/lucbocahut,Product & Solutions Architect - XRPL Commons
+98,daaain,Daniel Demmel,hello@danieldemmel.me,@twistco,"London, United Kingdom",0.247,,sdk,yes,https://github.com/daaain,"Full stack SWE @twistco, ex @team-blaze @ustwo, ♥ open source, degrowth activist, minimalist, flexitarian, @zzuuu's husband, dad of 2, neurodivergent, 🇭🇺&🇬🇧"
+99,solatis,Leon Mergen,leon@solatis.com,,"Driebergen-Rijsenburg, The Netherlands",0.241,,sdk,yes,https://github.com/solatis,Writer of code. Builder of things. Enjoyer of life.
+100,m98,Mohammad Kermani,98kermani@gmail.com,@findhotel,Netherlands,0.240,,sdk,yes,https://github.com/m98, 
+101,olaflaitinen,Gustav Olaf Yunus Laitinen-Lundström Fredriksson-Imanov,olaf.laitinen@gmail.com,University of Luxembourg,"Luxembourg, Luxembourg",0.236,ai-engineer,repo-search,no,https://github.com/olaflaitinen,"Sr. AI Engineer | Health AI, Urban AI, Medical Imaging, Federated Learning, Human-in-the-Loop ML | Multi-omics & Proteomics Data Science | ex-FCAI & ex-Google"
+102,barryceelen,Barry Ceelen,b@rryceelen.com,,Berlin,0.232,,sdk,yes,https://github.com/barryceelen,"wp_die( '<pre>' . var_export( 'Howdy!', true ) . '</pre>' );"
+103,cheahjs,Jun Siang Cheah,me@jscheah.me,,United Kingdom,0.224,,sdk,yes,https://github.com/cheahjs,
+104,valentinarodrigues,Valentina Rodrigues,valentinarodrigues93@gmail.com,Liberty IT,"Dublin, Ireland",0.215,,repo-search,no,https://github.com/valentinarodrigues,Principal Software Engineer
+105,alansastre,Alan Sastre,alan@certidevs.com,@certidevs,"Madrid, Spain",0.214,,repo-search,no,https://github.com/alansastre,CEO y Formador en @certidevs certidevs.com
+106,mksglu,Mert Köseoğlu,bm.ksglu@gmail.com,,London,0.209,,repo-search,no,https://github.com/mksglu,engineer
+107,evandempsey,Evan Dempsey,evandempsey@gmail.com,,Dublin,0.207,,sdk,yes,https://github.com/evandempsey,
+108,maxritter,Max Ritter,mail@maxritter.net,Max Ritter,"Munich, Germany",0.202,,repo-search,no,https://github.com/maxritter,"Senior IT Freelancer from Germany — Advisor | Architect | Engineer. Specializing in Agentic Engineering, Cloud, DevOps and Data —> maxritter.net
+"
+109,raine,Raine Virta,raine.virta@gmail.com,,"Helsinki, Finland",0.193,,repo-search,no,https://github.com/raine,"Full-stack developer exploring Go & Rust | Previously Reaktor, now freelance"
+110,aspekts,Marcus Kamuntu,home@aspekts.dev,@Yarn-Development,"London, UK",0.193,,sdk,yes,https://github.com/aspekts,"FS Dev, Student &
 CEO of @Yarn-Development
 "
+111,k1p1l0,Kyrylo Kozak,kozak@getmany.com,,Lisbon,0.192,,repo-search,no,https://github.com/k1p1l0,"I Love Claude Code! <3 
+
+GetMany.com"
+112,lukeocodes,Luke Oliff,luke@lukeoliff.com,@deepgram,"Colchester, UK",0.191,,repo-search,no,https://github.com/lukeocodes,DX at @deepgram 
+113,stephanj,Stephan Janssen,sja@devoxx.com,Devoxx,Belgium,0.189,,repo-search,no,https://github.com/stephanj,"Founder @Devoxx(Kids/Genie) and @BeJUG Co-Founder @Voxxed
+Founder JCS Int. acquired by Dolmen in 2002."
+114,emcrisostomo,Enrico Maria Crisostomo,enrico.m.crisostomo@gmail.com,@twilio ,"Madrid, Spain",0.185,,org,no,https://github.com/emcrisostomo,
+115,bitbonsai,Mauricio Wolff,gh@bitbonsai.com,Miro,Amsterdam,0.184,,repo-search,no,https://github.com/bitbonsai,
+116,phil65,Philipp Temminghoff,philipptemminghoff@googlemail.com,,Cologne,0.184,,repo-search,no,https://github.com/phil65,
+117,ItsWendell,Wendell Misiedjan,wendell@codesurge.io,,Netherlands,0.180,,repo-search,no,https://github.com/ItsWendell,Full-Stack Software Engineer
+118,stefanoamorelli,Stefano Amorelli,stefano@amorelli.tech,,"Tallinn, Estonia",0.171,,repo-search,no,https://github.com/stefanoamorelli,
+119,rupshabagchi,Rupsha Bagchi,rupsha.bagchi@gmail.com,University of Helsinki,"Helsinki, Finland",0.169,,org,no,https://github.com/rupshabagchi,"FullStack WebDev + Blockchain dev + Aspiring data scientist
+"
+120,eugenepyvovarov,Eugene Pyvovarov,eugene@lifeisgoodlabs.com,Lifeisgoodlabs OU,"Kyiv, Ukraine",0.168,,repo-search,no,https://github.com/eugenepyvovarov,
+121,joseairosa,José Airosa,me@joseairosa.com,,"Porto, Portugal",0.167,,repo-search,no,https://github.com/joseairosa,Gaming aficionado. Geeky > 9000! I love anime and manga so much that I decided to open my own company and online shop @ animegami.co.uk
+122,x1xhlol,Lucas Valbuena,lucknitelol@proton.me,,Spain,0.141,,repo-search,no,https://github.com/x1xhlol,16 y/o
