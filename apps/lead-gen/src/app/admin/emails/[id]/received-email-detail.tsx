@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useGetReceivedEmailQuery,
@@ -7,6 +8,7 @@ import {
   useUnarchiveEmailMutation,
 } from "@/__generated__/hooks";
 import { button } from "@/recipes/button";
+import { EmailComposer } from "@/components/admin/EmailComposer";
 import {
   Badge,
   Box,
@@ -20,6 +22,7 @@ import {
 import {
   ArrowLeftIcon,
   EnvelopeOpenIcon,
+  PaperPlaneIcon,
 } from "@radix-ui/react-icons";
 
 const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "orange" | "blue" | "gray" | "purple"> = {
@@ -33,6 +36,7 @@ const CLASSIFICATION_COLORS: Record<string, "green" | "red" | "orange" | "blue" 
 
 export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
   const router = useRouter();
+  const [replyOpen, setReplyOpen] = useState(false);
   const { data, loading, error, refetch } = useGetReceivedEmailQuery({
     variables: { id: emailId },
   });
@@ -91,13 +95,21 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
           >
             <ArrowLeftIcon /> Back to Emails
           </button>
-          <button
-            className={button({ variant: "ghost", size: "sm" })}
-            onClick={handleToggleArchive}
-            disabled={archiving || unarchiving}
-          >
-            {isArchived ? "Unarchive" : "Archive"}
-          </button>
+          <Flex gap="2">
+            <button
+              className={button({ variant: "solid", size: "sm" })}
+              onClick={() => setReplyOpen(true)}
+            >
+              <PaperPlaneIcon /> Reply
+            </button>
+            <button
+              className={button({ variant: "ghost", size: "sm" })}
+              onClick={handleToggleArchive}
+              disabled={archiving || unarchiving}
+            >
+              {isArchived ? "Unarchive" : "Archive"}
+            </button>
+          </Flex>
         </Flex>
 
         {/* Subject + metadata */}
@@ -194,6 +206,19 @@ export function ReceivedEmailDetail({ emailId }: { emailId: number }) {
           </Text>
         )}
       </Flex>
+
+      {/* Reply dialog */}
+      <EmailComposer
+        open={replyOpen}
+        onOpenChange={setReplyOpen}
+        to={email.replyToEmails?.[0] || email.fromEmail || ""}
+        name={email.fromEmail?.split("@")[0] || ""}
+        subject={
+          email.subject?.startsWith("Re:")
+            ? email.subject
+            : `Re: ${email.subject || ""}`
+        }
+      />
     </Container>
   );
 }
