@@ -304,7 +304,7 @@ async fn main() -> anyhow::Result<()> {
             let source_tag = format!("cpn:sdk/{query}");
             let src = "sdk";
             for user in users {
-                if is_bot(&user.login) || !seen.insert(user.login.clone()) {
+                if is_bot(&user.login) || seen.contains(&user.login) {
                     continue;
                 }
                 searched += 1;
@@ -338,6 +338,7 @@ async fn main() -> anyhow::Result<()> {
                 let mut tags = vec!["cpn:starred".into()];
                 tags.push(format!("cpn:src:{src}"));
 
+                seen.insert(user.login.clone());
                 batch.push(ContributorRecord {
                     user,
                     repos: vec![RepoContrib { repo: source_tag.clone(), contributions: 0 }],
@@ -675,10 +676,10 @@ async fn hydrate_batch(
     source_tag: &str,
     starred_anthropic: bool,
 ) -> Vec<ContributorRecord> {
-    // Deduplicate against seen set
+    // Deduplicate against seen set (don't insert yet — only stored candidates get added)
     let fresh: Vec<&str> = logins
         .iter()
-        .filter(|l| seen.insert(l.to_string()))
+        .filter(|l| !seen.contains(&l.to_string()))
         .copied()
         .collect();
 
@@ -711,9 +712,6 @@ async fn hydrate_batch(
                     Ok(u) => u,
                     Err(e) => {
                         warn!("  skip batch after rate-limit retry: {e}");
-                        for login in chunk {
-                            seen.remove(*login);
-                        }
                         continue;
                     }
                 }
@@ -776,6 +774,7 @@ async fn hydrate_batch(
         }
         tags.push(format!("cpn:src:{src}"));
 
+        seen.insert(user.login.clone());
         records.push(ContributorRecord {
             user,
             repos: vec![RepoContrib {
