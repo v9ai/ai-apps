@@ -47,8 +47,10 @@ kernel-spam = ["kernel-scoring"]
 kernel-bge = ["ort", "tokenizers", "ndarray"]
 kernel-ner-transformer = ["ort", "tokenizers", "ndarray"]
 kernel-reranker = ["ort", "tokenizers", "ndarray"]
+kernel-skill-extraction = ["ort", "tokenizers", "ndarray"]
+kernel-jobbert-v3 = ["ort", "tokenizers", "ndarray"]
 kernel = ["kernel-btree", "kernel-scoring", "kernel-html", "kernel-arena", "kernel-timer", "kernel-crc", "kernel-ner", "kernel-ring", "kernel-eval", "kernel-extract", "kernel-intent", "kernel-spam"]
-kernel-ml = ["kernel", "kernel-bge", "kernel-ner-transformer", "kernel-reranker"]
+kernel-ml = ["kernel", "kernel-bge", "kernel-ner-transformer", "kernel-reranker", "kernel-skill-extraction", "kernel-jobbert-v3"]
 
 [dev-dependencies]
 tempfile = "3"

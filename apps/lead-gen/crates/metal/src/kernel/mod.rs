@@ -42,3 +42,6 @@ pub mod spam_scoring;
 
 #[cfg(feature = "kernel-ner-transformer")]
 pub mod ner;
+
+#[cfg(feature = "kernel-skill-extraction")]
+pub mod skill_extraction;

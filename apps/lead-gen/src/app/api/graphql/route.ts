@@ -118,29 +118,50 @@ const apolloServer = new ApolloServer<GraphQLContext>({
   introspection: process.env.NODE_ENV !== "production",
 });
 
+// ─── Per-request session cache ──────────────────────────────────────────────
+// auth.api.getSession() was being called twice per request: once for rate
+// limiting and once for GraphQL context creation. This WeakMap deduplicates
+// that by caching the resolved session keyed on the NextRequest object so
+// the second call is a no-op lookup.
+type CachedSession = { id: string; email: string } | null;
+const sessionCache = new WeakMap<NextRequest, Promise<CachedSession>>();
+
+function resolveSession(request: NextRequest): Promise<CachedSession> {
+  const cached = sessionCache.get(request);
+  if (cached) return cached;
+
+  const promise = (async (): Promise<CachedSession> => {
+    if (process.env.NODE_ENV === "development" && process.env.ADMIN_EMAIL) {
+      return { id: "dev-local", email: process.env.ADMIN_EMAIL };
+    }
+    try {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (session?.user.id) {
+        return { id: session.user.id, email: session.user.email ?? "" };
+      }
+    } catch {
+      // Auth unavailable — treat as unauthenticated
+    }
+    return null;
+  })();
+
+  sessionCache.set(request, promise);
+  return promise;
+}
+
 const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
   apolloServer,
   {
     context: async (req) => {
       try {
         const loaders = createLoaders(db);
-
-        // Dev bypass: use ADMIN_EMAIL in development
-        if (process.env.NODE_ENV === "development" && process.env.ADMIN_EMAIL) {
-          return { userId: "dev-local", userEmail: process.env.ADMIN_EMAIL, db, loaders };
-        }
-
-        let userId: string | null = null;
-        let userEmail: string | null = null;
-        try {
-          const session = await auth.api.getSession({ headers: req.headers });
-          userId = session?.user.id ?? null;
-          userEmail = session?.user.email ?? null;
-        } catch {
-          // Auth unavailable — treat as unauthenticated
-        }
-
-        return { userId, userEmail, db, loaders };
+        const session = await resolveSession(req);
+        return {
+          userId: session?.id ?? null,
+          userEmail: session?.email ?? null,
+          db,
+          loaders,
+        };
       } catch (error) {
         console.error("❌ [GraphQL] Error in context setup:", error);
         console.error("❌ [GraphQL] Make sure environment variables are set in .env.local");
@@ -156,13 +177,9 @@ async function getRateLimitIdentifier(request: NextRequest): Promise<string> {
   if (process.env.NODE_ENV === "development") {
     return `dev:local`;
   }
-  try {
-    const session = await auth.api.getSession({ headers: request.headers });
-    if (session?.user.id) {
-      return `user:${session.user.id}`;
-    }
-  } catch {
-    // Auth unavailable
+  const session = await resolveSession(request);
+  if (session) {
+    return `user:${session.id}`;
   }
 
   // Fallback to IP address

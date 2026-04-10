@@ -15,7 +15,7 @@ import type {
   NewCompanyFact,
   NewCompanySnapshot,
 } from "@/db/schema";
-import { eq, inArray, ilike, sql } from "drizzle-orm";
+import { eq, and, inArray, ilike, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
 import type {
