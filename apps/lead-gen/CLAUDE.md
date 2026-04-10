@@ -136,7 +136,10 @@ The strategy enforcer (`src/agents/strategy-enforcer.ts`) is available as a plai
 
 Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Auth (`BETTER_AUTH_SECRET`, `NEXT_PUBLIC_BETTER_AUTH_URL`), AI provider keys (Anthropic, DeepSeek, OpenAI), LangSmith observability, admin email, app URL. See `.env.example` for full list.
 
-**Rule:** Always read API keys and secrets from `.env` / `.env.local` files — never use `export KEY=value` in the shell. If a key is needed, add it to `.env.local` (and `.env.example` as a placeholder). This keeps secrets out of shell history and ensures consistent loading via Next.js built-in env handling.
+**Rules:**
+- Always read API keys and secrets from `.env` / `.env.local` files — never use `export KEY=value` in the shell. If a key is needed, add it to `.env.local` (and `.env.example` as a placeholder). This keeps secrets out of shell history and ensures consistent loading via Next.js built-in env handling.
+- Never hardcode secrets, API keys, tokens, or credentials in source files — always use `process.env.VAR_NAME`. Before committing, never `git add` files matching `.env`, `.env.local`, or any file containing real key values. Only `.env.example` (with empty placeholders) belongs in the repo.
+- If you spot a real key in staged changes or source code, **stop and warn the user** before committing. Rotate the leaked key immediately.
 
 ---
 
