@@ -180,10 +180,10 @@ export const CompanyFactField = {
 
 export const CompanySnapshotField = {
   jsonld(parent: DbCompanySnapshot) {
-    return parent.jsonld ? JSON.parse(parent.jsonld) : null;
+    return cachedParse(parent, "jsonld", parent.jsonld, null);
   },
   extracted(parent: DbCompanySnapshot) {
-    return parent.extracted ? JSON.parse(parent.extracted) : null;
+    return cachedParse(parent, "extracted", parent.extracted, null);
   },
   evidence(parent: DbCompanySnapshot) {
     return {

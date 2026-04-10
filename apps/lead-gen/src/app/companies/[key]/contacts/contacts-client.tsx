@@ -253,7 +253,7 @@ function GenerateEmailDialog({
               p="3"
               style={{
                 background: "var(--green-2)",
-                borderRadius: 0,
+                borderRadius: 8,
               }}
             >
               <Flex justify="between" align="center" mb="2">

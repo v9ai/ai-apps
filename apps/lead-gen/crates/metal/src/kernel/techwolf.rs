@@ -191,156 +191,9 @@ fn should_skip_label(label: &str) -> bool {
     SKIP_LABELS.iter().any(|s| label.eq_ignore_ascii_case(s))
 }
 
-// ── ESCO mapping (inline, no separate module) ───────────────────────────────────
+// ── ESCO mapping — delegates to the `esco` module ─────────────────────────────
 
-/// Lightweight mapping between ESCO skill labels and internal `TECH_KEYWORDS` tags.
-///
-/// Since there is no separate `esco` module in the crate, this struct provides a
-/// self-contained bidirectional mapping built from a hardcoded table of known
-/// correspondences plus a fuzzy-match fallback.
-pub struct EscoMapping {
-    /// ESCO label (lowercased) → internal tag (lowercased).
-    esco_to_tag: HashMap<String, String>,
-    /// Internal tag (lowercased) → canonical ESCO label.
-    tag_to_esco: HashMap<String, String>,
-}
-
-impl Default for EscoMapping {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Known correspondences between ESCO skill labels and `TECH_KEYWORDS`.
-/// Covers the 48 keywords in `job_ner.rs` plus common ESCO synonyms.
-const ESCO_TAG_PAIRS: &[(&str, &str)] = &[
-    ("python (computer programming)", "python"),
-    ("python", "python"),
-    ("rust (programming language)", "rust"),
-    ("rust", "rust"),
-    ("javascript", "javascript"),
-    ("typescript", "typescript"),
-    ("java", "java"),
-    ("go (programming language)", "go"),
-    ("golang", "golang"),
-    ("c++", "c++"),
-    ("ruby", "ruby"),
-    ("scala", "scala"),
-    ("kotlin", "kotlin"),
-    ("swift", "swift"),
-    ("elixir", "elixir"),
-    ("react", "react"),
-    ("react.js", "react"),
-    ("vue.js", "vue"),
-    ("vue", "vue"),
-    ("svelte", "svelte"),
-    ("next.js", "nextjs"),
-    ("nextjs", "nextjs"),
-    ("nest.js", "nestjs"),
-    ("nestjs", "nestjs"),
-    ("express.js", "express"),
-    ("express", "express"),
-    ("node.js", "nodejs"),
-    ("nodejs", "nodejs"),
-    ("node", "node"),
-    ("ruby on rails", "rails"),
-    ("rails", "rails"),
-    ("fastapi", "fastapi"),
-    ("html", "html"),
-    ("css", "css"),
-    ("sql", "sql"),
-    ("nosql", "nosql"),
-    ("postgresql", "postgresql"),
-    ("postgres", "postgres"),
-    ("mongodb", "mongodb"),
-    ("redis", "redis"),
-    ("graphql", "graphql"),
-    ("grpc", "grpc"),
-    ("docker", "docker"),
-    ("kubernetes", "kubernetes"),
-    ("k8s", "k8s"),
-    ("amazon web services", "aws"),
-    ("aws", "aws"),
-    ("microsoft azure", "azure"),
-    ("azure", "azure"),
-    ("google cloud platform", "gcp"),
-    ("gcp", "gcp"),
-    ("terraform", "terraform"),
-    ("ansible", "ansible"),
-    ("linux", "linux"),
-    ("nginx", "nginx"),
-    ("apache kafka", "kafka"),
-    ("kafka", "kafka"),
-    ("apache spark", "spark"),
-    ("spark", "spark"),
-    ("apache airflow", "airflow"),
-    ("airflow", "airflow"),
-    ("cloudflare", "cloudflare"),
-    ("pytorch", "pytorch"),
-    ("tensorflow", "tensorflow"),
-    ("machine learning", "ml"),
-    ("ml", "ml"),
-    ("large language model", "llm"),
-    ("llm", "llm"),
-    ("langchain", "langchain"),
-    ("openai", "openai"),
-    ("retrieval-augmented generation", "rag"),
-    ("rag", "rag"),
-    ("webassembly", "webassembly"),
-    ("wasm", "wasm"),
-];
-
-impl EscoMapping {
-    /// Build the mapping from the hardcoded correspondence table.
-    pub fn new() -> Self {
-        let mut esco_to_tag = HashMap::new();
-        let mut tag_to_esco = HashMap::new();
-
-        for &(esco, tag) in ESCO_TAG_PAIRS {
-            let esco_lower = esco.to_ascii_lowercase();
-            let tag_lower = tag.to_ascii_lowercase();
-            esco_to_tag.entry(esco_lower.clone()).or_insert_with(|| tag_lower.clone());
-            tag_to_esco.entry(tag_lower).or_insert_with(|| esco_lower);
-        }
-
-        Self { esco_to_tag, tag_to_esco }
-    }
-
-    /// Look up the internal tag for an ESCO label. Falls back to fuzzy matching
-    /// against known ESCO labels if no exact match is found.
-    pub fn esco_to_tag(&self, esco_label: &str) -> Option<String> {
-        let lower = esco_label.to_ascii_lowercase();
-        if let Some(tag) = self.esco_to_tag.get(&lower) {
-            return Some(tag.clone());
-        }
-        // Fuzzy fallback: find the closest ESCO key by Levenshtein similarity.
-        let mut best: Option<(f64, &str)> = None;
-        for (esco_key, tag) in &self.esco_to_tag {
-            let sim = levenshtein_similarity(lower.as_bytes(), esco_key.as_bytes());
-            if sim > 0.85 {
-                if best.is_none() || sim > best.unwrap().0 {
-                    best = Some((sim, tag.as_str()));
-                }
-            }
-        }
-        best.map(|(_, tag)| tag.to_string())
-    }
-
-    /// Look up the ESCO label for an internal tag.
-    pub fn tag_to_esco(&self, tag: &str) -> Option<String> {
-        self.tag_to_esco.get(&tag.to_ascii_lowercase()).cloned()
-    }
-
-    /// Number of unique ESCO→tag mappings.
-    pub fn len(&self) -> usize {
-        self.esco_to_tag.len()
-    }
-
-    /// Whether the mapping is empty.
-    pub fn is_empty(&self) -> bool {
-        self.esco_to_tag.is_empty()
-    }
-}
+use super::esco::EscoMapping;
 
 // ── Dataset loaders ─────────────────────────────────────────────────────────────
 
@@ -658,7 +511,7 @@ pub fn eval_keyword_extraction(
 
     for sample in samples {
         let gt_label = sample.label.to_ascii_lowercase();
-        let gt_tag = esco_map.esco_to_tag(&gt_label).unwrap_or_default();
+        let gt_tag = esco_map.fuzzy_match_esco(&gt_label).unwrap_or_default().to_string();
 
         // Track unique ground-truth labels.
         gt_unique.entry(gt_label.clone()).or_insert(false);
@@ -746,7 +599,7 @@ pub fn eval_sentence_extraction(
 
     for sample in samples {
         let gt_label = sample.skill.to_ascii_lowercase();
-        let gt_tag = esco_map.esco_to_tag(&gt_label).unwrap_or_default();
+        let gt_tag = esco_map.fuzzy_match_esco(&gt_label).unwrap_or_default().to_string();
 
         gt_unique.entry(gt_label.clone()).or_insert(false);
 

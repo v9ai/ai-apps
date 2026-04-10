@@ -37,6 +37,18 @@ import type {
 import { safeJsonParse } from "./utils";
 
 /** Guard that throws a GraphQLError if the caller is not an authenticated admin. */
+/** Typed update object for companies table */
+type CompanyUpdate = PgUpdateSetSource<typeof companies>;
+
+/** Strip null values from a GraphQL input to match Drizzle's update type */
+function stripNulls<T extends Record<string, unknown>>(obj: T): { [K in keyof T]: Exclude<T[K], null> } {
+  const result = { ...obj };
+  for (const key of Object.keys(result)) {
+    if (result[key] === null) delete result[key];
+  }
+  return result as { [K in keyof T]: Exclude<T[K], null> };
+}
+
 function requireAdmin(context: GraphQLContext): void {
   if (!context.userId) {
     throw new GraphQLError("Authentication required", { extensions: { code: "UNAUTHENTICATED" } });

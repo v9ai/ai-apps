@@ -715,17 +715,21 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message.action === "findRelatedProgress" && findRelatedBtn) {
     const dupes = message.skipped || 0;
     const queued = message.queued ?? "?";
-    const name = message.name || "";
+    const name = (message.name || "").slice(0, 25);
     const tgt = message.targets ? ` (${message.targets} \u{1F3AF})` : "";
-    const filt = message.filtered ? `, ${message.filtered} filtered` : "";
-    findRelatedBtn.textContent = `${message.current} saved${tgt}, ${dupes} dupes${filt} (${queued} queued) ${name}`.trim();
+    const filt = message.filtered ? `, ${message.filtered} filt` : "";
+    findRelatedBtn.textContent = `${message.current} saved${tgt}, ${dupes} dup${filt} (${queued}q) ${name}`;
+    findRelatedBtn.title = `Click to stop | ${message.current} saved, ${dupes} dupes, ${message.filtered || 0} filtered, ${queued} queued — ${message.name || ""}`;
   }
   if (message.action === "findRelatedDone" && findRelatedBtn) {
+    findRelatedRunning = false;
     const dupes = message.skipped || 0;
     const tgt = message.targets ? ` (${message.targets} \u{1F3AF})` : "";
-    const filt = message.filtered ? `, ${message.filtered} filtered` : "";
-    findRelatedBtn.textContent = `Done! ${message.saved} new${tgt}, ${dupes} dupes${filt}`;
-    findRelatedBtn.style.backgroundColor = "#16a34a";
+    const filt = message.filtered ? `, ${message.filtered} filt` : "";
+    const label = message.cancelled ? "Stopped!" : "Done!";
+    findRelatedBtn.textContent = `${label} ${message.saved} new${tgt}, ${dupes} dup${filt}`;
+    findRelatedBtn.style.backgroundColor = message.cancelled ? "#d97706" : "#16a34a";
+    findRelatedBtn.title = "Find and save similar/related companies from LinkedIn";
     setTimeout(() => {
       if (findRelatedBtn) {
         findRelatedBtn.textContent = "Find Related";
@@ -735,8 +739,10 @@ chrome.runtime.onMessage.addListener((message) => {
     }, 3000);
   }
   if (message.action === "findRelatedError" && findRelatedBtn) {
+    findRelatedRunning = false;
     findRelatedBtn.textContent = message.error?.slice(0, 30) || "Error";
     findRelatedBtn.style.backgroundColor = "#dc2626";
+    findRelatedBtn.title = "Find and save similar/related companies from LinkedIn";
     setTimeout(() => {
       if (findRelatedBtn) {
         findRelatedBtn.textContent = "Find Related";
@@ -858,6 +864,8 @@ function createImportPeopleButton(): HTMLButtonElement {
   return btn;
 }
 
+let findRelatedRunning = false;
+
 function createFindRelatedButton(): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.setAttribute(FIND_RELATED_BTN_ATTR, "true");
@@ -878,21 +886,53 @@ function createFindRelatedButton(): HTMLButtonElement {
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     transition: background-color 0.2s;
+    max-width: 420px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   `;
 
   btn.addEventListener("mouseenter", () => {
-    if (!btn.disabled) btn.style.backgroundColor = "#0f766e";
+    if (!btn.disabled) {
+      btn.style.backgroundColor = findRelatedRunning ? "#991b1b" : "#0f766e";
+    }
   });
   btn.addEventListener("mouseleave", () => {
-    if (!btn.disabled) btn.style.backgroundColor = "#0d9488";
+    if (!btn.disabled) {
+      btn.style.backgroundColor = findRelatedRunning ? "#dc2626" : "#0d9488";
+    }
   });
 
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    btn.disabled = true;
+    if (findRelatedRunning) {
+      // Stop the crawl
+      btn.textContent = "Stopping...";
+      btn.disabled = true;
+      safeSendMessage(
+        { action: "stopFindRelated" },
+        (response) => {
+          if (!response?.success) {
+            btn.textContent = "Stop failed";
+            setTimeout(() => {
+              btn.textContent = "Find Related";
+              btn.style.backgroundColor = "#0d9488";
+              btn.disabled = false;
+              findRelatedRunning = false;
+            }, 2000);
+          }
+        },
+      );
+      return;
+    }
+
+    // Start the crawl
+    findRelatedRunning = true;
     btn.textContent = "Searching...";
+    btn.style.backgroundColor = "#dc2626";
+    btn.title = "Click to stop the crawl";
 
     safeSendMessage(
       { action: "findRelatedCompanies" },
@@ -900,6 +940,7 @@ function createFindRelatedButton(): HTMLButtonElement {
         if (!response?.success) {
           btn.textContent = "Error";
           btn.style.backgroundColor = "#dc2626";
+          findRelatedRunning = false;
           setTimeout(() => {
             btn.textContent = "Find Related";
             btn.style.backgroundColor = "#0d9488";

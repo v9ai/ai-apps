@@ -26,7 +26,22 @@ import type {
   ReceivedEmail,
 } from "@/db/schema";
 
-const BATCH_SIZE = 100;
+// ── Batch size tuning per entity access pattern ────────────────────────
+// Companies: loaded in bulk (list views, 50-item pages) → large batch
+const BATCH_COMPANY = 250;
+// Per-company child entities: loaded per-company in field resolvers → medium batch
+const BATCH_PER_COMPANY = 100;
+// Contacts: loaded per-company or individually → medium batch
+const BATCH_CONTACT = 100;
+// User settings: typically 1 per request (current user) → small batch
+const BATCH_USER = 10;
+
+// ── Batch scheduler ────────────────────────────────────────────────────
+// Default DataLoader uses process.nextTick which fires before any I/O.
+// A small 2ms delay collects more keys per batch when parallel field
+// resolvers are executing, trading negligible latency for fewer DB
+// round-trips on list pages (e.g. 50 companies × facts + snapshots).
+const batchSchedule = (cb: () => void) => setTimeout(cb, 2);
 
 export function createLoaders(db: DbInstance) {
   return {
@@ -39,7 +54,7 @@ export function createLoaders(db: DbInstance) {
         const byId = new Map(rows.map((r) => [r.id, r]));
         return companyIds.map((id) => byId.get(id) ?? null);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_COMPANY, batchScheduleFn: batchSchedule },
     ),
 
     companyFacts: new DataLoader<number, CompanyFact[]>(
@@ -56,7 +71,7 @@ export function createLoaders(db: DbInstance) {
         }
         return companyIds.map((id) => byCompany.get(id) ?? []);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),
 
     companySnapshots: new DataLoader<number, CompanySnapshot[]>(
@@ -73,7 +88,7 @@ export function createLoaders(db: DbInstance) {
         }
         return companyIds.map((id) => byCompany.get(id) ?? []);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),
 
     userSettings: new DataLoader<string, UserSettings | null>(
@@ -85,7 +100,9 @@ export function createLoaders(db: DbInstance) {
         const byUser = new Map(rows.map((r) => [r.user_id, r]));
         return userIds.map((id) => byUser.get(id) ?? null);
       },
-      { maxBatchSize: BATCH_SIZE },
+      // Single-user per request: small batch, no scheduler delay needed,
+      // caching disabled to avoid Map overhead for one-shot lookups.
+      { maxBatchSize: BATCH_USER, cache: false },
     ),
 
     contactsByCompany: new DataLoader<number, Contact[]>(
@@ -103,7 +120,7 @@ export function createLoaders(db: DbInstance) {
         }
         return companyIds.map((id) => byCompany.get(id) ?? []);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),
 
     contact: new DataLoader<number, Contact | null>(
@@ -115,7 +132,7 @@ export function createLoaders(db: DbInstance) {
         const byId = new Map(rows.map((r) => [r.id, r]));
         return contactIds.map((id) => byId.get(id) ?? null);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_CONTACT, batchScheduleFn: batchSchedule },
     ),
 
     contactEmailsByContact: new DataLoader<number, ContactEmail[]>(
@@ -132,7 +149,7 @@ export function createLoaders(db: DbInstance) {
         }
         return contactIds.map((id) => byContact.get(id) ?? []);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_CONTACT, batchScheduleFn: batchSchedule },
     ),
 
     emailCampaignsByCompany: new DataLoader<number, EmailCampaign[]>(
@@ -150,7 +167,7 @@ export function createLoaders(db: DbInstance) {
         }
         return companyIds.map((id) => byCompany.get(id) ?? []);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),
 
     linkedinPostsByCompany: new DataLoader<number, LinkedInPost[]>(
@@ -168,7 +185,7 @@ export function createLoaders(db: DbInstance) {
         }
         return companyIds.map((id) => byCompany.get(id) ?? []);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),
 
     intentSignalsByCompany: new DataLoader<number, IntentSignal[]>(
@@ -185,7 +202,7 @@ export function createLoaders(db: DbInstance) {
         }
         return companyIds.map((id) => byCompany.get(id) ?? []);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_PER_COMPANY, batchScheduleFn: batchSchedule },
     ),
 
     receivedEmailsByContact: new DataLoader<number, ReceivedEmail[]>(
@@ -203,7 +220,7 @@ export function createLoaders(db: DbInstance) {
         }
         return contactIds.map((id) => byContact.get(id) ?? []);
       },
-      { maxBatchSize: BATCH_SIZE },
+      { maxBatchSize: BATCH_CONTACT, batchScheduleFn: batchSchedule },
     ),
 
   };
