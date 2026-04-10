@@ -236,6 +236,7 @@ async fn flush_batch(db: &mut ContributorsDb, batch: &mut Vec<ContributorRecord>
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
+    dotenvy::from_filename(".env.local").ok();
     tracing_subscriber::fmt()
         .with_env_filter(
             std::env::var("RUST_LOG")
@@ -303,27 +304,20 @@ async fn main() -> anyhow::Result<()> {
 
                 info!("  page {page}: {} stargazers", stars.len());
 
-                for star in &stars {
-                    if is_bot(&star.login) {
-                        continue;
-                    }
-                    searched += 1;
+                let page_logins: Vec<&str> = stars
+                    .iter()
+                    .filter(|s| !is_bot(&s.login))
+                    .map(|s| s.login.as_str())
+                    .collect();
+                searched += page_logins.len() as u32;
 
-                    if let Some(record) = hydrate_user(
-                        &gh,
-                        &mut seen,
-                        &star.login,
-                        threshold,
-                        &format!("cpn:star/{repo_full}"),
-                        true,
-                    )
-                    .await
-                    {
-                        batch.push(record);
-                        if batch.len() >= BATCH_SIZE {
-                            stored += flush_batch(&mut db, &mut batch).await;
-                        }
-                    }
+                let source_tag = format!("cpn:star/{repo_full}");
+                let records = hydrate_batch(
+                    &gh, &mut seen, &page_logins, threshold, &source_tag, true,
+                ).await;
+                batch.extend(records);
+                if batch.len() >= BATCH_SIZE {
+                    stored += flush_batch(&mut db, &mut batch).await;
                 }
 
                 if stars.len() < 100 {
@@ -373,27 +367,20 @@ async fn main() -> anyhow::Result<()> {
 
                 info!("  page {page}: {} members", members.len());
 
-                for member in &members {
-                    if is_bot(&member.login) {
-                        continue;
-                    }
-                    searched += 1;
+                let page_logins: Vec<&str> = members
+                    .iter()
+                    .filter(|m| !is_bot(&m.login))
+                    .map(|m| m.login.as_str())
+                    .collect();
+                searched += page_logins.len() as u32;
 
-                    if let Some(record) = hydrate_user(
-                        &gh,
-                        &mut seen,
-                        &member.login,
-                        threshold,
-                        &format!("cpn:org/{org}"),
-                        false,
-                    )
-                    .await
-                    {
-                        batch.push(record);
-                        if batch.len() >= BATCH_SIZE {
-                            stored += flush_batch(&mut db, &mut batch).await;
-                        }
-                    }
+                let source_tag = format!("cpn:org/{org}");
+                let records = hydrate_batch(
+                    &gh, &mut seen, &page_logins, threshold, &source_tag, false,
+                ).await;
+                batch.extend(records);
+                if batch.len() >= BATCH_SIZE {
+                    stored += flush_batch(&mut db, &mut batch).await;
                 }
 
                 if members.len() < 100 {
@@ -456,24 +443,15 @@ async fn main() -> anyhow::Result<()> {
                     repo_owners.len()
                 );
 
-                for owner_login in &repo_owners {
-                    searched += 1;
-
-                    if let Some(record) = hydrate_user(
-                        &gh,
-                        &mut seen,
-                        owner_login,
-                        threshold,
-                        &format!("cpn:repo-search/{query}"),
-                        false,
-                    )
-                    .await
-                    {
-                        batch.push(record);
-                        if batch.len() >= BATCH_SIZE {
-                            stored += flush_batch(&mut db, &mut batch).await;
-                        }
-                    }
+                searched += repo_owners.len() as u32;
+                let owner_refs: Vec<&str> = repo_owners.iter().map(|s| s.as_str()).collect();
+                let source_tag = format!("cpn:repo-search/{query}");
+                let records = hydrate_batch(
+                    &gh, &mut seen, &owner_refs, threshold, &source_tag, false,
+                ).await;
+                batch.extend(records);
+                if batch.len() >= BATCH_SIZE {
+                    stored += flush_batch(&mut db, &mut batch).await;
                 }
 
                 if results.items.len() < 100 {
@@ -519,24 +497,15 @@ async fn main() -> anyhow::Result<()> {
 
             info!("  → {} total", results.total_count);
 
-            for item in &results.items {
-                searched += 1;
-
-                if let Some(record) = hydrate_user(
-                    &gh,
-                    &mut seen,
-                    &item.login,
-                    threshold,
-                    &format!("cpn:bio/{location}"),
-                    false,
-                )
-                .await
-                {
-                    batch.push(record);
-                    if batch.len() >= BATCH_SIZE {
-                        stored += flush_batch(&mut db, &mut batch).await;
-                    }
-                }
+            let item_logins: Vec<&str> = results.items.iter().map(|i| i.login.as_str()).collect();
+            searched += item_logins.len() as u32;
+            let source_tag = format!("cpn:bio/{location}");
+            let records = hydrate_batch(
+                &gh, &mut seen, &item_logins, threshold, &source_tag, false,
+            ).await;
+            batch.extend(records);
+            if batch.len() >= BATCH_SIZE {
+                stored += flush_batch(&mut db, &mut batch).await;
             }
 
             tokio::time::sleep(Duration::from_secs(2)).await;
@@ -556,113 +525,132 @@ async fn main() -> anyhow::Result<()> {
 
 // ── Shared: hydrate and score ────────────────────────────────────────────────
 
-/// Hydrate a GitHub user, apply EU filter, score partner fitness.
-/// Returns `Some(record)` if above threshold, `None` if filtered/below threshold/already seen/error.
+/// Batch-hydrate GitHub users via GraphQL, apply EU filter, score partner fitness.
+/// Returns records above threshold. Deduplicates against `seen`.
 ///
-/// On rate-limit errors: waits until the GitHub reset time and retries once,
-/// instead of silently skipping the user.
-async fn hydrate_user(
+/// On rate-limit errors: waits until reset and retries once.
+/// Uses GraphQL API to fetch up to 50 users per request (avoids REST secondary rate limits).
+async fn hydrate_batch(
     gh: &GhClient,
     seen: &mut HashSet<String>,
-    login: &str,
+    logins: &[&str],
     threshold: f32,
     source_tag: &str,
     starred_anthropic: bool,
-) -> Option<ContributorRecord> {
-    if !seen.insert(login.to_string()) {
-        return None;
+) -> Vec<ContributorRecord> {
+    // Deduplicate against seen set
+    let fresh: Vec<&str> = logins
+        .iter()
+        .filter(|l| seen.insert(l.to_string()))
+        .copied()
+        .collect();
+
+    if fresh.is_empty() {
+        return vec![];
     }
 
-    let user = match gh.get_user(login).await {
-        Ok(u) => u,
-        Err(GhError::RateLimit { reset_at }) => {
-            // Wait until the GitHub rate limit resets instead of skipping
-            if let Ok(reset_ts) = reset_at.parse::<i64>() {
-                let now = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs() as i64;
-                let wait_secs = (reset_ts - now + 2).max(1) as u64;
-                warn!("  rate-limited on {login}, waiting {wait_secs}s until reset");
-                tokio::time::sleep(Duration::from_secs(wait_secs)).await;
-            } else {
-                warn!("  rate-limited on {login}, unparseable reset={reset_at}, waiting 60s");
-                tokio::time::sleep(Duration::from_secs(60)).await;
-            }
-            // Retry once
-            match gh.get_user(login).await {
-                Ok(u) => u,
-                Err(e) => {
-                    warn!("  skip {login} after rate-limit retry: {e}");
-                    seen.remove(login);
-                    return None;
+    // Fetch via GraphQL in batches of 50 (GraphQL node limit)
+    const GQL_BATCH: usize = 50;
+    let mut all_users = Vec::new();
+
+    for chunk in fresh.chunks(GQL_BATCH) {
+        let users = match gh.get_users_graphql(chunk).await {
+            Ok(u) => u,
+            Err(GhError::RateLimit { reset_at }) => {
+                if let Ok(reset_ts) = reset_at.parse::<i64>() {
+                    let now = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs() as i64;
+                    let wait_secs = (reset_ts - now + 2).max(1) as u64;
+                    warn!("  rate-limited (GraphQL), waiting {wait_secs}s until reset");
+                    tokio::time::sleep(Duration::from_secs(wait_secs)).await;
+                } else {
+                    warn!("  rate-limited (GraphQL), unparseable reset={reset_at}, waiting 60s");
+                    tokio::time::sleep(Duration::from_secs(60)).await;
+                }
+                // Retry once
+                match gh.get_users_graphql(chunk).await {
+                    Ok(u) => u,
+                    Err(e) => {
+                        warn!("  skip batch after rate-limit retry: {e}");
+                        for login in chunk {
+                            seen.remove(*login);
+                        }
+                        continue;
+                    }
                 }
             }
-        }
-        Err(e) => {
-            warn!("  skip {login}: {e}");
-            return None;
-        }
-    };
-
-    // EU/UK location filter
-    if !is_eu_location(user.location.as_deref()) {
-        return None;
-    }
-
-    let skill_text = format!(
-        "{} {} {}",
-        user.bio.as_deref().unwrap_or(""),
-        user.company.as_deref().unwrap_or(""),
-        user.blog.as_deref().unwrap_or(""),
-    );
-    let skills = extract_skills(&skill_text);
-    let fitness = compute_partner_fitness(&user, &skills, starred_anthropic);
-
-    // Skip pure hobbyist stargazers: no archetype, not consulting, just starred
-    if starred_anthropic && fitness.archetypes.is_empty() && !fitness.is_consulting_company {
-        info!("  skip {login}: stargazer but no archetype or consulting signal");
-        return None;
-    }
-
-    if fitness.score < threshold {
-        return None;
-    }
-
-    info!(
-        "  ✓ {} ({:.2}) [{}] @ {} — {}",
-        user.login,
-        fitness.score,
-        if fitness.archetypes.is_empty() {
-            "general"
-        } else {
-            fitness.archetypes[0]
-        },
-        user.company.as_deref().unwrap_or("—"),
-        user.location.as_deref().unwrap_or("?"),
-    );
-
-    Some(ContributorRecord {
-        user,
-        repos: vec![RepoContrib {
-            repo: source_tag.to_string(),
-            contributions: 0,
-        }],
-        total_contributions: 0,
-        extra_tags: {
-            let mut tags = Vec::new();
-            if starred_anthropic {
-                tags.push("cpn:starred".into());
+            Err(e) => {
+                warn!("  skip batch of {}: {e}", chunk.len());
+                continue;
             }
-            // Extract source prefix: "cpn:star/repo" -> "star", "cpn:org/name" -> "org"
-            let src = source_tag
-                .strip_prefix("cpn:")
-                .and_then(|s| s.split('/').next())
-                .unwrap_or("unknown");
-            tags.push(format!("cpn:src:{src}"));
-            tags
-        },
-    })
+        };
+        all_users.extend(users);
+    }
+
+    // Score and filter
+    let src = source_tag
+        .strip_prefix("cpn:")
+        .and_then(|s| s.split('/').next())
+        .unwrap_or("unknown");
+
+    let mut records = Vec::new();
+    for user in all_users {
+        if !is_eu_location(user.location.as_deref()) {
+            continue;
+        }
+
+        let skill_text = format!(
+            "{} {} {}",
+            user.bio.as_deref().unwrap_or(""),
+            user.company.as_deref().unwrap_or(""),
+            user.blog.as_deref().unwrap_or(""),
+        );
+        let skills = extract_skills(&skill_text);
+        let fitness = compute_partner_fitness(&user, &skills, starred_anthropic);
+
+        // Skip pure hobbyist stargazers
+        if starred_anthropic && fitness.archetypes.is_empty() && !fitness.is_consulting_company {
+            info!("  skip {}: stargazer but no archetype or consulting signal", user.login);
+            continue;
+        }
+
+        if fitness.score < threshold {
+            continue;
+        }
+
+        info!(
+            "  ✓ {} ({:.2}) [{}] @ {} — {}",
+            user.login,
+            fitness.score,
+            if fitness.archetypes.is_empty() {
+                "general"
+            } else {
+                fitness.archetypes[0]
+            },
+            user.company.as_deref().unwrap_or("—"),
+            user.location.as_deref().unwrap_or("?"),
+        );
+
+        let mut tags = Vec::new();
+        if starred_anthropic {
+            tags.push("cpn:starred".into());
+        }
+        tags.push(format!("cpn:src:{src}"));
+
+        records.push(ContributorRecord {
+            user,
+            repos: vec![RepoContrib {
+                repo: source_tag.to_string(),
+                contributions: 0,
+            }],
+            total_contributions: 0,
+            extra_tags: tags,
+        });
+    }
+
+    records
 }
 
 // ── Display ──────────────────────────────────────────────────────────────────
