@@ -176,12 +176,10 @@ impl Arena {
 
 // ── ScoringArena: cache-line-aligned arena for batch scoring ────────────────
 
-/// Number of f32 features per contact in the scoring pipeline.
-/// 7 base features + 1 semantic + 1 score output = 9 f32s per contact.
-const FEATURE_VECTOR_F32S: usize = 9;
-
-/// Bytes per feature vector (9 f32s = 36 bytes, padded to 64 for cache-line alignment).
-const FEATURE_VECTOR_BYTES: usize = 64; // one cache line per vector
+/// Bytes per feature vector: one cache line (64 bytes) per contact.
+/// Accommodates 9 f32s (7 base features + 1 semantic + 1 score = 36 bytes)
+/// with 28 bytes of padding for cache-line alignment.
+const FEATURE_VECTOR_BYTES: usize = 64;
 
 /// Cache-line-aligned block header for the scoring arena's backing memory.
 /// Forces the mmap region to start on a 64-byte boundary when embedded in a struct.
