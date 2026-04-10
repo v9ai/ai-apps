@@ -256,6 +256,112 @@ impl GhClient {
         self.get_url(&url).await
     }
 
+    // ── GraphQL batch user fetch ──────────────────────────────────────────
+
+    /// Fetch full profiles for multiple users in a single GraphQL request.
+    /// Much more efficient than individual REST `/users/{login}` calls and
+    /// avoids secondary rate limits. Returns users in the same order as `logins`;
+    /// missing/errored users are silently omitted.
+    pub async fn get_users_graphql(&self, logins: &[&str]) -> Result<Vec<GhUser>> {
+        if logins.is_empty() {
+            return Ok(vec![]);
+        }
+        // Build aliased GraphQL query: u0: user(login:"x") { ... }, u1: ...
+        let fields = r#"login
+            id: databaseId
+            url
+            avatarUrl
+            name
+            email
+            bio
+            company
+            location
+            websiteUrl
+            twitterUsername
+            repositories(privacy: PUBLIC) { totalCount }
+            gists(privacy: PUBLIC) { totalCount }
+            followers { totalCount }
+            following { totalCount }
+            isHireable
+            createdAt
+            updatedAt"#;
+
+        let aliases: Vec<String> = logins
+            .iter()
+            .enumerate()
+            .map(|(i, login)| {
+                // Escape any quotes in login (shouldn't happen but be safe)
+                let escaped = login.replace('"', r#"\""#);
+                format!("u{i}: user(login: \"{escaped}\") {{ {fields} }}")
+            })
+            .collect();
+
+        let query = format!("query {{ {} }}", aliases.join("\n"));
+
+        let body = serde_json::json!({ "query": query });
+
+        let resp = self
+            .inner
+            .post("https://api.github.com/graphql")
+            .bearer_auth(&self.token)
+            .json(&body)
+            .send()
+            .await
+            .map_err(GhError::Http)?;
+
+        let status = resp.status().as_u16();
+        if status == 401 || status == 403 {
+            let reset = resp
+                .headers()
+                .get("x-ratelimit-reset")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("unknown")
+                .to_string();
+            if status == 403 {
+                return Err(GhError::RateLimit { reset_at: reset });
+            }
+            let body_text = resp.text().await.unwrap_or_default();
+            return Err(GhError::Api { status, message: body_text });
+        }
+        if !resp.status().is_success() {
+            let body_text = resp.text().await.unwrap_or_default();
+            return Err(GhError::Api { status, message: body_text });
+        }
+
+        let json: serde_json::Value = resp.json().await.map_err(GhError::Http)?;
+
+        // Check for top-level errors
+        if let Some(errors) = json.get("errors") {
+            // If ALL entries errored, treat as failure; otherwise partial success
+            if json.get("data").is_none() {
+                return Err(GhError::Other(format!(
+                    "GraphQL errors: {}",
+                    serde_json::to_string(errors).unwrap_or_default()
+                )));
+            }
+        }
+
+        let data = match json.get("data") {
+            Some(d) => d,
+            None => return Ok(vec![]),
+        };
+
+        let mut users = Vec::with_capacity(logins.len());
+        for i in 0..logins.len() {
+            let key = format!("u{i}");
+            if let Some(node) = data.get(&key) {
+                if node.is_null() {
+                    continue; // user doesn't exist
+                }
+                if let Some(user) = graphql_node_to_user(node) {
+                    users.push(user);
+                }
+            }
+        }
+
+        Ok(users)
+    }
+
     /// Search repos by topic + optional language.
     pub async fn search_repos(
         &self,
@@ -274,6 +380,99 @@ impl GhClient {
         );
         self.get_url(&url).await
     }
+}
+
+/// Convert a GraphQL user node (serde_json::Value) into a GhUser.
+fn graphql_node_to_user(node: &serde_json::Value) -> Option<GhUser> {
+    use chrono::{DateTime, Utc};
+
+    let login = node.get("login")?.as_str()?.to_string();
+    let id = node.get("id")?.as_u64()?;
+    let url = node.get("url")?.as_str()?.to_string();
+    let avatar_url = node
+        .get("avatarUrl")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let name = node.get("name").and_then(|v| v.as_str()).map(String::from);
+    let email = node
+        .get("email")
+        .and_then(|v| v.as_str())
+        .filter(|e| !e.is_empty())
+        .map(String::from);
+    let bio = node.get("bio").and_then(|v| v.as_str()).filter(|b| !b.is_empty()).map(String::from);
+    let company = node
+        .get("company")
+        .and_then(|v| v.as_str())
+        .filter(|c| !c.is_empty())
+        .map(String::from);
+    let location = node
+        .get("location")
+        .and_then(|v| v.as_str())
+        .filter(|l| !l.is_empty())
+        .map(String::from);
+    let blog = node
+        .get("websiteUrl")
+        .and_then(|v| v.as_str())
+        .filter(|b| !b.is_empty())
+        .map(String::from);
+    let twitter_username = node
+        .get("twitterUsername")
+        .and_then(|v| v.as_str())
+        .filter(|t| !t.is_empty())
+        .map(String::from);
+    let public_repos = node
+        .get("repositories")
+        .and_then(|v| v.get("totalCount"))
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as u32;
+    let public_gists = node
+        .get("gists")
+        .and_then(|v| v.get("totalCount"))
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as u32;
+    let followers = node
+        .get("followers")
+        .and_then(|v| v.get("totalCount"))
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as u32;
+    let following = node
+        .get("following")
+        .and_then(|v| v.get("totalCount"))
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as u32;
+    let hireable = node.get("isHireable").and_then(|v| v.as_bool());
+    let created_at: DateTime<Utc> = node
+        .get("createdAt")
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.parse().ok())
+        .unwrap_or_else(Utc::now);
+    let updated_at: DateTime<Utc> = node
+        .get("updatedAt")
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.parse().ok())
+        .unwrap_or_else(Utc::now);
+
+    Some(GhUser {
+        login,
+        id,
+        html_url: url,
+        avatar_url,
+        name,
+        email,
+        bio,
+        company,
+        location,
+        blog,
+        twitter_username,
+        public_repos,
+        public_gists,
+        followers,
+        following,
+        hireable,
+        created_at,
+        updated_at,
+    })
 }
 
 pub(crate) fn urlencoding(s: &str) -> String {
