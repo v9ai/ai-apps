@@ -83,6 +83,16 @@ export const button = cva({
           textUnderlineOffset: "3px",
         },
       },
+      gradient: {
+        backgroundImage:
+          "linear-gradient(135deg, {colors.accent.primary}, {colors.status.positive})",
+        color: "accent.contrast",
+        border: "1px solid transparent",
+        fontWeight: "bold",
+        _hover: {
+          opacity: "0.9",
+        },
+      },
     },
     size: {
       sm: {
@@ -99,6 +109,13 @@ export const button = cva({
         padding: "10px 32px",
         fontSize: "lg",
         height: "44px",
+      },
+      hero: {
+        padding: "14px 40px",
+        fontSize: "xl",
+        height: "52px",
+        fontWeight: "bold",
+        letterSpacing: "snug",
       },
     },
   },

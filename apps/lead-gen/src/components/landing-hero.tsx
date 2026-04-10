@@ -16,23 +16,26 @@ import { useEffect, useRef, useState } from "react";
 /**
  * LANDING HERO — Agentic Lead Gen
  *
- * Copy: "autonomous AI agents that discover, enrich, and close B2B leads"
- *       -- agentic autonomy voice, agents-do-the-work manifesto.
- *
- * Badge: live rotating agent status replaces static copy.
- *        Creates liveness -- the page feels like a mission control, not a brochure.
- *
- * Animations: word-by-word headline entrance, stat count-up, CTA micro-interactions,
- *             badge scan-line overlay -- all wired from globals.css.
- *
- * Subheadline: ends with "your agents work 24/7 so you don't have to"
- *              -- a personality line that makes the page memorable.
+ * Redesigned with:
+ *  - CSS gradient headline (indigo -> white)
+ *  - Animated background glow (CSS-only radial pulse)
+ *  - Clearer visual hierarchy: primary solid + secondary outline CTAs
+ *  - Stats row with separator dividers
+ *  - Mobile-first responsive layout (base/lg breakpoints)
  */
 
 /* ------------------------------------------------------------------ */
 /*  Animated stat counter: counts up from 0 on scroll into view       */
 /* ------------------------------------------------------------------ */
-function AnimatedStat({ value, label, context }: { value: string; label: string; context?: string }) {
+function AnimatedStat({
+  value,
+  label,
+  context,
+}: {
+  value: string;
+  label: string;
+  context?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [display, setDisplay] = useState(value);
@@ -89,7 +92,7 @@ function AnimatedStat({ value, label, context }: { value: string; label: string;
       <dd
         className={cx(
           css({
-            fontSize: { base: "xl", md: "2xl" },
+            fontSize: { base: "2xl", lg: "3xl" },
             fontWeight: "bold",
             color: "ui.heading",
             letterSpacing: "tight",
@@ -108,6 +111,7 @@ function AnimatedStat({ value, label, context }: { value: string; label: string;
           textTransform: "lowercase",
           letterSpacing: "wide",
           lineHeight: "none",
+          mt: "2px",
         })}
       >
         {label}
@@ -173,8 +177,6 @@ function StatusIndicator() {
   );
 }
 
-const HEADLINE_WORDS = ["Autonomous", "AI", "agents", "that"];
-
 const STATUS_LINES = [
   "discovery agent: scanning 820 domains",
   "enrichment agent: 300 leads qualified",
@@ -184,45 +186,120 @@ const STATUS_LINES = [
 ] as const;
 
 const STATS = [
-  { value: "50,000+", label: "pages discovered", context: "autonomous crawl agents (RL + UCB1)" },
-  { value: "300+", label: "leads qualified", context: "multi-agent enrichment pipeline" },
-  { value: "92%", label: "contact accuracy", context: "AI-verified email + LinkedIn" },
-  { value: "24x7", label: "agent uptime", context: "fully autonomous, zero manual work" },
+  {
+    value: "50,000+",
+    label: "pages discovered",
+    context: "autonomous crawl agents (RL + UCB1)",
+  },
+  {
+    value: "300+",
+    label: "leads qualified",
+    context: "multi-agent enrichment pipeline",
+  },
+  {
+    value: "92%",
+    label: "contact accuracy",
+    context: "AI-verified email + LinkedIn",
+  },
+  {
+    value: "24x7",
+    label: "agent uptime",
+    context: "fully autonomous, zero manual work",
+  },
 ] as const;
+
+/* ------------------------------------------------------------------ */
+/*  Styles                                                             */
+/* ------------------------------------------------------------------ */
+
+const heroSectionStyle = css({
+  position: "relative",
+  pt: { base: "sectionMobile", lg: "section" },
+  pb: { base: "sectionMobile", lg: "section" },
+  scrollMarginTop: "56px",
+  overflow: "hidden",
+});
+
+const glowStyle = css({
+  position: "absolute",
+  top: { base: "-120px", lg: "-200px" },
+  left: "50%",
+  transform: "translateX(-50%)",
+  width: { base: "400px", lg: "700px" },
+  height: { base: "400px", lg: "700px" },
+  borderRadius: "50%",
+  background:
+    "radial-gradient(circle, rgba(62, 99, 221, 0.15) 0%, rgba(62, 99, 221, 0.05) 40%, transparent 70%)",
+  pointerEvents: "none",
+  animation: "hero-glow-pulse 6s ease-in-out infinite",
+  zIndex: 0,
+});
+
+const headlineStyle = css({
+  fontSize: { base: "4xl", lg: "6xl" },
+  fontWeight: "bold",
+  letterSpacing: "tighter",
+  lineHeight: { base: "snug", lg: "tight" },
+  textAlign: "center",
+  maxW: { base: "100%", lg: "820px" },
+  mx: "auto",
+  px: { base: "4", lg: "0" },
+  position: "relative",
+  zIndex: 1,
+});
+
+const gradientTextStyle = css({
+  color: "transparent",
+  backgroundClip: "text",
+  WebkitBackgroundClip: "text",
+  background:
+    "linear-gradient(135deg, {colors.accent.primary} 0%, {colors.ui.heading} 60%, {colors.ui.heading} 100%)",
+  display: "inline",
+});
+
+const subheadlineStyle = css({
+  fontSize: { base: "base", lg: "lg" },
+  color: "ui.secondary",
+  textAlign: "center",
+  maxW: { base: "100%", lg: "600px" },
+  px: { base: "4", lg: "0" },
+  mx: "auto",
+  mt: { base: "4", lg: "6" },
+  lineHeight: "relaxed",
+  letterSpacing: "snug",
+  position: "relative",
+  zIndex: 1,
+});
+
+const statsDividerStyle = css({
+  display: { base: "none", lg: "block" },
+  width: "1px",
+  height: "40px",
+  background: "ui.border",
+  flexShrink: 0,
+  alignSelf: "center",
+});
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
 
 export function LandingHero() {
   return (
-    <section
-      id="hero"
-      className={css({
-        pt: { base: "sectionMobile", lg: "section" },
-        pb: { base: "sectionMobile", lg: "section" },
-        scrollMarginTop: "56px",
-      })}
-    >
-      <div className={container({ maxW: "breakpoint-lg" })}>
-        {/* --- brand lockup above trust badges --- */}
-        <div className={flex({ justify: "center", mb: "6" })}>
-          <span
-            className={css({
-              fontSize: { base: "3xl", md: "4xl", lg: "5xl" },
-              color: "ui.heading",
-              letterSpacing: "tight",
-              textTransform: "uppercase",
-              fontWeight: "bold",
-              lineHeight: "none",
-            })}
-          >
-            Agentic Lead Gen
-          </span>
-        </div>
+    <section id="hero" className={heroSectionStyle}>
+      {/* CSS-only animated background glow */}
+      <div className={glowStyle} aria-hidden="true" />
 
+      <div
+        className={container({ maxW: "breakpoint-lg" })}
+        style={{ position: "relative", zIndex: 1 }}
+      >
         {/* --- trust badge row --- */}
         <div
           className={flex({
             justify: "center",
             gap: "2",
-            mb: "5",
+            mb: { base: "6", lg: "8" },
             flexWrap: "wrap",
           })}
         >
@@ -275,7 +352,7 @@ export function LandingHero() {
             <StatusIndicator />
           </span>
 
-          {/* cited papers -- research credibility signal */}
+          {/* cited papers */}
           <span
             className={css({
               display: "inline-flex",
@@ -301,65 +378,89 @@ export function LandingHero() {
           </span>
         </div>
 
-        {/* --- headline (staggered word entrance) --- */}
-        <h1
-          className={css({
-            fontSize: { base: "4xl", md: "5xl", lg: "6xl" },
-            fontWeight: "light",
-            color: "ui.secondary",
-            letterSpacing: "tighter",
-            lineHeight: { base: "snug", lg: "tight" },
-            textAlign: "center",
-            maxW: "780px",
-            mx: "auto",
-          })}
-        >
-          {HEADLINE_WORDS.map((word, i) => (
-            <span key={i} className="headline-word">
-              {word}{" "}
-            </span>
-          ))}
-          <br className={css({ display: { base: "none", md: "block" } })} />
+        {/* --- headline with gradient text --- */}
+        <h1 className={headlineStyle}>
+          <span className={gradientTextStyle}>Autonomous AI agents</span>
+          <br className={css({ display: { base: "none", lg: "block" } })} />
           <span
-            className={cx(
-              css({
-                fontWeight: "bold",
-                color: "transparent",
-                backgroundClip: "text",
-                background:
-                  "linear-gradient(135deg, {colors.ui.heading} 0%, {colors.accent.primary} 50%, {colors.status.positive} 100%)",
-                WebkitBackgroundClip: "text",
-              }),
-              "headline-word",
-            )}
-            style={{ animationDelay: "0.32s" }}
+            className={css({
+              color: "ui.heading",
+              fontWeight: "light",
+              display: "inline",
+            })}
           >
-            Discover, enrich, and close B2B leads — autonomously.
+            {" "}
+            that discover, enrich, and
+          </span>
+          <br className={css({ display: { base: "none", lg: "block" } })} />
+          <span
+            className={css({
+              color: "ui.heading",
+              fontWeight: "light",
+              display: "inline",
+            })}
+          >
+            {" "}
+            close B2B leads
           </span>
         </h1>
 
         {/* --- subheadline --- */}
-        <p
-          className={css({
-            fontSize: { base: "base", md: "lg" },
-            color: "ui.secondary",
-            textAlign: "center",
-            maxW: { base: "100%", md: "580px" },
-            px: { base: "4", md: "0" },
-            mx: "auto",
-            mt: "5",
-            lineHeight: "relaxed",
-            letterSpacing: "snug",
-          })}
-        >
-          Five specialized AI agents work autonomously to find companies,
-          enrich profiles, discover decision-maker contacts, and craft
-          personalized outreach -- end to end, without human intervention.
-          Your agents work 24/7 so you don&apos;t have to.
+        <p className={subheadlineStyle}>
+          Five specialized AI agents work autonomously to find companies, enrich
+          profiles, discover decision-maker contacts, and craft personalized
+          outreach. Your agents work 24/7 so you don&apos;t have to.
         </p>
 
+        {/* --- CTA pair --- */}
+        <div
+          className={flex({
+            justify: "center",
+            gap: "3",
+            mt: { base: "6", lg: "8" },
+            direction: { base: "column", sm: "row" },
+            px: { base: "4", sm: "0" },
+            position: "relative",
+            zIndex: 1,
+          })}
+        >
+          <Link
+            href="/how-it-works"
+            className={cx(
+              button({ variant: "solid", size: "lg" }),
+              css({
+                justifyContent: "center",
+                width: { base: "100%", sm: "auto" },
+              }),
+              "cta-solid-animated",
+            )}
+          >
+            meet the agents
+            <ArrowRightIcon width={14} height={14} />
+          </Link>
+          <Link
+            href="/docs"
+            className={cx(
+              button({ variant: "outline", size: "lg" }),
+              css({
+                justifyContent: "center",
+                width: { base: "100%", sm: "auto" },
+              }),
+              "cta-ghost-animated",
+            )}
+          >
+            view documentation
+          </Link>
+        </div>
+
         {/* --- live activity indicator --- */}
-        <div className={flex({ justify: "center", mt: "7", mb: "2" })}>
+        <div
+          className={flex({
+            justify: "center",
+            mt: { base: "8", lg: "10" },
+            mb: "2",
+          })}
+        >
           <span
             className={css({
               display: "inline-flex",
@@ -388,77 +489,57 @@ export function LandingHero() {
           </span>
         </div>
 
-        {/* --- social proof stats (count-up + stagger entrance) --- */}
+        {/* --- social proof stats with dividers --- */}
         <dl
           aria-label="Agent statistics"
           className={cx(
             css({
-              display: "grid",
-              gridTemplateColumns: { base: "repeat(2, 1fr)", md: "repeat(4, auto)" },
-              justifyContent: { md: "center" },
-              gap: { base: "4", md: "8" },
-              mt: "7",
-              px: { base: "4", md: "0" },
+              display: "flex",
+              flexDirection: { base: "column", lg: "row" },
+              justifyContent: "center",
+              alignItems: "center",
+              gap: { base: "5", lg: "0" },
+              mt: "6",
+              px: { base: "4", lg: "0" },
             }),
             "stats-row-animated",
           )}
         >
-          {STATS.map((stat) => (
-            <AnimatedStat
+          {STATS.map((stat, i) => (
+            <div
               key={stat.label}
-              value={stat.value}
-              label={stat.label}
-              context={stat.context}
-            />
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                gap: { base: "0", lg: "0" },
+              })}
+            >
+              {i > 0 && <div className={statsDividerStyle} style={{ marginLeft: 32, marginRight: 32 }} />}
+              <AnimatedStat
+                value={stat.value}
+                label={stat.label}
+                context={stat.context}
+              />
+            </div>
           ))}
         </dl>
 
         {/* --- funnel conversion line --- */}
-        <div className={flex({ justify: "center", mt: "3" })}>
+        <div className={flex({ justify: "center", mt: "4" })}>
           <span
             className={css({
               fontSize: "2xs",
               color: "ui.dim",
               letterSpacing: "wide",
               textTransform: "lowercase",
+              textAlign: "center",
+              lineHeight: "relaxed",
+              px: { base: "4", lg: "0" },
             })}
           >
             820 domains discovered &rarr; 4,200 companies enriched &rarr; 1,100
             contacts verified &rarr; 300 personalized outreach campaigns
           </span>
-        </div>
-
-        {/* --- CTA pair (arrow nudge + border sweep) --- */}
-        <div
-          className={flex({
-            justify: "center",
-            gap: "3",
-            mt: "7",
-            direction: { base: "column", sm: "row" },
-            px: { base: "4", sm: "0" },
-          })}
-        >
-          <Link
-            href="/how-it-works"
-            className={cx(
-              button({ variant: "solid", size: "lg" }),
-              css({ justifyContent: "center", width: { base: "100%", sm: "auto" } }),
-              "cta-solid-animated",
-            )}
-          >
-            Meet the agents
-            <ArrowRightIcon width={14} height={14} />
-          </Link>
-          <Link
-            href="/docs"
-            className={cx(
-              button({ variant: "ghost", size: "lg" }),
-              css({ justifyContent: "center", width: { base: "100%", sm: "auto" } }),
-              "cta-ghost-animated",
-            )}
-          >
-            View documentation
-          </Link>
         </div>
       </div>
     </section>
