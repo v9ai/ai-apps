@@ -168,9 +168,9 @@ async function main() {
       const { subject, text } = buildEmail(row);
       try {
         await resend.emails.send({
-          from: "Vadim Nicolai <vadim@vadim.blog>",
+          from: "Vadim Nicolai <contact@vadim.blog>",
           headers: {
-            "List-Unsubscribe": "<mailto:vadim@vadim.blog?subject=unsubscribe>",
+            "List-Unsubscribe": "<mailto:contact@vadim.blog?subject=unsubscribe>",
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
           to: row.email.trim(),
