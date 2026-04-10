@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from "react";
+import { forwardRef, type HTMLAttributes, type CSSProperties } from "react";
 import { css, cx } from "styled-system/css";
 
 type GlowColor = "accent" | "positive" | "purple";
@@ -9,7 +9,7 @@ interface GlowEffectProps extends HTMLAttributes<HTMLDivElement> {
   size?: GlowSize;
   /** Enable pulsing animation (uses hero-glow-pulse keyframe from globals.css) */
   animate?: boolean;
-  /** Position from top (CSS value). Default: centered above container. */
+  /** Position from top (CSS value). Default: "-120px". */
   top?: string;
 }
 
@@ -28,11 +28,33 @@ const colorMap: Record<GlowColor, { inner: string; outer: string }> = {
   },
 };
 
-const sizeMap: Record<GlowSize, { base: string; lg: string }> = {
-  sm: { base: "200px", lg: "350px" },
-  md: { base: "400px", lg: "700px" },
-  lg: { base: "600px", lg: "1000px" },
+const sizeStyles: Record<GlowSize, string> = {
+  sm: css({
+    width: { base: "200px", lg: "350px" },
+    height: { base: "200px", lg: "350px" },
+  }),
+  md: css({
+    width: { base: "400px", lg: "700px" },
+    height: { base: "400px", lg: "700px" },
+  }),
+  lg: css({
+    width: { base: "600px", lg: "1000px" },
+    height: { base: "600px", lg: "1000px" },
+  }),
 };
+
+const baseStyle = css({
+  position: "absolute",
+  left: "50%",
+  transform: "translateX(-50%)",
+  borderRadius: "50%",
+  pointerEvents: "none",
+  zIndex: 0,
+});
+
+const animatedStyle = css({
+  animation: "hero-glow-pulse 6s ease-in-out infinite",
+});
 
 export const GlowEffect = forwardRef<HTMLDivElement, GlowEffectProps>(
   (
@@ -40,39 +62,32 @@ export const GlowEffect = forwardRef<HTMLDivElement, GlowEffectProps>(
       color = "accent",
       size = "md",
       animate = true,
-      top,
+      top = "-120px",
       className,
+      style,
       ...rest
     },
     ref
   ) => {
     const { inner, outer } = colorMap[color];
-    const dimensions = sizeMap[size];
+
+    const mergedStyle: CSSProperties = {
+      top,
+      background: `radial-gradient(circle, ${inner} 0%, ${outer} 40%, transparent 70%)`,
+      ...style,
+    };
 
     return (
       <div
         ref={ref}
         aria-hidden="true"
         className={cx(
-          css({
-            position: "absolute",
-            left: "50%",
-            transform: "translateX(-50%)",
-            borderRadius: "50%",
-            pointerEvents: "none",
-            zIndex: 0,
-          }),
-          animate
-            ? css({ animation: "hero-glow-pulse 6s ease-in-out infinite" })
-            : undefined,
+          baseStyle,
+          sizeStyles[size],
+          animate ? animatedStyle : undefined,
           className
         )}
-        style={{
-          top: top ?? "-120px",
-          width: dimensions.base,
-          height: dimensions.base,
-          background: `radial-gradient(circle, ${inner} 0%, ${outer} 40%, transparent 70%)`,
-        }}
+        style={mergedStyle}
         {...rest}
       />
     );

@@ -1,4 +1,6 @@
-use ahash::AHashMap;
+use ahash::{AHashMap, AHasher};
+use std::hash::{Hash, Hasher};
+use crate::bloom::BloomFilter;
 use crate::similarity::simd::{jaro_winkler_icase, levenshtein_similarity};
 
 pub fn blocking_keys_contact(first: &str, last: &str, email: &str) -> Vec<String> {

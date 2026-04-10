@@ -216,3 +216,45 @@ export function extractCompanyFeatures(
 export function vectorToArray(vec: Partial<LeadFeatureVector>): number[] {
   return FEATURE_NAMES.map((name) => (vec[name] as number) ?? 0);
 }
+
+// ---------------------------------------------------------------------------
+// Typed array packing for batch scoring
+// ---------------------------------------------------------------------------
+
+/** Number of features in the canonical vector. */
+export const FEATURE_COUNT = 42;
+
+/**
+ * Pack a single LeadFeatureVector into a Float32Array (42 elements).
+ * Field order matches FEATURE_NAMES exactly so it aligns with the weight vector.
+ * Missing features default to 0.
+ */
+export function toFloat32Array(vec: Partial<LeadFeatureVector>): Float32Array {
+  const out = new Float32Array(FEATURE_COUNT);
+  for (let i = 0; i < FEATURE_COUNT; i++) {
+    out[i] = (vec[FEATURE_NAMES[i]] as number) ?? 0;
+  }
+  return out;
+}
+
+/**
+ * Pack multiple LeadFeatureVectors into a single contiguous Float32Array
+ * laid out in row-major order: [v0_f0, v0_f1, ..., v0_f41, v1_f0, ...].
+ *
+ * This layout enables cache-friendly linear traversal during dot-product
+ * scoring and avoids per-vector allocation overhead.
+ */
+export function packBatchFloat32(
+  vectors: Partial<LeadFeatureVector>[],
+): Float32Array {
+  const n = vectors.length;
+  const buf = new Float32Array(n * FEATURE_COUNT);
+  for (let row = 0; row < n; row++) {
+    const base = row * FEATURE_COUNT;
+    const vec = vectors[row];
+    for (let col = 0; col < FEATURE_COUNT; col++) {
+      buf[base + col] = (vec[FEATURE_NAMES[col]] as number) ?? 0;
+    }
+  }
+  return buf;
+}
