@@ -51,3 +51,6 @@ pub mod esco;
 
 #[cfg(feature = "kernel-techwolf")]
 pub mod techwolf;
+
+#[cfg(feature = "kernel-ner")]
+pub mod voyager_bridge;

@@ -1,5 +1,5 @@
 -- Migration: Add Voyager API data storage
--- New columns on linkedin_posts + 3 new tables: voyager_job_counts, voyager_sessions, voyager_sync_log
+-- New columns on linkedin_posts + 4 new tables: voyager_job_counts, voyager_sessions, voyager_sync_log, voyager_snapshots
 
 -- 1. New columns on linkedin_posts for Voyager API fields
 ALTER TABLE "linkedin_posts" ADD COLUMN IF NOT EXISTS "voyager_urn" text;
@@ -64,3 +64,29 @@ CREATE TABLE IF NOT EXISTS "voyager_sync_log" (
 
 CREATE INDEX IF NOT EXISTS "idx_voyager_sync_log_started_at" ON "voyager_sync_log" ("started_at");
 CREATE INDEX IF NOT EXISTS "idx_voyager_sync_log_query" ON "voyager_sync_log" ("query");
+
+-- 5. voyager_snapshots — daily aggregated market intelligence
+CREATE TABLE IF NOT EXISTS "voyager_snapshots" (
+  "id" serial PRIMARY KEY,
+  "snapshot_date" text NOT NULL,
+  "query" text NOT NULL,
+  "total_jobs" integer NOT NULL DEFAULT 0,
+  "remote_jobs" integer NOT NULL DEFAULT 0,
+  "new_jobs_24h" integer NOT NULL DEFAULT 0,
+  "reposted_jobs" integer NOT NULL DEFAULT 0,
+  "top_companies" text,
+  "top_skills" text,
+  "salary_data" text,
+  "location_breakdown" text,
+  "industry_breakdown" text,
+  "employment_types" text,
+  "emerging_titles" text,
+  "repost_analysis" text,
+  "time_to_fill" text,
+  "voyager_request_id" text,
+  "raw_metadata" text,
+  "created_at" text NOT NULL DEFAULT now()::text
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_voyager_snapshots_date_query" ON "voyager_snapshots" ("snapshot_date", "query");
+CREATE INDEX IF NOT EXISTS "idx_voyager_snapshots_date" ON "voyager_snapshots" ("snapshot_date");
