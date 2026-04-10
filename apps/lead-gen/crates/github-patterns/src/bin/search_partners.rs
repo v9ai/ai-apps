@@ -288,7 +288,9 @@ async fn main() -> anyhow::Result<()> {
 
             info!("stargazers: {repo_full}");
 
-            for page in 1..=max_pages {
+            // Cap stargazer pages at 2 — low yield (~1%) after hobbyist filter,
+            // and passes 2-4 need the remaining time budget.
+            for page in 1..=max_pages.min(2) {
                 let stars = match gh.repo_stargazers(owner, repo, 100, page).await {
                     Ok(s) => s,
                     Err(e) => {
@@ -336,10 +338,6 @@ async fn main() -> anyhow::Result<()> {
             stored - pass_start
         );
     }
-
-    // Collect stargazer logins so later passes can skip them (already stored
-    // with starred_anthropic=true and the correct boosted score).
-    let _stargazer_logins: HashSet<String> = seen.clone();
 
     // ═══════════════════════════════════════════════════════════════════════
     // PASS 2: Org members of consulting / SI / AI companies
